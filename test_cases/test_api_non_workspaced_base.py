@@ -134,7 +134,7 @@ class DeleteTestsMixin:
 class ReadWriteTestsMixin(ListTestsMixin,
                           RetrieveTestsMixin,
                           CreateTestsMixin,
-                          # UpdateTestsMixin,
+                          UpdateTestsMixin,
                           DeleteTestsMixin,
                           ):
     pass

@@ -217,25 +217,37 @@ class CreateWorkspacedMixin(CreateMixin):
         return super(CreateWorkspacedMixin, self)._perform_create(obj)
 
 
-class UpdateWorkspacedMixin(object):
-    def put(self, workspace_name, object_id):
+class UpdateMixin(object):
+    """Add PUT /<workspace_name>/<id>/ route"""
+
+    def put(self, object_id, **kwargs):
         data = self._parse_data(self._get_schema_class()(strict=True),
                                 flask.request)
-        obj = self._get_object(object_id, workspace_name)
+        obj = self._get_object(object_id, **kwargs)
         self._update_object(obj, data)
-        updated = self._perform_update(workspace_name, object_id, obj)
+        updated = self._perform_update(object_id, obj, **kwargs)
         return self._dump(obj).data, 200
 
     def _update_object(self, obj, data):
         for (key, value) in data.items():
             setattr(obj, key, value)
 
-    def _perform_update(self, workspace_name, object_id, obj):
+    def _perform_update(self, object_id, obj):
         with db.session.no_autoflush:
-            obj.workspace = self._get_workspace(workspace_name)
             self._validate_uniqueness(obj, object_id)
         db.session.add(obj)
         db.session.commit()
+
+
+class UpdateWorkspacedMixin(UpdateMixin):
+    """Add PUT /<id>/ route"""
+
+    def _perform_update(self, object_id, obj, workspace_name):
+        assert not db.session.new
+        with db.session.no_autoflush:
+            obj.workspace = self._get_workspace(workspace_name)
+        return super(UpdateWorkspacedMixin, self)._perform_update(
+            object_id, obj)
 
 
 class DeleteMixin(object):
@@ -256,7 +268,7 @@ class DeleteWorkspacedMixin(DeleteMixin):
 
 
 class ReadWriteView(CreateMixin,
-                    #UpdateMixin,
+                    UpdateMixin,
                     DeleteMixin,
                     ReadOnlyView):
     """A generic view with list, retrieve and create endpoints"""

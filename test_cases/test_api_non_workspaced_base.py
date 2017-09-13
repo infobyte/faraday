@@ -122,12 +122,11 @@ class DeleteTestsMixin:
         assert was_deleted(self.first_object)
         assert self.model.query.count() == OBJECT_COUNT - 1
 
-    def test_delete_from_other_workspace_fails(self, test_client,
-                                                    second_workspace):
-        res = test_client.delete(self.url(self.first_object,
-                                          workspace=second_workspace))
+    @pytest.mark.parametrize('object_id', [123, -1, 'xxx', u'áá'])
+    def test_delete_non_existent_raises_404(self, test_client,
+                                            object_id):
+        res = test_client.delete(self.url(object_id))
         assert res.status_code == 404  # No content
-        assert not was_deleted(self.first_object)
         assert self.model.query.count() == OBJECT_COUNT
 
 
@@ -135,7 +134,7 @@ class ReadWriteTestsMixin(ListTestsMixin,
                           RetrieveTestsMixin,
                           CreateTestsMixin,
                           # UpdateTestsMixin,
-                          # DeleteTestsMixin
+                          DeleteTestsMixin,
                           ):
     pass
 

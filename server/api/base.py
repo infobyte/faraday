@@ -238,9 +238,10 @@ class UpdateWorkspacedMixin(object):
         db.session.commit()
 
 
-class DeleteWorkspacedMixin(object):
-    def delete(self, workspace_name, object_id):
-        obj = self._get_object(object_id, workspace_name)
+class DeleteMixin(object):
+    """Add DELETE /<id>/ route"""
+    def delete(self, object_id, **kwargs):
+        obj = self._get_object(object_id, **kwargs)
         self._perform_delete(obj)
         return None, 204
 
@@ -249,9 +250,14 @@ class DeleteWorkspacedMixin(object):
         db.session.commit()
 
 
+class DeleteWorkspacedMixin(DeleteMixin):
+    """Add DELETE /<workspace_name>/<id>/ route"""
+    pass
+
+
 class ReadWriteView(CreateMixin,
                     #UpdateMixin,
-                    #DeleteMixin,
+                    DeleteMixin,
                     ReadOnlyView):
     """A generic view with list, retrieve and create endpoints"""
     pass

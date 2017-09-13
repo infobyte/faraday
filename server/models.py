@@ -1,11 +1,16 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+from datetime import datetime
+
+import pytz
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     Column,
     DateTime,
     Enum,
+    event,
     Float,
     ForeignKey,
     Integer,
@@ -18,6 +23,7 @@ from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql import select
 from sqlalchemy import func
 from sqlalchemy.orm import column_property
+from sqlalchemy.schema import DDL
 from sqlalchemy.ext.declarative import declared_attr
 from flask_sqlalchemy import (
     SQLAlchemy as OriginalSQLAlchemy,
@@ -82,6 +88,22 @@ class DatabaseMetadata(db.Model):
     value = Column(String(250), nullable=False)
 
 
+class Metadata(db.Model):
+
+    __abstract__ = True
+
+    @declared_attr
+    def creator_id(cls):
+        return Column(Integer, ForeignKey('user.id'), nullable=True)
+
+    @declared_attr
+    def creator(cls):
+        return relationship('User', foreign_keys=[cls.creator_id])
+
+    create_date = Column(DateTime, default=datetime.utcnow)
+    update_date = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class EntityMetadata(db.Model):
     __tablename__ = 'metadata'
     __table_args__ = (
@@ -103,18 +125,20 @@ class EntityMetadata(db.Model):
     document_type = Column(String(250))
 
 
-class SourceCode(db.Model):
-    # TODO: add unique constraint -> filename, workspace
+class SourceCode(Metadata):
     __tablename__ = 'source_code'
     id = Column(Integer, primary_key=True)
     filename = Column(Text, nullable=False)
 
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', backref='source_codes')
 
+    __table_args__ = (
+        UniqueConstraint(filename, workspace_id, name='uix_source_code_filename_workspace'),
+    )
 
-class Host(db.Model):
-    # TODO: add unique constraint -> ip, workspace
+
+class Host(Metadata):
     __tablename__ = 'host'
     id = Column(Integer, primary_key=True)
     ip = Column(Text, nullable=False)  # IP v4 or v6
@@ -149,18 +173,25 @@ class Host(db.Model):
     )
 
 
-class Hostname(db.Model):
-    # TODO: add unique constraint -> name, host, workspace
+class Hostname(Metadata):
     __tablename__ = 'hostname'
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
 
-    host_id = Column(Integer, ForeignKey('host.id'), index=True)
+    host_id = Column(Integer, ForeignKey('host.id'), index=True, nullable=False)
     host = relationship('Host', backref='hostnames')
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship(
+        'Workspace',
+        backref='hostnames',
+        foreign_keys=[workspace_id]
+    )
+    __table_args__ = (
+        UniqueConstraint(name, host_id, workspace_id, name='uix_hostname_host_workspace'),
+    )
 
 
-class Service(db.Model):
-    # TODO: add unique constraint to -> port, protocol, host_id, workspace
+class Service(Metadata):
     STATUSES = [
         'open',
         'closed',
@@ -174,7 +205,7 @@ class Service(db.Model):
     owned = Column(Boolean, nullable=False, default=False)
 
     protocol = Column(Text, nullable=False)
-    status = Column(Enum(*STATUSES, name='service_statuses'), nullable=True)
+    status = Column(Enum(*STATUSES, name='service_statuses'), nullable=False)
     version = Column(Text, nullable=True)
 
     banner = Column(Text, nullable=True)
@@ -188,15 +219,18 @@ class Service(db.Model):
                                 foreign_keys=[entity_metadata_id]
                                 )
 
-    host_id = Column(Integer, ForeignKey('host.id'), index=True)
+    host_id = Column(Integer, ForeignKey('host.id'), index=True, nullable=False)
     host = relationship('Host', backref='services', foreign_keys=[host_id])
 
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
                             'Workspace',
                             backref='services',
                             foreign_keys=[workspace_id]
                             )
+    __table_args__ = (
+        UniqueConstraint(port, protocol, host_id, workspace_id, name='uix_service_port_protocol_host_workspace'),
+    )
 
 # TODO: Move this to Host definition. I need a way to reference Service before
 # it is declared
@@ -205,8 +239,7 @@ Host.service_count = column_property((select([func.count(Service.id)]).
             ), deferred=True)
 
 
-class VulnerabilityABC(db.Model):
-    # TODO: add unique constraint to -> name, description, severity, parent, method, pname, path, website, workspace
+class VulnerabilityABC(Metadata):
     # revisar plugin nexpose, netspark para terminar de definir uniques. asegurar que se carguen bien
     EASE_OF_RESOLUTIONS = [
         'trivial',
@@ -214,6 +247,14 @@ class VulnerabilityABC(db.Model):
         'moderate',
         'difficult',
         'infeasible'
+    ]
+    SEVERITIES = [
+        'critical',
+        'high',
+        'medium',
+        'low',
+        'informational',
+        'unclassified',
     ]
 
     __abstract__ = True
@@ -224,7 +265,7 @@ class VulnerabilityABC(db.Model):
     ease_of_resolution = Column(Enum(*EASE_OF_RESOLUTIONS, name='vulnerability_ease_of_resolution'), nullable=True)
     name = Column(Text, nullable=False)
     resolution = Column(Text, nullable=True)
-    severity = Column(String(50), nullable=False)
+    severity = Column(Enum(*SEVERITIES, name='vulnerability_severity'), nullable=False)
     # TODO add evidence
 
     impact_accountability = Column(Boolean, default=False)
@@ -235,6 +276,10 @@ class VulnerabilityABC(db.Model):
 
 class VulnerabilityTemplate(VulnerabilityABC):
     __tablename__ = 'vulnerability_template'
+
+    __table_args__ = (
+        UniqueConstraint('name', name='uix_vulnerability_template_name'),
+    )
 
 
 class VulnerabilityGeneric(VulnerabilityABC):
@@ -259,6 +304,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
                         Integer,
                         ForeignKey('workspace.id'),
                         index=True,
+                        nullable=False,
                         )
     workspace = relationship('Workspace', backref='vulnerabilities')
 
@@ -334,7 +380,7 @@ class VulnerabilityCode(VulnerabilityGeneric):
     }
 
 
-class ReferenceTemplate(db.Model):
+class ReferenceTemplate(Metadata):
     __tablename__ = 'reference_template'
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
@@ -350,8 +396,12 @@ class ReferenceTemplate(db.Model):
                                 foreign_keys=[vulnerability_id],
                                 )
 
+    __table_args__ = (
+        UniqueConstraint('name', 'vulnerability_id', name='uix_reference_template_name_vulnerability'),
+    )
 
-class Reference(db.Model):
+
+class Reference(Metadata):
     __tablename__ = 'reference'
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
@@ -359,7 +409,8 @@ class Reference(db.Model):
     workspace_id = Column(
                         Integer,
                         ForeignKey('workspace.id'),
-                        index=True
+                        index=True,
+                        nullable=False
                         )
     workspace = relationship(
                             'Workspace',
@@ -378,8 +429,12 @@ class Reference(db.Model):
                                 foreign_keys=[vulnerability_id],
                                 )
 
+    __table_args__ = (
+        UniqueConstraint('name', 'vulnerability_id', 'workspace_id', name='uix_reference_name_vulnerability_workspace'),
+    )
 
-class PolicyViolationTemplate(db.Model):
+
+class PolicyViolationTemplate(Metadata):
     __tablename__ = 'policy_violation_template'
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
@@ -395,8 +450,15 @@ class PolicyViolationTemplate(db.Model):
                                 foreign_keys=[vulnerability_id]
                                 )
 
+    __table_args__ = (
+        UniqueConstraint(
+                        'name',
+                        'vulnerability_id',
+                        name='uix_policy_violation_template_name_vulnerability'),
+    )
 
-class PolicyViolation(db.Model):
+
+class PolicyViolation(Metadata):
     __tablename__ = 'policy_violation'
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
@@ -404,7 +466,8 @@ class PolicyViolation(db.Model):
     workspace_id = Column(
                         Integer,
                         ForeignKey('workspace.id'),
-                        index=True
+                        index=True,
+                        nullable=False
                         )
     workspace = relationship(
                             'Workspace',
@@ -423,10 +486,16 @@ class PolicyViolation(db.Model):
                                 foreign_keys=[vulnerability_id]
                                 )
 
+    __table_args__ = (
+        UniqueConstraint(
+                        'name',
+                        'vulnerability_id',
+                        'workspace_id',
+                        name='uix_policy_violation_template_name_vulnerability_workspace'),
+    )
 
-class Credential(db.Model):
-    # TODO: add unique constraint -> username, host o service y workspace
-    # TODO: add constraint host y service, uno o el otro
+
+class Credential(Metadata):
     __tablename__ = 'credential'
     id = Column(Integer, primary_key=True)
     username = Column(String(250), nullable=False)
@@ -460,19 +529,32 @@ class Credential(db.Model):
                             foreign_keys=[workspace_id],
                             )
 
+    __table_args__ = (
+        CheckConstraint('(host_id IS NULL AND service_id IS NOT NULL) OR '
+                        '(host_id IS NOT NULL AND service_id IS NULL)',
+                        name='check_credential_host_service'),
+        UniqueConstraint(
+                        'username',
+                        'host_id',
+                        'service_id',
+                        'workspace_id',
+                        name='uix_credential_username_host_service_workspace'
+                        ),
+    )
 
-class Command(db.Model):
+
+class Command(Metadata):
     __tablename__ = 'command'
     id = Column(Integer, primary_key=True)
-    command = Column(String(250), nullable=False)
+    command = Column(Text(), nullable=False)
     start_date = Column(DateTime, nullable=False)
-    end_date = Column(DateTime, nullable=False)
+    end_date = Column(DateTime, nullable=True)
     ip = Column(String(250), nullable=False)  # where the command was executed
     hostname = Column(String(250), nullable=False)  # where the command was executed
-    params = Column(String(250), nullable=True)
-    user = Column(String(250), nullable=True)  # where the command was executed
+    params = Column(Text(), nullable=True)
+    user = Column(String(250), nullable=True)  # os username where the command was executed
 
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', foreign_keys=[workspace_id])
     # TODO: add Tool relationship and report_attachment
 
@@ -490,7 +572,7 @@ class Command(db.Model):
                                 )
 
 
-class Workspace(db.Model):
+class Workspace(Metadata):
     __tablename__ = 'workspace'
     id = Column(Integer, primary_key=True)
     # TODO: change nullable=True for appropriate fields
@@ -519,7 +601,7 @@ class RolesUsers(db.Model):
     role_id = Column('role_id', Integer(), ForeignKey('role.id'))
 
 
-class Role(db.Model, RoleMixin):
+class Role(Metadata, RoleMixin):
     __tablename__ = 'role'
     id = Column(Integer(), primary_key=True)
     name = Column(String(80), unique=True)
@@ -568,14 +650,14 @@ class User(db.Model, UserMixin):
                                  self.username)
 
 
-class MethodologyTemplate(db.Model):
+class MethodologyTemplate(Metadata):
     # TODO: reset template_id in methodologies when deleting meth template
     __tablename__ = 'methodology_template'
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
 
 
-class Methodology(db.Model):
+class Methodology(Metadata):
     # TODO: add unique constraint -> name, workspace
     __tablename__ = 'methodology'
     id = Column(Integer, primary_key=True)
@@ -603,10 +685,10 @@ class Methodology(db.Model):
                     )
 
     workspace = relationship('Workspace', backref='methodologies')
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
 
 
-class TaskABC(db.Model):
+class TaskABC(Metadata):
     __abstract__ = True
 
     id = Column(Integer, primary_key=True)
@@ -630,6 +712,10 @@ class TaskTemplate(TaskABC):
                     nullable=False,
                     )
 
+    # __table_args__ = (
+    #     UniqueConstraint(template_id, name='uix_task_template_name_desc_template_delete'),
+    # )
+
 
 class Task(TaskABC):
     STATUSES = [
@@ -652,30 +738,34 @@ class Task(TaskABC):
     entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
 
-    assigned_to = relationship('User', backref='assigned_tasks')
     assigned_to_id = Column(Integer, ForeignKey('user.id'), nullable=True)
+    assigned_to = relationship('User', backref='assigned_tasks', foreign_keys=[assigned_to_id])
 
-    methodology = relationship('Methodology', backref='tasks')
     methodology_id = Column(
                     Integer,
                     ForeignKey('methodology.id'),
                     index=True,
                     nullable=False,
                     )
+    methodology = relationship('Methodology', backref='tasks')
 
-    template = relationship('TaskTemplate', backref='tasks')
     template_id = Column(
                     Integer,
                     ForeignKey('task_template.id'),
                     index=True,
                     nullable=True,
                     )
+    template = relationship('TaskTemplate', backref='tasks')
 
     workspace = relationship('Workspace', backref='tasks')
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+
+    # __table_args__ = (
+    #     UniqueConstraint(TaskABC.name, methodology_id, workspace_id, name='uix_task_name_desc_methodology_workspace'),
+    # )
 
 
-class License(db.Model):
+class License(Metadata):
     __tablename__ = 'license'
     id = Column(Integer, primary_key=True)
     product = Column(Text, nullable=False)
@@ -685,8 +775,12 @@ class License(db.Model):
     type = Column(Text, nullable=True)
     notes = Column(Text, nullable=True)
 
+    __table_args__ = (
+        UniqueConstraint('product', 'start_date', 'end_date', name='uix_license_product_start_end_dates'),
+    )
 
-class Tag(db.Model):
+
+class Tag(Metadata):
     __tablename__ = 'tag'
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False, unique=True)
@@ -704,7 +798,18 @@ class TagObject(db.Model):
     tag_id = Column(Integer, ForeignKey('tag.id'), index=True)
 
 
-class Comment(db.Model):
+class CommentObject(db.Model):
+    __tablename__ = 'comment_object'
+    id = Column(Integer, primary_key=True)
+
+    object_id = Column(Integer, nullable=False)
+    object_type = Column(Text, nullable=False)
+
+    comment = relationship('Comment', backref='comment_objects')
+    comment_id = Column(Integer, ForeignKey('comment.id'), index=True)
+
+
+class Comment(Metadata):
     __tablename__ = 'comment'
     id = Column(Integer, primary_key=True)
 
@@ -717,8 +822,54 @@ class Comment(db.Model):
                         foreign_keys=[reply_to_id]
                         )
 
-    object_id = Column(Integer, nullable=False)
-    object_type = Column(Text, nullable=False)
-
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', foreign_keys=[workspace_id])
+
+
+class ExecutiveReport(Metadata):
+    STATUSES = [
+        'created',
+        'error',
+        'processing',
+    ]
+    __tablename__ = 'executive_report'
+    id = Column(Integer, primary_key=True)
+
+    grouped = Column(Boolean, nullable=False, default=False)
+    name = Column(Text, nullable=False, index=True)
+    status = Column(Enum(*STATUSES, name='executive_report_statuses'), nullable=True)
+    template_name = Column(Text, nullable=False)
+
+    conclusions = Column(Text, nullable=True)
+    enterprise = Column(Text, nullable=True)
+    objectives = Column(Text, nullable=True)
+    recommendations = Column(Text, nullable=True)
+    scope = Column(Text, nullable=True)
+    summary = Column(Text, nullable=True)
+    title = Column(Text, nullable=True)
+
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship('Workspace', foreign_keys=[workspace_id])
+
+
+# This constraint uses Columns from different classes
+# Since it applies to the table vulnerability it should be adVulnerability.ded to the Vulnerability class
+# However, since it contains columns from children classes, this cannot be done
+# This is a workaround suggested by SQLAlchemy's creator
+CheckConstraint('((Vulnerability.host_id IS NOT NULL)::int+'
+                '(Vulnerability.service_id IS NOT NULL)::int+'
+                '(Vulnerability.source_code_id IS NOT NULL)::int)=1',
+                name='check_vulnerability_host_service_source_code',
+                table=VulnerabilityGeneric.__table__)
+
+vulnerability_uniqueness = DDL(
+    "CREATE UNIQUE INDEX uix_vulnerability ON %(fullname)s "
+    "(name, md5(description), severity, host_id, service_id, "
+    "method, parameter_name, path, website, workspace_id, source_code_id);"
+)
+
+event.listen(
+    VulnerabilityGeneric.__table__,
+    'after_create',
+    vulnerability_uniqueness.execute_if(dialect='postgresql')
+)

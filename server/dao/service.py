@@ -45,7 +45,7 @@ class ServiceDAO(FaradayDAO):
                 func.count(distinct(Credential.id)).label("credentials_count"))
 
         query = self._session.query(service_bundle).\
-                group_by(Service.id).\
+                group_by(Service.id, EntityMetadata.id).\
                 outerjoin(EntityMetadata, EntityMetadata.id == Service.entity_metadata_id).\
                 outerjoin(Vulnerability, Service.id == Vulnerability.service_id).group_by(Service.id).\
                 outerjoin(Credential, (Credential.service_id == Service.id) and (Credential.host_id == None))

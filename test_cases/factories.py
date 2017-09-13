@@ -14,6 +14,7 @@ from server.models import (
     Host,
     License,
     Service,
+    User,
     Vulnerability,
     Workspace,
 )
@@ -41,13 +42,28 @@ class FaradayFactory(factory.alchemy.SQLAlchemyModelFactory):
 
     @classmethod
     def build_dict(cls, **kwargs):
-        return factory.build(dict, FACTORY_CLASS=cls)
+        ret = factory.build(dict, FACTORY_CLASS=cls)
+        try:
+            # creator is an user instance, that isn't serializable. Ignore it
+            del ret['creator']
+        except KeyError:
+            pass
+        return ret
 
+
+class UserFactory(FaradayFactory):
+
+    username = FuzzyText()
+
+    class Meta:
+        model = User
+        sqlalchemy_session = db.session
 
 
 class WorkspaceFactory(FaradayFactory):
 
     name = FuzzyText()
+    creator = factory.SubFactory(UserFactory)
 
     class Meta:
         model = Workspace
@@ -68,6 +84,7 @@ class HostFactory(WorkspaceObjectFactory):
     ip = factory.Faker('ipv4')
     description = FuzzyText()
     os = FuzzyChoice(['Linux', 'Windows', 'OSX', 'Android', 'iOS'])
+    creator = factory.SubFactory(UserFactory)
 
     class Meta:
         model = Host
@@ -86,9 +103,10 @@ class ServiceFactory(WorkspaceObjectFactory):
     name = FuzzyText()
     description = FuzzyText()
     port = FuzzyInteger(1, 65535)
-    protocol = FuzzyChoice(['tcp', 'udp'])
+    protocol = FuzzyChoice(['TCP', 'UDP'])
     host = factory.SubFactory(HostFactory)
     status = FuzzyChoice(Service.STATUSES)
+    creator = factory.SubFactory(UserFactory)
 
     class Meta:
         model = Service
@@ -99,14 +117,11 @@ class VulnerabilityFactory(WorkspaceObjectFactory):
 
     name = FuzzyText()
     description = FuzzyText()
-    host = factory.SubFactory(HostFactory)
-    entity_metadata = factory.SubFactory(EntityMetadataFactory)
-    service = factory.SubFactory(ServiceFactory)
+    # host = factory.SubFactory(HostFactory)
+    # service = factory.SubFactory(ServiceFactory)
     workspace = factory.SubFactory(WorkspaceFactory)
-    vuln_type = FuzzyChoice(['Vulnerability', 'VulnerabilityWeb'])
-    attachments = '[]'
-    policyviolations = '[]'
-    refs = '[]'
+    creator = factory.SubFactory(UserFactory)
+    severity = FuzzyChoice(['critical', 'high'])
 
     class Meta:
         model = Vulnerability

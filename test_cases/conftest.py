@@ -20,6 +20,7 @@ enabled_factories = [
     factories.VulnerabilityFactory,
     factories.CredentialFactory,
     factories.LicenseFactory,
+    factories.UserFactory,
 ]
 for factory in enabled_factories:
     register(factory)
@@ -69,6 +70,13 @@ def database(app, request):
 
     def teardown():
         db.drop_all()
+
+    # Disable check_vulnerability_host_service_source_code constraint because it
+    # doesn't work in sqlite
+    vuln_constraints = db.metadata.tables['vulnerability'].constraints
+    vuln_constraints.remove(next(
+        constraint for constraint in vuln_constraints
+        if constraint.name == 'check_vulnerability_host_service_source_code'))
 
     db.app = app
     db.create_all()

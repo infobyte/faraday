@@ -1,7 +1,6 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-import sys
 from ConfigParser import NoOptionError
 
 import flask
@@ -27,6 +26,15 @@ def create_app(db_connection_string=None, testing=None):
     app.config['SECURITY_POST_LOGOUT_VIEW'] = '/_api/login'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     # app.config['SQLALCHEMY_ECHO'] = True
+    app.config['SECURITY_PASSWORD_SCHEMES'] = [
+        'bcrypt',  # This should be the default value
+        # 'des_crypt',
+        'pbkdf2_sha1',  # Used by CouchDB passwords
+        # 'pbkdf2_sha256',
+        # 'pbkdf2_sha512',
+        # 'sha256_crypt',
+        # 'sha512_crypt',
+    ]
     if testing:
         app.config['TESTING'] = testing
     try:

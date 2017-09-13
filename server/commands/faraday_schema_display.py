@@ -19,6 +19,10 @@ class DatabaseSchema(Command):
         self._draw_entity_diagrama()
         self._draw_uml_class_diagram()
 
+    @property
+    def description(self):
+        return 'Generates an entity diagram and uml class diagram from the implemented model'
+
     def _draw_entity_diagrama(self):
         # create the pydot graph object by autoloading all tables via a bound metadata object
         graph = create_schema_graph(

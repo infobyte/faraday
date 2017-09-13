@@ -371,6 +371,7 @@ class VulnerabilityImporter(object):
                     session,
                     VulnerabilityWeb,
                     name=document.get('name'),
+                    description=document.get('desc'),
                     severity=severity,
                     service_id=parent.id,
                     method=method,
@@ -384,6 +385,7 @@ class VulnerabilityImporter(object):
                     'name': document.get('name'),
                     'severity': severity,
                     'workspace': workspace,
+                    'description': document.get('desc')
                 }
                 if type(parent) == Host:
                     vuln_params.update({'host_id': parent.id})
@@ -394,7 +396,6 @@ class VulnerabilityImporter(object):
                     Vulnerability,
                     **vuln_params
                 )
-            vulnerability.description = document.get('desc'),
             vulnerability.confirmed = document.get('confirmed', False) or False
             vulnerability.data = document.get('data')
             vulnerability.easeofresolution = document.get('easeofresolution')
@@ -911,9 +912,7 @@ class ImportCouchDB(FlaskScriptCommand):
             for interface in interfaces:
                 interface = interface['value']
                 vulns += get_children_from_couch(workspace, interface.get('_id'), 'Vulnerability')
-            # some vulns had the same name but different description.
-            # we check that we have the same vuln names now
-            assert len(set(map(lambda vuln: vuln['value'].get('name'), vulns))) == len(set(map(lambda vuln: vuln.name, host.vulnerabilities)))
+            assert len(vulns) == len(host.vulnerabilities)
 
     def verify_import_data(self, couchdb_relational_map, couchdb_relational_map_by_type, workspace):
         self.verify_host_vulns_count_is_correct(couchdb_relational_map, couchdb_relational_map_by_type, workspace)

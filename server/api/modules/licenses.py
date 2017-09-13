@@ -14,9 +14,9 @@ license_api = Blueprint('license_api', __name__)
 
 class LicenseSchema(Schema):
     id = fields.Integer(required=True, dump_only=True)
-    product = fields.String()
-    start_date = fields.DateTime()
-    end_date = fields.DateTime()
+    product = fields.String(required=True)
+    start_date = fields.DateTime(required=True)
+    end_date = fields.DateTime(required=True)
 
 
 class LicenseView(ReadWriteView):

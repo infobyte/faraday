@@ -912,7 +912,8 @@ class ImportCouchDB(FlaskScriptCommand):
             for interface in interfaces:
                 interface = interface['value']
                 vulns += get_children_from_couch(workspace, interface.get('_id'), 'Vulnerability')
-            assert len(vulns) == len(host.vulnerabilities)
+
+            assert len(set(map(lambda vuln: vuln['value'].get('name'), vulns))) == len(set(map(lambda vuln: vuln.name, host.vulnerabilities)))
 
     def verify_import_data(self, couchdb_relational_map, couchdb_relational_map_by_type, workspace):
         self.verify_host_vulns_count_is_correct(couchdb_relational_map, couchdb_relational_map_by_type, workspace)

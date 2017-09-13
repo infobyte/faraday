@@ -22,8 +22,9 @@ class GenericAPITest:
 
     @pytest.fixture(autouse=True)
     def load_workspace_with_objects(self, database, session, workspace):
-        objects = self.factory.create_batch(OBJECT_COUNT, workspace=workspace)
-        self.first_object = objects[0]
+        self.objects = self.factory.create_batch(
+            OBJECT_COUNT, workspace=workspace)
+        self.first_object = self.objects[0]
         session.commit()
         assert workspace.id is not None
         self.workspace = workspace
@@ -121,25 +122,26 @@ class CreateTestsMixin:
 
 class UpdateTestsMixin:
 
-    def test_update_a_host(self, test_client):
-        host = self.workspace.hosts[0]
+    def test_update_an_object(self, test_client):
         res = test_client.put(self.url(self.first_object),
                               data=self.factory.build_dict())
         assert res.status_code == 200
         assert self.model.query.count() == OBJECT_COUNT
+        for updated_field in self.update_fields:
+            assert res.json[updated_field] == getattr(self.first_object,
+                                                        updated_field)
 
     def test_update_fails_with_existing(self, test_client, session):
         for unique_field in self.unique_fields:
             data = self.factory.build_dict()
-            data[unique_field] = getattr(self.first_object, unique_field)
-            res = test_client.put(self.url(self.workspace.hosts[1]), data=data)
+            data[unique_field] = getattr(self.objects[1], unique_field)
+            res = test_client.put(self.url(self.first_object), data=data)
             assert res.status_code == 400
             assert self.model.query.count() == OBJECT_COUNT
 
-    def test_update_a_host_fails_with_empty_dict(self, test_client):
+    def test_update_an_object_fails_with_empty_dict(self, test_client):
         """To do this the user should use a PATCH request"""
-        host = self.workspace.hosts[0]
-        res = test_client.put(self.url(host), data={})
+        res = test_client.put(self.url(self.first_object), data={})
         assert res.status_code == 400
 
 

@@ -1,10 +1,20 @@
 import os
 import sys
 import pytest
+from pytest_factoryboy import register
 
 sys.path.append(os.path.abspath(os.getcwd()))
 from server.app import create_app
 from server.models import db
+from test_cases import factories
+
+
+
+register(factories.WorkspaceFactory)
+register(factories.HostFactory)
+register(factories.ServiceFactory)
+register(factories.VulnerabilityFactory)
+register(factories.CredentialFactory)
 
 
 @pytest.fixture(scope='session')

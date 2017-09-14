@@ -6,7 +6,11 @@ import re
 import sys
 import json
 import datetime
-from collections import defaultdict, OrderedDict
+from collections import (
+    Counter,
+    defaultdict,
+    OrderedDict
+)
 from binascii import unhexlify
 
 import requests
@@ -763,6 +767,9 @@ class ImportCouchDBUsers(FlaskScriptCommand):
 
 class ImportVulnerabilityTemplates(FlaskScriptCommand):
 
+    def __init__(self):
+        self.names = Counter()
+
     def run(self):
         cwe_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
             username=server.config.couchdb.user,
@@ -781,18 +788,36 @@ class ImportVulnerabilityTemplates(FlaskScriptCommand):
         for cwe in cwes:
             document = cwe['doc']
             new_severity = self.get_severity(document)
+
+            new_name = self.get_name(document)
+
             vuln_template, created = get_or_create(session,
                                                    VulnerabilityTemplate,
-                                                   name=document.get('name'),
-                                                   severity=new_severity,
-                                                   description=document.get('description'))
+                                                   name=new_name)
+
+            vuln_template.description = document.get('description')
             vuln_template.resolution = document.get('resolution')
+            vuln_template.severity = new_severity
+
             references = document['references'] if isinstance(document['references'], list) else [x.strip() for x in document['references'].split(',')]
             for ref_doc in references:
                 get_or_create(session,
                              ReferenceTemplate,
                              vulnerability=vuln_template,
                              name=ref_doc)
+
+    def get_name(self, document):
+        doc_name = document.get('name')
+        count = self.names[doc_name]
+
+        if count > 0:
+            name = u'{0} ({1})'.format(doc_name, count)
+        else:
+            name = doc_name
+
+        self.names[doc_name] += 1
+
+        return name
 
     def get_severity(self, document):
         default = 'unclassified'

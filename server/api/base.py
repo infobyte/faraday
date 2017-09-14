@@ -64,7 +64,7 @@ class GenericView(FlaskView):
         return obj
 
     def _dump(self, obj, **kwargs):
-        return self._get_schema_class()(**kwargs).dump(obj)
+        return self._get_schema_class()(**kwargs).dump(obj).data
 
     def _parse_data(self, schema, request, *args, **kwargs):
         return FlaskParser().parse(schema, request, locations=('json',),
@@ -195,7 +195,7 @@ class CreateMixin(object):
                                 flask.request)
         obj = self.model_class(**data)
         created = self._perform_create(obj, **kwargs)
-        return self._dump(created).data, 201
+        return self._dump(created), 201
 
     def _perform_create(self, obj):
         # assert not db.session.new
@@ -226,7 +226,7 @@ class UpdateMixin(object):
         obj = self._get_object(object_id, **kwargs)
         self._update_object(obj, data)
         updated = self._perform_update(object_id, obj, **kwargs)
-        return self._dump(obj).data, 200
+        return self._dump(obj), 200
 
     def _update_object(self, obj, data):
         for (key, value) in data.items():

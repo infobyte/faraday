@@ -44,7 +44,7 @@ class HostsView(ReadWriteWorkspacedView):
     @route('/<host_id>/services/')
     def service_list(self, workspace_name, host_id):
         services = self._get_object(host_id, workspace_name).services
-        return ServiceSchema(many=True).dump(services)
+        return ServiceSchema(many=True).dump(services).data
 
     def _get_base_query(self, workspace_name):
         """Get services_count in one query and not deferred, that doe

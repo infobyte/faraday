@@ -775,15 +775,19 @@ class ImportVulnerabilityTemplates(FlaskScriptCommand):
             mapped_exploitation = {
                 'critical': 'critical',
                 'med': 'medium',
+                'high to very high': 'high',
                 'high': 'high',
                 'low': 'low',
                 'info': 'informational',
+                'unknown': 'unclassified',
                 'unclassified': 'unclassified',
             }
+            if document.get('exploitation') not in mapped_exploitation.values():
+                logger.warn('Vuln template exploitation {0} not found. using unclassified'.format(document.get('exploitation')))
             vuln_template, created = get_or_create(session,
                                                    VulnerabilityTemplate,
                                                    name=document.get('name'),
-                                                   severity=mapped_exploitation[document.get('exploitation')],
+                                                   severity=mapped_exploitation[document.get('exploitation', 'unclassified').lower()],
                                                    description=document.get('description'))
             vuln_template.resolution = document.get('resolution')
             for ref_doc in document['references']:

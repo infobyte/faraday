@@ -34,6 +34,7 @@ def create_app(db_connection_string=None, testing=None):
         # 'pbkdf2_sha512',
         # 'sha256_crypt',
         # 'sha512_crypt',
+        'plaintext',  # TODO: remove it
     ]
     if testing:
         app.config['TESTING'] = testing

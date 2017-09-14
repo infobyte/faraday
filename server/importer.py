@@ -6,7 +6,7 @@ import re
 import sys
 import json
 import datetime
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from binascii import unhexlify
 
 import requests
@@ -55,6 +55,15 @@ COUCHDB_PASSWORD_PREFIX = '-pbkdf2-'
 
 logger = server.utils.logger.get_logger(__name__)
 session = db.session
+
+MAPPED_VULN_SEVERITY = OrderedDict([
+    ('critical', 'critical'),
+    ('high', 'high'),
+    ('med', 'medium'),
+    ('low', 'low'),
+    ('info', 'informational'),
+    ('unclassified', 'unclassified'),
+])
 
 OBJ_TYPES = [
             (1, 'Host'),
@@ -348,14 +357,7 @@ class VulnerabilityImporter(object):
         if not couch_parent_id:
             couch_parent_id = '.'.join(document['_id'].split('.')[:-1])
         parent_ids = couchdb_relational_map[couch_parent_id]
-        mapped_severity = {
-            'med': 'medium',
-            'critical': 'critical',
-            'high': 'high',
-            'low': 'low',
-            'info': 'informational',
-            'unclassified': 'unclassified',
-        }
+        mapped_severity = MAPPED_VULN_SEVERITY
         severity = mapped_severity[document.get('severity')]
         for parent_id in parent_ids:
             if level == 2:
@@ -769,25 +771,20 @@ class ImportVulnerabilityTemplates(FlaskScriptCommand):
             port=server.config.couchdb.port,
             path='cwe/_all_docs?include_docs=true'
         )
-        cwes = requests.get(cwe_url).json()['rows']
+
+        try:
+            cwes = requests.get(cwe_url).json()['rows']
+        except requests.exceptions.RequestException as e:
+            logger.warn(e)
+            return
+
         for cwe in cwes:
             document = cwe['doc']
-            mapped_exploitation = {
-                'critical': 'critical',
-                'med': 'medium',
-                'high to very high': 'high',
-                'high': 'high',
-                'low': 'low',
-                'info': 'informational',
-                'unknown': 'unclassified',
-                'unclassified': 'unclassified',
-            }
-            if document.get('exploitation') not in mapped_exploitation.values():
-                logger.warn('Vuln template exploitation {0} not found. using unclassified'.format(document.get('exploitation')))
+            new_severity = self.get_severity(document)
             vuln_template, created = get_or_create(session,
                                                    VulnerabilityTemplate,
                                                    name=document.get('name'),
-                                                   severity=mapped_exploitation[document.get('exploitation', 'unclassified').lower()],
+                                                   severity=new_severity,
                                                    description=document.get('description'))
             vuln_template.resolution = document.get('resolution')
             references = document['references'] if isinstance(document['references'], list) else [x.strip() for x in document['references'].split(',')]
@@ -797,6 +794,20 @@ class ImportVulnerabilityTemplates(FlaskScriptCommand):
                              vulnerability=vuln_template,
                              name=ref_doc)
 
+    def get_severity(self, document):
+        default = 'unclassified'
+
+        mapped_exploitation = MAPPED_VULN_SEVERITY
+
+        for key in mapped_exploitation.keys():
+            if key in document.get('exploitation').lower():
+                return mapped_exploitation[key]
+
+        logger.warn(
+            'Vuln template exploitation \'{0}\' not found. Using \'{1}\' instead.'.format(document.get('exploitation'), default)
+        )
+
+        return default
 
 class ImportLicense(FlaskScriptCommand):
 

@@ -11,7 +11,7 @@ class LicenseEnvelopedView(LicenseView):
     """A custom view to test that enveloping on generic views work ok"""
     route_base = "test_envelope_list"
 
-    def _envelope_list(self, objects):
+    def _envelope_list(self, objects, pagination_metadata=None):
         return {"object_list": objects}
 
 

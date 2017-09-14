@@ -12,7 +12,7 @@ from server.utils.logger import get_logger
 from server.utils.web import gzipped, validate_workspace,\
     get_integer_parameter, filter_request_args
 from server.dao.host import HostDAO
-from server.api.base import ReadWriteWorkspacedView
+from server.api.base import ReadWriteWorkspacedView, PaginatedMixin
 from server.models import Host
 
 host_api = Blueprint('host_api', __name__)
@@ -35,7 +35,8 @@ class ServiceSchema(Schema):
     status = fields.String(required=True)
 
 
-class HostsView(ReadWriteWorkspacedView):
+class HostsView(PaginatedMixin,
+                ReadWriteWorkspacedView):
     route_base = 'hosts'
     model_class = Host
     schema_class = HostSchema

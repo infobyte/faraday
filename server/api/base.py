@@ -147,14 +147,29 @@ class GenericWorkspacedView(GenericView):
 class ListMixin(object):
     """Add GET / route"""
 
-    def _envelope_list(self, objects):
+    def _envelope_list(self, objects, pagination_metadata=None):
         """Override this method to define how a list of objects is
         rendered"""
         return objects
 
+    def _paginate(self, query):
+        return query, None
+
     def index(self, **kwargs):
-        objects = self._get_base_query(**kwargs)
-        return self._envelope_list(self._dump(objects, many=True))
+        objects, pagination_metadata = self._paginate(
+            self._get_base_query(**kwargs))
+        return self._envelope_list(self._dump(objects, many=True),
+                                   pagination_metadata)
+
+
+class PaginatedMixin(object):
+    """Add pagination for list route"""
+
+    def _paginate(self, query):
+        if 'per_page' in flask.request.args:
+            pagination_metadata = query.paginate()
+            return pagination_metadata.items, pagination_metadata
+        return super(PaginatedMixin, self)._paginate(query)
 
 
 class ListWorkspacedMixin(ListMixin):

@@ -2,8 +2,13 @@ import pytest
 from sqlalchemy.orm.util import was_deleted
 
 from test_cases import factories
-from test_api_workspaced_base import API_PREFIX, ReadWriteAPITests
+from test_api_workspaced_base import (
+    API_PREFIX,
+    ReadWriteAPITests,
+    PaginationTestsMixin,
+)
 from server.models import db, Host
+from server.api.modules.hosts import HostsView
 
 HOSTS_COUNT = 5
 SERVICE_COUNT = [10, 5]  # 10 services to the first host, 5 to the second
@@ -201,10 +206,11 @@ class TestHostAPI:
                 assert host['service_count'] == len(ids_map[host['id']])
 
 
-class TestHostAPIGeneric(ReadWriteAPITests):
+class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
     model = Host
     factory = factories.HostFactory
     api_endpoint = 'hosts'
     unique_fields = ['ip']
     update_fields = ['ip', 'description', 'os']
+    view_class = HostsView
 

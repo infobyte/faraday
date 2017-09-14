@@ -17,16 +17,64 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    event
 )
 from sqlalchemy.orm import relationship, backref
+from sqlalchemy.sql import select
+from sqlalchemy import func
+from sqlalchemy.orm import column_property
 from sqlalchemy.schema import DDL
-from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.ext.declarative import declared_attr
+from flask_sqlalchemy import (
+    SQLAlchemy as OriginalSQLAlchemy,
+    _EngineConnector
+)
 from flask_security import (
     RoleMixin,
     UserMixin,
 )
 
 import server.config
+
+
+class SQLAlchemy(OriginalSQLAlchemy):
+    """Override to fix issues when doing a rollback with sqlite driver
+    See http://docs.sqlalchemy.org/en/rel_1_0/dialects/sqlite.html#serializable-isolation-savepoints-transactional-ddl
+    and https://bitbucket.org/zzzeek/sqlalchemy/issues/3561/sqlite-nested-transactions-fail-with
+    for furhter information"""
+
+    def make_connector(self, app=None, bind=None):
+        """Creates the connector for a given state and bind."""
+        return CustomEngineConnector(self, self.get_app(app), bind)
+
+
+class CustomEngineConnector(_EngineConnector):
+    """Used by overrideb SQLAlchemy class to fix rollback issues"""
+
+    def get_engine(self):
+        # Use an existent engine and don't register events if possible
+        uri = self.get_uri()
+        echo = self._app.config['SQLALCHEMY_ECHO']
+        if (uri, echo) == self._connected_for:
+            return self._engine
+
+        # Call original metohd and register events
+        rv = super(CustomEngineConnector, self).get_engine()
+        if uri.startswith('sqlite://'):
+            with self._lock:
+                @event.listens_for(rv, "connect")
+                def do_connect(dbapi_connection, connection_record):
+                    # disable pysqlite's emitting of the BEGIN statement
+                    # entirely.  also stops it from emitting COMMIT before any
+                    # DDL.
+                    dbapi_connection.isolation_level = None
+
+                @event.listens_for(rv, "begin")
+                def do_begin(conn):
+                    # emit our own BEGIN
+                    conn.execute("BEGIN")
+        return rv
+
 
 db = SQLAlchemy()
 
@@ -117,7 +165,7 @@ class Host(Metadata):
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
                             'Workspace',
-                            backref='workspace_hosts',
+                            backref='hosts',
                             foreign_keys=[workspace_id]
                             )
     __table_args__ = (
@@ -135,7 +183,7 @@ class Hostname(Metadata):
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
-        backref='hosts',
+        backref='hostnames',
         foreign_keys=[workspace_id]
     )
     __table_args__ = (
@@ -183,6 +231,12 @@ class Service(Metadata):
     __table_args__ = (
         UniqueConstraint(port, protocol, host_id, workspace_id, name='uix_service_port_protocol_host_workspace'),
     )
+
+# TODO: Move this to Host definition. I need a way to reference Service before
+# it is declared
+Host.service_count = column_property((select([func.count(Service.id)]).
+            where(Service.host_id == Host.id)#.label('service_count')
+            ), deferred=True)
 
 
 class VulnerabilityABC(Metadata):

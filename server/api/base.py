@@ -147,9 +147,14 @@ class GenericWorkspacedView(GenericView):
 class ListMixin(object):
     """Add GET / route"""
 
+    def _envelope_list(self, objects):
+        """Override this method to define how a list of objects is
+        rendered"""
+        return objects
+
     def index(self, **kwargs):
-        return self._dump(self._get_base_query(**kwargs).all(),
-                          many=True)
+        objects = self._get_base_query(**kwargs)
+        return self._envelope_list(self._dump(objects, many=True))
 
 
 class ListWorkspacedMixin(ListMixin):

@@ -325,7 +325,7 @@ class ServiceImporter(object):
                 service.banner = document.get('banner')
                 service.protocol = document.get('protocol')
                 if not document.get('status'):
-                    logger.warning('Service {0} with empty status. Using open as status'.format(document['_id']))
+                    logger.warning('Service {0} with empty status. Using \'open\' as status'.format(document['_id']))
                     document['status'] = 'open'
                 status_mapper = {
                     'open': 'open',

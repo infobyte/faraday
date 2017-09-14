@@ -877,11 +877,11 @@ class ImportCouchDB(FlaskScriptCommand):
         if obj_type == 'Credential':
             obj_type = 'Cred'
         data = {
-            "map": "function(doc) { if(doc.type == '%s' && doc._id.split('.').length == %d) emit(null, doc); }" % (obj_type, level)
+            "map": "function(doc) { if(doc.type == '%s' && doc._id.split('.').length == %d && !doc._deleted) emit(null, doc); }" % (obj_type, level)
         }
 
         documents = requests.post(host, json=data).json()
-        for doc in documents['rows']:
+        for doc in documents.get('rows', []):
             doc['value']['deleted'] = False
             doc_status_url = "http://{username}:{password}@{hostname}:{port}/{workspace_name}/_all_docs?keys=[\"{doc_id}\"]".format(
                 username=server.config.couchdb.user,

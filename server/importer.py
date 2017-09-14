@@ -790,7 +790,8 @@ class ImportVulnerabilityTemplates(FlaskScriptCommand):
                                                    severity=mapped_exploitation[document.get('exploitation', 'unclassified').lower()],
                                                    description=document.get('description'))
             vuln_template.resolution = document.get('resolution')
-            for ref_doc in document['references']:
+            references = document['references'] if isinstance(document['references'], list) else [x.strip() for x in document['references'].split(',')]
+            for ref_doc in references:
                 get_or_create(session,
                              ReferenceTemplate,
                              vulnerability=vuln_template,

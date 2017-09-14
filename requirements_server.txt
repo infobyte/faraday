@@ -12,6 +12,6 @@ Flask-Security==3.0.0
 bcrypt
 Flask-SQLAlchemy==2.2
 Flask-Script==2.0.5
-https://github.com/teracyhq/flask-classful/archive/develop.zip
+flask-classful
 marshmallow
 webargs

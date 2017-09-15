@@ -164,10 +164,25 @@ class ListMixin(object):
 
 class PaginatedMixin(object):
     """Add pagination for list route"""
+    per_page_parameter_name = 'page_size'
+    page_number_parameter_name = 'page'
 
     def _paginate(self, query):
-        if 'per_page' in flask.request.args:
-            pagination_metadata = query.paginate()
+        if self.per_page_parameter_name in flask.request.args:
+
+            try:
+                page = int(flask.request.args.get(
+                    self.page_number_parameter_name, 1))
+            except (TypeError, ValueError):
+                flask.abort(404, 'Invalid page number')
+
+            try:
+                per_page = int(flask.request.args[
+                    self.per_page_parameter_name])
+            except (TypeError, ValueError):
+                flask.abort(404, 'Invalid per_page value')
+
+            pagination_metadata = query.paginate(page=page, per_page=per_page)
             return pagination_metadata.items, pagination_metadata
         return super(PaginatedMixin, self)._paginate(query)
 

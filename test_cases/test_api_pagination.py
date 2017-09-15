@@ -9,13 +9,10 @@ def with_0_and_n_objects(n=10):
     return pytest.mark.parametrize('object_count', [0, n])
 
 class PaginationTestsMixin:
-    per_page_parameter_name = 'per_page'
-    page_number_parameter_name = 'page'
     view_class = None  # Must be overriden
 
     @pytest.fixture
     def delete_previously_created_objects(self, session):
-        from server.models import Host
         for obj in self.objects:
             session.delete(obj)
         session.commit()
@@ -40,9 +37,10 @@ class PaginationTestsMixin:
     def page_url(self, page_number=None, per_page=None):
         parameters = {}
         if page_number is not None:
-            parameters[self.page_number_parameter_name] = page_number
+            parameters[
+                self.view_class.page_number_parameter_name] = page_number
         if per_page is not None:
-            parameters[self.per_page_parameter_name] = per_page
+            parameters[self.view_class.per_page_parameter_name] = per_page
         return self.url() + '?' + urlencode(parameters)
 
     @pytest.mark.parametrize("page_number", [None, 1, 2])

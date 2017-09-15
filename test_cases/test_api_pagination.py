@@ -56,10 +56,10 @@ class PaginationTestsMixin:
         assert res.status_code == 200
         assert len(res.json['data']) == 100
 
+    @pytest.mark.skip("TODO: Fix for sqlite and postgres")
     @with_0_and_n_objects()
     @pytest.mark.usefixtures('pagination_test_logic')
     @pytest.mark.pagination
-    @pytest.mark.skip
     def test_does_not_allow_negative_per_page(self, session, test_client,
                                               object_count):
         self.create_many_objects(session, object_count)
@@ -69,7 +69,6 @@ class PaginationTestsMixin:
     @with_0_and_n_objects()
     @pytest.mark.usefixtures('pagination_test_logic')
     @pytest.mark.pagination
-    @pytest.mark.skip
     def test_does_not_allow_negative_page_number(self, session, test_client,
                                                  object_count):
         self.create_many_objects(session, object_count)

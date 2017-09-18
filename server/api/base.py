@@ -8,7 +8,7 @@ from werkzeug.routing import parse_rule
 from marshmallow import Schema
 from marshmallow.compat import with_metaclass
 from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
-from webargs.flaskparser import FlaskParser, abort
+from webargs.flaskparser import FlaskParser, parser, abort
 from webargs.core import ValidationError
 from server.models import Workspace, db
 
@@ -348,3 +348,8 @@ class AutoSchema(with_metaclass(ModelSchemaMeta, Schema)):
     the serialization and deserialization proccess.
     """
     OPTIONS_CLASS = ModelSchemaOpts
+
+
+class FilterSetMeta:
+    """Base Meta class of FilterSet objects"""
+    parser = parser

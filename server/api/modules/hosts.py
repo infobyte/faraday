@@ -8,7 +8,6 @@ from flask_classful import route
 from marshmallow import fields
 from filteralchemy import FilterSet, operators
 from sqlalchemy.orm import undefer
-from webargs.flaskparser import parser
 
 from server.utils.logger import get_logger
 from server.utils.web import gzipped, validate_workspace,\
@@ -19,6 +18,7 @@ from server.api.base import (
     PaginatedMixin,
     AutoSchema,
     FilterAlchemyMixin,
+    FilterSetMeta,
 )
 from server.models import Host, Service
 
@@ -36,10 +36,9 @@ class HostSchema(AutoSchema):
 
 
 class HostFilterSet(FilterSet):
-    class Meta:
+    class Meta(FilterSetMeta):
         model = Host
         fields = ('os',)
-        parser = parser
         operators = (operators.Equal, operators.Like, operators.ILike)
 
 

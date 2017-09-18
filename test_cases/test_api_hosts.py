@@ -224,9 +224,34 @@ class TestHostAPI:
         # This shouldn't be shown, they are from other workspace
         host_factory.create_batch(5, workspace=second_workspace, os='Unix')
 
-        res = test_client.get(self.url() + '?os=Unix')
+        url = self.url() + '?os=Unix'
+        res = test_client.get(url)
         assert res.status_code == 200
         self.compare_results(hosts, res)
+
+    def test_filter_by_os_like_ilike(self, test_client, session, workspace,
+                                     second_workspace, host_factory):
+        # The hosts that should be shown
+        hosts = host_factory.create_batch(5, workspace=workspace, os='Unix 1')
+        hosts += host_factory.create_batch(5, workspace=workspace, os='Unix 2')
+
+        # This should only be shown when using ilike, not when using like
+        case_insensitive_host = host_factory.create(
+            workspace=workspace, os='UNIX 3')
+
+        # This doesn't match the like expression
+        host_factory.create(workspace=workspace, os="Test Unix 1")
+
+        # This shouldn't be shown anywhere, they are from other workspace
+        host_factory.create_batch(5, workspace=second_workspace, os='Unix')
+
+        res = test_client.get(self.url() + '?os__like=Unix %')
+        assert res.status_code == 200
+        self.compare_results(hosts, res)
+
+        res = test_client.get(self.url() + '?os__ilike=Unix %')
+        assert res.status_code == 200
+        self.compare_results(hosts + [case_insensitive_host], res)
 
 
 class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):

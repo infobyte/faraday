@@ -6,7 +6,7 @@ import flask
 from flask import Blueprint
 from flask_classful import route
 from marshmallow import fields
-from filteralchemy import FilterSet
+from filteralchemy import FilterSet, operators
 from sqlalchemy.orm import undefer
 from webargs.flaskparser import parser
 
@@ -40,6 +40,7 @@ class HostFilterSet(FilterSet):
         model = Host
         fields = ('os',)
         parser = parser
+        operators = (operators.Equal, operators.Like, operators.ILike)
 
 
 class ServiceSchema(AutoSchema):

@@ -49,31 +49,37 @@ class SQLAlchemy(OriginalSQLAlchemy):
 
 
 class CustomEngineConnector(_EngineConnector):
-    """Used by overrideb SQLAlchemy class to fix rollback issues"""
+        """Used by overrided SQLAlchemy class to fix rollback issues.
 
-    def get_engine(self):
-        # Use an existent engine and don't register events if possible
-        uri = self.get_uri()
-        echo = self._app.config['SQLALCHEMY_ECHO']
-        if (uri, echo) == self._connected_for:
-            return self._engine
+        Also set case sensitive likes (in SQLite there are case
+        insensitive by default)"""
 
-        # Call original metohd and register events
-        rv = super(CustomEngineConnector, self).get_engine()
-        if uri.startswith('sqlite://'):
-            with self._lock:
-                @event.listens_for(rv, "connect")
-                def do_connect(dbapi_connection, connection_record):
-                    # disable pysqlite's emitting of the BEGIN statement
-                    # entirely.  also stops it from emitting COMMIT before any
-                    # DDL.
-                    dbapi_connection.isolation_level = None
+        def get_engine(self):
+            # Use an existent engine and don't register events if possible
+            uri = self.get_uri()
+            echo = self._app.config['SQLALCHEMY_ECHO']
+            if (uri, echo) == self._connected_for:
+                return self._engine
 
-                @event.listens_for(rv, "begin")
-                def do_begin(conn):
-                    # emit our own BEGIN
-                    conn.execute("BEGIN")
-        return rv
+            # Call original metohd and register events
+            rv = super(CustomEngineConnector, self).get_engine()
+            if uri.startswith('sqlite://'):
+                with self._lock:
+                    @event.listens_for(rv, "connect")
+                    def do_connect(dbapi_connection, connection_record):
+                        # disable pysqlite's emitting of the BEGIN statement
+                        # entirely.  also stops it from emitting COMMIT before any
+                        # DDL.
+                        dbapi_connection.isolation_level = None
+                        cursor = dbapi_connection.cursor()
+                        cursor.execute("PRAGMA case_sensitive_like=true")
+                        cursor.close()
+
+                    @event.listens_for(rv, "begin")
+                    def do_begin(conn):
+                        # emit our own BEGIN
+                        conn.execute("BEGIN")
+            return rv
 
 
 db = SQLAlchemy()

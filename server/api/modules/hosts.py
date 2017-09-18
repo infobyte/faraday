@@ -6,13 +6,20 @@ import flask
 from flask import Blueprint
 from flask_classful import route
 from marshmallow import fields
+from filteralchemy import FilterSet
 from sqlalchemy.orm import undefer
+from webargs.flaskparser import parser
 
 from server.utils.logger import get_logger
 from server.utils.web import gzipped, validate_workspace,\
     get_integer_parameter, filter_request_args
 from server.dao.host import HostDAO
-from server.api.base import ReadWriteWorkspacedView, PaginatedMixin, AutoSchema
+from server.api.base import (
+    ReadWriteWorkspacedView,
+    PaginatedMixin,
+    AutoSchema,
+    FilterAlchemyMixin,
+)
 from server.models import Host, Service
 
 host_api = Blueprint('host_api', __name__)
@@ -28,6 +35,13 @@ class HostSchema(AutoSchema):
         fields = ('id', 'ip', 'description', 'os', 'service_count')
 
 
+class HostFilterSet(FilterSet):
+    class Meta:
+        model = Host
+        fields = ('os',)
+        parser = parser
+
+
 class ServiceSchema(AutoSchema):
 
     class Meta:
@@ -36,11 +50,13 @@ class ServiceSchema(AutoSchema):
 
 
 class HostsView(PaginatedMixin,
+                FilterAlchemyMixin,
                 ReadWriteWorkspacedView):
     route_base = 'hosts'
     model_class = Host
     schema_class = HostSchema
     unique_fields = ['ip']
+    filterset_class = HostFilterSet
 
     @route('/<host_id>/services/')
     def service_list(self, workspace_name, host_id):

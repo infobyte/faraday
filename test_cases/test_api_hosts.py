@@ -51,6 +51,14 @@ class TestHostAPI:
     def services_url(self, host, workspace=None):
         return self.url(host, workspace) + 'services/'
 
+    def compare_results(self, hosts, response):
+        """
+        Compare is the hosts in response are the same that in hosts.
+        It only compares the IDs of each one, not other fields"""
+        hosts_in_list = set(host.id for host in hosts)
+        hosts_in_response = set(host['id'] for host in response.json)
+        assert hosts_in_list == hosts_in_response
+
     def test_list_retrieves_all_items_from_workspace(self, test_client,
                                                      second_workspace,
                                                      session,
@@ -205,6 +213,21 @@ class TestHostAPI:
             if host['id'] in ids_map:
                 assert host['service_count'] == len(ids_map[host['id']])
 
+    def test_filter_by_os_exact(self, test_client, session, workspace,
+                                second_workspace, host_factory):
+        # The hosts that should be shown
+        hosts = host_factory.create_batch(10, workspace=workspace, os='Unix')
+
+        # Search should be case sensitive so this shouln't be shown
+        host_factory.create_batch(1, workspace=workspace, os='UNIX')
+
+        # This shouldn't be shown, they are from other workspace
+        host_factory.create_batch(5, workspace=second_workspace, os='Unix')
+
+        res = test_client.get(self.url() + '?os=Unix')
+        assert res.status_code == 200
+        self.compare_results(hosts, res)
+
 
 class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
     model = Host
@@ -213,4 +236,3 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
     unique_fields = ['ip']
     update_fields = ['ip', 'description', 'os']
     view_class = HostsView
-

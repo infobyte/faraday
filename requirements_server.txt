@@ -16,3 +16,4 @@ flask-classful
 marshmallow
 webargs
 marshmallow-sqlalchemy
+filteralchemy

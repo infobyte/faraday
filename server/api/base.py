@@ -158,9 +158,13 @@ class ListMixin(object):
     def _paginate(self, query):
         return query, None
 
+    def _filter_query(self, query):
+        """Return a new SQLAlchemy query with some filters applied"""
+        return query
+
     def index(self, **kwargs):
-        objects, pagination_metadata = self._paginate(
-            self._get_base_query(**kwargs))
+        query = self._filter_query(self._get_base_query(**kwargs))
+        objects, pagination_metadata = self._paginate(query)
         return self._envelope_list(self._dump(objects, many=True),
                                    pagination_metadata)
 
@@ -188,6 +192,20 @@ class PaginatedMixin(object):
             pagination_metadata = query.paginate(page=page, per_page=per_page)
             return pagination_metadata.items, pagination_metadata
         return super(PaginatedMixin, self)._paginate(query)
+
+
+class FilterAlchemyMixin(object):
+    """Add querystring parameter filtering to list route
+
+    It is done by setting the ViewClass.filterset_class class
+    attribute
+    """
+
+    filterset_class = None
+
+    def _filter_query(self, query):
+        assert self.filterset_class is not None, 'You must define a filterset'
+        return self.filterset_class(query).filter()
 
 
 class ListWorkspacedMixin(ListMixin):

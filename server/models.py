@@ -174,6 +174,12 @@ class Host(Metadata):
                             backref='hosts',
                             foreign_keys=[workspace_id]
                             )
+
+    service_count = column_property((select([func.count('service.id')]).
+                select_from('service').
+                where("service.host_id = host.id")
+                ), deferred=True)
+
     __table_args__ = (
         UniqueConstraint(ip, workspace_id, name='uix_host_ip_workspace'),
     )
@@ -237,12 +243,6 @@ class Service(Metadata):
     __table_args__ = (
         UniqueConstraint(port, protocol, host_id, workspace_id, name='uix_service_port_protocol_host_workspace'),
     )
-
-# TODO: Move this to Host definition. I need a way to reference Service before
-# it is declared
-Host.service_count = column_property((select([func.count(Service.id)]).
-            where(Service.host_id == Host.id)#.label('service_count')
-            ), deferred=True)
 
 
 class VulnerabilityABC(Metadata):

@@ -213,12 +213,18 @@ class VulnerabilityABC(Metadata):
     name = Column(Text, nullable=False)
     resolution = Column(Text, nullable=True)
     severity = Column(Enum(*SEVERITIES, name='vulnerability_severity'), nullable=False)
+    risk = Column(Float(3,1), nullable=True)
     # TODO add evidence
 
     impact_accountability = Column(Boolean, default=False)
     impact_availability = Column(Boolean, default=False)
     impact_confidentiality = Column(Boolean, default=False)
     impact_integrity = Column(Boolean, default=False)
+
+    __table_args__ = (
+        CheckConstraint('1.0 <= risk AND risk <= 10.0',
+                        name='check_vulnerability_risk'),
+    )
 
 
 class VulnerabilityTemplate(VulnerabilityABC):

@@ -82,6 +82,8 @@ class SourceCode(Metadata):
     __tablename__ = 'source_code'
     id = Column(Integer, primary_key=True)
     filename = Column(Text, nullable=False)
+    function = Column(Text, nullable=True)
+    module = Column(Text, nullable=True)
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', backref='source_codes')
@@ -315,7 +317,9 @@ class VulnerabilityWeb(VulnerabilityGeneric):
 
 
 class VulnerabilityCode(VulnerabilityGeneric):
-    line = Column(Integer, nullable=True)
+    code = Column(Text, nullable=True)
+    start_line = Column(Integer, nullable=True)
+    end_line = Column(Integer, nullable=True)
 
     source_code_id = Column(Integer, ForeignKey(SourceCode.id), index=True)
     source_code = relationship(

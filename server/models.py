@@ -522,16 +522,35 @@ class Command(Metadata):
 class Workspace(Metadata):
     __tablename__ = 'workspace'
     id = Column(Integer, primary_key=True)
-    # TODO: change nullable=True for appropriate fields
     customer = Column(String(250), nullable=True)  # TBI
     description = Column(Text(), nullable=True)
     active = Column(Boolean(), nullable=False, default=True)  # TBI
     end_date = Column(DateTime(), nullable=True)
     name = Column(String(250), nullable=False, unique=True)
     public = Column(Boolean(), nullable=False, default=True)  # TBI
-    scope = Column(Text(), nullable=True)
     start_date = Column(DateTime(), nullable=True)
 
+
+class Scope(Metadata):
+    __tablename__ = 'scope'
+    id = Column(Integer, primary_key=True)
+    name = Column(Text(), nullable=False)
+
+    workspace_id = Column(
+                        Integer,
+                        ForeignKey('workspace.id'),
+                        index=True,
+                        nullable=False
+                        )
+    workspace = relationship(
+                            'Workspace',
+                            backref='scope',
+                            foreign_keys=[workspace_id],
+                            )
+
+    __table_args__ = (
+        UniqueConstraint('name', 'workspace_id', name='uix_scope_name_workspace'),
+    )
 
 def is_valid_workspace(workspace_name):
     return db.session.query(server.models.Workspace).filter_by(name=workspace_name).first() is not None

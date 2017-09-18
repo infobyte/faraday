@@ -27,28 +27,29 @@ import server.models
 import server.utils.logger
 from server.models import (
     db,
-    EntityMetadata,
-    Credential,
-    Host,
-    Service,
-    Reference,
     Command,
-    Workspace,
-    Hostname,
-    Vulnerability,
-    VulnerabilityWeb,
-    User,
-    PolicyViolation,
-    Task,
-    TaskTemplate,
-    Methodology,
-    MethodologyTemplate,
-    ExecutiveReport,
-    VulnerabilityTemplate,
-    ReferenceTemplate,
-    License,
     Comment,
     CommentObject,
+    Credential,
+    EntityMetadata,
+    ExecutiveReport,
+    Host,
+    Hostname,
+    License,
+    Methodology,
+    MethodologyTemplate,
+    PolicyViolation,
+    Reference,
+    ReferenceTemplate,
+    Service,
+    Scope,
+    Task,
+    TaskTemplate,
+    User,
+    Vulnerability,
+    VulnerabilityTemplate,
+    VulnerabilityWeb,
+    Workspace,
 )
 from server.utils.database import get_or_create
 from server.web import app
@@ -541,7 +542,8 @@ class WorkspaceImporter(object):
             workspace.start_date = datetime.datetime.fromtimestamp(float(document.get('duration')['start'])/1000)
         if document.get('duration') and document.get('duration')['end']:
             workspace.end_date = datetime.datetime.fromtimestamp(float(document.get('duration')['end'])/1000)
-        workspace.scope = document.get('scope')
+        for scope in [x.strip() for x in document.get('scope', '').split('\n') if x.strip()]:
+            scope_obj, created = get_or_create(session, Scope, name=scope, workspace=workspace)
         yield workspace
 
 

@@ -5,34 +5,34 @@
 import flask
 from flask import Blueprint
 from flask_classful import route
-from marshmallow import Schema, fields
+from marshmallow import fields
 from sqlalchemy.orm import undefer
 
 from server.utils.logger import get_logger
 from server.utils.web import gzipped, validate_workspace,\
     get_integer_parameter, filter_request_args
 from server.dao.host import HostDAO
-from server.api.base import ReadWriteWorkspacedView, PaginatedMixin
-from server.models import Host
+from server.api.base import ReadWriteWorkspacedView, PaginatedMixin, AutoSchema
+from server.models import Host, Service
 
 host_api = Blueprint('host_api', __name__)
 
 
-class HostSchema(Schema):
-    id = fields.Integer(required=True, dump_only=True)
-    ip = fields.String(required=True)
-    description = fields.String(required=True)
-    os = fields.String()
-    service_count = fields.Integer()
+class HostSchema(AutoSchema):
+
+    description = fields.String(required=True)  # Explicitly set required=True
+    service_count = fields.Integer(dump_only=True)
+
+    class Meta:
+        model = Host
+        fields = ('id', 'ip', 'description', 'os', 'service_count')
 
 
-class ServiceSchema(Schema):
-    id = fields.Integer(required=True, dump_only=True)
-    name = fields.String(required=True)
-    description = fields.String(required=False)
-    port = fields.Integer(required=True)
-    protocol = fields.String(required=True)
-    status = fields.String(required=True)
+class ServiceSchema(AutoSchema):
+
+    class Meta:
+        model = Service
+        fields = ('id', 'name', 'description', 'port', 'protocol', 'status')
 
 
 class HostsView(PaginatedMixin,

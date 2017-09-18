@@ -5,6 +5,9 @@ from flask_classful import FlaskView
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.inspection import inspect
 from werkzeug.routing import parse_rule
+from marshmallow import Schema
+from marshmallow.compat import with_metaclass
+from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
 from webargs.flaskparser import FlaskParser, abort
 from webargs.core import ValidationError
 from server.models import Workspace, db
@@ -317,3 +320,13 @@ class ReadWriteWorkspacedView(CreateWorkspacedMixin,
     """A generic workspaced view with list, retrieve and create
     endpoints"""
     pass
+
+
+class AutoSchema(with_metaclass(ModelSchemaMeta, Schema)):
+    """
+    A Marshmallow schema that does field introspection based on
+    the SQLAlchemy model specified in Meta.model.
+    Unlike the marshmallow_sqlalchemy ModelSchema, it doesn't change
+    the serialization and deserialization proccess.
+    """
+    OPTIONS_CLASS = ModelSchemaOpts

@@ -4,19 +4,19 @@
 
 import flask
 from flask import Blueprint
-from marshmallow import Schema, fields
+from marshmallow import fields
 
 from server.models import License
-from server.api.base import ReadWriteView
+from server.api.base import ReadWriteView, AutoSchema
 
 license_api = Blueprint('license_api', __name__)
 
 
-class LicenseSchema(Schema):
-    id = fields.Integer(required=True, dump_only=True)
-    product = fields.String(required=True)
-    start_date = fields.DateTime(required=True)
-    end_date = fields.DateTime(required=True)
+class LicenseSchema(AutoSchema):
+
+    class Meta:
+        model = License
+        fields = ('id', 'product', 'start_date', 'end_date')
 
 
 class LicenseView(ReadWriteView):

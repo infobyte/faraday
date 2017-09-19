@@ -320,6 +320,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
 
 class Vulnerability(VulnerabilityGeneric):
+    __tablename__ = None
     host_id = Column(Integer, ForeignKey(Host.id), index=True)
     host = relationship(
                     'Host',
@@ -327,15 +328,13 @@ class Vulnerability(VulnerabilityGeneric):
                     foreign_keys=[host_id],
                     )
 
-    service_id = Column(Integer, ForeignKey(Service.id))
-    service = relationship(
-                    'Service',
-                    backref='vulnerabilities',
-                    )
+    @declared_attr
+    def service_id(cls):
+        return VulnerabilityGeneric.__table__.c.get('service_id', Column(Integer, db.ForeignKey('service.id')))
 
-    __table_args__ = {
-        'extend_existing': True
-    }
+    @declared_attr
+    def service(cls):
+        return relationship('Service')
 
     __mapper_args__ = {
         'polymorphic_identity': VulnerabilityGeneric.VULN_TYPES[0]
@@ -343,6 +342,7 @@ class Vulnerability(VulnerabilityGeneric):
 
 
 class VulnerabilityWeb(VulnerabilityGeneric):
+    __tablename__ = None
     method = Column(String(50), nullable=True)
     parameters = Column(String(500), nullable=True)
     parameter_name = Column(String(250), nullable=True)
@@ -352,15 +352,13 @@ class VulnerabilityWeb(VulnerabilityGeneric):
     response = Column(Text(), nullable=True)
     website = Column(String(250), nullable=True)
 
-    service_id = Column(Integer, ForeignKey(Service.id))
-    service = relationship(
-                    'Service',
-                    backref='vulnerabilities_web',
-                    )
+    @declared_attr
+    def service_id(cls):
+        return VulnerabilityGeneric.__table__.c.get('service_id', Column(Integer, db.ForeignKey('service.id')))
 
-    __table_args__ = {
-        'extend_existing': True
-    }
+    @declared_attr
+    def service(cls):
+        return relationship('Service')
 
     __mapper_args__ = {
         'polymorphic_identity': VulnerabilityGeneric.VULN_TYPES[1]
@@ -368,6 +366,7 @@ class VulnerabilityWeb(VulnerabilityGeneric):
 
 
 class VulnerabilityCode(VulnerabilityGeneric):
+    __tablename__ = None
     line = Column(Integer, nullable=True)
 
     source_code_id = Column(Integer, ForeignKey(SourceCode.id), index=True)
@@ -376,10 +375,6 @@ class VulnerabilityCode(VulnerabilityGeneric):
                             backref='vulnerabilities',
                             foreign_keys=[source_code_id]
                             )
-
-    __table_args__ = {
-        'extend_existing': True
-    }
 
     __mapper_args__ = {
         'polymorphic_identity': VulnerabilityGeneric.VULN_TYPES[2]

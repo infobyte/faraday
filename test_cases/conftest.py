@@ -14,13 +14,16 @@ from test_cases import factories
 
 
 enabled_factories = [
-    factories.WorkspaceFactory,
-    factories.HostFactory,
-    factories.ServiceFactory,
-    factories.VulnerabilityFactory,
     factories.CredentialFactory,
     factories.LicenseFactory,
+    factories.HostFactory,
+    factories.ServiceFactory,
+    factories.SourceCodeFactory,
+    factories.VulnerabilityFactory,
+    factories.VulnerabilityCodeFactory,
+    factories.VulnerabilityWebFactory,
     factories.UserFactory,
+    factories.WorkspaceFactory,
 ]
 for factory in enabled_factories:
     register(factory)

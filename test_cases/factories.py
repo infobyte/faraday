@@ -14,8 +14,11 @@ from server.models import (
     Host,
     License,
     Service,
+    SourceCode,
     User,
     Vulnerability,
+    VulnerabilityCode,
+    VulnerabilityWeb,
     Workspace,
 )
 
@@ -113,18 +116,45 @@ class ServiceFactory(WorkspaceObjectFactory):
         sqlalchemy_session = db.session
 
 
+class SourceCodeFactory(WorkspaceObjectFactory):
+    filename = FuzzyText()
+
+    class Meta:
+        model = SourceCode
+        sqlalchemy_session = db.session
+
+
 class VulnerabilityFactory(WorkspaceObjectFactory):
 
     name = FuzzyText()
     description = FuzzyText()
-    # host = factory.SubFactory(HostFactory)
-    # service = factory.SubFactory(ServiceFactory)
+    # host = factory.SubFactory(HostFactory)  # TODO: Move to generic class
+    # service = factory.SubFactory(ServiceFactory)  # TODO: Move to generic class
     workspace = factory.SubFactory(WorkspaceFactory)
     creator = factory.SubFactory(UserFactory)
     severity = FuzzyChoice(['critical', 'high'])
 
     class Meta:
         model = Vulnerability
+        sqlalchemy_session = db.session
+
+
+class VulnerabilityWebFactory(VulnerabilityFactory):
+    method = FuzzyChoice(['GET', 'POST', 'PUT', 'PATCH' 'DELETE'])
+    parameter_name = FuzzyText()
+    service = factory.SubFactory(ServiceFactory)
+
+    class Meta:
+        model = VulnerabilityWeb
+        sqlalchemy_session = db.session
+
+
+class VulnerabilityCodeFactory(VulnerabilityFactory):
+    line = FuzzyInteger(1, 5000)
+    source_code = factory.SubFactory(SourceCodeFactory)
+
+    class Meta:
+        model = VulnerabilityCode
         sqlalchemy_session = db.session
 
 

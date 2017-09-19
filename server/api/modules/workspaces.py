@@ -5,7 +5,7 @@ import json
 
 import flask
 from flask import Blueprint
-from marshmallow import fields
+from marshmallow import Schema, fields
 
 from server.models import db, Workspace
 from server.dao.host import HostDAO
@@ -13,6 +13,7 @@ from server.dao.vuln import VulnerabilityDAO
 from server.dao.service import ServiceDAO
 from server.dao.workspace import WorkspaceDAO
 from server.utils.logger import get_logger
+from server.schemas import SelfNestedField
 from server.utils.web import (
     build_bad_request_response,
     filter_request_args,
@@ -31,14 +32,27 @@ from server.api.base import ReadWriteView, AutoSchema
 workspace_api = Blueprint('workspace_api', __name__)
 
 
-class WorkspaceSchema(AutoSchema):
+class WorkspaceSummarySchema(Schema):
+    credentials = fields.Integer(dump_only=True, attribute='credential_count')
+    hosts = fields.Integer(dump_only=True, attribute='host_count')
+    services = fields.Integer(dump_only=True, attribute='service_count')
+    web_vulns = fields.Integer(dump_only=True,
+                               attribute='vulnerability_web_count')
+    code_vulns = fields.Integer(dump_only=True,
+                                attribute='vulnerability_code_count')
+    std_vulns = fields.Integer(dump_only=True,
+                               attribute='vulnerability_standard_count')
+    total_vulns = fields.Integer(dump_only=True,
+                                 attribute='vulnerability_total_count')
 
-    host_count = fields.Integer(dump_only=True)
+
+class WorkspaceSchema(AutoSchema):
+    stats = SelfNestedField(WorkspaceSummarySchema())
 
     class Meta:
         model = Workspace
         fields = ('id', 'customer', 'description', 'active', 'start_date',
-                  'end_date', 'name', 'public', 'scope', 'host_count')
+                  'end_date', 'name', 'public', 'scope', 'stats')
 
 
 class WorkspaceView(ReadWriteView):

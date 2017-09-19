@@ -47,4 +47,4 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         session.commit()
         res = test_client.get(self.url(self.first_object))
         assert res.status_code == 200
-        assert res.json['host_count'] == 1
+        assert res.json['stats']['hosts'] == 1

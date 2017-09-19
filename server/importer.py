@@ -558,7 +558,6 @@ class MethodologyImporter(object):
             methodology, created = get_or_create(session, Methodology, name=document.get('name'))
             methodology.workspace = workspace
             yield methodology
-#        methodology.
 
 
 class TaskImporter(object):
@@ -782,12 +781,16 @@ class ImportVulnerabilityTemplates(FlaskScriptCommand):
         )
 
         try:
-            cwes = requests.get(cwe_url).json()['rows']
+            cwes = requests.get(cwe_url)
+            cwes.raise_for_status()
+        except requests.exceptions.HTTPError:
+            logger.warn('Unable to retrieve Vulnerability Templates Database. Moving on.')
+            return
         except requests.exceptions.RequestException as e:
             logger.warn(e)
             return
 
-        for cwe in cwes:
+        for cwe in cwes.json()['rows']:
             document = cwe['doc']
             new_severity = self.get_severity(document)
 
@@ -839,7 +842,7 @@ class ImportVulnerabilityTemplates(FlaskScriptCommand):
 class ImportLicense(FlaskScriptCommand):
 
     def run(self):
-        cwe_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
+        licenses_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
             username=server.config.couchdb.user,
             password=server.config.couchdb.password,
             hostname=server.config.couchdb.host,
@@ -847,17 +850,17 @@ class ImportLicense(FlaskScriptCommand):
             path='faraday_licenses/_all_docs?include_docs=true'
         )
 
-        if not requests.head(cwe_url).ok:
-            logger.info('No Licenses database found, nothing to see here, move along!')
-            return
-
         try:
-            licenses = requests.get(cwe_url).json()['rows']
+            licenses = requests.get(licenses_url)
+            licenses.raise_for_status()
+        except requests.exceptions.HTTPError:
+            logger.warn('Unable to retrieve Licenses Database. Moving on.')
+            return
         except requests.exceptions.RequestException as e:
             logger.warn(e)
             return
 
-        for license in licenses:
+        for license in licenses.json()['rows']:
             document = license['doc']
 
             license_obj, created = get_or_create(session,

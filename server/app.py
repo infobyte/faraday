@@ -25,6 +25,7 @@ def create_app(db_connection_string=None, testing=None):
     app.config['SECURITY_POST_LOGIN_VIEW'] = '/_api/session'
     app.config['SECURITY_POST_LOGOUT_VIEW'] = '/_api/login'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    # app.config['SQLALCHEMY_ECHO'] = True
     app.config['SECURITY_PASSWORD_SCHEMES'] = [
         'bcrypt',  # This should be the default value
         # 'des_crypt',
@@ -33,6 +34,7 @@ def create_app(db_connection_string=None, testing=None):
         # 'pbkdf2_sha512',
         # 'sha256_crypt',
         # 'sha512_crypt',
+        'plaintext',  # TODO: remove it
     ]
     if testing:
         app.config['TESTING'] = testing
@@ -66,6 +68,7 @@ def create_app(db_connection_string=None, testing=None):
     from server.api.modules.doc import doc_api
     from server.api.modules.vuln_csv import vuln_csv_api
     from server.api.modules.hosts import host_api
+    from server.api.modules.licenses import license_api
     from server.api.modules.commandsrun import commandsrun_api
     from server.api.modules.services import services_api
     from server.api.modules.credentials import credentials_api
@@ -75,6 +78,7 @@ def create_app(db_connection_string=None, testing=None):
     app.register_blueprint(doc_api)
     app.register_blueprint(vuln_csv_api)
     app.register_blueprint(host_api)
+    app.register_blueprint(license_api)
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(services_api)
     app.register_blueprint(credentials_api)

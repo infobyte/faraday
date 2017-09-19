@@ -60,3 +60,7 @@ jsconfig.json
 
 # vFeed DB
 data/vfeed.db
+
+# Images based on DB Schema
+entity_dbschema.png
+uml_schema.png

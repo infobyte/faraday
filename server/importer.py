@@ -11,6 +11,7 @@ from collections import (
     defaultdict,
     OrderedDict
 )
+from slugify import slugify
 from binascii import unhexlify
 
 import requests
@@ -43,6 +44,7 @@ from server.models import (
     ReferenceTemplate,
     Service,
     Scope,
+    Tag,
     Task,
     TaskTemplate,
     User,
@@ -580,7 +582,7 @@ class TaskImporter(object):
         if not methodology:
             methodology = session.query(MethodologyTemplate).filter_by(id=methodology_id).first()
             task_class = TaskTemplate
-        task, created = get_or_create(session, task_class, name=document.get('name'))
+        task, task_created = get_or_create(session, task_class, name=document.get('name'))
         if task_class == TaskTemplate:
             task.template = methodology
         else:
@@ -588,6 +590,7 @@ class TaskImporter(object):
             task.workspace = workspace
         task.description = document.get('description')
         task.assigned_to = session.query(User).filter_by(username=document.get('username')).first()
+        create_tags([x.strip() for x in document.tags if x.strip()], 'Tag', task.id)
         mapped_status = {
             'New': 'new',
             'In Progress': 'in progress',
@@ -598,6 +601,11 @@ class TaskImporter(object):
         #tags
         #task.due_date = datetime.datetime.fromtimestamp(document.get('due_date'))
         return [task]
+
+
+def create_tags(tags, model, parent_id):
+    # tag, create = get_or_create(session, Tag, name=scope, workspace=workspace)
+    return True
 
 
 class ReportsImporter(object):

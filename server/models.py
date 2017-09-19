@@ -573,6 +573,19 @@ class Command(Metadata):
                                 )
 
 
+def make_vuln_count_property(type_=None):
+    query = (select([func.count('vulnerability.id')]).
+             select_from('vulnerability').
+             where('vulnerability.workspace_id = workspace.id')
+             )
+    if type_:
+        # Don't do queries using this style!
+        # This can cause SQL injection vulnerabilities
+        # In this case type_ is supplied from a whitelist so this is safe
+        query = query.where("vulnerability.type = '%s'" % type_)
+    return column_property(query, deferred=True)
+
+
 class Workspace(Metadata):
     __tablename__ = 'workspace'
     id = Column(Integer, primary_key=True)
@@ -585,6 +598,11 @@ class Workspace(Metadata):
     public = Column(Boolean(), nullable=False, default=True)  # TBI
     scope = Column(Text(), nullable=True)
     start_date = Column(DateTime(), nullable=True)
+
+    vulnerability_web_count = make_vuln_count_property('vulnerability_web')
+    vulnerability_code_count = make_vuln_count_property('vulnerability_code')
+    vulnerability_standard_count = make_vuln_count_property('vulnerability')
+    vulnerability_total_count = make_vuln_count_property()
 
 
 def is_valid_workspace(workspace_name):

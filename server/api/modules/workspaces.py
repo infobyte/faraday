@@ -5,6 +5,7 @@ import json
 
 import flask
 from flask import Blueprint
+from marshmallow import fields
 
 from server.models import db, Workspace
 from server.dao.host import HostDAO
@@ -25,8 +26,27 @@ from server.couchdb import (
     list_workspaces_as_user,
     get_workspace
 )
+from server.api.base import ReadWriteView, AutoSchema
 
 workspace_api = Blueprint('workspace_api', __name__)
+
+
+class WorkspaceSchema(AutoSchema):
+
+    host_count = fields.Integer(dump_only=True)
+
+    class Meta:
+        model = Workspace
+        fields = ('id', 'customer', 'description', 'active', 'start_date',
+                  'end_date', 'name', 'public', 'scope', 'host_count')
+
+
+class WorkspaceView(ReadWriteView):
+    route_base = 'workspaces'
+    model_class = Workspace
+    schema_class = WorkspaceSchema
+
+WorkspaceView.register(workspace_api)
 
 
 @workspace_api.route('/ws', methods=['GET'])

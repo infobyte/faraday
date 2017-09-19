@@ -87,6 +87,19 @@ db = SQLAlchemy()
 SCHEMA_VERSION = 'W.3.0.0'
 
 
+def _make_generic_count_property(parent_table, children_table):
+    """Make a deferred by default column property that counts the
+    amount of childrens of some parent object"""
+    # TODO: Fix SQLAlchemy warnings
+    children_id_field = '{}.id'.format(children_table)
+    parent_id_field = '{}.id'.format(parent_table)
+    children_rel_field = '{}.{}_id'.format(children_table, parent_table)
+    query = (select([func.count(children_id_field)]).
+             select_from(children_table).
+             where('{} = {}'.format(children_rel_field, parent_id_field)))
+    return column_property(query, deferred=True)
+
+
 class DatabaseMetadata(db.Model):
     __tablename__ = 'db_metadata'
     id = Column(Integer, primary_key=True)
@@ -175,10 +188,7 @@ class Host(Metadata):
                             foreign_keys=[workspace_id]
                             )
 
-    service_count = column_property((select([func.count('service.id')]).
-                select_from('service').
-                where("service.host_id = host.id")
-                ), deferred=True)
+    service_count = _make_generic_count_property('host', 'service')
 
     __table_args__ = (
         UniqueConstraint(ip, workspace_id, name='uix_host_ip_workspace'),
@@ -573,7 +583,7 @@ class Command(Metadata):
                                 )
 
 
-def make_vuln_count_property(type_=None):
+def _make_vuln_count_property(type_=None):
     query = (select([func.count('vulnerability.id')]).
              select_from('vulnerability').
              where('vulnerability.workspace_id = workspace.id')
@@ -599,10 +609,13 @@ class Workspace(Metadata):
     scope = Column(Text(), nullable=True)
     start_date = Column(DateTime(), nullable=True)
 
-    vulnerability_web_count = make_vuln_count_property('vulnerability_web')
-    vulnerability_code_count = make_vuln_count_property('vulnerability_code')
-    vulnerability_standard_count = make_vuln_count_property('vulnerability')
-    vulnerability_total_count = make_vuln_count_property()
+    credential_count = _make_generic_count_property('workspace', 'credential')
+    host_count = _make_generic_count_property('workspace', 'host')
+    service_count = _make_generic_count_property('workspace', 'service')
+    vulnerability_web_count = _make_vuln_count_property('vulnerability_web')
+    vulnerability_code_count = _make_vuln_count_property('vulnerability_code')
+    vulnerability_standard_count = _make_vuln_count_property('vulnerability')
+    vulnerability_total_count = _make_vuln_count_property()
 
 
 def is_valid_workspace(workspace_name):

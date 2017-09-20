@@ -57,7 +57,9 @@ class WorkspaceSchema(AutoSchema):
 
 
 class WorkspaceView(ReadWriteView):
-    route_base = 'workspaces'
+    route_base = 'ws'
+    lookup_field = 'name'
+    lookup_field_type = unicode
     model_class = Workspace
     schema_class = WorkspaceSchema
 

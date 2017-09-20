@@ -28,7 +28,6 @@ class TestLicensesAPI(ReadWriteAPITests):
 
     def test_envelope_list(self, test_client, app):
         LicenseEnvelopedView.register(app)
-        print app.url_map
         original_res = test_client.get(self.url())
         assert original_res.status_code == 200
         new_res = test_client.get(API_PREFIX + 'test_envelope_list/')
@@ -40,7 +39,8 @@ class TestLicensesAPI(ReadWriteAPITests):
 class TestWorkspaceAPI(ReadWriteAPITests):
     model = Workspace
     factory = factories.WorkspaceFactory
-    api_endpoint = 'workspaces'
+    api_endpoint = 'ws'
+    lookup_field = 'name'
 
     def test_host_count(self, host_factory, test_client, session):
         host_factory.create(workspace=self.first_object)

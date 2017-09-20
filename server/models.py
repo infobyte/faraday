@@ -3,7 +3,6 @@
 # See the file 'doc/LICENSE' for the license information
 from datetime import datetime
 
-import pytz
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
@@ -17,6 +16,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    Unicode,
     event
 )
 from sqlalchemy.orm import relationship, backref
@@ -29,6 +29,8 @@ from flask_sqlalchemy import (
     SQLAlchemy as OriginalSQLAlchemy,
     _EngineConnector
 )
+from depot.fields.sqlalchemy import UploadedFileField
+from server.fields import FaradayUploadedFile
 from flask_security import (
     RoleMixin,
     UserMixin,
@@ -328,7 +330,7 @@ class Vulnerability(VulnerabilityGeneric):
 
     @declared_attr
     def service(cls):
-        return relationship('VulnerabilityGeneric')
+        return relationship('Service')
 
     __mapper_args__ = {
         'polymorphic_identity': VulnerabilityGeneric.VULN_TYPES[0]
@@ -352,7 +354,7 @@ class VulnerabilityWeb(VulnerabilityGeneric):
 
     @declared_attr
     def service(cls):
-        return relationship('VulnerabilityGeneric')
+        return relationship('Service')
 
     __mapper_args__ = {
         'polymorphic_identity': VulnerabilityGeneric.VULN_TYPES[1]
@@ -643,6 +645,37 @@ class User(db.Model, UserMixin):
     def __repr__(self):
         return '<%sUser: %s>' % ('LDAP ' if self.is_ldap else '',
                                  self.username)
+
+
+class Evidence(Metadata):
+    __tablename__ = 'evidence'
+
+    uid = Column(Integer, autoincrement=True, primary_key=True)
+    name = Column(Unicode(16), unique=True)
+    content = Column('content_col', UploadedFileField)  # plain attached file
+    file = Column(UploadedFileField(upload_type=FaradayUploadedFile))
+
+    vulnerability_id = Column(
+                            Integer,
+                            ForeignKey(VulnerabilityGeneric.id),
+                            index=True
+                            )
+    vulnerability = relationship(
+                                'VulnerabilityGeneric',
+                                backref='evidence',
+                                foreign_keys=[vulnerability_id],
+                                )
+
+
+class UserAvatar(Metadata):
+    __tablename_ = 'user_avatar'
+
+    uid = Column(Integer, autoincrement=True, primary_key=True)
+    name = Column(Unicode(16), unique=True)
+    # photo field will automatically generate thumbnail
+    photo = Column(UploadedFileField(upload_type=FaradayUploadedFile))
+    user_id = Column('user_id', Integer(), ForeignKey('user.id'))
+    user = relationship('User')
 
 
 class MethodologyTemplate(Metadata):

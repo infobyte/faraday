@@ -749,7 +749,7 @@ class ImportCouchDBUsers(FlaskScriptCommand):
             if user['name'] in admins.keys():
                 # This is an already imported admin user, skip
                 continue
-            logger.info('Importing {0}'.format(user['name']))
+            logger.info(u'Importing {0}'.format(user['name']))
             if not db.session.query(User).filter_by(username=user['name']).first():
                 app.user_datastore.create_user(
                     username=user['name'],

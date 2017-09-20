@@ -48,11 +48,12 @@ class WorkspaceSummarySchema(Schema):
 
 class WorkspaceSchema(AutoSchema):
     stats = SelfNestedField(WorkspaceSummarySchema())
+    _id = fields.Integer(dump_only=True, attribute='id')
 
     class Meta:
         model = Workspace
-        fields = ('id', 'customer', 'description', 'active', 'start_date',
-                  'end_date', 'name', 'public', 'scope', 'stats')
+        fields = ('_id', 'id', 'customer', 'description', 'active',
+                  'start_date', 'end_date', 'name', 'public', 'scope', 'stats')
 
 
 class WorkspaceView(ReadWriteView):

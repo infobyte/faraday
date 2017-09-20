@@ -150,7 +150,7 @@ class VulnerabilityWebFactory(VulnerabilityFactory):
 
 
 class VulnerabilityCodeFactory(VulnerabilityFactory):
-    line = FuzzyInteger(1, 5000)
+    start_line = FuzzyInteger(1, 5000)
     source_code = factory.SubFactory(SourceCodeFactory)
 
     class Meta:

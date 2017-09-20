@@ -6,7 +6,11 @@ import re
 import sys
 import json
 import datetime
-from collections import defaultdict
+from collections import (
+    Counter,
+    defaultdict,
+    OrderedDict
+)
 from binascii import unhexlify
 
 import requests
@@ -23,28 +27,29 @@ import server.models
 import server.utils.logger
 from server.models import (
     db,
-    EntityMetadata,
-    Credential,
-    Host,
-    Service,
-    Reference,
     Command,
-    Workspace,
-    Hostname,
-    Vulnerability,
-    VulnerabilityWeb,
-    User,
-    PolicyViolation,
-    Task,
-    TaskTemplate,
-    Methodology,
-    MethodologyTemplate,
-    ExecutiveReport,
-    VulnerabilityTemplate,
-    ReferenceTemplate,
-    License,
     Comment,
     CommentObject,
+    Credential,
+    EntityMetadata,
+    ExecutiveReport,
+    Host,
+    Hostname,
+    License,
+    Methodology,
+    MethodologyTemplate,
+    PolicyViolation,
+    Reference,
+    ReferenceTemplate,
+    Service,
+    Scope,
+    Task,
+    TaskTemplate,
+    User,
+    Vulnerability,
+    VulnerabilityTemplate,
+    VulnerabilityWeb,
+    Workspace,
 )
 from server.utils.database import get_or_create
 from server.web import app
@@ -55,6 +60,15 @@ COUCHDB_PASSWORD_PREFIX = '-pbkdf2-'
 
 logger = server.utils.logger.get_logger(__name__)
 session = db.session
+
+MAPPED_VULN_SEVERITY = OrderedDict([
+    ('critical', 'critical'),
+    ('high', 'high'),
+    ('med', 'medium'),
+    ('low', 'low'),
+    ('info', 'informational'),
+    ('unclassified', 'unclassified'),
+])
 
 OBJ_TYPES = [
             (1, 'Host'),
@@ -325,7 +339,7 @@ class ServiceImporter(object):
                 service.banner = document.get('banner')
                 service.protocol = document.get('protocol')
                 if not document.get('status'):
-                    logger.warning('Service {0} with empty status. Using open as status'.format(document['_id']))
+                    logger.warning('Service {0} with empty status. Using \'open\' as status'.format(document['_id']))
                     document['status'] = 'open'
                 status_mapper = {
                     'open': 'open',
@@ -348,14 +362,7 @@ class VulnerabilityImporter(object):
         if not couch_parent_id:
             couch_parent_id = '.'.join(document['_id'].split('.')[:-1])
         parent_ids = couchdb_relational_map[couch_parent_id]
-        mapped_severity = {
-            'med': 'medium',
-            'critical': 'critical',
-            'high': 'high',
-            'low': 'low',
-            'info': 'informational',
-            'unclassified': 'unclassified',
-        }
+        mapped_severity = MAPPED_VULN_SEVERITY
         severity = mapped_severity[document.get('severity')]
         for parent_id in parent_ids:
             if level == 2:
@@ -371,6 +378,7 @@ class VulnerabilityImporter(object):
                     session,
                     VulnerabilityWeb,
                     name=document.get('name'),
+                    description=document.get('desc'),
                     severity=severity,
                     service_id=parent.id,
                     method=method,
@@ -384,6 +392,7 @@ class VulnerabilityImporter(object):
                     'name': document.get('name'),
                     'severity': severity,
                     'workspace': workspace,
+                    'description': document.get('desc')
                 }
                 if type(parent) == Host:
                     vuln_params.update({'host_id': parent.id})
@@ -394,7 +403,6 @@ class VulnerabilityImporter(object):
                     Vulnerability,
                     **vuln_params
                 )
-            vulnerability.description = document.get('desc'),
             vulnerability.confirmed = document.get('confirmed', False) or False
             vulnerability.data = document.get('data')
             vulnerability.easeofresolution = document.get('easeofresolution')
@@ -534,7 +542,8 @@ class WorkspaceImporter(object):
             workspace.start_date = datetime.datetime.fromtimestamp(float(document.get('duration')['start'])/1000)
         if document.get('duration') and document.get('duration')['end']:
             workspace.end_date = datetime.datetime.fromtimestamp(float(document.get('duration')['end'])/1000)
-        workspace.scope = document.get('scope')
+        for scope in [x.strip() for x in document.get('scope', '').split('\n') if x.strip()]:
+            scope_obj, created = get_or_create(session, Scope, name=scope, workspace=workspace)
         yield workspace
 
 
@@ -549,7 +558,6 @@ class MethodologyImporter(object):
             methodology, created = get_or_create(session, Methodology, name=document.get('name'))
             methodology.workspace = workspace
             yield methodology
-#        methodology.
 
 
 class TaskImporter(object):
@@ -741,7 +749,7 @@ class ImportCouchDBUsers(FlaskScriptCommand):
             if user['name'] in admins.keys():
                 # This is an already imported admin user, skip
                 continue
-            logger.info('Importing {0}'.format(user['name']))
+            logger.info(u'Importing {0}'.format(user['name']))
             if not db.session.query(User).filter_by(username=user['name']).first():
                 app.user_datastore.create_user(
                     username=user['name'],
@@ -760,6 +768,9 @@ class ImportCouchDBUsers(FlaskScriptCommand):
 
 class ImportVulnerabilityTemplates(FlaskScriptCommand):
 
+    def __init__(self):
+        self.names = Counter()
+
     def run(self):
         cwe_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
             username=server.config.couchdb.user,
@@ -768,34 +779,70 @@ class ImportVulnerabilityTemplates(FlaskScriptCommand):
             port=server.config.couchdb.port,
             path='cwe/_all_docs?include_docs=true'
         )
-        cwes = requests.get(cwe_url).json()['rows']
-        for cwe in cwes:
+
+        try:
+            cwes = requests.get(cwe_url)
+            cwes.raise_for_status()
+        except requests.exceptions.HTTPError:
+            logger.warn('Unable to retrieve Vulnerability Templates Database. Moving on.')
+            return
+        except requests.exceptions.RequestException as e:
+            logger.warn(e)
+            return
+
+        for cwe in cwes.json()['rows']:
             document = cwe['doc']
-            mapped_exploitation = {
-                'critical': 'critical',
-                'med': 'medium',
-                'high': 'high',
-                'low': 'low',
-                'info': 'informational',
-                'unclassified': 'unclassified',
-            }
+            new_severity = self.get_severity(document)
+
+            new_name = self.get_name(document)
+
             vuln_template, created = get_or_create(session,
                                                    VulnerabilityTemplate,
-                                                   name=document.get('name'),
-                                                   severity=mapped_exploitation[document.get('exploitation')],
-                                                   description=document.get('description'))
+                                                   name=new_name)
+
+            vuln_template.description = document.get('description')
             vuln_template.resolution = document.get('resolution')
-            for ref_doc in document['references']:
+            vuln_template.severity = new_severity
+
+            references = document['references'] if isinstance(document['references'], list) else [x.strip() for x in document['references'].split(',')]
+            for ref_doc in references:
                 get_or_create(session,
                              ReferenceTemplate,
                              vulnerability=vuln_template,
                              name=ref_doc)
 
+    def get_name(self, document):
+        doc_name = document.get('name')
+        count = self.names[doc_name]
+
+        if count > 0:
+            name = u'{0} ({1})'.format(doc_name, count)
+        else:
+            name = doc_name
+
+        self.names[doc_name] += 1
+
+        return name
+
+    def get_severity(self, document):
+        default = 'unclassified'
+
+        mapped_exploitation = MAPPED_VULN_SEVERITY
+
+        for key in mapped_exploitation.keys():
+            if key in document.get('exploitation').lower():
+                return mapped_exploitation[key]
+
+        logger.warn(
+            'Vuln template exploitation \'{0}\' not found. Using \'{1}\' instead.'.format(document.get('exploitation'), default)
+        )
+
+        return default
 
 class ImportLicense(FlaskScriptCommand):
 
     def run(self):
-        cwe_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
+        licenses_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
             username=server.config.couchdb.user,
             password=server.config.couchdb.password,
             hostname=server.config.couchdb.host,
@@ -803,17 +850,17 @@ class ImportLicense(FlaskScriptCommand):
             path='faraday_licenses/_all_docs?include_docs=true'
         )
 
-        if not requests.head(cwe_url).ok:
-            logger.info('No Licenses database found, nothing to see here, move along!')
-            return
-
         try:
-            licenses = requests.get(cwe_url).json()['rows']
+            licenses = requests.get(licenses_url)
+            licenses.raise_for_status()
+        except requests.exceptions.HTTPError:
+            logger.warn('Unable to retrieve Licenses Database. Moving on.')
+            return
         except requests.exceptions.RequestException as e:
             logger.warn(e)
             return
 
-        for license in licenses:
+        for license in licenses.json()['rows']:
             document = license['doc']
 
             license_obj, created = get_or_create(session,
@@ -868,16 +915,15 @@ class ImportCouchDB(FlaskScriptCommand):
 
             self.import_workspace_into_database(workspace_name)
 
-    def get_objs(self, host, obj_type, level):
+    def get_objs(self, host, obj_type, level, workspace):
         if obj_type == 'Credential':
             obj_type = 'Cred'
         data = {
-            "map": "function(doc) { if(doc.type == '%s' && doc._id.split('.').length == %d) emit(null, doc); }" % (obj_type, level)
+            "map": "function(doc) { if(doc.type == '%s' && doc._id.split('.').length == %d && !doc._deleted) emit(null, doc); }" % (obj_type, level)
         }
 
-        r = requests.post(host, json=data)
-
-        return r.json()
+        documents = requests.post(host, json=data).json()
+        return documents
 
     def verify_host_vulns_count_is_correct(self, couchdb_relational_map, couchdb_relational_map_by_type, workspace):
         hosts = session.query(Host).filter_by(workspace=workspace)
@@ -897,7 +943,8 @@ class ImportCouchDB(FlaskScriptCommand):
             for interface in interfaces:
                 interface = interface['value']
                 vulns += get_children_from_couch(workspace, interface.get('_id'), 'Vulnerability')
-            assert len(vulns) == len(host.vulnerabilities)
+
+            assert len(set(map(lambda vuln: vuln['value'].get('name'), vulns))) == len(set(map(lambda vuln: vuln.name, host.vulnerabilities)))
 
     def verify_import_data(self, couchdb_relational_map, couchdb_relational_map_by_type, workspace):
         self.verify_host_vulns_count_is_correct(couchdb_relational_map, couchdb_relational_map_by_type, workspace)
@@ -939,12 +986,12 @@ class ImportCouchDB(FlaskScriptCommand):
         session.commit()
 
         couch_url = "http://{username}:{password}@{hostname}:{port}/{workspace_name}/_temp_view?include_docs=true".format(
-                    username=server.config.couchdb.user,
-                    password=server.config.couchdb.password,
-                    hostname=server.config.couchdb.host,
-                    port=server.config.couchdb.port,
-                    workspace_name=workspace_name
-                )
+                username=server.config.couchdb.user,
+                password=server.config.couchdb.password,
+                hostname=server.config.couchdb.host,
+                port=server.config.couchdb.port,
+                workspace_name=workspace_name
+        )
 
         # obj_types are tuples. the first value is the level on the tree
         # for the desired obj.
@@ -953,7 +1000,7 @@ class ImportCouchDB(FlaskScriptCommand):
         couchdb_relational_map_by_type = defaultdict(list)
         for level, obj_type in obj_types:
             obj_importer = faraday_importer.get_importer_from_document(obj_type)()
-            objs_dict = self.get_objs(couch_url, obj_type, level)
+            objs_dict = self.get_objs(couch_url, obj_type, level, workspace)
             for raw_obj in tqdm(objs_dict.get('rows', [])):
                 # we use no_autoflush since some queries triggers flush and some relationship are missing in the middle
                 with session.no_autoflush:

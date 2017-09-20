@@ -19,6 +19,7 @@ from sqlalchemy import (
     UniqueConstraint,
     event
 )
+from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql import select
 from sqlalchemy import func
@@ -148,6 +149,8 @@ class SourceCode(Metadata):
     __tablename__ = 'source_code'
     id = Column(Integer, primary_key=True)
     filename = Column(Text, nullable=False)
+    function = Column(Text, nullable=True)
+    module = Column(Text, nullable=True)
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', backref='source_codes')
@@ -282,12 +285,18 @@ class VulnerabilityABC(Metadata):
     name = Column(Text, nullable=False)
     resolution = Column(Text, nullable=True)
     severity = Column(Enum(*SEVERITIES, name='vulnerability_severity'), nullable=False)
+    risk = Column(Float(3,1), nullable=True)
     # TODO add evidence
 
     impact_accountability = Column(Boolean, default=False)
     impact_availability = Column(Boolean, default=False)
     impact_confidentiality = Column(Boolean, default=False)
     impact_integrity = Column(Boolean, default=False)
+
+    __table_args__ = (
+        CheckConstraint('1.0 <= risk AND risk <= 10.0',
+                        name='check_vulnerability_risk'),
+    )
 
 
 class VulnerabilityTemplate(VulnerabilityABC):
@@ -377,7 +386,9 @@ class VulnerabilityWeb(VulnerabilityGeneric):
 
 class VulnerabilityCode(VulnerabilityGeneric):
     __tablename__ = None
-    line = Column(Integer, nullable=True)
+    code = Column(Text, nullable=True)
+    start_line = Column(Integer, nullable=True)
+    end_line = Column(Integer, nullable=True)
 
     source_code_id = Column(Integer, ForeignKey(SourceCode.id), index=True)
     source_code = relationship(
@@ -599,14 +610,12 @@ def _make_vuln_count_property(type_=None):
 class Workspace(Metadata):
     __tablename__ = 'workspace'
     id = Column(Integer, primary_key=True)
-    # TODO: change nullable=True for appropriate fields
     customer = Column(String(250), nullable=True)  # TBI
     description = Column(Text(), nullable=True)
     active = Column(Boolean(), nullable=False, default=True)  # TBI
     end_date = Column(DateTime(), nullable=True)
     name = Column(String(250), nullable=False, unique=True)
     public = Column(Boolean(), nullable=False, default=True)  # TBI
-    scope = Column(Text(), nullable=True)
     start_date = Column(DateTime(), nullable=True)
 
     credential_count = _make_generic_count_property('workspace', 'credential')
@@ -617,6 +626,27 @@ class Workspace(Metadata):
     vulnerability_standard_count = _make_vuln_count_property('vulnerability')
     vulnerability_total_count = _make_vuln_count_property()
 
+
+class Scope(Metadata):
+    __tablename__ = 'scope'
+    id = Column(Integer, primary_key=True)
+    name = Column(Text(), nullable=False)
+
+    workspace_id = Column(
+                        Integer,
+                        ForeignKey('workspace.id'),
+                        index=True,
+                        nullable=False
+                        )
+    workspace = relationship(
+                            'Workspace',
+                            backref='scope',
+                            foreign_keys=[workspace_id],
+                            )
+
+    __table_args__ = (
+        UniqueConstraint('name', 'workspace_id', name='uix_scope_name_workspace'),
+    )
 
 def is_valid_workspace(workspace_name):
     return db.session.query(server.models.Workspace).filter_by(name=workspace_name).first() is not None

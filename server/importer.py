@@ -6,6 +6,7 @@ import re
 import sys
 import json
 import datetime
+import requests
 from collections import (
     Counter,
     defaultdict,
@@ -14,14 +15,13 @@ from collections import (
 from slugify import slugify
 from binascii import unhexlify
 
-import requests
 from IPy import IP
 from flask_script import Command as FlaskScriptCommand
 from passlib.utils.binary import ab64_encode
 from restkit.errors import RequestError, Unauthorized
 from tqdm import tqdm
-
 import server.config
+
 import server.couchdb
 import server.database
 import server.models
@@ -45,6 +45,7 @@ from server.models import (
     Service,
     Scope,
     Tag,
+    TagObject,
     Task,
     TaskTemplate,
     User,
@@ -59,8 +60,8 @@ from server.web import app
 COUCHDB_USER_PREFIX = 'org.couchdb.user:'
 COUCHDB_PASSWORD_PREFIX = '-pbkdf2-'
 
-
 logger = server.utils.logger.get_logger(__name__)
+
 session = db.session
 
 MAPPED_VULN_SEVERITY = OrderedDict([
@@ -156,6 +157,19 @@ def get_children_from_couch(workspace, parent_couchdb_id, child_type):
         return []
 
     return r.json()['rows']
+
+
+def create_tags(raw_tags, parent_id, parent_type):
+    for tag_name in [x.strip() for x in raw_tags if x.strip()]:
+        tag, tag_created = get_or_create(session, Tag, name=tag_name, slug=slugify(tag_name))
+        relation, relation_created = get_or_create(
+            session,
+            TagObject,
+            object_id=parent_id,
+            object_type=parent_type,
+            tag_id=tag.id,
+        )
+        session.commit()
 
 
 class EntityNotFound(Exception):
@@ -461,16 +475,16 @@ class VulnerabilityImporter(object):
 
 
 class CommandImporter(object):
-    DOC_TYPE = 'CommandRunInformation'
 
+    DOC_TYPE = 'CommandRunInformation'
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         start_date = datetime.datetime.fromtimestamp(document.get('itime'))
 
         command, instance = get_or_create(
-                session,
-                Command,
-                command=document.get('command', None),
-                start_date=start_date,
+            session,
+            Command,
+            command=document.get('command', None),
+            start_date=start_date,
         )
         if document.get('duration'):
             command.end_date = start_date + datetime.timedelta(seconds=document.get('duration'))
@@ -507,8 +521,8 @@ class NoteImporter(object):
 
 
 class CredentialImporter(object):
-    DOC_TYPE = 'Cred'
 
+    DOC_TYPE = 'Cred'
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         parents = []
         if level == 2:
@@ -536,8 +550,8 @@ class CredentialImporter(object):
 
 
 class WorkspaceImporter(object):
-    DOC_TYPE = 'Workspace'
 
+    DOC_TYPE = 'Workspace'
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         workspace.description = document.get('description')
         if document.get('duration') and document.get('duration')['start']:
@@ -590,7 +604,9 @@ class TaskImporter(object):
             task.workspace = workspace
         task.description = document.get('description')
         task.assigned_to = session.query(User).filter_by(username=document.get('username')).first()
-        create_tags([x.strip() for x in document.tags if x.strip()], 'Tag', task.id)
+        tags = document.get('tags', [])
+        if len(tags):
+            create_tags(tags, task.id, 'task')
         mapped_status = {
             'New': 'new',
             'In Progress': 'in progress',
@@ -602,10 +618,6 @@ class TaskImporter(object):
         #task.due_date = datetime.datetime.fromtimestamp(document.get('due_date'))
         return [task]
 
-
-def create_tags(tags, model, parent_id):
-    # tag, create = get_or_create(session, Tag, name=scope, workspace=workspace)
-    return True
 
 
 class ReportsImporter(object):

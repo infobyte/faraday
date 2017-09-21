@@ -13,7 +13,7 @@ angular.module("faradayApp")
 
             var createGetUrl = function(wsName, objectName) {
                 var objectName = ((objectName) ? "/" + objectName : "");
-                var get_url = APIURL + "ws/" + wsName + objectName;
+                var get_url = APIURL + "ws/" + wsName + objectName + '/';
                 return get_url;
             };
 
@@ -31,7 +31,7 @@ angular.module("faradayApp")
             };
 
             var createDbUrl = function(wsName) {
-                return APIURL + "ws/" + wsName;
+                return APIURL + "ws/" + wsName + "/";
             }
 
             var createDeleteUrl = createPostUrl; 
@@ -225,7 +225,7 @@ angular.module("faradayApp")
             }
 
             ServerAPI.getWorkspacesNames = function() {
-                return get(APIURL + "ws");
+                return get(APIURL + "ws/");
             }
 
             ServerAPI.getWorkspace = function(wsName) {
@@ -270,7 +270,7 @@ angular.module("faradayApp")
             }
 
             ServerAPI.getServicesBy = function(wsName, what) {
-                var url = createGetUrl(wsName, 'services') + '/count';
+                var url = createGetUrl(wsName, 'services') + 'count/';
                 return get(url, {"group_by": what})
             }
 
@@ -285,7 +285,7 @@ angular.module("faradayApp")
 
             ServerAPI.getVulnsBySeverity = function(wsName, confirmed) {
 
-                var url = createGetUrl(wsName, 'vulns') + '/count';
+                var url = createGetUrl(wsName, 'vulns') + 'count/';
                 var payload = {'group_by': 'severity'}
                 
                 if (confirmed !== undefined) {

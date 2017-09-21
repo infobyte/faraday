@@ -13,7 +13,7 @@ from server.dao.vuln import VulnerabilityDAO
 from server.dao.service import ServiceDAO
 from server.dao.workspace import WorkspaceDAO
 from server.utils.logger import get_logger
-from server.schemas import SelfNestedField
+from server.schemas import SelfNestedField, JSTimestampField
 from server.utils.web import (
     build_bad_request_response,
     filter_request_args,
@@ -46,14 +46,20 @@ class WorkspaceSummarySchema(Schema):
                                  attribute='vulnerability_total_count')
 
 
+class WorkspaceDurationSchema(Schema):
+    start = JSTimestampField(attribute='start_date')
+    end = JSTimestampField(attribute='end_date')
+
+
 class WorkspaceSchema(AutoSchema):
     stats = SelfNestedField(WorkspaceSummarySchema())
+    duration = SelfNestedField(WorkspaceDurationSchema())
     _id = fields.Integer(dump_only=True, attribute='id')
 
     class Meta:
         model = Workspace
         fields = ('_id', 'id', 'customer', 'description', 'active',
-                  'start_date', 'end_date', 'name', 'public', 'scope', 'stats')
+                  'duration', 'name', 'public', 'scope', 'stats')
 
 
 class WorkspaceView(ReadWriteView):

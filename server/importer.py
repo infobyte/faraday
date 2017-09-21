@@ -343,11 +343,13 @@ class ServiceImporter(object):
                     document['status'] = 'open'
                 status_mapper = {
                     'open': 'open',
+                    'up': 'open',
                     'closed': 'closed',
+                    'down': 'closed',
                     'filtered': 'filtered',
                     'open|filtered': 'filtered'
                 }
-                service.status = status_mapper[document.get('status')]
+                service.status = status_mapper[document.get('status', 'open')]
                 service.version = document.get('version')
                 service.workspace = workspace
 

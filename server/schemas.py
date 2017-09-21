@@ -1,5 +1,7 @@
+import time
 from marshmallow import fields
 from marshmallow.exceptions import ValidationError
+
 
 class SelfNestedField(fields.Field):
     """A field to make namespaced schemas. It allows to have
@@ -18,3 +20,12 @@ class SelfNestedField(fields.Field):
         if errors:
             raise ValidationError(errors, data=ret)
         return ret
+
+
+class JSTimestampField(fields.Field):
+    """A field to serialize datetime objects into javascript
+    compatible timestamps (like time.time()) * 1000"""
+
+    def _serialize(self, value, attr, obj):
+        if value is not None:
+            return int(time.mktime(value.timetuple()) * 1000)

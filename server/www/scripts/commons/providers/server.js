@@ -9,7 +9,7 @@ angular.module("faradayApp")
     .factory("ServerAPI", ["BASEURL", "$http", "$q",
         function(BASEURL, $http, $q) {
             var ServerAPI = {};
-            var APIURL = BASEURL + "_api/";
+            var APIURL = BASEURL + "_api/v2/";
 
             var createGetUrl = function(wsName, objectName) {
                 var objectName = ((objectName) ? "/" + objectName : "");
@@ -235,7 +235,7 @@ angular.module("faradayApp")
 
             ServerAPI.getWorkspaceSummary = function(wsName, confirmed) {
 
-                var getUrl = createGetUrl(wsName, "summary");
+                var getUrl = createGetUrl(wsName);
                 var payload = {};
 
                 if (confirmed !== undefined) {

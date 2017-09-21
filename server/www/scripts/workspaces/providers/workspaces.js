@@ -19,6 +19,14 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
+        workspacesFact.getWorkspaces = function() {
+            var deferred = $q.defer();
+            ServerAPI.getWorkspaces().
+                then(function(response)
+                    { deferred.resolve(response.data) }, errorHandler);
+            return deferred.promise;
+        };
+
         returnStatus = function(data) {
             return $q.when(data.status);
         };

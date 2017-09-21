@@ -228,6 +228,10 @@ angular.module("faradayApp")
                 return get(APIURL + "ws/");
             }
 
+            ServerAPI.getWorkspaces = function() {
+                return get(APIURL + "ws/");
+            }
+
             ServerAPI.getWorkspace = function(wsName) {
                 var getUrl = createDbUrl(wsName);
                 return get(getUrl);

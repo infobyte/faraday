@@ -21,7 +21,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
-from sqlalchemy.sql import select
+from sqlalchemy.sql import select, text, table, column
 from sqlalchemy import func
 from sqlalchemy.orm import column_property
 from sqlalchemy.schema import DDL
@@ -95,9 +95,10 @@ def _make_generic_count_property(parent_table, children_table):
     children_id_field = '{}.id'.format(children_table)
     parent_id_field = '{}.id'.format(parent_table)
     children_rel_field = '{}.{}_id'.format(children_table, parent_table)
-    query = (select([func.count(children_id_field)]).
-             select_from(children_table).
-             where('{} = {}'.format(children_rel_field, parent_id_field)))
+    query = (select([func.count(column(children_id_field))]).
+             select_from(table(children_table)).
+             where(text('{} = {}'.format(
+                 children_rel_field, parent_id_field))))
     return column_property(query, deferred=True)
 
 
@@ -595,15 +596,15 @@ class Command(Metadata):
 
 
 def _make_vuln_count_property(type_=None):
-    query = (select([func.count('vulnerability.id')]).
-             select_from('vulnerability').
-             where('vulnerability.workspace_id = workspace.id')
+    query = (select([func.count(column('vulnerability.id'))]).
+             select_from(table('vulnerability')).
+             where(text('vulnerability.workspace_id = workspace.id'))
              )
     if type_:
         # Don't do queries using this style!
         # This can cause SQL injection vulnerabilities
         # In this case type_ is supplied from a whitelist so this is safe
-        query = query.where("vulnerability.type = '%s'" % type_)
+        query = query.where(text("vulnerability.type = '%s'" % type_))
     return column_property(query, deferred=True)
 
 

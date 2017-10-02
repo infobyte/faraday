@@ -677,36 +677,28 @@ class User(db.Model, UserMixin):
                                  self.username)
 
 
-class Evidence(Metadata):
-    __tablename__ = 'evidence'
+class File(Metadata):
+    __tablename__ = 'file'
 
-    uid = Column(Integer, autoincrement=True, primary_key=True)
-    name = Column(Unicode(16), unique=True)
-    content = Column('content_col', UploadedFileField)  # plain attached file
-    file = Column(UploadedFileField(upload_type=FaradayUploadedFile))
-
-    vulnerability_id = Column(
-                            Integer,
-                            ForeignKey(VulnerabilityGeneric.id),
-                            index=True
-                            )
-    vulnerability = relationship(
-                                'VulnerabilityGeneric',
-                                backref='evidence',
-                                foreign_keys=[vulnerability_id],
-                                )
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    name = Column(Text, unique=True)
+    filename = Column(Text, unique=True)
+    description = Column(Text, unique=True)
+    content = Column(UploadedFileField(upload_type=FaradayUploadedFile))  # plain attached file
+    object_id = Column(Integer, nullable=False)
+    object_type = Column(Text, nullable=False)
 
 
 class UserAvatar(Metadata):
     __tablename_ = 'user_avatar'
 
-    uid = Column(Integer, autoincrement=True, primary_key=True)
-    name = Column(Unicode(16), unique=True)
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    name = Column(Text, unique=True)
     # photo field will automatically generate thumbnail
     # if the file is a valid image
     photo = Column(UploadedFileField(upload_type=FaradayUploadedFile))
     user_id = Column('user_id', Integer(), ForeignKey('user.id'))
-    user = relationship('User')
+    user = relationship('User', foreign_keys=[user_id])
 
 
 class MethodologyTemplate(Metadata):

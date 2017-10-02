@@ -6,6 +6,7 @@ import re
 import sys
 import json
 import datetime
+from tempfile import NamedTemporaryFile
 from collections import (
     Counter,
     defaultdict,
@@ -50,6 +51,7 @@ from server.models import (
     VulnerabilityTemplate,
     VulnerabilityWeb,
     Workspace,
+    File,
 )
 from server.utils.database import get_or_create
 from server.web import app
@@ -298,7 +300,7 @@ class HostImporter(object):
         if type(interface['hostnames']) in (str, unicode):
             interface['hostnames'] = [interface['hostnames']]
 
-        for hostname_str in interface['hostnames']:
+        for hostname_str in interface['hostnames'] or []:
             if not hostname_str:
                 # skip empty hostnames
                 continue
@@ -435,6 +437,32 @@ class VulnerabilityImporter(object):
 
             self.add_references(document, vulnerability, workspace)
             self.add_policy_violations(document, vulnerability, workspace)
+            attachments_data = document.get('_attachments') or {}
+            for attachment_name, attachment_data in attachments_data.items():
+                #http://localhost:5984/evidence/334389048b872a533002b34d73f8c29fd09efc50.c7b0f6cba2fae8e446b7ffedfdb18026bb9ba41d/forbidden.png
+                attachment_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
+                    username=server.config.couchdb.user,
+                    password=server.config.couchdb.password,
+                    hostname=server.config.couchdb.host,
+                    port=server.config.couchdb.port,
+                    path='{0}/{1}/{2}'.format(workspace.name, document.get('_id'), attachment_name)
+                )
+                response = requests.get(attachment_url)
+                response.raw.decode_content = True
+                attachment_file = NamedTemporaryFile()
+                attachment_file.write(response.content)
+                attachment_file.seek(0)
+                session.commit()
+                file, created = get_or_create(
+                    session,
+                    File,
+                    filename=attachment_name,
+                    object_id=vulnerability.id,
+                    object_type=vulnerability.__class__.__name__)
+                file.content = attachment_file.read()
+
+                attachment_file.close()
+
         yield vulnerability
 
     def add_policy_violations(self, document, vulnerability, workspace):

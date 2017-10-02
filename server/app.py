@@ -1,7 +1,16 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-from ConfigParser import NoOptionError
+import logging
+import os
+from os.path import join, expanduser
+
+try:
+    # py2.7
+    from configparser import ConfigParser, NoSectionError, NoOptionError
+except ImportError:
+    # py3
+    from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 
 import flask
 from flask import Flask
@@ -10,9 +19,27 @@ from flask_security import (
     Security,
     SQLAlchemyUserDatastore,
 )
+from depot.manager import DepotManager
 
 import server.config
 from server.utils.logger import LOGGING_HANDLERS
+
+logger = logging.getLogger(__name__)
+
+
+def setup_storage_path():
+    default_path = join(expanduser("~"), '.faraday/storage')
+    if not os.path.exists(default_path):
+        logger.info('Creating directory {0}'.format(default_path))
+        os.mkdir(default_path)
+    config = ConfigParser()
+    config.read(server.config.LOCAL_CONFIG_FILE)
+    config.add_section('storage')
+    config.set('storage', 'path', default_path)
+    with open(server.config.LOCAL_CONFIG_FILE, 'w') as configfile:
+        config.write(configfile)
+
+    return default_path
 
 
 def create_app(db_connection_string=None, testing=None):
@@ -36,6 +63,14 @@ def create_app(db_connection_string=None, testing=None):
         # 'sha512_crypt',
         'plaintext',  # TODO: remove it
     ]
+    try:
+        storage_path = server.config.storage.path
+    except AttributeError:
+        logger.warn('No storage section or path in the .faraday/server.ini. Setting the default value to .faraday/storage')
+        storage_path = setup_storage_path()
+    DepotManager.configure('default', {
+        'depot.storage_path': storage_path
+    })
     if testing:
         app.config['TESTING'] = testing
     try:

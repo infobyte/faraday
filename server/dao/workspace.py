@@ -25,7 +25,7 @@ class WorkspaceDAO(object):
         "end_date": [Workspace.end_date],
         "name": [Workspace.name],
         "public": [Workspace.public],
-        "scope": [Workspace.scope],
+        # "scope": [Workspace.scope],
         "start_date": [Workspace.start_date]
     }
 
@@ -72,7 +72,7 @@ class WorkspaceDAO(object):
                                   Workspace.end_date,
                                   Workspace.name,
                                   Workspace.public,
-                                  Workspace.scope,
+                                  # Workspace.scope,
                                   Workspace.start_date,
                                 )
 
@@ -100,6 +100,6 @@ class WorkspaceDAO(object):
             "end_date": workspace.end_date,
             "name": workspace.name,
             "public": workspace.public,
-            "scope": workspace.scope,
+            # "scope": workspace.scope,
             "start_date": workspace.start_date
         }

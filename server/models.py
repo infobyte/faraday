@@ -91,7 +91,6 @@ SCHEMA_VERSION = 'W.3.0.0'
 def _make_generic_count_property(parent_table, children_table):
     """Make a deferred by default column property that counts the
     amount of childrens of some parent object"""
-    # TODO: Fix SQLAlchemy warnings
     children_id_field = '{}.id'.format(children_table)
     parent_id_field = '{}.id'.format(parent_table)
     children_rel_field = '{}.{}_id'.format(children_table, parent_table)

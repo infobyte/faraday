@@ -21,7 +21,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
-from sqlalchemy.sql import select, text, table, column
+from sqlalchemy.sql import select, text, table
 from sqlalchemy import func
 from sqlalchemy.orm import column_property
 from sqlalchemy.schema import DDL
@@ -91,11 +91,10 @@ SCHEMA_VERSION = 'W.3.0.0'
 def _make_generic_count_property(parent_table, children_table):
     """Make a deferred by default column property that counts the
     amount of childrens of some parent object"""
-    # TODO: Fix SQLAlchemy warnings
     children_id_field = '{}.id'.format(children_table)
     parent_id_field = '{}.id'.format(parent_table)
     children_rel_field = '{}.{}_id'.format(children_table, parent_table)
-    query = (select([func.count(column(children_id_field))]).
+    query = (select([func.count(text(children_id_field))]).
              select_from(table(children_table)).
              where(text('{} = {}'.format(
                  children_rel_field, parent_id_field))))
@@ -596,7 +595,7 @@ class Command(Metadata):
 
 
 def _make_vuln_count_property(type_=None):
-    query = (select([func.count(column('vulnerability.id'))]).
+    query = (select([func.count(text('vulnerability.id'))]).
              select_from(table('vulnerability')).
              where(text('vulnerability.workspace_id = workspace.id'))
              )

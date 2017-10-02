@@ -3,7 +3,7 @@ import os
 import pytest
 from depot.manager import DepotManager
 
-from server.fields  import FaradayUploadedFile
+from server.fields import FaradayUploadedFile
 
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -25,8 +25,6 @@ def test_image_is_detected_correctly(setup_depot):
 
     with open(os.path.join(CURRENT_PATH, 'data', 'faraday.png'))as image_data:
         field = FaradayUploadedFile(image_data.read())
-
-        print(field)
         assert field['content_type'] == 'image/png'
         assert 'thumb_id' in field.keys()
         assert 'thumb_path' in field.keys()

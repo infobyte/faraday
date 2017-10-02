@@ -673,6 +673,7 @@ class UserAvatar(Metadata):
     uid = Column(Integer, autoincrement=True, primary_key=True)
     name = Column(Unicode(16), unique=True)
     # photo field will automatically generate thumbnail
+    # if the file is a valid image
     photo = Column(UploadedFileField(upload_type=FaradayUploadedFile))
     user_id = Column('user_id', Integer(), ForeignKey('user.id'))
     user = relationship('User')

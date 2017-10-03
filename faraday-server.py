@@ -89,6 +89,8 @@ def main():
     parser.add_argument('--stop', action='store_true', help='stop Faraday Server')
     parser.add_argument('--nodeps', action='store_true', help='Skip dependency check')
     parser.add_argument('--no-setup', action='store_true', help=argparse.SUPPRESS)
+    parser.add_argument('--port', help='Overides server.ini port configuration')
+    parser.add_argument('--bind_address', help='Overides server.ini bind_address configuration')
 
     f = open(server.config.VERSION_FILE)
     f_version = f.read().strip()
@@ -109,10 +111,16 @@ def main():
 
     # Overwrites config option if SSL is set by argument
     if args.ssl:
-        server.config.ssl.set('enabled', 'true')
+        server.config.ssl.enabled = 'true'
 
     if not args.no_setup:
         setup_environment(not args.nodeps)
+
+    if args.port:
+        server.config.faraday_server.port = args.port
+
+    if args.bind_address:
+        server.config.faraday_server.bind_address = args.bind_address
 
     if args.start:
         # Starts a new process on background with --ignore-setup

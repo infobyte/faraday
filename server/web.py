@@ -85,6 +85,10 @@ class WebServer(object):
     WEB_UI_LOCAL_PATH = os.path.join(server.config.FARADAY_BASE, 'server/www')
 
     def __init__(self, enable_ssl=False):
+        logger.get_logger(__name__).info('Starting server at port {0} with bind address {1}. SSL {2}'.format(
+            server.config.faraday_server.port,
+            server.config.faraday_server.bind_address,
+            enable_ssl))
         self.__ssl_enabled = enable_ssl
         self.__config_server()
         self.__config_couchdb_conn()

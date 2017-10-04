@@ -24,6 +24,7 @@ enabled_factories = [
     factories.VulnerabilityWebFactory,
     factories.UserFactory,
     factories.WorkspaceFactory,
+    factories.CommandFactory,
 ]
 for factory in enabled_factories:
     register(factory)

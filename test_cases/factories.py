@@ -1,10 +1,13 @@
 import factory
 import datetime
+
+import pytz
 from factory.fuzzy import (
     FuzzyChoice,
     FuzzyNaiveDateTime,
     FuzzyInteger,
     FuzzyText,
+    FuzzyDateTime,
 )
 from server.models import (
     db,
@@ -75,6 +78,7 @@ class WorkspaceFactory(FaradayFactory):
 
 class WorkspaceObjectFactory(FaradayFactory):
     workspace = factory.SubFactory(WorkspaceFactory)
+    creator = factory.SubFactory(UserFactory)
 
     @classmethod
     def build_dict(cls, **kwargs):
@@ -169,6 +173,11 @@ class CredentialFactory(WorkspaceObjectFactory):
 
 class CommandFactory(WorkspaceObjectFactory):
     command = FuzzyText()
+    end_date = FuzzyDateTime(datetime.datetime.utcnow().replace(tzinfo=pytz.utc) + datetime.timedelta(20), datetime.datetime.utcnow().replace(tzinfo=pytz.utc) + datetime.timedelta(30))
+    start_date = FuzzyDateTime(datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - datetime.timedelta(30), datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - datetime.timedelta(20))
+    ip = FuzzyText()
+    user = FuzzyText()
+    hostname = FuzzyText()
 
     class Meta:
         model = Command

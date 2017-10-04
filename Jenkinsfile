@@ -19,9 +19,10 @@ node {
     stage ("Install Application Dependencies") {
         sh """
             source ${ENV_PATH}/bin/activate
-            pip install nose nosexcover virtualenv responses
+            pip install virtualenv responses
             pip install -r $WORKSPACE/requirements.txt
             pip install -r $WORKSPACE/requirements_server.txt
+            pip install -r $WORKSPACE/requirements_dev.txt
             deactivate
            """
     }
@@ -43,7 +44,7 @@ node {
         try {
             sh """
                 source ${ENV_PATH}/bin/activate
-                cd $WORKSPACE && nosetests --verbose --with-xunit --xunit-file=$WORKSPACE/xunit.xml --with-xcoverage --xcoverage-file=$WORKSPACE/coverage.xml  -ignore-files='.*dont_run_rest_controller_apis.*' --no-byte-compile -v `find test_cases -name '*.py'| grep -v dont_run` || :
+                cd $WORKSPACE && pytest -v  --junitxml=$WORKSPACE/xunit.xml || :
                 deactivate
                """
                step([$class: 'CoberturaPublisher', autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/coverage.xml', failNoReports: false, failUnhealthy: false, failUnstable: false, maxNumberOfBuilds: 0, onlyStable: false, sourceEncoding: 'ASCII', zoomCoverageChart: false])

@@ -298,7 +298,7 @@ class HostImporter(object):
         if type(interface['hostnames']) in (str, unicode):
             interface['hostnames'] = [interface['hostnames']]
 
-        for hostname_str in interface['hostnames']:
+        for hostname_str in interface['hostnames'] or []:
             if not hostname_str:
                 # skip empty hostnames
                 continue

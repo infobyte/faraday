@@ -21,7 +21,6 @@ from persistence.server.models import (
     Note,
     Host,
     Service,
-    Interface
 )
 from plugins.modelactions import modelactions
 
@@ -41,7 +40,6 @@ class CmdPingPluginTest(unittest.TestCase):
                              "Connection closed by foreign host.\n")
     def setUp(self):
         factory.register(Host)
-        factory.register(Interface)
         factory.register(Service)
         factory.register(Vuln)
         factory.register(VulnWeb)
@@ -53,9 +51,6 @@ class CmdPingPluginTest(unittest.TestCase):
         action = self.plugin._pending_actions.get(block=True)
         self.assertEqual(action[0], modelactions.ADDHOST)
         self.assertEqual(action[1].name, "127.0.0.1")
-        action = self.plugin._pending_actions.get(block=True)
-        self.assertEqual(action[0], modelactions.ADDINTERFACE)
-        self.assertEqual(action[2].name, "127.0.0.1")
 
 
 if __name__ == '__main__':

@@ -24,7 +24,6 @@ from persistence.server.models import (
     Note,
     Host,
     Service,
-    Interface
 )
 from plugins.modelactions import modelactions
 
@@ -35,7 +34,6 @@ class NexposeTest(unittest.TestCase):
     def setUp(self):
         self.plugin = NexposeFullPlugin()
         factory.register(Host)
-        factory.register(Interface)
         factory.register(Service)
         factory.register(Vuln)
         factory.register(VulnWeb)
@@ -47,9 +45,9 @@ class NexposeTest(unittest.TestCase):
         action = self.plugin._pending_actions.get(block=True)
         self.assertEqual(action[0], modelactions.ADDHOST)
         self.assertEqual(action[1].name, "192.168.1.1")
-        action = self.plugin._pending_actions.get(block=True)
-        self.assertEqual(action[0], modelactions.ADDINTERFACE)
-        self.assertEqual(action[2].name, "192.168.1.1")
+        # action = self.plugin._pending_actions.get(block=True)
+        # self.assertEqual(action[0], modelactions.ADDINTERFACE)
+        # self.assertEqual(action[2].name, "192.168.1.1")
         for i in range(131):
             action = self.plugin._pending_actions.get(block=True)
             if type(action[2]) in [Vuln, VulnWeb]:

@@ -8,7 +8,7 @@ node {
     }
 
     stage("Install Python Virtual Enviroment") {
-        sh "virtualenv --no-site-packages ${ENV_PATH}"
+        sh "/usr/local/bin/virtualenv --no-site-packages ${ENV_PATH}"
     }
 
     // Get the latest version of our application code.

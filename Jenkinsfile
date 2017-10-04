@@ -22,6 +22,7 @@ node {
             pip install virtualenv responses
             pip install -r $WORKSPACE/requirements.txt
             pip install -r $WORKSPACE/requirements_server.txt
+            pip install -r $WORKSPACE/requirements_extras.txt
             pip install -r $WORKSPACE/requirements_dev.txt
             deactivate
            """

@@ -24,6 +24,8 @@ node {
             pip install -r $WORKSPACE/requirements_server.txt
             pip install -r $WORKSPACE/requirements_extras.txt
             pip install -r $WORKSPACE/requirements_dev.txt
+            pip uninstall -y flask-classful
+            pip install -e git+https://github.com/teracyhq/flask-classful.git@baf37cd8a1f9f1124d32c1376135968172aa6b7b#egg=Flask_Classful
             deactivate
            """
     }

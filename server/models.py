@@ -366,7 +366,7 @@ class VulnerabilityWeb(VulnerabilityGeneric):
     parameters = Column(String(500), nullable=True)
     parameter_name = Column(String(250), nullable=True)
     path = Column(String(500), nullable=True)
-    query = Column(Text(), nullable=True)
+    query_string = Column(Text(), nullable=True)
     request = Column(Text(), nullable=True)
     response = Column(Text(), nullable=True)
     website = Column(String(250), nullable=True)

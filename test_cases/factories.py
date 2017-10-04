@@ -132,7 +132,7 @@ class VulnerabilityFactory(WorkspaceObjectFactory):
 
     name = FuzzyText()
     description = FuzzyText()
-    # host = factory.SubFactory(HostFactory)  # TODO: Move to generic class
+    host = factory.SubFactory(HostFactory)  # TODO: Move to generic class
     # service = factory.SubFactory(ServiceFactory)  # TODO: Move to generic class
     workspace = factory.SubFactory(WorkspaceFactory)
     creator = factory.SubFactory(UserFactory)
@@ -153,7 +153,9 @@ class VulnerabilityWebFactory(VulnerabilityFactory):
         sqlalchemy_session = db.session
 
 
-class VulnerabilityCodeFactory(VulnerabilityFactory):
+class VulnerabilityCodeFactory(WorkspaceObjectFactory):
+    name = FuzzyText()
+    description = FuzzyText()
     start_line = FuzzyInteger(1, 5000)
     source_code = factory.SubFactory(SourceCodeFactory)
 

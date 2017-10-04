@@ -419,7 +419,7 @@ class VulnerabilityImporter(object):
             if document['type'] == 'VulnerabilityWeb':
 
 
-                vulnerability.query = document.get('query')
+                vulnerability.query_string = document.get('query')
                 vulnerability.request = document.get('request')
                 vulnerability.response = document.get('response')
 

@@ -5,7 +5,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from server.models import Host, Interface, Service, Vulnerability
+from server.models import Host, Service, Vulnerability
 import random
 def new_random_workspace_name():
     return ("aworkspace" + "".join(random.sample([chr(i) for i in range(65, 90)
@@ -17,9 +17,7 @@ def create_host(self, host_name="pepito", os="linux"):
     return host
 
 def create_interface(self, host, iname="coqiuto", mac="00:03:00:03:04:04"):
-    interface = Interface(name=iname, mac=mac)
-    self.model_controller.addInterfaceSYNC(host.getName(), interface)
-    return interface
+    raise NotImplementedError()
 
 def create_service(self, host, interface, service_name = "coquito"):
     service = Service(service_name)

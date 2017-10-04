@@ -19,11 +19,6 @@ from server.models import Command
 
 commandsrun_api = Blueprint('commandsrun_api', __name__)
 
-class Titlecased(fields.Field):
-    def _serialize(self, value, attr, obj):
-        if value is None:
-            return ''
-        return value.title()
 
 class CommandSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')

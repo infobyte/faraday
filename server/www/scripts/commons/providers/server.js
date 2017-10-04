@@ -13,7 +13,7 @@ angular.module("faradayApp")
 
             var createGetUrl = function(wsName, objectName) {
                 var objectName = ((objectName) ? "/" + objectName : "");
-                var get_url = APIURL + "ws/" + wsName + objectName + '/';
+                var get_url = APIURL + "ws/" + wsName + objectName;
                 return get_url;
             };
 
@@ -31,7 +31,7 @@ angular.module("faradayApp")
             };
 
             var createDbUrl = function(wsName) {
-                return APIURL + "ws/" + wsName + "/";
+                return APIURL + "ws/" + wsName;
             }
 
             var createDeleteUrl = createPostUrl; 

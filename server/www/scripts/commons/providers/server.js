@@ -274,7 +274,7 @@ angular.module("faradayApp")
             }
 
             ServerAPI.getServicesBy = function(wsName, what) {
-                var url = createGetUrl(wsName, 'services') + 'count/';
+                var url = createGetUrl(wsName, 'services') + '/count/';
                 return get(url, {"group_by": what})
             }
 

@@ -434,6 +434,7 @@ class VulnerabilityImporter(object):
                     vulnerability.parameters = params if params is not None else u''
             status_map = {
                 'opened': 'open',
+                'open': 'open',
                 'closed': 'closed',
             }
             status = status_map[document.get('status', 'opened')]

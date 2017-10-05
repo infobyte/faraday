@@ -347,9 +347,13 @@ class ServiceImporter(object):
                     'closed': 'closed',
                     'down': 'closed',
                     'filtered': 'filtered',
-                    'open|filtered': 'filtered'
+                    'open|filtered': 'filtered',
+                    'unknown': 'closed'
                 }
-                service.status = status_mapper[document.get('status', 'open')]
+                couchdb_status = document.get('status', 'open')
+                if couchdb_status.lower() == 'unkown':
+                    logger.warn('Service with status {0} found! Status will default to closed. Host is {1}'.format(couchdb_status, host.ip))
+                service.status = status_mapper[couchdb_status]
                 service.version = document.get('version')
                 service.workspace = workspace
 
@@ -437,7 +441,7 @@ class VulnerabilityImporter(object):
 
             self.add_references(document, vulnerability, workspace)
             self.add_policy_violations(document, vulnerability, workspace)
-        yield vulnerability
+            yield vulnerability
 
     def add_policy_violations(self, document, vulnerability, workspace):
         for policy_violation in document.get('policyviolations', []):

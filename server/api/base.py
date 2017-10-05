@@ -340,7 +340,9 @@ class CountWorkspacedMixin(object):
         workspace_name = kwargs.pop('workspace_name')
         # using format is not a great practice.
         # the user input is group_by, however it's filtered by column name.
-        group_by = '{0}.{1}'.format(self.model_class.__name__, group_by)
+        table_name = inspect(self.model_class).tables[0].name
+        group_by = '{0}.{1}'.format(table_name, group_by)
+
         count = db.session.query(self.model_class).join(Workspace).group_by(group_by).filter(
             Workspace.name == workspace_name).values(group_by, func.count(group_by))
         for key, count in count:

@@ -15,7 +15,7 @@ class GenericAPITest:
     model = None
     factory = None
     api_endpoint = None
-    pk_field = 'id'
+    lookup_field = 'id'
     unique_fields = []
     update_fields = []
 
@@ -37,7 +37,7 @@ class GenericAPITest:
     def url(self, obj=None):
         url = API_PREFIX + self.api_endpoint + '/'
         if obj is not None:
-            id_ = unicode(obj.id) if isinstance(
+            id_ = unicode(getattr(obj, self.lookup_field)) if isinstance(
                 obj, self.model) else unicode(obj)
             url += id_ + u'/'
         return url

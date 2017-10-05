@@ -5,7 +5,10 @@ from flask_classful import FlaskView
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.inspection import inspect
 from werkzeug.routing import parse_rule
-from webargs.flaskparser import FlaskParser, abort
+from marshmallow import Schema
+from marshmallow.compat import with_metaclass
+from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
+from webargs.flaskparser import FlaskParser, parser, abort
 from webargs.core import ValidationError
 from server.models import Workspace, db
 
@@ -64,7 +67,7 @@ class GenericView(FlaskView):
         return obj
 
     def _dump(self, obj, **kwargs):
-        return self._get_schema_class()(**kwargs).dump(obj)
+        return self._get_schema_class()(**kwargs).dump(obj).data
 
     def _parse_data(self, schema, request, *args, **kwargs):
         return FlaskParser().parse(schema, request, locations=('json',),
@@ -147,9 +150,62 @@ class GenericWorkspacedView(GenericView):
 class ListMixin(object):
     """Add GET / route"""
 
+    def _envelope_list(self, objects, pagination_metadata=None):
+        """Override this method to define how a list of objects is
+        rendered"""
+        return objects
+
+    def _paginate(self, query):
+        return query, None
+
+    def _filter_query(self, query):
+        """Return a new SQLAlchemy query with some filters applied"""
+        return query
+
     def index(self, **kwargs):
-        return self._dump(self._get_base_query(**kwargs).all(),
-                          many=True)
+        query = self._filter_query(self._get_base_query(**kwargs))
+        objects, pagination_metadata = self._paginate(query)
+        return self._envelope_list(self._dump(objects, many=True),
+                                   pagination_metadata)
+
+
+class PaginatedMixin(object):
+    """Add pagination for list route"""
+    per_page_parameter_name = 'page_size'
+    page_number_parameter_name = 'page'
+
+    def _paginate(self, query):
+        if self.per_page_parameter_name in flask.request.args:
+
+            try:
+                page = int(flask.request.args.get(
+                    self.page_number_parameter_name, 1))
+            except (TypeError, ValueError):
+                flask.abort(404, 'Invalid page number')
+
+            try:
+                per_page = int(flask.request.args[
+                    self.per_page_parameter_name])
+            except (TypeError, ValueError):
+                flask.abort(404, 'Invalid per_page value')
+
+            pagination_metadata = query.paginate(page=page, per_page=per_page)
+            return pagination_metadata.items, pagination_metadata
+        return super(PaginatedMixin, self)._paginate(query)
+
+
+class FilterAlchemyMixin(object):
+    """Add querystring parameter filtering to list route
+
+    It is done by setting the ViewClass.filterset_class class
+    attribute
+    """
+
+    filterset_class = None
+
+    def _filter_query(self, query):
+        assert self.filterset_class is not None, 'You must define a filterset'
+        return self.filterset_class(query).filter()
 
 
 class ListWorkspacedMixin(ListMixin):
@@ -195,7 +251,7 @@ class CreateMixin(object):
                                 flask.request)
         obj = self.model_class(**data)
         created = self._perform_create(obj, **kwargs)
-        return self._dump(created).data, 201
+        return self._dump(created), 201
 
     def _perform_create(self, obj):
         # assert not db.session.new
@@ -226,7 +282,7 @@ class UpdateMixin(object):
         obj = self._get_object(object_id, **kwargs)
         self._update_object(obj, data)
         updated = self._perform_update(object_id, obj, **kwargs)
-        return self._dump(obj).data, 200
+        return self._dump(obj), 200
 
     def _update_object(self, obj, data):
         for (key, value) in data.items():
@@ -282,3 +338,18 @@ class ReadWriteWorkspacedView(CreateWorkspacedMixin,
     """A generic workspaced view with list, retrieve and create
     endpoints"""
     pass
+
+
+class AutoSchema(with_metaclass(ModelSchemaMeta, Schema)):
+    """
+    A Marshmallow schema that does field introspection based on
+    the SQLAlchemy model specified in Meta.model.
+    Unlike the marshmallow_sqlalchemy ModelSchema, it doesn't change
+    the serialization and deserialization proccess.
+    """
+    OPTIONS_CLASS = ModelSchemaOpts
+
+
+class FilterSetMeta:
+    """Base Meta class of FilterSet objects"""
+    parser = parser

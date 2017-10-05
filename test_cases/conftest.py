@@ -14,13 +14,16 @@ from test_cases import factories
 
 
 enabled_factories = [
-    factories.WorkspaceFactory,
-    factories.HostFactory,
-    factories.ServiceFactory,
-    factories.VulnerabilityFactory,
     factories.CredentialFactory,
     factories.LicenseFactory,
+    factories.HostFactory,
+    factories.ServiceFactory,
+    factories.SourceCodeFactory,
+    factories.VulnerabilityFactory,
+    factories.VulnerabilityCodeFactory,
+    factories.VulnerabilityWebFactory,
     factories.UserFactory,
+    factories.WorkspaceFactory,
 ]
 for factory in enabled_factories:
     register(factory)
@@ -39,10 +42,11 @@ class CustomClient(FlaskClient):
             ]
 
         ret = super(CustomClient, self).open(*args, **kwargs)
-        try:
-            ret.json = json.loads(ret.data)
-        except ValueError:
-            ret.json = None
+        if ret.headers.get('content-type') == 'application/json':
+            try:
+                ret.json = json.loads(ret.data)
+            except ValueError:
+                ret.json = None
         return ret
 
 

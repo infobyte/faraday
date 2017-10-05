@@ -5,6 +5,8 @@
 import pytest
 from sqlalchemy.orm.util import was_deleted
 from server.models import db, Workspace
+from test_api_pagination import PaginationTestsMixin as \
+    OriginalPaginationTestsMixin
 
 API_PREFIX = '/v2/ws/'
 OBJECT_COUNT = 5
@@ -160,6 +162,13 @@ class DeleteTestsMixin:
         assert res.status_code == 404  # No content
         assert not was_deleted(self.first_object)
         assert self.model.query.count() == OBJECT_COUNT
+
+
+class PaginationTestsMixin(OriginalPaginationTestsMixin):
+    def create_many_objects(self, session, n):
+        objects = self.factory.create_batch(n, workspace=self.workspace)
+        session.commit()
+        return objects
 
 
 class ReadWriteTestsMixin(ListTestsMixin,

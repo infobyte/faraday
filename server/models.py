@@ -21,7 +21,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
-from sqlalchemy.sql import select
+from sqlalchemy.sql import select, text, table
 from sqlalchemy import func
 from sqlalchemy.orm import column_property
 from sqlalchemy.schema import DDL
@@ -50,36 +50,55 @@ class SQLAlchemy(OriginalSQLAlchemy):
 
 
 class CustomEngineConnector(_EngineConnector):
-    """Used by overrideb SQLAlchemy class to fix rollback issues"""
+        """Used by overrided SQLAlchemy class to fix rollback issues.
 
-    def get_engine(self):
-        # Use an existent engine and don't register events if possible
-        uri = self.get_uri()
-        echo = self._app.config['SQLALCHEMY_ECHO']
-        if (uri, echo) == self._connected_for:
-            return self._engine
+        Also set case sensitive likes (in SQLite there are case
+        insensitive by default)"""
 
-        # Call original metohd and register events
-        rv = super(CustomEngineConnector, self).get_engine()
-        if uri.startswith('sqlite://'):
-            with self._lock:
-                @event.listens_for(rv, "connect")
-                def do_connect(dbapi_connection, connection_record):
-                    # disable pysqlite's emitting of the BEGIN statement
-                    # entirely.  also stops it from emitting COMMIT before any
-                    # DDL.
-                    dbapi_connection.isolation_level = None
+        def get_engine(self):
+            # Use an existent engine and don't register events if possible
+            uri = self.get_uri()
+            echo = self._app.config['SQLALCHEMY_ECHO']
+            if (uri, echo) == self._connected_for:
+                return self._engine
 
-                @event.listens_for(rv, "begin")
-                def do_begin(conn):
-                    # emit our own BEGIN
-                    conn.execute("BEGIN")
-        return rv
+            # Call original metohd and register events
+            rv = super(CustomEngineConnector, self).get_engine()
+            if uri.startswith('sqlite://'):
+                with self._lock:
+                    @event.listens_for(rv, "connect")
+                    def do_connect(dbapi_connection, connection_record):
+                        # disable pysqlite's emitting of the BEGIN statement
+                        # entirely.  also stops it from emitting COMMIT before any
+                        # DDL.
+                        dbapi_connection.isolation_level = None
+                        cursor = dbapi_connection.cursor()
+                        cursor.execute("PRAGMA case_sensitive_like=true")
+                        cursor.close()
+
+                    @event.listens_for(rv, "begin")
+                    def do_begin(conn):
+                        # emit our own BEGIN
+                        conn.execute("BEGIN")
+            return rv
 
 
 db = SQLAlchemy()
 
 SCHEMA_VERSION = 'W.3.0.0'
+
+
+def _make_generic_count_property(parent_table, children_table):
+    """Make a deferred by default column property that counts the
+    amount of childrens of some parent object"""
+    children_id_field = '{}.id'.format(children_table)
+    parent_id_field = '{}.id'.format(parent_table)
+    children_rel_field = '{}.{}_id'.format(children_table, parent_table)
+    query = (select([func.count(text(children_id_field))]).
+             select_from(table(children_table)).
+             where(text('{} = {}'.format(
+                 children_rel_field, parent_id_field))))
+    return column_property(query, deferred=True)
 
 
 class DatabaseMetadata(db.Model):
@@ -171,6 +190,9 @@ class Host(Metadata):
                             backref='hosts',
                             foreign_keys=[workspace_id]
                             )
+
+    service_count = _make_generic_count_property('host', 'service')
+
     __table_args__ = (
         UniqueConstraint(ip, workspace_id, name='uix_host_ip_workspace'),
     )
@@ -234,12 +256,6 @@ class Service(Metadata):
     __table_args__ = (
         UniqueConstraint(port, protocol, host_id, workspace_id, name='uix_service_port_protocol_host_workspace'),
     )
-
-# TODO: Move this to Host definition. I need a way to reference Service before
-# it is declared
-Host.service_count = column_property((select([func.count(Service.id)]).
-            where(Service.host_id == Host.id)#.label('service_count')
-            ), deferred=True)
 
 
 class VulnerabilityABC(Metadata):
@@ -578,6 +594,19 @@ class Command(Metadata):
                                 )
 
 
+def _make_vuln_count_property(type_=None):
+    query = (select([func.count(text('vulnerability.id'))]).
+             select_from(table('vulnerability')).
+             where(text('vulnerability.workspace_id = workspace.id'))
+             )
+    if type_:
+        # Don't do queries using this style!
+        # This can cause SQL injection vulnerabilities
+        # In this case type_ is supplied from a whitelist so this is safe
+        query = query.where(text("vulnerability.type = '%s'" % type_))
+    return column_property(query, deferred=True)
+
+
 class Workspace(Metadata):
     __tablename__ = 'workspace'
     id = Column(Integer, primary_key=True)
@@ -588,6 +617,14 @@ class Workspace(Metadata):
     name = Column(String(250), nullable=False, unique=True)
     public = Column(Boolean(), nullable=False, default=True)  # TBI
     start_date = Column(DateTime(), nullable=True)
+
+    credential_count = _make_generic_count_property('workspace', 'credential')
+    host_count = _make_generic_count_property('workspace', 'host')
+    service_count = _make_generic_count_property('workspace', 'service')
+    vulnerability_web_count = _make_vuln_count_property('vulnerability_web')
+    vulnerability_code_count = _make_vuln_count_property('vulnerability_code')
+    vulnerability_standard_count = _make_vuln_count_property('vulnerability')
+    vulnerability_total_count = _make_vuln_count_property()
 
 
 class Scope(Metadata):

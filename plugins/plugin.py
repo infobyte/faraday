@@ -18,7 +18,6 @@ import model.api
 import model.common
 from model.common import factory
 from persistence.server.models import (Host,
-        Interface,
         Service,
         Vuln,
         VulnWeb,
@@ -160,23 +159,9 @@ class PluginBase(object):
         ipv6_gateway="0000:0000:0000:0000:0000:0000:0000:0000", ipv6_dns=[],
         network_segment="", hostname_resolution=[]):
 
-        # hostname_resolution must be a list. Many plugins are passing a string
-        # as argument causing errors in the WEB UI.
-        if isinstance(hostname_resolution, str):
-            hostname_resolution = [hostname_resolution]
-
-        int_obj = model.common.factory.createModelObject(
-            Interface.class_signature,
-            name, mac=mac, ipv4_address=ipv4_address,
-            ipv4_mask=ipv4_mask, ipv4_gateway=ipv4_gateway, ipv4_dns=ipv4_dns,
-            ipv6_address=ipv6_address, ipv6_prefix=ipv6_prefix,
-            ipv6_gateway=ipv6_gateway, ipv6_dns=ipv6_dns,
-            network_segment=network_segment,
-            hostnames=hostname_resolution, parent_id=host_id)
-
-        int_obj._metadata.creator = self.id
-        self.__addPendingAction(modelactions.ADDINTERFACE, host_id, int_obj)
-        return int_obj.getID()
+        # We don't use interface anymore, so return a host id to maintain
+        # backwards compatibility
+        return host_id
 
     def createAndAddServiceToInterface(self, host_id, interface_id, name,
                                        protocol="tcp?", ports=[],

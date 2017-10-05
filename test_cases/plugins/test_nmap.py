@@ -21,7 +21,6 @@ from persistence.server.models import (
     Note,
     Host,
     Service,
-    Interface
 )
 from plugins.modelactions import modelactions
 
@@ -56,7 +55,6 @@ class NmapXMLParserTest(unittest.TestCase):
 
     def setUp(self):
         factory.register(Host)
-        factory.register(Interface)
         factory.register(Service)
         factory.register(Vuln)
         factory.register(VulnWeb)
@@ -68,9 +66,6 @@ class NmapXMLParserTest(unittest.TestCase):
         action = self.plugin._pending_actions.get(block=True)
         self.assertEqual(action[0], modelactions.ADDHOST)
         self.assertEqual(action[1].name, "198.38.82.159")
-        action = self.plugin._pending_actions.get(block=True)
-        self.assertEqual(action[0], modelactions.ADDINTERFACE)
-        self.assertEqual(action[2].name, "198.38.82.159")
 
     def test_Plugin_Calls_createAndAddService(self):
         self.plugin.parseOutputString(self.xml_output)

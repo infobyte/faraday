@@ -2,8 +2,13 @@ import pytest
 from sqlalchemy.orm.util import was_deleted
 
 from test_cases import factories
-from test_api_workspaced_base import API_PREFIX, ReadWriteAPITests
+from test_api_workspaced_base import (
+    API_PREFIX,
+    ReadWriteAPITests,
+    PaginationTestsMixin,
+)
 from server.models import db, Host
+from server.api.modules.hosts import HostsView
 
 HOSTS_COUNT = 5
 SERVICE_COUNT = [10, 5]  # 10 services to the first host, 5 to the second
@@ -45,6 +50,14 @@ class TestHostAPI:
 
     def services_url(self, host, workspace=None):
         return self.url(host, workspace) + 'services/'
+
+    def compare_results(self, hosts, response):
+        """
+        Compare is the hosts in response are the same that in hosts.
+        It only compares the IDs of each one, not other fields"""
+        hosts_in_list = set(host.id for host in hosts)
+        hosts_in_response = set(host['id'] for host in response.json)
+        assert hosts_in_list == hosts_in_response
 
     def test_list_retrieves_all_items_from_workspace(self, test_client,
                                                      second_workspace,
@@ -200,11 +213,51 @@ class TestHostAPI:
             if host['id'] in ids_map:
                 assert host['service_count'] == len(ids_map[host['id']])
 
+    def test_filter_by_os_exact(self, test_client, session, workspace,
+                                second_workspace, host_factory):
+        # The hosts that should be shown
+        hosts = host_factory.create_batch(10, workspace=workspace, os='Unix')
 
-class TestHostAPIGeneric(ReadWriteAPITests):
+        # Search should be case sensitive so this shouln't be shown
+        host_factory.create_batch(1, workspace=workspace, os='UNIX')
+
+        # This shouldn't be shown, they are from other workspace
+        host_factory.create_batch(5, workspace=second_workspace, os='Unix')
+
+        url = self.url() + '?os=Unix'
+        res = test_client.get(url)
+        assert res.status_code == 200
+        self.compare_results(hosts, res)
+
+    def test_filter_by_os_like_ilike(self, test_client, session, workspace,
+                                     second_workspace, host_factory):
+        # The hosts that should be shown
+        hosts = host_factory.create_batch(5, workspace=workspace, os='Unix 1')
+        hosts += host_factory.create_batch(5, workspace=workspace, os='Unix 2')
+
+        # This should only be shown when using ilike, not when using like
+        case_insensitive_host = host_factory.create(
+            workspace=workspace, os='UNIX 3')
+
+        # This doesn't match the like expression
+        host_factory.create(workspace=workspace, os="Test Unix 1")
+
+        # This shouldn't be shown anywhere, they are from other workspace
+        host_factory.create_batch(5, workspace=second_workspace, os='Unix')
+
+        res = test_client.get(self.url() + '?os__like=Unix %')
+        assert res.status_code == 200
+        self.compare_results(hosts, res)
+
+        res = test_client.get(self.url() + '?os__ilike=Unix %')
+        assert res.status_code == 200
+        self.compare_results(hosts + [case_insensitive_host], res)
+
+
+class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
     model = Host
     factory = factories.HostFactory
     api_endpoint = 'hosts'
     unique_fields = ['ip']
     update_fields = ['ip', 'description', 'os']
-
+    view_class = HostsView

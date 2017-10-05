@@ -359,11 +359,13 @@ class ServiceImporter(object):
                     document['status'] = 'open'
                 status_mapper = {
                     'open': 'open',
+                    'up': 'open',
                     'closed': 'closed',
+                    'down': 'closed',
                     'filtered': 'filtered',
                     'open|filtered': 'filtered'
                 }
-                service.status = status_mapper[document.get('status')]
+                service.status = status_mapper[document.get('status', 'open')]
                 service.version = document.get('version')
                 service.workspace = workspace
 
@@ -769,7 +771,7 @@ class ImportCouchDBUsers(FlaskScriptCommand):
             if user['name'] in admins.keys():
                 # This is an already imported admin user, skip
                 continue
-            logger.info('Importing {0}'.format(user['name']))
+            logger.info(u'Importing {0}'.format(user['name']))
             if not db.session.query(User).filter_by(username=user['name']).first():
                 app.user_datastore.create_user(
                     username=user['name'],

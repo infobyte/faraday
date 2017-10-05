@@ -16,3 +16,5 @@ sqlalchemy>=1.0.12
 tqdm==4.15.0
 twisted>=16.1.1
 webargs
+marshmallow-sqlalchemy
+filteralchemy

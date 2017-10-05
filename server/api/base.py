@@ -1,9 +1,12 @@
-import flask
 import json
 
+import flask
+from flask import abort
+from sqlalchemy import inspect
 from flask_classful import FlaskView
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.inspection import inspect
+from sqlalchemy import func
 from werkzeug.routing import parse_rule
 from marshmallow import Schema
 from marshmallow.compat import with_metaclass
@@ -323,6 +326,31 @@ class DeleteWorkspacedMixin(DeleteMixin):
     pass
 
 
+class CountWorkspacedMixin(object):
+
+    def count(self, **kwargs):
+        res = {
+            'groups': [],
+            'total_count': 0
+        }
+        group_by = flask.request.args.get('group_by', None)
+        if not group_by or group_by not in inspect(self.model_class).attrs:
+            abort(404)
+
+        workspace_name = kwargs.pop('workspace_name')
+        # using format is not a great practice.
+        # the user input is group_by, however it's filtered by column name.
+        group_by = '{0}.{1}'.format(self.model_class.__name__, group_by)
+        count = db.session.query(self.model_class).join(Workspace).group_by(group_by).filter(
+            Workspace.name == workspace_name).values(group_by, func.count(group_by))
+        for key, count in count:
+            res['groups'].append(
+                {'count': count, 'name': key}
+            )
+            res['total_count'] +=1
+        return res
+
+
 class ReadWriteView(CreateMixin,
                     UpdateMixin,
                     DeleteMixin,
@@ -334,6 +362,7 @@ class ReadWriteView(CreateMixin,
 class ReadWriteWorkspacedView(CreateWorkspacedMixin,
                               UpdateWorkspacedMixin,
                               DeleteWorkspacedMixin,
+                              CountWorkspacedMixin,
                               ReadOnlyWorkspacedView):
     """A generic workspaced view with list, retrieve and create
     endpoints"""

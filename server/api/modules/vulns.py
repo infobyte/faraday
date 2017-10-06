@@ -58,6 +58,19 @@ class VulnerabilityGenericSchema(AutoSchema):
     service = fields.Integer(dump_only=True, attribute='service_id')
     host = fields.Integer(dump_only=True, attribute='host_id')
 
+    class Meta:
+        model = VulnerabilityGeneric
+        fields = (
+            '_id', 'status',
+            'website', 'issuetracker', 'description', 'parent',
+            'tags', 'severity', '_rev', 'easeofresolution', 'owned',
+            'hostnames', 'pname', 'query', 'owner',
+            'path', 'data', 'response', 'refs',
+            'desc', 'impact', 'confirmed', 'name',
+            'service', 'obj_id', 'type', 'policyviolations',
+            'request', '_attachments', 'params',
+            'target', 'resolution', 'method', 'metadata')
+
     def get_metadata(self, obj):
         return {
             "command_id": "e1a042dd0e054c1495e1c01ced856438",
@@ -113,19 +126,6 @@ class VulnerabilityGenericSchema(AutoSchema):
             'confidentiality': obj.impact_confidentiality,
             'integrity': obj.impact_integrity
         }
-
-    class Meta:
-        model = VulnerabilityGeneric
-        fields = (
-            '_id', 'status',
-            'website', 'issuetracker', 'description', 'parent',
-            'tags', 'severity', '_rev', 'easeofresolution', 'owned',
-            'hostnames', 'pname', 'query', 'owner',
-            'path', 'data', 'response', 'refs',
-            'desc', 'impact', 'confirmed', 'name',
-            'service', 'obj_id', 'type', 'policyviolations',
-            'request', '_attachments', 'params',
-            'target', 'resolution', 'method', 'metadata')
 
 
 class VulnerabilityView(ReadWriteWorkspacedView):

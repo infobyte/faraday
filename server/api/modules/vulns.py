@@ -77,7 +77,7 @@ class VulnerabilityGenericSchema(AutoSchema):
             return [hostname.name for hostname in obj.host.hostnames]
         if obj.service:
             return [hostname.name for hostname in obj.service.host.hostnames]
-        logger.info('Vulnerabilit without host and service. Check invatiant of obj with id {0}'.format(obj.id))
+        logger.info('Vulnerability without host and service. Check invariant in obj with id {0}'.format(obj.id))
         return []
 
     def get_easeofresolution(self, obj):

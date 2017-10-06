@@ -349,7 +349,7 @@ class CountWorkspacedMixin(object):
             res['groups'].append(
                 {'count': count, 'name': key}
             )
-            res['total_count'] +=1
+            res['total_count'] += count
         return res
 
 

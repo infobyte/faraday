@@ -21,7 +21,6 @@ from persistence.server.models import (
     Note,
     Host,
     Service,
-    Interface
 )
 from plugins.modelactions import modelactions
 import test_common
@@ -33,7 +32,6 @@ class NessusParserTest(unittest.TestCase):
     def setUp(self):
         self.plugin = NessusPlugin()
         factory.register(Host)
-        factory.register(Interface)
         factory.register(Service)
         factory.register(Vuln)
         factory.register(VulnWeb)
@@ -45,9 +43,9 @@ class NessusParserTest(unittest.TestCase):
         action = self.plugin._pending_actions.get(block=True)
         self.assertEqual(action[0], modelactions.ADDHOST)
         self.assertEqual(action[1].name, "12.233.108.201")
-        action = self.plugin._pending_actions.get(block=True)
-        self.assertEqual(action[0], modelactions.ADDINTERFACE)
-        self.assertEqual(action[2].name, "12.233.108.201")
+        # action = self.plugin._pending_actions.get(block=True)
+        # self.assertEqual(action[0], modelactions.ADDINTERFACE)
+        # self.assertEqual(action[2].name, "12.233.108.201")
         action = self.plugin._pending_actions.get(block=True)
         self.assertEqual(action[0], modelactions.ADDVULNHOST)
         self.assertEqual(action[2].name, "Nessus Scan Information")

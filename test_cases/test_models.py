@@ -4,7 +4,7 @@ from persistence.server import models
 from persistence.server import server_io_exceptions
 from mock import MagicMock, patch, create_autospec
 
-HOST_JSON_STRING = '{"_id":1,"id":"08d3b6545ec70897daf05cd471f4166a8e605c00","key":"08d3b6545ec70897daf05cd471f4166a8e605c00","value":{"_id":"08d3b6545ec70897daf05cd471f4166a8e605c00","_rev":"1-a12368dc03d557c337e833f8090db568","default_gateway":["192.168.20.1","00:1d:aa:c9:83:e8"],"description":"","interfaces":[1],"metadata":{"create_time":1475852074.455225,"creator":"","owner":"","update_action":0,"update_controller_action":"ModelControler._processAction ModelControler.newHost","update_time":1475852074.455226,"update_user":""},"name":"10.31.112.29","os":"Microsoft Windows Server 2008 R2 Standard Service Pack 1","owned":"false","owner":"","services":12,"vulns":43}}'
+HOST_JSON_STRING = '{"_id":1,"id":"08d3b6545ec70897daf05cd471f4166a8e605c00","key":"08d3b6545ec70897daf05cd471f4166a8e605c00","value":{"_id":"08d3b6545ec70897daf05cd471f4166a8e605c00","_rev":"1-a12368dc03d557c337e833f8090db568","default_gateway":["192.168.20.1","00:1d:aa:c9:83:e8"],"description":"","metadata":{"create_time":1475852074.455225,"creator":"","owner":"","update_action":0,"update_controller_action":"ModelControler._processAction ModelControler.newHost","update_time":1475852074.455226,"update_user":""},"name":"10.31.112.29","os":"Microsoft Windows Server 2008 R2 Standard Service Pack 1","owned":"false","owner":"","services":12,"vulns":43}}'
 
 INTERFACE_JSON_STRING = '{"_id":1,"id":"08d3b6545ec70897daf05cd471f4166a8e605c00.02946afc59c50a4d76c1adbb082c2d5439baf50a","key":"08d3b6545ec70897daf05cd471f4166a8e605c00.02946afc59c50a4d76c1adbb082c2d5439baf50a","value":{"_id":"08d3b6545ec70897daf05cd471f4166a8e605c00.02946afc59c50a4d76c1adbb082c2d5439baf50a","_rev":"1-c279e0906d2b1f02b832a99d5f58f99c","description":"","host_id":1,"hostnames":["qa3app09"],"ipv4":{"DNS":[],"address":"10.31.112.29","gateway":"0.0.0.0","mask":"0.0.0.0"},"ipv6":{"DNS":[],"address":"0000:0000:0000:0000:0000:0000:0000:0000","gateway":"0000:0000:0000:0000:0000:0000:0000:0000","prefix":"00"},"mac":"00:50:56:81:01:e3","metadata":{"create_time":1475852074.456803,"creator":"","owner":"","update_action":0,"update_controller_action":"ModelControler._processAction ModelControler.newInterface","update_time":1475852074.456803,"update_user":""},"name":"10.31.112.29","network_segment":"","owned":false,"owner":"","ports":{"closed":null,"filtered":null,"opened":null}}}'
 
@@ -47,7 +47,6 @@ class ModelsTest(unittest.TestCase):
                 u"_rev":u"1-a12368dc03d557c337e833f8090db568",
                 u"default_gateway":[u"192.168.20.1",u"00:1d:aa:c9:83:e8"],
                 u"description":u"",
-                u"interfaces":[1],
                 u"metadata":{u"create_time":1475852074.455225,
                              u"creator":u"",
                              u"owner":u"",
@@ -66,13 +65,11 @@ class ModelsTest(unittest.TestCase):
 
     def test_faraday_ready_objects_getter(self):
         hosts = models._get_faraday_ready_objects(self.ws, [self.a_host_dictionary], 'hosts')
-        interfaces = models._get_faraday_ready_objects(self.ws, [self.an_interface_dictionary], 'interfaces')
         services = models._get_faraday_ready_objects(self.ws, [self.a_service_dictionary], 'services')
         vulns = models._get_faraday_ready_objects(self.ws, [self.a_vuln_dictionary], 'vulns')
         vulns_web = models._get_faraday_ready_objects(self.ws, [self.a_vuln_dictionary], 'vulns_web')
 
         self.assertTrue(all([isinstance(h, models.Host) for h in hosts]))
-        self.assertTrue(all([isinstance(i, models.Interface) for i in interfaces]))
         self.assertTrue(all([isinstance(s, models.Service) for s in services]))
         self.assertTrue(all([isinstance(v, models.Vuln) for v in vulns]))
         self.assertTrue(all([isinstance(v, models.VulnWeb) for v in vulns_web]))
@@ -81,8 +78,8 @@ class ModelsTest(unittest.TestCase):
         # ideally, the flatten dictionary should be provided and shouldnt depend upon
         # our implementation.
         # ideally.
-        classes = [models.Host, models.Interface, models.Service, models.Vuln, models.VulnWeb, models.Note]
-        dicts = [self.a_host_dictionary, self.an_interface_dictionary, self.a_service_dictionary,
+        classes = [models.Host, models.Service, models.Vuln, models.VulnWeb, models.Note]
+        dicts = [self.a_host_dictionary, self.a_service_dictionary,
                  self.a_vuln_dictionary, self.a_vuln_web_dictionary, self.a_note_dictionary]
         dicts = map(models._flatten_dictionary, dicts)
         for class_, dictionary in zip(classes, dicts):

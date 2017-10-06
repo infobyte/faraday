@@ -21,7 +21,6 @@ from persistence.server.models import (
     Note,
     Host,
     Service,
-    Interface
 )
 from plugins.modelactions import modelactions
 
@@ -33,7 +32,6 @@ class CmdPingPluginTest(unittest.TestCase):
                         "(216.58.222.142): icmp_seq=1 ttl=53 time=28.9 ms")
     def setUp(self):
         factory.register(Host)
-        factory.register(Interface)
         factory.register(Service)
         factory.register(Vuln)
         factory.register(VulnWeb)
@@ -45,9 +43,6 @@ class CmdPingPluginTest(unittest.TestCase):
         action = self.plugin._pending_actions.get(block=True)
         self.assertEqual(action[0], modelactions.ADDHOST)
         self.assertEqual(action[1].name, "216.58.222.142")
-        action = self.plugin._pending_actions.get(block=True)
-        self.assertEqual(action[0], modelactions.ADDINTERFACE)
-        self.assertEqual(action[2].name, "216.58.222.142")
 
 
 if __name__ == '__main__':

@@ -22,6 +22,7 @@ from server.utils.web import (
     get_integer_parameter,
     filter_request_args
 )
+from server.schemas import PrimaryKeyRelatedField
 from server.dao.vuln import VulnerabilityDAO
 
 vulns_api = Blueprint('vulns_api', __name__)
@@ -33,7 +34,7 @@ class VulnerabilityGenericSchema(AutoSchema):
     website = fields.String(default='')
     _rev = fields.String(default='')
     owned = fields.Boolean(default=False)
-    owner = fields.Method('get_owner_name')
+    owner = PrimaryKeyRelatedField('username', attribute='creator')
     impact = fields.Method('get_impact')
     policyviolations = fields.Method('get_policyviolations')
     method = fields.String(default='')
@@ -112,9 +113,6 @@ class VulnerabilityGenericSchema(AutoSchema):
             'confidentiality': obj.impact_confidentiality,
             'integrity': obj.impact_integrity
         }
-
-    def get_owner_name(self, obj):
-        return obj.creator.username
 
     class Meta:
         model = VulnerabilityGeneric

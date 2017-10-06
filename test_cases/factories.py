@@ -17,6 +17,8 @@ from server.models import (
     EntityMetadata,
     Host,
     License,
+    PolicyViolation,
+    Reference,
     Service,
     SourceCode,
     User,
@@ -104,6 +106,24 @@ class EntityMetadataFactory(WorkspaceObjectFactory):
 
     class Meta:
         model = EntityMetadata
+        sqlalchemy_session = db.session
+
+
+class PolicyViolationFactory(WorkspaceObjectFactory):
+    name = FuzzyText()
+    vulnerability = None
+
+    class Meta:
+        model = PolicyViolation
+        sqlalchemy_session = db.session
+
+
+class ReferenceFactory(WorkspaceObjectFactory):
+    name = FuzzyText()
+    vulnerability = None
+
+    class Meta:
+        model = Reference
         sqlalchemy_session = db.session
 
 

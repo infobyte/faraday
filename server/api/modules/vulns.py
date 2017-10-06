@@ -36,10 +36,11 @@ class VulnerabilityGenericSchema(AutoSchema):
     owned = fields.Boolean(default=False)
     owner = PrimaryKeyRelatedField('username', attribute='creator')
     impact = fields.Method('get_impact')
-    policyviolations = fields.Method('get_policyviolations')
+    policyviolations = PrimaryKeyRelatedField('name', many=True,
+                                              attribute='policy_violations')
     method = fields.String(default='')
     params = fields.String(default='')
-    refs = fields.Method('get_refs')
+    refs = PrimaryKeyRelatedField('name', many=True, attribute='references')
     issuetracker = fields.Method('get_issuetracker')
     parent = fields.Method('get_parent')
     tags = fields.Method('get_tags')
@@ -94,9 +95,6 @@ class VulnerabilityGenericSchema(AutoSchema):
         logger.info('Vulnerability without host and service. Check invariant in obj with id {0}'.format(obj.id))
         return []
 
-    def get_easeofresolution(self, obj):
-        return obj.ease_of_resolution
-
     def get_tags(self, obj):
         return [tag.name for tag in db.session.query(TagObject, Tag).filter_by(
             object_type=obj.__class__.__name__,
@@ -112,12 +110,6 @@ class VulnerabilityGenericSchema(AutoSchema):
 
     def get_issuetracker(self, obj):
         return {}
-
-    def get_refs(self, obj):
-        return [ref.name for ref in obj.references]
-
-    def get_policyviolations(self, obj):
-        return [pv.name for pv in obj.policy_violations]
 
     def get_impact(self, obj):
         return {

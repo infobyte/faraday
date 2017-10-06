@@ -54,8 +54,8 @@ class VulnerabilityGenericSchema(AutoSchema):
     target = fields.String(default='')  # TODO: review this attribute
     query = fields.String(dump_only=True, attribute='query_string', default='')
     metadata = fields.Method('get_metadata')
-    service = fields.Integer(dump_only=True, attribute='service.id')
-    host = fields.Integer(dump_only=True, attribute='host.id')
+    service = fields.Integer(dump_only=True, attribute='service_id')
+    host = fields.Integer(dump_only=True, attribute='host_id')
 
     def get_metadata(self, obj):
         return {

@@ -1,3 +1,4 @@
+import random
 import factory
 import datetime
 
@@ -128,22 +129,37 @@ class SourceCodeFactory(WorkspaceObjectFactory):
         sqlalchemy_session = db.session
 
 
-class VulnerabilityFactory(WorkspaceObjectFactory):
-
+class VulnerabilityGenericFactory(WorkspaceObjectFactory):
     name = FuzzyText()
     description = FuzzyText()
-    host = factory.SubFactory(HostFactory)  # TODO: Move to generic class
-    # service = factory.SubFactory(ServiceFactory)  # TODO: Move to generic class
-    workspace = factory.SubFactory(WorkspaceFactory)
     creator = factory.SubFactory(UserFactory)
     severity = FuzzyChoice(['critical', 'high'])
+
+
+class VulnerabilityFactory(VulnerabilityGenericFactory):
+
+    host = factory.SubFactory(HostFactory)
+    service = factory.SubFactory(ServiceFactory)
+
+    @classmethod
+    def _after_postgeneration(cls, obj, create, results=None):
+        super(VulnerabilityFactory, cls)._after_postgeneration(
+            obj, create, results)
+        if obj.host and obj.service:
+            # Setting both service and host to a vuln is not allowed.
+            # This will pick one of them randomly.
+            # TODO: Check is this is recommended
+            if random.choice([True, False]):
+                obj.host = None
+            else:
+                obj.service = None
 
     class Meta:
         model = Vulnerability
         sqlalchemy_session = db.session
 
 
-class VulnerabilityWebFactory(VulnerabilityFactory):
+class VulnerabilityWebFactory(VulnerabilityGenericFactory):
     method = FuzzyChoice(['GET', 'POST', 'PUT', 'PATCH' 'DELETE'])
     parameter_name = FuzzyText()
     service = factory.SubFactory(ServiceFactory)
@@ -153,9 +169,7 @@ class VulnerabilityWebFactory(VulnerabilityFactory):
         sqlalchemy_session = db.session
 
 
-class VulnerabilityCodeFactory(WorkspaceObjectFactory):
-    name = FuzzyText()
-    description = FuzzyText()
+class VulnerabilityCodeFactory(VulnerabilityGenericFactory):
     start_line = FuzzyInteger(1, 5000)
     source_code = factory.SubFactory(SourceCodeFactory)
 

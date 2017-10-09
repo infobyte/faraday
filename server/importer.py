@@ -162,6 +162,8 @@ def get_children_from_couch(workspace, parent_couchdb_id, child_type):
 def create_tags(raw_tags, parent_id, parent_type):
     for tag_name in [x.strip() for x in raw_tags if x.strip()]:
         tag, tag_created = get_or_create(session, Tag, name=tag_name, slug=slugify(tag_name))
+        session.commit()
+
         relation, relation_created = get_or_create(
             session,
             TagObject,
@@ -604,11 +606,9 @@ class TaskImporter(object):
         else:
             task.methodology = methodology
             task.workspace = workspace
+
         task.description = document.get('description')
         task.assigned_to = session.query(User).filter_by(username=document.get('username')).first()
-        tags = document.get('tags', [])
-        if len(tags):
-            create_tags(tags, task.id, 'task')
         mapped_status = {
             'New': 'new',
             'In Progress': 'in progress',
@@ -616,7 +616,13 @@ class TaskImporter(object):
             'Completed': 'completed'
         }
         task.status = mapped_status[document.get('status')]
-        #tags
+
+        # we need the ID of the Task in order to add tags to it
+        session.commit()
+
+        tags = document.get('tags', [])
+        if len(tags):
+            create_tags(tags, task.id, 'task', task, task_created)
         #task.due_date = datetime.datetime.fromtimestamp(document.get('due_date'))
         return [task]
 

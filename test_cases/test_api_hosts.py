@@ -45,18 +45,18 @@ class TestHostAPI:
         workspace = workspace or self.workspace
         url = API_PREFIX + workspace.name + '/hosts/'
         if host is not None:
-            url += str(host.id) + '/'
+            url += str(host.id)
         return url
 
     def services_url(self, host, workspace=None):
-        return self.url(host, workspace) + 'services/'
+        return self.url(host, workspace) + '/services/'
 
     def compare_results(self, hosts, response):
         """
         Compare is the hosts in response are the same that in hosts.
         It only compares the IDs of each one, not other fields"""
         hosts_in_list = set(host.id for host in hosts)
-        hosts_in_response = set(host['id'] for host in response.json)
+        hosts_in_response = set(host['id'] for host in response.json['rows'])
         assert hosts_in_list == hosts_in_response
 
     def test_list_retrieves_all_items_from_workspace(self, test_client,
@@ -67,14 +67,14 @@ class TestHostAPI:
         session.commit()
         res = test_client.get(self.url())
         assert res.status_code == 200
-        assert len(res.json) == HOSTS_COUNT
+        assert len(res.json['rows']) == HOSTS_COUNT
 
     def test_retrieve_one_host(self, test_client, database):
         host = self.workspace.hosts[0]
         assert host.id is not None
         res = test_client.get(self.url(host))
         assert res.status_code == 200
-        assert res.json['ip'] == host.ip
+        assert res.json['name'] == host.ip
 
     def test_retrieve_fails_with_host_of_another_workspace(self,
                                                            test_client,
@@ -202,16 +202,16 @@ class TestHostAPI:
     def test_retrieve_shows_service_count(self, test_client, host_services):
         for (host, services) in host_services.items():
             res = test_client.get(self.url(host))
-            assert res.json['service_count'] == len(services)
+            assert res.json['services'] == len(services)
 
     def test_index_shows_service_count(self, test_client, host_services):
         ids_map = {host.id: services
                    for (host, services) in host_services.items()}
         res = test_client.get(self.url())
-        assert len(res.json) >= len(ids_map)  # Some hosts can have no services
-        for host in res.json:
+        assert len(res.json['rows']) >= len(ids_map)  # Some hosts can have no services
+        for host in res.json['rows']:
             if host['id'] in ids_map:
-                assert host['service_count'] == len(ids_map[host['id']])
+                assert host['value']['services'] == len(ids_map[host['id']])
 
     def test_filter_by_os_exact(self, test_client, session, workspace,
                                 second_workspace, host_factory):

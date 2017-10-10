@@ -46,7 +46,7 @@ class GenericAPITest:
         if obj is not None:
             id_ = unicode(obj.id) if isinstance(
                 obj, self.model) else unicode(obj)
-            url += id_ + u'/'
+            url += id_
         return url
 
 
@@ -59,7 +59,7 @@ class ListTestsMixin:
         session.commit()
         res = test_client.get(self.url())
         assert res.status_code == 200
-        assert len(res.json) == OBJECT_COUNT
+        assert len(res.json['rows']) == OBJECT_COUNT
 
 
 class RetrieveTestsMixin:

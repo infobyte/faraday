@@ -26,13 +26,39 @@ host_api = Blueprint('host_api', __name__)
 
 
 class HostSchema(AutoSchema):
-
+    _id = fields.Integer(dump_only=True, attribute='id')
+    id = fields.Integer()
+    _rev = fields.String(default='')
+    ip = fields.String(default='')
     description = fields.String(required=True)  # Explicitly set required=True
-    service_count = fields.Integer(dump_only=True)
+    credentials = fields.Function(lambda host: len(host.credentials))
+    default_gateway = fields.List(fields.String, attribute="default_gateway_ip")
+    metadata = fields.Method('get_metadata')
+    name = fields.String(dump_only=True, attribute='ip', default='')
+    os = fields.String(default='')
+    owned = fields.Boolean(default=False)
+    owner = fields.Function(lambda host: host.creator.username)
+    services = fields.Function(lambda host: len(host.services))
+    vulns = fields.Function(lambda host: len(host.vulnerabilities))
+
+    def get_metadata(self, obj):
+        return {
+            "command_id": None,
+            "create_time": None,
+            "creator": None,
+            "owner": None,
+            "update_action": None,
+            "update_controller_action": None,
+            "update_time":1504796508.21,
+            "update_user": None
+        }
 
     class Meta:
         model = Host
-        fields = ('id', 'ip', 'description', 'os', 'service_count')
+        fields = ('id', '_id', '_rev', 'ip', 'description',
+                  'credentials', 'default_gateway', 'metadata',
+                  'name', 'os', 'owned', 'owner', 'services', 'vulns'
+                  )
 
 
 class HostFilterSet(FilterSet):
@@ -68,6 +94,18 @@ class HostsView(PaginatedMixin,
         one query per host"""
         original = super(HostsView, self)._get_base_query(workspace_name)
         return original.options(undefer(Host.service_count))
+
+    def _envelope_list(self, objects, pagination_metadata=None):
+        hosts = []
+        for host in objects:
+            hosts.append({
+                'id': host['id'],
+                'key': host['id'],
+                'value': host
+            })
+        return {
+            'rows': hosts,
+        }
 
 HostsView.register(host_api)
 

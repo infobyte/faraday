@@ -192,7 +192,7 @@ class PaginatedMixin(object):
             except (TypeError, ValueError):
                 flask.abort(404, 'Invalid per_page value')
 
-            pagination_metadata = query.paginate(page=page, per_page=per_page)
+            pagination_metadata = query.paginate(page=page, per_page=per_page, error_out=False)
             return pagination_metadata.items, pagination_metadata
         return super(PaginatedMixin, self)._paginate(query)
 

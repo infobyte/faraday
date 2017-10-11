@@ -20,6 +20,7 @@ from server.api.base import (
     FilterAlchemyMixin,
     FilterSetMeta,
 )
+from server.schemas import PrimaryKeyRelatedField
 from server.models import Host, Service
 
 host_api = Blueprint('host_api', __name__)
@@ -37,7 +38,7 @@ class HostSchema(AutoSchema):
     name = fields.String(dump_only=True, attribute='ip', default='')
     os = fields.String(default='')
     owned = fields.Boolean(default=False)
-    owner = fields.Function(lambda host: host.creator.username)
+    owner = PrimaryKeyRelatedField('username', attribute='creator')
     services = fields.Function(lambda host: len(host.services))
     vulns = fields.Function(lambda host: len(host.vulnerabilities))
 

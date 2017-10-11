@@ -39,7 +39,10 @@ class GenericView(FlaskView):
     # Default attributes
     route_prefix = '/v2/'
     base_args = []
-    representations = {'application/json': output_json}
+    representations = {
+        'application/json': output_json,
+        'flask-classful/default': output_json,
+    }
     lookup_field = 'id'
     lookup_field_type = int
     unique_fields = []  # Fields unique

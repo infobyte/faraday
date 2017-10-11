@@ -45,11 +45,11 @@ class TestHostAPI:
         workspace = workspace or self.workspace
         url = API_PREFIX + workspace.name + '/hosts/'
         if host is not None:
-            url += str(host.id)
+            url += str(host.id) + '/'
         return url
 
     def services_url(self, host, workspace=None):
-        return self.url(host, workspace) + '/services/'
+        return self.url(host, workspace) + 'services/'
 
     def compare_results(self, hosts, response):
         """

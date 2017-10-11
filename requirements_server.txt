@@ -2,7 +2,7 @@ bcrypt
 couchdbkit>=0.6.5
 Flask-SQLAlchemy==2.3.1
 Flask-Script==2.0.5
-flask-classful
+flask-classful==0.14
 Flask-Security==3.0.0
 flask>=0.10.1
 marshmallow

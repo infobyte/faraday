@@ -46,7 +46,7 @@ class GenericAPITest:
         if obj is not None:
             id_ = unicode(obj.id) if isinstance(
                 obj, self.model) else unicode(obj)
-            url += id_
+            url += id_ + u'/'
         return url
 
 

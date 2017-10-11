@@ -20,14 +20,14 @@ current_path = os.path.abspath(os.getcwd())
 
 
 class LynisLogDataExtracter():
-    def __init__(self, datfile=None):
-        if datfile is None:
-            return(False)
-        if not os.path.exists(datfile):
-            raise IOError
-        with open(datfile) as f:
-            self.rawcontents = f.read()
+    def __init__(self, datfile=None, output=None):
         self.services = defaultdict(list)
+        if datfile and not os.path.exists(datfile):
+            with open(datfile) as f:
+                self.rawcontents = f.read()
+
+        if output:
+            self.rawcontents = output
 
     def _svcHelper(self, ip, port, protocol, name):
         self.services[ip].append({'port': port, 'protocol': protocol, 'name': name})
@@ -137,7 +137,11 @@ class LynisPlugin(core.PluginBase):
 
     def parseOutputString(self, output, debug=False):
         datpath = self.getDatPath(output)
-        lde = LynisLogDataExtracter(datfile=datpath)
+        if datpath:
+            lde = LynisLogDataExtracter(datfile=datpath)
+        elif '# Lynis Report' in output:
+            lde = LynisLogDataExtracter(output=output)
+
         h_id = self.createAndAddHost(name=lde.hostname(),
                                      os=lde.osfullname())
 

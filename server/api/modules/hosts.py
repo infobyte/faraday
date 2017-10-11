@@ -38,7 +38,7 @@ class HostSchema(AutoSchema):
     name = fields.String(dump_only=True, attribute='ip', default='')
     os = fields.String(default='')
     owned = fields.Boolean(default=False)
-    owner = PrimaryKeyRelatedField('username', attribute='creator')
+    owner = PrimaryKeyRelatedField('username', attribute='creator', dump_only=True)
     services = fields.Function(lambda host: len(host.services))
     vulns = fields.Function(lambda host: len(host.vulnerabilities))
 

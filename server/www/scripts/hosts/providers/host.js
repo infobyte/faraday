@@ -5,49 +5,33 @@
 angular.module('faradayApp')
     .factory('Host', ['BASEURL', 'ServerAPI', function(BASEURL, ServerAPI) {
         Host = function(data){
-            if(data) {
-                this.set(data);
-            }
+            this.set(data);
         };
 
         Host.prototype = {
-            // TODO: instead of using angular.extend, we should check
-            // the attributes we're assigning to the host
             set: function(data) {
-                // if there's no ID, we need to generate it based on the host name
-                if(data._id === undefined){
-                    data['_id'] = CryptoJS.SHA1(data.name).toString();
+                var self = this;
+
+                if(data._id != undefined) {
+                    if(data.metadata !== undefined) self.metadata = data.metadata;
                 }
-                data.type = "Host";
-                angular.extend(this, data);
-            },
 
+                for (var key in data) {
+                    if(data[key] !== undefined) self[key] = data[key];
+                };
+            },
             delete: function(ws) {
-                return ServerAPI.deleteHost(ws, this._id, this.rev);
+                return ServerAPI.deleteHost(ws, this.id);
             },
 
-            update: function(data, interfaceData, ws) {
+            update: function(data, ws) {
                 var self = this;
-                return ServerAPI.updateHost(ws, data)
-                .then(function(hostData) {
-                    self._rev = hostData.data.rev;
-                    ServerAPI.updateInterface(ws, interfaceData)
-                    .then(function(intData) {
-                            interfaceData._rev = intData.data.rev;
-                    });
-                });
+                return ServerAPI.updateHost(ws, data);
             },
 
-            save: function(ws, interfaceData) {
+            save: function(ws) {
                 var self = this;
-                return ServerAPI.createHost(ws, self).
-                    then(function(host_data) {
-                        ServerAPI.createInterface(ws, interfaceData).
-                        then(function(interface_data) {
-                            self._rev = host_data.rev;
-                            interfaceData._rev = interface_data.rev;
-                        });
-                    });
+                return ServerAPI.createHost(ws, self);
             },
 
         }

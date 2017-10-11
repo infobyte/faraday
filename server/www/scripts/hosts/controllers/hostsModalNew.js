@@ -16,15 +16,6 @@ angular.module('faradayApp')
             "owner": "",
         };
 
-        $scope.interfaceData = {
-            "hostnames": [{key: ''}],
-            "ipv6": "0000:0000:0000:0000:0000:0000:0000:0000",
-            "ipv4": "0.0.0.0",
-            "mac": "00:00:00:00:00:00",
-            "interfaceOwner": "",
-            "interfaceOwned": false
-        };
-        
         $scope.credentialData = {
             'name': '',
             'username': '',
@@ -42,7 +33,7 @@ angular.module('faradayApp')
                 hostnames.push(hname.hostname);
             });
 
-            $scope.interfaceData.hostnames = hostnames.filter(Boolean);
+            $scope.hostdata.hostnames = hostnames.filter(Boolean);
             $scope.hostdata.interfaceName = $scope.hostdata.name;
             $scope.hostdata.metadata = {
                 "update_time": timestamp,
@@ -54,7 +45,7 @@ angular.module('faradayApp')
                 "owner": ""
             };
 
-            $modalInstance.close([$scope.hostdata,$scope.interfaceData, $scope.credentialData]);
+            $modalInstance.close([$scope.hostdata, $scope.credentialData]);
         };
 
         $scope.cancel = function() {
@@ -62,7 +53,7 @@ angular.module('faradayApp')
         };
 
         $scope.newHostnames = function($event){
-            $scope.interfaceData.hostnames.push({key:''});
+            $scope.hostdata.hostnames.push({key:''});
             $event.preventDefault();
         }
 

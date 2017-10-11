@@ -101,37 +101,22 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
-        hostsManager.createHost = function(hostData, interfaceData, ws) {
+        hostsManager.createHost = function(hostData, ws) {
             var deferred = $q.defer();
             var self = this;
-
-            this.getHosts(ws)
-                .then(function(hosts) {
-                    var host = new Host(hostData);
-                    self.getHost(host._id, ws)
-                        .then(function() {
-                            deferred.reject("Host already exists");
-                        })
-                        .catch(function() {
-                            // host doesn't exist, good to go
-                            host.save(ws, interfaceData)
-                                .then(function() {
-                                    host = self.getHost(host._id, ws);
-                                    deferred.resolve(host);
-                                })
-                                .catch(function() {
-                                    deferred.reject("Error: host couldn't be saved");
-                                })
-                        });
+            var host = new Host(hostData);
+            host.save(ws)
+                .then(function(saved_host) {
+                    deferred.resolve(saved_host);
                 })
                 .catch(function() {
-                    deferred.reject("Error creating host");
-                });
+                    deferred.reject("Error: host couldn't be saved");
+                })
 
             return deferred.promise;
         };
 
-        hostsManager.updateHost = function(host, hostData, interfaceData, ws) {
+        hostsManager.updateHost = function(host, hostData, ws) {
             var deferred = $q.defer(),
             self = this;
 
@@ -192,24 +177,6 @@ angular.module('faradayApp')
 
         hostsManager.getAllServicesCount = function(ws) {
             return this.get_count(ws, 'services');
-        };
-
-        // XXX: THIS STILL USES VIEWS
-        hostsManager.getInterfaces = function(ws, id) {
-            var deferred = $q.defer(),
-            self = this;
-
-            var url = BASEURL + ws + '/_design/interfaces/_view/interfaces?key=\"' + id + '\"';
-
-            $http.get(url)
-                .success(function(interfaces) {
-                    deferred.resolve(interfaces.rows);
-                })
-                .error(function() {
-                    deferred.reject("Unable to retrieve Interfaces for Host " + id);
-                });
-
-            return deferred.promise;
         };
 
         return hostsManager;

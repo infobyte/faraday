@@ -17,17 +17,16 @@ angular.module("faradayApp")
                 return get_url;
             };
 
-            var createNewGetUrl = function(wsName, objId) {
-                return APIURL + "ws/" + wsName + "/doc/" + objId;
+            var createNewGetUrl = function(wsName, objId, objectType) {
+                return APIURL + "ws/" + wsName + "/" + objectType + "/" + objId;
             }
 
-            var createPostUrl = function(wsName, objectId, rev) {
-                if (rev === undefined) {
-                    return APIURL + "ws/" + wsName + "/doc/" + objectId;
-                }
-                else {
-                    return APIURL + "ws/" + wsName + "/doc/" + objectId + "?rev=" + rev;
-                }
+            var createPostUrl = function(wsName, objectId, objectType) {
+                return APIURL + "ws/" + wsName + "/" + objectType + "/";
+            };
+
+            var createPutUrl = function(wsName, objectId, objectType) {
+                return APIURL + "ws/" + wsName + "/" + objectType + "/" + objectId;
             };
 
             var createDbUrl = function(wsName) {
@@ -56,7 +55,7 @@ angular.module("faradayApp")
                 return serverComm("GET", url, data);
             };
 
-            var put = function(url, data, is_update) {
+            var send_data = function(url, data, is_update, method) {
                 // undefined is just evil...
                 if (typeof is_update === "undefined") {var is_update = false;}
                 if (is_update && !data._rev) {
@@ -64,12 +63,11 @@ angular.module("faradayApp")
                     console.log('ok, undefined, you win');
                     return get(url).then(function s(r) {
                         data._rev = r.data._rev;
-                        return serverComm("PUT", url, data);
+                        return serverComm(method, url, data);
                     }).catch(function e(r) {$q.reject(r)});
                 }
-                return serverComm("PUT", url, data);
+                return serverComm(method, url, data);
             };
-
 
             // delete is a reserved keyword
             // just set rev_provided to false if you're deleting a database :)
@@ -108,13 +106,7 @@ angular.module("faradayApp")
                 if (typeof host.owner === "undefined") {host.owner = ""};
                 if (typeof host.owned === "undefined") {host.owned = false};
                 if (typeof host.os === "undefined") {host.os = ""};
-                return createOrUpdate(wsName, host._id, host);
-            }
-
-            var modInterface = function(createOrUpdate, wsName, _interface) {
-                if (typeof _interface.owned === "undefined") {_interface.owned = false};
-                if (typeof _interface.owner === "undefined") {_interface.owner = ""};
-                if (typeof _interface.os === "undefined") {_interface.os = ""}; return createOrUpdate(wsName, _interface._id, _interface);
+                return createOrUpdate(wsName, host._id, host, 'hosts');
             }
 
             var modService = function(createOrUpdate, wsName, service) {
@@ -169,24 +161,24 @@ angular.module("faradayApp")
                     return createOrUpdate(wsName, command._id, command);
             }
 
-            var createObject = function(wsName, id, data) {
-                var postUrl = createPostUrl(wsName, id);
-                return put(postUrl, data, false);
+            var createObject = function(wsName, id, data, collectionName) {
+                var postUrl = createPostUrl(wsName, id, collectionName);
+                return send_data(postUrl, data, false, "POST");
             }
 
-            var updateObject = function(wsName, id, data) {
-                var postUrl = createPostUrl(wsName, id);
-                return put(postUrl, data, true);
+            var updateObject = function(wsName, id, data, collectionName) {
+                var postUrl = createPostUrl(wsName, id, collectionName);
+                return send_data(postUrl, data, true, "PUT");
             }
 
-            var saveInServer = function(wsName, objectId, data) {
-                var postUrl = createPostUrl(wsName, objectId);
-                return put(postUrl, data, false);
+            var saveInServer = function(wsName, objectId, data, collectionName) {
+                var postUrl = createPostUrl(wsName, objectId, collectionName);
+                return send_data(postUrl, data, false, "PUT");
             }
 
-            var updateInServer = function(wsName, objectId, data) {
-                var postUrl = createPostUrl(wsName, objectId);
-                return put(postUrl, objectId, true);
+            var updateInServer = function(wsName, objectId, data, collectionName) {
+                var postUrl = createPostUrl(wsName, objectId, collectionName);
+                return send_data(postUrl, objectId, true, "PUT");
             }
 
             ServerAPI.getHosts = function(wsName, data) {
@@ -196,11 +188,6 @@ angular.module("faradayApp")
             
             ServerAPI.getVulns = function(wsName, data) {
                 var getUrl = createGetUrl(wsName, 'vulns');
-                return get(getUrl, data);
-            }
-
-            ServerAPI.getInterfaces = function(wsName, data) {
-                var getUrl = createGetUrl(wsName, 'interfaces');
                 return get(getUrl, data);
             }
 
@@ -300,19 +287,11 @@ angular.module("faradayApp")
             }
 
             ServerAPI.createHost = function(wsName, host) {
-                    return modHost(createObject, wsName, host);
+                return modHost(createObject, wsName, host);
             }
 
             ServerAPI.updateHost = function(wsName, host) {
                     return modHost(updateObject, wsName, host);
-            }
-
-            ServerAPI.createInterface = function(wsName, _interface) {
-                    return modInterface(createObject, wsName, _interface);
-            }
-
-            ServerAPI.updateInterface = function(wsName, _interface) {
-                    return modInterface(updateObject, wsName, _interface);
             }
 
             ServerAPI.createService = function(wsName, service) {
@@ -370,16 +349,6 @@ angular.module("faradayApp")
 
             ServerAPI.deleteHost = function(wsName, hostId, rev) {
                 var deleteUrl = createDeleteUrl(wsName, hostId, rev);
-                if (typeof rev === "undefined") {
-                    return _delete(deleteUrl, false)
-                }
-                else {
-                    return _delete(deleteUrl, true);
-                }
-            }
-
-            ServerAPI.deleteInterface = function(wsName, interfaceId, rev) {
-                var deleteUrl = createDeleteUrl(wsName, interfaceId, rev);
                 if (typeof rev === "undefined") {
                     return _delete(deleteUrl, false)
                 }

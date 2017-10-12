@@ -31,8 +31,6 @@ angular.module('faradayApp')
                     if(typeof data.ports == "object") {
                         ports = ports.toString().replace(/,/g,":");
                     }
-
-                    data['_id'] = data.parent + "." + CryptoJS.SHA1(data.protocol+ "._." + ports).toString();
                 }
                 data.type = "Service";
                 angular.extend(this, data);

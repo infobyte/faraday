@@ -11,10 +11,18 @@ angular.module("faradayApp")
             var ServerAPI = {};
             var APIURL = BASEURL + "_api/v2/";
 
-            var createGetUrl = function(wsName, objectName) {
+            var createGetRelatedUrl = function(wsName, objectType, objectId, relatedObjectType) {
+                var objectName = ((objectName) ? "/" + objectType : "");
+                return get_url = APIURL + "ws/" + wsName + "/" + objectType + "/" + objectId + "/" + relatedObjectType + "/";
+            };
+
+            var createGetUrl = function(wsName, objectName, objectId) {
                 var objectName = ((objectName) ? "/" + objectName : "");
-                var get_url = APIURL + "ws/" + wsName + objectName;
-                return get_url;
+                if (typeof objectId == 'string' || typeof objectId ==  "number") {
+                    objectName = objectName + "/" + objectId;
+                }
+
+                return APIURL + "ws/" + wsName + objectName + "/";
             };
 
             var createNewGetUrl = function(wsName, objId, objectType) {
@@ -115,7 +123,7 @@ angular.module("faradayApp")
                 if (typeof service.protocol === "undefined") {service.protocol = ""};
                 if (typeof service.status === "undefined") {service.status = ""};
                 if (typeof service.version === "undefined") {service.version = ""};
-                return createOrUpdate(wsName, service._id, service);
+                return createOrUpdate(wsName, service._id, service, 'services');
             }
 
             var modVuln = function(createOrUpdate, wsName, vuln) {
@@ -179,6 +187,11 @@ angular.module("faradayApp")
             var updateInServer = function(wsName, objectId, data, collectionName) {
                 var postUrl = createPostUrl(wsName, objectId, collectionName);
                 return send_data(postUrl, objectId, true, "PUT");
+            }
+
+            ServerAPI.getHost = function(wsName, objId) {
+                var url = createGetUrl(wsName, 'hosts', objId);
+                return get(url);
             }
 
             ServerAPI.getHosts = function(wsName, data) {
@@ -270,8 +283,8 @@ angular.module("faradayApp")
             }
 
             ServerAPI.getServicesByHost = function(wsName, hostId) {
-                var url = createGetUrl(wsName, 'services');
-                return get(url, {"hostIdCouchdb": hostId});
+                var url = createGetRelatedUrl(wsName, 'hosts', hostId, 'services');
+                return get(url);
             }
 
             ServerAPI.getVulnsBySeverity = function(wsName, confirmed) {

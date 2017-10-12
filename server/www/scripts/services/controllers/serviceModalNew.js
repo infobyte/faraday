@@ -16,15 +16,13 @@ angular.module('faradayApp')
                 "ports": "",
                 "protocol": "",
                 "parent": "",
-                "status": "",
+                "status": "open",
                 "version": ""
             };
             // current Workspace
             var ws = $routeParams.wsId;
+            $scope.service.parent = host.id;
 
-            hostsManager.getInterfaces(ws, host._id).then(function(resp) {
-                $scope.service.parent = resp[0].value._id;
-            });
         };
 
         $scope.ok = function() {

@@ -19,14 +19,19 @@ services_api = Blueprint('services_api', __name__)
 
 class ServiceSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
-    _rev = fields.String(default='')
+    _rev = fields.String(default='', dump_only=True)
     metadata = fields.Method('get_metadata')
     owned = fields.Boolean(default=False)
     owner = fields.String(dump_only=True, attribute='creator.username')
-    ports = fields.Method('get_ports')
+    ports = fields.Method(attribute='port', deserialize='load_port')
+    status = fields.String(default='open')
+    parent = fields.Method(attribute='host_id', deserialize='load_host_id', load_only=True)
 
-    def get_ports(self, obj):
-        return [obj.port]
+    def load_host_id(self, value):
+        return value
+
+    def load_port(self, value):
+        return str(value.pop())
 
     def get_metadata(self, obj):
         return {
@@ -41,7 +46,7 @@ class ServiceSchema(AutoSchema):
 
     class Meta:
         model = Service
-        fields = ('_id', 'status',
+        fields = ('_id', 'status', 'parent',
                   'protocol', 'description', '_rev',
                   'owned', 'owner', 'credentials',
                   'name', 'version', '_id', 'ports',

@@ -50,7 +50,7 @@ angular.module('faradayApp')
 
         var loadHosts = function() {
             hostsManager.getHosts(
-                $scope.workspace, $scope.currentPage - 1,
+                $scope.workspace, $scope.currentPage,
                 $scope.pageSize, $scope.expression,
                 $scope.sortField, $scope.sortDirection)
                 .then(function(batch) {

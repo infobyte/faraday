@@ -44,4 +44,6 @@ class TestListServiceView(GenericAPITest):
                 u'ports',
                 u'metadata'
             ]
-            assert set(vuln['value'].keys()).issubset(object_properties)
+            expected = set(object_properties)
+            result = set(vuln['value'].keys())
+            assert expected <= result

@@ -8,7 +8,11 @@ from flask import request, jsonify, abort
 from flask import Blueprint
 from marshmallow import fields
 
-from server.api.base import AutoSchema, ReadWriteWorkspacedView
+from server.api.base import (
+    AutoSchema,
+    PaginatedMixin,
+    ReadWriteWorkspacedView,
+)
 from server.models import (
     db,
     VulnerabilityGeneric,
@@ -22,6 +26,7 @@ from server.utils.web import (
     get_integer_parameter,
     filter_request_args
 )
+from server.api.modules.services import ServiceSchema
 from server.schemas import PrimaryKeyRelatedField
 from server.dao.vuln import VulnerabilityDAO
 
@@ -56,7 +61,9 @@ class VulnerabilityGenericSchema(AutoSchema):
     target = fields.String(default='')  # TODO: review this attribute
     query = fields.String(dump_only=True, attribute='query_string', default='')
     metadata = fields.Method('get_metadata')
-    service = fields.Integer(dump_only=True, attribute='service_id')
+    service = fields.Nested(ServiceSchema(only=[
+        '_id', 'ports', 'status', 'protocol', 'name', 'version', 'summary'
+    ]), dump_only=True)
     host = fields.Integer(dump_only=True, attribute='host_id')
 
     class Meta:
@@ -120,7 +127,7 @@ class VulnerabilityGenericSchema(AutoSchema):
         }
 
 
-class VulnerabilityView(ReadWriteWorkspacedView):
+class VulnerabilityView(PaginatedMixin, ReadWriteWorkspacedView):
     route_base = 'vulns'
     model_class = VulnerabilityGeneric
     schema_class = VulnerabilityGenericSchema

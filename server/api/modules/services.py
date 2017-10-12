@@ -26,6 +26,7 @@ class ServiceSchema(AutoSchema):
     ports = fields.Method(attribute='port', deserialize='load_port')
     status = fields.String(default='open')
     parent = fields.Method(attribute='host_id', deserialize='load_host_id', load_only=True)
+    summary = fields.Method('get_summary')
 
     def load_host_id(self, value):
         return value
@@ -44,13 +45,16 @@ class ServiceSchema(AutoSchema):
             "update_user": ""
         }
 
+    def get_summary(self, obj):
+        return "(%s/%s) %s" % (obj.port, obj.protocol, obj.name)
+
     class Meta:
         model = Service
         fields = ('_id', 'status', 'parent',
                   'protocol', 'description', '_rev',
                   'owned', 'owner', 'credentials',
                   'name', 'version', '_id', 'ports',
-                  'metadata')
+                  'metadata', 'summary')
 
 
 class ServiceView(ReadWriteWorkspacedView):

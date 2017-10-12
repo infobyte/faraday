@@ -1187,3 +1187,8 @@ a.button-disable{cursor: not-allowed;pointer-events: none;opacity: 0.5}
 .accordion-expand-button-disabled {
     display: none !important;
 }
+
+#single-button {
+    /* TODO: this is a fast hask, maybe there is a better way to do this */
+    top: -50px;
+}

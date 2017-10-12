@@ -70,10 +70,12 @@ class HostFilterSet(FilterSet):
 
 
 class ServiceSchema(AutoSchema):
+    vulns = fields.Function(lambda service: len(service.vulnerabilities) + len(service.vulnerabilities_web), dump_only=True)
+
 
     class Meta:
         model = Service
-        fields = ('id', 'name', 'description', 'port', 'protocol', 'status')
+        fields = ('id', 'name', 'description', 'port', 'protocol', 'status', 'vulns')
 
 
 class HostsView(PaginatedMixin,

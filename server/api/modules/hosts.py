@@ -106,6 +106,8 @@ class HostsView(PaginatedMixin,
             })
         return {
             'rows': hosts,
+            'total_rows': (pagination_metadata and pagination_metadata.total
+                           or len(hosts)),
         }
 
 HostsView.register(host_api)

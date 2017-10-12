@@ -41,7 +41,6 @@ class TestListServiceView(GenericAPITest):
                 u'name',
                 u'version',
                 u'_id',
-                u'ports',
                 u'metadata'
             ]
             expected = set(object_properties)

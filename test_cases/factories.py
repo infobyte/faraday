@@ -16,6 +16,7 @@ from server.models import (
     Credential,
     EntityMetadata,
     Host,
+    Hostname,
     License,
     PolicyViolation,
     Reference,
@@ -98,6 +99,15 @@ class HostFactory(WorkspaceObjectFactory):
 
     class Meta:
         model = Host
+        sqlalchemy_session = db.session
+
+
+class HostnameFactory(WorkspaceObjectFactory):
+    name = factory.Faker('domain_name')
+    host = factory.SubFactory(HostFactory)
+
+    class Meta:
+        model = Hostname
         sqlalchemy_session = db.session
 
 

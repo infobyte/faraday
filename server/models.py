@@ -355,6 +355,14 @@ class Vulnerability(VulnerabilityGeneric):
     def service(cls):
         return relationship('Service')
 
+    @property
+    def hostnames(self):
+        if self.host is not None:
+            return self.host.hostnames
+        elif self.service is not None:
+            return self.service.host.hostnames
+        raise ValueError("Vulnerability has no service nor host")
+
     __mapper_args__ = {
         'polymorphic_identity': VulnerabilityGeneric.VULN_TYPES[0]
     }
@@ -379,6 +387,10 @@ class VulnerabilityWeb(VulnerabilityGeneric):
     def service(cls):
         return relationship('Service')
 
+    @property
+    def hostnames(self):
+        return self.service.host.hostnames
+
     __mapper_args__ = {
         'polymorphic_identity': VulnerabilityGeneric.VULN_TYPES[1]
     }
@@ -400,6 +412,10 @@ class VulnerabilityCode(VulnerabilityGeneric):
     __mapper_args__ = {
         'polymorphic_identity': VulnerabilityGeneric.VULN_TYPES[2]
     }
+
+    @property
+    def hostnames(self):
+        return []
 
 
 class ReferenceTemplate(Metadata):

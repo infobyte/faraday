@@ -193,6 +193,11 @@ def user(app, database, session):
 def ldap_user(app, session):
     return create_user(app, session, 'ldap', 'ldap@test.com', 'password', is_ldap=True)
 
+@pytest.fixture
+def host_with_hostnames(host, hostname_factory):
+    hostname_factory.create_batch(3, workspace=host.workspace, host=host)
+    return host
+
 
 def login_as(test_client, user):
     with test_client.session_transaction() as sess:

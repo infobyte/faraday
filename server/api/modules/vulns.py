@@ -45,7 +45,7 @@ class VulnerabilityGenericSchema(AutoSchema):
     parent = fields.Method('get_parent')
     tags = fields.Method('get_tags')
     easeofresolution = fields.String(dump_only=True, attribute='ease_of_resolution')
-    hostnames = fields.Method('get_hostnames')
+    hostnames = PrimaryKeyRelatedField('name', many=True)
     pname = fields.String(dump_only=True, attribute='parameter_name', default='')
     path = fields.String(default='')
     response = fields.String(default='')

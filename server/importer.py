@@ -435,8 +435,6 @@ class VulnerabilityImporter(object):
             vulnerability.impact_confidentiality = document.get('impact', {}).get('confidentiality')
             vulnerability.impact_integrity = document.get('impact', {}).get('integrity')
             if document['type'] == 'VulnerabilityWeb':
-
-
                 vulnerability.query = document.get('query')
                 vulnerability.request = document.get('request')
                 vulnerability.response = document.get('response')
@@ -455,6 +453,13 @@ class VulnerabilityImporter(object):
 
             self.add_references(document, vulnerability, workspace)
             self.add_policy_violations(document, vulnerability, workspace)
+
+            # need the vuln ID before creating Tags for it
+            session.commit()
+            tags = document.get('tags', [])
+            if len(tags):
+                create_tags(tags, vulnerability.id, document['type'])
+
         yield vulnerability
 
     def add_policy_violations(self, document, vulnerability, workspace):
@@ -619,10 +624,9 @@ class TaskImporter(object):
 
         # we need the ID of the Task in order to add tags to it
         session.commit()
-
         tags = document.get('tags', [])
         if len(tags):
-            create_tags(tags, task.id, 'task', task, task_created)
+            create_tags(tags, task.id, 'task')
         #task.due_date = datetime.datetime.fromtimestamp(document.get('due_date'))
         return [task]
 

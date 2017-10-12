@@ -172,6 +172,16 @@ class VulnerabilityFactory(VulnerabilityGenericFactory):
     service = factory.SubFactory(ServiceFactory)
 
     @classmethod
+    def attributes(cls, create=False, extra=None):
+        if extra:
+            if ('host' in extra and 'service' not in extra) or \
+                    ('service' in extra and 'host' not in extra):
+                raise ValueError('You should pass both service and host and '
+                                 'set one of them to None to prevent random '
+                                 'stuff to happen')
+        return super(VulnerabilityFactory, cls).attributes(create, extra)
+
+    @classmethod
     def _after_postgeneration(cls, obj, create, results=None):
         super(VulnerabilityFactory, cls)._after_postgeneration(
             obj, create, results)

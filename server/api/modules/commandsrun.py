@@ -33,7 +33,8 @@ class CommandSchema(AutoSchema):
         return time.mktime(obj.start_date.utctimetuple())
 
     def get_duration(self, obj):
-        return (obj.end_date - obj.start_date).seconds
+        if obj.end_date and obj.start_date:
+            return (obj.end_date - obj.start_date).seconds
 
     class Meta:
         model = Command

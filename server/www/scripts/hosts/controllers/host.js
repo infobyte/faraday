@@ -46,13 +46,7 @@ angular.module('faradayApp')
             // services by host
             dashboardSrv.getServicesByHost($scope.workspace, hostId)
                 .then(function(services) {
-                    var pss = [];
-
-                    services.forEach(function(service) {
-                        pss.push(service);
-                    });
-
-                    return $q.all(pss);
+                    return $q.all(services);
                 })
                 .then(function(services) {
                     $scope.services = services;
@@ -63,7 +57,7 @@ angular.module('faradayApp')
 
                     $scope.loadedServices = true;
 
-                    return servicesManager.getServiceVulnCount($scope.workspace, $scope.services)
+                    return services;
                 })
                 .then(function(vulns) {
                     $scope.services.forEach(function(service) {
@@ -309,12 +303,7 @@ angular.module('faradayApp')
         };
 
         $scope.delete = function() {
-            var selected = [];
-            $scope.selectedServices().forEach(function(service){
-            	if(service.selected){
-            		selected.push(service._id);
-            	}
-            });
+            var selected = $scope.selectedServices();
 
             if(selected.length == 0) {
                 $uibModal.open(config = {
@@ -376,12 +365,13 @@ angular.module('faradayApp')
             });
         };
 
-        $scope.remove = function(ids) {
-            ids.forEach(function(id) {
-                servicesManager.deleteServices(id, $scope.workspace).then(function() {
+        $scope.remove = function(services) {
+            //removes services from host
+            services.forEach(function(service) {
+                servicesManager.deleteServices(service, $scope.workspace).then(function() {
                     var index = -1;
                     for(var i=0; i < $scope.services.length; i++) {
-                        if($scope.services[i]._id === id) {
+                        if($scope.services[i]._id === service.id) {
                             index = i;
                             break;
                         }

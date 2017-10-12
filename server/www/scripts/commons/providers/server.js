@@ -25,8 +25,8 @@ angular.module("faradayApp")
                 return APIURL + "ws/" + wsName + objectName + "/";
             };
 
-            var createNewGetUrl = function(wsName, objId, objectType) {
-                return APIURL + "ws/" + wsName + "/" + objectType + "/" + objId;
+            var createNewGetUrl = function(wsName, objectId, objectType) {
+                return APIURL + "ws/" + wsName + "/" + objectType + "/" + objectId;
             }
 
             var createPostUrl = function(wsName, objectId, objectType) {
@@ -34,14 +34,14 @@ angular.module("faradayApp")
             };
 
             var createPutUrl = function(wsName, objectId, objectType) {
-                return APIURL + "ws/" + wsName + "/" + objectType + "/" + objectId;
+                return APIURL + "ws/" + wsName + "/" + objectType + "/" + objectId + "/";
             };
 
             var createDbUrl = function(wsName) {
                 return APIURL + "ws/" + wsName;
             }
 
-            var createDeleteUrl = createPostUrl; 
+            var createDeleteUrl = createPutUrl;
 
             var serverComm = function(method, url, data) {
                 var success = function (response) {
@@ -81,32 +81,10 @@ angular.module("faradayApp")
             // just set rev_provided to false if you're deleting a database :)
             var _delete = function(url, rev_provided) {
                 // never let undefined win
-
                 if (typeof rev_provided === "undefined") {var rev_provided = false;}
                 var deferred = $q.defer();
                 var data = {};
-                
-                if (rev_provided === false) {
-                    get(url).then(
-                        function s(r) {
-                            data.rev = r.data._rev;
-                            return serverComm("DELETE", url, data).then(
-                                function(res) {
-                                    deferred.resolve(res);
-                                }, function(err) {
-                                    deferred.reject(err);
-                                }
-                            );
-                        },
-                        function e(r) {
-                            deferred.reject(r);
-                        })
-                }
-                else{
-                    return serverComm("DELETE", url, data);
-                }
-
-                return deferred.promise;
+                return serverComm("DELETE", url, data);
             };
 
             var modHost = function(createOrUpdate, wsName, host) {
@@ -202,6 +180,11 @@ angular.module("faradayApp")
             ServerAPI.getVulns = function(wsName, data) {
                 var getUrl = createGetUrl(wsName, 'vulns');
                 return get(getUrl, data);
+            }
+
+            ServerAPI.getService = function(wsName, data, objId) {
+                var getUrl = createGetUrl(wsName, 'services', objId);
+                return get(getUrl);
             }
 
             ServerAPI.getServices = function(wsName, data) {
@@ -370,8 +353,8 @@ angular.module("faradayApp")
                 }
             }
 
-            ServerAPI.deleteService = function(wsName, serviceId, rev) {
-                var deleteUrl = createDeleteUrl(wsName, serviceId, rev);
+            ServerAPI.deleteService = function(wsName, serviceId) {
+                var deleteUrl = createDeleteUrl(wsName, serviceId, 'services');
                 if (typeof rev === "undefined") {
                     return _delete(deleteUrl, false)
                 }

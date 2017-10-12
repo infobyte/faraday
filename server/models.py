@@ -353,7 +353,7 @@ class Vulnerability(VulnerabilityGeneric):
 
     @declared_attr
     def service(cls):
-        return relationship('Service')
+        return relationship('Service', backref='vulnerabilities')
 
     @property
     def hostnames(self):
@@ -387,7 +387,7 @@ class VulnerabilityWeb(VulnerabilityGeneric):
 
     @declared_attr
     def service(cls):
-        return relationship('Service')
+        return relationship('Service', backref='vulnerabilities_web')
 
     @property
     def hostnames(self):

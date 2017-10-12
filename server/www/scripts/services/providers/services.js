@@ -115,22 +115,13 @@ angular.module('faradayApp')
         servicesManager.createService = function(serviceData, ws) {
             var deferred = $q.defer();
             var self = this;
-
-            this.getServices(ws).then(function(services) {
-                var service = new Service(serviceData);
-                self.getService(service._id, ws).then(function(resp) {
-                    deferred.reject("Service already exists");
-                }, function() {
-                    // host doesn't exist, good to go
-                    service.save(ws).then(function(){
-                        service = self.getService(service._id, ws);
-                        deferred.resolve(service);
-                    }, function(){
-                        // host couldn't be saved
-                        deferred.reject("Error: host couldn't be saved");
-                    })
-                });
-            });
+            var service = new Service(serviceData);
+            service.save(ws).then(function(saved_service){
+                deferred.resolve(saved_service);
+            }, function(){
+                // host couldn't be saved
+                deferred.reject("Error: host couldn't be saved");
+            })
 
             return deferred.promise;
         }

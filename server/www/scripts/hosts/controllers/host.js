@@ -12,12 +12,8 @@ angular.module('faradayApp')
         loadHosts = function(){
             hostsManager.getHost($routeParams.hidId, $scope.workspace, true)
                 .then(function(host) {
-                    hostsManager.getInterfaces($scope.workspace, host._id).then(function(resp){
-                        $scope.interface = resp[0].value;
-                        $scope.interface.hostnames = commons.arrayToObject($scope.interface.hostnames);
-                    });
                 	$scope.host = host;
-                    $scope.hostName = host.name; // User can edit $scope.host.name but not $scope.hostName
+                    $scope.hostName = host.ip; // User can edit $scope.host.name but not $scope.hostName
                     $scope.loadIcons();
                 });
         };
@@ -53,7 +49,7 @@ angular.module('faradayApp')
                     var pss = [];
 
                     services.forEach(function(service) {
-                        pss.push(servicesManager.getService(service.id, $scope.workspace, true));
+                        pss.push(service);
                     });
 
                     return $q.all(pss);
@@ -127,9 +123,9 @@ angular.module('faradayApp')
             $scope.hostdata.metadata['update_time'] = timestamp;
             $scope.hostdata.metadata['update_user'] = "UI Web";
 
-            hostsManager.updateHost($scope.host, $scope.hostdata, $scope.interface,
+            hostsManager.updateHost($scope.host, $scope.hostdata,
                                     $scope.workspace).then(function(){
-                                        $scope.interface.hostnames = old_hostnames;
+                                        $scope.hostnames = old_hostnames;
                                         $location.path('/host/ws/' + $scope.workspace + '/hid/' + $scope.host._id);
                                     });
         };

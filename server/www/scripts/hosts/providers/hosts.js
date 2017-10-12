@@ -27,14 +27,10 @@ angular.module('faradayApp')
 
         hostsManager._load = function(id, ws, deferred) {
             var self = this;
-            ServerAPI.getHosts(ws, {couchid: id}).then(
+            ServerAPI.getHost(ws, id).then(
                 function(response){
-                    if (response.data.rows.length === 1) {
-                        var host = self._get(response.data.rows[0].id, response.data.rows[0].value);
-                        deferred.resolve(host);
-                    } else {
-                        deferred.reject();
-                    }
+                    var host = self._get(response.data.id, response.data);
+                    deferred.resolve(host);
                 }, function(){
                     deferred.reject();
                 });
@@ -120,41 +116,13 @@ angular.module('faradayApp')
             var deferred = $q.defer(),
             self = this;
 
-            this.getHost(host._id, ws)
-                .then(function(resp) {
-                    resp.update(hostData, interfaceData, ws)
-                        .then(function() {
-                            // reload the host to update _rev
-                            host = self._load(host._id, ws, deferred);
-                            deferred.resolve(host);
-                        })
-                        .catch(function() {
-                            deferred.reject("Error updating host");
-                        });
+            resp.update(hostData, ws)
+                .then(function(host) {
+                    deferred.resolve(host);
                 })
                 .catch(function() {
-                    // host doesn't exist
-                    deferred.reject("Host doesn't exist");
+                    deferred.reject("Error updating host");
                 });
-
-            return deferred.promise;
-        };
-
-        hostsManager.getAllInterfaces = function(ws) {
-            var deferred = $q.defer(),
-            self = this;
-            ServerAPI.getInterfaces(ws) 
-                .then(function(ints) {
-                    var interfaces = [];
-                    ints.data.interfaces.forEach(function(interf) {
-                        interfaces.push(interf.value);
-                    });
-
-                    deferred.resolve(interfaces);
-                }, function() {
-                    deferred.reject("Unable to retrieve Interfaces");
-                });
-
             return deferred.promise;
         };
 

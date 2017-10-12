@@ -25,11 +25,8 @@ class ServiceSchema(AutoSchema):
     owner = fields.String(dump_only=True, attribute='creator.username')
     ports = fields.Method(attribute='port', deserialize='load_port')
     status = fields.String(default='open')
-    parent = fields.Method(attribute='host_id', deserialize='load_host_id', load_only=True)
+    parent = fields.Integer(attribute='host_id', load_only=True)
     summary = fields.Method('get_summary')
-
-    def load_host_id(self, value):
-        return value
 
     def load_port(self, value):
         return str(value.pop())
@@ -50,7 +47,7 @@ class ServiceSchema(AutoSchema):
 
     class Meta:
         model = Service
-        fields = ('_id', 'status', 'parent',
+        fields = ('id', '_id', 'status', 'parent',
                   'protocol', 'description', '_rev',
                   'owned', 'owner', 'credentials',
                   'name', 'version', '_id', 'ports',

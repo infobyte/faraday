@@ -305,11 +305,7 @@ angular.module('faradayApp')
 
             var deferred = $q.defer();
             ServerAPI.getServicesByHost(ws, host_id).then(function(res){
-                var tmp = [];
-                res.data.forEach(function(service){
-                    tmp.push(service);
-                });
-                deferred.resolve(tmp);
+                deferred.resolve(res.data);
             }, function(){
                 deferred.reject();
             });

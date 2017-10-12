@@ -257,7 +257,7 @@ angular.module("faradayApp")
             }
 
             ServerAPI.getServicesBy = function(wsName, what) {
-                var url = createGetUrl(wsName, 'services') + '/count/';
+                var url = createGetUrl(wsName, 'services') + 'count/';
                 return get(url, {"group_by": what})
             }
 
@@ -272,7 +272,7 @@ angular.module("faradayApp")
 
             ServerAPI.getVulnsBySeverity = function(wsName, confirmed) {
 
-                var url = createGetUrl(wsName, 'vulns') + '/count/';
+                var url = createGetUrl(wsName, 'vulns') + 'count/';
                 var payload = {'group_by': 'severity'}
                 
                 if (confirmed !== undefined) {

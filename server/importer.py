@@ -54,6 +54,7 @@ from server.models import (
     VulnerabilityWeb,
     Workspace,
 )
+from server.utils import invalid_chars
 from server.utils.database import get_or_create
 from server.web import app
 
@@ -1038,6 +1039,9 @@ class ImportCouchDB(FlaskScriptCommand):
                 with session.no_autoflush:
                     raw_obj = raw_obj['value']
                     couchdb_id = raw_obj['_id']
+
+                    # first let's make sure no invalid chars are present in the Raw objects
+                    raw_obj = invalid_chars.clean_dict(raw_obj)
 
                     for new_obj in obj_importer.update_from_document(raw_obj, workspace, level, couchdb_relational_map):
                         if not new_obj:

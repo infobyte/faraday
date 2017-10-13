@@ -39,8 +39,9 @@ class HostSchema(AutoSchema):
     os = fields.String(default='')
     owned = fields.Boolean(default=False)
     owner = PrimaryKeyRelatedField('username', attribute='creator', dump_only=True)
-    services = fields.Function(lambda host: len(host.services))
-    vulns = fields.Function(lambda host: len(host.vulnerabilities))
+    services = fields.Integer(attribute='service_count', dump_only=True)
+    vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
+
 
     def get_metadata(self, obj):
         return {
@@ -70,8 +71,7 @@ class HostFilterSet(FilterSet):
 
 
 class ServiceSchema(AutoSchema):
-    vulns = fields.Function(lambda service: len(service.vulnerabilities) + len(service.vulnerabilities_web), dump_only=True)
-
+    vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
 
     class Meta:
         model = Service

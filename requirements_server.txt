@@ -8,6 +8,7 @@ flask>=0.10.1
 marshmallow
 pyasn1-modules
 pyopenssl>=16.0.0
+python-slugify==1.2.4
 requests>=2.10.0
 restkit>=4.2.2
 service_identity>=16.0.0

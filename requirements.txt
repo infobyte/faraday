@@ -1,6 +1,5 @@
 argparse
 colorama
-couchdbkit
 flask==0.12.2
 IPy
 mockito

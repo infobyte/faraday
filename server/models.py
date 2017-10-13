@@ -374,14 +374,14 @@ class Vulnerability(VulnerabilityGeneric):
 
 class VulnerabilityWeb(VulnerabilityGeneric):
     __tablename__ = None
-    method = Column(String(50), nullable=True)
-    parameters = Column(String(500), nullable=True)
-    parameter_name = Column(String(250), nullable=True)
-    path = Column(String(500), nullable=True)
-    query_string = Column(Text(), nullable=True)
-    request = Column(Text(), nullable=True)
-    response = Column(Text(), nullable=True)
-    website = Column(String(250), nullable=True)
+    method = Column(Text, nullable=True)
+    parameters = Column(Text, nullable=True)
+    parameter_name = Column(Text, nullable=True)
+    path = Column(Text, nullable=True)
+    query_string = Column(Text, nullable=True)
+    request = Column(Text, nullable=True)
+    response = Column(Text, nullable=True)
+    website = Column(Text, nullable=True)
 
     @declared_attr
     def service_id(cls):

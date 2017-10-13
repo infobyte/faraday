@@ -6,21 +6,22 @@ import re
 import sys
 import json
 import datetime
+import requests
 from collections import (
     Counter,
     defaultdict,
     OrderedDict
 )
+from slugify import slugify
 from binascii import unhexlify
 
-import requests
 from IPy import IP
 from flask_script import Command as FlaskScriptCommand
 from passlib.utils.binary import ab64_encode
 from restkit.errors import RequestError, Unauthorized
 from tqdm import tqdm
-
 import server.config
+
 import server.couchdb
 import server.database
 import server.models
@@ -43,6 +44,8 @@ from server.models import (
     ReferenceTemplate,
     Service,
     Scope,
+    Tag,
+    TagObject,
     Task,
     TaskTemplate,
     User,
@@ -51,14 +54,15 @@ from server.models import (
     VulnerabilityWeb,
     Workspace,
 )
+from server.utils import invalid_chars
 from server.utils.database import get_or_create
 from server.web import app
 
 COUCHDB_USER_PREFIX = 'org.couchdb.user:'
 COUCHDB_PASSWORD_PREFIX = '-pbkdf2-'
 
-
 logger = server.utils.logger.get_logger(__name__)
+
 session = db.session
 
 MAPPED_VULN_SEVERITY = OrderedDict([
@@ -154,6 +158,21 @@ def get_children_from_couch(workspace, parent_couchdb_id, child_type):
         return []
 
     return r.json()['rows']
+
+
+def create_tags(raw_tags, parent_id, parent_type):
+    for tag_name in [x.strip() for x in raw_tags if x.strip()]:
+        tag, tag_created = get_or_create(session, Tag, name=tag_name, slug=slugify(tag_name))
+        session.commit()
+
+        relation, relation_created = get_or_create(
+            session,
+            TagObject,
+            object_id=parent_id,
+            object_type=parent_type,
+            tag_id=tag.id,
+        )
+        session.commit()
 
 
 class EntityNotFound(Exception):
@@ -421,8 +440,6 @@ class VulnerabilityImporter(object):
             vulnerability.impact_confidentiality = document.get('impact', {}).get('confidentiality')
             vulnerability.impact_integrity = document.get('impact', {}).get('integrity')
             if document['type'] == 'VulnerabilityWeb':
-
-
                 vulnerability.query_string = document.get('query')
                 vulnerability.request = document.get('request')
                 vulnerability.response = document.get('response')
@@ -442,7 +459,14 @@ class VulnerabilityImporter(object):
 
             self.add_references(document, vulnerability, workspace)
             self.add_policy_violations(document, vulnerability, workspace)
-            yield vulnerability
+
+            # need the vuln ID before creating Tags for it
+            session.commit()
+            tags = document.get('tags', [])
+            if len(tags):
+                create_tags(tags, vulnerability.id, document['type'])
+
+        yield vulnerability
 
     def add_policy_violations(self, document, vulnerability, workspace):
         for policy_violation in document.get('policyviolations', []):
@@ -466,16 +490,16 @@ class VulnerabilityImporter(object):
 
 
 class CommandImporter(object):
-    DOC_TYPE = 'CommandRunInformation'
 
+    DOC_TYPE = 'CommandRunInformation'
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         start_date = datetime.datetime.fromtimestamp(document.get('itime'))
 
         command, instance = get_or_create(
-                session,
-                Command,
-                command=document.get('command', None),
-                start_date=start_date,
+            session,
+            Command,
+            command=document.get('command', None),
+            start_date=start_date,
         )
         if document.get('duration'):
             command.end_date = start_date + datetime.timedelta(seconds=document.get('duration'))
@@ -512,8 +536,8 @@ class NoteImporter(object):
 
 
 class CredentialImporter(object):
-    DOC_TYPE = 'Cred'
 
+    DOC_TYPE = 'Cred'
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         parents = []
         if level == 2:
@@ -541,8 +565,8 @@ class CredentialImporter(object):
 
 
 class WorkspaceImporter(object):
-    DOC_TYPE = 'Workspace'
 
+    DOC_TYPE = 'Workspace'
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         workspace.description = document.get('description')
         if document.get('duration') and document.get('duration')['start']:
@@ -587,12 +611,13 @@ class TaskImporter(object):
         if not methodology:
             methodology = session.query(MethodologyTemplate).filter_by(id=methodology_id).first()
             task_class = TaskTemplate
-        task, created = get_or_create(session, task_class, name=document.get('name'))
+        task, task_created = get_or_create(session, task_class, name=document.get('name'))
         if task_class == TaskTemplate:
             task.template = methodology
         else:
             task.methodology = methodology
             task.workspace = workspace
+
         task.description = document.get('description')
         task.assigned_to = session.query(User).filter_by(username=document.get('username')).first()
         mapped_status = {
@@ -602,9 +627,15 @@ class TaskImporter(object):
             'Completed': 'completed'
         }
         task.status = mapped_status[document.get('status')]
-        #tags
+
+        # we need the ID of the Task in order to add tags to it
+        session.commit()
+        tags = document.get('tags', [])
+        if len(tags):
+            create_tags(tags, task.id, 'task')
         #task.due_date = datetime.datetime.fromtimestamp(document.get('due_date'))
         return [task]
+
 
 
 class ReportsImporter(object):
@@ -1013,6 +1044,9 @@ class ImportCouchDB(FlaskScriptCommand):
                 with session.no_autoflush:
                     raw_obj = raw_obj['value']
                     couchdb_id = raw_obj['_id']
+
+                    # first let's make sure no invalid chars are present in the Raw objects
+                    raw_obj = invalid_chars.clean_dict(raw_obj)
 
                     for new_obj in obj_importer.update_from_document(raw_obj, workspace, level, couchdb_relational_map):
                         if not new_obj:

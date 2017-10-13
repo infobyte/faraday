@@ -253,6 +253,37 @@ class TestHostAPI:
         assert res.status_code == 200
         self.compare_results(hosts + [case_insensitive_host], res)
 
+    def test_host_with_open_vuln_count_verification(self, test_client, session,
+                                                        workspace, host_factory, vulnerability_factory,
+                                                        service_factory):
+
+        host = host_factory.create(workspace=workspace)
+        service = service_factory.create(host=host)
+        vulnerability_factory.create(service=service, host=None)
+        vulnerability_factory.create(service=None, host=host)
+
+        session.commit()
+
+        res = test_client.get(self.url())
+        assert res.status_code == 200
+        json_host = filter(lambda json_host: json_host['value']['id'] == host.id, res.json['rows'])[0]
+        # the host has one vuln associated. another one via service.
+        assert json_host['value']['vulns'] == 1
+
+    def test_host_services_vuln_count_verification(self, test_client, session,
+                                                   workspace, host_factory, vulnerability_factory,
+                                                   service_factory):
+        host = host_factory.create(workspace=workspace)
+        service = service_factory.create(host=host)
+        vulnerability_factory.create(service=service, host=None)
+        session.commit()
+
+        res = test_client.get(self.url() + str(host.id) + "/" + 'services/')
+        assert res.status_code == 200
+        assert res.json[0]['vulns'] == 1
+
+
+
 
 class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
     model = Host

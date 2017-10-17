@@ -73,8 +73,8 @@ def run_server(args):
     web_server = server.web.WebServer(enable_ssl=args.ssl)
 
     daemonize.create_pid_file()
-    logger.info('Faraday Server is ready')
     web_server.run()
+    logger.info('Faraday Server is ready')
 
 
 def main():

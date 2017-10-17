@@ -27,7 +27,7 @@ class WebServer(object):
     WEB_UI_LOCAL_PATH = os.path.join(server.config.FARADAY_BASE, 'server/www')
 
     def __init__(self, enable_ssl=False):
-        logger.info('Starting server at port {0} with bind address {1}. SSL {2}'.format(
+        logger.info('Starting web server at port {0} with bind address {1}. SSL {2}'.format(
             server.config.faraday_server.port,
             server.config.faraday_server.bind_address,
             enable_ssl))
@@ -76,7 +76,10 @@ class WebServer(object):
             self.__listen_func(
                 self.__listen_port, site,
                 interface=self.__bind_address)
+            reactor.run()
+        except error.CannotListenError as e:
+            logger.error(str(e))
+            sys.exit(1)
         except Exception as e:
             logger.error('Something went wrong when trying to setup the Web UI')
-        reactor.run()
-
+            sys.exit(1)

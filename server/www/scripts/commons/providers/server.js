@@ -25,6 +25,15 @@ angular.module("faradayApp")
                 return APIURL + "ws/" + wsName + objectName + "/";
             };
 
+            // created GET URL for objects that do not belong to a workspace
+            var createNonWorkspacedGetUrl = function(objectName, objectId) {
+                if (typeof objectId == 'string' || typeof objectId ==  "number") {
+                    objectName = objectName + "/" + objectId;
+                }
+
+                return APIURL + objectName + "/";
+            };
+
             var createNewGetUrl = function(wsName, objectId, objectType) {
                 return APIURL + "ws/" + wsName + "/" + objectType + "/" + objectId;
             }
@@ -180,6 +189,16 @@ angular.module("faradayApp")
             ServerAPI.getVulns = function(wsName, data) {
                 var getUrl = createGetUrl(wsName, 'vulns');
                 return get(getUrl, data);
+            }
+
+            ServerAPI.getVulnerabilityTemplate = function(objId) {
+                var url = createNonWorkspacedGetUrl('vulnerability_template', objId);
+                return get(url);
+            }
+
+            ServerAPI.getVulnerabilityTemplates = function(data) {
+                var url = createNonWorkspacedGetUrl('vulnerability_template');
+                return get(url);
             }
 
             ServerAPI.getService = function(wsName, data, objId) {

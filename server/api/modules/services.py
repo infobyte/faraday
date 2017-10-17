@@ -26,6 +26,7 @@ class ServiceSchema(AutoSchema):
     ports = fields.Method(attribute='port', deserialize='load_port')
     status = fields.String(default='open')
     parent = fields.Integer(attribute='host_id', load_only=True)
+    host_id = fields.Integer(attribute='host_id', dump_only=True)
     summary = fields.Method('get_summary')
 
     def load_port(self, value):
@@ -51,7 +52,7 @@ class ServiceSchema(AutoSchema):
                   'protocol', 'description', '_rev',
                   'owned', 'owner', 'credentials',
                   'name', 'version', '_id', 'ports',
-                  'metadata', 'summary')
+                  'metadata', 'summary', 'host_id')
 
 
 class ServiceView(ReadWriteWorkspacedView):

@@ -14,8 +14,10 @@ angular.module('faradayApp')
 
             delete data.parents;
 
-            parents.forEach(function(parent_id) {
-                data.parent = parent_id;
+            parents.forEach(function(parent) {
+                // we iterate parents when creating multiple vulns from new vuln modal.
+                data.parent = parent.parent_id;
+                data.parent_type = parent.type
 
                 if(data.type == "Vulnerability") {
                     var vuln = new Vuln(ws, data);

@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
-
-from flask_script import Manager
+try:
+    from flask_script import Manager
+except ImportError:
+    print('Flask-Script missing. Install requirements with "pip install -r requirements_server.txt')
 
 from server.web import app
 from server.importer import ImportCouchDB

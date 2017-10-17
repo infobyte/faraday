@@ -48,9 +48,6 @@ def setup_environment(check_deps=False):
     # Web configuration file generation
     server.config.gen_web_config()
 
-    # Reports DB creation
-    server.couchdb.push_reports()
-
 
 def stop_server():
     if not daemonize.stop_server():

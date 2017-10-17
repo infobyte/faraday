@@ -17,17 +17,10 @@ angular.module('faradayApp')
                     hosts_dict[host._id] = host;
                     res.push(host);
                 });
-                hostsManager.getAllInterfaces(workspace).then(function(interfaces) {
-                    interfaces.forEach(function(interf) {
-                        host_id = interf._id.split(".")[0];
-                        if (hosts_dict.hasOwnProperty(host_id)) {
-                            hosts_dict[host_id].hostnames = hosts_dict[host_id].hostnames.concat(interf.hostnames);
-                        }
-                    });
-                }, function(err) {deferred.reject(err)});
+
                 servicesManager.getServices(workspace).then(function(services) {
                     services.forEach(function(service) {
-                        host_id = service._id.split(".")[0];
+                        host_id = service.host_id
                         if (hosts_dict.hasOwnProperty(host_id)) {
                             hosts_dict[host_id].services.push(service);
                         }

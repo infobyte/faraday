@@ -9,7 +9,6 @@ def with_0_and_n_objects(n=10):
     return pytest.mark.parametrize('object_count', [0, n])
 
 class PaginationTestsMixin:
-    view_class = None  # Must be overriden
 
     @pytest.fixture
     def delete_previously_created_objects(self, session):
@@ -18,14 +17,8 @@ class PaginationTestsMixin:
         session.commit()
 
     @pytest.fixture
-    def custom_envelope(self, monkeypatch):
-        def _envelope_list(self, objects, pagination_metadata=None):
-            return {"data": objects}
-        monkeypatch.setattr(self.view_class, '_envelope_list', _envelope_list)
-
-    @pytest.fixture
     def pagination_test_logic(self, delete_previously_created_objects,
-                              custom_envelope):
+                              mock_envelope_list):
         # Load this two fixtures
         pass
 

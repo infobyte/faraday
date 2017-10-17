@@ -3,7 +3,6 @@
 # See the file 'doc/LICENSE' for the license information
 from datetime import datetime
 
-import pytz
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
@@ -17,6 +16,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    Unicode,
     event
 )
 from sqlalchemy.ext.declarative import declared_attr
@@ -30,6 +30,8 @@ from flask_sqlalchemy import (
     SQLAlchemy as OriginalSQLAlchemy,
     _EngineConnector
 )
+from depot.fields.sqlalchemy import UploadedFileField
+from server.fields import FaradayUploadedFile
 from flask_security import (
     RoleMixin,
     UserMixin,
@@ -744,6 +746,30 @@ class User(db.Model, UserMixin):
     def __repr__(self):
         return '<%sUser: %s>' % ('LDAP ' if self.is_ldap else '',
                                  self.username)
+
+
+class File(Metadata):
+    __tablename__ = 'file'
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    name = Column(Text, unique=True)
+    filename = Column(Text, unique=True)
+    description = Column(Text, unique=True)
+    content = Column(UploadedFileField(upload_type=FaradayUploadedFile))  # plain attached file
+    object_id = Column(Integer, nullable=False)
+    object_type = Column(Text, nullable=False)
+
+
+class UserAvatar(Metadata):
+    __tablename_ = 'user_avatar'
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    name = Column(Text, unique=True)
+    # photo field will automatically generate thumbnail
+    # if the file is a valid image
+    photo = Column(UploadedFileField(upload_type=FaradayUploadedFile))
+    user_id = Column('user_id', Integer(), ForeignKey('user.id'))
+    user = relationship('User', foreign_keys=[user_id])
 
 
 class MethodologyTemplate(Metadata):

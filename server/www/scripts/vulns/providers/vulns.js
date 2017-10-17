@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .factory('vulnsManager',
-        ['Vuln', 'WebVuln', 'BASEURL', '$q', 'ServerAPI', 'commonsFact',
-        function(Vuln, WebVuln, BASEURL, $q, ServerAPI, commonsFact) {
+        ['Vuln', 'WebVuln', '$q', 'ServerAPI', 'commonsFact',
+        function(Vuln, WebVuln, $q, ServerAPI, commonsFact) {
         var vulnsManager = {};
 
         vulnsManager.createVuln = function(ws, data) {

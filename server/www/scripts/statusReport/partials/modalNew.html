@@ -5,7 +5,7 @@
 <form name="form" novalidate>
     <div class="modal-header">
         <div class="modal-button">
-            <button class="btn btn-success" ng-click="modal.ok()" ng-disabled="form.$invalid || modal.data.severity === undefined || (modal.data.type === 'VulnerabilityWeb' && modal.host_parents)">OK</button>
+            <button class="btn btn-success" ng-click="modal.ok()" ng-disabled="form.$invalid || modal.data.severity === undefined || (modal.data.type === 'VulnerabilityWeb' && modal.host_parents) || modal.data.parents.length == 0">OK</button>
             <button class="btn btn-danger" ng-click="modal.cancel()">Cancel</button>
         </div>
         <h3 class="modal-title">Vulnerability creation</h3>
@@ -249,7 +249,7 @@
     </div><!-- .modal-body -->
     <div class="modal-footer">
         <div class="modal-button">
-            <button class="btn btn-success" ng-click="modal.ok()" ng-disabled="form.$invalid || modal.data.severity === undefined || (modal.data.type === 'VulnerabilityWeb' && modal.host_parents)">OK</button>
+            <button class="btn btn-success" ng-click="modal.ok()" ng-disabled="form.$invalid || modal.data.severity === undefined || (modal.data.type === 'VulnerabilityWeb' && modal.host_parents) || modal.data.parents.length == 0">OK</button>
             <button class="btn btn-danger" ng-click="modal.cancel()">Cancel</button>
         </div>
     </div>

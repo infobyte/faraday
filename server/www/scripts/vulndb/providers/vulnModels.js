@@ -4,53 +4,11 @@
 //
 angular.module('faradayApp').
     factory('vulnModelsManager',
-        ['VulnModel', 'BASEURL', 'configSrv', '$http', '$q',
-            function(VulnModel, BASEURL, configSrv, $http, $q) {
+        ['VulnModel', 'BASEURL', '$http', '$q', 'ServerAPI',
+            function(VulnModel, BASEURL, $http, $q, ServerAPI) {
                 var vulnModelsManager = {};
                 vulnModelsManager.models = [];
                 vulnModelsManager.totalNumberOfModels = 0;
-
-                vulnModelsManager.DBExists = function() {
-                    var deferred = $q.defer();
-                    var self = this;
-
-                    configSrv.promise.
-                        then(function() {
-                            var url = BASEURL + configSrv.vulnModelsDB;
-
-                            $http.head(url).
-                                then(function(resp) {
-                                    deferred.resolve(true);
-                                }, function(resp) {
-                                    deferred.resolve(false);
-                                });
-                        }, function() {
-                            deferred.reject("Unable to fetch the Vulnerability Models DB name.");
-                        });
-
-                    return deferred.promise;
-                };
-
-                vulnModelsManager.createDB = function() {
-                    var deferred = $q.defer();
-                    var self = this;
-
-                    configSrv.promise
-                        .then(function() {
-                            var url = BASEURL + configSrv.vulnModelsDB;
-
-                            $http.put(url).
-                                then(function(resp) {
-                                    deferred.resolve(true);
-                                }, function(resp) {
-                                    deferred.reject(resp);
-                                });
-                        }, function() {
-                            deferred.reject("Unable to fetch Vulnerability Model DB name.");
-                        });
-
-                    return deferred.promise;
-                };
 
                 vulnModelsManager.create = function(data, outsider) {
                     if (outsider === undefined) { var outsider = false; };
@@ -104,30 +62,25 @@ angular.module('faradayApp').
                     var deferred = $q.defer();
                     var self = this;
 
-                    configSrv.promise.
-                        then(function() {
-                            var url = BASEURL + configSrv.vulnModelsDB + "/_all_docs?include_docs=true";
+                    ServerAPI.getVulnerabilityTemplates()
+                        .then(function(res) {
+                            var data = res.data;
+                            var vulnModels = [];
 
-                            $http.get(url).
-                                then(function(res) {
-                                    var data = res.data;
-                                    var vulnModels = [];
-
-                                    if (data.hasOwnProperty("rows")) {
-                                        data.rows.forEach(function(row) {
-                                            try {
-                                                vulnModels.push(new VulnModel(row.doc));
-                                            } catch(e) {
-                                                console.log(e.stack);
-                                            }
-                                        });
+                            if (data.hasOwnProperty("rows")) {
+                                data.rows.forEach(function(row) {
+                                    try {
+                                        vulnModels.push(new VulnModel(row.doc));
+                                    } catch(e) {
+                                        console.log(e.stack);
                                     }
-
-                                    angular.copy(vulnModels, self.models);
-                                    deferred.resolve(vulnModels);
-                                }, function(data, status, headers, config) {
-                                    deferred.reject("Unable to retrieve vuln models. " + status);
                                 });
+                            }
+
+                            angular.copy(vulnModels, self.models);
+                            deferred.resolve(vulnModels);
+                        }, function(data, status, headers, config) {
+                            deferred.reject("Unable to retrieve vuln models. " + status);
                         });
 
                     return deferred.promise;
@@ -137,17 +90,13 @@ angular.module('faradayApp').
                     var deferred = $q.defer();
                     var self = this;
 
-                    configSrv.promise.
-                        then(function() {
-                            var url = BASEURL + configSrv.vulnModelsDB + "/_all_docs";
-                            $http.get(url).
-                                then(function(res) {
-                                    var data = res.data;
-                                    self.updateState(data.total_rows);
-                                    deferred.resolve();
-                                }, function(data, status) {
-                                    deferred.reject("Unable to retrieve documents " + status);
-                                });
+                    ServerAPI.getVulnerabilityTemplates()
+                        .then(function(res) {
+                            var data = res.data;
+                            self.updateState(data.total_rows);
+                            deferred.resolve();
+                        }, function(data, status) {
+                            deferred.reject("Unable to retrieve documents " + status);
                         });
                     return deferred.promise;
                 };

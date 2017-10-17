@@ -64,28 +64,30 @@ def create_app(db_connection_string=None, testing=None):
     for handler in LOGGING_HANDLERS:
         app.logger.addHandler(handler)
 
-    from server.api.modules.workspaces import workspace_api
+    from server.modules.info import info_api
+    from server.api.modules.commandsrun import commandsrun_api
+    from server.api.modules.credentials import credentials_api
     from server.api.modules.doc import doc_api
-    from server.api.modules.vuln_csv import vuln_csv_api
-    from server.api.modules.vulns import vulns_api
     from server.api.modules.hosts import host_api
     from server.api.modules.licenses import license_api
-    from server.api.modules.commandsrun import commandsrun_api
     from server.api.modules.services import services_api
-    from server.api.modules.credentials import credentials_api
     from server.api.modules.session import session_api
-    from server.modules.info import info_api
-    app.register_blueprint(workspace_api)
-    app.register_blueprint(doc_api)
-    app.register_blueprint(vuln_csv_api)
-    app.register_blueprint(vulns_api)
-    app.register_blueprint(host_api)
-    app.register_blueprint(license_api)
+    from server.api.modules.vulns import vulns_api
+    from server.api.modules.vuln_csv import vuln_csv_api
+    from server.api.modules.vulnerability_template import vulnerability_template_api
+    from server.api.modules.workspaces import workspace_api
     app.register_blueprint(commandsrun_api)
-    app.register_blueprint(services_api)
     app.register_blueprint(credentials_api)
+    app.register_blueprint(doc_api)
+    app.register_blueprint(host_api)
     app.register_blueprint(info_api)
+    app.register_blueprint(license_api)
+    app.register_blueprint(services_api)
     app.register_blueprint(session_api)
+    app.register_blueprint(vulns_api)
+    app.register_blueprint(vuln_csv_api)
+    app.register_blueprint(vulnerability_template_api)
+    app.register_blueprint(workspace_api)
 
     # We are exposing a RESTful API, so don't redirect a user to a login page in
     # case of being unauthorized, raise a 403 error instead

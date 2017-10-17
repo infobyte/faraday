@@ -3,6 +3,7 @@
 # See the file 'doc/LICENSE' for the license information
 
 import os
+import sys
 import functools
 import twisted.web
 from twisted.web.resource import Resource
@@ -18,7 +19,7 @@ from server.utils import logger
 from server.app import create_app
 
 app = create_app()  # creates a Flask(__name__) app
-
+logger = server.utils.logger.get_logger(__name__)
 
 class WebServer(object):
     UI_URL_PATH = '_ui'
@@ -26,7 +27,7 @@ class WebServer(object):
     WEB_UI_LOCAL_PATH = os.path.join(server.config.FARADAY_BASE, 'server/www')
 
     def __init__(self, enable_ssl=False):
-        logger.get_logger(__name__).info('Starting server at port {0} with bind address {1}. SSL {2}'.format(
+        logger.info('Starting server at port {0} with bind address {1}. SSL {2}'.format(
             server.config.faraday_server.port,
             server.config.faraday_server.bind_address,
             enable_ssl))
@@ -43,7 +44,7 @@ class WebServer(object):
     def __load_ssl_certs(self):
         certs = (server.config.ssl.keyfile, server.config.ssl.certificate)
         if not all(certs):
-            logger.get_logger(__name__).critical("HTTPS request but SSL certificates are not configured")
+            logger.critical("HTTPS request but SSL certificates are not configured")
             exit(1) # Abort web-server startup
         return ssl.DefaultOpenSSLContextFactory(*certs)
 
@@ -71,8 +72,11 @@ class WebServer(object):
             self.__couchdb_port = int(server.config.couchdb.port)
             self.__listen_func = reactor.listenTCP
 
-        self.__listen_func(
-            self.__listen_port, site,
-            interface=self.__bind_address)
+        try:
+            self.__listen_func(
+                self.__listen_port, site,
+                interface=self.__bind_address)
+        except Exception as e:
+            logger.error('Something went wrong when trying to setup the Web UI')
         reactor.run()
 

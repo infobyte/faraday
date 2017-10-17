@@ -100,8 +100,7 @@ angular.module('faradayApp')
             },
             _update: function(vuln, data) {
                 var deferred = $q.defer(),
-                self = this,
-                url = BASEURL + vuln.ws + "/" + vuln._id;
+                self = this;
 
                 var now = new Date(),
                 date = now.getTime();
@@ -137,7 +136,6 @@ angular.module('faradayApp')
                         self._save(vuln, true)
                             .then(function(response) {
                                 self.set(self.ws, vuln);
-                                self._rev = response.rev;
                                 deferred.resolve();
                             }, function() {
                                 deferred.reject();
@@ -168,7 +166,6 @@ angular.module('faradayApp')
                 self = this,
                 vuln = {};
 
-                vuln._id = self._id;
                 vuln.metadata = self.metadata;
                 vuln.obj_id = self.obj_id;
                 vuln.owner = self.owner;
@@ -196,13 +193,11 @@ angular.module('faradayApp')
             save: function() {
                 var deferred = $q.defer(),
                 loadAtt,
-                self = this,
-                url = BASEURL + self.ws + "/" + self._id;
+                self = this;
 
                 self.populate().then(function(resp) {
                     self._save(resp, false)
                         .then(function(data) {
-                            self._rev = data.rev;
                             deferred.resolve(self);
                         }, function(data, status, headers, config) {
                             deferred.reject(status);

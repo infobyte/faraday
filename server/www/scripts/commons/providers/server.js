@@ -114,7 +114,7 @@ angular.module("faradayApp")
                 if (typeof vuln.data === "undefined") {vuln.data = ""};
                 if (typeof vuln.severity === "undefined") {vuln.severity = "info"};
                 if (typeof vuln.resolution === "undefined") {vuln.resolution = ""};
-                return createOrUpdate(wsName, vuln._id, vuln);
+                return createOrUpdate(wsName, vuln._id, vuln, 'vulns');
             }
 
             var modVulnWeb = function(createOrUpdate, wsName, vulnWeb) {

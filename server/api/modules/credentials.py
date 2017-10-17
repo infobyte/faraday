@@ -16,6 +16,7 @@ from server.dao.credential import CredentialDAO
 
 credentials_api = Blueprint('credentials_api', __name__)
 
+
 class CredentialSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     _rev = fields.String(default='', dump_only=True)

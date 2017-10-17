@@ -1,6 +1,7 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+import logging
 from ConfigParser import NoOptionError
 
 import flask
@@ -13,6 +14,7 @@ from flask_security import (
 
 import server.config
 from server.utils.logger import LOGGING_HANDLERS
+logger = logging.getLogger(__name__)
 
 
 def create_app(db_connection_string=None, testing=None):
@@ -41,9 +43,9 @@ def create_app(db_connection_string=None, testing=None):
     try:
         app.config['SQLALCHEMY_DATABASE_URI'] = db_connection_string or server.config.database.connection_string.strip("'")
     except AttributeError:
-        print('Missing [database] section on server.ini. Please configure the database before running the server.')
+        logger.info('Missing [database] section on server.ini. Please configure the database before running the server.')
     except NoOptionError:
-        print('Missing connection_string on [database] section on server.ini. Please configure the database before running the server.')
+        logger.info('Missing connection_string on [database] section on server.ini. Please configure the database before running the server.')
 
     from server.models import db
     db.init_app(app)

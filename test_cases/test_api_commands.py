@@ -3,7 +3,7 @@
 
 import pytest
 from test_cases import factories
-from test_api_workspaced_base import ListTestsMixin, API_PREFIX, GenericAPITest
+from test_api_workspaced_base import API_PREFIX, ReadOnlyAPITests
 from server.models import (
     Command,
     Workspace,
@@ -13,12 +13,10 @@ from server.api.modules.workspaces import WorkspaceView
 
 
 @pytest.mark.usefixtures('logged_user')
-class TestListCommandView(GenericAPITest):
+class TestListCommandView(ReadOnlyAPITests):
     model = Command
     factory = factories.CommandFactory
     api_endpoint = 'commands'
-    unique_fields = ['ip']
-    update_fields = ['ip', 'description', 'os']
     view_class = CommandView
 
     def test_(self, test_client, second_workspace, session):

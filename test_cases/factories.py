@@ -166,10 +166,15 @@ class VulnerabilityGenericFactory(WorkspaceObjectFactory):
     severity = FuzzyChoice(['critical', 'high'])
 
 
-class VulnerabilityFactory(VulnerabilityGenericFactory):
+class HasParentHostOrService(object):
+    """
+    Mixins for objects that must have either a host or a service,
+    but ont both, as a parent.
 
-    host = factory.SubFactory(HostFactory)
-    service = factory.SubFactory(ServiceFactory)
+    By default it randomly select one of them and set the other to
+    None, but this behavior can be modified as with other factory
+    fields
+    """
 
     @classmethod
     def attributes(cls, create=False, extra=None):
@@ -179,12 +184,15 @@ class VulnerabilityFactory(VulnerabilityGenericFactory):
                 raise ValueError('You should pass both service and host and '
                                  'set one of them to None to prevent random '
                                  'stuff to happen')
-        return super(VulnerabilityFactory, cls).attributes(create, extra)
+        return super(HasParentHostOrService, cls).attributes(create, extra)
 
     @classmethod
     def _after_postgeneration(cls, obj, create, results=None):
-        super(VulnerabilityFactory, cls)._after_postgeneration(
+        super(HasParentHostOrService, cls)._after_postgeneration(
             obj, create, results)
+        if isinstance(obj, dict):
+            # This happens when built with build_dict
+            return
         if obj.host and obj.service:
             # Setting both service and host to a vuln is not allowed.
             # This will pick one of them randomly.
@@ -193,6 +201,13 @@ class VulnerabilityFactory(VulnerabilityGenericFactory):
                 obj.host = None
             else:
                 obj.service = None
+
+
+class VulnerabilityFactory(HasParentHostOrService,
+                           VulnerabilityGenericFactory):
+
+    host = factory.SubFactory(HostFactory)
+    service = factory.SubFactory(ServiceFactory)
 
     class Meta:
         model = Vulnerability
@@ -218,7 +233,9 @@ class VulnerabilityCodeFactory(VulnerabilityGenericFactory):
         sqlalchemy_session = db.session
 
 
-class CredentialFactory(WorkspaceObjectFactory):
+class CredentialFactory(HasParentHostOrService, WorkspaceObjectFactory):
+    host = factory.SubFactory(HostFactory)
+    service = factory.SubFactory(ServiceFactory)
     username = FuzzyText()
     password = FuzzyText()
 

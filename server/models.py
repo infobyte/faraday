@@ -367,6 +367,13 @@ class Vulnerability(VulnerabilityGeneric):
             return self.service.host.hostnames
         raise ValueError("Vulnerability has no service nor host")
 
+    @property
+    def parent_type(self):
+        if self.host_id:
+            return 'Host'
+        if self.service_id:
+            return 'Service'
+
     __mapper_args__ = {
         'polymorphic_identity': VulnerabilityGeneric.VULN_TYPES[0]
     }
@@ -392,6 +399,11 @@ class VulnerabilityWeb(VulnerabilityGeneric):
     @declared_attr
     def service(cls):
         return relationship('Service', backref='vulnerabilities_web')
+
+    @property
+    def parent_type(self):
+        if self.service_id:
+            return 'Service'
 
     @property
     def hostnames(self):

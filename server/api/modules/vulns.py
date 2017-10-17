@@ -82,10 +82,7 @@ class VulnerabilitySchema(AutoSchema):
         return obj.__class__.__name__
 
     def get_parent_type(self, obj):
-        if obj.host_id:
-            return 'Host'
-        if obj.service_id:
-            return 'Service'
+        return obj.parent_type
 
     def get_metadata(self, obj):
         return {
@@ -188,7 +185,7 @@ class VulnerabilitySchema(AutoSchema):
 class VulnerabilityWebSchema(VulnerabilitySchema):
 
     method = fields.String(default='')
-    params = fields.String(default='')
+    params = fields.String(attribute='parameters', default='')
     pname = fields.String(dump_only=True, attribute='parameter_name', default='')
     path = fields.String(default='')
     response = fields.String(default='')

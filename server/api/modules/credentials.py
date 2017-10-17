@@ -49,10 +49,10 @@ class CredentialSchema(AutoSchema):
 
     class Meta:
         model = Credential
-        fields = ('id', '_id', 'status', 'parent',
-                  'username', 'description', '_rev',
-                  'owned', 'owner', 'name', 'password',
-                  '_id', 'metadata')
+        fields = ('id', '_id', "_rev", 'parent',
+                  'username', 'description',
+                  'name', 'password',
+                  'metadata')
 
 
 class CredentialView(ReadWriteWorkspacedView):

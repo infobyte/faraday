@@ -233,7 +233,9 @@ class VulnerabilityCodeFactory(VulnerabilityGenericFactory):
         sqlalchemy_session = db.session
 
 
-class CredentialFactory(WorkspaceObjectFactory):
+class CredentialFactory(HasParentHostOrService, WorkspaceObjectFactory):
+    host = factory.SubFactory(HostFactory)
+    service = factory.SubFactory(ServiceFactory)
     username = FuzzyText()
     password = FuzzyText()
 

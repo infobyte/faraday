@@ -1,0 +1,5 @@
+dev-python/beautifulsoup
+dev-python/gevent-psycopg2
+# net-analyzer/w3af @pentoo
+#dev-python/w3af-api-client  I will have to package. 
+# https://github.com/andresriancho/w3af-api-client

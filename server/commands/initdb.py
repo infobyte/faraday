@@ -94,6 +94,7 @@ class InitDB(Command):
             we return username and password and those values will be saved in the config file.
         """
         username_default = 'faraday_db_admin'
+        print('This script will {blue} create a new postgres user {white} and {blue} save faraday-server settings {white}(server.ini). '.format(blue=Fore.BLUE, white=Fore.WHITE))
         username = raw_input('Please enter the {blue} database user {white} (press enter to use "{0}"): '.format(username_default, blue=Fore.BLUE, white=Fore.WHITE)) or username_default
         postgres_command = ['sudo', '-u', 'postgres']
         password = None

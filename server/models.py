@@ -370,6 +370,10 @@ class Vulnerability(VulnerabilityGeneric):
         raise ValueError("Vulnerability has no service nor host")
 
     @property
+    def parent(self):
+        return self.host or self.service
+
+    @property
     def parent_type(self):
         if self.host_id:
             return 'Host'
@@ -406,6 +410,10 @@ class VulnerabilityWeb(VulnerabilityGeneric):
     def parent_type(self):
         if self.service_id:
             return 'Service'
+
+    @property
+    def parent(self):
+        return self.service
 
     @property
     def hostnames(self):

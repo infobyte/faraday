@@ -116,12 +116,7 @@ class VulnerabilitySchema(AutoSchema):
         ).all()]
 
     def get_parent(self, obj):
-        # TODO: move this to models and use duck typing?
-        if getattr(obj, 'service', None):
-            return obj.service.id
-        if getattr(obj, 'host', None):
-            return obj.host.id
-        return
+        return obj.parent.id
 
     def get_issuetracker(self, obj):
         return {}

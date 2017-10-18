@@ -69,6 +69,7 @@ class VulnerabilitySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
 
     _rev = fields.String(default='')
+    _attachments = fields.Method('get_attachments')
     owned = fields.Boolean(dump_only=True, default=False)
     owner = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
     impact = fields.Method('get_impact', deserialize='load_impact')
@@ -90,7 +91,6 @@ class VulnerabilitySchema(AutoSchema):
     status = fields.Method('get_status', deserialize='load_status')
     type = fields.Method('get_type', deserialize='load_type')
     obj_id = fields.String(dump_only=True, attribute='id')
-    _attachments = fields.Method('get_attachments')
     target = fields.String(default='')  # TODO: review this attribute
 
     class Meta:
@@ -264,24 +264,25 @@ class VulnerabilityView(PaginatedMixin,
         'VulnerabilityWeb': VulnerabilityWebSchema
     }
 
-    def post(self, **kwargs):
+    def _perform_create(self, data, **kwargs):
         data = self._parse_data(self._get_schema_class()(strict=True),
                                 request)
         attachments = data.pop('_attachments')
-        obj = self.model_class(**data)
-        created = self._perform_create(obj, **kwargs)
+        references = data.pop('references')
+        obj = super(VulnerabilityView, self)._perform_create(data, **kwargs)
+
         for filename, attachment in attachments.items():
             faraday_file = FaradayUploadedFile(b64decode(attachment['data']))
             get_or_create(
                 db.session,
                 File,
-                object_id=created.id,
-                object_type=created.__class__.__name__,
-                name=os.path.splitext(os.path.basename(filename))[0],
-                filename=os.path.basename(filename),
+                object_id=obj.id,
+                object_type=obj.__class__.__name__,
+                name = os.path.splitext(os.path.basename(filename))[0],
+                filename = os.path.basename(filename),
                 content=faraday_file,
             )
-        return self._dump(created), 201
+        return obj
 
     @property
     def model_class(self):

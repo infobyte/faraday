@@ -68,9 +68,15 @@ def create_app(db_connection_string=None, testing=None):
     except AttributeError:
         logger.warn('No storage section or path in the .faraday/server.ini. Setting the default value to .faraday/storage')
         storage_path = setup_storage_path()
-    DepotManager.configure('default', {
-        'depot.storage_path': storage_path
-    })
+    if not DepotManager.get('default'):
+        if testing:
+            DepotManager.configure('default', {
+                'depot.storage_path': '/tmp'
+            })
+        else:
+            DepotManager.configure('default', {
+                'depot.storage_path': storage_path
+            })
     if testing:
         app.config['TESTING'] = testing
     try:

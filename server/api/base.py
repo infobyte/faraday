@@ -10,6 +10,7 @@ from sqlalchemy import func
 from werkzeug.routing import parse_rule
 from marshmallow import Schema
 from marshmallow.compat import with_metaclass
+from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
 from webargs.flaskparser import FlaskParser, parser, abort
 from webargs.core import ValidationError
@@ -384,6 +385,16 @@ class AutoSchema(with_metaclass(ModelSchemaMeta, Schema)):
     OPTIONS_CLASS = ModelSchemaOpts
 
 
+class FilterAlchemyModelConverter(ModelConverter):
+    """Use this to make all fields of a model not required.
+
+    It is used to make filteralchemy support not nullable columns"""
+
+    def _add_column_kwargs(self, kwargs, column):
+        kwargs['required'] = False
+
+
 class FilterSetMeta:
     """Base Meta class of FilterSet objects"""
     parser = parser
+    converter = FilterAlchemyModelConverter()

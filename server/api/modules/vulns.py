@@ -43,7 +43,7 @@ class VulnerabilitySchema(AutoSchema):
     _attachments = fields.Method(load_only=True, deserialize='load_attachments')
     owned = fields.Boolean(dump_only=True, default=False)
     owner = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
-    impact = fields.Method(deserialize='load_impact')
+    impact = fields.Method('get_impact', deserialize='load_impact')
     policyviolations = PrimaryKeyRelatedField('name', many=True,
                                               attribute='policy_violations')
     desc = fields.String(dump_only=True, attribute='description')
@@ -59,7 +59,7 @@ class VulnerabilitySchema(AutoSchema):
         '_id', 'ports', 'status', 'protocol', 'name', 'version', 'summary'
     ]), dump_only=True)
     host = fields.Integer(dump_only=True, attribute='host_id')
-    status = fields.Method(attribute='status', deserialize='load_status')
+    status = fields.Method('get_status', deserialize='load_status')
     type = fields.Method('get_type', deserialize='load_type')
     obj_id = fields.String(dump_only=True, attribute='id')
     _attachments = fields.Method('get_attachments')
@@ -117,6 +117,17 @@ class VulnerabilitySchema(AutoSchema):
 
     def get_parent(self, obj):
         return obj.parent.id
+
+    def get_status(self, obj):
+        return obj.status
+
+    def get_impact(self, obj):
+        return {
+            'accountability': obj.impact_accountability,
+            'availability': obj.impact_availability,
+            'confidentiality': obj.impact_confidentiality,
+            'integrity': obj.impact_integrity,
+        }
 
     def get_issuetracker(self, obj):
         return {}

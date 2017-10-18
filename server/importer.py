@@ -876,6 +876,9 @@ class ImportVulnerabilityTemplates(FlaskScriptCommand):
             vuln_template.severity = new_severity
 
             references = document['references'] if isinstance(document['references'], list) else [x.strip() for x in document['references'].split(',')]
+            cwe_field = document.get('cwe')
+            if cwe_field not in references:
+                references.append(cwe_field)
             for ref_doc in references:
                 get_or_create(session,
                              ReferenceTemplate,

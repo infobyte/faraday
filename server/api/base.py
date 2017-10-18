@@ -10,6 +10,7 @@ from sqlalchemy import func
 from werkzeug.routing import parse_rule
 from marshmallow import Schema
 from marshmallow.compat import with_metaclass
+from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
 from webargs.flaskparser import FlaskParser, parser, abort
 from webargs.core import ValidationError
@@ -255,11 +256,12 @@ class CreateMixin(object):
     def post(self, **kwargs):
         data = self._parse_data(self._get_schema_class()(strict=True),
                                 flask.request)
-        obj = self.model_class(**data)
-        created = self._perform_create(obj, **kwargs)
+
+        created = self._perform_create(data, **kwargs)
         return self._dump(created), 201
 
-    def _perform_create(self, obj):
+    def _perform_create(self, data, **kwargs):
+        obj = self.model_class(**data)
         # assert not db.session.new
         with db.session.no_autoflush:
             # Required because _validate_uniqueness does a select. Doing this
@@ -273,10 +275,20 @@ class CreateMixin(object):
 class CreateWorkspacedMixin(CreateMixin):
     """Add POST /<workspace_name>/ route"""
 
-    def _perform_create(self, obj, workspace_name):
+    def _perform_create(self, data, workspace_name):
         assert not db.session.new
-        obj.workspace = self._get_workspace(workspace_name)
-        return super(CreateWorkspacedMixin, self)._perform_create(obj)
+        workspace = self._get_workspace(workspace_name)
+        obj = self.model_class(**data)
+        obj.workspace = workspace
+        # assert not db.session.new
+        with db.session.no_autoflush:
+            # Required because _validate_uniqueness does a select. Doing this
+            # outside a no_autoflush block would result in a premature create.
+            self._validate_uniqueness(obj)
+            db.session.add(obj)
+        db.session.commit()
+
+        return obj
 
 
 class UpdateMixin(object):
@@ -384,6 +396,16 @@ class AutoSchema(with_metaclass(ModelSchemaMeta, Schema)):
     OPTIONS_CLASS = ModelSchemaOpts
 
 
+class FilterAlchemyModelConverter(ModelConverter):
+    """Use this to make all fields of a model not required.
+
+    It is used to make filteralchemy support not nullable columns"""
+
+    def _add_column_kwargs(self, kwargs, column):
+        kwargs['required'] = False
+
+
 class FilterSetMeta:
     """Base Meta class of FilterSet objects"""
     parser = parser
+    converter = FilterAlchemyModelConverter()

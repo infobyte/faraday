@@ -4,12 +4,15 @@
 import time
 import logging
 
+from filteralchemy import FilterSet, operators
 from flask import request, jsonify, abort
 from flask import Blueprint
 from marshmallow import fields, post_load
 
 from server.api.base import (
     AutoSchema,
+    FilterAlchemyMixin,
+    FilterSetMeta,
     PaginatedMixin,
     ReadWriteWorkspacedView,
 )
@@ -213,8 +216,19 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'target', 'resolution', 'method', 'metadata')
 
 
-class VulnerabilityView(PaginatedMixin, ReadWriteWorkspacedView):
+class VulnerabilityFilterSet(FilterSet):
+    class Meta(FilterSetMeta):
+        model = VulnerabilityWeb  # It has all the fields
+        fields = (
+            'severity', 'website')
+        operators = (operators.Equal,)
+
+
+class VulnerabilityView(PaginatedMixin,
+                        FilterAlchemyMixin,
+                        ReadWriteWorkspacedView):
     route_base = 'vulns'
+    filterset_class = VulnerabilityFilterSet
 
     model_class_dict = {
         'Vulnerability': Vulnerability,

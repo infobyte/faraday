@@ -1,13 +1,13 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+import os
 import time
 import logging
 from base64 import b64encode, b64decode
 
 from filteralchemy import FilterSet, operators
-import os
-from flask import request, jsonify, abort
+from flask import request
 from flask import Blueprint
 from marshmallow import fields, post_load, ValidationError
 
@@ -29,20 +29,12 @@ from server.models import (
     VulnerabilityGeneric,
     Host, Service, File)
 from server.utils.database import get_or_create
-from server.utils.logger import get_logger
-from server.utils.web import (
-    gzipped,
-    validate_workspace,
-    get_integer_parameter,
-    filter_request_args
-)
+
 from server.api.modules.services import ServiceSchema
-from server.schemas import PrimaryKeyRelatedField, SelfNestedField
-from server.dao.vuln import VulnerabilityDAO
+from server.schemas import PrimaryKeyRelatedField
 
 vulns_api = Blueprint('vulns_api', __name__)
 logger = logging.getLogger(__name__)
-
 
 
 class EvidenceSchema(AutoSchema):

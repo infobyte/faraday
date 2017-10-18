@@ -76,6 +76,8 @@ MAPPED_VULN_SEVERITY = OrderedDict([
     ('low', 'low'),
     ('info', 'informational'),
     ('unclassified', 'unclassified'),
+    ('unknown', 'unclassified'),
+    ('', 'unclassified'),
 ])
 
 OBJ_TYPES = [

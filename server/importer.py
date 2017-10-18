@@ -374,9 +374,9 @@ class ServiceImporter(object):
                     'unknown': 'closed'
                 }
                 couchdb_status = document.get('status', 'open')
-                if couchdb_status.lower() == 'unkown':
-                    logger.warn('Service with status {0} found! Status will default to closed. Host is {1}'.format(couchdb_status, host.ip))
-                service.status = status_mapper[couchdb_status]
+                if couchdb_status.lower() not in status_mapper:
+                    logger.warn('Service with status {0} found! Status will default to open. Host is {1}'.format(couchdb_status, host.ip))
+                service.status = status_mapper.get(couchdb_status, 'open')
                 service.version = document.get('version')
                 service.workspace = workspace
 

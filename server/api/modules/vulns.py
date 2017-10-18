@@ -3,12 +3,15 @@
 # See the file 'doc/LICENSE' for the license information
 import time
 import logging
+from base64 import b64encode, b64decode
 
 from filteralchemy import FilterSet, operators
+import os
 from flask import request, jsonify, abort
 from flask import Blueprint
-from marshmallow import fields, post_load
+from marshmallow import fields, post_load, ValidationError
 
+from depot.manager import DepotManager
 from server.api.base import (
     AutoSchema,
     FilterAlchemyMixin,
@@ -16,6 +19,7 @@ from server.api.base import (
     PaginatedMixin,
     ReadWriteWorkspacedView,
 )
+from server.fields import FaradayUploadedFile
 from server.models import (
     db,
     Tag,
@@ -23,7 +27,8 @@ from server.models import (
     Vulnerability,
     VulnerabilityWeb,
     VulnerabilityGeneric,
-    Host, Service)
+    Host, Service, File)
+from server.utils.database import get_or_create
 from server.utils.logger import get_logger
 from server.utils.web import (
     gzipped,
@@ -32,18 +37,38 @@ from server.utils.web import (
     filter_request_args
 )
 from server.api.modules.services import ServiceSchema
-from server.schemas import PrimaryKeyRelatedField
+from server.schemas import PrimaryKeyRelatedField, SelfNestedField
 from server.dao.vuln import VulnerabilityDAO
 
 vulns_api = Blueprint('vulns_api', __name__)
 logger = logging.getLogger(__name__)
 
 
+
+class EvidenceSchema(AutoSchema):
+    content_type = fields.Method('get_content_type')
+    data = fields.Method('get_data')
+
+    class Meta:
+        model = File
+        fields = (
+            'content_type',
+            'data'
+        )
+
+    def get_content_type(self, file_obj):
+        depot = DepotManager.get()
+        return depot.get(file_obj.content.get('file_id')).content_type
+
+    def get_data(self, file_obj):
+        depot = DepotManager.get()
+        return b64encode(depot.get(file_obj.content.get('file_id')).read())
+
+
 class VulnerabilitySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
 
     _rev = fields.String(default='')
-    _attachments = fields.Method(load_only=True, deserialize='load_attachments')
     owned = fields.Boolean(dump_only=True, default=False)
     owner = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
     impact = fields.Method('get_impact', deserialize='load_impact')
@@ -99,11 +124,20 @@ class VulnerabilitySchema(AutoSchema):
         }
 
     def get_attachments(self, obj):
-        # TODO: retrieve obj attachments
-        return []
+        res = []
+        files = db.session.query(File).filter_by(object_id=obj.id, object_type=obj.__class__.__name__).all()
+
+        for file_obj in files:
+            ret, errors = EvidenceSchema().dump(file_obj)
+            if errors:
+                raise ValidationError(errors, data=ret)
+            res.append(ret)
+
+        return res
 
     def get_hostnames(self, obj):
         # TODO: improve performance here
+        # TODO: move this to models?
         if obj.host:
             return [hostname.name for hostname in obj.host.hostnames]
         if obj.service:
@@ -152,22 +186,12 @@ class VulnerabilitySchema(AutoSchema):
         self.parent_id = value
         return value
 
-    def load_attachments(self, value):
-        # TODO: implement attachments
-        pass
-
-    @post_load
-    def clean_up(self, data):
-        data.pop('_attachments')
-        return data
-
     @post_load
     def set_impact(self, data):
         impact = data.pop('impact')
         if impact:
             pass
         return data
-
 
     @post_load
     def set_parent(self, data):
@@ -235,22 +259,43 @@ class VulnerabilityView(PaginatedMixin,
         'VulnerabilityWeb': VulnerabilityWeb,
         'VulnerabilityGeneric': VulnerabilityGeneric,
     }
-    schema_class = {
+    schema_class_dict = {
         'Vulnerability': VulnerabilitySchema,
         'VulnerabilityWeb': VulnerabilityWebSchema
     }
+
+    def post(self, **kwargs):
+        data = self._parse_data(self._get_schema_class()(strict=True),
+                                request)
+        attachments = data.pop('_attachments')
+        obj = self.model_class(**data)
+        created = self._perform_create(obj, **kwargs)
+        for filename, attachment in attachments.items():
+            faraday_file = FaradayUploadedFile(b64decode(attachment['data']))
+            get_or_create(
+                db.session,
+                File,
+                object_id=created.id,
+                object_type=created.__class__.__name__,
+                name=os.path.splitext(os.path.basename(filename))[0],
+                filename=os.path.basename(filename),
+                content=faraday_file,
+            )
+        return self._dump(created), 201
 
     @property
     def model_class(self):
         if request.method == 'POST':
             return self.model_class_dict[request.json['type']]
+        # We use Generic to list all vulns from all types
         return self.model_class_dict['VulnerabilityGeneric']
 
     def _get_schema_class(self):
-        assert self.schema_class is not None, "You must define schema_class"
+        assert self.schema_class_dict is not None, "You must define schema_class"
         if request.method == 'POST':
-            return self.schema_class[request.json['type']]
-        return self.schema_class['VulnerabilityWeb']
+            return self.schema_class_dict[request.json['type']]
+        # We use web since it has all the fields
+        return self.schema_class_dict['VulnerabilityWeb']
 
     def _envelope_list(self, objects, pagination_metadata=None):
         vulns = []
@@ -265,52 +310,3 @@ class VulnerabilityView(PaginatedMixin,
         }
 
 VulnerabilityView.register(vulns_api)
-
-
-@vulns_api.route('/ws/<workspace>/vulns', methods=['GET'])
-@gzipped
-def get_vulnerabilities(workspace=None):
-    validate_workspace(workspace)
-    get_logger(__name__).debug("Request parameters: {!r}"\
-        .format(request.args))
-
-    page = get_integer_parameter('page', default=0)
-    page_size = get_integer_parameter('page_size', default=0)
-    search = request.args.get('search')
-    order_by = request.args.get('sort')
-    order_dir = request.args.get('sort_dir')
-
-    vuln_filter = filter_request_args(
-        'page', 'page_size', 'search', 'sort', 'sort_dir')
-
-    vuln_dao = VulnerabilityDAO(workspace)
-
-    result = vuln_dao.list(search=search,
-                           page=page,
-                           page_size=page_size,
-                           order_by=order_by,
-                           order_dir=order_dir,
-                           vuln_filter=vuln_filter)
-
-    return jsonify(result)
-
-
-@vulns_api.route('/ws/<workspace>/vulns/count', methods=['GET'])
-@gzipped
-def count_vulnerabilities(workspace=None):
-    validate_workspace(workspace)
-    get_logger(__name__).debug("Request parameters: {!r}"\
-        .format(request.args))
-
-    field = request.args.get('group_by')
-    search = request.args.get('search')
-    vuln_filter = filter_request_args('search', 'group_by')
-
-    vuln_dao = VulnerabilityDAO(workspace)
-    result = vuln_dao.count(group_by=field,
-                            search=search,
-                            vuln_filter=vuln_filter)
-    if result is None:
-        abort(400)
-
-    return jsonify(result)

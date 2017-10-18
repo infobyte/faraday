@@ -18,3 +18,4 @@ twisted>=16.1.1
 webargs
 marshmallow-sqlalchemy
 filteralchemy
+filedepot==0.5.0

@@ -278,6 +278,7 @@ class CreateWorkspacedMixin(CreateMixin):
     def _perform_create(self, data, workspace_name):
         assert not db.session.new
         workspace = self._get_workspace(workspace_name)
+        self.workspace = workspace
         obj = self.model_class(**data)
         obj.workspace = workspace
         # assert not db.session.new

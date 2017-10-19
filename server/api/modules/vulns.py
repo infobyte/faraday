@@ -27,7 +27,7 @@ from server.models import (
     Vulnerability,
     VulnerabilityWeb,
     VulnerabilityGeneric,
-    Host, Service, File)
+    Host, Service, File, Reference)
 from server.utils.database import get_or_create
 
 from server.api.modules.services import ServiceSchema
@@ -262,6 +262,10 @@ class VulnerabilityView(PaginatedMixin,
         attachments = data.pop('_attachments')
         references = data.pop('references')
         obj = super(VulnerabilityView, self)._perform_create(data, **kwargs)
+
+        for reference in references:
+            instance, _ = get_or_create(db.session, Reference, name=reference, workspace=self.workspace)
+            obj.references.append(instance)
 
         for filename, attachment in attachments.items():
             faraday_file = FaradayUploadedFile(b64decode(attachment['data']))

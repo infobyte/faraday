@@ -16,10 +16,8 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
-    Unicode,
     event
 )
-from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql import select, text, table
 from sqlalchemy import func
@@ -31,13 +29,14 @@ from flask_sqlalchemy import (
     _EngineConnector
 )
 from depot.fields.sqlalchemy import UploadedFileField
+
+import server.config
 from server.fields import FaradayUploadedFile
 from flask_security import (
     RoleMixin,
     UserMixin,
 )
-
-import server.config
+from server.utils.database import get_or_create
 
 
 class SQLAlchemy(OriginalSQLAlchemy):
@@ -339,6 +338,11 @@ class VulnerabilityGeneric(VulnerabilityABC):
                         )
     workspace = relationship('Workspace', backref='vulnerabilities')
 
+    references = relationship(
+        "Reference",
+        secondary="reference_vulnerability_association"
+    )
+
     __mapper_args__ = {
         'polymorphic_on': type
     }
@@ -473,31 +477,31 @@ class Reference(Metadata):
     name = Column(Text, nullable=False)
 
     workspace_id = Column(
-                        Integer,
-                        ForeignKey('workspace.id'),
-                        index=True,
-                        nullable=False
-                        )
+        Integer,
+        ForeignKey('workspace.id'),
+        index=True,
+        nullable=False
+    )
     workspace = relationship(
-                            'Workspace',
-                            backref='references',
-                            foreign_keys=[workspace_id],
-                            )
-
-    vulnerability_id = Column(
-                            Integer,
-                            ForeignKey(VulnerabilityGeneric.id),
-                            index=True
-                            )
-    vulnerability = relationship(
-                                'VulnerabilityGeneric',
-                                backref='references',
-                                foreign_keys=[vulnerability_id],
-                                )
+        'Workspace',
+        backref='references',
+        foreign_keys=[workspace_id],
+    )
 
     __table_args__ = (
-        UniqueConstraint('name', 'vulnerability_id', 'workspace_id', name='uix_reference_name_vulnerability_workspace'),
+        UniqueConstraint('name', 'workspace_id', name='uix_reference_name_vulnerability_workspace'),
     )
+
+
+class ReferenceVulnerabilityAssociation(db.Model):
+
+    __tablename__ = 'reference_vulnerability_association'
+
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id'), primary_key=True)
+    reference_id = Column(Integer, ForeignKey('reference.id'), primary_key=True)
+
+    reference = relationship("Reference", backref="reference_associations", foreign_keys=[reference_id])
+    vulnerability = relationship("Vulnerability", backref="vulnerability_associations", foreign_keys=[vulnerability_id])
 
 
 class PolicyViolationTemplate(Metadata):

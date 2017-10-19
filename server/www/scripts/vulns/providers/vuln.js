@@ -37,6 +37,7 @@ angular.module('faradayApp')
             this.owner = "";
             this.owned = "";
             this.parent = "";
+            this.parent_type = "";
             this.refs = "";
             this.resolution = "";
             this.service = "";
@@ -70,24 +71,14 @@ angular.module('faradayApp')
             set: function(ws, data) {
                 var self = this;
 
-                // new vuln
-                if(data._id === undefined) {
-                    var id = CryptoJS.SHA1(data.name + "." + data.desc).toString();
-                    self._id = data.parent + "." + id;
-                    self.obj_id = id;
-                } else {
-                    self._id = data._id;
-                    self.obj_id = data.obj_id;
-                    if(data._rev !== undefined) self._rev = data._rev;
-                    if(data.metadata !== undefined) self.metadata = data.metadata;
-                    if(data.target !== undefined) self.target = data.target;
-                    if(data.hostnames !== undefined) self.hostnames = data.hostnames;
-                    if(data.service !== undefined) self.service = data.service;
-                }
-
+                if(data.metadata !== undefined) self.metadata = data.metadata;
+                if(data.target !== undefined) self.target = data.target;
+                if(data.hostnames !== undefined) self.hostnames = data.hostnames;
+                if(data.service !== undefined) self.service = data.service;
                 if(data.owner !== undefined) self.owner = data.owner;
                 self.ws = ws;
                 if(data.parent !== undefined) self.parent = data.parent;
+                if(data.parent_type !== undefined) self.parent_type = data.parent_type;
 
                 self.public_properties.forEach(function(property) {
                     if(data[property] !== undefined) self[property] = data[property];
@@ -170,6 +161,7 @@ angular.module('faradayApp')
                 vuln.obj_id = self.obj_id;
                 vuln.owner = self.owner;
                 vuln.parent = self.parent;
+                vuln.parent_type = self.parent_type;
                 vuln.type = self.type;
                 vuln.ws = self.ws;
 

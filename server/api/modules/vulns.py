@@ -1,13 +1,13 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+import os
 import time
 import logging
 from base64 import b64encode, b64decode
 
 from filteralchemy import FilterSet, operators
-import os
-from flask import request, jsonify, abort
+from flask import request
 from flask import Blueprint
 from marshmallow import fields, post_load, ValidationError
 
@@ -27,22 +27,14 @@ from server.models import (
     Vulnerability,
     VulnerabilityWeb,
     VulnerabilityGeneric,
-    Host, Service, File)
+    Host, Service, File, Reference)
 from server.utils.database import get_or_create
-from server.utils.logger import get_logger
-from server.utils.web import (
-    gzipped,
-    validate_workspace,
-    get_integer_parameter,
-    filter_request_args
-)
+
 from server.api.modules.services import ServiceSchema
-from server.schemas import PrimaryKeyRelatedField, SelfNestedField
-from server.dao.vuln import VulnerabilityDAO
+from server.schemas import PrimaryKeyRelatedField
 
 vulns_api = Blueprint('vulns_api', __name__)
 logger = logging.getLogger(__name__)
-
 
 
 class EvidenceSchema(AutoSchema):
@@ -69,6 +61,7 @@ class VulnerabilitySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
 
     _rev = fields.String(default='')
+    _attachments = fields.Method('get_attachments')
     owned = fields.Boolean(dump_only=True, default=False)
     owner = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
     impact = fields.Method('get_impact', deserialize='load_impact')
@@ -90,7 +83,6 @@ class VulnerabilitySchema(AutoSchema):
     status = fields.Method('get_status', deserialize='load_status')
     type = fields.Method('get_type', deserialize='load_type')
     obj_id = fields.String(dump_only=True, attribute='id')
-    _attachments = fields.Method('get_attachments')
     target = fields.String(default='')  # TODO: review this attribute
 
     class Meta:
@@ -280,24 +272,29 @@ class VulnerabilityView(PaginatedMixin,
         'VulnerabilityWeb': VulnerabilityWebSchema
     }
 
-    def post(self, **kwargs):
+    def _perform_create(self, data, **kwargs):
         data = self._parse_data(self._get_schema_class()(strict=True),
                                 request)
         attachments = data.pop('_attachments')
-        obj = self.model_class(**data)
-        created = self._perform_create(obj, **kwargs)
+        references = data.pop('references')
+        obj = super(VulnerabilityView, self)._perform_create(data, **kwargs)
+
+        for reference in references:
+            instance, _ = get_or_create(db.session, Reference, name=reference, workspace=self.workspace)
+            obj.references.append(instance)
+
         for filename, attachment in attachments.items():
             faraday_file = FaradayUploadedFile(b64decode(attachment['data']))
             get_or_create(
                 db.session,
                 File,
-                object_id=created.id,
-                object_type=created.__class__.__name__,
-                name=os.path.splitext(os.path.basename(filename))[0],
-                filename=os.path.basename(filename),
+                object_id=obj.id,
+                object_type=obj.__class__.__name__,
+                name = os.path.splitext(os.path.basename(filename))[0],
+                filename = os.path.basename(filename),
                 content=faraday_file,
             )
-        return self._dump(created), 201
+        return obj
 
     @property
     def model_class(self):

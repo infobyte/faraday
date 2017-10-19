@@ -240,12 +240,28 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'target', 'resolution', 'method', 'metadata')
 
 
+# Use this override for filterset fields that filter by en exact match by
+# default, and not by a similar one (like operator)
+_strict_filtering = {'default_operator': operators.Equal}
+
 class VulnerabilityFilterSet(FilterSet):
     class Meta(FilterSetMeta):
         model = VulnerabilityWeb  # It has all the fields
+        # TODO migration: Check if we should add fields creator, owner, command,
+        # impact, type, service, issuetracker, tags, date, target, host,
+        # easeofresolution, evidence, policy violations, hostnames, target
         fields = (
-            'severity', 'website')
-        operators = (operators.Equal,)
+            "status", "website", "parameter_name", "query_string", "path",
+            "data", "severity", "confirmed", "name", "request", "response",
+            "parameters", "resolution", "method", "ease_of_resolution",
+            "description")
+        strict_fields = (
+            "severity", "confirmed", "method"
+        )
+        default_operator = operators.ILike
+        column_overrides = {
+            field: _strict_filtering for field in strict_fields}
+        operators = (operators.ILike, operators.Equal)
 
 
 class VulnerabilityView(PaginatedMixin,

@@ -26,7 +26,7 @@ class PrimaryKeyRelatedField(fields.Field):
             return ret
         else:
             if value is None:
-                return None
+                return []
             return getattr(value, self.field_name)
 
 

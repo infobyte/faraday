@@ -27,7 +27,7 @@ from server.models import (
     Vulnerability,
     VulnerabilityWeb,
     VulnerabilityGeneric,
-    Host, Service, File, Reference)
+    Host, Service, File, Reference, PolicyViolation)
 from server.utils.database import get_or_create
 
 from server.api.modules.services import ServiceSchema
@@ -66,9 +66,9 @@ class VulnerabilitySchema(AutoSchema):
     owner = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
     impact = fields.Method('get_impact', deserialize='load_impact')
     policyviolations = PrimaryKeyRelatedField('name', many=True,
-                                              attribute='policy_violations')
+                                              attribute='policy_violations', default=[])
     desc = fields.String(dump_only=True, attribute='description')
-    refs = PrimaryKeyRelatedField('name', many=True, attribute='references')
+    refs = PrimaryKeyRelatedField('name', many=True, attribute='references', default=[])
     issuetracker = fields.Method('get_issuetracker')
     parent = fields.Method('get_parent', deserialize='load_parent')
     parent_type = fields.Method('get_parent_type')
@@ -277,11 +277,16 @@ class VulnerabilityView(PaginatedMixin,
                                 request)
         attachments = data.pop('_attachments')
         references = data.pop('references')
+        policyviolations = data.pop('policy_violations')
         obj = super(VulnerabilityView, self)._perform_create(data, **kwargs)
 
         for reference in references:
             instance, _ = get_or_create(db.session, Reference, name=reference, workspace=self.workspace)
             obj.references.append(instance)
+
+        for policyviolation in policyviolations:
+            instance, _ = get_or_create(db.session, PolicyViolation, name=policyviolation, workspace=self.workspace)
+            obj.policy_violations.append(instance)
 
         for filename, attachment in attachments.items():
             faraday_file = FaradayUploadedFile(b64decode(attachment['data']))

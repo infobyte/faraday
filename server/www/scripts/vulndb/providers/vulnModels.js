@@ -17,18 +17,18 @@ angular.module('faradayApp').
 
                     try {
                         var vulnModel = new VulnModel(data);
-                        vulnModel.save().
-                            then(function(resp) {
+                        vulnModel.save()
+                            .then(function(resp) {
                                 if (outsider) {
                                     deferred.resolve(resp);
                                 } else {
-                                vulnModelsManager.get().
-                                    then(function() {
-                                        self.updateState(self.totalNumberOfModels + 1);
-                                        deferred.resolve(self);
-                                    }, function(reason) {
-                                        deferred.reject(reason);
-                                    });
+                                    vulnModelsManager.get()
+                                        .then(function() {
+                                            self.updateState(self.totalNumberOfModels + 1);
+                                            deferred.resolve(self);
+                                        }, function(reason) {
+                                            deferred.reject(reason);
+                                        });
                                 }}, function(reason) {
                                 deferred.reject(reason);
                             });

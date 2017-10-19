@@ -25,7 +25,7 @@ angular.module("faradayApp")
                 return APIURL + "ws/" + wsName + objectName + "/";
             };
 
-            // created GET URL for objects that do not belong to a workspace
+            // create GET URL for objects that do not belong to a workspace
             var createNonWorkspacedGetUrl = function(objectName, objectId) {
                 if (typeof objectId == 'string' || typeof objectId ==  "number") {
                     objectName = objectName + "/" + objectId;
@@ -42,8 +42,18 @@ angular.module("faradayApp")
                 return APIURL + "ws/" + wsName + "/" + objectType + "/";
             };
 
+            // create POST URL for objects that do not belong to a workspace
+            var createNonWorkspacedPostUrl = function(objectId, objectType) {
+                return APIURL + objectType + "/";
+            };
+
             var createPutUrl = function(wsName, objectId, objectType) {
                 return APIURL + "ws/" + wsName + "/" + objectType + "/" + objectId + "/";
+            };
+
+            // create PUT URL for objects that do not belong to a workspace
+            var createNonWorkspacedPutUrl = function(objectId, objectType) {
+                return APIURL + objectType + "/" + objectId + "/";
             };
 
             var createDbUrl = function(wsName) {
@@ -51,6 +61,8 @@ angular.module("faradayApp")
             }
 
             var createDeleteUrl = createPutUrl;
+
+            var createNonWorkspacedDeleteUrl = createNonWorkspacedPutUrl;
 
             var serverComm = function(method, url, data) {
                 var success = function (response) {
@@ -127,17 +139,29 @@ angular.module("faradayApp")
             }
 
             var modVulnWeb = function(createOrUpdate, wsName, vulnWeb) {
-                if (typeof vulnWeb.owner === "undefined") {vuln.owner = ""};
-                if (typeof vuln.description === "undefined") {vuln.description = ""};
-                if (typeof vulnWeb.protocol === "undefined") {vuln.protocol = ""};
-                if (typeof vulnWeb.status === "undefined") {vuln.status = ""};
-                if (typeof vulnWeb.version === "undefined") {vuln.version = ""};
-                if (typeof vulnWeb.confirmed === "undefined") {vuln.confirmed = false};
-                if (typeof vulnWeb.data === "undefined") {vuln.data = ""};
-                if (typeof vulnWeb.severity === "undefined") {vuln.severity = "info"};
-                if (typeof vulnWeb.resolution === "undefined") {vuln.resolution = ""};
-                if (typeof vulnWeb.params === "undefined") {vuln.parmas = ""};
+                if (typeof vulnWeb.owner === "undefined") {vulnWeb.owner = ""};
+                if (typeof vulnWeb.description === "undefined") {vulnWeb.description = ""};
+                if (typeof vulnWeb.protocol === "undefined") {vulnWeb.protocol = ""};
+                if (typeof vulnWeb.status === "undefined") {vulnWeb.status = ""};
+                if (typeof vulnWeb.version === "undefined") {vulnWeb.version = ""};
+                if (typeof vulnWeb.confirmed === "undefined") {vulnWeb.confirmed = false};
+                if (typeof vulnWeb.data === "undefined") {vulnWeb.data = ""};
+                if (typeof vulnWeb.severity === "undefined") {vulnWeb.severity = "info"};
+                if (typeof vulnWeb.resolution === "undefined") {vulnWeb.resolution = ""};
+                if (typeof vulnWeb.params === "undefined") {vulnWeb.params = ""};
                 return createOrUpdate(wsName, vulnWeb._id, vulnWeb);
+            }
+
+            var modVulnerabilityTemplate = function(createOrUpdate, vulnerabilityTemplate) {
+                var data_name = 'vulnerability_template';
+                if(typeof vulnerabilityTemplate.cwe === "undefined") {vulnerabilityTemplate.cwe = ""};
+                if(typeof vulnerabilityTemplate.description === "undefined") {vulnerabilityTemplate.description = ""};
+                if(typeof vulnerabilityTemplate.exploitation === "undefined") {vulnerabilityTemplate.exploitation = "informational"};
+                if(typeof vulnerabilityTemplate.name === "undefined") {vulnerabilityTemplate.name = ""};
+                if(typeof vulnerabilityTemplate.references === "undefined") {vulnerabilityTemplate.references = ""};
+                if(typeof vulnerabilityTemplate.resolution === "undefined") {vulnerabilityTemplate.resolution = ""};
+                vulnerabilityTemplate.type = data_name;
+                return createOrUpdate(vulnerabilityTemplate._id, vulnerabilityTemplate, data_name);
             }
 
             var modNote = function(createOrUpdate, wsName, note) {
@@ -161,20 +185,41 @@ angular.module("faradayApp")
                 return send_data(postUrl, data, false, "POST");
             }
 
+            var createNonWorkspacedObject = function(id, data, collectionName) {
+                var postUrl = createNonWorkspacedPostUrl(id, collectionName);
+                console.log(collectionName);
+                return send_data(postUrl, data, false, "POST");
+            };
+
             var updateObject = function(wsName, id, data, collectionName) {
                 var postUrl = createPostUrl(wsName, id, collectionName);
                 return send_data(postUrl, data, true, "PUT");
             }
+
+            var updateNonWorkspacedObject = function(id, data, collectionName) {
+                var postUrl = createNonWorkspacedPostUrl(id, collectionName);
+                return send_data(postUrl, data, true, "PUT");
+            };
 
             var saveInServer = function(wsName, objectId, data, collectionName) {
                 var postUrl = createPostUrl(wsName, objectId, collectionName);
                 return send_data(postUrl, data, false, "PUT");
             }
 
+            var saveNonWorkspacedInServer = function(objectId, data, collectionName) {
+                var postUrl = createNonWorkspacedPostUrl(objectId, collectionName);
+                return send_data(postUrl, data, false, "PUT");
+            };
+
             var updateInServer = function(wsName, objectId, data, collectionName) {
                 var postUrl = createPostUrl(wsName, objectId, collectionName);
                 return send_data(postUrl, objectId, true, "PUT");
             }
+
+            var updateNonWorkspacedInServer = function(objectId, data, collectionName) {
+                var postUrl = createPostUrl(objectId, collectionName);
+                return send_data(postUrl, objectId, true, "PUT");
+            };
 
             ServerAPI.getHost = function(wsName, objId) {
                 var url = createGetUrl(wsName, 'hosts', objId);
@@ -333,6 +378,14 @@ angular.module("faradayApp")
                     return modVulnWeb(updateObject, wsName, vulnWeb);
             }
 
+            ServerAPI.createVulnerabilityTemplate = function(vulnerabilityTemplate) {
+                    return modVulnerabilityTemplate(createNonWorkspacedObject, vulnerabilityTemplate);
+            };
+
+            ServerAPI.updateVulnerabilityTemplate = function(vulnerabilityTemplate) {
+                    return modVulnerabilityTemplate(updateNonWorkspacedObject, vulnerabilityTemplate);
+            };
+
             ServerAPI.createNote = function(wsName, note) {
                     return modNote(createObject, wsName, note);
             }
@@ -384,6 +437,16 @@ angular.module("faradayApp")
 
             ServerAPI.deleteVuln = function(wsName, vulnId, rev) {
                 var deleteUrl = createDeleteUrl(wsName, vulnId, rev);
+                if (typeof rev === "undefined") {
+                    return _delete(deleteUrl, false)
+                }
+                else {
+                    return _delete(deleteUrl, true);
+                }
+            }
+
+            ServerAPI.deleteVulnerabilityTemplate = function(vulnId, rev) {
+                var deleteUrl = createNonWorkspacedDeleteUrl(vulnId, rev);
                 if (typeof rev === "undefined") {
                     return _delete(deleteUrl, false)
                 }

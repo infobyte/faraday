@@ -50,3 +50,26 @@ class SelfNestedField(fields.Field):
 
     def _deserialize(self, value, attr, data):
         raise NotImplementedError("Only dump is implemented for now")
+
+
+class MutableField(fields.Field):
+    """
+    A field that enables the use of different fields for read and write.
+
+    This is useful in many cases, like for example when you want to use a
+    Nested field to show the data but an Integer field (that uses to be a
+    primary key) for writing/deserializing.
+    """
+
+    # TODO: inherit required and other properties from the child fields
+
+    def __init__(self, read_field, write_field, **kwargs):
+        self.read_field = read_field
+        self.write_field = write_field
+        super(MutableField, self).__init__(**kwargs)
+
+    def _serialize(self, value, attr, obj):
+        return self.read_field._serialize(value, attr, obj)
+
+    def _deserialize(self, value, attr, data):
+        return self.write_field._deserialize(value, attr, data)

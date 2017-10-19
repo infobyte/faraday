@@ -2,9 +2,10 @@ import time
 import datetime
 import pytest
 from collections import namedtuple
-from marshmallow import Schema, fields
+from marshmallow import Schema, fields, ValidationError
 from server.schemas import (
     JSTimestampField,
+    MutableField,
     PrimaryKeyRelatedField,
     SelfNestedField,
 )
@@ -92,3 +93,39 @@ class TestPrimaryKeyRelatedField:
             "user": None,
             "first_name": "other"
         }
+
+
+Blogpost2 = namedtuple('Blogpost', ['id', 'title', 'user'])
+
+
+class Blogpost2Schema(Schema):
+    id = fields.Integer()
+    title = fields.String()
+    user = MutableField(fields.Nested(UserSchema, only=('username',)),
+                        fields.String())
+
+class TestMutableField:
+
+    serialized_data = {"id": 1, "title": "test", "user": {"username": "john"}}
+    loaded_data = {"id": 1, "title": "test", "user": "john"}
+
+    @pytest.fixture(autouse=True)
+    def load_data(self):
+        self.user = User('john', [])  # I don't care for the user's blogposts
+        self.blogpost = Blogpost2(1, 'test', self.user)
+
+    def serialize(self, obj=None, schema=Blogpost2Schema):
+        return schema(strict=True).dump(obj or self.blogpost).data
+
+    def load(self, data, schema=Blogpost2Schema):
+        return schema(strict=True).load(data).data
+
+    def test_serialize(self):
+        assert self.serialize() == self.serialized_data
+
+    def test_deserialize(self):
+        assert self.load(self.loaded_data) == self.loaded_data
+
+    def test_deserialize_fails(self):
+        with pytest.raises(ValidationError):
+            self.load(self.serialized_data)

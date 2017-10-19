@@ -121,7 +121,6 @@ class EntityMetadataFactory(WorkspaceObjectFactory):
 
 class PolicyViolationFactory(WorkspaceObjectFactory):
     name = FuzzyText()
-    vulnerability = None
 
     class Meta:
         model = PolicyViolation
@@ -130,7 +129,6 @@ class PolicyViolationFactory(WorkspaceObjectFactory):
 
 class ReferenceFactory(WorkspaceObjectFactory):
     name = FuzzyText()
-    vulnerability = None
 
     class Meta:
         model = Reference

@@ -27,7 +27,7 @@ from server.models import (
     Vulnerability,
     VulnerabilityWeb,
     VulnerabilityGeneric,
-    Host, Service, File, Reference)
+    Host, Service, File, Reference, PolicyViolation)
 from server.utils.database import get_or_create
 
 from server.api.modules.services import ServiceSchema
@@ -61,17 +61,17 @@ class VulnerabilitySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
 
     _rev = fields.String(default='')
-    _attachments = fields.Method('get_attachments')
+    _attachments = fields.Method('get_attachments', 'set_attachments', default=[])
     owned = fields.Boolean(dump_only=True, default=False)
     owner = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
     impact = fields.Method('get_impact', deserialize='load_impact')
     policyviolations = PrimaryKeyRelatedField('name', many=True,
-                                              attribute='policy_violations')
+                                              attribute='policy_violations', default=[])
     desc = fields.String(dump_only=True, attribute='description')
-    refs = PrimaryKeyRelatedField('name', many=True, attribute='references')
+    refs = PrimaryKeyRelatedField('name', many=True, attribute='references', default=[])
     issuetracker = fields.Method('get_issuetracker')
-    parent = fields.Method('get_parent', deserialize='load_parent')
-    parent_type = fields.Method('get_parent_type')
+    parent = fields.Method('get_parent', deserialize='load_parent', required=True)
+    parent_type = fields.String(required=True)
     tags = fields.Method('get_tags')
     easeofresolution = fields.String(dump_only=True, attribute='ease_of_resolution')
     hostnames = PrimaryKeyRelatedField('name', many=True)
@@ -101,9 +101,6 @@ class VulnerabilitySchema(AutoSchema):
     def get_type(self, obj):
         return obj.__class__.__name__
 
-    def get_parent_type(self, obj):
-        return obj.parent_type
-
     def get_metadata(self, obj):
         return {
             "command_id": "e1a042dd0e054c1495e1c01ced856438",
@@ -127,6 +124,9 @@ class VulnerabilitySchema(AutoSchema):
 
         return res
 
+    def set_attachments(self, obj):
+        return obj
+
     def get_hostnames(self, obj):
         # TODO: improve performance here
         # TODO: move this to models?
@@ -147,6 +147,9 @@ class VulnerabilitySchema(AutoSchema):
     def get_parent(self, obj):
         return obj.parent.id
 
+    def load_parent(self, obj):
+        return obj
+
     def get_status(self, obj):
         return obj.status
 
@@ -162,7 +165,7 @@ class VulnerabilitySchema(AutoSchema):
         return {}
 
     def load_impact(self, value):
-        pass
+        return value
 
     def load_status(self, value):
         if value == 'opened':
@@ -180,17 +183,23 @@ class VulnerabilitySchema(AutoSchema):
 
     @post_load
     def set_impact(self, data):
-        impact = data.pop('impact')
+        impact = data.pop('impact', None)
         if impact:
-            pass
+            data['impact_accountability'] = impact['accountability']
+            data['impact_availability'] = impact['availability']
+            data['impact_confidentiality'] = impact['confidentiality']
+            data['impact_integrity'] = impact['integrity']
         return data
 
     @post_load
     def set_parent(self, data):
         # schema guarantees that parent_type exists.
         parent_class = None
-        parent_type = data.pop('parent_type')
-        parent_id = data.pop('parent')
+        parent_type = data.pop('parent_type', None)
+        parent_id = data.pop('parent', None)
+        if not (parent_type and parent_id):
+            # Probably a partial load, since they are required
+            return
         if parent_type == 'Host':
             parent_class = Host
             parent_field = 'host_id'
@@ -198,11 +207,12 @@ class VulnerabilitySchema(AutoSchema):
             parent_class = Service
             parent_field = 'service_id'
         if not parent_class:
-            raise Exception('Bad data')
+            print('parent_type', parent_type)
+            raise ValidationError('Unknown parent type')
 
         parent = db.session.query(parent_class).filter_by(id=parent_id).first()
         if not parent:
-            raise Exception('Parent not found')
+            raise ValidationError('Parent not found')
         data[parent_field] = parent.id
         return data
 
@@ -232,12 +242,28 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'target', 'resolution', 'method', 'metadata')
 
 
+# Use this override for filterset fields that filter by en exact match by
+# default, and not by a similar one (like operator)
+_strict_filtering = {'default_operator': operators.Equal}
+
 class VulnerabilityFilterSet(FilterSet):
     class Meta(FilterSetMeta):
         model = VulnerabilityWeb  # It has all the fields
+        # TODO migration: Check if we should add fields creator, owner, command,
+        # impact, type, service, issuetracker, tags, date, target, host,
+        # easeofresolution, evidence, policy violations, hostnames, target
         fields = (
-            'severity', 'website')
-        operators = (operators.Equal,)
+            "status", "website", "parameter_name", "query_string", "path",
+            "data", "severity", "confirmed", "name", "request", "response",
+            "parameters", "resolution", "method", "ease_of_resolution",
+            "description")
+        strict_fields = (
+            "severity", "confirmed", "method"
+        )
+        default_operator = operators.ILike
+        column_overrides = {
+            field: _strict_filtering for field in strict_fields}
+        operators = (operators.ILike, operators.Equal)
 
 
 class VulnerabilityView(PaginatedMixin,
@@ -261,11 +287,16 @@ class VulnerabilityView(PaginatedMixin,
                                 request)
         attachments = data.pop('_attachments')
         references = data.pop('references')
+        policyviolations = data.pop('policy_violations')
         obj = super(VulnerabilityView, self)._perform_create(data, **kwargs)
 
         for reference in references:
             instance, _ = get_or_create(db.session, Reference, name=reference, workspace=self.workspace)
             obj.references.append(instance)
+
+        for policyviolation in policyviolations:
+            instance, _ = get_or_create(db.session, PolicyViolation, name=policyviolation, workspace=self.workspace)
+            obj.policy_violations.append(instance)
 
         for filename, attachment in attachments.items():
             faraday_file = FaradayUploadedFile(b64decode(attachment['data']))
@@ -278,6 +309,7 @@ class VulnerabilityView(PaginatedMixin,
                 filename = os.path.basename(filename),
                 content=faraday_file,
             )
+        db.session.commit()
         return obj
 
     @property

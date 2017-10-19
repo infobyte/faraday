@@ -343,6 +343,11 @@ class VulnerabilityGeneric(VulnerabilityABC):
         secondary="reference_vulnerability_association"
     )
 
+    policy_violations = relationship(
+        "PolicyViolation",
+        secondary="policy_violation_vulnerability_association"
+    )
+
     __mapper_args__ = {
         'polymorphic_on': type
     }
@@ -501,7 +506,18 @@ class ReferenceVulnerabilityAssociation(db.Model):
     reference_id = Column(Integer, ForeignKey('reference.id'), primary_key=True)
 
     reference = relationship("Reference", backref="reference_associations", foreign_keys=[reference_id])
-    vulnerability = relationship("Vulnerability", backref="vulnerability_associations", foreign_keys=[vulnerability_id])
+    vulnerability = relationship("Vulnerability", backref="reference_vulnerability_associations", foreign_keys=[vulnerability_id])
+
+
+class PolicyViolationVulnerabilityAssociation(db.Model):
+        __tablename__ = 'policy_violation_vulnerability_association'
+
+        vulnerability_id = Column(Integer, ForeignKey('vulnerability.id'), primary_key=True)
+        policy_violation_id = Column(Integer, ForeignKey('policy_violation.id'), primary_key=True)
+
+        policy_violation = relationship("PolicyViolation", backref="policy_violation_associations", foreign_keys=[policy_violation_id])
+        vulnerability = relationship("Vulnerability", backref="policy_violationvulnerability_associations",
+                                     foreign_keys=[vulnerability_id])
 
 
 class PolicyViolationTemplate(Metadata):
@@ -545,21 +561,9 @@ class PolicyViolation(Metadata):
                             foreign_keys=[workspace_id],
                             )
 
-    vulnerability_id = Column(
-                            Integer,
-                            ForeignKey(VulnerabilityGeneric.id),
-                            index=True
-                            )
-    vulnerability = relationship(
-                                'VulnerabilityGeneric',
-                                backref='policy_violations',
-                                foreign_keys=[vulnerability_id]
-                                )
-
     __table_args__ = (
         UniqueConstraint(
                         'name',
-                        'vulnerability_id',
                         'workspace_id',
                         name='uix_policy_violation_template_name_vulnerability_workspace'),
     )

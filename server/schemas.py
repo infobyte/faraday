@@ -25,7 +25,9 @@ class PrimaryKeyRelatedField(fields.Field):
                 ret.append(getattr(item, self.field_name))
             return ret
         else:
-            return getattr(value, self.field_name, None)
+            if value is None:
+                return None
+            return getattr(value, self.field_name)
 
 
 class SelfNestedField(fields.Field):

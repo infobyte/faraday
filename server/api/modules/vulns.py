@@ -165,7 +165,7 @@ class VulnerabilitySchema(AutoSchema):
         return {}
 
     def load_impact(self, value):
-        pass
+        return value
 
     def load_status(self, value):
         if value == 'opened':
@@ -185,7 +185,10 @@ class VulnerabilitySchema(AutoSchema):
     def set_impact(self, data):
         impact = data.pop('impact', None)
         if impact:
-            pass
+            data['impact_accountability'] = impact['accountability']
+            data['impact_availability'] = impact['availability']
+            data['impact_confidentiality'] = impact['confidentiality']
+            data['impact_integrity'] = impact['integrity']
         return data
 
     @post_load
@@ -306,6 +309,7 @@ class VulnerabilityView(PaginatedMixin,
                 filename = os.path.basename(filename),
                 content=faraday_file,
             )
+        db.session.commit()
         return obj
 
     @property

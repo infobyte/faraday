@@ -23,6 +23,7 @@ from sqlalchemy.sql import select, text, table
 from sqlalchemy import func
 from sqlalchemy.orm import column_property
 from sqlalchemy.schema import DDL
+from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declared_attr
 from flask_sqlalchemy import (
     SQLAlchemy as OriginalSQLAlchemy,
@@ -338,10 +339,13 @@ class VulnerabilityGeneric(VulnerabilityABC):
                         )
     workspace = relationship('Workspace', backref='vulnerabilities')
 
-    references = relationship(
+    reference_instances = relationship(
         "Reference",
-        secondary="reference_vulnerability_association"
+        secondary="reference_vulnerability_association",
+        collection_class=set
     )
+
+    references = association_proxy('reference_instances', 'name')
 
     policy_violations = relationship(
         "PolicyViolation",

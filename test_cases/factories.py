@@ -1,6 +1,7 @@
 import random
 import factory
 import datetime
+import unicodedata
 
 import pytz
 from factory.fuzzy import (
@@ -25,6 +26,7 @@ from server.models import (
     User,
     Vulnerability,
     VulnerabilityCode,
+    VulnerabilityTemplate,
     VulnerabilityWeb,
     Workspace,
 )
@@ -43,6 +45,8 @@ FuzzyEndTime = lambda: (
     )
 )
 
+all_unicode = ''.join(unichr(i) for i in xrange(65536))
+UNICODE_LETTERS = ''.join(c for c in all_unicode if unicodedata.category(c) == 'Lu' or unicodedata.category(c) == 'Ll')
 
 
 class FaradayFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -228,6 +232,19 @@ class VulnerabilityCodeFactory(VulnerabilityGenericFactory):
 
     class Meta:
         model = VulnerabilityCode
+        sqlalchemy_session = db.session
+
+
+class VulnerabilityTemplateFactory(FaradayFactory):
+    # name = FuzzyText(chars=UNICODE_LETTERS)
+    # description = FuzzyText(chars=UNICODE_LETTERS)
+    name = FuzzyText()
+    description = FuzzyText()
+    severity = FuzzyChoice(VulnerabilityTemplate.SEVERITIES)
+    creator = factory.SubFactory(UserFactory)
+
+    class Meta:
+        model = VulnerabilityTemplate
         sqlalchemy_session = db.session
 
 

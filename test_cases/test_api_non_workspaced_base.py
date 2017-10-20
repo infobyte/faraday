@@ -143,3 +143,9 @@ class ReadWriteTestsMixin(ListTestsMixin,
 class ReadWriteAPITests(ReadWriteTestsMixin,
                         GenericAPITest):
     pass
+
+
+class ReadOnlyAPITests(ListTestsMixin,
+                       RetrieveTestsMixin,
+                       GenericAPITest):
+    pass

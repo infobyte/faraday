@@ -347,13 +347,15 @@ class CustomAssociationSet(_AssociationSet):
 def _reference_creator(name, vulnerability):
     """Get or create a vulnerability with the corresponding name.
     This must be worspace aware"""
+    assert (vulnerability.workspace and vulnerability.workspace.id
+            is not None), "Unknown workspace id"
     reference = Reference.query.filter(
-        Reference.workspace_id == vulnerability.workspace_id,
+        Reference.workspace == vulnerability.workspace,
         Reference.name == name
     ).first()
     if reference is None:
         # Doesn't exist
-        reference = Reference(name, vulnerability.workspace_id)
+        reference = Reference(name, vulnerability.workspace.id)
     return reference
 
 
@@ -547,10 +549,10 @@ class Reference(Metadata):
         UniqueConstraint('name', 'workspace_id', name='uix_reference_name_vulnerability_workspace'),
     )
 
-    def __init__(self, name, workspace_id):
-        self.name = name
-        self.workspace_id = workspace_id
-        super(Reference, self).__init__()
+    def __init__(self, name=None, workspace_id=None, **kwargs):
+        super(Reference, self).__init__(name=name,
+                                        workspace_id=workspace_id,
+                                        **kwargs)
 
 
 class ReferenceVulnerabilityAssociation(db.Model):

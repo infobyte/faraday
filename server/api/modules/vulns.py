@@ -68,7 +68,7 @@ class VulnerabilitySchema(AutoSchema):
     policyviolations = PrimaryKeyRelatedField('name', many=True,
                                               attribute='policy_violations', default=[])
     desc = fields.String(dump_only=True, attribute='description')
-    refs = PrimaryKeyRelatedField('name', many=True, attribute='references', default=[])
+    refs = fields.List(fields.String(), attribute='references')
     issuetracker = fields.Method('get_issuetracker')
     parent = fields.Method('get_parent', deserialize='load_parent', required=True)
     parent_type = fields.String(required=True)
@@ -286,13 +286,14 @@ class VulnerabilityView(PaginatedMixin,
         data = self._parse_data(self._get_schema_class()(strict=True),
                                 request)
         attachments = data.pop('_attachments')
+
+        # This will be set after setting the workspace
         references = data.pop('references')
+
         policyviolations = data.pop('policy_violations')
         obj = super(VulnerabilityView, self)._perform_create(data, **kwargs)
+        obj.references = references
 
-        for reference in references:
-            instance, _ = get_or_create(db.session, Reference, name=reference, workspace=self.workspace)
-            obj.references.append(instance)
 
         for policyviolation in policyviolations:
             instance, _ = get_or_create(db.session, PolicyViolation, name=policyviolation, workspace=self.workspace)

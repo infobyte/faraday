@@ -9,6 +9,7 @@ from marshmallow import fields
 from filteralchemy import FilterSet, operators
 from sqlalchemy.orm import undefer
 
+from server.utils.database import get_or_create
 from server.utils.logger import get_logger
 from server.utils.web import gzipped, validate_workspace,\
     get_integer_parameter, filter_request_args
@@ -21,7 +22,7 @@ from server.api.base import (
     FilterSetMeta,
 )
 from server.schemas import PrimaryKeyRelatedField
-from server.models import Host, Service
+from server.models import Host, Service, db, Hostname
 
 host_api = Blueprint('host_api', __name__)
 
@@ -41,7 +42,8 @@ class HostSchema(AutoSchema):
     services = fields.Integer(attribute='service_count', dump_only=True)
     vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
     credentials = fields.Integer(attribute='vulnerability_count', dump_only=True)
-
+    hostnames = PrimaryKeyRelatedField('name', many=True,
+                                       attribute="hostnames", default=[])
 
     def get_metadata(self, obj):
         return {
@@ -59,7 +61,8 @@ class HostSchema(AutoSchema):
         model = Host
         fields = ('id', '_id', '_rev', 'ip', 'description',
                   'credentials', 'default_gateway', 'metadata',
-                  'name', 'os', 'owned', 'owner', 'services', 'vulns'
+                  'name', 'os', 'owned', 'owner', 'services', 'vulns',
+                  'hostnames'
                   )
 
 
@@ -91,6 +94,15 @@ class HostsView(PaginatedMixin,
     def service_list(self, workspace_name, host_id):
         services = self._get_object(host_id, workspace_name).services
         return ServiceSchema(many=True).dump(services).data
+
+    def _perform_create(self, data, **kwargs):
+        hostnames = data.pop('hostnames', [])
+        host = super(HostsView, self)._perform_create(data, **kwargs)
+        for name in hostnames:
+            get_or_create(db.session, Hostname, name=name['key'], host=host, workspace=host.workspace)
+        db.session.commit()
+        return host
+
 
     def _get_base_query(self, workspace_name):
         """Get services_count in one query and not deferred, that doe

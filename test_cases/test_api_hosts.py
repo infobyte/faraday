@@ -282,7 +282,15 @@ class TestHostAPI:
         assert res.status_code == 200
         assert res.json[0]['vulns'] == 1
 
-
+    def test_create_host_with_hostnames(self, test_client):
+        raw_data = {
+            "ip": "192.168.0.21",
+            "hostnames": [{"key": "google.com"}],
+            "mac": "00:00:00:00:00:00", "description": "",
+            "os": "", "owned": False, "owner": ""
+        }
+        res = test_client.post(self.url(), data=raw_data)
+        assert res.status_code == 201
 
 
 class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):

@@ -100,7 +100,7 @@ angular.module('faradayApp')
         };
 
         $scope.newHostnames = function($event){
-            $scope.interface.hostnames.push({key:''});
+            $scope.host.hostnames.push({key:''});
             $event.preventDefault();
         }
 
@@ -109,9 +109,9 @@ angular.module('faradayApp')
             timestamp = date.getTime()/1000.0;
 
             // The objectToArray transform is necessary to call updateHost correctly
-            // If I don't restore the object after the call hostnames won't be shown in the interface
-            var old_hostnames = $scope.interface.hostnames;
-            $scope.interface.hostnames = commons.objectToArray($scope.interface.hostnames.filter(Boolean));
+            // If I don't restore the object after the call hostnames won't be shown in the host
+            var old_hostnames = $scope.host.hostnames;
+            $scope.host.hostnames = commons.objectToArray($scope.host.hostnames.filter(Boolean));
 
             $scope.hostdata = $scope.host;
             $scope.hostdata.metadata['update_time'] = timestamp;

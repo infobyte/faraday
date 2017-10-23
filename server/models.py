@@ -219,6 +219,9 @@ class Hostname(Metadata):
         UniqueConstraint(name, host_id, workspace_id, name='uix_hostname_host_workspace'),
     )
 
+    def __str__(self):
+        return self.name
+
 
 class Service(Metadata):
     STATUSES = [

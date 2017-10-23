@@ -74,21 +74,3 @@ class CredentialView(ReadWriteWorkspacedView):
         }
 
 CredentialView.register(credentials_api)
-
-
-@gzipped
-@credentials_api.route('/ws/<workspace>/credentials', methods=['GET'])
-def list_credentials(workspace=None):
-
-    validate_workspace(workspace)
-
-    get_logger(__name__).debug(
-        "Request parameters: {!r}".format(
-            flask.request.args))
-
-    cred_filter = filter_request_args()
-
-    dao = CredentialDAO(workspace)
-    result = dao.list(cred_filter=cred_filter)
-
-    return flask.jsonify(result)

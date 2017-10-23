@@ -348,19 +348,27 @@ class CustomAssociationSet(_AssociationSet):
         return self.creator(value, parent_instance)
 
 
-def _reference_creator(name, vulnerability):
-    """Get or create a vulnerability with the corresponding name.
-    This must be worspace aware"""
-    assert (vulnerability.workspace and vulnerability.workspace.id
-            is not None), "Unknown workspace id"
-    reference = Reference.query.filter(
-        Reference.workspace == vulnerability.workspace,
-        Reference.name == name
-    ).first()
-    if reference is None:
-        # Doesn't exist
-        reference = Reference(name, vulnerability.workspace.id)
-    return reference
+def _build_associationproxy_creator(model_class_name):
+    def creator(name, vulnerability):
+        """Get or create a reference/policyviolation with the
+        corresponding name. This must be worspace aware"""
+
+        # Ugly hack to avoid the fact that Reference is defined after
+        # Vulnerability
+        model_class = globals()[model_class_name]
+
+        assert (vulnerability.workspace and vulnerability.workspace.id
+                is not None), "Unknown workspace id"
+        child = model_class.query.filter(
+            getattr(model_class, 'workspace') == vulnerability.workspace,
+            getattr(model_class, 'name') == name,
+        ).first()
+        if child is None:
+            # Doesn't exist
+            child = model_class(name, vulnerability.workspace.id)
+        return child
+
+    return creator
 
 
 class VulnerabilityGeneric(VulnerabilityABC):
@@ -395,14 +403,21 @@ class VulnerabilityGeneric(VulnerabilityABC):
         collection_class=set
     )
 
-    references = association_proxy('reference_instances', 'name',
-                                   proxy_factory=CustomAssociationSet,
-                                   creator=_reference_creator)
+    references = association_proxy(
+        'reference_instances', 'name',
+        proxy_factory=CustomAssociationSet,
+        creator=_build_associationproxy_creator('Reference'))
 
-    policy_violations = relationship(
+    policy_violation_instances = relationship(
         "PolicyViolation",
-        secondary="policy_violation_vulnerability_association"
+        secondary="policy_violation_vulnerability_association",
+        collection_class=set
     )
+
+    policy_violations = association_proxy(
+        'policy_violation_instances', 'name',
+        proxy_factory=CustomAssociationSet,
+        creator=_build_associationproxy_creator('PolicyViolation'))
 
     __mapper_args__ = {
         'polymorphic_on': type
@@ -628,6 +643,11 @@ class PolicyViolation(Metadata):
                         'workspace_id',
                         name='uix_policy_violation_template_name_vulnerability_workspace'),
     )
+
+    def __init__(self, name=None, workspace_id=None, **kwargs):
+        super(PolicyViolation, self).__init__(name=name,
+                                        workspace_id=workspace_id,
+                                        **kwargs)
 
 
 class Credential(Metadata):

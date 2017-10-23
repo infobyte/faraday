@@ -292,6 +292,17 @@ class TestHostAPI:
         res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 201
 
+    def test_create_host_with_default_gateway(self, test_client):
+        raw_data = {
+            "ip": "192.168.0.21",
+            "default_gateway": "192.168.0.1",
+            "mac": "00:00:00:00:00:00", "description": "",
+            "os": "", "owned": False, "owner": ""
+        }
+        res = test_client.post(self.url(), data=raw_data)
+        assert res.status_code == 201
+        assert res.json['default_gateway'] == [u'192.168.0.1']
+
 
 class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
     model = Host

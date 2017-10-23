@@ -197,7 +197,7 @@ angular.module("faradayApp")
             }
 
             var updateNonWorkspacedObject = function(id, data, collectionName) {
-                var postUrl = createNonWorkspacedPostUrl(id, collectionName);
+                var postUrl = createNonWorkspacedPutUrl(id, collectionName);
                 return send_data(postUrl, data, true, "PUT");
             };
 
@@ -446,7 +446,7 @@ angular.module("faradayApp")
             }
 
             ServerAPI.deleteVulnerabilityTemplate = function(vulnId, rev) {
-                var deleteUrl = createNonWorkspacedDeleteUrl(vulnId, rev);
+                var deleteUrl = createNonWorkspacedDeleteUrl(vulnId, 'vulnerability_template');
                 if (typeof rev === "undefined") {
                     return _delete(deleteUrl, false)
                 }

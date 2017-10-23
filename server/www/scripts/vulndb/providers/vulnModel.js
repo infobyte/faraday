@@ -47,19 +47,12 @@ angular.module('faradayApp').
                     var deferred = $q.defer();
                     var self = this;
 
-                    configSrv.promise.
-                        then(function() {
-                            var url = BASEURL + configSrv.vulnModelsDB + "/" + self._id + "?rev=" + self._rev;
-
-                            $http.delete(url).
-                                then(function(resp) {
-                                    deferred.resolve(resp);
-                                }, function(data, status, headers, config) {
-                                    deferred.reject("Unable to delete Vuln Model from DB. " + status)
-                                });
-                        }, function(reason) {
-                            deferred.reject(reason);
-                        });
+                    ServerAPI.deleteVulnerabilityTemplate(self._id)
+                        .then(function(resp) {
+                            deferred.resolve(resp);
+                        }, function(data, status, headers, config) {
+                            deferred.reject("Unable to delete Vuln Model from DB. " + status)
+                    });
 
                     return deferred.promise;
                 },
@@ -68,21 +61,13 @@ angular.module('faradayApp').
                     var deferred = $q.defer();
                     var self = this;
 
-                    configSrv.promise.
-                        then(function() {
-                            var url = BASEURL + configSrv.vulnModelsDB + "/" + self._id;
-
-                            $http.put(url, data).
-                                then(function(res) {
-                                    self.set(res.data);
-                                    self._rev = res.data.rev;
-                                    deferred.resolve(self);
-                                }, function(res) {
-                                    deferred.reject("Unable to update the Vuln Model. " + res.data.reason);
-                                });
-                        }, function(reason) {
-                            deferred.reject(reason);
-                        });
+                    ServerAPI.updateVulnerabilityTemplate(self)
+                        .then(function(res) {
+                            self.set(res.data);
+                            deferred.resolve(self);
+                        }, function(res) {
+                            deferred.reject("Unable to update the Vuln Model. " + res.data.reason);
+                    });
                     return deferred.promise;
                 },
 

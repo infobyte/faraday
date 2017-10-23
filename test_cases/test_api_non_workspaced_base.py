@@ -49,7 +49,11 @@ class ListTestsMixin:
                                            session):
         res = test_client.get(self.url())
         assert res.status_code == 200
-        assert len(res.json) == OBJECT_COUNT
+        if 'rows' in res.json:
+            assert len(res.json['rows']) == OBJECT_COUNT
+        else:
+            assert len(res.json) == OBJECT_COUNT
+
 
 
 class RetrieveTestsMixin:

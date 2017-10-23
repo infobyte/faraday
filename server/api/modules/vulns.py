@@ -18,7 +18,7 @@ from server.api.base import (
     FilterSetMeta,
     PaginatedMixin,
     ReadWriteWorkspacedView,
-)
+    InvalidUsage)
 from server.fields import FaradayUploadedFile
 from server.models import (
     db,
@@ -323,7 +323,10 @@ class VulnerabilityView(PaginatedMixin,
     def _get_schema_class(self):
         assert self.schema_class_dict is not None, "You must define schema_class"
         if request.method == 'POST':
-            return self.schema_class_dict[request.json['type']]
+            requested_type = request.json['type']
+            if requested_type not in self.schema_class_dict:
+                raise InvalidUsage('Invalid vulnerability type.')
+            return self.schema_class_dict[requested_type]
         # We use web since it has all the fields
         return self.schema_class_dict['VulnerabilityWeb']
 

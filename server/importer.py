@@ -436,7 +436,7 @@ class VulnerabilityImporter(object):
                 )
             vulnerability.confirmed = document.get('confirmed', False) or False
             vulnerability.data = document.get('data')
-            vulnerability.easeofresolution = document.get('easeofresolution')
+            vulnerability.ease_of_resolution = document.get('easeofresolution') if document.get('easeofresolution') else None
             vulnerability.resolution = document.get('resolution')
 
             vulnerability.owned = document.get('owned', False)
@@ -463,8 +463,8 @@ class VulnerabilityImporter(object):
             status = status_map[document.get('status', 'opened')]
             vulnerability.status = status
 
-            self.add_references(document, vulnerability, workspace)
-            self.add_policy_violations(document, vulnerability, workspace)
+            vulnerability.references.extend(self.add_references(document, vulnerability, workspace))
+            vulnerability.policy_violations.extend(self.add_policy_violations(document, vulnerability, workspace))
 
             # need the vuln ID before creating Tags for it
             session.commit()
@@ -502,24 +502,28 @@ class VulnerabilityImporter(object):
         yield vulnerability
 
     def add_policy_violations(self, document, vulnerability, workspace):
+        policy_violations = list()
         for policy_violation in document.get('policyviolations', []):
-            get_or_create(
+            pv, _ = get_or_create(
                 session,
                 PolicyViolation,
                 name=policy_violation,
-                workspace=workspace,
-                vulnerability=vulnerability
+                workspace=workspace
             )
+            policy_violations.append(pv)
+        return policy_violations
 
     def add_references(self, document, vulnerability, workspace):
+        references = list()
         for ref in document.get('refs', []):
-            get_or_create(
+            reference, _ = get_or_create(
                 session,
                 Reference,
                 name=ref,
-                workspace=workspace,
-                vulnerability=vulnerability
+                workspace=workspace
             )
+            references.append(reference)
+        return references
 
 
 class CommandImporter(object):

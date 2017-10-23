@@ -32,7 +32,6 @@ class HostSchema(AutoSchema):
     _rev = fields.String(default='')
     ip = fields.String(default='')
     description = fields.String(required=True)  # Explicitly set required=True
-    credentials = fields.Function(lambda host: len(host.credentials))
     default_gateway = fields.List(fields.String, attribute="default_gateway_ip")
     metadata = fields.Method('get_metadata')
     name = fields.String(dump_only=True, attribute='ip', default='')
@@ -41,6 +40,7 @@ class HostSchema(AutoSchema):
     owner = PrimaryKeyRelatedField('username', attribute='creator', dump_only=True)
     services = fields.Integer(attribute='service_count', dump_only=True)
     vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
+    credentials = fields.Integer(attribute='vulnerability_count', dump_only=True)
 
 
     def get_metadata(self, obj):

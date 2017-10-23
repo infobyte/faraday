@@ -23,7 +23,7 @@ from sqlalchemy.sql import select, text, table
 from sqlalchemy import func
 from sqlalchemy.orm import column_property
 from sqlalchemy.schema import DDL
-from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.ext.associationproxy import association_proxy, _AssociationSet
 from sqlalchemy.ext.declarative import declared_attr
 from flask_sqlalchemy import (
     SQLAlchemy as OriginalSQLAlchemy,
@@ -313,6 +313,50 @@ class VulnerabilityTemplate(VulnerabilityABC):
     )
 
 
+class CustomAssociationSet(_AssociationSet):
+    """
+    A custom associacion set that passes the creator method the both
+    the value and the instance of the parent object
+    """
+
+    # def __init__(self, lazy_collection, creator, getter, setter, parent):
+    def __init__(self, lazy_collection, creator, value_attr, parent):
+        """I have to override this method because the proxy_factory
+        class takes different arguments than the hardcoded
+        _AssociationSet one.
+        In particular, the getter and the setter aren't passed, but
+        since I have an instance of the parent (AssociationProxy
+        instance) I do the logic here.
+        The value_attr argument isn't relevant to this implementation
+        """
+
+        if parent.getset_factory:
+            getter, setter = parent.getset_factory(
+                parent.collection_class, parent)
+        else:
+            getter, setter = parent._default_getset(parent.collection_class)
+
+        super(CustomAssociationSet, self).__init__(
+            lazy_collection, creator, getter, setter, parent)
+
+    def _create(self, value):
+        parent_instance = self.lazy_collection.ref()
+        return self.creator(value, parent_instance)
+
+
+def _reference_creator(name, vulnerability):
+    """Get or create a vulnerability with the corresponding name.
+    This must be worspace aware"""
+    reference = Reference.query.filter(
+        Reference.workspace_id == vulnerability.workspace_id,
+        Reference.name == name
+    ).first()
+    if reference is None:
+        # Doesn't exist
+        reference = Reference(name, vulnerability.workspace_id)
+    return reference
+
+
 class VulnerabilityGeneric(VulnerabilityABC):
     STATUSES = [
         'open',
@@ -345,7 +389,9 @@ class VulnerabilityGeneric(VulnerabilityABC):
         collection_class=set
     )
 
-    references = association_proxy('reference_instances', 'name')
+    references = association_proxy('reference_instances', 'name',
+                                   proxy_factory=CustomAssociationSet,
+                                   creator=_reference_creator)
 
     policy_violations = relationship(
         "PolicyViolation",
@@ -500,6 +546,11 @@ class Reference(Metadata):
     __table_args__ = (
         UniqueConstraint('name', 'workspace_id', name='uix_reference_name_vulnerability_workspace'),
     )
+
+    def __init__(self, name, workspace_id):
+        self.name = name
+        self.workspace_id = workspace_id
+        super(Reference, self).__init__()
 
 
 class ReferenceVulnerabilityAssociation(db.Model):

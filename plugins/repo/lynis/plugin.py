@@ -22,7 +22,7 @@ current_path = os.path.abspath(os.getcwd())
 class LynisLogDataExtracter():
     def __init__(self, datfile=None, output=None):
         self.services = defaultdict(list)
-        if datfile and not os.path.exists(datfile):
+        if datfile and os.path.exists(datfile):
             with open(datfile) as f:
                 self.rawcontents = f.read()
 
@@ -79,25 +79,47 @@ class LynisLogDataExtracter():
         return(m.group(1).strip())
 
     def listeningservices(self):
-        m = re.findall('^network_listen_port\[\]=(.+)$',
+        
+        line = re.findall('^network_listen_port\[\]=(.+)$',
                        self.rawcontents, re.MULTILINE)
-        for combo in m:
-            x = combo.split('|')
-            c = x[0].count(':')
-            if c == 1:
-                ip, port = x[0].split(':')
-            elif c == 3:
-                a, b, c, port = x[0].split(':')
+
+        for combo in line:
+            if combo.find("|") > 0:
+
+                items_service = combo.split('|')
+                elements_ip_port = items_service[0].split(':')
+                count = items_service[0].count(':')
+                protocol = items_service[1]
+                name = items_service[2]
+
+                if name == '-':
+                    name = 'Unknown'
+            
+            else:
+                items_service = combo
+                count = items_service.count(':')
+                elements_ip_port = items_service.split(':')
+                protocol = "Unknown"
+                name = "Unknown"
+
+            #Ipv4
+            if count == 1:
+                ip, port = elements_ip_port
+
+            #Ipv6
+            elif count == 3:
+                port = elements_ip_port[3]
                 ip = '::'
-            elif c == 5:
-                a, b, c, d, e, port = x[0].split(':')
-                ip = x[0].replace(':{}'.format(port), '')
-            protocol = x[1]
-            name = x[2]
-            if name == '-':
-                name = 'unknown'
+
+            #Ipv6
+            elif count == 5:
+                port = elements_ip_port[5]
+                ip = items_service[0].replace(':{}'.format(port), '')
+ 
             self._svcHelper(ip, port, protocol, name)
-        return(self.services)
+
+        return self.services
+
 
     def suggestions(self):
         sugs = {}
@@ -132,11 +154,10 @@ class LynisPlugin(core.PluginBase):
         self._hosts = []
 
         global current_path
-        pp = "lynis_output-%s.txt" % random.uniform(1, 10)
-        self._file_output_path = os.path.join(self.data_path, pp)
 
     def parseOutputString(self, output, debug=False):
         datpath = self.getDatPath(output)
+
         if datpath:
             lde = LynisLogDataExtracter(datfile=datpath)
         elif '# Lynis Report' in output:
@@ -151,6 +172,7 @@ class LynisPlugin(core.PluginBase):
             severity='info',
             desc=lde.kernelVersion()
         )
+        
         interfaces = lde.interfaces()
         macs = lde.macs()
         ipv4s = lde.ipv4()
@@ -165,7 +187,7 @@ class LynisPlugin(core.PluginBase):
                                                 interface_id=i_id,
                                                 name=service_data['name'],
                                                 protocol=service_data['protocol'],
-                                                ports=svcs[service_data['port']])
+                                                ports=[service_data['port']])
         for ipv6 in ipv6s:
             i_id = self.createAndAddInterface(host_id=h_id,
                                               ipv6_address=ipv6)
@@ -174,7 +196,7 @@ class LynisPlugin(core.PluginBase):
                                                 interface_id=i_id,
                                                 name=service_data['name'],
                                                 protocol=service_data['protocol'],
-                                                ports=svcs[service_data['port']])
+                                                ports=[service_data['port']])
         sugs = lde.suggestions()
         for sug in sugs:
             self.createAndAddVulnToHost(
@@ -201,7 +223,7 @@ class LynisPlugin(core.PluginBase):
         Because of that, we will extract the DAT location off
         lynis' output via parseOutputString().
         """
-        pass
+        return
 
     def getDatPath(self, output):
         m = re.search('(\/.+\.dat)$', output, re.MULTILINE)

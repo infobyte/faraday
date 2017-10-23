@@ -28,6 +28,22 @@ def output_json(data, code, headers=None):
     return response
 
 
+class InvalidUsage(Exception):
+    status_code = 400
+
+    def __init__(self, message, status_code=None, payload=None):
+        Exception.__init__(self)
+        self.message = message
+        if status_code is not None:
+            self.status_code = status_code
+        self.payload = payload
+
+    def to_dict(self):
+        rv = dict(self.payload or ())
+        rv['message'] = self.message
+        return rv
+
+
 # TODO: Require @view decorator to enable custom routes
 class GenericView(FlaskView):
     """Abstract class to provide helpers. Inspired in Django REST
@@ -101,6 +117,12 @@ class GenericView(FlaskView):
             return flask.jsonify({
                 'messages': messages,
             }), 400
+
+        @app.errorhandler(InvalidUsage)
+        def handle_invalid_usage(error):
+            response = flask.jsonify(error.to_dict())
+            response.status_code = error.status_code
+            return response
 
 
 class GenericWorkspacedView(GenericView):

@@ -463,8 +463,10 @@ class VulnerabilityImporter(object):
             status = status_map[document.get('status', 'opened')]
             vulnerability.status = status
 
-            vulnerability.references.extend(self.add_references(document, vulnerability, workspace))
-            vulnerability.policy_violations.extend(self.add_policy_violations(document, vulnerability, workspace))
+            vulnerability.reference_instances.update(
+                self.add_references(document, vulnerability, workspace))
+            vulnerability.policy_violation_instances.update(
+                self.add_policy_violations(document, vulnerability, workspace))
 
             # need the vuln ID before creating Tags for it
             session.commit()

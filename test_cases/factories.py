@@ -144,7 +144,7 @@ class ServiceFactory(WorkspaceObjectFactory):
     description = FuzzyText()
     port = FuzzyInteger(1, 65535)
     protocol = FuzzyChoice(['TCP', 'UDP'])
-    host = factory.SubFactory(HostFactory)
+    host = factory.SubFactory(HostFactory, workspace=factory.SelfAttribute('..workspace'))
     status = FuzzyChoice(Service.STATUSES)
     creator = factory.SubFactory(UserFactory)
 
@@ -208,8 +208,8 @@ class HasParentHostOrService(object):
 class VulnerabilityFactory(HasParentHostOrService,
                            VulnerabilityGenericFactory):
 
-    host = factory.SubFactory(HostFactory)
-    service = factory.SubFactory(ServiceFactory)
+    host = factory.SubFactory(HostFactory, workspace=factory.SelfAttribute('..workspace'))
+    service = factory.SubFactory(ServiceFactory, workspace=factory.SelfAttribute('..workspace'))
 
     class Meta:
         model = Vulnerability
@@ -219,7 +219,7 @@ class VulnerabilityFactory(HasParentHostOrService,
 class VulnerabilityWebFactory(VulnerabilityGenericFactory):
     method = FuzzyChoice(['GET', 'POST', 'PUT', 'PATCH' 'DELETE'])
     parameter_name = FuzzyText()
-    service = factory.SubFactory(ServiceFactory)
+    service = factory.SubFactory(ServiceFactory, workspace=factory.SelfAttribute('..workspace'))
 
     class Meta:
         model = VulnerabilityWeb
@@ -249,8 +249,8 @@ class VulnerabilityTemplateFactory(FaradayFactory):
 
 
 class CredentialFactory(HasParentHostOrService, WorkspaceObjectFactory):
-    host = factory.SubFactory(HostFactory)
-    service = factory.SubFactory(ServiceFactory)
+    host = factory.SubFactory(HostFactory, workspace=factory.SelfAttribute('..workspace'))
+    service = None  # factory.SubFactory(ServiceFactory)
     username = FuzzyText()
     password = FuzzyText()
 

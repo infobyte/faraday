@@ -71,7 +71,7 @@ class VulnerabilitySchema(AutoSchema):
     refs = fields.List(fields.String(), attribute='references')
     issuetracker = fields.Method('get_issuetracker')
     parent = fields.Method('get_parent', deserialize='load_parent', required=True)
-    parent_type = fields.String(required=True)
+    parent_type = fields.Method('get_parent_type', required=True)
     tags = fields.Method('get_tags')
     easeofresolution = fields.String(dump_only=True, attribute='ease_of_resolution')
     hostnames = PrimaryKeyRelatedField('name', many=True)
@@ -80,7 +80,7 @@ class VulnerabilitySchema(AutoSchema):
         '_id', 'ports', 'status', 'protocol', 'name', 'version', 'summary'
     ]), dump_only=True)
     host = fields.Integer(dump_only=True, attribute='host_id')
-    status = fields.Method('get_status', deserialize='load_status')
+    status = fields.Method('get_status', deserialize='load_status')  # TODO: this breaks enum validation.
     type = fields.Method('get_type', deserialize='load_type')
     obj_id = fields.String(dump_only=True, attribute='id')
     target = fields.String(default='')  # TODO: review this attribute
@@ -146,6 +146,9 @@ class VulnerabilitySchema(AutoSchema):
 
     def get_parent(self, obj):
         return obj.parent.id
+
+    def get_parent_type(self, obj):
+        return obj.parent.__class__.__name__
 
     def load_parent(self, obj):
         return obj

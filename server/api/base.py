@@ -427,6 +427,8 @@ class FilterAlchemyModelConverter(ModelConverter):
     It is used to make filteralchemy support not nullable columns"""
 
     def _add_column_kwargs(self, kwargs, column):
+        super(FilterAlchemyModelConverter, self)._add_column_kwargs(kwargs,
+                                                                    column)
         kwargs['required'] = False
 
 

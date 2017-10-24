@@ -246,12 +246,14 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
 # default, and not by a similar one (like operator)
 _strict_filtering = {'default_operator': operators.Equal}
 
+
 class VulnerabilityFilterSet(FilterSet):
     class Meta(FilterSetMeta):
         model = VulnerabilityWeb  # It has all the fields
-        # TODO migration: Check if we should add fields creator, owner, command,
-        # impact, type, service, issuetracker, tags, date, target, host,
-        # easeofresolution, evidence, policy violations, hostnames, target
+        # TODO migration: Check if we should add fields creator, owner,
+        # command, impact, type, service, issuetracker, tags, date, target,
+        # host, easeofresolution, evidence, policy violations, hostnames,
+        # target
         fields = (
             "status", "website", "parameter_name", "query_string", "path",
             "data", "severity", "confirmed", "name", "request", "response",

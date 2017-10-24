@@ -371,6 +371,9 @@ class CountWorkspacedMixin(object):
             'total_count': 0
         }
         group_by = flask.request.args.get('group_by', None)
+        # TODO migration: whitelist fields to avoid leaking a confidential
+        # field's value.
+        # Example: /users/count/?group_by=password
         if not group_by or group_by not in inspect(self.model_class).attrs:
             abort(404)
 

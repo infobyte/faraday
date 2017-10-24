@@ -191,10 +191,6 @@ class ListMixin(object):
     def _paginate(self, query):
         return query, None
 
-    def _filter_query(self, query):
-        """Return a new SQLAlchemy query with some filters applied"""
-        return query
-
     def index(self, **kwargs):
         query = self._filter_query(self._get_base_query(**kwargs))
         objects, pagination_metadata = self._paginate(query)

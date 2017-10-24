@@ -80,6 +80,10 @@ class GenericView(FlaskView):
     def _get_base_query(self):
         return self.model_class.query
 
+    def _filter_query(self, query):
+        """Return a new SQLAlchemy query with some filters applied"""
+        return query
+
     def _get_object(self, object_id, **kwargs):
         self._validate_object_id(object_id)
         try:
@@ -383,9 +387,12 @@ class CountWorkspacedMixin(object):
         table_name = inspect(self.model_class).tables[0].name
         group_by = '{0}.{1}'.format(table_name, group_by)
 
-        count = db.session.query(self.model_class).join(Workspace).group_by(group_by).filter(
-            Workspace.name == workspace_name).values(group_by, func.count(group_by))
-        for key, count in count:
+        count = self._filter_query(
+            db.session.query(self.model_class)
+            .join(Workspace)
+            .group_by(group_by)
+            .filter(Workspace.name == workspace_name))
+        for key, count in count.values(group_by, func.count(group_by)):
             res['groups'].append(
                 {'count': count, 'name': key}
             )

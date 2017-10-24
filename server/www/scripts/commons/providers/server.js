@@ -173,7 +173,7 @@ angular.module("faradayApp")
             var modCredential = function(createOrUpdate, wsName, credential) {
                 if (typeof credential.owner === "undefined") {credential.owner = ""};
                 if (typeof credential.description === "undefined") {credential.description = ""};
-                return createOrUpdate(wsName, credential._id, credential); 
+                return createOrUpdate(wsName, credential._id, credential, 'credential');
             }
 
             var modCommand = function(createOrUpdate, wsName, command) {
@@ -261,8 +261,8 @@ angular.module("faradayApp")
                 return get(getUrl, data);
             }
 
-            ServerAPI.getCredentials = function(wsName, data) {
-                var getUrl = createGetUrl(wsName, 'credentials');
+            ServerAPI.getCredentials = function(wsName, data, objId) {
+                var getUrl = createGetUrl(wsName, 'credential', objId);
                 return get(getUrl, data);
             }
 

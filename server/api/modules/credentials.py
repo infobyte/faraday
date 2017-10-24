@@ -9,9 +9,6 @@ from marshmallow import fields
 
 from server.api.base import AutoSchema, ReadWriteWorkspacedView
 from server.models import Credential
-from server.utils.logger import get_logger
-from server.utils.web import gzipped, validate_workspace, filter_request_args
-from server.dao.credential import CredentialDAO
 
 
 credentials_api = Blueprint('credentials_api', __name__)
@@ -22,10 +19,11 @@ class CredentialSchema(AutoSchema):
     _rev = fields.String(default='', dump_only=True)
     metadata = fields.Method('get_metadata')
     owned = fields.Boolean(default=False)
-    owner = fields.String(dump_only=True, attribute='creator.username')
+    owner = fields.String(dump_only=True, attribute='creator.username', default='')
     username = fields.String(default='')
     password = fields.String(default='')
     description = fields.String(default='')
+    couchdbid = fields.String(default='')  # backwards compatibility
 
     parent = fields.Method('get_parent')
 
@@ -53,11 +51,12 @@ class CredentialSchema(AutoSchema):
         fields = ('id', '_id', "_rev", 'parent',
                   'username', 'description',
                   'name', 'password',
+                  'owner', 'owned', 'couchdbid',
                   'metadata')
 
 
 class CredentialView(ReadWriteWorkspacedView):
-    route_base = 'credentials'
+    route_base = 'credential'
     model_class = Credential
     schema_class = CredentialSchema
 
@@ -70,7 +69,7 @@ class CredentialView(ReadWriteWorkspacedView):
                 'value': credential
             })
         return {
-            'credentials': credentials,
+            'rows': credentials,
         }
 
 CredentialView.register(credentials_api)

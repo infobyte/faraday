@@ -22,7 +22,7 @@ class TestListServiceView(ReadOnlyAPITests):
     #update_fields = ['ip', 'description', 'os']
     view_class = ServiceView
 
-    def test_(self, test_client, second_workspace, session):
+    def test_service_list_backwards_compatibility(self, test_client, second_workspace, session):
         self.factory.create(workspace=second_workspace)
         session.commit()
         res = test_client.get(self.url())

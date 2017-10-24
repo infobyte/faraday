@@ -4,7 +4,7 @@
 
 import pytest
 from sqlalchemy.orm.util import was_deleted
-from server.models import db, Workspace
+from server.models import db, Workspace, Credential
 from test_api_pagination import PaginationTestsMixin as \
     OriginalPaginationTestsMixin
 

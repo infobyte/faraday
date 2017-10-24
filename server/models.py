@@ -161,6 +161,10 @@ class SourceCode(Metadata):
         UniqueConstraint(filename, workspace_id, name='uix_source_code_filename_workspace'),
     )
 
+    @property
+    def parent(self):
+        return
+
 
 class Host(Metadata):
     __tablename__ = 'host'
@@ -201,6 +205,10 @@ class Host(Metadata):
         UniqueConstraint(ip, workspace_id, name='uix_host_ip_workspace'),
     )
 
+    @property
+    def parent(self):
+        return
+
 
 class Hostname(Metadata):
     __tablename__ = 'hostname'
@@ -221,6 +229,10 @@ class Hostname(Metadata):
 
     def __str__(self):
         return self.name
+
+    @property
+    def parent(self):
+        return self.host
 
 
 class Service(Metadata):
@@ -267,6 +279,10 @@ class Service(Metadata):
         UniqueConstraint(port, protocol, host_id, workspace_id, name='uix_service_port_protocol_host_workspace'),
     )
 
+    @property
+    def parent(self):
+        return self.host
+
 
 class VulnerabilityABC(Metadata):
     # revisar plugin nexpose, netspark para terminar de definir uniques. asegurar que se carguen bien
@@ -307,6 +323,10 @@ class VulnerabilityABC(Metadata):
         CheckConstraint('1.0 <= risk AND risk <= 10.0',
                         name='check_vulnerability_risk'),
     )
+
+    @property
+    def parent(self):
+        raise NotImplementedError('ABC property called')
 
 
 class VulnerabilityTemplate(VulnerabilityABC):
@@ -453,13 +473,6 @@ class Vulnerability(VulnerabilityGeneric):
     def parent(self):
         return self.host or self.service
 
-    @property
-    def parent_type(self):
-        if self.host_id:
-            return 'Host'
-        if self.service_id:
-            return 'Service'
-
     __mapper_args__ = {
         'polymorphic_identity': VulnerabilityGeneric.VULN_TYPES[0]
     }
@@ -485,11 +498,6 @@ class VulnerabilityWeb(VulnerabilityGeneric):
     @declared_attr
     def service(cls):
         return relationship('Service', backref='vulnerabilities_web')
-
-    @property
-    def parent_type(self):
-        if self.service_id:
-            return 'Service'
 
     @property
     def parent(self):
@@ -524,6 +532,10 @@ class VulnerabilityCode(VulnerabilityGeneric):
     @property
     def hostnames(self):
         return []
+
+    @property
+    def parent(self):
+        return self.source_code
 
 
 class ReferenceTemplate(Metadata):
@@ -572,6 +584,11 @@ class Reference(Metadata):
         super(Reference, self).__init__(name=name,
                                         workspace_id=workspace_id,
                                         **kwargs)
+
+    @property
+    def parent(self):
+        # TODO: fix this propery
+        return
 
 
 class ReferenceVulnerabilityAssociation(db.Model):
@@ -649,6 +666,11 @@ class PolicyViolation(Metadata):
                                         workspace_id=workspace_id,
                                         **kwargs)
 
+    @property
+    def parent(self):
+        # TODO: Fix this property
+        return
+
 
 class Credential(Metadata):
     __tablename__ = 'credential'
@@ -697,6 +719,10 @@ class Credential(Metadata):
                         ),
     )
 
+    @property
+    def parent(self):
+        return self.host or self.service
+
 
 class Command(Metadata):
     __tablename__ = 'command'
@@ -725,6 +751,10 @@ class Command(Metadata):
                                 single_parent=True,
                                 foreign_keys=[entity_metadata_id]
                                 )
+
+    @property
+    def parent(self):
+        return
 
 
 def _make_vuln_count_property(type_=None):

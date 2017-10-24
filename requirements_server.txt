@@ -6,6 +6,7 @@ flask-classful==0.14
 Flask-Security==3.0.0
 flask>=0.10.1
 marshmallow
+Pillow==4.2.1
 pyasn1-modules
 pyopenssl>=16.0.0
 python-slugify==1.2.4

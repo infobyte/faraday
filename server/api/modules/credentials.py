@@ -5,11 +5,10 @@ import time
 
 import flask
 from flask import Blueprint
-from marshmallow import fields
+from marshmallow import fields, post_load
 
 from server.api.base import AutoSchema, ReadWriteWorkspacedView
-from server.models import Credential
-
+from server.models import Credential, Host, Service, db
 
 credentials_api = Blueprint('credentials_api', __name__)
 
@@ -24,15 +23,14 @@ class CredentialSchema(AutoSchema):
     password = fields.String(default='')
     description = fields.String(default='')
     couchdbid = fields.String(default='')  # backwards compatibility
-
-    parent = fields.Method('get_parent')
+    parent_type = fields.Method('get_parent_type', required=True)
+    parent = fields.Method('get_parent', required=True)
 
     def get_parent(self, obj):
-        if getattr(obj, 'service', None):
-            return obj.service.id
-        if getattr(obj, 'host', None):
-            return obj.host.id
-        return
+        return obj.parent.id
+
+    def get_parent_type(self, obj):
+        return obj.parent.__class__.__name__
 
     def get_metadata(self, obj):
         return {
@@ -52,7 +50,22 @@ class CredentialSchema(AutoSchema):
                   'username', 'description',
                   'name', 'password',
                   'owner', 'owned', 'couchdbid',
+                  'parent', 'parent_type',
                   'metadata')
+
+    @post_load
+    def set_parent(self, data):
+        parent_type = data.pop('parent_type', None)
+        parent_id = data.pop('parent', None)
+        if parent_type == 'Host':
+            parent_class = Host
+            parent_field = 'host_id'
+        if parent_type == 'Service':
+            parent_class = Service
+            parent_field = 'service_id'
+        parent = db.session.query(parent_class).filter_by(id=parent_id).first()
+        data[parent_field] = parent.id
+        return data
 
 
 class CredentialView(ReadWriteWorkspacedView):
@@ -71,5 +84,6 @@ class CredentialView(ReadWriteWorkspacedView):
         return {
             'rows': credentials,
         }
+
 
 CredentialView.register(credentials_api)

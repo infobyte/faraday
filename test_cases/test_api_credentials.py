@@ -52,7 +52,7 @@ class TestCredentialsAPIGeneric(ReadOnlyAPITests):
             "type":"Cred",
             "owner":"",
             "description":"",
-            "parent_id": host.id,
+            "parent": host.id,
             "parent_type": "Host"
         }
         res = test_client.post(self.url(), data=raw_data)

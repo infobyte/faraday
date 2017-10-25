@@ -390,7 +390,11 @@ class CountWorkspacedMixin(object):
             .filter(Workspace.name == workspace_name))
         for key, count in count.values(group_by, func.count(group_by)):
             res['groups'].append(
-                {'count': count, 'name': key}
+                {'count': count,
+                 'name': key,
+                 # To add compatibility with the web ui
+                 flask.request.args.get('group_by'): key,
+                 }
             )
             res['total_count'] += count
         return res

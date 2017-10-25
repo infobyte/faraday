@@ -173,6 +173,7 @@ class VulnerabilitySchema(AutoSchema):
     def load_status(self, value):
         if value == 'opened':
             return 'open'
+        return value
 
     def load_type(self, value):
         if value == 'Vulnerability':

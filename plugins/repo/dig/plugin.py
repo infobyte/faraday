@@ -102,13 +102,7 @@ class DigPlugin(core.PluginBase):
                             description="E-mail Server")
 
                         text = "Priority: " + mx_priority
-                        self.
-
-
-
-
-
-                        (
+                        self.createAndAddNoteToService(
                             host_id=host_id,
                             service_id=service_id,
                             name="priority",

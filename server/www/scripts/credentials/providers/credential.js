@@ -54,7 +54,7 @@ angular.module('faradayApp')
                 var deferred = $q.defer();
                 var self = this;
                 
-                ServerAPI.getObj(ws, id).then(function(response){
+                ServerAPI.getObj(ws, id, 'credential').then(function(response){
                     angular.extend(self, response.data);
                     deferred.resolve();
                 });

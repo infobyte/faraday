@@ -121,6 +121,10 @@ def _setUpAPIServer(hostname=None, port=None):
                         raise Exception("No ports available!")
                     CONF.setApiConInfo(hostname, port)
                     CONF.saveConfig()
+                elif exception.errno == 48:
+                    # Address already open
+                    # Another instance of faraday.py already running
+                    raise Exception("Another instance of faraday.py already running!")
                 else:
                     raise exception
             except Exception as e:

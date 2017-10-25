@@ -222,6 +222,18 @@ class VulnerabilitySchema(AutoSchema):
         data[parent_field] = parent.id
         return data
 
+    @post_load
+    def post_load_hostnames(self, data):
+        """
+        Since we don't allow a parent change on update, it makes no sense to have this data
+        Removing this method will result in error, since the relation in the database would have to be updated and that is not implemented
+        :param data:
+        :return:
+        """
+        data.pop('hostnames', None)
+        return data
+
+
 
 class VulnerabilityWebSchema(VulnerabilitySchema):
 

@@ -60,7 +60,7 @@ class EvidenceSchema(AutoSchema):
 class VulnerabilitySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
 
-    _rev = fields.String(default='')
+    _rev = fields.String(dump_only=True, default='')
     _attachments = fields.Method('get_attachments', 'set_attachments', default=[])
     owned = fields.Boolean(dump_only=True, default=False)
     owner = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')

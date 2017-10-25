@@ -37,7 +37,7 @@ class TestHostAPI:
         ret = {}
         for (count, host) in zip(SERVICE_COUNT, self.hosts):
             ret[host] = service_factory.create_batch(
-                count, host=host, workspace=host.workspace)
+                count, host=host, workspace=host.workspace, status='open')
         session.commit()
         return ret
 
@@ -199,14 +199,31 @@ class TestHostAPI:
         assert other_host.id not in ids_returned
         assert ids_expected == ids_returned
 
-    def test_retrieve_shows_service_count(self, test_client, host_services):
+    def test_retrieve_shows_service_count(self, test_client, host_services,
+                                          service_factory):
         for (host, services) in host_services.items():
+            # Adding closed and filtered services shouldn't impact on the
+            # service count since it should only count opened services
+            service_factory.create_batch(3, status='closed', host=host,
+                                         workspace=host.workspace)
+            service_factory.create_batch(2, status='filtered', host=host,
+                                         workspace=host.workspace)
             res = test_client.get(self.url(host))
             assert res.json['services'] == len(services)
 
-    def test_index_shows_service_count(self, test_client, host_services):
+    def test_index_shows_service_count(self, test_client, host_services,
+                                       service_factory):
         ids_map = {host.id: services
                    for (host, services) in host_services.items()}
+
+        # Adding closed and filtered services shouldn't impact on the
+        # service count since it should only count opened services
+        for host in host_services.keys():
+            service_factory.create_batch(3, status='closed', host=host,
+                                         workspace=host.workspace)
+            service_factory.create_batch(2, status='filtered', host=host,
+                                         workspace=host.workspace)
+
         res = test_client.get(self.url())
         assert len(res.json['rows']) >= len(ids_map)  # Some hosts can have no services
         for host in res.json['rows']:

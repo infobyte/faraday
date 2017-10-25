@@ -4,7 +4,7 @@
 
 import pytest
 from sqlalchemy.orm.util import was_deleted
-from server.models import db, Workspace
+from server.models import db, Workspace, Credential
 from test_api_pagination import PaginationTestsMixin as \
     OriginalPaginationTestsMixin
 
@@ -51,7 +51,17 @@ class GenericAPITest:
 
 
 class ListTestsMixin:
+    view_class = None  # Must be overriden
 
+    @pytest.fixture
+    def mock_envelope_list(self, monkeypatch):
+        assert self.view_class is not None, 'You must define view_class ' \
+            'in order to use ListTestsMixin or PaginationTestsMixin'
+        def _envelope_list(self, objects, pagination_metadata=None):
+            return {"data": objects}
+        monkeypatch.setattr(self.view_class, '_envelope_list', _envelope_list)
+
+    @pytest.mark.usefixtures('mock_envelope_list')
     def test_list_retrieves_all_items_from_workspace(self, test_client,
                                                      second_workspace,
                                                      session):
@@ -59,7 +69,7 @@ class ListTestsMixin:
         session.commit()
         res = test_client.get(self.url())
         assert res.status_code == 200
-        assert len(res.json) == OBJECT_COUNT
+        assert len(res.json['data']) == OBJECT_COUNT
 
 
 class RetrieveTestsMixin:
@@ -181,4 +191,10 @@ class ReadWriteTestsMixin(ListTestsMixin,
 
 class ReadWriteAPITests(ReadWriteTestsMixin,
                         GenericAPITest):
+    pass
+
+
+class ReadOnlyAPITests(ListTestsMixin,
+                       RetrieveTestsMixin,
+                       GenericAPITest):
     pass

@@ -6,7 +6,10 @@ import re
 import sys
 import json
 import datetime
+
 import requests
+from tempfile import NamedTemporaryFile
+
 from collections import (
     Counter,
     defaultdict,
@@ -53,6 +56,7 @@ from server.models import (
     VulnerabilityTemplate,
     VulnerabilityWeb,
     Workspace,
+    File,
 )
 from server.utils import invalid_chars
 from server.utils.database import get_or_create
@@ -72,6 +76,8 @@ MAPPED_VULN_SEVERITY = OrderedDict([
     ('low', 'low'),
     ('info', 'informational'),
     ('unclassified', 'unclassified'),
+    ('unknown', 'unclassified'),
+    ('', 'unclassified'),
 ])
 
 OBJ_TYPES = [
@@ -317,7 +323,7 @@ class HostImporter(object):
         if type(interface['hostnames']) in (str, unicode):
             interface['hostnames'] = [interface['hostnames']]
 
-        for hostname_str in interface['hostnames']:
+        for hostname_str in interface['hostnames'] or []:
             if not hostname_str:
                 # skip empty hostnames
                 continue
@@ -366,9 +372,13 @@ class ServiceImporter(object):
                     'closed': 'closed',
                     'down': 'closed',
                     'filtered': 'filtered',
-                    'open|filtered': 'filtered'
+                    'open|filtered': 'filtered',
+                    'unknown': 'closed'
                 }
-                service.status = status_mapper[document.get('status', 'open')]
+                couchdb_status = document.get('status', 'open')
+                if couchdb_status.lower() not in status_mapper:
+                    logger.warn('Service with unknown status "{0}" found! Status will default to open. Host is {1}'.format(couchdb_status, host.ip))
+                service.status = status_mapper.get(couchdb_status, 'open')
                 service.version = document.get('version')
                 service.workspace = workspace
 
@@ -384,7 +394,13 @@ class VulnerabilityImporter(object):
             couch_parent_id = '.'.join(document['_id'].split('.')[:-1])
         parent_ids = couchdb_relational_map[couch_parent_id]
         mapped_severity = MAPPED_VULN_SEVERITY
-        severity = mapped_severity[document.get('severity')]
+        try:
+            severity = mapped_severity[document.get('severity')]
+        except KeyError:
+            logger.warn("Unknown severity value '%s' of vuln with id %s. "
+                        "Using 'unclassified'",
+                        document.get('severity'), document['_id'])
+            severity = 'unclassified'
         for parent_id in parent_ids:
             if level == 2:
                 parent = session.query(Host).filter_by(id=parent_id).first()
@@ -426,7 +442,7 @@ class VulnerabilityImporter(object):
                 )
             vulnerability.confirmed = document.get('confirmed', False) or False
             vulnerability.data = document.get('data')
-            vulnerability.easeofresolution = document.get('easeofresolution')
+            vulnerability.ease_of_resolution = document.get('easeofresolution') if document.get('easeofresolution') else None
             vulnerability.resolution = document.get('resolution')
 
             vulnerability.owned = document.get('owned', False)
@@ -436,7 +452,7 @@ class VulnerabilityImporter(object):
             vulnerability.impact_confidentiality = document.get('impact', {}).get('confidentiality')
             vulnerability.impact_integrity = document.get('impact', {}).get('integrity')
             if document['type'] == 'VulnerabilityWeb':
-                vulnerability.query = document.get('query')
+                vulnerability.query_string = document.get('query')
                 vulnerability.request = document.get('request')
                 vulnerability.response = document.get('response')
 
@@ -447,13 +463,16 @@ class VulnerabilityImporter(object):
                     vulnerability.parameters = params if params is not None else u''
             status_map = {
                 'opened': 'open',
+                'open': 'open',
                 'closed': 'closed',
             }
             status = status_map[document.get('status', 'opened')]
             vulnerability.status = status
 
-            self.add_references(document, vulnerability, workspace)
-            self.add_policy_violations(document, vulnerability, workspace)
+            vulnerability.reference_instances.update(
+                self.add_references(document, vulnerability, workspace))
+            vulnerability.policy_violation_instances.update(
+                self.add_policy_violations(document, vulnerability, workspace))
 
             # need the vuln ID before creating Tags for it
             session.commit()
@@ -461,27 +480,58 @@ class VulnerabilityImporter(object):
             if len(tags):
                 create_tags(tags, vulnerability.id, document['type'])
 
+            attachments_data = document.get('_attachments') or {}
+            for attachment_name, attachment_data in attachments_data.items():
+                #http://localhost:5984/evidence/334389048b872a533002b34d73f8c29fd09efc50.c7b0f6cba2fae8e446b7ffedfdb18026bb9ba41d/forbidden.png
+                attachment_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
+                    username=server.config.couchdb.user,
+                    password=server.config.couchdb.password,
+                    hostname=server.config.couchdb.host,
+                    port=server.config.couchdb.port,
+                    path='{0}/{1}/{2}'.format(workspace.name, document.get('_id'), attachment_name)
+                )
+                response = requests.get(attachment_url)
+                response.raw.decode_content = True
+                attachment_file = NamedTemporaryFile()
+                attachment_file.write(response.content)
+                attachment_file.seek(0)
+                session.commit()
+                file, created = get_or_create(
+                    session,
+                    File,
+                    filename=attachment_name,
+                    object_id=vulnerability.id,
+                    object_type=vulnerability.__class__.__name__)
+                file.content = attachment_file.read()
+
+                attachment_file.close()
+
+
         yield vulnerability
 
     def add_policy_violations(self, document, vulnerability, workspace):
+        policy_violations = list()
         for policy_violation in document.get('policyviolations', []):
-            get_or_create(
+            pv, _ = get_or_create(
                 session,
                 PolicyViolation,
                 name=policy_violation,
-                workspace=workspace,
-                vulnerability=vulnerability
+                workspace=workspace
             )
+            policy_violations.append(pv)
+        return policy_violations
 
     def add_references(self, document, vulnerability, workspace):
+        references = list()
         for ref in document.get('refs', []):
-            get_or_create(
+            reference, _ = get_or_create(
                 session,
                 Reference,
                 name=ref,
-                workspace=workspace,
-                vulnerability=vulnerability
+                workspace=workspace
             )
+            references.append(reference)
+        return references
 
 
 class CommandImporter(object):
@@ -838,6 +888,9 @@ class ImportVulnerabilityTemplates(FlaskScriptCommand):
             vuln_template.severity = new_severity
 
             references = document['references'] if isinstance(document['references'], list) else [x.strip() for x in document['references'].split(',')]
+            cwe_field = document.get('cwe')
+            if cwe_field not in references:
+                references.append(cwe_field)
             for ref_doc in references:
                 get_or_create(session,
                              ReferenceTemplate,

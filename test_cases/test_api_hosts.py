@@ -56,7 +56,7 @@ class TestHostAPI:
         Compare is the hosts in response are the same that in hosts.
         It only compares the IDs of each one, not other fields"""
         hosts_in_list = set(host.id for host in hosts)
-        hosts_in_response = set(host['id'] for host in response.json)
+        hosts_in_response = set(host['id'] for host in response.json['rows'])
         assert hosts_in_list == hosts_in_response
 
     def test_list_retrieves_all_items_from_workspace(self, test_client,
@@ -67,14 +67,14 @@ class TestHostAPI:
         session.commit()
         res = test_client.get(self.url())
         assert res.status_code == 200
-        assert len(res.json) == HOSTS_COUNT
+        assert len(res.json['rows']) == HOSTS_COUNT
 
     def test_retrieve_one_host(self, test_client, database):
         host = self.workspace.hosts[0]
         assert host.id is not None
         res = test_client.get(self.url(host))
         assert res.status_code == 200
-        assert res.json['ip'] == host.ip
+        assert res.json['name'] == host.ip
 
     def test_retrieve_fails_with_host_of_another_workspace(self,
                                                            test_client,
@@ -202,16 +202,16 @@ class TestHostAPI:
     def test_retrieve_shows_service_count(self, test_client, host_services):
         for (host, services) in host_services.items():
             res = test_client.get(self.url(host))
-            assert res.json['service_count'] == len(services)
+            assert res.json['services'] == len(services)
 
     def test_index_shows_service_count(self, test_client, host_services):
         ids_map = {host.id: services
                    for (host, services) in host_services.items()}
         res = test_client.get(self.url())
-        assert len(res.json) >= len(ids_map)  # Some hosts can have no services
-        for host in res.json:
+        assert len(res.json['rows']) >= len(ids_map)  # Some hosts can have no services
+        for host in res.json['rows']:
             if host['id'] in ids_map:
-                assert host['service_count'] == len(ids_map[host['id']])
+                assert host['value']['services'] == len(ids_map[host['id']])
 
     def test_filter_by_os_exact(self, test_client, session, workspace,
                                 second_workspace, host_factory):
@@ -252,6 +252,59 @@ class TestHostAPI:
         res = test_client.get(self.url() + '?os__ilike=Unix %')
         assert res.status_code == 200
         self.compare_results(hosts + [case_insensitive_host], res)
+
+    def test_host_with_open_vuln_count_verification(self, test_client, session,
+                                                        workspace, host_factory, vulnerability_factory,
+                                                        service_factory):
+
+        host = host_factory.create(workspace=workspace)
+        service = service_factory.create(host=host, workspace=workspace)
+        vulnerability_factory.create(service=service, host=None, workspace=workspace)
+        vulnerability_factory.create(service=None, host=host, workspace=workspace)
+
+        session.commit()
+
+        res = test_client.get(self.url())
+        assert res.status_code == 200
+        json_host = filter(lambda json_host: json_host['value']['id'] == host.id, res.json['rows'])[0]
+        # the host has one vuln associated. another one via service.
+        assert json_host['value']['vulns'] == 1
+
+    def test_host_services_vuln_count_verification(self, test_client, session,
+                                                   workspace, host_factory, vulnerability_factory,
+                                                   service_factory):
+        host = host_factory.create(workspace=workspace)
+        service = service_factory.create(host=host, workspace=workspace)
+        vulnerability_factory.create(service=service, host=None, workspace=workspace)
+        session.commit()
+
+        res = test_client.get(self.url() + str(host.id) + "/" + 'services/')
+        assert res.status_code == 200
+        assert res.json[0]['vulns'] == 1
+
+    def test_create_host_with_hostnames(self, test_client):
+        raw_data = {
+            "ip": "192.168.0.21",
+            "hostnames": [{"key": "google.com"}],
+            "mac": "00:00:00:00:00:00",
+            "description": "",
+            "os": "",
+            "owned": False,
+            "owner": ""
+        }
+        res = test_client.post(self.url(), data=raw_data)
+        assert res.status_code == 201
+
+    def test_create_host_with_default_gateway(self, test_client):
+        raw_data = {
+            "ip": "192.168.0.21",
+            "default_gateway": "192.168.0.1",
+            "mac": "00:00:00:00:00:00", "description": "",
+            "os": "", "owned": False, "owner": ""
+        }
+        res = test_client.post(self.url(), data=raw_data)
+        assert res.status_code == 201
+        assert res.json['default_gateway'] == [u'192.168.0.1']
 
 
 class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):

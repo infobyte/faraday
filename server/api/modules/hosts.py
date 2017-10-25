@@ -9,6 +9,7 @@ from marshmallow import fields
 from filteralchemy import FilterSet, operators
 from sqlalchemy.orm import undefer
 
+from server.utils.database import get_or_create
 from server.utils.logger import get_logger
 from server.utils.web import gzipped, validate_workspace,\
     get_integer_parameter, filter_request_args
@@ -20,19 +21,49 @@ from server.api.base import (
     FilterAlchemyMixin,
     FilterSetMeta,
 )
-from server.models import Host, Service
+from server.schemas import PrimaryKeyRelatedField
+from server.models import Host, Service, db, Hostname
 
 host_api = Blueprint('host_api', __name__)
 
 
 class HostSchema(AutoSchema):
-
+    _id = fields.Integer(dump_only=True, attribute='id')
+    id = fields.Integer()
+    _rev = fields.String(default='')
+    ip = fields.String(default='')
     description = fields.String(required=True)  # Explicitly set required=True
-    service_count = fields.Integer(dump_only=True)
+    default_gateway = fields.List(fields.String, attribute="default_gateway_ip")
+    metadata = fields.Method('get_metadata')
+    name = fields.String(dump_only=True, attribute='ip', default='')
+    os = fields.String(default='')
+    owned = fields.Boolean(default=False)
+    owner = PrimaryKeyRelatedField('username', attribute='creator', dump_only=True)
+    services = fields.Integer(attribute='service_count', dump_only=True)
+    vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
+    credentials = fields.Integer(attribute='vulnerability_count', dump_only=True)
+    hostnames = PrimaryKeyRelatedField('name', many=True,
+                                       attribute="hostnames", default=[])
+
+    def get_metadata(self, obj):
+        return {
+            "command_id": None,
+            "create_time": None,
+            "creator": None,
+            "owner": None,
+            "update_action": None,
+            "update_controller_action": None,
+            "update_time":1504796508.21,
+            "update_user": None
+        }
 
     class Meta:
         model = Host
-        fields = ('id', 'ip', 'description', 'os', 'service_count')
+        fields = ('id', '_id', '_rev', 'ip', 'description',
+                  'credentials', 'default_gateway', 'metadata',
+                  'name', 'os', 'owned', 'owner', 'services', 'vulns',
+                  'hostnames'
+                  )
 
 
 class HostFilterSet(FilterSet):
@@ -43,10 +74,11 @@ class HostFilterSet(FilterSet):
 
 
 class ServiceSchema(AutoSchema):
+    vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
 
     class Meta:
         model = Service
-        fields = ('id', 'name', 'description', 'port', 'protocol', 'status')
+        fields = ('id', 'name', 'description', 'port', 'protocol', 'status', 'vulns')
 
 
 class HostsView(PaginatedMixin,
@@ -63,36 +95,35 @@ class HostsView(PaginatedMixin,
         services = self._get_object(host_id, workspace_name).services
         return ServiceSchema(many=True).dump(services).data
 
+    def _perform_create(self, data, **kwargs):
+        hostnames = data.pop('hostnames', [])
+        default_gateway_ip = data.pop('default_gateway_ip', [None])
+        host = super(HostsView, self)._perform_create(data, **kwargs)
+        host.default_gateway_ip = default_gateway_ip[0]
+        for name in hostnames:
+            get_or_create(db.session, Hostname, name=name['key'], host=host, workspace=host.workspace)
+        db.session.commit()
+        return host
+
+
     def _get_base_query(self, workspace_name):
         """Get services_count in one query and not deferred, that doe
         one query per host"""
         original = super(HostsView, self)._get_base_query(workspace_name)
         return original.options(undefer(Host.service_count))
 
+    def _envelope_list(self, objects, pagination_metadata=None):
+        hosts = []
+        for host in objects:
+            hosts.append({
+                'id': host['id'],
+                'key': host['id'],
+                'value': host
+            })
+        return {
+            'rows': hosts,
+            'total_rows': (pagination_metadata and pagination_metadata.total
+                           or len(hosts)),
+        }
+
 HostsView.register(host_api)
-
-
-@gzipped
-@host_api.route('/ws/<workspace>/hosts', methods=['GET'])
-def list_hosts(workspace=None):
-    validate_workspace(workspace)
-    get_logger(__name__).debug("Request parameters: {!r}"\
-        .format(flask.request.args))
-
-    page = get_integer_parameter('page', default=0)
-    page_size = get_integer_parameter('page_size', default=0)
-    search = flask.request.args.get('search')
-    order_by = flask.request.args.get('sort')
-    order_dir = flask.request.args.get('sort_dir')
-
-    host_filter = filter_request_args('page', 'page_size', 'search', 'sort', 'sort_dir')
-
-    dao = HostDAO(workspace)
-    result = dao.list(search=search,
-                      page=page,
-                      page_size=page_size,
-                      order_by=order_by,
-                      order_dir=order_dir,
-                      host_filter=host_filter)
-
-    return flask.jsonify(result)

@@ -32,32 +32,23 @@ angular.module('faradayApp')
                     $scope.hash = "";
             }
 
-            // todo: refactor the following code
-            workspacesFact.list().then(function(wss) {
-                $scope.wss = wss;
-                var objects = {};
-                $scope.wss.forEach(function(ws){
-                    workspacesFact.get(ws).then(function(resp) {
-                        $scope.onSuccessGet(resp);
-                    });
-                    objects[ws] = dashboardSrv.getObjectsCount(ws);
-                });
-                $q.all(objects).then(function(os) {
-                    for(var workspace in os) {
-                        if(os.hasOwnProperty(workspace)) {
-                            $scope.objects[workspace] = {
-                                "total_vulns": "-",
-                                "hosts": "-",
-                                "services": "-"
-                            };
-                            for (var stat in os[workspace]) {
-                                if (os[workspace].hasOwnProperty(stat)) {
-                                    if ($scope.objects[workspace].hasOwnProperty(stat))
-                                        $scope.objects[workspace][stat] = os[workspace][stat];
-                                }
-                            };
+            workspacesFact.getWorkspaces().then(function(wss) {
+
+                $scope.wss = []; // Store workspace names
+                wss.forEach(function(ws){
+                    $scope.wss.push(ws.name);
+                    $scope.onSuccessGet(ws);
+                    $scope.objects[ws.name] = {
+                        "total_vulns": "-",
+                        "hosts": "-",
+                        "services": "-"
+                    };
+                    for (var stat in ws.stats) {
+                        if (ws.stats.hasOwnProperty(stat)) {
+                            if ($scope.objects[ws.name].hasOwnProperty(stat))
+                                $scope.objects[ws.name][stat] = ws.stats[stat];
                         }
-                    }
+                    };
                 });
             });
         };

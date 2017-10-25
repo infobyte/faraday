@@ -1014,9 +1014,7 @@ angular.module('faradayApp')
             });
         };
 
-        $scope.serviceSearch = function(srvStr) {
-            //TODO: this is horrible
-            var srvName = srvStr.split(') ')[1];
+        $scope.serviceSearch = function(srvName) {
             return $scope.encodeUrl(srvName);
         }
 

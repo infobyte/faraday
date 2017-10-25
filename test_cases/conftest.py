@@ -1,7 +1,9 @@
 import os
 import sys
 import json
+import inspect
 import pytest
+from factory import Factory
 from flask.testing import FlaskClient
 from sqlalchemy import event
 from pytest_factoryboy import register
@@ -13,18 +15,20 @@ from test_cases import factories
 
 
 
-enabled_factories = [
-    factories.CredentialFactory,
-    factories.LicenseFactory,
-    factories.HostFactory,
-    factories.ServiceFactory,
-    factories.SourceCodeFactory,
-    factories.VulnerabilityFactory,
-    factories.VulnerabilityCodeFactory,
-    factories.VulnerabilityWebFactory,
-    factories.UserFactory,
-    factories.WorkspaceFactory,
-]
+# Discover factories to automatically register them to pytest-factoryboy and to
+# override its session
+enabled_factories = []
+for attr_name in dir(factories):
+    obj = getattr(factories, attr_name)
+    if not inspect.isclass(obj):
+        continue
+    if not issubclass(obj, Factory):
+        continue
+    if obj._meta.model is None:
+        # It is an abstract class
+        continue
+    enabled_factories.append(obj)
+
 for factory in enabled_factories:
     register(factory)
 
@@ -188,6 +192,11 @@ def user(app, database, session):
 @pytest.fixture
 def ldap_user(app, session):
     return create_user(app, session, 'ldap', 'ldap@test.com', 'password', is_ldap=True)
+
+@pytest.fixture
+def host_with_hostnames(host, hostname_factory):
+    hostname_factory.create_batch(3, workspace=host.workspace, host=host)
+    return host
 
 
 def login_as(test_client, user):

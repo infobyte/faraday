@@ -1,12 +1,16 @@
-import flask
 import json
 
+import flask
+from flask import abort
+from sqlalchemy import inspect
 from flask_classful import FlaskView
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.inspection import inspect
+from sqlalchemy import func
 from werkzeug.routing import parse_rule
 from marshmallow import Schema
 from marshmallow.compat import with_metaclass
+from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
 from webargs.flaskparser import FlaskParser, parser, abort
 from webargs.core import ValidationError
@@ -24,6 +28,22 @@ def output_json(data, code, headers=None):
     return response
 
 
+class InvalidUsage(Exception):
+    status_code = 400
+
+    def __init__(self, message, status_code=None, payload=None):
+        Exception.__init__(self)
+        self.message = message
+        if status_code is not None:
+            self.status_code = status_code
+        self.payload = payload
+
+    def to_dict(self):
+        rv = dict(self.payload or ())
+        rv['message'] = self.message
+        return rv
+
+
 # TODO: Require @view decorator to enable custom routes
 class GenericView(FlaskView):
     """Abstract class to provide helpers. Inspired in Django REST
@@ -36,7 +56,10 @@ class GenericView(FlaskView):
     # Default attributes
     route_prefix = '/v2/'
     base_args = []
-    representations = {'application/json': output_json}
+    representations = {
+        'application/json': output_json,
+        'flask-classful/default': output_json,
+    }
     lookup_field = 'id'
     lookup_field_type = int
     unique_fields = []  # Fields unique
@@ -56,6 +79,10 @@ class GenericView(FlaskView):
 
     def _get_base_query(self):
         return self.model_class.query
+
+    def _filter_query(self, query):
+        """Return a new SQLAlchemy query with some filters applied"""
+        return query
 
     def _get_object(self, object_id, **kwargs):
         self._validate_object_id(object_id)
@@ -94,6 +121,12 @@ class GenericView(FlaskView):
             return flask.jsonify({
                 'messages': messages,
             }), 400
+
+        @app.errorhandler(InvalidUsage)
+        def handle_invalid_usage(error):
+            response = flask.jsonify(error.to_dict())
+            response.status_code = error.status_code
+            return response
 
 
 class GenericWorkspacedView(GenericView):
@@ -158,10 +191,6 @@ class ListMixin(object):
     def _paginate(self, query):
         return query, None
 
-    def _filter_query(self, query):
-        """Return a new SQLAlchemy query with some filters applied"""
-        return query
-
     def index(self, **kwargs):
         query = self._filter_query(self._get_base_query(**kwargs))
         objects, pagination_metadata = self._paginate(query)
@@ -189,7 +218,7 @@ class PaginatedMixin(object):
             except (TypeError, ValueError):
                 flask.abort(404, 'Invalid per_page value')
 
-            pagination_metadata = query.paginate(page=page, per_page=per_page)
+            pagination_metadata = query.paginate(page=page, per_page=per_page, error_out=False)
             return pagination_metadata.items, pagination_metadata
         return super(PaginatedMixin, self)._paginate(query)
 
@@ -249,11 +278,12 @@ class CreateMixin(object):
     def post(self, **kwargs):
         data = self._parse_data(self._get_schema_class()(strict=True),
                                 flask.request)
-        obj = self.model_class(**data)
-        created = self._perform_create(obj, **kwargs)
+
+        created = self._perform_create(data, **kwargs)
         return self._dump(created), 201
 
-    def _perform_create(self, obj):
+    def _perform_create(self, data, **kwargs):
+        obj = self.model_class(**data)
         # assert not db.session.new
         with db.session.no_autoflush:
             # Required because _validate_uniqueness does a select. Doing this
@@ -267,10 +297,20 @@ class CreateMixin(object):
 class CreateWorkspacedMixin(CreateMixin):
     """Add POST /<workspace_name>/ route"""
 
-    def _perform_create(self, obj, workspace_name):
+    def _perform_create(self, data, workspace_name):
         assert not db.session.new
-        obj.workspace = self._get_workspace(workspace_name)
-        return super(CreateWorkspacedMixin, self)._perform_create(obj)
+        workspace = self._get_workspace(workspace_name)
+        obj = self.model_class(**data)
+        obj.workspace = workspace
+        # assert not db.session.new
+        with db.session.no_autoflush:
+            # Required because _validate_uniqueness does a select. Doing this
+            # outside a no_autoflush block would result in a premature create.
+            self._validate_uniqueness(obj)
+            db.session.add(obj)
+        db.session.commit()
+
+        return obj
 
 
 class UpdateMixin(object):
@@ -323,6 +363,39 @@ class DeleteWorkspacedMixin(DeleteMixin):
     pass
 
 
+class CountWorkspacedMixin(object):
+
+    def count(self, **kwargs):
+        res = {
+            'groups': [],
+            'total_count': 0
+        }
+        group_by = flask.request.args.get('group_by', None)
+        # TODO migration: whitelist fields to avoid leaking a confidential
+        # field's value.
+        # Example: /users/count/?group_by=password
+        if not group_by or group_by not in inspect(self.model_class).attrs:
+            abort(404)
+
+        workspace_name = kwargs.pop('workspace_name')
+        # using format is not a great practice.
+        # the user input is group_by, however it's filtered by column name.
+        table_name = inspect(self.model_class).tables[0].name
+        group_by = '{0}.{1}'.format(table_name, group_by)
+
+        count = self._filter_query(
+            db.session.query(self.model_class)
+            .join(Workspace)
+            .group_by(group_by)
+            .filter(Workspace.name == workspace_name))
+        for key, count in count.values(group_by, func.count(group_by)):
+            res['groups'].append(
+                {'count': count, 'name': key}
+            )
+            res['total_count'] += count
+        return res
+
+
 class ReadWriteView(CreateMixin,
                     UpdateMixin,
                     DeleteMixin,
@@ -334,6 +407,7 @@ class ReadWriteView(CreateMixin,
 class ReadWriteWorkspacedView(CreateWorkspacedMixin,
                               UpdateWorkspacedMixin,
                               DeleteWorkspacedMixin,
+                              CountWorkspacedMixin,
                               ReadOnlyWorkspacedView):
     """A generic workspaced view with list, retrieve and create
     endpoints"""
@@ -350,6 +424,18 @@ class AutoSchema(with_metaclass(ModelSchemaMeta, Schema)):
     OPTIONS_CLASS = ModelSchemaOpts
 
 
+class FilterAlchemyModelConverter(ModelConverter):
+    """Use this to make all fields of a model not required.
+
+    It is used to make filteralchemy support not nullable columns"""
+
+    def _add_column_kwargs(self, kwargs, column):
+        super(FilterAlchemyModelConverter, self)._add_column_kwargs(kwargs,
+                                                                    column)
+        kwargs['required'] = False
+
+
 class FilterSetMeta:
     """Base Meta class of FilterSet objects"""
     parser = parser
+    converter = FilterAlchemyModelConverter()

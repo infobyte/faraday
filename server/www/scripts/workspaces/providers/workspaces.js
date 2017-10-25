@@ -9,7 +9,21 @@ angular.module('faradayApp')
         workspacesFact.list = function() {
             var deferred = $q.defer();
             ServerAPI.getWorkspacesNames().
-                then(function(response) { deferred.resolve(response.data.workspaces) }, errorHandler);
+                then(function(response) {
+                    var names = [];
+                    response.data.forEach(function(workspace){
+                        names.push(workspace.name);
+                    });
+                    deferred.resolve(names);
+                }, errorHandler);
+            return deferred.promise;
+        };
+
+        workspacesFact.getWorkspaces = function() {
+            var deferred = $q.defer();
+            ServerAPI.getWorkspaces().
+                then(function(response)
+                    { deferred.resolve(response.data) }, errorHandler);
             return deferred.promise;
         };
 

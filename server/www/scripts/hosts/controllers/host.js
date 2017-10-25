@@ -12,12 +12,8 @@ angular.module('faradayApp')
         loadHosts = function(){
             hostsManager.getHost($routeParams.hidId, $scope.workspace, true)
                 .then(function(host) {
-                    hostsManager.getInterfaces($scope.workspace, host._id).then(function(resp){
-                        $scope.interface = resp[0].value;
-                        $scope.interface.hostnames = commons.arrayToObject($scope.interface.hostnames);
-                    });
                 	$scope.host = host;
-                    $scope.hostName = host.name; // User can edit $scope.host.name but not $scope.hostName
+                    $scope.hostName = host.ip; // User can edit $scope.host.name but not $scope.hostName
                     $scope.loadIcons();
                 });
         };
@@ -50,13 +46,7 @@ angular.module('faradayApp')
             // services by host
             dashboardSrv.getServicesByHost($scope.workspace, hostId)
                 .then(function(services) {
-                    var pss = [];
-
-                    services.forEach(function(service) {
-                        pss.push(servicesManager.getService(service.id, $scope.workspace, true));
-                    });
-
-                    return $q.all(pss);
+                    return $q.all(services);
                 })
                 .then(function(services) {
                     $scope.services = services;
@@ -67,11 +57,11 @@ angular.module('faradayApp')
 
                     $scope.loadedServices = true;
 
-                    return servicesManager.getServiceVulnCount($scope.workspace, $scope.services)
+                    return services;
                 })
                 .then(function(vulns) {
                     $scope.services.forEach(function(service) {
-                        service.vulns = vulns[service._id] || 0;
+                        service.vulns = vulns[service.id] || 0;
                     });
                 })
                 .catch(function(e) {
@@ -110,7 +100,7 @@ angular.module('faradayApp')
         };
 
         $scope.newHostnames = function($event){
-            $scope.interface.hostnames.push({key:''});
+            $scope.host.hostnames.push({key:''});
             $event.preventDefault();
         }
 
@@ -119,17 +109,17 @@ angular.module('faradayApp')
             timestamp = date.getTime()/1000.0;
 
             // The objectToArray transform is necessary to call updateHost correctly
-            // If I don't restore the object after the call hostnames won't be shown in the interface
-            var old_hostnames = $scope.interface.hostnames;
-            $scope.interface.hostnames = commons.objectToArray($scope.interface.hostnames.filter(Boolean));
+            // If I don't restore the object after the call hostnames won't be shown in the host
+            var old_hostnames = $scope.host.hostnames;
+            $scope.host.hostnames = commons.objectToArray($scope.host.hostnames.filter(Boolean));
 
             $scope.hostdata = $scope.host;
             $scope.hostdata.metadata['update_time'] = timestamp;
             $scope.hostdata.metadata['update_user'] = "UI Web";
 
-            hostsManager.updateHost($scope.host, $scope.hostdata, $scope.interface,
+            hostsManager.updateHost($scope.host, $scope.hostdata,
                                     $scope.workspace).then(function(){
-                                        $scope.interface.hostnames = old_hostnames;
+                                        $scope.hostnames = old_hostnames;
                                         $location.path('/host/ws/' + $scope.workspace + '/hid/' + $scope.host._id);
                                     });
         };
@@ -313,12 +303,7 @@ angular.module('faradayApp')
         };
 
         $scope.delete = function() {
-            var selected = [];
-            $scope.selectedServices().forEach(function(service){
-            	if(service.selected){
-            		selected.push(service._id);
-            	}
-            });
+            var selected = $scope.selectedServices();
 
             if(selected.length == 0) {
                 $uibModal.open(config = {
@@ -380,12 +365,13 @@ angular.module('faradayApp')
             });
         };
 
-        $scope.remove = function(ids) {
-            ids.forEach(function(id) {
-                servicesManager.deleteServices(id, $scope.workspace).then(function() {
+        $scope.remove = function(services) {
+            //removes services from host
+            services.forEach(function(service) {
+                servicesManager.deleteServices(service, $scope.workspace).then(function() {
                     var index = -1;
                     for(var i=0; i < $scope.services.length; i++) {
-                        if($scope.services[i]._id === id) {
+                        if($scope.services[i]._id === service.id) {
                             index = i;
                             break;
                         }

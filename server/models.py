@@ -3,7 +3,6 @@
 # See the file 'doc/LICENSE' for the license information
 from datetime import datetime
 
-import pytz
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
@@ -19,23 +18,26 @@ from sqlalchemy import (
     UniqueConstraint,
     event
 )
-from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql import select, text, table
 from sqlalchemy import func
 from sqlalchemy.orm import column_property
 from sqlalchemy.schema import DDL
+from sqlalchemy.ext.associationproxy import association_proxy, _AssociationSet
 from sqlalchemy.ext.declarative import declared_attr
 from flask_sqlalchemy import (
     SQLAlchemy as OriginalSQLAlchemy,
     _EngineConnector
 )
+from depot.fields.sqlalchemy import UploadedFileField
+
+import server.config
+from server.fields import FaradayUploadedFile
 from flask_security import (
     RoleMixin,
     UserMixin,
 )
-
-import server.config
+from server.utils.database import get_or_create
 
 
 class SQLAlchemy(OriginalSQLAlchemy):
@@ -159,6 +161,10 @@ class SourceCode(Metadata):
         UniqueConstraint(filename, workspace_id, name='uix_source_code_filename_workspace'),
     )
 
+    @property
+    def parent(self):
+        return
+
 
 class Host(Metadata):
     __tablename__ = 'host'
@@ -192,10 +198,16 @@ class Host(Metadata):
                             )
 
     service_count = _make_generic_count_property('host', 'service')
+    vulnerability_count = _make_generic_count_property('host', 'vulnerability')
+    credentials_count = _make_generic_count_property('host', 'credential')
 
     __table_args__ = (
         UniqueConstraint(ip, workspace_id, name='uix_host_ip_workspace'),
     )
+
+    @property
+    def parent(self):
+        return
 
 
 class Hostname(Metadata):
@@ -214,6 +226,13 @@ class Hostname(Metadata):
     __table_args__ = (
         UniqueConstraint(name, host_id, workspace_id, name='uix_hostname_host_workspace'),
     )
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def parent(self):
+        return self.host
 
 
 class Service(Metadata):
@@ -253,9 +272,16 @@ class Service(Metadata):
                             backref='services',
                             foreign_keys=[workspace_id]
                             )
+
+    vulnerability_count = _make_generic_count_property('service', 'vulnerability')
+
     __table_args__ = (
         UniqueConstraint(port, protocol, host_id, workspace_id, name='uix_service_port_protocol_host_workspace'),
     )
+
+    @property
+    def parent(self):
+        return self.host
 
 
 class VulnerabilityABC(Metadata):
@@ -298,6 +324,10 @@ class VulnerabilityABC(Metadata):
                         name='check_vulnerability_risk'),
     )
 
+    @property
+    def parent(self):
+        raise NotImplementedError('ABC property called')
+
 
 class VulnerabilityTemplate(VulnerabilityABC):
     __tablename__ = 'vulnerability_template'
@@ -305,6 +335,60 @@ class VulnerabilityTemplate(VulnerabilityABC):
     __table_args__ = (
         UniqueConstraint('name', name='uix_vulnerability_template_name'),
     )
+
+
+class CustomAssociationSet(_AssociationSet):
+    """
+    A custom associacion set that passes the creator method the both
+    the value and the instance of the parent object
+    """
+
+    # def __init__(self, lazy_collection, creator, getter, setter, parent):
+    def __init__(self, lazy_collection, creator, value_attr, parent):
+        """I have to override this method because the proxy_factory
+        class takes different arguments than the hardcoded
+        _AssociationSet one.
+        In particular, the getter and the setter aren't passed, but
+        since I have an instance of the parent (AssociationProxy
+        instance) I do the logic here.
+        The value_attr argument isn't relevant to this implementation
+        """
+
+        if parent.getset_factory:
+            getter, setter = parent.getset_factory(
+                parent.collection_class, parent)
+        else:
+            getter, setter = parent._default_getset(parent.collection_class)
+
+        super(CustomAssociationSet, self).__init__(
+            lazy_collection, creator, getter, setter, parent)
+
+    def _create(self, value):
+        parent_instance = self.lazy_collection.ref()
+        return self.creator(value, parent_instance)
+
+
+def _build_associationproxy_creator(model_class_name):
+    def creator(name, vulnerability):
+        """Get or create a reference/policyviolation with the
+        corresponding name. This must be worspace aware"""
+
+        # Ugly hack to avoid the fact that Reference is defined after
+        # Vulnerability
+        model_class = globals()[model_class_name]
+
+        assert (vulnerability.workspace and vulnerability.workspace.id
+                is not None), "Unknown workspace id"
+        child = model_class.query.filter(
+            getattr(model_class, 'workspace') == vulnerability.workspace,
+            getattr(model_class, 'name') == name,
+        ).first()
+        if child is None:
+            # Doesn't exist
+            child = model_class(name, vulnerability.workspace.id)
+        return child
+
+    return creator
 
 
 class VulnerabilityGeneric(VulnerabilityABC):
@@ -333,6 +417,28 @@ class VulnerabilityGeneric(VulnerabilityABC):
                         )
     workspace = relationship('Workspace', backref='vulnerabilities')
 
+    reference_instances = relationship(
+        "Reference",
+        secondary="reference_vulnerability_association",
+        collection_class=set
+    )
+
+    references = association_proxy(
+        'reference_instances', 'name',
+        proxy_factory=CustomAssociationSet,
+        creator=_build_associationproxy_creator('Reference'))
+
+    policy_violation_instances = relationship(
+        "PolicyViolation",
+        secondary="policy_violation_vulnerability_association",
+        collection_class=set
+    )
+
+    policy_violations = association_proxy(
+        'policy_violation_instances', 'name',
+        proxy_factory=CustomAssociationSet,
+        creator=_build_associationproxy_creator('PolicyViolation'))
+
     __mapper_args__ = {
         'polymorphic_on': type
     }
@@ -353,7 +459,19 @@ class Vulnerability(VulnerabilityGeneric):
 
     @declared_attr
     def service(cls):
-        return relationship('Service')
+        return relationship('Service', backref='vulnerabilities')
+
+    @property
+    def hostnames(self):
+        if self.host is not None:
+            return self.host.hostnames
+        elif self.service is not None:
+            return self.service.host.hostnames
+        raise ValueError("Vulnerability has no service nor host")
+
+    @property
+    def parent(self):
+        return self.host or self.service
 
     __mapper_args__ = {
         'polymorphic_identity': VulnerabilityGeneric.VULN_TYPES[0]
@@ -366,18 +484,28 @@ class VulnerabilityWeb(VulnerabilityGeneric):
     parameters = Column(Text, nullable=True)
     parameter_name = Column(Text, nullable=True)
     path = Column(Text, nullable=True)
-    query = Column(Text, nullable=True)
+    query_string = Column(Text, nullable=True)
     request = Column(Text, nullable=True)
     response = Column(Text, nullable=True)
     website = Column(Text, nullable=True)
 
     @declared_attr
     def service_id(cls):
-        return VulnerabilityGeneric.__table__.c.get('service_id', Column(Integer, db.ForeignKey('service.id')))
+        return VulnerabilityGeneric.__table__.c.get(
+            'service_id', Column(Integer, db.ForeignKey('service.id'),
+                                 nullable=False))
 
     @declared_attr
     def service(cls):
-        return relationship('Service')
+        return relationship('Service', backref='vulnerabilities_web')
+
+    @property
+    def parent(self):
+        return self.service
+
+    @property
+    def hostnames(self):
+        return self.service.host.hostnames
 
     __mapper_args__ = {
         'polymorphic_identity': VulnerabilityGeneric.VULN_TYPES[1]
@@ -400,6 +528,14 @@ class VulnerabilityCode(VulnerabilityGeneric):
     __mapper_args__ = {
         'polymorphic_identity': VulnerabilityGeneric.VULN_TYPES[2]
     }
+
+    @property
+    def hostnames(self):
+        return []
+
+    @property
+    def parent(self):
+        return self.source_code
 
 
 class ReferenceTemplate(Metadata):
@@ -429,31 +565,52 @@ class Reference(Metadata):
     name = Column(Text, nullable=False)
 
     workspace_id = Column(
-                        Integer,
-                        ForeignKey('workspace.id'),
-                        index=True,
-                        nullable=False
-                        )
+        Integer,
+        ForeignKey('workspace.id'),
+        index=True,
+        nullable=False
+    )
     workspace = relationship(
-                            'Workspace',
-                            backref='references',
-                            foreign_keys=[workspace_id],
-                            )
-
-    vulnerability_id = Column(
-                            Integer,
-                            ForeignKey(VulnerabilityGeneric.id),
-                            index=True
-                            )
-    vulnerability = relationship(
-                                'VulnerabilityGeneric',
-                                backref='references',
-                                foreign_keys=[vulnerability_id],
-                                )
+        'Workspace',
+        backref='references',
+        foreign_keys=[workspace_id],
+    )
 
     __table_args__ = (
-        UniqueConstraint('name', 'vulnerability_id', 'workspace_id', name='uix_reference_name_vulnerability_workspace'),
+        UniqueConstraint('name', 'workspace_id', name='uix_reference_name_vulnerability_workspace'),
     )
+
+    def __init__(self, name=None, workspace_id=None, **kwargs):
+        super(Reference, self).__init__(name=name,
+                                        workspace_id=workspace_id,
+                                        **kwargs)
+
+    @property
+    def parent(self):
+        # TODO: fix this propery
+        return
+
+
+class ReferenceVulnerabilityAssociation(db.Model):
+
+    __tablename__ = 'reference_vulnerability_association'
+
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id'), primary_key=True)
+    reference_id = Column(Integer, ForeignKey('reference.id'), primary_key=True)
+
+    reference = relationship("Reference", backref="reference_associations", foreign_keys=[reference_id])
+    vulnerability = relationship("Vulnerability", backref="reference_vulnerability_associations", foreign_keys=[vulnerability_id])
+
+
+class PolicyViolationVulnerabilityAssociation(db.Model):
+        __tablename__ = 'policy_violation_vulnerability_association'
+
+        vulnerability_id = Column(Integer, ForeignKey('vulnerability.id'), primary_key=True)
+        policy_violation_id = Column(Integer, ForeignKey('policy_violation.id'), primary_key=True)
+
+        policy_violation = relationship("PolicyViolation", backref="policy_violation_associations", foreign_keys=[policy_violation_id])
+        vulnerability = relationship("Vulnerability", backref="policy_violationvulnerability_associations",
+                                     foreign_keys=[vulnerability_id])
 
 
 class PolicyViolationTemplate(Metadata):
@@ -497,24 +654,22 @@ class PolicyViolation(Metadata):
                             foreign_keys=[workspace_id],
                             )
 
-    vulnerability_id = Column(
-                            Integer,
-                            ForeignKey(VulnerabilityGeneric.id),
-                            index=True
-                            )
-    vulnerability = relationship(
-                                'VulnerabilityGeneric',
-                                backref='policy_violations',
-                                foreign_keys=[vulnerability_id]
-                                )
-
     __table_args__ = (
         UniqueConstraint(
                         'name',
-                        'vulnerability_id',
                         'workspace_id',
                         name='uix_policy_violation_template_name_vulnerability_workspace'),
     )
+
+    def __init__(self, name=None, workspace_id=None, **kwargs):
+        super(PolicyViolation, self).__init__(name=name,
+                                        workspace_id=workspace_id,
+                                        **kwargs)
+
+    @property
+    def parent(self):
+        # TODO: Fix this property
+        return
 
 
 class Credential(Metadata):
@@ -564,6 +719,10 @@ class Credential(Metadata):
                         ),
     )
 
+    @property
+    def parent(self):
+        return self.host or self.service
+
 
 class Command(Metadata):
     __tablename__ = 'command'
@@ -592,6 +751,10 @@ class Command(Metadata):
                                 single_parent=True,
                                 foreign_keys=[entity_metadata_id]
                                 )
+
+    @property
+    def parent(self):
+        return
 
 
 def _make_vuln_count_property(type_=None):
@@ -710,6 +873,30 @@ class User(db.Model, UserMixin):
     def __repr__(self):
         return '<%sUser: %s>' % ('LDAP ' if self.is_ldap else '',
                                  self.username)
+
+
+class File(Metadata):
+    __tablename__ = 'file'
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    name = Column(Text, unique=True)
+    filename = Column(Text, unique=True)
+    description = Column(Text, unique=True)
+    content = Column(UploadedFileField(upload_type=FaradayUploadedFile))  # plain attached file
+    object_id = Column(Integer, nullable=False)
+    object_type = Column(Text, nullable=False)
+
+
+class UserAvatar(Metadata):
+    __tablename_ = 'user_avatar'
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    name = Column(Text, unique=True)
+    # photo field will automatically generate thumbnail
+    # if the file is a valid image
+    photo = Column(UploadedFileField(upload_type=FaradayUploadedFile))
+    user_id = Column('user_id', Integer(), ForeignKey('user.id'))
+    user = relationship('User', foreign_keys=[user_id])
 
 
 class MethodologyTemplate(Metadata):

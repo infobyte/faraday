@@ -21,9 +21,9 @@ def populate_workspace(workspace):
 
     # Create standard vulns
     host_vulns = VulnerabilityFactory.create_batch(
-        STANDARD_VULN_COUNT[0], workspace=workspace, host=host)
+        STANDARD_VULN_COUNT[0], workspace=workspace, host=host, service=None)
     service_vulns = VulnerabilityFactory.create_batch(
-        STANDARD_VULN_COUNT[1], workspace=workspace, service=service)
+        STANDARD_VULN_COUNT[1], workspace=workspace, service=service, host=None)
 
     # Create web vulns
     web_vulns = VulnerabilityWebFactory.create_batch(

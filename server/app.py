@@ -2,7 +2,15 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 import logging
-from ConfigParser import NoOptionError
+import os
+from os.path import join, expanduser
+
+try:
+    # py2.7
+    from configparser import ConfigParser, NoSectionError, NoOptionError
+except ImportError:
+    # py3
+    from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 
 import flask
 from flask import Flask
@@ -11,10 +19,28 @@ from flask_security import (
     Security,
     SQLAlchemyUserDatastore,
 )
+from depot.manager import DepotManager
 
 import server.config
 from server.utils.logger import LOGGING_HANDLERS
 logger = logging.getLogger(__name__)
+
+logger = logging.getLogger(__name__)
+
+
+def setup_storage_path():
+    default_path = join(expanduser("~"), '.faraday/storage')
+    if not os.path.exists(default_path):
+        logger.info('Creating directory {0}'.format(default_path))
+        os.mkdir(default_path)
+    config = ConfigParser()
+    config.read(server.config.LOCAL_CONFIG_FILE)
+    config.add_section('storage')
+    config.set('storage', 'path', default_path)
+    with open(server.config.LOCAL_CONFIG_FILE, 'w') as configfile:
+        config.write(configfile)
+
+    return default_path
 
 
 def create_app(db_connection_string=None, testing=None):
@@ -38,6 +64,20 @@ def create_app(db_connection_string=None, testing=None):
         # 'sha512_crypt',
         'plaintext',  # TODO: remove it
     ]
+    try:
+        storage_path = server.config.storage.path
+    except AttributeError:
+        logger.warn('No storage section or path in the .faraday/server.ini. Setting the default value to .faraday/storage')
+        storage_path = setup_storage_path()
+    if not DepotManager.get('default'):
+        if testing:
+            DepotManager.configure('default', {
+                'depot.storage_path': '/tmp'
+            })
+        else:
+            DepotManager.configure('default', {
+                'depot.storage_path': storage_path
+            })
     if testing:
         app.config['TESTING'] = testing
     try:
@@ -66,26 +106,30 @@ def create_app(db_connection_string=None, testing=None):
     for handler in LOGGING_HANDLERS:
         app.logger.addHandler(handler)
 
-    from server.api.modules.workspaces import workspace_api
+    from server.modules.info import info_api
+    from server.api.modules.commandsrun import commandsrun_api
+    from server.api.modules.credentials import credentials_api
     from server.api.modules.doc import doc_api
-    from server.api.modules.vuln_csv import vuln_csv_api
     from server.api.modules.hosts import host_api
     from server.api.modules.licenses import license_api
-    from server.api.modules.commandsrun import commandsrun_api
     from server.api.modules.services import services_api
-    from server.api.modules.credentials import credentials_api
     from server.api.modules.session import session_api
-    from server.modules.info import info_api
-    app.register_blueprint(workspace_api)
-    app.register_blueprint(doc_api)
-    app.register_blueprint(vuln_csv_api)
-    app.register_blueprint(host_api)
-    app.register_blueprint(license_api)
+    from server.api.modules.vulns import vulns_api
+    from server.api.modules.vuln_csv import vuln_csv_api
+    from server.api.modules.vulnerability_template import vulnerability_template_api
+    from server.api.modules.workspaces import workspace_api
     app.register_blueprint(commandsrun_api)
-    app.register_blueprint(services_api)
     app.register_blueprint(credentials_api)
+    app.register_blueprint(doc_api)
+    app.register_blueprint(host_api)
     app.register_blueprint(info_api)
+    app.register_blueprint(license_api)
+    app.register_blueprint(services_api)
     app.register_blueprint(session_api)
+    app.register_blueprint(vulns_api)
+    app.register_blueprint(vuln_csv_api)
+    app.register_blueprint(vulnerability_template_api)
+    app.register_blueprint(workspace_api)
 
     # We are exposing a RESTful API, so don't redirect a user to a login page in
     # case of being unauthorized, raise a 403 error instead

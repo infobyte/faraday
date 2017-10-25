@@ -288,10 +288,10 @@ angular.module('faradayApp')
 
         dashboardSrv.getHost = function(ws, host_id) {
             var deferred = $q.defer();
-            ServerAPI.getHosts(ws, {'couchid': host_id})
+            ServerAPI.getHost(ws, host_id)
                 .then(function(res) {
                     if (res.rows == 1) {
-                        deferred.resolve(res.data.rows[0]);
+                        deferred.resolve(res.data);
                     } else {
                         deferred.reject("More than one object found by ID");
                     }
@@ -305,14 +305,7 @@ angular.module('faradayApp')
 
             var deferred = $q.defer();
             ServerAPI.getServicesByHost(ws, host_id).then(function(res){
-                var tmp = [];
-                res.data.services.forEach(function(service){
-                    var _service = service.value;
-                    _service["id"] = service.id;
-                    _service["port"] = _service.ports;
-                    tmp.push(_service);
-                });
-                deferred.resolve(tmp);
+                deferred.resolve(res.data);
             }, function(){
                 deferred.reject();
             });

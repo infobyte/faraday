@@ -61,27 +61,27 @@ class VulnerabilitySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
 
     _rev = fields.String(dump_only=True, default='')
-    _attachments = fields.Method('get_attachments', 'set_attachments', default=[])
+    _attachments = fields.Method(serialize='get_attachments', deserialize='load_attachments', default=[])
     owned = fields.Boolean(dump_only=True, default=False)
     owner = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
-    impact = fields.Method('get_impact', deserialize='load_impact')
+    impact = fields.Method(serialize='get_impact', deserialize='load_impact')
     desc = fields.String(dump_only=True, attribute='description')
     policyviolations = fields.List(fields.String,
                                    attribute='policy_violations')
     refs = fields.List(fields.String(), attribute='references')
-    issuetracker = fields.Method('get_issuetracker')
-    parent = fields.Method('get_parent', deserialize='load_parent', required=True)
-    parent_type = fields.Method('get_parent_type', required=True)
-    tags = fields.Method('get_tags')
+    issuetracker = fields.Method(serialize='get_issuetracker')
+    parent = fields.Method(serialize='get_parent', deserialize='load_parent', required=True)
+    parent_type = fields.Method(serialize='get_parent_type', required=True)
+    tags = fields.Method(serialize='get_tags')
     easeofresolution = fields.String(dump_only=True, attribute='ease_of_resolution')
     hostnames = PrimaryKeyRelatedField('name', many=True)
-    metadata = fields.Method('get_metadata')
+    metadata = fields.Method(serialize='get_metadata')
     service = fields.Nested(ServiceSchema(only=[
         '_id', 'ports', 'status', 'protocol', 'name', 'version', 'summary'
     ]), dump_only=True)
     host = fields.Integer(dump_only=True, attribute='host_id')
-    status = fields.Method('get_status', deserialize='load_status')  # TODO: this breaks enum validation.
-    type = fields.Method('get_type', deserialize='load_type')
+    status = fields.Method(serialize='get_status', deserialize='load_status')  # TODO: this breaks enum validation.
+    type = fields.Method(serialize='get_type', deserialize='load_type')
     obj_id = fields.String(dump_only=True, attribute='id')
     target = fields.String(default='')  # TODO: review this attribute
 
@@ -124,8 +124,8 @@ class VulnerabilitySchema(AutoSchema):
 
         return res
 
-    def set_attachments(self, obj):
-        return obj
+    def load_attachments(self, value):
+        return value
 
     def get_hostnames(self, obj):
         # TODO: improve performance here

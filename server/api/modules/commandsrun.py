@@ -60,25 +60,3 @@ class CommandView(ReadWriteWorkspacedView):
         }
 
 CommandView.register(commandsrun_api)
-
-
-@gzipped
-@commandsrun_api.route('/ws/<workspace>/commands', methods=['GET'])
-def list_commands(workspace=None):
-    validate_workspace(workspace)
-    get_logger(__name__).debug(
-        "Request parameters: {!r}".format(flask.request.args))
-
-    page = get_integer_parameter('page', default=0)
-    page_size = get_integer_parameter('page_size', default=0)
-
-    commands_filter = filter_request_args(
-        'page', 'page_size')
-
-    dao = CommandDAO(workspace)
-    result = dao.list(
-        page=page,
-        page_size=page_size,
-        command_filter=commands_filter)
-
-    return flask.jsonify(result)

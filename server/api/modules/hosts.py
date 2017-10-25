@@ -97,7 +97,9 @@ class HostsView(PaginatedMixin,
 
     def _perform_create(self, data, **kwargs):
         hostnames = data.pop('hostnames', [])
+        default_gateway_ip = data.pop('default_gateway_ip', [None])
         host = super(HostsView, self)._perform_create(data, **kwargs)
+        host.default_gateway_ip = default_gateway_ip[0]
         for name in hostnames:
             get_or_create(db.session, Hostname, name=name['key'], host=host, workspace=host.workspace)
         db.session.commit()
@@ -125,29 +127,3 @@ class HostsView(PaginatedMixin,
         }
 
 HostsView.register(host_api)
-
-
-@gzipped
-@host_api.route('/ws/<workspace>/hosts', methods=['GET'])
-def list_hosts(workspace=None):
-    validate_workspace(workspace)
-    get_logger(__name__).debug("Request parameters: {!r}"\
-        .format(flask.request.args))
-
-    page = get_integer_parameter('page', default=0)
-    page_size = get_integer_parameter('page_size', default=0)
-    search = flask.request.args.get('search')
-    order_by = flask.request.args.get('sort')
-    order_dir = flask.request.args.get('sort_dir')
-
-    host_filter = filter_request_args('page', 'page_size', 'search', 'sort', 'sort_dir')
-
-    dao = HostDAO(workspace)
-    result = dao.list(search=search,
-                      page=page,
-                      page_size=page_size,
-                      order_by=order_by,
-                      order_dir=order_dir,
-                      host_filter=host_filter)
-
-    return flask.jsonify(result)

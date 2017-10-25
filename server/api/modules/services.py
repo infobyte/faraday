@@ -73,33 +73,3 @@ class ServiceView(ReadWriteWorkspacedView):
         }
 
 ServiceView.register(services_api)
-
-
-@services_api.route('/ws/<workspace>/services', methods=['GET'])
-@gzipped
-def list_services(workspace=None):
-    validate_workspace(workspace)
-    get_logger(__name__).debug("Request parameters: {!r}"\
-        .format(flask.request.args))
-
-    services_dao = ServiceDAO(workspace)
-
-    services = services_dao.list(service_filter=flask.request.args)
-
-    return flask.jsonify(services)
-
-@services_api.route('/ws/<workspace>/services/count', methods=['GET'])
-@gzipped
-def count_services(workspace=None):
-    validate_workspace(workspace)
-    get_logger(__name__).debug("Request parameters: {!r}"\
-        .format(flask.request.args))
-
-    field = flask.request.args.get('group_by')
-
-    services_dao = ServiceDAO(workspace)
-    result = services_dao.count(group_by=field)
-    if result is None:
-        flask.abort(400)
-
-    return flask.jsonify(result)

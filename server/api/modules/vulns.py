@@ -27,7 +27,7 @@ from server.models import (
     Vulnerability,
     VulnerabilityWeb,
     VulnerabilityGeneric,
-    Host, Service, File, Reference, PolicyViolation)
+    Host, Service, File)
 from server.utils.database import get_or_create
 
 from server.api.modules.services import ServiceSchema
@@ -65,13 +65,13 @@ class VulnerabilitySchema(AutoSchema):
     owned = fields.Boolean(dump_only=True, default=False)
     owner = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
     impact = fields.Method('get_impact', deserialize='load_impact')
-    policyviolations = PrimaryKeyRelatedField('name', many=True,
-                                              attribute='policy_violations', default=[])
     desc = fields.String(dump_only=True, attribute='description')
+    policyviolations = fields.List(fields.String,
+                                   attribute='policy_violations')
     refs = fields.List(fields.String(), attribute='references')
     issuetracker = fields.Method('get_issuetracker')
     parent = fields.Method('get_parent', deserialize='load_parent', required=True)
-    parent_type = fields.String(required=True)
+    parent_type = fields.Method('get_parent_type', required=True)
     tags = fields.Method('get_tags')
     easeofresolution = fields.String(dump_only=True, attribute='ease_of_resolution')
     hostnames = PrimaryKeyRelatedField('name', many=True)
@@ -80,7 +80,7 @@ class VulnerabilitySchema(AutoSchema):
         '_id', 'ports', 'status', 'protocol', 'name', 'version', 'summary'
     ]), dump_only=True)
     host = fields.Integer(dump_only=True, attribute='host_id')
-    status = fields.Method('get_status', deserialize='load_status')
+    status = fields.Method('get_status', deserialize='load_status')  # TODO: this breaks enum validation.
     type = fields.Method('get_type', deserialize='load_type')
     obj_id = fields.String(dump_only=True, attribute='id')
     target = fields.String(default='')  # TODO: review this attribute
@@ -146,6 +146,9 @@ class VulnerabilitySchema(AutoSchema):
 
     def get_parent(self, obj):
         return obj.parent.id
+
+    def get_parent_type(self, obj):
+        return obj.parent.__class__.__name__
 
     def load_parent(self, obj):
         return obj
@@ -246,12 +249,14 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
 # default, and not by a similar one (like operator)
 _strict_filtering = {'default_operator': operators.Equal}
 
+
 class VulnerabilityFilterSet(FilterSet):
     class Meta(FilterSetMeta):
         model = VulnerabilityWeb  # It has all the fields
-        # TODO migration: Check if we should add fields creator, owner, command,
-        # impact, type, service, issuetracker, tags, date, target, host,
-        # easeofresolution, evidence, policy violations, hostnames, target
+        # TODO migration: Check if we should add fields creator, owner,
+        # command, impact, type, service, issuetracker, tags, date, target,
+        # host, easeofresolution, evidence, policy violations, hostnames,
+        # target
         fields = (
             "status", "website", "parameter_name", "query_string", "path",
             "data", "severity", "confirmed", "name", "request", "response",
@@ -289,15 +294,11 @@ class VulnerabilityView(PaginatedMixin,
 
         # This will be set after setting the workspace
         references = data.pop('references')
-
         policyviolations = data.pop('policy_violations')
+
         obj = super(VulnerabilityView, self)._perform_create(data, **kwargs)
         obj.references = references
-
-
-        for policyviolation in policyviolations:
-            instance, _ = get_or_create(db.session, PolicyViolation, name=policyviolation, workspace=self.workspace)
-            obj.policy_violations.append(instance)
+        obj.policy_violations = policyviolations
 
         for filename, attachment in attachments.items():
             faraday_file = FaradayUploadedFile(b64decode(attachment['data']))
@@ -306,8 +307,8 @@ class VulnerabilityView(PaginatedMixin,
                 File,
                 object_id=obj.id,
                 object_type=obj.__class__.__name__,
-                name = os.path.splitext(os.path.basename(filename))[0],
-                filename = os.path.basename(filename),
+                name=os.path.splitext(os.path.basename(filename))[0],
+                filename=os.path.basename(filename),
                 content=faraday_file,
             )
         db.session.commit()

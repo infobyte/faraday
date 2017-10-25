@@ -80,6 +80,10 @@ class GenericView(FlaskView):
     def _get_base_query(self):
         return self.model_class.query
 
+    def _filter_query(self, query):
+        """Return a new SQLAlchemy query with some filters applied"""
+        return query
+
     def _get_object(self, object_id, **kwargs):
         self._validate_object_id(object_id)
         try:
@@ -186,10 +190,6 @@ class ListMixin(object):
 
     def _paginate(self, query):
         return query, None
-
-    def _filter_query(self, query):
-        """Return a new SQLAlchemy query with some filters applied"""
-        return query
 
     def index(self, **kwargs):
         query = self._filter_query(self._get_base_query(**kwargs))
@@ -300,7 +300,6 @@ class CreateWorkspacedMixin(CreateMixin):
     def _perform_create(self, data, workspace_name):
         assert not db.session.new
         workspace = self._get_workspace(workspace_name)
-        self.workspace = workspace
         obj = self.model_class(**data)
         obj.workspace = workspace
         # assert not db.session.new
@@ -372,6 +371,9 @@ class CountWorkspacedMixin(object):
             'total_count': 0
         }
         group_by = flask.request.args.get('group_by', None)
+        # TODO migration: whitelist fields to avoid leaking a confidential
+        # field's value.
+        # Example: /users/count/?group_by=password
         if not group_by or group_by not in inspect(self.model_class).attrs:
             abort(404)
 
@@ -381,9 +383,12 @@ class CountWorkspacedMixin(object):
         table_name = inspect(self.model_class).tables[0].name
         group_by = '{0}.{1}'.format(table_name, group_by)
 
-        count = db.session.query(self.model_class).join(Workspace).group_by(group_by).filter(
-            Workspace.name == workspace_name).values(group_by, func.count(group_by))
-        for key, count in count:
+        count = self._filter_query(
+            db.session.query(self.model_class)
+            .join(Workspace)
+            .group_by(group_by)
+            .filter(Workspace.name == workspace_name))
+        for key, count in count.values(group_by, func.count(group_by)):
             res['groups'].append(
                 {'count': count, 'name': key}
             )
@@ -425,6 +430,8 @@ class FilterAlchemyModelConverter(ModelConverter):
     It is used to make filteralchemy support not nullable columns"""
 
     def _add_column_kwargs(self, kwargs, column):
+        super(FilterAlchemyModelConverter, self)._add_column_kwargs(kwargs,
+                                                                    column)
         kwargs['required'] = False
 
 

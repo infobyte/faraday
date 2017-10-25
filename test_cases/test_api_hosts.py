@@ -258,9 +258,9 @@ class TestHostAPI:
                                                         service_factory):
 
         host = host_factory.create(workspace=workspace)
-        service = service_factory.create(host=host)
-        vulnerability_factory.create(service=service, host=None)
-        vulnerability_factory.create(service=None, host=host)
+        service = service_factory.create(host=host, workspace=workspace)
+        vulnerability_factory.create(service=service, host=None, workspace=workspace)
+        vulnerability_factory.create(service=None, host=host, workspace=workspace)
 
         session.commit()
 
@@ -274,8 +274,8 @@ class TestHostAPI:
                                                    workspace, host_factory, vulnerability_factory,
                                                    service_factory):
         host = host_factory.create(workspace=workspace)
-        service = service_factory.create(host=host)
-        vulnerability_factory.create(service=service, host=None)
+        service = service_factory.create(host=host, workspace=workspace)
+        vulnerability_factory.create(service=service, host=None, workspace=workspace)
         session.commit()
 
         res = test_client.get(self.url() + str(host.id) + "/" + 'services/')
@@ -286,11 +286,25 @@ class TestHostAPI:
         raw_data = {
             "ip": "192.168.0.21",
             "hostnames": [{"key": "google.com"}],
+            "mac": "00:00:00:00:00:00",
+            "description": "",
+            "os": "",
+            "owned": False,
+            "owner": ""
+        }
+        res = test_client.post(self.url(), data=raw_data)
+        assert res.status_code == 201
+
+    def test_create_host_with_default_gateway(self, test_client):
+        raw_data = {
+            "ip": "192.168.0.21",
+            "default_gateway": "192.168.0.1",
             "mac": "00:00:00:00:00:00", "description": "",
             "os": "", "owned": False, "owner": ""
         }
         res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 201
+        assert res.json['default_gateway'] == [u'192.168.0.1']
 
 
 class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):

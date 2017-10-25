@@ -65,7 +65,7 @@ angular.module('faradayApp')
             var loadCredentials = function (credentials){
                 credentials.forEach(function(cred){
                     
-                    var object = new credential(cred.value);
+                    var object = new credential(cred.value, cred.value.parent, cred.value.parent_type);
                     object.getParentName($scope.workspace).then(function(response){
                         object.target = response;
                     });

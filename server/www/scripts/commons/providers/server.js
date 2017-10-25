@@ -173,7 +173,7 @@ angular.module("faradayApp")
             var modCredential = function(createOrUpdate, wsName, credential) {
                 if (typeof credential.owner === "undefined") {credential.owner = ""};
                 if (typeof credential.description === "undefined") {credential.description = ""};
-                return createOrUpdate(wsName, credential._id, credential, 'credential');
+                return createOrUpdate(wsName, credential.id, credential, 'credential');
             }
 
             var modCommand = function(createOrUpdate, wsName, command) {
@@ -192,7 +192,7 @@ angular.module("faradayApp")
             };
 
             var updateObject = function(wsName, id, data, collectionName) {
-                var postUrl = createPostUrl(wsName, id, collectionName);
+                var postUrl = createPutUrl(wsName, id, collectionName);
                 return send_data(postUrl, data, true, "PUT");
             }
 
@@ -466,7 +466,7 @@ angular.module("faradayApp")
             }
 
             ServerAPI.deleteCredential = function(wsName, credentialId, rev) {
-                var deleteUrl = createDeleteUrl(wsName, credentialId, rev);
+                var deleteUrl = createDeleteUrl(wsName, credentialId, 'credential');
                 if (typeof rev === "undefined") {
                     return _delete(deleteUrl, false)
                 }

@@ -10,6 +10,7 @@ from server.importer import ImportCouchDB
 from server.commands.initdb import InitDB
 from server.commands.faraday_schema_display import DatabaseSchema
 from server.commands.app_urls import AppUrls
+from server.commands.reset_db import ResetDB
 
 manager = Manager(app)
 
@@ -20,4 +21,5 @@ if __name__ == "__main__":
     manager.add_command('initdb', InitDB())
     manager.add_command('faraday_schema_display', DatabaseSchema())
     manager.add_command('show_urls', AppUrls())
+    manager.add_command('reset_db', ResetDB())
     manager.run()

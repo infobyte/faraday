@@ -188,7 +188,7 @@ class VulnerabilitySchema(AutoSchema):
         return value
 
     @post_load
-    def set_impact(self, data):
+    def post_load_impact(self, data):
         impact = data.pop('impact', None)
         if impact:
             data['impact_accountability'] = impact['accountability']
@@ -198,7 +198,7 @@ class VulnerabilitySchema(AutoSchema):
         return data
 
     @post_load
-    def set_parent(self, data):
+    def post_load_parent(self, data):
         # schema guarantees that parent_type exists.
         parent_class = None
         parent_type = data.pop('parent_type', None)

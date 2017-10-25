@@ -65,7 +65,7 @@ class VulnerabilitySchema(AutoSchema):
     owned = fields.Boolean(dump_only=True, default=False)
     owner = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
     impact = fields.Method(serialize='get_impact', deserialize='load_impact')
-    desc = fields.String(dump_only=True, attribute='description')
+    desc = fields.String(attribute='description')
     policyviolations = fields.List(fields.String,
                                    attribute='policy_violations')
     refs = fields.List(fields.String(), attribute='references')
@@ -89,7 +89,7 @@ class VulnerabilitySchema(AutoSchema):
         model = Vulnerability
         fields = (
             '_id', 'status',
-            'issuetracker', 'description', 'parent', 'parent_type',
+            'issuetracker', 'parent', 'parent_type',
             'tags', 'severity', '_rev', 'easeofresolution', 'owned',
             'hostnames', 'owner',
             'data', 'refs',

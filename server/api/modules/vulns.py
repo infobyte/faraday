@@ -154,6 +154,8 @@ class VulnerabilitySchema(AutoSchema):
         return obj
 
     def get_status(self, obj):
+        if obj.status == 'open':
+            return 'opened'
         return obj.status
 
     def get_impact(self, obj):

@@ -18,6 +18,7 @@ angular.module('faradayApp')
 
         // Only this properties will be saved to server.
         var _credentialFieldsSaveToServer = {
+            'id': 'integer',
             'name': 'string',
             'username': 'string',
             'metadata': 'string',
@@ -72,10 +73,7 @@ angular.module('faradayApp')
                 var self = this;
                 self.metadata = updateMetadata(self.metadata);
                 
-                return ServerAPI.updateCredential(ws, buildObjectServer(self))
-                .then(function(credentialData) {
-                    self._rev = credentialData.rev;
-                });
+                return ServerAPI.updateCredential(ws, buildObjectServer(self));
             },
 
             // Create object in server.

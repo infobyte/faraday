@@ -173,7 +173,7 @@ angular.module("faradayApp")
             var modCredential = function(createOrUpdate, wsName, credential) {
                 if (typeof credential.owner === "undefined") {credential.owner = ""};
                 if (typeof credential.description === "undefined") {credential.description = ""};
-                return createOrUpdate(wsName, credential._id, credential, 'credential');
+                return createOrUpdate(wsName, credential.id, credential, 'credential');
             }
 
             var modCommand = function(createOrUpdate, wsName, command) {

@@ -192,7 +192,7 @@ angular.module("faradayApp")
             };
 
             var updateObject = function(wsName, id, data, collectionName) {
-                var postUrl = createPostUrl(wsName, id, collectionName);
+                var postUrl = createPutUrl(wsName, id, collectionName);
                 return send_data(postUrl, data, true, "PUT");
             }
 

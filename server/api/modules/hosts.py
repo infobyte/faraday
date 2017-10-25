@@ -7,7 +7,7 @@ from flask import Blueprint
 from flask_classful import route
 from marshmallow import fields
 from filteralchemy import FilterSet, operators
-from sqlalchemy.orm import undefer
+from sqlalchemy.orm import undefer, joinedload
 
 from server.utils.database import get_or_create
 from server.utils.logger import get_logger
@@ -110,7 +110,11 @@ class HostsView(PaginatedMixin,
         """Get services_count in one query and not deferred, that doe
         one query per host"""
         original = super(HostsView, self)._get_base_query(workspace_name)
-        return original.options(undefer(Host.open_service_count))
+        return original.options(
+            undefer(Host.open_service_count),
+            undefer(Host.vulnerability_count),
+            joinedload(Host.hostnames)
+        )
 
     def _envelope_list(self, objects, pagination_metadata=None):
         hosts = []

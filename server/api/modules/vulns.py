@@ -60,28 +60,28 @@ class EvidenceSchema(AutoSchema):
 class VulnerabilitySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
 
-    _rev = fields.String(default='')
-    _attachments = fields.Method('get_attachments', 'set_attachments', default=[])
+    _rev = fields.String(dump_only=True, default='')
+    _attachments = fields.Method(serialize='get_attachments', deserialize='load_attachments', default=[])
     owned = fields.Boolean(dump_only=True, default=False)
     owner = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
-    impact = fields.Method('get_impact', deserialize='load_impact')
-    desc = fields.String(dump_only=True, attribute='description')
+    impact = fields.Method(serialize='get_impact', deserialize='load_impact')
+    desc = fields.String(attribute='description')
     policyviolations = fields.List(fields.String,
                                    attribute='policy_violations')
     refs = fields.List(fields.String(), attribute='references')
-    issuetracker = fields.Method('get_issuetracker')
-    parent = fields.Method('get_parent', deserialize='load_parent', required=True)
-    parent_type = fields.Method('get_parent_type', required=True)
-    tags = fields.Method('get_tags')
+    issuetracker = fields.Method(serialize='get_issuetracker')
+    parent = fields.Method(serialize='get_parent', deserialize='load_parent', required=True)
+    parent_type = fields.Method(serialize='get_parent_type', required=True)
+    tags = fields.Method(serialize='get_tags')
     easeofresolution = fields.String(dump_only=True, attribute='ease_of_resolution')
     hostnames = PrimaryKeyRelatedField('name', many=True)
-    metadata = fields.Method('get_metadata')
+    metadata = fields.Method(serialize='get_metadata')
     service = fields.Nested(ServiceSchema(only=[
         '_id', 'ports', 'status', 'protocol', 'name', 'version', 'summary'
     ]), dump_only=True)
     host = fields.Integer(dump_only=True, attribute='host_id')
-    status = fields.Method('get_status', deserialize='load_status')  # TODO: this breaks enum validation.
-    type = fields.Method('get_type', deserialize='load_type')
+    status = fields.Method(serialize='get_status', deserialize='load_status')  # TODO: this breaks enum validation.
+    type = fields.Method(serialize='get_type', deserialize='load_type')
     obj_id = fields.String(dump_only=True, attribute='id')
     target = fields.String(default='')  # TODO: review this attribute
 
@@ -89,7 +89,7 @@ class VulnerabilitySchema(AutoSchema):
         model = Vulnerability
         fields = (
             '_id', 'status',
-            'issuetracker', 'description', 'parent', 'parent_type',
+            'issuetracker', 'parent', 'parent_type',
             'tags', 'severity', '_rev', 'easeofresolution', 'owned',
             'hostnames', 'owner',
             'data', 'refs',
@@ -124,8 +124,8 @@ class VulnerabilitySchema(AutoSchema):
 
         return res
 
-    def set_attachments(self, obj):
-        return obj
+    def load_attachments(self, value):
+        return value
 
     def get_hostnames(self, obj):
         # TODO: improve performance here
@@ -154,6 +154,8 @@ class VulnerabilitySchema(AutoSchema):
         return obj
 
     def get_status(self, obj):
+        if obj.status == 'open':
+            return 'opened'
         return obj.status
 
     def get_impact(self, obj):
@@ -173,6 +175,7 @@ class VulnerabilitySchema(AutoSchema):
     def load_status(self, value):
         if value == 'opened':
             return 'open'
+        return value
 
     def load_type(self, value):
         if value == 'Vulnerability':
@@ -185,7 +188,7 @@ class VulnerabilitySchema(AutoSchema):
         return value
 
     @post_load
-    def set_impact(self, data):
+    def post_load_impact(self, data):
         impact = data.pop('impact', None)
         if impact:
             data['impact_accountability'] = impact['accountability']
@@ -195,7 +198,7 @@ class VulnerabilitySchema(AutoSchema):
         return data
 
     @post_load
-    def set_parent(self, data):
+    def post_load_parent(self, data):
         # schema guarantees that parent_type exists.
         parent_class = None
         parent_type = data.pop('parent_type', None)
@@ -218,6 +221,18 @@ class VulnerabilitySchema(AutoSchema):
             raise ValidationError('Parent not found')
         data[parent_field] = parent.id
         return data
+
+    @post_load
+    def post_load_hostnames(self, data):
+        """
+        Since we don't allow a parent change on update, it makes no sense to have this data
+        Removing this method will result in error, since the relation in the database would have to be updated and that is not implemented
+        :param data:
+        :return:
+        """
+        data.pop('hostnames', None)
+        return data
+
 
 
 class VulnerabilityWebSchema(VulnerabilitySchema):

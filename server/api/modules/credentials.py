@@ -12,7 +12,7 @@ from server.api.base import (
     AutoSchema,
     ReadWriteWorkspacedView,
     FilterSetMeta,
-    FilterAlchemyMixin)
+    FilterAlchemyMixin, InvalidUsage)
 from server.models import Credential, Host, Service, db
 
 credentials_api = Blueprint('credentials_api', __name__)
@@ -73,6 +73,8 @@ class CredentialSchema(AutoSchema):
             parent_class = Service
             parent_field = 'service_id'
         parent = db.session.query(parent_class).filter_by(id=parent_id).first()
+        if not parent:
+            raise InvalidUsage('Parent not found.')
         data[parent_field] = parent.id
         return data
 

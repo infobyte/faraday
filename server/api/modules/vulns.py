@@ -102,7 +102,7 @@ class VulnerabilitySchema(AutoSchema):
         model = Vulnerability
         fields = (
             '_id', 'status',
-            'issuetracker', 'parent', 'parent_type',
+            'issuetracker', 'description', 'parent', 'parent_type',
             'tags', 'severity', '_rev', 'easeofresolution', 'owned',
             'hostnames', 'owner',
             'data', 'refs',

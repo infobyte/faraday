@@ -43,7 +43,10 @@ class HostSchema(AutoSchema):
     vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
     credentials = fields.Integer(attribute='vulnerability_count', dump_only=True)
     hostnames = PrimaryKeyRelatedField('name', many=True,
-                                       attribute="hostnames", default=[])
+                                       attribute="hostnames",
+                                       # TODO migration: make it writable
+                                       dump_only=True,  # Only for now
+                                       default=[])
 
     def get_metadata(self, obj):
         return {
@@ -53,7 +56,7 @@ class HostSchema(AutoSchema):
             "owner": None,
             "update_action": None,
             "update_controller_action": None,
-            "update_time":1504796508.21,
+            "update_time": 1504796508.21,
             "update_user": None
         }
 

@@ -183,7 +183,6 @@ class VulnerabilitySchema(AutoSchema):
             return 'vulnerability_web'
 
     def load_parent(self, value):
-        self.parent_id = value
         return value
 
     @post_load

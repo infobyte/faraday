@@ -11,6 +11,9 @@ class JSTimestampField(fields.Field):
         if value is not None:
             return int(time.mktime(value.timetuple()) * 1000)
 
+    def _deserialize(self, value, attr, data):
+        raise NotImplementedError("Only dump is implemented for now")
+
 
 class PrimaryKeyRelatedField(fields.Field):
     def __init__(self, field_name='id', *args, **kwargs):
@@ -28,6 +31,9 @@ class PrimaryKeyRelatedField(fields.Field):
             if value is None:
                 return None
             return getattr(value, self.field_name)
+
+    def _deserialize(self, value, attr, data):
+        raise NotImplementedError("Only dump is implemented for now")
 
 
 class SelfNestedField(fields.Field):

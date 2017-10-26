@@ -30,6 +30,11 @@ class TestSelfNestedField:
         dumped = schema.dump(point).data
         assert dumped == {"name": "home", "coords": {"x": 123.0, "y": 456.1}}
 
+    def test_deserialization_fails(self):
+        with pytest.raises(NotImplementedError):
+            PlaceSchema().load({"name": "home",
+                                "coords": {"x": 123.0, "y": 456.1}})
+
 
 class TestJSTimestampField:
     def test_parses_current_datetime(self):
@@ -41,6 +46,10 @@ class TestJSTimestampField:
 
     def test_parses_null_datetime(self):
         assert JSTimestampField()._serialize(None, None, None) is None
+
+    def test_deserialization_fails(self):
+        with pytest.raises(NotImplementedError):
+            JSTimestampField()._deserialize(time.time() * 1000, None, None)
 
 
 User = namedtuple('User', ['username', 'blogposts'])
@@ -93,6 +102,11 @@ class TestPrimaryKeyRelatedField:
             "user": None,
             "first_name": "other"
         }
+
+    def test_deserialization_fails(self):
+        with pytest.raises(NotImplementedError):
+            UserSchema().load({"username": "test",
+                               "blogposts": [1, 2, 3]})
 
 
 Blogpost2 = namedtuple('Blogpost', ['id', 'title', 'user'])

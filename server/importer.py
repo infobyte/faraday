@@ -368,12 +368,14 @@ class ServiceImporter(object):
                     document['status'] = 'open'
                 status_mapper = {
                     'open': 'open',
+                    'opened': 'open',
                     'up': 'open',
                     'closed': 'closed',
                     'down': 'closed',
                     'filtered': 'filtered',
                     'open|filtered': 'filtered',
-                    'unknown': 'closed'
+                    'unknown': 'closed',
+                    '-': 'closed',
                 }
                 couchdb_status = document.get('status', 'open')
                 if couchdb_status.lower() not in status_mapper:

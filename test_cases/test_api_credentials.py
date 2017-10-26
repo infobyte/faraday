@@ -4,6 +4,7 @@ from test_api_workspaced_base import (
 )
 from server.api.modules.credentials import CredentialView
 from server.models import Credential
+from test_cases.factories import ServiceFactory
 
 
 class TestCredentialsAPIGeneric(ReadOnlyAPITests):
@@ -57,3 +58,58 @@ class TestCredentialsAPIGeneric(ReadOnlyAPITests):
         }
         res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 201
+
+    def test_get_credentials_for_a_host_backwards_compatibility(self, session, test_client):
+        credential = self.factory.create()
+        session.commit()
+        res = test_client.get(self.url(workspace=credential.workspace) + '?host_id={0}'.format(credential.host.id))
+        assert res.status_code == 200
+        assert map(lambda cred: cred['value']['parent'],res.json['rows']) == [credential.host.id]
+        assert map(lambda cred: cred['value']['parent_type'], res.json['rows']) == [u'Host']
+
+    def test_get_credentials_for_a_service_backwards_compatibility(self, session, test_client):
+        service = ServiceFactory.create()
+        credential = self.factory.create(service=service, host=None, workspace=service.workspace)
+        session.commit()
+        res = test_client.get(self.url(workspace=credential.workspace) + '?service={0}'.format(credential.service.id))
+        assert res.status_code == 200
+        assert map(lambda cred: cred['value']['parent'],res.json['rows']) == [credential.service.id]
+        assert map(lambda cred: cred['value']['parent_type'], res.json['rows']) == [u'Service']
+
+    def _generate_raw_update_data(self, name, username, password, parent_id):
+        return {
+            "id": 7,
+            "name": name,
+            "username": username,
+            "metadata": {"update_time": 1508960699994, "create_time": 1508965372,
+                         "update_user": "", "update_action": 0, "creator": "Metasploit", "owner": "",
+                         "update_controller_action": "No model controller call",
+                         "command_id": "e1a042dd0e054c1495e1c01ced856438"},
+            "password": password,
+            "type": "Cred",
+            "parent_type": "Host",
+            "parent": parent_id,
+            "owner": "",
+            "description": "",
+            "_rev": ""}
+
+    def test_update_credentials_with_invalid_parent(self, test_client, session):
+        credential = self.factory.create()
+        session.commit()
+
+        raw_data = self._generate_raw_update_data('Name1', 'Username2', 'Password3', parent_id=43)
+
+        res = test_client.put(self.url(workspace=credential.workspace) + str(credential.id) + '/', data=raw_data)
+        assert res.status_code == 400
+
+    def test_update_credentials(self, test_client, session):
+        credential = self.factory.create()
+        session.commit()
+
+        raw_data = self._generate_raw_update_data('Name1', 'Username2', 'Password3', parent_id=credential.host.id)
+
+        res = test_client.put(self.url(workspace=credential.workspace) + str(credential.id) + '/', data=raw_data)
+        assert res.status_code == 200
+        assert res.json['username'] == u'Username2'
+        assert res.json['password'] == u'Password3'
+        assert res.json['name'] == u'Name1'

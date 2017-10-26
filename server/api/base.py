@@ -15,6 +15,9 @@ from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
 from webargs.flaskparser import FlaskParser, parser, abort
 from webargs.core import ValidationError
 from server.models import Workspace, db
+import server.utils.logger
+
+logger = server.utils.logger.get_logger(__name__)
 
 
 def output_json(data, code, headers=None):
@@ -326,7 +329,10 @@ class UpdateMixin(object):
 
     def _update_object(self, obj, data):
         for (key, value) in data.items():
-            setattr(obj, key, value)
+            try:
+                setattr(obj, key, value)
+            except Exception as e:
+                logger.warn('There was a problem when trying to update ' + key + ' for ' + obj.type + ': ' + e.message)
 
     def _perform_update(self, object_id, obj):
         with db.session.no_autoflush:
@@ -390,7 +396,11 @@ class CountWorkspacedMixin(object):
             .filter(Workspace.name == workspace_name))
         for key, count in count.values(group_by, func.count(group_by)):
             res['groups'].append(
-                {'count': count, 'name': key}
+                {'count': count,
+                 'name': key,
+                 # To add compatibility with the web ui
+                 flask.request.args.get('group_by'): key,
+                 }
             )
             res['total_count'] += count
         return res

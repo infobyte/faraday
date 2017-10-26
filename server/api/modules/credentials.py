@@ -6,8 +6,13 @@ import time
 import flask
 from flask import Blueprint
 from marshmallow import fields, post_load
+from filteralchemy import FilterSet, operators
 
-from server.api.base import AutoSchema, ReadWriteWorkspacedView
+from server.api.base import (
+    AutoSchema,
+    ReadWriteWorkspacedView,
+    FilterSetMeta,
+    FilterAlchemyMixin, InvalidUsage)
 from server.models import Credential, Host, Service, db
 
 credentials_api = Blueprint('credentials_api', __name__)
@@ -25,6 +30,10 @@ class CredentialSchema(AutoSchema):
     couchdbid = fields.String(default='')  # backwards compatibility
     parent_type = fields.Method('get_parent_type', required=True)
     parent = fields.Method('get_parent', required=True)
+
+    # for filtering
+    host_id = fields.Integer(load_only=True)
+    service_id = fields.Integer(load_only=True)
 
     def get_parent(self, obj):
         return obj.parent.id
@@ -64,14 +73,29 @@ class CredentialSchema(AutoSchema):
             parent_class = Service
             parent_field = 'service_id'
         parent = db.session.query(parent_class).filter_by(id=parent_id).first()
+        if not parent:
+            raise InvalidUsage('Parent not found.')
         data[parent_field] = parent.id
         return data
 
 
-class CredentialView(ReadWriteWorkspacedView):
+class CredentialFilterSet(FilterSet):
+    class Meta(FilterSetMeta):
+        model = Credential
+        fields = (
+            'host_id',
+            'service_id'
+        )
+
+        default_operator = operators.Equal
+        operators = (operators.Equal, )
+
+
+class CredentialView(FilterAlchemyMixin, ReadWriteWorkspacedView):
     route_base = 'credential'
     model_class = Credential
     schema_class = CredentialSchema
+    filterset_class = CredentialFilterSet
 
     def _envelope_list(self, objects, pagination_metadata=None):
         credentials = []

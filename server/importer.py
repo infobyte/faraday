@@ -379,7 +379,7 @@ class ServiceImporter(object):
                 }
                 couchdb_status = document.get('status', 'open')
                 if couchdb_status.lower() not in status_mapper:
-                    logger.warn('Service with status {0} found! Status will default to open. Host is {1}'.format(couchdb_status, host.ip))
+                    logger.warn('Service with unknown status "{0}" found! Status will default to open. Host is {1}'.format(couchdb_status, host.ip))
                 service.status = status_mapper.get(couchdb_status, 'open')
                 service.version = document.get('version')
                 service.workspace = workspace
@@ -396,7 +396,13 @@ class VulnerabilityImporter(object):
             couch_parent_id = '.'.join(document['_id'].split('.')[:-1])
         parent_ids = couchdb_relational_map[couch_parent_id]
         mapped_severity = MAPPED_VULN_SEVERITY
-        severity = mapped_severity[document.get('severity')]
+        try:
+            severity = mapped_severity[document.get('severity')]
+        except KeyError:
+            logger.warn("Unknown severity value '%s' of vuln with id %s. "
+                        "Using 'unclassified'",
+                        document.get('severity'), document['_id'])
+            severity = 'unclassified'
         for parent_id in parent_ids:
             if level == 2:
                 parent = session.query(Host).filter_by(id=parent_id).first()

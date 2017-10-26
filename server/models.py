@@ -90,7 +90,7 @@ db = SQLAlchemy()
 SCHEMA_VERSION = 'W.3.0.0'
 
 
-def _make_generic_count_property(parent_table, children_table):
+def _make_generic_count_property(parent_table, children_table, where=None):
     """Make a deferred by default column property that counts the
     amount of childrens of some parent object"""
     children_id_field = '{}.id'.format(children_table)
@@ -100,6 +100,8 @@ def _make_generic_count_property(parent_table, children_table):
              select_from(table(children_table)).
              where(text('{} = {}'.format(
                  children_rel_field, parent_id_field))))
+    if where is not None:
+        query = query.where(where)
     return column_property(query, deferred=True)
 
 
@@ -197,7 +199,9 @@ class Host(Metadata):
                             foreign_keys=[workspace_id]
                             )
 
-    service_count = _make_generic_count_property('host', 'service')
+    open_service_count = _make_generic_count_property(
+        'host', 'service', where=text("service.status = 'open'"))
+    total_service_count = _make_generic_count_property('host', 'service')
     vulnerability_count = _make_generic_count_property('host', 'vulnerability')
     credentials_count = _make_generic_count_property('host', 'credential')
 

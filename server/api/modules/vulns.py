@@ -31,7 +31,7 @@ from server.models import (
 from server.utils.database import get_or_create
 
 from server.api.modules.services import ServiceSchema
-from server.schemas import PrimaryKeyRelatedField
+from server.schemas import MutableField, PrimaryKeyRelatedField
 
 vulns_api = Blueprint('vulns_api', __name__)
 logger = logging.getLogger(__name__)
@@ -71,7 +71,9 @@ class VulnerabilitySchema(AutoSchema):
     refs = fields.List(fields.String(), attribute='references')
     issuetracker = fields.Method(serialize='get_issuetracker')
     parent = fields.Method(serialize='get_parent', deserialize='load_parent', required=True)
-    parent_type = fields.Method(serialize='get_parent_type', required=True)
+    parent_type = MutableField(fields.Method('get_parent_type'),
+                               fields.String(),
+                               required=True)
     tags = fields.Method(serialize='get_tags')
     easeofresolution = fields.String(dump_only=True, attribute='ease_of_resolution')
     hostnames = PrimaryKeyRelatedField('name', many=True)
@@ -149,9 +151,6 @@ class VulnerabilitySchema(AutoSchema):
 
     def get_parent_type(self, obj):
         return obj.parent.__class__.__name__
-
-    def load_parent(self, obj):
-        return obj
 
     def get_status(self, obj):
         if obj.status == 'open':

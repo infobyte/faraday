@@ -104,6 +104,7 @@ class Blogpost2Schema(Schema):
     user = MutableField(fields.Nested(UserSchema, only=('username',)),
                         fields.String())
 
+
 class TestMutableField:
 
     serialized_data = {"id": 1, "title": "test", "user": {"username": "john"}}
@@ -129,3 +130,24 @@ class TestMutableField:
     def test_deserialize_fails(self):
         with pytest.raises(ValidationError):
             self.load(self.serialized_data)
+
+    def test_required_propagation(self):
+        read_field = fields.String()
+        write_field = fields.Float()
+        mutable = MutableField(read_field, write_field, required=True)
+        assert mutable.required
+        assert read_field.required
+        assert write_field.required
+
+    def test_load_method_field(self):
+        class PlaceSchema(Schema):
+            name = fields.String()
+            x = MutableField(fields.Method('get_x'),
+                             fields.String)
+
+            def get_x(self, obj):
+                return 5
+        assert self.serialize(Place('test', 1, 1), PlaceSchema) == {
+            "name": "test",
+            "x": 5,
+        }

@@ -66,6 +66,15 @@ class MutableField(fields.Field):
     def __init__(self, read_field, write_field, **kwargs):
         self.read_field = read_field
         self.write_field = write_field
+
+        # Set _CHECK_ATTRIBUTE based on the read field because it is used
+        # during serialization
+        self._CHECK_ATTRIBUTE = self.read_field._CHECK_ATTRIBUTE
+
+        # Propagate required=True to the children fields
+        if kwargs.get('required'):
+            self.read_field.required = self.write_field.required = True
+
         super(MutableField, self).__init__(**kwargs)
 
     def _serialize(self, value, attr, obj):
@@ -73,3 +82,9 @@ class MutableField(fields.Field):
 
     def _deserialize(self, value, attr, data):
         return self.write_field._deserialize(value, attr, data)
+
+    def _add_to_schema(self, field_name, schema):
+        # Propagate to child fields
+        super(MutableField, self)._add_to_schema(field_name, schema)
+        self.read_field._add_to_schema(field_name, schema)
+        self.write_field._add_to_schema(field_name, schema)

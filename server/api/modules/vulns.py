@@ -10,6 +10,7 @@ from filteralchemy import FilterSet, operators
 from flask import request
 from flask import Blueprint
 from marshmallow import fields, post_load, ValidationError
+from sqlalchemy.orm import joinedload
 
 from depot.manager import DepotManager
 from server.api.base import (
@@ -356,5 +357,12 @@ class VulnerabilityView(PaginatedMixin,
         return {
             'vulnerabilities': vulns,
         }
+
+    def _get_base_query(self, workspace_name):
+        original = super(VulnerabilityView, self)._get_base_query(workspace_name)
+        return original.options(
+            joinedload(VulnerabilityGeneric.policy_violations),
+            joinedload(VulnerabilityGeneric.references)
+        )
 
 VulnerabilityView.register(vulns_api)

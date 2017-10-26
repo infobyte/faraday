@@ -333,14 +333,6 @@ class VulnerabilityABC(Metadata):
         raise NotImplementedError('ABC property called')
 
 
-class VulnerabilityTemplate(VulnerabilityABC):
-    __tablename__ = 'vulnerability_template'
-
-    __table_args__ = (
-        UniqueConstraint('name', name='uix_vulnerability_template_name'),
-    )
-
-
 class CustomAssociationSet(_AssociationSet):
     """
     A custom associacion set that passes the creator method the both
@@ -393,6 +385,59 @@ def _build_associationproxy_creator(model_class_name):
         return child
 
     return creator
+
+
+def _build_associationproxy_creator_non_workspaced(model_class_name):
+    def creator(name, vulnerability):
+        """Get or create a reference/policyviolation with the
+        corresponding name. This must be worspace aware"""
+
+        # Ugly hack to avoid the fact that Reference is defined after
+        # Vulnerability
+        model_class = globals()[model_class_name]
+        child = model_class.query.filter(
+            getattr(model_class, 'name') == name,
+        ).first()
+        if child is None:
+            # Doesn't exist
+            child = model_class(name)
+        return child
+
+    return creator
+
+
+class VulnerabilityTemplate(VulnerabilityABC):
+    __tablename__ = 'vulnerability_template'
+
+    __table_args__ = (
+        UniqueConstraint('name', name='uix_vulnerability_template_name'),
+    )
+
+    # We use ReferenceTemplate and not Reference since Templates does not have workspace.
+
+    reference_template_instances = relationship(
+        "ReferenceTemplate",
+        secondary="reference_template_vulnerability_association",
+        collection_class=set
+    )
+
+    references = association_proxy(
+        'reference_template_instances', 'name',
+        proxy_factory=CustomAssociationSet,
+        creator=_build_associationproxy_creator_non_workspaced('ReferenceTemplate')
+    )
+
+    policy_violation_template_instances = relationship(
+        "PolicyViolationTemplate",
+        secondary="policy_violation_template_vulnerability_association",
+        collection_class=set
+    )
+
+    policy_violations = association_proxy(
+        'policy_violation_template_instances', 'name',
+        proxy_factory=CustomAssociationSet,
+        creator=_build_associationproxy_creator_non_workspaced('PolicyViolationTemplate')
+    )
 
 
 class VulnerabilityGeneric(VulnerabilityABC):
@@ -547,20 +592,13 @@ class ReferenceTemplate(Metadata):
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
 
-    vulnerability_id = Column(
-                            Integer,
-                            ForeignKey(VulnerabilityTemplate.id),
-                            index=True
-                            )
-    vulnerability = relationship(
-                                'VulnerabilityTemplate',
-                                backref='references',
-                                foreign_keys=[vulnerability_id],
-                                )
-
     __table_args__ = (
-        UniqueConstraint('name', 'vulnerability_id', name='uix_reference_template_name_vulnerability'),
+        UniqueConstraint('name', name='uix_reference_template_name'),
     )
+
+    def __init__(self, name=None, **kwargs):
+        super(ReferenceTemplate, self).__init__(name=name,
+                                        **kwargs)
 
 
 class Reference(Metadata):
@@ -607,14 +645,38 @@ class ReferenceVulnerabilityAssociation(db.Model):
 
 
 class PolicyViolationVulnerabilityAssociation(db.Model):
-        __tablename__ = 'policy_violation_vulnerability_association'
 
-        vulnerability_id = Column(Integer, ForeignKey('vulnerability.id'), primary_key=True)
-        policy_violation_id = Column(Integer, ForeignKey('policy_violation.id'), primary_key=True)
+    __tablename__ = 'policy_violation_vulnerability_association'
 
-        policy_violation = relationship("PolicyViolation", backref="policy_violation_associations", foreign_keys=[policy_violation_id])
-        vulnerability = relationship("Vulnerability", backref="policy_violationvulnerability_associations",
-                                     foreign_keys=[vulnerability_id])
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id'), primary_key=True)
+    policy_violation_id = Column(Integer, ForeignKey('policy_violation.id'), primary_key=True)
+
+    policy_violation = relationship("PolicyViolation", backref="policy_violation_associations", foreign_keys=[policy_violation_id])
+    vulnerability = relationship("Vulnerability", backref="policy_violationvulnerability_associations",
+                                 foreign_keys=[vulnerability_id])
+
+
+class ReferenceVulnerabilityAssociation(db.Model):
+
+    __tablename__ = 'reference_template_vulnerability_association'
+
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability_template.id'), primary_key=True)
+    reference_id = Column(Integer, ForeignKey('reference_template.id'), primary_key=True)
+
+    reference = relationship("ReferenceTemplate", backref="reference_template_associations", foreign_keys=[reference_id])
+    vulnerability = relationship("VulnerabilityTemplate", backref="reference_template_vulnerability_associations", foreign_keys=[vulnerability_id])
+
+
+class PolicyViolationVulnerabilityAssociation(db.Model):
+
+    __tablename__ = 'policy_violation_template_vulnerability_association'
+
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability_template.id'), primary_key=True)
+    policy_violation_id = Column(Integer, ForeignKey('policy_violation_template.id'), primary_key=True)
+
+    policy_violation = relationship("PolicyViolationTemplate", backref="policy_violation_template_associations", foreign_keys=[policy_violation_id])
+    vulnerability = relationship("VulnerabilityTemplate", backref="policy_violation_template_vulnerability_associations",
+                                 foreign_keys=[vulnerability_id])
 
 
 class PolicyViolationTemplate(Metadata):
@@ -622,23 +684,15 @@ class PolicyViolationTemplate(Metadata):
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
 
-    vulnerability_id = Column(
-                            Integer,
-                            ForeignKey(VulnerabilityTemplate.id),
-                            index=True
-                            )
-    vulnerability = relationship(
-                                'VulnerabilityTemplate',
-                                backref='policy_violations',
-                                foreign_keys=[vulnerability_id]
-                                )
-
     __table_args__ = (
         UniqueConstraint(
                         'name',
-                        'vulnerability_id',
-                        name='uix_policy_violation_template_name_vulnerability'),
+                        name='uix_policy_violation_template_name'),
     )
+
+    def __init__(self, name=None, **kwargs):
+        super(PolicyViolationTemplate, self).__init__(name=name,
+                                        **kwargs)
 
 
 class PolicyViolation(Metadata):

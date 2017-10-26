@@ -12,6 +12,9 @@ def test_child_parent_verification_event(session, workspace, second_workspace):
     return False
 
 def test_child_parent_verification_event(session, workspace):
+    """
+        Asserts that no exception will be raised when workspace are the same.
+    """
     host = HostFactory.build(workspace=workspace)
     ServiceFactory.build(host=host, workspace=workspace)
     session.commit()

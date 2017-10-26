@@ -29,7 +29,7 @@ from server.models import (
     VulnerabilityTemplate,
     VulnerabilityWeb,
     Workspace,
-)
+    ReferenceTemplate)
 
 # Make partials for start and end date. End date must be after start date
 FuzzyStartTime = lambda: (
@@ -136,6 +136,14 @@ class ReferenceFactory(WorkspaceObjectFactory):
 
     class Meta:
         model = Reference
+        sqlalchemy_session = db.session
+
+
+class ReferenceTemplateFactory(FaradayFactory):
+    name = FuzzyText()
+
+    class Meta:
+        model = ReferenceTemplate
         sqlalchemy_session = db.session
 
 

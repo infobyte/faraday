@@ -20,3 +20,5 @@ webargs
 marshmallow-sqlalchemy
 filteralchemy
 filedepot==0.5.0
+nplusone==0.8.1
+

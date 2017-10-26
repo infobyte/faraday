@@ -19,6 +19,7 @@ from flask_security import (
     Security,
     SQLAlchemyUserDatastore,
 )
+from nplusone.ext.flask_sqlalchemy import NPlusOne
 from depot.manager import DepotManager
 
 import server.config
@@ -79,6 +80,10 @@ def create_app(db_connection_string=None, testing=None):
             })
     if testing:
         app.config['TESTING'] = testing
+        app.config['NPLUSONE_LOGGER'] = logging.getLogger('faraday.nplusone')
+        app.config['NPLUSONE_LOG_LEVEL'] = logging.ERROR
+        app.config['NPLUSONE_RAISE'] = True
+        NPlusOne(app)
     try:
         app.config['SQLALCHEMY_DATABASE_URI'] = db_connection_string or server.config.database.connection_string.strip("'")
     except AttributeError:

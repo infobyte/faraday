@@ -329,10 +329,7 @@ class UpdateMixin(object):
 
     def _update_object(self, obj, data):
         for (key, value) in data.items():
-            try:
-                setattr(obj, key, value)
-            except Exception as e:
-                logger.warn('There was a problem when trying to update ' + key + ' for ' + obj.type + ': ' + e.message)
+            setattr(obj, key, value)
 
     def _perform_update(self, object_id, obj):
         with db.session.no_autoflush:

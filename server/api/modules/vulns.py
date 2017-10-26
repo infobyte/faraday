@@ -76,7 +76,7 @@ class VulnerabilitySchema(AutoSchema):
                                required=True)
     tags = fields.Method(serialize='get_tags')
     easeofresolution = fields.String(dump_only=True, attribute='ease_of_resolution')
-    hostnames = PrimaryKeyRelatedField('name', many=True)
+    hostnames = PrimaryKeyRelatedField('name', many=True, dump_only=True)
     metadata = fields.Method(serialize='get_metadata')
     service = fields.Nested(ServiceSchema(only=[
         '_id', 'ports', 'status', 'protocol', 'name', 'version', 'summary'
@@ -219,18 +219,6 @@ class VulnerabilitySchema(AutoSchema):
             raise ValidationError('Parent not found')
         data[parent_field] = parent.id
         return data
-
-    @post_load
-    def post_load_hostnames(self, data):
-        """
-        Since we don't allow a parent change on update, it makes no sense to have this data
-        Removing this method will result in error, since the relation in the database would have to be updated and that is not implemented
-        :param data:
-        :return:
-        """
-        data.pop('hostnames', None)
-        return data
-
 
 
 class VulnerabilityWebSchema(VulnerabilitySchema):

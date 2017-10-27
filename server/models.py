@@ -128,27 +128,6 @@ class Metadata(db.Model):
     update_date = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
-class EntityMetadata(db.Model):
-    __tablename__ = 'metadata'
-    __table_args__ = (
-        UniqueConstraint('couchdb_id'),
-    )
-
-    id = Column(Integer, primary_key=True)
-    update_time = Column(Float, nullable=True)
-    update_user = Column(String(250), nullable=True)
-    update_action = Column(Integer, nullable=True)
-    create_time = Column(Float, nullable=True)
-    update_controller_action = Column(String(250), nullable=True)
-    creator = Column(String(250), nullable=True)
-    owner = Column(String(250), nullable=True)
-    command_id = Column(String(250), nullable=True)
-
-    couchdb_id = Column(String(250))
-    revision = Column(String(250))
-    document_type = Column(String(250))
-
-
 class SourceCode(Metadata):
     __tablename__ = 'source_code'
     id = Column(Integer, primary_key=True)
@@ -182,15 +161,6 @@ class Host(Metadata):
 
     mac = Column(Text, nullable=True)
     net_segment = Column(Text, nullable=True)
-
-    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
-    entity_metadata = relationship(
-                                EntityMetadata,
-                                uselist=False,
-                                cascade="all, delete-orphan",
-                                single_parent=True,
-                                foreign_keys=[entity_metadata_id]
-                                )
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
@@ -257,15 +227,6 @@ class Service(Metadata):
     version = Column(Text, nullable=True)
 
     banner = Column(Text, nullable=True)
-
-    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
-    entity_metadata = relationship(
-                                EntityMetadata,
-                                uselist=False,
-                                cascade="all, delete-orphan",
-                                single_parent=True,
-                                foreign_keys=[entity_metadata_id]
-                                )
 
     host_id = Column(Integer, ForeignKey('host.id'), index=True, nullable=False)
     host = relationship('Host', backref='services', foreign_keys=[host_id])
@@ -738,15 +699,6 @@ class Credential(Metadata):
     description = Column(Text(), nullable=True)
     name = Column(String(250), nullable=True)
 
-    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
-    entity_metadata = relationship(
-                                EntityMetadata,
-                                uselist=False,
-                                cascade="all, delete-orphan",
-                                single_parent=True,
-                                foreign_keys=[entity_metadata_id],
-                                )
-
     host_id = Column(Integer, ForeignKey(Host.id), index=True, nullable=True)
     host = relationship('Host', backref='credentials', foreign_keys=[host_id])
 
@@ -796,19 +748,6 @@ class Command(Metadata):
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', foreign_keys=[workspace_id])
     # TODO: add Tool relationship and report_attachment
-
-    entity_metadata_id = Column(
-                                Integer,
-                                ForeignKey(EntityMetadata.id),
-                                index=True
-                                )
-    entity_metadata = relationship(
-                                EntityMetadata,
-                                uselist=False,
-                                cascade="all, delete-orphan",
-                                single_parent=True,
-                                foreign_keys=[entity_metadata_id]
-                                )
 
     @property
     def parent(self):
@@ -970,19 +909,6 @@ class Methodology(Metadata):
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
 
-    entity_metadata_id = Column(
-                            Integer,
-                            ForeignKey(EntityMetadata.id),
-                            index=True
-                            )
-    entity_metadata = relationship(
-                                EntityMetadata,
-                                uselist=False,
-                                cascade="all, delete-orphan",
-                                single_parent=True,
-                                foreign_keys=[entity_metadata_id]
-                                )
-
     template = relationship('MethodologyTemplate', backref='methodologies')
     template_id = Column(
                     Integer,
@@ -1041,9 +967,6 @@ class Task(TaskABC):
     __mapper_args__ = {
         'concrete': True
     }
-
-    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
-    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
 
     assigned_to_id = Column(Integer, ForeignKey('user.id'), nullable=True)
     assigned_to = relationship('User', backref='assigned_tasks', foreign_keys=[assigned_to_id])

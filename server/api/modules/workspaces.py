@@ -9,10 +9,6 @@ from marshmallow import Schema, fields
 from sqlalchemy.orm import undefer
 
 from server.models import db, Workspace
-from server.dao.host import HostDAO
-from server.dao.vuln import VulnerabilityDAO
-from server.dao.service import ServiceDAO
-from server.dao.workspace import WorkspaceDAO
 from server.utils.logger import get_logger
 from server.schemas import (
     JSTimestampField,

@@ -5,6 +5,8 @@ import logging
 import os
 from os.path import join, expanduser
 
+from server.models import User
+
 try:
     # py2.7
     from configparser import ConfigParser, NoSectionError, NoOptionError
@@ -13,7 +15,7 @@ except ImportError:
     from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 
 import flask
-from flask import Flask
+from flask import Flask, session, g
 from flask.json import JSONEncoder
 from flask_security import (
     Security,
@@ -140,6 +142,11 @@ def create_app(db_connection_string=None, testing=None):
         logged_in = 'user_id' in flask.session
         if (not logged_in and not getattr(view, 'is_public', False)):
             flask.abort(403)
+
+        g.user = None
+        if logged_in:
+            user = User.query.filter_by(id=session["user_id"]).first()
+            g.user = user
 
     return app
 

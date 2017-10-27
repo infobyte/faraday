@@ -114,7 +114,6 @@ def create_app(db_connection_string=None, testing=None):
     from server.api.modules.services import services_api
     from server.api.modules.session import session_api
     from server.api.modules.vulns import vulns_api
-    from server.api.modules.vuln_csv import vuln_csv_api
     from server.api.modules.vulnerability_template import vulnerability_template_api
     from server.api.modules.workspaces import workspace_api
     app.register_blueprint(commandsrun_api)
@@ -126,7 +125,6 @@ def create_app(db_connection_string=None, testing=None):
     app.register_blueprint(services_api)
     app.register_blueprint(session_api)
     app.register_blueprint(vulns_api)
-    app.register_blueprint(vuln_csv_api)
     app.register_blueprint(vulnerability_template_api)
     app.register_blueprint(workspace_api)
 

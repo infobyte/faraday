@@ -15,7 +15,6 @@ from server.models import (
     db,
     Command,
     Credential,
-    EntityMetadata,
     Host,
     Hostname,
     License,
@@ -112,14 +111,6 @@ class HostnameFactory(WorkspaceObjectFactory):
 
     class Meta:
         model = Hostname
-        sqlalchemy_session = db.session
-
-
-class EntityMetadataFactory(WorkspaceObjectFactory):
-    couchdb_id = factory.Sequence(lambda n: '{0}.1.2'.format(n))
-
-    class Meta:
-        model = EntityMetadata
         sqlalchemy_session = db.session
 
 

@@ -11,7 +11,6 @@ from sqlalchemy.orm import joinedload
 from server.api.base import AutoSchema, ReadWriteWorkspacedView
 from server.models import Service
 from server.utils.logger import get_logger
-from server.dao.service import ServiceDAO
 from server.utils.web import gzipped, validate_workspace, get_integer_parameter
 
 

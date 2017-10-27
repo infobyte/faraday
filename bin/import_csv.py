@@ -3,7 +3,7 @@
 """
 Faraday Penetration Test IDE
 Copyright (C) 2017  Infobyte LLC (http://www.infobytesec.com/)
-See the file 'doc/LICENSE' for the license information
+See the file "doc/LICENSE" for the license information
 """
 
 import csv
@@ -12,6 +12,10 @@ from persistence.server import models
 WORKSPACE = ""
 __description__ = "Import Faraday objects from CSV file"
 __prettyname__ = "Import objects from CSV"
+
+VULN_SEVERITIES = ["info", "low", "med", "high", "critical"]
+VULN_STATUS = ["opened", "closed", "re-opened", "risk-accepted"]
+SERVICE_STATUS = ["open", "filtered", "close"]
 
 
 def parse_register(register):
@@ -42,8 +46,17 @@ def transform_dict_to_object(columns, register):
         if val == "owned" or val == "confirmed":
             value[val] = False
 
-        if val == "ports" or val == "hostnames" or val == "refs" or val == "policyviolations":
+        elif val == "ports" or val == "hostnames" or val == "refs" or val == "policyviolations":
             value[val] = []
+
+        elif key == "service_status":
+            value[val] = "open"
+
+        elif key == "vulnerability_status" or key == "vulnerability_web_status":
+            value[val] = "opened"
+
+        elif key == "vulnerability_severity" or key == "vulnerability_web_severity":
+            value[val] = "info"
 
         # Copy data to new object
         if key in register:
@@ -62,6 +75,17 @@ def transform_dict_to_object(columns, register):
             elif val == "refs" or val == "hostnames" or val == "policyviolations":
                 value[val] = register[key].split(",")
 
+            elif key == "service_status":
+                if register[key].lower() in SERVICE_STATUS:
+                    value[val] = register[key]
+
+            elif key == "vulnerability_status" or key =="vulnerability_web_status":
+                if register[key].lower() in VULN_STATUS:
+                    value[val] = register[key]
+
+            elif key == "vulnerability_severity" or key == "vulnerability_web_severity":
+                if register[key].lower() in VULN_SEVERITIES:
+                    value[val] = register[key]
             else:
                 value[val] = register[key]
 

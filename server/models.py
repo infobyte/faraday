@@ -656,7 +656,7 @@ class PolicyViolationVulnerabilityAssociation(db.Model):
                                  foreign_keys=[vulnerability_id])
 
 
-class ReferenceVulnerabilityAssociation(db.Model):
+class ReferenceTemplateVulnerabilityAssociation(db.Model):
 
     __tablename__ = 'reference_template_vulnerability_association'
 
@@ -667,7 +667,7 @@ class ReferenceVulnerabilityAssociation(db.Model):
     vulnerability = relationship("VulnerabilityTemplate", backref="reference_template_vulnerability_associations", foreign_keys=[vulnerability_id])
 
 
-class PolicyViolationVulnerabilityAssociation(db.Model):
+class PolicyViolationTemplateVulnerabilityAssociation(db.Model):
 
     __tablename__ = 'policy_violation_template_vulnerability_association'
 

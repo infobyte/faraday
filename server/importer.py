@@ -895,10 +895,9 @@ class ImportVulnerabilityTemplates(FlaskScriptCommand):
             if cwe_field not in references:
                 references.append(cwe_field)
             for ref_doc in references:
-                get_or_create(session,
-                             ReferenceTemplate,
-                             vulnerability=vuln_template,
-                             name=ref_doc)
+                vuln_template.references.add(ref_doc)
+
+
 
     def get_name(self, document):
         doc_name = document.get('name')

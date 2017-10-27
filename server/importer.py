@@ -189,7 +189,7 @@ class EntityMetadataImporter(object):
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         # entity, created = get_or_create(session, EntityMetadata, couchdb_id=document.get('_id'))
-        # TODO: use inline metadata, not additional class
+        # TODO migration: use inline metadata, not additional class
         return
         metadata = document.get('metadata', dict())
         entity.update_time = metadata.get('update_time', None)

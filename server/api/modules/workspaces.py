@@ -37,13 +37,13 @@ class WorkspaceSummarySchema(Schema):
     credentials = fields.Integer(dump_only=True, attribute='credential_count')
     hosts = fields.Integer(dump_only=True, attribute='host_count')
     services = fields.Integer(dump_only=True, attribute='service_count')
-    web_vulns = fields.Integer(dump_only=True,
+    web_vulns = fields.Integer(dump_only=True, allow_none=False,
                                attribute='vulnerability_web_count')
-    code_vulns = fields.Integer(dump_only=True,
+    code_vulns = fields.Integer(dump_only=True, allow_none=False,
                                 attribute='vulnerability_code_count')
-    std_vulns = fields.Integer(dump_only=True,
+    std_vulns = fields.Integer(dump_only=True, allow_none=False,
                                attribute='vulnerability_standard_count')
-    total_vulns = fields.Integer(dump_only=True,
+    total_vulns = fields.Integer(dump_only=True, allow_none=False,
                                  attribute='vulnerability_total_count')
 
 
@@ -72,15 +72,11 @@ class WorkspaceView(ReadWriteView):
     schema_class = WorkspaceSchema
 
     def _get_base_query(self):
-        original = super(WorkspaceView, self)._get_base_query()
-        return original.options(
-            undefer(Workspace.host_count),
-            undefer(Workspace.credential_count),
-            undefer(Workspace.service_count),
-            undefer(Workspace.vulnerability_web_count),
-            undefer(Workspace.vulnerability_code_count),
-            undefer(Workspace.vulnerability_standard_count),
-            undefer(Workspace.vulnerability_total_count),
-        )
+        try:
+            only_confirmed = bool(json.loads(flask.request.args['confirmed']))
+        except (KeyError, ValueError):
+            only_confirmed = False
+        return Workspace.query_with_count(only_confirmed)
+
 
 WorkspaceView.register(workspace_api)

@@ -29,7 +29,7 @@ class dirbPlugin(core.PluginBase):
         self.plugin_version = "0.0.1"
         self.version = "2.22"
         self.regexpUrl = r'((http[s]?)\:\/\/([\w\.]+)[.\S]+)'
-        self._command_regex = re.compile(r'^(sudo dirb|dirb|\.\/dirb|sudo \.\/dirb).*?')
+        self._command_regex = re.compile(r'^(?:sudo dirb|dirb|\.\/dirb|sudo \.\/dirb)\s+(?:(http[s]?)\:\/\/([\w\.]+)[.\S]+)')
         self.text = []
         
 
@@ -109,11 +109,24 @@ class dirbPlugin(core.PluginBase):
         return True
 
 
+
     def processCommandString(self, username, current_path, command_string):
+        """
+        Adds the -oX parameter to get xml output to the command string that the
+        user has set.
+        """
 
-        arg = "%s -w" % command_string
-        return arg
+        no_stop_on_warn_msg_re = r"\s+-w"
+        arg_search = re.search(no_stop_on_warn_msg_re,command_string)
+        extra_arg = ""
+        if arg_search is None:
+            extra_arg +=" -w"
 
+        silent_mode_re = r"\s+-S"
+        arg_search = re.search(silent_mode_re,command_string)
+        if arg_search is None:
+            extra_arg +=" -S"
+        return "%s%s" % (command_string, extra_arg)
 
 def createPlugin():
     return dirbPlugin()

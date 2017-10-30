@@ -41,10 +41,11 @@ class CredentialSchema(AutoSchema):
     service_id = fields.Integer(load_only=True)
 
     def get_parent(self, obj):
-        return obj.parent.id
+        return obj.host_id or obj.service_id
 
     def get_parent_type(self, obj):
-        return obj.parent.__class__.__name__
+        assert obj.host_id is not None or obj.service_id is not None
+        return 'Service' if obj.service_id is not None else 'Host'
 
     def get_metadata(self, obj):
         return {

@@ -64,4 +64,29 @@ node {
             }
         }
     }
+
+    stage ("Run Unit/Integration Tests (with PostgreSQL)") {
+        def testsError = null
+        try {
+            withCredentials([string(credentialsId: 'postgresql_connection_string', variable: 'CONN_STRING')]) {
+                sh """
+                    source ${ENV_PATH}/bin/activate
+                    cd $WORKSPACE && pytest -v  --junitxml=$WORKSPACE/xunit-postgres.xml --connection-string "$CONN_STRING" || :
+                    deactivate
+                """
+                step([$class: 'CoberturaPublisher', autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/coverage.xml', failNoReports: false, failUnhealthy: false, failUnstable: false, maxNumberOfBuilds: 0, onlyStable: false, sourceEncoding: 'ASCII', zoomCoverageChart: false])
+            }
+        }
+        catch(err) {
+            testsError = err
+            currentBuild.result = 'FAILURE'
+        }
+        finally {
+            junit "**/xunit-postgres.xml"
+
+            if (testsError) {
+                throw testsError
+            }
+        }
+    }
 }

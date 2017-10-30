@@ -94,7 +94,7 @@ def transform_dict_to_object(columns, register):
 
     # Check if obj is Invalid, return None
     for key, val in obj.iteritems():
-        if val != [""] and val != [] and val != "" and val != False:
+        if val != [""] and val != [] and val != "" and val != False and val != "info" and val != "opened" and val != "open":
             return obj
 
     return None

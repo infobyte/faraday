@@ -93,7 +93,7 @@ class InitDB(Command):
 
     def generate_random_pw(self, pwlen):
         rng = SystemRandom()
-        return "".join([rng.choice(string.ascii_letters + string.digits + string.punctuation) for _ in xrange(pwlen)])
+        return "".join([rng.choice(string.ascii_letters + string.digits) for _ in xrange(pwlen)])
 
     def _configure_postgres(self, psql_log_file):
         """

@@ -54,11 +54,16 @@ class CustomClient(FlaskClient):
         return ret
 
 
+def pytest_addoption(parser):
+    parser.addoption('--connection-string', default='sqlite://',
+                     help="Database connection string. Defaults to in-memory "
+                     "sqlite if not specified:")
+
+
 @pytest.fixture(scope='session')
 def app(request):
-    # we use sqlite memory for tests
-    test_conn_string = 'sqlite://'
-    app = create_app(db_connection_string=test_conn_string, testing=True)
+    app = create_app(db_connection_string=request.config.getoption(
+        '--connection-string'), testing=True)
     app.test_client_class = CustomClient
 
     # Establish an application context before running the tests.

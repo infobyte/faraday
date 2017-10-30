@@ -134,6 +134,8 @@ def _import_from_couchdb(db_conn, couchdb_conn):
     flush_changes()
 
 def _show_progress(msg, percentage):
-    sys.stdout.write('{}: {}%\r'.format(msg, percentage))
-    sys.stdout.flush()
-
+    try:
+        sys.stdout.write('{}: {}%\r'.format(msg, percentage))
+        sys.stdout.flush()
+    except IOError:
+        logger.warning("Unable to write progress to stdout")

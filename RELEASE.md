@@ -8,6 +8,11 @@ Make sure you run ```./faraday.py --update``` the first time after an update!
 New features in the latest update
 =====================================
 
+
+TBA:
+---
+* Fix bug when the process can't write to stdout
+
 August 11, 2017:
 ---
 * Add check to the vuln creation modal for empty targets in the Web UI

@@ -3,6 +3,7 @@ import json
 import flask
 from flask import abort, g
 from flask_classful import FlaskView
+from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.inspection import inspect
 from sqlalchemy import func
@@ -12,7 +13,7 @@ from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
 from webargs.flaskparser import FlaskParser, parser, abort
 from webargs.core import ValidationError
-from server.models import Workspace, db
+from server.models import Workspace, db, Metadata
 import server.utils.logger
 
 logger = server.utils.logger.get_logger(__name__)
@@ -79,7 +80,14 @@ class GenericView(FlaskView):
             flask.abort(404, 'Invalid format of lookup field')
 
     def _get_base_query(self):
-        return self.model_class.query
+        query = self.model_class.query
+        if issubclass(self.model_class, Metadata):
+            # APIs for objects with metadata always return the creator's
+            # username. Do a joinedload to prevent doing one query per object
+            # (n+1) problem
+            return query.options(joinedload(
+                getattr(self.model_class, 'creator')).load_only('username'))
+        return query
 
     def _filter_query(self, query):
         """Return a new SQLAlchemy query with some filters applied"""

@@ -14,7 +14,6 @@ from server.utils.web import (
     validate_workspace,
     filter_request_args, get_integer_parameter
 )
-from server.dao.command import CommandDAO
 from server.models import Command
 
 commandsrun_api = Blueprint('commandsrun_api', __name__)

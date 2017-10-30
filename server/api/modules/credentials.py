@@ -5,15 +5,16 @@ import time
 
 import flask
 from flask import Blueprint
-from marshmallow import fields, post_load
+from marshmallow import fields, post_load, ValidationError
 from filteralchemy import FilterSet, operators
 
 from server.api.base import (
     AutoSchema,
     ReadWriteWorkspacedView,
     FilterSetMeta,
-    FilterAlchemyMixin)
+    FilterAlchemyMixin, InvalidUsage)
 from server.models import Credential, Host, Service, db
+from server.schemas import MutableField
 
 credentials_api = Blueprint('credentials_api', __name__)
 
@@ -28,8 +29,12 @@ class CredentialSchema(AutoSchema):
     password = fields.String(default='')
     description = fields.String(default='')
     couchdbid = fields.String(default='')  # backwards compatibility
-    parent_type = fields.Method('get_parent_type', required=True)
-    parent = fields.Method('get_parent', required=True)
+    parent_type = MutableField(fields.Method('get_parent_type'),
+                               fields.String(),
+                               required=True)
+    parent = MutableField(fields.Method('get_parent'),
+                          fields.Integer(),
+                          required=True)
 
     # for filtering
     host_id = fields.Integer(load_only=True)
@@ -69,10 +74,15 @@ class CredentialSchema(AutoSchema):
         if parent_type == 'Host':
             parent_class = Host
             parent_field = 'host_id'
-        if parent_type == 'Service':
+        elif parent_type == 'Service':
             parent_class = Service
             parent_field = 'service_id'
+        else:
+            raise ValidationError(
+                'Unknown parent type: {}'.format(parent_type))
         parent = db.session.query(parent_class).filter_by(id=parent_id).first()
+        if not parent:
+            raise InvalidUsage('Parent not found.')
         data[parent_field] = parent.id
         return data
 

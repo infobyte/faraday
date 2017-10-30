@@ -1,13 +1,11 @@
 import json
 
 import flask
-from flask import abort
-from sqlalchemy import inspect
+from flask import abort, g
 from flask_classful import FlaskView
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.inspection import inspect
 from sqlalchemy import func
-from werkzeug.routing import parse_rule
 from marshmallow import Schema
 from marshmallow.compat import with_metaclass
 from marshmallow_sqlalchemy import ModelConverter
@@ -15,6 +13,9 @@ from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
 from webargs.flaskparser import FlaskParser, parser, abort
 from webargs.core import ValidationError
 from server.models import Workspace, db
+import server.utils.logger
+
+logger = server.utils.logger.get_logger(__name__)
 
 
 def output_json(data, code, headers=None):
@@ -278,8 +279,9 @@ class CreateMixin(object):
     def post(self, **kwargs):
         data = self._parse_data(self._get_schema_class()(strict=True),
                                 flask.request)
-
         created = self._perform_create(data, **kwargs)
+        created.creator = g.user
+        db.session.commit()
         return self._dump(created), 201
 
     def _perform_create(self, data, **kwargs):
@@ -290,7 +292,6 @@ class CreateMixin(object):
             # outside a no_autoflush block would result in a premature create.
             self._validate_uniqueness(obj)
             db.session.add(obj)
-        db.session.commit()
         return obj
 
 
@@ -390,7 +391,11 @@ class CountWorkspacedMixin(object):
             .filter(Workspace.name == workspace_name))
         for key, count in count.values(group_by, func.count(group_by)):
             res['groups'].append(
-                {'count': count, 'name': key}
+                {'count': count,
+                 'name': key,
+                 # To add compatibility with the web ui
+                 flask.request.args.get('group_by'): key,
+                 }
             )
             res['total_count'] += count
         return res

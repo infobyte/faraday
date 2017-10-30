@@ -19,7 +19,7 @@ class TestListCommandView(ReadOnlyAPITests):
     api_endpoint = 'commands'
     view_class = CommandView
 
-    def test_(self, test_client, second_workspace, session):
+    def test_backwards_compatibility_list(self, test_client, second_workspace, session):
         self.factory.create(workspace=second_workspace)
         session.commit()
         res = test_client.get(self.url())

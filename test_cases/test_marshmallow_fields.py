@@ -14,8 +14,8 @@ Place = namedtuple('Place', ['name', 'x', 'y'])
 
 
 class PointSchema(Schema):
-    x = fields.Float()
-    y = fields.Float()
+    x = fields.Float(required=True)
+    y = fields.Float(required=True)
 
 
 class PlaceSchema(Schema):
@@ -24,11 +24,28 @@ class PlaceSchema(Schema):
 
 
 class TestSelfNestedField:
+
+    def load(self, data, schema=PlaceSchema):
+        return schema(strict=True).load(data).data
+
     def test_field_serialization(self):
         point = Place('home', 123, 456.1)
         schema = PlaceSchema()
         dumped = schema.dump(point).data
         assert dumped == {"name": "home", "coords": {"x": 123.0, "y": 456.1}}
+
+    def test_deserialization_success(self):
+        load = PlaceSchema().load({"coords": {"x": 123.0, "y": 456.1}}).data
+        assert load == {"coords": {"x": 123.0, "y": 456.1}}
+
+    @pytest.mark.parametrize('data', [
+        {"coords": {"x": 1}},
+        {"coords": {"x": None, "y": 2}},
+        {"coords": {"x": "xxx", "y": 2}},
+    ])
+    def test_deserialization_fails(self, data):
+        with pytest.raises(ValidationError):
+            self.load(data)
 
 
 class TestJSTimestampField:
@@ -41,6 +58,10 @@ class TestJSTimestampField:
 
     def test_parses_null_datetime(self):
         assert JSTimestampField()._serialize(None, None, None) is None
+
+    def test_deserialization_fails(self):
+        with pytest.raises(NotImplementedError):
+            JSTimestampField()._deserialize(time.time() * 1000, None, None)
 
 
 User = namedtuple('User', ['username', 'blogposts'])
@@ -94,6 +115,11 @@ class TestPrimaryKeyRelatedField:
             "first_name": "other"
         }
 
+    def test_deserialization_fails(self):
+        with pytest.raises(NotImplementedError):
+            UserSchema().load({"username": "test",
+                               "blogposts": [1, 2, 3]})
+
 
 Blogpost2 = namedtuple('Blogpost', ['id', 'title', 'user'])
 
@@ -103,6 +129,7 @@ class Blogpost2Schema(Schema):
     title = fields.String()
     user = MutableField(fields.Nested(UserSchema, only=('username',)),
                         fields.String())
+
 
 class TestMutableField:
 
@@ -129,3 +156,24 @@ class TestMutableField:
     def test_deserialize_fails(self):
         with pytest.raises(ValidationError):
             self.load(self.serialized_data)
+
+    def test_required_propagation(self):
+        read_field = fields.String()
+        write_field = fields.Float()
+        mutable = MutableField(read_field, write_field, required=True)
+        assert mutable.required
+        assert read_field.required
+        assert write_field.required
+
+    def test_load_method_field(self):
+        class PlaceSchema(Schema):
+            name = fields.String()
+            x = MutableField(fields.Method('get_x'),
+                             fields.String)
+
+            def get_x(self, obj):
+                return 5
+        assert self.serialize(Place('test', 1, 1), PlaceSchema) == {
+            "name": "test",
+            "x": 5,
+        }

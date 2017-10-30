@@ -7,13 +7,12 @@ from flask import Blueprint
 from flask_classful import route
 from marshmallow import fields
 from filteralchemy import FilterSet, operators
-from sqlalchemy.orm import undefer
+from sqlalchemy.orm import undefer, joinedload
 
 from server.utils.database import get_or_create
 from server.utils.logger import get_logger
 from server.utils.web import gzipped, validate_workspace,\
     get_integer_parameter, filter_request_args
-from server.dao.host import HostDAO
 from server.api.base import (
     ReadWriteWorkspacedView,
     PaginatedMixin,
@@ -39,11 +38,14 @@ class HostSchema(AutoSchema):
     os = fields.String(default='')
     owned = fields.Boolean(default=False)
     owner = PrimaryKeyRelatedField('username', attribute='creator', dump_only=True)
-    services = fields.Integer(attribute='service_count', dump_only=True)
+    services = fields.Integer(attribute='open_service_count', dump_only=True)
     vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
     credentials = fields.Integer(attribute='vulnerability_count', dump_only=True)
     hostnames = PrimaryKeyRelatedField('name', many=True,
-                                       attribute="hostnames", default=[])
+                                       attribute="hostnames",
+                                       # TODO migration: make it writable
+                                       dump_only=True,  # Only for now
+                                       default=[])
 
     def get_metadata(self, obj):
         return {
@@ -53,7 +55,7 @@ class HostSchema(AutoSchema):
             "owner": None,
             "update_action": None,
             "update_controller_action": None,
-            "update_time":1504796508.21,
+            "update_time": 1504796508.21,
             "update_user": None
         }
 
@@ -110,7 +112,11 @@ class HostsView(PaginatedMixin,
         """Get services_count in one query and not deferred, that doe
         one query per host"""
         original = super(HostsView, self)._get_base_query(workspace_name)
-        return original.options(undefer(Host.service_count))
+        return original.options(
+            undefer(Host.open_service_count),
+            undefer(Host.vulnerability_count),
+            joinedload(Host.hostnames)
+        )
 
     def _envelope_list(self, objects, pagination_metadata=None):
         hosts = []

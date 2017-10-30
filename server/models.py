@@ -18,10 +18,10 @@ from sqlalchemy import (
     UniqueConstraint,
     event
 )
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import backref, relationship, undefer
 from sqlalchemy.sql import select, text, table
 from sqlalchemy import func
-from sqlalchemy.orm import column_property
+from sqlalchemy.orm import column_property, query_expression, with_expression
 from sqlalchemy.schema import DDL
 from sqlalchemy.ext.associationproxy import association_proxy, _AssociationSet
 from sqlalchemy.ext.declarative import declared_attr
@@ -90,7 +90,7 @@ db = SQLAlchemy()
 SCHEMA_VERSION = 'W.3.0.0'
 
 
-def _make_generic_count_property(parent_table, children_table):
+def _make_generic_count_property(parent_table, children_table, where=None):
     """Make a deferred by default column property that counts the
     amount of childrens of some parent object"""
     children_id_field = '{}.id'.format(children_table)
@@ -100,6 +100,8 @@ def _make_generic_count_property(parent_table, children_table):
              select_from(table(children_table)).
              where(text('{} = {}'.format(
                  children_rel_field, parent_id_field))))
+    if where is not None:
+        query = query.where(where)
     return column_property(query, deferred=True)
 
 
@@ -124,27 +126,6 @@ class Metadata(db.Model):
 
     create_date = Column(DateTime, default=datetime.utcnow)
     update_date = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-
-class EntityMetadata(db.Model):
-    __tablename__ = 'metadata'
-    __table_args__ = (
-        UniqueConstraint('couchdb_id'),
-    )
-
-    id = Column(Integer, primary_key=True)
-    update_time = Column(Float, nullable=True)
-    update_user = Column(String(250), nullable=True)
-    update_action = Column(Integer, nullable=True)
-    create_time = Column(Float, nullable=True)
-    update_controller_action = Column(String(250), nullable=True)
-    creator = Column(String(250), nullable=True)
-    owner = Column(String(250), nullable=True)
-    command_id = Column(String(250), nullable=True)
-
-    couchdb_id = Column(String(250))
-    revision = Column(String(250))
-    document_type = Column(String(250))
 
 
 class SourceCode(Metadata):
@@ -181,15 +162,6 @@ class Host(Metadata):
     mac = Column(Text, nullable=True)
     net_segment = Column(Text, nullable=True)
 
-    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
-    entity_metadata = relationship(
-                                EntityMetadata,
-                                uselist=False,
-                                cascade="all, delete-orphan",
-                                single_parent=True,
-                                foreign_keys=[entity_metadata_id]
-                                )
-
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
                             'Workspace',
@@ -197,7 +169,9 @@ class Host(Metadata):
                             foreign_keys=[workspace_id]
                             )
 
-    service_count = _make_generic_count_property('host', 'service')
+    open_service_count = _make_generic_count_property(
+        'host', 'service', where=text("service.status = 'open'"))
+    total_service_count = _make_generic_count_property('host', 'service')
     vulnerability_count = _make_generic_count_property('host', 'vulnerability')
     credentials_count = _make_generic_count_property('host', 'credential')
 
@@ -253,15 +227,6 @@ class Service(Metadata):
     version = Column(Text, nullable=True)
 
     banner = Column(Text, nullable=True)
-
-    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
-    entity_metadata = relationship(
-                                EntityMetadata,
-                                uselist=False,
-                                cascade="all, delete-orphan",
-                                single_parent=True,
-                                foreign_keys=[entity_metadata_id]
-                                )
 
     host_id = Column(Integer, ForeignKey('host.id'), index=True, nullable=False)
     host = relationship('Host', backref='services', foreign_keys=[host_id])
@@ -329,14 +294,6 @@ class VulnerabilityABC(Metadata):
         raise NotImplementedError('ABC property called')
 
 
-class VulnerabilityTemplate(VulnerabilityABC):
-    __tablename__ = 'vulnerability_template'
-
-    __table_args__ = (
-        UniqueConstraint('name', name='uix_vulnerability_template_name'),
-    )
-
-
 class CustomAssociationSet(_AssociationSet):
     """
     A custom associacion set that passes the creator method the both
@@ -389,6 +346,59 @@ def _build_associationproxy_creator(model_class_name):
         return child
 
     return creator
+
+
+def _build_associationproxy_creator_non_workspaced(model_class_name):
+    def creator(name, vulnerability):
+        """Get or create a reference/policyviolation with the
+        corresponding name. This must be worspace aware"""
+
+        # Ugly hack to avoid the fact that Reference is defined after
+        # Vulnerability
+        model_class = globals()[model_class_name]
+        child = model_class.query.filter(
+            getattr(model_class, 'name') == name,
+        ).first()
+        if child is None:
+            # Doesn't exist
+            child = model_class(name)
+        return child
+
+    return creator
+
+
+class VulnerabilityTemplate(VulnerabilityABC):
+    __tablename__ = 'vulnerability_template'
+
+    __table_args__ = (
+        UniqueConstraint('name', name='uix_vulnerability_template_name'),
+    )
+
+    # We use ReferenceTemplate and not Reference since Templates does not have workspace.
+
+    reference_template_instances = relationship(
+        "ReferenceTemplate",
+        secondary="reference_template_vulnerability_association",
+        collection_class=set
+    )
+
+    references = association_proxy(
+        'reference_template_instances', 'name',
+        proxy_factory=CustomAssociationSet,
+        creator=_build_associationproxy_creator_non_workspaced('ReferenceTemplate')
+    )
+
+    policy_violation_template_instances = relationship(
+        "PolicyViolationTemplate",
+        secondary="policy_violation_template_vulnerability_association",
+        collection_class=set
+    )
+
+    policy_violations = association_proxy(
+        'policy_violation_template_instances', 'name',
+        proxy_factory=CustomAssociationSet,
+        creator=_build_associationproxy_creator_non_workspaced('PolicyViolationTemplate')
+    )
 
 
 class VulnerabilityGeneric(VulnerabilityABC):
@@ -543,20 +553,13 @@ class ReferenceTemplate(Metadata):
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
 
-    vulnerability_id = Column(
-                            Integer,
-                            ForeignKey(VulnerabilityTemplate.id),
-                            index=True
-                            )
-    vulnerability = relationship(
-                                'VulnerabilityTemplate',
-                                backref='references',
-                                foreign_keys=[vulnerability_id],
-                                )
-
     __table_args__ = (
-        UniqueConstraint('name', 'vulnerability_id', name='uix_reference_template_name_vulnerability'),
+        UniqueConstraint('name', name='uix_reference_template_name'),
     )
+
+    def __init__(self, name=None, **kwargs):
+        super(ReferenceTemplate, self).__init__(name=name,
+                                        **kwargs)
 
 
 class Reference(Metadata):
@@ -603,14 +606,38 @@ class ReferenceVulnerabilityAssociation(db.Model):
 
 
 class PolicyViolationVulnerabilityAssociation(db.Model):
-        __tablename__ = 'policy_violation_vulnerability_association'
 
-        vulnerability_id = Column(Integer, ForeignKey('vulnerability.id'), primary_key=True)
-        policy_violation_id = Column(Integer, ForeignKey('policy_violation.id'), primary_key=True)
+    __tablename__ = 'policy_violation_vulnerability_association'
 
-        policy_violation = relationship("PolicyViolation", backref="policy_violation_associations", foreign_keys=[policy_violation_id])
-        vulnerability = relationship("Vulnerability", backref="policy_violationvulnerability_associations",
-                                     foreign_keys=[vulnerability_id])
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability.id'), primary_key=True)
+    policy_violation_id = Column(Integer, ForeignKey('policy_violation.id'), primary_key=True)
+
+    policy_violation = relationship("PolicyViolation", backref="policy_violation_associations", foreign_keys=[policy_violation_id])
+    vulnerability = relationship("Vulnerability", backref="policy_violationvulnerability_associations",
+                                 foreign_keys=[vulnerability_id])
+
+
+class ReferenceTemplateVulnerabilityAssociation(db.Model):
+
+    __tablename__ = 'reference_template_vulnerability_association'
+
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability_template.id'), primary_key=True)
+    reference_id = Column(Integer, ForeignKey('reference_template.id'), primary_key=True)
+
+    reference = relationship("ReferenceTemplate", backref="reference_template_associations", foreign_keys=[reference_id])
+    vulnerability = relationship("VulnerabilityTemplate", backref="reference_template_vulnerability_associations", foreign_keys=[vulnerability_id])
+
+
+class PolicyViolationTemplateVulnerabilityAssociation(db.Model):
+
+    __tablename__ = 'policy_violation_template_vulnerability_association'
+
+    vulnerability_id = Column(Integer, ForeignKey('vulnerability_template.id'), primary_key=True)
+    policy_violation_id = Column(Integer, ForeignKey('policy_violation_template.id'), primary_key=True)
+
+    policy_violation = relationship("PolicyViolationTemplate", backref="policy_violation_template_associations", foreign_keys=[policy_violation_id])
+    vulnerability = relationship("VulnerabilityTemplate", backref="policy_violation_template_vulnerability_associations",
+                                 foreign_keys=[vulnerability_id])
 
 
 class PolicyViolationTemplate(Metadata):
@@ -618,23 +645,15 @@ class PolicyViolationTemplate(Metadata):
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
 
-    vulnerability_id = Column(
-                            Integer,
-                            ForeignKey(VulnerabilityTemplate.id),
-                            index=True
-                            )
-    vulnerability = relationship(
-                                'VulnerabilityTemplate',
-                                backref='policy_violations',
-                                foreign_keys=[vulnerability_id]
-                                )
-
     __table_args__ = (
         UniqueConstraint(
                         'name',
-                        'vulnerability_id',
-                        name='uix_policy_violation_template_name_vulnerability'),
+                        name='uix_policy_violation_template_name'),
     )
+
+    def __init__(self, name=None, **kwargs):
+        super(PolicyViolationTemplate, self).__init__(name=name,
+                                        **kwargs)
 
 
 class PolicyViolation(Metadata):
@@ -679,15 +698,6 @@ class Credential(Metadata):
     password = Column(Text(), nullable=False)
     description = Column(Text(), nullable=True)
     name = Column(String(250), nullable=True)
-
-    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
-    entity_metadata = relationship(
-                                EntityMetadata,
-                                uselist=False,
-                                cascade="all, delete-orphan",
-                                single_parent=True,
-                                foreign_keys=[entity_metadata_id],
-                                )
 
     host_id = Column(Integer, ForeignKey(Host.id), index=True, nullable=True)
     host = relationship('Host', backref='credentials', foreign_keys=[host_id])
@@ -739,25 +749,13 @@ class Command(Metadata):
     workspace = relationship('Workspace', foreign_keys=[workspace_id])
     # TODO: add Tool relationship and report_attachment
 
-    entity_metadata_id = Column(
-                                Integer,
-                                ForeignKey(EntityMetadata.id),
-                                index=True
-                                )
-    entity_metadata = relationship(
-                                EntityMetadata,
-                                uselist=False,
-                                cascade="all, delete-orphan",
-                                single_parent=True,
-                                foreign_keys=[entity_metadata_id]
-                                )
-
     @property
     def parent(self):
         return
 
 
-def _make_vuln_count_property(type_=None):
+def _make_vuln_count_property(type_=None, only_confirmed=False,
+                              use_column_property=True):
     query = (select([func.count(text('vulnerability.id'))]).
              select_from(table('vulnerability')).
              where(text('vulnerability.workspace_id = workspace.id'))
@@ -767,7 +765,19 @@ def _make_vuln_count_property(type_=None):
         # This can cause SQL injection vulnerabilities
         # In this case type_ is supplied from a whitelist so this is safe
         query = query.where(text("vulnerability.type = '%s'" % type_))
-    return column_property(query, deferred=True)
+    if only_confirmed:
+        if str(db.engine.url).startswith('sqlite://'):
+            # SQLite has no "true" expression, we have to use the integer 1
+            # instead
+            query = query.where(text("vulnerability.confirmed = 1"))
+        else:
+            # I suppose that we're using PostgreSQL, that can't compare
+            # booleans with integers
+            query = query.where(text("vulnerability.confirmed = true"))
+    if use_column_property:
+        return column_property(query, deferred=True)
+    else:
+        return query
 
 
 class Workspace(Metadata):
@@ -784,10 +794,50 @@ class Workspace(Metadata):
     credential_count = _make_generic_count_property('workspace', 'credential')
     host_count = _make_generic_count_property('workspace', 'host')
     service_count = _make_generic_count_property('workspace', 'service')
-    vulnerability_web_count = _make_vuln_count_property('vulnerability_web')
-    vulnerability_code_count = _make_vuln_count_property('vulnerability_code')
-    vulnerability_standard_count = _make_vuln_count_property('vulnerability')
-    vulnerability_total_count = _make_vuln_count_property()
+
+    vulnerability_web_count = query_expression()
+    vulnerability_code_count = query_expression()
+    vulnerability_standard_count = query_expression()
+    vulnerability_total_count = query_expression()
+
+    @classmethod
+    def query_with_count(cls, only_confirmed):
+        """
+        Add count fields to the query.
+
+        If only_confirmed is True, it will only show the count for confirmed
+        vulnerabilities. Otherwise, it will show the count of all of them
+        """
+        from sqlalchemy.sql.expression import literal_column
+        return cls.query.options(
+            undefer(cls.host_count),
+            undefer(cls.credential_count),
+            undefer(cls.service_count),
+            with_expression(
+                cls.vulnerability_web_count,
+                _make_vuln_count_property('vulnerability_web',
+                                          only_confirmed=only_confirmed,
+                                          use_column_property=False)
+            ),
+            with_expression(
+                cls.vulnerability_code_count,
+                _make_vuln_count_property('vulnerability_code',
+                                          only_confirmed=only_confirmed,
+                                          use_column_property=False)
+            ),
+            with_expression(
+                cls.vulnerability_standard_count,
+                _make_vuln_count_property('vulnerability',
+                                          only_confirmed=only_confirmed,
+                                          use_column_property=False)
+            ),
+            with_expression(
+                cls.vulnerability_total_count,
+                _make_vuln_count_property(type_=None,
+                                          only_confirmed=only_confirmed,
+                                          use_column_property=False)
+            ),
+        )
 
 
 class Scope(Metadata):
@@ -912,19 +962,6 @@ class Methodology(Metadata):
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
 
-    entity_metadata_id = Column(
-                            Integer,
-                            ForeignKey(EntityMetadata.id),
-                            index=True
-                            )
-    entity_metadata = relationship(
-                                EntityMetadata,
-                                uselist=False,
-                                cascade="all, delete-orphan",
-                                single_parent=True,
-                                foreign_keys=[entity_metadata_id]
-                                )
-
     template = relationship('MethodologyTemplate', backref='methodologies')
     template_id = Column(
                     Integer,
@@ -983,9 +1020,6 @@ class Task(TaskABC):
     __mapper_args__ = {
         'concrete': True
     }
-
-    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
-    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
 
     assigned_to_id = Column(Integer, ForeignKey('user.id'), nullable=True)
     assigned_to = relationship('User', backref='assigned_tasks', foreign_keys=[assigned_to_id])

@@ -71,6 +71,7 @@ angular.module('faradayApp')
             set: function(ws, data) {
                 var self = this;
 
+                if(data._id !== undefined) self._id = data._id;
                 if(data.metadata !== undefined) self.metadata = data.metadata;
                 if(data.target !== undefined) self.target = data.target;
                 if(data.hostnames !== undefined) self.hostnames = data.hostnames;

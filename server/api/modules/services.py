@@ -6,11 +6,11 @@ import time
 import flask
 from flask import Blueprint
 from marshmallow import fields
+from sqlalchemy.orm import joinedload
 
 from server.api.base import AutoSchema, ReadWriteWorkspacedView
 from server.models import Service
 from server.utils.logger import get_logger
-from server.dao.service import ServiceDAO
 from server.utils.web import gzipped, validate_workspace, get_integer_parameter
 
 
@@ -71,5 +71,11 @@ class ServiceView(ReadWriteWorkspacedView):
         return {
             'services': services,
         }
+
+    def _get_base_query(self, workspace_name):
+        original = super(ServiceView, self)._get_base_query(workspace_name)
+        return original.options(
+            joinedload(Service.credentials)
+        )
 
 ServiceView.register(services_api)

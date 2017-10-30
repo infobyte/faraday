@@ -11,6 +11,9 @@ class JSTimestampField(fields.Field):
         if value is not None:
             return int(time.mktime(value.timetuple()) * 1000)
 
+    def _deserialize(self, value, attr, data):
+        raise NotImplementedError("Only dump is implemented for now")
+
 
 class PrimaryKeyRelatedField(fields.Field):
     def __init__(self, field_name='id', *args, **kwargs):
@@ -28,6 +31,9 @@ class PrimaryKeyRelatedField(fields.Field):
             if value is None:
                 return None
             return getattr(value, self.field_name)
+
+    def _deserialize(self, value, attr, data):
+        raise NotImplementedError("Only dump is implemented for now")
 
 
 class SelfNestedField(fields.Field):
@@ -49,7 +55,10 @@ class SelfNestedField(fields.Field):
         return ret
 
     def _deserialize(self, value, attr, data):
-        raise NotImplementedError("Only dump is implemented for now")
+        load = self.target_schema.load(value)
+        if load.errors:
+            raise ValidationError(load.errors)
+        return load.data
 
 
 class MutableField(fields.Field):
@@ -66,6 +75,15 @@ class MutableField(fields.Field):
     def __init__(self, read_field, write_field, **kwargs):
         self.read_field = read_field
         self.write_field = write_field
+
+        # Set _CHECK_ATTRIBUTE based on the read field because it is used
+        # during serialization
+        self._CHECK_ATTRIBUTE = self.read_field._CHECK_ATTRIBUTE
+
+        # Propagate required=True to the children fields
+        if kwargs.get('required'):
+            self.read_field.required = self.write_field.required = True
+
         super(MutableField, self).__init__(**kwargs)
 
     def _serialize(self, value, attr, obj):
@@ -73,3 +91,9 @@ class MutableField(fields.Field):
 
     def _deserialize(self, value, attr, data):
         return self.write_field._deserialize(value, attr, data)
+
+    def _add_to_schema(self, field_name, schema):
+        # Propagate to child fields
+        super(MutableField, self)._add_to_schema(field_name, schema)
+        self.read_field._add_to_schema(field_name, schema)
+        self.write_field._add_to_schema(field_name, schema)

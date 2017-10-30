@@ -35,7 +35,6 @@ from server.models import (
     Comment,
     CommentObject,
     Credential,
-    EntityMetadata,
     ExecutiveReport,
     Host,
     Hostname,
@@ -189,7 +188,9 @@ class EntityNotFound(Exception):
 class EntityMetadataImporter(object):
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
-        entity, created = get_or_create(session, EntityMetadata, couchdb_id=document.get('_id'))
+        # entity, created = get_or_create(session, EntityMetadata, couchdb_id=document.get('_id'))
+        # TODO migration: use inline metadata, not additional class
+        return
         metadata = document.get('metadata', dict())
         entity.update_time = metadata.get('update_time', None)
         entity.update_user = metadata.get('update_user', None)
@@ -368,12 +369,14 @@ class ServiceImporter(object):
                     document['status'] = 'open'
                 status_mapper = {
                     'open': 'open',
+                    'opened': 'open',
                     'up': 'open',
                     'closed': 'closed',
                     'down': 'closed',
                     'filtered': 'filtered',
                     'open|filtered': 'filtered',
-                    'unknown': 'closed'
+                    'unknown': 'closed',
+                    '-': 'closed',
                 }
                 couchdb_status = document.get('status', 'open')
                 if couchdb_status.lower() not in status_mapper:
@@ -892,10 +895,9 @@ class ImportVulnerabilityTemplates(FlaskScriptCommand):
             if cwe_field not in references:
                 references.append(cwe_field)
             for ref_doc in references:
-                get_or_create(session,
-                             ReferenceTemplate,
-                             vulnerability=vuln_template,
-                             name=ref_doc)
+                vuln_template.references.add(ref_doc)
+
+
 
     def get_name(self, document):
         doc_name = document.get('name')

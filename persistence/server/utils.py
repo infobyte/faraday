@@ -71,7 +71,8 @@ def get_vuln_properties(vuln):
                  'severity': vuln.getSeverity(),
                  'resolution': vuln.getResolution(),
                  'desc': vuln.getDesc(),
-                 'status': vuln.getStatus()}
+                 'status': vuln.getStatus(),
+                 'policyviolations': vuln.getPolicyViolations()}
     vuln_dict.update(get_object_properties(vuln))
     return vuln_dict
 

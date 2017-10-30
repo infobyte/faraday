@@ -362,11 +362,23 @@ class Script(object):
     @param script_node A script_node taken from an nmap xml tree
     """
 
+    def parse_output(self, output):
+        block_re = re.compile('^\s{4}References:((?:.|[\r\n])+[\r\n](?:\s{4}\w|\s*$))', re.MULTILINE)
+        m1 = block_re.findall(output)
+        if len(m1) > 0:
+            links_re = re.compile('[ \t]+([^ \t\n\r]+)[ \t]*')
+            m2 = links_re.findall(m1[0])
+            return m2
+        return []
+
+
+
     def __init__(self, script_node):
         self.node = script_node
 
         self.name = script_node.get("id")
         self.desc = script_node.get("output")
+        self.refs =  self.parse_output(self.desc)
         self.response = ""
         for k in script_node.findall("elem"):
             self.response += "\n" + str(k.get('key')) + ": " + str(k.text)
@@ -474,6 +486,7 @@ class NmapPlugin(core.PluginBase):
                     h_id,
                     v.name,
                     desc=v.desc,
+                    ref=v.refs,
                     severity=0)
 
             for port in host.ports:
@@ -499,6 +512,7 @@ class NmapPlugin(core.PluginBase):
                 for v in port.vulns:
                     severity = 0
                     desc = v.desc
+                    refs = v.refs
                     desc += "\nOutput: " + v.response if v.response else ""
 
                     if re.search(r"VULNERABLE", desc):
@@ -528,6 +542,7 @@ class NmapPlugin(core.PluginBase):
                             s_id,
                             v.name,
                             desc=desc,
+                            ref=refs,
                             severity=severity,
                             website=minterfase)
                     else:
@@ -536,6 +551,7 @@ class NmapPlugin(core.PluginBase):
                             s_id,
                             v.name,
                             desc=v.desc,
+                            ref=refs,
                             severity=severity)
         del parser
         return True

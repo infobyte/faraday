@@ -91,6 +91,9 @@ class HostsView(PaginatedMixin,
     schema_class = HostSchema
     unique_fields = ['ip']
     filterset_class = HostFilterSet
+    get_undefer = [Host.open_service_count,
+                   Host.vulnerability_count]
+    get_joinedloads = [Host.hostnames]
 
     @route('/<host_id>/services/')
     def service_list(self, workspace_name, host_id):
@@ -103,20 +106,10 @@ class HostsView(PaginatedMixin,
         host = super(HostsView, self)._perform_create(data, **kwargs)
         host.default_gateway_ip = default_gateway_ip[0]
         for name in hostnames:
-            get_or_create(db.session, Hostname, name=name['key'], host=host, workspace=host.workspace)
+            get_or_create(db.session, Hostname, name=name['key'], host=host,
+                          workspace=host.workspace)
         db.session.commit()
         return host
-
-
-    def _get_base_query(self, workspace_name):
-        """Get services_count in one query and not deferred, that doe
-        one query per host"""
-        original = super(HostsView, self)._get_base_query(workspace_name)
-        return original.options(
-            undefer(Host.open_service_count),
-            undefer(Host.vulnerability_count),
-            joinedload(Host.hostnames)
-        )
 
     def _envelope_list(self, objects, pagination_metadata=None):
         hosts = []

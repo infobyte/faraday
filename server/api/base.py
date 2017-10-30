@@ -3,7 +3,7 @@ import json
 import flask
 from flask import abort, g
 from flask_classful import FlaskView
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, undefer
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.inspection import inspect
 from sqlalchemy import func
@@ -66,6 +66,10 @@ class GenericView(FlaskView):
     lookup_field_type = int
     unique_fields = []  # Fields unique
 
+    # Attributes to improve the performance of list and retrieve views
+    get_joinedloads = []  # List of relationships to eagerload
+    get_undefer = []  # List of columns to undefer
+
     def _get_schema_class(self):
         assert self.schema_class is not None, "You must define schema_class"
         return self.schema_class
@@ -81,23 +85,34 @@ class GenericView(FlaskView):
 
     def _get_base_query(self):
         query = self.model_class.query
+        return query
+
+    def _get_eagerloaded_query(self, *args, **kwargs):
+        options = []
         if issubclass(self.model_class, Metadata):
             # APIs for objects with metadata always return the creator's
             # username. Do a joinedload to prevent doing one query per object
             # (n+1) problem
-            return query.options(joinedload(
+            options.append(joinedload(
                 getattr(self.model_class, 'creator')).load_only('username'))
-        return query
+        query = self._get_base_query(*args, **kwargs)
+        options += [joinedload(relationship)
+                    for relationship in self.get_joinedloads]
+        options += [undefer(column) for column in self.get_undefer]
+        return query.options(*options)
 
     def _filter_query(self, query):
         """Return a new SQLAlchemy query with some filters applied"""
         return query
 
-    def _get_object(self, object_id, **kwargs):
+    def _get_object(self, object_id, eagerload=False, **kwargs):
         self._validate_object_id(object_id)
+        if eagerload:
+            query = self._get_eagerloaded_query(**kwargs)
+        else:
+            query = self._get_base_query(**kwargs)
         try:
-            obj = self._get_base_query(**kwargs).filter(
-                self._get_lookup_field() == object_id).one()
+            obj = query.filter(self._get_lookup_field() == object_id).one()
         except NoResultFound:
             flask.abort(404, 'Object with id "%s" not found' % object_id)
         return obj
@@ -157,13 +172,16 @@ class GenericWorkspacedView(GenericView):
     def _get_base_query(self, workspace_name):
         base = super(GenericWorkspacedView, self)._get_base_query()
         return base.join(Workspace).filter(
-            Workspace.id==self._get_workspace(workspace_name).id)
+            Workspace.id == self._get_workspace(workspace_name).id)
 
-    def _get_object(self, object_id, workspace_name):
+    def _get_object(self, object_id, workspace_name, eagerload=False):
         self._validate_object_id(object_id)
+        if eagerload:
+            query = self._get_eagerloaded_query(workspace_name)
+        else:
+            query = self._get_base_query(workspace_name)
         try:
-            obj = self._get_base_query(workspace_name).filter(
-                self._get_lookup_field() == object_id).one()
+            obj = query.filter(self._get_lookup_field() == object_id).one()
         except NoResultFound:
             flask.abort(404, 'Object with id "%s" not found' % object_id)
         return obj
@@ -177,7 +195,7 @@ class GenericWorkspacedView(GenericView):
             field = getattr(self.model_class, field_name)
             value = getattr(obj, field_name)
             query = self._get_base_query(obj.workspace.name).filter(
-                field==value)
+                field == value)
             if object_id is not None:
                 # The object already exists in DB, we want to fetch an object
                 # different to this one but with the same unique field
@@ -201,7 +219,7 @@ class ListMixin(object):
         return query, None
 
     def index(self, **kwargs):
-        query = self._filter_query(self._get_base_query(**kwargs))
+        query = self._filter_query(self._get_eagerloaded_query(**kwargs))
         objects, pagination_metadata = self._paginate(query)
         return self._envelope_list(self._dump(objects, many=True),
                                    pagination_metadata)
@@ -257,7 +275,8 @@ class RetrieveMixin(object):
     """Add GET /<id>/ route"""
 
     def get(self, object_id, **kwargs):
-        return self._dump(self._get_object(object_id, **kwargs))
+        return self._dump(self._get_object(object_id, eagerload=True,
+                                           **kwargs))
 
 
 class RetrieveWorkspacedMixin(RetrieveMixin):

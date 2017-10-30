@@ -70,6 +70,7 @@ class WorkspaceView(ReadWriteView):
     lookup_field_type = unicode
     model_class = Workspace
     schema_class = WorkspaceSchema
+    get_joinedloads = [Workspace.scope]
 
     def _get_base_query(self):
         try:

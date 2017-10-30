@@ -89,7 +89,11 @@ class GenericView(FlaskView):
 
     def _get_eagerloaded_query(self, *args, **kwargs):
         options = []
-        if issubclass(self.model_class, Metadata):
+        try:
+            has_creator = 'owner' in self.schema_class.opts.fields
+        except AttributeError:
+            has_creator = False
+        if has_creator:
             # APIs for objects with metadata always return the creator's
             # username. Do a joinedload to prevent doing one query per object
             # (n+1) problem

@@ -337,6 +337,8 @@ class ReportParser(object):
             return "Retina"
         elif "netsparker" == tag:
             return "Netsparker"
+        elif "netsparker-cloud" == tag:
+            return "NetsparkerCloud"            
         elif "maltego" == tag:
             return "Maltego"
         else:

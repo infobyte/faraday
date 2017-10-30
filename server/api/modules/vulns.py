@@ -10,6 +10,7 @@ from filteralchemy import FilterSet, operators
 from flask import request
 from flask import Blueprint
 from marshmallow import Schema, fields, post_load, ValidationError
+from marshmallow.validate import OneOf
 
 from depot.manager import DepotManager
 from server.api.base import (
@@ -86,7 +87,7 @@ class VulnerabilitySchema(AutoSchema):
                                fields.String(),
                                required=True)
     tags = fields.Method(serialize='get_tags')
-    easeofresolution = fields.String(dump_only=True, attribute='ease_of_resolution')
+    easeofresolution = fields.String(attribute='ease_of_resolution', validate=OneOf(Vulnerability.EASE_OF_RESOLUTIONS),)
     hostnames = PrimaryKeyRelatedField('name', many=True, dump_only=True)
     metadata = fields.Method(serialize='get_metadata')
     service = fields.Nested(ServiceSchema(only=[

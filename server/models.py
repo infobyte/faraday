@@ -766,7 +766,14 @@ def _make_vuln_count_property(type_=None, only_confirmed=False,
         # In this case type_ is supplied from a whitelist so this is safe
         query = query.where(text("vulnerability.type = '%s'" % type_))
     if only_confirmed:
-        query = query.where(text("vulnerability.confirmed = 1"))
+        if str(db.engine.url).startswith('sqlite://'):
+            # SQLite has no "true" expression, we have to use the integer 1
+            # instead
+            query = query.where(text("vulnerability.confirmed = 1"))
+        else:
+            # I suppose that we're using PostgreSQL, that can't compare
+            # booleans with integers
+            query = query.where(text("vulnerability.confirmed = true"))
     if use_column_property:
         return column_property(query, deferred=True)
     else:

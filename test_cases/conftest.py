@@ -82,10 +82,18 @@ def database(app, request):
     """Session-wide test database."""
 
     def teardown():
+        try:
+            db.engine.execute('DROP TABLE vulnerability CASCADE')
+        except Exception:
+            pass
+        try:
+            db.engine.execute('DROP TABLE vulnerability_template CASCADE')
+        except Exception:
+            pass
         db.drop_all()
 
-    # Disable check_vulnerability_host_service_source_code constraint because it
-    # doesn't work in sqlite
+    # Disable check_vulnerability_host_service_source_code constraint because
+    # it doesn't work in sqlite
     vuln_constraints = db.metadata.tables['vulnerability'].constraints
     vuln_constraints.remove(next(
         constraint for constraint in vuln_constraints

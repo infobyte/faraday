@@ -35,7 +35,6 @@ from server.models import (
     Comment,
     CommentObject,
     Credential,
-    EntityMetadata,
     ExecutiveReport,
     Host,
     Hostname,
@@ -189,7 +188,9 @@ class EntityNotFound(Exception):
 class EntityMetadataImporter(object):
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
-        entity, created = get_or_create(session, EntityMetadata, couchdb_id=document.get('_id'))
+        # entity, created = get_or_create(session, EntityMetadata, couchdb_id=document.get('_id'))
+        # TODO migration: use inline metadata, not additional class
+        return
         metadata = document.get('metadata', dict())
         entity.update_time = metadata.get('update_time', None)
         entity.update_user = metadata.get('update_user', None)

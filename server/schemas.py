@@ -55,7 +55,10 @@ class SelfNestedField(fields.Field):
         return ret
 
     def _deserialize(self, value, attr, data):
-        raise NotImplementedError("Only dump is implemented for now")
+        load = self.target_schema.load(value)
+        if load.errors:
+            raise ValidationError(load.errors)
+        return load.data
 
 
 class MutableField(fields.Field):

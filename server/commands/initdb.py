@@ -1,6 +1,9 @@
+import string
+
 import os
 import sys
 import getpass
+from random import SystemRandom
 from tempfile import TemporaryFile
 from subprocess import Popen, PIPE
 
@@ -88,19 +91,20 @@ class InitDB(Command):
         if process_status is not 0:
             sys.exit(process_status)
 
+    def generate_random_pw(self, pwlen):
+        rng = SystemRandom()
+        return "".join([rng.choice(string.ascii_letters + string.digits) for _ in xrange(pwlen)])
+
     def _configure_postgres(self, psql_log_file):
         """
             This step will create the role on the database.
             we return username and password and those values will be saved in the config file.
         """
         username_default = 'faraday_db_admin'
-        username = raw_input('Please enter the {blue} database user {white} (press enter to use "{0}"): '.format(username_default, blue=Fore.BLUE, white=Fore.WHITE)) or username_default
+        print('This script will {blue} create a new postgres user {white} and {blue} save faraday-server settings {white}(server.ini). '.format(blue=Fore.BLUE, white=Fore.WHITE))
+        username = raw_input('Please enter the new {blue} database username {white} (press enter to use "{0}"): '.format(username_default, blue=Fore.BLUE, white=Fore.WHITE)) or username_default
         postgres_command = ['sudo', '-u', 'postgres']
-        password = None
-        while not password:
-            password = getpass.getpass(prompt='Please enter the {blue} password for the postgreSQL username {white}: '.format(blue=Fore.BLUE, white=Fore.WHITE))
-            if not password:
-                print('Please type a valid password')
+        password = self.generate_random_pw(25)
         command = postgres_command + ['psql', '-c', 'CREATE ROLE {0} WITH LOGIN PASSWORD \'{1}\';'.format(username, password)]
         p = Popen(command, stderr=psql_log_file, stdout=psql_log_file)
         p.wait()

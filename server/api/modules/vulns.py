@@ -9,7 +9,7 @@ from base64 import b64encode, b64decode
 from filteralchemy import FilterSet, operators
 from flask import request
 from flask import Blueprint
-from marshmallow import fields, post_load, ValidationError
+from marshmallow import Schema, fields, post_load, ValidationError
 
 from depot.manager import DepotManager
 from server.api.base import (
@@ -31,7 +31,11 @@ from server.models import (
 from server.utils.database import get_or_create
 
 from server.api.modules.services import ServiceSchema
-from server.schemas import MutableField, PrimaryKeyRelatedField
+from server.schemas import (
+    MutableField,
+    PrimaryKeyRelatedField,
+    SelfNestedField,
+)
 
 vulns_api = Blueprint('vulns_api', __name__)
 logger = logging.getLogger(__name__)
@@ -57,6 +61,13 @@ class EvidenceSchema(AutoSchema):
         return b64encode(depot.get(file_obj.content.get('file_id')).read())
 
 
+class ImpactSchema(Schema):
+    accountability = fields.Boolean(attribute='impact_accountability')
+    availability = fields.Boolean(attribute='impact_availability')
+    confidentiality = fields.Boolean(attribute='impact_confidentiality')
+    integrity = fields.Boolean(attribute='impact_integrity')
+
+
 class VulnerabilitySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
 
@@ -64,7 +75,7 @@ class VulnerabilitySchema(AutoSchema):
     _attachments = fields.Method(serialize='get_attachments', deserialize='load_attachments', default=[])
     owned = fields.Boolean(dump_only=True, default=False)
     owner = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
-    impact = fields.Method(serialize='get_impact', deserialize='load_impact')
+    impact = SelfNestedField(ImpactSchema())
     desc = fields.String(attribute='description')
     policyviolations = fields.List(fields.String,
                                    attribute='policy_violations')
@@ -76,7 +87,7 @@ class VulnerabilitySchema(AutoSchema):
                                required=True)
     tags = fields.Method(serialize='get_tags')
     easeofresolution = fields.String(dump_only=True, attribute='ease_of_resolution')
-    hostnames = PrimaryKeyRelatedField('name', many=True)
+    hostnames = PrimaryKeyRelatedField('name', many=True, dump_only=True)
     metadata = fields.Method(serialize='get_metadata')
     service = fields.Nested(ServiceSchema(only=[
         '_id', 'ports', 'status', 'protocol', 'name', 'version', 'summary'
@@ -91,7 +102,7 @@ class VulnerabilitySchema(AutoSchema):
         model = Vulnerability
         fields = (
             '_id', 'status',
-            'issuetracker', 'parent', 'parent_type',
+            'issuetracker', 'description', 'parent', 'parent_type',
             'tags', 'severity', '_rev', 'easeofresolution', 'owned',
             'hostnames', 'owner',
             'data', 'refs',
@@ -157,19 +168,8 @@ class VulnerabilitySchema(AutoSchema):
             return 'opened'
         return obj.status
 
-    def get_impact(self, obj):
-        return {
-            'accountability': obj.impact_accountability,
-            'availability': obj.impact_availability,
-            'confidentiality': obj.impact_confidentiality,
-            'integrity': obj.impact_integrity,
-        }
-
     def get_issuetracker(self, obj):
         return {}
-
-    def load_impact(self, value):
-        return value
 
     def load_status(self, value):
         if value == 'opened':
@@ -187,12 +187,10 @@ class VulnerabilitySchema(AutoSchema):
 
     @post_load
     def post_load_impact(self, data):
+        # Unflatten impact (move data[impact][*] to data[*])
         impact = data.pop('impact', None)
         if impact:
-            data['impact_accountability'] = impact['accountability']
-            data['impact_availability'] = impact['availability']
-            data['impact_confidentiality'] = impact['confidentiality']
-            data['impact_integrity'] = impact['integrity']
+            data.update(impact)
         return data
 
     @post_load
@@ -219,18 +217,6 @@ class VulnerabilitySchema(AutoSchema):
             raise ValidationError('Parent not found')
         data[parent_field] = parent.id
         return data
-
-    @post_load
-    def post_load_hostnames(self, data):
-        """
-        Since we don't allow a parent change on update, it makes no sense to have this data
-        Removing this method will result in error, since the relation in the database would have to be updated and that is not implemented
-        :param data:
-        :return:
-        """
-        data.pop('hostnames', None)
-        return data
-
 
 
 class VulnerabilityWebSchema(VulnerabilitySchema):

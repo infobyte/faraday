@@ -13,7 +13,7 @@ python-slugify==1.2.4
 requests>=2.10.0
 restkit>=4.2.2
 service_identity>=16.0.0
-sqlalchemy>=1.0.12
+SQLAlchemy==1.2.0b2
 tqdm==4.15.0
 twisted>=16.1.1
 webargs

@@ -1,13 +1,11 @@
 import json
 
 import flask
-from flask import abort
-from sqlalchemy import inspect
+from flask import abort, g
 from flask_classful import FlaskView
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.inspection import inspect
 from sqlalchemy import func
-from werkzeug.routing import parse_rule
 from marshmallow import Schema
 from marshmallow.compat import with_metaclass
 from marshmallow_sqlalchemy import ModelConverter
@@ -281,8 +279,9 @@ class CreateMixin(object):
     def post(self, **kwargs):
         data = self._parse_data(self._get_schema_class()(strict=True),
                                 flask.request)
-
         created = self._perform_create(data, **kwargs)
+        created.creator = g.user
+        db.session.commit()
         return self._dump(created), 201
 
     def _perform_create(self, data, **kwargs):
@@ -293,7 +292,6 @@ class CreateMixin(object):
             # outside a no_autoflush block would result in a premature create.
             self._validate_uniqueness(obj)
             db.session.add(obj)
-        db.session.commit()
         return obj
 
 
@@ -329,10 +327,7 @@ class UpdateMixin(object):
 
     def _update_object(self, obj, data):
         for (key, value) in data.items():
-            try:
-                setattr(obj, key, value)
-            except Exception as e:
-                logger.warn('There was a problem when trying to update ' + key + ' for ' + obj.type + ': ' + e.message)
+            setattr(obj, key, value)
 
     def _perform_update(self, object_id, obj):
         with db.session.no_autoflush:

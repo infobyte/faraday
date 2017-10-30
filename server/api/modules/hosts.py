@@ -13,7 +13,6 @@ from server.utils.database import get_or_create
 from server.utils.logger import get_logger
 from server.utils.web import gzipped, validate_workspace,\
     get_integer_parameter, filter_request_args
-from server.dao.host import HostDAO
 from server.api.base import (
     ReadWriteWorkspacedView,
     PaginatedMixin,

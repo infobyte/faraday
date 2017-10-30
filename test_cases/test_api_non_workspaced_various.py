@@ -48,3 +48,34 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         res = test_client.get(self.url(self.first_object))
         assert res.status_code == 200
         assert res.json['stats']['hosts'] == 1
+
+    @pytest.mark.parametrize('querystring', [
+        '',
+        '?confirmed=0',
+        '?confirmed=false'
+    ])
+    def test_vuln_count(self, vulnerability_factory, test_client, session,
+                        querystring):
+        vulnerability_factory.create_batch(8, workspace=self.first_object,
+                                           confirmed=False)
+        vulnerability_factory.create_batch(5, workspace=self.first_object,
+                                           confirmed=True)
+        session.commit()
+        res = test_client.get(self.url(self.first_object) + querystring)
+        assert res.status_code == 200
+        assert res.json['stats']['total_vulns'] == 13
+
+    @pytest.mark.parametrize('querystring', [
+        '?confirmed=1',
+        '?confirmed=true'
+    ])
+    def test_vuln_count_confirmed(self, vulnerability_factory, test_client,
+                                  session, querystring):
+        vulnerability_factory.create_batch(8, workspace=self.first_object,
+                                           confirmed=False)
+        vulnerability_factory.create_batch(5, workspace=self.first_object,
+                                           confirmed=True)
+        session.commit()
+        res = test_client.get(self.url(self.first_object) + querystring)
+        assert res.status_code == 200
+        assert res.json['stats']['total_vulns'] == 5

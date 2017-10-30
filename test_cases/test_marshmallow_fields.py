@@ -14,8 +14,8 @@ Place = namedtuple('Place', ['name', 'x', 'y'])
 
 
 class PointSchema(Schema):
-    x = fields.Float()
-    y = fields.Float()
+    x = fields.Float(required=True)
+    y = fields.Float(required=True)
 
 
 class PlaceSchema(Schema):
@@ -24,16 +24,28 @@ class PlaceSchema(Schema):
 
 
 class TestSelfNestedField:
+
+    def load(self, data, schema=PlaceSchema):
+        return schema(strict=True).load(data).data
+
     def test_field_serialization(self):
         point = Place('home', 123, 456.1)
         schema = PlaceSchema()
         dumped = schema.dump(point).data
         assert dumped == {"name": "home", "coords": {"x": 123.0, "y": 456.1}}
 
-    def test_deserialization_fails(self):
-        with pytest.raises(NotImplementedError):
-            PlaceSchema().load({"name": "home",
-                                "coords": {"x": 123.0, "y": 456.1}})
+    def test_deserialization_success(self):
+        load = PlaceSchema().load({"coords": {"x": 123.0, "y": 456.1}}).data
+        assert load == {"coords": {"x": 123.0, "y": 456.1}}
+
+    @pytest.mark.parametrize('data', [
+        {"coords": {"x": 1}},
+        {"coords": {"x": None, "y": 2}},
+        {"coords": {"x": "xxx", "y": 2}},
+    ])
+    def test_deserialization_fails(self, data):
+        with pytest.raises(ValidationError):
+            self.load(data)
 
 
 class TestJSTimestampField:

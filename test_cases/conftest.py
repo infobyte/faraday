@@ -54,11 +54,16 @@ class CustomClient(FlaskClient):
         return ret
 
 
+def pytest_addoption(parser):
+    parser.addoption('--connection-string', default='sqlite://',
+                     help="Database connection string. Defaults to in-memory "
+                     "sqlite if not specified:")
+
+
 @pytest.fixture(scope='session')
 def app(request):
-    # we use sqlite memory for tests
-    test_conn_string = 'sqlite://'
-    app = create_app(db_connection_string=test_conn_string, testing=True)
+    app = create_app(db_connection_string=request.config.getoption(
+        '--connection-string'), testing=True)
     app.test_client_class = CustomClient
 
     # Establish an application context before running the tests.
@@ -77,10 +82,18 @@ def database(app, request):
     """Session-wide test database."""
 
     def teardown():
+        try:
+            db.engine.execute('DROP TABLE vulnerability CASCADE')
+        except Exception:
+            pass
+        try:
+            db.engine.execute('DROP TABLE vulnerability_template CASCADE')
+        except Exception:
+            pass
         db.drop_all()
 
-    # Disable check_vulnerability_host_service_source_code constraint because it
-    # doesn't work in sqlite
+    # Disable check_vulnerability_host_service_source_code constraint because
+    # it doesn't work in sqlite
     vuln_constraints = db.metadata.tables['vulnerability'].constraints
     vuln_constraints.remove(next(
         constraint for constraint in vuln_constraints

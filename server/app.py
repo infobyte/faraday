@@ -5,6 +5,8 @@ import logging
 import os
 from os.path import join, expanduser
 
+from server.models import User
+
 try:
     # py2.7
     from configparser import ConfigParser, NoSectionError, NoOptionError
@@ -13,7 +15,7 @@ except ImportError:
     from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 
 import flask
-from flask import Flask
+from flask import Flask, session, g
 from flask.json import JSONEncoder
 from flask_security import (
     Security,
@@ -24,6 +26,7 @@ from depot.manager import DepotManager
 
 import server.config
 from server.utils.logger import LOGGING_HANDLERS
+logger = logging.getLogger(__name__)
 
 logger = logging.getLogger(__name__)
 
@@ -87,9 +90,9 @@ def create_app(db_connection_string=None, testing=None):
     try:
         app.config['SQLALCHEMY_DATABASE_URI'] = db_connection_string or server.config.database.connection_string.strip("'")
     except AttributeError:
-        print('Missing [database] section on server.ini. Please configure the database before running the server.')
+        logger.info('Missing [database] section on server.ini. Please configure the database before running the server.')
     except NoOptionError:
-        print('Missing connection_string on [database] section on server.ini. Please configure the database before running the server.')
+        logger.info('Missing connection_string on [database] section on server.ini. Please configure the database before running the server.')
 
     from server.models import db
     db.init_app(app)
@@ -119,7 +122,6 @@ def create_app(db_connection_string=None, testing=None):
     from server.api.modules.services import services_api
     from server.api.modules.session import session_api
     from server.api.modules.vulns import vulns_api
-    from server.api.modules.vuln_csv import vuln_csv_api
     from server.api.modules.vulnerability_template import vulnerability_template_api
     from server.api.modules.workspaces import workspace_api
     app.register_blueprint(commandsrun_api)
@@ -131,7 +133,6 @@ def create_app(db_connection_string=None, testing=None):
     app.register_blueprint(services_api)
     app.register_blueprint(session_api)
     app.register_blueprint(vulns_api)
-    app.register_blueprint(vuln_csv_api)
     app.register_blueprint(vulnerability_template_api)
     app.register_blueprint(workspace_api)
 
@@ -147,6 +148,11 @@ def create_app(db_connection_string=None, testing=None):
         logged_in = 'user_id' in flask.session
         if (not logged_in and not getattr(view, 'is_public', False)):
             flask.abort(403)
+
+        g.user = None
+        if logged_in:
+            user = User.query.filter_by(id=session["user_id"]).first()
+            g.user = user
 
     return app
 

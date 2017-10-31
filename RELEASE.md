@@ -8,6 +8,22 @@ Make sure you run ```./faraday.py --update``` the first time after an update!
 New features in the latest update
 =====================================
 
+
+TBA:
+---
+* Fixed bug when trying to run Faraday as second process and closing the terminal (&!)
+* Fixed bug where it asks for dependencies eternally when you have a different version than the one required
+* Fixed small bug in the update_from_document method
+* Fixed bug, makes the python library dependencies specific to the desired version
+* Fixed GitHub language bar to reflect real code percentage
+* Merge PR #195: Create gentoo_requirements_extras.txt (New Github wiki page)
+* Merge PR #225: Add references to found vulnerabilities in nmap plugin
+* New plugin: Netsparker cloud
+* New plugin: Lynis (Winner of Faraday Challenge 2017)
+* New Fplugin: changes the status of all vulnerabilities of an specific workspace to closed
+* New Fplugin: combines the "create_interface" and "create_host" scripts into one (create_interface_and_host script)
+* New Fplugin: import_csv , now you can import Faraday objects from a CSV
+
 August 11, 2017:
 ---
 * Add check to the vuln creation modal for empty targets in the Web UI

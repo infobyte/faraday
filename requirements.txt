@@ -1,7 +1,6 @@
 couchdbkit==0.6.5
 mockito==1.0.12
 whoosh==2.7.4
-argparse==1.4.0
 IPy==0.83
 restkit==4.2.2
 requests==2.18.4

@@ -141,7 +141,6 @@ class VulnerabilitySchema(AutoSchema):
     def load_attachments(self, value):
         return value
 
-
     def get_tags(self, obj):
         # TODO: improve performance here
         return [tag.name for tag in db.session.query(TagObject, Tag).filter_by(
@@ -287,6 +286,8 @@ class VulnerabilityView(PaginatedMixin,
     def _perform_create(self, data, **kwargs):
         data = self._parse_data(self._get_schema_class()(strict=True),
                                 request)
+        # TODO migration: use default values when popping and validate the
+        # popped object has the expected type.
         attachments = data.pop('_attachments')
 
         # This will be set after setting the workspace

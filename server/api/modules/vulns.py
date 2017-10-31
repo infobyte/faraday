@@ -23,6 +23,7 @@ from server.api.base import (
 from server.fields import FaradayUploadedFile
 from server.models import (
     db,
+    Hostname,
     Tag,
     TagObject,
     Vulnerability,
@@ -141,15 +142,6 @@ class VulnerabilitySchema(AutoSchema):
     def load_attachments(self, value):
         return value
 
-    def get_hostnames(self, obj):
-        # TODO: improve performance here
-        # TODO: move this to models?
-        if obj.host:
-            return [hostname.name for hostname in obj.host.hostnames]
-        if obj.service:
-            return [hostname.name for hostname in obj.service.host.hostnames]
-        logger.info('Vulnerability without host and service. Check invariant in obj with id {0}'.format(obj.id))
-        return []
 
     def get_tags(self, obj):
         # TODO: improve performance here
@@ -330,10 +322,16 @@ class VulnerabilityView(PaginatedMixin,
             *args, **kwargs)
         joinedloads = [
             joinedload(Vulnerability.host)
-            .load_only(Host.id),  # Only hostnames are needed
+            .load_only(Host.id)  # Only hostnames are needed
+            .joinedload(Host.hostnames),
 
-            joinedload(Vulnerability.service),
+            joinedload(Vulnerability.service)
+            .joinedload(Service.host)
+            .joinedload(Host.hostnames),
+
             joinedload(VulnerabilityWeb.service)
+            .joinedload(Service.host)
+            .joinedload(Host.hostnames),
         ]
         return query.options(selectin_polymorphic(
             VulnerabilityGeneric,

@@ -23,7 +23,6 @@ from server.api.base import (
 from server.fields import FaradayUploadedFile
 from server.models import (
     db,
-    Hostname,
     Tag,
     TagObject,
     Vulnerability,

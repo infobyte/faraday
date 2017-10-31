@@ -21,7 +21,12 @@ from sqlalchemy import (
 from sqlalchemy.orm import backref, relationship, undefer
 from sqlalchemy.sql import select, text, table
 from sqlalchemy import func
-from sqlalchemy.orm import column_property, query_expression, with_expression
+from sqlalchemy.orm import (
+    backref,
+    column_property,
+    query_expression,
+    with_expression
+)
 from sqlalchemy.schema import DDL
 from sqlalchemy.ext.associationproxy import association_proxy, _AssociationSet
 from sqlalchemy.ext.declarative import declared_attr
@@ -379,6 +384,7 @@ class VulnerabilityTemplate(VulnerabilityABC):
     reference_template_instances = relationship(
         "ReferenceTemplate",
         secondary="reference_template_vulnerability_association",
+        lazy="joined",
         collection_class=set
     )
 
@@ -391,6 +397,7 @@ class VulnerabilityTemplate(VulnerabilityABC):
     policy_violation_template_instances = relationship(
         "PolicyViolationTemplate",
         secondary="policy_violation_template_vulnerability_association",
+        lazy="joined",
         collection_class=set
     )
 
@@ -430,6 +437,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
     reference_instances = relationship(
         "Reference",
         secondary="reference_vulnerability_association",
+        lazy="joined",
         collection_class=set
     )
 
@@ -441,6 +449,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
     policy_violation_instances = relationship(
         "PolicyViolation",
         secondary="policy_violation_vulnerability_association",
+        lazy="joined",
         collection_class=set
     )
 
@@ -851,15 +860,16 @@ class Scope(Metadata):
                         index=True,
                         nullable=False
                         )
-    workspace = relationship(
-                            'Workspace',
-                            backref='scope',
-                            foreign_keys=[workspace_id],
-                            )
+    workspace = relationship('Workspace',
+                             backref=backref('scope', lazy="joined"),
+                             foreign_keys=[workspace_id],
+                             )
 
     __table_args__ = (
-        UniqueConstraint('name', 'workspace_id', name='uix_scope_name_workspace'),
+        UniqueConstraint('name', 'workspace_id',
+                         name='uix_scope_name_workspace'),
     )
+
 
 def is_valid_workspace(workspace_name):
     return db.session.query(server.models.Workspace).filter_by(name=workspace_name).first() is not None

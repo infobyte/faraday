@@ -268,11 +268,6 @@ class VulnerabilityView(PaginatedMixin,
     route_base = 'vulns'
     filterset_class = VulnerabilityFilterSet
 
-    get_joinedloads = [
-        VulnerabilityGeneric.reference_instances,
-        VulnerabilityGeneric.policy_violation_instances,
-    ]
-
     model_class_dict = {
         'Vulnerability': Vulnerability,
         'VulnerabilityWeb': VulnerabilityWeb,

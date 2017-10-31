@@ -64,3 +64,6 @@ data/vfeed.db
 # Images based on DB Schema
 entity_dbschema.png
 uml_schema.png
+
+# Documentation builds
+doc/_build/

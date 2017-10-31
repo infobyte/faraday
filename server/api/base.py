@@ -90,7 +90,7 @@ class GenericView(FlaskView):
     def _get_eagerloaded_query(self, *args, **kwargs):
         options = []
         try:
-            has_creator = 'owner' in self.schema_class.opts.fields
+            has_creator = 'owner' in self._get_schema_class().opts.fields
         except AttributeError:
             has_creator = False
         if has_creator:

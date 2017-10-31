@@ -10,6 +10,7 @@ from filteralchemy import FilterSet, operators
 from flask import request
 from flask import Blueprint
 from marshmallow import Schema, fields, post_load, ValidationError
+from sqlalchemy.orm import joinedload, selectin_polymorphic
 
 from depot.manager import DepotManager
 from server.api.base import (
@@ -158,10 +159,11 @@ class VulnerabilitySchema(AutoSchema):
         ).all()]
 
     def get_parent(self, obj):
-        return obj.parent.id
+        return obj.service_id or obj.host_id
 
     def get_parent_type(self, obj):
-        return obj.parent.__class__.__name__
+        assert obj.service_id is not None or obj.host_id is not None
+        return 'Service' if obj.service_id is not None else 'Host'
 
     def get_status(self, obj):
         if obj.status == 'open':
@@ -276,6 +278,11 @@ class VulnerabilityView(PaginatedMixin,
     route_base = 'vulns'
     filterset_class = VulnerabilityFilterSet
 
+    get_joinedloads = [
+        VulnerabilityGeneric.reference_instances,
+        VulnerabilityGeneric.policy_violation_instances,
+    ]
+
     model_class_dict = {
         'Vulnerability': Vulnerability,
         'VulnerabilityWeb': VulnerabilityWeb,
@@ -312,6 +319,26 @@ class VulnerabilityView(PaginatedMixin,
             )
         db.session.commit()
         return obj
+
+    def _get_eagerloaded_query(self, *args, **kwargs):
+        """Eager hostnames loading.
+
+        This is too complex to get_joinedloads so I have to
+        override the function
+        """
+        query = super(VulnerabilityView, self)._get_eagerloaded_query(
+            *args, **kwargs)
+        joinedloads = [
+            joinedload(Vulnerability.host)
+            .load_only(Host.id),  # Only hostnames are needed
+
+            joinedload(Vulnerability.service),
+            joinedload(VulnerabilityWeb.service)
+        ]
+        return query.options(selectin_polymorphic(
+            VulnerabilityGeneric,
+            [Vulnerability, VulnerabilityWeb]
+        ), *joinedloads)
 
     @property
     def model_class(self):

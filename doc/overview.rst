@@ -23,7 +23,7 @@ A really powerful Object Relational Mapper for Python that allows us to map
 results of SQL queries to instances of Python objects
 
 `Flask-Classful`_
-^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^
 
 A pretty simple library to create RESTful API endpoints inside a class defining
 one or many routes related to that endpoint.  Is takes the idea of Flask
@@ -49,9 +49,11 @@ It gives us customizable registration and login endpoints.
 It was build on top of other common Flask libraries such as:
 
 * `Flask-Login`_
+
 .. _`Flask-Login`: https://flask-login.readthedocs.io/en/latest/
 
 * `Flask-Principal`_
+
 .. _`Flask-Principal`: https://pythonhosted.org/Flask-Principal/
 
 .. _flask: http://flask.pocoo.org/
@@ -68,20 +70,25 @@ Other libraries we use
 
 * `Marshmallow-SQLAlchemy`_ To automatically create Marshmallow schemas based
   on SQLAlchemy models
+
 .. _`Marshmallow-SQLAlchemy`: https://marshmallow-sqlalchemy.readthedocs.io/
 
 * `Flask-SQLAlchemy`_ provides us a nice way to use the framework and the ORM together.
   It also has a good `pagination system` that is used on many API endpoints
+
 .. _`Flask-SQLAlchemy`: http://flask-sqlalchemy.pocoo.org/
 .. _pagination system: http://flask-sqlalchemy.pocoo.org/2.3/api/#utilities
 
 * `Webargs`_ to parse the request arguments given a Marshmallow Schema
+
 .. _`Webargs`: http://webargs.readthedocs.io/
 
 * `Filteralchemy`_ to make query filters in a declarative way, inspired on
   `django-filter`_
+
 .. _`django-filter`: https://github.com/carltongibson/django-filter
 .. _`Filteralchemy`: http://filteralchemy.readthedocs.io/
 
 * `Depot`_ to have pluggable file storage backends
+
 .. _`Depot`: http://depot.readthedocs.io/

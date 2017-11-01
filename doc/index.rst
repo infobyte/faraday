@@ -11,6 +11,7 @@ Welcome to Faraday's documentation!
    :caption: Contents:
 
    reference
+   overview
 
 Indices and tables
 ==================

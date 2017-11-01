@@ -51,7 +51,7 @@ def _get_base_server_url():
         server_url = _conf().getCouchURI()
     else:
         server_url = SERVER_URL
-    return server_url
+    return server_url[:-1] if server_url[-1] == "/" else server_url
 
 
 def _create_server_api_url():

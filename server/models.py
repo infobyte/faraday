@@ -734,21 +734,10 @@ class Credential(Metadata):
         return self.host or self.service
 
 
-def _make_command_created_related_object(object_type=None, joined=False, extra_where=None):
-    where_expr = ""
-    if extra_where:
-        where_expr += extra_where
-
-
+def _make_command_created_related_object():
     query = select([BooleanToIntColumn("(count(*) = 0)")])
-
-    if joined:
-        query = query.select_from('command_object as command_object_inner, {0}'.format(object_type.lower()))
-        where_expr += 'command_object_inner.object_id = {0}.id and '.format(object_type.lower())
-    else:
-        query = query.select_from('command_object as command_object_inner')
-
-    where_expr += " command_object_inner.create_date < command_object.create_date and " \
+    query = query.select_from('command_object as command_object_inner')
+    where_expr = " command_object_inner.create_date < command_object.create_date and " \
                   " (command_object_inner.object_id = command_object.object_id and " \
                   " command_object_inner.object_type = command_object.object_type) "
     query = query.where(text(where_expr))
@@ -774,11 +763,6 @@ class CommandObject(db.Model):
     # remeber that this table has a row instances per relationship.
     # this created integer can be used to obtain the total object_type objects created.
     created = _make_command_created_related_object()
-    created_vulnerability_critical = _make_command_created_related_object(
-        'Vulnerability',
-        joined=True,
-        extra_where="vulnerability.severity='critical' and "
-    )
 
 
 def _make_created_objects_sum(object_type_filter):
@@ -795,7 +779,7 @@ def _make_created_objects_sum_joined(object_type_filter, join_filters):
     for attr, filter_value in join_filters.items():
         where_conditions.append("vulnerability.{0} = {1}".format(attr, filter_value))
     return column_property(
-        select([func.sum(CommandObject.created_vulnerability_critical)]). \
+        select([func.sum(CommandObject.created)]). \
             select_from(table('command_object')). \
             select_from(table('vulnerability')). \
             where(' and '.join(where_conditions))

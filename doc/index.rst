@@ -10,8 +10,8 @@ Welcome to Faraday's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   reference
    overview
+   reference
 
 Indices and tables
 ==================

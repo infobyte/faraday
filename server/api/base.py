@@ -47,25 +47,73 @@ class InvalidUsage(Exception):
 
 # TODO: Require @view decorator to enable custom routes
 class GenericView(FlaskView):
-    """Abstract class to provide helpers. Inspired in Django REST
-    Framework generic viewsets"""
+    """Abstract class to provide helpers. Inspired in `Django REST
+    Framework generic viewsets`_.
+
+    To create new views, you should create a class inheriting from
+    GenericView (or from one of its subclasses) and set the model_class,
+    schema_class, and optionally the rest of class attributes.
+
+    .. _Django REST Framework generic viewsets: http://www.django-rest-framework.org/api-guide/viewsets/#genericviewset
+    """
 
     # Must-implement attributes
+
+    #: **Required**. The class of the SQLAlchemy model this view will handle
     model_class = None
+
+    #: **Required** (unless _get_schema_class is overwritten).
+    #: A subclass of `marshmallow.Schema` to serialize and deserialize the
+    #: data provided by the user
     schema_class = None
 
     # Default attributes
+
+    #: The prefix where the endpoint should be registered.
+    #: This is useful for API versioning
     route_prefix = '/v2/'
+
+    #: Arguments that are passed to the view but shouldn't change the route
+    #: rule. This should be used when route_prefix is parametrized
+    #:
+    #: You tipically won't need this, unless you're creating nested views.
+    #: For example GenericWorkspacedView use this so the workspace name is
+    #: prepended to the view URL
     base_args = []
+
+    #: Decides how you want to format the output response. It is set to dump a
+    #: JSON object by default.
+    #: See http://flask-classful.teracy.org/#adding-resource-representations-get-real-classy-and-put-on-a-top-hat
+    #: for more information
     representations = {
         'application/json': output_json,
         'flask-classful/default': output_json,
     }
+
+    ""
+    #: Name of the field of the model used to get the object instance in
+    #: retrieve, update and delete endpoints.
+    #:
+    #: For example, if you have a `Tag` model, maybe a `slug` would be good
+    #: lookup field.
+    #:
+    #: .. note::
+    #:     You have to use a unique field here instead of one allowing
+    #:     duplicate values
     lookup_field = 'id'
+
+    #: A function that converts the string paremeter passed in the URL to the
+    #: value that will be queried in the database.
+    #: It defaults to int to match the type of the default lookup_field_type
+    #: (id)
     lookup_field_type = int
+
+    # List of field names that the _validate_uniqueness method will use
+    # to detect duplicate object creation/update
     unique_fields = []  # Fields unique
 
     def _get_schema_class(self):
+        """Documentame"""
         assert self.schema_class is not None, "You must define schema_class"
         return self.schema_class
 

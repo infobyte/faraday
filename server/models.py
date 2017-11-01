@@ -37,7 +37,7 @@ from flask_security import (
     RoleMixin,
     UserMixin,
 )
-from server.utils.database import get_or_create, IntToBooleanColumn
+from server.utils.database import get_or_create, BooleanToIntColumn
 
 
 class SQLAlchemy(OriginalSQLAlchemy):
@@ -734,16 +734,26 @@ class Credential(Metadata):
         return self.host or self.service
 
 
-def _make_command_created_related_object(object_type):
-    # # text('(count(*) = 0)::int ')
+def _make_command_created_related_object(object_type=None, joined=False, extra_where=None):
+    where_expr = ""
+    if extra_where:
+        where_expr += extra_where
+
+
+    query = select([BooleanToIntColumn("(count(*) = 0)")])
+
+    if joined:
+        query = query.select_from('command_object as command_object_inner, {0}'.format(object_type.lower()))
+        where_expr += 'command_object_inner.object_id = {0}.id and '.format(object_type.lower())
+    else:
+        query = query.select_from('command_object as command_object_inner')
+
+    where_expr += " command_object_inner.create_date < command_object.create_date and " \
+                  " (command_object_inner.object_id = command_object.object_id and " \
+                  " command_object_inner.object_type = command_object.object_type) "
+    query = query.where(text(where_expr))
     return column_property(
-        select([IntToBooleanColumn("(count(*) = 0)")]).\
-        select_from('command_object as command_object_inner').\
-        where(text(
-            " command_object_inner.create_date < command_object.create_date and " \
-            " command_object_inner.object_id = command_object.object_id and " \
-            " command_object_inner.object_type='%s' " % (object_type))
-        )
+        query,
     )
 
 
@@ -763,17 +773,32 @@ class CommandObject(db.Model):
     # the following properties are used to know if the command created the specified objects_type
     # remeber that this table has a row instances per relationship.
     # this created integer can be used to obtain the total object_type objects created.
-    created_vulnerability = _make_command_created_related_object('Vulnerability')
-    created_vulnerability_web = _make_command_created_related_object('VulnerabilityWeb')
-    created_host = _make_command_created_related_object('Host')
-    created_service = _make_command_created_related_object('Services')
+    created = _make_command_created_related_object()
+    created_vulnerability_critical = _make_command_created_related_object(
+        'Vulnerability',
+        joined=True,
+        extra_where="vulnerability.severity='critical' and "
+    )
 
 
-def _make_created_objects_sum(object, object_created_attribute, join_condition):
+def _make_created_objects_sum(object_type_filter):
+    where_condition = "command_object.command_id = command.id and command_object.object_type= '%s'" % object_type_filter
     return column_property(
-        select([func.sum(object_created_attribute)]).\
-        select_from(object).\
-        where(join_condition)
+        select([func.sum(CommandObject.created)]).\
+        select_from(table('command_object')). \
+        where(where_condition)
+    )
+
+
+def _make_created_objects_sum_joined(object_type_filter, join_filters):
+    where_conditions = ["vulnerability.id = command_object.object_id and command_object.command_id = command.id and command_object.object_type= '%s'" % object_type_filter]
+    for attr, filter_value in join_filters.items():
+        where_conditions.append("vulnerability.{0} = {1}".format(attr, filter_value))
+    return column_property(
+        select([func.sum(CommandObject.created_vulnerability_critical)]). \
+            select_from(table('command_object')). \
+            select_from(table('vulnerability')). \
+            where(' and '.join(where_conditions))
     )
 
 
@@ -792,29 +817,15 @@ class Command(Metadata):
     workspace = relationship('Workspace', foreign_keys=[workspace_id])
     # TODO: add Tool relationship and report_attachment
 
-    sum_created_vulnerabilities = _make_created_objects_sum(
-        CommandObject,
-        CommandObject.created_vulnerability,
-        'command.id=command_object.command_id'
-    )
+    sum_created_vulnerabilities = _make_created_objects_sum('Vulnerability')
 
-    sum_created_vulnerabilities_web = _make_created_objects_sum(
-        CommandObject,
-        CommandObject.created_vulnerability_web,
-        'command.id=command_object.command_id'
-    )
+    sum_created_vulnerabilities_web = _make_created_objects_sum('VulnerabilityWeb')
 
-    sum_created_hosts = _make_created_objects_sum(
-        CommandObject,
-        CommandObject.created_host,
-        'command.id=command_object.command_id'
-    )
+    sum_created_hosts = _make_created_objects_sum('Host')
 
-    sum_created_services = _make_created_objects_sum(
-        CommandObject,
-        CommandObject.created_service,
-        'command.id=command_object.command_id'
-    )
+    sum_created_services = _make_created_objects_sum('Service')
+
+    sum_created_vulnerability_critical = _make_created_objects_sum_joined('Vulnerability', {'severity': '\'critical\''})
 
     @property
     def parent(self):

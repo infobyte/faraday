@@ -66,7 +66,11 @@ class CommandView(ReadWriteWorkspacedView):
         for command in query.all():
             res.append({
                 'command': command.id,
-                'sum_created_vulnerabilities': command.sum_created_vulnerabilities
+                'sum_created_vulnerabilities': command.sum_created_vulnerabilities or 0,
+                'sum_created_vulnerabilities_web': command.sum_created_vulnerabilities_web or 0,
+                'sum_created_hosts': command.sum_created_hosts or 0,
+                'sum_created_services': command.sum_created_services or 0,
+                'sum_created_vulnerability_critical': command.sum_created_vulnerability_critical or 0
             })
         return res
 

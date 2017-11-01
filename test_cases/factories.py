@@ -280,11 +280,17 @@ class CommandFactory(WorkspaceObjectFactory):
     @factory.post_generation
     def attach_vuln_object(self, create, extracted, **kwargs):
         if create:
-            vuln = VulnerabilityFactory.create(workspace=self.workspace)
+            host = HostFactory.create(workspace=self.workspace)
+            vuln = VulnerabilityFactory.create(workspace=self.workspace, host=host, service=None, severity='low')
             db.session.flush()
             CommandObjectFactory.create(
                 object_type='Vulnerability',
                 object_id=vuln.id,
+                command=self,
+            )
+            CommandObjectFactory.create(
+                object_type='Host',
+                object_id=host.id,
                 command=self,
             )
 

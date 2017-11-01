@@ -188,3 +188,19 @@ def _group_concat_postgresql(element, compiler, **kw):
         separator,
     )
     return res
+
+class IntToBooleanColumn(expression.FunctionElement):
+
+    def __init__(self, expression):
+        super(IntToBooleanColumn, self).__init__()
+        self.expression_str = expression
+
+
+@compiler.compiles(IntToBooleanColumn, 'postgresql')
+def _integer_to_boolean_postgresql(element, compiler, **kw):
+    return '{0}::int'.format(element.expression_str)
+
+@compiler.compiles(IntToBooleanColumn, 'sqlite')
+def _integer_to_boolean_sqlite(element, compiler, **kw):
+    # text('(count(*) = 0)::int ')
+    return element.expression_str

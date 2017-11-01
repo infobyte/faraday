@@ -10,6 +10,7 @@ from server.models import (
 )
 from server.api.modules.commandsrun import CommandView
 from server.api.modules.workspaces import WorkspaceView
+from test_cases.factories import VulnerabilityFactory, EmptyCommandFactory, CommandObjectFactory
 
 
 @pytest.mark.usefixtures('logged_user')
@@ -39,3 +40,19 @@ class TestListCommandView(ReadOnlyAPITests):
                 u'workspace'
             ]
             assert set(object_properties) == set(command['value'].keys())
+
+    def test_activity_feed(self, session, test_client):
+        command = self.factory.create()
+        another_command = EmptyCommandFactory.create(workspace=command.workspace)
+        vuln_id = command.command_objects[0].object_id
+        session.flush()
+        CommandObjectFactory.create(
+            command=another_command,
+            object_type='Vulnerability',
+            object_id=vuln_id
+        )
+        session.commit()
+        res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
+        assert res.status_code == 200
+        assert filter(lambda stats: stats['command'] == command.id, res.json)[0]['sum_created_vulnerabilities'] == 1
+        assert filter(lambda stats: stats['command'] == another_command.id, res.json)[0]['sum_created_vulnerabilities'] == 0

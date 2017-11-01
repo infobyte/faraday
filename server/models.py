@@ -37,7 +37,7 @@ from flask_security import (
     RoleMixin,
     UserMixin,
 )
-from server.utils.database import get_or_create
+from server.utils.database import get_or_create, IntToBooleanColumn
 
 
 class SQLAlchemy(OriginalSQLAlchemy):
@@ -734,6 +734,49 @@ class Credential(Metadata):
         return self.host or self.service
 
 
+def _make_command_created_related_object(object_type):
+    # # text('(count(*) = 0)::int ')
+    return column_property(
+        select([IntToBooleanColumn("(count(*) = 0)")]).\
+        select_from('command_object as command_object_inner').\
+        where(text(
+            " command_object_inner.create_date < command_object.create_date and " \
+            " command_object_inner.object_id = command_object.object_id and " \
+            " command_object_inner.object_type='%s' " % (object_type))
+        )
+    )
+
+
+class CommandObject(db.Model):
+    __tablename__ = 'command_object'
+    id = Column(Integer, primary_key=True)
+
+    object_id = Column(Integer, nullable=False)
+    object_type = Column(Text, nullable=False)
+
+    command = relationship('Command', backref='command_objects')
+    command_id = Column(Integer, ForeignKey('command.id'), index=True)
+
+    create_date = Column(DateTime, default=datetime.utcnow)
+    update_date = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # the following properties are used to know if the command created the specified objects_type
+    # remeber that this table has a row instances per relationship.
+    # this created integer can be used to obtain the total object_type objects created.
+    created_vulnerability = _make_command_created_related_object('Vulnerability')
+    created_vulnerability_web = _make_command_created_related_object('VulnerabilityWeb')
+    created_host = _make_command_created_related_object('Host')
+    created_service = _make_command_created_related_object('Services')
+
+
+def _make_created_objects_sum(object, object_created_attribute, join_condition):
+    return column_property(
+        select([func.sum(object_created_attribute)]).\
+        select_from(object).\
+        where(join_condition)
+    )
+
+
 class Command(Metadata):
     __tablename__ = 'command'
     id = Column(Integer, primary_key=True)
@@ -748,6 +791,30 @@ class Command(Metadata):
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', foreign_keys=[workspace_id])
     # TODO: add Tool relationship and report_attachment
+
+    sum_created_vulnerabilities = _make_created_objects_sum(
+        CommandObject,
+        CommandObject.created_vulnerability,
+        'command.id=command_object.command_id'
+    )
+
+    sum_created_vulnerabilities_web = _make_created_objects_sum(
+        CommandObject,
+        CommandObject.created_vulnerability_web,
+        'command.id=command_object.command_id'
+    )
+
+    sum_created_hosts = _make_created_objects_sum(
+        CommandObject,
+        CommandObject.created_host,
+        'command.id=command_object.command_id'
+    )
+
+    sum_created_services = _make_created_objects_sum(
+        CommandObject,
+        CommandObject.created_service,
+        'command.id=command_object.command_id'
+    )
 
     @property
     def parent(self):
@@ -1090,6 +1157,7 @@ class CommentObject(db.Model):
 
     comment = relationship('Comment', backref='comment_objects')
     comment_id = Column(Integer, ForeignKey('comment.id'), index=True)
+
 
 
 class Comment(Metadata):

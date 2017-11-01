@@ -5,6 +5,7 @@ import time
 
 import flask
 from flask import Blueprint
+from flask_classful import route
 from marshmallow import fields
 
 from server.api.base import AutoSchema, ReadWriteWorkspacedView
@@ -14,7 +15,7 @@ from server.utils.web import (
     validate_workspace,
     filter_request_args, get_integer_parameter
 )
-from server.models import Command
+from server.models import Command, Workspace
 
 commandsrun_api = Blueprint('commandsrun_api', __name__)
 
@@ -57,5 +58,16 @@ class CommandView(ReadWriteWorkspacedView):
         return {
             'commands': commands,
         }
+
+    @route('/activity_feed/')
+    def activity_feed(self, workspace_name):
+        res = []
+        query = Command.query.join(Workspace).filter_by(name=workspace_name)
+        for command in query.all():
+            res.append({
+                'command': command.id,
+                'sum_created_vulnerabilities': command.sum_created_vulnerabilities
+            })
+        return res
 
 CommandView.register(commandsrun_api)

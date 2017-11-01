@@ -150,11 +150,14 @@ class TestListCommandView(ReadOnlyAPITests):
     def test_multiple_commands_executed_with_same_objects_found(self, session, test_client):
 
         workspace = WorkspaceFactory.create()
-        command = EmptyCommandFactory.create(workspace=workspace)
+        host = HostFactory.create(workspace=workspace)
+        vuln = VulnerabilityFactory.create(severity='low', workspace=workspace, host=host, service=None)
         service = ServiceFactory.create(workspace=workspace)
-        for _ in range(0, 10):
-            host = HostFactory.create(workspace=workspace)
-            vuln = VulnerabilityFactory.create(severity='low', workspace=workspace, host=host, service=None)
+        commands = []
+        for index in range(0, 10):
+            command = EmptyCommandFactory.create(workspace=workspace)
+            commands.append(command)
+
             session.flush()
             CommandObjectFactory.create(
                 command=command,
@@ -168,7 +171,7 @@ class TestListCommandView(ReadOnlyAPITests):
             )
         vuln_med = VulnerabilityFactory.create(severity='medium', workspace=workspace, service=service, host=None)
         session.flush()
-
+        command = EmptyCommandFactory.create(workspace=workspace)
         CommandObjectFactory.create(
             command=command,
             object_type='Service',
@@ -182,10 +185,27 @@ class TestListCommandView(ReadOnlyAPITests):
         session.commit()
         res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
         assert res.status_code == 200
-        assert res.json == [{u'command': command.id,
-                             u'sum_created_hosts': 10,
-                             u'sum_created_services': 1,
-                             u'sum_created_vulnerabilities': 11,
+        assert res.json[0] == {u'command': commands[0].id,
+                             u'sum_created_hosts': 1,
+                             u'sum_created_services': 0,
+                             u'sum_created_vulnerabilities': 1,
                              u'sum_created_vulnerabilities_web': 0,
                              u'sum_created_vulnerability_critical': 0
-                             }]
+                             }
+        for index in range(1, 10):
+            assert res.json[index] == {u'command': commands[index].id,
+                                   u'sum_created_hosts': 0,
+                                   u'sum_created_services': 0,
+                                   u'sum_created_vulnerabilities': 0,
+                                   u'sum_created_vulnerabilities_web': 0,
+                                   u'sum_created_vulnerability_critical': 0
+                                   }
+
+        # new command must create new service and vuln
+        assert res.json[10] == {u'command': command.id,
+                               u'sum_created_hosts': 0,
+                               u'sum_created_services': 1,
+                               u'sum_created_vulnerabilities': 1,
+                               u'sum_created_vulnerabilities_web': 0,
+                               u'sum_created_vulnerability_critical': 0
+                               }

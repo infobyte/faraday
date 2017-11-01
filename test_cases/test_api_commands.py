@@ -11,7 +11,7 @@ from server.models import (
 from server.api.modules.commandsrun import CommandView
 from server.api.modules.workspaces import WorkspaceView
 from test_cases.factories import VulnerabilityFactory, EmptyCommandFactory, CommandObjectFactory, HostFactory, \
-    WorkspaceFactory
+    WorkspaceFactory, ServiceFactory
 
 
 @pytest.mark.usefixtures('logged_user')
@@ -75,8 +75,6 @@ class TestListCommandView(ReadOnlyAPITests):
                                                                                           u'sum_created_vulnerabilities_web': 0,
                                                                                           u'sum_created_vulnerability_critical': 0}]
 
-
-
     def test_verify_created_critical_vulns_is_correctly_showing_sum_values(self, session, test_client):
         workspace = WorkspaceFactory.create()
         command = EmptyCommandFactory.create(workspace=workspace)
@@ -108,4 +106,86 @@ class TestListCommandView(ReadOnlyAPITests):
                              u'sum_created_vulnerabilities': 2,
                              u'sum_created_vulnerabilities_web': 0,
                              u'sum_created_vulnerability_critical': 1
+                             }]
+
+    def test_verify_created_vulns_with_host_and_service_verification(self, session, test_client):
+        workspace = WorkspaceFactory.create()
+        command = EmptyCommandFactory.create(workspace=workspace)
+        host = HostFactory.create(workspace=workspace)
+        service = ServiceFactory.create(workspace=workspace)
+        vuln = VulnerabilityFactory.create(severity='critical', workspace=workspace, host=host, service=None)
+        vuln_med = VulnerabilityFactory.create(severity='medium', workspace=workspace, service=service, host=None)
+        session.flush()
+        CommandObjectFactory.create(
+            command=command,
+            object_type='Host',
+            object_id=host.id
+        )
+        CommandObjectFactory.create(
+            command=command,
+            object_type='Vulnerability',
+            object_id=vuln.id
+        )
+        CommandObjectFactory.create(
+            command=command,
+            object_type='Service',
+            object_id=service.id
+        )
+        CommandObjectFactory.create(
+            command=command,
+            object_type='Vulnerability',
+            object_id=vuln_med.id
+        )
+        session.commit()
+        res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
+        assert res.status_code == 200
+        assert res.json == [{u'command': command.id,
+                             u'sum_created_hosts': 1,
+                             u'sum_created_services': 1,
+                             u'sum_created_vulnerabilities': 2,
+                             u'sum_created_vulnerabilities_web': 0,
+                             u'sum_created_vulnerability_critical': 1
+                             }]
+
+    def test_multiple_commands_executed_with_same_objects_found(self, session, test_client):
+
+        workspace = WorkspaceFactory.create()
+        command = EmptyCommandFactory.create(workspace=workspace)
+        service = ServiceFactory.create(workspace=workspace)
+        for _ in range(0, 10):
+            host = HostFactory.create(workspace=workspace)
+            vuln = VulnerabilityFactory.create(severity='low', workspace=workspace, host=host, service=None)
+            session.flush()
+            CommandObjectFactory.create(
+                command=command,
+                object_type='Host',
+                object_id=host.id
+            )
+            CommandObjectFactory.create(
+                command=command,
+                object_type='Vulnerability',
+                object_id=vuln.id
+            )
+        vuln_med = VulnerabilityFactory.create(severity='medium', workspace=workspace, service=service, host=None)
+        session.flush()
+
+        CommandObjectFactory.create(
+            command=command,
+            object_type='Service',
+            object_id=service.id
+        )
+        CommandObjectFactory.create(
+            command=command,
+            object_type='Vulnerability',
+            object_id=vuln_med.id
+        )
+        session.commit()
+        res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
+        assert res.status_code == 200
+        assert res.json == [{u'command': command.id,
+                             u'sum_created_hosts': 10,
+                             u'sum_created_services': 1,
+                             u'sum_created_vulnerabilities': 11,
+                             u'sum_created_vulnerabilities_web': 0,
+                             u'sum_created_vulnerability_critical': 0
                              }]

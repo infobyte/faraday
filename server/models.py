@@ -449,6 +449,13 @@ class VulnerabilityGeneric(VulnerabilityABC):
         proxy_factory=CustomAssociationSet,
         creator=_build_associationproxy_creator('PolicyViolation'))
 
+    evidence = relationship(
+        "File",
+        primaryjoin="and_(File.object_id==VulnerabilityGeneric.id, "
+                    "File.object_type=='vulnerability')",
+        foreign_keys="File.object_id",
+    )
+
     __mapper_args__ = {
         'polymorphic_on': type
     }
@@ -991,10 +998,11 @@ class File(Metadata):
     __tablename__ = 'file'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    name = Column(Text, unique=True)
-    filename = Column(Text, unique=True)
-    description = Column(Text, unique=True)
-    content = Column(UploadedFileField(upload_type=FaradayUploadedFile))  # plain attached file
+    name = Column(Text)
+    filename = Column(Text, nullable=False)
+    description = Column(Text)
+    content = Column(UploadedFileField(upload_type=FaradayUploadedFile),
+                     nullable=False)  # plain attached file
     object_id = Column(Integer, nullable=False)
     object_type = Column(Text, nullable=False)
 

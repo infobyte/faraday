@@ -128,9 +128,8 @@ class VulnerabilitySchema(AutoSchema):
 
     def get_attachments(self, obj):
         res = []
-        files = db.session.query(File).filter_by(object_id=obj.id, object_type=obj.__class__.__name__).all()
 
-        for file_obj in files:
+        for file_obj in obj.evidence:
             ret, errors = EvidenceSchema().dump(file_obj)
             if errors:
                 raise ValidationError(errors, data=ret)
@@ -306,7 +305,7 @@ class VulnerabilityView(PaginatedMixin,
                 db.session,
                 File,
                 object_id=obj.id,
-                object_type=obj.__class__.__name__,
+                object_type='vulnerability',
                 name=os.path.splitext(os.path.basename(filename))[0],
                 filename=os.path.basename(filename),
                 content=faraday_file,

@@ -391,6 +391,7 @@ class VulnerabilityImporter(object):
     DOC_TYPE = ['Vulnerability', 'VulnerabilityWeb']
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
+        vulnerability = None
         couch_parent_id = document.get('parent', None)
         if not couch_parent_id:
             couch_parent_id = '.'.join(document['_id'].split('.')[:-1])
@@ -467,8 +468,14 @@ class VulnerabilityImporter(object):
                 'opened': 'open',
                 'open': 'open',
                 'closed': 'closed',
+                're-opened': 're-opened',
+                'risk-accepted': 'risk-accepted',
             }
-            status = status_map[document.get('status', 'opened')]
+            try:
+                status = status_map[document.get('status', 'opened')]
+            except KeyError:
+                logger.warn('Could not map vulnerability status {0}'.format(document['status']))
+                continue
             vulnerability.status = status
 
             vulnerability.reference_instances.update(

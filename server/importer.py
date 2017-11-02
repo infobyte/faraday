@@ -55,6 +55,7 @@ from server.models import (
     VulnerabilityWeb,
     Workspace,
     File,
+    log_command_object_found,
 )
 from server.utils import invalid_chars
 from server.utils.database import get_or_create
@@ -268,6 +269,10 @@ class HostImporter(object):
         hosts = []
         host_ips = [name_or_ip for name_or_ip in self.retrieve_ips_from_host_document(document)]
         interfaces = get_children_from_couch(workspace, document.get('_id'), 'Interface')
+        command = None
+        if 'command_id' in document['metadata'] and document['metadata']['command_id']:
+            command = session.query(Command).get(couchdb_relational_map[document['metadata']['command_id']][0])
+
         for interface in interfaces:
             interface = interface['value']
             if check_ip_address(interface['ipv4']['address']):
@@ -275,27 +280,30 @@ class HostImporter(object):
                 host, created = get_or_create(session, Host, ip=interface_ip, workspace=workspace)
                 host.default_gateway_ip = interface['ipv4']['gateway']
                 self.merge_with_host(host, interface, workspace)
-                hosts.append(host)
+                hosts.append((host, created))
             if check_ip_address(interface['ipv6']['address']):
                 interface_ip = interface['ipv6']['address']
                 host, created = get_or_create(session, Host, ip=interface_ip, workspace=workspace)
                 host.default_gateway_ip = interface['ipv6']['gateway']
                 self.merge_with_host(host, interface, workspace)
-                hosts.append(host)
+                hosts.append((host, created))
         if not hosts:
             # if not host were created after inspecting interfaces
             # we create a host with "name" as ip to avoid losing hosts.
             # some hosts lacks of interface
             for name_or_ip in host_ips:
                 host, created = get_or_create(session, Host, ip=name_or_ip, workspace=workspace)
-                hosts.append(host)
+                hosts.append((host, created))
 
         if len(hosts) > 1:
             logger.warning('Total hosts found {0} for couchdb id {1}'.format(len(hosts), document.get('_id')))
 
-        for host in hosts:
+        for host, created in hosts:
             # we update or set other host attributes in this cycle
             # Ticket #3387: if the 'os' field is None, we default to 'unknown
+            if command:
+                log_command_object_found(command, host, created)
+
             if not document.get('os'):
                 document['os'] = 'unknown'
 

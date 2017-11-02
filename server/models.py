@@ -787,6 +787,11 @@ class CommandObject(db.Model):
     # this created integer can be used to obtain the total object_type objects created.
     created = _make_command_created_related_object()
 
+    # We are currently using the column property created. however to avoid losing information
+    # we also store the a boolean to know if at the moment of created the object related to the
+    # Command was created.
+    created_persistent = Column(Boolean, default=False)
+
 
 def _make_created_objects_sum(object_type_filter):
     where_condition = "command_object.command_id = command.id and command_object.object_type= '%s'" % object_type_filter
@@ -1236,3 +1241,15 @@ event.listen(
     'after_create',
     vulnerability_uniqueness.execute_if(dialect='postgresql')
 )
+
+
+def log_command_object_found(command, object, created):
+    db.session.flush()
+    get_or_create(
+        db.session,
+        CommandObject,
+        command=command,
+        object_id=object.id,
+        object_type=object.__tablename__,
+        created_persistent=created,
+    )

@@ -61,13 +61,16 @@
                                         <a href="" ng-click="toggleSort('vulns')">Vulns</a>
                                     </th>
                                     <th>
+                                        <a href="" ng-click="toggleSort('credentials')">Credentials</a>
+                                    </th>
+                                    <th>
                                         <a href="" ng-click="toggleSort('os')">OS</a>
                                     </th>
                                     <th>
                                         <a href="" ng-click="toggleSort('owned')">Owned</a>
                                     </th>
                                     <th>
-                                        <a href="" ng-click="toggleSort('credentials')">Credentials</a>
+                                        <a href="" ng-click="toggleSort('metadata.update_time')">Last modified</a>
                                     </th>
                                 </tr>
                             </thead>
@@ -85,17 +88,22 @@
                                     <td><a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-bind="host.services || '-'"></a></td>
                                     <td><a ng-href="#/status/ws/{{workspace}}/search/target={{host.name}}" ng-bind="host.vulns"></a></td>
                                     <td>
+                                        <a ng-href="#/credentials/ws/{{workspace}}/hid/{{host._id}}">{{host.credentials}}</a>
+                                    </td>
+                                    <td>
                                         <a ng-href="#/hosts/ws/{{workspace}}/search/os={{host.os}}">
                                             <img ng-if="host.icon != undefined" ng-src="images/{{host.icon}}.png" uib-tooltip="{{host.os}}"/>
                                             <span ng-if="host.icon == undefined" class="fa fa-laptop" uib-tooltip="{{host.os}}"></span>
                                         </a>
                                     </td>
                                     <td>
-                                        <i class="fa fa-exclamation-triangle" aria-hidden="true" ng-if="host.owned"> owned</i>
+                                        <span class="fa fa-exclamation-triangle" aria-hidden="true" ng-if="host.owned"></span>
+                                        <span ng-if="host.owned"> owned</span>
                                         <span ng-if="!host.owned">not yet</span>
                                     </td>
                                     <td>
-                                        <a ng-href="#/credentials/ws/{{workspace}}/hid/{{host._id}}">{{host.credentials}}</a>
+                                        <span am-time-ago="host.metadata.update_time * 1000"></span>
+                                        <span ng-if="!host.metadata.update_time" am-time-ago="host.metadata.create_time * 1000"></span>
                                     </td>
                                 </tr>
                             </tbody>

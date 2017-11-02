@@ -327,6 +327,8 @@ class VulnerabilityView(PaginatedMixin,
             joinedload(VulnerabilityWeb.service)
             .joinedload(Service.host)
             .joinedload(Host.hostnames),
+
+            joinedload(VulnerabilityGeneric.evidence),
         ]
         return query.options(selectin_polymorphic(
             VulnerabilityGeneric,

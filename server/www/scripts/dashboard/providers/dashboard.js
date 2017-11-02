@@ -228,6 +228,18 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
+        dashboardSrv.getActivityFeed = function(ws) {
+            var deferred = $q.defer();
+
+            ServerAPI.getActivityFeed(ws).then(function(res) {
+                deferred.resolve(res.data);
+            }, function() {
+                deferred.reject();
+            });
+
+            return deferred.promise;
+        };
+
         dashboardSrv.getCommands = function(ws) {
             var deferred = $q.defer();
 

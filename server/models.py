@@ -781,7 +781,6 @@ class CommandObject(db.Model):
     command_id = Column(Integer, ForeignKey('command.id'), index=True)
 
     create_date = Column(DateTime, default=datetime.utcnow)
-    update_date = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # the following properties are used to know if the command created the specified objects_type
     # remeber that this table has a row instances per relationship.

@@ -271,6 +271,11 @@ angular.module("faradayApp")
                 return get(getUrl, data);
             }
 
+            ServerAPI.getActivityFeed = function(wsName, data) {
+                var getUrl = createGetUrl(wsName, 'commands') + 'activity_feed/';
+                return get(getUrl, data);
+            }
+
             ServerAPI.getWorkspacesNames = function() {
                 return get(APIURL + "ws/");
             }

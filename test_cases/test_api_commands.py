@@ -70,19 +70,26 @@ class TestListCommandView(object):
         res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
         assert res.status_code == 200
 
-        assert filter(lambda stats: stats['command'] == command.id, res.json) == [{u'command': command.id,
-                                                                                  u'sum_created_hosts': 1,
-                                                                                  u'sum_created_services': 0,
-                                                                                  u'sum_created_vulnerabilities': 1,
-                                                                                  u'sum_created_vulnerabilities_web': 0,
-                                                                                  u'sum_created_vulnerability_critical': 0}]
+        assert filter(lambda stats: stats['_id'] == command.id, res.json) == [{u'_id': command.id,
+                                                                               u'command': command.command,
+                                                                               u'command_type': '',
+                                                                               u'date': time.mktime(command.start_date.timetuple()) * 1000,
+                                                                               u'params': command.params,
+                                                                               u'hosts_count': 1,
+                                                                               u'services_count': 0,
+                                                                               u'vulnerabilities_count': 1,
+                                                                               u'criticalIssue': 0}]
 
-        assert filter(lambda stats: stats['command'] == another_command.id, res.json) == [{u'command': another_command.id,
-                                                                                          u'sum_created_hosts': 0,
-                                                                                          u'sum_created_services': 0,
-                                                                                          u'sum_created_vulnerabilities': 0,
-                                                                                          u'sum_created_vulnerabilities_web': 0,
-                                                                                          u'sum_created_vulnerability_critical': 0}]
+        assert filter(lambda stats: stats['_id'] == another_command.id, res.json) == [{
+                                                                                u'_id': another_command.id,
+                                                                                u'command': another_command.command,
+                                                                                u'command_type': '',
+                                                                                u'date': time.mktime(another_command.start_date.timetuple()) * 1000,
+                                                                                u'params': another_command.params,
+                                                                                u'hosts_count': 0,
+                                                                                u'services_count': 0,
+                                                                                u'vulnerabilities_count': 0,
+                                                                                u'criticalIssue': 0}]
 
     @pytest.mark.skip(reason='refactor needed to adapt new m2m model')
     def test_verify_created_critical_vulns_is_correctly_showing_sum_values(self, session, test_client):
@@ -110,13 +117,17 @@ class TestListCommandView(object):
         session.commit()
         res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
         assert res.status_code == 200
-        assert res.json == [{u'command': command.id,
-                             u'sum_created_hosts': 1,
-                             u'sum_created_services': 0,
-                             u'sum_created_vulnerabilities': 2,
-                             u'sum_created_vulnerabilities_web': 0,
-                             u'sum_created_vulnerability_critical': 1
-                             }]
+        assert res.json == [
+                            {u'_id': command.id,
+                             u'command': command.command,
+                             u'command_type': '',
+                             u'date': time.mktime(command.start_date.timetuple()) * 1000,
+                             u'params': command.params,
+                             u'hosts_count': 1,
+                             u'services_count': 0,
+                             u'vulnerabilities_count': 2,
+                             u'criticalIssue': 1}
+                            ]
 
     @pytest.mark.skip(reason='refactor needed to adapt new m2m model')
     def test_verify_created_vulns_with_host_and_service_verification(self, session, test_client):
@@ -150,13 +161,16 @@ class TestListCommandView(object):
         session.commit()
         res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
         assert res.status_code == 200
-        assert res.json == [{u'command': command.id,
-                             u'sum_created_hosts': 1,
-                             u'sum_created_services': 1,
-                             u'sum_created_vulnerabilities': 2,
-                             u'sum_created_vulnerabilities_web': 0,
-                             u'sum_created_vulnerability_critical': 1
-                             }]
+        assert res.json == [{u'_id': command.id,
+             u'command': command.command,
+             u'command_type': '',
+             u'date': time.mktime(command.start_date.timetuple()) * 1000,
+             u'params': command.params,
+             u'hosts_count': 1,
+             u'services_count': 1,
+             u'vulnerabilities_count': 2,
+             u'criticalIssue': 1}
+        ]
 
     @pytest.mark.skip(reason='refactor needed to adapt new m2m model')
     def test_multiple_commands_executed_with_same_objects_found(self, session, test_client):
@@ -197,27 +211,34 @@ class TestListCommandView(object):
         session.commit()
         res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
         assert res.status_code == 200
-        assert res.json[0] == {u'command': commands[0].id,
-                             u'sum_created_hosts': 1,
-                             u'sum_created_services': 0,
-                             u'sum_created_vulnerabilities': 1,
-                             u'sum_created_vulnerabilities_web': 0,
-                             u'sum_created_vulnerability_critical': 0
-                             }
+        assert res.json[0] == {u'_id': commands[0].id,
+                               u'command': commands[0].command,
+                               u'command_type': '',
+                               u'date': time.mktime(commands[0].start_date.timetuple()) * 1000,
+                               u'params': commands[0].params,
+                               u'hosts_count': 1,
+                               u'services_count': 0,
+                               u'vulnerabilities_count': 1,
+                               u'criticalIssue': 0}
+
         for index in range(1, 10):
-            assert res.json[index] == {u'command': commands[index].id,
-                                   u'sum_created_hosts': 0,
-                                   u'sum_created_services': 0,
-                                   u'sum_created_vulnerabilities': 0,
-                                   u'sum_created_vulnerabilities_web': 0,
-                                   u'sum_created_vulnerability_critical': 0
-                                   }
+            assert res.json[index] == {u'_id': commands[index].id,
+                                       u'command': commands[index].command,
+                                       u'command_type': '',
+                                       u'date': time.mktime(commands[index].start_date.timetuple()) * 1000,
+                                       u'params': commands[index].params,
+                                       u'hosts_count': 0,
+                                       u'services_count': 0,
+                                       u'vulnerabilities_count': 0,
+                                       u'criticalIssue': 0}
 
         # new command must create new service and vuln
-        assert res.json[10] == {u'command': command.id,
-                               u'sum_created_hosts': 0,
-                               u'sum_created_services': 1,
-                               u'sum_created_vulnerabilities': 1,
-                               u'sum_created_vulnerabilities_web': 0,
-                               u'sum_created_vulnerability_critical': 0
-                               }
+        assert res.json[10] == {u'_id': command.id,
+                                       u'command': command.command,
+                                       u'command_type': '',
+                                       u'date': time.mktime(command.start_date.timetuple()) * 1000,
+                                       u'params': command.params,
+                                       u'hosts_count': 0,
+                                       u'services_count': 1,
+                                       u'vulnerabilities_count': 1,
+                                       u'criticalIssue': 0}

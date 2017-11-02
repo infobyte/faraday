@@ -65,12 +65,16 @@ class CommandView(ReadWriteWorkspacedView):
         query = Command.query.join(Workspace).filter_by(name=workspace_name)
         for command in query.all():
             res.append({
-                'command': command.id,
-                'sum_created_vulnerabilities': command.sum_created_vulnerabilities or 0,
-                'sum_created_vulnerabilities_web': command.sum_created_vulnerabilities_web or 0,
-                'sum_created_hosts': command.sum_created_hosts or 0,
-                'sum_created_services': command.sum_created_services or 0,
-                'sum_created_vulnerability_critical': command.sum_created_vulnerability_critical or 0
+                '_id': command.id,
+                'command_type': '',
+                'command': command.command,
+                'params': command.params,
+                'vulnerabilities_count': (command.sum_created_vulnerabilities or 0) + (command.sum_created_vulnerabilities_web or 0),
+                'hosts_count': command.sum_created_hosts or 0,
+                'services_count': command.sum_created_services or 0,
+                'criticalIssue': command.sum_created_vulnerability_critical or 0,
+                'date': time.mktime(command.start_date.timetuple()) * 1000,
+
             })
         return res
 

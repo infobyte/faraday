@@ -79,10 +79,10 @@ MAPPED_VULN_SEVERITY = OrderedDict([
 ])
 
 OBJ_TYPES = [
+            (1, 'CommandRunInformation'),
             (1, 'Host'),
             (1, 'EntityMetadata'),
             (1, 'Note'),
-            (1, 'CommandRunInformation'),
             (1, 'TaskGroup'),
             (1, 'Task'),
             (1, 'Workspace'),

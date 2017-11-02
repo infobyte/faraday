@@ -42,7 +42,7 @@ from flask_security import (
     RoleMixin,
     UserMixin,
 )
-from server.utils.database import get_or_create
+from server.utils.database import get_or_create, BooleanToIntColumn
 
 
 class SQLAlchemy(OriginalSQLAlchemy):
@@ -458,6 +458,13 @@ class VulnerabilityGeneric(VulnerabilityABC):
         proxy_factory=CustomAssociationSet,
         creator=_build_associationproxy_creator('PolicyViolation'))
 
+    evidence = relationship(
+        "File",
+        primaryjoin="and_(File.object_id==VulnerabilityGeneric.id, "
+                    "File.object_type=='vulnerability')",
+        foreign_keys="File.object_id",
+    )
+
     __mapper_args__ = {
         'polymorphic_on': type
     }
@@ -743,6 +750,58 @@ class Credential(Metadata):
         return self.host or self.service
 
 
+def _make_command_created_related_object():
+    query = select([BooleanToIntColumn("(count(*) = 0)")])
+    query = query.select_from('command_object as command_object_inner')
+    where_expr = " command_object_inner.create_date < command_object.create_date and " \
+                  " (command_object_inner.object_id = command_object.object_id and " \
+                  " command_object_inner.object_type = command_object.object_type) "
+    query = query.where(text(where_expr))
+    return column_property(
+        query,
+    )
+
+
+class CommandObject(db.Model):
+    __tablename__ = 'command_object'
+    id = Column(Integer, primary_key=True)
+
+    object_id = Column(Integer, nullable=False)
+    object_type = Column(Text, nullable=False)
+
+    command = relationship('Command', backref='command_objects')
+    command_id = Column(Integer, ForeignKey('command.id'), index=True)
+
+    create_date = Column(DateTime, default=datetime.utcnow)
+    update_date = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # the following properties are used to know if the command created the specified objects_type
+    # remeber that this table has a row instances per relationship.
+    # this created integer can be used to obtain the total object_type objects created.
+    created = _make_command_created_related_object()
+
+
+def _make_created_objects_sum(object_type_filter):
+    where_condition = "command_object.command_id = command.id and command_object.object_type= '%s'" % object_type_filter
+    return column_property(
+        select([func.sum(CommandObject.created)]).\
+        select_from(table('command_object')). \
+        where(where_condition)
+    )
+
+
+def _make_created_objects_sum_joined(object_type_filter, join_filters):
+    where_conditions = ["vulnerability.id = command_object.object_id and command_object.command_id = command.id and command_object.object_type= '%s'" % object_type_filter]
+    for attr, filter_value in join_filters.items():
+        where_conditions.append("vulnerability.{0} = {1}".format(attr, filter_value))
+    return column_property(
+        select([func.sum(CommandObject.created)]). \
+            select_from(table('command_object')). \
+            select_from(table('vulnerability')). \
+            where(' and '.join(where_conditions))
+    )
+
+
 class Command(Metadata):
     __tablename__ = 'command'
     id = Column(Integer, primary_key=True)
@@ -757,6 +816,16 @@ class Command(Metadata):
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', foreign_keys=[workspace_id])
     # TODO: add Tool relationship and report_attachment
+
+    sum_created_vulnerabilities = _make_created_objects_sum('Vulnerability')
+
+    sum_created_vulnerabilities_web = _make_created_objects_sum('VulnerabilityWeb')
+
+    sum_created_hosts = _make_created_objects_sum('Host')
+
+    sum_created_services = _make_created_objects_sum('Service')
+
+    sum_created_vulnerability_critical = _make_created_objects_sum_joined('Vulnerability', {'severity': '\'critical\''})
 
     @property
     def parent(self):
@@ -939,10 +1008,11 @@ class File(Metadata):
     __tablename__ = 'file'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    name = Column(Text, unique=True)
-    filename = Column(Text, unique=True)
-    description = Column(Text, unique=True)
-    content = Column(UploadedFileField(upload_type=FaradayUploadedFile))  # plain attached file
+    name = Column(Text)
+    filename = Column(Text, nullable=False)
+    description = Column(Text)
+    content = Column(UploadedFileField(upload_type=FaradayUploadedFile),
+                     nullable=False)  # plain attached file
     object_id = Column(Integer, nullable=False)
     object_type = Column(Text, nullable=False)
 
@@ -1100,6 +1170,7 @@ class CommentObject(db.Model):
 
     comment = relationship('Comment', backref='comment_objects')
     comment_id = Column(Integer, ForeignKey('comment.id'), index=True)
+
 
 
 class Comment(Metadata):

@@ -10,6 +10,7 @@ from filteralchemy import FilterSet, operators
 from flask import request
 from flask import Blueprint
 from marshmallow import Schema, fields, post_load, ValidationError
+from marshmallow.validate import OneOf
 from sqlalchemy.orm import joinedload, selectin_polymorphic
 
 from depot.manager import DepotManager
@@ -87,7 +88,7 @@ class VulnerabilitySchema(AutoSchema):
                                fields.String(),
                                required=True)
     tags = fields.Method(serialize='get_tags')
-    easeofresolution = fields.String(dump_only=True, attribute='ease_of_resolution')
+    easeofresolution = fields.String(attribute='ease_of_resolution', validate=OneOf(Vulnerability.EASE_OF_RESOLUTIONS),)
     hostnames = PrimaryKeyRelatedField('name', many=True, dump_only=True)
     metadata = fields.Method(serialize='get_metadata')
     service = fields.Nested(ServiceSchema(only=[
@@ -128,9 +129,8 @@ class VulnerabilitySchema(AutoSchema):
 
     def get_attachments(self, obj):
         res = []
-        files = db.session.query(File).filter_by(object_id=obj.id, object_type=obj.__class__.__name__).all()
 
-        for file_obj in files:
+        for file_obj in obj.evidence:
             ret, errors = EvidenceSchema().dump(file_obj)
             if errors:
                 raise ValidationError(errors, data=ret)
@@ -299,7 +299,7 @@ class VulnerabilityView(PaginatedMixin,
                 db.session,
                 File,
                 object_id=obj.id,
-                object_type=obj.__class__.__name__,
+                object_type='vulnerability',
                 name=os.path.splitext(os.path.basename(filename))[0],
                 filename=os.path.basename(filename),
                 content=faraday_file,

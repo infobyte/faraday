@@ -28,7 +28,7 @@ from server.models import (
     VulnerabilityTemplate,
     VulnerabilityWeb,
     Workspace,
-    ReferenceTemplate)
+    ReferenceTemplate, CommandObject)
 
 # Make partials for start and end date. End date must be after start date
 FuzzyStartTime = lambda: (
@@ -258,6 +258,13 @@ class CredentialFactory(HasParentHostOrService, WorkspaceObjectFactory):
         sqlalchemy_session = db.session
 
 
+class CommandObjectFactory(FaradayFactory):
+
+    class Meta:
+        model = CommandObject
+        sqlalchemy_session = db.session
+
+
 class CommandFactory(WorkspaceObjectFactory):
     command = FuzzyText()
     end_date = FuzzyDateTime(datetime.datetime.utcnow().replace(tzinfo=pytz.utc) + datetime.timedelta(20), datetime.datetime.utcnow().replace(tzinfo=pytz.utc) + datetime.timedelta(30))
@@ -269,6 +276,36 @@ class CommandFactory(WorkspaceObjectFactory):
     class Meta:
         model = Command
         sqlalchemy_session = db.session
+
+    @factory.post_generation
+    def attach_vuln_object(self, create, extracted, **kwargs):
+        if create:
+            host = HostFactory.create(workspace=self.workspace)
+            vuln = VulnerabilityFactory.create(workspace=self.workspace, host=host, service=None, severity='low')
+            db.session.flush()
+            CommandObjectFactory.create(
+                object_type='Vulnerability',
+                object_id=vuln.id,
+                command=self,
+            )
+            CommandObjectFactory.create(
+                object_type='Host',
+                object_id=host.id,
+                command=self,
+            )
+
+class EmptyCommandFactory(FaradayFactory):
+    command = FuzzyText()
+    end_date = FuzzyDateTime(datetime.datetime.utcnow().replace(tzinfo=pytz.utc) + datetime.timedelta(20), datetime.datetime.utcnow().replace(tzinfo=pytz.utc) + datetime.timedelta(30))
+    start_date = FuzzyDateTime(datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - datetime.timedelta(30), datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - datetime.timedelta(20))
+    ip = FuzzyText()
+    user = FuzzyText()
+    hostname = FuzzyText()
+
+    class Meta:
+        model = Command
+        sqlalchemy_session = db.session
+
 
 
 class LicenseFactory(FaradayFactory):

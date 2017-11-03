@@ -456,6 +456,14 @@ class VulnerabilityGeneric(VulnerabilityABC):
         foreign_keys="File.object_id",
     )
 
+    tags = relationship(
+        "Tag",
+        secondary="tag_object",
+        primaryjoin="and_(TagObject.object_id==VulnerabilityGeneric.id, "
+                    "TagObject.object_type=='vulnerability')",
+        collection_class=set,
+    )
+
     __mapper_args__ = {
         'polymorphic_on': type
     }

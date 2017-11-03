@@ -14,14 +14,21 @@ from test_cases.factories import VulnerabilityFactory, EmptyCommandFactory, Comm
     WorkspaceFactory, ServiceFactory
 
 
-@pytest.mark.skip(reason='refactor needed to adapt new m2m model')
+# Note: because of a bug with pytest, I can't simply mark TestListCommandView
+# with @pytest.mark.skip. I had to made it inherit from object instad of
+# ReadOnlyAPITests, and to manually skip the extra tests inside the class.
+# See https://docs.pytest.org/en/latest/skipping.html#skip-all-test-functions-of-a-class-or-module
+# and https://github.com/pytest-dev/pytest/issues/568 for more information
+
 @pytest.mark.usefixtures('logged_user')
-class TestListCommandView(ReadOnlyAPITests):
+# class TestListCommandView(ReadOnlyAPITests):  # TODO: change to this!!!
+class TestListCommandView(object):
     model = Command
     factory = factories.CommandFactory
     api_endpoint = 'commands'
     view_class = CommandView
 
+    @pytest.mark.skip(reason='refactor needed to adapt new m2m model')
     def test_backwards_compatibility_list(self, test_client, second_workspace, session):
         self.factory.create(workspace=second_workspace)
         session.commit()
@@ -43,6 +50,7 @@ class TestListCommandView(ReadOnlyAPITests):
             ]
             assert set(object_properties) == set(command['value'].keys())
 
+    @pytest.mark.skip(reason='refactor needed to adapt new m2m model')
     def test_activity_feed(self, session, test_client):
         command = self.factory.create()
         another_command = EmptyCommandFactory.create(workspace=command.workspace)
@@ -76,6 +84,7 @@ class TestListCommandView(ReadOnlyAPITests):
                                                                                           u'sum_created_vulnerabilities_web': 0,
                                                                                           u'sum_created_vulnerability_critical': 0}]
 
+    @pytest.mark.skip(reason='refactor needed to adapt new m2m model')
     def test_verify_created_critical_vulns_is_correctly_showing_sum_values(self, session, test_client):
         workspace = WorkspaceFactory.create()
         command = EmptyCommandFactory.create(workspace=workspace)
@@ -109,6 +118,7 @@ class TestListCommandView(ReadOnlyAPITests):
                              u'sum_created_vulnerability_critical': 1
                              }]
 
+    @pytest.mark.skip(reason='refactor needed to adapt new m2m model')
     def test_verify_created_vulns_with_host_and_service_verification(self, session, test_client):
         workspace = WorkspaceFactory.create()
         command = EmptyCommandFactory.create(workspace=workspace)
@@ -148,6 +158,7 @@ class TestListCommandView(ReadOnlyAPITests):
                              u'sum_created_vulnerability_critical': 1
                              }]
 
+    @pytest.mark.skip(reason='refactor needed to adapt new m2m model')
     def test_multiple_commands_executed_with_same_objects_found(self, session, test_client):
 
         workspace = WorkspaceFactory.create()

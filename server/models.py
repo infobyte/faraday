@@ -1028,6 +1028,10 @@ class File(Metadata):
     object_id = Column(Integer, nullable=False)
     object_type = Column(Text, nullable=False)
 
+    __table_args__ = (
+        UniqueConstraint('object_id', 'object_type', 'filename', name='uix_file_obj_id_type_and_filename'),
+    )
+
 
 class UserAvatar(Metadata):
     __tablename_ = 'user_avatar'

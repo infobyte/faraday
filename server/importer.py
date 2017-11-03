@@ -531,6 +531,7 @@ class VulnerabilityImporter(object):
                     filename=attachment_name,
                     object_id=vulnerability.id,
                     object_type=vulnerability.__class__.__name__)
+                session.flush()
                 file.content = attachment_file.read()
 
                 attachment_file.close()
@@ -539,27 +540,35 @@ class VulnerabilityImporter(object):
         yield vulnerability
 
     def add_policy_violations(self, document, vulnerability, workspace):
-        policy_violations = list()
+        policy_violations = set()
         for policy_violation in document.get('policyviolations', []):
-            pv, _ = get_or_create(
+            if not policy_violation:
+                continue
+            pv, created = get_or_create(
                 session,
                 PolicyViolation,
                 name=policy_violation,
                 workspace=workspace
             )
-            policy_violations.append(pv)
+            session.flush()
+            if created and pv.name not in map(lambda pva: pva.name, policy_violations):
+                policy_violations.add(pv)
         return policy_violations
 
     def add_references(self, document, vulnerability, workspace):
-        references = list()
+        references = set()
         for ref in document.get('refs', []):
-            reference, _ = get_or_create(
+            if not ref:
+                continue
+            reference, created = get_or_create(
                 session,
                 Reference,
                 name=ref,
                 workspace=workspace
             )
-            references.append(reference)
+            session.flush()
+            if created and reference not in map(lambda  ref: ref.name, references):
+                references.add(reference)
         return references
 
 
@@ -626,7 +635,14 @@ class CredentialImporter(object):
                 host = parent
             if isinstance(parent, Service):
                 service = parent
-            credential, created = get_or_create(session, Credential, username=document.get('username'), host=host, service=service)
+            credential, created = get_or_create(
+                session,
+                Credential,
+                username=document.get('username'),
+                host=host,
+                service=service,
+                workspace=workspace,
+            )
             if command:
                 log_command_object_found(command, credential, created)
             credential.password = document.get('password', None)

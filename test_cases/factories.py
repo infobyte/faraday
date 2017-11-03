@@ -22,6 +22,7 @@ from server.models import (
     Reference,
     Service,
     SourceCode,
+    Tag,
     User,
     Vulnerability,
     VulnerabilityCode,
@@ -325,3 +326,12 @@ class LicenseFactory(FaradayFactory):
         ret['start_date'] = ret['start_date'].isoformat()
         ret['end_date'] = ret['end_date'].isoformat()
         return ret
+
+
+class TagFactory(FaradayFactory):
+    name = FuzzyText()
+    slug = FuzzyText()
+
+    class Meta:
+        model = Tag
+        sqlalchemy_session = db.session

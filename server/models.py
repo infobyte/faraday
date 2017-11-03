@@ -465,6 +465,14 @@ class VulnerabilityGeneric(VulnerabilityABC):
         foreign_keys="File.object_id",
     )
 
+    tags = relationship(
+        "Tag",
+        secondary="tag_object",
+        primaryjoin="and_(TagObject.object_id==VulnerabilityGeneric.id, "
+                    "TagObject.object_type=='vulnerability')",
+        collection_class=set,
+    )
+
     __mapper_args__ = {
         'polymorphic_on': type
     }
@@ -1161,18 +1169,6 @@ class TagObject(db.Model):
     tag_id = Column(Integer, ForeignKey('tag.id'), index=True)
 
 
-class CommentObject(db.Model):
-    __tablename__ = 'comment_object'
-    id = Column(Integer, primary_key=True)
-
-    object_id = Column(Integer, nullable=False)
-    object_type = Column(Text, nullable=False)
-
-    comment = relationship('Comment', backref='comment_objects')
-    comment_id = Column(Integer, ForeignKey('comment.id'), index=True)
-
-
-
 class Comment(Metadata):
     __tablename__ = 'comment'
     id = Column(Integer, primary_key=True)
@@ -1186,8 +1182,12 @@ class Comment(Metadata):
                         foreign_keys=[reply_to_id]
                         )
 
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True,
+                          nullable=False)
     workspace = relationship('Workspace', foreign_keys=[workspace_id])
+
+    object_id = Column(Integer, nullable=False)
+    object_type = Column(Text, nullable=False)
 
 
 class ExecutiveReport(Metadata):

@@ -33,7 +33,6 @@ from server.models import (
     db,
     Command,
     Comment,
-    CommentObject,
     Credential,
     ExecutiveReport,
     Host,
@@ -571,15 +570,9 @@ class NoteImporter(object):
             session,
             Comment,
             text='{0}\n{1}'.format(document.get('text', ''), document.get('description', '')),
-            workspace=workspace)
-
-        get_or_create(
-            session,
-            CommentObject,
             object_id=couchdb_relational_map[parent_document.get('_id')],
             object_type=parent_document['type'],
-            comment=comment,
-        )
+            workspace=workspace)
         yield comment
 
 
@@ -712,16 +705,11 @@ class CommunicationImporter(object):
             session,
             Comment,
             text=document.get('text'),
-            workspace=workspace)
-
-        get_or_create(
-            session,
-            CommentObject,
             object_id=workspace.id,
             object_type='Workspace',
-            comment=comment,
-        )
+            workspace=workspace)
         yield comment
+
 
 class FaradayEntityImporter(object):
     # Document Types: [u'Service', u'Communication', u'Vulnerability', u'CommandRunInformation', u'Reports', u'Host', u'Workspace']

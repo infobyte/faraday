@@ -87,7 +87,7 @@ class VulnerabilitySchema(AutoSchema):
     parent_type = MutableField(fields.Method('get_parent_type'),
                                fields.String(),
                                required=True)
-    tags = fields.Method(serialize='get_tags')
+    tags = PrimaryKeyRelatedField('name', dump_only=True, many=True)
     easeofresolution = fields.String(attribute='ease_of_resolution', validate=OneOf(Vulnerability.EASE_OF_RESOLUTIONS),)
     hostnames = PrimaryKeyRelatedField('name', many=True, dump_only=True)
     metadata = fields.Method(serialize='get_metadata')
@@ -140,13 +140,6 @@ class VulnerabilitySchema(AutoSchema):
 
     def load_attachments(self, value):
         return value
-
-    def get_tags(self, obj):
-        # TODO: improve performance here
-        return [tag.name for tag in db.session.query(TagObject, Tag).filter_by(
-            object_type=obj.__class__.__name__,
-            object_id=obj.id
-        ).all()]
 
     def get_parent(self, obj):
         return obj.service_id or obj.host_id
@@ -329,6 +322,7 @@ class VulnerabilityView(PaginatedMixin,
             .joinedload(Host.hostnames),
 
             joinedload(VulnerabilityGeneric.evidence),
+            joinedload(VulnerabilityGeneric.tags),
         ]
         return query.options(selectin_polymorphic(
             VulnerabilityGeneric,

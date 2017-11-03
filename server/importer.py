@@ -270,7 +270,7 @@ class HostImporter(object):
         host_ips = [name_or_ip for name_or_ip in self.retrieve_ips_from_host_document(document)]
         interfaces = get_children_from_couch(workspace, document.get('_id'), 'Interface')
         command = None
-        if 'command_id' in document['metadata'] and document['metadata']['command_id']:
+        if 'metadata' in document and 'command_id' in document['metadata'] and document['metadata']['command_id']:
             command = session.query(Command).get(couchdb_relational_map[document['metadata']['command_id']][0])
 
         for interface in interfaces:
@@ -351,6 +351,9 @@ class ServiceImporter(object):
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         #  service was always below interface, not it's below host.
+        command = None
+        if 'command_id' in document['metadata'] and document['metadata']['command_id']:
+            command = session.query(Command).get(couchdb_relational_map[document['metadata']['command_id']][0])
         try:
             parent_id = document['parent'].split('.')[0]
         except KeyError:
@@ -358,6 +361,8 @@ class ServiceImporter(object):
             parent_id = document['_id'].split('.')[0]
         for relational_parent_id in couchdb_relational_map[parent_id]:
             host, created = get_or_create(session, Host, id=relational_parent_id)
+            if command:
+                log_command_object_found(command, host, created)
             ports = document.get('ports')
             if len(ports) > 2:
                 logger.warn('More than one port found in services!')
@@ -391,6 +396,8 @@ class ServiceImporter(object):
                 service.status = status_mapper.get(couchdb_status, 'open')
                 service.version = document.get('version')
                 service.workspace = workspace
+                if command:
+                    log_command_object_found(command, service, created)
 
                 yield service
 
@@ -399,6 +406,9 @@ class VulnerabilityImporter(object):
     DOC_TYPE = ['Vulnerability', 'VulnerabilityWeb']
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
+        command = None
+        if 'command_id' in document['metadata'] and document['metadata']['command_id']:
+            command = session.query(Command).get(couchdb_relational_map[document['metadata']['command_id']][0])
         vulnerability = None
         couch_parent_id = document.get('parent', None)
         if not couch_parent_id:
@@ -435,6 +445,8 @@ class VulnerabilityImporter(object):
                     website=website,
                     workspace=workspace,
                 )
+                if command:
+                    log_command_object_found(command, vulnerability, created)
             if document['type'] == 'Vulnerability':
                 vuln_params = {
                     'name': document.get('name'),
@@ -492,7 +504,7 @@ class VulnerabilityImporter(object):
                 self.add_policy_violations(document, vulnerability, workspace))
 
             # need the vuln ID before creating Tags for it
-            session.commit()
+            session.flush()
             tags = document.get('tags', [])
             if len(tags):
                 create_tags(tags, vulnerability.id, document['type'])
@@ -595,6 +607,9 @@ class CredentialImporter(object):
 
     DOC_TYPE = 'Cred'
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
+        command = None
+        if 'command_id' in document['metadata'] and document['metadata']['command_id']:
+            command = session.query(Command).get(couchdb_relational_map[document['metadata']['command_id']][0])
         parents = []
         if level == 2:
             parent_ids = couchdb_relational_map[document['_id'].split('.')[0]]
@@ -612,6 +627,8 @@ class CredentialImporter(object):
             if isinstance(parent, Service):
                 service = parent
             credential, created = get_or_create(session, Credential, username=document.get('username'), host=host, service=service)
+            if command:
+                log_command_object_found(command, credential, created)
             credential.password = document.get('password', None)
             credential.owned = document.get('owned', False)
             credential.description = document.get('description', None)

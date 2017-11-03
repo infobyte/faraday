@@ -554,10 +554,10 @@ class VulnerabilityCode(VulnerabilityGeneric):
 
     source_code_id = Column(Integer, ForeignKey(SourceCode.id), index=True)
     source_code = relationship(
-                            SourceCode,
-                            backref='vulnerabilities',
-                            foreign_keys=[source_code_id]
-                            )
+        SourceCode,
+        backref='vulnerabilities',
+        foreign_keys=[source_code_id]
+    )
 
     __mapper_args__ = {
         'polymorphic_identity': VulnerabilityGeneric.VULN_TYPES[2]
@@ -1244,12 +1244,16 @@ event.listen(
 
 
 def log_command_object_found(command, object, created):
+    object_type = object.__tablename__
+    if object.__class__.__name__ in ['Vulnerability', 'VulnerabilityWeb', 'VulnerabilityCode']:
+        object_type = 'vulnerability'
+
     db.session.flush()
     get_or_create(
         db.session,
         CommandObject,
         command=command,
         object_id=object.id,
-        object_type=object.__tablename__,
+        object_type=object_type,
         created_persistent=created,
     )

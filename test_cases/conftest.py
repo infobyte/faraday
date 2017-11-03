@@ -5,6 +5,7 @@ import inspect
 import pytest
 from factory import Factory
 from flask.testing import FlaskClient
+from nplusone.core import signals
 from sqlalchemy import event
 from pytest_factoryboy import register
 
@@ -199,12 +200,15 @@ def create_user(app, session, username, email, password, **kwargs):
 @pytest.fixture
 def user(app, database, session):
     # print 'user', id(session), session
-    return create_user(app, session, 'test', 'user@test.com', 'password', is_ldap=False)
+    return create_user(app, session, 'test', 'user@test.com', 'password',
+                       is_ldap=False)
 
 
 @pytest.fixture
 def ldap_user(app, session):
-    return create_user(app, session, 'ldap', 'ldap@test.com', 'password', is_ldap=True)
+    return create_user(app, session, 'ldap', 'ldap@test.com', 'password',
+                       is_ldap=True)
+
 
 @pytest.fixture
 def host_with_hostnames(host, hostname_factory):
@@ -219,7 +223,16 @@ def login_as(test_client, user):
         db.session.add(user)
         sess['user_id'] = user.id
 
+
 @pytest.fixture
 def logged_user(test_client, user):
     login_as(test_client, user)
     return user
+
+
+@pytest.fixture
+def ignore_nplusone(app):
+    old = app.config['NPLUSONE_RAISE']
+    app.config['NPLUSONE_RAISE'] = False
+    yield
+    app.config['NPLUSONE_RAISE'] = old

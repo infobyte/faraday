@@ -95,6 +95,7 @@ class VulnerabilitySchema(AutoSchema):
         '_id', 'ports', 'status', 'protocol', 'name', 'version', 'summary'
     ]), dump_only=True)
     host = fields.Integer(dump_only=True, attribute='host_id')
+    severity = fields.Method(serialize='get_severity', deserialize='load_severity')
     status = fields.Method(serialize='get_status', deserialize='load_status')  # TODO: this breaks enum validation.
     type = fields.Method(serialize='get_type', deserialize='load_type')
     obj_id = fields.String(dump_only=True, attribute='id')
@@ -148,6 +149,13 @@ class VulnerabilitySchema(AutoSchema):
         assert obj.service_id is not None or obj.host_id is not None
         return 'Service' if obj.service_id is not None else 'Host'
 
+    def get_severity(self, obj):
+        if obj.severity == 'medium':
+            return 'med'
+        if obj.severity == 'informational':
+            return 'info'
+        return obj.severity
+
     def get_status(self, obj):
         if obj.status == 'open':
             return 'opened'
@@ -155,6 +163,13 @@ class VulnerabilitySchema(AutoSchema):
 
     def get_issuetracker(self, obj):
         return {}
+
+    def load_severity(self, value):
+        if value == 'med':
+            return 'medium'
+        if value == 'info':
+            return 'informational'
+        return value
 
     def load_status(self, value):
         if value == 'opened':

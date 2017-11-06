@@ -445,8 +445,7 @@ class VulnerabilityImporter(object):
                     website=website,
                     workspace=workspace,
                 )
-                if command:
-                    log_command_object_found(command, vulnerability, created)
+
             if document['type'] == 'Vulnerability':
                 vuln_params = {
                     'name': document.get('name'),
@@ -474,6 +473,8 @@ class VulnerabilityImporter(object):
             vulnerability.impact_availability = document.get('impact', {}).get('availability')
             vulnerability.impact_confidentiality = document.get('impact', {}).get('confidentiality')
             vulnerability.impact_integrity = document.get('impact', {}).get('integrity')
+            if command:
+                log_command_object_found(command, vulnerability, created)
             if document['type'] == 'VulnerabilityWeb':
                 vulnerability.query_string = document.get('query')
                 vulnerability.request = document.get('request')
@@ -531,7 +532,6 @@ class VulnerabilityImporter(object):
                     filename=attachment_name,
                     object_id=vulnerability.id,
                     object_type=vulnerability.__class__.__name__)
-                session.flush()
                 file.content = attachment_file.read()
 
                 attachment_file.close()
@@ -576,6 +576,10 @@ class CommandImporter(object):
 
     DOC_TYPE = 'CommandRunInformation'
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
+        import_source = 'shell'
+        if document.get('command', '').startswith('Import'):
+            import_source = 'report'
+
         start_date = datetime.datetime.fromtimestamp(document.get('itime'))
 
         command, instance = get_or_create(
@@ -583,10 +587,12 @@ class CommandImporter(object):
             Command,
             command=document.get('command', None),
             start_date=start_date,
+
         )
         if document.get('duration'):
             command.end_date = start_date + datetime.timedelta(seconds=document.get('duration'))
 
+        command.import_source = import_source
         command.command = document.get('command', None)
         command.ip = document.get('ip', None)
         command.hostname = document.get('hostname', None)

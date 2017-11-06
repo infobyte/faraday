@@ -72,7 +72,8 @@ class TestListCommandView(ReadOnlyAPITests):
 
         assert filter(lambda stats: stats['_id'] == command.id, res.json) == [{u'_id': command.id,
                                                                                u'command': command.command,
-                                                                               u'command_type': '',
+                                                                               u'import_source': u'shell',
+                                                                               u'user': command.user,
                                                                                u'date': time.mktime(command.start_date.timetuple()) * 1000,
                                                                                u'params': command.params,
                                                                                u'hosts_count': 1,
@@ -83,7 +84,8 @@ class TestListCommandView(ReadOnlyAPITests):
         assert filter(lambda stats: stats['_id'] == another_command.id, res.json) == [{
                                                                                 u'_id': another_command.id,
                                                                                 u'command': another_command.command,
-                                                                                u'command_type': '',
+                                                                                u'import_source': u'shell',
+                                                                                u'user': another_command.user,
                                                                                 u'date': time.mktime(another_command.start_date.timetuple()) * 1000,
                                                                                 u'params': another_command.params,
                                                                                 u'hosts_count': 0,
@@ -119,7 +121,8 @@ class TestListCommandView(ReadOnlyAPITests):
         assert res.json == [
                             {u'_id': command.id,
                              u'command': command.command,
-                             u'command_type': '',
+                             u'import_source': u'shell',
+                             u'user': command.user,
                              u'date': time.mktime(command.start_date.timetuple()) * 1000,
                              u'params': command.params,
                              u'hosts_count': 1,
@@ -161,7 +164,8 @@ class TestListCommandView(ReadOnlyAPITests):
         assert res.status_code == 200
         assert res.json == [{u'_id': command.id,
              u'command': command.command,
-             u'command_type': '',
+             u'import_source': u'shell',
+             u'user': command.user,
              u'date': time.mktime(command.start_date.timetuple()) * 1000,
              u'params': command.params,
              u'hosts_count': 1,
@@ -210,7 +214,8 @@ class TestListCommandView(ReadOnlyAPITests):
         assert res.status_code == 200
         assert res.json[0] == {u'_id': commands[0].id,
                                u'command': commands[0].command,
-                               u'command_type': '',
+                               u'import_source': u'shell',
+                               u'user': commands[0].user,
                                u'date': time.mktime(commands[0].start_date.timetuple()) * 1000,
                                u'params': commands[0].params,
                                u'hosts_count': 1,
@@ -221,7 +226,8 @@ class TestListCommandView(ReadOnlyAPITests):
         for index in range(1, 10):
             assert res.json[index] == {u'_id': commands[index].id,
                                        u'command': commands[index].command,
-                                       u'command_type': '',
+                                       u'import_source': u'shell',
+                                       u'user': commands[index].user,
                                        u'date': time.mktime(commands[index].start_date.timetuple()) * 1000,
                                        u'params': commands[index].params,
                                        u'hosts_count': 0,
@@ -232,7 +238,8 @@ class TestListCommandView(ReadOnlyAPITests):
         # new command must create new service and vuln
         assert res.json[10] == {u'_id': command.id,
                                        u'command': command.command,
-                                       u'command_type': '',
+                                       u'import_source': u'shell',
+                                       u'user': command.user,
                                        u'date': time.mktime(command.start_date.timetuple()) * 1000,
                                        u'params': command.params,
                                        u'hosts_count': 0,

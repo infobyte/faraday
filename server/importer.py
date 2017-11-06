@@ -532,7 +532,6 @@ class VulnerabilityImporter(object):
                     filename=attachment_name,
                     object_id=vulnerability.id,
                     object_type=vulnerability.__class__.__name__)
-                session.flush()
                 file.content = attachment_file.read()
 
                 attachment_file.close()

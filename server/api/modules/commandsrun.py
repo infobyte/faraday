@@ -66,7 +66,8 @@ class CommandView(ReadWriteWorkspacedView):
         for command in query.all():
             res.append({
                 '_id': command.id,
-                'command_type': '',
+                'user': command.user,
+                'import_source': command.import_source,
                 'command': command.command,
                 'params': command.params,
                 'vulnerabilities_count': (command.sum_created_vulnerabilities or 0) + (command.sum_created_vulnerabilities_web or 0),

@@ -815,6 +815,12 @@ def _make_created_objects_sum_joined(object_type_filter, join_filters):
 
 
 class Command(Metadata):
+
+    IMPORT_SOURCE = [
+        'report',  # all the files the tools export and faraday imports it from the resports directory, gtk manual import or web import.
+        'shell',  # command executed on the shell or webshell with hooks connected to faraday.
+    ]
+
     __tablename__ = 'command'
     id = Column(Integer, primary_key=True)
     command = Column(Text(), nullable=False)
@@ -824,6 +830,7 @@ class Command(Metadata):
     hostname = Column(String(250), nullable=False)  # where the command was executed
     params = Column(Text(), nullable=True)
     user = Column(String(250), nullable=True)  # os username where the command was executed
+    import_source = Column(Enum(*IMPORT_SOURCE, name='import_source_enum'))
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', foreign_keys=[workspace_id])
@@ -1026,7 +1033,7 @@ class File(Metadata):
     filename = Column(Text, nullable=False)
     description = Column(Text)
     content = Column(UploadedFileField(upload_type=FaradayUploadedFile),
-                     nullable=True)  # plain attached file
+                     nullable=False)  # plain attached file
     object_id = Column(Integer, nullable=False)
     object_type = Column(Text, nullable=False)
 

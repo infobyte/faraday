@@ -273,6 +273,7 @@ class CommandFactory(WorkspaceObjectFactory):
     ip = FuzzyText()
     user = FuzzyText()
     hostname = FuzzyText()
+    import_source = 'shell'
 
     class Meta:
         model = Command
@@ -302,6 +303,7 @@ class EmptyCommandFactory(FaradayFactory):
     ip = FuzzyText()
     user = FuzzyText()
     hostname = FuzzyText()
+    import_source = 'shell'
 
     class Meta:
         model = Command

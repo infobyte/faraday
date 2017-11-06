@@ -576,6 +576,10 @@ class CommandImporter(object):
 
     DOC_TYPE = 'CommandRunInformation'
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
+        import_source = 'shell'
+        if document.get('Command', '').startswith('Import'):
+            import_source = 'shell'
+
         start_date = datetime.datetime.fromtimestamp(document.get('itime'))
 
         command, instance = get_or_create(
@@ -583,6 +587,7 @@ class CommandImporter(object):
             Command,
             command=document.get('command', None),
             start_date=start_date,
+            import_source=import_source,
         )
         if document.get('duration'):
             command.end_date = start_date + datetime.timedelta(seconds=document.get('duration'))

@@ -577,8 +577,8 @@ class CommandImporter(object):
     DOC_TYPE = 'CommandRunInformation'
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         import_source = 'shell'
-        if document.get('Command', '').startswith('Import'):
-            import_source = 'shell'
+        if document.get('command', '').startswith('Import'):
+            import_source = 'report'
 
         start_date = datetime.datetime.fromtimestamp(document.get('itime'))
 

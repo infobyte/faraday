@@ -445,8 +445,7 @@ class VulnerabilityImporter(object):
                     website=website,
                     workspace=workspace,
                 )
-                if command:
-                    log_command_object_found(command, vulnerability, created)
+
             if document['type'] == 'Vulnerability':
                 vuln_params = {
                     'name': document.get('name'),
@@ -474,6 +473,8 @@ class VulnerabilityImporter(object):
             vulnerability.impact_availability = document.get('impact', {}).get('availability')
             vulnerability.impact_confidentiality = document.get('impact', {}).get('confidentiality')
             vulnerability.impact_integrity = document.get('impact', {}).get('integrity')
+            if command:
+                log_command_object_found(command, vulnerability, created)
             if document['type'] == 'VulnerabilityWeb':
                 vulnerability.query_string = document.get('query')
                 vulnerability.request = document.get('request')

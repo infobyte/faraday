@@ -760,7 +760,7 @@ class Credential(Metadata):
 
 def _make_command_created_related_object():
     query = select([BooleanToIntColumn("(count(*) = 0)")])
-    query = query.select_from('command_object as command_object_inner')
+    query = query.select_from(text('command_object as command_object_inner'))
     where_expr = " command_object_inner.create_date < command_object.create_date and " \
                   " (command_object_inner.object_id = command_object.object_id and " \
                   " command_object_inner.object_type = command_object.object_type) "
@@ -798,7 +798,7 @@ def _make_created_objects_sum(object_type_filter):
     return column_property(
         select([func.sum(CommandObject.created)]).\
         select_from(table('command_object')). \
-        where(where_condition)
+        where(text(where_condition))
     )
 
 
@@ -810,7 +810,7 @@ def _make_created_objects_sum_joined(object_type_filter, join_filters):
         select([func.sum(CommandObject.created)]). \
             select_from(table('command_object')). \
             select_from(table('vulnerability')). \
-            where(' and '.join(where_conditions))
+            where(text(' and '.join(where_conditions)))
     )
 
 

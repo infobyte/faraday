@@ -397,6 +397,9 @@ class DeleteWorkspacedMixin(DeleteMixin):
 
 class CountWorkspacedMixin(object):
 
+    #: List of SQLAlchemy query filters to apply when counting
+    count_extra_filters = []
+
     def count(self, **kwargs):
         res = {
             'groups': [],
@@ -419,7 +422,8 @@ class CountWorkspacedMixin(object):
             db.session.query(self.model_class)
             .join(Workspace)
             .group_by(group_by)
-            .filter(Workspace.name == workspace_name))
+            .filter(Workspace.name == workspace_name,
+                    *self.count_extra_filters))
         for key, count in count.values(group_by, func.count(group_by)):
             res['groups'].append(
                 {'count': count,

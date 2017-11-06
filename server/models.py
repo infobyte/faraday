@@ -883,7 +883,9 @@ class Workspace(Metadata):
 
     credential_count = _make_generic_count_property('workspace', 'credential')
     host_count = _make_generic_count_property('workspace', 'host')
-    service_count = _make_generic_count_property('workspace', 'service')
+    open_service_count = _make_generic_count_property(
+        'workspace', 'service', where=text("service.status = 'open'"))
+    total_service_count = _make_generic_count_property('workspace', 'service')
 
     vulnerability_web_count = query_expression()
     vulnerability_code_count = query_expression()
@@ -898,11 +900,11 @@ class Workspace(Metadata):
         If only_confirmed is True, it will only show the count for confirmed
         vulnerabilities. Otherwise, it will show the count of all of them
         """
-        from sqlalchemy.sql.expression import literal_column
         return cls.query.options(
             undefer(cls.host_count),
             undefer(cls.credential_count),
-            undefer(cls.service_count),
+            undefer(cls.open_service_count),
+            undefer(cls.total_service_count),
             with_expression(
                 cls.vulnerability_web_count,
                 _make_vuln_count_property('vulnerability_web',

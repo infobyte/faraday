@@ -59,6 +59,7 @@ class ServiceView(ReadWriteWorkspacedView):
     route_base = 'services'
     model_class = Service
     schema_class = ServiceSchema
+    count_extra_filters = [Service.status == 'open']
 
     def _envelope_list(self, objects, pagination_metadata=None):
         services = []

@@ -40,7 +40,7 @@ class HostSchema(AutoSchema):
     owner = PrimaryKeyRelatedField('username', attribute='creator', dump_only=True)
     services = fields.Integer(attribute='open_service_count', dump_only=True)
     vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
-    credentials = fields.Integer(attribute='vulnerability_count', dump_only=True)
+    credentials = fields.Integer(attribute='credentials_count', dump_only=True)
     hostnames = PrimaryKeyRelatedField('name', many=True,
                                        attribute="hostnames",
                                        # TODO migration: make it writable
@@ -88,6 +88,7 @@ class HostsView(PaginatedMixin,
                 ReadWriteWorkspacedView):
     route_base = 'hosts'
     model_class = Host
+    order_field = Host.ip.asc()
     schema_class = HostSchema
     unique_fields = ['ip']
     filterset_class = HostFilterSet

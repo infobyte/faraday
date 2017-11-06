@@ -156,8 +156,9 @@ class DigPlugin(core.PluginBase):
                             name="TXT Information",
                             text=text.encode('ascii', 'ignore'))
 
-        except:
+        except Exception as ex:
             print("some part of the dig plug-in caused an error! Please check repo/dig/plugin.py")
+            logger.error("Error from dig plugin: %s" % (ex))
             return False
 
 

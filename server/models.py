@@ -829,15 +829,15 @@ class Command(Metadata):
     workspace = relationship('Workspace', foreign_keys=[workspace_id])
     # TODO: add Tool relationship and report_attachment
 
-    sum_created_vulnerabilities = _make_created_objects_sum('Vulnerability')
+    sum_created_vulnerabilities = _make_created_objects_sum('vulnerability')
 
-    sum_created_vulnerabilities_web = _make_created_objects_sum('VulnerabilityWeb')
+    sum_created_vulnerabilities_web = _make_created_objects_sum_joined('vulnerability', {'type': '\'vulnerability_web\''})
 
-    sum_created_hosts = _make_created_objects_sum('Host')
+    sum_created_hosts = _make_created_objects_sum('host')
 
-    sum_created_services = _make_created_objects_sum('Service')
+    sum_created_services = _make_created_objects_sum('service')
 
-    sum_created_vulnerability_critical = _make_created_objects_sum_joined('Vulnerability', {'severity': '\'critical\''})
+    sum_created_vulnerability_critical = _make_created_objects_sum_joined('vulnerability', {'severity': '\'critical\''})
 
     @property
     def parent(self):
@@ -1026,13 +1026,9 @@ class File(Metadata):
     filename = Column(Text, nullable=False)
     description = Column(Text)
     content = Column(UploadedFileField(upload_type=FaradayUploadedFile),
-                     nullable=False)  # plain attached file
+                     nullable=True)  # plain attached file
     object_id = Column(Integer, nullable=False)
     object_type = Column(Text, nullable=False)
-
-    __table_args__ = (
-        UniqueConstraint('object_id', 'object_type', 'filename', name='uix_file_obj_id_type_and_filename'),
-    )
 
 
 class UserAvatar(Metadata):

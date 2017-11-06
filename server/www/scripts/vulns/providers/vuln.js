@@ -15,7 +15,6 @@ angular.module('faradayApp')
             this.confirmed = true;
             this.data = "";
             this.desc = "";
-            this.easeofresolution = "";
             this.hostnames = "";
             this.impact = {
                 accountability: false,

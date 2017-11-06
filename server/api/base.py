@@ -47,12 +47,15 @@ class InvalidUsage(Exception):
 
 # TODO: Require @view decorator to enable custom routes
 class GenericView(FlaskView):
-    """Abstract class to provide helpers. Inspired in `Django REST
+    """Abstract class to provide generic views. Inspired in `Django REST
     Framework generic viewsets`_.
 
     To create new views, you should create a class inheriting from
     GenericView (or from one of its subclasses) and set the model_class,
     schema_class, and optionally the rest of class attributes.
+
+    Then, you should register it with your app by using the ``register``
+    classmethod.
 
     .. _Django REST Framework generic viewsets: http://www.django-rest-framework.org/api-guide/viewsets/#genericviewset
     """
@@ -113,27 +116,50 @@ class GenericView(FlaskView):
     unique_fields = []  # Fields unique
 
     def _get_schema_class(self):
-        """Documentame"""
+        """By default, it returns ``self.schema_class``.
+
+        You can override it to define a custom behavior to be used
+        in all views.
+        """
         assert self.schema_class is not None, "You must define schema_class"
         return self.schema_class
 
     def _get_lookup_field(self):
+        """Get a Field instance based on ``self.model_class`` and
+        ``self.lookup_field``
+        """
         return getattr(self.model_class, self.lookup_field)
 
     def _validate_object_id(self, object_id):
+        """
+        By default, it validates the value of the lookup field set by the user
+        in the URL by calling ``self.lookup_field_type(object_id)``.
+        If that raises a ValueError, que view will fail with error
+        code 404.
+        """
         try:
             self.lookup_field_type(object_id)
         except ValueError:
             flask.abort(404, 'Invalid format of lookup field')
 
     def _get_base_query(self):
+        """Override this method to change the base Query object that
+        will be used to perform all the queries of the view"""
         return self.model_class.query
 
     def _filter_query(self, query):
-        """Return a new SQLAlchemy query with some filters applied"""
+        """Return a new SQLAlchemy query with some filters applied.
+
+        By default it doesn't do anything. It is overriden by
+        :class:`FilterAlchemyMixin` to give support to Filteralchemy
+        filters"""
         return query
 
     def _get_object(self, object_id, **kwargs):
+        """
+        Given the object_id and extra route params, get an instance of
+        ``self.model_class``
+        """
         self._validate_object_id(object_id)
         try:
             obj = self._get_base_query(**kwargs).filter(
@@ -143,21 +169,43 @@ class GenericView(FlaskView):
         return obj
 
     def _dump(self, obj, **kwargs):
+        """Serializes an object with the Marshmallow schema class
+        returned by ``self._get_schema_class()``. Any passed kwargs
+        will be passed to the ``__init__`` method of the schema.
+        """
         return self._get_schema_class()(**kwargs).dump(obj).data
 
     def _parse_data(self, schema, request, *args, **kwargs):
+        """Deserializes from a Flask request to a dict with valid
+        data. It a ``Marshmallow.Schema`` instance to perform the
+        deserialization
+        """
         return FlaskParser().parse(schema, request, locations=('json',),
                                    *args, **kwargs)
 
     def _validate_uniqueness(self, obj, object_id=None):
+        """
+        Validate if an `obj` already exists in the database.
+        It it does, it should rollback the transaction and response with
+        a 400 or similar error code.
+
+        If the used is updating the object, `object_id` will be the ID
+        of the object being updated. If creating, it will be None
+
+        .. warning ::
+            This isn't implemented yet on this class. It is on
+            GenericWorkspacedView with the proper workspace support
+        """
         # TODO: Implement this
         return True
 
     @classmethod
     def register(cls, app, *args, **kwargs):
-        """Register and add JSON error handler. Use error code
-        400 instead of 422"""
+        """Given a flask app or blueprint, register the view and add a JSON
+        error handler. Use error code 400 instead of 422"""
+
         super(GenericView, cls).register(app, *args, **kwargs)
+
         @app.errorhandler(422)
         def handle_unprocessable_entity(err):
             # webargs attaches additional metadata to the `data` attribute

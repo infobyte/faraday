@@ -285,12 +285,12 @@ class CommandFactory(WorkspaceObjectFactory):
             vuln = VulnerabilityFactory.create(workspace=self.workspace, host=host, service=None, severity='low')
             db.session.flush()
             CommandObjectFactory.create(
-                object_type='Vulnerability',
+                object_type='vulnerability',
                 object_id=vuln.id,
                 command=self,
             )
             CommandObjectFactory.create(
-                object_type='Host',
+                object_type='host',
                 object_id=host.id,
                 command=self,
             )

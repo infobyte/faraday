@@ -23,14 +23,13 @@ from test_cases.factories import VulnerabilityFactory, EmptyCommandFactory, Comm
 # and https://github.com/pytest-dev/pytest/issues/568 for more information
 
 @pytest.mark.usefixtures('logged_user')
-# class TestListCommandView(ReadOnlyAPITests):  # TODO: change to this!!!
-class TestListCommandView(object):
+class TestListCommandView(ReadOnlyAPITests):
     model = Command
     factory = factories.CommandFactory
     api_endpoint = 'commands'
     view_class = CommandView
 
-    @pytest.mark.skip(reason='refactor needed to adapt new m2m model')
+    @pytest.mark.usefixtures('ignore_nplusone')
     def test_backwards_compatibility_list(self, test_client, second_workspace, session):
         self.factory.create(workspace=second_workspace)
         session.commit()
@@ -52,7 +51,6 @@ class TestListCommandView(object):
             ]
             assert set(object_properties) == set(command['value'].keys())
 
-    @pytest.mark.skip(reason='refactor needed to adapt new m2m model')
     def test_activity_feed(self, session, test_client):
         command = self.factory.create()
         another_command = EmptyCommandFactory.create(workspace=command.workspace)
@@ -60,12 +58,12 @@ class TestListCommandView(object):
         session.flush()
         CommandObjectFactory.create(
             command=another_command,
-            object_type='Vulnerability',
+            object_type='vulnerability',
             object_id=vuln.id
         )
         CommandObjectFactory.create(
             command=another_command,
-            object_type='Host',
+            object_type='host',
             object_id=vuln.host.id
         )
         session.commit()
@@ -93,7 +91,6 @@ class TestListCommandView(object):
                                                                                 u'vulnerabilities_count': 0,
                                                                                 u'criticalIssue': 0}]
 
-    @pytest.mark.skip(reason='refactor needed to adapt new m2m model')
     def test_verify_created_critical_vulns_is_correctly_showing_sum_values(self, session, test_client):
         workspace = WorkspaceFactory.create()
         command = EmptyCommandFactory.create(workspace=workspace)
@@ -103,17 +100,17 @@ class TestListCommandView(object):
         session.flush()
         CommandObjectFactory.create(
             command=command,
-            object_type='Host',
+            object_type='host',
             object_id=host.id
         )
         CommandObjectFactory.create(
             command=command,
-            object_type='Vulnerability',
+            object_type='vulnerability',
             object_id=vuln.id
         )
         CommandObjectFactory.create(
             command=command,
-            object_type='Vulnerability',
+            object_type='vulnerability',
             object_id=vuln_med.id
         )
         session.commit()
@@ -131,7 +128,6 @@ class TestListCommandView(object):
                              u'criticalIssue': 1}
                             ]
 
-    @pytest.mark.skip(reason='refactor needed to adapt new m2m model')
     def test_verify_created_vulns_with_host_and_service_verification(self, session, test_client):
         workspace = WorkspaceFactory.create()
         command = EmptyCommandFactory.create(workspace=workspace)
@@ -142,22 +138,22 @@ class TestListCommandView(object):
         session.flush()
         CommandObjectFactory.create(
             command=command,
-            object_type='Host',
+            object_type='host',
             object_id=host.id
         )
         CommandObjectFactory.create(
             command=command,
-            object_type='Vulnerability',
+            object_type='vulnerability',
             object_id=vuln.id
         )
         CommandObjectFactory.create(
             command=command,
-            object_type='Service',
+            object_type='service',
             object_id=service.id
         )
         CommandObjectFactory.create(
             command=command,
-            object_type='Vulnerability',
+            object_type='vulnerability',
             object_id=vuln_med.id
         )
         session.commit()
@@ -174,7 +170,6 @@ class TestListCommandView(object):
              u'criticalIssue': 1}
         ]
 
-    @pytest.mark.skip(reason='refactor needed to adapt new m2m model')
     def test_multiple_commands_executed_with_same_objects_found(self, session, test_client):
 
         workspace = WorkspaceFactory.create()
@@ -189,12 +184,12 @@ class TestListCommandView(object):
             session.flush()
             CommandObjectFactory.create(
                 command=command,
-                object_type='Host',
+                object_type='host',
                 object_id=host.id
             )
             CommandObjectFactory.create(
                 command=command,
-                object_type='Vulnerability',
+                object_type='vulnerability',
                 object_id=vuln.id
             )
         vuln_med = VulnerabilityFactory.create(severity='medium', workspace=workspace, service=service, host=None)
@@ -202,12 +197,12 @@ class TestListCommandView(object):
         command = EmptyCommandFactory.create(workspace=workspace)
         CommandObjectFactory.create(
             command=command,
-            object_type='Service',
+            object_type='service',
             object_id=service.id
         )
         CommandObjectFactory.create(
             command=command,
-            object_type='Vulnerability',
+            object_type='vulnerability',
             object_id=vuln_med.id
         )
         session.commit()

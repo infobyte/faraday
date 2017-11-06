@@ -639,18 +639,19 @@ class CredentialImporter(object):
                 session,
                 Credential,
                 username=document.get('username'),
+                password=document.get('password'),
                 host=host,
                 service=service,
                 workspace=workspace,
             )
-            if command:
-                log_command_object_found(command, credential, created)
             credential.password = document.get('password', None)
             credential.owned = document.get('owned', False)
             credential.description = document.get('description', None)
             credential.name = document.get('name', None)
             credential.workspace = workspace
-        yield credential
+            if command:
+                log_command_object_found(command, credential, created)
+            yield credential
 
 
 class WorkspaceImporter(object):

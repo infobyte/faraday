@@ -587,11 +587,12 @@ class CommandImporter(object):
             Command,
             command=document.get('command', None),
             start_date=start_date,
-            import_source=import_source,
+
         )
         if document.get('duration'):
             command.end_date = start_date + datetime.timedelta(seconds=document.get('duration'))
 
+        command.import_source = import_source
         command.command = document.get('command', None)
         command.ip = document.get('ip', None)
         command.hostname = document.get('hostname', None)

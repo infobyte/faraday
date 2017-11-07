@@ -16,8 +16,9 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
-    event
-)
+    event,
+    and_)
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import backref, relationship, undefer
 from sqlalchemy.sql import select, text, table
 from sqlalchemy import func
@@ -108,6 +109,19 @@ def _make_generic_count_property(parent_table, children_table, where=None):
     if where is not None:
         query = query.where(where)
     return column_property(query, deferred=True)
+
+
+def _make_command_created_related_object():
+    query = select([BooleanToIntColumn("(count(*) = 0)")])
+    query = query.select_from(text('command_object as command_object_inner'))
+    where_expr = " command_object_inner.create_date < command_object.create_date and " \
+                " (command_object_inner.object_id = command_object.object_id and " \
+                " command_object_inner.object_type = command_object.object_type) and " \
+                " command_object_inner.workspace_id = command_object.workspace_id "
+    query = query.where(text(where_expr))
+    return column_property(
+        query,
+    )
 
 
 class DatabaseMetadata(db.Model):
@@ -425,6 +439,110 @@ class VulnerabilityTemplate(VulnerabilityABC):
         proxy_factory=CustomAssociationSet,
         creator=_build_associationproxy_creator_non_workspaced('PolicyViolationTemplate')
     )
+
+
+class CommandObject(db.Model):
+    __tablename__ = 'command_object'
+    id = Column(Integer, primary_key=True)
+
+    object_id = Column(Integer, nullable=False)
+    object_type = Column(Text, nullable=False)
+
+    command = relationship('Command', backref='command_objects')
+    command_id = Column(Integer, ForeignKey('command.id'), index=True)
+
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship('Workspace', foreign_keys=[workspace_id])
+
+    create_date = Column(DateTime, default=datetime.utcnow)
+
+    # the following properties are used to know if the command created the specified objects_type
+    # remeber that this table has a row instances per relationship.
+    # this created integer can be used to obtain the total object_type objects created.
+    created = _make_command_created_related_object()
+
+    # We are currently using the column property created. however to avoid losing information
+    # we also store the a boolean to know if at the moment of created the object related to the
+    # Command was created.
+    created_persistent = Column(Boolean, default=False)
+
+    __table_args__ = (
+        UniqueConstraint('object_id', 'object_type', 'command_id', 'workspace_id',
+                         name='uix_command_object_object_id_object_type_command_id_workspace_id'),
+    )
+
+    @property
+    def parent(self):
+        return self.command
+
+
+def _make_created_objects_sum(object_type_filter):
+    where_conditions = ["command_object.object_type= '%s'" % object_type_filter]
+    where_conditions.append("command_object.command_id = command.id")
+    where_conditions.append("command_object.workspace_id = command.workspace_id")
+    return column_property(
+        select([func.sum(CommandObject.created)]).\
+        select_from(table('command_object')). \
+        where(text(' and '.join(where_conditions)))
+    )
+
+
+def _make_created_objects_sum_joined(object_type_filter, join_filters):
+    """
+
+    :param object_type_filter: can be any host, service, vulnerability, credential or any object created from commands.
+    :param join_filters: Filter for vulnerability fields.
+    :return: column property with sum of created objects.
+    """
+    where_conditions = ["command_object.object_type= '%s'" % object_type_filter]
+    where_conditions.append("command_object.command_id = command.id")
+    where_conditions.append("vulnerability.id = command_object.object_id ")
+    where_conditions.append("command_object.workspace_id = vulnerability.workspace_id")
+    for attr, filter_value in join_filters.items():
+        where_conditions.append("vulnerability.{0} = {1}".format(attr, filter_value))
+    return column_property(
+        select([func.sum(CommandObject.created)]). \
+            select_from(table('command_object')). \
+            select_from(table('vulnerability')). \
+            where(text(' and '.join(where_conditions)))
+    )
+
+
+class Command(Metadata):
+
+    IMPORT_SOURCE = [
+        'report',  # all the files the tools export and faraday imports it from the resports directory, gtk manual import or web import.
+        'shell',  # command executed on the shell or webshell with hooks connected to faraday.
+    ]
+
+    __tablename__ = 'command'
+    id = Column(Integer, primary_key=True)
+    command = Column(Text(), nullable=False)
+    start_date = Column(DateTime, nullable=False)
+    end_date = Column(DateTime, nullable=True)
+    ip = Column(String(250), nullable=False)  # where the command was executed
+    hostname = Column(String(250), nullable=False)  # where the command was executed
+    params = Column(Text(), nullable=True)
+    user = Column(String(250), nullable=True)  # os username where the command was executed
+    import_source = Column(Enum(*IMPORT_SOURCE, name='import_source_enum'))
+
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship('Workspace', foreign_keys=[workspace_id])
+    # TODO: add Tool relationship and report_attachment
+
+    sum_created_vulnerabilities = _make_created_objects_sum('vulnerability')
+
+    sum_created_vulnerabilities_web = _make_created_objects_sum_joined('vulnerability', {'type': '\'vulnerability_web\''})
+
+    sum_created_hosts = _make_created_objects_sum('host')
+
+    sum_created_services = _make_created_objects_sum('service')
+
+    sum_created_vulnerability_critical = _make_created_objects_sum_joined('vulnerability', {'severity': '\'critical\''})
+
+    @property
+    def parent(self):
+        return
 
 
 class VulnerabilityGeneric(VulnerabilityABC):
@@ -775,107 +893,6 @@ class Credential(Metadata):
     @property
     def parent(self):
         return self.host or self.service
-
-
-def _make_command_created_related_object():
-    query = select([BooleanToIntColumn("(count(*) = 0)")])
-    query = query.select_from(text('command_object as command_object_inner'))
-    where_expr = " command_object_inner.create_date < command_object.create_date and " \
-                  " (command_object_inner.object_id = command_object.object_id and " \
-                  " command_object_inner.object_type = command_object.object_type) "
-    query = query.where(text(where_expr))
-    return column_property(
-        query,
-    )
-
-
-class CommandObject(db.Model):
-    __tablename__ = 'command_object'
-    id = Column(Integer, primary_key=True)
-
-    object_id = Column(Integer, nullable=False)
-    object_type = Column(Text, nullable=False)
-
-    command = relationship('Command', backref='command_objects')
-    command_id = Column(Integer, ForeignKey('command.id'), index=True)
-
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
-    workspace = relationship('Workspace', foreign_keys=[workspace_id])
-
-    create_date = Column(DateTime, default=datetime.utcnow)
-
-    # the following properties are used to know if the command created the specified objects_type
-    # remeber that this table has a row instances per relationship.
-    # this created integer can be used to obtain the total object_type objects created.
-    created = _make_command_created_related_object()
-
-    # We are currently using the column property created. however to avoid losing information
-    # we also store the a boolean to know if at the moment of created the object related to the
-    # Command was created.
-    created_persistent = Column(Boolean, default=False)
-
-    __table_args__ = (
-        UniqueConstraint('object_id', 'object_type', 'command_id', 'workspace_id',
-                         name='uix_command_object_object_id_object_type_command_id_workspace_id'),
-    )
-
-
-def _make_created_objects_sum(object_type_filter):
-    where_condition = "command_object.command_id = command.id and command_object.object_type= '%s'" % object_type_filter
-    return column_property(
-        select([func.sum(CommandObject.created)]).\
-        select_from(table('command_object')). \
-        where(text(where_condition))
-    )
-
-
-def _make_created_objects_sum_joined(object_type_filter, join_filters):
-    where_conditions = ["vulnerability.id = command_object.object_id and command_object.command_id = command.id and command_object.object_type= '%s'" % object_type_filter]
-    for attr, filter_value in join_filters.items():
-        where_conditions.append("vulnerability.{0} = {1}".format(attr, filter_value))
-    return column_property(
-        select([func.sum(CommandObject.created)]). \
-            select_from(table('command_object')). \
-            select_from(table('vulnerability')). \
-            where(text(' and '.join(where_conditions)))
-    )
-
-
-class Command(Metadata):
-
-    IMPORT_SOURCE = [
-        'report',  # all the files the tools export and faraday imports it from the resports directory, gtk manual import or web import.
-        'shell',  # command executed on the shell or webshell with hooks connected to faraday.
-    ]
-
-    __tablename__ = 'command'
-    id = Column(Integer, primary_key=True)
-    command = Column(Text(), nullable=False)
-    start_date = Column(DateTime, nullable=False)
-    end_date = Column(DateTime, nullable=True)
-    ip = Column(String(250), nullable=False)  # where the command was executed
-    hostname = Column(String(250), nullable=False)  # where the command was executed
-    params = Column(Text(), nullable=True)
-    user = Column(String(250), nullable=True)  # os username where the command was executed
-    import_source = Column(Enum(*IMPORT_SOURCE, name='import_source_enum'))
-
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
-    workspace = relationship('Workspace', foreign_keys=[workspace_id])
-    # TODO: add Tool relationship and report_attachment
-
-    sum_created_vulnerabilities = _make_created_objects_sum('vulnerability')
-
-    sum_created_vulnerabilities_web = _make_created_objects_sum_joined('vulnerability', {'type': '\'vulnerability_web\''})
-
-    sum_created_hosts = _make_created_objects_sum('host')
-
-    sum_created_services = _make_created_objects_sum('service')
-
-    sum_created_vulnerability_critical = _make_created_objects_sum_joined('vulnerability', {'severity': '\'critical\''})
-
-    @property
-    def parent(self):
-        return
 
 
 def _make_vuln_count_property(type_=None, only_confirmed=False,

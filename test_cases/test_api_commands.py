@@ -59,12 +59,14 @@ class TestListCommandView(ReadOnlyAPITests):
         CommandObjectFactory.create(
             command=another_command,
             object_type='vulnerability',
-            object_id=vuln.id
+            object_id=vuln.id,
+            workspace=command.workspace
         )
         CommandObjectFactory.create(
             command=another_command,
             object_type='host',
-            object_id=vuln.host.id
+            object_id=vuln.host.id,
+            workspace=command.workspace
         )
         session.commit()
         res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
@@ -103,17 +105,20 @@ class TestListCommandView(ReadOnlyAPITests):
         CommandObjectFactory.create(
             command=command,
             object_type='host',
-            object_id=host.id
+            object_id=host.id,
+            workspace=workspace
         )
         CommandObjectFactory.create(
             command=command,
             object_type='vulnerability',
-            object_id=vuln.id
+            object_id=vuln.id,
+            workspace=workspace
         )
         CommandObjectFactory.create(
             command=command,
             object_type='vulnerability',
-            object_id=vuln_med.id
+            object_id=vuln_med.id,
+            workspace=workspace
         )
         session.commit()
         res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
@@ -142,22 +147,26 @@ class TestListCommandView(ReadOnlyAPITests):
         CommandObjectFactory.create(
             command=command,
             object_type='host',
-            object_id=host.id
+            object_id=host.id,
+            workspace=workspace
         )
         CommandObjectFactory.create(
             command=command,
             object_type='vulnerability',
-            object_id=vuln.id
+            object_id=vuln.id,
+            workspace=workspace
         )
         CommandObjectFactory.create(
             command=command,
             object_type='service',
-            object_id=service.id
+            object_id=service.id,
+            workspace=workspace
         )
         CommandObjectFactory.create(
             command=command,
             object_type='vulnerability',
-            object_id=vuln_med.id
+            object_id=vuln_med.id,
+            workspace=workspace
         )
         session.commit()
         res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
@@ -189,12 +198,14 @@ class TestListCommandView(ReadOnlyAPITests):
             CommandObjectFactory.create(
                 command=command,
                 object_type='host',
-                object_id=host.id
+                object_id=host.id,
+                workspace=workspace
             )
             CommandObjectFactory.create(
                 command=command,
                 object_type='vulnerability',
-                object_id=vuln.id
+                object_id=vuln.id,
+                workspace=workspace
             )
         vuln_med = VulnerabilityFactory.create(severity='medium', workspace=workspace, service=service, host=None)
         session.flush()
@@ -202,12 +213,14 @@ class TestListCommandView(ReadOnlyAPITests):
         CommandObjectFactory.create(
             command=command,
             object_type='service',
-            object_id=service.id
+            object_id=service.id,
+            workspace=workspace
         )
         CommandObjectFactory.create(
             command=command,
             object_type='vulnerability',
-            object_id=vuln_med.id
+            object_id=vuln_med.id,
+            workspace=workspace
         )
         session.commit()
         res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')

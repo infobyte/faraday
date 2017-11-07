@@ -70,7 +70,7 @@ class CommandView(ReadWriteWorkspacedView):
                 'import_source': command.import_source,
                 'command': command.command,
                 'params': command.params,
-                'vulnerabilities_count': (command.sum_created_vulnerabilities or 0) + (command.sum_created_vulnerabilities_web or 0),
+                'vulnerabilities_count': (command.sum_created_vulnerabilities or 0),
                 'hosts_count': command.sum_created_hosts or 0,
                 'services_count': command.sum_created_services or 0,
                 'criticalIssue': command.sum_created_vulnerability_critical or 0,

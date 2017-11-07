@@ -7,10 +7,11 @@ import logging
 from base64 import b64encode, b64decode
 
 from filteralchemy import FilterSet, operators
-from flask import request
+from flask import request, current_app
 from flask import Blueprint
 from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
+from sqlalchemy import and_
 from sqlalchemy.orm import joinedload, selectin_polymorphic
 
 from depot.manager import DepotManager
@@ -29,7 +30,7 @@ from server.models import (
     Vulnerability,
     VulnerabilityWeb,
     VulnerabilityGeneric,
-    Host, Service, File)
+    Host, Service, File, CommandObject)
 from server.utils.database import get_or_create
 
 from server.api.modules.services import ServiceSchema
@@ -118,12 +119,17 @@ class VulnerabilitySchema(AutoSchema):
         return obj.__class__.__name__
 
     def get_metadata(self, obj):
+        command_id = None
+        command_obj = CommandObject.query.filter_by(object_type='vulnerability', object_id=obj.id, workspace=obj.workspace).first()
+        if command_obj:
+            command_id = command_obj.command_id
         return {
-            "command_id": "e1a042dd0e054c1495e1c01ced856438",
+            "command_id": command_id,
             "create_time": time.mktime(obj.create_date.utctimetuple()),
-            "creator": "Metasploit",
-            "owner": "", "update_action": 0,
-            "update_controller_action": "No model controller call",
+            "creator": "",
+            "owner": obj.creator and obj.creator.username or '',
+            "update_action": 0,
+            "update_controller_action": "",
             "update_time": time.mktime(obj.update_date.utctimetuple()),
             "update_user": ""
         }
@@ -260,14 +266,31 @@ class VulnerabilityFilterSet(FilterSet):
             "status", "website", "parameter_name", "query_string", "path",
             "data", "severity", "confirmed", "name", "request", "response",
             "parameters", "resolution", "method", "ease_of_resolution",
-            "description")
+            "description", "command_id")
+
         strict_fields = (
             "severity", "confirmed", "method"
         )
+
         default_operator = operators.ILike
         column_overrides = {
             field: _strict_filtering for field in strict_fields}
         operators = (operators.ILike, operators.Equal)
+
+    def filter(self):
+        """Generate a filtered query from request parameters.
+
+        :returns: Filtered SQLALchemy query
+        """
+        command_id = request.args.get('command_id')
+        if command_id:
+            self.query = db.session.query(VulnerabilityGeneric).join(CommandObject, and_(VulnerabilityWeb.id == CommandObject.object_id, CommandObject.object_type=='vulnerability'))
+
+        query = super(VulnerabilityFilterSet, self).filter()
+
+        if command_id:
+            query = query.filter(CommandObject.command_id==int(command_id))
+        return query
 
 
 class VulnerabilityView(PaginatedMixin,

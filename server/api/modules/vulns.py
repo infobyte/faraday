@@ -100,7 +100,7 @@ class VulnerabilitySchema(AutoSchema):
     status = fields.Method(serialize='get_status', deserialize='load_status')  # TODO: this breaks enum validation.
     type = fields.Method(serialize='get_type', deserialize='load_type')
     obj_id = fields.String(dump_only=True, attribute='id')
-    target = fields.String(default='')  # TODO: review this attribute
+    target = fields.Method('get_target')
 
     class Meta:
         model = Vulnerability
@@ -169,6 +169,12 @@ class VulnerabilitySchema(AutoSchema):
 
     def get_issuetracker(self, obj):
         return {}
+
+    def get_target(self, obj):
+        if obj.service is not None:
+            return obj.service.host.ip
+        else:
+            return obj.host.ip
 
     def load_severity(self, value):
         if value == 'med':
@@ -395,6 +401,25 @@ class VulnerabilityView(PaginatedMixin,
         return {
             'vulnerabilities': vulns,
         }
+
+    def count(self, **kwargs):
+        """Override to change severity values"""
+        res = super(VulnerabilityView, self).count(**kwargs)
+
+        def convert_group(group):
+            group = group.copy()
+            severity_map = {
+                "informational": "info",
+                "medium": "med"
+            }
+            severity = group['severity']
+            group['severity'] = group['name'] = severity_map.get(
+                severity, severity)
+            return group
+
+        if request.args.get('group_by') == 'severity':
+            res['groups'] = [convert_group(group) for group in res['groups']]
+        return res
 
 
 VulnerabilityView.register(vulns_api)

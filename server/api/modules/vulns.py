@@ -379,5 +379,24 @@ class VulnerabilityView(PaginatedMixin,
             'vulnerabilities': vulns,
         }
 
+    def count(self, **kwargs):
+        """Override to change severity values"""
+        res = super(VulnerabilityView, self).count(**kwargs)
+
+        def convert_group(group):
+            group = group.copy()
+            severity_map = {
+                "informational": "info",
+                "medium": "med"
+            }
+            severity = group['severity']
+            group['severity'] = group['name'] = severity_map.get(
+                severity, severity)
+            return group
+
+        if request.args.get('group_by') == 'severity':
+            res['groups'] = [convert_group(group) for group in res['groups']]
+        return res
+
 
 VulnerabilityView.register(vulns_api)

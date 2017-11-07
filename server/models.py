@@ -780,6 +780,9 @@ class CommandObject(db.Model):
     command = relationship('Command', backref='command_objects')
     command_id = Column(Integer, ForeignKey('command.id'), index=True)
 
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship('Workspace', foreign_keys=[workspace_id])
+
     create_date = Column(DateTime, default=datetime.utcnow)
 
     # the following properties are used to know if the command created the specified objects_type
@@ -791,6 +794,11 @@ class CommandObject(db.Model):
     # we also store the a boolean to know if at the moment of created the object related to the
     # Command was created.
     created_persistent = Column(Boolean, default=False)
+
+    __table_args__ = (
+        UniqueConstraint('object_id', 'object_type', 'command_id', 'workspace_id',
+                         name='uix_command_object_object_id_object_type_command_id_workspace_id'),
+    )
 
 
 def _make_created_objects_sum(object_type_filter):
@@ -1258,11 +1266,12 @@ def log_command_object_found(command, object, created):
         object_type = 'vulnerability'
 
     db.session.flush()
-    get_or_create(
+    log, _ = get_or_create(
         db.session,
         CommandObject,
         command=command,
         object_id=object.id,
         object_type=object_type,
-        created_persistent=created,
+        workspace=object.workspace,
     )
+    log.created_persistent=created

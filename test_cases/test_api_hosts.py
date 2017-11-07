@@ -285,7 +285,7 @@ class TestHostAPI:
         assert res.status_code == 200
         json_host = filter(lambda json_host: json_host['value']['id'] == host.id, res.json['rows'])[0]
         # the host has one vuln associated. another one via service.
-        assert json_host['value']['vulns'] == 1
+        assert json_host['value']['vulns'] == 2
 
     def test_host_services_vuln_count_verification(self, test_client, session,
                                                    workspace, host_factory, vulnerability_factory,

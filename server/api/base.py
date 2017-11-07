@@ -214,6 +214,10 @@ class GenericWorkspacedView(GenericView):
 class ListMixin(object):
     """Add GET / route"""
 
+    #: If set (to a SQLAlchemy attribute instance) use this field to order the
+    #: query by default
+    order_field = None
+
     def _envelope_list(self, objects, pagination_metadata=None):
         """Override this method to define how a list of objects is
         rendered"""
@@ -224,6 +228,8 @@ class ListMixin(object):
 
     def index(self, **kwargs):
         query = self._filter_query(self._get_eagerloaded_query(**kwargs))
+        if self.order_field is not None:
+            query = query.order_by(self.order_field)
         objects, pagination_metadata = self._paginate(query)
         return self._envelope_list(self._dump(objects, many=True),
                                    pagination_metadata)

@@ -167,7 +167,8 @@ class Host(Metadata):
     mac = Column(Text, nullable=True)
     net_segment = Column(Text, nullable=True)
 
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True,
+                          nullable=False)
     workspace = relationship(
                             'Workspace',
                             backref='hosts',
@@ -177,7 +178,25 @@ class Host(Metadata):
     open_service_count = _make_generic_count_property(
         'host', 'service', where=text("service.status = 'open'"))
     total_service_count = _make_generic_count_property('host', 'service')
-    vulnerability_count = _make_generic_count_property('host', 'vulnerability')
+
+    __host_vulnerabilities = (
+        select([func.count(text('vulnerability.id'))]).
+        select_from('vulnerability').
+        where(text('vulnerability.host_id = host.id')).
+        as_scalar()
+    )
+    __service_vulnerabilities = (
+        select([func.count(text('vulnerability.id'))]).
+        select_from(text('vulnerability, service')).
+        where(text('vulnerability.service_id = service.id and '
+                   'service.host_id = host.id')).
+        as_scalar()
+    )
+    vulnerability_count = column_property(
+        # select(text('count(*)')).select_from(__host_vulnerabilities.subquery()),
+        __host_vulnerabilities + __service_vulnerabilities,
+        deferred=True)
+
     credentials_count = _make_generic_count_property('host', 'credential')
 
     __table_args__ = (

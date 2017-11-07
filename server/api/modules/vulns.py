@@ -99,7 +99,7 @@ class VulnerabilitySchema(AutoSchema):
     status = fields.Method(serialize='get_status', deserialize='load_status')  # TODO: this breaks enum validation.
     type = fields.Method(serialize='get_type', deserialize='load_type')
     obj_id = fields.String(dump_only=True, attribute='id')
-    target = fields.String(default='')  # TODO: review this attribute
+    target = fields.Method('get_target')
 
     class Meta:
         model = Vulnerability
@@ -163,6 +163,12 @@ class VulnerabilitySchema(AutoSchema):
 
     def get_issuetracker(self, obj):
         return {}
+
+    def get_target(self, obj):
+        if obj.service is not None:
+            return obj.service.host.ip
+        else:
+            return obj.host.ip
 
     def load_severity(self, value):
         if value == 'med':

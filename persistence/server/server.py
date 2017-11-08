@@ -51,7 +51,7 @@ def _get_base_server_url():
         server_url = _conf().getCouchURI()
     else:
         server_url = SERVER_URL
-    return server_url
+    return server_url[:-1] if server_url[-1] == "/" else server_url
 
 
 def _create_server_api_url():
@@ -1014,7 +1014,7 @@ def update_service(workspace_name, id, name, description, ports,
 
 def create_vuln(workspace_name, id, name, description, owned=None, owner="",
                 confirmed=False, data="", refs=None, severity="info", resolution="",
-                desc="", metadata=None, status=None):
+                desc="", metadata=None, status=None, policyviolations=[]):
     """Creates a vuln.
 
     Args:
@@ -1034,6 +1034,7 @@ def create_vuln(workspace_name, id, name, description, owned=None, owner="",
         status (str): the service's status
         metadata: a collection of metadata. If you don't know the metada. leave
             on None, it will be created automatically.
+        policyviolations (lst) :  the policy violations
 
     Returns:
         A dictionary with the server's response.
@@ -1052,11 +1053,12 @@ def create_vuln(workspace_name, id, name, description, owned=None, owner="",
                            desc=desc,
                            type="Vulnerability",
                            status=status,
-                           metadata=metadata)
+                           metadata=metadata,
+                           policyviolations=policyviolations)
 
 def update_vuln(workspace_name, id, name, description, owned=None, owner="",
                 confirmed=False, data="", refs=None, severity="info", resolution="",
-                desc="", metadata=None, status=None):
+                desc="", metadata=None, status=None, policyviolations=[]):
     """Updates a vuln.
 
     Args:
@@ -1076,6 +1078,7 @@ def update_vuln(workspace_name, id, name, description, owned=None, owner="",
         status (str): the service's status
         metadata: a collection of metadata. If you don't know the metada. leave
             on None, it will be created automatically.
+        policyviolations (lst) :  the policy violations
 
     Returns:
         A dictionary with the server's response.
@@ -1094,13 +1097,14 @@ def update_vuln(workspace_name, id, name, description, owned=None, owner="",
                              desc=desc,
                              type="Vulnerability",
                              status=status,
-                             metadata=metadata)
+                             metadata=metadata,
+                             policyviolations=policyviolations)
 
 def create_vuln_web(workspace_name, id, name, description, owned=None, owner="",
                     confirmed=False, data="", refs=None, severity="info", resolution="",
                     desc="", metadata=None, method=None, params="", path=None, pname=None,
                     query=None, request=None, response=None, category="", website=None,
-                    status=None):
+                    status=None, policyviolations=[]):
     """Creates a vuln web.
 
     Args:
@@ -1127,6 +1131,7 @@ def create_vuln_web(workspace_name, id, name, description, owned=None, owner="",
         category (str): a category for the web vuln's
         website (str): the website where the vuln was found
         status (str): the web vulns's status
+        policyviolations (lst) :  the policy violations
 
     Returns:
         A dictionary with the server's response.
@@ -1154,13 +1159,14 @@ def create_vuln_web(workspace_name, id, name, description, owned=None, owner="",
                            website=website,
                            category=category,
                            status=status,
-                           type='VulnerabilityWeb')
+                           type='VulnerabilityWeb',
+                           policyviolations=policyviolations)
 
 def update_vuln_web(workspace_name, id, name, description, owned=None, owner="",
                     confirmed=False, data="", refs=None, severity="info", resolution="",
                     desc="", metadata=None, method=None, params="", path=None, pname=None,
                     query=None, request=None, response=None, category="", website=None,
-                    status=None):
+                    status=None, policyviolations=[]):
     """Creates a vuln web.
 
     Args:
@@ -1187,6 +1193,7 @@ def update_vuln_web(workspace_name, id, name, description, owned=None, owner="",
         category (str): a category for the web vuln's
         website (str): the website where the vuln was found
         status (str): the web vulns's status
+        policyviolations (lst) :  the policy violations
 
     Returns:
         A dictionary with the server's response.
@@ -1214,7 +1221,8 @@ def update_vuln_web(workspace_name, id, name, description, owned=None, owner="",
                              website=website,
                              category=category,
                              status=status,
-                             type='VulnerabilityWeb')
+                             type='VulnerabilityWeb',
+                             policyviolations=policyviolations)
 
 def create_note(workspace_name, id, name, text, owned=None, owner="",
                 description="", metadata=None):

@@ -102,7 +102,7 @@ class VulnerabilityDAO(FaradayDAO):
         # Apply pagination, sorting and filtering options to the query
         query = self.__specialized_sort(query, order_by, order_dir)
         query = apply_search_filter(query, self.COLUMNS_MAP, search, vuln_filter, self.STRICT_FILTERING)
-        count = get_count(query)
+        count = get_count(query,count_col=Vulnerability.id)
 
         if page_size:
             query = paginate(query, page, page_size)

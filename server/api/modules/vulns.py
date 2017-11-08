@@ -400,6 +400,8 @@ class VulnerabilityView(PaginatedMixin,
             })
         return {
             'vulnerabilities': vulns,
+            'count': (pagination_metadata.total
+                      if pagination_metadata is not None else len(vulns))
         }
 
     def count(self, **kwargs):

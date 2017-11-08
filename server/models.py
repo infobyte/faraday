@@ -276,7 +276,9 @@ class Service(Metadata):
                             foreign_keys=[workspace_id]
                             )
 
-    vulnerability_count = _make_generic_count_property('service', 'vulnerability')
+    vulnerability_count = _make_generic_count_property('service',
+                                                       'vulnerability')
+    credentials_count = _make_generic_count_property('service', 'credential')
 
     __table_args__ = (
         UniqueConstraint(port, protocol, host_id, workspace_id, name='uix_service_port_protocol_host_workspace'),

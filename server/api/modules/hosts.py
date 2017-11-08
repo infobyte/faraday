@@ -78,11 +78,12 @@ class HostFilterSet(FilterSet):
 class ServiceSchema(AutoSchema):
     vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
     credentials = fields.Integer(attribute='credentials_count', dump_only=True)
+    ports = fields.Integer(attribute='port')
 
     class Meta:
         model = Service
-        fields = ('id', 'name', 'description', 'port', 'protocol', 'status',
-                  'vulns', 'credentials')
+        fields = ('id', 'name', 'description', 'port', 'ports', 'protocol',
+                  'status', 'vulns', 'credentials', 'version')
 
 
 class HostsView(PaginatedMixin,

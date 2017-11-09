@@ -1006,6 +1006,10 @@ class Scope(Metadata):
                          name='uix_scope_name_workspace'),
     )
 
+    @property
+    def parent(self):
+        return
+
 
 def is_valid_workspace(workspace_name):
     return db.session.query(server.models.Workspace).filter_by(name=workspace_name).first() is not None
@@ -1256,6 +1260,10 @@ class Comment(Metadata):
     object_id = Column(Integer, nullable=False)
     object_type = Column(Text, nullable=False)
 
+    @property
+    def parent(self):
+        return
+
 
 class ExecutiveReport(Metadata):
     STATUSES = [
@@ -1281,6 +1289,10 @@ class ExecutiveReport(Metadata):
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', foreign_keys=[workspace_id])
+
+    @property
+    def parent(self):
+        return
 
 
 # This constraint uses Columns from different classes

@@ -189,7 +189,7 @@ def set_metadata(document, obj):
                 if key == 'create_time':
                     obj.create_date = datetime.datetime.fromtimestamp(document['metadata']['create_time'])
                 if key == 'owner':
-                    creator = User.query.filter_by(username=value)
+                    creator = User.query.filter_by(username=value).first()
                     obj.creator = creator
             except ValueError:
                 if key == 'create_time':

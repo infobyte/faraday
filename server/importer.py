@@ -180,6 +180,24 @@ def create_tags(raw_tags, parent_id, parent_type):
         session.commit()
 
 
+def set_metadata(document, obj):
+    if 'metadata' in document:
+        for key, value in document['metadata'].iteritems():
+            if not value:
+                continue
+            try:
+                if key == 'create_time':
+                    obj.create_date = datetime.datetime.fromtimestamp(document['metadata']['create_time'])
+                if key == 'owner':
+                    creator = User.query.filter_by(username=value)
+                    obj.creator = creator
+            except ValueError:
+                if key == 'create_time':
+                    obj.create_date = datetime.datetime.fromtimestamp(document['metadata']['create_time'] / 1000)
+            except TypeError:
+                print('')
+
+
 class EntityNotFound(Exception):
     def __init__(self, entity_id):
         super(EntityNotFound, self).__init__("Entity (%s) wasn't found" % entity_id)
@@ -716,6 +734,7 @@ class TaskImporter(object):
 
         task.description = document.get('description')
         task.assigned_to = session.query(User).filter_by(username=document.get('username')).first()
+
         mapped_status = {
             'New': 'new',
             'In Progress': 'in progress',
@@ -1144,6 +1163,7 @@ class ImportCouchDB(FlaskScriptCommand):
                     for new_obj in obj_importer.update_from_document(raw_obj, workspace, level, couchdb_relational_map):
                         if not new_obj:
                             continue
+                        set_metadata(raw_obj, new_obj)
                         session.commit()
                         couchdb_relational_map_by_type[couchdb_id].append({'type': obj_type, 'id': new_obj.id})
                         couchdb_relational_map[couchdb_id].append(new_obj.id)

@@ -10,9 +10,7 @@ from sqlalchemy.orm import joinedload
 
 from server.api.base import AutoSchema, ReadWriteWorkspacedView
 from server.models import Service
-from server.utils.logger import get_logger
-from server.utils.web import gzipped, validate_workspace, get_integer_parameter
-
+from server.schemas import MetadataSchema, SelfNestedField
 
 services_api = Blueprint('services_api', __name__)
 
@@ -20,7 +18,6 @@ services_api = Blueprint('services_api', __name__)
 class ServiceSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     _rev = fields.String(default='', dump_only=True)
-    metadata = fields.Method('get_metadata')
     owned = fields.Boolean(default=False)
     owner = fields.String(dump_only=True, attribute='creator.username')
     ports = fields.Method(attribute='port', deserialize='load_port')
@@ -28,20 +25,10 @@ class ServiceSchema(AutoSchema):
     parent = fields.Integer(attribute='host_id', load_only=True)
     host_id = fields.Integer(attribute='host_id', dump_only=True)
     summary = fields.Method('get_summary')
+    metadata = SelfNestedField(MetadataSchema())
 
     def load_port(self, value):
         return str(value.pop())
-
-    def get_metadata(self, obj):
-        return {
-            "command_id": "e1a042dd0e054c1495e1c01ced856438",
-            "create_time": time.mktime(obj.create_date.utctimetuple()),
-            "creator": "Metasploit",
-            "owner": "", "update_action": 0,
-            "update_controller_action": "No model controller call",
-            "update_time": time.mktime(obj.update_date.utctimetuple()),
-            "update_user": ""
-        }
 
     def get_summary(self, obj):
         return "(%s/%s) %s" % (obj.port, obj.protocol, obj.name)

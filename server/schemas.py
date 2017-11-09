@@ -1,6 +1,9 @@
 import time
-from marshmallow import fields
+from marshmallow import fields, Schema
 from marshmallow.exceptions import ValidationError
+
+from server.api.base import AutoSchema
+from server.models import CommandObject
 
 
 class JSTimestampField(fields.Field):
@@ -97,3 +100,25 @@ class MutableField(fields.Field):
         super(MutableField, self)._add_to_schema(field_name, schema)
         self.read_field._add_to_schema(field_name, schema)
         self.write_field._add_to_schema(field_name, schema)
+
+
+class MetadataSchema(Schema):
+    command_id = fields.Method('get_command_id', dump_only=True)
+
+    creator = fields.Function(lambda x: '')
+    owner = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
+
+    create_time = JSTimestampField(attribute='create_date', dump_only=True)
+    update_time = JSTimestampField(attribute='update_date', dump_only=True)
+
+    update_user = fields.String(default='', dump_only=True)
+    update_action = fields.Integer(default=0, dump_only=True)
+    update_controller_action = fields.String(default='', dump_only=True)
+
+    def get_command_id(self, obj):
+        command_id = None
+        command_obj = CommandObject.query.filter_by(object_type='vulnerability', object_id=obj.id, workspace=obj.workspace).first()
+        if command_obj:
+            command_id = command_obj.command_id
+
+        return command_id

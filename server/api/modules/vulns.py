@@ -25,8 +25,6 @@ from server.api.base import (
 from server.fields import FaradayUploadedFile
 from server.models import (
     db,
-    Tag,
-    TagObject,
     Vulnerability,
     VulnerabilityWeb,
     VulnerabilityGeneric,
@@ -38,7 +36,7 @@ from server.schemas import (
     MutableField,
     PrimaryKeyRelatedField,
     SelfNestedField,
-)
+    MetadataSchema)
 
 vulns_api = Blueprint('vulns_api', __name__)
 logger = logging.getLogger(__name__)
@@ -91,7 +89,6 @@ class VulnerabilitySchema(AutoSchema):
     tags = PrimaryKeyRelatedField('name', dump_only=True, many=True)
     easeofresolution = fields.String(attribute='ease_of_resolution', validate=OneOf(Vulnerability.EASE_OF_RESOLUTIONS),)
     hostnames = PrimaryKeyRelatedField('name', many=True, dump_only=True)
-    metadata = fields.Method(serialize='get_metadata')
     service = fields.Nested(ServiceSchema(only=[
         '_id', 'ports', 'status', 'protocol', 'name', 'version', 'summary'
     ]), dump_only=True)
@@ -101,6 +98,7 @@ class VulnerabilitySchema(AutoSchema):
     type = fields.Method(serialize='get_type', deserialize='load_type')
     obj_id = fields.String(dump_only=True, attribute='id')
     target = fields.Method('get_target')
+    metadata = SelfNestedField(MetadataSchema())
 
     class Meta:
         model = Vulnerability
@@ -117,22 +115,6 @@ class VulnerabilitySchema(AutoSchema):
 
     def get_type(self, obj):
         return obj.__class__.__name__
-
-    def get_metadata(self, obj):
-        command_id = None
-        command_obj = CommandObject.query.filter_by(object_type='vulnerability', object_id=obj.id, workspace=obj.workspace).first()
-        if command_obj:
-            command_id = command_obj.command_id
-        return {
-            "command_id": command_id,
-            "create_time": time.mktime(obj.create_date.utctimetuple()),
-            "creator": "",
-            "owner": obj.creator and obj.creator.username or '',
-            "update_action": 0,
-            "update_controller_action": "",
-            "update_time": time.mktime(obj.update_date.utctimetuple()),
-            "update_user": ""
-        }
 
     def get_attachments(self, obj):
         res = []

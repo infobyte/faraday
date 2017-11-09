@@ -76,6 +76,7 @@ class HostFilterSet(FilterSet):
 
 
 class ServiceSchema(AutoSchema):
+    # TODO migration: use the schema in ./services.py
     vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
     credentials = fields.Integer(attribute='credentials_count', dump_only=True)
     ports = fields.Integer(attribute='port')

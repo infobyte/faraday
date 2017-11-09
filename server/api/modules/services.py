@@ -10,8 +10,7 @@ from sqlalchemy.orm import joinedload
 
 from server.api.base import AutoSchema, ReadWriteWorkspacedView
 from server.models import Service
-from server.utils.logger import get_logger
-from server.utils.web import gzipped, validate_workspace, get_integer_parameter
+from server.schemas import MutableField, PrimaryKeyRelatedField
 
 
 services_api = Blueprint('services_api', __name__)
@@ -22,14 +21,22 @@ class ServiceSchema(AutoSchema):
     _rev = fields.String(default='', dump_only=True)
     metadata = fields.Method('get_metadata')
     owned = fields.Boolean(default=False)
-    owner = fields.String(dump_only=True, attribute='creator.username')
-    ports = fields.Method(attribute='port', deserialize='load_port')
+    owner = PrimaryKeyRelatedField('username', dump_only=True,
+                                   attribute='creator')
+    port = fields.Integer(dump_only=True)  # Port is loaded via ports
+    ports = MutableField(fields.String(),
+                         fields.Method(deserialize='load_port'),
+                         required=True,
+                         attribute='port')
     status = fields.String(default='open')
-    parent = fields.Integer(attribute='host_id', load_only=True)
+    parent = fields.Integer(attribute='host_id', load_only=True, required=True)
     host_id = fields.Integer(attribute='host_id', dump_only=True)
     summary = fields.Method('get_summary')
+    vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
+    credentials = fields.Integer(attribute='credentials_count', dump_only=True)
 
     def load_port(self, value):
+        # TODO migration: handle empty list and not numeric value
         return str(value.pop())
 
     def get_metadata(self, obj):
@@ -50,8 +57,8 @@ class ServiceSchema(AutoSchema):
         model = Service
         fields = ('id', '_id', 'status', 'parent',
                   'protocol', 'description', '_rev',
-                  'owned', 'owner', 'credentials',
-                  'name', 'version', '_id', 'ports',
+                  'owned', 'owner', 'credentials', 'vulns',
+                  'name', 'version', '_id', 'port', 'ports',
                   'metadata', 'summary', 'host_id')
 
 
@@ -60,6 +67,7 @@ class ServiceView(ReadWriteWorkspacedView):
     model_class = Service
     schema_class = ServiceSchema
     count_extra_filters = [Service.status == 'open']
+    get_undefer = [Service.credentials_count, Service.vulnerability_count]
 
     def _envelope_list(self, objects, pagination_metadata=None):
         services = []

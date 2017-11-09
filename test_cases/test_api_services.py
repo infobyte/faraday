@@ -46,3 +46,21 @@ class TestListServiceView(ReadOnlyAPITests):
             expected = set(object_properties)
             result = set(service['value'].keys())
             assert expected <= result
+
+    def test_create_service(self, test_client, host, session):
+        session.commit()
+        data = {
+            "name": "ftp",
+            "description": "test. test",
+            "owned": False,
+            "ports": [21],
+            "protocol": "tcp",
+            "status": "open",
+            "parent": host.id
+        }
+        res = test_client.post(self.url(), data=data)
+        assert res.status_code == 201
+        service = Service.query.get(res.json['_id'])
+        assert service.name == "ftp"
+        assert service.port == 21
+        assert service.host is host

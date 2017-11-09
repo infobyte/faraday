@@ -1,3 +1,5 @@
+import pytest
+
 from test_cases import factories
 from test_api_workspaced_base import (
     ReadOnlyAPITests,
@@ -14,6 +16,7 @@ class TestCredentialsAPIGeneric(ReadOnlyAPITests):
     api_endpoint = 'credential'
     update_fields = ['username', 'password']
 
+    @pytest.mark.usefixtures('ignore_nplusone')
     def test_get_list_backwards_compatibility(self, test_client, session, second_workspace):
         cred = self.factory.create(workspace=second_workspace)
         session.commit()

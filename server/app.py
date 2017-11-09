@@ -82,6 +82,7 @@ def create_app(db_connection_string=None, testing=None):
                 'depot.storage_path': storage_path
             })
     if testing:
+        app.config['SQLALCHEMY_ECHO'] = False
         app.config['TESTING'] = testing
         app.config['NPLUSONE_LOGGER'] = logging.getLogger('faraday.nplusone')
         app.config['NPLUSONE_LOG_LEVEL'] = logging.ERROR

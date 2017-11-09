@@ -699,12 +699,10 @@ class MethodologyImporter(object):
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         if document.get('group_type') == 'template':
             methodology, created = get_or_create(session, MethodologyTemplate, name=document.get('name'))
-            methodology.workspace = workspace
             yield methodology
 
         if document.get('group_type') == 'instance':
-            methodology, created = get_or_create(session, Methodology, name=document.get('name'))
-            methodology.workspace = workspace
+            methodology, created = get_or_create(session, Methodology, name=document.get('name'), workspace=workspace)
             yield methodology
 
 
@@ -723,17 +721,18 @@ class TaskImporter(object):
         if len(couchdb_relational_map[document.get('group_id')]) > 1:
             logger.error('It was expected only one parent in methodology {0}'.format(document.get('_id')))
 
-        methodology = session.query(Methodology).filter_by(id=methodology_id).first()
+        methodology = session.query(Methodology).filter_by(id=methodology_id, workspace=workspace).first()
         task_class = Task
         if not methodology:
             methodology = session.query(MethodologyTemplate).filter_by(id=methodology_id).first()
             task_class = TaskTemplate
-        task, task_created = get_or_create(session, task_class, name=document.get('name'))
+
         if task_class == TaskTemplate:
+            task, task_created = get_or_create(session, task_class, name=document.get('name'))
             task.template = methodology
         else:
+            task, task_created = get_or_create(session, task_class, name=document.get('name'), workspace=workspace)
             task.methodology = methodology
-            task.workspace = workspace
 
         task.description = document.get('description')
         task.assigned_to = session.query(User).filter_by(username=document.get('username')).first()

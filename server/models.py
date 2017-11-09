@@ -1120,6 +1120,10 @@ class Methodology(Metadata):
     workspace = relationship('Workspace', backref='methodologies')
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
 
+    @property
+    def parent(self):
+        return
+
 
 class TaskABC(Metadata):
     __abstract__ = True
@@ -1193,6 +1197,10 @@ class Task(TaskABC):
     # __table_args__ = (
     #     UniqueConstraint(TaskABC.name, methodology_id, workspace_id, name='uix_task_name_desc_methodology_workspace'),
     # )
+
+    @property
+    def parent(self):
+        return self.methodology
 
 
 class License(Metadata):

@@ -13,6 +13,7 @@ from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
 from sqlalchemy import and_
 from sqlalchemy.orm import joinedload, selectin_polymorphic
+from sqlalchemy.orm.exc import NoResultFound
 
 from depot.manager import DepotManager
 from server.api.base import (
@@ -25,10 +26,15 @@ from server.api.base import (
 from server.fields import FaradayUploadedFile
 from server.models import (
     db,
+    CommandObject,
+    File,
+    Host,
+    Service,
     Vulnerability,
     VulnerabilityWeb,
     VulnerabilityGeneric,
-    Host, Service, File, CommandObject)
+    Workspace
+)
 from server.utils.database import get_or_create
 
 from server.api.modules.services import ServiceSchema
@@ -206,9 +212,13 @@ class VulnerabilitySchema(AutoSchema):
             print('parent_type', parent_type)
             raise ValidationError('Unknown parent type')
 
-        parent = db.session.query(parent_class).filter_by(id=parent_id).first()
-        if not parent:
-            raise ValidationError('Parent not found')
+        try:
+            parent = db.session.query(parent_class).join(Workspace).filter(
+                Workspace.name == self.context['workspace_name'],
+                parent_class.id == parent_id
+            ).one()
+        except NoResultFound:
+            raise ValidationError('Parent id not found: {}'.format(parent_id))
         data[parent_field] = parent.id
         return data
 
@@ -298,7 +308,7 @@ class VulnerabilityView(PaginatedMixin,
     }
 
     def _perform_create(self, data, **kwargs):
-        data = self._parse_data(self._get_schema_class()(strict=True),
+        data = self._parse_data(self._get_schema_instance(kwargs),
                                 request)
         # TODO migration: use default values when popping and validate the
         # popped object has the expected type.

@@ -68,8 +68,6 @@ class TestListServiceView(ReadOnlyAPITests):
     def test_create_fails_with_host_of_other_workspace(self, test_client,
                                                        host, session,
                                                        second_workspace):
-        # TODO migration: check why workspace checker isn't triggering an error
-        # here
         session.commit()
         assert host.workspace_id != second_workspace.id
         data = {
@@ -83,3 +81,24 @@ class TestListServiceView(ReadOnlyAPITests):
         }
         res = test_client.post(self.url(workspace=second_workspace), data=data)
         assert res.status_code == 400
+        assert 'Host with id' in res.data
+
+    def test_update_fails_with_host_of_other_workspace(self, test_client,
+                                                       second_workspace,
+                                                       host_factory,
+                                                       session):
+        host = host_factory.create(workspace=second_workspace)
+        session.commit()
+        assert host.workspace_id != self.first_object.workspace_id
+        data = {
+            "name": "ftp",
+            "description": "test. test",
+            "owned": False,
+            "ports": [21],
+            "protocol": "tcp",
+            "status": "open",
+            "parent": host.id
+        }
+        res = test_client.put(self.url(self.first_object), data=data)
+        assert res.status_code == 400
+        assert 'Host with id' in res.data

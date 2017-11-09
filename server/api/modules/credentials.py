@@ -1,9 +1,6 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-import time
-
-import flask
 from flask import Blueprint
 from marshmallow import fields, post_load, ValidationError
 from filteralchemy import FilterSet, operators
@@ -14,7 +11,7 @@ from server.api.base import (
     FilterSetMeta,
     FilterAlchemyMixin, InvalidUsage)
 from server.models import Credential, Host, Service, db
-from server.schemas import MutableField
+from server.schemas import MutableField, SelfNestedField, MetadataSchema
 
 credentials_api = Blueprint('credentials_api', __name__)
 
@@ -22,7 +19,6 @@ credentials_api = Blueprint('credentials_api', __name__)
 class CredentialSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     _rev = fields.String(default='', dump_only=True)
-    metadata = fields.Method('get_metadata')
     owned = fields.Boolean(default=False)
     owner = fields.String(dump_only=True, attribute='creator.username', default='')
     username = fields.String(default='')
@@ -39,6 +35,7 @@ class CredentialSchema(AutoSchema):
     # for filtering
     host_id = fields.Integer(load_only=True)
     service_id = fields.Integer(load_only=True)
+    metadata = SelfNestedField(MetadataSchema())
 
     def get_parent(self, obj):
         return obj.host_id or obj.service_id
@@ -46,17 +43,6 @@ class CredentialSchema(AutoSchema):
     def get_parent_type(self, obj):
         assert obj.host_id is not None or obj.service_id is not None
         return 'Service' if obj.service_id is not None else 'Host'
-
-    def get_metadata(self, obj):
-        return {
-            "command_id": "e1a042dd0e054c1495e1c01ced856438",
-            "create_time": time.mktime(obj.create_date.utctimetuple()),
-            "creator": "Metasploit",
-            "owner": "", "update_action": 0,
-            "update_controller_action": "No model controller call",
-            "update_time": time.mktime(obj.update_date.utctimetuple()),
-            "update_user": ""
-        }
 
 
     class Meta:

@@ -11,7 +11,12 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from server.api.base import AutoSchema, ReadWriteWorkspacedView
 from server.models import Host, Service, Workspace
-from server.schemas import MutableField, PrimaryKeyRelatedField
+from server.schemas import (
+    MetadataSchema,
+    MutableField,
+    PrimaryKeyRelatedField,
+    SelfNestedField,
+)
 
 
 services_api = Blueprint('services_api', __name__)
@@ -20,7 +25,6 @@ services_api = Blueprint('services_api', __name__)
 class ServiceSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     _rev = fields.String(default='', dump_only=True)
-    metadata = fields.Method('get_metadata')
     owned = fields.Boolean(default=False)
     owner = PrimaryKeyRelatedField('username', dump_only=True,
                                    attribute='creator')
@@ -35,21 +39,11 @@ class ServiceSchema(AutoSchema):
     summary = fields.Method('get_summary')
     vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
     credentials = fields.Integer(attribute='credentials_count', dump_only=True)
+    metadata = SelfNestedField(MetadataSchema())
 
     def load_port(self, value):
         # TODO migration: handle empty list and not numeric value
         return str(value.pop())
-
-    def get_metadata(self, obj):
-        return {
-            "command_id": "e1a042dd0e054c1495e1c01ced856438",
-            "create_time": time.mktime(obj.create_date.utctimetuple()),
-            "creator": "Metasploit",
-            "owner": "", "update_action": 0,
-            "update_controller_action": "No model controller call",
-            "update_time": time.mktime(obj.update_date.utctimetuple()),
-            "update_user": ""
-        }
 
     def get_summary(self, obj):
         return "(%s/%s) %s" % (obj.port, obj.protocol, obj.name)

@@ -180,6 +180,24 @@ def create_tags(raw_tags, parent_id, parent_type):
         session.commit()
 
 
+def set_metadata(document, obj):
+    if 'metadata' in document:
+        for key, value in document['metadata'].iteritems():
+            if not value:
+                continue
+            try:
+                if key == 'create_time':
+                    obj.create_date = datetime.datetime.fromtimestamp(document['metadata']['create_time'])
+                if key == 'owner':
+                    creator = User.query.filter_by(username=value)
+                    obj.creator = creator
+            except ValueError:
+                if key == 'create_time':
+                    obj.create_date = datetime.datetime.fromtimestamp(document['metadata']['create_time'] / 1000)
+            except TypeError:
+                print('')
+
+
 class EntityNotFound(Exception):
     def __init__(self, entity_id):
         super(EntityNotFound, self).__init__("Entity (%s) wasn't found" % entity_id)
@@ -510,34 +528,37 @@ class VulnerabilityImporter(object):
             if len(tags):
                 create_tags(tags, vulnerability.id, document['type'])
 
-            attachments_data = document.get('_attachments') or {}
-            for attachment_name, attachment_data in attachments_data.items():
-                #http://localhost:5984/evidence/334389048b872a533002b34d73f8c29fd09efc50.c7b0f6cba2fae8e446b7ffedfdb18026bb9ba41d/forbidden.png
-                attachment_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
-                    username=server.config.couchdb.user,
-                    password=server.config.couchdb.password,
-                    hostname=server.config.couchdb.host,
-                    port=server.config.couchdb.port,
-                    path='{0}/{1}/{2}'.format(workspace.name, document.get('_id'), attachment_name)
-                )
-                response = requests.get(attachment_url)
-                response.raw.decode_content = True
-                attachment_file = NamedTemporaryFile()
-                attachment_file.write(response.content)
-                attachment_file.seek(0)
-                session.commit()
-                file, created = get_or_create(
-                    session,
-                    File,
-                    filename=attachment_name,
-                    object_id=vulnerability.id,
-                    object_type=vulnerability.__class__.__name__)
-                file.content = attachment_file.read()
-
-                attachment_file.close()
+            self.add_attachments(document, vulnerability, workspace)
 
 
         yield vulnerability
+
+    def add_attachments(self, document, vulnerability, workspace):
+        attachments_data = document.get('_attachments') or {}
+        for attachment_name, attachment_data in attachments_data.items():
+            # http://localhost:5984/evidence/334389048b872a533002b34d73f8c29fd09efc50.c7b0f6cba2fae8e446b7ffedfdb18026bb9ba41d/forbidden.png
+            attachment_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
+                username=server.config.couchdb.user,
+                password=server.config.couchdb.password,
+                hostname=server.config.couchdb.host,
+                port=server.config.couchdb.port,
+                path='{0}/{1}/{2}'.format(workspace.name, document.get('_id'), attachment_name)
+            )
+            response = requests.get(attachment_url)
+            response.raw.decode_content = True
+            attachment_file = NamedTemporaryFile()
+            attachment_file.write(response.content)
+            attachment_file.seek(0)
+            session.commit()
+            file, created = get_or_create(
+                session,
+                File,
+                filename=attachment_name,
+                object_id=vulnerability.id,
+                object_type=vulnerability.__class__.__name__)
+            file.content = attachment_file.read()
+
+            attachment_file.close()
 
     def add_policy_violations(self, document, vulnerability, workspace):
         policy_violations = set()
@@ -716,6 +737,7 @@ class TaskImporter(object):
 
         task.description = document.get('description')
         task.assigned_to = session.query(User).filter_by(username=document.get('username')).first()
+
         mapped_status = {
             'New': 'new',
             'In Progress': 'in progress',
@@ -1144,6 +1166,7 @@ class ImportCouchDB(FlaskScriptCommand):
                     for new_obj in obj_importer.update_from_document(raw_obj, workspace, level, couchdb_relational_map):
                         if not new_obj:
                             continue
+                        set_metadata(raw_obj, new_obj)
                         session.commit()
                         couchdb_relational_map_by_type[couchdb_id].append({'type': obj_type, 'id': new_obj.id})
                         couchdb_relational_map[couchdb_id].append(new_obj.id)

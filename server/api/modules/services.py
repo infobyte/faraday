@@ -5,11 +5,12 @@ import time
 
 import flask
 from flask import Blueprint
-from marshmallow import fields
+from marshmallow import fields, post_load, ValidationError
 from sqlalchemy.orm import joinedload
+from sqlalchemy.orm.exc import NoResultFound
 
 from server.api.base import AutoSchema, ReadWriteWorkspacedView
-from server.models import Service
+from server.models import Host, Service, Workspace
 from server.schemas import MutableField, PrimaryKeyRelatedField
 
 
@@ -52,6 +53,24 @@ class ServiceSchema(AutoSchema):
 
     def get_summary(self, obj):
         return "(%s/%s) %s" % (obj.port, obj.protocol, obj.name)
+
+    @post_load
+    def post_load_parent(self, data):
+        """Gets the host_id from parent attribute. Pops it and tries to
+        get a Host with that id in the corresponding workspace.
+        """
+        host_id = data.pop('host_id', None)
+        print data
+        if host_id is None:
+            # Partial update?
+            return
+        try:
+            data['host'] = Host.query.join(Workspace).filter(
+                Workspace.name == self.context['workspace_name'],
+                Host.id == host_id
+            ).one()
+        except NoResultFound:
+            raise ValidationError('Host with id {} not found'.format(host_id))
 
     class Meta:
         model = Service

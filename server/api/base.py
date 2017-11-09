@@ -74,6 +74,28 @@ class GenericView(FlaskView):
         assert self.schema_class is not None, "You must define schema_class"
         return self.schema_class
 
+    def _get_schema_instance(self, route_kwargs, **kwargs):
+        """Instances a model schema.
+
+        By default it uses sets strict to True
+        but this can be overriden as well as any other parameters in
+        the function's kwargs.
+
+        It also uses _set_schema_context to set the context of the
+        schema.
+        """
+        if 'strict' not in kwargs:
+            kwargs['strict'] = True
+        kwargs['context'] = self._set_schema_context(
+            kwargs.get('context', {}), **route_kwargs)
+        return self._get_schema_class()(**kwargs)
+
+    def _set_schema_context(self, context, **kwargs):
+        """This function can be overriden to update the context passed
+        to the schema.
+        """
+        return context
+
     def _get_lookup_field(self):
         return getattr(self.model_class, self.lookup_field)
 
@@ -121,8 +143,8 @@ class GenericView(FlaskView):
             flask.abort(404, 'Object with id "%s" not found' % object_id)
         return obj
 
-    def _dump(self, obj, **kwargs):
-        return self._get_schema_class()(**kwargs).dump(obj).data
+    def _dump(self, obj, route_kwargs, **kwargs):
+        return self._get_schema_instance(route_kwargs, **kwargs).dump(obj).data
 
     def _parse_data(self, schema, request, *args, **kwargs):
         return FlaskParser().parse(schema, request, locations=('json',),
@@ -190,6 +212,11 @@ class GenericWorkspacedView(GenericView):
             flask.abort(404, 'Object with id "%s" not found' % object_id)
         return obj
 
+    def _set_schema_context(self, context, **kwargs):
+        """Overriden to pass the workspace name to the schema"""
+        context.update(kwargs)
+        return context
+
     def _validate_uniqueness(self, obj, object_id=None):
         # TODO: Use implementation of GenericView
         assert obj.workspace is not None, "Object must have a " \
@@ -231,7 +258,7 @@ class ListMixin(object):
         if self.order_field is not None:
             query = query.order_by(self.order_field)
         objects, pagination_metadata = self._paginate(query)
-        return self._envelope_list(self._dump(objects, many=True),
+        return self._envelope_list(self._dump(objects, kwargs, many=True),
                                    pagination_metadata)
 
 
@@ -286,7 +313,7 @@ class RetrieveMixin(object):
 
     def get(self, object_id, **kwargs):
         return self._dump(self._get_object(object_id, eagerload=True,
-                                           **kwargs))
+                                           **kwargs), kwargs)
 
 
 class RetrieveWorkspacedMixin(RetrieveMixin):
@@ -314,12 +341,12 @@ class CreateMixin(object):
     """Add POST / route"""
 
     def post(self, **kwargs):
-        data = self._parse_data(self._get_schema_class()(strict=True),
+        data = self._parse_data(self._get_schema_instance(kwargs),
                                 flask.request)
         created = self._perform_create(data, **kwargs)
         created.creator = g.user
         db.session.commit()
-        return self._dump(created), 201
+        return self._dump(created, kwargs), 201
 
     def _perform_create(self, data, **kwargs):
         obj = self.model_class(**data)
@@ -355,12 +382,12 @@ class UpdateMixin(object):
     """Add PUT /<workspace_name>/<id>/ route"""
 
     def put(self, object_id, **kwargs):
-        data = self._parse_data(self._get_schema_class()(strict=True),
+        data = self._parse_data(self._get_schema_instance(kwargs),
                                 flask.request)
         obj = self._get_object(object_id, **kwargs)
         self._update_object(obj, data)
         updated = self._perform_update(object_id, obj, **kwargs)
-        return self._dump(obj), 200
+        return self._dump(obj, kwargs), 200
 
     def _update_object(self, obj, data):
         for (key, value) in data.items():

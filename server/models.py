@@ -1312,4 +1312,7 @@ def log_command_object_found(command, object, created):
         object_type=object_type,
         workspace=object.workspace,
     )
-    log.created_persistent=created
+    log.created_persistent = created
+
+# We have to import this after all models are defined
+import server.events

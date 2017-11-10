@@ -1,16 +1,14 @@
-#-*- coding: utf8 -*-
+# -*- coding: utf8 -*-
 """Tests for many API endpoints that do not depend on workspace_name"""
 
 import pytest
 
 from server.api.modules.services import ServiceView
 from test_cases import factories
-from test_api_workspaced_base import API_PREFIX, ReadOnlyAPITests
+from test_api_workspaced_base import ReadOnlyAPITests
 from server.models import (
     Service
 )
-from server.api.modules.commandsrun import CommandView
-from server.api.modules.workspaces import WorkspaceView
 
 
 @pytest.mark.usefixtures('logged_user')
@@ -22,7 +20,9 @@ class TestListServiceView(ReadOnlyAPITests):
     #update_fields = ['ip', 'description', 'os']
     view_class = ServiceView
 
-    def test_service_list_backwards_compatibility(self, test_client, second_workspace, session):
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_service_list_backwards_compatibility(self, test_client,
+                                                  second_workspace, session):
         self.factory.create(workspace=second_workspace)
         session.commit()
         res = test_client.get(self.url())
@@ -46,3 +46,59 @@ class TestListServiceView(ReadOnlyAPITests):
             expected = set(object_properties)
             result = set(service['value'].keys())
             assert expected <= result
+
+    def test_create_service(self, test_client, host, session):
+        session.commit()
+        data = {
+            "name": "ftp",
+            "description": "test. test",
+            "owned": False,
+            "ports": [21],
+            "protocol": "tcp",
+            "status": "open",
+            "parent": host.id
+        }
+        res = test_client.post(self.url(), data=data)
+        assert res.status_code == 201
+        service = Service.query.get(res.json['_id'])
+        assert service.name == "ftp"
+        assert service.port == 21
+        assert service.host is host
+
+    def test_create_fails_with_host_of_other_workspace(self, test_client,
+                                                       host, session,
+                                                       second_workspace):
+        session.commit()
+        assert host.workspace_id != second_workspace.id
+        data = {
+            "name": "ftp",
+            "description": "test. test",
+            "owned": False,
+            "ports": [21],
+            "protocol": "tcp",
+            "status": "open",
+            "parent": host.id
+        }
+        res = test_client.post(self.url(workspace=second_workspace), data=data)
+        assert res.status_code == 400
+        assert 'Host with id' in res.data
+
+    def test_update_fails_with_host_of_other_workspace(self, test_client,
+                                                       second_workspace,
+                                                       host_factory,
+                                                       session):
+        host = host_factory.create(workspace=second_workspace)
+        session.commit()
+        assert host.workspace_id != self.first_object.workspace_id
+        data = {
+            "name": "ftp",
+            "description": "test. test",
+            "owned": False,
+            "ports": [21],
+            "protocol": "tcp",
+            "status": "open",
+            "parent": host.id
+        }
+        res = test_client.put(self.url(self.first_object), data=data)
+        assert res.status_code == 400
+        assert 'Host with id' in res.data

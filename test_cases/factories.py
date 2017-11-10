@@ -22,13 +22,14 @@ from server.models import (
     Reference,
     Service,
     SourceCode,
+    Tag,
     User,
     Vulnerability,
     VulnerabilityCode,
     VulnerabilityTemplate,
     VulnerabilityWeb,
     Workspace,
-    ReferenceTemplate)
+    ReferenceTemplate, CommandObject)
 
 # Make partials for start and end date. End date must be after start date
 FuzzyStartTime = lambda: (
@@ -258,6 +259,14 @@ class CredentialFactory(HasParentHostOrService, WorkspaceObjectFactory):
         sqlalchemy_session = db.session
 
 
+class CommandObjectFactory(FaradayFactory):
+    workspace = factory.SubFactory(WorkspaceFactory)
+
+    class Meta:
+        model = CommandObject
+        sqlalchemy_session = db.session
+
+
 class CommandFactory(WorkspaceObjectFactory):
     command = FuzzyText()
     end_date = FuzzyDateTime(datetime.datetime.utcnow().replace(tzinfo=pytz.utc) + datetime.timedelta(20), datetime.datetime.utcnow().replace(tzinfo=pytz.utc) + datetime.timedelta(30))
@@ -265,10 +274,47 @@ class CommandFactory(WorkspaceObjectFactory):
     ip = FuzzyText()
     user = FuzzyText()
     hostname = FuzzyText()
+    import_source = 'shell'
 
     class Meta:
         model = Command
         sqlalchemy_session = db.session
+
+    @factory.post_generation
+    def attach_vuln_object(self, create, extracted, **kwargs):
+        if create:
+            host = HostFactory.create(workspace=self.workspace)
+            vuln = VulnerabilityFactory.create(workspace=self.workspace, host=host, service=None, severity='low')
+            db.session.flush()
+            CommandObjectFactory.create(
+                object_type='vulnerability',
+                object_id=vuln.id,
+                command=self,
+                workspace=self.workspace
+            )
+            CommandObjectFactory.create(
+                object_type='host',
+                object_id=host.id,
+                command=self,
+                workspace=self.workspace
+            )
+
+class EmptyCommandFactory(WorkspaceObjectFactory):
+    """
+        A command without command objects.
+    """
+    command = FuzzyText()
+    end_date = FuzzyDateTime(datetime.datetime.utcnow().replace(tzinfo=pytz.utc) + datetime.timedelta(20), datetime.datetime.utcnow().replace(tzinfo=pytz.utc) + datetime.timedelta(30))
+    start_date = FuzzyDateTime(datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - datetime.timedelta(30), datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - datetime.timedelta(20))
+    ip = FuzzyText()
+    user = FuzzyText()
+    hostname = FuzzyText()
+    import_source = 'shell'
+
+    class Meta:
+        model = Command
+        sqlalchemy_session = db.session
+
 
 
 class LicenseFactory(FaradayFactory):
@@ -288,3 +334,12 @@ class LicenseFactory(FaradayFactory):
         ret['start_date'] = ret['start_date'].isoformat()
         ret['end_date'] = ret['end_date'].isoformat()
         return ret
+
+
+class TagFactory(FaradayFactory):
+    name = FuzzyText()
+    slug = FuzzyText()
+
+    class Meta:
+        model = Tag
+        sqlalchemy_session = db.session

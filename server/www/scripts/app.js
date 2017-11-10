@@ -48,9 +48,17 @@ var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.
         ];
         return exploitations;
     })())
+    .constant("SERVICE_STATUSES", (function() {
+        var statuses = [
+            "open",
+            "closed",
+            "filtered"
+        ];
+        return statuses;
+    })())
     .constant("STATUSES", (function() {
         var statuses = [
-            "opened",
+            "opened",  // TODO migration: should we change this to "open"?
             "closed",
             "re-opened",
             "risk-accepted"

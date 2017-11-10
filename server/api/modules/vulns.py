@@ -7,9 +7,13 @@ import logging
 from base64 import b64encode, b64decode
 
 from filteralchemy import FilterSet, operators
-from flask import request
+from flask import request, current_app
 from flask import Blueprint
 from marshmallow import Schema, fields, post_load, ValidationError
+from marshmallow.validate import OneOf
+from sqlalchemy import and_
+from sqlalchemy.orm import joinedload, selectin_polymorphic
+from sqlalchemy.orm.exc import NoResultFound
 
 from depot.manager import DepotManager
 from server.api.base import (
@@ -22,12 +26,15 @@ from server.api.base import (
 from server.fields import FaradayUploadedFile
 from server.models import (
     db,
-    Tag,
-    TagObject,
+    CommandObject,
+    File,
+    Host,
+    Service,
     Vulnerability,
     VulnerabilityWeb,
     VulnerabilityGeneric,
-    Host, Service, File)
+    Workspace
+)
 from server.utils.database import get_or_create
 
 from server.api.modules.services import ServiceSchema
@@ -35,7 +42,7 @@ from server.schemas import (
     MutableField,
     PrimaryKeyRelatedField,
     SelfNestedField,
-)
+    MetadataSchema)
 
 vulns_api = Blueprint('vulns_api', __name__)
 logger = logging.getLogger(__name__)
@@ -85,18 +92,19 @@ class VulnerabilitySchema(AutoSchema):
     parent_type = MutableField(fields.Method('get_parent_type'),
                                fields.String(),
                                required=True)
-    tags = fields.Method(serialize='get_tags')
-    easeofresolution = fields.String(dump_only=True, attribute='ease_of_resolution')
+    tags = PrimaryKeyRelatedField('name', dump_only=True, many=True)
+    easeofresolution = fields.String(attribute='ease_of_resolution', validate=OneOf(Vulnerability.EASE_OF_RESOLUTIONS),)
     hostnames = PrimaryKeyRelatedField('name', many=True, dump_only=True)
-    metadata = fields.Method(serialize='get_metadata')
     service = fields.Nested(ServiceSchema(only=[
         '_id', 'ports', 'status', 'protocol', 'name', 'version', 'summary'
     ]), dump_only=True)
     host = fields.Integer(dump_only=True, attribute='host_id')
+    severity = fields.Method(serialize='get_severity', deserialize='load_severity')
     status = fields.Method(serialize='get_status', deserialize='load_status')  # TODO: this breaks enum validation.
     type = fields.Method(serialize='get_type', deserialize='load_type')
     obj_id = fields.String(dump_only=True, attribute='id')
-    target = fields.String(default='')  # TODO: review this attribute
+    target = fields.Method('get_target')
+    metadata = SelfNestedField(MetadataSchema())
 
     class Meta:
         model = Vulnerability
@@ -114,22 +122,10 @@ class VulnerabilitySchema(AutoSchema):
     def get_type(self, obj):
         return obj.__class__.__name__
 
-    def get_metadata(self, obj):
-        return {
-            "command_id": "e1a042dd0e054c1495e1c01ced856438",
-            "create_time": time.mktime(obj.create_date.utctimetuple()),
-            "creator": "Metasploit",
-            "owner": "", "update_action": 0,
-            "update_controller_action": "No model controller call",
-            "update_time": time.mktime(obj.update_date.utctimetuple()),
-            "update_user": ""
-        }
-
     def get_attachments(self, obj):
         res = []
-        files = db.session.query(File).filter_by(object_id=obj.id, object_type=obj.__class__.__name__).all()
 
-        for file_obj in files:
+        for file_obj in obj.evidence:
             ret, errors = EvidenceSchema().dump(file_obj)
             if errors:
                 raise ValidationError(errors, data=ret)
@@ -140,28 +136,19 @@ class VulnerabilitySchema(AutoSchema):
     def load_attachments(self, value):
         return value
 
-    def get_hostnames(self, obj):
-        # TODO: improve performance here
-        # TODO: move this to models?
-        if obj.host:
-            return [hostname.name for hostname in obj.host.hostnames]
-        if obj.service:
-            return [hostname.name for hostname in obj.service.host.hostnames]
-        logger.info('Vulnerability without host and service. Check invariant in obj with id {0}'.format(obj.id))
-        return []
-
-    def get_tags(self, obj):
-        # TODO: improve performance here
-        return [tag.name for tag in db.session.query(TagObject, Tag).filter_by(
-            object_type=obj.__class__.__name__,
-            object_id=obj.id
-        ).all()]
-
     def get_parent(self, obj):
-        return obj.parent.id
+        return obj.service_id or obj.host_id
 
     def get_parent_type(self, obj):
-        return obj.parent.__class__.__name__
+        assert obj.service_id is not None or obj.host_id is not None
+        return 'Service' if obj.service_id is not None else 'Host'
+
+    def get_severity(self, obj):
+        if obj.severity == 'medium':
+            return 'med'
+        if obj.severity == 'informational':
+            return 'info'
+        return obj.severity
 
     def get_status(self, obj):
         if obj.status == 'open':
@@ -170,6 +157,19 @@ class VulnerabilitySchema(AutoSchema):
 
     def get_issuetracker(self, obj):
         return {}
+
+    def get_target(self, obj):
+        if obj.service is not None:
+            return obj.service.host.ip
+        else:
+            return obj.host.ip
+
+    def load_severity(self, value):
+        if value == 'med':
+            return 'medium'
+        if value == 'info':
+            return 'informational'
+        return value
 
     def load_status(self, value):
         if value == 'opened':
@@ -212,9 +212,13 @@ class VulnerabilitySchema(AutoSchema):
             print('parent_type', parent_type)
             raise ValidationError('Unknown parent type')
 
-        parent = db.session.query(parent_class).filter_by(id=parent_id).first()
-        if not parent:
-            raise ValidationError('Parent not found')
+        try:
+            parent = db.session.query(parent_class).join(Workspace).filter(
+                Workspace.name == self.context['workspace_name'],
+                parent_class.id == parent_id
+            ).one()
+        except NoResultFound:
+            raise ValidationError('Parent id not found: {}'.format(parent_id))
         data[parent_field] = parent.id
         return data
 
@@ -260,14 +264,31 @@ class VulnerabilityFilterSet(FilterSet):
             "status", "website", "parameter_name", "query_string", "path",
             "data", "severity", "confirmed", "name", "request", "response",
             "parameters", "resolution", "method", "ease_of_resolution",
-            "description")
+            "description", "command_id")
+
         strict_fields = (
             "severity", "confirmed", "method"
         )
+
         default_operator = operators.ILike
         column_overrides = {
             field: _strict_filtering for field in strict_fields}
         operators = (operators.ILike, operators.Equal)
+
+    def filter(self):
+        """Generate a filtered query from request parameters.
+
+        :returns: Filtered SQLALchemy query
+        """
+        command_id = request.args.get('command_id')
+        if command_id:
+            self.query = db.session.query(VulnerabilityGeneric).join(CommandObject, and_(VulnerabilityWeb.id == CommandObject.object_id, CommandObject.object_type=='vulnerability'))
+
+        query = super(VulnerabilityFilterSet, self).filter()
+
+        if command_id:
+            query = query.filter(CommandObject.command_id==int(command_id))
+        return query
 
 
 class VulnerabilityView(PaginatedMixin,
@@ -287,8 +308,10 @@ class VulnerabilityView(PaginatedMixin,
     }
 
     def _perform_create(self, data, **kwargs):
-        data = self._parse_data(self._get_schema_class()(strict=True),
+        data = self._parse_data(self._get_schema_instance(kwargs),
                                 request)
+        # TODO migration: use default values when popping and validate the
+        # popped object has the expected type.
         attachments = data.pop('_attachments')
 
         # This will be set after setting the workspace
@@ -305,13 +328,42 @@ class VulnerabilityView(PaginatedMixin,
                 db.session,
                 File,
                 object_id=obj.id,
-                object_type=obj.__class__.__name__,
+                object_type='vulnerability',
                 name=os.path.splitext(os.path.basename(filename))[0],
                 filename=os.path.basename(filename),
                 content=faraday_file,
             )
         db.session.commit()
         return obj
+
+    def _get_eagerloaded_query(self, *args, **kwargs):
+        """Eager hostnames loading.
+
+        This is too complex to get_joinedloads so I have to
+        override the function
+        """
+        query = super(VulnerabilityView, self)._get_eagerloaded_query(
+            *args, **kwargs)
+        joinedloads = [
+            joinedload(Vulnerability.host)
+            .load_only(Host.id)  # Only hostnames are needed
+            .joinedload(Host.hostnames),
+
+            joinedload(Vulnerability.service)
+            .joinedload(Service.host)
+            .joinedload(Host.hostnames),
+
+            joinedload(VulnerabilityWeb.service)
+            .joinedload(Service.host)
+            .joinedload(Host.hostnames),
+
+            joinedload(VulnerabilityGeneric.evidence),
+            joinedload(VulnerabilityGeneric.tags),
+        ]
+        return query.options(selectin_polymorphic(
+            VulnerabilityGeneric,
+            [Vulnerability, VulnerabilityWeb]
+        ), *joinedloads)
 
     @property
     def model_class(self):
@@ -340,7 +392,28 @@ class VulnerabilityView(PaginatedMixin,
             })
         return {
             'vulnerabilities': vulns,
+            'count': (pagination_metadata.total
+                      if pagination_metadata is not None else len(vulns))
         }
+
+    def count(self, **kwargs):
+        """Override to change severity values"""
+        res = super(VulnerabilityView, self).count(**kwargs)
+
+        def convert_group(group):
+            group = group.copy()
+            severity_map = {
+                "informational": "info",
+                "medium": "med"
+            }
+            severity = group['severity']
+            group['severity'] = group['name'] = severity_map.get(
+                severity, severity)
+            return group
+
+        if request.args.get('group_by') == 'severity':
+            res['groups'] = [convert_group(group) for group in res['groups']]
+        return res
 
 
 VulnerabilityView.register(vulns_api)

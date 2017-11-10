@@ -16,12 +16,18 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
-    event
-)
+    event,
+    and_)
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import backref, relationship, undefer
 from sqlalchemy.sql import select, text, table
 from sqlalchemy import func
-from sqlalchemy.orm import column_property, query_expression, with_expression
+from sqlalchemy.orm import (
+    backref,
+    column_property,
+    query_expression,
+    with_expression
+)
 from sqlalchemy.schema import DDL
 from sqlalchemy.ext.associationproxy import association_proxy, _AssociationSet
 from sqlalchemy.ext.declarative import declared_attr
@@ -37,7 +43,7 @@ from flask_security import (
     RoleMixin,
     UserMixin,
 )
-from server.utils.database import get_or_create
+from server.utils.database import get_or_create, BooleanToIntColumn
 
 
 class SQLAlchemy(OriginalSQLAlchemy):
@@ -105,6 +111,19 @@ def _make_generic_count_property(parent_table, children_table, where=None):
     return column_property(query, deferred=True)
 
 
+def _make_command_created_related_object():
+    query = select([BooleanToIntColumn("(count(*) = 0)")])
+    query = query.select_from(text('command_object as command_object_inner'))
+    where_expr = " command_object_inner.create_date < command_object.create_date and " \
+                " (command_object_inner.object_id = command_object.object_id and " \
+                " command_object_inner.object_type = command_object.object_type) and " \
+                " command_object_inner.workspace_id = command_object.workspace_id "
+    query = query.where(text(where_expr))
+    return column_property(
+        query,
+    )
+
+
 class DatabaseMetadata(db.Model):
     __tablename__ = 'db_metadata'
     id = Column(Integer, primary_key=True)
@@ -162,7 +181,8 @@ class Host(Metadata):
     mac = Column(Text, nullable=True)
     net_segment = Column(Text, nullable=True)
 
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True,
+                          nullable=False)
     workspace = relationship(
                             'Workspace',
                             backref='hosts',
@@ -172,7 +192,25 @@ class Host(Metadata):
     open_service_count = _make_generic_count_property(
         'host', 'service', where=text("service.status = 'open'"))
     total_service_count = _make_generic_count_property('host', 'service')
-    vulnerability_count = _make_generic_count_property('host', 'vulnerability')
+
+    __host_vulnerabilities = (
+        select([func.count(text('vulnerability.id'))]).
+        select_from('vulnerability').
+        where(text('vulnerability.host_id = host.id')).
+        as_scalar()
+    )
+    __service_vulnerabilities = (
+        select([func.count(text('vulnerability.id'))]).
+        select_from(text('vulnerability, service')).
+        where(text('vulnerability.service_id = service.id and '
+                   'service.host_id = host.id')).
+        as_scalar()
+    )
+    vulnerability_count = column_property(
+        # select(text('count(*)')).select_from(__host_vulnerabilities.subquery()),
+        __host_vulnerabilities + __service_vulnerabilities,
+        deferred=True)
+
     credentials_count = _make_generic_count_property('host', 'credential')
 
     __table_args__ = (
@@ -238,7 +276,9 @@ class Service(Metadata):
                             foreign_keys=[workspace_id]
                             )
 
-    vulnerability_count = _make_generic_count_property('service', 'vulnerability')
+    vulnerability_count = _make_generic_count_property('service',
+                                                       'vulnerability')
+    credentials_count = _make_generic_count_property('service', 'credential')
 
     __table_args__ = (
         UniqueConstraint(port, protocol, host_id, workspace_id, name='uix_service_port_protocol_host_workspace'),
@@ -379,6 +419,7 @@ class VulnerabilityTemplate(VulnerabilityABC):
     reference_template_instances = relationship(
         "ReferenceTemplate",
         secondary="reference_template_vulnerability_association",
+        lazy="joined",
         collection_class=set
     )
 
@@ -391,6 +432,7 @@ class VulnerabilityTemplate(VulnerabilityABC):
     policy_violation_template_instances = relationship(
         "PolicyViolationTemplate",
         secondary="policy_violation_template_vulnerability_association",
+        lazy="joined",
         collection_class=set
     )
 
@@ -399,6 +441,110 @@ class VulnerabilityTemplate(VulnerabilityABC):
         proxy_factory=CustomAssociationSet,
         creator=_build_associationproxy_creator_non_workspaced('PolicyViolationTemplate')
     )
+
+
+class CommandObject(db.Model):
+    __tablename__ = 'command_object'
+    id = Column(Integer, primary_key=True)
+
+    object_id = Column(Integer, nullable=False)
+    object_type = Column(Text, nullable=False)
+
+    command = relationship('Command', backref='command_objects')
+    command_id = Column(Integer, ForeignKey('command.id'), index=True)
+
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship('Workspace', foreign_keys=[workspace_id])
+
+    create_date = Column(DateTime, default=datetime.utcnow)
+
+    # the following properties are used to know if the command created the specified objects_type
+    # remeber that this table has a row instances per relationship.
+    # this created integer can be used to obtain the total object_type objects created.
+    created = _make_command_created_related_object()
+
+    # We are currently using the column property created. however to avoid losing information
+    # we also store the a boolean to know if at the moment of created the object related to the
+    # Command was created.
+    created_persistent = Column(Boolean, default=False)
+
+    __table_args__ = (
+        UniqueConstraint('object_id', 'object_type', 'command_id', 'workspace_id',
+                         name='uix_command_object_object_id_object_type_command_id_workspace_id'),
+    )
+
+    @property
+    def parent(self):
+        return self.command
+
+
+def _make_created_objects_sum(object_type_filter):
+    where_conditions = ["command_object.object_type= '%s'" % object_type_filter]
+    where_conditions.append("command_object.command_id = command.id")
+    where_conditions.append("command_object.workspace_id = command.workspace_id")
+    return column_property(
+        select([func.sum(CommandObject.created)]).\
+        select_from(table('command_object')). \
+        where(text(' and '.join(where_conditions)))
+    )
+
+
+def _make_created_objects_sum_joined(object_type_filter, join_filters):
+    """
+
+    :param object_type_filter: can be any host, service, vulnerability, credential or any object created from commands.
+    :param join_filters: Filter for vulnerability fields.
+    :return: column property with sum of created objects.
+    """
+    where_conditions = ["command_object.object_type= '%s'" % object_type_filter]
+    where_conditions.append("command_object.command_id = command.id")
+    where_conditions.append("vulnerability.id = command_object.object_id ")
+    where_conditions.append("command_object.workspace_id = vulnerability.workspace_id")
+    for attr, filter_value in join_filters.items():
+        where_conditions.append("vulnerability.{0} = {1}".format(attr, filter_value))
+    return column_property(
+        select([func.sum(CommandObject.created)]). \
+            select_from(table('command_object')). \
+            select_from(table('vulnerability')). \
+            where(text(' and '.join(where_conditions)))
+    )
+
+
+class Command(Metadata):
+
+    IMPORT_SOURCE = [
+        'report',  # all the files the tools export and faraday imports it from the resports directory, gtk manual import or web import.
+        'shell',  # command executed on the shell or webshell with hooks connected to faraday.
+    ]
+
+    __tablename__ = 'command'
+    id = Column(Integer, primary_key=True)
+    command = Column(Text(), nullable=False)
+    start_date = Column(DateTime, nullable=False)
+    end_date = Column(DateTime, nullable=True)
+    ip = Column(String(250), nullable=False)  # where the command was executed
+    hostname = Column(String(250), nullable=False)  # where the command was executed
+    params = Column(Text(), nullable=True)
+    user = Column(String(250), nullable=True)  # os username where the command was executed
+    import_source = Column(Enum(*IMPORT_SOURCE, name='import_source_enum'))
+
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship('Workspace', foreign_keys=[workspace_id])
+    # TODO: add Tool relationship and report_attachment
+
+    sum_created_vulnerabilities = _make_created_objects_sum('vulnerability')
+
+    sum_created_vulnerabilities_web = _make_created_objects_sum_joined('vulnerability', {'type': '\'vulnerability_web\''})
+
+    sum_created_hosts = _make_created_objects_sum('host')
+
+    sum_created_services = _make_created_objects_sum('service')
+
+    sum_created_vulnerability_critical = _make_created_objects_sum_joined('vulnerability', {'severity': '\'critical\''})
+
+    @property
+    def parent(self):
+        return
 
 
 class VulnerabilityGeneric(VulnerabilityABC):
@@ -430,6 +576,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
     reference_instances = relationship(
         "Reference",
         secondary="reference_vulnerability_association",
+        lazy="joined",
         collection_class=set
     )
 
@@ -441,6 +588,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
     policy_violation_instances = relationship(
         "PolicyViolation",
         secondary="policy_violation_vulnerability_association",
+        lazy="joined",
         collection_class=set
     )
 
@@ -448,6 +596,21 @@ class VulnerabilityGeneric(VulnerabilityABC):
         'policy_violation_instances', 'name',
         proxy_factory=CustomAssociationSet,
         creator=_build_associationproxy_creator('PolicyViolation'))
+
+    evidence = relationship(
+        "File",
+        primaryjoin="and_(File.object_id==VulnerabilityGeneric.id, "
+                    "File.object_type=='vulnerability')",
+        foreign_keys="File.object_id",
+    )
+
+    tags = relationship(
+        "Tag",
+        secondary="tag_object",
+        primaryjoin="and_(TagObject.object_id==VulnerabilityGeneric.id, "
+                    "TagObject.object_type=='vulnerability')",
+        collection_class=set,
+    )
 
     __mapper_args__ = {
         'polymorphic_on': type
@@ -530,10 +693,10 @@ class VulnerabilityCode(VulnerabilityGeneric):
 
     source_code_id = Column(Integer, ForeignKey(SourceCode.id), index=True)
     source_code = relationship(
-                            SourceCode,
-                            backref='vulnerabilities',
-                            foreign_keys=[source_code_id]
-                            )
+        SourceCode,
+        backref='vulnerabilities',
+        foreign_keys=[source_code_id]
+    )
 
     __mapper_args__ = {
         'polymorphic_identity': VulnerabilityGeneric.VULN_TYPES[2]
@@ -734,26 +897,6 @@ class Credential(Metadata):
         return self.host or self.service
 
 
-class Command(Metadata):
-    __tablename__ = 'command'
-    id = Column(Integer, primary_key=True)
-    command = Column(Text(), nullable=False)
-    start_date = Column(DateTime, nullable=False)
-    end_date = Column(DateTime, nullable=True)
-    ip = Column(String(250), nullable=False)  # where the command was executed
-    hostname = Column(String(250), nullable=False)  # where the command was executed
-    params = Column(Text(), nullable=True)
-    user = Column(String(250), nullable=True)  # os username where the command was executed
-
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
-    workspace = relationship('Workspace', foreign_keys=[workspace_id])
-    # TODO: add Tool relationship and report_attachment
-
-    @property
-    def parent(self):
-        return
-
-
 def _make_vuln_count_property(type_=None, only_confirmed=False,
                               use_column_property=True):
     query = (select([func.count(text('vulnerability.id'))]).
@@ -793,7 +936,9 @@ class Workspace(Metadata):
 
     credential_count = _make_generic_count_property('workspace', 'credential')
     host_count = _make_generic_count_property('workspace', 'host')
-    service_count = _make_generic_count_property('workspace', 'service')
+    open_service_count = _make_generic_count_property(
+        'workspace', 'service', where=text("service.status = 'open'"))
+    total_service_count = _make_generic_count_property('workspace', 'service')
 
     vulnerability_web_count = query_expression()
     vulnerability_code_count = query_expression()
@@ -808,11 +953,11 @@ class Workspace(Metadata):
         If only_confirmed is True, it will only show the count for confirmed
         vulnerabilities. Otherwise, it will show the count of all of them
         """
-        from sqlalchemy.sql.expression import literal_column
         return cls.query.options(
             undefer(cls.host_count),
             undefer(cls.credential_count),
-            undefer(cls.service_count),
+            undefer(cls.open_service_count),
+            undefer(cls.total_service_count),
             with_expression(
                 cls.vulnerability_web_count,
                 _make_vuln_count_property('vulnerability_web',
@@ -851,15 +996,20 @@ class Scope(Metadata):
                         index=True,
                         nullable=False
                         )
-    workspace = relationship(
-                            'Workspace',
-                            backref='scope',
-                            foreign_keys=[workspace_id],
-                            )
+    workspace = relationship('Workspace',
+                             backref=backref('scope', lazy="joined"),
+                             foreign_keys=[workspace_id],
+                             )
 
     __table_args__ = (
-        UniqueConstraint('name', 'workspace_id', name='uix_scope_name_workspace'),
+        UniqueConstraint('name', 'workspace_id',
+                         name='uix_scope_name_workspace'),
     )
+
+    @property
+    def parent(self):
+        return
+
 
 def is_valid_workspace(workspace_name):
     return db.session.query(server.models.Workspace).filter_by(name=workspace_name).first() is not None
@@ -929,10 +1079,11 @@ class File(Metadata):
     __tablename__ = 'file'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    name = Column(Text, unique=True)
-    filename = Column(Text, unique=True)
-    description = Column(Text, unique=True)
-    content = Column(UploadedFileField(upload_type=FaradayUploadedFile))  # plain attached file
+    name = Column(Text)
+    filename = Column(Text, nullable=False)
+    description = Column(Text)
+    content = Column(UploadedFileField(upload_type=FaradayUploadedFile),
+                     nullable=False)  # plain attached file
     object_id = Column(Integer, nullable=False)
     object_type = Column(Text, nullable=False)
 
@@ -972,6 +1123,10 @@ class Methodology(Metadata):
 
     workspace = relationship('Workspace', backref='methodologies')
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+
+    @property
+    def parent(self):
+        return
 
 
 class TaskABC(Metadata):
@@ -1047,6 +1202,10 @@ class Task(TaskABC):
     #     UniqueConstraint(TaskABC.name, methodology_id, workspace_id, name='uix_task_name_desc_methodology_workspace'),
     # )
 
+    @property
+    def parent(self):
+        return self.methodology
+
 
 class License(Metadata):
     __tablename__ = 'license'
@@ -1081,17 +1240,6 @@ class TagObject(db.Model):
     tag_id = Column(Integer, ForeignKey('tag.id'), index=True)
 
 
-class CommentObject(db.Model):
-    __tablename__ = 'comment_object'
-    id = Column(Integer, primary_key=True)
-
-    object_id = Column(Integer, nullable=False)
-    object_type = Column(Text, nullable=False)
-
-    comment = relationship('Comment', backref='comment_objects')
-    comment_id = Column(Integer, ForeignKey('comment.id'), index=True)
-
-
 class Comment(Metadata):
     __tablename__ = 'comment'
     id = Column(Integer, primary_key=True)
@@ -1105,8 +1253,16 @@ class Comment(Metadata):
                         foreign_keys=[reply_to_id]
                         )
 
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True,
+                          nullable=False)
     workspace = relationship('Workspace', foreign_keys=[workspace_id])
+
+    object_id = Column(Integer, nullable=False)
+    object_type = Column(Text, nullable=False)
+
+    @property
+    def parent(self):
+        return
 
 
 class ExecutiveReport(Metadata):
@@ -1134,6 +1290,10 @@ class ExecutiveReport(Metadata):
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', foreign_keys=[workspace_id])
 
+    @property
+    def parent(self):
+        return
+
 
 # This constraint uses Columns from different classes
 # Since it applies to the table vulnerability it should be adVulnerability.ded to the Vulnerability class
@@ -1156,3 +1316,23 @@ event.listen(
     'after_create',
     vulnerability_uniqueness.execute_if(dialect='postgresql')
 )
+
+
+def log_command_object_found(command, object, created):
+    object_type = object.__tablename__
+    if object.__class__.__name__ in ['Vulnerability', 'VulnerabilityWeb', 'VulnerabilityCode']:
+        object_type = 'vulnerability'
+
+    db.session.flush()
+    log, _ = get_or_create(
+        db.session,
+        CommandObject,
+        command=command,
+        object_id=object.id,
+        object_type=object_type,
+        workspace=object.workspace,
+    )
+    log.created_persistent = created
+
+# We have to import this after all models are defined
+import server.events

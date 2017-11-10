@@ -36,7 +36,8 @@ workspace_api = Blueprint('workspace_api', __name__)
 class WorkspaceSummarySchema(Schema):
     credentials = fields.Integer(dump_only=True, attribute='credential_count')
     hosts = fields.Integer(dump_only=True, attribute='host_count')
-    services = fields.Integer(dump_only=True, attribute='service_count')
+    services = fields.Integer(dump_only=True,
+                              attribute='total_service_count')
     web_vulns = fields.Integer(dump_only=True, allow_none=False,
                                attribute='vulnerability_web_count')
     code_vulns = fields.Integer(dump_only=True, allow_none=False,

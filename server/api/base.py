@@ -3,6 +3,7 @@ import json
 import flask
 from flask import abort, g
 from flask_classful import FlaskView
+from sqlalchemy.orm import joinedload, undefer
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.inspection import inspect
 from sqlalchemy import func
@@ -12,7 +13,7 @@ from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
 from webargs.flaskparser import FlaskParser, parser, abort
 from webargs.core import ValidationError
-from server.models import Workspace, db
+from server.models import Workspace, db, Metadata
 import server.utils.logger
 
 logger = server.utils.logger.get_logger(__name__)
@@ -65,9 +66,35 @@ class GenericView(FlaskView):
     lookup_field_type = int
     unique_fields = []  # Fields unique
 
+    # Attributes to improve the performance of list and retrieve views
+    get_joinedloads = []  # List of relationships to eagerload
+    get_undefer = []  # List of columns to undefer
+
     def _get_schema_class(self):
         assert self.schema_class is not None, "You must define schema_class"
         return self.schema_class
+
+    def _get_schema_instance(self, route_kwargs, **kwargs):
+        """Instances a model schema.
+
+        By default it uses sets strict to True
+        but this can be overriden as well as any other parameters in
+        the function's kwargs.
+
+        It also uses _set_schema_context to set the context of the
+        schema.
+        """
+        if 'strict' not in kwargs:
+            kwargs['strict'] = True
+        kwargs['context'] = self._set_schema_context(
+            kwargs.get('context', {}), **route_kwargs)
+        return self._get_schema_class()(**kwargs)
+
+    def _set_schema_context(self, context, **kwargs):
+        """This function can be overriden to update the context passed
+        to the schema.
+        """
+        return context
 
     def _get_lookup_field(self):
         return getattr(self.model_class, self.lookup_field)
@@ -79,23 +106,45 @@ class GenericView(FlaskView):
             flask.abort(404, 'Invalid format of lookup field')
 
     def _get_base_query(self):
-        return self.model_class.query
+        query = self.model_class.query
+        return query
+
+    def _get_eagerloaded_query(self, *args, **kwargs):
+        options = []
+        try:
+            has_creator = 'owner' in self._get_schema_class().opts.fields
+        except AttributeError:
+            has_creator = False
+        if has_creator:
+            # APIs for objects with metadata always return the creator's
+            # username. Do a joinedload to prevent doing one query per object
+            # (n+1) problem
+            options.append(joinedload(
+                getattr(self.model_class, 'creator')).load_only('username'))
+        query = self._get_base_query(*args, **kwargs)
+        options += [joinedload(relationship)
+                    for relationship in self.get_joinedloads]
+        options += [undefer(column) for column in self.get_undefer]
+        return query.options(*options)
 
     def _filter_query(self, query):
         """Return a new SQLAlchemy query with some filters applied"""
         return query
 
-    def _get_object(self, object_id, **kwargs):
+    def _get_object(self, object_id, eagerload=False, **kwargs):
         self._validate_object_id(object_id)
+        if eagerload:
+            query = self._get_eagerloaded_query(**kwargs)
+        else:
+            query = self._get_base_query(**kwargs)
         try:
-            obj = self._get_base_query(**kwargs).filter(
-                self._get_lookup_field() == object_id).one()
+            obj = query.filter(self._get_lookup_field() == object_id).one()
         except NoResultFound:
             flask.abort(404, 'Object with id "%s" not found' % object_id)
         return obj
 
-    def _dump(self, obj, **kwargs):
-        return self._get_schema_class()(**kwargs).dump(obj).data
+    def _dump(self, obj, route_kwargs, **kwargs):
+        return self._get_schema_instance(route_kwargs, **kwargs).dump(obj).data
 
     def _parse_data(self, schema, request, *args, **kwargs):
         return FlaskParser().parse(schema, request, locations=('json',),
@@ -149,16 +198,24 @@ class GenericWorkspacedView(GenericView):
     def _get_base_query(self, workspace_name):
         base = super(GenericWorkspacedView, self)._get_base_query()
         return base.join(Workspace).filter(
-            Workspace.id==self._get_workspace(workspace_name).id)
+            Workspace.id == self._get_workspace(workspace_name).id)
 
-    def _get_object(self, object_id, workspace_name):
+    def _get_object(self, object_id, workspace_name, eagerload=False):
         self._validate_object_id(object_id)
+        if eagerload:
+            query = self._get_eagerloaded_query(workspace_name)
+        else:
+            query = self._get_base_query(workspace_name)
         try:
-            obj = self._get_base_query(workspace_name).filter(
-                self._get_lookup_field() == object_id).one()
+            obj = query.filter(self._get_lookup_field() == object_id).one()
         except NoResultFound:
             flask.abort(404, 'Object with id "%s" not found' % object_id)
         return obj
+
+    def _set_schema_context(self, context, **kwargs):
+        """Overriden to pass the workspace name to the schema"""
+        context.update(kwargs)
+        return context
 
     def _validate_uniqueness(self, obj, object_id=None):
         # TODO: Use implementation of GenericView
@@ -169,7 +226,7 @@ class GenericWorkspacedView(GenericView):
             field = getattr(self.model_class, field_name)
             value = getattr(obj, field_name)
             query = self._get_base_query(obj.workspace.name).filter(
-                field==value)
+                field == value)
             if object_id is not None:
                 # The object already exists in DB, we want to fetch an object
                 # different to this one but with the same unique field
@@ -184,6 +241,10 @@ class GenericWorkspacedView(GenericView):
 class ListMixin(object):
     """Add GET / route"""
 
+    #: If set (to a SQLAlchemy attribute instance) use this field to order the
+    #: query by default
+    order_field = None
+
     def _envelope_list(self, objects, pagination_metadata=None):
         """Override this method to define how a list of objects is
         rendered"""
@@ -193,9 +254,11 @@ class ListMixin(object):
         return query, None
 
     def index(self, **kwargs):
-        query = self._filter_query(self._get_base_query(**kwargs))
+        query = self._filter_query(self._get_eagerloaded_query(**kwargs))
+        if self.order_field is not None:
+            query = query.order_by(self.order_field)
         objects, pagination_metadata = self._paginate(query)
-        return self._envelope_list(self._dump(objects, many=True),
+        return self._envelope_list(self._dump(objects, kwargs, many=True),
                                    pagination_metadata)
 
 
@@ -249,7 +312,8 @@ class RetrieveMixin(object):
     """Add GET /<id>/ route"""
 
     def get(self, object_id, **kwargs):
-        return self._dump(self._get_object(object_id, **kwargs))
+        return self._dump(self._get_object(object_id, eagerload=True,
+                                           **kwargs), kwargs)
 
 
 class RetrieveWorkspacedMixin(RetrieveMixin):
@@ -277,12 +341,12 @@ class CreateMixin(object):
     """Add POST / route"""
 
     def post(self, **kwargs):
-        data = self._parse_data(self._get_schema_class()(strict=True),
+        data = self._parse_data(self._get_schema_instance(kwargs),
                                 flask.request)
         created = self._perform_create(data, **kwargs)
         created.creator = g.user
         db.session.commit()
-        return self._dump(created), 201
+        return self._dump(created, kwargs), 201
 
     def _perform_create(self, data, **kwargs):
         obj = self.model_class(**data)
@@ -318,12 +382,12 @@ class UpdateMixin(object):
     """Add PUT /<workspace_name>/<id>/ route"""
 
     def put(self, object_id, **kwargs):
-        data = self._parse_data(self._get_schema_class()(strict=True),
+        data = self._parse_data(self._get_schema_instance(kwargs),
                                 flask.request)
         obj = self._get_object(object_id, **kwargs)
         self._update_object(obj, data)
         updated = self._perform_update(object_id, obj, **kwargs)
-        return self._dump(obj), 200
+        return self._dump(obj, kwargs), 200
 
     def _update_object(self, obj, data):
         for (key, value) in data.items():
@@ -366,6 +430,9 @@ class DeleteWorkspacedMixin(DeleteMixin):
 
 class CountWorkspacedMixin(object):
 
+    #: List of SQLAlchemy query filters to apply when counting
+    count_extra_filters = []
+
     def count(self, **kwargs):
         res = {
             'groups': [],
@@ -388,7 +455,8 @@ class CountWorkspacedMixin(object):
             db.session.query(self.model_class)
             .join(Workspace)
             .group_by(group_by)
-            .filter(Workspace.name == workspace_name))
+            .filter(Workspace.name == workspace_name,
+                    *self.count_extra_filters))
         for key, count in count.values(group_by, func.count(group_by)):
             res['groups'].append(
                 {'count': count,

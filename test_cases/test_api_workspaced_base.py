@@ -62,6 +62,7 @@ class ListTestsMixin:
         monkeypatch.setattr(self.view_class, '_envelope_list', _envelope_list)
 
     @pytest.mark.usefixtures('mock_envelope_list')
+    @pytest.mark.usefixtures('ignore_nplusone')
     def test_list_retrieves_all_items_from_workspace(self, test_client,
                                                      second_workspace,
                                                      session):

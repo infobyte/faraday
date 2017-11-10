@@ -38,6 +38,7 @@ class PaginationTestsMixin:
 
     @pytest.mark.parametrize("page_number", [None, 1, 2])
     @pytest.mark.usefixtures('pagination_test_logic')
+    @pytest.mark.usefixtures('ignore_nplusone')
     @pytest.mark.pagination
     def test_returns_all_with_no_per_page(self, test_client, session,
                                           page_number):
@@ -69,6 +70,7 @@ class PaginationTestsMixin:
         assert res.json == {u'data': []}
 
     @pytest.mark.usefixtures('pagination_test_logic')
+    @pytest.mark.usefixtures('ignore_nplusone')
     @pytest.mark.pagination
     def test_pages_have_different_elements(self, session, test_client):
         """Test correct page size, correct IDs and that there are

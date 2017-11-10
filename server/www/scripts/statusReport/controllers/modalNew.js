@@ -64,7 +64,6 @@ angular.module('faradayApp')
                 _attachments: {},
                 data: "",
                 desc: "",
-                easeofresolution: undefined,
                 impact: {
                     accountability: false,
                     availability: false,

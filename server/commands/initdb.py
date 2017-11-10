@@ -2,7 +2,6 @@ import string
 
 import os
 import sys
-import getpass
 from random import SystemRandom
 from tempfile import TemporaryFile
 from subprocess import Popen, PIPE
@@ -17,7 +16,7 @@ except ImportError:
 from flask import current_app
 from flask_script import Command
 from colorama import init
-from colorama import Fore, Back, Style
+from colorama import Fore
 from sqlalchemy.exc import OperationalError
 
 from config.globals import CONST_FARADAY_HOME_PATH

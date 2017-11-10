@@ -237,13 +237,15 @@ class PluginController(object):
         del self._active_plugins[pid]
         return True
 
-    def processReport(self, plugin, filepath):
-
+    def processReport(self, plugin, filepath, ws_name=None):
+        if not ws_name:
+            ws_name = model.api.getActiveWorkspace().name
         cmd_info = CommandRunInformation(
-            **{'workspace': model.api.getActiveWorkspace().name,
+            **{'workspace': ws_name,
                 'itime': time.time(),
                 'command': 'Import %s:' % plugin,
                 'params': filepath})
+        self._mapper_manager.createMappers(ws_name)
         self._mapper_manager.save(cmd_info)
 
         if plugin in self._plugins:

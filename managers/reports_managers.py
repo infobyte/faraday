@@ -27,8 +27,9 @@ CONF = getInstanceConfiguration()
 
 
 class ReportProcessor():
-    def __init__(self, plugin_controller):
+    def __init__(self, plugin_controller, ws_name=None):
         self.plugin_controller = plugin_controller
+        self.ws_name = ws_name
 
     def processReport(self, filename):
         """
@@ -49,7 +50,7 @@ class ReportProcessor():
         """Sends a report to the appropiate plugin specified by plugin_id"""
         getLogger(self).info(
             'The file is %s, %s' % (filename, plugin_id))
-        if not self.plugin_controller.processReport(plugin_id, filename):
+        if not self.plugin_controller.processReport(plugin_id, filename, self.ws_name):
             getLogger(self).error(
                 "Faraday doesn't have a plugin for this tool..."
                 " Processing: ABORT")
@@ -65,13 +66,14 @@ class ReportProcessor():
 class ReportManager(threading.Thread):
     def __init__(self, timer, ws_name, plugin_controller):
         threading.Thread.__init__(self)
+        self.ws_name = ws_name
         self.setDaemon(True)
         self.timer = timer
         self._stop = False
         self._report_path = os.path.join(CONF.getReportPath(), ws_name)
         self._report_ppath = os.path.join(self._report_path, "process")
         self._report_upath = os.path.join(self._report_path, "unprocessed")
-        self.processor = ReportProcessor(plugin_controller)
+        self.processor = ReportProcessor(plugin_controller, ws_name)
 
         if not os.path.exists(self._report_path):
             os.mkdir(self._report_path)

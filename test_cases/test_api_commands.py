@@ -184,16 +184,25 @@ class TestListCommandView(ReadOnlyAPITests):
         ]
 
     def test_multiple_commands_executed_with_same_objects_found(self, session, test_client):
-
+        """
+            This text verifies that multiple command does not affect activity feed counters.
+        """
         workspace = WorkspaceFactory.create()
         host = HostFactory.create(workspace=workspace)
         vuln = VulnerabilityFactory.create(severity='low', workspace=workspace, host=host, service=None)
         service = ServiceFactory.create(workspace=workspace)
         commands = []
+        in_the_middle_commands = []
+        first_command = None
         for index in range(0, 10):
+
             command = EmptyCommandFactory.create(workspace=workspace)
             commands.append(command)
-
+            if index > 0:
+                # in the middle commands should not affect counters (should be at 0)
+                in_the_middle_commands.append(command)
+            else:
+                first_command = command
             session.flush()
             CommandObjectFactory.create(
                 command=command,
@@ -207,17 +216,18 @@ class TestListCommandView(ReadOnlyAPITests):
                 object_id=vuln.id,
                 workspace=workspace
             )
+        # This command will change activity feed counters
         vuln_med = VulnerabilityFactory.create(severity='medium', workspace=workspace, service=service, host=None)
         session.flush()
-        command = EmptyCommandFactory.create(workspace=workspace)
+        last_command = EmptyCommandFactory.create(workspace=workspace)
         CommandObjectFactory.create(
-            command=command,
+            command=last_command,
             object_type='service',
             object_id=service.id,
             workspace=workspace
         )
         CommandObjectFactory.create(
-            command=command,
+            command=last_command,
             object_type='vulnerability',
             object_id=vuln_med.id,
             workspace=workspace
@@ -225,36 +235,42 @@ class TestListCommandView(ReadOnlyAPITests):
         session.commit()
         res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
         assert res.status_code == 200
-        assert res.json[0] == {u'_id': commands[0].id,
-                               u'command': commands[0].command,
-                               u'import_source': u'shell',
-                               u'user': commands[0].user,
-                               u'date': time.mktime(commands[0].start_date.timetuple()) * 1000,
-                               u'params': commands[0].params,
-                               u'hosts_count': 1,
-                               u'services_count': 0,
-                               u'vulnerabilities_count': 1,
-                               u'criticalIssue': 0}
+        raw_first_command = filter(lambda comm: comm['_id'] == commands[0].id, res.json)
 
-        for index in range(1, 10):
-            assert res.json[index] == {u'_id': commands[index].id,
-                                       u'command': commands[index].command,
+        assert raw_first_command.pop() == {
+            u'_id': first_command.id,
+            u'command': first_command.command,
+            u'import_source': u'shell',
+            u'user': first_command.user,
+            u'date': time.mktime(first_command.start_date.timetuple()) * 1000,
+            u'params': first_command.params,
+            u'hosts_count': 1,
+            u'services_count': 0,
+            u'vulnerabilities_count': 1,
+            u'criticalIssue': 0
+        }
+
+        for in_the_middle_command in in_the_middle_commands:
+            raw_in_the_middle_command = filter(lambda comm: comm['_id'] == in_the_middle_command.id, res.json)
+            assert raw_in_the_middle_command.pop() == {u'_id': in_the_middle_command.id,
+                                       u'command': in_the_middle_command.command,
                                        u'import_source': u'shell',
-                                       u'user': commands[index].user,
-                                       u'date': time.mktime(commands[index].start_date.timetuple()) * 1000,
-                                       u'params': commands[index].params,
+                                       u'user': in_the_middle_command.user,
+                                       u'date': time.mktime(in_the_middle_command.start_date.timetuple()) * 1000,
+                                       u'params': in_the_middle_command.params,
                                        u'hosts_count': 0,
                                        u'services_count': 0,
                                        u'vulnerabilities_count': 0,
                                        u'criticalIssue': 0}
 
         # new command must create new service and vuln
-        assert res.json[10] == {u'_id': command.id,
-                                       u'command': command.command,
+        raw_last_command = filter(lambda comm: comm['_id'] == last_command.id, res.json)
+        assert raw_last_command.pop() == {u'_id': last_command.id,
+                                       u'command': last_command.command,
                                        u'import_source': u'shell',
-                                       u'user': command.user,
-                                       u'date': time.mktime(command.start_date.timetuple()) * 1000,
-                                       u'params': command.params,
+                                       u'user': last_command.user,
+                                       u'date': time.mktime(last_command.start_date.timetuple()) * 1000,
+                                       u'params': last_command.params,
                                        u'hosts_count': 0,
                                        u'services_count': 1,
                                        u'vulnerabilities_count': 1,

@@ -1,3 +1,4 @@
+import operator
 import pytest
 from sqlalchemy.orm.util import was_deleted
 
@@ -334,3 +335,34 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
     unique_fields = ['ip']
     update_fields = ['ip', 'description', 'os']
     view_class = HostsView
+
+    @pytest.mark.usefixtures("mock_envelope_list")
+    def test_sort_by_description(self, test_client, session):
+        session.commit()
+        expected_ids = [host.id for host in
+                        sorted(Host.query.all(),
+                               key=operator.attrgetter('description'))]
+        res = test_client.get(self.url() + '?sort=description&sort_dir=asc')
+        assert res.status_code == 200
+        assert [host['_id'] for host in res.json['data']] == expected_ids
+
+        expected_ids.reverse()  # In place list reverse
+        res = test_client.get(self.url() + '?sort=description&sort_dir=desc')
+        assert res.status_code == 200
+        assert [host['_id'] for host in res.json['data']] == expected_ids
+
+    @pytest.mark.usefixtures("mock_envelope_list")
+    def test_sort_by_services(self, test_client, session, second_workspace,
+                              host_factory, service_factory):
+        expected_ids = []
+        for i in range(10):
+            host = host_factory.create(workspace=second_workspace)
+            service_factory.create(host=host, workspace=second_workspace,
+                                   status='open')
+            session.flush()
+            expected_ids.append(host.id)
+        session.commit()
+        res = test_client.get(self.url(workspace=second_workspace) +
+                              '?sort=services&sort_dir=asc')
+        assert res.status_code == 200
+        assert [h['_id'] for h in res.json['data']] == expected_ids

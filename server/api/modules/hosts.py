@@ -83,7 +83,7 @@ class HostsView(PaginatedMixin,
     filterset_class = HostFilterSet
     get_undefer = [Host.open_service_count,
                    Host.vulnerability_count]
-    get_joinedloads = [Host.hostnames]
+    get_joinedloads = [Host.hostnames, Host.workspace]
 
     @route('/<host_id>/services/')
     def service_list(self, workspace_name, host_id):
@@ -114,5 +114,6 @@ class HostsView(PaginatedMixin,
             'total_rows': (pagination_metadata and pagination_metadata.total
                            or len(hosts)),
         }
+
 
 HostsView.register(host_api)

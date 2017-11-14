@@ -223,7 +223,8 @@ class ReportParser(object):
 
         signatures = {
          "\x50\x4B": "zip",
-         "\x3C\x3F\x78\x6D\x6C": "xml"
+         "\x3C\x3F\x78\x6D\x6C": "xml",
+         "# Lynis Re": "dat",
         }
 
         try:
@@ -263,7 +264,8 @@ class ReportParser(object):
         # Find root tag based in report_type
         if report_type == "zip":
             result = "maltego"
-
+        elif report_type == "dat":
+            result = 'lynis'
         else:
 
             try:
@@ -337,7 +339,11 @@ class ReportParser(object):
             return "Retina"
         elif "netsparker" == tag:
             return "Netsparker"
+        elif "netsparker-cloud" == tag:
+            return "NetsparkerCloud"            
         elif "maltego" == tag:
             return "Maltego"
+        elif "lynis" == tag:
+            return "Lynis"
         else:
             return None

@@ -1324,7 +1324,7 @@ def log_command_object_found(command, object, created):
         object_type = 'vulnerability'
 
     db.session.flush()
-    log, _ = get_or_create(
+    log, log_created = get_or_create(
         db.session,
         CommandObject,
         command=command,
@@ -1332,7 +1332,9 @@ def log_command_object_found(command, object, created):
         object_type=object_type,
         workspace=object.workspace,
     )
-    log.created_persistent = created
+    if not log_created:
+        # without this if, multiple executions of the importer will write this attribute with False
+        log.created_persistent = created
 
 # We have to import this after all models are defined
 import server.events

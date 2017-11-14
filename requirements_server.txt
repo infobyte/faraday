@@ -7,7 +7,7 @@ Flask-Security==3.0.0
 flask==0.12.2
 marshmallow
 Pillow==4.2.1
-pyasn1-modules==0.0.11
+pyasn1-modules>=0.0.11
 pyopenssl==17.2.0
 python-slugify==1.2.4
 requests==2.18.4

@@ -20,7 +20,6 @@ class TestListServiceView(ReadOnlyAPITests):
     #update_fields = ['ip', 'description', 'os']
     view_class = ServiceView
 
-    @pytest.mark.usefixtures('ignore_nplusone')
     def test_service_list_backwards_compatibility(self, test_client,
                                                   second_workspace, session):
         self.factory.create(workspace=second_workspace)

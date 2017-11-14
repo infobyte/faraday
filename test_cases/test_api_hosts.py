@@ -60,7 +60,6 @@ class TestHostAPI:
         hosts_in_response = set(host['id'] for host in response.json['rows'])
         assert hosts_in_list == hosts_in_response
 
-    @pytest.mark.usefixtures('ignore_nplusone')
     def test_list_retrieves_all_items_from_workspace(self, test_client,
                                                      second_workspace,
                                                      session,
@@ -213,7 +212,6 @@ class TestHostAPI:
             res = test_client.get(self.url(host))
             assert res.json['services'] == len(services)
 
-    @pytest.mark.usefixtures('ignore_nplusone')
     def test_index_shows_service_count(self, test_client, host_services,
                                        service_factory):
         ids_map = {host.id: services
@@ -273,7 +271,6 @@ class TestHostAPI:
         assert res.status_code == 200
         self.compare_results(hosts + [case_insensitive_host], res)
 
-    @pytest.mark.usefixtures('ignore_nplusone')
     def test_host_with_open_vuln_count_verification(self, test_client, session,
                                                         workspace, host_factory, vulnerability_factory,
                                                         service_factory):

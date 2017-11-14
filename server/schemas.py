@@ -117,7 +117,7 @@ class MetadataSchema(Schema):
 
     def get_command_id(self, obj):
         command_id = None
-        command_obj = CommandObject.query.filter_by(object_type='vulnerability', object_id=obj.id, workspace=obj.workspace).first()
+        command_obj = CommandObject.query.filter_by(object_type='vulnerability', object_id=obj.id, workspace_id=obj.workspace_id).first()
         if command_obj:
             command_id = command_obj.command_id
 

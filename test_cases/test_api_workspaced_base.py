@@ -157,6 +157,16 @@ class UpdateTestsMixin:
         res = test_client.put(self.url(self.first_object), data={})
         assert res.status_code == 400
 
+    def test_update_cant_change_id(self, test_client):
+        raw_json = self.factory.build_dict()
+        expected_id = self.first_object.id
+        raw_json['id'] = 100000
+        res = test_client.put(self.url(self.first_object),
+                              data=raw_json)
+        assert res.status_code == 200
+        assert res.json['id'] == expected_id
+
+
 
 class DeleteTestsMixin:
 

@@ -92,9 +92,7 @@ class HostsView(PaginatedMixin,
 
     def _perform_create(self, data, **kwargs):
         hostnames = data.pop('hostnames', [])
-        default_gateway_ip = data.pop('default_gateway_ip', [None])
         host = super(HostsView, self)._perform_create(data, **kwargs)
-        host.default_gateway_ip = default_gateway_ip[0]
         for name in hostnames:
             get_or_create(db.session, Hostname, name=name['key'], host=host,
                           workspace=host.workspace)

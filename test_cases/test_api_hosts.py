@@ -1,4 +1,5 @@
 import pytest
+import time
 from sqlalchemy.orm.util import was_deleted
 
 from test_cases import factories
@@ -9,6 +10,7 @@ from test_api_workspaced_base import (
 )
 from server.models import db, Host
 from server.api.modules.hosts import HostsView
+from test_cases.factories import HostFactory
 
 HOSTS_COUNT = 5
 SERVICE_COUNT = [10, 5]  # 10 services to the first host, 5 to the second
@@ -324,7 +326,64 @@ class TestHostAPI:
         }
         res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 201
-        assert res.json['default_gateway'] == [u'192.168.0.1']
+        assert res.json['default_gateway'] == '192.168.0.1'
+
+    def test_update_host(self, test_client, session):
+        host = HostFactory.create()
+        session.commit()
+        raw_data = {
+            "metadata":
+                        {
+                            "update_time":1510688312.431,
+                            "update_user":"UI Web",
+                            "update_action":0,
+                            "creator":"",
+                            "create_time":1510673388000,
+                            "update_controller_action":"",
+                            "owner":"leonardo",
+                            "command_id": None},
+            "name":"10.31.112.21",
+            "ip":"10.31.112.21",
+            "_rev":"",
+            "description":"",
+            "owned": False,
+            "services":12,
+            "hostnames":[],
+            "vulns":43,
+            "owner":"leonardo",
+            "credentials":0,
+            "_id": 4000,
+            "os":"Microsoft Windows Server 2008 R2 Standard Service Pack 1",
+            "id": 4000,
+            "icon":"windows"}
+
+        res = test_client.put(self.url(host, workspace=host.workspace), data=raw_data)
+        assert res.status_code == 200
+        updated_host = Host.query.filter_by(id=host.id).first()
+        assert res.json == {
+            u'_id': 6,
+            u'_rev': u'',
+            u'credentials': 0,
+            u'default_gateway': None,
+            u'description': u'',
+            u'hostnames': [],
+            u'id': 6,
+            u'ip': u'10.31.112.21',
+            u'metadata': {u'command_id': None,
+                u'create_time': int(time.mktime(updated_host.create_date.timetuple())) * 1000,
+                u'creator': u'',
+                u'owner': host.creator.username,
+                u'update_action': 0,
+                u'update_controller_action': u'',
+                u'update_time': int(time.mktime(updated_host.update_date.timetuple())) * 1000,
+                u'update_user': u''},
+            u'name': u'10.31.112.21',
+            u'os': u'Microsoft Windows Server 2008 R2 Standard Service Pack 1',
+            u'owned': False,
+            u'owner': host.creator.username,
+            u'services': 0,
+            u'vulns': 0}
+
 
 
 class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):

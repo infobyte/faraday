@@ -384,6 +384,9 @@ class UpdateMixin(object):
     def put(self, object_id, **kwargs):
         data = self._parse_data(self._get_schema_instance(kwargs),
                                 flask.request)
+        if 'id' in data:
+            # just in case an schema allows id as writable.
+            data.pop('id')
         obj = self._get_object(object_id, **kwargs)
         self._update_object(obj, data)
         updated = self._perform_update(object_id, obj, **kwargs)

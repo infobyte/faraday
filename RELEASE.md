@@ -8,6 +8,9 @@ Make sure you run ```./faraday.py --update``` the first time after an update!
 New features in the latest update
 =====================================
 
+November 17, 2017:
+---
+* Fix bug with tags in models.
 
 November 5, 2017:
 ---

@@ -132,7 +132,6 @@ class DatabaseMetadata(db.Model):
 
 
 class Metadata(db.Model):
-
     __abstract__ = True
 
     @declared_attr

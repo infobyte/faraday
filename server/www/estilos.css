@@ -1189,7 +1189,7 @@ a.button-disable{cursor: not-allowed;pointer-events: none;opacity: 0.5}
     display: none !important;
 }
 
-#single-button {
+.header_right {
     /* TODO: this is a fast hask, maybe there is a better way to do this */
-    top: -50px;
+    margin-top: -3%;
 }

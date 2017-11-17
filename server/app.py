@@ -46,6 +46,62 @@ def setup_storage_path():
     return default_path
 
 
+def register_blueprints(app):
+    from server.modules.info import info_api
+    from server.api.modules.commandsrun import commandsrun_api
+    from server.api.modules.credentials import credentials_api
+    from server.api.modules.doc import doc_api
+    from server.api.modules.hosts import host_api
+    from server.api.modules.licenses import license_api
+    from server.api.modules.services import services_api
+    from server.api.modules.session import session_api
+    from server.api.modules.vulns import vulns_api
+    from server.api.modules.vulnerability_template import vulnerability_template_api
+    from server.api.modules.workspaces import workspace_api
+    from server.api.modules.handlers import handlers_api
+    app.register_blueprint(commandsrun_api)
+    app.register_blueprint(credentials_api)
+    app.register_blueprint(doc_api)
+    app.register_blueprint(host_api)
+    app.register_blueprint(info_api)
+    app.register_blueprint(license_api)
+    app.register_blueprint(services_api)
+    app.register_blueprint(session_api)
+    app.register_blueprint(vulns_api)
+    app.register_blueprint(vulnerability_template_api)
+    app.register_blueprint(workspace_api)
+    app.register_blueprint(handlers_api)
+
+
+def check_testing_configuration(testing, app):
+    if testing:
+        app.config['SQLALCHEMY_ECHO'] = False
+        app.config['TESTING'] = testing
+        app.config['NPLUSONE_LOGGER'] = logging.getLogger('faraday.nplusone')
+        app.config['NPLUSONE_LOG_LEVEL'] = logging.ERROR
+        app.config['NPLUSONE_RAISE'] = True
+        NPlusOne(app)
+
+
+def register_handlers(app):
+    # We are exposing a RESTful API, so don't redirect a user to a login page in
+    # case of being unauthorized, raise a 403 error instead
+    @app.login_manager.unauthorized_handler
+    def unauthorized():
+        flask.abort(403)
+
+    @app.before_request
+    def default_login_required():
+        view = app.view_functions.get(flask.request.endpoint)
+        logged_in = 'user_id' in flask.session
+        if (not logged_in and not getattr(view, 'is_public', False)):
+            flask.abort(403)
+
+        g.user = None
+        if logged_in:
+            user = User.query.filter_by(id=session["user_id"]).first()
+            g.user = user
+
 def create_app(db_connection_string=None, testing=None):
     app = Flask(__name__)
 
@@ -81,13 +137,9 @@ def create_app(db_connection_string=None, testing=None):
             DepotManager.configure('default', {
                 'depot.storage_path': storage_path
             })
-    if testing:
-        app.config['SQLALCHEMY_ECHO'] = False
-        app.config['TESTING'] = testing
-        app.config['NPLUSONE_LOGGER'] = logging.getLogger('faraday.nplusone')
-        app.config['NPLUSONE_LOG_LEVEL'] = logging.ERROR
-        app.config['NPLUSONE_RAISE'] = True
-        NPlusOne(app)
+
+    check_testing_configuration(testing, app)
+
     try:
         app.config['SQLALCHEMY_DATABASE_URI'] = db_connection_string or server.config.database.connection_string.strip("'")
     except AttributeError:
@@ -114,46 +166,9 @@ def create_app(db_connection_string=None, testing=None):
     for handler in LOGGING_HANDLERS:
         app.logger.addHandler(handler)
 
-    from server.modules.info import info_api
-    from server.api.modules.commandsrun import commandsrun_api
-    from server.api.modules.credentials import credentials_api
-    from server.api.modules.doc import doc_api
-    from server.api.modules.hosts import host_api
-    from server.api.modules.licenses import license_api
-    from server.api.modules.services import services_api
-    from server.api.modules.session import session_api
-    from server.api.modules.vulns import vulns_api
-    from server.api.modules.vulnerability_template import vulnerability_template_api
-    from server.api.modules.workspaces import workspace_api
-    app.register_blueprint(commandsrun_api)
-    app.register_blueprint(credentials_api)
-    app.register_blueprint(doc_api)
-    app.register_blueprint(host_api)
-    app.register_blueprint(info_api)
-    app.register_blueprint(license_api)
-    app.register_blueprint(services_api)
-    app.register_blueprint(session_api)
-    app.register_blueprint(vulns_api)
-    app.register_blueprint(vulnerability_template_api)
-    app.register_blueprint(workspace_api)
+    register_blueprints(app)
+    register_handlers(app)
 
-    # We are exposing a RESTful API, so don't redirect a user to a login page in
-    # case of being unauthorized, raise a 403 error instead
-    @app.login_manager.unauthorized_handler
-    def unauthorized():
-        flask.abort(403)
-
-    @app.before_request
-    def default_login_required():
-        view = app.view_functions.get(flask.request.endpoint)
-        logged_in = 'user_id' in flask.session
-        if (not logged_in and not getattr(view, 'is_public', False)):
-            flask.abort(403)
-
-        g.user = None
-        if logged_in:
-            user = User.query.filter_by(id=session["user_id"]).first()
-            g.user = user
 
     return app
 

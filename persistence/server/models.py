@@ -1104,7 +1104,7 @@ class VulnWeb(Vuln):
         self.hostnames = vuln_web.get('hostnames')
         self.impact = vuln_web.get('impact')
         self.service = vuln_web.get('service')
-        self.tags = vuln_web.get('tags')
+        self.tags = vuln_web.get('tags', list())
         self.target = vuln_web.get('target')
         self.parent = vuln_web.get('parent')
         self.policyviolations = vuln_web.get('policyviolations', list())

@@ -1,6 +1,6 @@
 #-*- coding: utf8 -*-
 """Tests for many API endpoints that do not depend on workspace_name"""
-
+import datetime
 import pytest
 import time
 
@@ -275,3 +275,30 @@ class TestListCommandView(ReadOnlyAPITests):
                                        u'services_count': 1,
                                        u'vulnerabilities_count': 1,
                                        u'criticalIssue': 0}
+
+    def test_sub_second_command_returns_correct_duration_value(self, test_client):
+        command = self.factory(
+            start_date=datetime.datetime(2017, 11, 14, 12, 29, 21, 248433),
+            end_date=datetime.datetime(2017, 11, 14, 12, 29, 21, 690839)
+        )
+        res = test_client.get(self.url(workspace=command.workspace))
+        assert res.status_code == 200
+        assert res.json['commands'][0]['value']['duration'] == 0.442406
+
+    def test_more_than_one_second_command_returns_correct_duration_value(self, test_client):
+        command = self.factory(
+            start_date=datetime.datetime(2017, 11, 14, 12, 29, 20, 248433),
+            end_date=datetime.datetime(2017, 11, 14, 12, 29, 21, 690839)
+        )
+        res = test_client.get(self.url(workspace=command.workspace))
+        assert res.status_code == 200
+        assert res.json['commands'][0]['value']['duration'] == 1.442406
+
+    def test_more_than_one_hour_command_returns_correct_duration_value(self, test_client):
+        command = self.factory(
+            start_date=datetime.datetime(2017, 11, 14, 12, 28, 20, 248433),
+            end_date=datetime.datetime(2017, 11, 14, 12, 29, 21, 690839)
+        )
+        res = test_client.get(self.url(workspace=command.workspace))
+        assert res.status_code == 200
+        assert res.json['commands'][0]['value']['duration'] == 61.442406

@@ -41,7 +41,6 @@ def setup_environment(check_deps=False):
             else:
                 logger.error("Dependencies not met. Please refer to the documentation in order to install them. [%s]",
                              ", ".join(missing_deps))
-                sys.exit(1)
 
         logger.info("Dependencies met")
 

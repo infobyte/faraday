@@ -32,7 +32,11 @@ class CommandSchema(AutoSchema):
 
     def get_duration(self, obj):
         if obj.end_date and obj.start_date:
-            return (obj.end_date - obj.start_date).seconds
+            return (obj.end_date - obj.start_date).seconds + ((obj.end_date - obj.start_date).microseconds / 1000000.0)
+        if obj.start_date and not obj.end_date:
+            return 'In progress'
+        if not obj.start_date and not obj.end_date:
+            return 'Not started'
 
     class Meta:
         model = Command

@@ -407,6 +407,7 @@ class ServiceImporter(object):
                     'open|filtered': 'filtered',
                     'unknown': 'closed',
                     '-': 'closed',
+                    'running': 'open',
                 }
                 couchdb_status = document.get('status', 'open')
                 if couchdb_status.lower() not in status_mapper:
@@ -525,7 +526,7 @@ class VulnerabilityImporter(object):
             # need the vuln ID before creating Tags for it
             session.flush()
             tags = document.get('tags', [])
-            if len(tags):
+            if tags and len(tags):
                 create_tags(tags, vulnerability.id, document['type'])
 
             self.add_attachments(document, vulnerability, workspace)

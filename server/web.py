@@ -10,9 +10,7 @@ from twisted.web.resource import Resource
 
 import server.config
 
-from twisted.web import proxy
 from twisted.internet import ssl, reactor, error
-from twisted.protocols.tls import TLSMemoryBIOFactory
 from twisted.web.static import File
 from twisted.web.wsgi import WSGIResource
 from server.utils import logger

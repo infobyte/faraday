@@ -344,6 +344,7 @@ class TestHostAPI:
             "ip":"10.31.112.21",
             "_rev":"",
             "description":"",
+            "default_gateway": None,
             "owned": False,
             "services":12,
             "hostnames":[],

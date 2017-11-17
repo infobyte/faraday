@@ -13,7 +13,7 @@ from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
 from webargs.flaskparser import FlaskParser, parser, abort
 from webargs.core import ValidationError
-from server.models import Workspace, db, Metadata
+from server.models import Workspace, db
 import server.utils.logger
 
 logger = server.utils.logger.get_logger(__name__)

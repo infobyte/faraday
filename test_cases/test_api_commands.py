@@ -29,7 +29,6 @@ class TestListCommandView(ReadOnlyAPITests):
     api_endpoint = 'commands'
     view_class = CommandView
 
-    @pytest.mark.usefixtures('ignore_nplusone')
     def test_backwards_compatibility_list(self, test_client, second_workspace, session):
         self.factory.create(workspace=second_workspace)
         session.commit()
@@ -49,6 +48,7 @@ class TestListCommandView(ReadOnlyAPITests):
                 u'user',
                 u'workspace'
             ]
+            assert command['value']['workspace'] == self.workspace.name
             assert set(object_properties) == set(command['value'].keys())
 
     def test_activity_feed(self, session, test_client):

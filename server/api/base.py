@@ -253,13 +253,57 @@ class ListMixin(object):
     def _paginate(self, query):
         return query, None
 
+    def _get_order_field(self, **kwargs):
+        """Override this to enable custom sorting"""
+        return self.order_field
+
     def index(self, **kwargs):
         query = self._filter_query(self._get_eagerloaded_query(**kwargs))
-        if self.order_field is not None:
-            query = query.order_by(self.order_field)
+        order_field = self._get_order_field(**kwargs)
+        if order_field is not None:
+            query = query.order_by(order_field)
         objects, pagination_metadata = self._paginate(query)
         return self._envelope_list(self._dump(objects, kwargs, many=True),
                                    pagination_metadata)
+
+
+class SortableMixin(object):
+    """Enables custom sorting by a field specified by te user"""
+    sort_field_paremeter_name = "sort"
+    sort_direction_paremeter_name = "sort_dir"
+    default_sort_direction = "asc"
+
+    def _get_order_field(self, **kwargs):
+        try:
+            order_field = flask.request.args[self.sort_field_paremeter_name]
+        except KeyError:
+            # Sort field not specified, return the default
+            return self.order_field
+        # Check that the field is in the schema to prevent unwanted fields
+        # value leaking
+        schema = self._get_schema_instance(kwargs)
+        try:
+            field_instance = schema.fields[order_field]
+        except KeyError:
+            raise InvalidUsage("Unknown field: %s" % order_field)
+
+        # Translate from the field name in the schema to the database field
+        # name
+        order_field = field_instance.attribute or order_field
+
+        # TODO migration: improve this checking or use a whitelist.
+        # Handle PrimaryKeyRelatedField
+        if order_field not in inspect(self.model_class).attrs:
+            # It could be something like fields.Method
+            raise InvalidUsage("Field not in the DB: %s" % order_field)
+
+        field = getattr(self.model_class, order_field)
+        sort_dir = flask.request.args.get(self.sort_direction_paremeter_name,
+                                          self.default_sort_direction)
+        if sort_dir not in ('asc', 'desc'):
+            raise InvalidUsage("Invalid value for sorting direction: %s" %
+                               sort_dir)
+        return getattr(field, sort_dir)()
 
 
 class PaginatedMixin(object):
@@ -323,14 +367,16 @@ class RetrieveWorkspacedMixin(RetrieveMixin):
     pass
 
 
-class ReadOnlyView(ListMixin,
+class ReadOnlyView(SortableMixin,
+                   ListMixin,
                    RetrieveMixin,
                    GenericView):
     """A generic view with list and retrieve endpoints"""
     pass
 
 
-class ReadOnlyWorkspacedView(ListWorkspacedMixin,
+class ReadOnlyWorkspacedView(SortableMixin,
+                             ListWorkspacedMixin,
                              RetrieveWorkspacedMixin,
                              GenericWorkspacedView):
     """A workspaced generic view with list and retrieve endpoints"""
@@ -445,6 +491,8 @@ class CountWorkspacedMixin(object):
         # TODO migration: whitelist fields to avoid leaking a confidential
         # field's value.
         # Example: /users/count/?group_by=password
+        # Also we should check that the field exists in the db and isn't, for
+        # example, a relationship
         if not group_by or group_by not in inspect(self.model_class).attrs:
             abort(404)
 

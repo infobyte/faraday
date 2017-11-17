@@ -113,4 +113,5 @@ class HostsView(PaginatedMixin,
                            or len(hosts)),
         }
 
+
 HostsView.register(host_api)

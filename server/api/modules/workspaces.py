@@ -71,6 +71,7 @@ class WorkspaceView(ReadWriteView):
     lookup_field_type = unicode
     model_class = Workspace
     schema_class = WorkspaceSchema
+    order_field = Workspace.name.asc()
 
     def _get_base_query(self):
         try:

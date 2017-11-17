@@ -29,7 +29,7 @@ class HostSchema(AutoSchema):
     _rev = fields.String(default='')
     ip = fields.String(default='')
     description = fields.String(required=True)  # Explicitly set required=True
-    default_gateway = fields.List(fields.String, attribute="default_gateway_ip")
+    default_gateway = fields.String(attribute="default_gateway_ip")
     name = fields.String(dump_only=True, attribute='ip', default='')
     os = fields.String(default='')
     owned = fields.Boolean(default=False)

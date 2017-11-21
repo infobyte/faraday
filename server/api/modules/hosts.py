@@ -29,7 +29,7 @@ class HostSchema(AutoSchema):
     _rev = fields.String(default='')
     ip = fields.String(default='')
     description = fields.String(required=True)  # Explicitly set required=True
-    default_gateway = fields.List(fields.String, attribute="default_gateway_ip")
+    default_gateway = fields.String(attribute="default_gateway_ip")
     name = fields.String(dump_only=True, attribute='ip', default='')
     os = fields.String(default='')
     owned = fields.Boolean(default=False)
@@ -92,9 +92,7 @@ class HostsView(PaginatedMixin,
 
     def _perform_create(self, data, **kwargs):
         hostnames = data.pop('hostnames', [])
-        default_gateway_ip = data.pop('default_gateway_ip', [None])
         host = super(HostsView, self)._perform_create(data, **kwargs)
-        host.default_gateway_ip = default_gateway_ip[0]
         for name in hostnames:
             get_or_create(db.session, Hostname, name=name['key'], host=host,
                           workspace=host.workspace)
@@ -114,5 +112,6 @@ class HostsView(PaginatedMixin,
             'total_rows': (pagination_metadata and pagination_metadata.total
                            or len(hosts)),
         }
+
 
 HostsView.register(host_api)

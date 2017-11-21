@@ -16,6 +16,7 @@ from server.utils.web import (
     filter_request_args, get_integer_parameter
 )
 from server.models import Command, Workspace
+from server.schemas import PrimaryKeyRelatedField
 
 commandsrun_api = Blueprint('commandsrun_api', __name__)
 
@@ -24,17 +25,18 @@ class CommandSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     itime = fields.Method('get_itime')
     duration = fields.Method('get_duration')
-    workspace = fields.Method('get_workspace_name')
-
-    def get_workspace_name(self, obj):
-        return obj.workspace.name
+    workspace = PrimaryKeyRelatedField('name')
 
     def get_itime(self, obj):
         return time.mktime(obj.start_date.utctimetuple())
 
     def get_duration(self, obj):
         if obj.end_date and obj.start_date:
-            return (obj.end_date - obj.start_date).seconds
+            return (obj.end_date - obj.start_date).seconds + ((obj.end_date - obj.start_date).microseconds / 1000000.0)
+        if obj.start_date and not obj.end_date:
+            return 'In progress'
+        if not obj.start_date and not obj.end_date:
+            return 'Not started'
 
     class Meta:
         model = Command
@@ -46,6 +48,7 @@ class CommandView(ReadWriteWorkspacedView):
     route_base = 'commands'
     model_class = Command
     schema_class = CommandSchema
+    get_joinedloads = [Command.workspace]
 
     def _envelope_list(self, objects, pagination_metadata=None):
         commands = []

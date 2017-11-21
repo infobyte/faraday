@@ -1,4 +1,6 @@
+import operator
 import pytest
+import time
 from sqlalchemy.orm.util import was_deleted
 
 from test_cases import factories
@@ -9,6 +11,7 @@ from test_api_workspaced_base import (
 )
 from server.models import db, Host
 from server.api.modules.hosts import HostsView
+from test_cases.factories import HostFactory
 
 HOSTS_COUNT = 5
 SERVICE_COUNT = [10, 5]  # 10 services to the first host, 5 to the second
@@ -59,7 +62,6 @@ class TestHostAPI:
         hosts_in_response = set(host['id'] for host in response.json['rows'])
         assert hosts_in_list == hosts_in_response
 
-    @pytest.mark.usefixtures('ignore_nplusone')
     def test_list_retrieves_all_items_from_workspace(self, test_client,
                                                      second_workspace,
                                                      session,
@@ -212,7 +214,6 @@ class TestHostAPI:
             res = test_client.get(self.url(host))
             assert res.json['services'] == len(services)
 
-    @pytest.mark.usefixtures('ignore_nplusone')
     def test_index_shows_service_count(self, test_client, host_services,
                                        service_factory):
         ids_map = {host.id: services
@@ -272,7 +273,6 @@ class TestHostAPI:
         assert res.status_code == 200
         self.compare_results(hosts + [case_insensitive_host], res)
 
-    @pytest.mark.usefixtures('ignore_nplusone')
     def test_host_with_open_vuln_count_verification(self, test_client, session,
                                                         workspace, host_factory, vulnerability_factory,
                                                         service_factory):
@@ -324,7 +324,64 @@ class TestHostAPI:
         }
         res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 201
-        assert res.json['default_gateway'] == [u'192.168.0.1']
+        assert res.json['default_gateway'] == '192.168.0.1'
+
+    def test_update_host(self, test_client, session):
+        host = HostFactory.create()
+        session.commit()
+        raw_data = {
+            "metadata":
+                        {
+                            "update_time":1510688312.431,
+                            "update_user":"UI Web",
+                            "update_action":0,
+                            "creator":"",
+                            "create_time":1510673388000,
+                            "update_controller_action":"",
+                            "owner":"leonardo",
+                            "command_id": None},
+            "name":"10.31.112.21",
+            "ip":"10.31.112.21",
+            "_rev":"",
+            "description":"",
+            "owned": False,
+            "services":12,
+            "hostnames":[],
+            "vulns":43,
+            "owner":"leonardo",
+            "credentials":0,
+            "_id": 4000,
+            "os":"Microsoft Windows Server 2008 R2 Standard Service Pack 1",
+            "id": 4000,
+            "icon":"windows"}
+
+        res = test_client.put(self.url(host, workspace=host.workspace), data=raw_data)
+        assert res.status_code == 200
+        updated_host = Host.query.filter_by(id=host.id).first()
+        assert res.json == {
+            u'_id': 6,
+            u'_rev': u'',
+            u'credentials': 0,
+            u'default_gateway': None,
+            u'description': u'',
+            u'hostnames': [],
+            u'id': 6,
+            u'ip': u'10.31.112.21',
+            u'metadata': {u'command_id': None,
+                u'create_time': int(time.mktime(updated_host.create_date.timetuple())) * 1000,
+                u'creator': u'',
+                u'owner': host.creator.username,
+                u'update_action': 0,
+                u'update_controller_action': u'',
+                u'update_time': int(time.mktime(updated_host.update_date.timetuple())) * 1000,
+                u'update_user': u''},
+            u'name': u'10.31.112.21',
+            u'os': u'Microsoft Windows Server 2008 R2 Standard Service Pack 1',
+            u'owned': False,
+            u'owner': host.creator.username,
+            u'services': 0,
+            u'vulns': 0}
+
 
 
 class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
@@ -334,3 +391,34 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
     unique_fields = ['ip']
     update_fields = ['ip', 'description', 'os']
     view_class = HostsView
+
+    @pytest.mark.usefixtures("mock_envelope_list")
+    def test_sort_by_description(self, test_client, session):
+        session.commit()
+        expected_ids = [host.id for host in
+                        sorted(Host.query.all(),
+                               key=operator.attrgetter('description'))]
+        res = test_client.get(self.url() + '?sort=description&sort_dir=asc')
+        assert res.status_code == 200
+        assert [host['_id'] for host in res.json['data']] == expected_ids
+
+        expected_ids.reverse()  # In place list reverse
+        res = test_client.get(self.url() + '?sort=description&sort_dir=desc')
+        assert res.status_code == 200
+        assert [host['_id'] for host in res.json['data']] == expected_ids
+
+    @pytest.mark.usefixtures("mock_envelope_list")
+    def test_sort_by_services(self, test_client, session, second_workspace,
+                              host_factory, service_factory):
+        expected_ids = []
+        for i in range(10):
+            host = host_factory.create(workspace=second_workspace)
+            service_factory.create(host=host, workspace=second_workspace,
+                                   status='open')
+            session.flush()
+            expected_ids.append(host.id)
+        session.commit()
+        res = test_client.get(self.url(workspace=second_workspace) +
+                              '?sort=services&sort_dir=asc')
+        assert res.status_code == 200
+        assert [h['_id'] for h in res.json['data']] == expected_ids

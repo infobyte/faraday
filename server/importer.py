@@ -19,7 +19,6 @@ from slugify import slugify
 from binascii import unhexlify
 
 from IPy import IP
-from flask_script import Command as FlaskScriptCommand
 from passlib.utils.binary import ab64_encode
 from restkit.errors import RequestError, Unauthorized
 from tqdm import tqdm
@@ -409,6 +408,7 @@ class ServiceImporter(object):
                     'open|filtered': 'filtered',
                     'unknown': 'closed',
                     '-': 'closed',
+                    'running': 'open',
                 }
                 couchdb_status = document.get('status', 'open')
                 if couchdb_status.lower() not in status_mapper:
@@ -527,7 +527,7 @@ class VulnerabilityImporter(object):
             # need the vuln ID before creating Tags for it
             session.flush()
             tags = document.get('tags', [])
-            if len(tags):
+            if tags and len(tags):
                 create_tags(tags, vulnerability.id, document['type'])
 
             self.add_attachments(document, vulnerability, workspace)
@@ -829,7 +829,7 @@ class FaradayEntityImporter(object):
         return importer_self
 
 
-class ImportCouchDBUsers(FlaskScriptCommand):
+class ImportCouchDBUsers():
 
     def modular_crypt_pbkdf2_sha1(self, checksum, salt, iterations=1000):
         return '$pbkdf2${iterations}${salt}${checksum}'.format(
@@ -918,7 +918,7 @@ class ImportCouchDBUsers(FlaskScriptCommand):
 
 
 
-class ImportVulnerabilityTemplates(FlaskScriptCommand):
+class ImportVulnerabilityTemplates():
 
     def __init__(self):
         self.names = Counter()
@@ -993,7 +993,7 @@ class ImportVulnerabilityTemplates(FlaskScriptCommand):
 
         return default
 
-class ImportLicense(FlaskScriptCommand):
+class ImportLicense():
 
     def run(self):
         licenses_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
@@ -1027,7 +1027,7 @@ class ImportLicense(FlaskScriptCommand):
                                                    )
 
 
-class ImportCouchDB(FlaskScriptCommand):
+class ImportCouchDB():
     def _open_couchdb_conn(self):
         try:
             couchdb_server_conn = server.couchdb.CouchDBServer()

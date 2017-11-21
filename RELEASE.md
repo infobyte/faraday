@@ -8,11 +8,15 @@ Make sure you run ```./faraday.py --update``` the first time after an update!
 New features in the latest update
 =====================================
 
-
-TBA:
+November 17, 2017:
 ---
+* Fix bug with tags in models.
+
+November 5, 2017:
+---
+* Added "Last modified" and "Created" in Hosts view
 * Fixed bug when trying to run Faraday as second process and closing the terminal (&!)
-* Fixed bug where it asks for dependencies eternally when you have a different version than the one required
+* Fixed bug where it asked for dependencies eternally when you have a different version than the one required
 * Fixed small bug in the update_from_document method
 * Fixed bug, makes the python library dependencies specific to the desired version
 * Fixed GitHub language bar to reflect real code percentage

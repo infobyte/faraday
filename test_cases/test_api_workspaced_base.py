@@ -62,7 +62,6 @@ class ListTestsMixin:
         monkeypatch.setattr(self.view_class, '_envelope_list', _envelope_list)
 
     @pytest.mark.usefixtures('mock_envelope_list')
-    @pytest.mark.usefixtures('ignore_nplusone')
     def test_list_retrieves_all_items_from_workspace(self, test_client,
                                                      second_workspace,
                                                      session):
@@ -156,6 +155,16 @@ class UpdateTestsMixin:
         """To do this the user should use a PATCH request"""
         res = test_client.put(self.url(self.first_object), data={})
         assert res.status_code == 400
+
+    def test_update_cant_change_id(self, test_client):
+        raw_json = self.factory.build_dict()
+        expected_id = self.first_object.id
+        raw_json['id'] = 100000
+        res = test_client.put(self.url(self.first_object),
+                              data=raw_json)
+        assert res.status_code == 200
+        assert res.json['id'] == expected_id
+
 
 
 class DeleteTestsMixin:

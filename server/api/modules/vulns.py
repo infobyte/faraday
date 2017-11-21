@@ -105,6 +105,8 @@ class VulnerabilitySchema(AutoSchema):
     obj_id = fields.String(dump_only=True, attribute='id')
     target = fields.Method('get_target')
     metadata = SelfNestedField(MetadataSchema())
+    date = fields.DateTime(attribute='create_date',
+                           dump_only=True)  # This is only used for sorting
 
     class Meta:
         model = Vulnerability
@@ -113,7 +115,7 @@ class VulnerabilitySchema(AutoSchema):
             'issuetracker', 'description', 'parent', 'parent_type',
             'tags', 'severity', '_rev', 'easeofresolution', 'owned',
             'hostnames', 'owner',
-            'data', 'refs',
+            'date', 'data', 'refs',
             'desc', 'impact', 'confirmed', 'name',
             'service', 'obj_id', 'type', 'policyviolations',
             '_attachments',
@@ -241,7 +243,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'website', 'issuetracker', 'description', 'parent',
             'tags', 'severity', '_rev', 'easeofresolution', 'owned',
             'hostnames', 'pname', 'query', 'owner',
-            'path', 'data', 'response', 'refs',
+            'path', 'date', 'data', 'response', 'refs',
             'desc', 'impact', 'confirmed', 'name',
             'service', 'obj_id', 'type', 'policyviolations',
             'request', '_attachments', 'params',

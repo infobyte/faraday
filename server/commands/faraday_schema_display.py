@@ -1,6 +1,5 @@
 from __future__ import print_function
 import sys
-from flask_script import Command
 from sqlalchemy import MetaData
 try:
     from sqlalchemy_schemadisplay import create_schema_graph
@@ -14,7 +13,7 @@ from server import models
 import server.config
 
 
-class DatabaseSchema(Command):
+class DatabaseSchema():
 
     def run(self):
         self._draw_entity_diagrama()

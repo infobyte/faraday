@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import click
+from sqlalchemy.exc import OperationalError
+
 from server.importer import ImportCouchDB
 from server.commands.initdb import InitDB
 from server.commands.faraday_schema_display import DatabaseSchema
@@ -17,7 +19,12 @@ def cli():
 
 @click.command()
 def process_reports():
-    import_external_reports()
+    with app.app_context():
+        try:
+            import_external_reports()
+        except OperationalError as ex:
+            print('{0}'.format(ex))
+            print('Please verify database is running or configuration on server.ini!')
 
 @click.command()
 def reset_db():

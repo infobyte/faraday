@@ -125,7 +125,7 @@ def _unsafe_io_with_server(server_io_function, server_expected_response,
         if answer.status_code != server_expected_response:
             raise requests.exceptions.RequestException(response=answer)
     except requests.exceptions.RequestException:
-        raise CantCommunicateWithServerError(server_io_function, server_url, payload)
+        raise CantCommunicateWithServerError(server_io_function, server_url, payload, answer)
     return answer
 
 

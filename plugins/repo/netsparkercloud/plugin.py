@@ -37,6 +37,7 @@ __maintainer__ = "Francisco Amato"
 __email__ = "famato@infobytesec.com"
 __status__ = "Development"
 
+
 def cleaner_unicode(string):
     if string is not None:
         return string.encode('ascii', errors='backslashreplace')
@@ -109,6 +110,10 @@ class Item(object):
 
     @param item_node A item_node taken from an netsparkercloud xml tree
     """
+    def re_map_severity(self, severity):
+        if severity == "Important":
+            return "high"
+        return severity
 
     def __init__(self, item_node):
         self.node = item_node
@@ -128,7 +133,7 @@ class Item(object):
 
         self.type = self.get_text_from_subnode("type")
         self.name = self.get_text_from_subnode("name")
-        self.severity = self.get_text_from_subnode("severity")
+        self.severity = self.re_map_severity(self.get_text_from_subnode("severity"))
         self.certainty = self.get_text_from_subnode("certainty")
 
 

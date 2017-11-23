@@ -276,6 +276,10 @@ class ReportParser(object):
             result = "maltego"
         elif report_type == "dat":
             result = 'lynis'
+        elif report_type == 'json':
+            # this will work since recon-ng is the first plugin to use json.
+            # we need to add json detection here!
+            result = 'reconng'
         else:
 
             try:
@@ -355,5 +359,7 @@ class ReportParser(object):
             return "Maltego"
         elif "lynis" == tag:
             return "Lynis"
+        elif "reconng" == tag:
+            return "Reconng"
         else:
             return None

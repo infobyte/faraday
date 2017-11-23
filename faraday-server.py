@@ -83,6 +83,18 @@ def run_server(args):
 
     daemonize.create_pid_file()
     logger.info('Faraday Server is ready')
+
+    if args.ssl:
+        protocol = "https"
+    else:
+        protocol = "http"
+
+    logger.info('Web interface ready at %s://%s:%d/_ui/' % (
+        protocol,
+        server.config.faraday_server.bind_address,
+        int(server.config.faraday_server.port)
+        ))
+
     web_server.run()
 
 

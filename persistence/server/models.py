@@ -408,9 +408,9 @@ def update_credential(workspace_name, credential):
     return server.update_credential(workspace_name, **credential_properties)
 
 @_ignore_in_changes
-def create_command(workspace_name, command):
+def create_command(workspace_name, command, session):
     command_properties = get_command_properties(command)
-    return server.create_command(workspace_name, **command_properties)
+    return server.create_command(workspace_name, session, **command_properties)
 
 @_ignore_in_changes
 def update_command(workspace_name, command):
@@ -420,7 +420,7 @@ def update_command(workspace_name, command):
     command_properties = get_command_properties(command)
     return server.update_command(workspace_name, **command_properties)
 
-def create_object(workspace_name, object_signature, obj):
+def create_object(workspace_name, object_signature, obj, session):
     """Given a workspace name, an object_signature as string and obj, a Faraday
     object, save that object on the server.
 
@@ -442,7 +442,7 @@ def create_object(workspace_name, object_signature, obj):
     except KeyError:
         raise WrongObjectSignature(object_signature)
 
-    return appropiate_function(workspace_name, obj)
+    return appropiate_function(workspace_name, obj, session)
 
 def update_object(workspace_name, object_signature, obj):
     """Given a workspace name, an object_signature as string and obj, a Faraday

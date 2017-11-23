@@ -3,7 +3,7 @@ Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
-
+from requests import Session
 from persistence.server.models import create_object, get_object, update_object, delete_object
 
 # NOTE: This class is intended to be instantiated by the
@@ -17,22 +17,23 @@ class MapperManager(object):
     def __init__(self):
         # create and store the datamappers
         self.workspace_name = None
+        self.session = None
 
     def createMappers(self, workpace_name):
         self.workspace_name = workpace_name
 
     def save(self, obj):
-        if create_object(self.workspace_name, obj.class_signature, obj):
+        if create_object(self.workspace_name, obj.class_signature, obj, self.session):
             return True
         return False
     
     def update(self, obj):
-        if update_object(self.workspace_name, obj.class_signature, obj):
+        if update_object(self.workspace_name, obj.class_signature, obj, self.session):
             return True
         return False
 
     def find(self, class_signature, obj_id):
-        return get_object(self.workspace_name, class_signature, obj_id)
+        return get_object(self.workspace_name, class_signature, obj_id, self.session)
 
     def remove(self, obj_id, class_signature):
-        return delete_object(self.workspace_name, class_signature, obj_id)
+        return delete_object(self.workspace_name, class_signature, obj_id, self.session)

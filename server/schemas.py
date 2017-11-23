@@ -2,8 +2,7 @@ import time
 from marshmallow import fields, Schema
 from marshmallow.exceptions import ValidationError
 
-from server.api.base import AutoSchema
-from server.models import CommandObject
+from server.models import db, CommandObject
 
 
 class JSTimestampField(fields.Field):

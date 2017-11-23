@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 def import_external_reports():
-    threads = []
+    processes = []
     plugin_manager = PluginManager(
         os.path.join(CONF.getConfigPath(), "plugins"))
     mappers_manager = MapperManager()
@@ -25,12 +25,12 @@ def import_external_reports():
     )
     for workspace in Workspace.query.all():
         report_manager = ReportManager(
-            10,
+            0.1,
             workspace.name,
             plugin_controller
         )
-        threads.append(report_manager)
+        processes.append(report_manager)
         report_manager.start()
 
-    for thread in threads:
+    for thread in processes:
         thread.join()

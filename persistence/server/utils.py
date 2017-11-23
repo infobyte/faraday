@@ -103,11 +103,12 @@ def get_credential_properties(credential):
     return cred_dict
 
 def get_command_properties(command):
-    return {'id': command.getID(),
-            'command': command.command,
-            'user': command.user,
-            'ip': command.ip,
-            'hostname': command.hostname,
-            'itime': command.itime,
-            'duration': command.duration,
-            'params': command.params}
+    return {
+        'command': command.command,
+        'user': command.user,
+        'ip': command.ip,
+        'hostname': command.hostname,
+        'itime': command.itime,
+        'duration': command.duration,
+        'params': command.params
+    }

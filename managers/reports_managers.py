@@ -7,11 +7,11 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 import os
-#import model.api
-import threading
+import re
 import time
 import traceback
-import re
+from multiprocessing import Process
+
 
 from utils.logs import getLogger
 
@@ -63,11 +63,11 @@ class ReportProcessor():
         self.plugin_controller.onCommandFinished('0', 0, cmd)
 
 
-class ReportManager(threading.Thread):
+class ReportManager(Process):
     def __init__(self, timer, ws_name, plugin_controller):
-        threading.Thread.__init__(self)
+        Process.__init__(self)
         self.ws_name = ws_name
-        self.setDaemon(True)
+        self.daemon = True
         self.timer = timer
         self._stop = False
         self._report_path = os.path.join(CONF.getReportPath(), ws_name)
@@ -85,19 +85,19 @@ class ReportManager(threading.Thread):
             os.mkdir(self._report_upath)
 
     def run(self):
-        tmp_timer = 0
+        tmp_timer = .0
         tmp_timer_sentinel = 0
         while not self._stop:
 
-            time.sleep(1)
-            tmp_timer += 1
+            time.sleep(.1)
+            tmp_timer += .1
             tmp_timer_sentinel += 1
 
             if tmp_timer_sentinel == 1800:
                 tmp_timer_sentinel = 0
                 self.launchSentinel()
 
-            if tmp_timer == self.timer:
+            if tmp_timer >= self.timer:
                 try:
                     self.syncReports()
                 except Exception:

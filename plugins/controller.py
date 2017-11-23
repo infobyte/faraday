@@ -249,7 +249,7 @@ class PluginController(object):
         self._mapper_manager.save(cmd_info)
 
         if plugin in self._plugins:
-            self.processOutput(self._plugins[plugin], filepath, cmd_info.getID(), True )
+            self.processOutput(self._plugins[plugin], filepath, cmd_info.getID(), True)
             cmd_info.duration = time.time() - cmd_info.itime
             self._mapper_manager.update(cmd_info)
             return True

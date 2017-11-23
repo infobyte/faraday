@@ -166,7 +166,6 @@ class DirsearchPlugin(PluginTerminalOutput):
             return command_string
         else:
             # Use temporal file to save the report data
-            # TODO: use tempfile
             self.json_report_file = tempfile.mktemp(
                 prefix="dirsearch_report_", suffix=".json")
             self.devlog('Setting report file to {}'.format(

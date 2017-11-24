@@ -39,11 +39,24 @@ from persistence.server.changes_stream import CouchChangesStream
 # NOTE: Change is you want to use this module by itself.
 # If FARADAY_UP is False, SERVER_URL must be a valid faraday server url
 FARADAY_UP = True
-SERVER_URL = "http://127.0.0.1:5984"
+SERVER_URL = "http://127.0.0.1:5985"
+AUTH_USER = ""
+AUTH_PASS = ""
+
 
 def _conf():
+
     from config.configuration import getInstanceConfiguration
     CONF = getInstanceConfiguration()
+
+    # If you are running this libs outside of Faraday, cookies are not setted.
+    # you need get a valid cookie auth and set that.
+    # Fplugin run in other instance, so this dont generate any trouble.
+    if not CONF.getDBSessionCookies():
+        server_url = CONF.getCouchURI() if FARADAY_UP else SERVER_URL
+        cookie = login_user(server_url, AUTH_USER, AUTH_PASS)
+        CONF.setDBSessionCookies(cookie)
+
     return CONF
 
 def _get_base_server_url():
@@ -106,6 +119,17 @@ def _create_server_db_url(workspace_name):
     db_url = '{0}/ws/{1}'.format(server_api_url, workspace_name)
     return db_url
 
+def _add_session_cookies(func):
+    """A decorator which wrapps a function dealing with I/O with the server and
+    adds authentication to the parameters.
+    """
+    def wrapper(*args, **kwargs):
+        kwargs['cookies'] = _conf().getDBSessionCookies()
+        response = func(*args, **kwargs)
+        return response
+    return wrapper if FARADAY_UP else func
+
+@_add_session_cookies
 def _unsafe_io_with_server(server_io_function, server_expected_response,
                            server_url, **payload):
     """A wrapper for functions which deals with I/O to or from the server.
@@ -271,6 +295,7 @@ def _delete_from_couch(workspace_name, faraday_object_id):
     return _delete(delete_url)
 
 # XXX: COUCH IT!
+@_add_session_cookies
 def _couch_changes(workspace_name, **params):
     return CouchChangesStream(workspace_name,
                               _create_couch_db_url(workspace_name),
@@ -1473,10 +1498,35 @@ def server_info():
     except:
         return None
 
+def login_user(uri, uname, upass):
+    auth = {"email": uname, "password": upass}
+    try:
+        resp = requests.post(uri + "/_api/login", json=auth, timeout=1)
+        if resp.status_code == 400:
+            return None
+        else:
+            return resp.cookies
+    except requests.adapters.ConnectionError:
+        return None
+    except requests.adapters.ReadTimeout:
+        return None
+
+def is_authenticated(uri, cookies):
+    try:
+        resp = requests.get(uri + "/_api/session", cookies=cookies, timeout=1)
+        if resp.status_code != 403:
+            user_info = resp.json()
+            return bool(user_info.get('name', {}))
+        else:
+            return False
+    except requests.adapters.ConnectionError:
+        return False
+    except requests.adapters.ReadTimeout:
+        return False
+
 def check_faraday_version():
     """Raise RuntimeError if client and server aren't running the same version"""
     info = server_info()
-    #print "INFO", infok
 
     faraday_directory = os.path.dirname(os.path.realpath('faraday.py'))
 
@@ -1498,3 +1548,15 @@ def test_server_url(url_to_test):
     except:
         test_okey = False
     return test_okey
+
+def get_user_info():
+    try:
+        resp = requests.get(_get_base_server_url() + "/_api/session", cookies=_conf().getDBSessionCookies(), timeout=1)
+        if resp.status_code != 403:
+            return resp.json()
+        else:
+            return False
+    except requests.adapters.ConnectionError:
+        return False
+    except requests.adapters.ReadTimeout:
+        return False

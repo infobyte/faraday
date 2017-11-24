@@ -157,6 +157,8 @@ class Configuration:
             self._plugin_settings = json.loads(self._getValue(tree, CONST_PLUGIN_SETTINGS, default = "{}"))
             self._osint = json.loads(self._getValue(tree, CONST_OSINT, default = "{\"host\": \"shodan.io\",\"icon\": \"shodan\",\"label\": \"Shodan\", \"prefix\": \"/search?query=\", \"suffix\": \"\", \"use_external_icon\": false}"))
 
+            self._session_cookies = {}
+
             self._updates_uri = self._getValue(tree, CONST_UPDATEURI, default = "https://www.faradaysec.com/scripts/updates.php")
             self._tkts_uri = self._getValue(tree, CONST_TKTURI,default = "https://www.faradaysec.com/scripts/listener.php")
             self._tkt_api_params = self._getValue(tree, CONST_TKTAPIPARAMS,default ="{}")
@@ -252,6 +254,9 @@ class Configuration:
 
     def getCouchIsReplicated(self):
         return self._couch_is_replicated
+
+    def getDBSessionCookies(self):
+        return self._session_cookies
 
     def getRepoPassword(self):
         return self._repo_password
@@ -370,6 +375,9 @@ class Configuration:
 
     def setPerspectiveView(self, val):
         self._perspective_view = val
+
+    def setDBSessionCookies(self, val=None):
+        self._session_cookies = val
 
     def setRepoPassword(self, val):
         self._repo_password = val

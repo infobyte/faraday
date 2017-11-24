@@ -138,7 +138,7 @@ def _parse_json(response_object):
         return {}
 
 
-def _get(request_url, session, **params):
+def _get(request_url, **params):
     """Get from the request_url. Takes an arbitrary number of parameters
     to customize the request_url if necessary.
 
@@ -147,12 +147,12 @@ def _get(request_url, session, **params):
 
     Return a dictionary with the information in the json.
     """
-    return _parse_json(_unsafe_io_with_server(session.get,
+    return _parse_json(_unsafe_io_with_server(requests.get,
                                               200,
                                               request_url,
                                               params=params))
 
-def _put(post_url, session, update=False, expected_response=201, **params):
+def _put(post_url, update=False, expected_response=201, **params):
     """Put to the post_url. If update is True, try to get the object
     revision first so as to update the object in Couch. You can
     customize the expected response (it should be 201, but Couchdbkit returns
@@ -168,27 +168,27 @@ def _put(post_url, session, update=False, expected_response=201, **params):
     if update:
         last_rev = _get(post_url)['_rev']
         params['_rev'] = last_rev
-    return _parse_json(_unsafe_io_with_server(session.put,
+    return _parse_json(_unsafe_io_with_server(requests.put,
                                               expected_response,
                                               post_url,
                                               json=params))
 
 
-def _post(post_url, session, update=False, expected_response=201, **params):
-    return _parse_json(_unsafe_io_with_server(session.post,
+def _post(post_url, update=False, expected_response=201, **params):
+    return _parse_json(_unsafe_io_with_server(requests.post,
                                               expected_response,
                                               post_url,
                                               json=params))
 
 
-def _delete(delete_url, session, database=False):
+def _delete(delete_url, database=False):
     """Deletes the object on delete_url. If you're deleting a database,
     specify the database parameter to True"""
     params = {}
     if not database:
         last_rev = _get(delete_url)['_rev']
         params = {'rev': last_rev}
-    return _parse_json(_unsafe_io_with_server(session.delete,
+    return _parse_json(_unsafe_io_with_server(requests.delete,
                                               200,
                                               delete_url,
                                               params=params))
@@ -253,13 +253,13 @@ def _update_in_couch(workspace_name, faraday_object_id, **params):
     post_url = _create_server_post_url(workspace_name, faraday_object_id)
     return _put(post_url, update=True, **params)
 
-def _save_to_server(workspace_name, session, **params):
+def _save_to_server(workspace_name, **params):
     post_url = _create_server_post_url(workspace_name, params['type'])
-    return _post(post_url, session, update=False, expected_response=200, **params)
+    return _post(post_url, update=False, expected_response=200, **params)
 
-def _update_in_server(workspace_name, faraday_object_id, session, **params):
+def _update_in_server(workspace_name, faraday_object_id, **params):
     post_url = _create_server_post_url(workspace_name, faraday_object_id)
-    return _put(post_url, session, update=True, expected_response=200, **params)
+    return _put(post_url, update=True, expected_response=200, **params)
 
 def _save_db_to_server(db_name, **params):
     post_url = _create_server_db_url(db_name)
@@ -1347,14 +1347,13 @@ def update_credential(workspace_name, id, name, username, password,
                              password=password,
                              type="Cred")
 
-def create_command(workspace_name, session, command, duration=None, hostname=None,
+def create_command(workspace_name, command, duration=None, hostname=None,
                    ip=None, itime=None, params=None, user=None):
     """Creates a command.
 
     Args:
         workspace_name (str): the name of the workspace where the vuln web will be saved.
         command (str): the command to be created
-        session (obj): request authenticated Session instance
         duration (str). the command's duration
         hostname (str): the hostname where the command was executed
         ip (str): the ip of the host where the command was executed
@@ -1366,7 +1365,6 @@ def create_command(workspace_name, session, command, duration=None, hostname=Non
         A dictionary with the server's response.
     """
     return _save_to_server(workspace_name,
-                           session,
                            command=command,
                            duration=duration,
                            hostname=hostname,

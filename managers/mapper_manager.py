@@ -23,17 +23,17 @@ class MapperManager(object):
         self.workspace_name = workpace_name
 
     def save(self, obj):
-        if create_object(self.workspace_name, obj.class_signature, obj, self.session):
+        if create_object(self.workspace_name, obj.class_signature, obj):
             return True
         return False
     
     def update(self, obj):
-        if update_object(self.workspace_name, obj.class_signature, obj, self.session):
+        if update_object(self.workspace_name, obj.class_signature, obj):
             return True
         return False
 
     def find(self, class_signature, obj_id):
-        return get_object(self.workspace_name, class_signature, obj_id, self.session)
+        return get_object(self.workspace_name, class_signature, obj_id)
 
     def remove(self, obj_id, class_signature):
-        return delete_object(self.workspace_name, class_signature, obj_id, self.session)
+        return delete_object(self.workspace_name, class_signature, obj_id)

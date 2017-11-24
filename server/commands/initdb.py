@@ -15,7 +15,6 @@ except ImportError:
     from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 
 from flask import current_app
-from flask_script import Command
 from colorama import init
 from colorama import Fore, Back, Style
 from sqlalchemy.exc import OperationalError
@@ -25,7 +24,7 @@ from server.config import LOCAL_CONFIG_FILE
 init()
 
 
-class InitDB(Command):
+class InitDB():
 
     def _check_current_config(self, config):
         try:

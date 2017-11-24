@@ -205,9 +205,12 @@ def check_dependencies_or_exit():
 
     """
 
-    installed_deps, missing_deps = dependencies.check_dependencies(requirements_file=FARADAY_REQUIREMENTS_FILE)
+    installed_deps, missing_deps, conflict_deps = dependencies.check_dependencies(requirements_file=FARADAY_REQUIREMENTS_FILE)
 
     logger.info("Checking dependencies...")
+
+    if conflict_deps:
+        logger.info("Some dependencies are old. Update them with \"pip install -rrequirements_server.txt -U\"")
 
     if missing_deps:
 

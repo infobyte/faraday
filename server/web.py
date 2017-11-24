@@ -12,6 +12,7 @@ import server.config
 
 from twisted.internet import ssl, reactor, error
 from twisted.web.static import File
+from twisted.web.util import Redirect
 from twisted.web.wsgi import WSGIResource
 from server.utils import logger
 from server.app import create_app
@@ -20,6 +21,7 @@ app = create_app()  # creates a Flask(__name__) app
 logger = server.utils.logger.get_logger(__name__)
 
 class WebServer(object):
+    HOME = ''
     UI_URL_PATH = '_ui'
     API_URL_PATH = '_api'
     WEB_UI_LOCAL_PATH = os.path.join(server.config.FARADAY_BASE, 'server/www')
@@ -48,10 +50,14 @@ class WebServer(object):
 
     def __build_server_tree(self):
         self.__root_resource = Resource()
+        self.__root_resource.putChild(WebServer.HOME, self.__build_web_redirect())
         self.__root_resource.putChild(
             WebServer.UI_URL_PATH, self.__build_web_resource())
         self.__root_resource.putChild(
             WebServer.API_URL_PATH, self.__build_api_resource())
+
+    def __build_web_redirect(self):
+        return Redirect(WebServer.UI_URL_PATH)
 
     def __build_web_resource(self):
         return File(WebServer.WEB_UI_LOCAL_PATH)

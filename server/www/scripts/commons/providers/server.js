@@ -484,12 +484,12 @@ angular.module("faradayApp")
 
             ServerAPI.createWorkspace = function(wsName, data) {
                 var dbUrl = createDbUrl(wsName);
-                return put(dbUrl, data, false)
+                return send_data(dbUrl, data, true, "POST");
             }
 
             ServerAPI.updateWorkspace = function(workspace) {
                 var putUrl = createDbUrl(workspace.name);
-                return put(putUrl, workspace, true)
+                return send_data(dbUrl, workspace, true, "PUT");
             }
 
             ServerAPI.deleteWorkspace = function(wsName) {

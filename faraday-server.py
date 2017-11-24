@@ -25,10 +25,13 @@ def setup_environment(check_deps=False):
     if check_deps:
 
         # Check dependencies
-        installed_deps, missing_deps = dependencies.check_dependencies(
+        installed_deps, missing_deps, conflict_deps = dependencies.check_dependencies(
             requirements_file=server.config.REQUIREMENTS_FILE)
 
         logger.info("Checking dependencies...")
+
+        if conflict_deps:
+            logger.info("Some dependencies are old. Update them with \"pip install -rrequirements_server.txt -U\"")
 
         if missing_deps:
 

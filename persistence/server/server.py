@@ -53,7 +53,7 @@ def _conf():
     # you need get a valid cookie auth and set that.
     # Fplugin run in other instance, so this dont generate any trouble.
     if not CONF.getDBSessionCookies():
-        server_url = CONF.getCouchURI() if FARADAY_UP else SERVER_URL
+        server_url = CONF.getServerURI() if FARADAY_UP else SERVER_URL
         cookie = login_user(server_url, AUTH_USER, AUTH_PASS)
         CONF.setDBSessionCookies(cookie)
 
@@ -61,7 +61,7 @@ def _conf():
 
 def _get_base_server_url():
     if FARADAY_UP:
-        server_url = _conf().getCouchURI()
+        server_url = _conf().getServerURI()
     else:
         server_url = SERVER_URL
     return server_url[:-1] if server_url[-1] == "/" else server_url

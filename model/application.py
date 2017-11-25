@@ -8,6 +8,7 @@ See the file 'doc/LICENSE' for the license information
 import os
 import sys
 import signal
+import json
 import threading
 import requests
 
@@ -17,6 +18,7 @@ from time import sleep
 from model.controller import ModelController
 from managers.workspace_manager import WorkspaceManager
 from plugins.controller import PluginController
+from persistence.server.server import login_user
 
 import model.api
 import model.guiapi
@@ -77,6 +79,24 @@ class MainApplication(object):
         self._original_excepthook = sys.excepthook
 
         self.args = args
+
+        logger = getLogger(self)
+        if args.creds_file:
+            try:
+                with open(args.creds_file, 'r') as fp:
+                    creds = json.loads(fp.read())
+                    username = creds.get('username')
+                    password = creds.get('password')
+                    session_cookie = login_user(CONF.getServerURI(),
+                                                username, password)
+                    if session_cookie:
+                        logger.info('Login successful')
+                        CONF.setDBUser(username)
+                        CONF.setDBSessionCookies(session_cookie)
+                    else:
+                        logger.error('Login failed')
+            except (IOError, ValueError):
+                logger.error("Credentials file couldn't be loaded")
 
         self._mappers_manager = MapperManager()
 

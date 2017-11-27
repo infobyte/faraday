@@ -44,9 +44,10 @@ class CommandSchema(AutoSchema):
 
     @post_load
     def post_load_set_end_date_with_duration(self, data):
+        # there is a potential bug when updating, the start_date can be changed.
         duration = data.pop('duration', None)
         if duration:
-            pass
+            data['end_date'] = data['start_date'] + datetime.timedelta(seconds=120)
 
     class Meta:
         model = Command

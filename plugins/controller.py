@@ -7,14 +7,13 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-
-import errno
-from cStringIO import StringIO
-import multiprocessing
 import os
+import time
 import Queue
 import shlex
-import time
+import errno
+import logging
+import multiprocessing
 
 from plugins.plugin import PluginProcess
 import model.api
@@ -25,6 +24,8 @@ from utils.logs import getLogger
 from config.globals import (
     CONST_FARADAY_HOME_PATH,
     CONST_FARADAY_ZSH_OUTPUT_PATH)
+
+logger = logging.getLogger(__name__)
 
 
 class PluginController(object):
@@ -249,6 +250,7 @@ class PluginController(object):
         cmd_info.setID(self._mapper_manager.save(cmd_info))
 
         if plugin in self._plugins:
+            logger.info('Processing report with plugin {0}'.format(plugin))
             self.processOutput(self._plugins[plugin], filepath, cmd_info.getID(), True)
             cmd_info.duration = time.time() - cmd_info.itime
             self._mapper_manager.update(cmd_info)

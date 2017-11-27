@@ -42,6 +42,9 @@ FARADAY_UP = True
 SERVER_URL = "http://127.0.0.1:5985"
 AUTH_USER = ""
 AUTH_PASS = ""
+OBJECT_TYPE_END_POINT_MAPPER = {
+    'CommandRunInformation': 'commands',
+}
 
 
 def _conf():
@@ -58,6 +61,7 @@ def _conf():
         CONF.setDBSessionCookies(cookie)
 
     return CONF
+
 
 def _get_base_server_url():
     if FARADAY_UP:

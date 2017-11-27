@@ -123,7 +123,7 @@ class PluginBase(object):
         Using the output the plugin can create and add hosts, interfaces,
         services, etc.
         """
-        pass
+        raise NotImplementedError('This method must be implemented.')
 
     def processCommandString(self, username, current_path, command_string):
         """

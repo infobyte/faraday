@@ -90,8 +90,6 @@ def _setUpAPIServer(hostname=None, port=None):
 
                 # register all the api functions to be exposed by the server
                 _xmlrpc_api_server.register_function(createAndAddHost)
-                _xmlrpc_api_server.register_function(createAndAddInterface)
-                _xmlrpc_api_server.register_function(createAndAddServiceToInterface)
                 _xmlrpc_api_server.register_function(createAndAddNoteToService)
                 _xmlrpc_api_server.register_function(createAndAddNoteToHost)
                 _xmlrpc_api_server.register_function(createAndAddNoteToNote)
@@ -99,10 +97,7 @@ def _setUpAPIServer(hostname=None, port=None):
                 _xmlrpc_api_server.register_function(createAndAddVulnToService)
                 _xmlrpc_api_server.register_function(createAndAddVulnToHost)
                 _xmlrpc_api_server.register_function(addHost)
-                _xmlrpc_api_server.register_function(addInterface)
-                _xmlrpc_api_server.register_function(addServiceToInterface)
                 _xmlrpc_api_server.register_function(newHost)
-                _xmlrpc_api_server.register_function(newInterface)
                 _xmlrpc_api_server.register_function(newService)
                 _xmlrpc_api_server.register_function(devlog)
 
@@ -143,48 +138,17 @@ def createAndAddHost(name, os="Unknown"):
         return host.getID()
     return None
 
-def createAndAddInterface(host_id, name = "", mac = "00:00:00:00:00:00",
-                 ipv4_address = "0.0.0.0", ipv4_mask = "0.0.0.0",
-                 ipv4_gateway = "0.0.0.0", ipv4_dns = [],
-                 ipv6_address = "0000:0000:0000:0000:0000:0000:0000:0000", ipv6_prefix = "00",
-                 ipv6_gateway = "0000:0000:0000:0000:0000:0000:0000:0000", ipv6_dns = [],
-                 network_segment = "", hostname_resolution = []):
-    """
-    Creates a new interface object with the parameters provided and adds it to
-    the host selected.
-    If interface is successfuly created and the host exists, it returns the inteface id
-    It returns None otherwise
-    """
-    interface = newInterface(name, mac, ipv4_address, ipv4_mask, ipv4_gateway,
-                             ipv4_dns,ipv6_address,ipv6_prefix,ipv6_gateway,ipv6_dns,
-                             network_segment, hostname_resolution, parent_id=host_id)
-    if addInterface(host_id, interface):
-        return interface.getID()
-    return None
-
-def createAndAddServiceToInterface(host_id, interface_id, name, protocol = "tcp?",
-                ports = [], status = "running", version = "unknown", description = ""):
-    service = newService(name, protocol, ports, status, version, description, parent_id=interface_id)
-    if addServiceToInterface(host_id, interface_id, service):
-        return service.getID()
-    return None
 
 # Vulnerability
-
 def createAndAddVulnToHost(host_id, name, desc, ref, severity, resolution):
     vuln = newVuln(name, desc, ref, severity, resolution, parent_id=host_id)
     if addVulnToHost(host_id, vuln):
         return vuln.getID()
     return None
 
-def createAndAddVulnToInterface(host_id, interface_id, name, desc, ref, severity, resolution):
-    vuln = newVuln(name, desc, ref, severity, resolution, parent_id=interface_id)
-    if addVulnToInterface(host_id, interface_id, vuln):
-        return vuln.getID()
-    return None
 
 def createAndAddVulnToService(host_id, service_id, name, desc, ref, severity, resolution):
-    #we should give the interface_id or de application_id too? I think we should...
+    #we should give the application_id too? I think we should...
     vuln = newVuln(name, desc, ref, severity, resolution, parent_id=service_id)
     if addVulnToService(host_id, service_id, vuln):
         return vuln.getID()
@@ -194,7 +158,7 @@ def createAndAddVulnToService(host_id, service_id, name, desc, ref, severity, re
 
 def createAndAddVulnWebToService(host_id, service_id, name, desc, ref, severity, resolution, website, path, request, response,
                 method,pname, params,query,category):
-    #we should give the interface_id or de application_id too? I think we should...
+    #we should give the application_id too? I think we should...
     vuln = newVulnWeb(name, desc, ref, severity, resolution, website, path, request, response,
                 method,pname, params, query, category, parent_id=service_id)
     if addVulnWebToService(host_id, service_id, vuln):
@@ -209,11 +173,6 @@ def createAndAddNoteToHost(host_id, name, text):
         return note.getID()
     return None
 
-def createAndAddNoteToInterface(host_id, interface_id, name, text):
-    note = newNote(name, text, parent_id=interface_id)
-    if addNoteToInterface(host_id, interface_id, note):
-        return note.getID()
-    return None
 
 def createAndAddNoteToService(host_id, service_id, name, text):
     note = newNote(name, text, parent_id=service_id)
@@ -245,18 +204,9 @@ def addHost(host):
         return True
     return False
 
-def addInterface(host_id, interface):
-    if interface is not None:
-        __model_controller.addInterfaceASYNC(host_id, interface)
-        return True
-    return False
 
-
-def addServiceToInterface(host_id, interface_id, service):
-    if service is not None:
-        __model_controller.addServiceToInterfaceASYNC(host_id, interface_id, service)
-        return True
-    return False
+def addServiceToHost(host_id, service):
+    pass
 
 # Vulnerability
 
@@ -266,11 +216,6 @@ def addVulnToHost(host_id, vuln):
         return True
     return False
 
-def addVulnToInterface(host_id, interface_id, vuln):
-    if vuln is not None:
-        __model_controller.addVulnToInterfaceASYNC(host_id, interface_id, vuln)
-        return True
-    return False
 
 def addVulnToService(host_id, service_id, vuln):
     if vuln is not None:
@@ -285,19 +230,14 @@ def addVulnWebToService(host_id, service_id, vuln):
         return True
     return False
 
-# Notes
 
+# Notes
 def addNoteToHost(host_id, note):
     if note is not None:
         __model_controller.addNoteToHostASYNC(host_id, note)
         return True
     return False
 
-def addNoteToInterface(host_id, interface_id, note):
-    if note is not None:
-        __model_controller.addNoteToInterfaceASYNC(host_id, interface_id, note)
-        return True
-    return False
 
 def addNoteToService(host_id, service_id, note):
     if note is not None:
@@ -326,24 +266,11 @@ def delHost(hostname):
     return True
 
 
-def delInterface(hostname,intname):
-    __model_controller.delInterfaceASYNC(hostname,intname)
-    return True
-
 def delServiceFromHost(hostname, service):
     __model_controller.delServiceFromHostASYNC(hostname, service)
     return True
 
-def delServiceFromInterface(hostname, intname, service, remote = True):
-    __model_controller.delServiceFromInterfaceASYNC(hostname,intname,service)
-    return True
 
-
-# Vulnerability
-#-------------------------------------------------------------------------------
-def delVulnFromInterface(vuln, hostname, intname):
-    __model_controller.delVulnFromInterfaceASYNC(hostname,intname, vuln)
-    return True
 #-------------------------------------------------------------------------------
 def delVulnFromHost(vuln, hostname):
     __model_controller.delVulnFromHostASYNC(hostname,vuln)
@@ -354,11 +281,7 @@ def delVulnFromService(vuln, hostname, srvname):
     __model_controller.delVulnFromServiceASYNC(hostname,srvname, vuln)
     return True
 
-# Notes
-#-------------------------------------------------------------------------------
-def delNoteFromInterface(note, hostname, intname):
-    __model_controller.delNoteFromInterfaceASYNC(hostname,intname, note)
-    return True
+
 #-------------------------------------------------------------------------------
 def delNoteFromHost(note, hostname):
     __model_controller.delNoteFromHostASYNC(hostname, note)
@@ -385,20 +308,6 @@ def newHost(name, os = "Unknown"):
     """
     return __model_controller.newHost(name, os)
 
-def newInterface(name = "", mac = "00:00:00:00:00:00",
-                 ipv4_address = "0.0.0.0", ipv4_mask = "0.0.0.0",
-                 ipv4_gateway = "0.0.0.0", ipv4_dns = [],
-                 ipv6_address = "0000:0000:0000:0000:0000:0000:0000:0000", ipv6_prefix = "00",
-                 ipv6_gateway = "0000:0000:0000:0000:0000:0000:0000:0000", ipv6_dns = [],
-                 network_segment = "", hostname_resolution = [], parent_id=None):
-    """
-    It creates and returns an Interface object.
-    The created object is not added to the model.
-    """
-    return __model_controller.newInterface(
-        name, mac, ipv4_address, ipv4_mask, ipv4_gateway, ipv4_dns,
-        ipv6_address, ipv6_prefix, ipv6_gateway, ipv6_dns, network_segment,
-        hostname_resolution, parent_id)
 
 def newService(name, protocol = "tcp?", ports = [], status = "running",
                version = "unknown", description = "", parent_id=None):

@@ -160,17 +160,13 @@ class PluginController(object):
     def _setupActionDispatcher(self):
         self._actionDispatcher = {
             modelactions.ADDHOST: model.api.addHost,
-            modelactions.ADDINTERFACE: model.api.addInterface,
-            modelactions.ADDSERVICEINT: model.api.addServiceToInterface,
-            modelactions.DELSERVICEINT: model.api.delServiceFromInterface,
+            modelactions.ADDSERVICEHOST: model.api.addServiceToHost,
             #Vulnerability
-            modelactions.ADDVULNINT: model.api.addVulnToInterface,
             modelactions.ADDVULNHOST: model.api.addVulnToHost,
             modelactions.ADDVULNSRV: model.api.addVulnToService,
             #VulnWeb
             modelactions.ADDVULNWEBSRV: model.api.addVulnWebToService,
             #Note
-            modelactions.ADDNOTEINT: model.api.addNoteToInterface,
             modelactions.ADDNOTEHOST: model.api.addNoteToHost,
             modelactions.ADDNOTESRV: model.api.addNoteToService,
             modelactions.ADDNOTENOTE: model.api.addNoteToNote,

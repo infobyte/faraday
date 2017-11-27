@@ -22,24 +22,19 @@ from persistence.server import models
 # and things are really messy
 
 CONF = getInstanceConfiguration()
+logger = logging.getLogger(__name__)
 
 
 class modelactions:
     ADDHOST = 2000
     DELHOST = 2001
-    ADDINTERFACE = 2002
-    DELINTERFACE = 2003
-    ADDSERVICEINT = 2004
-    DELSERVICEINT = 2006
+    ADDSERVICEHOST = 2008
+    ADDSERVICEHOST = 20008
     ADDCATEGORY = 2011
-    ADDVULNINT = 2013
-    DELVULNINT = 2014
     ADDVULNHOST = 2017
     DELVULNHOST = 2018
     ADDVULNSRV = 2019
     DELVULNSRV = 2020
-    ADDNOTEINT = 2021
-    DELNOTEINT = 2022
     ADDNOTEHOST = 2025
     DELNOTEHOST = 2026
     ADDNOTESRV = 2027
@@ -71,13 +66,7 @@ class modelactions:
     __descriptions = {
         ADDHOST: "ADDHOST",
         DELHOST: "DELHOST",
-        ADDINTERFACE: "ADDINTERFACE",
-        DELINTERFACE: "DELINTERFACE",
-        ADDSERVICEINT: "ADDSERVICEINT",
-        DELSERVICEINT: "DELSERVICEINT",
         ADDCATEGORY: "ADDCATEGORY",
-        ADDVULNINT: "ADDVULNINT",
-        DELVULNINT: "DELVULNINT",
         ADDVULNHOST: "ADDVULNHOST",
         DELVULNHOST: "DELVULNHOST",
         ADDVULNSRV: "ADDVULNSRV",
@@ -213,15 +202,9 @@ class ModelController(threading.Thread):
             modelactions.ADDHOST: self.__add,
             modelactions.DELHOST: self.__del,
             modelactions.EDITHOST: self.__edit,
-            modelactions.ADDINTERFACE: checkParentHost(self.__add),
-            modelactions.DELINTERFACE: self.__del,
             modelactions.EDITINTERFACE: self.__edit,
-            modelactions.ADDSERVICEINT: checkParentInterface(self.__add),
-            modelactions.DELSERVICEINT: self.__del,
             modelactions.EDITSERVICE: self.__edit,
             # Vulnerability
-            modelactions.ADDVULNINT: checkParentInterface(self.__add),
-            modelactions.DELVULNINT: self.__del,
             modelactions.ADDVULNHOST: checkParentHost(self.__add),
             modelactions.DELVULNHOST: self.__del,
             modelactions.ADDVULNSRV: checkParentService(self.__add),
@@ -231,8 +214,6 @@ class ModelController(threading.Thread):
             modelactions.ADDVULNWEBSRV: checkParentService(self.__add),
             modelactions.EDITVULN: self.__edit,
             # Note
-            modelactions.ADDNOTEINT: checkParentInterface(self.__add),
-            modelactions.DELNOTEINT: self.__del,
             modelactions.ADDNOTEHOST: checkParentHost(self.__add),
             modelactions.DELNOTEHOST: self.__del,
             modelactions.ADDNOTESRV: checkParentService(self.__add),
@@ -807,23 +788,6 @@ class ModelController(threading.Thread):
         return model.common.factory.createModelObject(
             models.Host.class_signature, name,
             self.mappers_manager.workspace_name, os=os, parent_id=None)
-
-    def newInterface(self, name, mac="00:00:00:00:00:00",
-                     ipv4_address="0.0.0.0",
-                     ipv4_mask="0.0.0.0", ipv4_gateway="0.0.0.0", ipv4_dns=[],
-                     ipv6_address="0000:0000:0000:0000:0000:0000:0000:0000",
-                     ipv6_prefix="00",
-                     ipv6_gateway="0000:0000:0000:0000:0000:0000:0000:0000",
-                     ipv6_dns=[], network_segment="", hostname_resolution=[],
-                     parent_id=None):
-        return model.common.factory.createModelObject(
-            models.Interface.class_signature, name,
-            self.mappers_manager.workspace_name, mac=mac, ipv4_address=ipv4_address,
-            ipv4_mask=ipv4_mask, ipv4_gateway=ipv4_gateway, ipv4_dns=ipv4_dns,
-            ipv6_address=ipv6_address, ipv6_prefix=ipv6_prefix,
-            ipv6_gateway=ipv6_gateway, ipv6_dns=ipv6_dns,
-            network_segment=network_segment,
-            hostnames=hostname_resolution, parent_id=parent_id)
 
     def newService(self, name, protocol="tcp?", ports=[], status="running",
                    version="unknown", description="", parent_id=None):

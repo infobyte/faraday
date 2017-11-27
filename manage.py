@@ -11,6 +11,7 @@ from server.commands.reset_db import reset_db_all
 from server.commands.reports import import_external_reports
 
 from server.web import app
+from utils.logs import setUpLogger
 
 
 @click.group()
@@ -18,10 +19,13 @@ def cli():
     pass
 
 @click.command()
-def process_reports():
+@click.option('--debug/--no-debug', default=False)
+@click.option('--workspace', default=None)
+def process_reports(debug, workspace):
+    setUpLogger(debug)
     with app.app_context():
         try:
-            import_external_reports()
+            import_external_reports(workspace)
         except OperationalError as ex:
             print('{0}'.format(ex))
             print('Please verify database is running or configuration on server.ini!')

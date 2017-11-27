@@ -89,9 +89,16 @@ def _create_server_get_url(workspace_name, object_name=None):
 
 def _create_server_post_url(workspace_name, obj_type):
     server_api_url = _create_server_api_url()
-    object_end_point_name = OBJECT_END_POINT_MAPPER[obj_type]
+    object_end_point_name = OBJECT_TYPE_END_POINT_MAPPER[obj_type]
     post_url = '{0}/ws/{1}/{2}/'.format(server_api_url, workspace_name, object_end_point_name)
     return post_url
+
+
+def _create_server_put_url(workspace_name, obj_type, obj_id):
+    server_api_url = _create_server_api_url()
+    object_end_point_name = OBJECT_TYPE_END_POINT_MAPPER[obj_type]
+    pust_url = '{0}/ws/{1}/{2}/{3}/'.format(server_api_url, workspace_name, object_end_point_name, obj_id)
+    return pust_url
 
 
 def _create_server_delete_url(workspace_name, object_id):
@@ -176,7 +183,7 @@ def _get(request_url, **params):
                                               request_url,
                                               params=params))
 
-def _put(post_url, update=False, expected_response=201, **params):
+def _put(post_url, expected_response=201, **params):
     """Put to the post_url. If update is True, try to get the object
     revision first so as to update the object in Couch. You can
     customize the expected response (it should be 201, but Couchdbkit returns
@@ -189,9 +196,6 @@ def _put(post_url, update=False, expected_response=201, **params):
     Return a dictionary with the response from couchdb, which looks like this:
     {u'id': u'61', u'ok': True, u'rev': u'1-967a00dff5e02add41819138abb3284d'}
     """
-    if update:
-        last_rev = _get(post_url)['_rev']
-        params['_rev'] = last_rev
     return _parse_json(_unsafe_io_with_server(requests.put,
                                               expected_response,
                                               post_url,
@@ -274,16 +278,16 @@ def _save_to_couch(workspace_name, faraday_object_id, **params):
     return _post(post_url, update=False, **params)
 
 def _update_in_couch(workspace_name, faraday_object_id, **params):
-    post_url = _create_server_post_url(workspace_name, faraday_object_id)
-    return _put(post_url, update=True, **params)
+    post_url = _create_server_put_url(workspace_name, faraday_object_id)
+    return _put(post_url, **params)
 
 def _save_to_server(workspace_name, **params):
     post_url = _create_server_post_url(workspace_name, params['type'])
-    return _post(post_url, update=False, expected_response=200, **params)
+    return _post(post_url, update=False, expected_response=201, **params)
 
 def _update_in_server(workspace_name, faraday_object_id, **params):
-    post_url = _create_server_post_url(workspace_name, faraday_object_id)
-    return _put(post_url, update=True, expected_response=200, **params)
+    put_url = _create_server_put_url(workspace_name, params['type'], faraday_object_id)
+    return _put(put_url, expected_response=200, **params)
 
 def _save_db_to_server(db_name, **params):
     post_url = _create_server_db_url(db_name)
@@ -1400,7 +1404,7 @@ def create_command(workspace_name, command, duration=None, hostname=None,
                            workspace=workspace_name,
                            type="CommandRunInformation")
 
-def update_command(workspace_name, command, duration=None, hostname=None,
+def update_command(workspace_name, command_id, command, duration=None, hostname=None,
                    ip=None, itime=None, params=None, user=None):
     """Updates a command.
 
@@ -1419,7 +1423,7 @@ def update_command(workspace_name, command, duration=None, hostname=None,
         A dictionary with the server's response.
     """
     return _update_in_server(workspace_name,
-                             id,
+                             command_id,
                              command=command,
                              duration=duration,
                              hostname=hostname,
@@ -1501,7 +1505,7 @@ def server_info():
 def login_user(uri, uname, upass):
     auth = {"email": uname, "password": upass}
     try:
-        resp = requests.post(uri + "/_api/login", json=auth, timeout=1)
+        resp = requests.post(uri + "/_api/login", json=auth)
         if resp.status_code == 400:
             return None
         else:

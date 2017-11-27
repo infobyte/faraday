@@ -9,10 +9,9 @@ See the file 'doc/LICENSE' for the license information
 import os
 import re
 import time
+import logging
 import traceback
 from multiprocessing import Process
-
-
 from utils.logs import getLogger
 
 try:
@@ -24,6 +23,7 @@ except ImportError:
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
+logger = logging.getLogger(__name__)
 
 
 class ReportProcessor():
@@ -64,10 +64,11 @@ class ReportProcessor():
 
 
 class ReportManager(Process):
-    def __init__(self, timer, ws_name, plugin_controller):
+    def __init__(self, timer, ws_name, plugin_controller, polling=True):
         Process.__init__(self)
+        self.polling = polling
         self.ws_name = ws_name
-        self.daemon = True
+        self.daemon = False
         self.timer = timer
         self._stop = False
         self._report_path = os.path.join(CONF.getReportPath(), ws_name)
@@ -100,6 +101,8 @@ class ReportManager(Process):
             if tmp_timer >= self.timer:
                 try:
                     self.syncReports()
+                    if not self.polling:
+                        break
                 except Exception:
                     getLogger(self).error(
                         "An exception was captured while saving reports\n%s"
@@ -138,7 +141,7 @@ class ReportManager(Process):
 
             # If plugin not is detected... move to unprocessed
             if self.processor.processReport(filename) is False:
-
+                logger.info('Plugin not detected. Moving {0} to unprocessed'.format(filename))
                 os.rename(
                     filename,
                     os.path.join(self._report_upath, name))

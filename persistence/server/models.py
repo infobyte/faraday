@@ -418,7 +418,7 @@ def update_command(workspace_name, command):
     Return the server's json response as a dictionary.
     """
     command_properties = get_command_properties(command)
-    return server.update_command(workspace_name, **command_properties)
+    return server.update_command(workspace_name, command.getID(), **command_properties)
 
 def create_object(workspace_name, object_signature, obj):
     """Given a workspace name, an object_signature as string and obj, a Faraday

@@ -175,7 +175,6 @@ class ModelController(threading.Thread):
         # This could be done in hosts module, but it seems easier to maintain
         # if we have all in one place inside the controller
         self._object_factory.register(models.Host)
-        self._object_factory.register(models.Interface)
         self._object_factory.register(models.Service)
         self._object_factory.register(models.Vuln)
         self._object_factory.register(models.VulnWeb)
@@ -448,7 +447,8 @@ class ModelController(threading.Thread):
 
     def _save_new_object(self, new_object):
         res = self.mappers_manager.save(new_object)
-        if res: notifier.addObject(new_object)
+        if res:
+            notifier.addObject(new_object)
         return res
 
     def _handle_conflict(self, old_obj, new_obj):

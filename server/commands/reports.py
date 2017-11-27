@@ -1,9 +1,13 @@
 import os
 import logging
 
+from tqdm import tqdm
+
 from managers.mapper_manager import MapperManager
 from managers.reports_managers import ReportManager, CONF
-
+from managers.workspace_manager import WorkspaceManager
+from model.api import setUpAPIs
+from model.controller import ModelController
 
 from plugins.controller import PluginController
 from plugins.manager import PluginManager
@@ -12,25 +16,40 @@ from server.models import Workspace
 logger = logging.getLogger(__name__)
 
 
-def import_external_reports():
-    processes = []
+def import_external_reports(workspace_name=None):
+
     plugin_manager = PluginManager(
         os.path.join(CONF.getConfigPath(), "plugins"))
     mappers_manager = MapperManager()
+    controller = ModelController(mappers_manager)
+    workspace_manager = WorkspaceManager(mappers_manager)
+    setUpAPIs(controller, workspace_manager, hostname=None, port=None)
 
     plugin_controller = PluginController(
         'PluginController',
         plugin_manager,
         mappers_manager
     )
-    for workspace in Workspace.query.all():
+
+    if workspace_name:
+        query = Workspace.query.filter_by(name=workspace_name)
+    else:
+        query = Workspace.query
+
+    process_workspaces(plugin_controller, query)
+
+
+def process_workspaces(plugin_controller, query):
+    processes = []
+    for workspace in query.all():
         report_manager = ReportManager(
             0.1,
             workspace.name,
-            plugin_controller
+            plugin_controller,
+            polling=False
         )
         processes.append(report_manager)
         report_manager.start()
 
-    for thread in processes:
+    for thread in tqdm(processes):
         thread.join()

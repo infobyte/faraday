@@ -246,7 +246,7 @@ class PluginController(object):
                 'command': 'Import %s:' % plugin,
                 'params': filepath})
         self._mapper_manager.createMappers(ws_name)
-        self._mapper_manager.save(cmd_info)
+        cmd_info.setID(self._mapper_manager.save(cmd_info))
 
         if plugin in self._plugins:
             self.processOutput(self._plugins[plugin], filepath, cmd_info.getID(), True)

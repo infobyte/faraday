@@ -46,7 +46,6 @@ class CommandRunInformation(object):
     class_signature = "CommandRunInformation"
 
     def __init__(self, **kwargs):
-        self._id = uuid.uuid4().hex
         self.type = self.__class__.__name__
         self.user = get_user()
         self.ip = get_private_ip()
@@ -63,7 +62,7 @@ class CommandRunInformation(object):
         return self._id
 
     def setID(self, id):
-        return self._id
+        self._id = id
 
     def toDict(self):
         return self.__dict__

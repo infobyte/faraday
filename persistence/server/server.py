@@ -1519,6 +1519,7 @@ def login_user(uri, uname, upass):
     except requests.adapters.ReadTimeout:
         return None
 
+
 def is_authenticated(uri, cookies):
     try:
         resp = requests.get(uri + "/_api/session", cookies=cookies, timeout=1)

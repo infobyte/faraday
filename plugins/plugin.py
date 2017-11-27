@@ -8,12 +8,15 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-import multiprocessing
 import os
 import re
+import time
 import Queue
 import traceback
+import multiprocessing
+import deprecation
 
+import server.config
 import model.api
 import model.common
 from model.common import factory
@@ -29,6 +32,7 @@ from plugins.modelactions import modelactions
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
+VERSION = server.config.__get_version()
 
 
 class PluginBase(object):
@@ -147,10 +151,13 @@ class PluginBase(object):
             Host.class_signature,
             name, os=os, parent_id=None)
 
-        host_obj._metadata.creator = self.id
+        host_obj._metadata.creatoserverr = self.id
         self.__addPendingAction(modelactions.ADDHOST, host_obj)
         return host_obj.getID()
 
+    @deprecation.deprecated(deprecated_in="3.0", removed_in="3.5",
+                            current_version=VERSION,
+                            details="Interface object removed. Use host or service instead")
     def createAndAddInterface(
         self, host_id, name="", mac="00:00:00:00:00:00",
         ipv4_address="0.0.0.0", ipv4_mask="0.0.0.0", ipv4_gateway="0.0.0.0",
@@ -163,6 +170,9 @@ class PluginBase(object):
         # backwards compatibility
         return host_id
 
+    @deprecation.deprecated(deprecated_in="3.0", removed_in="3.5",
+                            current_version=VERSION,
+                            details="Interface object removed. Use host or service instead. This will attach Service to Host!")
     def createAndAddServiceToInterface(self, host_id, interface_id, name,
                                        protocol="tcp?", ports=[],
                                        status="running", version="unknown",
@@ -171,10 +181,10 @@ class PluginBase(object):
         serv_obj = model.common.factory.createModelObject(
             Service.class_signature,
             name, protocol=protocol, ports=ports, status=status,
-            version=version, description=description, parent_id=interface_id)
+            version=version, description=description, parent_id=host_id)
 
         serv_obj._metadata.creator = self.id
-        self.__addPendingAction(modelactions.ADDSERVICEINT, host_id, interface_id, serv_obj)
+        self.__addPendingAction(modelactions.ADDSERVICEHOST, host_id, serv_obj)
         return serv_obj.getID()
 
     def createAndAddVulnToHost(self, host_id, name, desc="", ref=[],
@@ -189,6 +199,9 @@ class PluginBase(object):
         self.__addPendingAction(modelactions.ADDVULNHOST, host_id, vuln_obj)
         return vuln_obj.getID()
 
+    @deprecation.deprecated(deprecated_in="3.0", removed_in="3.5",
+                            current_version=VERSION,
+                            details="Interface object removed. Use host or service instead. Vuln will be added to Host")
     def createAndAddVulnToInterface(self, host_id, interface_id, name,
                                     desc="", ref=[], severity="",
                                     resolution=""):
@@ -199,7 +212,7 @@ class PluginBase(object):
             confirmed=False, parent_id=interface_id)
 
         vuln_obj._metadata.creator = self.id
-        self.__addPendingAction(modelactions.ADDVULNINT, host_id, interface_id, vuln_obj)
+        self.__addPendingAction(modelactions.ADDVULNHOST, host_id, vuln_obj)
         return vuln_obj.getID()
 
     def createAndAddVulnToService(self, host_id, service_id, name, desc="",
@@ -240,6 +253,9 @@ class PluginBase(object):
         self.__addPendingAction(modelactions.ADDNOTEHOST, host_id, note_obj)
         return note_obj.getID()
 
+    @deprecation.deprecated(deprecated_in="3.0", removed_in="3.5",
+                            current_version=VERSION,
+                            details="Interface object removed. Use host or service instead. Note will be added to Host")
     def createAndAddNoteToInterface(self, host_id, interface_id, name, text):
 
         note_obj = model.common.factory.createModelObject(
@@ -247,7 +263,7 @@ class PluginBase(object):
             name, text=text, parent_id=interface_id)
 
         note_obj._metadata.creator = self.id
-        self.__addPendingAction(modelactions.ADDNOTEINT, host_id, interface_id, note_obj)
+        self.__addPendingAction(modelactions.ADDNOTEHOST, host_id, note_obj)
         return note_obj.getID()
 
     def createAndAddNoteToService(self, host_id, service_id, name, text):
@@ -340,18 +356,20 @@ class PluginProcess(multiprocessing.Process):
                         try:
                             self.new_elem_queue.put(
                                 self.plugin._pending_actions.get(block=False))
+                            time.sleep(0)  # potentially allowing another process to run
                         except Queue.Empty:
                             model.api.devlog(
                                 ("PluginProcess run _pending_actions"
                                  " queue Empty. Breaking loop"))
                             break
-                        except Exception:
+                        except Exception as ex:
                             model.api.devlog(
                                 ("PluginProcess run getting from "
                                  "_pending_action queue - something strange "
                                  "happened... unhandled exception?"))
                             model.api.devlog(traceback.format_exc())
                             break
+
 
             else:
 

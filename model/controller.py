@@ -4,11 +4,13 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-import time
-import threading
-import Queue
+#import Queue
+import logging
 import traceback
 import model.common  # this is to make sure the factory is created
+from multiprocessing import Process, Lock, Queue
+from Queue import Empty
+from threading import Thread, RLock
 
 from config.configuration import getInstanceConfiguration
 from utils.logs import getLogger
@@ -99,31 +101,31 @@ class modelactions:
         return modelactions.__descriptions.get(action, "")
 
 
-class ModelController(threading.Thread):
+class ModelController(Thread):
 
     def __init__(self, mappers_manager):
-        threading.Thread.__init__(self)
+        Thread.__init__(self)
 
         self.mappers_manager = mappers_manager
 
         # set as daemon
-        self.setDaemon(True)
+#        self.setDaemon(True)
 
         # flag to stop daemon thread
         self._stop = False
         # locks needed to make model thread-safe
-        self._hosts_lock = threading.RLock()
+        self._hosts_lock = Lock()
 
         # count of plugins sending actions
         self.active_plugins_count = 0
-        self.active_plugins_count_lock = threading.RLock()
+        self.active_plugins_count_lock = Lock()
 
         # TODO: check if it is better using collections.deque
         # a performance analysis should be done
         # http://docs.python.org/library/collections.html#collections.deque
 
         # the actions queue
-        self._pending_actions = Queue.Queue()
+        self._pending_actions = Queue()
 
         # a reference to the ModelObjectFactory
         self._object_factory = model.common.factory
@@ -136,7 +138,7 @@ class ModelController(threading.Thread):
 
         # This flag & lock are used when the complete model is being persisted
         self._saving_model_flag = False
-        self._saving_model_lock = threading.RLock()
+        self._saving_model_lock = Lock()
 
         self._actionDispatcher = None
         self._setupActionDispatcher()
@@ -358,12 +360,12 @@ class ModelController(threading.Thread):
             parameters = current_action[1:]
             # dispatch the action
             self._processAction(action, parameters)
-        except Queue.Empty:
+        except Empty:
             # if timeout was reached, just let the daemon run again
             # this is done just to be able to test the stop flag
             # because if we don't do it, the daemon will be blocked forever
             pass
-        except Exception:
+        except Exception as ex:
             getLogger(self).debug(
                 "something strange happened... unhandled exception?")
             getLogger(self).debug(traceback.format_exc())

@@ -21,9 +21,6 @@ def import_external_reports(workspace_name=None):
     plugin_manager = PluginManager(
         os.path.join(CONF.getConfigPath(), "plugins"))
     mappers_manager = MapperManager()
-    controller = ModelController(mappers_manager)
-    workspace_manager = WorkspaceManager(mappers_manager)
-    setUpAPIs(controller, workspace_manager, hostname=None, port=None)
 
     plugin_controller = PluginController(
         'PluginController',
@@ -36,12 +33,18 @@ def import_external_reports(workspace_name=None):
     else:
         query = Workspace.query
 
-    process_workspaces(plugin_controller, query)
+    process_workspaces(mappers_manager, plugin_controller, query)
+    #controller._pending_actions.join()
 
 
-def process_workspaces(plugin_controller, query):
+def process_workspaces(mappers_manager, plugin_controller, query):
     processes = []
     for workspace in query.all():
+        mappers_manager.createMappers(workspace.name)
+        controller = ModelController(mappers_manager)
+        workspace_manager = WorkspaceManager(mappers_manager)
+        setUpAPIs(controller, workspace_manager, hostname=None, port=None)
+        controller.start()
         report_manager = ReportManager(
             0.1,
             workspace.name,
@@ -51,5 +54,5 @@ def process_workspaces(plugin_controller, query):
         processes.append(report_manager)
         report_manager.start()
 
-    for thread in tqdm(processes):
-        thread.join()
+    #for thread in tqdm(processes):
+    #    thread.join()

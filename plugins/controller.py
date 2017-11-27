@@ -139,7 +139,8 @@ class PluginController(object):
                         "something strange happened... "
                         "unhandled exception?")
                     break
-            except Exception:
+            except Exception as ex:
+                logger.exception(ex)
                 getLogger(self).debug(
                     "new_elem_queue Exception - "
                     "something strange happened... "

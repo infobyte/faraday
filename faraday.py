@@ -210,7 +210,7 @@ def check_dependencies_or_exit():
     logger.info("Checking dependencies...")
 
     if conflict_deps:
-        logger.info("Some dependencies are old. Update them with \"pip install -rrequirements_server.txt -U\"")
+        logger.info("Some dependencies are old. Update them with \"pip install -r requirements_server.txt -U\"")
 
     if missing_deps:
 

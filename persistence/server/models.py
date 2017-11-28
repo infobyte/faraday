@@ -592,7 +592,7 @@ def delete_workspace(workspace_name):
 
 def get_workspaces_names():
     """Return a list with all the workspace names available."""
-    return server.get_workspaces_names()['workspaces']
+    return map(lambda ws: ws['name'], server.get_workspaces_names())
 
 def server_info():
     """True if server is up, False otherwise."""

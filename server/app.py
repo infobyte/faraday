@@ -47,7 +47,7 @@ def setup_storage_path():
 
 
 def register_blueprints(app):
-    from server.modules.info import info_api
+    from server.api.modules.info import info_api
     from server.api.modules.commandsrun import commandsrun_api
     from server.api.modules.credentials import credentials_api
     from server.api.modules.doc import doc_api

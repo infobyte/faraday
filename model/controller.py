@@ -193,13 +193,6 @@ class ModelController(Thread):
 
     def _setupActionDispatcher(self):
 
-        # these are decorators for the __add method.
-        checkParentHost = self._checkParent('Host')
-        checkParentInterface = self._checkParent('Interface')
-        checkParentService = self._checkParent('Service')
-        checkParentVuln = self._checkParent('Vuln')
-        checkParentNote = self._checkParent('Note')
-
         self._actionDispatcher = {
             modelactions.ADDHOST: self.__add,
             modelactions.DELHOST: self.__del,
@@ -207,28 +200,28 @@ class ModelController(Thread):
             modelactions.EDITINTERFACE: self.__edit,
             modelactions.EDITSERVICE: self.__edit,
             # Vulnerability
-            modelactions.ADDVULNHOST: checkParentHost(self.__add),
+            modelactions.ADDVULNHOST: self.__add,
             modelactions.DELVULNHOST: self.__del,
-            modelactions.ADDVULNSRV: checkParentService(self.__add),
+            modelactions.ADDVULNSRV: self.__add,
             modelactions.DELVULNSRV: self.__del,
             modelactions.ADDVULN: self.__add,
             modelactions.DELVULN: self.__del,
-            modelactions.ADDVULNWEBSRV: checkParentService(self.__add),
+            modelactions.ADDVULNWEBSRV: self.__add,
             modelactions.EDITVULN: self.__edit,
             # Note
-            modelactions.ADDNOTEHOST: checkParentHost(self.__add),
+            modelactions.ADDNOTEHOST: self.__add,
             modelactions.DELNOTEHOST: self.__del,
-            modelactions.ADDNOTESRV: checkParentService(self.__add),
+            modelactions.ADDNOTESRV: self.__add,
             modelactions.DELNOTESRV: self.__del,
-            modelactions.ADDNOTEVULN: checkParentVuln(self.__add),
+            modelactions.ADDNOTEVULN: self.__add,
             modelactions.ADDNOTE: self.__add,
             modelactions.DELNOTE: self.__del,
-            modelactions.ADDCREDSRV: checkParentService(self.__add),
+            modelactions.ADDCREDSRV: self.__add,
             modelactions.DELCREDSRV: self.__del,
-            modelactions.ADDNOTENOTE: checkParentNote(self.__add),
+            modelactions.ADDNOTENOTE: self.__add,
             modelactions.EDITNOTE: self.__edit,
             modelactions.EDITCRED: self.__edit,
-            modelactions.ADDCRED: checkParentHost(self.__add),
+            modelactions.ADDCRED: self.__add,
             modelactions.DELCRED: self.__del,
             # Plugin states
             modelactions.PLUGINSTART: self._pluginStart,

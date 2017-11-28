@@ -229,7 +229,7 @@ def get_services(workspace_name, **params):
 
 def get_service(workspace_name, service_id):
     """Return the Service of id service_id. None if not found."""
-    return force_unique(get_services(workspace_name, couchid=service_id))
+    return force_unique(get_services(workspace_name, service_id=service_id))
 
 def get_credentials(workspace_name, **params):
     """Take a workspace name and a arbitrary number of params to customize the
@@ -639,13 +639,8 @@ class ModelBase(object):
         self._metadata = obj.get('metadata', Metadata(self.owner))
         self.updates = []
 
-    def setID(self, parent_id, *args):
-        if  self.id and self.id != -1:
-            return None
-        objid = get_hash(args)
-        if parent_id:
-            objid = '.'.join([parent_id, objid])
-        self.id = objid
+    def setID(self, id):
+        self.id = id
 
     @staticmethod
     def publicattrsrefs():
@@ -728,10 +723,6 @@ class Host(ModelBase):
         self.default_gateway = host.get('default_gateway')
         self.os = host.get('os') if host.get('os') else 'unknown'
         self.vuln_amount = int(host.get('vulns', 0))
-
-    def setID(self, _):
-        # empty arg so as to share same interface as other classes' generateID
-        ModelBase.setID(self, '', self.name)
 
     @staticmethod
     def publicattrsrefs():

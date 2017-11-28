@@ -103,7 +103,6 @@ class ModelObjectFactory(object):
                 objargs['_id'] = -1  # they still don't have a server id
                 objargs['id'] = -1 # we'll generate it after making sure the objects are okey
                 tmpObj = self._registered_objects[classname](objargs, workspace_name)
-                tmpObj.setID(parent_id)
                 return tmpObj
             else:
                 raise Exception("Object name parameter missing. Cannot create object class: %s" % classname)

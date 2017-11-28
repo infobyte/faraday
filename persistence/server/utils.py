@@ -31,8 +31,8 @@ def get_object_properties(obj):
     if not isinstance(obj.getMetadata(), dict):
         metadata = metadata.toDict()
 
-    return {'id': obj.getID(),
-            'name': obj.getName(),
+    return {
+            'ip': obj.getName(),
             'description': obj.getDescription(),
             'metadata': metadata,
             'owned': obj.isOwned(),
@@ -41,7 +41,9 @@ def get_object_properties(obj):
 
 def get_host_properties(host):
     host_dict = {'os': host.getOS(),
-                 'default_gateway': host.getDefaultGateway()}
+    }
+    if host.getDefaultGateway():
+        host['default_gateway'] = host.getDefaultGateway()
     host_dict.update(get_object_properties(host))
     return host_dict
 

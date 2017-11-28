@@ -44,6 +44,7 @@ AUTH_USER = ""
 AUTH_PASS = ""
 OBJECT_TYPE_END_POINT_MAPPER = {
     'CommandRunInformation': 'commands',
+    'Host': 'hosts',
 }
 
 
@@ -75,7 +76,7 @@ def _create_server_api_url():
     """Return the server's api url."""
     return "{0}/_api/v2".format(_get_base_server_url())
 
-def _create_server_get_url(workspace_name, object_name=None):
+def _create_server_get_url(workspace_name, object_name=None, object_id=None):
     """Creates a url to get from the server. Takes the workspace name
     as a string, an object_name paramter which is the object you want to
     query as a string ('hosts', 'interfaces', etc) .
@@ -85,6 +86,7 @@ def _create_server_get_url(workspace_name, object_name=None):
     Return the get_url as a string.
     """
     object_name = "/{0}".format(object_name) if object_name else ""
+    object_name += "/{0}/".format(object_id) if object_id else ""
     get_url = '{0}/ws/{1}{2}'.format(_create_server_api_url(),
                                      workspace_name,
                                      object_name)
@@ -139,6 +141,7 @@ def _add_session_cookies(func):
         response = func(*args, **kwargs)
         return response
     return wrapper if FARADAY_UP else func
+
 
 @_add_session_cookies
 def _unsafe_io_with_server(server_io_function, server_expected_response,
@@ -826,7 +829,7 @@ def get_commands_number(workspace_name, **params):
     """
     return int(_get_raw_commands(workspace_name, **params))
 
-def create_host(workspace_name, id, name, os, default_gateway,
+def create_host(workspace_name, ip, os, default_gateway=None,
                 description="", metadata=None, owned=False, owner="",
                 parent=None):
     """Create a host.
@@ -849,8 +852,7 @@ def create_host(workspace_name, id, name, os, default_gateway,
         A dictionary with the server's response.
     """
     return _save_to_server(workspace_name,
-                           id,
-                           name=name, os=os,
+                           ip=ip, os=os,
                            default_gateway=default_gateway,
                            owned=owned,
                            metadata=metadata,

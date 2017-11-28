@@ -430,6 +430,7 @@ class ModelController(Thread):
 
     def _save_new_object(self, new_object):
         res = self.mappers_manager.save(new_object)
+        new_object.setID(res)
         if res:
             notifier.addObject(new_object)
         return res
@@ -439,10 +440,11 @@ class ModelController(Thread):
         return self.addUpdate(old_obj, new_obj)
 
     def __add(self, new_obj, parent_id=None, *args):
-        old_obj = self.mappers_manager.find(new_obj.class_signature, new_obj.getID())
-        if not old_obj:
-            return self._save_new_object(new_obj)
-        return self._handle_conflict(old_obj, new_obj)
+        new_obj_id = self._save_new_object(new_obj)
+        if new_obj_id:
+            new_obj
+        # conflict
+        #return self._handle_conflict(old_obj, new_obj)
 
     def __edit(self, obj, *args, **kwargs):
         obj.updateAttributes(*args, **kwargs)

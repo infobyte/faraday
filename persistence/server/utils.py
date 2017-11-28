@@ -32,7 +32,7 @@ def get_object_properties(obj):
         metadata = metadata.toDict()
 
     return {
-            'ip': obj.getName(),
+            'name': obj.getName(),
             'description': obj.getDescription(),
             'metadata': metadata,
             'owned': obj.isOwned(),
@@ -45,17 +45,12 @@ def get_host_properties(host):
     if host.getDefaultGateway():
         host['default_gateway'] = host.getDefaultGateway()
     host_dict.update(get_object_properties(host))
+    # name was removed from host and changed to ip
+    ip = host_dict.pop('name')
+    # regex ip y lanzar warning si no es ip.
+    host_dict['ip'] = ip
     return host_dict
 
-def get_interface_properties(interface):
-    interface_dict = {'mac': interface.getMAC(),
-                      'hostnames': interface.getHostnames(),
-                      'network_segment': interface.getNetworkSegment(),
-                      'ipv4':  interface.getIPv4(),
-                      'ipv6': interface.getIPv6()
-                      }
-    interface_dict.update(get_object_properties(interface))
-    return interface_dict
 
 def get_service_properties(service):
     service_dict = {'ports': service.getPorts(),
@@ -65,6 +60,7 @@ def get_service_properties(service):
                     }
     service_dict.update(get_object_properties(service))
     return service_dict
+
 
 def get_vuln_properties(vuln):
     vuln_dict = {'confirmed': vuln.getConfirmed(),

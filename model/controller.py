@@ -788,9 +788,9 @@ class ModelController(Thread):
     def delCredSYNC(self, model_object, cred_id):
         self._processAction(modelactions.DELCRED, [cred_id], sync=True)
 
-    def newHost(self, name, os="Unknown"):
+    def newHost(self, ip, os="Unknown"):
         return model.common.factory.createModelObject(
-            models.Host.class_signature, name,
+            models.Host.class_signature, ip,
             self.mappers_manager.workspace_name, os=os, parent_id=None)
 
     def newService(self, name, protocol="tcp?", ports=[], status="running",

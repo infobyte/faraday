@@ -6,11 +6,14 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+import traceback
 
 import os
 import sys
 import threading
 import webbrowser
+
+import restkit
 
 try:
     import gi
@@ -172,7 +175,7 @@ class GuiApp(Gtk.Application, FaradayUi):
             self.ws_sidebar.clear_sidebar()
             self.ws_sidebar.refresh_sidebar()
         except restkit.errors.Unauthorized:
-            notification_center.showDialog(
+            model.notification_center.showDialog(
                 "You're not authorized to delete this workspace.\n"
                 "Make sure you're an admin and that you're logged in.",
                 "ERROR")

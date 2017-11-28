@@ -13,6 +13,7 @@ from Queue import Empty
 from threading import Thread, RLock
 
 from config.configuration import getInstanceConfiguration
+from persistence.server.server_io_exceptions import ConflictInDatabase
 from utils.logs import getLogger
 import model.api as api
 from model.guiapi import notification_center as notifier
@@ -433,11 +434,11 @@ class ModelController(Thread):
         return self.addUpdate(old_obj, new_obj)
 
     def __add(self, new_obj, parent_id=None, *args):
-        new_obj_id = self._save_new_object(new_obj)
-        if new_obj_id:
-            new_obj
-        # conflict
-        #return self._handle_conflict(old_obj, new_obj)
+        try:
+            self._save_new_object(new_obj)
+        except ConflictInDatabase as conflict:
+            old_obj = new_obj.__class__(conflict.answer.json()['object'], new_obj._workspace_name)
+            return self._handle_conflict(old_obj, new_obj)
 
     def __edit(self, obj, *args, **kwargs):
         obj.updateAttributes(*args, **kwargs)

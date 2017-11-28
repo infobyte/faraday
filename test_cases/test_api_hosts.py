@@ -422,3 +422,23 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
                               '?sort=services&sort_dir=asc')
         assert res.status_code == 200
         assert [h['_id'] for h in res.json['data']] == expected_ids
+
+    def test_create_a_host_twice_returns_conflict(self, test_client):
+        res = test_client.post(self.url(), data={
+            "ip": "127.0.0.1",
+            "description": "aaaaa",
+        })
+        assert res.status_code == 201
+        assert Host.query.count() == HOSTS_COUNT + 1
+        host_id = res.json['id']
+        host = Host.query.get(host_id)
+        assert host.ip == "127.0.0.1"
+        assert host.description == "aaaaa"
+        assert host.os is None
+        assert host.workspace == self.workspace
+        res = test_client.post(self.url(), data={
+            "ip": "127.0.0.1",
+            "description": "aaaaa",
+        })
+        assert res.status_code == 409
+        assert res.json['object']['_id'] == host_id

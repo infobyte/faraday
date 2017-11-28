@@ -157,10 +157,10 @@ class GenericView(FlaskView):
     @classmethod
     def register(cls, app, *args, **kwargs):
         """Register and add JSON error handler. Use error code
-        400 instead of 422"""
+        400 instead of 409"""
         super(GenericView, cls).register(app, *args, **kwargs)
-        @app.errorhandler(422)
-        def handle_unprocessable_entity(err):
+        @app.errorhandler(409)
+        def handle_conflict(err):
             # webargs attaches additional metadata to the `data` attribute
             exc = getattr(err, 'exc')
             if exc:
@@ -168,9 +168,7 @@ class GenericView(FlaskView):
                 messages = exc.messages
             else:
                 messages = ['Invalid request']
-            return flask.jsonify({
-                'messages': messages,
-            }), 400
+            return flask.jsonify(messages), 409
 
         @app.errorhandler(InvalidUsage)
         def handle_invalid_usage(error):
@@ -231,11 +229,16 @@ class GenericWorkspacedView(GenericView):
                 # The object already exists in DB, we want to fetch an object
                 # different to this one but with the same unique field
                 query = query.filter(primary_key_field != object_id)
-            if query.one_or_none():
+            obj = query.one_or_none()
+            conflict_data = self._get_schema_class()().dump(obj).data
+            if obj:
                 db.session.rollback()
-                abort(422, ValidationError('Existing value for %s field: %s' % (
-                    field_name, value
-                )))
+                abort(409, ValidationError(
+                    {
+                        'message': 'Existing value for %s field: %s' % (field_name, value),
+                        'object': conflict_data,
+                    }
+                ))
 
 
 class ListMixin(object):

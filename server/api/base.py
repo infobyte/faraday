@@ -387,8 +387,10 @@ class CreateMixin(object):
     """Add POST / route"""
 
     def post(self, **kwargs):
-        data = self._parse_data(self._get_schema_instance(kwargs),
+        context = {'updating': False}
+        data = self._parse_data(self._get_schema_instance(kwargs, context=context),
                                 flask.request)
+        data.pop('id', None)
         created = self._perform_create(data, **kwargs)
         created.creator = g.user
         db.session.commit()
@@ -428,12 +430,12 @@ class UpdateMixin(object):
     """Add PUT /<workspace_name>/<id>/ route"""
 
     def put(self, object_id, **kwargs):
-        data = self._parse_data(self._get_schema_instance(kwargs),
-                                flask.request)
-        if 'id' in data:
-            # just in case an schema allows id as writable.
-            data.pop('id')
         obj = self._get_object(object_id, **kwargs)
+        context = {'updating': True, 'object': obj}
+        data = self._parse_data(self._get_schema_instance(kwargs, context=context),
+                                flask.request)
+        # just in case an schema allows id as writable.
+        data.pop('id', None)
         self._update_object(obj, data)
         updated = self._perform_update(object_id, obj, **kwargs)
         return self._dump(obj, kwargs), 200

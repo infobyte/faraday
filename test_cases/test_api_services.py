@@ -9,6 +9,7 @@ from test_api_workspaced_base import ReadOnlyAPITests
 from server.models import (
     Service
 )
+from test_cases.factories import HostFactory
 
 
 @pytest.mark.usefixtures('logged_user')
@@ -100,4 +101,74 @@ class TestListServiceView(ReadOnlyAPITests):
         }
         res = test_client.put(self.url(self.first_object), data=data)
         assert res.status_code == 400
-        assert 'Host with id' in res.data
+        assert 'Can\'t change service parent.' in res.data
+
+    def _raw_put_data(self, id, parent=None, status='open', protocol='tcp', ports=None):
+        if not ports:
+            ports = [22]
+        raw_data = {"status": status,
+                    "protocol": protocol,
+                    "description": "",
+                    "_rev": "",
+                    "metadata": {"update_time": 1510945708000, "update_user": "", "update_action": 0, "creator": "",
+                                 "create_time": 1510945708000, "update_controller_action": "", "owner": "leonardo",
+                                 "command_id": None},
+                    "owned": False,
+                    "owner": "",
+                    "version": "",
+                    "_id": id,
+                    "ports": ports,
+                    "name": "ssh2",
+                    "type": "Service"}
+        if parent:
+            raw_data['parent'] = parent
+        return raw_data
+
+    def test_update_with_json_from_webui(self, test_client, session):
+        service = self.factory()
+        session.commit()
+        raw_data = self._raw_put_data(service.id)
+
+        res = test_client.put(self.url(service, workspace=service.workspace), data=raw_data)
+        assert res.status_code == 200
+        updated_service = Service.query.filter_by(id=service.id).first()
+        assert updated_service.status == 'open'
+        assert updated_service.name == 'ssh2'
+
+    def test_update_cant_change_parent(self, test_client, session):
+        service = self.factory()
+        host = HostFactory.create()
+        session.commit()
+        raw_data = self._raw_put_data(service.id, parent=host.id)
+        res = test_client.put(self.url(service, workspace=service.workspace), data=raw_data)
+        assert res.status_code == 400
+        assert 'Can\'t change service parent.' in res.data
+        updated_service = Service.query.filter_by(id=service.id).first()
+        assert updated_service.name == service.name
+
+    def test_update_status(self, test_client, session):
+        service = self.factory(status='open')
+        session.commit()
+        raw_data = self._raw_put_data(service.id, parent=service.host.id, status='closed')
+        res = test_client.put(self.url(service, workspace=service.workspace), data=raw_data)
+        assert res.status_code == 200
+        updated_service = Service.query.filter_by(id=service.id).first()
+        assert updated_service.status == 'closed'
+
+    def test_update_ports(self, test_client, session):
+        service = self.factory(port=22)
+        session.commit()
+        raw_data = self._raw_put_data(service.id, parent=service.host.id, ports=[221])
+        res = test_client.put(self.url(service, workspace=service.workspace), data=raw_data)
+        assert res.status_code == 200
+        updated_service = Service.query.filter_by(id=service.id).first()
+        assert updated_service.port == 221
+
+    def test_update_cant_change_id(self, test_client, session):
+        service = self.factory()
+        host = HostFactory.create()
+        session.commit()
+        raw_data = self._raw_put_data(service.id)
+        res = test_client.put(self.url(service, workspace=service.workspace), data=raw_data)
+        assert res.status_code == 200
+        assert res.json['id'] == service.id

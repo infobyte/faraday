@@ -6,7 +6,7 @@ import flask
 from flask import Blueprint
 from flask_classful import route
 from marshmallow import fields
-from filteralchemy import FilterSet, operators
+from filteralchemy import Filter, FilterSet, operators
 
 from server.utils.database import get_or_create
 
@@ -53,11 +53,19 @@ class HostSchema(AutoSchema):
                   )
 
 
+class ServiceFilter(Filter):
+    """Filter hosts by service name"""
+
+    def filter(self, query, model, attr, value):
+        return query.filter(model.services.any(Service.name == value))
+
+
 class HostFilterSet(FilterSet):
     class Meta(FilterSetMeta):
         model = Host
-        fields = ('os',)
+        fields = ('os', 'service')
         operators = (operators.Equal, operators.Like, operators.ILike)
+    service = ServiceFilter(fields.Str())
 
 
 class ServiceSchema(AutoSchema):

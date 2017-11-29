@@ -273,9 +273,25 @@ class TestHostAPI:
         assert res.status_code == 200
         self.compare_results(hosts + [case_insensitive_host], res)
 
+    def test_filter_by_service(self, test_client, session, workspace,
+                               service_factory, host_factory):
+        services = service_factory.create_batch(10, workspace=workspace,
+                                                name="IRC")
+        hosts = [service.host for service in services]
+
+        # Hosts that shouldn't be shown
+        host_factory.create_batch(5, workspace=workspace)
+
+        res = test_client.get(self.url() + '?service=IRC')
+        assert res.status_code == 200
+        shown_hosts_ids = set(obj['id'] for obj in res.json['rows'])
+        expected_host_ids = set(host.id for host in hosts)
+        assert shown_hosts_ids == expected_host_ids
+
     def test_host_with_open_vuln_count_verification(self, test_client, session,
-                                                        workspace, host_factory, vulnerability_factory,
-                                                        service_factory):
+                                                    workspace, host_factory,
+                                                    vulnerability_factory,
+                                                    service_factory):
 
         host = host_factory.create(workspace=workspace)
         service = service_factory.create(host=host, workspace=workspace)

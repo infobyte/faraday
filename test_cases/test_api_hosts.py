@@ -344,6 +344,7 @@ class TestHostAPI:
             "ip":"10.31.112.21",
             "_rev":"",
             "description":"",
+            "default_gateway": None,
             "owned": False,
             "services":12,
             "hostnames":[],
@@ -359,13 +360,13 @@ class TestHostAPI:
         assert res.status_code == 200
         updated_host = Host.query.filter_by(id=host.id).first()
         assert res.json == {
-            u'_id': 6,
+            u'_id': host.id,
             u'_rev': u'',
             u'credentials': 0,
             u'default_gateway': None,
             u'description': u'',
             u'hostnames': [],
-            u'id': 6,
+            u'id': host.id,
             u'ip': u'10.31.112.21',
             u'metadata': {u'command_id': None,
                 u'create_time': int(time.mktime(updated_host.create_date.timetuple())) * 1000,

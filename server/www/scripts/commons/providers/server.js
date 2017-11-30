@@ -413,7 +413,7 @@ angular.module("faradayApp")
             }
 
             ServerAPI.deleteHost = function(wsName, hostId, rev) {
-                var deleteUrl = createDeleteUrl(wsName, hostId, rev);
+                var deleteUrl = createDeleteUrl(wsName, hostId, 'hosts');
                 if (typeof rev === "undefined") {
                     return _delete(deleteUrl, false)
                 }
@@ -433,7 +433,7 @@ angular.module("faradayApp")
             }
 
             ServerAPI.deleteVuln = function(wsName, vulnId, rev) {
-                var deleteUrl = createDeleteUrl(wsName, vulnId, rev);
+                var deleteUrl = createDeleteUrl(wsName, vulnId, 'vulns');
                 if (typeof rev === "undefined") {
                     return _delete(deleteUrl, false)
                 }

@@ -55,6 +55,9 @@
                                         <a href="" ng-click="toggleSort('name')">Name</a>
                                     </th>
                                     <th>
+                                        <a href="">Hostnames</a>
+                                    </th>
+                                    <th>
                                         <a href="" ng-click="toggleSort('services')">Open Services</a>
                                     </th>
                                     <th>
@@ -84,6 +87,11 @@
                                     <td>
                                         <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}">{{host.name}}</a>
                                         <osint-link query="host.name" osint="osint"></osint-link>
+                                    </td>
+                                    <td>
+                                        <span ng-repeat="hostname in host.hostnames">
+                                            {{hostname}} <br>
+                                        </span>
                                     </td>
                                     <td><a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-bind="host.services || '-'"></a></td>
                                     <td><a ng-href="#/status/ws/{{workspace}}/search/target={{host.name}}" ng-bind="host.vulns"></a></td>

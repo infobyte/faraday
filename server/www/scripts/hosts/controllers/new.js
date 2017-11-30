@@ -38,7 +38,7 @@ angular.module('faradayApp')
 
             $scope.insert = function(hostdata) {
                 hostsManager.createHost(hostdata, $scope.workspace).then(function(host) {
-                    $location.path('/host/ws/' + $scope.workspace + '/hid/' + $scope.host.id);
+                    $location.path('/host/ws/' + $scope.workspace + '/hid/' + host.data.id);
                 }, function(message) {
                     $uibModal.open({
                         templateUrl: 'scripts/commons/partials/modalKO.html',

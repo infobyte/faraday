@@ -45,6 +45,7 @@ def _conf():
     else:
         raise CantAccessConfigurationWithoutTheClient
 
+
 def _get_merge_strategy():
     try:
         merge_strategy = _conf().getMergeStrategy()
@@ -53,12 +54,17 @@ def _get_merge_strategy():
     return merge_strategy
 
 _CHANGES_LOCK = Lock()
+
+
 def get_changes_lock():
     return _CHANGES_LOCK
 
 _LOCAL_CHANGES_ID_TO_REV = {}
+
+
 def local_changes():
     return _LOCAL_CHANGES_ID_TO_REV
+
 
 def _ignore_in_changes(func):
     @wraps(func)
@@ -69,6 +75,7 @@ def _ignore_in_changes(func):
                 _LOCAL_CHANGES_ID_TO_REV[json['id']] = json['rev']
         return json
     return func_wrapper
+
 
 def _flatten_dictionary(dictionary):
     """Given a dictionary with dictionaries inside, create a new flattened
@@ -98,6 +105,7 @@ def _flatten_dictionary(dictionary):
 # client, even if they come from the server: they should have the same
 # interface as the old style objects, from when we kept them on memory
 
+
 def _get_faraday_ready_objects(workspace_name, faraday_ready_object_dictionaries,
                                faraday_object_name):
     """Takes a workspace name, a faraday object ('hosts', 'vulns',
@@ -124,9 +132,11 @@ def _get_faraday_ready_objects(workspace_name, faraday_ready_object_dictionaries
             faraday_objects.append(appropiate_class(flattened_object_dictionary, workspace_name))
     return faraday_objects
 
+
 def _get_faraday_ready_hosts(workspace_name, hosts_dictionaries):
     """Return a list of Hosts created with the information found on hosts_dictionaries"""
     return _get_faraday_ready_objects(workspace_name, hosts_dictionaries, 'hosts')
+
 
 def _get_faraday_ready_vulns(workspace_name, vulns_dictionaries, vulns_type=None):
     """Return a list of Vuln or VulnWeb objects created with the information found on
@@ -144,21 +154,26 @@ def _get_faraday_ready_vulns(workspace_name, vulns_dictionaries, vulns_type=None
     faraday_ready_web_vulns = _get_faraday_ready_objects(workspace_name, web_vulns, 'vulns_web')
     return faraday_ready_vulns + faraday_ready_web_vulns
 
+
 def _get_faraday_ready_services(workspace_name, services_dictionaries):
     """Return a list of Services created with the information found on services_dictionaries"""
     return _get_faraday_ready_objects(workspace_name, services_dictionaries, 'services')
+
 
 def _get_faraday_ready_credentials(workspace_name, credentials_dictionaries):
     """Return a list of Credentials created with the information found on credentials_dictionaries"""
     return _get_faraday_ready_objects(workspace_name, credentials_dictionaries, 'credentials')
 
+
 def _get_faraday_ready_notes(workspace_name, notes_dictionaries):
     """Return a list of Notes created with the information found on notes_dictionaries"""
     return _get_faraday_ready_objects(workspace_name, notes_dictionaries, 'notes')
 
+
 def _get_faraday_ready_commands(workspace_name, commands_dictionaries):
     """Return a list of Commands created with the information found on commands_dictionaries"""
     return _get_faraday_ready_objects(workspace_name, commands_dictionaries, 'commands')
+
 
 def get_changes_stream(workspace_name):
     """Take a workspace_name as a string.
@@ -170,6 +185,7 @@ def get_changes_stream(workspace_name):
     return server.get_changes_stream(workspace_name, since=since,
                                      heartbeat='1000')
 
+
 def get_hosts(workspace_name, **params):
     """Take a workspace name and a arbitrary number of params to customize the
     request.
@@ -179,9 +195,11 @@ def get_hosts(workspace_name, **params):
     host_dictionaries = server.get_hosts(workspace_name, **params)
     return _get_faraday_ready_hosts(workspace_name, host_dictionaries)
 
+
 def get_host(workspace_name, host_id):
     """Return the host by host_id. None if it can't be found."""
     return force_unique(get_hosts(workspace_name, couchid=host_id))
+
 
 def get_all_vulns(workspace_name, **params):
     """Take a workspace name and a arbitrary number of params to customize the
@@ -192,6 +210,7 @@ def get_all_vulns(workspace_name, **params):
     vulns_dictionaries = server.get_all_vulns(workspace_name, **params)
     return _get_faraday_ready_vulns(workspace_name, vulns_dictionaries)
 
+
 def get_vulns(workspace_name, **params):
     """Take a workspace name and a arbitrary number of params to customize the
     request.
@@ -201,9 +220,11 @@ def get_vulns(workspace_name, **params):
     vulns_dictionaries = server.get_vulns(workspace_name, **params)
     return _get_faraday_ready_vulns(workspace_name, vulns_dictionaries, vulns_type='vulns')
 
+
 def get_vuln(workspace_name, vuln_id):
     """Return the Vuln of id vuln_id. None if not found."""
     return force_unique(get_vulns(workspace_name, couchid=vuln_id))
+
 
 def get_web_vulns(workspace_name, **params):
     """Take a workspace name and a arbitrary number of params to customize the
@@ -214,9 +235,11 @@ def get_web_vulns(workspace_name, **params):
     vulns_web_dictionaries = server.get_web_vulns(workspace_name, **params)
     return _get_faraday_ready_vulns(workspace_name, vulns_web_dictionaries, vulns_type='vulns_web')
 
+
 def get_web_vuln(workspace_name, vuln_id):
     """Return the WebVuln of id vuln_id. None if not found."""
     return force_unique(get_web_vulns(workspace_name, couchid=vuln_id))
+
 
 def get_services(workspace_name, **params):
     """Take a workspace name and a arbitrary number of params to customize the
@@ -227,9 +250,11 @@ def get_services(workspace_name, **params):
     services_dictionary = server.get_services(workspace_name, **params)
     return _get_faraday_ready_services(workspace_name, services_dictionary)
 
+
 def get_service(workspace_name, service_id):
     """Return the Service of id service_id. None if not found."""
     return force_unique(get_services(workspace_name, service_id=service_id))
+
 
 def get_credentials(workspace_name, **params):
     """Take a workspace name and a arbitrary number of params to customize the
@@ -240,9 +265,11 @@ def get_credentials(workspace_name, **params):
     credentials_dictionary = server.get_credentials(workspace_name, **params)
     return _get_faraday_ready_credentials(workspace_name, credentials_dictionary)
 
+
 def get_credential(workspace_name, credential_id):
     """Return the Credential of id credential_id. None if not found."""
     return force_unique(get_credentials(workspace_name, couchid=credential_id))
+
 
 def get_notes(workspace_name, **params):
     """Take a workspace name and a arbitrary number of params to customize the
@@ -253,14 +280,17 @@ def get_notes(workspace_name, **params):
     notes_dictionary = server.get_notes(workspace_name, **params)
     return _get_faraday_ready_notes(workspace_name, notes_dictionary)
 
+
 def get_note(workspace_name, note_id):
     """Return the Note of id note_id. None if not found."""
     return force_unique(get_notes(workspace_name, couchid=note_id))
+
 
 def get_workspace(workspace_name):
     """Return the Workspace of id workspace_name. None if not found."""
     workspace = server.get_workspace(workspace_name)
     return _Workspace(workspace, workspace_name) if workspace else None
+
 
 def get_commands(workspace_name, **params):
     """Take a workspace name and a arbitrary number of params to customize the
@@ -271,9 +301,11 @@ def get_commands(workspace_name, **params):
     commands_dictionary = server.get_commands(workspace_name, **params)
     return _get_faraday_ready_commands(workspace_name, commands_dictionary)
 
+
 def get_command(workspace_name, command_id):
     """Return the Command of id command_id. None if not found."""
     return force_unique(get_commands(workspace_name, couchid=command_id))
+
 
 def get_object(workspace_name, object_signature, object_id):
     """Given a workspace name, an object_signature as string  and an arbitrary
@@ -298,11 +330,13 @@ def get_object(workspace_name, object_signature, object_id):
 
     return appropiate_function(workspace_name, object_id)
 
+
 def get_deleted_object_name_and_type(workspace_name, object_id):
     """Return a tupe of (name, type) for the deleted object of object_id,
     if it can get around CouchDB to do it. Else None"""
     obj_dict = server.get_object_before_last_revision(workspace_name, object_id)
     return (obj_dict['name'], obj_dict['type']) if obj_dict else (None, None)
+
 
 @_ignore_in_changes
 def create_host(workspace_name, host):
@@ -313,6 +347,7 @@ def create_host(workspace_name, host):
     host_properties = get_host_properties(host)
     return server.create_host(workspace_name, **host_properties)
 
+
 @_ignore_in_changes
 def update_host(workspace_name, host):
     """Take a workspace_name and a host object and update it in the sever.
@@ -322,6 +357,7 @@ def update_host(workspace_name, host):
     host_properties = get_host_properties(host)
     return server.update_host(workspace_name, **host_properties)
 
+
 @_ignore_in_changes
 def create_service(workspace_name, service):
     """Take a workspace_name and a service object and save it to the sever.
@@ -329,6 +365,7 @@ def create_service(workspace_name, service):
     """
     service_properties = get_service_properties(service)
     return server.create_service(workspace_name, **service_properties)
+
 
 @_ignore_in_changes
 def update_service(workspace_name, service):
@@ -339,6 +376,7 @@ def update_service(workspace_name, service):
     service_properties = get_service_properties(service)
     return server.update_service(workspace_name, **service_properties)
 
+
 @_ignore_in_changes
 def create_vuln(workspace_name, vuln):
     """Take a workspace_name and an vulnerability object and save it to the
@@ -347,6 +385,7 @@ def create_vuln(workspace_name, vuln):
     """
     vuln_properties = get_vuln_properties(vuln)
     return server.create_vuln(workspace_name, **vuln_properties)
+
 
 @_ignore_in_changes
 def update_vuln(workspace_name, vuln):
@@ -357,6 +396,7 @@ def update_vuln(workspace_name, vuln):
     vuln_properties = get_vuln_properties(vuln)
     return server.update_vuln(workspace_name, **vuln_properties)
 
+
 @_ignore_in_changes
 def create_vuln_web(workspace_name, vuln_web):
     """Take a workspace_name and an vulnerabilityWeb object and save it to the
@@ -365,6 +405,7 @@ def create_vuln_web(workspace_name, vuln_web):
     """
     vuln_web_properties = get_vuln_web_properties(vuln_web)
     return server.create_vuln_web(workspace_name, **vuln_web_properties)
+
 
 @_ignore_in_changes
 def update_vuln_web(workspace_name, vuln_web):
@@ -375,6 +416,7 @@ def update_vuln_web(workspace_name, vuln_web):
     vuln_web_properties = get_vuln_web_properties(vuln_web)
     return server.update_vuln_web(workspace_name, **vuln_web_properties)
 
+
 @_ignore_in_changes
 def create_note(workspace_name, note):
     """Take a workspace_name and an note object and save it to the sever.
@@ -382,6 +424,7 @@ def create_note(workspace_name, note):
     """
     note_properties = get_note_properties(note)
     return server.create_note(workspace_name, **note_properties)
+
 
 @_ignore_in_changes
 def update_note(workspace_name, note):
@@ -391,6 +434,7 @@ def update_note(workspace_name, note):
     note_properties = get_note_properties(note)
     return server.update_note(workspace_name, **note_properties)
 
+
 @_ignore_in_changes
 def create_credential(workspace_name, credential):
     """Take a workspace_name and an credential object and save it to the sever.
@@ -398,6 +442,7 @@ def create_credential(workspace_name, credential):
     """
     credential_properties = get_credential_properties(credential)
     return server.create_credential(workspace_name, **credential_properties)
+
 
 @_ignore_in_changes
 def update_credential(workspace_name, credential):
@@ -407,10 +452,12 @@ def update_credential(workspace_name, credential):
     credential_properties = get_credential_properties(credential)
     return server.update_credential(workspace_name, **credential_properties)
 
+
 @_ignore_in_changes
 def create_command(workspace_name, command):
     command_properties = get_command_properties(command)
     return server.create_command(workspace_name, **command_properties)
+
 
 @_ignore_in_changes
 def update_command(workspace_name, command):
@@ -419,6 +466,7 @@ def update_command(workspace_name, command):
     """
     command_properties = get_command_properties(command)
     return server.update_command(workspace_name, command.getID(), **command_properties)
+
 
 def create_object(workspace_name, object_signature, obj):
     """Given a workspace name, an object_signature as string and obj, a Faraday
@@ -443,6 +491,7 @@ def create_object(workspace_name, object_signature, obj):
         raise WrongObjectSignature(object_signature)
 
     return appropiate_function(workspace_name, obj)
+
 
 def update_object(workspace_name, object_signature, obj):
     """Given a workspace name, an object_signature as string and obj, a Faraday
@@ -482,10 +531,12 @@ def create_workspace(workspace_name, description, start_date, finish_date,
     return server.create_workspace(workspace_name, description,
                                    start_date, finish_date, customer)
 
+
 def get_workspace_summary(workspace_name):
     """Return the workspace summary as a dictionary
     """
     return server.get_workspace_summary(workspace_name)
+
 
 def get_workspace_numbers(workspace_name):
     """Return a tuple with the number of hosts, services and vulns
@@ -493,15 +544,18 @@ def get_workspace_numbers(workspace_name):
     """
     return server.get_workspace_numbers(workspace_name)
 
+
 def get_hosts_number(workspace_name, **params):
     """Return the number of hosts found on the workspace of name workspace_name
     """
     return server.get_hosts_number(workspace_name, **params)
 
+
 def get_services_number(workspace_name, **params):
     """Return the number of services found on the workspace of name workspace_name
     """
     return server.get_services_number(workspace_name, **params)
+
 
 def get_vulns_number(workspace_name, **params):
     """Return the number of vulns found on the workspace of name workspace_name
@@ -513,12 +567,14 @@ def get_vulns_number(workspace_name, **params):
 # except for their names.
 # maybe implement some kind of validation in the future?
 
+
 @_ignore_in_changes
 def delete_host(workspace_name, host_id):
     """Delete the host of id host_id on workspace workspace_name.
     Return the json response from the server.
     """
     return server.delete_host(workspace_name, host_id)
+
 
 @_ignore_in_changes
 def delete_service(workspace_name, service_id):
@@ -527,12 +583,14 @@ def delete_service(workspace_name, service_id):
     """
     return server.delete_service(workspace_name, service_id)
 
+
 @_ignore_in_changes
 def delete_vuln(workspace_name, vuln_id):
     """Delete the vuln of id vuln_id on workspace workspace_name.
     Return the json response from the server.
     """
     return server.delete_vuln(workspace_name, vuln_id)
+
 
 @_ignore_in_changes
 def delete_note(workspace_name, note_id):
@@ -541,12 +599,14 @@ def delete_note(workspace_name, note_id):
     """
     return server.delete_note(workspace_name, note_id)
 
+
 @_ignore_in_changes
 def delete_credential(workspace_name, credential_id):
     """Delete the credential of id credential_id on workspace workspace_name.
     Return the json response from the server.
     """
     return server.delete_credential(workspace_name, credential_id)
+
 
 @_ignore_in_changes
 def delete_vuln_web(workspace_name, vuln_id):
@@ -555,12 +615,14 @@ def delete_vuln_web(workspace_name, vuln_id):
     """
     return server.delete_vuln(workspace_name, vuln_id)
 
+
 @_ignore_in_changes
 def delete_command(workspace_name, command_id):
     """Delete the command of id command_id on workspace workspace_name.
     Return the json response from the server.
     """
     return server.delete_command(workspace_name, command_id)
+
 
 def delete_object(workspace_name, object_signature, obj_id):
     """Given a workspace name, an object_signature as string and an object id.
@@ -583,6 +645,7 @@ def delete_object(workspace_name, object_signature, obj_id):
 
     return appropiate_function(workspace_name, obj_id)
 
+
 def delete_workspace(workspace_name):
     """Tries to delete the worskpace workspace_name and returns the json
     response.  You should always try/except this function, at least catching
@@ -590,13 +653,16 @@ def delete_workspace(workspace_name):
     """
     return server.delete_workspace(workspace_name)
 
+
 def get_workspaces_names():
     """Return a list with all the workspace names available."""
     return map(lambda ws: ws['name'], server.get_workspaces_names())
 
+
 def server_info():
     """True if server is up, False otherwise."""
     return server.server_info()
+
 
 def test_server_url(url_to_test):
     """Return True if url_to_test/_api/info is accessible, False otherwise"""
@@ -642,6 +708,9 @@ class ModelBase(object):
     def setID(self, id):
         self.id = id
 
+    def getID(self):
+        return self.id
+
     @staticmethod
     def publicattrsrefs():
         return {'Description': 'description',
@@ -656,10 +725,14 @@ class ModelBase(object):
         is a default value returns the good one.
         If neither returns the default value.
         If conflicting returns a tuple with the values """
-        if prop1 in self.defaultValues(): return prop2
-        elif prop2 in self.defaultValues(): return prop1
-        elif self.tieBreakable(key): return self.tieBreak(key, prop1, prop2)
-        else: return (prop1, prop2)
+        if prop1 in self.defaultValues():
+            return prop2
+        elif prop2 in self.defaultValues():
+            return prop1
+        elif self.tieBreakable(key):
+            return self.tieBreak(key, prop1, prop2)
+        else:
+            return (prop1, prop2)
 
     def tieBreakable(self, key):
         """
@@ -703,11 +776,16 @@ class ModelBase(object):
     def needs_merge(self, new_obj):
         return ModelObjectDiff(self, new_obj).existDiff()
 
-    def getOwner(self): return self.owner
-    def isOwned(self): return self.owned
-    def getName(self): return self.name
-    def getMetadata(self): return self._metadata
-    def getDescription(self): return self.description
+    def getOwner(self):
+        return self.owner
+    def isOwned(self):
+        return self.owned
+    def getName(self):
+        return self.name
+    def getMetadata(self):
+        return self._metadata
+    def getDescription(self):
+        return self.description
 
 
 class Host(ModelBase):
@@ -741,11 +819,15 @@ class Host(ModelBase):
         if owned is not None:
             self.owned = owned
 
-    def __str__(self): return "{0} ({1})".format(self.name, self.vuln_amount)
-    def getOS(self): return self.os
-    def getVulnAmount(self): return self.vuln_amount
-    def getID(self): return self.id
-    def getDefaultGateway(self): return self.default_gateway
+    def __str__(self):
+        return "{0} ({1})".format(self.name, self.vuln_amount)
+    def getOS(self):
+        return self.os
+    def getVulnAmount(self):
+        return self.vuln_amount
+
+    def getDefaultGateway(self):
+        return self.default_gateway
     def getVulns(self):
         return get_all_vulns(self._workspace_name, hostid=self._server_id)
     # def getInterface(self, interface_couch_id):
@@ -755,140 +837,6 @@ class Host(ModelBase):
     #     return get_interfaces(self._workspace_name, host=self._server_id)
     def getServices(self):
         return get_services(self._workspace_name, hostid=self._server_id)
-
-
-# class Interface(ModelBase):
-#     """A simple Interface class. Should implement all the methods of the
-#     Interface object in Model.Host
-#     Any method here more than a couple of lines long probably represent
-#     a search the server is missing.
-#     """
-#     class_signature = 'Interface'
-
-#     def __init__(self, interface, workspace_name):
-#         ModelBase.__init__(self, interface, workspace_name)
-#         self.hostnames = interface.get('hostnames', [])
-
-#         # NOTE. i don't know why this is like this
-#         # probably a remnant of the old faraday style classes
-#         try:
-#             self.ipv4 = interface['ipv4']
-#             self.ipv6 = interface['ipv6']
-#         except KeyError:
-#             self.ipv4 = {'address': interface['ipv4_address'],
-#                          'gateway': interface['ipv4_gateway'],
-#                          'mask': interface['ipv4_mask'],
-#                          'DNS': interface['ipv4_dns']}
-#             self.ipv6 = {'address': interface['ipv6_address'],
-#                          'gateway': interface['ipv6_gateway'],
-#                          'prefix': interface['ipv6_prefix'],
-#                          'DNS': interface['ipv6_dns']}
-#         self.mac = interface.get('mac')
-#         self.network_segment = interface.get('network_segment')
-#         self.ports = interface.get('ports')
-
-#         self.amount_ports_opened   = 0
-#         self.amount_ports_closed   = 0
-#         self.amount_ports_filtered = 0
-
-#     def setID(self, parent_id):
-#         try:
-#             ipv4_address = self.ipv4_address
-#             ipv6_address = self.ipv6_address
-#         except AttributeError:
-#             ipv4_address = self.ipv4['address']
-#             ipv6_address = self.ipv6['address']
-
-#         ModelBase.setID(self, parent_id, self.network_segment, ipv4_address, ipv6_address)
-
-#     @staticmethod
-#     def publicattrsrefs():
-#         publicattrs = dict(ModelBase.publicattrsrefs(), **{
-#             'MAC Address' : 'mac',
-#             'IPV4 Settings' : 'ipv4',
-#             'IPV6 Settings' : 'ipv6',
-#             'Network Segment' : 'network_segment',
-#             'Hostnames' : 'hostnames'
-#         })
-#         return publicattrs
-
-#     def tieBreakable(self, property_key):
-#         """
-#         Return true if we can auto resolve this conflict.
-#         """
-#         if property_key in ["hostnames"]:
-#             return True
-#         return False
-
-#     def tieBreak(self, key, prop1, prop2):
-#         """
-#         Return the 'choosen one'
-#         Return a tuple with prop1, prop2 if we cant resolve conflict.
-#         """
-#         if key == "hostnames":
-#             prop1.extend(prop2)
-#             # Remove duplicated with set...
-#             return list(set(prop1))
-
-#         return (prop1, prop2)
-
-#     def updateAttributes(self, name=None, description=None, hostnames=None, mac=None, ipv4=None, ipv6=None,
-#                          network_segment=None, amount_ports_opened=None, amount_ports_closed=None,
-#                          amount_ports_filtered=None, owned=None):
-
-#         if name is not None:
-#             self.name = name
-#         if description is not None:
-#             self.description = description
-#         if hostnames is not None:
-#             self.hostnames = hostnames
-#         if mac is not None:
-#             self.mac = mac
-#         if ipv4 is not None:
-#             self.ipv4 = ipv4
-#         if ipv6 is not None:
-#             self.ipv6 = ipv6
-#         if network_segment is not None:
-#             self.network_segment = network_segment
-#         if amount_ports_opened is not None:
-#             self.setPortsOpened(amount_ports_opened)
-#         if amount_ports_closed is not None:
-#             self.setPortsClosed(amount_ports_closed)
-#         if amount_ports_filtered is not None:
-#             self.setPortsFiltered(amount_ports_filtered)
-#         if owned is not None:
-#             self.owned = owned
-
-#     def setPortsOpened(self, ports_opened):
-#         self.amount_ports_opened   = ports_opened
-
-#     def setPortsClosed(self, ports_closed):
-#         self.amount_ports_closed   = ports_closed
-
-#     def setPortsFiltered(self, ports_filtered):
-#         self.amount_ports_filtered = ports_filtered
-
-#     def __str__(self): return "{0}".format(self.name)
-#     def getID(self): return self.id
-#     def getHostnames(self): return self.hostnames
-#     def getIPv4(self): return self.ipv4
-#     def getIPv6(self): return self.ipv6
-#     def getIPv4Address(self): return self.ipv4['address']
-#     def getIPv4Mask(self): return self.ipv4['mask']
-#     def getIPv4Gateway(self): return self.ipv4['gateway']
-#     def getIPv4DNS(self): return self.ipv4['DNS']
-#     def getIPv6Address(self): return self.ipv6['address']
-#     def getIPv6Gateway(self): return self.ipv6['gateway']
-#     def getIPv6DNS(self): return self.ipv6['DNS']
-#     def getMAC(self): return self.mac
-#     def getNetworkSegment(self): return self.network_segment
-
-#     def getService(self, service_couch_id):
-#         return get_service(self._workspace_name, service_couch_id)
-#     def getAllServices(self):
-#         return get_services(self._workspace_name, interface=self._server_id)
-#     def getVulns(self):
-#         return get_all_vulns(self._workspace_name, interfaceid=self._server_id)
 
 
 class Service(ModelBase):
@@ -906,11 +854,6 @@ class Service(ModelBase):
         self.version = service['version']
         self.status = service['status']
         self.vuln_amount = int(service.get('vulns', 0))
-
-    def setID(self, parent_id):
-        # TODO: str from list? ERROR MIGRATION NEEDED
-        ports = ':'.join(str(self.ports))
-        ModelBase.setID(self, parent_id, self.protocol, ports)
 
     @staticmethod
     def publicattrsrefs():
@@ -939,14 +882,20 @@ class Service(ModelBase):
         if owned is not None:
             self.owned = owned
 
-    def __str__(self): return "{0} ({1})".format(self.name, self.vuln_amount)
-    def getID(self): return self.id
-    def getStatus(self): return self.status
-    def getPorts(self): return self.ports  # this is a list of one element in faraday
-    def getVersion(self): return self.version
-    def getProtocol(self): return self.protocol
-    def isOwned(self): return self.owned
-    def getVulns(self): return get_all_vulns(self._workspace_name, serviceid=self._server_id)
+    def __str__(self):
+        return "{0} ({1})".format(self.name, self.vuln_amount)
+    def getStatus(self):
+        return self.status
+    def getPorts(self):
+        return self.ports  # this is a list of one element in faraday
+    def getVersion(self):
+        return self.version
+    def getProtocol(self):
+        return self.protocol
+    def isOwned(self):
+        return self.owned
+    def getVulns(self):
+        return get_all_vulns(self._workspace_name, serviceid=self._server_id)
 
 
 class Vuln(ModelBase):
@@ -969,9 +918,6 @@ class Vuln(ModelBase):
         self.resolution = vuln.get('resolution')
         self.status = vuln.get('status', "opened")
         self.policyviolations = vuln.get('policyviolations', list())
-
-    def setID(self, parent_id):
-        ModelBase.setID(self, parent_id, self.name, self.description)
 
     @staticmethod
     def publicattrsrefs():
@@ -1058,15 +1004,22 @@ class Vuln(ModelBase):
         if policyviolations is not None:
             self.policyviolations = policyviolations
 
-    def getID(self): return self.id
-    def getDesc(self): return self.desc
-    def getData(self): return self.data
-    def getSeverity(self): return self.severity
-    def getRefs(self): return self.refs
-    def getConfirmed(self): return self.confirmed
-    def getResolution(self): return self.resolution
-    def getStatus(self): return self.status
-    def getPolicyViolations(self): return self.policyviolations
+    def getDesc(self):
+        return self.desc
+    def getData(self):
+        return self.data
+    def getSeverity(self):
+        return self.severity
+    def getRefs(self):
+        return self.refs
+    def getConfirmed(self):
+        return self.confirmed
+    def getResolution(self):
+        return self.resolution
+    def getStatus(self):
+        return self.status
+    def getPolicyViolations(self):
+        return self.policyviolations
 
     def setStatus(self, status):
         self.status = status
@@ -1099,9 +1052,6 @@ class VulnWeb(Vuln):
         self.target = vuln_web.get('target')
         self.parent = vuln_web.get('parent')
         self.policyviolations = vuln_web.get('policyviolations', list())
-
-    def setID(self, parent_id):
-        ModelBase.setID(self, parent_id, self.name, self.website, self.path, self.description)
 
     @staticmethod
     def publicattrsrefs():
@@ -1147,26 +1097,46 @@ class VulnWeb(Vuln):
         if policyviolations is not None:
             self.policyviolations = policyviolations
 
-    def getDescription(self): return self.description
-    def getPath(self): return self.path
-    def getWebsite(self): return self.website
-    def getRequest(self): return self.request
-    def getResponse(self): return self.response
-    def getMethod(self): return self.method
-    def getPname(self): return self.pname
-    def getParams(self): return self.params
-    def getQuery(self): return self.query
-    def getResolution(self): return self.resolution
-    def getAttachments(self): return self.attachments
-    def getEaseOfResolution(self): return self.easeofresolution
-    def getHostnames(self): return self.hostnames
-    def getImpact(self): return self.impact
-    def getService(self): return self.service
-    def getStatus(self): return self.status
-    def getTags(self): return self.tags
-    def getTarget(self): return self.target
-    def getParent(self): return self.parent
-    def getPolicyViolations(self): return self.policyviolations
+    def getDescription(self):
+        return self.description
+    def getPath(self):
+        return self.path
+    def getWebsite(self):
+        return self.website
+    def getRequest(self):
+        return self.request
+    def getResponse(self):
+        return self.response
+    def getMethod(self):
+        return self.method
+    def getPname(self):
+        return self.pname
+    def getParams(self):
+        return self.params
+    def getQuery(self):
+        return self.query
+    def getResolution(self):
+        return self.resolution
+    def getAttachments(self):
+        return self.attachments
+    def getEaseOfResolution(self):
+        return self.easeofresolution
+    def getHostnames(self):
+        return self.hostnames
+    def getImpact(self):
+        return self.impact
+    def getService(self):
+        return self.service
+    def getStatus(self):
+        return self.status
+    def getTags(self):
+        return self.tags
+    def getTarget(self):
+        return self.target
+    def getParent(self):
+        return self.parent
+    def getPolicyViolations(self):
+        return self.policyviolations
 
     def tieBreakable(self, key):
         """
@@ -1226,16 +1196,12 @@ class Note(ModelBase):
         ModelBase.__init__(self, note, workspace_name)
         self.text = note['text']
 
-    def setID(self, parent_id):
-        ModelBase.setID(self, parent_id, self.name, self.text)
-
     def updateAttributes(self, name=None, text=None):
         if name is not None:
             self.name = name
         if text is not None:
             self.text = text
 
-    def getID(self): return self.id
     def getDescription(self): return self.description
     def getText(self): return self.text
 
@@ -1251,18 +1217,16 @@ class Credential(ModelBase):
 
         self.password = credential['password']
 
-    def setID(self, parent_id):
-        ModelBase.setID(self, parent_id, self.name, self.username, self.password)
-
     def updateAttributes(self, username=None, password=None):
         if username is not None:
-            self.username =username
+            self.username = username
         if password is not None:
             self.password = password
 
-    def getID(self): return self.id
-    def getUsername(self): return self.username
-    def getPassword(self): return self.password
+    def getUsername(self):
+        return self.username
+    def getPassword(self):
+        return self.password
 
 class Command:
     class_signature = 'CommandRunInformation'
@@ -1278,15 +1242,22 @@ class Command:
         self.user = command['user']
         self.workspace = command['workspace']
 
-    def getID(self): return self.id
-    def getCommand(self): return self.command
-    def getDuration(self): return self.duration
-    def getHostname(self): return self.hostname
-    def getIP(self): return self.ip
-    def getItime(self): return self.itime
-    def getParams(self): return self.params
-    def getUser(self): return self.user
-    def getWorkspace(self): return self.workspace
+    def getCommand(self):
+        return self.command
+    def getDuration(self):
+        return self.duration
+    def getHostname(self):
+        return self.hostname
+    def getIP(self):
+        return self.ip
+    def getItime(self):
+        return self.itime
+    def getParams(self):
+        return self.params
+    def getUser(self):
+        return self.user
+    def getWorkspace(self):
+        return self.workspace
 
 class _Workspace:
     class_signature = 'Workspace'
@@ -1299,12 +1270,16 @@ class _Workspace:
         self.start_date = workspace['sdate']
         self.finish_date = workspace['fdate']
 
-    def getID(self): return self._id
-    def getName(self): return self.name
-    def getDescription(self): return self.description
-    def getCustomer(self): return self.customer
-    def getStartDate(self): return self.start_date
-    def getFinishDate(self): return self.finish_date
+    def getName(self):
+        return self.name
+    def getDescription(self):
+        return self.description
+    def getCustomer(self):
+        return self.customer
+    def getStartDate(self):
+        return self.start_date
+    def getFinishDate(self):
+        return self.finish_date
 
 
 class MetadataUpdateActions(object):
@@ -1357,17 +1332,3 @@ class Metadata(object):
         if controller_funcallnames:
             return "ModelControler." +  " ModelControler.".join(controller_funcallnames)
         return "No model controller call"
-
-# NOTE: uncomment for test
-# class SillyHost():
-#     def __init__(self) :
-#         import random; self.id = random.randint(0, 1000)
-#         self.os = "Windows"
-#     def getID(self): return self.id
-#     def getOS(self): return self.os
-#     def getDefaultGateway(self): return '192.168.1.1'
-#     def getDescription(self): return "a description"
-#     def getName(self): return "my name"
-#     def isOwned(self): return False
-#     def getOwner(self): return False
-#     def getMetadata(self): return {'stuff': 'gives other stuff'}

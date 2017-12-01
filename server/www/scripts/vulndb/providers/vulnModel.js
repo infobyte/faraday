@@ -61,7 +61,7 @@ angular.module('faradayApp').
                     var deferred = $q.defer();
                     var self = this;
 
-                    ServerAPI.updateVulnerabilityTemplate(self)
+                    ServerAPI.updateVulnerabilityTemplate(data)
                         .then(function(res) {
                             self.set(res.data);
                             deferred.resolve(self);

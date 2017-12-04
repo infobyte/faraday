@@ -102,7 +102,7 @@ class modelactions:
 
 class ModelController(Thread):
 
-    def __init__(self, mappers_manager):
+    def __init__(self, mappers_manager, pending_actions):
         Thread.__init__(self)
 
         self.mappers_manager = mappers_manager
@@ -124,7 +124,7 @@ class ModelController(Thread):
         # http://docs.python.org/library/collections.html#collections.deque
 
         # the actions queue
-        self._pending_actions = Queue()
+        self._pending_actions = pending_actions
 
         # a reference to the ModelObjectFactory
         self._object_factory = model.common.factory
@@ -143,6 +143,7 @@ class ModelController(Thread):
         self._setupActionDispatcher()
 
         self.objects_with_updates = []
+        self._stop = False
 
     def __getattr__(self, name):
         getLogger(self).debug("ModelObject attribute to refactor: %s" % name)
@@ -206,6 +207,8 @@ class ModelController(Thread):
             modelactions.DELVULN: self.__del,
             modelactions.ADDVULNWEBSRV: self.__add,
             modelactions.EDITVULN: self.__edit,
+            #Service
+            modelactions.ADDSERVICEHOST: self.__add,
             # Note
             modelactions.ADDNOTEHOST: self.__add,
             modelactions.DELNOTEHOST: self.__del,
@@ -311,6 +314,9 @@ class ModelController(Thread):
             except RuntimeError:
                 pass
 
+    def stop(self):
+        self._stop = True
+
     def _main(self):
         """
         The main method for the thread.
@@ -319,7 +325,7 @@ class ModelController(Thread):
         This will make host addition and removal "thread-safe" and will
         avoid locking components that need to interact with the model
         """
-        while True:
+        while not self._stop:
             # check if thread must finish
             # no plugin should be active to stop the controller
             if self._stop and self.active_plugins_count == 0:
@@ -329,7 +335,6 @@ class ModelController(Thread):
             # or if we have pending duplicated hosts that need to be
             # merged by the userget
             if not self._sync_api_request and not self._saving_model_flag:
-
                 self.processAction()
             else:
                 # there is some object requesting for a sync api so we
@@ -435,6 +440,7 @@ class ModelController(Thread):
             self._save_new_object(new_obj)
         except ConflictInDatabase as conflict:
             old_obj = new_obj.__class__(conflict.answer.json()['object'], new_obj._workspace_name)
+            new_obj.setID(old_obj.getID())
             return self._handle_conflict(old_obj, new_obj)
 
     def __edit(self, obj, *args, **kwargs):

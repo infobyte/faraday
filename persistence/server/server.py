@@ -45,6 +45,10 @@ AUTH_PASS = ""
 OBJECT_TYPE_END_POINT_MAPPER = {
     'CommandRunInformation': 'commands',
     'Host': 'hosts',
+    'Vulnerability': 'vulns',
+    'VulnerabilityWeb': 'vulns',
+    'Service': 'services',
+    'Note': 'comments',
 }
 
 
@@ -982,7 +986,7 @@ def update_interface(workspace_name, id, name, description, mac,
                              type="Interface",
                              metadata=metadata)
 
-def create_service(workspace_name, id, name, description, ports,
+def create_service(workspace_name, name, description, ports, parent,
                    owned=False, owner="", protocol="", status="", version="",
                    metadata=None):
     """Creates a service.
@@ -1005,8 +1009,8 @@ def create_service(workspace_name, id, name, description, ports,
         A dictionary with the server's response.
     """
     return _save_to_server(workspace_name,
-                           id,
                            name=name,
+                           parent=parent,
                            description=description,
                            ports=ports,
                            owned=owned,
@@ -1053,7 +1057,7 @@ def update_service(workspace_name, id, name, description, ports,
                              metadata=metadata)
 
 
-def create_vuln(workspace_name, id, name, description, owned=None, owner="",
+def create_vuln(workspace_name, name, description, owned=None, owner="",
                 confirmed=False, data="", refs=None, severity="info", resolution="",
                 desc="", metadata=None, status=None, policyviolations=[]):
     """Creates a vuln.
@@ -1081,7 +1085,6 @@ def create_vuln(workspace_name, id, name, description, owned=None, owner="",
         A dictionary with the server's response.
     """
     return _save_to_server(workspace_name,
-                           id,
                            name=name,
                            description=description,
                            owned=owned,
@@ -1141,7 +1144,7 @@ def update_vuln(workspace_name, id, name, description, owned=None, owner="",
                              metadata=metadata,
                              policyviolations=policyviolations)
 
-def create_vuln_web(workspace_name, id, name, description, owned=None, owner="",
+def create_vuln_web(workspace_name, name, description, owned=None, owner="",
                     confirmed=False, data="", refs=None, severity="info", resolution="",
                     desc="", metadata=None, method=None, params="", path=None, pname=None,
                     query=None, request=None, response=None, category="", website=None,
@@ -1178,7 +1181,6 @@ def create_vuln_web(workspace_name, id, name, description, owned=None, owner="",
         A dictionary with the server's response.
     """
     return _save_to_server(workspace_name,
-                           id,
                            name=name,
                            description=description,
                            owned=owned,
@@ -1265,7 +1267,7 @@ def update_vuln_web(workspace_name, id, name, description, owned=None, owner="",
                              type='VulnerabilityWeb',
                              policyviolations=policyviolations)
 
-def create_note(workspace_name, id, name, text, owned=None, owner="",
+def create_note(workspace_name, name, text, owned=None, owner="",
                 description="", metadata=None):
     """Creates a note.
 
@@ -1284,7 +1286,6 @@ def create_note(workspace_name, id, name, text, owned=None, owner="",
         A dictionary with the server's response.
     """
     return _save_to_server(workspace_name,
-                           id,
                            name=name,
                            description=description,
                            owned=owned,

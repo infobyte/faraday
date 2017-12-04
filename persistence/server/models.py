@@ -9,9 +9,9 @@ See the file 'doc/LICENSE' for the license information
 import glob
 import os
 import sys
-from time import time
+from time import time, sleep
 import traceback
-from threading import Lock
+from threading import Lock, Condition
 from persistence.server import server
 from persistence.server.server_io_exceptions import (WrongObjectSignature,
                                                      CantAccessConfigurationWithoutTheClient)
@@ -697,18 +697,25 @@ class ModelBase(object):
     def __init__(self, obj, workspace_name):
         self._workspace_name = workspace_name
         self._server_id = obj.get('_id', '')
-        self.id = obj.get('id', '')
+        self.id = obj.get('id', None)
         self.name = obj.get('name')
         self.description = obj.get('description', "")
         self.owned = obj.get('owned', False)
         self.owner = obj.get('owner', '')
         self._metadata = obj.get('metadata', Metadata(self.owner))
+        self.parent_id = obj.get('parent')
         self.updates = []
+
+    def getParent(self):
+        return self.parent_id
 
     def setID(self, id):
         self.id = id
 
     def getID(self):
+        while self.id is None:
+            sleep(0.5)
+
         return self.id
 
     @staticmethod
@@ -1165,8 +1172,7 @@ class VulnWeb(Vuln):
 
     def getTarget(self):
         return self.target
-    def getParent(self):
-        return self.parent
+
     def getPolicyViolations(self):
         return self.policyviolations
 

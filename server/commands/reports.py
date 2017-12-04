@@ -1,5 +1,6 @@
 import os
 import logging
+from Queue import Queue
 
 from tqdm import tqdm
 
@@ -22,37 +23,48 @@ def import_external_reports(workspace_name=None):
         os.path.join(CONF.getConfigPath(), "plugins"))
     mappers_manager = MapperManager()
 
-    plugin_controller = PluginController(
-        'PluginController',
-        plugin_manager,
-        mappers_manager
-    )
+
 
     if workspace_name:
         query = Workspace.query.filter_by(name=workspace_name)
     else:
         query = Workspace.query
 
-    process_workspaces(mappers_manager, plugin_controller, query)
+    process_workspaces(mappers_manager, plugin_manager, query)
     #controller._pending_actions.join()
 
 
-def process_workspaces(mappers_manager, plugin_controller, query):
-    processes = []
+def process_workspaces(mappers_manager, plugin_manager, query):
+    report_managers = []
+    controllers = []
     for workspace in query.all():
+        if workspace.name != 'airbnb':
+            continue
+        print(workspace.name)
+        pending_actions = Queue()
+        plugin_controller = PluginController(
+            'PluginController',
+            plugin_manager,
+            mappers_manager,
+            pending_actions
+        )
         mappers_manager.createMappers(workspace.name)
-        controller = ModelController(mappers_manager)
+        controller = ModelController(mappers_manager, pending_actions)
         workspace_manager = WorkspaceManager(mappers_manager)
         setUpAPIs(controller, workspace_manager, hostname=None, port=None)
         controller.start()
+        controllers.append(controller)
         report_manager = ReportManager(
             0.1,
             workspace.name,
             plugin_controller,
             polling=False
         )
-        processes.append(report_manager)
+        report_managers.append(report_manager)
         report_manager.start()
 
-    #for thread in tqdm(processes):
-    #    thread.join()
+    #for report_manager in report_managers:
+    #    report_manager.join()
+
+    #for controller in controllers:
+    #    controller.join()

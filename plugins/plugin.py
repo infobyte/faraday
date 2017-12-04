@@ -7,11 +7,10 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from threading import Thread
 
 import os
 import re
-import time
-import Queue
 import traceback
 import multiprocessing
 import deprecation
@@ -56,7 +55,6 @@ class PluginBase(object):
         self.framework_version = None
         self._completition = {}
         self._new_elems = []
-        self._pending_actions = Queue.Queue()
         self._settings = {}
 
     def has_custom_output(self):
@@ -64,6 +62,16 @@ class PluginBase(object):
 
     def get_custom_file_path(self):
         return self._output_file_path
+
+    def set_actions_queue(self, _pending_actions):
+        """
+            We use plugin controller queue to add actions created by plugins.
+            Plugin controller will consume this actions.
+
+        :param controller: plugin controller
+        :return: None
+        """
+        self._pending_actions = _pending_actions
 
     def getSettings(self):
         for param, (param_type, value) in self._settings.iteritems():
@@ -150,7 +158,6 @@ class PluginBase(object):
         host_obj = factory.createModelObject(
             Host.class_signature,
             name, os=os, parent_id=None)
-
         host_obj._metadata.creatoserverr = self.id
         self.__addPendingAction(modelactions.ADDHOST, host_obj)
         return host_obj.getID()
@@ -184,7 +191,7 @@ class PluginBase(object):
             version=version, description=description, parent_id=host_id)
 
         serv_obj._metadata.creator = self.id
-        self.__addPendingAction(modelactions.ADDSERVICEHOST, host_id, serv_obj)
+        self.__addPendingAction(modelactions.ADDSERVICEHOST, serv_obj)
         return serv_obj.getID()
 
     def createAndAddVulnToHost(self, host_id, name, desc="", ref=[],
@@ -196,7 +203,7 @@ class PluginBase(object):
             confirmed=False, parent_id=host_id)
 
         vuln_obj._metadata.creator = self.id
-        self.__addPendingAction(modelactions.ADDVULNHOST, host_id, vuln_obj)
+        self.__addPendingAction(modelactions.ADDVULNHOST, vuln_obj)
         return vuln_obj.getID()
 
     @deprecation.deprecated(deprecated_in="3.0", removed_in="3.5",
@@ -212,7 +219,7 @@ class PluginBase(object):
             confirmed=False, parent_id=interface_id)
 
         vuln_obj._metadata.creator = self.id
-        self.__addPendingAction(modelactions.ADDVULNHOST, host_id, vuln_obj)
+        self.__addPendingAction(modelactions.ADDVULNHOST, vuln_obj)
         return vuln_obj.getID()
 
     def createAndAddVulnToService(self, host_id, service_id, name, desc="",
@@ -224,7 +231,7 @@ class PluginBase(object):
             confirmed=False, parent_id=service_id)
 
         vuln_obj._metadata.creator = self.id
-        self.__addPendingAction(modelactions.ADDVULNSRV, host_id, service_id, vuln_obj)
+        self.__addPendingAction(modelactions.ADDVULNSRV, vuln_obj)
         return vuln_obj.getID()
 
     def createAndAddVulnWebToService(self, host_id, service_id, name, desc="",
@@ -240,7 +247,7 @@ class PluginBase(object):
             category=category, confirmed=False, parent_id=service_id)
 
         vulnweb_obj._metadata.creator = self.id
-        self.__addPendingAction(modelactions.ADDVULNWEBSRV, host_id, service_id, vulnweb_obj)
+        self.__addPendingAction(modelactions.ADDVULNWEBSRV, vulnweb_obj)
         return vulnweb_obj.getID()
 
     def createAndAddNoteToHost(self, host_id, name, text):
@@ -250,7 +257,7 @@ class PluginBase(object):
             name, text=text, parent_id=host_id)
 
         note_obj._metadata.creator = self.id
-        self.__addPendingAction(modelactions.ADDNOTEHOST, host_id, note_obj)
+        self.__addPendingAction(modelactions.ADDNOTEHOST, note_obj)
         return note_obj.getID()
 
     @deprecation.deprecated(deprecated_in="3.0", removed_in="3.5",
@@ -263,7 +270,7 @@ class PluginBase(object):
             name, text=text, parent_id=interface_id)
 
         note_obj._metadata.creator = self.id
-        self.__addPendingAction(modelactions.ADDNOTEHOST, host_id, note_obj)
+        self.__addPendingAction(modelactions.ADDNOTEHOST, note_obj)
         return note_obj.getID()
 
     def createAndAddNoteToService(self, host_id, service_id, name, text):
@@ -273,17 +280,17 @@ class PluginBase(object):
             name, text=text, parent_id=service_id)
 
         note_obj._metadata.creator = self.id
-        self.__addPendingAction(modelactions.ADDNOTESRV, host_id, service_id, note_obj)
+        self.__addPendingAction(modelactions.ADDNOTESRV, note_obj)
         return note_obj.getID()
 
-    def createAndAddNoteToNote(self, host_id, service_id, note_id, name, text):
+    def createAndAddNoteToNote(self, host_id, name, text):
 
         note_obj = model.common.factory.createModelObject(
             Note.class_signature,
             name, text=text, parent_id=note_id)
 
         note_obj._metadata.creator = self.id
-        self.__addPendingAction(modelactions.ADDNOTENOTE, host_id, service_id, note_id, note_obj)
+        self.__addPendingAction(modelactions.ADDNOTENOTE, host_id, note_obj)
         return note_obj.getID()
 
     def createAndAddCredToService(self, host_id, service_id, username,
@@ -294,7 +301,7 @@ class PluginBase(object):
             username, password=password, parent_id=service_id)
 
         cred_obj._metadata.creator = self.id
-        self.__addPendingAction(modelactions.ADDCREDSRV, host_id, service_id, cred_obj)
+        self.__addPendingAction(modelactions.ADDCREDSRV, cred_obj)
         return cred_obj.getID()
 
     def log(self, msg, level='INFO'):
@@ -322,11 +329,17 @@ class PluginCustomOutput(PluginBase):
         self.processReport(self._output_file_path)
 
 
-class PluginProcess(multiprocessing.Process):
-    def __init__(self, plugin_instance, output_queue, new_elem_queue, isReport=False):
-        multiprocessing.Process.__init__(self)
+class PluginProcess(Thread):
+    def __init__(self, plugin_instance, output_queue, isReport=False):
+        """
+            Executes one plugin.
+
+        :param plugin_instance: current plugin in execution.
+        :param output_queue: queue with raw ouput of that the plugin needs.
+        :param isReport: output data was read from file.
+        """
+        Thread.__init__(self)
         self.output_queue = output_queue
-        self.new_elem_queue = new_elem_queue
         self.plugin = plugin_instance
         self.isReport = isReport
 
@@ -348,34 +361,13 @@ class PluginProcess(multiprocessing.Process):
                         self.plugin.processReport(output)
                     else:
                         self.plugin.processOutput(output)
-                except Exception:
+                except Exception as ex:
                     model.api.devlog("Plugin raised an exception:")
                     model.api.devlog(traceback.format_exc())
-                else:
-                    while True:
-                        try:
-                            self.new_elem_queue.put(
-                                self.plugin._pending_actions.get(block=False))
-                            time.sleep(0)  # potentially allowing another process to run
-                        except Queue.Empty:
-                            model.api.devlog(
-                                ("PluginProcess run _pending_actions"
-                                 " queue Empty. Breaking loop"))
-                            break
-                        except Exception as ex:
-                            model.api.devlog(
-                                ("PluginProcess run getting from "
-                                 "_pending_action queue - something strange "
-                                 "happened... unhandled exception?"))
-                            model.api.devlog(traceback.format_exc())
-                            break
-
-
             else:
-
                 done = True
                 model.api.devlog('%s: Exiting' % proc_name)
 
             self.output_queue.task_done()
-        self.new_elem_queue.put(None)
+
         return

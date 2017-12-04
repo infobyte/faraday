@@ -7,13 +7,16 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+import threading
+
 import os
 import time
 import Queue
 import shlex
 import errno
 import logging
-import multiprocessing
+from multiprocessing import JoinableQueue
+from Queue import Queue, Empty
 
 from plugins.plugin import PluginProcess
 import model.api
@@ -28,11 +31,12 @@ from config.globals import (
 logger = logging.getLogger(__name__)
 
 
-class PluginController(object):
+class PluginController(threading.Thread):
     """
     TODO: Doc string.
     """
-    def __init__(self, id, plugin_manager, mapper_manager):
+    def __init__(self, id, plugin_manager, mapper_manager, pending_actions):
+        super(PluginController, self).__init__()
         self.plugin_manager = plugin_manager
         self._plugins = plugin_manager.getPlugins()
         self.id = id
@@ -45,6 +49,8 @@ class PluginController(object):
         self._active_plugins = {}
         self.plugin_sets = {}
         self.plugin_manager.addController(self, self.id)
+        self.stop = False
+        self.pending_actions = pending_actions
 
     def _find_plugin(self, plugin_id):
         return self._plugins.get(plugin_id, None)
@@ -93,60 +99,30 @@ class PluginController(object):
         """
         return self._plugins
 
+    def stop(self):
+        self.stop = True
+
     def processOutput(self, plugin, output, command_id, isReport=False):
-        output_queue = multiprocessing.JoinableQueue()
-        new_elem_queue = multiprocessing.Queue()
+        output_queue = JoinableQueue()
+        plugin.set_actions_queue(self.pending_actions)
 
         plugin_process = PluginProcess(
-            plugin, output_queue, new_elem_queue, isReport)
+            plugin, output_queue, isReport)
 
         getLogger(self).debug(
             "Created plugin_process (%d) for plugin instance (%d)" %
             (id(plugin_process), id(plugin)))
 
+        # TODO: stop this processes
         plugin_process.start()
 
+        print('Plugin controller ', self.pending_actions)
+        self.pending_actions.put((modelactions.PLUGINSTART, plugin.id))
+
         output_queue.put(output)
-        output_queue.put(None)
         output_queue.join()
 
-        self._processAction(modelactions.PLUGINSTART, [plugin.id])
-
-        while True:
-            try:
-                current_action = new_elem_queue.get(block=False)
-                if current_action is None:
-                    break
-                action = current_action[0]
-                parameters = current_action[1:]
-
-                if hasattr(parameters[-1], '_metadata'):
-                    parameters[-1]._metadata.command_id = command_id
-
-                getLogger(self).debug(
-                    "Core: Processing a new '%s', parameters (%s)\n" %
-                    (action, str(parameters)))
-                self._processAction(action, parameters)
-
-            except Queue.Empty:
-                continue
-            except IOError, e:
-                if e.errno == errno.EINTR:
-                    continue
-                else:
-                    getLogger(self).debug(
-                        "new_elem_queue Exception - "
-                        "something strange happened... "
-                        "unhandled exception?")
-                    break
-            except Exception as ex:
-                logger.exception(ex)
-                getLogger(self).debug(
-                    "new_elem_queue Exception - "
-                    "something strange happened... "
-                    "unhandled exception?")
-                break
-        self._processAction(modelactions.PLUGINEND, [plugin.id])
+        self.pending_actions.put((modelactions.PLUGINEND, plugin.id))
 
     def _processAction(self, action, parameters):
         """
@@ -230,8 +206,7 @@ class PluginController(object):
         cmd_info.duration = time.time() - cmd_info.itime
         self._mapper_manager.update(cmd_info)
 
-        self.processOutput(plugin, term_output, cmd_info.getID()
-)
+        self.processOutput(plugin, term_output, cmd_info.getID())
         del self._active_plugins[pid]
         return True
 

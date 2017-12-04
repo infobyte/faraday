@@ -159,6 +159,20 @@ class GenericView(FlaskView):
         """Register and add JSON error handler. Use error code
         400 instead of 409"""
         super(GenericView, cls).register(app, *args, **kwargs)
+
+        @app.errorhandler(422)
+        def handle_conflict(err):
+            # webargs attaches additional metadata to the `data` attribute
+            exc = getattr(err, 'exc')
+            if exc:
+                # Get validations from the ValidationError object
+                messages = exc.messages
+            else:
+                messages = ['Invalid request']
+            return flask.jsonify({
+                'messages': messages,
+            }), 400
+
         @app.errorhandler(409)
         def handle_conflict(err):
             # webargs attaches additional metadata to the `data` attribute

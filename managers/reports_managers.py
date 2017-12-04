@@ -5,6 +5,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from threading import Thread
 
 import os
 import re
@@ -58,14 +59,13 @@ class ReportProcessor():
         return True
 
     def onlinePlugin(self, cmd):
-
         _, new_cmd = self.plugin_controller.processCommandInput('0', cmd, './')
         self.plugin_controller.onCommandFinished('0', 0, cmd)
 
 
-class ReportManager(Process):
+class ReportManager(Thread):
     def __init__(self, timer, ws_name, plugin_controller, polling=True):
-        Process.__init__(self)
+        Thread.__init__(self)
         self.polling = polling
         self.ws_name = ws_name
         self.daemon = False

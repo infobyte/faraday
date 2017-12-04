@@ -53,11 +53,13 @@ def get_host_properties(host):
 
 
 def get_service_properties(service):
-    service_dict = {'ports': service.getPorts(),
-                    'protocol': service.getProtocol(),
-                    'status': service.getStatus(),
-                    'version': service.getVersion()
-                    }
+    service_dict = {
+        'ports': service.getPorts(),
+        'protocol': service.getProtocol(),
+        'status': service.getStatus(),
+        'version': service.getVersion(),
+        'parent': service.getParent()
+    }
     service_dict.update(get_object_properties(service))
     return service_dict
 

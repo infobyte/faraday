@@ -101,7 +101,7 @@ class VulnerabilitySchema(AutoSchema):
     host = fields.Integer(dump_only=True, attribute='host_id')
     severity = fields.Method(serialize='get_severity', deserialize='load_severity')
     status = fields.Method(serialize='get_status', deserialize='load_status')  # TODO: this breaks enum validation.
-    type = fields.Method(serialize='get_type', deserialize='load_type')
+    type = fields.Method(serialize='get_type', deserialize='load_type', required=True)
     obj_id = fields.String(dump_only=True, attribute='id')
     target = fields.Method('get_target')
     metadata = SelfNestedField(MetadataSchema())

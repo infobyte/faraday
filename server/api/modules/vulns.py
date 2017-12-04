@@ -377,7 +377,9 @@ class VulnerabilityView(PaginatedMixin,
     def _get_schema_class(self):
         assert self.schema_class_dict is not None, "You must define schema_class"
         if request.method == 'POST':
-            requested_type = request.json['type']
+            requested_type = request.json.get('type', None)
+            if not requested_type:
+                raise ValidationError('Type is required.')
             if requested_type not in self.schema_class_dict:
                 raise InvalidUsage('Invalid vulnerability type.')
             return self.schema_class_dict[requested_type]

@@ -5,6 +5,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+import json
 
 import os
 #import model.api
@@ -240,14 +241,23 @@ class ReportParser(object):
                 if file_signature.find(key) == 0:
 
                     result = signatures[key]
-                    getLogger(self).debug("Report type detected: %s" % result)
                     break
+
+            if not result:
+                # try json loads to detect a json file.
+                try:
+                    json.loads(f.read())
+                    f.seek(0)
+                    result = 'json'
+                except ValueError:
+                    pass
 
         except IOError, err:
             self.report_type = None
             getLogger(self).error(
                 "Error while opening file.\n%s. %s" % (err, file_path))
 
+        getLogger(self).debug("Report type detected: %s" % result)
         return f, result
 
     def getRootTag(self, file_path):
@@ -266,6 +276,10 @@ class ReportParser(object):
             result = "maltego"
         elif report_type == "dat":
             result = 'lynis'
+        elif report_type == 'json':
+            # this will work since recon-ng is the first plugin to use json.
+            # we need to add json detection here!
+            result = 'reconng'
         else:
 
             try:
@@ -345,5 +359,7 @@ class ReportParser(object):
             return "Maltego"
         elif "lynis" == tag:
             return "Lynis"
+        elif "reconng" == tag:
+            return "Reconng"
         else:
             return None

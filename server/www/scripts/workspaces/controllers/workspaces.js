@@ -54,9 +54,6 @@ angular.module('faradayApp')
         };
 
         $scope.onSuccessGet = function(workspace){
-            if (workspace.sdate !== undefined) {
-                if(workspace.sdate.toString().indexOf(".") != -1) workspace.sdate = workspace.sdate * 1000;
-            }
             workspace.selected = false;
             $scope.workspaces.push(workspace);
         };
@@ -141,7 +138,6 @@ angular.module('faradayApp')
                 "duration":     duration,
                 "name":         ws.name,
                 "scope":        ws.scope,
-                "sdate":        ws.sdate,
                 "type":         ws.type
             };
             workspacesFact.update(workspace).then(function(workspace) {
@@ -262,9 +258,7 @@ angular.module('faradayApp')
             workspace = {
                 "_id": wname,
                 "customer": "",
-                "sdate": (new Date).getTime(),
                 "name": wname,
-                "fdate": undefined,
                 "type": "Workspace",
                 "children": [
                 ],

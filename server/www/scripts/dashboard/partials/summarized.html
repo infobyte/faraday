@@ -26,6 +26,7 @@
                                     <div class="nro" ng-switch-when="hosts"><a href="#/hosts/ws/{{workspace}}">{{obj.value}}</a></div>
                                     <div class="nro" ng-switch-when="web vulns"><a href="#/status/ws/{{workspace}}/search/type=VulnerabilityWeb">{{obj.value}}</a></div>
                                     <div class="nro" ng-switch-when="vulns"><a href="#/status/ws/{{workspace}}/search/type=Vulnerability">{{obj.value}}</a></div>
+                                    <div class="nro" ng-switch-when="credentials"><a href="#/credentials/ws/{{workspace}}">{{obj.value}}</a></div>
                                     <!--#/status/ws/cscan/search/severity=high -->
                                     <div class="nro" ng-switch-default>{{obj.value}}</div>
                                 </div>

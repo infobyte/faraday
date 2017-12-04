@@ -821,13 +821,16 @@ class Host(ModelBase):
 
     def __str__(self):
         return "{0} ({1})".format(self.name, self.vuln_amount)
+
     def getOS(self):
         return self.os
+
     def getVulnAmount(self):
         return self.vuln_amount
 
     def getDefaultGateway(self):
         return self.default_gateway
+
     def getVulns(self):
         return get_all_vulns(self._workspace_name, hostid=self._server_id)
     # def getInterface(self, interface_couch_id):
@@ -850,7 +853,7 @@ class Service(ModelBase):
     def __init__(self, service, workspace_name):
         ModelBase.__init__(self, service, workspace_name)
         self.protocol = service['protocol']
-        self.ports =  [int(port) for port in service['ports']]
+        self.ports = [int(port) for port in service['ports']]
         self.version = service['version']
         self.status = service['status']
         self.vuln_amount = int(service.get('vulns', 0))
@@ -858,10 +861,10 @@ class Service(ModelBase):
     @staticmethod
     def publicattrsrefs():
         publicattrs = dict(ModelBase.publicattrsrefs(), **{
-            'Ports' : 'ports',
-            'Protocol' : 'protocol',
-            'Status' : 'status',
-            'Version' : 'version'
+            'Ports': 'ports',
+            'Protocol': 'protocol',
+            'Status': 'status',
+            'Version': 'version'
         })
         return publicattrs
 
@@ -884,16 +887,22 @@ class Service(ModelBase):
 
     def __str__(self):
         return "{0} ({1})".format(self.name, self.vuln_amount)
+
     def getStatus(self):
         return self.status
+
     def getPorts(self):
         return self.ports  # this is a list of one element in faraday
+
     def getVersion(self):
         return self.version
+
     def getProtocol(self):
         return self.protocol
+
     def isOwned(self):
         return self.owned
+
     def getVulns(self):
         return get_all_vulns(self._workspace_name, serviceid=self._server_id)
 
@@ -922,9 +931,9 @@ class Vuln(ModelBase):
     @staticmethod
     def publicattrsrefs():
         publicattrs = dict(ModelBase.publicattrsrefs(), **{
-            'Data' : 'data',
-            'Severity' : 'severity',
-            'Refs' : 'refs',
+            'Data': 'data',
+            'Severity': 'severity',
+            'Refs': 'refs',
             'Resolution': 'resolution',
             'Status': 'status'
         })
@@ -1006,18 +1015,25 @@ class Vuln(ModelBase):
 
     def getDesc(self):
         return self.desc
+
     def getData(self):
         return self.data
+
     def getSeverity(self):
         return self.severity
+
     def getRefs(self):
         return self.refs
+
     def getConfirmed(self):
         return self.confirmed
+
     def getResolution(self):
         return self.resolution
+
     def getStatus(self):
         return self.status
+
     def getPolicyViolations(self):
         return self.policyviolations
 
@@ -1050,23 +1066,22 @@ class VulnWeb(Vuln):
         self.service = vuln_web.get('service')
         self.tags = vuln_web.get('tags', list())
         self.target = vuln_web.get('target')
-        self.parent = vuln_web.get('parent')
         self.policyviolations = vuln_web.get('policyviolations', list())
 
     @staticmethod
     def publicattrsrefs():
         publicattrs = dict(ModelBase.publicattrsrefs(), **{
-            'Data' : 'data',
-            'Severity' : 'severity',
-            'Refs' : 'refs',
-            'Path' : 'path',
-            'Website' : 'website',
-            'Request' : 'request',
-            'Response' : 'response',
-            'Method' : 'method',
-            'Pname' : 'pname',
-            'Params' : 'params',
-            'Query' : 'query',
+            'Data': 'data',
+            'Severity': 'severity',
+            'Refs': 'refs',
+            'Path': 'path',
+            'Website': 'website',
+            'Request': 'request',
+            'Response': 'response',
+            'Method': 'method',
+            'Pname': 'pname',
+            'Params': 'params',
+            'Query': 'query',
             'Status': 'status'})
         return publicattrs
 
@@ -1099,38 +1114,55 @@ class VulnWeb(Vuln):
 
     def getDescription(self):
         return self.description
+
     def getPath(self):
         return self.path
+
     def getWebsite(self):
         return self.website
+
     def getRequest(self):
         return self.request
+
     def getResponse(self):
         return self.response
+
     def getMethod(self):
         return self.method
+
     def getPname(self):
         return self.pname
+
     def getParams(self):
         return self.params
+
     def getQuery(self):
         return self.query
+
     def getResolution(self):
         return self.resolution
+
     def getAttachments(self):
         return self.attachments
+
     def getEaseOfResolution(self):
         return self.easeofresolution
+
     def getHostnames(self):
         return self.hostnames
+
     def getImpact(self):
         return self.impact
+
     def getService(self):
         return self.service
+
     def getStatus(self):
         return self.status
+
     def getTags(self):
         return self.tags
+
     def getTarget(self):
         return self.target
     def getParent(self):
@@ -1202,8 +1234,12 @@ class Note(ModelBase):
         if text is not None:
             self.text = text
 
-    def getDescription(self): return self.description
-    def getText(self): return self.text
+    def getDescription(self):
+        return self.description
+
+    def getText(self):
+        return self.text
+
 
 class Credential(ModelBase):
     class_signature = "Cred"
@@ -1225,8 +1261,10 @@ class Credential(ModelBase):
 
     def getUsername(self):
         return self.username
+
     def getPassword(self):
         return self.password
+
 
 class Command:
     class_signature = 'CommandRunInformation'
@@ -1244,20 +1282,28 @@ class Command:
 
     def getCommand(self):
         return self.command
+
     def getDuration(self):
         return self.duration
+
     def getHostname(self):
         return self.hostname
+
     def getIP(self):
         return self.ip
+
     def getItime(self):
         return self.itime
+
     def getParams(self):
         return self.params
+
     def getUser(self):
         return self.user
+
     def getWorkspace(self):
         return self.workspace
+
 
 class _Workspace:
     class_signature = 'Workspace'
@@ -1272,12 +1318,16 @@ class _Workspace:
 
     def getName(self):
         return self.name
+
     def getDescription(self):
         return self.description
+
     def getCustomer(self):
         return self.customer
+
     def getStartDate(self):
         return self.start_date
+
     def getFinishDate(self):
         return self.finish_date
 
@@ -1326,9 +1376,9 @@ class Metadata(object):
         """This private method grabs the stackframes in look for the controller
         call that generated the update"""
 
-        l_strace = traceback.extract_stack(limit = 10)
-        controller_funcallnames = [ x[2] for x in l_strace if "controller" in x[0] ]
+        l_strace = traceback.extract_stack(limit=10)
+        controller_funcallnames = [x[2] for x in l_strace if "controller" in x[0]]
 
         if controller_funcallnames:
-            return "ModelControler." +  " ModelControler.".join(controller_funcallnames)
+            return "ModelControler." + " ModelControler.".join(controller_funcallnames)
         return "No model controller call"

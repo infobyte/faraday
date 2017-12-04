@@ -46,7 +46,6 @@ class modelactions:
     ADDNOTEVULN = 2030
     DELNOTEVULN = 2031
     EDITHOST = 2032
-    EDITINTERFACE = 2033
     EDITSERVICE = 2035
     ADDCREDSRV = 2036
     DELCREDSRV = 2037
@@ -79,7 +78,6 @@ class modelactions:
         ADDNOTENOTE: "ADDNOTENOTE",
         DELNOTENOTE: "DELNOTENOTE",
         EDITHOST: "EDITHOST",
-        EDITINTERFACE: "EDITINTERFACE",
         ADDCREDSRV: "ADDCREDSRV",
         DELCREDSRV: "DELCREDSRV",
         ADDVULNWEBSRV: "ADDVULNSWEBRV",
@@ -198,7 +196,6 @@ class ModelController(Thread):
             modelactions.ADDHOST: self.__add,
             modelactions.DELHOST: self.__del,
             modelactions.EDITHOST: self.__edit,
-            modelactions.EDITINTERFACE: self.__edit,
             modelactions.EDITSERVICE: self.__edit,
             # Vulnerability
             modelactions.ADDVULNHOST: self.__add,
@@ -487,87 +484,6 @@ class ModelController(Thread):
         self._processAction(modelactions.EDITHOST, [
                             host, name, description, os, owned], sync=True)
 
-    def addInterfaceASYNC(self, hostid, interface, update=False):
-        """
-        ASYNC API
-        Adds an action to the ModelController actions queue indicating a
-        new interface must be added to a specific host
-        """
-        self.__addPendingAction(modelactions.ADDINTERFACE, interface, hostid)
-
-    def addInterfaceSYNC(self, hostId, interface, update=False):
-        """
-        SYNC API
-        Adds interface directly to the model
-        """
-        self._processAction(modelactions.ADDINTERFACE, [
-                            interface, hostId], sync=True)
-
-    def delInterfaceASYNC(self, hostId, interfaceId):
-        """
-        ASYNC API
-        Adds an action to the ModelController actions queue indicating a
-        particular host must be removed from the model
-        """
-        self.__addPendingAction(modelactions.DELINTERFACE, interfaceId, hostId)
-
-    def delInterfaceSYNC(self, host, interface_id, *args):
-        """
-        SYNC API
-        Deletes an interface from model
-        """
-        self._processAction(modelactions.DELINTERFACE,
-                            [interface_id], sync=True)
-
-    def editInterfaceSYNC(self, interface, name, description, hostnames,
-                          mac, ipv4, ipv6, network_segment,
-                          amount_ports_opened, amount_ports_closed,
-                          amount_ports_filtered, owned):
-        """
-        SYNC API
-        Modifies an interface from model
-        """
-        self._processAction(modelactions.EDITINTERFACE,
-                            [interface, name, description, hostnames,
-                             mac, ipv4, ipv6, network_segment,
-                             amount_ports_opened, amount_ports_closed,
-                             amount_ports_filtered, owned], sync=True)
-
-    def addServiceToInterfaceASYNC(self, host, interfaceId, newService):
-        """
-        ASYNC API
-        Adds an action to the ModelController actions queue indicating a
-        new services must be added to a specific host in a specific interface
-        """
-        self.__addPendingAction(
-            modelactions.ADDSERVICEINT, newService, interfaceId)
-
-    def addServiceToInterfaceSYNC(self, host_id, interface_id, newService):
-        """
-        SYNC API
-        Adds a service to a specific host in a specific interface
-        directly to the model
-        """
-        self._processAction(modelactions.ADDSERVICEINT, [
-                            newService, interface_id], sync=True)
-
-    def delServiceFromInterfaceASYNC(self, host, interfaceId, serviceId):
-        """
-        ASYNC API
-        Adds an action to the ModelController actions queue indicating a
-        particular service in a host and interface must be removed from the
-        model Interface parameter can be "ALL"
-        """
-        self.__addPendingAction(
-            modelactions.DELSERVICEINT, serviceId, interfaceId)
-
-    def delServiceFromInterfaceSYNC(self, host, interfaceId, serviceId):
-        """
-        SYNC API
-        Delete a service in a host and interface from the model
-        """
-        self._processAction(modelactions.DELSERVICEINT, [serviceId], sync=True)
-
     def editServiceSYNC(self, service, name, description, protocol, ports, status, version, owned):
         """
         SYNC API
@@ -615,13 +531,6 @@ class ModelController(Thread):
         self.active_plugins_count_lock.release()
         return True
 
-    def addVulnToInterfaceASYNC(self, host, intId, newVuln):
-        self.__addPendingAction(modelactions.ADDVULNINT, newVuln, intId)
-
-    def addVulnToInterfaceSYNC(self, host, intId, newVuln):
-        self._processAction(modelactions.ADDVULNINT, [
-                            newVuln, intId], sync=True)
-
     def addVulnToHostASYNC(self, hostId, newVuln):
         self.__addPendingAction(modelactions.ADDVULNHOST, newVuln, hostId)
 
@@ -646,14 +555,6 @@ class ModelController(Thread):
     def addVulnWebToServiceSYNC(self, host, srvId, newVuln):
         self._processAction(modelactions.ADDVULNWEBSRV,
                             [newVuln, srvId], sync=True)
-
-    def delVulnFromInterfaceASYNC(self, hostname, intname, vuln):
-        self.__addPendingAction(modelactions.DELVULNINT,
-                                hostname, intname, vuln)
-
-    def delVulnFromInterfaceSYNC(self, hostname, intname, vuln):
-        self._processAction(modelactions.DELVULNINT, [
-                            hostname, intname, vuln], sync=True)
 
     def delVulnFromHostASYNC(self, hostId, vulnId):
         self.__addPendingAction(modelactions.DELVULNHOST, vulnId)
@@ -693,14 +594,6 @@ class ModelController(Thread):
                                 severity, resolution, request, response, method,
                                 pname, params, query, category)
 
-    # Note
-    def addNoteToInterfaceASYNC(self, host, intId, newNote):
-        self.__addPendingAction(modelactions.ADDNOTEINT, newNote, intId)
-
-    def addNoteToInterfaceSYNC(self, host, intId, newNote):
-        self._processAction(modelactions.ADDNOTEINT, [
-                            newNote, intId], sync=True)
-
     def addNoteToHostASYNC(self, hostId, newNote):
         self.__addPendingAction(modelactions.ADDNOTEHOST, newNote, hostId)
 
@@ -725,12 +618,6 @@ class ModelController(Thread):
     def addNoteSYNC(self, model_object, newNote):
         self._processAction(modelactions.ADDNOTE, [
                             newNote, model_object], sync=True)
-
-    def delNoteFromInterfaceASYNC(self, hostname, intname, noteId):
-        self.__addPendingAction(modelactions.DELNOTEINT, noteId)
-
-    def delNoteFromInterfaceSYNC(self, hostname, intname, noteId):
-        self._processAction(modelactions.DELNOTEINT, [noteId], sync=True)
 
     def delNoteFromHostASYNC(self, hostId, noteId):
         self.__addPendingAction(modelactions.DELNOTEHOST, noteId)

@@ -115,6 +115,16 @@ def parse_host(register):
     if obj is None:
         return None
     host = models.Host(obj, WORKSPACE)
+
+    try:
+
+        date = register.get("host_metadata_create_time")
+        if date is not None:
+            datetime_object = datetime.strptime(date, "%d/%m/%Y")
+            host._metadata.create_time = mktime(datetime_object.timetuple())
+    except Exception:
+        print "Invalid date", host.name
+
     return host
 
 

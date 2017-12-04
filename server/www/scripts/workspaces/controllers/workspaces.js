@@ -82,8 +82,8 @@ angular.module('faradayApp')
                     $scope.workspaces[i].description = workspace.description;
                     if ($scope.workspaces[i].duration === undefined)
                         $scope.workspaces[i].duration = {};
-                    $scope.workspaces[i].duration.start = workspace.duration.start;
-                    $scope.workspaces[i].duration.end = workspace.duration.end;
+                    $scope.workspaces[i].duration.start_date = workspace.duration.start_date;
+                    $scope.workspaces[i].duration.end_date = workspace.duration.end_date;
                     $scope.workspaces[i].scope = workspace.scope;
                     break;
                 }
@@ -118,15 +118,15 @@ angular.module('faradayApp')
         };
 
         $scope.update = function(ws){
-            if(typeof(ws.duration.start) == "number") {
-                start = ws.duration.start;
-            } else if(ws.duration.start) {
-                start = ws.duration.start.getTime(); 
+            if(typeof(ws.duration.start_date) == "number") {
+                start = ws.duration.start_date;
+            } else if(ws.duration.start_date) {
+                start = ws.duration.start_date.getTime();
             } else {start = "";}
-            if(typeof(ws.duration.end) == "number") {
-                end = ws.duration.end;
-            } else if(ws.duration.end) {
-                end = ws.duration.end.getTime();
+            if(typeof(ws.duration.end_date) == "number") {
+                end = ws.duration.end_date;
+            } else if(ws.duration.end_date) {
+                end = ws.duration.end_date.getTime();
             } else {end = "";}
             duration = {'start': start, 'end': end};
             workspace = {
@@ -262,7 +262,7 @@ angular.module('faradayApp')
                 "type": "Workspace",
                 "children": [
                 ],
-                "duration": {"start": start, "end": end},
+                "duration": {"start_date": start, "end_date": end},
                 "scope": scope,
                 "description": wdesc
             };

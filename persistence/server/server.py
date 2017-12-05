@@ -24,8 +24,11 @@ Warning:
 """
 
 import os
-import requests
 import json
+import logging
+
+import requests
+
 from persistence.server.utils import force_unique
 from persistence.server.server_io_exceptions import (WrongObjectSignature,
                                                      CantCommunicateWithServerError,

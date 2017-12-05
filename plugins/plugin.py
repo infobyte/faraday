@@ -12,21 +12,20 @@ from threading import Thread
 import os
 import re
 import traceback
-import multiprocessing
 import deprecation
 
 import server.config
 import model.api
 import model.common
 from model.common import factory
-from persistence.server.models import (Host,
-        Service,
-        Vuln,
-        VulnWeb,
-        Credential,
-        Note,
-        Command
-        )
+from persistence.server.models import (
+    Host,
+    Service,
+    Vuln,
+    VulnWeb,
+    Credential,
+    Note,
+)
 from plugins.modelactions import modelactions
 
 from config.configuration import getInstanceConfiguration
@@ -157,7 +156,9 @@ class PluginBase(object):
 
         host_obj = factory.createModelObject(
             Host.class_signature,
-            name, os=os, parent_id=None)
+            name,
+            os=os,
+            parent_id=None)
         host_obj._metadata.creatoserverr = self.id
         self.__addPendingAction(modelactions.ADDHOST, host_obj)
         return host_obj.getID()
@@ -283,14 +284,15 @@ class PluginBase(object):
         self.__addPendingAction(modelactions.ADDNOTESRV, note_obj)
         return note_obj.getID()
 
-    def createAndAddNoteToNote(self, host_id, name, text):
+    def createAndAddNoteToNote(self, host_id, service_id, note_id, name, text):
 
         note_obj = model.common.factory.createModelObject(
             Note.class_signature,
             name, text=text, parent_id=note_id)
 
         note_obj._metadata.creator = self.id
-        self.__addPendingAction(modelactions.ADDNOTENOTE, host_id, note_obj)
+
+        self.__addPendingAction(modelactions.ADDNOTENOTE, note_obj)
         return note_obj.getID()
 
     def createAndAddCredToService(self, host_id, service_id, username,

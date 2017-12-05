@@ -1,8 +1,9 @@
+import time
 import pytest
 
 from server.models import Workspace
 from server.api.modules.workspaces import WorkspaceView
-from test_cases.test_api_non_workspaced_base import ReadWriteAPITests, API_PREFIX
+from test_cases.test_api_non_workspaced_base import ReadWriteAPITests
 from test_cases import factories
 
 class TestWorkspaceAPI(ReadWriteAPITests):
@@ -25,7 +26,10 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         '?confirmed=false'
     ])
 
-    def test_vuln_count(self, vulnerability_factory, test_client, session,
+    def test_vuln_count(self,
+                        vulnerability_factory,
+                        test_client,
+                        session,
                         querystring):
         vulnerability_factory.create_batch(8, workspace=self.first_object,
                                            confirmed=False)
@@ -41,8 +45,11 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         '?confirmed=true'
     ])
 
-    def test_vuln_count_confirmed(self, vulnerability_factory, test_client,
-                                  session, querystring):
+    def test_vuln_count_confirmed(self,
+                                  vulnerability_factory,
+                                  test_client,
+                                  session,
+                                  querystring):
         vulnerability_factory.create_batch(8, workspace=self.first_object,
                                            confirmed=False)
         vulnerability_factory.create_batch(5, workspace=self.first_object,
@@ -51,3 +58,56 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         res = test_client.get(self.url(self.first_object) + querystring)
         assert res.status_code == 200
         assert res.json['stats']['total_vulns'] == 5
+
+    def test_create_fails_with_valid_duration(self, session, test_client):
+        workspace_count_previous = session.query(Workspace).count()
+        start_date = int(time.time())*1000
+        end_date = start_date+86400000
+        duration = {'start_date': start_date, 'end_date': end_date}
+        raw_data = {'name': 'somethingdarkside', 'duration': duration}
+        res = test_client.post('/v2/ws/', data=raw_data)
+        assert res.status_code == 201
+        assert workspace_count_previous + 1 == session.query(Workspace).count()
+        assert res.json['duration']['start_date'] == start_date
+        assert res.json['duration']['end_date'] == end_date
+
+    def test_create_fails_with_invalid_duration_start_type(self,
+                                                           session,
+                                                           test_client):
+        workspace_count_previous = session.query(Workspace).count()
+        start_date = 'this should clearly fail'
+        duration = {'start_date': start_date, 'end_date': 86400000}
+        raw_data = {'name': 'somethingdarkside', 'duration': duration}
+        res = test_client.post('/v2/ws/', data=raw_data)
+        assert res.status_code == 400
+        assert workspace_count_previous == session.query(Workspace).count()
+
+    @pytest.mark.xfail(reason="Filter not implemented yet")
+    def test_create_fails_with_invalid_duration_start_after_end(self,
+                                                                session,
+                                                                test_client):
+        workspace_count_previous = session.query(Workspace).count()
+        start_date = int(time.time())*1000
+        duration = {'start_date': start_date, 'end_date': start_date-86400000}
+        raw_data = {'name': 'somethingdarkside', 'duration': duration}
+        res = test_client.post('/v2/ws/', data=raw_data)
+        assert res.status_code == 400
+        assert workspace_count_previous == session.query(Workspace).count()
+
+    def test_create_with_description(self, session, test_client):
+        description = 'darkside'
+        raw_data = {'name': 'something', 'description': description}
+        workspace_count_previous = session.query(Workspace).count()
+        res = test_client.post('/v2/ws/', data=raw_data)
+        assert res.status_code == 201
+        assert workspace_count_previous + 1 == session.query(Workspace).count()
+        assert res.json['description'] == description
+
+    def test_create_with_scope(self, session, test_client):
+        description = 'darkside'
+        raw_data = {'name': 'something', 'description': description}
+        workspace_count_previous = session.query(Workspace).count()
+        res = test_client.post('/v2/ws/', data=raw_data)
+        assert res.status_code == 201
+        assert workspace_count_previous + 1 == session.query(Workspace).count()
+        assert res.json['description'] == description

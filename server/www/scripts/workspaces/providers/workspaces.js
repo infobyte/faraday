@@ -46,8 +46,8 @@ angular.module('faradayApp')
             var deferred = $q.defer();
             ServerAPI.getWorkspace(workspace_name).then(function(workspace) {
                 deferred.resolve({
-                    "start": workspace.data.duration.start,
-                    "end": workspace.data.duration.end
+                    "start_date": workspace.data.duration.start_date,
+                    "end_date": workspace.data.duration.end_date
                 });
             });
             return deferred.promise;

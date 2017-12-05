@@ -49,8 +49,8 @@ class WorkspaceSummarySchema(Schema):
 
 
 class WorkspaceDurationSchema(Schema):
-    start = JSTimestampField(attribute='start_date')
-    end = JSTimestampField(attribute='end_date')
+    start_date = JSTimestampField(attribute='start_date')
+    end_date = JSTimestampField(attribute='end_date')
 
 
 class WorkspaceSchema(AutoSchema):

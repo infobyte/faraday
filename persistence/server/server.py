@@ -730,7 +730,7 @@ def get_services_number(workspace_name, **params):
     Returns:
         The amount of services in the workspace as an integer.
     """
-    return int(get_workspace_summary(workspace_name)['interfaces'])
+    return int(get_workspace_summary(workspace_name)['services'])
 
 def get_interfaces_number(workspace_name, **params):
     """

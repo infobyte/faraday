@@ -2,6 +2,7 @@
 """Tests for many API endpoints that do not depend on workspace_name"""
 
 import pytest
+import json
 
 from server.api.modules.services import ServiceView
 from test_cases import factories
@@ -101,3 +102,20 @@ class TestListServiceView(ReadOnlyAPITests):
         res = test_client.put(self.url(self.first_object), data=data)
         assert res.status_code == 400
         assert 'Host with id' in res.data
+
+    def test_create_service_returns_conflict_if_already_exists(self, test_client, host, session):
+        session.commit()
+        service = self.first_object
+        data = {
+            "name": service.name,
+            "description": service.description,
+            "owned": service.owned,
+            "ports": [service.port],
+            "protocol": service.protocol,
+            "status": service.status,
+            "parent": service.host_id
+        }
+        res = test_client.post(self.url(workspace=service.workspace), data=data)
+        assert res.status_code == 409
+        message = json.loads(res.data)
+        assert message['object']['_id'] == service.id

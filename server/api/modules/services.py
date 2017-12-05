@@ -81,6 +81,7 @@ class ServiceView(ReadWriteWorkspacedView):
     schema_class = ServiceSchema
     count_extra_filters = [Service.status == 'open']
     get_undefer = [Service.credentials_count, Service.vulnerability_count]
+    unique_fields = [('port', 'protocol', 'host')]
 
     def _envelope_list(self, objects, pagination_metadata=None):
         services = []

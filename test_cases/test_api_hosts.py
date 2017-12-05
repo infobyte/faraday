@@ -118,7 +118,7 @@ class TestHostAPI:
             "ip": host.ip,
             "description": "aaaaa",
         })
-        assert res.status_code == 400
+        assert res.status_code == 409
         assert Host.query.count() == HOSTS_COUNT + 1
 
     def test_create_a_host_with_ip_of_other_workspace(self, test_client,
@@ -154,7 +154,7 @@ class TestHostAPI:
             "ip": self.workspace.hosts[1].ip,  # Existing IP
             "description": "bbbbb",
         })
-        assert res.status_code == 400
+        assert res.status_code == 409
         session.refresh(host)
         assert host.ip == original_ip
         assert host.description == original_desc  # It shouldn't do a partial update

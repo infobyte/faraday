@@ -234,18 +234,21 @@ class GenericWorkspacedView(GenericView):
         assert obj.workspace is not None, "Object must have a " \
             "workspace attribute set to call _validate_uniqueness"
         primary_key_field = inspect(self.model_class).primary_key[0]
-        for field_name in self.unique_fields:
-            field = getattr(self.model_class, field_name)
-            value = getattr(obj, field_name)
-            query = self._get_base_query(obj.workspace.name).filter(
-                field == value)
-            if object_id is not None:
-                # The object already exists in DB, we want to fetch an object
-                # different to this one but with the same unique field
-                query = query.filter(primary_key_field != object_id)
-            obj = query.one_or_none()
-            conflict_data = self._get_schema_class()().dump(obj).data
-            if obj:
+        query = self._get_base_query(obj.workspace.name)
+        if object_id is not None:
+            # The object already exists in DB, we want to fetch an object
+            # different to this one but with the same unique field
+            query = query.filter(primary_key_field != object_id)
+        for field_names in self.unique_fields:
+            for field_name in field_names:
+                field = getattr(self.model_class, field_name)
+                value = getattr(obj, field_name)
+                query = query.filter(
+                    field == value)
+
+            existing_obj = query.one_or_none()
+            conflict_data = self._get_schema_class()().dump(existing_obj).data
+            if existing_obj:
                 db.session.rollback()
                 abort(409, ValidationError(
                     {

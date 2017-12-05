@@ -1,6 +1,7 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+import operator
 from datetime import datetime
 
 from sqlalchemy import (
@@ -219,6 +220,56 @@ class Host(Metadata):
     @property
     def parent(self):
         return
+
+    def set_hostnames(self, new_hostnames):
+        """Override the host's hostnames. Take care of deleting old not
+        used hostnames and to leave the sames the ones that weren't
+        modified
+
+        This function was thought to update existing objects, it shouldn't
+        be used when creating!
+        """
+        return set_children_objects(self, new_hostnames,
+                                    parent_field='hostnames',
+                                    child_field='name')
+
+
+def set_children_objects(instance, value, parent_field, child_field='id'):
+    """
+    Override some kind of children of instance. This is useful in one
+    to many relationships. It takes care of deleting not used children,
+    adding new objects, and keeping the not modified ones the same.
+
+    :param instance: instance of the parent object
+    :param value: list of childs (values of the child_field)
+    :param parent_field: the parent field's relationship to the children name
+    :param child_field: the "lookup field" of the children model
+    """
+    # Get the class of the children. Inspired in
+    # https://stackoverflow.com/questions/6843144/how-to-find-sqlalchemy-remote-side-objects-class-or-class-name-without-db-queri
+    children_model = getattr(
+        type(instance), parent_field).property.mapper.class_
+
+    value = set(value)
+    current_value = getattr(instance, parent_field)
+    current_value_fields = set(map(operator.attrgetter(child_field),
+                                   current_value))
+
+    for existing_child in current_value_fields:
+        if existing_child not in value:
+            # It was removed
+            removed_instance = next(
+                inst for inst in current_value
+                if getattr(inst, child_field) == existing_child)
+            db.session.delete(removed_instance)
+
+    for new_child in value:
+        if new_child in current_value_fields:
+            # it already exists
+            continue
+        kwargs = {child_field: new_child}
+        kwargs['workspace'] = instance.workspace
+        current_value.append(children_model(**kwargs))
 
 
 class Hostname(Metadata):

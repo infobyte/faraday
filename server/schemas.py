@@ -1,4 +1,5 @@
 import time
+import datetime
 from marshmallow import fields, Schema
 from marshmallow.exceptions import ValidationError
 
@@ -15,7 +16,8 @@ class JSTimestampField(fields.Field):
             return int(time.mktime(value.timetuple()) * 1000)
 
     def _deserialize(self, value, attr, data):
-        raise NotImplementedError("Only dump is implemented for now")
+        if value is not None and value:
+            return datetime.datetime.fromtimestamp(value/1e3)
 
 
 class PrimaryKeyRelatedField(fields.Field):

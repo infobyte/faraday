@@ -60,9 +60,13 @@ class SelfNestedField(fields.Field):
         return ret
 
     def _deserialize(self, value, attr, data):
+        """
+        It would be awesome if this method could also flatten the dict keys into the parent
+        """
         load = self.target_schema.load(value)
         if load.errors:
             raise ValidationError(load.errors)
+
         return load.data
 
 

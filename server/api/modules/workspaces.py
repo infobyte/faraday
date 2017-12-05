@@ -5,7 +5,7 @@ import json
 
 import flask
 from flask import Blueprint
-from marshmallow import Schema, fields
+from marshmallow import Schema, fields, post_load
 from sqlalchemy.orm import undefer
 
 from server.models import db, Workspace
@@ -63,6 +63,14 @@ class WorkspaceSchema(AutoSchema):
         model = Workspace
         fields = ('_id', 'id', 'customer', 'description', 'active',
                   'duration', 'name', 'public', 'scope', 'stats')
+
+    @post_load
+    def post_load_duration(self, data):
+        # Unflatten duration (move data[duration][*] to data[*])
+        duration = data.pop('duration', None)
+        if duration:
+            data.update(duration)
+        return data
 
 
 class WorkspaceView(ReadWriteView):

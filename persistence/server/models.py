@@ -6,12 +6,10 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-import glob
-import os
-import sys
-from time import time, sleep
+import logging
+from time import time
 import traceback
-from threading import Lock, Condition
+from threading import Lock, Condition, RLock, Event
 from persistence.server import server
 from persistence.server.server_io_exceptions import (WrongObjectSignature,
                                                      CantAccessConfigurationWithoutTheClient)
@@ -28,7 +26,6 @@ from persistence.server.utils import (force_unique,
 
 from model.diff import ModelObjectDiff, MergeSolver
 from model.conflict import ConflictUpdate
-from config.configuration import getInstanceConfiguration
 from functools import wraps
 from difflib import Differ
 
@@ -705,17 +702,20 @@ class ModelBase(object):
         self._metadata = obj.get('metadata', Metadata(self.owner))
         self.parent_id = obj.get('parent')
         self.updates = []
+        self.id_available = Event()
+        if self.id is not None:
+            self.id_available.set()
 
     def getParent(self):
         return self.parent_id
 
     def setID(self, id):
         self.id = id
+        self.id_available.set()
 
     def getID(self):
-        while self.id is None:
-            sleep(0.5)
-
+        if self.id is None:
+            self.id_available.wait(timeout=10)
         return self.id
 
     @staticmethod

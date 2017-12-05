@@ -7,7 +7,7 @@ from server.api.base import AutoSchema
 from server.models import CommandObject
 
 
-class JSTimestampField(fields.Field):
+class JSTimestampField(fields.Integer):
     """A field to serialize datetime objects into javascript
     compatible timestamps (like time.time()) * 1000"""
 
@@ -17,7 +17,7 @@ class JSTimestampField(fields.Field):
 
     def _deserialize(self, value, attr, data):
         if value is not None and value:
-            return datetime.datetime.fromtimestamp(value/1e3)
+            return datetime.datetime.fromtimestamp(self._validated(value)/1e3)
 
 
 class PrimaryKeyRelatedField(fields.Field):

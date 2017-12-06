@@ -757,7 +757,7 @@ def get_workspace_numbers(workspace_name):
         A tuple of 4 elements with the amounts of hosts, interfaces, services and vulns.
     """
     stats = _get_raw_workspace_summary(workspace_name)['stats']
-    return stats['hosts'], stats['interfaces'], stats['services'], stats['total_vulns']
+    return stats['hosts'], stats['services'], stats['total_vulns']
 
 def get_hosts_number(workspace_name, **params):
     """
@@ -1559,7 +1559,7 @@ def test_server_url(url_to_test):
     False otherwise.
     """
     try:
-        _get("{0}/_api/info".format(url_to_test))
+        _get("{0}/v2/_api/info".format(url_to_test))
         test_okey = True
     except:
         test_okey = False

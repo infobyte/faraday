@@ -1323,8 +1323,9 @@ class _Workspace:
         self.name = workspace['name']
         self.description = workspace['description']
         self.customer = workspace['customer']
-        self.start_date = workspace['start_date']
-        self.end_date = workspace['end_date']
+        if 'duration' in workspace:
+            self.start_date = workspace['duration']['start_date']
+            self.end_date = workspace['duration']['end_date']
 
     def getID(self):
         return self._id

@@ -388,7 +388,7 @@ class GuiApp(Gtk.Application, FaradayUi):
     def update_counts(self):
         """Returns the counts of hosts, services and vulns on the current
         workspace."""
-        hosts, interfaces, services, vulns = self.serverIO.get_workspace_numbers()
+        hosts, services, vulns = self.serverIO.get_workspace_numbers()
         return hosts, services, vulns
 
     def show_host_info(self, host_id):
@@ -885,6 +885,8 @@ class GuiApp(Gtk.Application, FaradayUi):
             except Unauthorized:
                 self.show_normal_error("You are not authorized to write data "
                                        "to this workspace.")
+
+        plugin_response, plugin_id = select_plugin()
 
         while plugin_response == Gtk.ResponseType.ACCEPT and plugin_id is None:
             # force user to select a plugin if he did not do it

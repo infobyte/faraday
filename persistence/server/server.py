@@ -1060,8 +1060,9 @@ def update_service(workspace_name, id, name, description, ports,
                              metadata=metadata)
 
 
-def create_vuln(workspace_name, name, description, owned=None, owner="",
-                confirmed=False, data="", refs=None, severity="info", resolution="",
+def create_vuln(workspace_name, name, description, parent, parent_type,
+                owned=None, owner="", confirmed=False,
+                resolution="", data="", refs=None, severity="info",
                 desc="", metadata=None, status=None, policyviolations=[]):
     """Creates a vuln.
 
@@ -1090,6 +1091,8 @@ def create_vuln(workspace_name, name, description, owned=None, owner="",
     return _save_to_server(workspace_name,
                            name=name,
                            description=description,
+                           parent=parent,
+                           parent_type=parent_type,
                            owned=owned,
                            owner=owner,
                            confirmed=confirmed,

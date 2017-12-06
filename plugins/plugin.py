@@ -189,7 +189,8 @@ class PluginBase(object):
         serv_obj = model.common.factory.createModelObject(
             Service.class_signature,
             name, protocol=protocol, ports=ports, status=status,
-            version=version, description=description, parent_id=host_id)
+            version=version, description=description,
+            parent_type='Service', parent_id=host_id)
 
         serv_obj._metadata.creator = self.id
         self.__addPendingAction(modelactions.ADDSERVICEHOST, serv_obj)
@@ -200,8 +201,9 @@ class PluginBase(object):
 
         vuln_obj = model.common.factory.createModelObject(
             Vuln.class_signature,
-            name, desc=desc, refs=ref, severity=severity, resolution=resolution,
-            confirmed=False, parent_id=host_id)
+            name, desc=desc, refs=ref, severity=severity,
+            resolution=resolution, confirmed=False,
+            parent_id=host_id, parent_type='Host')
 
         vuln_obj._metadata.creator = self.id
         self.__addPendingAction(modelactions.ADDVULNHOST, vuln_obj)
@@ -216,8 +218,9 @@ class PluginBase(object):
 
         vuln_obj = model.common.factory.createModelObject(
             Vuln.class_signature,
-            name, desc=desc, refs=ref, severity=severity, resolution=resolution,
-            confirmed=False, parent_id=interface_id)
+            name, desc=desc, refs=ref, severity=severity,
+            resolution=resolution, confirmed=False,
+            parent_type='Host', parent_id=host_id)
 
         vuln_obj._metadata.creator = self.id
         self.__addPendingAction(modelactions.ADDVULNHOST, vuln_obj)
@@ -228,8 +231,10 @@ class PluginBase(object):
 
         vuln_obj = model.common.factory.createModelObject(
             Vuln.class_signature,
-            name, desc=desc, refs=ref, severity=severity, resolution=resolution,
-            confirmed=False, parent_id=service_id)
+            name, desc=desc, refs=ref, severity=severity,
+            resolution=resolution, confirmed=False,
+            parent_type='Service', parent_id=service_id
+        )
 
         vuln_obj._metadata.creator = self.id
         self.__addPendingAction(modelactions.ADDVULNSRV, vuln_obj)
@@ -242,10 +247,13 @@ class PluginBase(object):
                                      params="", query="", category=""):
         vulnweb_obj = model.common.factory.createModelObject(
             VulnWeb.class_signature,
-            name, desc=desc, refs=ref, severity=severity, resolution=resolution,
-            website=website, path=path, request=request, response=response,
-            method=method, pname=pname, params=params, query=query,
-            category=category, confirmed=False, parent_id=service_id)
+            name, desc=desc, refs=ref, severity=severity,
+            resolution=resolution, website=website, path=path,
+            request=request, response=response, method=method,
+            pname=pname, params=params, query=query,
+            category=category, confirmed=False, parent_id=service_id,
+            parent_type='Service',
+        )
 
         vulnweb_obj._metadata.creator = self.id
         self.__addPendingAction(modelactions.ADDVULNWEBSRV, vulnweb_obj)

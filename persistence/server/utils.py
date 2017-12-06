@@ -65,28 +65,33 @@ def get_service_properties(service):
 
 
 def get_vuln_properties(vuln):
-    vuln_dict = {'confirmed': vuln.getConfirmed(),
-                 'data': vuln.getData(),
-                 'refs': vuln.getRefs(),
-                 'severity': vuln.getSeverity(),
-                 'resolution': vuln.getResolution(),
-                 'desc': vuln.getDesc(),
-                 'status': vuln.getStatus(),
-                 'policyviolations': vuln.getPolicyViolations()}
+    vuln_dict = {
+        'confirmed': vuln.getConfirmed(),
+        'data': vuln.getData(),
+        'refs': vuln.getRefs(),
+        'severity': vuln.getSeverity(),
+        'resolution': vuln.getResolution(),
+        'desc': vuln.getDesc(),
+        'status': vuln.getStatus(),
+        'policyviolations': vuln.getPolicyViolations(),
+        'parent': vuln.getParent(),
+        'parent_type': vuln.getParentType(),
+    }
     vuln_dict.update(get_object_properties(vuln))
     return vuln_dict
 
 def get_vuln_web_properties(vuln_web):
-    vuln_web_dict = {'method': vuln_web.getMethod(),
-                     'params': vuln_web.getParams(),
-                     'request': vuln_web.getRequest(),
-                     'response': vuln_web.getResponse(),
-                     'website': vuln_web.getWebsite(),
-                     'path': vuln_web.getPath(),
-                     'pname': vuln_web.getPname(),
-                     'query': vuln_web.getQuery(),
-                     'status': vuln_web.getStatus()
-                     }
+    vuln_web_dict = {
+        'method': vuln_web.getMethod(),
+        'params': vuln_web.getParams(),
+        'request': vuln_web.getRequest(),
+        'response': vuln_web.getResponse(),
+        'website': vuln_web.getWebsite(),
+        'path': vuln_web.getPath(),
+        'pname': vuln_web.getPname(),
+        'query': vuln_web.getQuery(),
+        'status': vuln_web.getStatus()
+    }
     vuln_web_dict.update(get_object_properties(vuln_web))
     vuln_web_dict.update(get_vuln_properties(vuln_web))
     return vuln_web_dict

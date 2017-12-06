@@ -934,6 +934,10 @@ class Vuln(ModelBase):
         self.resolution = vuln.get('resolution')
         self.status = vuln.get('status', "opened")
         self.policyviolations = vuln.get('policyviolations', list())
+        self.parent_type = vuln.get('parent_type')
+
+    def getParentType(self):
+        return self.parent_type
 
     @staticmethod
     def publicattrsrefs():

@@ -314,7 +314,7 @@ class VulnerabilityView(PaginatedMixin,
                                 request)
         # TODO migration: use default values when popping and validate the
         # popped object has the expected type.
-        attachments = data.pop('_attachments')
+        attachments = data.pop('_attachments', {})
 
         # This will be set after setting the workspace
         references = data.pop('references')

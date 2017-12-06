@@ -10,16 +10,18 @@ import sys
 import signal
 import json
 import threading
-import requests
-
 from json import loads
 from time import sleep
+from Queue import Queue
+
+import requests
 
 from model.controller import ModelController
 from managers.workspace_manager import WorkspaceManager
 from plugins.controller import PluginController
 from persistence.server.server import login_user
 
+from utils.logs import setUpLogger
 import model.api
 import model.guiapi
 import apis.rest.api as restapi
@@ -76,6 +78,7 @@ class TimerClass(threading.Thread):
 class MainApplication(object):
 
     def __init__(self, args):
+        setUpLogger()
         self._original_excepthook = sys.excepthook
 
         self.args = args
@@ -99,8 +102,8 @@ class MainApplication(object):
                 logger.error("Credentials file couldn't be loaded")
 
         self._mappers_manager = MapperManager()
-
-        self._model_controller = ModelController(self._mappers_manager)
+        pending_actions = Queue()
+        self._model_controller = ModelController(self._mappers_manager, pending_actions)
 
         self._plugin_manager = PluginManager(
             os.path.join(CONF.getConfigPath(), "plugins"))
@@ -112,7 +115,8 @@ class MainApplication(object):
         self._plugin_controller = PluginController(
             'PluginController',
             self._plugin_manager,
-            self._mappers_manager
+            self._mappers_manager,
+            pending_actions
         )
 
         if self.args.cli:

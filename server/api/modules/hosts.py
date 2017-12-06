@@ -53,7 +53,7 @@ class HostSchema(AutoSchema):
 
     class Meta:
         model = Host
-        fields = ('id', '_id', '_rev', 'ip', 'description',
+        fields = ('id', '_id', '_rev', 'ip', 'description', 'mac',
                   'credentials', 'default_gateway', 'metadata',
                   'name', 'os', 'owned', 'owner', 'services', 'vulns',
                   'hostnames'

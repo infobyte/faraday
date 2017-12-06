@@ -8,6 +8,12 @@ import functools
 import twisted.web
 from twisted.web.resource import Resource
 
+# Ugly hack to make "flask shell" work. It works because when running via flask
+# shell, __file__ will be server/web.py instead of faraday-server.py
+if os.path.split(os.path.dirname(__file__))[-1] == 'server':
+    path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    sys.path.append(path)
+
 import server.config
 
 from twisted.internet import ssl, reactor, error

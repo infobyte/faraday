@@ -60,8 +60,8 @@
                                    <b>{{ws.name}}</b>
                                 </span>
                             </td>
-                            <td ng-bind="ws.duration.start || '-' | date:'MM/dd/yyyy'"></td>
-                            <td ng-bind="ws.duration.end || '-' | date:'MM/dd/yyyy'"></td>
+                            <td ng-bind="ws.duration.start_date || '-' | date:'MM/dd/yyyy'"></td>
+                            <td ng-bind="ws.duration.end_date || '-' | date:'MM/dd/yyyy'"></td>
                             <td><a href="#/status/ws/{{ws.name}}">{{objects[ws.name]['total_vulns']}}</a></td>
                             <td><a href="#/hosts/ws/{{ws.name}}">{{objects[ws.name]['hosts']}}</a></td>
                             <td ng-bind="objects[ws.name]['services']"></td>

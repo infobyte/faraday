@@ -1,11 +1,12 @@
 import time
+import datetime
 from marshmallow import fields, Schema
 from marshmallow.exceptions import ValidationError
 
 from server.models import db, CommandObject
 
 
-class JSTimestampField(fields.Field):
+class JSTimestampField(fields.Integer):
     """A field to serialize datetime objects into javascript
     compatible timestamps (like time.time()) * 1000"""
 
@@ -14,7 +15,8 @@ class JSTimestampField(fields.Field):
             return int(time.mktime(value.timetuple()) * 1000)
 
     def _deserialize(self, value, attr, data):
-        raise NotImplementedError("Only dump is implemented for now")
+        if value is not None and value:
+            return datetime.datetime.fromtimestamp(self._validated(value)/1e3)
 
 
 class PrimaryKeyRelatedField(fields.Field):
@@ -57,9 +59,13 @@ class SelfNestedField(fields.Field):
         return ret
 
     def _deserialize(self, value, attr, data):
+        """
+        It would be awesome if this method could also flatten the dict keys into the parent
+        """
         load = self.target_schema.load(value)
         if load.errors:
             raise ValidationError(load.errors)
+
         return load.data
 
 

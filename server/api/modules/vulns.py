@@ -284,12 +284,15 @@ class VulnerabilityFilterSet(FilterSet):
         """
         command_id = request.args.get('command_id')
         if command_id:
-            self.query = db.session.query(VulnerabilityGeneric).join(CommandObject, and_(VulnerabilityWeb.id == CommandObject.object_id, CommandObject.object_type=='vulnerability'))
+            self.query = self.query.join(
+                CommandObject, and_(
+                    VulnerabilityWeb.id == CommandObject.object_id,
+                    CommandObject.object_type == 'vulnerability'))
 
         query = super(VulnerabilityFilterSet, self).filter()
 
         if command_id:
-            query = query.filter(CommandObject.command_id==int(command_id))
+            query = query.filter(CommandObject.command_id == int(command_id))
         return query
 
 

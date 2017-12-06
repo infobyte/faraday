@@ -23,7 +23,7 @@ services_api = Blueprint('services_api', __name__)
 
 
 class ServiceSchema(AutoSchema):
-    _id = fields.Integer(dump_only=True, attribute='id')
+    _id = fields.Integer(attribute='id', dump_only=True)
     _rev = fields.String(default='', dump_only=True)
     owned = fields.Boolean(default=False)
     owner = PrimaryKeyRelatedField('username', dump_only=True,
@@ -34,7 +34,7 @@ class ServiceSchema(AutoSchema):
                          required=True,
                          attribute='port')
     status = fields.String(default='open')
-    parent = fields.Integer(attribute='host_id', load_only=True, required=True)
+    parent = fields.Integer(attribute='host_id', load_only=True)  # parent is not required for updates
     host_id = fields.Integer(attribute='host_id', dump_only=True)
     summary = fields.Method('get_summary')
     vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
@@ -54,17 +54,25 @@ class ServiceSchema(AutoSchema):
         get a Host with that id in the corresponding workspace.
         """
         host_id = data.pop('host_id', None)
-        print data
-        if host_id is None:
-            # Partial update?
-            return
-        try:
-            data['host'] = Host.query.join(Workspace).filter(
-                Workspace.name == self.context['workspace_name'],
-                Host.id == host_id
-            ).one()
-        except NoResultFound:
-            raise ValidationError('Host with id {} not found'.format(host_id))
+        if self.context['updating']:
+            if host_id is None:
+                # Partial update?
+                return
+
+            if host_id != self.context['object'].parent.id:
+                raise ValidationError('Can\'t change service parent.')
+
+        else:
+            if not host_id:
+                raise ValidationError('Parent id is required when creating a service.')
+
+            try:
+                data['host'] = Host.query.join(Workspace).filter(
+                    Workspace.name == self.context['workspace_name'],
+                    Host.id == host_id
+                ).one()
+            except NoResultFound:
+                raise ValidationError('Host with id {} not found'.format(host_id))
 
     class Meta:
         model = Service

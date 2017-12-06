@@ -56,7 +56,7 @@ angular.module("faradayApp")
                 return APIURL + objectType + "/" + objectId + "/";
             };
 
-            var createDbUrl = function(wsName) {
+            var createDbUrl = function(wsName = "") {
                 return APIURL + "ws/" + wsName;
             }
 
@@ -87,14 +87,6 @@ angular.module("faradayApp")
             var send_data = function(url, data, is_update, method) {
                 // undefined is just evil...
                 if (typeof is_update === "undefined") {var is_update = false;}
-                if (is_update && !data._rev) {
-                    // ok, undefined, you win
-                    console.log('ok, undefined, you win');
-                    return get(url).then(function s(r) {
-                        data._rev = r.data._rev;
-                        return serverComm(method, url, data);
-                    }).catch(function e(r) {$q.reject(r)});
-                }
                 return serverComm(method, url, data);
             };
 
@@ -421,7 +413,7 @@ angular.module("faradayApp")
             }
 
             ServerAPI.deleteHost = function(wsName, hostId, rev) {
-                var deleteUrl = createDeleteUrl(wsName, hostId, rev);
+                var deleteUrl = createDeleteUrl(wsName, hostId, 'hosts');
                 if (typeof rev === "undefined") {
                     return _delete(deleteUrl, false)
                 }
@@ -441,7 +433,7 @@ angular.module("faradayApp")
             }
 
             ServerAPI.deleteVuln = function(wsName, vulnId, rev) {
-                var deleteUrl = createDeleteUrl(wsName, vulnId, rev);
+                var deleteUrl = createDeleteUrl(wsName, vulnId, 'vulns');
                 if (typeof rev === "undefined") {
                     return _delete(deleteUrl, false)
                 }
@@ -491,13 +483,13 @@ angular.module("faradayApp")
             }
 
             ServerAPI.createWorkspace = function(wsName, data) {
-                var dbUrl = createDbUrl(wsName);
-                return put(dbUrl, data, false)
+                var dbUrl = createDbUrl();
+                return send_data(dbUrl, data, true, "POST");
             }
 
             ServerAPI.updateWorkspace = function(workspace) {
                 var putUrl = createDbUrl(workspace.name);
-                return put(putUrl, workspace, true)
+                return send_data(dbUrl, workspace, true, "PUT");
             }
 
             ServerAPI.deleteWorkspace = function(wsName) {

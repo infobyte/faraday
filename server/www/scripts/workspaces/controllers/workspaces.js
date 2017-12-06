@@ -54,9 +54,6 @@ angular.module('faradayApp')
         };
 
         $scope.onSuccessGet = function(workspace){
-            if (workspace.sdate !== undefined) {
-                if(workspace.sdate.toString().indexOf(".") != -1) workspace.sdate = workspace.sdate * 1000;
-            }
             workspace.selected = false;
             $scope.workspaces.push(workspace);
         };
@@ -85,8 +82,8 @@ angular.module('faradayApp')
                     $scope.workspaces[i].description = workspace.description;
                     if ($scope.workspaces[i].duration === undefined)
                         $scope.workspaces[i].duration = {};
-                    $scope.workspaces[i].duration.start = workspace.duration.start;
-                    $scope.workspaces[i].duration.end = workspace.duration.end;
+                    $scope.workspaces[i].duration.start_date = workspace.duration.start_date;
+                    $scope.workspaces[i].duration.end_date = workspace.duration.end_date;
                     $scope.workspaces[i].scope = workspace.scope;
                     break;
                 }
@@ -121,17 +118,17 @@ angular.module('faradayApp')
         };
 
         $scope.update = function(ws){
-            if(typeof(ws.duration.start) == "number") {
-                start = ws.duration.start;
-            } else if(ws.duration.start) {
-                start = ws.duration.start.getTime(); 
-            } else {start = "";}
-            if(typeof(ws.duration.end) == "number") {
-                end = ws.duration.end;
-            } else if(ws.duration.end) {
-                end = ws.duration.end.getTime();
-            } else {end = "";}
-            duration = {'start': start, 'end': end};
+            if(typeof(ws.duration.start_date) == "number") {
+                start_date = ws.duration.start_date;
+            } else if(ws.duration.start_date) {
+                start_date = ws.duration.start_date.getTime();
+            } else {start_date = "";}
+            if(typeof(ws.duration.end_date) == "number") {
+                end_date = ws.duration.end_date;
+            } else if(ws.duration.end_date) {
+                end_date = ws.duration.end_date.getTime();
+            } else {end_date = "";}
+            duration = {'start_date': start_date, 'end_date': end_date};
             workspace = {
                 "_id":          ws._id,
                 "_rev":         ws._rev,
@@ -141,7 +138,6 @@ angular.module('faradayApp')
                 "duration":     duration,
                 "name":         ws.name,
                 "scope":        ws.scope,
-                "sdate":        ws.sdate,
                 "type":         ws.type
             };
             workspacesFact.update(workspace).then(function(workspace) {
@@ -164,7 +160,7 @@ angular.module('faradayApp')
             });
 
             $scope.modal.result.then(function(workspace) {
-                workspace = $scope.create(workspace.name, workspace.description, workspace.start, workspace.end, workspace.scope);
+                workspace = $scope.create(workspace.name, workspace.description, workspace.start_date, workspace.end_date, workspace.scope);
                 $scope.insert(workspace); 
             });
 
@@ -256,19 +252,17 @@ angular.module('faradayApp')
         };
         // end of modal context
 
-        $scope.create = function(wname, wdesc, start, end, scope){
-            if(end) end = end.getTime(); else end = "";
-            if(start) start = start.getTime(); else start = "";
+        $scope.create = function(wname, wdesc, start_date, end_date, scope){
+            if(end_date) end_date = end_date.getTime(); else end_date = "";
+            if(start_date) start_date = start_date.getTime(); else start_date = "";
             workspace = {
                 "_id": wname,
                 "customer": "",
-                "sdate": (new Date).getTime(),
                 "name": wname,
-                "fdate": undefined,
                 "type": "Workspace",
                 "children": [
                 ],
-                "duration": {"start": start, "end": end},
+                "duration": {"start_date": start_date, "end_date": end_date},
                 "scope": scope,
                 "description": wdesc
             };

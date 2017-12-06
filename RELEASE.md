@@ -8,6 +8,15 @@ Make sure you run ```./faraday.py --update``` the first time after an update!
 New features in the latest update
 =====================================
 
+TBA:
+---
+* CouchDB was replaced by PostgreSQL :)
+* Host object changed, now the name property is called ip
+* Interface object was removed
+* Note object was removed and replaced with Comment
+* Communication object was removed and replaced with Comment
+* Show credentials count in summarized report on the dashboard
+
 November 17, 2017:
 ---
 * Fix bug with tags in models.

@@ -1323,8 +1323,11 @@ class _Workspace:
         self.name = workspace['name']
         self.description = workspace['description']
         self.customer = workspace['customer']
-        self.start_date = workspace['sdate']
-        self.finish_date = workspace['fdate']
+        self.start_date = workspace['start_date']
+        self.end_date = workspace['end_date']
+
+    def getID(self):
+        return self._id
 
     def getName(self):
         return self.name
@@ -1339,7 +1342,7 @@ class _Workspace:
         return self.start_date
 
     def getFinishDate(self):
-        return self.finish_date
+        return self.end_date
 
 
 class MetadataUpdateActions(object):

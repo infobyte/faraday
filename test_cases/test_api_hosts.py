@@ -273,9 +273,25 @@ class TestHostAPI:
         assert res.status_code == 200
         self.compare_results(hosts + [case_insensitive_host], res)
 
+    def test_filter_by_service(self, test_client, session, workspace,
+                               service_factory, host_factory):
+        services = service_factory.create_batch(10, workspace=workspace,
+                                                name="IRC")
+        hosts = [service.host for service in services]
+
+        # Hosts that shouldn't be shown
+        host_factory.create_batch(5, workspace=workspace)
+
+        res = test_client.get(self.url() + '?service=IRC')
+        assert res.status_code == 200
+        shown_hosts_ids = set(obj['id'] for obj in res.json['rows'])
+        expected_host_ids = set(host.id for host in hosts)
+        assert shown_hosts_ids == expected_host_ids
+
     def test_host_with_open_vuln_count_verification(self, test_client, session,
-                                                        workspace, host_factory, vulnerability_factory,
-                                                        service_factory):
+                                                    workspace, host_factory,
+                                                    vulnerability_factory,
+                                                    service_factory):
 
         host = host_factory.create(workspace=workspace)
         service = service_factory.create(host=host, workspace=workspace)
@@ -344,6 +360,7 @@ class TestHostAPI:
             "ip":"10.31.112.21",
             "_rev":"",
             "description":"",
+            "default_gateway": None,
             "owned": False,
             "services":12,
             "hostnames":[],
@@ -359,13 +376,13 @@ class TestHostAPI:
         assert res.status_code == 200
         updated_host = Host.query.filter_by(id=host.id).first()
         assert res.json == {
-            u'_id': 6,
+            u'_id': host.id,
             u'_rev': u'',
             u'credentials': 0,
             u'default_gateway': None,
             u'description': u'',
             u'hostnames': [],
-            u'id': 6,
+            u'id': host.id,
             u'ip': u'10.31.112.21',
             u'metadata': {u'command_id': None,
                 u'create_time': int(time.mktime(updated_host.create_date.timetuple())) * 1000,

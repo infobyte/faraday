@@ -1190,6 +1190,6 @@ a.button-disable{cursor: not-allowed;pointer-events: none;opacity: 0.5}
 }
 
 .header_right {
-    /* TODO: this is a fast hask, maybe there is a better way to do this */
-    margin-top: -3%;
+    /* TODO: this is a fast hack, maybe there is a better way to do this */
+    margin-top: -2.25%;
 }

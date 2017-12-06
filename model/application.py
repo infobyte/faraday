@@ -130,7 +130,7 @@ class MainApplication(object):
 
     def on_connection_lost(self):
         """All it does is send a notification to the notification center"""
-        model.guiapi.notification_center.CouchDBConnectionProblem()
+        model.guiapi.notification_center.DBConnectionProblem()
 
     def enableExceptHook(self):
         sys.excepthook = exception_handler

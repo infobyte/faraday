@@ -7,7 +7,6 @@ angular.module('faradayApp')
         ['$scope', '$filter', '$q', '$uibModal', 'commonsFact', 'licensesManager',
         function($scope, $filter, $q, $uibModal, commonsFact, licensesManager) {
 
-            $scope.db_exists = false;
             $scope.expiration_month = false;
             $scope.licenses = [];
             $scope.loaded_licenses = false;
@@ -25,28 +24,12 @@ angular.module('faradayApp')
                 $scope.sort_field = "end";
                 $scope.reverse = true;
 
-                licensesManager.DBExists()
-                    .then(function(exists) {
-                        if(!exists) {
-                            $uibModal.open({
-                                templateUrl: 'scripts/licenses/partials/modalCreateDB.html',
-                                controller: 'licensesModalCreateDB',
-                                size: 'lg'
-                            }).result.then(function() {
-                                $scope.db_exists = true;
-                            }, function(message) {
-                                // The user didn't create the DB, do nothing!
-                            });
-                        } else {
-                            $scope.db_exists = true;
-                            licensesManager.get()
-                                .then(function() {
-                                    $scope.licenses = licensesManager.licenses;
-                                    $scope.loaded_licenses = true;
+                licensesManager.get()
+                    .then(function() {
+                        $scope.licenses = licensesManager.licenses;
+                        $scope.loaded_licenses = true;
 
-                                    $scope.expiration_month = $scope.isExpirationMonth($scope.licenses);
-                                });
-                        }
+                        $scope.expiration_month = $scope.isExpirationMonth($scope.licenses);
                     }, function(message) {
                         commonsFact.errorDialog(message);
                     });

@@ -66,7 +66,7 @@ angular.module('faradayApp').
                             self.set(res.data);
                             deferred.resolve(self);
                         }, function(res) {
-                            deferred.reject("Unable to update the Vuln Model. " + res.data.reason);
+                            deferred.reject("Unable to update the Vuln Model. " + JSON.stringify(res.data));
                     });
                     return deferred.promise;
                 },

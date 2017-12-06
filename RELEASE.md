@@ -16,6 +16,7 @@ TBA:
 * Note object was removed and replaced with Comment
 * Communication object was removed and replaced with Comment
 * Show credentials count in summarized report on the dashboard
+* Remove vuln template CWE fields, join it with references
 
 November 17, 2017:
 ---

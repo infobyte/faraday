@@ -136,7 +136,7 @@ def _create_couch_db_url(workspace_name):
 
 def _create_server_db_url(workspace_name):
     server_api_url = _create_server_api_url()
-    db_url = '{0}/ws/{1}'.format(server_api_url, workspace_name)
+    db_url = '{0}/ws/'.format(server_api_url)
     return db_url
 
 def _add_session_cookies(func):
@@ -284,16 +284,8 @@ def _get_raw_commands(workspace_name, **params):
 
 
 def _get_raw_workspace_summary(workspace_name):
-    request_url = _create_server_get_url(workspace_name, 'summary')
+    request_url = _create_server_get_url(workspace_name)
     return _get(request_url)
-
-def _save_to_couch(workspace_name, faraday_object_id, **params):
-    post_url = _create_couch_post_url(workspace_name, faraday_object_id)
-    return _post(post_url, update=False, **params)
-
-def _update_in_couch(workspace_name, faraday_object_id, **params):
-    post_url = _create_server_put_url(workspace_name, faraday_object_id)
-    return _put(post_url, **params)
 
 def _save_to_server(workspace_name, **params):
     post_url = _create_server_post_url(workspace_name, params['type'])
@@ -305,7 +297,7 @@ def _update_in_server(workspace_name, faraday_object_id, **params):
 
 def _save_db_to_server(db_name, **params):
     post_url = _create_server_db_url(db_name)
-    return _put(post_url, expected_response=200, **params)
+    return _post(post_url, expected_response=201, **params)
 
 # XXX: SEMI COUCH IT!
 def _delete_from_couch(workspace_name, faraday_object_id):

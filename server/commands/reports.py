@@ -23,8 +23,6 @@ def import_external_reports(workspace_name=None):
         os.path.join(CONF.getConfigPath(), "plugins"))
     mappers_manager = MapperManager()
 
-
-
     if workspace_name:
         query = Workspace.query.filter_by(name=workspace_name)
     else:

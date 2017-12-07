@@ -11,6 +11,7 @@ Welcome to Faraday's documentation!
    :caption: Contents:
 
    overview
+   creating_views
    reference
 
 Indices and tables

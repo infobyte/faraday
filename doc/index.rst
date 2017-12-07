@@ -7,11 +7,12 @@ Welcome to Faraday's documentation!
 ===================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
    overview
    creating_views
+   recipes
    reference
 
 Indices and tables

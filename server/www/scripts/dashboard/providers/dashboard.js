@@ -228,6 +228,18 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
+        dashboardSrv.getActivityFeed = function(ws) {
+            var deferred = $q.defer();
+
+            ServerAPI.getActivityFeed(ws).then(function(res) {
+                deferred.resolve(res.data);
+            }, function() {
+                deferred.reject();
+            });
+
+            return deferred.promise;
+        };
+
         dashboardSrv.getCommands = function(ws) {
             var deferred = $q.defer();
 
@@ -239,12 +251,14 @@ angular.module('faradayApp')
                         _cmd.user = _cmd.user || "unknown";
                         _cmd.hostname = _cmd.hostname || "unknown";
                         _cmd.ip = _cmd.ip || "0.0.0.0";
-                        if(_cmd.duration == "0" || _cmd.duration == "") {
+                        if(_cmd.duration == "In progres") {
                             _cmd.duration = "In progress";
+                        } else if (_cmd.duration == "Not started") {
+                            _cmd.duration = "Not started";
                         } else if(_cmd.duration != undefined) {
                             _cmd.duration = _cmd.duration.toFixed(2) + "s";
                         }
-                        _cmd.date = _cmd.itime * 1000;                        
+                        _cmd.date = _cmd.itime;
                         tmp.push(_cmd);
                     });
 

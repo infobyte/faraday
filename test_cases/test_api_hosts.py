@@ -1,4 +1,6 @@
+import operator
 import pytest
+import time
 from sqlalchemy.orm.util import was_deleted
 
 from test_cases import factories
@@ -9,6 +11,7 @@ from test_api_workspaced_base import (
 )
 from server.models import db, Host
 from server.api.modules.hosts import HostsView
+from test_cases.factories import HostFactory
 
 HOSTS_COUNT = 5
 SERVICE_COUNT = [10, 5]  # 10 services to the first host, 5 to the second
@@ -270,9 +273,25 @@ class TestHostAPI:
         assert res.status_code == 200
         self.compare_results(hosts + [case_insensitive_host], res)
 
+    def test_filter_by_service(self, test_client, session, workspace,
+                               service_factory, host_factory):
+        services = service_factory.create_batch(10, workspace=workspace,
+                                                name="IRC")
+        hosts = [service.host for service in services]
+
+        # Hosts that shouldn't be shown
+        host_factory.create_batch(5, workspace=workspace)
+
+        res = test_client.get(self.url() + '?service=IRC')
+        assert res.status_code == 200
+        shown_hosts_ids = set(obj['id'] for obj in res.json['rows'])
+        expected_host_ids = set(host.id for host in hosts)
+        assert shown_hosts_ids == expected_host_ids
+
     def test_host_with_open_vuln_count_verification(self, test_client, session,
-                                                        workspace, host_factory, vulnerability_factory,
-                                                        service_factory):
+                                                    workspace, host_factory,
+                                                    vulnerability_factory,
+                                                    service_factory):
 
         host = host_factory.create(workspace=workspace)
         service = service_factory.create(host=host, workspace=workspace)
@@ -285,7 +304,7 @@ class TestHostAPI:
         assert res.status_code == 200
         json_host = filter(lambda json_host: json_host['value']['id'] == host.id, res.json['rows'])[0]
         # the host has one vuln associated. another one via service.
-        assert json_host['value']['vulns'] == 1
+        assert json_host['value']['vulns'] == 2
 
     def test_host_services_vuln_count_verification(self, test_client, session,
                                                    workspace, host_factory, vulnerability_factory,
@@ -321,7 +340,65 @@ class TestHostAPI:
         }
         res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 201
-        assert res.json['default_gateway'] == [u'192.168.0.1']
+        assert res.json['default_gateway'] == '192.168.0.1'
+
+    def test_update_host(self, test_client, session):
+        host = HostFactory.create()
+        session.commit()
+        raw_data = {
+            "metadata":
+                        {
+                            "update_time":1510688312.431,
+                            "update_user":"UI Web",
+                            "update_action":0,
+                            "creator":"",
+                            "create_time":1510673388000,
+                            "update_controller_action":"",
+                            "owner":"leonardo",
+                            "command_id": None},
+            "name":"10.31.112.21",
+            "ip":"10.31.112.21",
+            "_rev":"",
+            "description":"",
+            "default_gateway": None,
+            "owned": False,
+            "services":12,
+            "hostnames":[],
+            "vulns":43,
+            "owner":"leonardo",
+            "credentials":0,
+            "_id": 4000,
+            "os":"Microsoft Windows Server 2008 R2 Standard Service Pack 1",
+            "id": 4000,
+            "icon":"windows"}
+
+        res = test_client.put(self.url(host, workspace=host.workspace), data=raw_data)
+        assert res.status_code == 200
+        updated_host = Host.query.filter_by(id=host.id).first()
+        assert res.json == {
+            u'_id': host.id,
+            u'_rev': u'',
+            u'credentials': 0,
+            u'default_gateway': None,
+            u'description': u'',
+            u'hostnames': [],
+            u'id': host.id,
+            u'ip': u'10.31.112.21',
+            u'metadata': {u'command_id': None,
+                u'create_time': int(time.mktime(updated_host.create_date.timetuple())) * 1000,
+                u'creator': u'',
+                u'owner': host.creator.username,
+                u'update_action': 0,
+                u'update_controller_action': u'',
+                u'update_time': int(time.mktime(updated_host.update_date.timetuple())) * 1000,
+                u'update_user': u''},
+            u'name': u'10.31.112.21',
+            u'os': u'Microsoft Windows Server 2008 R2 Standard Service Pack 1',
+            u'owned': False,
+            u'owner': host.creator.username,
+            u'services': 0,
+            u'vulns': 0}
+
 
 
 class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
@@ -331,3 +408,37 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
     unique_fields = ['ip']
     update_fields = ['ip', 'description', 'os']
     view_class = HostsView
+
+    @pytest.mark.usefixtures("mock_envelope_list")
+    def test_sort_by_description(self, test_client, session):
+        for host in Host.query.all():
+            # I don't want to test case sensitive sorting
+            host.description = host.description.lower()
+        session.commit()
+        expected_ids = [host.id for host in
+                        sorted(Host.query.all(),
+                               key=operator.attrgetter('description'))]
+        res = test_client.get(self.url() + '?sort=description&sort_dir=asc')
+        assert res.status_code == 200
+        assert [host['_id'] for host in res.json['data']] == expected_ids
+
+        expected_ids.reverse()  # In place list reverse
+        res = test_client.get(self.url() + '?sort=description&sort_dir=desc')
+        assert res.status_code == 200
+        assert [host['_id'] for host in res.json['data']] == expected_ids
+
+    @pytest.mark.usefixtures("mock_envelope_list")
+    def test_sort_by_services(self, test_client, session, second_workspace,
+                              host_factory, service_factory):
+        expected_ids = []
+        for i in range(10):
+            host = host_factory.create(workspace=second_workspace)
+            service_factory.create_batch(
+                i, host=host, workspace=second_workspace, status='open')
+            session.flush()
+            expected_ids.append(host.id)
+        session.commit()
+        res = test_client.get(self.url(workspace=second_workspace) +
+                              '?sort=services&sort_dir=asc')
+        assert res.status_code == 200
+        assert [h['_id'] for h in res.json['data']] == expected_ids

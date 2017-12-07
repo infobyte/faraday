@@ -46,9 +46,7 @@ describe('workspacesFact', function() {
            var workspace =  {
                "_id": "test_workspace",
                "customer": "",
-               "sdate": 1415901244.040532,
                "name": "test_workspace",
-               "fdate": 1415901244.040532,
                "type": "Workspace",
                "children": [
                ],

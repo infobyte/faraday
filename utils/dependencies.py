@@ -16,15 +16,18 @@ def check_dependencies(requirements_file='requirements.txt'):
 
     installed = []
     missing = []
+    conflict = []
 
     for package in requirements:
         try:
             pkg_resources.working_set.resolve([package])
             installed += [package]
-        except (pkg_resources.DistributionNotFound, pkg_resources.VersionConflict):
+        except pkg_resources.DistributionNotFound:
             missing += [package.key]
+        except pkg_resources.VersionConflict:
+            conflict += [package.key]
 
-    return installed, missing
+    return installed, missing, conflict
 
 
 def install_packages(packages):

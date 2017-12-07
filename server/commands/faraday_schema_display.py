@@ -1,5 +1,5 @@
+from __future__ import print_function
 import sys
-from flask_script import Command
 from sqlalchemy import MetaData
 try:
     from sqlalchemy_schemadisplay import create_schema_graph
@@ -13,7 +13,7 @@ from server import models
 import server.config
 
 
-class DatabaseSchema(Command):
+class DatabaseSchema():
 
     def run(self):
         self._draw_entity_diagrama()
@@ -50,6 +50,8 @@ class DatabaseSchema(Command):
         graph = create_uml_graph(
             mappers,
             show_operations=False,  # not necessary in this case
-            show_multiplicity_one=False  # some people like to see the ones, some don't
+            show_multiplicity_one=False,  # some people like to see the ones, some don't
+            # show_attributes=False,  # Uncomment to don't show fields, only model names
         )
         graph.write_png('uml_schema.png')  # write out the file
+        print("Graph written to fle uml_schema.png")

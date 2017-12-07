@@ -116,7 +116,7 @@ angular.module('faradayApp')
             var deferred = $q.defer(),
             self = this;
 
-            resp.update(hostData, ws)
+            host.update(hostData, ws)
                 .then(function(host) {
                     deferred.resolve(host);
                 })

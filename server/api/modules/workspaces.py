@@ -5,7 +5,7 @@ import json
 
 import flask
 from flask import Blueprint
-from marshmallow import Schema, fields
+from marshmallow import Schema, fields, post_load
 from sqlalchemy.orm import undefer
 
 from server.models import db, Workspace
@@ -36,7 +36,8 @@ workspace_api = Blueprint('workspace_api', __name__)
 class WorkspaceSummarySchema(Schema):
     credentials = fields.Integer(dump_only=True, attribute='credential_count')
     hosts = fields.Integer(dump_only=True, attribute='host_count')
-    services = fields.Integer(dump_only=True, attribute='service_count')
+    services = fields.Integer(dump_only=True,
+                              attribute='total_service_count')
     web_vulns = fields.Integer(dump_only=True, allow_none=False,
                                attribute='vulnerability_web_count')
     code_vulns = fields.Integer(dump_only=True, allow_none=False,
@@ -48,8 +49,8 @@ class WorkspaceSummarySchema(Schema):
 
 
 class WorkspaceDurationSchema(Schema):
-    start = JSTimestampField(attribute='start_date')
-    end = JSTimestampField(attribute='end_date')
+    start_date = JSTimestampField(attribute='start_date')
+    end_date = JSTimestampField(attribute='end_date')
 
 
 class WorkspaceSchema(AutoSchema):
@@ -63,6 +64,14 @@ class WorkspaceSchema(AutoSchema):
         fields = ('_id', 'id', 'customer', 'description', 'active',
                   'duration', 'name', 'public', 'scope', 'stats')
 
+    @post_load
+    def post_load_duration(self, data):
+        # Unflatten duration (move data[duration][*] to data[*])
+        duration = data.pop('duration', None)
+        if duration:
+            data.update(duration)
+        return data
+
 
 class WorkspaceView(ReadWriteView):
     route_base = 'ws'
@@ -70,6 +79,7 @@ class WorkspaceView(ReadWriteView):
     lookup_field_type = unicode
     model_class = Workspace
     schema_class = WorkspaceSchema
+    order_field = Workspace.name.asc()
 
     def _get_base_query(self):
         try:

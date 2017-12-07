@@ -1,10 +1,12 @@
+import pytest
+
 from test_cases import factories
 from test_api_workspaced_base import (
     ReadOnlyAPITests,
 )
 from server.api.modules.credentials import CredentialView
 from server.models import Credential
-from test_cases.factories import ServiceFactory
+from test_cases.factories import HostFactory, ServiceFactory
 
 
 class TestCredentialsAPIGeneric(ReadOnlyAPITests):
@@ -113,3 +115,55 @@ class TestCredentialsAPIGeneric(ReadOnlyAPITests):
         assert res.json['username'] == u'Username2'
         assert res.json['password'] == u'Password3'
         assert res.json['name'] == u'Name1'
+
+    @pytest.mark.parametrize("parent_type, parent_factory", [
+        ("Host", HostFactory),
+        ("Service", ServiceFactory),
+    ], ids=["with host parent", "with service parent"])
+    def test_create_with_parent_of_other_workspace(
+            self, parent_type, parent_factory, test_client, session,
+            second_workspace):
+        parent = parent_factory.create(workspace=second_workspace)
+        session.commit()
+        assert parent.workspace_id != self.workspace.id
+        data = {
+            "username": "admin",
+            "password": "admin",
+            "name": "test",
+            "parent_type": parent_type,
+            "parent": parent.id
+        }
+        res = test_client.post(self.url(), data=data)
+        assert res.status_code == 400
+        assert 'Parent id not found' in res.data
+
+    @pytest.mark.parametrize("parent_type, parent_factory", [
+        ("Host", HostFactory),
+        ("Service", ServiceFactory),
+    ], ids=["with host parent", "with service parent"])
+    def test_update_with_parent_of_other_workspace(
+            self, parent_type, parent_factory, test_client, session,
+            second_workspace, credential_factory):
+        parent = parent_factory.create(workspace=second_workspace)
+        if parent_type == 'Host':
+            credential = credential_factory.create(
+                host=HostFactory.create(workspace=self.workspace),
+                service=None,
+                workspace=self.workspace)
+        else:
+            credential = credential_factory.create(
+                host=None,
+                service=ServiceFactory.create(workspace=self.workspace),
+                workspace=self.workspace)
+        session.commit()
+        assert parent.workspace_id != self.workspace.id
+        data = {
+            "username": "admin",
+            "password": "admin",
+            "name": "test",
+            "parent_type": parent_type,
+            "parent": parent.id
+        }
+        res = test_client.put(self.url(credential), data=data)
+        assert res.status_code == 400
+        assert 'Parent id not found' in res.data

@@ -92,6 +92,7 @@ node {
 
     stage ("Build docs") {
         sh """
+            source ${ENV_PATH}/bin/activate
             pip install sphinx
             mkdir -p ~/docs
             rm -rf ~/docs/jenkins_build

@@ -89,4 +89,13 @@ node {
             }
         }
     }
+
+    stage ("Build docs") {
+        sh """
+            pip install sphinx
+            mkdir -p ~/docs
+            rm -rf ~/docs/jenkins_build
+            cd $WORKSPACE/doc && make html && cp -r _build/html ~/docs/jenkins_build
+        """
+    }
 }

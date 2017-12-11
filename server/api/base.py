@@ -13,7 +13,7 @@ from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
 from webargs.flaskparser import FlaskParser, parser, abort
 from webargs.core import ValidationError
-from server.models import Workspace, db
+from server.models import Workspace, db, Command, CommandObject
 import server.utils.logger
 
 logger = server.utils.logger.get_logger(__name__)
@@ -408,6 +408,7 @@ class CreateMixin(object):
 
     def post(self, **kwargs):
         context = {'updating': False}
+
         data = self._parse_data(self._get_schema_instance(kwargs, context=context),
                                 flask.request)
         data.pop('id', None)
@@ -442,8 +443,28 @@ class CreateWorkspacedMixin(CreateMixin):
             self._validate_uniqueness(obj)
             db.session.add(obj)
         db.session.commit()
-
+        self._set_command_id(obj)
         return obj
+
+    def _set_command_id(self, obj):
+        try:
+            command_id = int(flask.request.args.get('command_id', None))
+        except TypeError:
+            command_id = None
+
+        if command_id:
+            command = db.session.query(Command).filter(Command.id==command_id, Command.workspace==obj.workspace).first()
+            if command is None:
+                raise InvalidUsage('Command not found.')
+            command_object = CommandObject(
+                object_id=obj.id,
+                object_type=obj.__class__.__name__,
+                command=command,
+                workspace=obj.workspace,
+                created_persistent=True
+            )
+            db.session.add(command)
+            db.session.add(command_object)
 
 
 class UpdateMixin(object):

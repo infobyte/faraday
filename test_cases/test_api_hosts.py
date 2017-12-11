@@ -1,7 +1,14 @@
-import operator
-import pytest
 import time
+import operator
+try:
+    import urlparse
+    from urllib import urlencode
+except: # For Python 3
+    import urllib.parse as urlparse
+    from urllib.parse import urlencode
 from sqlalchemy.orm.util import was_deleted
+
+import pytest
 
 from test_cases import factories
 from test_api_workspaced_base import (
@@ -11,7 +18,8 @@ from test_api_workspaced_base import (
 )
 from server.models import db, Host
 from server.api.modules.hosts import HostsView
-from test_cases.factories import HostFactory
+from test_cases.factories import HostFactory, CommandFactory, \
+    EmptyCommandFactory, WorkspaceFactory
 
 HOSTS_COUNT = 5
 SERVICE_COUNT = [10, 5]  # 10 services to the first host, 5 to the second
@@ -459,3 +467,36 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
         })
         assert res.status_code == 409
         assert res.json['object']['_id'] == host_id
+
+    def test_create_host_from_command(self, test_client, session):
+        command = EmptyCommandFactory.create()
+        session.commit()
+        assert len(command.command_objects) == 0
+        url = self.url(workspace=command.workspace) + '?' + urlencode({'command_id': command.id})
+
+        res = test_client.post(url, data={
+            "ip": "127.0.0.1",
+            "description": "aaaaa",
+        })
+
+        assert res.status_code == 201
+        assert len(command.command_objects) == 1
+        cmd_obj = command.command_objects[0]
+        assert cmd_obj.object_type == 'Host'
+        assert cmd_obj.object_id == res.json['id']
+
+    def test_create_host_cant_assign_command_from_another_workspace(self, test_client, session):
+        command = EmptyCommandFactory.create()
+        new_workspace = WorkspaceFactory.create()
+        session.commit()
+        assert len(command.command_objects) == 0
+        url = self.url(workspace=new_workspace) + '?' + urlencode({'command_id': command.id})
+
+        res = test_client.post(url, data={
+            "ip": "127.0.0.1",
+            "description": "aaaaa",
+        })
+
+        assert res.status_code == 400
+        assert res.json == {u'message': u'Command not found.'}
+        assert len(command.command_objects) == 0

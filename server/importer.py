@@ -669,7 +669,7 @@ class CommandImporter(object):
             # Now that we have a field that distinguished between shell commands
             # and imported reports, it is no longer required to directly format
             # in hte command field
-            document['command'] = document['command'][len('Import '):]
+            document['command'] = document['command'][len('Import '):-1]
 
         start_date = datetime.datetime.fromtimestamp(document.get('itime'))
 

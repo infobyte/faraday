@@ -20,8 +20,9 @@
                 <td align="left">
                     <span ng-if="cmd.import_source == 'report'" class="fa fa-upload"/>
                     <span ng-if="cmd.import_source == 'shell'" class="fa fa-terminal"/>
-                    <b class="capitalize">{{cmd.user || Anonymous}}</b> <span ng-if="cmd.import_source == 'shell'" uib-tooltip="{{ cmd.command + ' ' + cmd.params}}">ran {{cmd.command}}</span>
-                    <span ng-if="cmd.import_source == 'report'" uib-tooltip="{{ cmd.command + ' ' + cmd.params}}">{{cmd.command.replace('Import', 'imported').replace(':', '')  || Unknown}}</span>
+                    <b class="capitalize">{{cmd.user || Anonymous}}</b>
+                    <span ng-if="cmd.import_source == 'shell'" uib-tooltip="{{ cmd.command + ' ' + cmd.params}}">ran {{cmd.command}}</span>
+                    <span ng-if="cmd.import_source == 'report'" uib-tooltip="Import {{ cmd.command + ': ' + cmd.params}}">imported {{cmd.tool||cmd.command}} report</span>
                     <span> and found</span>
                     <span ng-if="cmd.hosts_count == 0 && cmd.services_count == 0 && cmd.vulnerabilities_count == 0 "> nothing</span>
                     <span ng-if="cmd.hosts_count != 0 || cmd.services_count != 0 || cmd.vulnerabilities_count != 0 ">: </span>

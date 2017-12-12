@@ -336,13 +336,13 @@ def get_deleted_object_name_and_type(workspace_name, object_id):
 
 
 @_ignore_in_changes
-def create_host(workspace_name, host):
+def create_host(workspace_name, host, command_id):
     """Take a workspace_name and a host object and save it to the sever.
 
     Return the server's json response as a dictionary.
     """
     host_properties = get_host_properties(host)
-    return server.create_host(workspace_name, **host_properties)
+    return server.create_host(workspace_name, command_id, **host_properties)
 
 
 @_ignore_in_changes
@@ -356,12 +356,12 @@ def update_host(workspace_name, host):
 
 
 @_ignore_in_changes
-def create_service(workspace_name, service):
+def create_service(workspace_name, service, command_id):
     """Take a workspace_name and a service object and save it to the sever.
     Return the server's json response as a dictionary.
     """
     service_properties = get_service_properties(service)
-    return server.create_service(workspace_name, **service_properties)
+    return server.create_service(workspace_name, command_id, **service_properties)
 
 
 @_ignore_in_changes
@@ -375,13 +375,13 @@ def update_service(workspace_name, service):
 
 
 @_ignore_in_changes
-def create_vuln(workspace_name, vuln):
+def create_vuln(workspace_name, vuln, command_id):
     """Take a workspace_name and an vulnerability object and save it to the
     sever. The rev parameter must be provided if you are updating the object.
     Return the server's json response as a dictionary.
     """
     vuln_properties = get_vuln_properties(vuln)
-    return server.create_vuln(workspace_name, **vuln_properties)
+    return server.create_vuln(workspace_name, command_id, **vuln_properties)
 
 
 @_ignore_in_changes
@@ -395,13 +395,13 @@ def update_vuln(workspace_name, vuln):
 
 
 @_ignore_in_changes
-def create_vuln_web(workspace_name, vuln_web):
+def create_vuln_web(workspace_name, vuln_web, command_id):
     """Take a workspace_name and an vulnerabilityWeb object and save it to the
     sever.
     Return the server's json response as a dictionary.
     """
     vuln_web_properties = get_vuln_web_properties(vuln_web)
-    return server.create_vuln_web(workspace_name, **vuln_web_properties)
+    return server.create_vuln_web(workspace_name, command_id, **vuln_web_properties)
 
 
 @_ignore_in_changes
@@ -415,12 +415,12 @@ def update_vuln_web(workspace_name, vuln_web):
 
 
 @_ignore_in_changes
-def create_note(workspace_name, note):
+def create_note(workspace_name, note, command_id):
     """Take a workspace_name and an note object and save it to the sever.
     Return the server's json response as a dictionary.
     """
     note_properties = get_note_properties(note)
-    return server.create_note(workspace_name, **note_properties)
+    return server.create_note(workspace_name, command_id, **note_properties)
 
 
 @_ignore_in_changes
@@ -433,7 +433,7 @@ def update_note(workspace_name, note):
 
 
 @_ignore_in_changes
-def create_credential(workspace_name, credential):
+def create_credential(workspace_name, credential, command_id):
     """Take a workspace_name and an credential object and save it to the sever.
     Return the server's json response as a dictionary.
     """
@@ -451,7 +451,16 @@ def update_credential(workspace_name, credential):
 
 
 @_ignore_in_changes
-def create_command(workspace_name, command):
+def create_command(workspace_name, command, command_id):
+    """
+        This function uses command_id for compatibility (a ~duck typing idea).
+        command_id will be always None here since we want to create the command.
+
+    :param workspace_name: workspace to save the command
+    :param command_id: Not used!
+    :param command: dict with command date
+    :return:
+    """
     command_properties = get_command_properties(command)
     return server.create_command(workspace_name, **command_properties)
 
@@ -465,7 +474,7 @@ def update_command(workspace_name, command):
     return server.update_command(workspace_name, command.getID(), **command_properties)
 
 
-def create_object(workspace_name, object_signature, obj):
+def create_object(workspace_name, object_signature, obj, command_id):
     """Given a workspace name, an object_signature as string and obj, a Faraday
     object, save that object on the server.
 
@@ -487,7 +496,7 @@ def create_object(workspace_name, object_signature, obj):
     except KeyError:
         raise WrongObjectSignature(object_signature)
 
-    return appropiate_function(workspace_name, obj)
+    return appropiate_function(workspace_name, obj, command_id)
 
 
 def update_object(workspace_name, object_signature, obj):

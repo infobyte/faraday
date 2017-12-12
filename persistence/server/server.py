@@ -100,10 +100,14 @@ def _create_server_get_url(workspace_name, object_name=None, object_id=None):
     return get_url
 
 
-def _create_server_post_url(workspace_name, obj_type):
+def _create_server_post_url(workspace_name, obj_type, command_id):
     server_api_url = _create_server_api_url()
     object_end_point_name = OBJECT_TYPE_END_POINT_MAPPER[obj_type]
     post_url = '{0}/ws/{1}/{2}/'.format(server_api_url, workspace_name, object_end_point_name)
+    if command_id:
+        get_params = {'command_id': command_id}
+        post_url += '?' + urlencode(get_params)
+    print(post_url)
     return post_url
 
 
@@ -288,7 +292,14 @@ def _get_raw_workspace_summary(workspace_name):
     return _get(request_url)
 
 def _save_to_server(workspace_name, **params):
-    post_url = _create_server_post_url(workspace_name, params['type'])
+    """
+
+    :param workspace_name:
+    :param command_id:
+    :param params:
+    :return:
+    """
+    post_url = _create_server_post_url(workspace_name, params['type'], params.get('command_id', None))
     return _post(post_url, update=False, expected_response=201, **params)
 
 def _update_in_server(workspace_name, faraday_object_id, **params):
@@ -828,7 +839,7 @@ def get_commands_number(workspace_name, **params):
     """
     return int(_get_raw_commands(workspace_name, **params))
 
-def create_host(workspace_name, ip, os, default_gateway=None,
+def create_host(workspace_name, command_id, ip, os, default_gateway=None,
                 description="", metadata=None, owned=False, owner="",
                 parent=None):
     """Create a host.
@@ -851,6 +862,7 @@ def create_host(workspace_name, ip, os, default_gateway=None,
         A dictionary with the server's response.
     """
     return _save_to_server(workspace_name,
+                           command_id=command_id,
                            ip=ip, os=os,
                            default_gateway=default_gateway,
                            owned=owned,
@@ -894,94 +906,7 @@ def update_host(workspace_name, id, name, os, default_gateway,
                              type="Host")
 
 
-# TODO: FIX. If you actually pass ipv4 or ipv6 as None, which are the defaults
-# values here, the server will complain. Review if this should be fixed on
-# the client or on the server.
-def create_interface(workspace_name, id, name, description, mac,
-                     owned=False, owner="", hostnames=None, network_segment=None,
-                     ipv4=None, ipv6=None, metadata=None):
-    """Creates an interface.
-
-    Warning:
-        DO NOT leave ipv4 and ipv6 values on None, as the default indicated.
-        This is a known bug and we're working to fix it. ipv4 and ipv6 need to
-        be valid IP addresses, or, in case one of them is irrelevant, empty strings.
-
-    Args:
-        workspace_name (str): the name of the workspace where the interface will be saved.
-        id (str): the id of the interface. Must be unique.
-        name (str): the interface's name
-        description (str): a description.
-        mac (str) the mac address of the interface
-        owned (bool): is the host owned or not?
-        owner (str): an owner for the host
-        hostnames ([str]): a list of hostnames
-        network_segment (str): the network segment
-        ipv4 (str): the ipv4 direction of the interface.
-        ipv6 (str): the ipv6 direction of the interface.
-        metadata: a collection of metadata. If you don't know the metada. leave
-            on None, it will be created automatically.
-
-    Returns:
-        A dictionary with the server's response.
-    """
-    return _save_to_server(workspace_name,
-                           id,
-                           name=name,
-                           description=description,
-                           mac=mac,
-                           owned=owned,
-                           owner=owner,
-                           hostnames=hostnames,
-                           network_segment=network_segment,
-                           ipv4=ipv4,
-                           ipv6=ipv6,
-                           type="Interface",
-                           metadata=metadata)
-
-def update_interface(workspace_name, id, name, description, mac,
-                     owned=False, owner="", hostnames=None, network_segment=None,
-                     ipv4=None, ipv6=None, metadata=None):
-    """Creates an interface.
-
-    Warning:
-        DO NOT leave ipv4 and ipv6 values on None, as the default indicated.
-        This is a known bug and we're working to fix it. ipv4 and ipv6 need to
-        be valid IP addresses, or, in case one of them is irrelevant, empty strings.
-
-    Args:
-        workspace_name (str): the name of the workspace where the interface will be saved.
-        id (str): the id of the interface. Must be unique.
-        name (str): the interface's name
-        description (str): a description.
-        mac (str) the mac address of the interface
-        owned (bool): is the host owned or not?
-        owner (str): an owner for the host
-        hostnames ([str]): a list of hostnames
-        network_segment (str): the network segment
-        ipv4 (str): the ipv4 direction of the interface.
-        ipv6 (str): the ipv6 direction of the interface.
-        metadata: a collection of metadata. If you don't know the metada. leave
-            on None, it will be created automatically.
-
-    Returns:
-        A dictionary with the server's response.
-    """
-    return _update_in_server(workspace_name,
-                             id,
-                             name=name,
-                             description=description,
-                             mac=mac,
-                             owned=owned,
-                             owner=owner,
-                             hostnames=hostnames,
-                             network_segment=network_segment,
-                             ipv4=ipv4,
-                             ipv6=ipv6,
-                             type="Interface",
-                             metadata=metadata)
-
-def create_service(workspace_name, name, description, ports, parent,
+def create_service(workspace_name, command_id, name, description, ports, parent,
                    owned=False, owner="", protocol="", status="", version="",
                    metadata=None):
     """Creates a service.
@@ -1004,6 +929,7 @@ def create_service(workspace_name, name, description, ports, parent,
         A dictionary with the server's response.
     """
     return _save_to_server(workspace_name,
+                           command_id=command_id,
                            name=name,
                            parent=parent,
                            description=description,
@@ -1052,7 +978,7 @@ def update_service(workspace_name, id, name, description, ports,
                              metadata=metadata)
 
 
-def create_vuln(workspace_name, name, description, parent, parent_type,
+def create_vuln(workspace_name, command_id, name, description, parent, parent_type,
                 owned=None, owner="", confirmed=False,
                 resolution="", data="", refs=None, severity="info",
                 desc="", metadata=None, status=None, policyviolations=[]):
@@ -1081,6 +1007,7 @@ def create_vuln(workspace_name, name, description, parent, parent_type,
         A dictionary with the server's response.
     """
     return _save_to_server(workspace_name,
+                           command_id=command_id,
                            name=name,
                            description=description,
                            parent=parent,
@@ -1142,7 +1069,7 @@ def update_vuln(workspace_name, id, name, description, owned=None, owner="",
                              metadata=metadata,
                              policyviolations=policyviolations)
 
-def create_vuln_web(workspace_name, name, description, owned=None, owner="",
+def create_vuln_web(workspace_name, command_id, name, description, owned=None, owner="",
                     confirmed=False, data="", refs=None, severity="info", resolution="",
                     desc="", metadata=None, method=None, params="", path=None, pname=None,
                     query=None, request=None, response=None, category="", website=None,
@@ -1179,6 +1106,7 @@ def create_vuln_web(workspace_name, name, description, owned=None, owner="",
         A dictionary with the server's response.
     """
     return _save_to_server(workspace_name,
+                           command_id=command_id,
                            name=name,
                            description=description,
                            owned=owned,
@@ -1265,7 +1193,7 @@ def update_vuln_web(workspace_name, id, name, description, owned=None, owner="",
                              type='VulnerabilityWeb',
                              policyviolations=policyviolations)
 
-def create_note(workspace_name, name, text, owned=None, owner="",
+def create_note(workspace_name, command_id, object_type, object_id, name, text, owned=None, owner="",
                 description="", metadata=None):
     """Creates a note.
 
@@ -1321,7 +1249,7 @@ def update_note(workspace_name, id, name, text, owned=None, owner="",
                              metadata=metadata)
 
 
-def create_credential(workspace_name, id, name, username, password,
+def create_credential(workspace_name, command_id, name, username, password,
                       owned=None, owner="", description="", metadata=None):
     """Creates a credential.
 
@@ -1341,7 +1269,7 @@ def create_credential(workspace_name, id, name, username, password,
         A dictionary with the server's response.
     """
     return _save_to_server(workspace_name,
-                           id,
+                           command_id=command_id,
                            name=name,
                            description=description,
                            owned=owned,

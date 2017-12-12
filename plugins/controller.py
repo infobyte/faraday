@@ -117,12 +117,12 @@ class PluginController(threading.Thread):
         plugin_process.start()
 
         print('Plugin controller ', self.pending_actions)
-        self.pending_actions.put((modelactions.PLUGINSTART, plugin.id))
+        self.pending_actions.put((modelactions.PLUGINSTART, plugin.id, command_id))
 
-        output_queue.put(output)
+        output_queue.put((output, command_id))
         output_queue.join()
 
-        self.pending_actions.put((modelactions.PLUGINEND, plugin.id))
+        self.pending_actions.put((modelactions.PLUGINEND, plugin.id, command_id))
 
     def _processAction(self, action, parameters):
         """

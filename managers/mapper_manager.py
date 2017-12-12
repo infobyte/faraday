@@ -22,8 +22,8 @@ class MapperManager(object):
     def createMappers(self, workpace_name):
         self.workspace_name = workpace_name
 
-    def save(self, obj):
-        saved_raw_obj = create_object(self.workspace_name, obj.class_signature, obj)
+    def save(self, obj, command_id=None):
+        saved_raw_obj = create_object(self.workspace_name, obj.class_signature, obj, command_id)
         if '_id' in saved_raw_obj:
             return saved_raw_obj['_id']
         return False

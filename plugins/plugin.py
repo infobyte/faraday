@@ -55,6 +55,7 @@ class PluginBase(object):
         self._completition = {}
         self._new_elems = []
         self._settings = {}
+        self.command_id = None
 
     def has_custom_output(self):
         return bool(self._output_file_path)
@@ -71,6 +72,9 @@ class PluginBase(object):
         :return: None
         """
         self._pending_actions = _pending_actions
+
+    def setCommandID(self, command_id):
+        self.command_id = command_id
 
     def getSettings(self):
         for param, (param_type, value) in self._settings.iteritems():
@@ -150,10 +154,15 @@ class PluginBase(object):
         The caller of this function has to build the action in the right
         way since no checks are preformed over args
         """
+
+        if self.command_id:
+            args = args + (self.command_id, )
+        else:
+            logger.warn('Warning command id not set for action {0}'.format(args))
+        print('Addpending', args)
         self._pending_actions.put(args)
 
     def createAndAddHost(self, name, os="unknown"):
-
         host_obj = factory.createModelObject(
             Host.class_signature,
             name,
@@ -180,7 +189,7 @@ class PluginBase(object):
 
     @deprecation.deprecated(deprecated_in="3.0", removed_in="3.5",
                             current_version=VERSION,
-                            details="Interface object removed. Use host or service instead. This will attach Service to Host!")
+                            details="Interface object removed. Use host or service instead. Service will be attached to Host!")
     def createAndAddServiceToInterface(self, host_id, interface_id, name,
                                        protocol="tcp?", ports=[],
                                        status="running", version="unknown",

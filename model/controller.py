@@ -408,24 +408,8 @@ class ModelController(Thread):
     def find(self, obj_id):
         return self.mappers_manager.find(obj_id)
 
-    def addHostASYNC(self, host):
-        """
-        ASYNC API
-        Adds an action to the ModelController actions queue indicating a
-        new host must be added to the model
-        """
-        self.__addPendingAction(modelactions.ADDHOST,
-                                host)
-
-    def addHostSYNC(self, host):
-        """
-        SYNC API
-        Adds a host directly to the model
-        """
-        self._processAction(modelactions.ADDHOST, [host, None], sync=True)
-
-    def _save_new_object(self, new_object):
-        res = self.mappers_manager.save(new_object)
+    def _save_new_object(self, new_object, command_id):
+        res = self.mappers_manager.save(new_object, command_id)
         new_object.setID(res)
         if res:
             notifier.addObject(new_object)
@@ -435,9 +419,17 @@ class ModelController(Thread):
         if not old_obj.needs_merge(new_obj): return True
         return self.addUpdate(old_obj, new_obj)
 
-    def __add(self, new_obj, parent_id=None, *args):
+    def __add(self, new_obj, command_id=None, *args):
+        """
+            This method sends requests to the faraday-server.
+
+        :param new_obj:
+        :param command_id:
+        :param args:
+        :return:
+        """
         try:
-            self._save_new_object(new_obj)
+            self._save_new_object(new_obj, command_id)
         except ConflictInDatabase as conflict:
             old_obj = new_obj.__class__(conflict.answer.json()['object'], new_obj._workspace_name)
             new_obj.setID(old_obj.getID())

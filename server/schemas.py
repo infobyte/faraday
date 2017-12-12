@@ -109,7 +109,7 @@ class MutableField(fields.Field):
 
 
 class MetadataSchema(Schema):
-    command_id = fields.Method('get_command_id', dump_only=True)
+    command_id = fields.Function(lambda x: None)
 
     creator = fields.Function(lambda x: '')
     owner = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
@@ -120,11 +120,3 @@ class MetadataSchema(Schema):
     update_user = fields.String(default='', dump_only=True)
     update_action = fields.Integer(default=0, dump_only=True)
     update_controller_action = fields.String(default='', dump_only=True)
-
-    def get_command_id(self, obj):
-        command_id = None
-        command_obj = CommandObject.query.filter_by(object_type='vulnerability', object_id=obj.id, workspace_id=obj.workspace_id).first()
-        if command_obj:
-            command_id = command_obj.command_id
-
-        return command_id

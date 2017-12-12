@@ -6,6 +6,7 @@ angular.module('faradayApp')
     .factory('License', ['BASEURL', 'configSrv', '$http', '$q',
     function(BASEURL, configSrv, $http, $q) {
         function License(data) {
+            var APIURL = BASEURL + "_api/v2/";
             var now = new Date(),
             date = now.getTime() / 1000.0;
 
@@ -59,7 +60,7 @@ angular.module('faradayApp')
 
                 configSrv.promise
                     .then(function() {
-                        var url = BASEURL + configSrv.license_db + "/" + self._id + "?rev=" + self._rev;
+                        var url = APIURL + "licenses/" + self._id;
 
                         $http.delete(url)
                             .then(function(resp) {
@@ -79,7 +80,7 @@ angular.module('faradayApp')
 
                 configSrv.promise
                     .then(function() {
-                        var url = BASEURL + configSrv.license_db + "/" + self._id;
+                        var url = APIURL + "licenses/" + self._id;
 
                         $http.put(url, data)
                             .then(function(res) {
@@ -105,7 +106,7 @@ angular.module('faradayApp')
 
                 configSrv.promise
                     .then(function() {
-                        var url = BASEURL + configSrv.license_db;
+                        var url = APIURL + "licenses/";
 
                         $http.post(url, self)
                             .then(function(data) {

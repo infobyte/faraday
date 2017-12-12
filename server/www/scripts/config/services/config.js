@@ -3,17 +3,15 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('configSrv', ['BASEURL', '$http', function(BASEURL, $http) {
+    .factory('configSrv', ['$http', function($http) {
 
         var p = $http.get('config/config.json')
             .then(function(conf) {
                 configSrv.faraday_version = conf.data.ver;
-                configSrv.license_db = conf.data.lic_db;
             });
 
         configSrv = {
             faraday_version: null,
-            license_db: null,
             promise: p
         }
 

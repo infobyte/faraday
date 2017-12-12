@@ -4,13 +4,13 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-#import Queue
+import time
 import logging
 import traceback
 import model.common  # this is to make sure the factory is created
-from multiprocessing import Process, Lock, Queue
+from multiprocessing import Lock
 from Queue import Empty
-from threading import Thread, RLock
+from threading import Thread
 
 from config.configuration import getInstanceConfiguration
 from persistence.server.server_io_exceptions import ConflictInDatabase
@@ -355,7 +355,7 @@ class ModelController(Thread):
             action = current_action[0]
             parameters = current_action[1:]
             # dispatch the action
-            self._processAction(action, parameters)
+            self._processAction(action, list(parameters))
         except Empty:
             # if timeout was reached, just let the daemon run again
             # this is done just to be able to test the stop flag

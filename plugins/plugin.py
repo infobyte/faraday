@@ -7,12 +7,14 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from threading import Thread
+
 
 import os
 import re
+import logging
 import traceback
 import deprecation
+from threading import Thread
 
 import server.config
 import model.api
@@ -272,7 +274,7 @@ class PluginBase(object):
 
         note_obj = model.common.factory.createModelObject(
             Note.class_signature,
-            name, text=text, parent_id=host_id)
+            name, text=text, object_id=host_id, object_type='host')
 
         note_obj._metadata.creator = self.id
         self.__addPendingAction(modelactions.ADDNOTEHOST, note_obj)
@@ -285,7 +287,7 @@ class PluginBase(object):
 
         note_obj = model.common.factory.createModelObject(
             Note.class_signature,
-            name, text=text, parent_id=interface_id)
+            name, text=text, object_id=host_id, object_type='host')
 
         note_obj._metadata.creator = self.id
         self.__addPendingAction(modelactions.ADDNOTEHOST, note_obj)
@@ -295,7 +297,7 @@ class PluginBase(object):
 
         note_obj = model.common.factory.createModelObject(
             Note.class_signature,
-            name, text=text, parent_id=service_id)
+            name, text=text, object_id=service_id, object_type='service')
 
         note_obj._metadata.creator = self.id
         self.__addPendingAction(modelactions.ADDNOTESRV, note_obj)
@@ -305,7 +307,7 @@ class PluginBase(object):
 
         note_obj = model.common.factory.createModelObject(
             Note.class_signature,
-            name, text=text, parent_id=note_id)
+            name, text=text, object_id=note_id, object_type='comment')
 
         note_obj._metadata.creator = self.id
 

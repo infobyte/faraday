@@ -1246,6 +1246,8 @@ class Note(ModelBase):
     def __init__(self, note, workspace_name):
         ModelBase.__init__(self, note, workspace_name)
         self.text = note['text']
+        self.object_id = note['object_id']
+        self.object_type = note['object_type']
 
     def updateAttributes(self, name=None, text=None):
         if name is not None:
@@ -1258,6 +1260,14 @@ class Note(ModelBase):
 
     def getText(self):
         return self.text
+
+    def getObjectID(self):
+        # sorry for adding camel case method.
+        return self.object_id
+
+    def getObjectType(self):
+        # sorry for adding camel case method.
+        return self.object_type
 
 
 class Credential(ModelBase):

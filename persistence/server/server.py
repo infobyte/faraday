@@ -26,6 +26,13 @@ Warning:
 import os
 import json
 import logging
+try:
+    import urlparse
+    from urllib import urlencode
+except: # For Python 3
+    import urllib.parse as urlparse
+    from urllib.parse import urlencode
+
 
 import requests
 
@@ -51,7 +58,7 @@ OBJECT_TYPE_END_POINT_MAPPER = {
     'Vulnerability': 'vulns',
     'VulnerabilityWeb': 'vulns',
     'Service': 'services',
-    'Note': 'comments',
+    'Note': 'comment',
 }
 
 
@@ -1212,6 +1219,9 @@ def create_note(workspace_name, command_id, object_type, object_id, name, text, 
         A dictionary with the server's response.
     """
     return _save_to_server(workspace_name,
+                           command_id=command_id,
+                           object_id=object_id,
+                           object_type=object_type,
                            name=name,
                            description=description,
                            owned=owned,

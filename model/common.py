@@ -100,7 +100,8 @@ class ModelObjectFactory(object):
         if classname in self._registered_objects:
             if object_name is not None:
                 objargs['name'] = object_name
-                objargs['parent'] = parent_id
+                if parent_id:
+                    objargs['parent'] = parent_id
                 tmpObj = self._registered_objects[classname](objargs, workspace_name)
                 return tmpObj
             else:

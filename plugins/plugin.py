@@ -374,7 +374,8 @@ class PluginProcess(Thread):
         model.api.devlog("-" * 40)
         done = False
         while not done:
-            output = self.output_queue.get()
+            output, command_id = self.output_queue.get()
+            self.plugin.setCommandID(command_id)
             if output is not None:
                 model.api.devlog('%s: %s' % (proc_name, "New Output"))
                 try:

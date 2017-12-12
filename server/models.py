@@ -519,7 +519,7 @@ class Command(Metadata):
     __tablename__ = 'command'
     id = Column(Integer, primary_key=True)
     command = Column(Text(), nullable=False)
-    tool = Column(Text(), nullable=False, default='')
+    tool = Column(Text(), nullable=False)
     start_date = Column(DateTime, nullable=False)
     end_date = Column(DateTime, nullable=True)
     ip = Column(String(250), nullable=False)  # where the command was executed

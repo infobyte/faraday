@@ -249,12 +249,18 @@ def update_command_tools(workspace, command_tool_map, id_map):
             ))
             continue
         assert workspace.id == command.workspace_id
-        if command.tool:
+        if command.tool and command.tool != 'unknown':
             logger.warn("Command {} (Couch ID {}) has already a tool. "
                         "Overriding it".format(command_id,
                                                command_couchid))
         command.tool = tool
         session.add(command)
+    session.commit()
+    missing_tool_count = Command.query.filter_by(
+        workspace=workspace, tool="unknown").count()
+    if missing_tool_count:
+        logger.warn("Couldn't find the tool name of {} commands".format(
+                    missing_tool_count))
 
 
 class EntityNotFound(Exception):
@@ -658,8 +664,12 @@ class CommandImporter(object):
     DOC_TYPE = 'CommandRunInformation'
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         import_source = 'shell'
-        if document.get('command', '').startswith('Import'):
+        if document.get('command', '').startswith('Import '):
             import_source = 'report'
+            # Now that we have a field that distinguished between shell commands
+            # and imported reports, it is no longer required to directly format
+            # in hte command field
+            document['command'] = document['command'][len('Import '):]
 
         start_date = datetime.datetime.fromtimestamp(document.get('itime'))
 
@@ -679,6 +689,7 @@ class CommandImporter(object):
         command.hostname = document.get('hostname', None)
         command.params = document.get('params', None)
         command.user = document.get('user', None)
+        command.tool = 'unknown'  # It will be updated later
         command.workspace = workspace
 
         yield command
@@ -1084,7 +1095,6 @@ class ImportLicense():
                                                    notes=document.get('notes'),
                                                    type=document.get('lictype')
                                                    )
-
 
 class ImportCouchDB():
     def _open_couchdb_conn(self):

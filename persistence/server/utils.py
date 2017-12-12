@@ -9,6 +9,7 @@ See the file 'doc/LICENSE' for the license information
 import hashlib
 from persistence.server.server_io_exceptions import MoreThanOneObjectFoundByID
 
+
 def force_unique(lst):
     """Takes a list and return its only member if the list len is 1,
     None if list is empty or raises an MoreThanOneObjectFoundByID error
@@ -30,15 +31,17 @@ def get_object_properties(obj):
         metadata = metadata.toDict()
 
     return {
-            'name': obj.getName(),
-            'description': obj.getDescription(),
-            'metadata': metadata,
-            'owned': obj.isOwned(),
-            'owner': obj.getOwner()
-            }
+        'name': obj.getName(),
+        'description': obj.getDescription(),
+        'metadata': metadata,
+        'owned': obj.isOwned(),
+        'owner': obj.getOwner()
+    }
+
 
 def get_host_properties(host):
-    host_dict = {'os': host.getOS(),
+    host_dict = {
+        'os': host.getOS(),
     }
     if host.getDefaultGateway():
         host['default_gateway'] = host.getDefaultGateway()
@@ -78,6 +81,7 @@ def get_vuln_properties(vuln):
     vuln_dict.update(get_object_properties(vuln))
     return vuln_dict
 
+
 def get_vuln_web_properties(vuln_web):
     vuln_web_dict = {
         'method': vuln_web.getMethod(),
@@ -94,6 +98,7 @@ def get_vuln_web_properties(vuln_web):
     vuln_web_dict.update(get_vuln_properties(vuln_web))
     return vuln_web_dict
 
+
 def get_note_properties(note):
     note_dict = {
         'text': note.getText(),
@@ -103,11 +108,13 @@ def get_note_properties(note):
     note_dict.update(get_object_properties(note))
     return note_dict
 
+
 def get_credential_properties(credential):
     cred_dict = {'username': credential.getUsername(),
                  'password': credential.getPassword()}
     cred_dict.update(get_object_properties(credential))
     return cred_dict
+
 
 def get_command_properties(command):
     return {

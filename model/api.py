@@ -443,6 +443,7 @@ def delEvidence(file_path):
 #-------------------------------------------------------------------------------
 # MISC APIS
 #-------------------------------------------------------------------------------
+
 def log(msg ,level = "INFO"):
     """
     This api will log the text in the GUI console without the level

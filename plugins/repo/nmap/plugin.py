@@ -371,8 +371,6 @@ class Script(object):
             return m2
         return []
 
-
-
     def __init__(self, script_node):
         self.node = script_node
 

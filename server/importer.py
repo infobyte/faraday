@@ -78,6 +78,8 @@ MAPPED_VULN_SEVERITY = OrderedDict([
     ('', 'unclassified'),
 ])
 
+# The objects are imported in this order (the order of the list, the integer
+# isn't related to this)
 OBJ_TYPES = [
             (1, 'CommandRunInformation'),
             (1, 'Host'),
@@ -195,6 +197,64 @@ def set_metadata(document, obj):
                     obj.create_date = datetime.datetime.fromtimestamp(document['metadata']['create_time'] / 1000)
             except TypeError:
                 print('')
+
+
+def map_tool_with_command_id(command_tool_map, document):
+    try:
+        metadata = document['metadata']
+        tool = metadata['creator']
+        command_id = metadata['command_id']
+    except KeyError:
+        # Ignore objects without any of these keys
+        return
+    if not tool or not command_id:
+        # it could be blank
+        return
+    old_tool = command_tool_map.get(command_id)
+    if old_tool is not None and old_tool != tool:
+        logger.warn('Conflicting tool names for command {}: "{}" and "{}". '
+                    'Using "{}"'.format(
+                        command_id,
+                        old_tool,
+                        tool,
+                        tool
+                    ))
+    command_tool_map[command_id] = tool
+
+
+def update_command_tools(workspace, command_tool_map, id_map):
+    if command_tool_map:
+        logger.info("Setting the tool to {} commands".format(
+            len(command_tool_map)))
+    for (command_couchid, tool) in tqdm(command_tool_map.items()):
+        try:
+            map_data = id_map[command_couchid]
+
+            # There should be only one command created
+            assert len(map_data) <= 1
+            map_data = map_data[0]
+        except IndexError:
+            logger.warn("Couldn't find new numeric ID of command {}".format(
+                command_couchid
+            ))
+            continue
+        else:
+            assert map_data['type'] == 'CommandRunInformation'
+            command_id = map_data['id']
+        command = Command.query.get(command_id)
+        if command is None:
+            logger.warn("Couldn't get command {}, mapped to ID {}".format(
+                command_couchid,
+                command_id
+            ))
+            continue
+        assert workspace.id == command.workspace_id
+        if command.tool:
+            logger.warn("Command {} (Couch ID {}) has already a tool. "
+                        "Overriding it".format(command_id,
+                                               command_couchid))
+        command.tool = tool
+        session.add(command)
 
 
 class EntityNotFound(Exception):
@@ -899,7 +959,7 @@ class ImportCouchDBUsers():
             if user['name'] in admins.keys():
                 # This is an already imported admin user, skip
                 continue
-            logger.info(u'Importing {0}'.format(user['name']))
+            logger.info(u'Importing user {0}'.format(user['name']))
             if not db.session.query(User).filter_by(username=user['name']).first():
                 app.user_datastore.create_user(
                     username=user['name'],
@@ -922,6 +982,7 @@ class ImportVulnerabilityTemplates():
         self.names = Counter()
 
     def run(self):
+        logger.info("Importing vulnerability templates")
         cwe_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
             username=server.config.couchdb.user,
             password=server.config.couchdb.password,
@@ -940,7 +1001,7 @@ class ImportVulnerabilityTemplates():
             logger.warn(e)
             return
 
-        for cwe in cwes.json()['rows']:
+        for cwe in tqdm(cwes.json()['rows']):
             document = cwe['doc']
             new_severity = self.get_severity(document)
 
@@ -1150,6 +1211,7 @@ class ImportCouchDB():
         obj_types = OBJ_TYPES
         couchdb_relational_map = defaultdict(list)
         couchdb_relational_map_by_type = defaultdict(list)
+        command_tool_map = {}
         for level, obj_type in obj_types:
             obj_importer = faraday_importer.get_importer_from_document(obj_type)()
             objs_dict = self.get_objs(couch_url, obj_type, level, workspace)
@@ -1166,8 +1228,13 @@ class ImportCouchDB():
                         if not new_obj:
                             continue
                         set_metadata(raw_obj, new_obj)
+                        map_tool_with_command_id(command_tool_map,
+                                                 raw_obj)
                         session.commit()
                         couchdb_relational_map_by_type[couchdb_id].append({'type': obj_type, 'id': new_obj.id})
                         couchdb_relational_map[couchdb_id].append(new_obj.id)
+        update_command_tools(workspace, command_tool_map,
+                             couchdb_relational_map_by_type)
+        session.commit()
         self.verify_import_data(couchdb_relational_map, couchdb_relational_map_by_type, workspace)
         return created

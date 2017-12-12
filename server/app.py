@@ -60,6 +60,7 @@ def register_blueprints(app):
     from server.api.modules.vulnerability_template import vulnerability_template_api
     from server.api.modules.workspaces import workspace_api
     from server.api.modules.handlers import handlers_api
+    from server.api.modules.comments import comment_api
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(credentials_api)
     app.register_blueprint(doc_api)
@@ -72,6 +73,7 @@ def register_blueprints(app):
     app.register_blueprint(vulnerability_template_api)
     app.register_blueprint(workspace_api)
     app.register_blueprint(handlers_api)
+    app.register_blueprint(comment_api)
 
 
 def check_testing_configuration(testing, app):

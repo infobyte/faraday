@@ -15,7 +15,6 @@ from persistence.server.server_io_exceptions import (WrongObjectSignature,
                                                      CantAccessConfigurationWithoutTheClient)
 
 from persistence.server.utils import (force_unique,
-                                      get_hash,
                                       get_host_properties,
                                       get_service_properties,
                                       get_vuln_properties,

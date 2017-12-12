@@ -21,8 +21,6 @@ def force_unique(lst):
     else:
         raise MoreThanOneObjectFoundByID(lst)
 
-def get_hash(parts):
-    return hashlib.sha1("._.".join(parts)).hexdigest()
 
 def get_object_properties(obj):
     # this sometimes is the metadata object and sometimes its a dictionary

@@ -879,7 +879,7 @@ def create_host(workspace_name, command_id, ip, os, default_gateway=None,
                            description=description,
                            type="Host")
 
-def update_host(workspace_name, id, name, os, default_gateway,
+def update_host(workspace_name, id, ip, os, default_gateway="",
                 description="", metadata=None, owned=False, owner="",
                 parent=None):
     """Updates a host.
@@ -903,7 +903,7 @@ def update_host(workspace_name, id, name, os, default_gateway,
     """
     return _update_in_server(workspace_name,
                              id,
-                             name=name, os=os,
+                             ip=ip, os=os,
                              default_gateway=default_gateway,
                              owned=owned,
                              metadata=metadata,

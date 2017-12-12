@@ -351,7 +351,7 @@ def update_host(workspace_name, host):
     Return the server's json response as a dictionary.
     """
     host_properties = get_host_properties(host)
-    return server.update_host(workspace_name, **host_properties)
+    return server.update_host(workspace_name, host.getID(), **host_properties)
 
 
 @_ignore_in_changes

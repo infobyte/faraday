@@ -7,11 +7,11 @@ angular.module('faradayApp')
                     ['$scope', '$filter', '$routeParams',
                     '$location', '$uibModal', '$cookies', '$q', '$window', 'BASEURL',
                     'SEVERITIES', 'EASEOFRESOLUTION', 'STATUSES', 'hostsManager', 'commonsFact',
-                     'vulnsManager', 'workspacesFact', 'csvService', 'uiGridConstants', 'vulnModelsManager',
+                     'vulnsManager', 'workspacesFact', 'csvService', 'uiGridConstants', 'vulnModelsManager','ServerAPI',
                     function($scope, $filter, $routeParams,
                         $location, $uibModal, $cookies, $q, $window, BASEURL,
                         SEVERITIES, EASEOFRESOLUTION, STATUSES, hostsManager, commonsFact,
-                             vulnsManager, workspacesFact, csvService, uiGridConstants, vulnModelsManager) {
+                             vulnsManager, workspacesFact, csvService, uiGridConstants, vulnModelsManager, ServerAPI) {
         $scope.baseurl;
         $scope.columns;
         $scope.easeofresolution;
@@ -441,6 +441,34 @@ angular.module('faradayApp')
             return res;
         };
 
+        $scope.searchExploits = function(){
+            var selected = $scope.getCurrentSelection();
+
+            selected.forEach(function(vuln){
+
+                vuln.refs.forEach(function(ref){
+
+                    if(ref.toLowerCase().startsWith('cve')){
+
+                        var response = ServerAPI.getExploits(ref);
+                        response.then(function(res) {
+
+                            var modal = $uibModal.open({
+                                templateUrl: 'scripts/commons/partials/exploitsModal.html',
+                                controller: 'commonsModalExploitsCtrl',
+                                resolve: {
+                                    msg: function() {
+                                        return res.data;
+                                    }
+                                }
+                            });
+                        }, function(error){
+                            showMessage("Exploit for this vulnerability not found", false);
+                        });
+                    }
+                });
+            });
+        };
 
         $scope.saveAsModel = function() {
             var self = this;
@@ -930,13 +958,13 @@ angular.module('faradayApp')
                 // Add the total amount of vulnerabilities as an option for pagination
                 // if it is larger than our biggest page size
                 if ($scope.gridOptions.totalItems > paginationOptions.defaultPageSizes[paginationOptions.defaultPageSizes.length - 1]) {
-                    
+
                     $scope.gridOptions.paginationPageSizes = paginationOptions.defaultPageSizes.concat([$scope.gridOptions.totalItems]);
-                    
+
                     // sadly, this will load the vuln list again because it fires a paginationChanged event
                     if ($scope.gridOptions.paginationPageSize > $scope.gridOptions.totalItems)
                         $scope.gridOptions.paginationPageSize = $scope.gridOptions.totalItems;
-                    
+
                     // New vuln and MAX items per page setted => reload page size.
                     if ($scope.gridOptions.paginationPageSize === $scope.gridOptions.totalItems - 1)
                         $scope.gridOptions.paginationPageSize = $scope.gridOptions.totalItems;

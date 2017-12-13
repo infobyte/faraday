@@ -3,7 +3,6 @@ Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
-from requests import Session
 from persistence.server.models import create_object, get_object, update_object, delete_object
 
 # NOTE: This class is intended to be instantiated by the
@@ -28,8 +27,8 @@ class MapperManager(object):
             return saved_raw_obj['_id']
         return False
     
-    def update(self, obj):
-        if update_object(self.workspace_name, obj.class_signature, obj):
+    def update(self, obj, command_id=None):
+        if update_object(self.workspace_name, obj.class_signature, obj, command_id):
             return True
         return False
 

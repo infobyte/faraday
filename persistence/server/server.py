@@ -118,11 +118,15 @@ def _create_server_post_url(workspace_name, obj_type, command_id):
     return post_url
 
 
-def _create_server_put_url(workspace_name, obj_type, obj_id):
+def _create_server_put_url(workspace_name, obj_type, obj_id, command_id):
     server_api_url = _create_server_api_url()
     object_end_point_name = OBJECT_TYPE_END_POINT_MAPPER[obj_type]
-    pust_url = '{0}/ws/{1}/{2}/{3}/'.format(server_api_url, workspace_name, object_end_point_name, obj_id)
-    return pust_url
+    put_url = '{0}/ws/{1}/{2}/{3}/'.format(server_api_url, workspace_name, object_end_point_name, obj_id)
+    if command_id:
+        get_params = {'command_id': command_id}
+        put_url += '?' + urlencode(get_params)
+    print(put_url)
+    return put_url
 
 
 def _create_server_delete_url(workspace_name, object_id):
@@ -302,7 +306,6 @@ def _save_to_server(workspace_name, **params):
     """
 
     :param workspace_name:
-    :param command_id:
     :param params:
     :return:
     """
@@ -310,7 +313,7 @@ def _save_to_server(workspace_name, **params):
     return _post(post_url, update=False, expected_response=201, **params)
 
 def _update_in_server(workspace_name, faraday_object_id, **params):
-    put_url = _create_server_put_url(workspace_name, params['type'], faraday_object_id)
+    put_url = _create_server_put_url(workspace_name, params['type'], faraday_object_id, params.get('command_id', None))
     return _put(put_url, expected_response=200, **params)
 
 def _save_db_to_server(db_name, **params):
@@ -879,7 +882,7 @@ def create_host(workspace_name, command_id, ip, os, default_gateway=None,
                            description=description,
                            type="Host")
 
-def update_host(workspace_name, id, ip, os, default_gateway="",
+def update_host(workspace_name, command_id, id, ip, os, default_gateway="",
                 description="", metadata=None, owned=False, owner="",
                 parent=None):
     """Updates a host.
@@ -903,6 +906,7 @@ def update_host(workspace_name, id, ip, os, default_gateway="",
     """
     return _update_in_server(workspace_name,
                              id,
+                             command_id=command_id,
                              ip=ip, os=os,
                              default_gateway=default_gateway,
                              owned=owned,
@@ -949,7 +953,7 @@ def create_service(workspace_name, command_id, name, description, ports, parent,
                            type="Service",
                            metadata=metadata)
 
-def update_service(workspace_name, id, name, description, ports,
+def update_service(workspace_name, command_id, id, name, description, ports,
                    owned=False, owner="", protocol="", status="", version="",
                    metadata=None):
     """Creates a service.
@@ -973,6 +977,7 @@ def update_service(workspace_name, id, name, description, ports,
     """
     return _update_in_server(workspace_name,
                              id,
+                             command_id=command_id,
                              name=name,
                              description=description,
                              ports=ports,
@@ -1032,7 +1037,7 @@ def create_vuln(workspace_name, command_id, name, description, parent, parent_ty
                            metadata=metadata,
                            policyviolations=policyviolations)
 
-def update_vuln(workspace_name, id, name, description, owned=None, owner="",
+def update_vuln(workspace_name, command_id, id, name, description, owned=None, owner="",
                 confirmed=False, data="", refs=None, severity="info", resolution="",
                 desc="", metadata=None, status=None, policyviolations=[]):
     """Updates a vuln.
@@ -1061,6 +1066,7 @@ def update_vuln(workspace_name, id, name, description, owned=None, owner="",
     """
     return _update_in_server(workspace_name,
                              id,
+                             command_id=command_id,
                              name=name,
                              description=description,
                              owned=owned,
@@ -1138,7 +1144,7 @@ def create_vuln_web(workspace_name, command_id, name, description, owned=None, o
                            type='VulnerabilityWeb',
                            policyviolations=policyviolations)
 
-def update_vuln_web(workspace_name, id, name, description, owned=None, owner="",
+def update_vuln_web(workspace_name, command_id, id, name, description, owned=None, owner="",
                     confirmed=False, data="", refs=None, severity="info", resolution="",
                     desc="", metadata=None, method=None, params="", path=None, pname=None,
                     query=None, request=None, response=None, category="", website=None,
@@ -1176,6 +1182,7 @@ def update_vuln_web(workspace_name, id, name, description, owned=None, owner="",
     """
     return _update_in_server(workspace_name,
                              id,
+                             command_id=command_id,
                              name=name,
                              description=description,
                              owned=owned,
@@ -1230,7 +1237,7 @@ def create_note(workspace_name, command_id, object_type, object_id, name, text, 
                            type="Note",
                            metadata=metadata)
 
-def update_note(workspace_name, id, name, text, owned=None, owner="",
+def update_note(workspace_name, command_id, id, name, text, owned=None, owner="",
                 description="", metadata=None):
     """Updates a note.
 
@@ -1250,6 +1257,7 @@ def update_note(workspace_name, id, name, text, owned=None, owner="",
     """
     return _update_in_server(workspace_name,
                              id,
+                             command_id=command_id,
                              name=name,
                              description=description,
                              owned=owned,
@@ -1289,7 +1297,7 @@ def create_credential(workspace_name, command_id, name, username, password,
                            password=password,
                            type="Cred")
 
-def update_credential(workspace_name, id, name, username, password,
+def update_credential(workspace_name, command_id, id, name, username, password,
                       owned=None, owner="", description="", metadata=None):
     """Updates a credential.
 
@@ -1310,6 +1318,7 @@ def update_credential(workspace_name, id, name, username, password,
     """
     return _update_in_server(workspace_name,
                              id,
+                             command_id=command_id,
                              name=name,
                              description=description,
                              owned=owned,

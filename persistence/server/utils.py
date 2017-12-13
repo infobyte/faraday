@@ -44,7 +44,7 @@ def get_host_properties(host):
         'os': host.getOS(),
     }
     if host.getDefaultGateway():
-        host['default_gateway'] = host.getDefaultGateway()
+        host_dict['default_gateway'] = host.getDefaultGateway()
     host_dict.update(get_object_properties(host))
     # name was removed from host and changed to ip
     ip = host_dict.pop('name')

@@ -387,20 +387,20 @@ class ModelController(Thread):
         new_action = args
         self._pending_actions.put(new_action)
 
-    def addUpdate(self, old_object, new_object):
+    def addUpdate(self, old_object, new_object, command_id):
         # Returns True if the update was resolved without user interaction
         try:
-            mergeAction = old_object.addUpdate(new_object)
+            mergeAction = old_object.addUpdate(new_object, command_id)
             if mergeAction:
                 if old_object not in self.objects_with_updates:
                     self.objects_with_updates.append(old_object)
                 notifier.conflictUpdate(1)
                 return False
-        except:
+        except Exception as ex:
             api.devlog("(%s).addUpdate(%s, %s) - failed" %
                        (self, old_object, new_object))
             return False
-        self.mappers_manager.update(old_object)
+        self.mappers_manager.update(old_object, command_id)
         notifier.editHost(old_object)
         return True
 
@@ -415,9 +415,9 @@ class ModelController(Thread):
             notifier.addObject(new_object)
         return res
 
-    def _handle_conflict(self, old_obj, new_obj):
+    def _handle_conflict(self, old_obj, new_obj, command_id):
         if not old_obj.needs_merge(new_obj): return True
-        return self.addUpdate(old_obj, new_obj)
+        return self.addUpdate(old_obj, new_obj, command_id)
 
     def __add(self, new_obj, command_id=None, *args):
         """
@@ -433,11 +433,11 @@ class ModelController(Thread):
         except ConflictInDatabase as conflict:
             old_obj = new_obj.__class__(conflict.answer.json()['object'], new_obj._workspace_name)
             new_obj.setID(old_obj.getID())
-            return self._handle_conflict(old_obj, new_obj)
+            return self._handle_conflict(old_obj, new_obj, command_id)
 
-    def __edit(self, obj, *args, **kwargs):
+    def __edit(self, obj, command_id=None, *args, **kwargs):
         obj.updateAttributes(*args, **kwargs)
-        self.mappers_manager.update(obj)
+        self.mappers_manager.update(obj, command_id)
         notifier.editHost(obj)
         return True
 

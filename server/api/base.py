@@ -428,7 +428,37 @@ class CreateMixin(object):
         return obj
 
 
-class CreateWorkspacedMixin(CreateMixin):
+class CommandMixing():
+    """
+        Created the command obj to log model activity after a command
+        execution via the api (ex. from plugins)
+        This will use GET parameter command_id.
+        NOTE: GET parameters are also available in POST requests
+    """
+
+    def _set_command_id(self, obj, created):
+        try:
+            # validates the data type from user input.
+            command_id = int(flask.request.args.get('command_id', None))
+        except TypeError:
+            command_id = None
+
+        if command_id:
+            command = db.session.query(Command).filter(Command.id==command_id, Command.workspace==obj.workspace).first()
+            if command is None:
+                raise InvalidUsage('Command not found.')
+            command_object = CommandObject(
+                object_id=obj.id,
+                object_type=obj.__class__.__name__,
+                command=command,
+                workspace=obj.workspace,
+                created_persistent=created
+            )
+            db.session.add(command)
+            db.session.add(command_object)
+
+
+class CreateWorkspacedMixin(CreateMixin, CommandMixing):
     """Add POST /<workspace_name>/ route"""
 
     def _perform_create(self, data, workspace_name):
@@ -443,28 +473,8 @@ class CreateWorkspacedMixin(CreateMixin):
             self._validate_uniqueness(obj)
             db.session.add(obj)
         db.session.commit()
-        self._set_command_id(obj)
+        self._set_command_id(obj, True)
         return obj
-
-    def _set_command_id(self, obj):
-        try:
-            command_id = int(flask.request.args.get('command_id', None))
-        except TypeError:
-            command_id = None
-
-        if command_id:
-            command = db.session.query(Command).filter(Command.id==command_id, Command.workspace==obj.workspace).first()
-            if command is None:
-                raise InvalidUsage('Command not found.')
-            command_object = CommandObject(
-                object_id=obj.id,
-                object_type=obj.__class__.__name__,
-                command=command,
-                workspace=obj.workspace,
-                created_persistent=True
-            )
-            db.session.add(command)
-            db.session.add(command_object)
 
 
 class UpdateMixin(object):
@@ -492,13 +502,15 @@ class UpdateMixin(object):
         db.session.commit()
 
 
-class UpdateWorkspacedMixin(UpdateMixin):
+class UpdateWorkspacedMixin(UpdateMixin, CommandMixing):
     """Add PUT /<id>/ route"""
 
     def _perform_update(self, object_id, obj, workspace_name):
         assert not db.session.new
         with db.session.no_autoflush:
             obj.workspace = self._get_workspace(workspace_name)
+
+        self._set_command_id(obj, False)
         return super(UpdateWorkspacedMixin, self)._perform_update(
             object_id, obj)
 

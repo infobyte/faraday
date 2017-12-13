@@ -345,13 +345,13 @@ def create_host(workspace_name, host, command_id):
 
 
 @_ignore_in_changes
-def update_host(workspace_name, host):
+def update_host(workspace_name, host, command_id):
     """Take a workspace_name and a host object and update it in the sever.
 
     Return the server's json response as a dictionary.
     """
     host_properties = get_host_properties(host)
-    return server.update_host(workspace_name, host.getID(), **host_properties)
+    return server.update_host(workspace_name, command_id, host.getID(), **host_properties)
 
 
 @_ignore_in_changes
@@ -370,7 +370,7 @@ def update_service(workspace_name, service):
     Return the server's json response as a dictionary.
     """
     service_properties = get_service_properties(service)
-    return server.update_service(workspace_name, **service_properties)
+    return server.update_service(workspace_name, service.getID(), **service_properties)
 
 
 @_ignore_in_changes
@@ -390,7 +390,7 @@ def update_vuln(workspace_name, vuln):
     Return the server's json response as a dictionary.
     """
     vuln_properties = get_vuln_properties(vuln)
-    return server.update_vuln(workspace_name, **vuln_properties)
+    return server.update_vuln(workspace_name, vuln.getID(), **vuln_properties)
 
 
 @_ignore_in_changes
@@ -410,7 +410,7 @@ def update_vuln_web(workspace_name, vuln_web):
     Return the server's json response as a dictionary.
     """
     vuln_web_properties = get_vuln_web_properties(vuln_web)
-    return server.update_vuln_web(workspace_name, **vuln_web_properties)
+    return server.update_vuln_web(workspace_name, vuln_web.getID(), **vuln_web_properties)
 
 
 @_ignore_in_changes
@@ -428,7 +428,7 @@ def update_note(workspace_name, note):
     Return the server's json response as a dictionary.
     """
     note_properties = get_note_properties(note)
-    return server.update_note(workspace_name, **note_properties)
+    return server.update_note(workspace_name, note.getID(), **note_properties)
 
 
 @_ignore_in_changes
@@ -446,7 +446,7 @@ def update_credential(workspace_name, credential):
     Return the server's json response as a dictionary.
     """
     credential_properties = get_credential_properties(credential)
-    return server.update_credential(workspace_name, **credential_properties)
+    return server.update_credential(workspace_name, credential.getID(), **credential_properties)
 
 
 @_ignore_in_changes
@@ -498,7 +498,7 @@ def create_object(workspace_name, object_signature, obj, command_id):
     return appropiate_function(workspace_name, obj, command_id)
 
 
-def update_object(workspace_name, object_signature, obj):
+def update_object(workspace_name, object_signature, obj, command_id):
     """Given a workspace name, an object_signature as string and obj, a Faraday
     object, update that object on the server.
 
@@ -521,7 +521,7 @@ def update_object(workspace_name, object_signature, obj):
     except KeyError:
         raise WrongObjectSignature(object_signature)
 
-    return appropiate_function(workspace_name, obj)
+    return appropiate_function(workspace_name, obj, command_id)
 
 
 def create_workspace(workspace_name, description, start_date, finish_date,

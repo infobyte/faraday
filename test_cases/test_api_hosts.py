@@ -406,7 +406,9 @@ class TestHostAPI:
             u'hostnames': [],
             u'id': host.id,
             u'ip': u'10.31.112.21',
-            u'metadata': {u'command_id': None,
+            u'mac': None,
+            u'metadata': {
+                u'command_id': None,
                 u'create_time': int(time.mktime(updated_host.create_date.timetuple())) * 1000,
                 u'creator': u'',
                 u'owner': host.creator.username,

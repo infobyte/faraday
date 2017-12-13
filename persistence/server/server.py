@@ -1422,8 +1422,6 @@ def create_workspace(workspace_name, description, start_date, finish_date,
                               name=workspace_name,
                               description=description,
                               customer=customer,
-                              sdate=start_date,
-                              fdate=finish_date,
                               duration=duration,
                               type="Workspace")
 

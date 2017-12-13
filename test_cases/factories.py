@@ -261,6 +261,7 @@ class CredentialFactory(HasParentHostOrService, WorkspaceObjectFactory):
 
 class CommandObjectFactory(FaradayFactory):
     workspace = factory.SubFactory(WorkspaceFactory)
+    created_persistent = False
 
     class Meta:
         model = CommandObject

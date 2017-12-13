@@ -31,6 +31,7 @@ import server.utils.logger
 from server.models import (
     db,
     Command,
+    CommandObject,
     Comment,
     Credential,
     ExecutiveReport,
@@ -54,7 +55,6 @@ from server.models import (
     VulnerabilityWeb,
     Workspace,
     File,
-    log_command_object_found,
 )
 from server.utils import invalid_chars
 from server.utils.database import get_or_create
@@ -259,8 +259,9 @@ def update_command_tools(workspace, command_tool_map, id_map):
     missing_tool_count = Command.query.filter_by(
         workspace=workspace, tool="unknown").count()
     if missing_tool_count:
-        logger.warn("Couldn't find the tool name of {} commands".format(
-                    missing_tool_count))
+        logger.warn("Couldn't find the tool name of {} commands in "
+                    "workspace {}".format(
+                        missing_tool_count, workspace.name))
 
 
 class EntityNotFound(Exception):
@@ -384,8 +385,9 @@ class HostImporter(object):
         for host, created in hosts:
             # we update or set other host attributes in this cycle
             # Ticket #3387: if the 'os' field is None, we default to 'unknown
-            if command:
-                log_command_object_found(command, host, created)
+            if command and created:
+                session.flush()
+                CommandObject.create(host, command)
 
             if not document.get('os'):
                 document['os'] = 'unknown'
@@ -444,8 +446,9 @@ class ServiceImporter(object):
             parent_id = document['_id'].split('.')[0]
         for relational_parent_id in couchdb_relational_map[parent_id]:
             host, created = get_or_create(session, Host, id=relational_parent_id)
-            if command:
-                log_command_object_found(command, host, created)
+            if command and created:
+                session.flush()
+                CommandObject.create(host, command)
             ports = document.get('ports')
             if len(ports) > 2:
                 logger.warn('More than one port found in services!')
@@ -480,8 +483,9 @@ class ServiceImporter(object):
                 service.status = status_mapper.get(couchdb_status, 'open')
                 service.version = document.get('version')
                 service.workspace = workspace
-                if command:
-                    log_command_object_found(command, service, created)
+                if command and created:
+                    session.flush()
+                    CommandObject.create(service, command)
 
                 yield service
 
@@ -557,8 +561,9 @@ class VulnerabilityImporter(object):
             vulnerability.impact_availability = document.get('impact', {}).get('availability')
             vulnerability.impact_confidentiality = document.get('impact', {}).get('confidentiality')
             vulnerability.impact_integrity = document.get('impact', {}).get('integrity')
-            if command:
-                log_command_object_found(command, vulnerability, created)
+            if command and created:
+                session.flush()
+                CommandObject.create(vulnerability, command)
             if document['type'] == 'VulnerabilityWeb':
                 vulnerability.query_string = document.get('query')
                 vulnerability.request = document.get('request')
@@ -747,8 +752,9 @@ class CredentialImporter(object):
             credential.description = document.get('description', None)
             credential.name = document.get('name', None)
             credential.workspace = workspace
-            if command:
-                log_command_object_found(command, credential, created)
+            if command and created:
+                session.flush()
+                CommandObject.create(credential, command)
             yield credential
 
 

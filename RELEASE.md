@@ -15,6 +15,7 @@ TBA:
 * Interface object was removed
 * Note object was removed and replaced with Comment
 * Communication object was removed and replaced with Comment
+* Show credentials count in summarized report on the dashboard
 
 November 17, 2017:
 ---

@@ -56,7 +56,7 @@ angular.module("faradayApp")
                 return APIURL + objectType + "/" + objectId + "/";
             };
 
-            var createDbUrl = function(wsName) {
+            var createDbUrl = function(wsName = "") {
                 return APIURL + "ws/" + wsName;
             }
 
@@ -483,7 +483,7 @@ angular.module("faradayApp")
             }
 
             ServerAPI.createWorkspace = function(wsName, data) {
-                var dbUrl = createDbUrl(wsName);
+                var dbUrl = createDbUrl();
                 return send_data(dbUrl, data, true, "POST");
             }
 

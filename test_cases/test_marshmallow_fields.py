@@ -60,8 +60,13 @@ class TestJSTimestampField:
         assert JSTimestampField()._serialize(None, None, None) is None
 
     def test_deserialization_fails(self):
-        with pytest.raises(NotImplementedError):
-            JSTimestampField()._deserialize(time.time() * 1000, None, None)
+        ts = time.time()
+        dt = datetime.datetime.fromtimestamp(ts)
+        loaded = JSTimestampField()._deserialize(ts * 1000,
+                                                 None,
+                                                 None)
+        assert isinstance(loaded, datetime.date)
+        assert abs(loaded - dt) < datetime.timedelta(seconds=60)
 
 
 User = namedtuple('User', ['username', 'blogposts'])

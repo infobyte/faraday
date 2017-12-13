@@ -109,9 +109,9 @@ class MutableField(fields.Field):
 
 
 class MetadataSchema(Schema):
-    command_id = fields.Function(lambda x: None)
+    command_id = fields.Function(lambda x: None, dump_only=True)
 
-    creator = fields.Function(lambda x: '')
+    creator = fields.Function(lambda x: '', dump_only=True)
     owner = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
 
     create_time = JSTimestampField(attribute='create_date', dump_only=True)

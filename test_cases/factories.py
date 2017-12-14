@@ -107,7 +107,7 @@ class HostFactory(WorkspaceObjectFactory):
 
 
 class HostnameFactory(WorkspaceObjectFactory):
-    name = factory.Faker('domain_name')
+    name = factory.FuzzyText()
     host = factory.SubFactory(HostFactory)
 
     class Meta:

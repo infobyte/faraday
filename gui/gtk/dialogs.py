@@ -18,7 +18,7 @@ from model import guiapi
 from decorators import scrollable
 
 from compatibility import CompatibleScrolledWindow as GtkScrolledWindow
-from plugins import fplugin_utils,appstore_utils
+from plugins import fplugin_utils, appstore_utils
 
 CONF = getInstanceConfiguration()
 
@@ -114,7 +114,7 @@ class NewWorkspaceDialog(Gtk.Window):
     a description and a type for a new workspace. Also checks that the
     those attributes don't correspond to an existing workspace"""
 
-    def __init__(self, create_ws_callback,  workspace_manager, sidebar, parent,
+    def __init__(self, create_ws_callback, workspace_manager, sidebar, parent,
                  title=None):
 
         Gtk.Window.__init__(self, title="Create New Workspace")
@@ -275,7 +275,7 @@ class PluginOptionsDialog(Gtk.Window):
                                                        for i in range(3)]
 
         self.nameEntry, self.versionEntry, self.pluginVersionEntry = [
-                Gtk.Label() for i in range(3)]
+            Gtk.Label() for i in range(3)]
 
         nameLabel.set_text("Name: ")
         versionLabel.set_text("Version: ")
@@ -576,7 +576,7 @@ class AppStoreDialog(Gtk.Window):
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
         self.set_transient_for(parent)
         self.set_modal(True)
-        self.set_size_request(800, 300)
+        self.set_size_request(1024, 768)
 
         plugin_info = self.createPluginInfo()
 
@@ -601,6 +601,7 @@ class AppStoreDialog(Gtk.Window):
         descriptionLabel = Gtk.Label()
 
         self.descriptionEntry = Gtk.Label()
+        self.descriptionEntry.set_line_wrap(True)
 
         descriptionLabel.set_text("Description: ")
 
@@ -677,13 +678,13 @@ class AppStoreDialog(Gtk.Window):
             # self.id_of_selected = model[treeiter][1]
             description = model[treeiter][1]
 
-            self.descriptionEntry.set_label(description)
+            self.descriptionEntry.set_label(appstore_utils.strip_tags(description))
 
         except TypeError:
             pass
 
     def install_faraday_plugin(self, plugin):
-        #TODO
+        # TODO
         pass
 
 
@@ -696,6 +697,7 @@ class HostInfoDialog(Gtk.Window):
     strings and ints) and the object per se, which are in the model folder and
     are totally alien to GTK.
     """
+
     def __init__(self, parent, active_ws_name, host):
         """Creates a window with the information about a given hosts.
         The parent is needed so the window can set transient for
@@ -722,13 +724,13 @@ class HostInfoDialog(Gtk.Window):
 
         self.specific_info = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.specific_info_frame = self.create_scroll_frame(
-                                       self.specific_info,
-                                       "Service Information")
+            self.specific_info,
+            "Service Information")
 
         self.vuln_info = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.vuln_info_frame = self.create_scroll_frame(
-                                            self.vuln_info,
-                                            "Vulnerability Information")
+            self.vuln_info,
+            "Vulnerability Information")
 
         main_tree = self.create_main_tree_view(self.model)
         vuln_list = self.create_vuln_list()
@@ -1014,6 +1016,7 @@ class HostInfoDialog(Gtk.Window):
         """Return the model for the vulnerabilities of the obj object.
         It will be sorted alphabetically.
         """
+
         def params_to_string(params):  # XXX
             """Converts params to a string, in case it gets here as a list.
             It's pretty anoyting, but needed for backwards compatibility.
@@ -1110,6 +1113,7 @@ class HostInfoDialog(Gtk.Window):
         """Take a selection as selected_object and an object_type
         and return the actual object, not the model's selection.
         """
+
         def safely(func):
             def safe_wrapper(*args, **kwargs):
                 try:
@@ -1118,7 +1122,8 @@ class HostInfoDialog(Gtk.Window):
                     dialog = errorDialog(self, ("There has been a problem. "
                                                 "The object you clicked on "
                                                 "does not exist anymore."))
-                    self.destroy() # exit
+                    self.destroy()  # exit
+
             return safe_wrapper
 
         object_id = selected_object[0]
@@ -1298,8 +1303,8 @@ class ConflictsDialog(Gtk.Window):
             dialog.run()
             dialog.destroy()
 
-        except KeyError: # TODO: revert this hack to prevent exception when
-                         # fixing conflict of non existent object
+        except KeyError:  # TODO: revert this hack to prevent exception when
+            # fixing conflict of non existent object
             dialog = Gtk.MessageDialog(self, 0,
                                        Gtk.MessageType.INFO,
                                        Gtk.ButtonsType.OK,
@@ -1792,11 +1797,11 @@ class aboutDialog(Gtk.AboutDialog):
     """The simple about dialog displayed when the user clicks on "about"
     ont the menu. Could be in application.py, but for consistency reasons
     its here"""
-    def __init__(self, main_window):
 
+    def __init__(self, main_window):
         Gtk.AboutDialog.__init__(self, transient_for=main_window, modal=True)
         icons = CONF.getImagePath() + "icons/"
-        faraday_icon = GdkPixbuf.Pixbuf.new_from_file(icons+"about.png")
+        faraday_icon = GdkPixbuf.Pixbuf.new_from_file(icons + "about.png")
         self.set_logo(faraday_icon)
         self.set_program_name("Faraday")
         self.set_comments("Penetration Test IDE -"
@@ -1804,6 +1809,7 @@ class aboutDialog(Gtk.AboutDialog):
         faraday_website = "http://www.infobytesec.com/faraday.html"
         self.set_website(faraday_website)
         self.set_website_label("Learn more about Faraday")
+
 
 class errorDialog(Gtk.MessageDialog):
     """A simple error dialog to show the user where things went wrong.

@@ -419,6 +419,9 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
 
     @pytest.mark.usefixtures("mock_envelope_list")
     def test_sort_by_description(self, test_client, session):
+        for host in Host.query.all():
+            # I don't want to test case sensitive sorting
+            host.description = host.description.lower()
         session.commit()
         expected_ids = [host.id for host in
                         sorted(Host.query.all(),
@@ -438,8 +441,8 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
         expected_ids = []
         for i in range(10):
             host = host_factory.create(workspace=second_workspace)
-            service_factory.create(host=host, workspace=second_workspace,
-                                   status='open')
+            service_factory.create_batch(
+                i, host=host, workspace=second_workspace, status='open')
             session.flush()
             expected_ids.append(host.id)
         session.commit()

@@ -570,6 +570,8 @@ class AppStoreDialog(Gtk.Window):
     Creating and displaying the models of each plugin settings is specially
     messy , there's more info in the appropiate methods"""
 
+    _errors = False
+
     def __init__(self, parent):
 
         Gtk.Window.__init__(self, title="Faraday Plugin")
@@ -580,9 +582,9 @@ class AppStoreDialog(Gtk.Window):
         self.set_size_request(1024, 768)
 
         plugin_info = self.createPluginInfo()
-        #
-        # if not plugin_info:
-        #     self.destroy()
+
+        if self._errors:
+            return
 
         # self.id_of_selected = plugin_info[0][0]  # default selected is first item in list
         plugin_list = self.createPluginListView(plugin_info)
@@ -643,11 +645,11 @@ class AppStoreDialog(Gtk.Window):
             products = appstore_utils.get_appstore_applications()
         except appstore_utils.TimeoutException:
             errorDialog(self.parent, "Request timed out")
-            self.close()
+            self._errors = True
             return
         except appstore_utils.RequestException:
             errorDialog(self.parent, "An error ocurred while processing the AppStore data. ")
-            self.close()
+            self._errors = True
             return
 
         for key, plugin_dic in products.items():
@@ -698,6 +700,9 @@ class AppStoreDialog(Gtk.Window):
 
         except TypeError:
             pass
+
+    def had_errors(self):
+        return self._errors
 
     def install_faraday_plugin(self, plugin):
         print self.git_repository_of_selected

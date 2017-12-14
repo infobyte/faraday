@@ -705,7 +705,14 @@ class AppStoreDialog(Gtk.Window):
         return self._errors
 
     def install_faraday_plugin(self, plugin):
-        print self.git_repository_of_selected
+        try:
+            appstore_utils.install_app(self.git_repository_of_selected)
+        except appstore_utils.InstallationException:
+            errorDialog(self.parent, "An error ocurred while installing the selected app. Please check the console for more information.")
+        else:
+            errorDialog(self.parent, "Application installed!")
+
+        self.destroy()
 
 
 class HostInfoDialog(Gtk.Window):

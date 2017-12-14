@@ -16,6 +16,10 @@ class RequestException(Exception):
     pass
 
 
+class InstallationException(Exception):
+    pass
+
+
 def _get_url(endpoint):
     return "{0}/{1}?{2}".format(BASE_URL, endpoint, PARAMS)
 
@@ -49,3 +53,7 @@ def strip_tags(html):
     s = MLStripper()
     s.feed(html)
     return s.get_data()
+
+
+def install_app(git_repository):
+    pass

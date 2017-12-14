@@ -1306,8 +1306,9 @@ CheckConstraint('((Vulnerability.host_id IS NOT NULL)::int+'
 
 vulnerability_uniqueness = DDL(
     "CREATE UNIQUE INDEX uix_vulnerability ON %(fullname)s "
-    "(name, md5(description), severity, host_id, service_id, "
-    "method, parameter_name, path, website, workspace_id, source_code_id);"
+    "(name, md5(description), COALESCE(host_id, -1), COALESCE(service_id, -1), "
+    "COALESCE(method, ''), COALESCE(parameter_name, ''), COALESCE(path, ''), "
+    "COALESCE(website, ''), workspace_id, COALESCE(source_code_id, -1));"
 )
 
 event.listen(

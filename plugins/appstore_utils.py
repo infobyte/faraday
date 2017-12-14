@@ -1,11 +1,17 @@
-import requests
 from HTMLParser import HTMLParser
+import os
+import requests
+import subprocess
+from config.configuration import getInstanceConfiguration
+
+CONF = getInstanceConfiguration()
 
 BASE_URL = "https://appstore.faradaysec.com/api/rest"
 PARAMS = "limit=100"
 HEADERS = {
     'Accept': 'application/json'
 }
+APPSTORE_PATH = "appstore"
 
 
 class TimeoutException(Exception):
@@ -56,4 +62,13 @@ def strip_tags(html):
 
 
 def install_app(git_repository):
-    pass
+    path = os.path.join(CONF.getConfigPath(), APPSTORE_PATH)
+
+    if not os.path.exists(path):
+        os.mkdir(path)
+
+    args = ['git', 'clone', git_repository]
+
+    process = subprocess.Popen(args, cwd=path, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    process.wait()

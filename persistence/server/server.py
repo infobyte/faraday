@@ -1038,9 +1038,10 @@ def create_vuln(workspace_name, command_id, name, description, parent, parent_ty
                            metadata=metadata,
                            policyviolations=policyviolations)
 
-def update_vuln(workspace_name, command_id, id, name, description, owned=None, owner="",
-                confirmed=False, data="", refs=None, severity="info", resolution="",
-                desc="", metadata=None, status=None, policyviolations=[]):
+def update_vuln(workspace_name, command_id, id, name, description, parent,
+                parent_type, owned=None, owner="", confirmed=False, data="",
+                refs=None, severity="info", resolution="", desc="",
+                metadata=None, status=None, policyviolations=[]):
     """Updates a vuln.
 
     Args:
@@ -1067,6 +1068,8 @@ def update_vuln(workspace_name, command_id, id, name, description, owned=None, o
     """
     return _update_in_server(workspace_name,
                              id,
+                             parent=parent,
+                             parent_type=parent_type,
                              command_id=command_id,
                              name=name,
                              description=description,

@@ -384,13 +384,13 @@ def create_vuln(workspace_name, vuln, command_id):
 
 
 @_ignore_in_changes
-def update_vuln(workspace_name, vuln):
+def update_vuln(workspace_name, vuln, command_id):
     """Take a workspace_name and a Vuln object and update it in the sever.
 
     Return the server's json response as a dictionary.
     """
     vuln_properties = get_vuln_properties(vuln)
-    return server.update_vuln(workspace_name, vuln.getID(), **vuln_properties)
+    return server.update_vuln(workspace_name, command_id, vuln.getID(), **vuln_properties)
 
 
 @_ignore_in_changes

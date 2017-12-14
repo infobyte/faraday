@@ -17,6 +17,10 @@ See the file 'doc/LICENSE' for the license information
         <attribute name="action">app.pluginOptions</attribute>
       </item>
     </section>
+      <item>
+        <attribute name="label" translatable="yes">AppStore</attribute>
+        <attribute name="action">app.appstore</attribute>
+      </item>
     <section>
       <item>
         <attribute name="label" translatable="yes">About</attribute>

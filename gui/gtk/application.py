@@ -64,6 +64,7 @@ from dialogs import ForcePreferenceWindowDialog
 from dialogs import errorDialog
 from dialogs import ImportantErrorDialog
 from dialogs import FaradayPluginsDialog
+from dialogs import AppStoreDialog
 
 from mainwidgets import Sidebar
 from mainwidgets import WorkspaceSidebar
@@ -654,6 +655,7 @@ class GuiApp(Gtk.Application, FaradayUi):
                             "preferences": self.on_preferences,
                             "pluginOptions": self.on_plugin_options,
                             "faradayPlugin": self.on_faraday_plugin,
+                            "appstore":self.on_appstore,
                             "new": self.on_new_button,
                             "new_terminal": self.on_new_terminal_button,
                             "open_report": self.on_open_report_button,
@@ -759,6 +761,11 @@ class GuiApp(Gtk.Application, FaradayUi):
         pluginsOption_window = FaradayPluginsDialog(self.window.get_current_focused_terminal(),
                                                     self.get_active_workspace().getName(),
                                                     self.window)
+        pluginsOption_window.show_all()
+
+    def on_appstore(self, action, param):
+        """Defines what happens when you press "Faraday Plugin..." on the menu"""
+        pluginsOption_window = AppStoreDialog(self.window)
         pluginsOption_window.show_all()
 
     def on_new_button(self, action=None, params=None, title=None):

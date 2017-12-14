@@ -205,9 +205,7 @@ angular.module('faradayApp')
             ['$scope', '$modalInstance', 'msg',
             function($scope, $modalInstance, msg) {
 
-        $scope.metasploit = msg['metasploit'];
-        $scope.exploitdb = msg['exploitdb'];
-        $scope.cveid = msg['cveid'];
+        $scope.objsCve = msg;
 
         $scope.ok = function() {
             $modalInstance.close();

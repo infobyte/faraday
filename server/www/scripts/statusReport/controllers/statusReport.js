@@ -442,6 +442,8 @@ angular.module('faradayApp')
         };
 
         $scope.searchExploits = function(){
+
+            var promises = [];
             var selected = $scope.getCurrentSelection();
 
             selected.forEach(function(vuln){
@@ -451,24 +453,43 @@ angular.module('faradayApp')
                     if(ref.toLowerCase().startsWith('cve')){
 
                         var response = ServerAPI.getExploits(ref);
-                        response.then(function(res) {
-
-                            var modal = $uibModal.open({
-                                templateUrl: 'scripts/commons/partials/exploitsModal.html',
-                                controller: 'commonsModalExploitsCtrl',
-                                resolve: {
-                                    msg: function() {
-                                        return res.data;
-                                    }
-                                }
-                            });
-                        }, function(error){
-                            showMessage("Exploit for this vulnerability not found", false);
-                        });
+                        promises.push(response);
                     }
                 });
             });
-        };
+
+            return $q.all(promises).then(function(modalData){
+
+                var response = modalData.map(function(obj){
+                    return obj.data;
+                });
+
+                return response.filter(x => !angular.equals(x, {}))
+
+            }, function(failed) {
+                showMessage("Something failed searching vulnerability exploits.");
+                return [];
+            });
+        }
+
+        $scope.showExploits = function(){
+
+           $scope.searchExploits().then(function(exploits){
+
+                if(exploits.length > 0){
+
+                    var modal = $uibModal.open({
+                        templateUrl: 'scripts/statusReport/partials/exploitsModal.html',
+                        controller: 'commonsModalExploitsCtrl',
+                        resolve: {
+                            msg: function() {
+                                return exploits;
+                            }
+                        }
+                    });
+                }
+            });
+        }
 
         $scope.saveAsModel = function() {
             var self = this;

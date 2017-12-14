@@ -8,6 +8,14 @@ HEADERS = {
 }
 
 
+class TimeoutException(Exception):
+    pass
+
+
+class RequestException(Exception):
+    pass
+
+
 def _get_url(endpoint):
     return "{0}/{1}?{2}".format(BASE_URL, endpoint, PARAMS)
 
@@ -15,15 +23,18 @@ def _get_url(endpoint):
 def get_appstore_applications():
     url = _get_url('products')
 
-    r = requests.get(url, headers=HEADERS)
-
-    products = r.json()
-
-    return products
+    try:
+        r = requests.get(url, headers=HEADERS, timeout=1)
+        return r.json()
+    except requests.exceptions.Timeout:
+        raise TimeoutException()
+    except requests.exceptions.RequestException:
+        raise RequestException()
 
 
 class MLStripper(HTMLParser):
     def __init__(self):
+        HTMLParser.__init__(self)
         self.reset()
         self.fed = []
 

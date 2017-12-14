@@ -575,10 +575,14 @@ class AppStoreDialog(Gtk.Window):
         Gtk.Window.__init__(self, title="Faraday Plugin")
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
         self.set_transient_for(parent)
+        self.parent = parent
         self.set_modal(True)
         self.set_size_request(1024, 768)
 
         plugin_info = self.createPluginInfo()
+        #
+        # if not plugin_info:
+        #     self.destroy()
 
         # self.id_of_selected = plugin_info[0][0]  # default selected is first item in list
         plugin_list = self.createPluginListView(plugin_info)
@@ -592,7 +596,6 @@ class AppStoreDialog(Gtk.Window):
         cancel_button.connect("clicked", self.on_click_cancel)
         buttonBox.pack_start(install_button, True, True, 10)
         buttonBox.pack_start(cancel_button, True, True, 10)
-
         left_side_box.pack_start(buttonBox, False, False, 10)
 
         infoBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -634,12 +637,24 @@ class AppStoreDialog(Gtk.Window):
         """Creates and return a TreeStore where the basic information about
         the plugins: the plugin ID, name, intended version of the tool
         and plugin version"""
-        plugin_info = Gtk.TreeStore(str, str, str)
+        plugin_info = Gtk.TreeStore(str, str, str, str)
 
-        for key, plugin_dic in appstore_utils.get_appstore_applications().items():
+        try:
+            products = appstore_utils.get_appstore_applications()
+        except appstore_utils.TimeoutException:
+            errorDialog(self.parent, "Request timed out")
+            self.close()
+            return
+        except appstore_utils.RequestException:
+            errorDialog(self.parent, "An error ocurred while processing the AppStore data. ")
+            self.close()
+            return
+
+        for key, plugin_dic in products.items():
             plugin_info.append(None, [key,
                                       plugin_dic["description"],
-                                      plugin_dic["name"]
+                                      plugin_dic["name"],
+                                      plugin_dic.get("git_repository", None)
                                       ]
                                )
 
@@ -675,6 +690,7 @@ class AppStoreDialog(Gtk.Window):
         try:
             model, treeiter = selection.get_selected()
             self.name_of_selected = model[treeiter][0]
+            self.git_repository_of_selected = model[treeiter][3]
             # self.id_of_selected = model[treeiter][1]
             description = model[treeiter][1]
 
@@ -684,8 +700,7 @@ class AppStoreDialog(Gtk.Window):
             pass
 
     def install_faraday_plugin(self, plugin):
-        # TODO
-        pass
+        print self.git_repository_of_selected
 
 
 class HostInfoDialog(Gtk.Window):

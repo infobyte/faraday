@@ -41,7 +41,7 @@ class CommandSchema(AutoSchema):
     class Meta:
         model = Command
         fields = ('_id', 'command', 'duration', 'itime', 'ip', 'hostname',
-                  'params', 'user', 'workspace')
+                  'params', 'user', 'workspace', 'tool', 'import_source')
 
 
 class CommandView(ReadWriteWorkspacedView):
@@ -72,6 +72,7 @@ class CommandView(ReadWriteWorkspacedView):
                 'user': command.user,
                 'import_source': command.import_source,
                 'command': command.command,
+                'tool': command.tool,
                 'params': command.params,
                 'vulnerabilities_count': (command.sum_created_vulnerabilities or 0),
                 'hosts_count': command.sum_created_hosts or 0,

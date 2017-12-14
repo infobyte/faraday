@@ -23,7 +23,9 @@
         <tbody>
             <tr ng-repeat="cmd in commands | orderObjectBy:cmdSortField:cmdSortReverse">
                 <td><b><p uib-tooltip="{{cmd.ip}}">{{cmd.user}}@{{cmd.hostname}}</p></b></td>
-                <td class="wrapword">{{cmd.command + ' ' + cmd.params}}</td>
+                <td class="wrapword">
+                    <span ng-if="cmd.import_source == 'report'">Import {{(cmd.tool == 'unknown' ? cmd.command : cmd.tool) + ': ' + cmd.params}}</span>
+                    <span ng-if="cmd.import_source == 'shell'">{{cmd.command + ' ' + cmd.params}}</span>
                 <td am-time-ago="cmd.date"/>
                 <td ng-bind="cmd.duration || 'undefined'"></td>
             </tr>

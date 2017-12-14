@@ -46,7 +46,9 @@ class TestListCommandView(ReadOnlyAPITests):
                 u'itime',
                 u'params',
                 u'user',
-                u'workspace'
+                u'workspace',
+                u'tool',
+                u'import_source',
             ]
             assert command['value']['workspace'] == self.workspace.name
             assert set(object_properties) == set(command['value'].keys())
@@ -72,28 +74,33 @@ class TestListCommandView(ReadOnlyAPITests):
         res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
         assert res.status_code == 200
 
-        assert filter(lambda stats: stats['_id'] == command.id, res.json) == [{u'_id': command.id,
-                                                                               u'command': command.command,
-                                                                               u'import_source': u'shell',
-                                                                               u'user': command.user,
-                                                                               u'date': time.mktime(command.start_date.timetuple()) * 1000,
-                                                                               u'params': command.params,
-                                                                               u'hosts_count': 1,
-                                                                               u'services_count': 0,
-                                                                               u'vulnerabilities_count': 1,
-                                                                               u'criticalIssue': 0}]
+        assert filter(lambda stats: stats['_id'] == command.id, res.json) == [
+            {u'_id': command.id,
+             u'command': command.command,
+             u'import_source': u'shell',
+             u'user': command.user,
+             u'date': time.mktime(command.start_date.timetuple()) * 1000,
+             u'params': command.params,
+             u'tool': command.tool,
+             u'hosts_count': 1,
+             u'services_count': 0,
+             u'vulnerabilities_count': 1,
+             u'criticalIssue': 0}]
 
-        assert filter(lambda stats: stats['_id'] == another_command.id, res.json) == [{
-                                                                                u'_id': another_command.id,
-                                                                                u'command': another_command.command,
-                                                                                u'import_source': u'shell',
-                                                                                u'user': another_command.user,
-                                                                                u'date': time.mktime(another_command.start_date.timetuple()) * 1000,
-                                                                                u'params': another_command.params,
-                                                                                u'hosts_count': 0,
-                                                                                u'services_count': 0,
-                                                                                u'vulnerabilities_count': 0,
-                                                                                u'criticalIssue': 0}]
+        assert filter(lambda stats: stats['_id'] == another_command.id,
+                      res.json) == [{
+                        u'_id': another_command.id,
+                        u'command': another_command.command,
+                        u'import_source': u'shell',
+                        u'tool': another_command.tool,
+                        u'user': another_command.user,
+                        u'date': time.mktime(
+                            another_command.start_date.timetuple()) * 1000,
+                        u'params': another_command.params,
+                        u'hosts_count': 0,
+                        u'services_count': 0,
+                        u'vulnerabilities_count': 0,
+                        u'criticalIssue': 0}]
 
     def test_verify_created_critical_vulns_is_correctly_showing_sum_values(self, session, test_client):
         workspace = WorkspaceFactory.create()
@@ -127,6 +134,7 @@ class TestListCommandView(ReadOnlyAPITests):
                             {u'_id': command.id,
                              u'command': command.command,
                              u'import_source': u'shell',
+                             u'tool': command.tool,
                              u'user': command.user,
                              u'date': time.mktime(command.start_date.timetuple()) * 1000,
                              u'params': command.params,
@@ -171,16 +179,18 @@ class TestListCommandView(ReadOnlyAPITests):
         session.commit()
         res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
         assert res.status_code == 200
-        assert res.json == [{u'_id': command.id,
-             u'command': command.command,
-             u'import_source': u'shell',
-             u'user': command.user,
-             u'date': time.mktime(command.start_date.timetuple()) * 1000,
-             u'params': command.params,
-             u'hosts_count': 1,
-             u'services_count': 1,
-             u'vulnerabilities_count': 2,
-             u'criticalIssue': 1}
+        assert res.json == [{
+            u'_id': command.id,
+            u'command': command.command,
+            u'import_source': u'shell',
+            u'tool': command.tool,
+            u'user': command.user,
+            u'date': time.mktime(command.start_date.timetuple()) * 1000,
+            u'params': command.params,
+            u'hosts_count': 1,
+            u'services_count': 1,
+            u'vulnerabilities_count': 2,
+            u'criticalIssue': 1}
         ]
 
     def test_multiple_commands_executed_with_same_objects_found(self, session, test_client):
@@ -247,6 +257,7 @@ class TestListCommandView(ReadOnlyAPITests):
             u'hosts_count': 1,
             u'services_count': 0,
             u'vulnerabilities_count': 1,
+            u'tool': first_command.tool,
             u'criticalIssue': 0
         }
 
@@ -259,6 +270,7 @@ class TestListCommandView(ReadOnlyAPITests):
                                        u'date': time.mktime(in_the_middle_command.start_date.timetuple()) * 1000,
                                        u'params': in_the_middle_command.params,
                                        u'hosts_count': 0,
+                                       u'tool': in_the_middle_command.tool,
                                        u'services_count': 0,
                                        u'vulnerabilities_count': 0,
                                        u'criticalIssue': 0}
@@ -272,6 +284,7 @@ class TestListCommandView(ReadOnlyAPITests):
                                        u'date': time.mktime(last_command.start_date.timetuple()) * 1000,
                                        u'params': last_command.params,
                                        u'hosts_count': 0,
+                                       u'tool': last_command.tool,
                                        u'services_count': 1,
                                        u'vulnerabilities_count': 1,
                                        u'criticalIssue': 0}

@@ -4,6 +4,7 @@ import datetime
 import unicodedata
 
 import pytz
+from factory import SubFactory
 from factory.fuzzy import (
     FuzzyChoice,
     FuzzyNaiveDateTime,
@@ -107,8 +108,8 @@ class HostFactory(WorkspaceObjectFactory):
 
 
 class HostnameFactory(WorkspaceObjectFactory):
-    name = factory.FuzzyText()
-    host = factory.SubFactory(HostFactory)
+    name = FuzzyText()
+    host = SubFactory(HostFactory)
 
     class Meta:
         model = Hostname

@@ -954,8 +954,8 @@ def create_service(workspace_name, command_id, name, description, ports, parent,
                            metadata=metadata)
 
 def update_service(workspace_name, command_id, id, name, description, ports,
-                   owned=False, owner="", protocol="", status="", version="",
-                   metadata=None):
+                   parent, owned=False, owner="", protocol="", status="",
+                   version="", metadata=None):
     """Creates a service.
 
     Args:
@@ -977,6 +977,7 @@ def update_service(workspace_name, command_id, id, name, description, ports,
     """
     return _update_in_server(workspace_name,
                              id,
+                             parent=parent,
                              command_id=command_id,
                              name=name,
                              description=description,

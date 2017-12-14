@@ -364,13 +364,13 @@ def create_service(workspace_name, service, command_id):
 
 
 @_ignore_in_changes
-def update_service(workspace_name, service):
+def update_service(workspace_name, service, command_id):
     """Take a workspace_name and an service object and update it in the sever.
 
     Return the server's json response as a dictionary.
     """
     service_properties = get_service_properties(service)
-    return server.update_service(workspace_name, service.getID(), **service_properties)
+    return server.update_service(workspace_name, command_id, service.getID(), **service_properties)
 
 
 @_ignore_in_changes

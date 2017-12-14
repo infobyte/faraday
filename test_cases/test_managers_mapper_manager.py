@@ -1,16 +1,19 @@
 from functools import partial
 from managers.mapper_manager import MapperManager
-from persistence.server.models import Host
+from persistence.server.models import Host, Service
 import persistence.server.server
-from test_cases.factories import WorkspaceFactory, CommandFactory, HostFactory
+from test_cases.factories import WorkspaceFactory, CommandFactory, HostFactory, \
+    ServiceFactory
 
 # OBJ_DATA is like a fixture.
 # We use it to test all model classes.
 # to add more tests you need to add items in the list or more objects in the dict.
+
 OBJ_DATA = {
     Host: {
         'factory': HostFactory,
         'api_end_point': 'hosts',
+        'parent': {},
         'data': {
             '_id': 1,
             'name': '192.168.0.20',
@@ -31,11 +34,42 @@ OBJ_DATA = {
                 'parent': None,
                 'type': 'Host'
         },
+    },
+    Service: {
+        'factory': ServiceFactory,
+        'api_end_point': 'services',
+        'parent': {
+            'parent_type': 'Service',
+            'parent_factory': HostFactory
+        },
+        'data': {
+            '_id': 1,
+            'name': 'Service port 60',
+            'description': 'My service',
+            'owned': False,
+            'owner': 'leo',
+            'protocol': 'tcp',
+            'ports': [60],
+            'version': '2',
+            'status': 'open',
+            'vulns': 0,
+        },
+        'expected_payload': {
+            'command_id': None,
+            'name': 'Service port 60',
+            'description': 'My service',
+            'protocol': 'tcp',
+            'ports': [60],
+            'version': '2',
+            'status': 'open',
+            'owned': False,
+            'owner': 'leo',
+            'type': 'Service'
+        },
     }
 }
 
 class TestMapperManager():
-
 
     def test_save_without_command(self, monkeypatch, session):
         workspace = WorkspaceFactory.create(name='test')
@@ -44,13 +78,18 @@ class TestMapperManager():
         mapper_manager.createMappers(workspace.name)
         for obj_class, test_data in OBJ_DATA.items():
             raw_data = test_data['data']
-
+            if test_data['parent']:
+                parent = test_data['parent']['parent_factory'].create()
+                session.commit()
+                test_data['data']['parent'] = parent.id
+                test_data['data']['parent_type'] = test_data['parent']['parent_type']
+                test_data['expected_payload']['parent'] = parent.id
             def mock_server_post(test_data, post_url, update=False, expected_response=201, **params):
                 assert post_url == 'http://localhost:5985/_api/v2/ws/test/{0}/'.format(test_data['api_end_point'])
                 assert expected_response == 201
                 assert update == False
                 metadata = params.pop('metadata')
-                assert metadata['owner'] == 'leo'
+                assert metadata['owner'] == test_data['expected_payload']['owner']
                 assert params == test_data['expected_payload']
                 return {
                     'id': 1,
@@ -70,13 +109,18 @@ class TestMapperManager():
         mapper_manager.createMappers(workspace.name)
         for obj_class, test_data in OBJ_DATA.items():
             raw_data = test_data['data']
-
+            if test_data['parent']:
+                parent = test_data['parent']['parent_factory'].create()
+                session.commit()
+                test_data['data']['parent'] = parent.id
+                test_data['data']['parent_type'] = test_data['parent']['parent_type']
+                test_data['expected_payload']['parent'] = parent.id
             def mock_server_post(test_data, post_url, update=False, expected_response=201, **params):
                 assert post_url == 'http://localhost:5985/_api/v2/ws/test/{0}/?command_id={1}'.format(test_data['api_end_point'], params['command_id'])
                 assert expected_response == 201
                 assert update == False
                 metadata = params.pop('metadata')
-                assert metadata['owner'] == 'leo'
+                assert metadata['owner'] == test_data['expected_payload']['owner']
                 params.pop('command_id')
                 test_data['expected_payload'].pop('command_id')
                 assert params == test_data['expected_payload']
@@ -98,12 +142,18 @@ class TestMapperManager():
             relational_model = test_data['factory'].create()
             session.commit()
             raw_data = test_data['data']
+            if test_data['parent']:
+                parent = test_data['parent']['parent_factory'].create()
+                session.commit()
+                test_data['data']['parent'] = parent.id
+                test_data['data']['parent_type'] = test_data['parent']['parent_type']
+                test_data['expected_payload']['parent'] = parent.id
             def mock_server_put(test_data, put_url, update=False, expected_response=201, **params):
                 assert put_url == 'http://localhost:5985/_api/v2/ws/test/{0}/{1}/'.format(test_data['api_end_point'], test_data['id'])
                 assert expected_response == 200
                 assert update == False
                 metadata = params.pop('metadata')
-                assert metadata['owner'] == 'leo'
+                assert metadata['owner'] == test_data['expected_payload']['owner']
                 params.pop('command_id')
                 test_data['expected_payload'].pop('command_id', None)
                 assert params == test_data['expected_payload']
@@ -130,6 +180,12 @@ class TestMapperManager():
         mapper_manager.createMappers(workspace.name)
         for obj_class, test_data in OBJ_DATA.items():
             raw_data = test_data['data']
+            if test_data['parent']:
+                parent = test_data['parent']['parent_factory'].create()
+                session.commit()
+                test_data['data']['parent'] = parent.id
+                test_data['data']['parent_type'] = test_data['parent']['parent_type']
+                test_data['expected_payload']['parent'] = parent.id
             relational_model = test_data['factory'].create()
             session.commit()
             def mock_server_put(put_url, update=False, expected_response=201, **params):

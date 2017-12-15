@@ -7,7 +7,7 @@ from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
 BASE_URL = "https://appstore.faradaysec.com/api/rest"
-PARAMS = "limit=100"
+PARAMS = "limit=100&filter[1][attribute]=git_repository&filter[1][neq]="
 HEADERS = {
     'Accept': 'application/json'
 }

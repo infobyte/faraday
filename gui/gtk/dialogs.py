@@ -571,6 +571,8 @@ class AppStoreDialog(Gtk.Window):
     Creating and displaying the models of each plugin settings is specially
     messy , there's more info in the appropiate methods"""
 
+    _installation_error = None
+
     def __init__(self, parent):
 
         Gtk.Window.__init__(self, title="Faraday Plugin")
@@ -580,18 +582,51 @@ class AppStoreDialog(Gtk.Window):
         self.set_modal(True)
         self.set_size_request(1024, 768)
 
-        self.loadingDialog = loadingDialog(self.parent,"Loading Appstore...")
+        self.loadingDialog = loadingDialog(self.parent, "Loading Appstore...")
 
         thread = threading.Thread(target=self._start_dialog)
         thread.start()
 
     def _start_dialog(self):
 
-        plugin_info = self.createPluginInfo()
+        plugin_info = Gtk.TreeStore(str, str, str, str)
+
+        _request_error = None
+
+        try:
+            products = appstore_utils.get_appstore_applications()
+        except appstore_utils.TimeoutException:
+            _request_error = 'timeout'
+        except appstore_utils.RequestException:
+            _request_error = 'request'
+        else:
+            for key, plugin_dic in products.items():
+                plugin_info.append(None, [key,
+                                          plugin_dic["description"],
+                                          plugin_dic["name"],
+                                          plugin_dic.get("git_repository", None)
+                                          ]
+                                   )
+
+            # Sort it!
+            sorted_plugin_info = Gtk.TreeModelSort(model=plugin_info)
+            sorted_plugin_info.set_sort_column_id(2, Gtk.SortType.ASCENDING)
 
         def done():
+
+            if _request_error == 'timeout':
+                self.loadingDialog.destroy()
+                self.loadingDialog = None
+                errorDialog(self.parent, "Request timed out")
+                return
+            elif _request_error == 'request':
+                self.loadingDialog.destroy()
+                self.loadingDialog = None
+                errorDialog(self.parent, "An error ocurred while processing the AppStore data. ")
+                return
+
             # self.id_of_selected = plugin_info[0][0]  # default selected is first item in list
-            plugin_list = self.createPluginListView(plugin_info)
+            plugin_list = self.createPluginListView(sorted_plugin_info)
             left_side_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
             left_side_box.pack_start(plugin_list, True, True, 0)
 
@@ -629,6 +664,7 @@ class AppStoreDialog(Gtk.Window):
             self.add(self.mainBox)
 
             self.loadingDialog.destroy()
+            self.loadingDialog = None
 
             self.show_all()
 
@@ -637,41 +673,16 @@ class AppStoreDialog(Gtk.Window):
     def on_click_install(self, button=None):
         """On click OK button update the plugins settings and then destroy"""
 
-        self.install_faraday_plugin(self.name_of_selected)
+        self.loadingDialog = loadingDialog(self.parent, "Installing...")
+
+        thread = threading.Thread(target=self._install_faraday_plugin)
+        thread.start()
 
         self.destroy()
 
     def on_click_cancel(self, button):
         """On click cancel button, destroy brutally. No mercy"""
         self.destroy()
-
-    def createPluginInfo(self):
-        """Creates and return a TreeStore where the basic information about
-        the plugins: the plugin ID, name, intended version of the tool
-        and plugin version"""
-        plugin_info = Gtk.TreeStore(str, str, str, str)
-
-        try:
-            products = appstore_utils.get_appstore_applications()
-        except appstore_utils.TimeoutException:
-            errorDialog(self.parent, "Request timed out")
-            return
-        except appstore_utils.RequestException:
-            errorDialog(self.parent, "An error ocurred while processing the AppStore data. ")
-            return
-
-        for key, plugin_dic in products.items():
-            plugin_info.append(None, [key,
-                                      plugin_dic["description"],
-                                      plugin_dic["name"],
-                                      plugin_dic.get("git_repository", None)
-                                      ]
-                               )
-
-        # Sort it!
-        sorted_plugin_info = Gtk.TreeModelSort(model=plugin_info)
-        sorted_plugin_info.set_sort_column_id(2, Gtk.SortType.ASCENDING)
-        return sorted_plugin_info
 
     @scrollable(width=300)
     def createPluginListView(self, plugin_info):
@@ -709,16 +720,22 @@ class AppStoreDialog(Gtk.Window):
         except TypeError:
             pass
 
-    def install_faraday_plugin(self, plugin):
+    def _install_faraday_plugin(self):
         try:
             appstore_utils.install_app(self.git_repository_of_selected)
         except appstore_utils.InstallationException:
-            errorDialog(self.parent,
-                        "An error ocurred while installing the selected app. Please check the console for more information.")
-        else:
-            errorDialog(self.parent, "Application installed!")
+            self._installation_error = True
 
-        self.destroy()
+        def done():
+            self.loadingDialog.destroy()
+
+            if self._installation_error:
+                errorDialog(self.parent,
+                            "An error ocurred while installing the selected app. Please check the console for more information.")
+            else:
+                errorDialog(self.parent, "Application installed!")
+
+        GObject.idle_add(done)
 
 
 class HostInfoDialog(Gtk.Window):
@@ -1872,6 +1889,7 @@ class loadingDialog(Gtk.MessageDialog):
                                    error)
         if explanation is not None:
             self.format_secondary_text(explanation)
+        self.set_modal(True)
         self.show()
 
 

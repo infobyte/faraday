@@ -121,7 +121,7 @@ class TestMapperManager():
                     test_data['data']['parent_type'] = test_data['parent']['parent_type']
                     test_data['expected_payload']['parent'] = parent.id
                 def mock_server_post(test_data, post_url, update=False, expected_response=201, **params):
-                    assert post_url == 'http://localhost:5985/_api/v2/ws/test/{0}/'.format(test_data['api_end_point'])
+                    assert post_url == 'http://localhost:5984/_api/v2/ws/test/{0}/'.format(test_data['api_end_point'])
                     assert expected_response == 201
                     assert update == False
                     metadata = params.pop('metadata')
@@ -153,7 +153,7 @@ class TestMapperManager():
                     test_data['data']['parent_type'] = test_data['parent']['parent_type']
                     test_data['expected_payload']['parent'] = parent.id
                 def mock_server_post(test_data, post_url, update=False, expected_response=201, **params):
-                    assert post_url == 'http://localhost:5985/_api/v2/ws/test/{0}/?command_id={1}'.format(test_data['api_end_point'], params['command_id'])
+                    assert post_url == 'http://localhost:5984/_api/v2/ws/test/{0}/?command_id={1}'.format(test_data['api_end_point'], params['command_id'])
                     assert expected_response == 201
                     assert update == False
                     metadata = params.pop('metadata')
@@ -187,7 +187,7 @@ class TestMapperManager():
                     test_data['data']['parent_type'] = test_data['parent']['parent_type']
                     test_data['expected_payload']['parent'] = parent.id
                 def mock_server_put(test_data, put_url, update=False, expected_response=201, **params):
-                    assert put_url == 'http://localhost:5985/_api/v2/ws/test/{0}/{1}/'.format(test_data['api_end_point'], test_data['id'])
+                    assert put_url == 'http://localhost:5984/_api/v2/ws/test/{0}/{1}/'.format(test_data['api_end_point'], test_data['id'])
                     assert expected_response == 200
                     assert update == False
                     metadata = params.pop('metadata')
@@ -228,7 +228,7 @@ class TestMapperManager():
                 relational_model = test_data['factory'].create()
                 session.commit()
                 def mock_server_put(put_url, update=False, expected_response=201, **params):
-                    assert put_url == 'http://localhost:5985/_api/v2/ws/test/{0}/{1}/?command_id={2}'.format(test_data['api_end_point'], test_data['id'], params['command_id'])
+                    assert put_url == 'http://localhost:5984/_api/v2/ws/test/{0}/{1}/?command_id={2}'.format(test_data['api_end_point'], test_data['id'], params['command_id'])
                     assert expected_response == 200
                     assert update == False
 

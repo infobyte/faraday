@@ -10,7 +10,7 @@ from persistence.server import server_io_exceptions
 from mock import MagicMock, patch
 
 server.FARADAY_UP = False
-server.SERVER_URL = "http://s:p"
+server.SERVER_URL = "http://localhost:5984"
 example_url = "http://just_some_url"
 
 
@@ -18,7 +18,7 @@ class ClientServerAPITests(unittest.TestCase):
 
     def setUp(self):
         self.ws_name = "a_ws"
-        self.server_api_url = "http://s:p/_api"
+        self.server_api_url = "http://localhost:5984/_api"
 
     def test_get_base_server_url(self):
         s = server._get_base_server_url()
@@ -26,21 +26,20 @@ class ClientServerAPITests(unittest.TestCase):
 
     def test_create_server_api_url(self):
         s = server._create_server_api_url()
-        self.assertEqual("{0}/_api".format(server.SERVER_URL), s)
+        self.assertEqual("{0}/_api/v2".format(server.SERVER_URL), s)
 
     def test_create_server_get_url(self):
         obj_name = "hosts"
         s = server._create_server_get_url(self.ws_name, obj_name)
-        self.assertEqual("{0}/_api/ws/{1}/{2}".format(server.SERVER_URL, self.ws_name, obj_name), s)
+        self.assertEqual("{0}/_api/v2/ws/{1}/{2}".format(server.SERVER_URL, self.ws_name, obj_name), s)
 
     def test_create_serve_post_url(self):
-        objid = "123456"
-        server_post_url = server._create_server_post_url(self.ws_name, objid)
-        self.assertEqual(self.server_api_url + '/ws/' + self.ws_name + '/doc/' + objid, server_post_url)
+        server_post_url = server._create_server_post_url(self.ws_name, 'Service', 1)
+        self.assertEqual(self.server_api_url + '/v2/ws/a_ws/services/?command_id=1', server_post_url)
 
     def test_create_server_get_ws_names_url(self):
         s = server._create_server_get_url(self.ws_name)
-        self.assertEqual("{0}/_api/ws/{1}".format(server.SERVER_URL, self.ws_name), s)
+        self.assertEqual("{0}/_api/v2/ws/{1}".format(server.SERVER_URL, self.ws_name), s)
 
     @responses.activate
     def test_raise_conflict_in_database(self):
@@ -107,21 +106,6 @@ class ClientServerAPITests(unittest.TestCase):
     def test_put_with_no_update(self):
         responses.add(responses.PUT, example_url, body='{"ok": "true"}', status=200)
         self.assertEqual(server._put(example_url, expected_response=200), {"ok": "true"})
-
-    @responses.activate
-    def test_put_with_update(self):
-        responses.add(responses.GET, example_url, body='{"_rev": "1-asf"}')
-        responses.add(responses.PUT, example_url, body='{"ok": "true"}', status=200)
-        server._put(example_url, update=True, expected_response=200)
-        self.assertIn("_rev", responses.calls[0].response.text)
-
-    @responses.activate
-    def test_delete_object(self):
-        responses.add(responses.GET, example_url, body='{"_rev": "1-asf"}')
-        responses.add(responses.DELETE, example_url, body='{"ok": "true"}', status=200)
-        server._delete(example_url)
-        self.assertIn("_rev", responses.calls[0].response.text)
-        self.assertEqual(responses.calls[1].request.method, 'DELETE')
 
     def test_faraday_dictionary_dispatcher_result(self):
         mock_raw_hosts = MagicMock()

@@ -459,44 +459,6 @@ class ModelController(Thread):
             return True
         return False
 
-    def delHostASYNC(self, hostId):
-        """
-        ASYNC API
-        Adds an action to the ModelController actions queue indicating a
-        particular host must be removed from the model
-        """
-        self.__addPendingAction(modelactions.DELHOST, hostId)
-
-    def delHostSYNC(self, hostId):
-        """
-        SYNC API
-        Deletes a host from model
-        """
-        self._processAction(modelactions.DELHOST, [hostId], sync=True)
-
-    def editHostSYNC(self, host, name, description, os, owned):
-        """
-        SYNC API
-        Modifies a host from model
-        """
-        self._processAction(modelactions.EDITHOST, [
-                            host, name, description, os, owned], sync=True)
-
-    def editServiceSYNC(self, service, name, description, protocol, ports, status, version, owned):
-        """
-        SYNC API
-        Modifies a host from model
-        """
-        self._processAction(modelactions.EDITSERVICE, [
-                            service, name, description, protocol, ports, status, version, owned], sync=True)
-
-    def editServiceASYNC(self, service, name, description, protocol, ports, status, version, owned):
-        """
-        ASYNC API
-        Modifies a service from model
-        """
-        self.__addPendingAction(modelactions.EDITSERVICE, service,
-                                name, description, protocol, ports, status, version, owned)
 
     def __editService(self, service, name=None, description=None,
                       protocol=None, ports=None, status=None,
@@ -515,157 +477,19 @@ class ModelController(Thread):
     def addPluginEnd(self, name):
         self.__addPendingAction(modelactions.PLUGINEND, name)
 
-    def _pluginStart(self, name):
+    def _pluginStart(self, name, command_id):
         self.active_plugins_count_lock.acquire()
-        getLogger(self).info("Plugin Started: " + name)
+        getLogger(self).info("Plugin Started: {0}. ".format(name, command_id))
         self.active_plugins_count += 1
         self.active_plugins_count_lock.release()
         return True
 
-    def _pluginEnd(self, name):
+    def _pluginEnd(self, name, command_id):
         self.active_plugins_count_lock.acquire()
-        getLogger(self).info("Plugin Ended: " + name)
+        getLogger(self).info("Plugin Ended: {0}".format(name))
         self.active_plugins_count -= 1
         self.active_plugins_count_lock.release()
         return True
-
-    def addVulnToHostASYNC(self, hostId, newVuln):
-        self.__addPendingAction(modelactions.ADDVULNHOST, newVuln, hostId)
-
-    def addVulnToHostSYNC(self, hostId, newVuln):
-        self._processAction(modelactions.ADDVULNHOST, [
-                            newVuln, hostId], sync=True)
-
-    def addVulnToServiceASYNC(self, host, srvId, newVuln):
-        self.__addPendingAction(modelactions.ADDVULNSRV, newVuln, srvId)
-
-    def addVulnToServiceSYNC(self, host, srvId, newVuln):
-        self._processAction(modelactions.ADDVULNSRV, [
-                            newVuln, srvId], sync=True)
-
-    def addVulnSYNC(self, modelObjectId, newVuln):
-        self._processAction(modelactions.ADDVULN, [
-                            newVuln, modelObjectId], sync=True)
-
-    def addVulnWebToServiceASYNC(self, host, srvId, newVuln):
-        self.__addPendingAction(modelactions.ADDVULNWEBSRV, newVuln, srvId)
-
-    def addVulnWebToServiceSYNC(self, host, srvId, newVuln):
-        self._processAction(modelactions.ADDVULNWEBSRV,
-                            [newVuln, srvId], sync=True)
-
-    def delVulnFromHostASYNC(self, hostId, vulnId):
-        self.__addPendingAction(modelactions.DELVULNHOST, vulnId)
-
-    def delVulnFromHostSYNC(self, hostname, vulnId):
-        self._processAction(modelactions.DELVULNHOST, [vulnId], sync=True)
-
-    def delVulnFromServiceASYNC(self, hostname, srvname, vulnId):
-        self.__addPendingAction(modelactions.DELVULNSRV, vulnId)
-
-    def delVulnFromServiceSYNC(self, hostname, srvname, vulnId):
-        self._processAction(modelactions.DELVULNSRV, [vulnId], sync=True)
-
-    def delVulnSYNC(self, model_object, vuln_id):
-        self._processAction(modelactions.DELVULN, [vuln_id], sync=True)
-
-    def editVulnSYNC(self, vuln, name, desc, severity, resolution, refs):
-        self._processAction(modelactions.EDITVULN, [
-                            vuln, name, desc, severity, resolution, refs], sync=True)
-
-    def editVulnASYNC(self, vuln, name, desc, severity, resolution, refs):
-        self.__addPendingAction(modelactions.EDITVULN,
-                                vuln, name, desc, severity, resolution, refs)
-
-    def editVulnWebSYNC(self, vuln, name, desc, website, path, refs, severity, resolution,
-                        request, response, method, pname, params, query,
-                        category):
-        self._processAction(modelactions.EDITVULN,
-                            [vuln, name, desc, website, path, refs, severity, resolution,
-                             request, response, method, pname, params, query, category], sync=True)
-
-    def editVulnWebASYNC(self, vuln, name, desc, website, path, refs,
-                         severity, resolution, request, response, method, pname,
-                         params, query, category):
-        self.__addPendingAction(modelactions.EDITVULN,
-                                vuln, name, desc, website, path, refs,
-                                severity, resolution, request, response, method,
-                                pname, params, query, category)
-
-    def addNoteToHostASYNC(self, hostId, newNote):
-        self.__addPendingAction(modelactions.ADDNOTEHOST, newNote, hostId)
-
-    def addNoteToHostSYNC(self, hostId, newNote):
-        self._processAction(modelactions.ADDNOTEHOST, [
-                            newNote, hostId], sync=True)
-
-    def addNoteToServiceASYNC(self, host, srvId, newNote):
-        self.__addPendingAction(modelactions.ADDNOTESRV, newNote, srvId)
-
-    def addNoteToNoteASYNC(self, host, srvname, note_id, newNote):
-        self.__addPendingAction(modelactions.ADDNOTENOTE, newNote, note_id)
-
-    def addNoteToNoteSYNC(self, noteId, newNote):
-        self._processAction(modelactions.ADDNOTENOTE, [
-                            newNote, noteId], sync=True)
-
-    def addNoteToServiceSYNC(self, host, srvId, newNote):
-        self._processAction(modelactions.ADDNOTESRV, [
-                            newNote, srvId], sync=True)
-
-    def addNoteSYNC(self, model_object, newNote):
-        self._processAction(modelactions.ADDNOTE, [
-                            newNote, model_object], sync=True)
-
-    def delNoteFromHostASYNC(self, hostId, noteId):
-        self.__addPendingAction(modelactions.DELNOTEHOST, noteId)
-
-    def delNoteFromHostSYNC(self, hostname, noteId):
-        self._processAction(modelactions.DELNOTEHOST, [noteId], sync=True)
-
-    def delNoteFromServiceASYNC(self, hostId, srvId, noteId):
-        self.__addPendingAction(modelactions.DELNOTESRV, noteId)
-
-    def delNoteFromServiceSYNC(self, hostname, srvname, noteId):
-        self._processAction(modelactions.DELNOTESRV, [noteId], sync=True)
-
-    def delNoteSYNC(self, model_object, note_id):
-        self._processAction(modelactions.DELNOTE, [note_id], sync=True)
-
-    def addCredToServiceASYNC(self, host, srvId, newCred):
-        self.__addPendingAction(modelactions.ADDCREDSRV, newCred, srvId)
-
-    def addCredToServiceSYNC(self, host, srvId, newCred):
-        self._processAction(modelactions.ADDCREDSRV, [
-                            newCred, srvId], sync=True)
-
-    def delCredFromServiceASYNC(self, hostname, srvname, credId):
-        self.__addPendingAction(modelactions.DELCREDSRV, credId)
-
-    def delCredFromServiceSYNC(self, hostname, srvname, credId):
-        self._processAction(modelactions.DELCREDSRV, [credId], sync=True)
-
-    def editNoteSYNC(self, note, name, text):
-        self._processAction(modelactions.EDITNOTE, [
-                            note, name, text], sync=True)
-
-    def editNoteASYNC(self, note, name, text):
-        self.__addPendingAction(modelactions.EDITNOTE, note, name, text)
-
-    def editCredSYNC(self, cred, username, password):
-        self._processAction(modelactions.EDITCRED, [
-                            cred, username, password], sync=True)
-
-    def editCredASYNC(self, cred, username, password):
-        self.__addPendingAction(modelactions.EDITCRED,
-                                cred, username, password)
-
-    def addCredSYNC(self, model_object_id, newCred):
-        self._processAction(modelactions.ADDCRED, [
-                            newCred, model_object_id], sync=True)
-
-    def delCredSYNC(self, model_object, cred_id):
-        self._processAction(modelactions.DELCRED, [cred_id], sync=True)
 
     def newHost(self, ip, os="Unknown"):
         return model.common.factory.createModelObject(

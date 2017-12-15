@@ -465,7 +465,7 @@ def create_command(workspace_name, command, command_id):
 
 
 @_ignore_in_changes
-def update_command(workspace_name, command):
+def update_command(workspace_name, command, command_id):
     """Take a workspace_name and a Command object and update it in the sever.
     Return the server's json response as a dictionary.
     """

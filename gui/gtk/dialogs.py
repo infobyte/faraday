@@ -7,12 +7,13 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 import gi
+import threading
 import webbrowser
 import os
 
 gi.require_version('Gtk', '3.0')
 
-from gi.repository import Gtk, GdkPixbuf, Gdk
+from gi.repository import Gtk, GdkPixbuf, Gdk, GObject
 from config.configuration import getInstanceConfiguration
 from model import guiapi
 from decorators import scrollable
@@ -570,8 +571,6 @@ class AppStoreDialog(Gtk.Window):
     Creating and displaying the models of each plugin settings is specially
     messy , there's more info in the appropiate methods"""
 
-    _errors = False
-
     def __init__(self, parent):
 
         Gtk.Window.__init__(self, title="Faraday Plugin")
@@ -581,48 +580,59 @@ class AppStoreDialog(Gtk.Window):
         self.set_modal(True)
         self.set_size_request(1024, 768)
 
+        self.loadingDialog = loadingDialog(self.parent,"Loading Appstore...")
+
+        thread = threading.Thread(target=self._start_dialog)
+        thread.start()
+
+    def _start_dialog(self):
+
         plugin_info = self.createPluginInfo()
 
-        if self._errors:
-            return
+        def done():
+            # self.id_of_selected = plugin_info[0][0]  # default selected is first item in list
+            plugin_list = self.createPluginListView(plugin_info)
+            left_side_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+            left_side_box.pack_start(plugin_list, True, True, 0)
 
-        # self.id_of_selected = plugin_info[0][0]  # default selected is first item in list
-        plugin_list = self.createPluginListView(plugin_info)
-        left_side_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        left_side_box.pack_start(plugin_list, True, True, 0)
+            buttonBox = Gtk.Box()
+            install_button = Gtk.Button.new_with_label("Install")
+            cancel_button = Gtk.Button.new_with_label("Cancel")
+            install_button.connect("clicked", self.on_click_install)
+            cancel_button.connect("clicked", self.on_click_cancel)
+            buttonBox.pack_start(install_button, True, True, 10)
+            buttonBox.pack_start(cancel_button, True, True, 10)
+            left_side_box.pack_start(buttonBox, False, False, 10)
 
-        buttonBox = Gtk.Box()
-        install_button = Gtk.Button.new_with_label("Install")
-        cancel_button = Gtk.Button.new_with_label("Cancel")
-        install_button.connect("clicked", self.on_click_install)
-        cancel_button.connect("clicked", self.on_click_cancel)
-        buttonBox.pack_start(install_button, True, True, 10)
-        buttonBox.pack_start(cancel_button, True, True, 10)
-        left_side_box.pack_start(buttonBox, False, False, 10)
+            infoBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+            descriptionBox = Gtk.Box()
 
-        infoBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        descriptionBox = Gtk.Box()
+            descriptionLabel = Gtk.Label()
 
-        descriptionLabel = Gtk.Label()
+            self.descriptionEntry = Gtk.Label()
+            self.descriptionEntry.set_line_wrap(True)
 
-        self.descriptionEntry = Gtk.Label()
-        self.descriptionEntry.set_line_wrap(True)
+            descriptionLabel.set_text("Description: ")
 
-        descriptionLabel.set_text("Description: ")
+            descriptionBox.pack_start(descriptionLabel, False, False, 5)
+            descriptionBox.pack_start(self.descriptionEntry, False, True, 5)
 
-        descriptionBox.pack_start(descriptionLabel, False, False, 5)
-        descriptionBox.pack_start(self.descriptionEntry, False, True, 5)
+            infoBox.pack_start(descriptionBox, False, False, 5)
 
-        infoBox.pack_start(descriptionBox, False, False, 5)
+            self.pluginSpecsBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+            self.pluginSpecsBox.pack_start(infoBox, False, False, 5)
 
-        self.pluginSpecsBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.pluginSpecsBox.pack_start(infoBox, False, False, 5)
+            self.mainBox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+            self.mainBox.pack_start(left_side_box, False, True, 10)
+            self.mainBox.pack_end(self.pluginSpecsBox, True, True, 10)
 
-        self.mainBox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        self.mainBox.pack_start(left_side_box, False, True, 10)
-        self.mainBox.pack_end(self.pluginSpecsBox, True, True, 10)
+            self.add(self.mainBox)
 
-        self.add(self.mainBox)
+            self.loadingDialog.destroy()
+
+            self.show_all()
+
+        GObject.idle_add(done)
 
     def on_click_install(self, button=None):
         """On click OK button update the plugins settings and then destroy"""
@@ -645,11 +655,9 @@ class AppStoreDialog(Gtk.Window):
             products = appstore_utils.get_appstore_applications()
         except appstore_utils.TimeoutException:
             errorDialog(self.parent, "Request timed out")
-            self._errors = True
             return
         except appstore_utils.RequestException:
             errorDialog(self.parent, "An error ocurred while processing the AppStore data. ")
-            self._errors = True
             return
 
         for key, plugin_dic in products.items():
@@ -701,14 +709,12 @@ class AppStoreDialog(Gtk.Window):
         except TypeError:
             pass
 
-    def had_errors(self):
-        return self._errors
-
     def install_faraday_plugin(self, plugin):
         try:
             appstore_utils.install_app(self.git_repository_of_selected)
         except appstore_utils.InstallationException:
-            errorDialog(self.parent, "An error ocurred while installing the selected app. Please check the console for more information.")
+            errorDialog(self.parent,
+                        "An error ocurred while installing the selected app. Please check the console for more information.")
         else:
             errorDialog(self.parent, "Application installed!")
 
@@ -1852,6 +1858,21 @@ class errorDialog(Gtk.MessageDialog):
             self.format_secondary_text(explanation)
         self.run()
         self.destroy()
+
+
+class loadingDialog(Gtk.MessageDialog):
+    """A simple error dialog to show the user where things went wrong.
+    Takes the parent window, (Gtk.Window or Gtk.Dialog, most probably)
+    the error and explanation (strings, nothing fancy) as arguments"""
+
+    def __init__(self, parent_window, error, explanation=None):
+        Gtk.MessageDialog.__init__(self, parent_window, 0,
+                                   Gtk.MessageType.INFO,
+                                   Gtk.ButtonsType.NONE,
+                                   error)
+        if explanation is not None:
+            self.format_secondary_text(explanation)
+        self.show()
 
 
 class ImportantErrorDialog(Gtk.Dialog):

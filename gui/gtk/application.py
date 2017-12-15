@@ -766,8 +766,6 @@ class GuiApp(Gtk.Application, FaradayUi):
     def on_appstore(self, action, param):
         """Defines what happens when you press "Faraday Plugin..." on the menu"""
         pluginsOption_window = AppStoreDialog(self.window)
-        if not pluginsOption_window.had_errors():
-            pluginsOption_window.show_all()
 
     def on_new_button(self, action=None, params=None, title=None):
         """Defines what happens when you press the 'new' button on the toolbar

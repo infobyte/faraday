@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 
 import click
+import requests
+from requests import ConnectionError
 from sqlalchemy.exc import OperationalError
 
+from persistence.server.server import _conf, FARADAY_UP, SERVER_URL
 from server.importer import ImportCouchDB
 from server.commands.initdb import InitDB
 from server.commands.faraday_schema_display import DatabaseSchema
@@ -18,17 +21,28 @@ from utils.logs import setUpLogger
 def cli():
     pass
 
+
+def check_faraday_server(url):
+    return requests.get(url)
+
+
 @click.command()
 @click.option('--debug/--no-debug', default=False)
 @click.option('--workspace', default=None)
 def process_reports(debug, workspace):
     setUpLogger(debug)
+    configuration = _conf()
+    url = '{0}/_api/v2/info'.format(configuration.getServerURI() if FARADAY_UP else SERVER_URL)
     with app.app_context():
         try:
+            check_faraday_server(url)
             import_external_reports(workspace)
         except OperationalError as ex:
             print('{0}'.format(ex))
             print('Please verify database is running or configuration on server.ini!')
+        except ConnectionError:
+            print('Can\'t connect to {0}. Please check if the server is running.'.format(url))
+
 
 @click.command()
 def reset_db():

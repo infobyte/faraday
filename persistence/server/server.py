@@ -41,8 +41,7 @@ from persistence.server.server_io_exceptions import (WrongObjectSignature,
                                                      CantCommunicateWithServerError,
                                                      ConflictInDatabase,
                                                      ResourceDoesNotExist,
-                                                     Unauthorized,
-                                                     MoreThanOneObjectFoundByID)
+                                                     Unauthorized)
 
 from persistence.server.changes_stream import CouchChangesStream
 

@@ -491,6 +491,7 @@ class ModelController(Thread):
         self.active_plugins_count_lock.release()
         return True
 
+
     def newHost(self, ip, os="Unknown"):
         return model.common.factory.createModelObject(
             models.Host.class_signature, ip,

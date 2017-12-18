@@ -33,6 +33,7 @@ from plugins.modelactions import modelactions
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 VERSION = server.config.__get_version()
+logger = logging.getLogger(__name__)
 
 
 class PluginBase(object):

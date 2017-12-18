@@ -1,19 +1,28 @@
 from functools import partial
+
+import mock
+import pytest
+
 from managers.mapper_manager import MapperManager
 from persistence.server.models import Host, Service, Vuln, Credential
 import persistence.server.server
+from persistence.server.utils import get_host_properties
 from test_cases.factories import WorkspaceFactory, CommandFactory, HostFactory, \
     ServiceFactory, VulnerabilityFactory, CredentialFactory
 
-# OBJ_DATA is like a fixture.
+# OBJ_DATA is used to parametrize tests (https://docs.pytest.org/en/latest/parametrize.html)
 # We use it to test all model classes.
 # to add more tests you need to add items in the list or more objects in the dict.
 
 OBJ_DATA = {
+    # the key is the object being tested
     Host: [{
         'factory': HostFactory,
+        # api_end_point is used to assert the generated url.
         'api_end_point': 'hosts',
+        # parent is used to assert parent information is correcly generated.
         'parent': {},
+        # data is used to instanciate a persistence.server.models class.
         'data': {
             '_id': 1,
             'name': '192.168.0.20',
@@ -23,6 +32,7 @@ OBJ_DATA = {
             'owned': False,
             'owner': 'leo'
         },
+        # expected_payload is asserted with the generated payload that will be sent to the API of faraday-server
         'expected_payload': {
                 'command_id': None,
                 'default_gateway': '192.168.0.1',
@@ -131,150 +141,214 @@ OBJ_DATA = {
 }
 
 
+# the following dict is used to parametrize find (GET) tests
+GET_OBJ_DATA = {
+    Host: [
+        {
+            'factory': HostFactory,
+            'api_end_point': 'hosts',
+            'get_properties_function': get_host_properties,
+            'mocked_response': {
+                    'name': "192.168.1.1", 'default_gateway': None,
+                    'ip': "192.168.1.1", '_rev': "",
+                    'description': "Test description", 'owned': False,
+                    'services': 7, 'hostnames': [],
+                    'vulns': 45, 'owner': "leonardo",
+                    'credentials': 1, '_id': 16,
+                    'os': "Linux 2.6.9", 'id': 16,
+                    'metadata': {
+                        'update_time': 1513381792000, 'update_user': "",
+                        'update_action': 0, 'creator': "",
+                        'create_time': 1513381792000, 'update_controller_action': "",
+                        'owner': "leonardo", 'command_id': None
+                    }
+            },
+            'serialized_expected_results': {
+                'description': 'Test description',
+                'ip': '192.168.1.1',
+                'os': 'Linux 2.6.9',
+                'owned': False,
+                'owner': 'leonardo'}
+
+        }
+    ]
+}
+
+class MockResponse:
+    def __init__(self, json_data, status_code):
+        self.json_data = json_data
+        self.status_code = status_code
+
+    def json(self):
+        return self.json_data
+
+
+@pytest.mark.usefixtures('logged_user')
 class TestMapperManager():
 
-    def test_save_without_command(self, monkeypatch, session):
+    @pytest.mark.parametrize("obj_class, many_test_data", OBJ_DATA.items())
+    def test_save_without_command(self, obj_class, many_test_data, monkeypatch, session):
         workspace = WorkspaceFactory.create(name='test')
         session.commit()
         mapper_manager = MapperManager()
         mapper_manager.createMappers(workspace.name)
-        for obj_class, many_test_data in OBJ_DATA.items():
-            for test_data in many_test_data:
-                raw_data = test_data['data']
-                if test_data['parent']:
-                    parent = test_data['parent']['parent_factory'].create()
-                    session.commit()
-                    test_data['data']['parent'] = parent.id
-                    test_data['data']['parent_type'] = test_data['parent']['parent_type']
-                    test_data['expected_payload']['parent'] = parent.id
-                    if obj_class in [Vuln, Credential]:
-                        test_data['expected_payload']['parent_type'] = test_data['parent']['parent_type']
-                def mock_server_post(test_data, post_url, update=False, expected_response=201, **params):
-                    assert post_url == 'http://localhost:5985/_api/v2/ws/test/{0}/'.format(test_data['api_end_point'])
-                    assert expected_response == 201
-                    assert update == False
-                    metadata = params.pop('metadata')
-                    assert metadata['owner'] == test_data['expected_payload']['owner']
-                    assert params == test_data['expected_payload']
-                    return {
-                        'id': 1,
-                        'ok': True,
-                        'rev': ''
-                    }
 
-                monkeypatch.setattr(persistence.server.server, '_post', partial(mock_server_post, test_data))
-                obj = obj_class(raw_data, workspace.name)
-                mapper_manager.save(obj)
+        for test_data in many_test_data:
+            raw_data = test_data['data']
+            if test_data['parent']:
+                parent = test_data['parent']['parent_factory'].create()
+                session.commit()
+                test_data['data']['parent'] = parent.id
+                test_data['data']['parent_type'] = test_data['parent']['parent_type']
+                test_data['expected_payload']['parent'] = parent.id
+                if obj_class in [Vuln, Credential]:
+                    test_data['expected_payload']['parent_type'] = test_data['parent']['parent_type']
+            def mock_server_post(test_data, post_url, update=False, expected_response=201, **params):
+                assert post_url == 'http://localhost:5985/_api/v2/ws/test/{0}/'.format(test_data['api_end_point'])
+                assert expected_response == 201
+                assert update == False
+                metadata = params.pop('metadata')
+                assert metadata['owner'] == test_data['expected_payload']['owner']
+                assert params == test_data['expected_payload']
+                return {
+                    'id': 1,
+                    'ok': True,
+                    'rev': ''
+                }
 
-    def test_save_with_command(self, monkeypatch, session):
+            monkeypatch.setattr(persistence.server.server, '_post', partial(mock_server_post, test_data))
+            obj = obj_class(raw_data, workspace.name)
+            mapper_manager.save(obj)
+
+    @pytest.mark.parametrize("obj_class, many_test_data", OBJ_DATA.items())
+    def test_save_with_command(self, obj_class, many_test_data, monkeypatch, session):
         workspace = WorkspaceFactory.create(name='test')
         command = CommandFactory.create(workspace=workspace)
         session.commit()
         mapper_manager = MapperManager()
         mapper_manager.createMappers(workspace.name)
-        for obj_class, many_test_data in OBJ_DATA.items():
-            for test_data in many_test_data:
-                raw_data = test_data['data']
-                if test_data['parent']:
-                    parent = test_data['parent']['parent_factory'].create()
-                    session.commit()
-                    test_data['data']['parent'] = parent.id
-                    test_data['data']['parent_type'] = test_data['parent']['parent_type']
-                    test_data['expected_payload']['parent'] = parent.id
-                    if obj_class in [Vuln, Credential]:
-                        test_data['expected_payload']['parent_type'] = test_data['parent']['parent_type']
-                def mock_server_post(test_data, post_url, update=False, expected_response=201, **params):
-                    assert post_url == 'http://localhost:5985/_api/v2/ws/test/{0}/?command_id={1}'.format(test_data['api_end_point'], params['command_id'])
-                    assert expected_response == 201
-                    assert update == False
-                    metadata = params.pop('metadata')
-                    assert metadata['owner'] == test_data['expected_payload']['owner']
-                    params.pop('command_id')
-                    test_data['expected_payload'].pop('command_id')
-                    assert params == test_data['expected_payload']
-                    return {
-                        'id': 1,
-                        'ok': True,
-                        'rev': ''
-                    }
+        for test_data in many_test_data:
+            raw_data = test_data['data']
+            if test_data['parent']:
+                parent = test_data['parent']['parent_factory'].create()
+                session.commit()
+                test_data['data']['parent'] = parent.id
+                test_data['data']['parent_type'] = test_data['parent']['parent_type']
+                test_data['expected_payload']['parent'] = parent.id
+                if obj_class in [Vuln, Credential]:
+                    test_data['expected_payload']['parent_type'] = test_data['parent']['parent_type']
+            def mock_server_post(test_data, post_url, update=False, expected_response=201, **params):
+                assert post_url == 'http://localhost:5985/_api/v2/ws/test/{0}/?command_id={1}'.format(test_data['api_end_point'], params['command_id'])
+                assert expected_response == 201
+                assert update == False
+                metadata = params.pop('metadata')
+                assert metadata['owner'] == test_data['expected_payload']['owner']
+                params.pop('command_id')
+                test_data['expected_payload'].pop('command_id')
+                assert params == test_data['expected_payload']
+                return {
+                    'id': 1,
+                    'ok': True,
+                    'rev': ''
+                }
 
-                monkeypatch.setattr(persistence.server.server, '_post', partial(mock_server_post, test_data))
-                obj = obj_class(raw_data, workspace.name)
-                mapper_manager.save(obj, command.id)
+            monkeypatch.setattr(persistence.server.server, '_post', partial(mock_server_post, test_data))
+            obj = obj_class(raw_data, workspace.name)
+            mapper_manager.save(obj, command.id)
 
-    def test_update_without_command(self, monkeypatch, session):
+    @pytest.mark.parametrize("obj_class, many_test_data", OBJ_DATA.items())
+    def test_update_without_command(self, obj_class, many_test_data, monkeypatch, session):
         workspace = WorkspaceFactory.create(name='test')
         mapper_manager = MapperManager()
         mapper_manager.createMappers(workspace.name)
-        for obj_class, many_test_data in OBJ_DATA.items():
-            for test_data in many_test_data:
-                relational_model = test_data['factory'].create()
+
+        for test_data in many_test_data:
+            relational_model = test_data['factory'].create()
+            session.commit()
+            raw_data = test_data['data']
+            if test_data['parent']:
+                parent = test_data['parent']['parent_factory'].create()
                 session.commit()
-                raw_data = test_data['data']
-                if test_data['parent']:
-                    parent = test_data['parent']['parent_factory'].create()
-                    session.commit()
-                    test_data['data']['parent'] = parent.id
-                    test_data['data']['parent_type'] = test_data['parent']['parent_type']
-                    test_data['expected_payload']['parent'] = parent.id
-                    if obj_class in [Vuln, Credential]:
-                        test_data['expected_payload']['parent_type'] = test_data['parent']['parent_type']
-                def mock_server_put(test_data, put_url, update=False, expected_response=201, **params):
-                    assert put_url == 'http://localhost:5985/_api/v2/ws/test/{0}/{1}/'.format(test_data['api_end_point'], test_data['id'])
-                    assert expected_response == 200
-                    assert update == False
-                    metadata = params.pop('metadata')
-                    assert metadata['owner'] == test_data['expected_payload']['owner']
-                    params.pop('command_id')
-                    test_data['expected_payload'].pop('command_id', None)
-                    assert params == test_data['expected_payload']
+                test_data['data']['parent'] = parent.id
+                test_data['data']['parent_type'] = test_data['parent']['parent_type']
+                test_data['expected_payload']['parent'] = parent.id
+                if obj_class in [Vuln, Credential]:
+                    test_data['expected_payload']['parent_type'] = test_data['parent']['parent_type']
+            def mock_server_put(test_data, put_url, update=False, expected_response=201, **params):
+                assert put_url == 'http://localhost:5985/_api/v2/ws/test/{0}/{1}/'.format(test_data['api_end_point'], test_data['id'])
+                assert expected_response == 200
+                assert update == False
+                metadata = params.pop('metadata')
+                assert metadata['owner'] == test_data['expected_payload']['owner']
+                params.pop('command_id')
+                test_data['expected_payload'].pop('command_id', None)
+                assert params == test_data['expected_payload']
 
-                    return {
-                        'id': 1,
-                        'ok': True,
-                        'rev': ''
-                    }
+                return {
+                    'id': 1,
+                    'ok': True,
+                    'rev': ''
+                }
 
-                raw_data['id'] = relational_model.id
-                test_data['id'] = relational_model.id
-                monkeypatch.setattr(persistence.server.server, '_put', partial(mock_server_put, test_data))
+            raw_data['id'] = relational_model.id
+            test_data['id'] = relational_model.id
+            monkeypatch.setattr(persistence.server.server, '_put', partial(mock_server_put, test_data))
 
-                obj = obj_class(raw_data, workspace.name)
-                mapper_manager.update(obj)
+            obj = obj_class(raw_data, workspace.name)
+            mapper_manager.update(obj)
 
-    def test_update_with_command(self, monkeypatch, session):
+    @pytest.mark.parametrize("obj_class, many_test_data", OBJ_DATA.items())
+    def test_update_with_command(self, obj_class, many_test_data, monkeypatch, session):
         session.commit()
         workspace = WorkspaceFactory.create(name='test')
         command = CommandFactory.create(workspace=workspace)
         session.commit()
         mapper_manager = MapperManager()
         mapper_manager.createMappers(workspace.name)
-        for obj_class, many_test_data in OBJ_DATA.items():
-            for test_data in many_test_data:
-                raw_data = test_data['data']
-                if test_data['parent']:
-                    parent = test_data['parent']['parent_factory'].create()
-                    session.commit()
-                    test_data['data']['parent'] = parent.id
-                    test_data['data']['parent_type'] = test_data['parent']['parent_type']
-                    test_data['expected_payload']['parent'] = parent.id
-                    if obj_class in [Vuln, Credential]:
-                        test_data['expected_payload']['parent_type'] = test_data['parent']['parent_type']
-                relational_model = test_data['factory'].create()
+
+        for test_data in many_test_data:
+            raw_data = test_data['data']
+            if test_data['parent']:
+                parent = test_data['parent']['parent_factory'].create()
                 session.commit()
-                def mock_server_put(put_url, update=False, expected_response=201, **params):
-                    assert put_url == 'http://localhost:5985/_api/v2/ws/test/{0}/{1}/?command_id={2}'.format(test_data['api_end_point'], test_data['id'], params['command_id'])
-                    assert expected_response == 200
-                    assert update == False
+                test_data['data']['parent'] = parent.id
+                test_data['data']['parent_type'] = test_data['parent']['parent_type']
+                test_data['expected_payload']['parent'] = parent.id
+                if obj_class in [Vuln, Credential]:
+                    test_data['expected_payload']['parent_type'] = test_data['parent']['parent_type']
+            relational_model = test_data['factory'].create()
+            session.commit()
+            def mock_server_put(put_url, update=False, expected_response=201, **params):
+                assert put_url == 'http://localhost:5985/_api/v2/ws/test/{0}/{1}/?command_id={2}'.format(test_data['api_end_point'], test_data['id'], params['command_id'])
+                assert expected_response == 200
+                assert update == False
+                return {
+                    'id': 1,
+                    'ok': True,
+                    'rev': ''
+                }
 
-                    return {
-                        'id': 1,
-                        'ok': True,
-                        'rev': ''
-                    }
+            raw_data['id'] = relational_model.id
+            test_data['id'] = relational_model.id
+            monkeypatch.setattr(persistence.server.server, '_put', mock_server_put)
+            obj = obj_class(raw_data, workspace.name)
+            mapper_manager.update(obj, command.id)
 
-                raw_data['id'] = relational_model.id
-                test_data['id'] = relational_model.id
-                monkeypatch.setattr(persistence.server.server, '_put', mock_server_put)
-                obj = obj_class(raw_data, workspace.name)
-                mapper_manager.update(obj, command.id)
+    @pytest.mark.parametrize("obj_class, many_test_data", GET_OBJ_DATA.items())
+    def test_find_obj_by_id(self, obj_class, many_test_data, session, monkeypatch):
+        for test_data in many_test_data:
+            persisted_obj = test_data['factory'].create()
+            session.commit()
+            mapper_manager = MapperManager()
+            mapper_manager.createMappers(persisted_obj.workspace.name)
+
+            def mock_unsafe_io_with_server(host, test_data, server_io_function, server_expected_response, server_url, **payload):
+                mocked_response = test_data['mocked_response']
+                assert 'http://localhost:5985/_api/v2/ws/{0}/{1}/{2}/'.format(persisted_obj.workspace.name, test_data['api_end_point'], persisted_obj.id) == server_url
+                return MockResponse(mocked_response, 200)
+
+            monkeypatch.setattr(persistence.server.server, '_unsafe_io_with_server', partial(mock_unsafe_io_with_server, persisted_obj, test_data))
+            found_obj = mapper_manager.find(obj_class.class_signature, persisted_obj.id)
+            serialized_obj = test_data['get_properties_function'](found_obj)
+            metadata = serialized_obj.pop('metadata')
+            assert serialized_obj == test_data['serialized_expected_results']

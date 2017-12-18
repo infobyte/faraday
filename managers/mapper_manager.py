@@ -3,6 +3,8 @@ Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
+import logging
+
 from persistence.server.models import create_object, get_object, update_object, delete_object
 
 # NOTE: This class is intended to be instantiated by the
@@ -10,6 +12,7 @@ from persistence.server.models import create_object, get_object, update_object, 
 # IMPORTANT: There should be only one instance of this
 # class, since it creates the datamappers and those should
 # be unique too (they have identity maps for every model object)
+logger = logging.getLogger(__name__)
 
 
 class MapperManager(object):
@@ -33,6 +36,8 @@ class MapperManager(object):
         return False
 
     def find(self, class_signature, obj_id):
+        if self.workspace_name is None:
+            logger.warn('No workspace detected. please call createMappers first.')
         return get_object(self.workspace_name, class_signature, obj_id)
 
     def remove(self, obj_id, class_signature):

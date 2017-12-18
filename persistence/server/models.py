@@ -85,8 +85,8 @@ def _flatten_dictionary(dictionary):
         flattened_dict[u'_id'] = dictionary['_id']
     if dictionary.get('id'):
         flattened_dict[u'id'] = dictionary['id']
-    for k, v in dictionary.get('value', {}).items():
-        if k != '_id':  # this is the couch id, which we have saved on 'id'
+    for k, v in dictionary.get('value', dictionary).items():
+        if k != '_id':
             flattened_dict[k] = v
     return flattened_dict
 
@@ -194,7 +194,7 @@ def get_hosts(workspace_name, **params):
 
 def get_host(workspace_name, host_id):
     """Return the host by host_id. None if it can't be found."""
-    return force_unique(get_hosts(workspace_name, couchid=host_id))
+    return get_hosts(workspace_name, id=host_id).pop()
 
 
 def get_all_vulns(workspace_name, **params):
@@ -766,7 +766,7 @@ class ModelBase(object):
         """
         return None
 
-    def addUpdate(self, newModelObject):
+    def addUpdate(self, newModelObject, command_id):
         conflict = False
         diff = ModelObjectDiff(self, newModelObject)
         for k, v in diff.getPropertiesDiff().items():

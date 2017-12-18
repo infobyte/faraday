@@ -25,7 +25,7 @@ Warning:
 
 import os
 import json
-import logging
+
 try:
     import urlparse
     from urllib import urlencode
@@ -254,7 +254,7 @@ def _delete(delete_url, database=False):
 def _get_raw_hosts(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
     a dictionary with the hosts table."""
-    request_url = _create_server_get_url(workspace_name, 'hosts')
+    request_url = _create_server_get_url(workspace_name, 'hosts', params.get('id', None))
     return _get(request_url, **params)
 
 
@@ -362,8 +362,9 @@ def _get_faraday_ready_dictionaries(workspace_name, faraday_object_name,
 
     appropiate_function = object_to_func[faraday_object_name]
     appropiate_dictionary = appropiate_function(workspace_name, **params)
-    faraday_ready_dictionaries = []
-    if appropiate_dictionary:
+    faraday_ready_dictionaries = [appropiate_dictionary]
+    if faraday_object_row_name in appropiate_dictionary:
+        faraday_ready_dictionaries = []
         for raw_dictionary in appropiate_dictionary[faraday_object_row_name]:
             if not full_table:
                 faraday_ready_dictionaries.append(raw_dictionary['value'])

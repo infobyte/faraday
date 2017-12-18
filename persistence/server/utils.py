@@ -6,7 +6,12 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-import hashlib
+import re
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 from persistence.server.server_io_exceptions import MoreThanOneObjectFoundByID
 
 
@@ -48,8 +53,10 @@ def get_host_properties(host):
     host_dict.update(get_object_properties(host))
     # name was removed from host and changed to ip
     ip = host_dict.pop('name')
-    # regex ip y lanzar warning si no es ip.
-    host_dict['ip'] = ip
+    if 'ip' not in host_dict and ip:
+        if re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", ip) is None:
+            logger.warn('Host with invalid IP address detected.')
+        host_dict['ip'] = ip
     return host_dict
 
 

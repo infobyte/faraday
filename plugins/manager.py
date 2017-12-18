@@ -100,6 +100,7 @@ class PluginManager(object):
                     module_path = os.path.join(plugin_repo_path, name)
                     sys.path.append(module_path)
                     module_filename = os.path.join(module_path, "plugin.py")
+                    getLogger(self).debug('Loading plugin {0}'.format(name))
                     self._plugin_modules[name] = imp.load_source(
                         name, module_filename)
                 except Exception as e:

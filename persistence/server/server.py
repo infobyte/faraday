@@ -58,6 +58,7 @@ OBJECT_TYPE_END_POINT_MAPPER = {
     'VulnerabilityWeb': 'vulns',
     'Service': 'services',
     'Note': 'comment',
+    'Cred': 'credential',
 }
 
 
@@ -1271,7 +1272,8 @@ def update_note(workspace_name, command_id, id, name, text, owned=None, owner=""
 
 
 def create_credential(workspace_name, command_id, name, username, password,
-                      owned=None, owner="", description="", metadata=None):
+                      parent, parent_type, owned=None, owner="",
+                      description="", metadata=None):
     """Creates a credential.
 
     Args:
@@ -1291,6 +1293,8 @@ def create_credential(workspace_name, command_id, name, username, password,
     """
     return _save_to_server(workspace_name,
                            command_id=command_id,
+                           parent=parent,
+                           parent_type=parent_type,
                            name=name,
                            description=description,
                            owned=owned,
@@ -1301,7 +1305,8 @@ def create_credential(workspace_name, command_id, name, username, password,
                            type="Cred")
 
 def update_credential(workspace_name, command_id, id, name, username, password,
-                      owned=None, owner="", description="", metadata=None):
+                      parent, parent_type, owned=None, owner="",
+                      description="", metadata=None):
     """Updates a credential.
 
     Args:
@@ -1321,6 +1326,8 @@ def update_credential(workspace_name, command_id, id, name, username, password,
     """
     return _update_in_server(workspace_name,
                              id,
+                             parent=parent,
+                             parent_type=parent_type,
                              command_id=command_id,
                              name=name,
                              description=description,

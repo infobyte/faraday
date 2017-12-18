@@ -1,9 +1,9 @@
 from functools import partial
 from managers.mapper_manager import MapperManager
-from persistence.server.models import Host, Service, Vuln
+from persistence.server.models import Host, Service, Vuln, Credential
 import persistence.server.server
 from test_cases.factories import WorkspaceFactory, CommandFactory, HostFactory, \
-    ServiceFactory, VulnerabilityFactory
+    ServiceFactory, VulnerabilityFactory, CredentialFactory
 
 # OBJ_DATA is like a fixture.
 # We use it to test all model classes.
@@ -100,6 +100,33 @@ OBJ_DATA = {
             'status': 'opened',
             'resolution': None,
         },
+    }],
+    Credential: [{
+        'factory': CredentialFactory,
+        'api_end_point': 'credential',
+        'parent': {
+            'parent_type': 'Host',
+            'parent_factory': HostFactory
+        },
+        'data': {
+            '_id': 1,
+            'name': 'New credential',
+            'description': 'Test credential',
+            'owned': False,
+            'owner': 'leo',
+            'password': 'testpass',
+            'username': 'username1'
+        },
+        'expected_payload': {
+            'command_id': None,
+            'name': 'New credential',
+            'description': 'Test credential',
+            'owner': 'leo',
+            'owned': False,
+            'password': 'testpass',
+            'username': 'username1',
+            'type': 'Cred',
+        },
     }]
 }
 
@@ -120,8 +147,10 @@ class TestMapperManager():
                     test_data['data']['parent'] = parent.id
                     test_data['data']['parent_type'] = test_data['parent']['parent_type']
                     test_data['expected_payload']['parent'] = parent.id
+                    if obj_class in [Vuln, Credential]:
+                        test_data['expected_payload']['parent_type'] = test_data['parent']['parent_type']
                 def mock_server_post(test_data, post_url, update=False, expected_response=201, **params):
-                    assert post_url == 'http://localhost:5984/_api/v2/ws/test/{0}/'.format(test_data['api_end_point'])
+                    assert post_url == 'http://localhost:5985/_api/v2/ws/test/{0}/'.format(test_data['api_end_point'])
                     assert expected_response == 201
                     assert update == False
                     metadata = params.pop('metadata')
@@ -152,8 +181,10 @@ class TestMapperManager():
                     test_data['data']['parent'] = parent.id
                     test_data['data']['parent_type'] = test_data['parent']['parent_type']
                     test_data['expected_payload']['parent'] = parent.id
+                    if obj_class in [Vuln, Credential]:
+                        test_data['expected_payload']['parent_type'] = test_data['parent']['parent_type']
                 def mock_server_post(test_data, post_url, update=False, expected_response=201, **params):
-                    assert post_url == 'http://localhost:5984/_api/v2/ws/test/{0}/?command_id={1}'.format(test_data['api_end_point'], params['command_id'])
+                    assert post_url == 'http://localhost:5985/_api/v2/ws/test/{0}/?command_id={1}'.format(test_data['api_end_point'], params['command_id'])
                     assert expected_response == 201
                     assert update == False
                     metadata = params.pop('metadata')
@@ -186,8 +217,10 @@ class TestMapperManager():
                     test_data['data']['parent'] = parent.id
                     test_data['data']['parent_type'] = test_data['parent']['parent_type']
                     test_data['expected_payload']['parent'] = parent.id
+                    if obj_class in [Vuln, Credential]:
+                        test_data['expected_payload']['parent_type'] = test_data['parent']['parent_type']
                 def mock_server_put(test_data, put_url, update=False, expected_response=201, **params):
-                    assert put_url == 'http://localhost:5984/_api/v2/ws/test/{0}/{1}/'.format(test_data['api_end_point'], test_data['id'])
+                    assert put_url == 'http://localhost:5985/_api/v2/ws/test/{0}/{1}/'.format(test_data['api_end_point'], test_data['id'])
                     assert expected_response == 200
                     assert update == False
                     metadata = params.pop('metadata')
@@ -225,10 +258,12 @@ class TestMapperManager():
                     test_data['data']['parent'] = parent.id
                     test_data['data']['parent_type'] = test_data['parent']['parent_type']
                     test_data['expected_payload']['parent'] = parent.id
+                    if obj_class in [Vuln, Credential]:
+                        test_data['expected_payload']['parent_type'] = test_data['parent']['parent_type']
                 relational_model = test_data['factory'].create()
                 session.commit()
                 def mock_server_put(put_url, update=False, expected_response=201, **params):
-                    assert put_url == 'http://localhost:5984/_api/v2/ws/test/{0}/{1}/?command_id={2}'.format(test_data['api_end_point'], test_data['id'], params['command_id'])
+                    assert put_url == 'http://localhost:5985/_api/v2/ws/test/{0}/{1}/?command_id={2}'.format(test_data['api_end_point'], test_data['id'], params['command_id'])
                     assert expected_response == 200
                     assert update == False
 

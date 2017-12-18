@@ -110,8 +110,12 @@ def get_note_properties(note):
 
 
 def get_credential_properties(credential):
-    cred_dict = {'username': credential.getUsername(),
-                 'password': credential.getPassword()}
+    cred_dict = {
+        'username': credential.getUsername(),
+        'password': credential.getPassword(),
+        'parent': credential.getParent(),
+        'parent_type': credential.getParentType(),
+    }
     cred_dict.update(get_object_properties(credential))
     return cred_dict
 

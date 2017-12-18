@@ -437,16 +437,16 @@ def create_credential(workspace_name, credential, command_id):
     Return the server's json response as a dictionary.
     """
     credential_properties = get_credential_properties(credential)
-    return server.create_credential(workspace_name, **credential_properties)
+    return server.create_credential(workspace_name, command_id, **credential_properties)
 
 
 @_ignore_in_changes
-def update_credential(workspace_name, credential):
+def update_credential(workspace_name, credential, command_id):
     """Take a workspace_name and a Credential object and update it in the sever.
     Return the server's json response as a dictionary.
     """
     credential_properties = get_credential_properties(credential)
-    return server.update_credential(workspace_name, credential.getID(), **credential_properties)
+    return server.update_credential(workspace_name, command_id, credential.getID(), **credential_properties)
 
 
 @_ignore_in_changes
@@ -713,6 +713,10 @@ class ModelBase(object):
         self.id_available = Event()
         if self.id is not None:
             self.id_available.set()
+        self.parent_type = obj.get('parent_type', None)
+
+    def getParentType(self):
+        return self.parent_type
 
     def getParent(self):
         return self.parent_id
@@ -942,10 +946,6 @@ class Vuln(ModelBase):
         self.resolution = vuln.get('resolution')
         self.status = vuln.get('status', "opened")
         self.policyviolations = vuln.get('policyviolations', list())
-        self.parent_type = vuln.get('parent_type')
-
-    def getParentType(self):
-        return self.parent_type
 
     @staticmethod
     def publicattrsrefs():

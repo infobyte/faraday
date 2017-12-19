@@ -24,6 +24,7 @@ from server.schemas import (
     SelfNestedField
 )
 from server.models import Host, Service, db, Hostname
+from server.api.modules.services import ServiceSchema
 
 host_api = Blueprint('host_api', __name__)
 
@@ -73,18 +74,6 @@ class HostFilterSet(FilterSet):
         fields = ('os', 'service')
         operators = (operators.Equal, operators.Like, operators.ILike)
     service = ServiceFilter(fields.Str())
-
-
-class ServiceSchema(AutoSchema):
-    # TODO migration: use the schema in ./services.py
-    vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
-    credentials = fields.Integer(attribute='credentials_count', dump_only=True)
-    ports = fields.Integer(attribute='port')
-
-    class Meta:
-        model = Service
-        fields = ('id', 'name', 'description', 'port', 'ports', 'protocol',
-                  'status', 'vulns', 'credentials', 'version')
 
 
 class HostsView(PaginatedMixin,

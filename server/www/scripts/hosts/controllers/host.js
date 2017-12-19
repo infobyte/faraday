@@ -21,6 +21,29 @@ angular.module('faradayApp')
                 });
         };
 
+        loadServices = function(){
+            // services by host
+            var hostId = $routeParams.hidId;
+            dashboardSrv.getServicesByHost($scope.workspace, hostId)
+                .then(function(services) {
+                    return $q.all(services);
+                })
+                .then(function(services) {
+                    $scope.services = services;
+
+                    $scope.services.forEach(function(service) {
+                        service.uri = encodeURIComponent(encodeURIComponent("(" + service.ports + "/" + service.protocol + ") " + service.name));
+                    });
+
+                    $scope.loadedServices = true;
+
+                    return services;
+                })
+                .catch(function(e) {
+                    console.log(e);
+                });
+        };
+
 	    init = function() {
 	    	$scope.selectall_service = false;
             // current workspace
@@ -43,28 +66,9 @@ angular.module('faradayApp')
                     $scope.workspaces = wss;
                 });
 
-            // current host
+            // current host and its services
             loadHosts();
-
-            // services by host
-            dashboardSrv.getServicesByHost($scope.workspace, hostId)
-                .then(function(services) {
-                    return $q.all(services);
-                })
-                .then(function(services) {
-                    $scope.services = services;
-
-                    $scope.services.forEach(function(service) {
-                        service.uri = encodeURIComponent(encodeURIComponent("(" + service.ports + "/" + service.protocol + ") " + service.name));
-                    });
-
-                    $scope.loadedServices = true;
-
-                    return services;
-                })
-                .catch(function(e) {
-                    console.log(e);
-                });
+            loadServices(hostId);
 
             $scope.pageSize = 10;
             $scope.currentPage = 1;
@@ -268,6 +272,7 @@ angular.module('faradayApp')
         $scope.update = function(services, data) {
             services.forEach(function(service) {
 	            servicesManager.updateService(service, data, $scope.workspace).then(function(s) {
+                    loadServices();
 	            }, function(message) {
 	                console.log(message);
 	            });

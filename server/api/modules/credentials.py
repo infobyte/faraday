@@ -21,7 +21,8 @@ class CredentialSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     _rev = fields.String(default='', dump_only=True)
     owned = fields.Boolean(default=False)
-    owner = fields.String(dump_only=True, attribute='creator.username', default='')
+    owner = fields.String(dump_only=True, attribute='creator.username',
+                          default='')
     username = fields.String(default='')
     password = fields.String(default='')
     description = fields.String(default='')
@@ -61,9 +62,11 @@ class CredentialSchema(AutoSchema):
         if parent_type == 'Host':
             parent_class = Host
             parent_field = 'host_id'
+            not_parent_field = 'service_id'
         elif parent_type == 'Service':
             parent_class = Service
             parent_field = 'service_id'
+            not_parent_field = 'host_id'
         else:
             raise ValidationError(
                 'Unknown parent type: {}'.format(parent_type))
@@ -74,6 +77,7 @@ class CredentialSchema(AutoSchema):
         except NoResultFound:
             raise InvalidUsage('Parent id not found: {}'.format(parent_id))
         data[parent_field] = parent.id
+        data[not_parent_field] = None
         return data
 
 

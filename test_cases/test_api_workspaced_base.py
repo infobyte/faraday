@@ -97,9 +97,10 @@ class RetrieveTestsMixin:
 class CreateTestsMixin:
 
     def test_create_succeeds(self, test_client):
+        data = self.factory.build_dict(workspace=self.workspace)
         res = test_client.post(self.url(),
-                               data=self.factory.build_dict())
-        assert res.status_code == 201
+                               data=data)
+        assert res.status_code == 201, (res.status_code, res.data)
         assert self.model.query.count() == OBJECT_COUNT + 1
         object_id = res.json['id']
         obj = self.model.query.get(object_id)
@@ -120,6 +121,8 @@ class CreateTestsMixin:
     def test_create_with_existing_in_other_workspace(self, test_client,
                                                      session,
                                                      second_workspace):
+        if not self.unique_fields:
+            return
         unique_field = self.unique_fields[0]
         other_object = self.factory.create(workspace=second_workspace)
         session.commit()
@@ -135,13 +138,14 @@ class CreateTestsMixin:
 class UpdateTestsMixin:
 
     def test_update_an_object(self, test_client):
+        data = self.factory.build_dict(workspace=self.workspace)
         res = test_client.put(self.url(self.first_object),
-                              data=self.factory.build_dict())
+                              data=data)
         assert res.status_code == 200
         assert self.model.query.count() == OBJECT_COUNT
         for updated_field in self.update_fields:
             assert res.json[updated_field] == getattr(self.first_object,
-                                                        updated_field)
+                                                      updated_field)
 
     def test_update_fails_with_existing(self, test_client, session):
         for unique_field in self.unique_fields:
@@ -157,7 +161,7 @@ class UpdateTestsMixin:
         assert res.status_code == 400
 
     def test_update_cant_change_id(self, test_client):
-        raw_json = self.factory.build_dict()
+        raw_json = self.factory.build_dict(workspace=self.workspace)
         expected_id = self.first_object.id
         raw_json['id'] = 100000
         res = test_client.put(self.url(self.first_object),

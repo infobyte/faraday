@@ -2,14 +2,14 @@ import pytest
 
 from test_cases import factories
 from test_api_workspaced_base import (
-    ReadOnlyAPITests,
+    ReadWriteAPITests,
 )
 from server.api.modules.credentials import CredentialView
 from server.models import Credential
 from test_cases.factories import HostFactory, ServiceFactory
 
 
-class TestCredentialsAPIGeneric(ReadOnlyAPITests):
+class TestCredentialsAPIGeneric(ReadWriteAPITests):
     model = Credential
     factory = factories.CredentialFactory
     view_class = CredentialView
@@ -61,8 +61,10 @@ class TestCredentialsAPIGeneric(ReadOnlyAPITests):
         res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 201
 
-    def test_get_credentials_for_a_host_backwards_compatibility(self, session, test_client):
-        credential = self.factory.create()
+    def test_get_credentials_for_a_host_backwards_compatibility(
+            self, session, test_client, host):
+        credential = self.factory.create(host=host, service=None,
+                                         workspace=self.workspace)
         session.commit()
         res = test_client.get(self.url(workspace=credential.workspace) + '?host_id={0}'.format(credential.host.id))
         assert res.status_code == 200
@@ -104,11 +106,13 @@ class TestCredentialsAPIGeneric(ReadOnlyAPITests):
         res = test_client.put(self.url(workspace=credential.workspace) + str(credential.id) + '/', data=raw_data)
         assert res.status_code == 400
 
-    def test_update_credentials(self, test_client, session):
-        credential = self.factory.create()
+    def test_update_credentials(self, test_client, session, host):
+        credential = self.factory.create(host=host, service=None,
+                                         workspace=self.workspace)
         session.commit()
 
-        raw_data = self._generate_raw_update_data('Name1', 'Username2', 'Password3', parent_id=credential.host.id)
+        raw_data = self._generate_raw_update_data(
+            'Name1', 'Username2', 'Password3', parent_id=credential.host.id)
 
         res = test_client.put(self.url(workspace=credential.workspace) + str(credential.id) + '/', data=raw_data)
         assert res.status_code == 200

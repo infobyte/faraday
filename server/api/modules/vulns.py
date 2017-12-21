@@ -222,6 +222,8 @@ class VulnerabilitySchema(AutoSchema):
         except NoResultFound:
             raise ValidationError('Parent id not found: {}'.format(parent_id))
         data[parent_field] = parent.id
+        # TODO migration: check what happens when updating the parent from
+        # service to host or viceverse
         return data
 
 

@@ -301,16 +301,24 @@ class VulnerabilityView(PaginatedMixin,
                         ReadWriteWorkspacedView):
     route_base = 'vulns'
     filterset_class = VulnerabilityFilterSet
+    unique_fields_by_class = {
+        'Vulnerability': [('name', 'description', 'host_id', 'service_id')],
+        'VulnerabilityWeb': [('name', 'description', 'service_id', 'method', 'parameter_name', 'path', 'website')],
+    }
 
     model_class_dict = {
         'Vulnerability': Vulnerability,
         'VulnerabilityWeb': VulnerabilityWeb,
-        'VulnerabilityGeneric': VulnerabilityGeneric,
+        'VulnerabilityGeneric': VulnerabilityGeneric, # For listing objects
     }
     schema_class_dict = {
         'Vulnerability': VulnerabilitySchema,
         'VulnerabilityWeb': VulnerabilityWebSchema
     }
+
+    def _validate_uniqueness(self, obj, object_id=None):
+        self.unique_fields = self.unique_fields_by_class[obj.__class__.__name__]
+        super(VulnerabilityView, self)._validate_uniqueness(obj, object_id)
 
     def _perform_create(self, data, **kwargs):
         data = self._parse_data(self._get_schema_instance(kwargs),

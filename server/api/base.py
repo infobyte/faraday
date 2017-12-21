@@ -252,7 +252,7 @@ class GenericWorkspacedView(GenericView):
                 db.session.rollback()
                 abort(409, ValidationError(
                     {
-                        'message': 'Existing value for %s field: %s' % (field_name, value),
+                        'message': 'Existing value for unique columns: %s' % (field_names, ),
                         'object': conflict_data,
                     }
                 ))

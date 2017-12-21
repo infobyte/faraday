@@ -1,9 +1,9 @@
 from functools import partial
 
-import mock
 import pytest
 
 from managers.mapper_manager import MapperManager
+from persistence.server.server import _create_server_api_url
 from persistence.server.models import Host, Service, Vuln, Credential
 import persistence.server.server
 from persistence.server.utils import get_host_properties
@@ -204,7 +204,8 @@ class TestMapperManager():
                 if obj_class in [Vuln, Credential]:
                     test_data['expected_payload']['parent_type'] = test_data['parent']['parent_type']
             def mock_server_post(test_data, post_url, update=False, expected_response=201, **params):
-                assert post_url == 'http://localhost:5985/_api/v2/ws/test/{0}/'.format(test_data['api_end_point'])
+                assert post_url == '{0}/ws/test/{1}/'.format(
+                    _create_server_api_url(), test_data['api_end_point'])
                 assert expected_response == 201
                 assert update == False
                 metadata = params.pop('metadata')
@@ -238,7 +239,7 @@ class TestMapperManager():
                 if obj_class in [Vuln, Credential]:
                     test_data['expected_payload']['parent_type'] = test_data['parent']['parent_type']
             def mock_server_post(test_data, post_url, update=False, expected_response=201, **params):
-                assert post_url == 'http://localhost:5985/_api/v2/ws/test/{0}/?command_id={1}'.format(test_data['api_end_point'], params['command_id'])
+                assert post_url == '{0}/ws/test/{1}/?command_id={2}'.format(_create_server_api_url(), test_data['api_end_point'], params['command_id'])
                 assert expected_response == 201
                 assert update == False
                 metadata = params.pop('metadata')
@@ -275,7 +276,7 @@ class TestMapperManager():
                 if obj_class in [Vuln, Credential]:
                     test_data['expected_payload']['parent_type'] = test_data['parent']['parent_type']
             def mock_server_put(test_data, put_url, update=False, expected_response=201, **params):
-                assert put_url == 'http://localhost:5985/_api/v2/ws/test/{0}/{1}/'.format(test_data['api_end_point'], test_data['id'])
+                assert put_url == '{0}/ws/test/{1}/{2}/'.format(_create_server_api_url(), test_data['api_end_point'], test_data['id'])
                 assert expected_response == 200
                 assert update == False
                 metadata = params.pop('metadata')
@@ -319,7 +320,11 @@ class TestMapperManager():
             relational_model = test_data['factory'].create()
             session.commit()
             def mock_server_put(put_url, update=False, expected_response=201, **params):
-                assert put_url == 'http://localhost:5985/_api/v2/ws/test/{0}/{1}/?command_id={2}'.format(test_data['api_end_point'], test_data['id'], params['command_id'])
+                assert put_url == '{0}/ws/test/{1}/{2}/?command_id={3}'.format(
+                    _create_server_api_url(),
+                    test_data['api_end_point'],
+                    test_data['id'],
+                    params['command_id'])
                 assert expected_response == 200
                 assert update == False
                 return {
@@ -344,7 +349,11 @@ class TestMapperManager():
 
             def mock_unsafe_io_with_server(host, test_data, server_io_function, server_expected_response, server_url, **payload):
                 mocked_response = test_data['mocked_response']
-                assert 'http://localhost:5985/_api/v2/ws/{0}/{1}/{2}/'.format(persisted_obj.workspace.name, test_data['api_end_point'], persisted_obj.id) == server_url
+                assert '{0}/ws/{1}/{2}/{3}/'.format(
+                    _create_server_api_url(),
+                    persisted_obj.workspace.name,
+                    test_data['api_end_point'],
+                    persisted_obj.id) == server_url
                 return MockResponse(mocked_response, 200)
 
             monkeypatch.setattr(persistence.server.server, '_unsafe_io_with_server', partial(mock_unsafe_io_with_server, persisted_obj, test_data))

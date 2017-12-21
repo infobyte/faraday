@@ -261,21 +261,14 @@ def _get_raw_hosts(workspace_name, **params):
 def _get_raw_vulns(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
     a dictionary with the vulns table."""
-    request_url = _create_server_get_url(workspace_name, 'vulns')
-    return _get(request_url, **params)
-
-
-def _get_raw_interfaces(workspace_name, **params):
-    """Take a workspace_name and an arbitrary number of params and return
-    a dictionary with the interfaces table."""
-    request_url = _create_server_get_url(workspace_name, 'interfaces')
+    request_url = _create_server_get_url(workspace_name, 'vulns', params.get('id', None))
     return _get(request_url, **params)
 
 
 def _get_raw_services(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
     a dictionary with the services table."""
-    request_url = _create_server_get_url(workspace_name, 'services')
+    request_url = _create_server_get_url(workspace_name, 'services', params.get('id', None))
     return _get(request_url, **params)
 
 
@@ -354,7 +347,6 @@ def _get_faraday_ready_dictionaries(workspace_name, faraday_object_name,
     """
     object_to_func = {'hosts': _get_raw_hosts,
                       'vulns': _get_raw_vulns,
-                      'interfaces': _get_raw_interfaces,
                       'services': _get_raw_services,
                       'notes': _get_raw_notes,
                       'credentials': _get_raw_credentials,

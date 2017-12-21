@@ -219,7 +219,7 @@ def get_vulns(workspace_name, **params):
 
 def get_vuln(workspace_name, vuln_id):
     """Return the Vuln of id vuln_id. None if not found."""
-    return force_unique(get_vulns(workspace_name, couchid=vuln_id))
+    return force_unique(get_vulns(workspace_name, id=vuln_id))
 
 
 def get_web_vulns(workspace_name, **params):
@@ -234,7 +234,7 @@ def get_web_vulns(workspace_name, **params):
 
 def get_web_vuln(workspace_name, vuln_id):
     """Return the WebVuln of id vuln_id. None if not found."""
-    return force_unique(get_web_vulns(workspace_name, couchid=vuln_id))
+    return force_unique(get_web_vulns(workspace_name, id=vuln_id))
 
 
 def get_services(workspace_name, **params):
@@ -249,7 +249,7 @@ def get_services(workspace_name, **params):
 
 def get_service(workspace_name, service_id):
     """Return the Service of id service_id. None if not found."""
-    return force_unique(get_services(workspace_name, service_id=service_id))
+    return force_unique(get_services(workspace_name, id=service_id))
 
 
 def get_credentials(workspace_name, **params):
@@ -264,7 +264,7 @@ def get_credentials(workspace_name, **params):
 
 def get_credential(workspace_name, credential_id):
     """Return the Credential of id credential_id. None if not found."""
-    return force_unique(get_credentials(workspace_name, couchid=credential_id))
+    return force_unique(get_credentials(workspace_name, id=credential_id))
 
 
 def get_notes(workspace_name, **params):
@@ -279,7 +279,7 @@ def get_notes(workspace_name, **params):
 
 def get_note(workspace_name, note_id):
     """Return the Note of id note_id. None if not found."""
-    return force_unique(get_notes(workspace_name, couchid=note_id))
+    return force_unique(get_notes(workspace_name, id=note_id))
 
 
 def get_workspace(workspace_name):
@@ -300,7 +300,7 @@ def get_commands(workspace_name, **params):
 
 def get_command(workspace_name, command_id):
     """Return the Command of id command_id. None if not found."""
-    return force_unique(get_commands(workspace_name, couchid=command_id))
+    return force_unique(get_commands(workspace_name, id=command_id))
 
 
 def get_object(workspace_name, object_signature, object_id):

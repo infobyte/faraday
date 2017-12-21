@@ -30,20 +30,23 @@ class ServiceSchema(AutoSchema):
                                    attribute='creator')
     port = fields.Integer(dump_only=True)  # Port is loaded via ports
     ports = MutableField(fields.String(),
-                         fields.Method(deserialize='load_port'),
+                         fields.Method(deserialize='load_ports', serialize='get_ports'),
                          required=True,
                          attribute='port')
     status = fields.String(default='open')
-    parent = fields.Integer(attribute='host_id', load_only=True)  # parent is not required for updates
+    parent = fields.Integer(attribute='host_id')  # parent is not required for updates
     host_id = fields.Integer(attribute='host_id', dump_only=True)
     summary = fields.Method('get_summary')
     vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
     credentials = fields.Integer(attribute='credentials_count', dump_only=True)
     metadata = SelfNestedField(MetadataSchema())
 
-    def load_port(self, value):
+    def load_ports(self, value):
         # TODO migration: handle empty list and not numeric value
         return str(value.pop())
+
+    def get_ports(self, obj):
+        return [obj.port]
 
     def get_summary(self, obj):
         return "(%s/%s) %s" % (obj.port, obj.protocol, obj.name)

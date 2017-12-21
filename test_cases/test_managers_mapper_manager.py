@@ -6,7 +6,8 @@ from managers.mapper_manager import MapperManager
 from persistence.server.server import _create_server_api_url
 from persistence.server.models import Host, Service, Vuln, Credential
 import persistence.server.server
-from persistence.server.utils import get_host_properties
+from persistence.server.utils import get_host_properties, \
+    get_service_properties, get_vuln_properties
 from test_cases.factories import WorkspaceFactory, CommandFactory, HostFactory, \
     ServiceFactory, VulnerabilityFactory, CredentialFactory
 
@@ -143,6 +144,90 @@ OBJ_DATA = {
 
 # the following dict is used to parametrize find (GET) tests
 GET_OBJ_DATA = {
+    Vuln: [
+        {
+            'factory': VulnerabilityFactory,
+            'api_end_point': 'vulns',
+            'get_properties_function': get_vuln_properties,
+            'mocked_response': {
+                "website": "",
+                "_rev": "",
+                "parent_type": "Service",
+                "owned": False,
+                "owner": "leonardo",
+                "query": "",
+                "refs": [],
+                "impact": {
+                    "accountability": False,
+                    "integrity": False,
+                    "confidentiality": False,
+                    "availability": False
+                },
+                "confirmed": True,
+                "severity": "med",
+                "service": {
+                    "status": "open",
+                    "protocol": "tcp",
+                    "name": "ssh",
+                    "summary": "(21/tcp) ssh",
+                    "version": "",
+                    "_id": 1,
+                    "ports": "21"
+                },
+                "policyviolations": [],
+                "params": "",
+                "type": "Vulnerability",
+                "method": "",
+                "metadata": {
+                    "update_time": 1513290499000,
+                    "update_user": "",
+                    "update_action": 0,
+                    "creator": "",
+                    "create_time": 1513290499000,
+                    "update_controller_action": "",
+                    "owner": "leonardo",
+                    "command_id": None
+                },
+                "status": "opened",
+                "issuetracker": {},
+                "description": "description",
+                "parent": 1,
+                "tags": [],
+                "easeofresolution": "trivial",
+                "hostnames": [],
+                "pname": "",
+                "date": "2017-12-14T19:28:19.427274+00:00",
+                "path": "",
+                "data": "data",
+                "response": "",
+                "desc": "description",
+                "name": "Vuln test",
+                "obj_id": "1",
+                "request": "",
+                "_attachments": [],
+                "target": "192.168.0.1",
+                "_id": 1,
+                "resolution": ""
+        },
+            'serialized_expected_results': {
+                'confirmed': True,
+                'data': 'data',
+                'desc': 'description',
+                'description': 'description',
+                'name': 'Vuln test',
+                'owned': False,
+                'owner': 'leonardo',
+                'parent': 1,
+                'parent_type': 'Service',
+                'policyviolations': [],
+                'refs': [],
+                'resolution': '',
+                'severity': 'med',
+                'status': 'opened'
+            }
+
+        }
+    ],
     Host: [
         {
             'factory': HostFactory,
@@ -169,6 +254,58 @@ GET_OBJ_DATA = {
                 'os': 'Linux 2.6.9',
                 'owned': False,
                 'owner': 'leonardo'}
+
+        }
+    ],
+    Service: [
+        {
+            'factory': ServiceFactory,
+            'api_end_point': 'services',
+            'parent': {
+                'parent_type': 'Host',
+                'parent_factory': HostFactory
+            },
+            'get_properties_function': get_service_properties,
+            'mocked_response': {
+                "status": "open",
+                "protocol": "tcp",
+                "description": "Test description",
+                "vulns": 2,
+                "_rev": "",
+                "metadata": {
+                    "update_time": 1513290473000,
+                    "update_user": "",
+                    "update_action": 0,
+                    "creator": "",
+                    "create_time": 1513290473000,
+                    "update_controller_action": "",
+                    "owner": "leonardo",
+                    "command_id": None
+                },
+                "owned": False,
+                "summary": "(21/tcp) ssh",
+                "port": 21,
+                "owner": "leonardo",
+                "version": "",
+                "host_id": 1,
+                "parent": 1,
+                "id": 1,
+                "credentials": 0,
+                "_id": 1,
+                "ports": [21],
+                "name": "ssh"
+            },
+            'serialized_expected_results': {
+                'name': 'ssh',
+                'description': 'Test description',
+                'ports': [21],
+                'protocol': 'tcp',
+                'status': 'open',
+                'parent': 1,
+                'version': '',
+                'owned': False,
+                'owner': 'leonardo'
+            }
 
         }
     ]

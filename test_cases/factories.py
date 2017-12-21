@@ -109,7 +109,7 @@ class HostFactory(WorkspaceObjectFactory):
 
 class HostnameFactory(WorkspaceObjectFactory):
     name = FuzzyText()
-    host = SubFactory(HostFactory)
+    host = factory.SubFactory(HostFactory)
 
     class Meta:
         model = Hostname

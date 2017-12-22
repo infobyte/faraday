@@ -33,6 +33,11 @@ class CredentialSchema(AutoSchema):
     parent = MutableField(fields.Method('get_parent'),
                           fields.Integer(),
                           required=True)
+    host_ip = fields.String(dump_only=True, attribute="host.ip",
+                            default=None)
+    service_name = fields.String(dump_only=True, attribute="service.name",
+                                 default=None)
+    target = fields.Method('get_target', dump_only=True)
 
     # for filtering
     host_id = fields.Integer(load_only=True)
@@ -46,14 +51,18 @@ class CredentialSchema(AutoSchema):
         assert obj.host_id is not None or obj.service_id is not None
         return 'Service' if obj.service_id is not None else 'Host'
 
+    def get_target(self, obj):
+        if obj.host is not None:
+            return obj.host.ip
+        else:
+            return obj.service.host.ip + '/' + obj.service.name
+
     class Meta:
         model = Credential
-        fields = ('id', '_id', "_rev", 'parent',
-                  'username', 'description',
-                  'name', 'password',
-                  'owner', 'owned', 'couchdbid',
-                  'parent', 'parent_type',
-                  'metadata')
+        fields = ('id', '_id', "_rev", 'parent', 'username', 'description',
+                  'name', 'password', 'owner', 'owned', 'couchdbid', 'parent',
+                  'parent_type', 'metadata', 'host_ip', 'service_name',
+                  'target')
 
     @post_load
     def set_parent(self, data):
@@ -98,6 +107,7 @@ class CredentialView(FilterAlchemyMixin, ReadWriteWorkspacedView):
     model_class = Credential
     schema_class = CredentialSchema
     filterset_class = CredentialFilterSet
+    get_joinedloads = [Credential.host, Credential.service]
 
     def _envelope_list(self, objects, pagination_metadata=None):
         credentials = []

@@ -114,6 +114,7 @@ class CredentialView(FilterAlchemyMixin, ReadWriteWorkspacedView):
         for credential in objects:
             credentials.append({
                 'id': credential['_id'],
+                '_id': credential['_id'],
                 'key': credential['_id'],
                 'value': credential
             })

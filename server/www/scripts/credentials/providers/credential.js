@@ -72,6 +72,7 @@ angular.module('faradayApp')
             update: function(ws) {
                 var self = this;
                 self.metadata = updateMetadata(self.metadata);
+                if(!self.id) self.id = self._id;
                 
                 return ServerAPI.updateCredential(ws, buildObjectServer(self));
             },
@@ -83,7 +84,7 @@ angular.module('faradayApp')
                 
                 return ServerAPI.createCredential(ws, buildObjectServer(self)).
                     then(function(credential_data) {
-                        self._rev = credential_data.rev;
+                        self._id = credential_data.data.id
                     });
             },
 

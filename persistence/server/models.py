@@ -1298,7 +1298,7 @@ class Command:
     class_signature = 'CommandRunInformation'
     def __init__(self, command, workspace_name):
         self._workspace_name = workspace_name
-        self.id = command['id']
+        self.id = command.get('id', None) or command.get('_id', None)
         self.command = command['command']
         self.duration = command['duration']
         self.hostname = command['hostname']
@@ -1307,6 +1307,9 @@ class Command:
         self.params = command['params']
         self.user = command['user']
         self.workspace = command['workspace']
+
+    def getID(self):
+        return self.id
 
     def getCommand(self):
         return self.command

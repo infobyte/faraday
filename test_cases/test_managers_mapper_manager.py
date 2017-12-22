@@ -4,14 +4,32 @@ import pytest
 
 from managers.mapper_manager import MapperManager
 from persistence.server.server import _create_server_api_url
-from persistence.server.models import Host, Service, Vuln, Credential, VulnWeb, \
-    Note
+from persistence.server.models import (
+    Host,
+    Service,
+    Vuln,
+    Credential,
+    VulnWeb,
+    Note,
+    Command,
+)
 import persistence.server.server
-from persistence.server.utils import get_host_properties, \
-    get_service_properties, get_vuln_properties, get_vuln_web_properties
-from test_cases.factories import WorkspaceFactory, CommandFactory, HostFactory, \
-    ServiceFactory, VulnerabilityFactory, CredentialFactory, \
-    VulnerabilityWebFactory, CommentFactory
+from persistence.server.utils import (
+    get_host_properties,
+    get_service_properties,
+    get_vuln_properties,
+    get_vuln_web_properties
+)
+from test_cases.factories import (
+    WorkspaceFactory,
+    CommandFactory,
+    HostFactory,
+    ServiceFactory,
+    VulnerabilityFactory,
+    CredentialFactory,
+    VulnerabilityWebFactory,
+    CommentFactory,
+    EmptyCommandFactory)
 
 # OBJ_DATA is used to parametrize tests (https://docs.pytest.org/en/latest/parametrize.html)
 # We use it to test all model classes.
@@ -195,6 +213,7 @@ OBJ_DATA = {
     Note: [{
         'factory': CommentFactory,
         'api_end_point': 'comment',
+        # parent not used
         'parent': {
             'parent_type': 'Host',
             'parent_factory': HostFactory
@@ -219,6 +238,37 @@ OBJ_DATA = {
             'owner': 'leo',
             'text': 'Text from Note',
             'type': 'Note'},
+    }],
+    Command: [{
+        'factory': EmptyCommandFactory,
+        'api_end_point': 'commands',
+        # parent not used
+        'parent': {
+            'parent_type': 'Host',
+            'parent_factory': HostFactory
+        },
+        'data': {
+            'itime': 1513959206,
+            'ip': "192.168.124.1",
+            'hostname': "mandarina",
+            'command': "Import Nexpose:",
+            'user': "leonardo",
+            'workspace': "airbnb",
+            'duration': 0.164561,
+            'params': "/home/lcubo/.faraday/report/airbnb/nexpose_5.7.19_Website_PT.xml",
+            '_id': 280
+        },
+        'expected_payload':{
+            'command': 'Import Nexpose:',
+            'duration': 0.164561,
+            'hostname': 'mandarina',
+            'ip': '192.168.124.1',
+            'itime': 1513959206,
+            'params': '/home/lcubo/.faraday/report/airbnb/nexpose_5.7.19_Website_PT.xml',
+            'type': 'CommandRunInformation',
+            'user': 'leonardo',
+            'workspace': u'test'
+        }
     }]
 }
 
@@ -516,7 +566,7 @@ class TestMapperManager():
                 session.commit()
                 test_data['data']['parent'] = parent.id
                 test_data['data']['parent_type'] = test_data['parent']['parent_type']
-                if obj_class not in [Note]:
+                if obj_class not in [Note, Command]:
                     test_data['expected_payload']['parent'] = parent.id
                 if obj_class in [Vuln, Credential]:
                     test_data['expected_payload']['parent_type'] = test_data['parent']['parent_type']
@@ -525,8 +575,9 @@ class TestMapperManager():
                     _create_server_api_url(), test_data['api_end_point'])
                 assert expected_response == 201
                 assert update == False
-                metadata = params.pop('metadata')
-                assert metadata['owner'] == test_data['expected_payload']['owner']
+                if obj_class not in [Command]:
+                    metadata = params.pop('metadata')
+                    assert metadata['owner'] == test_data['expected_payload']['owner']
                 assert params == test_data['expected_payload']
                 return {
                     'id': 1,
@@ -540,6 +591,8 @@ class TestMapperManager():
 
     @pytest.mark.parametrize("obj_class, many_test_data", OBJ_DATA.items())
     def test_save_with_command(self, obj_class, many_test_data, monkeypatch, session):
+        if obj_class == Command:
+            return
         workspace = WorkspaceFactory.create(name='test')
         command = CommandFactory.create(workspace=workspace)
         session.commit()
@@ -592,7 +645,7 @@ class TestMapperManager():
 
                 test_data['data']['parent'] = parent.id
                 test_data['data']['parent_type'] = test_data['parent']['parent_type']
-                if obj_class not in [Note]:
+                if obj_class not in [Note, Command]:
                     test_data['expected_payload']['parent'] = parent.id
                 if obj_class in [Vuln, Credential]:
                     test_data['expected_payload']['parent_type'] = test_data['parent']['parent_type']
@@ -600,9 +653,10 @@ class TestMapperManager():
                 assert put_url == '{0}/ws/test/{1}/{2}/'.format(_create_server_api_url(), test_data['api_end_point'], test_data['id'])
                 assert expected_response == 200
                 assert update == False
-                metadata = params.pop('metadata')
-                assert metadata['owner'] == test_data['expected_payload']['owner']
-                params.pop('command_id')
+                if obj_class not in [Command]:
+                    metadata = params.pop('metadata')
+                    assert metadata['owner'] == test_data['expected_payload']['owner']
+                params.pop('command_id', None)
                 test_data['expected_payload'].pop('command_id', None)
                 assert params == test_data['expected_payload']
 
@@ -621,6 +675,8 @@ class TestMapperManager():
 
     @pytest.mark.parametrize("obj_class, many_test_data", OBJ_DATA.items())
     def test_update_with_command(self, obj_class, many_test_data, monkeypatch, session):
+        if obj_class in [Command]:
+            return
         session.commit()
         workspace = WorkspaceFactory.create(name='test')
         command = CommandFactory.create(workspace=workspace)

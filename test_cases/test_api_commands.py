@@ -302,3 +302,36 @@ class TestListCommandView(ReadOnlyAPITests):
         res = test_client.get(self.url(workspace=command.workspace))
         assert res.status_code == 200
         assert res.json['commands'][0]['value']['duration'] == 61.442406
+
+    def test_create_command(self, test_client):
+        raw_data ={
+            'command': 'Import Nessus:',
+            'duration': None,
+            'hostname': 'mandarina',
+            'ip': '192.168.20.53',
+            'itime': 1511387720.048548,
+            'params': u'/home/lcubo/.faraday/report/airbnb/nessus_report_Remote.nessus',
+            'user': 'lcubo'
+        }
+
+        res = test_client.post(self.url(), data=raw_data)
+        assert res.status_code == 201
+
+
+    def test_update_command(self, test_client, session):
+        command = self.factory()
+        session.commit()
+        raw_data ={
+            'command': 'Import Nessus:',
+            'duration': 120,
+            'hostname': 'mandarina',
+            'ip': '192.168.20.53',
+            'itime': 1511387720.048548,
+            'params': u'/home/lcubo/.faraday/report/airbnb/nessus_report_Remote.nessus',
+            'user': 'lcubo'
+        }
+
+        res = test_client.put(self.url(command, workspace=command.workspace), data=raw_data)
+        assert res.status_code == 200
+        updated_command = self.model.query.get(command.id)
+        assert updated_command.end_date == datetime.datetime.fromtimestamp(1511387720.048548) + datetime.timedelta(seconds=120)

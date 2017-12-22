@@ -7,10 +7,11 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-
-import unittest
-import sys
 import os
+import sys
+from Queue import Queue
+from collections import defaultdict
+
 sys.path.append(os.path.abspath(os.getcwd()))
 from plugins.repo.nmap.plugin import NmapPlugin
 from model.common import factory
@@ -21,11 +22,10 @@ from persistence.server.models import (
     Note,
     Host,
     Service,
-)
-from plugins.modelactions import modelactions
+    ModelBase)
 
 
-class NmapXMLParserTest(unittest.TestCase):
+class TestNmapXMLParserTest:
     plugin = NmapPlugin()
     outputNmapBlog = ("Starting Nmap 7.12 ( https://nmap.org ) at 2016-05-16 14:56 ART\n"
                       "Nmap scan report for joaquinlp.me (198.38.82.159)\n"
@@ -53,29 +53,45 @@ class NmapXMLParserTest(unittest.TestCase):
     with open(cd + '/nmap_output_xml', 'r') as output:
         xml_output = output.read()
 
-    def setUp(self):
+    def register_factorties(self, monkeypatch):
         factory.register(Host)
         factory.register(Service)
         factory.register(Vuln)
         factory.register(VulnWeb)
         factory.register(Note)
         factory.register(Credential)
+        self.pending_actions = Queue()
+        self.plugin.set_actions_queue(self.pending_actions)
+        monkeypatch.setattr(ModelBase, 'getID', lambda _: 1)
 
-    def test_Plugin_Calls_createAndAddHost(self):
+    def test_Plugin_Calls_createAndAddHost(self, monkeypatch):
+        self.register_factorties(monkeypatch)
+
         self.plugin.parseOutputString(self.xml_output)
-        action = self.plugin._pending_actions.get(block=True)
-        self.assertEqual(action[0], modelactions.ADDHOST)
-        self.assertEqual(action[1].name, "198.38.82.159")
+        actions = defaultdict(list)
+        while not self.pending_actions.empty():
+            action = self.plugin._pending_actions.get(block=True)
+            actions[action[0]].append(action[1])
 
-    def test_Plugin_Calls_createAndAddService(self):
-        self.plugin.parseOutputString(self.xml_output)
-        action = self.plugin._pending_actions.get(block=True)
-        action = self.plugin._pending_actions.get(block=True)
-        self.assertEqual(action[0], modelactions.ADDSERVICEINT)
-        self.assertEqual(action[3].ports, [25])
-        self.assertEqual(action[3].name, 'smtp')
-        self.assertEqual(action[3].protocol, 'tcp')
+        assert actions[2000][0].name == "198.38.82.159"
+        assert actions.keys() ==  [2000, 20008]
 
+        assert len(actions[2000]) == 1
+        assert len(actions[20008]) == 13
 
-if __name__ == '__main__':
-    unittest.main()
+        assert map(lambda service: service.name, actions[20008]) == [
+            'ftp',
+            'smtp',
+            'domain',
+            'http',
+            'pop3',
+            'imap',
+            'https',
+            'smtps',
+            'submission',
+            'imaps',
+            'pop3s',
+            'ms-v-worlds',
+            'mysql'
+                                                                     ]
+

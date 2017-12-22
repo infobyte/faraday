@@ -78,7 +78,7 @@ class WorkspaceManager(object):
                  "For example: "
                  "<couch_uri>http://john:password@127.0.0.1:5984</couch_uri>"))
         except Exception as e:
-            notification_center.CouchDBConnectionProblem(e)
+            notification_center.DBConnectionProblem(e)
             raise WorkspaceException(str(e))
         self.mappersManager.createMappers(name)
         self.setActiveWorkspace(workspace)

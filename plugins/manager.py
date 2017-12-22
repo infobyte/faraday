@@ -22,6 +22,7 @@ CONF = getInstanceConfiguration()
 
 
 class PluginManager(object):
+
     def __init__(self, plugin_repo_path):
         self._controllers = {}
         self._plugin_modules = {}
@@ -74,7 +75,7 @@ class PluginManager(object):
 
     def _instancePlugins(self):
         plugins = {}
-        for module in self._plugin_modules.itervalues():
+        for module in self._plugin_modules.values():
             new_plugin = module.createPlugin()
             self._verifyPlugin(new_plugin)
             plugins[new_plugin.id] = new_plugin
@@ -99,6 +100,7 @@ class PluginManager(object):
                     module_path = os.path.join(plugin_repo_path, name)
                     sys.path.append(module_path)
                     module_filename = os.path.join(module_path, "plugin.py")
+                    getLogger(self).debug('Loading plugin {0}'.format(name))
                     self._plugin_modules[name] = imp.load_source(
                         name, module_filename)
                 except Exception as e:

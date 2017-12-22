@@ -1247,10 +1247,10 @@ class Comment(Metadata):
 
     reply_to_id = Column(Integer, ForeignKey('comment.id'))
     reply_to = relationship(
-                        'Comment',
-                        remote_side=[id],
-                        foreign_keys=[reply_to_id]
-                        )
+        'Comment',
+        remote_side=[id],
+        foreign_keys=[reply_to_id]
+    )
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True,
                           nullable=False)

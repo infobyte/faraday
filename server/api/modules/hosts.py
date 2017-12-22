@@ -87,7 +87,7 @@ class HostsView(PaginatedMixin,
     model_class = Host
     order_field = Host.ip.asc()
     schema_class = HostSchema
-    unique_fields = ['ip']
+    unique_fields = [('ip', )]
     filterset_class = HostFilterSet
     get_undefer = [Host.open_service_count,
                    Host.vulnerability_count]

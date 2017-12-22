@@ -7,7 +7,7 @@ from persistence.server.server import _create_server_api_url
 from persistence.server.models import Host, Service, Vuln, Credential, VulnWeb
 import persistence.server.server
 from persistence.server.utils import get_host_properties, \
-    get_service_properties, get_vuln_properties
+    get_service_properties, get_vuln_properties, get_vuln_web_properties
 from test_cases.factories import WorkspaceFactory, CommandFactory, HostFactory, \
     ServiceFactory, VulnerabilityFactory, CredentialFactory, \
     VulnerabilityWebFactory
@@ -196,6 +196,102 @@ OBJ_DATA = {
 
 # the following dict is used to parametrize find (GET) tests
 GET_OBJ_DATA = {
+    VulnWeb: [
+        {
+            'factory': VulnerabilityWebFactory,
+            'api_end_point': 'vulns',
+            'get_properties_function': get_vuln_web_properties,
+            'mocked_response': {
+                "website": "www.faradaysec.com",
+                "_rev": "",
+                "parent_type": "Service",
+                "owned": False,
+                "owner": "leonardo",
+                "query": "query",
+                "refs": [
+                "ref"
+                ],
+                "impact": {
+                    "accountability": False,
+                    "integrity": False,
+                    "confidentiality": False,
+                    "availability": False
+                },
+                "confirmed": True,
+                "severity": "high",
+                "service": {
+                    "status": "open",
+                    "protocol": "fdsf",
+                    "name": "gfdgfd",
+                    "summary": "(32/fdsf) gfdgfd",
+                    "version": "",
+                    "_id": 299,
+                    "ports": "32"
+                },
+                "policyviolations": [],
+                "params": "parameters",
+                "type": "VulnerabilityWeb",
+                "method": "GET",
+                "metadata": {
+                "update_time": 1513982385000,
+                "update_user": "",
+                "update_action": 0,
+                "creator": "",
+                "create_time": 1513982385000,
+                "update_controller_action": "",
+                "owner": "leonardo",
+                "command_id": None
+                },
+                "status": "opened",
+                "issuetracker": {},
+                "description": "Description",
+                "parent": 299,
+                "tags": [ ],
+                "easeofresolution": "simple",
+                "hostnames": [
+                "macbookpro-c9a7"
+                ],
+                "pname": "pname",
+                "date": "2017-12-22T19:39:45.014203+00:00",
+                "path": "path",
+                "data": "data",
+                "response": "response",
+                "desc": "Description",
+                "name": "Vuln web",
+                "obj_id": "348",
+                "request": "request",
+                "_attachments": [],
+                "target": "172.16.138.1",
+                "_id": 348,
+                "resolution": "resolution"
+                },
+            'serialized_expected_results': {
+                'confirmed': True,
+                'data': 'data',
+                'desc': 'Description',
+                'description': 'Description',
+                'name': 'Vuln web',
+                'owned': False,
+                'owner': 'leonardo',
+                'parent': 299,
+                'parent_type': 'Service',
+                'params': 'parameters',
+                'path': 'path',
+                'policyviolations': [],
+                'response': 'response',
+                'method': 'GET',
+                'refs': ['ref'],
+                'request': 'request',
+                'resolution': 'resolution',
+                'severity': 'high',
+                'status': 'opened',
+                'website': 'www.faradaysec.com',
+                "query": "query",
+                "pname": "pname"
+            }
+
+        }
+    ],
     Vuln: [
         {
             'factory': VulnerabilityFactory,

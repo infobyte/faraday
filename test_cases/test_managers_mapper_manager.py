@@ -4,12 +4,13 @@ import pytest
 
 from managers.mapper_manager import MapperManager
 from persistence.server.server import _create_server_api_url
-from persistence.server.models import Host, Service, Vuln, Credential
+from persistence.server.models import Host, Service, Vuln, Credential, VulnWeb
 import persistence.server.server
 from persistence.server.utils import get_host_properties, \
     get_service_properties, get_vuln_properties
 from test_cases.factories import WorkspaceFactory, CommandFactory, HostFactory, \
-    ServiceFactory, VulnerabilityFactory, CredentialFactory
+    ServiceFactory, VulnerabilityFactory, CredentialFactory, \
+    VulnerabilityWebFactory
 
 # OBJ_DATA is used to parametrize tests (https://docs.pytest.org/en/latest/parametrize.html)
 # We use it to test all model classes.
@@ -110,6 +111,57 @@ OBJ_DATA = {
             'refs': [],
             'status': 'opened',
             'resolution': None,
+        },
+    }],
+    VulnWeb: [{
+        'factory': VulnerabilityWebFactory,
+        'api_end_point': 'vulns',
+        'parent': {
+            'parent_type': 'Service',
+            'parent_factory': ServiceFactory
+        },
+        'data': {
+            '_id': 1,
+            'name': 'Service vulnerable',
+            'desc': 'My vuln',
+            'owned': False,
+            'owner': 'leo',
+            'severity': 'critical',
+            'data': '',
+            'website': 'www.faradaysec.com',
+            'method': 'GET',
+            'pname': 'param_name',
+            'params': 'params',
+            'path': 'path',
+            'request': 'test',
+            'query': 'query test',
+            'response': 'repsonse data',
+        },
+        'expected_payload': {
+            'category': '',
+            'command_id': None,
+            'name': 'Service vulnerable',
+            'desc': 'My vuln',
+            'description': 'My vuln',
+            'owner': 'leo',
+            'owned': False,
+            'confirmed': False,
+            'severity': 'critical',
+            'data': '',
+            'type': 'VulnerabilityWeb',
+            'parent_type': 'Service',
+            'policyviolations': [],
+            'refs': [],
+            'status': 'opened',
+            'resolution': None,
+            'website': 'www.faradaysec.com',
+            'method': 'GET',
+            'pname': 'param_name',
+            'params': 'params',
+            'path': 'path',
+            'request': 'test',
+            'query': 'query test',
+            'response': 'repsonse data',
         },
     }],
     Credential: [{

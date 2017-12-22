@@ -1079,10 +1079,13 @@ def update_vuln(workspace_name, command_id, id, name, description, parent,
                              metadata=metadata,
                              policyviolations=policyviolations)
 
-def create_vuln_web(workspace_name, command_id, name, description, owned=None, owner="",
-                    confirmed=False, data="", refs=None, severity="info", resolution="",
-                    desc="", metadata=None, method=None, params="", path=None, pname=None,
-                    query=None, request=None, response=None, category="", website=None,
+
+def create_vuln_web(workspace_name, command_id, name, description, parent,
+                    parent_type, owned=None, owner="", confirmed=False,
+                    data="", refs=None, severity="info", resolution="",
+                    desc="", metadata=None, method=None, params="",
+                    path=None, pname=None, query=None, request=None,
+                    response=None, category="", website=None,
                     status=None, policyviolations=[]):
     """Creates a vuln web.
 
@@ -1116,6 +1119,8 @@ def create_vuln_web(workspace_name, command_id, name, description, owned=None, o
         A dictionary with the server's response.
     """
     return _save_to_server(workspace_name,
+                           parent=parent,
+                           parent_type=parent_type,
                            command_id=command_id,
                            name=name,
                            description=description,
@@ -1141,7 +1146,8 @@ def create_vuln_web(workspace_name, command_id, name, description, owned=None, o
                            type='VulnerabilityWeb',
                            policyviolations=policyviolations)
 
-def update_vuln_web(workspace_name, command_id, id, name, description, owned=None, owner="",
+def update_vuln_web(workspace_name, command_id, id, name, description,
+                    parent, parent_type, owned=None, owner="",
                     confirmed=False, data="", refs=None, severity="info", resolution="",
                     desc="", metadata=None, method=None, params="", path=None, pname=None,
                     query=None, request=None, response=None, category="", website=None,
@@ -1179,6 +1185,8 @@ def update_vuln_web(workspace_name, command_id, id, name, description, owned=Non
     """
     return _update_in_server(workspace_name,
                              id,
+                             parent=parent,
+                             parent_type=parent_type,
                              command_id=command_id,
                              name=name,
                              description=description,

@@ -423,12 +423,12 @@ def create_note(workspace_name, note, command_id):
 
 
 @_ignore_in_changes
-def update_note(workspace_name, note):
+def update_note(workspace_name, note, command_id):
     """Take a workspace_name and a Note object and update it in the sever.
     Return the server's json response as a dictionary.
     """
     note_properties = get_note_properties(note)
-    return server.update_note(workspace_name, note.getID(), **note_properties)
+    return server.update_note(workspace_name, command_id, note.getID(), **note_properties)
 
 
 @_ignore_in_changes

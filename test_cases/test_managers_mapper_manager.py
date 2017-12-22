@@ -4,13 +4,14 @@ import pytest
 
 from managers.mapper_manager import MapperManager
 from persistence.server.server import _create_server_api_url
-from persistence.server.models import Host, Service, Vuln, Credential, VulnWeb
+from persistence.server.models import Host, Service, Vuln, Credential, VulnWeb, \
+    Note
 import persistence.server.server
 from persistence.server.utils import get_host_properties, \
     get_service_properties, get_vuln_properties, get_vuln_web_properties
 from test_cases.factories import WorkspaceFactory, CommandFactory, HostFactory, \
     ServiceFactory, VulnerabilityFactory, CredentialFactory, \
-    VulnerabilityWebFactory
+    VulnerabilityWebFactory, CommentFactory
 
 # OBJ_DATA is used to parametrize tests (https://docs.pytest.org/en/latest/parametrize.html)
 # We use it to test all model classes.
@@ -190,11 +191,41 @@ OBJ_DATA = {
             'username': 'username1',
             'type': 'Cred',
         },
+    }],
+    Note: [{
+        'factory': CommentFactory,
+        'api_end_point': 'comment',
+        'parent': {
+            'parent_type': 'Host',
+            'parent_factory': HostFactory
+        },
+        'data': {
+            '_id': 1,
+            'text': 'Text from Note',
+            'object_id': 10,
+            'object_type': 'Host',
+            'owned': False,
+            'owner': 'leo',
+            'password': 'testpass',
+            'username': 'username1'
+        },
+        'expected_payload': {
+            'command_id': None,
+            'description': '',
+            'name': None,
+            'object_id': 10,
+            'object_type': 'Host',
+            'owned': False,
+            'owner': 'leo',
+            'text': 'Text from Note',
+            'type': 'Note'},
     }]
 }
 
 
 # the following dict is used to parametrize find (GET) tests
+# mocked_response is the json returned by the api
+# serialized_expected_results the expected serialized result.
 GET_OBJ_DATA = {
     VulnWeb: [
         {
@@ -485,7 +516,8 @@ class TestMapperManager():
                 session.commit()
                 test_data['data']['parent'] = parent.id
                 test_data['data']['parent_type'] = test_data['parent']['parent_type']
-                test_data['expected_payload']['parent'] = parent.id
+                if obj_class not in [Note]:
+                    test_data['expected_payload']['parent'] = parent.id
                 if obj_class in [Vuln, Credential]:
                     test_data['expected_payload']['parent_type'] = test_data['parent']['parent_type']
             def mock_server_post(test_data, post_url, update=False, expected_response=201, **params):
@@ -518,9 +550,11 @@ class TestMapperManager():
             if test_data['parent']:
                 parent = test_data['parent']['parent_factory'].create()
                 session.commit()
+
                 test_data['data']['parent'] = parent.id
                 test_data['data']['parent_type'] = test_data['parent']['parent_type']
-                test_data['expected_payload']['parent'] = parent.id
+                if obj_class not in [Note]:
+                    test_data['expected_payload']['parent'] = parent.id
                 if obj_class in [Vuln, Credential]:
                     test_data['expected_payload']['parent_type'] = test_data['parent']['parent_type']
             def mock_server_post(test_data, post_url, update=False, expected_response=201, **params):
@@ -555,9 +589,11 @@ class TestMapperManager():
             if test_data['parent']:
                 parent = test_data['parent']['parent_factory'].create()
                 session.commit()
+
                 test_data['data']['parent'] = parent.id
                 test_data['data']['parent_type'] = test_data['parent']['parent_type']
-                test_data['expected_payload']['parent'] = parent.id
+                if obj_class not in [Note]:
+                    test_data['expected_payload']['parent'] = parent.id
                 if obj_class in [Vuln, Credential]:
                     test_data['expected_payload']['parent_type'] = test_data['parent']['parent_type']
             def mock_server_put(test_data, put_url, update=False, expected_response=201, **params):

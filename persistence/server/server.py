@@ -1242,8 +1242,9 @@ def create_note(workspace_name, command_id, object_type, object_id, name, text, 
                            type="Note",
                            metadata=metadata)
 
-def update_note(workspace_name, command_id, id, name, text, owned=None, owner="",
-                description="", metadata=None):
+def update_note(workspace_name, command_id, id, name, text,
+                object_type, object_id, owned=None,
+                owner="", description="", metadata=None):
     """Updates a note.
 
     Args:
@@ -1262,6 +1263,8 @@ def update_note(workspace_name, command_id, id, name, text, owned=None, owner=""
     """
     return _update_in_server(workspace_name,
                              id,
+                             object_id=object_id,
+                             object_type=object_type,
                              command_id=command_id,
                              name=name,
                              description=description,

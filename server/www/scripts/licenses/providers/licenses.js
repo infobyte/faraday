@@ -78,30 +78,24 @@ angular.module('faradayApp')
             var deferred = $q.defer(),
             self = this;
 
-            configSrv.promise
-                .then(function() {
-                    var url = APIURL + "licenses/";
+            var url = APIURL + "licenses/";
 
-                    $http.get(url)
-                        .then(function(res) {
-                            var data = res.data;
-                            var licenses = [];
+            $http.get(url)
+                .then(function(res) {
+                    var licenses = [];
+                    res.data.forEach(function(row) {
+                        try {
+                            var new_lic = new License(row);
+                            licenses.push(new_lic);
+                        } catch(e) {
+                            console.log(e.stack);
+                        }
+                    });
 
-                            if(data.hasOwnProperty("rows")) {
-                                data.rows.forEach(function(row) {
-                                    try {
-                                        licenses.push(new License(row.doc));
-                                    } catch(e) {
-                                        console.log(e.stack);
-                                    }
-                                });
-                            }
-
-                            angular.copy(licenses, self.licenses);
-                            deferred.resolve(licenses);
-                        }, function(data, status, headers, config) {
-                            deferred.reject("Unable to retrieve Licenses. " + status);
-                        });
+                    angular.copy(licenses, self.licenses);
+                    deferred.resolve(licenses);
+                }, function(data, status, headers, config) {
+                    deferred.reject("Unable to retrieve Licenses. " + status);
                 });
 
             return deferred.promise;

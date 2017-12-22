@@ -6,7 +6,7 @@ angular.module('faradayApp')
     .factory('License', ['BASEURL', 'configSrv', '$http', '$q',
     function(BASEURL, configSrv, $http, $q) {
         function License(data) {
-            var APIURL = BASEURL + "_api/v2/";
+            this.LICAPI = BASEURL + "_api/v2/licenses/";
             var now = new Date(),
             date = now.getTime() / 1000.0;
 
@@ -58,18 +58,13 @@ angular.module('faradayApp')
                 var deferred = $q.defer(),
                 self = this;
 
-                configSrv.promise
-                    .then(function() {
-                        var url = APIURL + "licenses/" + self._id;
+                var url = self.LICAPI + self._id;
 
-                        $http.delete(url)
-                            .then(function(resp) {
-                                deferred.resolve(resp);
-                            }, function(data, status, headers, config) {
-                                deferred.reject("Unable to delete License from database. " + status);
-                            });
-                    }, function(reason) {
-                        deferred.reject(reason);
+                $http.delete(url)
+                    .then(function(resp) {
+                        deferred.resolve(resp);
+                    }, function(data, status, headers, config) {
+                        deferred.reject("Unable to delete License from database. " + status);
                     });
 
                 return deferred.promise;
@@ -80,7 +75,7 @@ angular.module('faradayApp')
 
                 configSrv.promise
                     .then(function() {
-                        var url = APIURL + "licenses/" + self._id;
+                        var url = self.LICAPI + self._id;
 
                         $http.put(url, data)
                             .then(function(res) {
@@ -104,20 +99,13 @@ angular.module('faradayApp')
                 delete this._id;
                 delete this._rev;
 
-                configSrv.promise
-                    .then(function() {
-                        var url = APIURL + "licenses/";
-
-                        $http.post(url, self)
-                            .then(function(data) {
-                                self._id = data._id;
-                                self._rev = data.rev;
-                                deferred.resolve(self);
-                            }, function(res) {
-                                deferred.reject("Unable to save the License. " + res.data.reason);
-                            });
-                    }, function(reason) {
-                        deferred.reject(reason);
+                $http.post(self.LICAPI, self)
+                    .then(function(data) {
+                        self._id = data._id;
+                        self._rev = data.rev;
+                        deferred.resolve(self);
+                    }, function(res) {
+                        deferred.reject("Unable to save the License. " + res.data.reason);
                     });
 
                 return deferred.promise;

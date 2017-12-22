@@ -23,7 +23,7 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
         assert res.status_code == 200
         assert 'rows' in res.json
         for vuln in res.json['rows']:
-            assert set([u'id', u'key', u'value']) == set(vuln.keys())
+            assert set([u'_id', u'id', u'key', u'value']) == set(vuln.keys())
             object_properties = [
                 u'_id',
                 u'couchdbid',

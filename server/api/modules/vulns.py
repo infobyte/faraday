@@ -101,7 +101,7 @@ class VulnerabilitySchema(AutoSchema):
     host = fields.Integer(dump_only=True, attribute='host_id')
     severity = fields.Method(serialize='get_severity', deserialize='load_severity')
     status = fields.Method(serialize='get_status', deserialize='load_status')  # TODO: this breaks enum validation.
-    type = fields.Method(serialize='get_type', deserialize='load_type')
+    type = fields.Method(serialize='get_type', deserialize='load_type', required=True)
     obj_id = fields.String(dump_only=True, attribute='id')
     target = fields.Method('get_target')
     metadata = SelfNestedField(MetadataSchema())
@@ -301,23 +301,31 @@ class VulnerabilityView(PaginatedMixin,
                         ReadWriteWorkspacedView):
     route_base = 'vulns'
     filterset_class = VulnerabilityFilterSet
+    unique_fields_by_class = {
+        'Vulnerability': [('name', 'description', 'host_id', 'service_id')],
+        'VulnerabilityWeb': [('name', 'description', 'service_id', 'method', 'parameter_name', 'path', 'website')],
+    }
 
     model_class_dict = {
         'Vulnerability': Vulnerability,
         'VulnerabilityWeb': VulnerabilityWeb,
-        'VulnerabilityGeneric': VulnerabilityGeneric,
+        'VulnerabilityGeneric': VulnerabilityGeneric, # For listing objects
     }
     schema_class_dict = {
         'Vulnerability': VulnerabilitySchema,
         'VulnerabilityWeb': VulnerabilityWebSchema
     }
 
+    def _validate_uniqueness(self, obj, object_id=None):
+        self.unique_fields = self.unique_fields_by_class[obj.__class__.__name__]
+        super(VulnerabilityView, self)._validate_uniqueness(obj, object_id)
+
     def _perform_create(self, data, **kwargs):
         data = self._parse_data(self._get_schema_instance(kwargs),
                                 request)
         # TODO migration: use default values when popping and validate the
         # popped object has the expected type.
-        attachments = data.pop('_attachments')
+        attachments = data.pop('_attachments', {})
 
         # This will be set after setting the workspace
         references = data.pop('references')
@@ -380,7 +388,9 @@ class VulnerabilityView(PaginatedMixin,
     def _get_schema_class(self):
         assert self.schema_class_dict is not None, "You must define schema_class"
         if request.method == 'POST':
-            requested_type = request.json['type']
+            requested_type = request.json.get('type', None)
+            if not requested_type:
+                raise ValidationError('Type is required.')
             if requested_type not in self.schema_class_dict:
                 raise InvalidUsage('Invalid vulnerability type.')
             return self.schema_class_dict[requested_type]

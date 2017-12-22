@@ -10,6 +10,9 @@ See the file 'doc/LICENSE' for the license information
 
 import unittest
 import sys
+from Queue import Queue
+from collections import defaultdict
+
 import os
 sys.path.append(os.path.abspath(os.getcwd()))
 # module's path has a dash (-) in it, so we need to do this...
@@ -24,14 +27,14 @@ from persistence.server.models import (
     Note,
     Host,
     Service,
-)
+    ModelBase)
 from plugins.modelactions import modelactions
 
 
-class NexposeTest(unittest.TestCase):
+class TestNexpose:
     cd = os.path.dirname(os.path.realpath(__file__))
 
-    def setUp(self):
+    def test_Plugin_creates_apropiate_objects(self, monkeypatch):
         self.plugin = NexposeFullPlugin()
         factory.register(Host)
         factory.register(Service)
@@ -39,23 +42,25 @@ class NexposeTest(unittest.TestCase):
         factory.register(VulnWeb)
         factory.register(Note)
         factory.register(Credential)
-
-    def test_Plugin_creates_apropiate_objects(self):
+        pending_actions = Queue()
+        self.plugin.set_actions_queue(pending_actions)
+        monkeypatch.setattr(ModelBase, 'getID', lambda _: 1)
         self.plugin.processReport(self.cd + '/nexpose_full_xml')
-        action = self.plugin._pending_actions.get(block=True)
-        self.assertEqual(action[0], modelactions.ADDHOST)
-        self.assertEqual(action[1].name, "192.168.1.1")
-        # action = self.plugin._pending_actions.get(block=True)
-        # self.assertEqual(action[0], modelactions.ADDINTERFACE)
-        # self.assertEqual(action[2].name, "192.168.1.1")
-        for i in range(131):
+
+        actions = defaultdict(list)
+        while not pending_actions.empty():
             action = self.plugin._pending_actions.get(block=True)
-            if type(action[2]) in [Vuln, VulnWeb]:
-                assert action[0] == modelactions.ADDVULNHOST
-            elif type(action[-1]) == Service:
-                assert action[0] == modelactions.ADDSERVICEINT
-        action = self.plugin._pending_actions.get(block=True)
-        assert action[0] == modelactions.ADDVULNSRV
+            actions[action[0]].append(action[1])
+
+        assert actions[2000][0].name == "192.168.1.1"
+        assert actions.keys() == [2000, 2017, 2019, 2037, 20008]
+
+        assert len(actions[2000]) == 8
+        assert len(actions[20008]) == 20
+        assert len(actions[2027]) == 0
+        assert len(actions[2037]) == 403
+        assert len(actions[2039]) == 0
+
 
 
 if __name__ == '__main__':

@@ -54,7 +54,7 @@ class NotificationCenter():
     def workspaceChanged(self, workspace):
         self._notifyWidgets(events.WorkspaceChangedCustomEvent(workspace))
 
-    def CouchDBConnectionProblem(self, problem=None):
+    def DBConnectionProblem(self, problem=None):
         self._notifyWidgets(events.ShowExceptionConnectionRefusedCustomEvent(problem))
 
     def WorkspaceProblem(self, problem=None):

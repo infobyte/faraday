@@ -39,7 +39,7 @@ CONST_NETWORK_LOCATION = "network_location"
 CONST_PERSISTENCE_PATH = "persistence_path"
 CONST_PERSPECTIVE_VIEW = "perspective_view"
 CONST_REPO_PASSWORD = "repo_password"
-CONST_COUCH_URI = "couch_uri"
+CONST_SERVER_URI = "couch_uri"
 CONST_COUCH_REPLICS = "couch_replics"
 CONST_COUCH_ISREPLICATED = "couch_is_replicated"
 CONST_REPO_URL = "repo_url"
@@ -145,7 +145,7 @@ class Configuration:
             self._persistence_path = self._getValue(tree, CONST_PERSISTENCE_PATH)
             self._perspective_view = self._getValue(tree, CONST_PERSISTENCE_PATH)
             self._repo_password = self._getValue(tree, CONST_REPO_PASSWORD)
-            self._couch_uri = self._getValue(tree, CONST_COUCH_URI, default = "")
+            self._server_uri = self._getValue(tree, CONST_SERVER_URI, default = "")
             self._couch_replics = self._getValue(tree, CONST_COUCH_REPLICS, default = "")
             self._couch_is_replicated = bool(self._getValue(tree, CONST_COUCH_ISREPLICATED, default = False))
             self._repo_url = self._getValue(tree, CONST_REPO_URL)
@@ -156,6 +156,9 @@ class Configuration:
             self._last_workspace = self._getValue(tree, CONST_LAST_WORKSPACE, default = "untitled")
             self._plugin_settings = json.loads(self._getValue(tree, CONST_PLUGIN_SETTINGS, default = "{}"))
             self._osint = json.loads(self._getValue(tree, CONST_OSINT, default = "{\"host\": \"shodan.io\",\"icon\": \"shodan\",\"label\": \"Shodan\", \"prefix\": \"/search?query=\", \"suffix\": \"\", \"use_external_icon\": false}"))
+
+            self._db_user = ""
+            self._session_cookies = {}
 
             self._updates_uri = self._getValue(tree, CONST_UPDATEURI, default = "https://www.faradaysec.com/scripts/updates.php")
             self._tkts_uri = self._getValue(tree, CONST_TKTURI,default = "https://www.faradaysec.com/scripts/listener.php")
@@ -241,17 +244,23 @@ class Configuration:
     def getPerspectiveView(self):
         return self._perspective_view
 
-    def getCouchURI(self):
-        if self._couch_uri and self._couch_uri.endswith('/'):
-            return self._couch_uri[:-1]
+    def getServerURI(self):
+        if self._server_uri and self._server_uri.endswith('/'):
+            return self._server_uri[:-1]
         else:
-            return self._couch_uri
+            return self._server_uri
 
     def getCouchReplics(self):
         return self._couch_replics
 
     def getCouchIsReplicated(self):
         return self._couch_is_replicated
+
+    def getDBSessionCookies(self):
+        return self._session_cookies
+
+    def getDBUser(self):
+        return self._db_user
 
     def getRepoPassword(self):
         return self._repo_password
@@ -371,6 +380,12 @@ class Configuration:
     def setPerspectiveView(self, val):
         self._perspective_view = val
 
+    def setDBSessionCookies(self, val=None):
+        self._session_cookies = val
+
+    def setDBUser(self, val=None):
+        self._db_user = val
+
     def setRepoPassword(self, val):
         self._repo_password = val
 
@@ -390,7 +405,7 @@ class Configuration:
         self._version = val
 
     def setCouchUri(self, uri):
-        self._couch_uri = uri
+        self._server_uri = uri
 
     def setCouchIsReplicated(self, is_it):
         self._couch_is_replicated = is_it
@@ -542,9 +557,9 @@ class Configuration:
         LAST_WORKSPACE.text = self.getLastWorkspace()
         ROOT.append(LAST_WORKSPACE)
 
-        COUCH_URI = Element(CONST_COUCH_URI)
-        COUCH_URI.text = self.getCouchURI()
-        ROOT.append(COUCH_URI)
+        SERVER_URI = Element(CONST_SERVER_URI)
+        SERVER_URI.text = self.getServerURI()
+        ROOT.append(SERVER_URI)
 
         COUCH_IS_REPLICATED = Element(CONST_COUCH_ISREPLICATED)
         COUCH_IS_REPLICATED.text = str(self.getCouchIsReplicated())

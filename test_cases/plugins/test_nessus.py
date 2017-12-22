@@ -10,6 +10,9 @@ See the file 'doc/LICENSE' for the license information
 
 import unittest
 import sys
+from Queue import Queue
+from collections import defaultdict
+
 import os
 sys.path.append(os.path.abspath(os.getcwd()))
 from plugins.repo.nessus.plugin import NessusPlugin
@@ -21,15 +24,15 @@ from persistence.server.models import (
     Note,
     Host,
     Service,
-)
+    ModelBase)
 from plugins.modelactions import modelactions
 import test_common
 
 
-class NessusParserTest(unittest.TestCase):
+class TestNessusParser:
     cd = os.path.dirname(os.path.realpath(__file__))
 
-    def setUp(self):
+    def test_Plugin_Calls_createAndAddHost(self, monkeypatch):
         self.plugin = NessusPlugin()
         factory.register(Host)
         factory.register(Service)
@@ -38,23 +41,28 @@ class NessusParserTest(unittest.TestCase):
         factory.register(Note)
         factory.register(Credential)
 
-    def test_Plugin_Calls_createAndAddHost(self):
+        pending_actions = Queue()
+        self.plugin.set_actions_queue(pending_actions)
+        monkeypatch.setattr(ModelBase, 'getID', lambda _: 1)
         self.plugin.processReport(self.cd + '/nessus_xml')
-        action = self.plugin._pending_actions.get(block=True)
-        self.assertEqual(action[0], modelactions.ADDHOST)
-        self.assertEqual(action[1].name, "12.233.108.201")
-        # action = self.plugin._pending_actions.get(block=True)
-        # self.assertEqual(action[0], modelactions.ADDINTERFACE)
-        # self.assertEqual(action[2].name, "12.233.108.201")
-        action = self.plugin._pending_actions.get(block=True)
-        self.assertEqual(action[0], modelactions.ADDVULNHOST)
-        self.assertEqual(action[2].name, "Nessus Scan Information")
-        test_common.skip(self, 4)
-        action = self.plugin._pending_actions.get(block=True)
-        self.assertEqual(action[0], modelactions.ADDSERVICEINT)
-        self.assertEqual(action[3].ports, [443])
-        self.assertEqual(action[3].name, 'https?')
-        self.assertEqual(action[3].protocol, 'tcp')
+        actions = defaultdict(list)
+        while not pending_actions.empty():
+            action = self.plugin._pending_actions.get(block=True)
+            actions[action[0]].append(action[1])
+
+        assert actions[2000][0].name == "12.233.108.201"
+        assert actions.keys() == [2017, 20008, 2027, 2000, 2037, 2039]
+        assert len(actions[20008]) == 1
+        assert len(actions[2027]) == 1
+        assert len(actions[2037]) == 1
+        assert len(actions[2039]) == 1
+
+        assert actions[2037][0].name == "Nessus SYN scanner"
+
+        assert actions[20008][0].ports == [443]
+        assert actions[20008][0].name == 'https?'
+        assert actions[20008][0].protocol == 'tcp'
+
 
 
 if __name__ == '__main__':

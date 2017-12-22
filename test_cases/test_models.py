@@ -73,18 +73,3 @@ class ModelsTest(unittest.TestCase):
         self.assertTrue(all([isinstance(s, models.Service) for s in services]))
         self.assertTrue(all([isinstance(v, models.Vuln) for v in vulns]))
         self.assertTrue(all([isinstance(v, models.VulnWeb) for v in vulns_web]))
-
-    def test_id_creation(self):
-        # ideally, the flatten dictionary should be provided and shouldnt depend upon
-        # our implementation.
-        # ideally.
-        classes = [models.Host, models.Service, models.Vuln, models.VulnWeb, models.Note]
-        dicts = [self.a_host_dictionary, self.a_service_dictionary,
-                 self.a_vuln_dictionary, self.a_vuln_web_dictionary, self.a_note_dictionary]
-        dicts = map(models._flatten_dictionary, dicts)
-        for class_, dictionary in zip(classes, dicts):
-            expected_id = dictionary['id']
-            parent_id = '.'.join(expected_id.split('.')[:-1])
-            obj = class_(dictionary, self.ws)
-            obj.setID(parent_id)
-            self.assertEqual(expected_id, unicode(obj.id))

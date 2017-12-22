@@ -4,6 +4,7 @@ import datetime
 import unicodedata
 
 import pytz
+from factory import SubFactory
 from factory.fuzzy import (
     FuzzyChoice,
     FuzzyNaiveDateTime,
@@ -29,7 +30,7 @@ from server.models import (
     VulnerabilityTemplate,
     VulnerabilityWeb,
     Workspace,
-    ReferenceTemplate, CommandObject)
+    ReferenceTemplate, CommandObject, Comment)
 
 # Make partials for start and end date. End date must be after start date
 FuzzyStartTime = lambda: (
@@ -107,7 +108,7 @@ class HostFactory(WorkspaceObjectFactory):
 
 
 class HostnameFactory(WorkspaceObjectFactory):
-    name = factory.Faker('domain_name')
+    name = FuzzyText()
     host = factory.SubFactory(HostFactory)
 
     class Meta:
@@ -313,6 +314,20 @@ class EmptyCommandFactory(WorkspaceObjectFactory):
 
     class Meta:
         model = Command
+        sqlalchemy_session = db.session
+
+
+class CommentFactory(WorkspaceObjectFactory):
+    """
+        A command without command objects.
+    """
+    text = FuzzyText()
+    object_id = FuzzyInteger(1)
+    object_type = FuzzyChoice(['Host', 'Service', 'Comment'])
+
+
+    class Meta:
+        model = Comment
         sqlalchemy_session = db.session
 
 

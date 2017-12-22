@@ -10,6 +10,9 @@ See the file 'doc/LICENSE' for the license information
 
 import unittest
 import sys
+from Queue import Queue
+from collections import defaultdict
+
 import os
 sys.path.append(os.path.abspath(os.getcwd()))
 from plugins.repo.whois.plugin import CmdWhoisPlugin
@@ -21,30 +24,35 @@ from persistence.server.models import (
     Note,
     Host,
     Service,
-)
+    ModelBase)
 from plugins.modelactions import modelactions
 
 
-class CmdPingPluginTest(unittest.TestCase):
+class TestCmdPingPlugin:
     plugin = CmdWhoisPlugin()
     cd = os.path.dirname(os.path.realpath(__file__))
     with open(cd + '/whois_output', 'r') as output:
         outputWhoisInfobyte = output.read()
 
-    def setUp(self):
+
+    def test_Plugin_Calls_createAndAddHost(self, monkeypatch):
         factory.register(Host)
         factory.register(Service)
         factory.register(Vuln)
         factory.register(VulnWeb)
         factory.register(Note)
         factory.register(Credential)
-
-    def test_Plugin_Calls_createAndAddHost(self):
+        pending_actions = Queue()
+        self.plugin.set_actions_queue(pending_actions)
+        monkeypatch.setattr(ModelBase, 'getID', lambda _: 1)
         self.plugin.parseOutputString(self.outputWhoisInfobyte)
-        action = self.plugin._pending_actions.get(block=True)
-        self.assertEqual(action[0], modelactions.ADDHOST)
-        self.assertEqual(action[1].name, "205.251.196.172")
 
+        actions = defaultdict(list)
+        while not pending_actions.empty():
+            action = self.plugin._pending_actions.get(block=True)
+            actions[action[0]].append(action[1])
 
-if __name__ == '__main__':
-    unittest.main()
+        assert actions[2000][0].name == "205.251.196.172"
+        assert actions.keys() == [2000]
+
+        assert len(actions[2000]) == 8

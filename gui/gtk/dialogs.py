@@ -14,6 +14,7 @@ gi.require_version('Gtk', '3.0')
 
 from gi.repository import Gtk, GdkPixbuf, Gdk
 from config.configuration import getInstanceConfiguration
+from persistence.server.server import is_authenticated, login_user, get_user_info, test_server_url
 from model import guiapi
 from decorators import scrollable
 
@@ -49,7 +50,7 @@ class PreferenceWindowDialog(Gtk.Dialog):
         ip_label.set_text("Faraday Server IP or URL")
         main_box.pack_start(ip_label, True, False, 10)
 
-        couch_uri = CONF.getCouchURI()
+        couch_uri = CONF.getServerURI()
         self.ip_entry = Gtk.Entry()
         text = couch_uri if couch_uri else "http://127.0.0.1:5050"
         self.ip_entry.set_text(text)
@@ -74,8 +75,33 @@ class PreferenceWindowDialog(Gtk.Dialog):
         repourl (Couch IP) from self.ip_entry and connect to it if possible.
         """
         repourl = self.ip_entry.get_text()
-        if self.connectCouchCallback(repourl, parent=self):  # success!
+
+        if not test_server_url(repourl):
+            errorDialog(self, "Could not connect to Faraday Server.",
+                        ("Are you sure it is running and that the URL is correct?"))
+            return False
+
+
+        credentials_ok = self.credentialsOK(repourl)
+        couch_connection_ok = self.connectCouchCallback(repourl, parent=self)
+        if credentials_ok and couch_connection_ok:
             self.destroy()
+
+    def credentialsOK(self, repourl):
+        """Pops up a dialog (if necessary) to set up Faraday
+        credentials. Dialog is a LoginDialog which emits a signal marked
+        by 42 when the user clicks its button. The run method returns 42
+        on that click. Function will listen for that 42 at most three times.
+        It's a boolean function, return True if auth ok, False if not.
+        Number 42 was chosen for obvious reasons :) """
+
+        if is_authenticated(repourl, CONF.getDBSessionCookies()):
+            return True
+
+        # if that didn't work...
+        loginDialog = LoginDialog(self)
+        return loginDialog.run(3, repourl, self)
+
 
     def on_click_cancel(self, button=None):
         self.destroy()
@@ -107,6 +133,124 @@ class ForcePreferenceWindowDialog(PreferenceWindowDialog):
     def on_click_cancel(self, button=None):
         """Override on_click_cancel to make it exit Faraday."""
         self.exit_faraday(parent=self)
+
+
+class LoginDialog(Gtk.Dialog):
+    """A simple login dialog with a user and password"""
+    def __init__(self, parent):
+        Gtk.Dialog.__init__(self,
+                            flags=Gtk.DialogFlags.MODAL,
+                            buttons=("OK", Gtk.ResponseType.OK,
+                                     "Cancel", Gtk.ResponseType.CANCEL))
+
+        self.set_default_response(Gtk.ResponseType.OK)
+
+        self.set_keep_above(True)
+
+        self.set_transient_for(parent)
+        content_area = self.get_content_area()
+
+        instructions = Gtk.Label.new("Credentials needed to proceed."
+                                     "You've got 3 tries.")
+        instructions.set_line_wrap(True)
+        instructions.set_max_width_chars(38)
+        content_area.pack_start(instructions, True, True, 10)
+
+        userBox = Gtk.Box()
+        user_label = Gtk.Label()
+        user_label.set_text("User:")
+        self.user_entry = Gtk.Entry()
+        self.user_entry.set_width_chars(24)
+        self.user_entry.set_activates_default(True)
+        userBox.pack_start(user_label, True, True, 3)
+        userBox.pack_start(self.user_entry, False, False, 5)
+        content_area.pack_start(userBox, True, True, 10)
+
+        passwordBox = Gtk.Box()
+        password_label = Gtk.Label()
+        password_label.set_text("Password:")
+        self.password_entry = Gtk.Entry()
+        self.password_entry.set_visibility(False)
+        self.password_entry.set_width_chars(24)
+        self.password_entry.set_activates_default(True)
+        passwordBox.pack_start(password_label, True, True, 3)
+        passwordBox.pack_start(self.password_entry, False, False, 5)
+        content_area.pack_start(passwordBox, True, True, 10)
+
+        self.show_all()
+
+    def getUser(self):
+        if self.user_entry.get_text() is not None:
+            res = self.user_entry.get_text()
+        else:
+            res = ""
+        return res
+
+    def getPassword(self):
+        if self.password_entry.get_text() is not None:
+            res = self.password_entry.get_text()
+        else:
+            res = ""
+        return res
+
+    def run(self, attempts, url, parent):
+        for attempt in range(attempts):
+            run = Gtk.Dialog.run(self)
+
+            if run == Gtk.ResponseType.OK:
+                newUser = self.getUser()
+                newPass = self.getPassword()
+                session_cookie = login_user(url, newUser, newPass)
+                if not session_cookie:
+                    if attempt != attempts-1:
+                        errorDialog(self, ("Invalid credentials!. You "
+                                           "have " +
+                                           str(attempts-1-attempt) +
+                                           " attempt(s) left."))
+                else:
+
+                    CONF.setDBUser(newUser)
+                    CONF.setDBSessionCookies(session_cookie)
+
+                    user_info = get_user_info()
+
+                    if user_info is None or 'userCtx' not in user_info or 'roles' not in user_info['userCtx'] or 'client' in user_info['userCtx']['roles']:
+                        errorDialog(self, ("You can't login as a client. You have " +
+                                           str(attempts - 1 - attempt) +
+                                           " attempt(s) left."))
+                        continue
+
+                    self.destroy()
+
+                    return True
+
+            if run == Gtk.ResponseType.CANCEL or run == -4:
+                # run returns -4 when escape key pressed
+                self.exit()
+                return False
+        else:
+            errorDialog(self, ("Invalid credentials after " +
+                                 str(attempts) + " tries. " +
+                                 "Check your credentials and try again."))
+            self.exit()
+            return False
+
+    def exit(self):
+        self.destroy()
+
+
+class ForceLoginDialog(LoginDialog):
+    """A simple login dialog with a user and password"""
+    def __init__(self, parent, exit_faraday_callback):
+        LoginDialog.__init__(self, parent)
+
+        self.set_deletable(False)
+
+        self.exit_faraday = exit_faraday_callback
+
+    def exit(self, button=None):
+        """Override destroy to make it exit Faraday."""
+        self.exit_faraday()
 
 
 class NewWorkspaceDialog(Gtk.Window):
@@ -591,7 +735,7 @@ class HostInfoDialog(Gtk.Window):
         host_info = self.model[0]
 
         host_id = self.model[0][0]
-        couch_url = CONF.getCouchURI()
+        couch_url = CONF.getServerURI()
         base_url = couch_url + "/_ui/#/host/ws/"
         self.edit_url = base_url + active_ws_name + "/hid/" + host_id
 
@@ -722,8 +866,8 @@ class HostInfoDialog(Gtk.Window):
         several columns
 
           HOST
-           ------------> SERVICE1
-           ------------> SERVICE2
+                   ------------> SERVICE1
+                   ------------> SERVICE2
 
         And so on and so on, like Zizek says.
         """
@@ -1518,7 +1662,10 @@ class ForceChooseWorkspaceDialog(Gtk.Window):
         message = Gtk.Label()
         message.set_text("Your last workspace is not accessible. \n"
                          "You must select one of the below workspaces to "
-                         "continue using Faraday.")
+                         "continue using Faraday. \n"
+                         "If your problem persists, double check you are "
+                         "logged in. You may want to start faraday with the "
+                         "--login flag.")
         return message
 
     @scrollable(height=200)

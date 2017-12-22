@@ -33,7 +33,7 @@ angular.module('faradayApp')
 
         var searchFilter = {};
         var paginationOptions = {
-            page: 0,
+            page: 1,
             pageSize: 10,
             defaultPageSizes: [10, 50, 75, 100],
             sortColumn: null,
@@ -104,8 +104,7 @@ angular.module('faradayApp')
                     // Clear selection
                     $scope.gridApi.selection.clearSelectedRows();
 
-                    // ui-grid pages are numbered starting from 1, server-side paging starts at 0
-                    paginationOptions.page = pageNumber - 1;
+                    paginationOptions.page = pageNumber;
                     paginationOptions.pageSize = pageSize;
 
                     // Load new page

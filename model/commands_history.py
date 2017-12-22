@@ -7,10 +7,11 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-import uuid
 import socket
 import subprocess
 import getpass
+
+from threading import Event
 
 
 def get_private_ip():
@@ -46,7 +47,6 @@ class CommandRunInformation(object):
     class_signature = "CommandRunInformation"
 
     def __init__(self, **kwargs):
-        self._id = uuid.uuid4().hex
         self.type = self.__class__.__name__
         self.user = get_user()
         self.ip = get_private_ip()
@@ -55,15 +55,20 @@ class CommandRunInformation(object):
         self.duration = None
         self.params = None
         self.workspace = None
+        self._id = None
+        self.id_available = Event()
 
         for k, v in kwargs.items():
             setattr(self, k, v)
 
     def getID(self):
+        if self._id is None:
+            self.id_available.wait(timeout=1)
         return self._id
 
     def setID(self, id):
-        return self._id
+        self._id = id
+        self.id_available.set()
 
     def toDict(self):
         return self.__dict__

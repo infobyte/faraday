@@ -19,7 +19,7 @@ from persistence.server.utils import (
     get_service_properties,
     get_vuln_properties,
     get_vuln_web_properties,
-    get_credential_properties)
+    get_credential_properties, get_command_properties)
 from test_cases.factories import (
     WorkspaceFactory,
     CommandFactory,
@@ -580,6 +580,77 @@ GET_OBJ_DATA = {
             'password': 'secretpassword',
             'username': 'user1'
         }
+    }],
+    Credential: [{
+        'factory': ServiceFactory,
+        'api_end_point': 'credential',
+        'parent': {
+            'parent_type': 'Host',
+            'parent_factory': HostFactory
+        },
+        'get_properties_function': get_credential_properties,
+        'mocked_response': {
+            "username": "user1",
+            "password": "secretpassword",
+            "description": "Credential obtained using hashcat",
+            "couchdbid": "",
+            'parent': 64,
+            'parent_type': 'Host',
+            "_rev": "",
+            "metadata": {
+                "update_time": 1514312337000,
+                "update_user": "",
+                "update_action": 0,
+                "creator": "",
+                "create_time": 1514312336000,
+                "update_controller_action": "",
+                "owner": "leonardo",
+                "command_id": None
+            },
+            "owned": False,
+            "owner": "leonardo",
+            "_id": 2,
+            "id": 2,
+            "name": "dsds"
+        },
+        'serialized_expected_results': {
+            'description': 'Credential obtained using hashcat',
+            'name': 'dsds',
+            'owned': False,
+            'owner': 'leonardo',
+            'parent': 64,
+            'parent_type': 'Host',
+            'password': 'secretpassword',
+            'username': 'user1'
+        }
+    }],
+    Command: [{
+        'factory': ServiceFactory,
+        'api_end_point': 'commands',
+        'parent': {
+            'parent_type': 'Host',
+            'parent_factory': HostFactory
+        },
+        'get_properties_function': get_command_properties,
+        'mocked_response': {
+            "itime": 1513365824,
+            "ip": "192.168.20.53",
+            "hostname": "mandarina",
+            "command": "Import Nessus:",
+            "user": "lcubo",
+            "workspace": "dsadsa",
+            "duration": "In progress",
+            "params": "/home/lcubo/.faraday/report/dsadsa/nessus_report_Remote.nessus",
+            "_id": 1
+        },
+        'serialized_expected_results': {
+            'command': 'Import Nessus:',
+            'duration': 'In progress',
+            'hostname': 'mandarina',
+            'ip': '192.168.20.53',
+            'itime': 1513365824,
+            'params': '/home/lcubo/.faraday/report/dsadsa/nessus_report_Remote.nessus',
+            'user': 'lcubo'}
     }]
 }
 
@@ -779,5 +850,6 @@ class TestMapperManager():
             monkeypatch.setattr(persistence.server.server, '_unsafe_io_with_server', partial(mock_unsafe_io_with_server, persisted_obj, test_data))
             found_obj = mapper_manager.find(obj_class.class_signature, persisted_obj.id)
             serialized_obj = test_data['get_properties_function'](found_obj)
-            metadata = serialized_obj.pop('metadata')
+            if obj_class not in [Command]:
+                metadata = serialized_obj.pop('metadata')
             assert serialized_obj == test_data['serialized_expected_results']

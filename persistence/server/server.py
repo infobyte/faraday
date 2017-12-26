@@ -275,7 +275,7 @@ def _get_raw_services(workspace_name, **params):
 def _get_raw_notes(workspace_name, **params):
     """Take a workspace name and an arbitrary number of params and
     return a dictionary with the notes table."""
-    request_url = _create_server_get_url(workspace_name, 'notes')
+    request_url = _create_server_get_url(workspace_name, 'comment', params.get('id', None))
     return _get(request_url, **params)
 
 
@@ -287,7 +287,7 @@ def _get_raw_credentials(workspace_name, **params):
 
 
 def _get_raw_commands(workspace_name, **params):
-    request_url = _create_server_get_url(workspace_name, 'commands')
+    request_url = _create_server_get_url(workspace_name, 'commands', params.get('id', None))
     return _get(request_url, **params)
 
 

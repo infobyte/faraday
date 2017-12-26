@@ -93,7 +93,10 @@ class VulnerabilitySchema(AutoSchema):
                                fields.String(),
                                required=True)
     tags = PrimaryKeyRelatedField('name', dump_only=True, many=True)
-    easeofresolution = fields.String(attribute='ease_of_resolution', validate=OneOf(Vulnerability.EASE_OF_RESOLUTIONS),)
+    easeofresolution = fields.String(
+        attribute='ease_of_resolution',
+        validate=OneOf(Vulnerability.EASE_OF_RESOLUTIONS),
+        allow_none=True)
     hostnames = PrimaryKeyRelatedField('name', many=True, dump_only=True)
     service = fields.Nested(ServiceSchema(only=[
         '_id', 'ports', 'status', 'protocol', 'name', 'version', 'summary'
@@ -303,13 +306,14 @@ class VulnerabilityView(PaginatedMixin,
     filterset_class = VulnerabilityFilterSet
     unique_fields_by_class = {
         'Vulnerability': [('name', 'description', 'host_id', 'service_id')],
-        'VulnerabilityWeb': [('name', 'description', 'service_id', 'method', 'parameter_name', 'path', 'website')],
+        'VulnerabilityWeb': [('name', 'description', 'service_id', 'method',
+                              'parameter_name', 'path', 'website')],
     }
 
     model_class_dict = {
         'Vulnerability': Vulnerability,
         'VulnerabilityWeb': VulnerabilityWeb,
-        'VulnerabilityGeneric': VulnerabilityGeneric, # For listing objects
+        'VulnerabilityGeneric': VulnerabilityGeneric,  # For listing objects
     }
     schema_class_dict = {
         'Vulnerability': VulnerabilitySchema,

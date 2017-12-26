@@ -241,7 +241,9 @@ class GenericWorkspacedView(GenericView):
             query = query.filter(primary_key_field != object_id)
         for field_names in self.unique_fields:
             for field_name in field_names:
-                field = getattr(self.model_class, field_name)
+                # Use type(obj) instead of self.model_class to be
+                # compatible with polymorphic obejcts (e.g. Vulnerability)
+                field = getattr(type(obj), field_name)
                 value = getattr(obj, field_name)
                 query = query.filter(
                     field == value)
@@ -506,7 +508,9 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixing):
     """Add PUT /<id>/ route"""
 
     def _perform_update(self, object_id, obj, workspace_name):
-        assert not db.session.new
+        # # Make sure that if I created new objects, I had properly commited them
+        # assert not db.session.new
+
         with db.session.no_autoflush:
             obj.workspace = self._get_workspace(workspace_name)
 

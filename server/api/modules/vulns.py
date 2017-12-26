@@ -321,8 +321,9 @@ class VulnerabilityView(PaginatedMixin,
     }
 
     def _validate_uniqueness(self, obj, object_id=None):
-        self.unique_fields = self.unique_fields_by_class[obj.__class__.__name__]
-        super(VulnerabilityView, self)._validate_uniqueness(obj, object_id)
+        unique_fields = self.unique_fields_by_class[obj.__class__.__name__]
+        super(VulnerabilityView, self)._validate_uniqueness(
+            obj, object_id, unique_fields)
 
     def _perform_create(self, data, **kwargs):
         data = self._parse_data(self._get_schema_instance(kwargs),

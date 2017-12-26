@@ -18,8 +18,8 @@ from persistence.server.utils import (
     get_host_properties,
     get_service_properties,
     get_vuln_properties,
-    get_vuln_web_properties
-)
+    get_vuln_web_properties,
+    get_credential_properties)
 from test_cases.factories import (
     WorkspaceFactory,
     CommandFactory,
@@ -537,7 +537,50 @@ GET_OBJ_DATA = {
             }
 
         }
-    ]
+    ],
+    Credential: [{
+        'factory': ServiceFactory,
+        'api_end_point': 'credential',
+        'parent': {
+            'parent_type': 'Host',
+            'parent_factory': HostFactory
+        },
+        'get_properties_function': get_credential_properties,
+        'mocked_response': {
+            "username": "user1",
+            "password": "secretpassword",
+            "description": "Credential obtained using hashcat",
+            "couchdbid": "",
+            'parent': 64,
+            'parent_type': 'Host',
+            "_rev": "",
+            "metadata": {
+                "update_time": 1514312337000,
+                "update_user": "",
+                "update_action": 0,
+                "creator": "",
+                "create_time": 1514312336000,
+                "update_controller_action": "",
+                "owner": "leonardo",
+                "command_id": None
+            },
+            "owned": False,
+            "owner": "leonardo",
+            "_id": 2,
+            "id": 2,
+            "name": "dsds"
+            },
+        'serialized_expected_results': {
+            'description': 'Credential obtained using hashcat',
+            'name': 'dsds',
+            'owned': False,
+            'owner': 'leonardo',
+            'parent': 64,
+            'parent_type': 'Host',
+            'password': 'secretpassword',
+            'username': 'user1'
+        }
+    }]
 }
 
 class MockResponse:

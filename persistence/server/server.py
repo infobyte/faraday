@@ -282,7 +282,7 @@ def _get_raw_notes(workspace_name, **params):
 def _get_raw_credentials(workspace_name, **params):
     """Take a workspace name and an arbitrary number of params and
     return a dictionary with the credentials table."""
-    request_url = _create_server_get_url(workspace_name, 'credentials')
+    request_url = _create_server_get_url(workspace_name, 'credential', params.get('id', None))
     return _get(request_url, **params)
 
 

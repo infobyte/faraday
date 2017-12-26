@@ -139,7 +139,7 @@ angular.module('faradayApp')
             vm.data.parents = [];
             parents.forEach(function(parent) {
                 var parent_type = "Service";
-                if (Host.prototype.isPrototypeOf(vm.data.parents[0])) {
+                if (Host.prototype.isPrototypeOf(parents[0])) {
                     parent_type = "Host";
                 }
                 vm.data.parents.push({parent_id: parent._id, type:parent_type});

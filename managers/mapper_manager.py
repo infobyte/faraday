@@ -26,9 +26,9 @@ class MapperManager(object):
 
     def save(self, obj, command_id=None):
         saved_raw_obj = create_object(self.workspace_name, obj.class_signature, obj, command_id)
-        if '_id' in saved_raw_obj:
-            return saved_raw_obj['_id']
-        return False
+        if '_id' in saved_raw_obj or 'id' in saved_raw_obj:
+            return saved_raw_obj.get('_id', None) or saved_raw_obj['id']
+        raise RuntimeError('Could not retrieve id from server.')
     
     def update(self, obj, command_id=None):
         if update_object(self.workspace_name, obj.class_signature, obj, command_id):

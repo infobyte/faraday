@@ -64,6 +64,8 @@ class modelactions:
     DELCRED = 2050
     PLUGINSTART = 3000
     PLUGINEND = 3001
+    LOG = 3002
+    DEVLOG = 3003
 
     __descriptions = {
         ADDHOST: "ADDHOST",

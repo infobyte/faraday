@@ -701,8 +701,8 @@ class ModelBase(object):
     """
     def __init__(self, obj, workspace_name):
         self._workspace_name = workspace_name
-        self._server_id = obj.get('_id', '')
-        self.id = obj.get('id', None)
+        self._server_id = obj.get('_id', None)
+        self.id = obj.get('id', self._server_id)
         self.name = obj.get('name')
         self.description = obj.get('description', "")
         self.owned = obj.get('owned', False)

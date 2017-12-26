@@ -28,7 +28,8 @@ from persistence.server.models import (
     Credential,
     Note,
 )
-from plugins.modelactions import modelactions
+from model.controller import modelactions
+#from plugins.modelactions import modelactions
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()

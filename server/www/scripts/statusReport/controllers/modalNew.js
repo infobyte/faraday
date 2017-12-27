@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('modalNewVulnCtrl',
-        ['$modalInstance', '$filter', '$upload', 'EASEOFRESOLUTION', 'commonsFact', 'severities', 'workspace', 'targetFact', 'cweFact',
-        function($modalInstance, $filter, $upload, EASEOFRESOLUTION, commons, severities, workspace, targetFact, cweFact) {
+        ['$modalInstance', '$filter', '$upload', 'EASEOFRESOLUTION', 'commonsFact', 'severities', 'workspace', 'targetFact', 'vulnModelsManager',
+        function($modalInstance, $filter, $upload, EASEOFRESOLUTION, commons, severities, workspace, targetFact, vulnModelsManager) {
 
         var vm = this;
 
@@ -48,7 +48,7 @@ angular.module('faradayApp')
             vm.host_parents = false;
 
             vm.cweList = [];
-            cweFact.get().then(function(data) {
+            vulnModelsManager.get().then(function(data) {
                 vm.cweList = data;
             });
             vm.cweLimit = 5;
@@ -228,7 +228,7 @@ angular.module('faradayApp')
             vm.data.refs = refs;
 
             var policyviolations = [];
-            item.policyviolations.forEach(function(policyviolation) {
+            if(item.hasOwnProperty('policyviolations')) item.policyviolations.forEach(function(policyviolation) {
                 policyviolations.push({value: policyviolation});
             });
             vm.data.policyviolations = policyviolations;

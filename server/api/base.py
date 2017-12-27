@@ -453,13 +453,24 @@ class CommandMixing():
             command = db.session.query(Command).filter(Command.id==command_id, Command.workspace==obj.workspace).first()
             if command is None:
                 raise InvalidUsage('Command not found.')
-            command_object = CommandObject(
+            # if the object is created and updated in the same command
+            # the command object already exists
+            # we skip the creation.
+            command_object = CommandObject.query.filter_by(
                 object_id=obj.id,
                 object_type=obj.__class__.__name__,
                 command=command,
                 workspace=obj.workspace,
-                created_persistent=created
-            )
+            ).first()
+            if created or not command_object:
+                command_object = CommandObject(
+                    object_id=obj.id,
+                    object_type=obj.__class__.__name__,
+                    command=command,
+                    workspace=obj.workspace,
+                    created_persistent=created
+                )
+
             db.session.add(command)
             db.session.add(command_object)
 
@@ -494,7 +505,8 @@ class UpdateMixin(object):
         # just in case an schema allows id as writable.
         data.pop('id', None)
         self._update_object(obj, data)
-        updated = self._perform_update(object_id, obj, **kwargs)
+        self._perform_update(object_id, obj, **kwargs)
+
         return self._dump(obj, kwargs), 200
 
     def _update_object(self, obj, data):

@@ -321,7 +321,7 @@ class PluginBase(object):
 
         cred_obj = model.common.factory.createModelObject(
             Credential.class_signature,
-            username, password=password, parent_id=service_id)
+            username, password=password, parent_id=service_id, parent_type='Service')
 
         cred_obj._metadata.creator = self.id
         self.__addPendingAction(modelactions.ADDCREDSRV, cred_obj)

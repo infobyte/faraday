@@ -20,7 +20,6 @@ credentials_api = Blueprint('credentials_api', __name__)
 class CredentialSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     _rev = fields.String(default='', dump_only=True)
-    owned = fields.Boolean(default=False)
     owner = fields.String(dump_only=True, attribute='creator.username', default='')
     username = fields.String(default='')
     password = fields.String(default='')
@@ -50,7 +49,7 @@ class CredentialSchema(AutoSchema):
         fields = ('id', '_id', "_rev", 'parent',
                   'username', 'description',
                   'name', 'password',
-                  'owner', 'owned', 'couchdbid',
+                  'owner', 'couchdbid',
                   'parent', 'parent_type',
                   'metadata')
 

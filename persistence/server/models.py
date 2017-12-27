@@ -1074,9 +1074,9 @@ class VulnWeb(Vuln):
         self.website = vuln_web.get('website')
         self.request = vuln_web.get('request')
         self.response = vuln_web.get('response')
-        self.method = vuln_web.get('method')
+        self.method = vuln_web.get('method') or ''
         self.pname = vuln_web.get('pname')
-        self.params = vuln_web.get('params')
+        self.params = vuln_web.get('params') or ''
         self.query = vuln_web.get('query')
         self.resolution = vuln_web.get('resolution')
         self.attachments = vuln_web.get('_attachments')

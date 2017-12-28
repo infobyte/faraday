@@ -1,3 +1,4 @@
+import getpass
 import string
 
 import os
@@ -90,7 +91,7 @@ class InitDB():
                             'Please enter the {blue} database name {white} (press enter to use "faraday"): '.format(
                                 blue=Fore.BLUE, white=Fore.WHITE)) or 'faraday'
                         current_psql_output = TemporaryFile()
-                        process_status = self._create_database(database_name, username, current_psql_output)
+                        database_name, process_status = self._create_database(database_name, username, current_psql_output)
                         current_psql_output.seek(0)
                         self._check_psql_output(current_psql_output, process_status)
                 else:

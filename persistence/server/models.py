@@ -726,8 +726,15 @@ class ModelBase(object):
         self.id_available.set()
 
     def getID(self):
-        if self.id is None:
-            self.id_available.wait(timeout=10)
+        # getId will wait until the id is not None
+        timeout = 1
+        retries = 1
+        max_retries = 6
+        while retries <= max_retries and self.id is None:
+            self.id_available.wait(timeout=timeout)
+            print('Retrying getID timeout {0}'.format(timeout))
+            timeout = timeout << retries - 1
+            retries += 1
         return self.id
 
     @staticmethod

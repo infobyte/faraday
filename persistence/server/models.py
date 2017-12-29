@@ -1080,7 +1080,7 @@ class VulnWeb(Vuln):
         self.path = vuln_web.get('path')
         self.website = vuln_web.get('website')
         self.request = vuln_web.get('request')
-        self.response = vuln_web.get('response')
+        self.response = vuln_web.get('response').encode('ascii', 'ignore')
         self.method = vuln_web.get('method') or ''
         self.pname = vuln_web.get('pname')
         self.params = vuln_web.get('params') or ''

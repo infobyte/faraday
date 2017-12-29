@@ -126,16 +126,17 @@ class PluginBase(object):
     def processOutput(self, term_output):
         output = term_output
         if self.has_custom_output() and os.path.isfile(self.get_custom_file_path()):
-            with open(self.get_custom_file_path(), 'r', encoding='utf8').read() as output:
-                self.parseOutputString(output)
+            self._parse_filename(self.get_custom_file_path())
         else:
             self.parseOutputString(output)
 
+    def _parse_filename(self, filename):
+        with open(filename, 'rb') as output:
+            self.parseOutputString(output.read())
 
     def processReport(self, filepath):
         if os.path.isfile(filepath):
-            output = open(filepath, 'r').read()
-            self.parseOutputString(output)
+            self._parse_filename(filepath)
 
     def parseOutputString(self, output):
         """

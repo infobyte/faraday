@@ -189,9 +189,10 @@ class Item(object):
             return ""
         encoded = distutils.util.strtobool(subnode.get('base64', 'false'))
         if encoded:
-            return subnode.text.decode('base64', 'strict')
+            res = subnode.text.decode('base64', 'strict')
         else:
-            return subnode.text
+            res = subnode.text
+        return "".join([ch for ch in res if ord(ch) <= 128])
 
     def get_text_from_subnode(self, subnode_xpath_expr):
         """

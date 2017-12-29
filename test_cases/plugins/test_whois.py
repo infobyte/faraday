@@ -25,7 +25,6 @@ from persistence.server.models import (
     Host,
     Service,
     ModelBase)
-from plugins.modelactions import modelactions
 
 
 class TestCmdPingPlugin:

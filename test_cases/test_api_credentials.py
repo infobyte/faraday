@@ -30,7 +30,6 @@ class TestCredentialsAPIGeneric(ReadOnlyAPITests):
                 u'description',
                 u'metadata',
                 u'name',
-                u'owned',
                 u'owner',
                 u'password',
                 u'username',

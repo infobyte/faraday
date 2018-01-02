@@ -39,9 +39,9 @@ CONST_NETWORK_LOCATION = "network_location"
 CONST_PERSISTENCE_PATH = "persistence_path"
 CONST_PERSPECTIVE_VIEW = "perspective_view"
 CONST_REPO_PASSWORD = "repo_password"
-CONST_SERVER_URI = "couch_uri"
-CONST_COUCH_REPLICS = "couch_replics"
-CONST_COUCH_ISREPLICATED = "couch_is_replicated"
+CONST_API_URL = "api_url"
+CONST_API_USERNAME = "api_username"
+CONST_API_PASSWORD = "api_password"
 CONST_REPO_URL = "repo_url"
 CONST_REPO_USER = "repo_user"
 CONST_REPORT_PATH = "report_path"
@@ -145,9 +145,9 @@ class Configuration:
             self._persistence_path = self._getValue(tree, CONST_PERSISTENCE_PATH)
             self._perspective_view = self._getValue(tree, CONST_PERSISTENCE_PATH)
             self._repo_password = self._getValue(tree, CONST_REPO_PASSWORD)
-            self._server_uri = self._getValue(tree, CONST_SERVER_URI, default = "")
-            self._couch_replics = self._getValue(tree, CONST_COUCH_REPLICS, default = "")
-            self._couch_is_replicated = bool(self._getValue(tree, CONST_COUCH_ISREPLICATED, default = False))
+            self._api_url = self._getValue(tree, CONST_API_URL)
+            self._api_username = self._getValue(tree, CONST_API_USERNAME)
+            self._api_password = self._getValue(tree, CONST_API_PASSWORD)
             self._repo_url = self._getValue(tree, CONST_REPO_URL)
             self._repo_user = self._getValue(tree, CONST_REPO_USER)
             self._report_path = self._getValue(tree, CONST_REPORT_PATH)
@@ -245,16 +245,7 @@ class Configuration:
         return self._perspective_view
 
     def getServerURI(self):
-        if self._server_uri and self._server_uri.endswith('/'):
-            return self._server_uri[:-1]
-        else:
-            return self._server_uri
-
-    def getCouchReplics(self):
-        return self._couch_replics
-
-    def getCouchIsReplicated(self):
-        return self._couch_is_replicated
+        return self._api_url
 
     def getDBSessionCookies(self):
         return self._session_cookies
@@ -303,6 +294,15 @@ class Configuration:
 
     def getMergeStrategy(self):
         return self._merge_strategy
+
+    def getAPIUrl(self):
+        return self._api_url
+
+    def getAPIUsername(self):
+        return self._api_username
+
+    def getAPIPassword(self):
+        return self._api_password
 
     def setLastWorkspace(self, workspaceName):
         self._last_workspace = workspaceName
@@ -404,14 +404,14 @@ class Configuration:
     def setVersion(self, val):
         self._version = val
 
-    def setCouchUri(self, uri):
-        self._server_uri = uri
+    def setAPIUrl(self, url):
+        self._server_uri = url
 
-    def setCouchIsReplicated(self, is_it):
-        self._couch_is_replicated = is_it
+    def setAPIUsername(self, username):
+        self._username = username
 
-    def setCouchReplics(self, urls):
-        self._couch_replics = urls
+    def setAPIPassword(self, password):
+        self._password = password
 
     def setPluginSettings(self, settings):
         self._plugin_settings = settings
@@ -557,17 +557,17 @@ class Configuration:
         LAST_WORKSPACE.text = self.getLastWorkspace()
         ROOT.append(LAST_WORKSPACE)
 
-        SERVER_URI = Element(CONST_SERVER_URI)
-        SERVER_URI.text = self.getServerURI()
-        ROOT.append(SERVER_URI)
+        SERVER_URL = Element(CONST_API_URL)
+        SERVER_URL.text = self.getServerURI()
+        ROOT.append(SERVER_URL)
 
-        COUCH_IS_REPLICATED = Element(CONST_COUCH_ISREPLICATED)
-        COUCH_IS_REPLICATED.text = str(self.getCouchIsReplicated())
-        ROOT.append(COUCH_IS_REPLICATED)
+        SERVER_USERNAME = Element(CONST_API_USERNAME)
+        SERVER_USERNAME.text = self.getAPIUsername()
+        ROOT.append(SERVER_USERNAME)
 
-        COUCH_REPLICS = Element(CONST_COUCH_REPLICS)
-        COUCH_REPLICS.text = self.getCouchReplics()
-        ROOT.append(COUCH_REPLICS)
+        SERVER_PASSWORD = Element(CONST_API_PASSWORD)
+        SERVER_PASSWORD.text = self.getAPIPassword()
+        ROOT.append(SERVER_PASSWORD)
 
         VERSION = Element(CONST_VERSION)
         VERSION.text = self.getVersion()

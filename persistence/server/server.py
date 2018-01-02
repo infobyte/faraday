@@ -72,7 +72,7 @@ def _conf():
     # Fplugin run in other instance, so this dont generate any trouble.
     if not CONF.getDBSessionCookies():
         server_url = CONF.getServerURI() if FARADAY_UP else SERVER_URL
-        cookie = login_user(server_url, AUTH_USER, AUTH_PASS)
+        cookie = login_user(server_url, CONF.getAPIUsername(), CONF.getAPIPassword())
         CONF.setDBSessionCookies(cookie)
 
     return CONF

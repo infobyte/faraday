@@ -64,7 +64,6 @@ angular.module('faradayApp')
                 _attachments: {},
                 data: "",
                 desc: "",
-                easeofresolution: undefined,
                 impact: {
                     accountability: false,
                     availability: false,
@@ -75,7 +74,7 @@ angular.module('faradayApp')
                 name: "",
                 owned: false,
                 params: "",
-                parents: [],
+                parents: [],  // a tuple with (parent_id, parent_type)
                 path: "",
                 pname: "",
                 policyviolations: [],
@@ -139,7 +138,11 @@ angular.module('faradayApp')
             var parents = vm.data.parents;
             vm.data.parents = [];
             parents.forEach(function(parent) {
-                vm.data.parents.push(parent._id);
+                var parent_type = "Service";
+                if (Host.prototype.isPrototypeOf(vm.data.parents[0])) {
+                    parent_type = "Host";
+                }
+                vm.data.parents.push({parent_id: parent._id, type:parent_type});
             });
 
             $modalInstance.close(vm.data);

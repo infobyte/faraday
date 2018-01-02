@@ -14,26 +14,10 @@ angular.module('faradayApp')
             $scope.showServices = false;
             $scope.creating = true;
 
-            $scope.interface = {
-                "hostnames": [{key: ''}],
-                "ipv6": {
-                        "prefix": "00",
-                        "gateway": "0000.0000.0000.0000",
-                        "DNS": [],
-                        "address": "0000:0000:0000:0000:0000:0000:0000:0000"
-                    },
-                "ipv4":{
-                        "mask": "0.0.0.0",
-                        "gateway": "0.0.0.0",
-                        "DNS": [],
-                        "address": "0.0.0.0"
-                    },
-                "mac": "00:00:00:00:00:00",
-                "interfaceOwner": "",
-                "interfaceOwned": false
-            };
             $scope.host = {
-                "name": "",
+                "ip": "",
+                "hostnames": [{key: ''}],
+                "mac": "00:00:00:00:00:00",
                 "description": "",
                 "default_gateway": "None",
                 "os": "",
@@ -48,14 +32,13 @@ angular.module('faradayApp')
                 });
 
             $scope.newHostnames = function($event){
-                $scope.interface.hostnames.push({key:''});
+                $scope.host.hostnames.push({key:''});
                 $event.preventDefault();
             };
 
-            $scope.insert = function(hostdata, interfaceData) {
-                var interfaceData = $scope.createInterface(hostdata, interfaceData);
-                hostsManager.createHost(hostdata, interfaceData, $scope.workspace).then(function(host) {
-                    $location.path('/host/ws/' + $scope.workspace + '/hid/' + $scope.host._id);
+            $scope.insert = function(hostdata) {
+                hostsManager.createHost(hostdata, $scope.workspace).then(function(host) {
+                    $location.path('/host/ws/' + $scope.workspace + '/hid/' + host.data.id);
                 }, function(message) {
                     $uibModal.open({
                         templateUrl: 'scripts/commons/partials/modalKO.html',
@@ -71,45 +54,9 @@ angular.module('faradayApp')
             };
 
             $scope.ok = function(){
-                var interface = angular.copy($scope.interface);
-                interface.hostnames = commons.objectToArray(interface.hostnames);
-                $scope.insert($scope.host, interface);
+                $scope.insert($scope.host);
             };
 
-            $scope.createInterface = function (hostData, interfaceData){
-                if(typeof(hostData.ipv4) == "undefined") hostData.ipv4 = "";
-                if(typeof(hostData.ipv6) == "undefined") hostData.ipv6 = "";
-                var interfaceData = {
-                    "_id": CryptoJS.SHA1(hostData.name).toString() + "." + CryptoJS.SHA1("" + "._." + interfaceData.ipv4 + "._." + interfaceData.ipv6).toString(),
-                    "description": "",
-                    "hostnames": interfaceData.hostnames,
-                    "ipv4": interfaceData.ipv4,
-                    "ipv6": interfaceData.ipv6,
-                    "mac": interfaceData.mac,
-                    "metadata": {
-                        "update_time": new Date().getTime(),
-                        "update_user": "",
-                        "update_action": 0,
-                        "creator": "",
-                        "create_time": new Date().getTime(),
-                        "update_controller_action": "",
-                        "owner": "",
-
-                    },
-                    "name": hostData.name,
-                    "network_segment": "",
-                    "owned": false,
-                    "owner": "",
-                    "parent": CryptoJS.SHA1(hostData.name).toString(),
-                    "ports": {
-                       "filtered": 0,
-                       "opened": 0,
-                       "closed": 0
-                    },
-                    "type": "Interface"
-                };
-                return interfaceData;
-            };
 
         };
 

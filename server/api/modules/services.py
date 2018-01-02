@@ -1,42 +1,115 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+import time
 
 import flask
 from flask import Blueprint
-from server.utils.logger import get_logger
-from server.dao.service import ServiceDAO
-from server.utils.web import gzipped, validate_workspace, get_integer_parameter
+from marshmallow import fields, post_load, ValidationError
+from sqlalchemy.orm import joinedload
+from sqlalchemy.orm.exc import NoResultFound
+
+from server.api.base import AutoSchema, ReadWriteWorkspacedView
+from server.models import Host, Service, Workspace
+from server.schemas import (
+    MetadataSchema,
+    MutableField,
+    PrimaryKeyRelatedField,
+    SelfNestedField,
+)
 
 
 services_api = Blueprint('services_api', __name__)
 
 
-@services_api.route('/ws/<workspace>/services', methods=['GET'])
-@gzipped
-def list_services(workspace=None):
-    validate_workspace(workspace)
-    get_logger(__name__).debug("Request parameters: {!r}"\
-        .format(flask.request.args))
+class ServiceSchema(AutoSchema):
+    _id = fields.Integer(attribute='id', dump_only=True)
+    _rev = fields.String(default='', dump_only=True)
+    owned = fields.Boolean(default=False)
+    owner = PrimaryKeyRelatedField('username', dump_only=True,
+                                   attribute='creator')
+    port = fields.Integer(dump_only=True)  # Port is loaded via ports
+    ports = MutableField(fields.String(),
+                         fields.Method(deserialize='load_ports', serialize='get_ports'),
+                         required=True,
+                         attribute='port')
+    status = fields.String(default='open')
+    parent = fields.Integer(attribute='host_id')  # parent is not required for updates
+    host_id = fields.Integer(attribute='host_id', dump_only=True)
+    summary = fields.Method('get_summary')
+    vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
+    credentials = fields.Integer(attribute='credentials_count', dump_only=True)
+    metadata = SelfNestedField(MetadataSchema())
 
-    services_dao = ServiceDAO(workspace)
+    def load_ports(self, value):
+        # TODO migration: handle empty list and not numeric value
+        return str(value.pop())
 
-    services = services_dao.list(service_filter=flask.request.args)
+    def get_ports(self, obj):
+        return [obj.port]
 
-    return flask.jsonify(services)
+    def get_summary(self, obj):
+        return "(%s/%s) %s" % (obj.port, obj.protocol, obj.name)
 
-@services_api.route('/ws/<workspace>/services/count', methods=['GET'])
-@gzipped
-def count_services(workspace=None):
-    validate_workspace(workspace)
-    get_logger(__name__).debug("Request parameters: {!r}"\
-        .format(flask.request.args))
+    @post_load
+    def post_load_parent(self, data):
+        """Gets the host_id from parent attribute. Pops it and tries to
+        get a Host with that id in the corresponding workspace.
+        """
+        host_id = data.pop('host_id', None)
+        if self.context['updating']:
+            if host_id is None:
+                # Partial update?
+                return
 
-    field = flask.request.args.get('group_by')
+            if host_id != self.context['object'].parent.id:
+                raise ValidationError('Can\'t change service parent.')
 
-    services_dao = ServiceDAO(workspace)
-    result = services_dao.count(group_by=field)
-    if result is None:
-        flask.abort(400)
+        else:
+            if not host_id:
+                raise ValidationError('Parent id is required when creating a service.')
 
-    return flask.jsonify(result)
+            try:
+                data['host'] = Host.query.join(Workspace).filter(
+                    Workspace.name == self.context['workspace_name'],
+                    Host.id == host_id
+                ).one()
+            except NoResultFound:
+                raise ValidationError('Host with id {} not found'.format(host_id))
+
+    class Meta:
+        model = Service
+        fields = ('id', '_id', 'status', 'parent',
+                  'protocol', 'description', '_rev',
+                  'owned', 'owner', 'credentials', 'vulns',
+                  'name', 'version', '_id', 'port', 'ports',
+                  'metadata', 'summary', 'host_id')
+
+
+class ServiceView(ReadWriteWorkspacedView):
+    route_base = 'services'
+    model_class = Service
+    schema_class = ServiceSchema
+    count_extra_filters = [Service.status == 'open']
+    get_undefer = [Service.credentials_count, Service.vulnerability_count]
+    unique_fields = [('port', 'protocol', 'host')]
+
+    def _envelope_list(self, objects, pagination_metadata=None):
+        services = []
+        for service in objects:
+            services.append({
+                'id': service['_id'],
+                'key': service['_id'],
+                'value': service
+            })
+        return {
+            'services': services,
+        }
+
+    def _get_base_query(self, workspace_name):
+        original = super(ServiceView, self)._get_base_query(workspace_name)
+        return original.options(
+            joinedload(Service.credentials)
+        )
+
+ServiceView.register(services_api)

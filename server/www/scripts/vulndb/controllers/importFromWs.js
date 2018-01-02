@@ -7,6 +7,7 @@ angular.module('faradayApp')
             $scope.data;
 
             var init = function() {
+                // TODO migration: use workspacesFact that is fixed
                 ServerAPI.getWorkspacesNames().then(
                     function(ws_data) {
                         $scope.workspaces = ws_data.data.workspaces;

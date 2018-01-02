@@ -75,6 +75,6 @@ def build_faraday_plugin_command(plugin, workspace_name, absolute_path=False):
     return '{path}fplugin {command} -u {url} -w {workspace} '.format(
         path='"%s"' % path if absolute_path else '',
         command=plugin,
-        url=CONF.getCouchURI(),
+        url=CONF.getServerURI(),
         workspace=workspace_name
     )

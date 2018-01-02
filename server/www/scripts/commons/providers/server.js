@@ -9,32 +9,60 @@ angular.module("faradayApp")
     .factory("ServerAPI", ["BASEURL", "$http", "$q",
         function(BASEURL, $http, $q) {
             var ServerAPI = {};
-            var APIURL = BASEURL + "_api/";
+            var APIURL = BASEURL + "_api/v2/";
 
-            var createGetUrl = function(wsName, objectName) {
-                var objectName = ((objectName) ? "/" + objectName : "");
-                var get_url = APIURL + "ws/" + wsName + objectName;
-                return get_url;
+            var createGetRelatedUrl = function(wsName, objectType, objectId, relatedObjectType) {
+                var objectName = ((objectName) ? "/" + objectType : "");
+                return get_url = APIURL + "ws/" + wsName + "/" + objectType + "/" + objectId + "/" + relatedObjectType + "/";
             };
 
-            var createNewGetUrl = function(wsName, objId) {
-                return APIURL + "ws/" + wsName + "/doc/" + objId;
+            var createGetUrl = function(wsName, objectName, objectId) {
+                var objectName = ((objectName) ? "/" + objectName : "");
+                if (typeof objectId == 'string' || typeof objectId ==  "number") {
+                    objectName = objectName + "/" + objectId;
+                }
+
+                return APIURL + "ws/" + wsName + objectName + "/";
+            };
+
+            // create GET URL for objects that do not belong to a workspace
+            var createNonWorkspacedGetUrl = function(objectName, objectId) {
+                if (typeof objectId == 'string' || typeof objectId ==  "number") {
+                    objectName = objectName + "/" + objectId;
+                }
+
+                return APIURL + objectName + "/";
+            };
+
+            var createNewGetUrl = function(wsName, objectId, objectType) {
+                return APIURL + "ws/" + wsName + "/" + objectType + "/" + objectId;
             }
 
-            var createPostUrl = function(wsName, objectId, rev) {
-                if (rev === undefined) {
-                    return APIURL + "ws/" + wsName + "/doc/" + objectId;
-                }
-                else {
-                    return APIURL + "ws/" + wsName + "/doc/" + objectId + "?rev=" + rev;
-                }
+            var createPostUrl = function(wsName, objectId, objectType) {
+                return APIURL + "ws/" + wsName + "/" + objectType + "/";
             };
 
-            var createDbUrl = function(wsName) {
+            // create POST URL for objects that do not belong to a workspace
+            var createNonWorkspacedPostUrl = function(objectId, objectType) {
+                return APIURL + objectType + "/";
+            };
+
+            var createPutUrl = function(wsName, objectId, objectType) {
+                return APIURL + "ws/" + wsName + "/" + objectType + "/" + objectId + "/";
+            };
+
+            // create PUT URL for objects that do not belong to a workspace
+            var createNonWorkspacedPutUrl = function(objectId, objectType) {
+                return APIURL + objectType + "/" + objectId + "/";
+            };
+
+            var createDbUrl = function(wsName = "") {
                 return APIURL + "ws/" + wsName;
             }
 
-            var createDeleteUrl = createPostUrl; 
+            var createDeleteUrl = createPutUrl;
+
+            var createNonWorkspacedDeleteUrl = createNonWorkspacedPutUrl;
 
             var serverComm = function(method, url, data) {
                 var success = function (response) {
@@ -56,51 +84,20 @@ angular.module("faradayApp")
                 return serverComm("GET", url, data);
             };
 
-            var put = function(url, data, is_update) {
+            var send_data = function(url, data, is_update, method) {
                 // undefined is just evil...
                 if (typeof is_update === "undefined") {var is_update = false;}
-                if (is_update && !data._rev) {
-                    // ok, undefined, you win
-                    console.log('ok, undefined, you win');
-                    return get(url).then(function s(r) {
-                        data._rev = r.data._rev;
-                        return serverComm("PUT", url, data);
-                    }).catch(function e(r) {$q.reject(r)});
-                }
-                return serverComm("PUT", url, data);
+                return serverComm(method, url, data);
             };
-
 
             // delete is a reserved keyword
             // just set rev_provided to false if you're deleting a database :)
             var _delete = function(url, rev_provided) {
                 // never let undefined win
-
                 if (typeof rev_provided === "undefined") {var rev_provided = false;}
                 var deferred = $q.defer();
                 var data = {};
-                
-                if (rev_provided === false) {
-                    get(url).then(
-                        function s(r) {
-                            data.rev = r.data._rev;
-                            return serverComm("DELETE", url, data).then(
-                                function(res) {
-                                    deferred.resolve(res);
-                                }, function(err) {
-                                    deferred.reject(err);
-                                }
-                            );
-                        },
-                        function e(r) {
-                            deferred.reject(r);
-                        })
-                }
-                else{
-                    return serverComm("DELETE", url, data);
-                }
-
-                return deferred.promise;
+                return serverComm("DELETE", url, data);
             };
 
             var modHost = function(createOrUpdate, wsName, host) {
@@ -108,13 +105,7 @@ angular.module("faradayApp")
                 if (typeof host.owner === "undefined") {host.owner = ""};
                 if (typeof host.owned === "undefined") {host.owned = false};
                 if (typeof host.os === "undefined") {host.os = ""};
-                return createOrUpdate(wsName, host._id, host);
-            }
-
-            var modInterface = function(createOrUpdate, wsName, _interface) {
-                if (typeof _interface.owned === "undefined") {_interface.owned = false};
-                if (typeof _interface.owner === "undefined") {_interface.owner = ""};
-                if (typeof _interface.os === "undefined") {_interface.os = ""}; return createOrUpdate(wsName, _interface._id, _interface);
+                return createOrUpdate(wsName, host._id, host, 'hosts');
             }
 
             var modService = function(createOrUpdate, wsName, service) {
@@ -123,7 +114,7 @@ angular.module("faradayApp")
                 if (typeof service.protocol === "undefined") {service.protocol = ""};
                 if (typeof service.status === "undefined") {service.status = ""};
                 if (typeof service.version === "undefined") {service.version = ""};
-                return createOrUpdate(wsName, service._id, service);
+                return createOrUpdate(wsName, service._id, service, 'services');
             }
 
             var modVuln = function(createOrUpdate, wsName, vuln) {
@@ -136,21 +127,33 @@ angular.module("faradayApp")
                 if (typeof vuln.data === "undefined") {vuln.data = ""};
                 if (typeof vuln.severity === "undefined") {vuln.severity = "info"};
                 if (typeof vuln.resolution === "undefined") {vuln.resolution = ""};
-                return createOrUpdate(wsName, vuln._id, vuln);
+                return createOrUpdate(wsName, vuln._id, vuln, 'vulns');
             }
 
             var modVulnWeb = function(createOrUpdate, wsName, vulnWeb) {
-                if (typeof vulnWeb.owner === "undefined") {vuln.owner = ""};
-                if (typeof vuln.description === "undefined") {vuln.description = ""};
-                if (typeof vulnWeb.protocol === "undefined") {vuln.protocol = ""};
-                if (typeof vulnWeb.status === "undefined") {vuln.status = ""};
-                if (typeof vulnWeb.version === "undefined") {vuln.version = ""};
-                if (typeof vulnWeb.confirmed === "undefined") {vuln.confirmed = false};
-                if (typeof vulnWeb.data === "undefined") {vuln.data = ""};
-                if (typeof vulnWeb.severity === "undefined") {vuln.severity = "info"};
-                if (typeof vulnWeb.resolution === "undefined") {vuln.resolution = ""};
-                if (typeof vulnWeb.params === "undefined") {vuln.parmas = ""};
+                if (typeof vulnWeb.owner === "undefined") {vulnWeb.owner = ""};
+                if (typeof vulnWeb.description === "undefined") {vulnWeb.description = ""};
+                if (typeof vulnWeb.protocol === "undefined") {vulnWeb.protocol = ""};
+                if (typeof vulnWeb.status === "undefined") {vulnWeb.status = ""};
+                if (typeof vulnWeb.version === "undefined") {vulnWeb.version = ""};
+                if (typeof vulnWeb.confirmed === "undefined") {vulnWeb.confirmed = false};
+                if (typeof vulnWeb.data === "undefined") {vulnWeb.data = ""};
+                if (typeof vulnWeb.severity === "undefined") {vulnWeb.severity = "info"};
+                if (typeof vulnWeb.resolution === "undefined") {vulnWeb.resolution = ""};
+                if (typeof vulnWeb.params === "undefined") {vulnWeb.params = ""};
                 return createOrUpdate(wsName, vulnWeb._id, vulnWeb);
+            }
+
+            var modVulnerabilityTemplate = function(createOrUpdate, vulnerabilityTemplate) {
+                var data_name = 'vulnerability_template';
+                if(typeof vulnerabilityTemplate.cwe === "undefined") {vulnerabilityTemplate.cwe = ""};
+                if(typeof vulnerabilityTemplate.description === "undefined") {vulnerabilityTemplate.description = ""};
+                if(typeof vulnerabilityTemplate.exploitation === "undefined") {vulnerabilityTemplate.exploitation = "informational"};
+                if(typeof vulnerabilityTemplate.name === "undefined") {vulnerabilityTemplate.name = ""};
+                if(typeof vulnerabilityTemplate.references === "undefined") {vulnerabilityTemplate.references = ""};
+                if(typeof vulnerabilityTemplate.resolution === "undefined") {vulnerabilityTemplate.resolution = ""};
+                vulnerabilityTemplate.type = data_name;
+                return createOrUpdate(vulnerabilityTemplate._id, vulnerabilityTemplate, data_name);
             }
 
             var modNote = function(createOrUpdate, wsName, note) {
@@ -162,31 +165,57 @@ angular.module("faradayApp")
             var modCredential = function(createOrUpdate, wsName, credential) {
                 if (typeof credential.owner === "undefined") {credential.owner = ""};
                 if (typeof credential.description === "undefined") {credential.description = ""};
-                return createOrUpdate(wsName, credential._id, credential); 
+                return createOrUpdate(wsName, credential.id, credential, 'credential');
             }
 
             var modCommand = function(createOrUpdate, wsName, command) {
                     return createOrUpdate(wsName, command._id, command);
             }
 
-            var createObject = function(wsName, id, data) {
-                var postUrl = createPostUrl(wsName, id);
-                return put(postUrl, data, false);
+            var createObject = function(wsName, id, data, collectionName) {
+                var postUrl = createPostUrl(wsName, id, collectionName);
+                return send_data(postUrl, data, false, "POST");
             }
 
-            var updateObject = function(wsName, id, data) {
-                var postUrl = createPostUrl(wsName, id);
-                return put(postUrl, data, true);
+            var createNonWorkspacedObject = function(id, data, collectionName) {
+                var postUrl = createNonWorkspacedPostUrl(id, collectionName);
+                console.log(collectionName);
+                return send_data(postUrl, data, false, "POST");
+            };
+
+            var updateObject = function(wsName, id, data, collectionName) {
+                var postUrl = createPutUrl(wsName, id, collectionName);
+                return send_data(postUrl, data, true, "PUT");
             }
 
-            var saveInServer = function(wsName, objectId, data) {
-                var postUrl = createPostUrl(wsName, objectId);
-                return put(postUrl, data, false);
+            var updateNonWorkspacedObject = function(id, data, collectionName) {
+                var postUrl = createNonWorkspacedPutUrl(id, collectionName);
+                return send_data(postUrl, data, true, "PUT");
+            };
+
+            var saveInServer = function(wsName, objectId, data, collectionName) {
+                var postUrl = createPostUrl(wsName, objectId, collectionName);
+                return send_data(postUrl, data, false, "PUT");
             }
 
-            var updateInServer = function(wsName, objectId, data) {
-                var postUrl = createPostUrl(wsName, objectId);
-                return put(postUrl, objectId, true);
+            var saveNonWorkspacedInServer = function(objectId, data, collectionName) {
+                var postUrl = createNonWorkspacedPostUrl(objectId, collectionName);
+                return send_data(postUrl, data, false, "PUT");
+            };
+
+            var updateInServer = function(wsName, objectId, data, collectionName) {
+                var postUrl = createPostUrl(wsName, objectId, collectionName);
+                return send_data(postUrl, objectId, true, "PUT");
+            }
+
+            var updateNonWorkspacedInServer = function(objectId, data, collectionName) {
+                var postUrl = createPostUrl(objectId, collectionName);
+                return send_data(postUrl, objectId, true, "PUT");
+            };
+
+            ServerAPI.getHost = function(wsName, objId) {
+                var url = createGetUrl(wsName, 'hosts', objId);
+                return get(url);
             }
 
             ServerAPI.getHosts = function(wsName, data) {
@@ -199,9 +228,19 @@ angular.module("faradayApp")
                 return get(getUrl, data);
             }
 
-            ServerAPI.getInterfaces = function(wsName, data) {
-                var getUrl = createGetUrl(wsName, 'interfaces');
-                return get(getUrl, data);
+            ServerAPI.getVulnerabilityTemplate = function(objId) {
+                var url = createNonWorkspacedGetUrl('vulnerability_template', objId);
+                return get(url);
+            }
+
+            ServerAPI.getVulnerabilityTemplates = function(data) {
+                var url = createNonWorkspacedGetUrl('vulnerability_template');
+                return get(url);
+            }
+
+            ServerAPI.getService = function(wsName, data, objId) {
+                var getUrl = createGetUrl(wsName, 'services', objId);
+                return get(getUrl);
             }
 
             ServerAPI.getServices = function(wsName, data) {
@@ -214,8 +253,8 @@ angular.module("faradayApp")
                 return get(getUrl, data);
             }
 
-            ServerAPI.getCredentials = function(wsName, data) {
-                var getUrl = createGetUrl(wsName, 'credentials');
+            ServerAPI.getCredentials = function(wsName, data, objId) {
+                var getUrl = createGetUrl(wsName, 'credential', objId);
                 return get(getUrl, data);
             }
 
@@ -224,8 +263,17 @@ angular.module("faradayApp")
                 return get(getUrl, data);
             }
 
+            ServerAPI.getActivityFeed = function(wsName, data) {
+                var getUrl = createGetUrl(wsName, 'commands') + 'activity_feed/';
+                return get(getUrl, data);
+            }
+
             ServerAPI.getWorkspacesNames = function() {
-                return get(APIURL + "ws");
+                return get(APIURL + "ws/");
+            }
+
+            ServerAPI.getWorkspaces = function() {
+                return get(APIURL + "ws/");
             }
 
             ServerAPI.getWorkspace = function(wsName) {
@@ -235,7 +283,7 @@ angular.module("faradayApp")
 
             ServerAPI.getWorkspaceSummary = function(wsName, confirmed) {
 
-                var getUrl = createGetUrl(wsName, "summary");
+                var getUrl = createGetUrl(wsName);
                 var payload = {};
 
                 if (confirmed !== undefined) {
@@ -245,8 +293,8 @@ angular.module("faradayApp")
                 return get(getUrl, payload);
             }
 
-            ServerAPI.getObj = function(wsName, objID) {
-                var getUrl = createNewGetUrl(wsName, objID)
+            ServerAPI.getObj = function(wsName, objID, objectType) {
+                var getUrl = createNewGetUrl(wsName, objID, objectType) + "/";
                 return get(getUrl);
             }
 
@@ -270,7 +318,7 @@ angular.module("faradayApp")
             }
 
             ServerAPI.getServicesBy = function(wsName, what) {
-                var url = createGetUrl(wsName, 'services') + '/count';
+                var url = createGetUrl(wsName, 'services') + 'count/';
                 return get(url, {"group_by": what})
             }
 
@@ -279,13 +327,13 @@ angular.module("faradayApp")
             }
 
             ServerAPI.getServicesByHost = function(wsName, hostId) {
-                var url = createGetUrl(wsName, 'services');
-                return get(url, {"hostIdCouchdb": hostId});
+                var url = createGetRelatedUrl(wsName, 'hosts', hostId, 'services');
+                return get(url);
             }
 
             ServerAPI.getVulnsBySeverity = function(wsName, confirmed) {
 
-                var url = createGetUrl(wsName, 'vulns') + '/count';
+                var url = createGetUrl(wsName, 'vulns') + 'count/';
                 var payload = {'group_by': 'severity'}
                 
                 if (confirmed !== undefined) {
@@ -296,19 +344,11 @@ angular.module("faradayApp")
             }
 
             ServerAPI.createHost = function(wsName, host) {
-                    return modHost(createObject, wsName, host);
+                return modHost(createObject, wsName, host);
             }
 
             ServerAPI.updateHost = function(wsName, host) {
                     return modHost(updateObject, wsName, host);
-            }
-
-            ServerAPI.createInterface = function(wsName, _interface) {
-                    return modInterface(createObject, wsName, _interface);
-            }
-
-            ServerAPI.updateInterface = function(wsName, _interface) {
-                    return modInterface(updateObject, wsName, _interface);
             }
 
             ServerAPI.createService = function(wsName, service) {
@@ -334,6 +374,14 @@ angular.module("faradayApp")
             ServerAPI.updateVulnWeb = function(wsName, vulnWeb) {
                     return modVulnWeb(updateObject, wsName, vulnWeb);
             }
+
+            ServerAPI.createVulnerabilityTemplate = function(vulnerabilityTemplate) {
+                    return modVulnerabilityTemplate(createNonWorkspacedObject, vulnerabilityTemplate);
+            };
+
+            ServerAPI.updateVulnerabilityTemplate = function(vulnerabilityTemplate) {
+                    return modVulnerabilityTemplate(updateNonWorkspacedObject, vulnerabilityTemplate);
+            };
 
             ServerAPI.createNote = function(wsName, note) {
                     return modNote(createObject, wsName, note);
@@ -365,7 +413,7 @@ angular.module("faradayApp")
             }
 
             ServerAPI.deleteHost = function(wsName, hostId, rev) {
-                var deleteUrl = createDeleteUrl(wsName, hostId, rev);
+                var deleteUrl = createDeleteUrl(wsName, hostId, 'hosts');
                 if (typeof rev === "undefined") {
                     return _delete(deleteUrl, false)
                 }
@@ -374,18 +422,8 @@ angular.module("faradayApp")
                 }
             }
 
-            ServerAPI.deleteInterface = function(wsName, interfaceId, rev) {
-                var deleteUrl = createDeleteUrl(wsName, interfaceId, rev);
-                if (typeof rev === "undefined") {
-                    return _delete(deleteUrl, false)
-                }
-                else {
-                    return _delete(deleteUrl, true);
-                }
-            }
-
-            ServerAPI.deleteService = function(wsName, serviceId, rev) {
-                var deleteUrl = createDeleteUrl(wsName, serviceId, rev);
+            ServerAPI.deleteService = function(wsName, serviceId) {
+                var deleteUrl = createDeleteUrl(wsName, serviceId, 'services');
                 if (typeof rev === "undefined") {
                     return _delete(deleteUrl, false)
                 }
@@ -395,7 +433,17 @@ angular.module("faradayApp")
             }
 
             ServerAPI.deleteVuln = function(wsName, vulnId, rev) {
-                var deleteUrl = createDeleteUrl(wsName, vulnId, rev);
+                var deleteUrl = createDeleteUrl(wsName, vulnId, 'vulns');
+                if (typeof rev === "undefined") {
+                    return _delete(deleteUrl, false)
+                }
+                else {
+                    return _delete(deleteUrl, true);
+                }
+            }
+
+            ServerAPI.deleteVulnerabilityTemplate = function(vulnId, rev) {
+                var deleteUrl = createNonWorkspacedDeleteUrl(vulnId, 'vulnerability_template');
                 if (typeof rev === "undefined") {
                     return _delete(deleteUrl, false)
                 }
@@ -415,7 +463,7 @@ angular.module("faradayApp")
             }
 
             ServerAPI.deleteCredential = function(wsName, credentialId, rev) {
-                var deleteUrl = createDeleteUrl(wsName, credentialId, rev);
+                var deleteUrl = createDeleteUrl(wsName, credentialId, 'credential');
                 if (typeof rev === "undefined") {
                     return _delete(deleteUrl, false)
                 }
@@ -435,13 +483,13 @@ angular.module("faradayApp")
             }
 
             ServerAPI.createWorkspace = function(wsName, data) {
-                var dbUrl = createDbUrl(wsName);
-                return put(dbUrl, data, false)
+                var dbUrl = createDbUrl();
+                return send_data(dbUrl, data, true, "POST");
             }
 
             ServerAPI.updateWorkspace = function(workspace) {
                 var putUrl = createDbUrl(workspace.name);
-                return put(putUrl, workspace, true)
+                return send_data(dbUrl, workspace, true, "PUT");
             }
 
             ServerAPI.deleteWorkspace = function(wsName) {

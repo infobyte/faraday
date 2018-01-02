@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('serviceModalNew',
-        ['$scope', '$modalInstance', '$routeParams', 'host', 'servicesManager', 'hostsManager',
-        function($scope, $modalInstance, $routeParams, host, servicesManager, hostsManager) {
+        ['$scope', '$modalInstance', '$routeParams', 'SERVICE_STATUSES', 'host', 'servicesManager', 'hostsManager',
+        function($scope, $modalInstance, $routeParams, SERVICE_STATUSES, host, servicesManager, hostsManager) {
 
         init = function() {
             $scope.service = {
@@ -16,15 +16,14 @@ angular.module('faradayApp')
                 "ports": "",
                 "protocol": "",
                 "parent": "",
-                "status": "",
+                "status": "open",
                 "version": ""
             };
             // current Workspace
             var ws = $routeParams.wsId;
+            $scope.service.parent = host.id;
+            $scope.statuses = SERVICE_STATUSES;
 
-            hostsManager.getInterfaces(ws, host._id).then(function(resp) {
-                $scope.service.parent = resp[0].value._id;
-            });
         };
 
         $scope.ok = function() {

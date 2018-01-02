@@ -8,16 +8,20 @@ See the file 'doc/LICENSE' for the license information
 import os
 import sys
 import signal
+import json
 import threading
-import requests
-
 from json import loads
 from time import sleep
+from Queue import Queue
+
+import requests
 
 from model.controller import ModelController
 from managers.workspace_manager import WorkspaceManager
 from plugins.controller import PluginController
+from persistence.server.server import login_user
 
+from utils.logs import setUpLogger
 import model.api
 import model.guiapi
 import apis.rest.api as restapi
@@ -74,13 +78,32 @@ class TimerClass(threading.Thread):
 class MainApplication(object):
 
     def __init__(self, args):
+        setUpLogger()
         self._original_excepthook = sys.excepthook
 
         self.args = args
 
-        self._mappers_manager = MapperManager()
+        logger = getLogger(self)
+        if args.creds_file:
+            try:
+                with open(args.creds_file, 'r') as fp:
+                    creds = json.loads(fp.read())
+                    username = creds.get('username')
+                    password = creds.get('password')
+                    session_cookie = login_user(CONF.getServerURI(),
+                                                username, password)
+                    if session_cookie:
+                        logger.info('Login successful')
+                        CONF.setDBUser(username)
+                        CONF.setDBSessionCookies(session_cookie)
+                    else:
+                        logger.error('Login failed')
+            except (IOError, ValueError):
+                logger.error("Credentials file couldn't be loaded")
 
-        self._model_controller = ModelController(self._mappers_manager)
+        self._mappers_manager = MapperManager()
+        pending_actions = Queue()
+        self._model_controller = ModelController(self._mappers_manager, pending_actions)
 
         self._plugin_manager = PluginManager(
             os.path.join(CONF.getConfigPath(), "plugins"))
@@ -92,7 +115,8 @@ class MainApplication(object):
         self._plugin_controller = PluginController(
             'PluginController',
             self._plugin_manager,
-            self._mappers_manager
+            self._mappers_manager,
+            pending_actions
         )
 
         if self.args.cli:
@@ -110,7 +134,7 @@ class MainApplication(object):
 
     def on_connection_lost(self):
         """All it does is send a notification to the notification center"""
-        model.guiapi.notification_center.CouchDBConnectionProblem()
+        model.guiapi.notification_center.DBConnectionProblem()
 
     def enableExceptHook(self):
         sys.excepthook = exception_handler

@@ -25,7 +25,7 @@ class DocumentImporter(object):
             include into the database (ie: these documents are added on future
             changes)
         """
-        entity = server.models.FaradayEntity.parse(document)
+        entity = server.models.FaradayEntity.parse(self.__db_conn.session, document)
         if entity is None:
             return False
 

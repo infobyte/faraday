@@ -7,8 +7,9 @@ See the file 'doc/LICENSE' for the license information
 import sys
 import traceback
 import threading
-import SimpleXMLRPCServer
+import logging
 import xmlrpclib
+import SimpleXMLRPCServer
 
 try:
     import model.api as api
@@ -17,6 +18,7 @@ except AttributeError:
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
+logger = logging.getLogger(__name__)
 
 
 # -------------------------------------------------------------------------------
@@ -94,13 +96,13 @@ class ModelObjectFactory(object):
         """
         if not workspace_name:
             workspace_name = CONF.getLastWorkspace()
+            logger.warn('No workspace selected. Using last workspace {0}'.format(workspace_name))
         if classname in self._registered_objects:
             if object_name is not None:
                 objargs['name'] = object_name
-                objargs['_id'] = -1  # they still don't have a server id
-                objargs['id'] = -1 # we'll generate it after making sure the objects are okey
+                if parent_id:
+                    objargs['parent'] = parent_id
                 tmpObj = self._registered_objects[classname](objargs, workspace_name)
-                tmpObj.setID(parent_id)
                 return tmpObj
             else:
                 raise Exception("Object name parameter missing. Cannot create object class: %s" % classname)

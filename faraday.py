@@ -39,6 +39,7 @@ from utils.profilehooks import profile
 from utils.user_input import query_yes_no
 
 from persistence.server import server
+from persistence.server.server import is_authenticated, login_user, get_user_info
 
 USER_HOME = os.path.expanduser(CONST_USER_HOME)
 FARADAY_BASE = os.path.dirname(os.path.realpath(__file__))
@@ -130,6 +131,12 @@ def getParserArgs():
                         default=False,
                         help="Disable the application exception hook that allows to send error reports to developers.")
 
+    parser.add_argument('--login',
+                        action="store_true",
+                        dest="login",
+                        default=False,
+                        help="Enable prompt for authentication Database credentials")
+
     parser.add_argument('--dev-mode',
                         action="store_true",
                         dest="dev_mode",
@@ -186,7 +193,15 @@ def getParserArgs():
                         default=False,
                         help="Enables debug mode. Default = disabled")
 
-    parser.add_argument('--nodeps', action='store_true', help='Skip dependency check')
+    parser.add_argument('--creds-file',
+                        action="store",
+                        dest="creds_file",
+                        default=None,
+                        help="File containing user's credentials to be used in cli mode")
+
+    parser.add_argument('--nodeps',
+                        action="store_true",
+                        help='Skip dependency check')
 
     f = open(FARADAY_VERSION_FILE)
     f_version = f.read().strip()
@@ -205,9 +220,12 @@ def check_dependencies_or_exit():
 
     """
 
-    installed_deps, missing_deps = dependencies.check_dependencies(requirements_file=FARADAY_REQUIREMENTS_FILE)
+    installed_deps, missing_deps, conflict_deps = dependencies.check_dependencies(requirements_file=FARADAY_REQUIREMENTS_FILE)
 
     logger.info("Checking dependencies...")
+
+    if conflict_deps:
+        logger.info("Some dependencies are old. Update them with \"pip install -r requirements_server.txt -U\"")
 
     if missing_deps:
 
@@ -301,9 +319,9 @@ def startFaraday():
         start = main_app.start
     from colorama import Fore, Back, Style
     import string
-    couchURL = getInstanceConfiguration().getCouchURI()
-    if couchURL:
-        url = "%s/_ui" % couchURL
+    serverURL = getInstanceConfiguration().getServerURI()
+    if serverURL:
+        url = "%s/_ui" % serverURL
         print(Fore.WHITE + Style.BRIGHT + "\n*" + string.center("faraday ui is ready", 53 - 6))
         print(
             Fore.WHITE + Style.BRIGHT + "Make sure you got couchdb up and running.\nIf couchdb is up, point your browser to: \n[%s]" % url)
@@ -454,6 +472,12 @@ def update():
 
     """
     if args.update:
+        CONF = getInstanceConfiguration()
+
+        if not is_authenticated(CONF.getServerURI(), CONF.getDBSessionCookies()):
+            logger.warning("Credentials needed to update.")
+            doLoginLoop()
+
         from updates.updater import Updater
         Updater().doUpdates()
         logger.info("Update process finished with no errors")
@@ -485,7 +509,7 @@ def checkUpdates():
 def checkCouchUrl():
     import requests
     try:
-        requests.get(getInstanceConfiguration().getCouchURI(), timeout=5)
+        requests.get(getInstanceConfiguration().getServerURI(), timeout=5)
     except requests.exceptions.SSLError:
         print """
         SSL certificate validation failed.
@@ -527,6 +551,46 @@ def check_faraday_version():
         sys.exit(2)
 
 
+def doLoginLoop():
+    """ Sets the username and passwords from the command line.
+    If --login flag is set then username and password is set """
+
+    import getpass
+
+    print("""\nTo login please provide your valid DB Credentials.\n
+You have 3 attempts.""")
+
+    try:
+
+        CONF = getInstanceConfiguration()
+
+        for attempt in range(1, 4):
+
+            username = raw_input("Username: ")
+            password = getpass.getpass('Password: ')
+            session_cookie = login_user(CONF.getServerURI(), username, password)
+            if session_cookie:
+                CONF.setDBUser(username)
+                CONF.setDBSessionCookies(session_cookie)
+
+                user_info = get_user_info()
+
+                if user_info is None or 'username' not in user_info or 'roles' not in user_info or 'client' in user_info['roles']:
+                    print "You can't login as a client. You have %s attempt(s) left." % (3 - attempt)
+                    continue
+
+                logger.info('Login successful')
+
+                break
+            print('Login failed, please try again. You have %d more attempts' % (3 - attempt))
+
+        else:
+            logger.fatal('Invalid credentials, 3 attempts failed. Quitting Faraday...')
+            sys.exit(-1)
+    except KeyboardInterrupt:
+        sys.exit(0)
+
+
 def main():
     """Main.
 
@@ -553,6 +617,21 @@ def main():
     setConf()
     checkCouchUrl()
     checkVersion()
+
+    if args.login:
+        CONF = getInstanceConfiguration()
+
+        if not CONF.getServerURI():
+            couchURI = raw_input("Enter the Faraday server [http://127.0.0.1:5985]: ") or "http://127.0.0.1:5985"
+
+            if couchURI:
+                CONF.setCouchUri(couchURI)
+                checkCouchUrl()
+            else:
+                logger.fatal('Please configure couchdb server to authenticate (--login)')
+                sys.exit(-1)
+
+        doLoginLoop()
 
     check_faraday_version()
 

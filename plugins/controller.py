@@ -7,31 +7,36 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+import threading
 
-import errno
-from cStringIO import StringIO
-import multiprocessing
 import os
+import time
 import Queue
 import shlex
-import time
+import errno
+import logging
+from multiprocessing import JoinableQueue
+from Queue import Queue, Empty
 
 from plugins.plugin import PluginProcess
 import model.api
 from model.commands_history import CommandRunInformation
-from plugins.modelactions import modelactions
+from model.controller import modelactions
 from utils.logs import getLogger
 
 from config.globals import (
     CONST_FARADAY_HOME_PATH,
     CONST_FARADAY_ZSH_OUTPUT_PATH)
 
+logger = logging.getLogger(__name__)
 
-class PluginController(object):
+
+class PluginController(threading.Thread):
     """
     TODO: Doc string.
     """
-    def __init__(self, id, plugin_manager, mapper_manager):
+    def __init__(self, id, plugin_manager, mapper_manager, pending_actions):
+        super(PluginController, self).__init__()
         self.plugin_manager = plugin_manager
         self._plugins = plugin_manager.getPlugins()
         self.id = id
@@ -44,6 +49,8 @@ class PluginController(object):
         self._active_plugins = {}
         self.plugin_sets = {}
         self.plugin_manager.addController(self, self.id)
+        self.stop = False
+        self.pending_actions = pending_actions
 
     def _find_plugin(self, plugin_id):
         return self._plugins.get(plugin_id, None)
@@ -92,59 +99,30 @@ class PluginController(object):
         """
         return self._plugins
 
+    def stop(self):
+        self.stop = True
+
     def processOutput(self, plugin, output, command_id, isReport=False):
-        output_queue = multiprocessing.JoinableQueue()
-        new_elem_queue = multiprocessing.Queue()
+        output_queue = JoinableQueue()
+        plugin.set_actions_queue(self.pending_actions)
 
         plugin_process = PluginProcess(
-            plugin, output_queue, new_elem_queue, isReport)
+            plugin, output_queue, isReport)
 
         getLogger(self).debug(
             "Created plugin_process (%d) for plugin instance (%d)" %
             (id(plugin_process), id(plugin)))
 
+        # TODO: stop this processes
         plugin_process.start()
 
-        output_queue.put(output)
-        output_queue.put(None)
+        print('Plugin controller ', self.pending_actions)
+        self.pending_actions.put((modelactions.PLUGINSTART, plugin.id, command_id))
+
+        output_queue.put((output, command_id))
         output_queue.join()
 
-        self._processAction(modelactions.PLUGINSTART, [plugin.id])
-
-        while True:
-            try:
-                current_action = new_elem_queue.get(block=False)
-                if current_action is None:
-                    break
-                action = current_action[0]
-                parameters = current_action[1:]
-
-                if hasattr(parameters[-1], '_metadata'):
-                    parameters[-1]._metadata.command_id = command_id
-
-                getLogger(self).debug(
-                    "Core: Processing a new '%s', parameters (%s)\n" %
-                    (action, str(parameters)))
-                self._processAction(action, parameters)
-
-            except Queue.Empty:
-                continue
-            except IOError, e:
-                if e.errno == errno.EINTR:
-                    continue
-                else:
-                    getLogger(self).debug(
-                        "new_elem_queue Exception - "
-                        "something strange happened... "
-                        "unhandled exception?")
-                    break
-            except Exception:
-                getLogger(self).debug(
-                    "new_elem_queue Exception - "
-                    "something strange happened... "
-                    "unhandled exception?")
-                break
-        self._processAction(modelactions.PLUGINEND, [plugin.id])
+        self.pending_actions.put((modelactions.PLUGINEND, plugin.id, command_id))
 
     def _processAction(self, action, parameters):
         """
@@ -159,17 +137,13 @@ class PluginController(object):
     def _setupActionDispatcher(self):
         self._actionDispatcher = {
             modelactions.ADDHOST: model.api.addHost,
-            modelactions.ADDINTERFACE: model.api.addInterface,
-            modelactions.ADDSERVICEINT: model.api.addServiceToInterface,
-            modelactions.DELSERVICEINT: model.api.delServiceFromInterface,
+            modelactions.ADDSERVICEHOST: model.api.addServiceToHost,
             #Vulnerability
-            modelactions.ADDVULNINT: model.api.addVulnToInterface,
             modelactions.ADDVULNHOST: model.api.addVulnToHost,
             modelactions.ADDVULNSRV: model.api.addVulnToService,
             #VulnWeb
             modelactions.ADDVULNWEBSRV: model.api.addVulnWebToService,
             #Note
-            modelactions.ADDNOTEINT: model.api.addNoteToInterface,
             modelactions.ADDNOTEHOST: model.api.addNoteToHost,
             modelactions.ADDNOTESRV: model.api.addNoteToService,
             modelactions.ADDNOTENOTE: model.api.addNoteToNote,
@@ -232,22 +206,24 @@ class PluginController(object):
         cmd_info.duration = time.time() - cmd_info.itime
         self._mapper_manager.update(cmd_info)
 
-        self.processOutput(plugin, term_output, cmd_info.getID()
-)
+        self.processOutput(plugin, term_output, cmd_info.getID())
         del self._active_plugins[pid]
         return True
 
-    def processReport(self, plugin, filepath):
-
+    def processReport(self, plugin, filepath, ws_name=None):
+        if not ws_name:
+            ws_name = model.api.getActiveWorkspace().name
         cmd_info = CommandRunInformation(
-            **{'workspace': model.api.getActiveWorkspace().name,
+            **{'workspace': ws_name,
                 'itime': time.time(),
                 'command': 'Import %s:' % plugin,
                 'params': filepath})
-        self._mapper_manager.save(cmd_info)
+        self._mapper_manager.createMappers(ws_name)
+        cmd_info.setID(self._mapper_manager.save(cmd_info))
 
         if plugin in self._plugins:
-            self.processOutput(self._plugins[plugin], filepath, cmd_info.getID(), True )
+            logger.info('Processing report with plugin {0}'.format(plugin))
+            self.processOutput(self._plugins[plugin], filepath, cmd_info.getID(), True)
             cmd_info.duration = time.time() - cmd_info.itime
             self._mapper_manager.update(cmd_info)
             return True

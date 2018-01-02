@@ -10,7 +10,6 @@ angular.module('faradayApp')
 
         // All credentials need this properties minimum for build object.
         var _credentialFields = {
-            '_id': 'string',
             'name': 'string',
             'username': 'string',
             'password': 'string',
@@ -19,31 +18,32 @@ angular.module('faradayApp')
 
         // Only this properties will be saved to server.
         var _credentialFieldsSaveToServer = {
-            '_id': 'string',
-            '_rev': 'string',
+            'id': 'integer',
             'name': 'string',
             'username': 'string',
             'metadata': 'string',
             'password': 'string',
             'type': 'string',
+            'parent_type': 'string',
+            'parent': 'string'
         };
 
         var Credential;
-        Credential = function(data, parent){
+        Credential = function(data, parent, parent_type){
             if(data) {
-                this.set(data, parent);
+                this.set(data, parent, parent_type);
             }
         };
 
         Credential.prototype = {
             // Build object.
-            set: function(data, parent) {
+            set: function(data, parent, parent_type) {
 
                 data.type = 'Cred';
+                data.parent_type = parent_type;
+                data.parent = parent;
                 if(data.metadata === undefined)
                     data.metadata = '';
-                if(data._id === undefined && parent)
-                    data['_id'] = _generateID(parent, data.name, data.username, data.password);
 
                 _checkFieldsOk(data);
                 angular.extend(this, data);
@@ -55,7 +55,7 @@ angular.module('faradayApp')
                 var deferred = $q.defer();
                 var self = this;
                 
-                ServerAPI.getObj(ws, id).then(function(response){
+                ServerAPI.getObj(ws, id, 'credential').then(function(response){
                     angular.extend(self, response.data);
                     deferred.resolve();
                 });
@@ -73,10 +73,7 @@ angular.module('faradayApp')
                 var self = this;
                 self.metadata = updateMetadata(self.metadata);
                 
-                return ServerAPI.updateCredential(ws, buildObjectServer(self))
-                .then(function(credentialData) {
-                    self._rev = credentialData.rev;
-                });
+                return ServerAPI.updateCredential(ws, buildObjectServer(self));
             },
 
             // Create object in server.
@@ -94,12 +91,12 @@ angular.module('faradayApp')
                 
                 var deferred = $q.defer();
                 
-                var result = this._id.split('.');
+                var result = this.parent;
                 var hostIdToSearch = undefined;
                 var serviceIdToSearch = undefined;
 
                 //Parent is Host
-                if (result.length === 2){
+                if (result.parent_type === 'Host'){
                     hostIdToSearch = result[0];
 
                     ServerAPI.getObj(ws, hostIdToSearch).then(function(response){
@@ -108,9 +105,9 @@ angular.module('faradayApp')
                 }
 
                 //Parent is Service
-                else if (result.length === 4){
+                else if (result.lparent_type == 'Service'){
                     hostIdToSearch = result[0];
-                    serviceIdToSearch = result.slice(0, result.length - 1).join('.');
+                    serviceIdToSearch = result.parent;
 
                      ServerAPI.getObj(ws, hostIdToSearch).then(function(responseHost){
                          ServerAPI.getObj(ws, serviceIdToSearch).then(function(responseService){
@@ -122,11 +119,6 @@ angular.module('faradayApp')
                 return deferred.promise;
             }
         };
-
-    var _generateID = function(parent, name, username, password){
-        var id = parent + '.' + CryptoJS.SHA1([name, username, password].join('._.')).toString();
-        return id;
-    };
 
     // Check object to construct have all fields and also, type of they are OK.
     // All fields in _credentialFields should are in object.

@@ -2,11 +2,11 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 
-import server.utils.logger
-
 from sqlalchemy import distinct, Boolean
 from sqlalchemy.sql import func, asc, desc
 from sqlalchemy.sql.expression import ClauseElement
+from sqlalchemy.sql import expression
+from sqlalchemy.ext import compiler
 
 
 class ORDER_DIRECTIONS:
@@ -18,7 +18,7 @@ def paginate(query, page, page_size):
     """
     Limit results from a query based on pagination parameters
     """
-    if not (page >= 0 and page_size >=0):
+    if not (page >= 0 and page_size >= 0):
         raise Exception("invalid values for pagination (page: %d, page_size: %d)" % (page, page_size))
     return query.limit(page_size).offset(page * page_size)
 
@@ -94,7 +94,7 @@ def apply_search_filter(query, field_to_col_map, free_text_search=None, field_fi
                 # ignore this list since its purpose is clearly to
                 # match anything it can find.
                 if is_direct_filter_search and attribute in strict_filter:
-                    search_term = column.is_(field_filter.get(attribute))
+                    search_term = column.op('=')(field_filter.get(attribute))
                 else:
                     search_term = column.like(like_str)
 
@@ -153,7 +153,8 @@ def get_count(query, count_col=None):
     else:
         count_filter = [func.count(distinct(count_col))]
 
-    count_q = query.statement.with_only_columns(count_filter).order_by(None).group_by(None)
+    count_q = query.statement.with_only_columns(count_filter).\
+              order_by(None).group_by(None)
     count = query.session.execute(count_q).scalar()
 
     return count
@@ -169,3 +170,36 @@ def get_or_create(session, model, defaults=None, **kwargs):
         instance = model(**params)
         session.add(instance)
         return instance, True
+
+
+class GroupConcat(expression.FunctionElement):
+    name = "group_concat"
+
+
+@compiler.compiles(GroupConcat, 'postgresql')
+def _group_concat_postgresql(element, compiler, **kw):
+    if len(element.clauses) == 2:
+        separator = compiler.process(element.clauses.clauses[1])
+    else:
+        separator = ','
+
+    res = 'array_to_string(array_agg({0}), \'{1}\')'.format(
+        compiler.process(element.clauses.clauses[0]),
+        separator,
+    )
+    return res
+
+class BooleanToIntColumn(expression.FunctionElement):
+
+    def __init__(self, expression):
+        super(BooleanToIntColumn, self).__init__()
+        self.expression_str = expression
+
+
+@compiler.compiles(BooleanToIntColumn, 'postgresql')
+def _integer_to_boolean_postgresql(element, compiler, **kw):
+    return '{0}::int'.format(element.expression_str)
+
+@compiler.compiles(BooleanToIntColumn, 'sqlite')
+def _integer_to_boolean_sqlite(element, compiler, **kw):
+    return element.expression_str

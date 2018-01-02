@@ -50,7 +50,7 @@ class Update(object):
 
 class CouchViews(Update):
     def run(self):
-        source_server = CONF.getCouchURI()
+        source_server = CONF.getServerURI()
         if not source_server:
             logger.info("""No DB configuration found.
                     To upgrade your DB please configure a valid CouchDB URI in:
@@ -84,7 +84,7 @@ class DB(Update):
             logger.info('Database [%s] is a backup, ignoring' % db_name)
             return
 
-        source_server = CONF.getCouchURI()
+        source_server = CONF.getServerURI()
         # Levanto los servidores
         db_source = couchdbkit.Database("/".join((source_server, db_name)))
         if db_source.doc_exist(db_name):
@@ -102,7 +102,7 @@ class DB(Update):
 
         # Crear documento 'workspace'
         logger.info('Creating workspace document')
-        
+
         create_workspace(db_name,
                         'Migrated Workspace',
                         int(time.time() * 1000),
@@ -145,7 +145,7 @@ class DB(Update):
 
 
     def run(self):
-        source_server = CONF.getCouchURI()
+        source_server = CONF.getServerURI()
         if not source_server:
             logger.info("""No DB configuration found.
                     To upgrade your DB please configure a valid CouchDB URI in:

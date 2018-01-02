@@ -229,13 +229,6 @@ def addServiceToApplication(host_id, application_id, service):
         return True
     return False
 
-def addServiceToInterface(host_id, interface_id, service):
-    if service is not None:
-        __model_controller.addServiceToInterfaceSYNC(host_id, interface_id, service)
-        return True
-    return False
-
-               
 
 def addVulnToHost(host_id, vuln):
     if vuln is not None:
@@ -243,11 +236,6 @@ def addVulnToHost(host_id, vuln):
         return True
     return False
 
-def addVulnToInterface(host_id, interface_id, vuln):
-    if vuln is not None:
-        __model_controller.addVulnToInterfaceSYNC(host_id, interface_id, vuln)
-        return True
-    return False
 
 def addVulnToApplication(host_id, application_id, vuln):
     if vuln is not None:

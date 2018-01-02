@@ -9,7 +9,6 @@ from sqlalchemy.orm.query import Bundle
 from server.dao.base import FaradayDAO
 from server.models import (
     Host,
-    Interface,
     Service,
     EntityMetadata,
     Vulnerability,
@@ -21,7 +20,6 @@ from server.utils.database import apply_search_filter
 class ServiceDAO(FaradayDAO):
     MAPPED_ENTITY = Service
     COLUMNS_MAP = {
-        "interface":    [Service.interface_id],
         "couchid":      [EntityMetadata.couchdb_id],
         "command_id":   [EntityMetadata.command_id],
         'id':           [Service.id],
@@ -34,13 +32,12 @@ class ServiceDAO(FaradayDAO):
         "hostIdCouchdb": []
     }
 
-    STRICT_FILTERING = ["couchid", "interface", 'id', 'hostid']
+    STRICT_FILTERING = ["couchid", 'id', 'hostid']
 
     def list(self, service_filter={}):
         service_bundle = Bundle('service',
                 Service.id, Service.name, Service.description, Service.protocol,
-                Service.status, Service.ports, Service.version, Service.owned,
-                Service.interface_id,
+                Service.status, Service.port, Service.version, Service.owned,
                 func.count(distinct(Vulnerability.id)).label('vuln_count'), EntityMetadata.couchdb_id,\
                 EntityMetadata.revision, EntityMetadata.update_time, EntityMetadata.update_user,\
                 EntityMetadata.update_action, EntityMetadata.creator, EntityMetadata.create_time,\
@@ -48,12 +45,10 @@ class ServiceDAO(FaradayDAO):
                 func.count(distinct(Credential.id)).label("credentials_count"))
 
         query = self._session.query(service_bundle).\
-                group_by(Service.id).\
+                group_by(Service.id, EntityMetadata.id).\
                 outerjoin(EntityMetadata, EntityMetadata.id == Service.entity_metadata_id).\
                 outerjoin(Vulnerability, Service.id == Vulnerability.service_id).group_by(Service.id).\
-                outerjoin(Interface, Interface.id == Service.interface_id).\
-                outerjoin(Credential, (Credential.service_id == Service.id) and (Credential.host_id == None)).\
-                outerjoin(Host, Host.id == Interface.host_id)
+                outerjoin(Credential, (Credential.service_id == Service.id) and (Credential.host_id == None))
 
         query = query.filter(Service.workspace == self.workspace)
         query = apply_search_filter(query, self.COLUMNS_MAP, None, service_filter, self.STRICT_FILTERING)
@@ -90,7 +85,7 @@ class ServiceDAO(FaradayDAO):
                 },
                 'protocol': service.protocol,
                 'status': service.status,
-                'ports': [int(i) for i in service.ports.split(',') if service.ports],
+                'port': [int(i) for i in service.port.split(',') if service.port],
                 'version': service.version,
                 'owned': service.owned,
                 'owner': service.owner,

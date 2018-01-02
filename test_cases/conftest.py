@@ -1,17 +1,73 @@
 import os
 import sys
+import json
+import inspect
 import pytest
+from factory import Factory
+from flask.testing import FlaskClient
+from nplusone.core import signals
+from sqlalchemy import event
+from pytest_factoryboy import register
 
 sys.path.append(os.path.abspath(os.getcwd()))
 from server.app import create_app
 from server.models import db
+from test_cases import factories
+
+
+
+# Discover factories to automatically register them to pytest-factoryboy and to
+# override its session
+enabled_factories = []
+for attr_name in dir(factories):
+    obj = getattr(factories, attr_name)
+    if not inspect.isclass(obj):
+        continue
+    if not issubclass(obj, Factory):
+        continue
+    if obj._meta.model is None:
+        # It is an abstract class
+        continue
+    enabled_factories.append(obj)
+
+for factory in enabled_factories:
+    register(factory)
+
+register(factories.WorkspaceFactory, "second_workspace")
+
+
+class CustomClient(FlaskClient):
+
+    def open(self, *args, **kwargs):
+        if kwargs.pop('use_json_data', True) and 'data' in kwargs:
+            # JSON-encode data by default
+            kwargs['data'] = json.dumps(kwargs['data'])
+            kwargs['headers'] = kwargs.get('headers', []) + [
+                ('Content-Type', 'application/json'),
+            ]
+
+        ret = super(CustomClient, self).open(*args, **kwargs)
+        if ret.headers.get('content-type') == 'application/json':
+            try:
+                ret.json = json.loads(ret.data)
+            except ValueError:
+                ret.json = None
+        return ret
+
+
+def pytest_addoption(parser):
+    parser.addoption('--connection-string', default='sqlite://',
+                     help="Database connection string. Defaults to in-memory "
+                     "sqlite if not specified:")
+    parser.addoption('--ignore-nplusone', action='store_true',
+                     help="Globally ignore nplusone errors")
 
 
 @pytest.fixture(scope='session')
 def app(request):
-    # we use sqlite memory for tests
-    test_conn_string = 'sqlite://'
-    app = create_app(db_connection_string=test_conn_string, testing=True)
+    app = create_app(db_connection_string=request.config.getoption(
+        '--connection-string'), testing=True)
+    app.test_client_class = CustomClient
 
     # Establish an application context before running the tests.
     ctx = app.app_context()
@@ -21,6 +77,8 @@ def app(request):
         ctx.pop()
 
     request.addfinalizer(teardown)
+    app.config['NPLUSONE_RAISE'] = not request.config.getoption(
+        '--ignore-nplusone')
     return app
 
 
@@ -29,7 +87,22 @@ def database(app, request):
     """Session-wide test database."""
 
     def teardown():
+        try:
+            db.engine.execute('DROP TABLE vulnerability CASCADE')
+        except Exception:
+            pass
+        try:
+            db.engine.execute('DROP TABLE vulnerability_template CASCADE')
+        except Exception:
+            pass
         db.drop_all()
+
+    # Disable check_vulnerability_host_service_source_code constraint because
+    # it doesn't work in sqlite
+    vuln_constraints = db.metadata.tables['vulnerability'].constraints
+    vuln_constraints.remove(next(
+        constraint for constraint in vuln_constraints
+        if constraint.name == 'check_vulnerability_host_service_source_code'))
 
     db.app = app
     db.create_all()
@@ -39,16 +112,24 @@ def database(app, request):
 
 
 @pytest.fixture(scope='function')
-def session(database, request):
-    connection = db.engine.connect()
+def fake_session(database, request):
+    connection = database.engine.connect()
     transaction = connection.begin()
 
     options = {"bind": connection, 'binds': {}}
     session = db.create_scoped_session(options=options)
 
+    database.session = session
     db.session = session
 
+    for factory in enabled_factories:
+        factory._meta.sqlalchemy_session = session
+
     def teardown():
+        # rollback - everything that happened with the
+        # Session above (including calls to commit())
+        # is rolled back.
+        # be careful with this!!!!!
         transaction.rollback()
         connection.close()
         session.remove()
@@ -56,29 +137,87 @@ def session(database, request):
     request.addfinalizer(teardown)
     return session
 
+
+@pytest.fixture(scope='function')
+def session(database, request):
+    """Use this fixture if the function being tested does a session
+    rollback.
+
+    See http://docs.sqlalchemy.org/en/latest/orm/session_transaction.html#joining-a-session-into-an-external-transaction-such-as-for-test-suites
+    for further information
+    """
+    connection = database.engine.connect()
+    transaction = connection.begin()
+
+    options = {"bind": connection, 'binds': {}}
+    session = db.create_scoped_session(options=options)
+
+    # start the session in a SAVEPOINT...
+    session.begin_nested()
+
+    # then each time that SAVEPOINT ends, reopen it
+    @event.listens_for(session, "after_transaction_end")
+    def restart_savepoint(session, transaction):
+        if transaction.nested and not transaction._parent.nested:
+
+            # ensure that state is expired the way
+            # session.commit() at the top level normally does
+            # (optional step)
+            session.expire_all()
+
+            session.begin_nested()
+
+    database.session = session
+    db.session = session
+
+    for factory in enabled_factories:
+        factory._meta.sqlalchemy_session = session
+
+    def teardown():
+        # rollback - everything that happened with the
+        # Session above (including calls to commit())
+        # is rolled back.
+        # be careful with this!!!!!
+        transaction.rollback()
+        connection.close()
+        session.remove()
+
+    request.addfinalizer(teardown)
+    return session
+
+
 @pytest.fixture
 def test_client(app):
     return app.test_client()
 
 
-def create_user(app, username, email, password, **kwargs):
+def create_user(app, session, username, email, password, **kwargs):
     user = app.user_datastore.create_user(username=username,
                                           email=email,
                                           password=password,
                                           **kwargs)
-    db.session.add(user)
-    db.session.commit()
+    session.add(user)
+    session.commit()
     return user
 
 
 @pytest.fixture
-def user(app, session):
-    return create_user(app, 'test', 'user@test.com', 'password', is_ldap=False)
+def user(app, database, session):
+    # print 'user', id(session), session
+    return create_user(app, session, 'test', 'user@test.com', 'password',
+                       is_ldap=False)
 
 
 @pytest.fixture
 def ldap_user(app, session):
-    return create_user(app, 'ldap', 'ldap@test.com', 'password', is_ldap=True)
+    return create_user(app, session, 'ldap', 'ldap@test.com', 'password',
+                       is_ldap=True)
+
+
+@pytest.fixture
+def host_with_hostnames(host, hostname_factory):
+    hostname_factory.create_batch(3, workspace=host.workspace, host=host)
+    return host
 
 
 def login_as(test_client, user):
@@ -88,7 +227,16 @@ def login_as(test_client, user):
         db.session.add(user)
         sess['user_id'] = user.id
 
+
 @pytest.fixture
 def logged_user(test_client, user):
     login_as(test_client, user)
     return user
+
+
+@pytest.fixture
+def ignore_nplusone(app):
+    old = app.config['NPLUSONE_RAISE']
+    app.config['NPLUSONE_RAISE'] = False
+    yield
+    app.config['NPLUSONE_RAISE'] = old

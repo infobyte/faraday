@@ -15,7 +15,6 @@ angular.module('faradayApp')
             this.confirmed = true;
             this.data = "";
             this.desc = "";
-            this.easeofresolution = "";
             this.hostnames = "";
             this.impact = {
                 accountability: false,
@@ -37,6 +36,7 @@ angular.module('faradayApp')
             this.owner = "";
             this.owned = "";
             this.parent = "";
+            this.parent_type = "";
             this.refs = "";
             this.resolution = "";
             this.service = "";
@@ -70,24 +70,15 @@ angular.module('faradayApp')
             set: function(ws, data) {
                 var self = this;
 
-                // new vuln
-                if(data._id === undefined) {
-                    var id = CryptoJS.SHA1(data.name + "." + data.desc).toString();
-                    self._id = data.parent + "." + id;
-                    self.obj_id = id;
-                } else {
-                    self._id = data._id;
-                    self.obj_id = data.obj_id;
-                    if(data._rev !== undefined) self._rev = data._rev;
-                    if(data.metadata !== undefined) self.metadata = data.metadata;
-                    if(data.target !== undefined) self.target = data.target;
-                    if(data.hostnames !== undefined) self.hostnames = data.hostnames;
-                    if(data.service !== undefined) self.service = data.service;
-                }
-
+                if(data._id !== undefined) self._id = data._id;
+                if(data.metadata !== undefined) self.metadata = data.metadata;
+                if(data.target !== undefined) self.target = data.target;
+                if(data.hostnames !== undefined) self.hostnames = data.hostnames;
+                if(data.service !== undefined) self.service = data.service;
                 if(data.owner !== undefined) self.owner = data.owner;
                 self.ws = ws;
                 if(data.parent !== undefined) self.parent = data.parent;
+                if(data.parent_type !== undefined) self.parent_type = data.parent_type;
 
                 self.public_properties.forEach(function(property) {
                     if(data[property] !== undefined) self[property] = data[property];
@@ -100,8 +91,7 @@ angular.module('faradayApp')
             },
             _update: function(vuln, data) {
                 var deferred = $q.defer(),
-                self = this,
-                url = BASEURL + vuln.ws + "/" + vuln._id;
+                self = this;
 
                 var now = new Date(),
                 date = now.getTime();
@@ -137,7 +127,6 @@ angular.module('faradayApp')
                         self._save(vuln, true)
                             .then(function(response) {
                                 self.set(self.ws, vuln);
-                                self._rev = response.rev;
                                 deferred.resolve();
                             }, function() {
                                 deferred.reject();
@@ -168,11 +157,11 @@ angular.module('faradayApp')
                 self = this,
                 vuln = {};
 
-                vuln._id = self._id;
                 vuln.metadata = self.metadata;
                 vuln.obj_id = self.obj_id;
                 vuln.owner = self.owner;
                 vuln.parent = self.parent;
+                vuln.parent_type = self.parent_type;
                 vuln.type = self.type;
                 vuln.ws = self.ws;
 
@@ -196,13 +185,11 @@ angular.module('faradayApp')
             save: function() {
                 var deferred = $q.defer(),
                 loadAtt,
-                self = this,
-                url = BASEURL + self.ws + "/" + self._id;
+                self = this;
 
                 self.populate().then(function(resp) {
                     self._save(resp, false)
                         .then(function(data) {
-                            self._rev = data.rev;
                             deferred.resolve(self);
                         }, function(data, status, headers, config) {
                             deferred.reject(status);

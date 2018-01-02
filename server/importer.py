@@ -527,7 +527,6 @@ class VulnerabilityImporter(object):
                     VulnerabilityWeb,
                     name=document.get('name'),
                     description=document.get('desc'),
-                    severity=severity,
                     service_id=parent.id,
                     method=method,
                     parameter_name=pname,
@@ -539,7 +538,6 @@ class VulnerabilityImporter(object):
             if document['type'] == 'Vulnerability':
                 vuln_params = {
                     'name': document.get('name'),
-                    'severity': severity,
                     'workspace': workspace,
                     'description': document.get('desc')
                 }
@@ -552,6 +550,7 @@ class VulnerabilityImporter(object):
                     Vulnerability,
                     **vuln_params
                 )
+            vulnerability.severity = severity
             vulnerability.confirmed = document.get('confirmed', False) or False
             vulnerability.data = document.get('data')
             vulnerability.ease_of_resolution = document.get('easeofresolution') if document.get('easeofresolution') else None

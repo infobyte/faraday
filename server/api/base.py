@@ -229,7 +229,7 @@ class GenericWorkspacedView(GenericView):
         context.update(kwargs)
         return context
 
-    def _validate_uniqueness(self, obj, object_id=None):
+    def _validate_uniqueness(self, obj, object_id=None, unique_fields=None):
         # TODO: Use implementation of GenericView
         assert obj.workspace is not None, "Object must have a " \
             "workspace attribute set to call _validate_uniqueness"
@@ -239,9 +239,15 @@ class GenericWorkspacedView(GenericView):
             # The object already exists in DB, we want to fetch an object
             # different to this one but with the same unique field
             query = query.filter(primary_key_field != object_id)
-        for field_names in self.unique_fields:
+        if unique_fields is None:
+            # It is usually None, but in some case the child class may want to
+            # override it based on some condition dependent on the request
+            unique_fields = self.unique_fields
+        for field_names in unique_fields:
             for field_name in field_names:
-                field = getattr(self.model_class, field_name)
+                # Use type(obj) instead of self.model_class to be
+                # compatible with polymorphic obejcts (e.g. Vulnerability)
+                field = getattr(type(obj), field_name)
                 value = getattr(obj, field_name)
                 query = query.filter(
                     field == value)
@@ -447,13 +453,24 @@ class CommandMixing():
             command = db.session.query(Command).filter(Command.id==command_id, Command.workspace==obj.workspace).first()
             if command is None:
                 raise InvalidUsage('Command not found.')
-            command_object = CommandObject(
+            # if the object is created and updated in the same command
+            # the command object already exists
+            # we skip the creation.
+            command_object = CommandObject.query.filter_by(
                 object_id=obj.id,
                 object_type=obj.__class__.__name__,
                 command=command,
                 workspace=obj.workspace,
-                created_persistent=created
-            )
+            ).first()
+            if created or not command_object:
+                command_object = CommandObject(
+                    object_id=obj.id,
+                    object_type=obj.__class__.__name__,
+                    command=command,
+                    workspace=obj.workspace,
+                    created_persistent=created
+                )
+
             db.session.add(command)
             db.session.add(command_object)
 
@@ -488,7 +505,8 @@ class UpdateMixin(object):
         # just in case an schema allows id as writable.
         data.pop('id', None)
         self._update_object(obj, data)
-        updated = self._perform_update(object_id, obj, **kwargs)
+        self._perform_update(object_id, obj, **kwargs)
+
         return self._dump(obj, kwargs), 200
 
     def _update_object(self, obj, data):
@@ -506,7 +524,9 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixing):
     """Add PUT /<id>/ route"""
 
     def _perform_update(self, object_id, obj, workspace_name):
-        assert not db.session.new
+        # # Make sure that if I created new objects, I had properly commited them
+        # assert not db.session.new
+
         with db.session.no_autoflush:
             obj.workspace = self._get_workspace(workspace_name)
 

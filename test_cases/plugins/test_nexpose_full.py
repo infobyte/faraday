@@ -28,7 +28,6 @@ from persistence.server.models import (
     Host,
     Service,
     ModelBase)
-from plugins.modelactions import modelactions
 
 
 class TestNexpose:
@@ -53,12 +52,12 @@ class TestNexpose:
             actions[action[0]].append(action[1])
 
         assert actions[2000][0].name == "192.168.1.1"
-        assert actions.keys() == [2000, 2017, 2019, 2037, 20008]
+        assert actions.keys() == [2000, 2017, 2019, 2038, 20008]
 
         assert len(actions[2000]) == 8
         assert len(actions[20008]) == 20
         assert len(actions[2027]) == 0
-        assert len(actions[2037]) == 403
+        assert len(actions[2038]) == 403
         assert len(actions[2039]) == 0
 
 

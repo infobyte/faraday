@@ -72,7 +72,7 @@ def _conf():
     # Fplugin run in other instance, so this dont generate any trouble.
     if not CONF.getDBSessionCookies():
         server_url = CONF.getServerURI() if FARADAY_UP else SERVER_URL
-        cookie = login_user(server_url, AUTH_USER, AUTH_PASS)
+        cookie = login_user(server_url, CONF.getAPIUsername(), CONF.getAPIPassword())
         CONF.setDBSessionCookies(cookie)
 
     return CONF
@@ -261,40 +261,33 @@ def _get_raw_hosts(workspace_name, **params):
 def _get_raw_vulns(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
     a dictionary with the vulns table."""
-    request_url = _create_server_get_url(workspace_name, 'vulns')
-    return _get(request_url, **params)
-
-
-def _get_raw_interfaces(workspace_name, **params):
-    """Take a workspace_name and an arbitrary number of params and return
-    a dictionary with the interfaces table."""
-    request_url = _create_server_get_url(workspace_name, 'interfaces')
+    request_url = _create_server_get_url(workspace_name, 'vulns', params.get('id', None))
     return _get(request_url, **params)
 
 
 def _get_raw_services(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
     a dictionary with the services table."""
-    request_url = _create_server_get_url(workspace_name, 'services')
+    request_url = _create_server_get_url(workspace_name, 'services', params.get('id', None))
     return _get(request_url, **params)
 
 
 def _get_raw_notes(workspace_name, **params):
     """Take a workspace name and an arbitrary number of params and
     return a dictionary with the notes table."""
-    request_url = _create_server_get_url(workspace_name, 'notes')
+    request_url = _create_server_get_url(workspace_name, 'comment', params.get('id', None))
     return _get(request_url, **params)
 
 
 def _get_raw_credentials(workspace_name, **params):
     """Take a workspace name and an arbitrary number of params and
     return a dictionary with the credentials table."""
-    request_url = _create_server_get_url(workspace_name, 'credentials')
+    request_url = _create_server_get_url(workspace_name, 'credential', params.get('id', None))
     return _get(request_url, **params)
 
 
 def _get_raw_commands(workspace_name, **params):
-    request_url = _create_server_get_url(workspace_name, 'commands')
+    request_url = _create_server_get_url(workspace_name, 'commands', params.get('id', None))
     return _get(request_url, **params)
 
 
@@ -354,7 +347,6 @@ def _get_faraday_ready_dictionaries(workspace_name, faraday_object_name,
     """
     object_to_func = {'hosts': _get_raw_hosts,
                       'vulns': _get_raw_vulns,
-                      'interfaces': _get_raw_interfaces,
                       'services': _get_raw_services,
                       'notes': _get_raw_notes,
                       'credentials': _get_raw_credentials,
@@ -1087,10 +1079,13 @@ def update_vuln(workspace_name, command_id, id, name, description, parent,
                              metadata=metadata,
                              policyviolations=policyviolations)
 
-def create_vuln_web(workspace_name, command_id, name, description, owned=None, owner="",
-                    confirmed=False, data="", refs=None, severity="info", resolution="",
-                    desc="", metadata=None, method=None, params="", path=None, pname=None,
-                    query=None, request=None, response=None, category="", website=None,
+
+def create_vuln_web(workspace_name, command_id, name, description, parent,
+                    parent_type, owned=None, owner="", confirmed=False,
+                    data="", refs=None, severity="info", resolution="",
+                    desc="", metadata=None, method=None, params="",
+                    path=None, pname=None, query=None, request=None,
+                    response=None, category="", website=None,
                     status=None, policyviolations=[]):
     """Creates a vuln web.
 
@@ -1124,6 +1119,8 @@ def create_vuln_web(workspace_name, command_id, name, description, owned=None, o
         A dictionary with the server's response.
     """
     return _save_to_server(workspace_name,
+                           parent=parent,
+                           parent_type=parent_type,
                            command_id=command_id,
                            name=name,
                            description=description,
@@ -1149,7 +1146,8 @@ def create_vuln_web(workspace_name, command_id, name, description, owned=None, o
                            type='VulnerabilityWeb',
                            policyviolations=policyviolations)
 
-def update_vuln_web(workspace_name, command_id, id, name, description, owned=None, owner="",
+def update_vuln_web(workspace_name, command_id, id, name, description,
+                    parent, parent_type, owned=None, owner="",
                     confirmed=False, data="", refs=None, severity="info", resolution="",
                     desc="", metadata=None, method=None, params="", path=None, pname=None,
                     query=None, request=None, response=None, category="", website=None,
@@ -1187,6 +1185,8 @@ def update_vuln_web(workspace_name, command_id, id, name, description, owned=Non
     """
     return _update_in_server(workspace_name,
                              id,
+                             parent=parent,
+                             parent_type=parent_type,
                              command_id=command_id,
                              name=name,
                              description=description,
@@ -1242,8 +1242,9 @@ def create_note(workspace_name, command_id, object_type, object_id, name, text, 
                            type="Note",
                            metadata=metadata)
 
-def update_note(workspace_name, command_id, id, name, text, owned=None, owner="",
-                description="", metadata=None):
+def update_note(workspace_name, command_id, id, name, text,
+                object_type, object_id, owned=None,
+                owner="", description="", metadata=None):
     """Updates a note.
 
     Args:
@@ -1262,6 +1263,8 @@ def update_note(workspace_name, command_id, id, name, text, owned=None, owner=""
     """
     return _update_in_server(workspace_name,
                              id,
+                             object_id=object_id,
+                             object_type=object_type,
                              command_id=command_id,
                              name=name,
                              description=description,

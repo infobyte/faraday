@@ -25,7 +25,6 @@ from persistence.server.models import (
     Host,
     Service,
     ModelBase)
-from plugins.modelactions import modelactions
 
 
 class TestBurp:
@@ -51,11 +50,11 @@ class TestBurp:
             actions[action[0]].append(action[1])
 
         assert actions[2000][0].name == "200.20.20.201"
-        assert actions.keys() == [2000, 20008, 2027, 2037, 2039]
+        assert actions.keys() == [2000, 20008, 2027, 2040, 2038]
         assert len(actions[20008]) == 14
         assert len(actions[2027]) == 14
-        assert len(actions[2037]) == 14
-        assert len(actions[2039]) == 14
+        assert len(actions[2040]) == 14
+        assert len(actions[2038]) == 14
 
         assert all('http' == name for name in map(lambda service: service.name, actions[20008]))
         assert all([80] == ports for ports in map(lambda service: service.ports, actions[20008]))

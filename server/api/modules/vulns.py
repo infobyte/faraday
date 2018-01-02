@@ -94,7 +94,10 @@ class VulnerabilitySchema(AutoSchema):
                                fields.String(),
                                required=True)
     tags = PrimaryKeyRelatedField('name', dump_only=True, many=True)
-    easeofresolution = fields.String(attribute='ease_of_resolution', validate=OneOf(Vulnerability.EASE_OF_RESOLUTIONS),)
+    easeofresolution = fields.String(
+        attribute='ease_of_resolution',
+        validate=OneOf(Vulnerability.EASE_OF_RESOLUTIONS),
+        allow_none=True)
     hostnames = PrimaryKeyRelatedField('name', many=True, dump_only=True)
     service = fields.Nested(ServiceSchema(only=[
         '_id', 'ports', 'status', 'protocol', 'name', 'version', 'summary'
@@ -209,6 +212,8 @@ class VulnerabilitySchema(AutoSchema):
         except NoResultFound:
             raise ValidationError('Parent id not found: {}'.format(parent_id))
         data[parent_field] = parent.id
+        # TODO migration: check what happens when updating the parent from
+        # service to host or viceverse
         return data
 
 
@@ -290,13 +295,14 @@ class VulnerabilityView(PaginatedMixin,
     filterset_class = VulnerabilityFilterSet
     unique_fields_by_class = {
         'Vulnerability': [('name', 'description', 'host_id', 'service_id')],
-        'VulnerabilityWeb': [('name', 'description', 'service_id', 'method', 'parameter_name', 'path', 'website')],
+        'VulnerabilityWeb': [('name', 'description', 'service_id', 'method',
+                              'parameter_name', 'path', 'website')],
     }
 
     model_class_dict = {
         'Vulnerability': Vulnerability,
         'VulnerabilityWeb': VulnerabilityWeb,
-        'VulnerabilityGeneric': VulnerabilityGeneric, # For listing objects
+        'VulnerabilityGeneric': VulnerabilityGeneric,  # For listing objects
     }
     schema_class_dict = {
         'Vulnerability': VulnerabilitySchema,
@@ -304,8 +310,9 @@ class VulnerabilityView(PaginatedMixin,
     }
 
     def _validate_uniqueness(self, obj, object_id=None):
-        self.unique_fields = self.unique_fields_by_class[obj.__class__.__name__]
-        super(VulnerabilityView, self)._validate_uniqueness(obj, object_id)
+        unique_fields = self.unique_fields_by_class[obj.__class__.__name__]
+        super(VulnerabilityView, self)._validate_uniqueness(
+            obj, object_id, unique_fields)
 
     def _perform_create(self, data, **kwargs):
         data = self._parse_data(self._get_schema_instance(kwargs),

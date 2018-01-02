@@ -21,7 +21,7 @@ from Queue import Queue, Empty
 from plugins.plugin import PluginProcess
 import model.api
 from model.commands_history import CommandRunInformation
-from plugins.modelactions import modelactions
+from model.controller import modelactions
 from utils.logs import getLogger
 
 from config.globals import (

@@ -49,7 +49,7 @@ angular.module('faradayApp')
                         $scope.parentObject.nameService = response['data']['name'];
 
                         // and also, load all host information needed.
-                        var hostId = response['data']['_id'].split('.')[0];
+                        var hostId = response['data']['host_id'];
 
                         ServerAPI.getObj($scope.workspace, hostId, 'hosts').then(function (response) {
                             $scope.parentObject.nameHost = response['data']['name'];

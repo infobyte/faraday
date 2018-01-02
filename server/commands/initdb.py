@@ -1,3 +1,4 @@
+import getpass
 import string
 
 import os
@@ -5,6 +6,8 @@ import sys
 from random import SystemRandom
 from tempfile import TemporaryFile
 from subprocess import Popen, PIPE
+
+from sqlalchemy import create_engine
 
 try:
     # py2.7
@@ -90,7 +93,7 @@ class InitDB():
                             'Please enter the {blue} database name {white} (press enter to use "faraday"): '.format(
                                 blue=Fore.BLUE, white=Fore.WHITE)) or 'faraday'
                         current_psql_output = TemporaryFile()
-                        process_status = self._create_database(database_name, username, current_psql_output)
+                        database_name, process_status = self._create_database(database_name, username, current_psql_output)
                         current_psql_output.seek(0)
                         self._check_psql_output(current_psql_output, process_status)
                 else:
@@ -102,10 +105,18 @@ class InitDB():
             current_psql_output.close()
             conn_string = self._save_config(config, username, password, database_name, hostname)
             self._create_tables(conn_string)
+            self._create_admin_user(conn_string)
         except KeyboardInterrupt:
             current_psql_output.close()
             print('User cancelled.')
             sys.exit(1)
+
+    def _create_admin_user(self, conn_string):
+        engine = create_engine(conn_string)
+        random_password = self.generate_random_pw(12)
+        engine.execute("INSERT INTO \"user\" (username, password, is_ldap, active) VALUES ('admin', '{0}', false, true);".format(random_password))
+        print("Admin username created with {red} password{white}: {random_password}".format(random_password=random_password, white=Fore.WHITE, red=Fore.RED))
+
 
     def _configure_existing_postgres_user(self):
         username = raw_input('Please enter the postgresql username: ')

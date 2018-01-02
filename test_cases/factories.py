@@ -195,8 +195,12 @@ class HasParentHostOrService(object):
             obj, create, results)
         if isinstance(obj, dict):
             # This happens when built with build_dict
-            return
-        if obj.host and obj.service:
+            if obj['host'] and obj['service']:
+                if random.choice([True, False]):
+                    obj['host'] = None
+                else:
+                    obj['service'] = None
+        elif obj.host and obj.service:
             # Setting both service and host to a vuln is not allowed.
             # This will pick one of them randomly.
             # TODO: Check is this is recommended
@@ -204,6 +208,38 @@ class HasParentHostOrService(object):
                 obj.host = None
             else:
                 obj.service = None
+
+    @classmethod
+    def build_dict(cls, **kwargs):
+        ret = super(HasParentHostOrService, cls).build_dict(**kwargs)
+        service = ret.pop('service')
+        host = ret.pop('host')
+        if host is not None:
+            assert service is None
+
+            # This should be set by the SelfAttribute of the SubFactory, but I
+            # don't kwown why it doesn't work here
+            host.workspace = kwargs.get('workspace', host.workspace)
+
+            db.session.add(host)
+            db.session.commit()  # Needed to get the object IDs
+            ret['parent_type'] = 'Host'
+            ret['parent'] = host.id
+        elif service is not None:
+            assert host is None
+
+            # This should be set by the SelfAttribute of the SubFactory, but I
+            # don't kwown why it doesn't work here
+            service.workspace = service.host.workspace = kwargs.get(
+                'workspace', service.workspace)
+
+            db.session.add(service)
+            db.session.commit()  # Needed to get the object IDs
+            ret['parent_type'] = 'Service'
+            ret['parent'] = service.id
+        else:
+            raise ValueError("Either host or service must be set")
+        return ret
 
 
 class VulnerabilityFactory(HasParentHostOrService,
@@ -250,8 +286,12 @@ class VulnerabilityTemplateFactory(FaradayFactory):
 
 
 class CredentialFactory(HasParentHostOrService, WorkspaceObjectFactory):
-    host = factory.SubFactory(HostFactory, workspace=factory.SelfAttribute('..workspace'))
-    service = None  # factory.SubFactory(ServiceFactory)
+    host = factory.SubFactory(
+        HostFactory, workspace=factory.SelfAttribute('..workspace')
+    )
+    service = factory.SubFactory(
+        ServiceFactory, workspace=factory.SelfAttribute('..workspace')
+    )
     username = FuzzyText()
     password = FuzzyText()
 

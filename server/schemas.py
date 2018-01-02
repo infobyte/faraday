@@ -3,7 +3,7 @@ import datetime
 from marshmallow import fields, Schema
 from marshmallow.exceptions import ValidationError
 
-from server.models import db, CommandObject
+from server.models import CommandObject, VulnerabilityABC
 
 
 class JSTimestampField(fields.Integer):
@@ -105,6 +105,31 @@ class MutableField(fields.Field):
         super(MutableField, self)._add_to_schema(field_name, schema)
         self.read_field._add_to_schema(field_name, schema)
         self.write_field._add_to_schema(field_name, schema)
+
+
+class SeverityField(fields.String):
+    """
+    Custom field for the severity, with the proper mappings to make
+    it compatible with the web UI
+    """
+
+    def _serialize(self, value, attr, obj):
+        ret = super(SeverityField, self)._serialize(value, attr, obj)
+        if ret == 'medium':
+            return 'med'
+        elif ret == 'informational':
+            return 'info'
+        return ret
+
+    def _deserialize(self, value, attr, data):
+        ret = super(SeverityField, self)._serialize(value, attr, data)
+        if ret == 'med':
+            return 'medium'
+        elif ret == 'info':
+            return 'informational'
+        if ret not in VulnerabilityABC.SEVERITIES:
+            raise ValidationError("Invalid severity type.")
+        return ret
 
 
 class MetadataSchema(Schema):

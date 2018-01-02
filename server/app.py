@@ -98,7 +98,7 @@ def register_handlers(app):
         view = app.view_functions.get(flask.request.endpoint)
         logged_in = 'user_id' in flask.session
         if (not logged_in and not getattr(view, 'is_public', False)):
-            flask.abort(403)
+            flask.abort(401)
 
         g.user = None
         if logged_in:

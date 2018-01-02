@@ -284,7 +284,8 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
             title: ' Forbidden |'
         }).
         otherwise({
-            templateUrl: 'scripts/commons/partials/home.html'
+            templateUrl: 'scripts/commons/partials/home.html',
+            controller: 'homeCtrl'
         });
 }]);
 

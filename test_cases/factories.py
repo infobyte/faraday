@@ -302,6 +302,7 @@ class CredentialFactory(HasParentHostOrService, WorkspaceObjectFactory):
 
 class CommandObjectFactory(FaradayFactory):
     workspace = factory.SubFactory(WorkspaceFactory)
+    created_persistent = False
 
     class Meta:
         model = CommandObject
@@ -310,6 +311,7 @@ class CommandObjectFactory(FaradayFactory):
 
 class CommandFactory(WorkspaceObjectFactory):
     command = FuzzyText()
+    tool = FuzzyText()
     end_date = FuzzyDateTime(datetime.datetime.utcnow().replace(tzinfo=pytz.utc) + datetime.timedelta(20), datetime.datetime.utcnow().replace(tzinfo=pytz.utc) + datetime.timedelta(30))
     start_date = FuzzyDateTime(datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - datetime.timedelta(30), datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - datetime.timedelta(20))
     ip = FuzzyText()
@@ -340,11 +342,13 @@ class CommandFactory(WorkspaceObjectFactory):
                 workspace=self.workspace
             )
 
+
 class EmptyCommandFactory(WorkspaceObjectFactory):
     """
         A command without command objects.
     """
     command = FuzzyText()
+    tool = FuzzyText()
     end_date = FuzzyDateTime(datetime.datetime.utcnow().replace(tzinfo=pytz.utc) + datetime.timedelta(20), datetime.datetime.utcnow().replace(tzinfo=pytz.utc) + datetime.timedelta(30))
     start_date = FuzzyDateTime(datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - datetime.timedelta(30), datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - datetime.timedelta(20))
     ip = FuzzyText()

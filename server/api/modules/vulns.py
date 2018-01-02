@@ -12,7 +12,7 @@ from flask import Blueprint
 from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
 from sqlalchemy import and_
-from sqlalchemy.orm import joinedload, selectin_polymorphic
+from sqlalchemy.orm import joinedload, selectin_polymorphic, undefer
 from sqlalchemy.orm.exc import NoResultFound
 
 from depot.manager import DepotManager
@@ -76,6 +76,14 @@ class ImpactSchema(Schema):
     integrity = fields.Boolean(attribute='impact_integrity')
 
 
+class CustomMetadataSchema(MetadataSchema):
+    """
+    Implements command_id and creator logic
+    """
+    command_id = fields.Integer(dump_only=True, attribute='creator_command_id')
+    creator = fields.String(dump_only=True, attribute='creator_command_tool')
+
+
 class VulnerabilitySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
 
@@ -108,7 +116,7 @@ class VulnerabilitySchema(AutoSchema):
     type = fields.Method(serialize='get_type', deserialize='load_type', required=True)
     obj_id = fields.String(dump_only=True, attribute='id')
     target = fields.Method('get_target')
-    metadata = SelfNestedField(MetadataSchema())
+    metadata = SelfNestedField(CustomMetadataSchema())
     date = fields.DateTime(attribute='create_date',
                            dump_only=True)  # This is only used for sorting
 
@@ -274,17 +282,15 @@ class VulnerabilityFilterSet(FilterSet):
 
         :returns: Filtered SQLALchemy query
         """
+        # TODO migration: this can became a normal filter instead of a custom
+        # one, since now we can use creator_command_id
         command_id = request.args.get('command_id')
-        if command_id:
-            self.query = self.query.join(
-                CommandObject, and_(
-                    VulnerabilityWeb.id == CommandObject.object_id,
-                    CommandObject.object_type == 'vulnerability'))
-
         query = super(VulnerabilityFilterSet, self).filter()
 
         if command_id:
-            query = query.filter(CommandObject.command_id == int(command_id))
+            # query = query.filter(CommandObject.command_id == int(command_id))
+            query = query.filter(VulnerabilityGeneric.creator_command_id ==
+                                 int(command_id))  # TODO migration: handle invalid int()
         return query
 
 
@@ -364,6 +370,8 @@ class VulnerabilityView(PaginatedMixin,
             .joinedload(Service.host)
             .joinedload(Host.hostnames),
 
+            undefer(VulnerabilityGeneric.creator_command_id),
+            undefer(VulnerabilityGeneric.creator_command_tool),
             joinedload(VulnerabilityGeneric.evidence),
             joinedload(VulnerabilityGeneric.tags),
         ]

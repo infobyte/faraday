@@ -61,12 +61,12 @@ angular.module('faradayApp').
                     var deferred = $q.defer();
                     var self = this;
 
-                    ServerAPI.updateVulnerabilityTemplate(self)
+                    ServerAPI.updateVulnerabilityTemplate(data)
                         .then(function(res) {
                             self.set(res.data);
                             deferred.resolve(self);
                         }, function(res) {
-                            deferred.reject("Unable to update the Vuln Model. " + res.data.reason);
+                            deferred.reject("Unable to update the Vuln Model. " + JSON.stringify(res.data));
                     });
                     return deferred.promise;
                 },

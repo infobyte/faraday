@@ -17,8 +17,14 @@ from server.api.base import (
     FilterAlchemyMixin,
     FilterSetMeta,
 )
-from server.schemas import PrimaryKeyRelatedField, MetadataSchema, SelfNestedField
+from server.schemas import (
+    MetadataSchema,
+    MutableField,
+    PrimaryKeyRelatedField,
+    SelfNestedField
+)
 from server.models import Host, Service, db, Hostname
+from server.api.modules.services import ServiceSchema
 
 host_api = Blueprint('host_api', __name__)
 
@@ -29,7 +35,8 @@ class HostSchema(AutoSchema):
     _rev = fields.String(default='')
     ip = fields.String(default='')
     description = fields.String(required=True)  # Explicitly set required=True
-    default_gateway = fields.String(attribute="default_gateway_ip", allow_none=True)
+    default_gateway = fields.String(attribute="default_gateway_ip",
+                                    required=False, allow_none=True)
     name = fields.String(dump_only=True, attribute='ip', default='')
     os = fields.String(default='')
     owned = fields.Boolean(default=False)
@@ -37,16 +44,17 @@ class HostSchema(AutoSchema):
     services = fields.Integer(attribute='open_service_count', dump_only=True)
     vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
     credentials = fields.Integer(attribute='credentials_count', dump_only=True)
-    hostnames = PrimaryKeyRelatedField('name', many=True,
-                                       attribute="hostnames",
-                                       # TODO migration: make it writable
-                                       dump_only=True,  # Only for now
-                                       default=[])
+    hostnames = MutableField(
+        PrimaryKeyRelatedField('name', many=True,
+                               attribute="hostnames",
+                               dump_only=True,
+                               default=[]),
+        fields.List(fields.String))
     metadata = SelfNestedField(MetadataSchema())
 
     class Meta:
         model = Host
-        fields = ('id', '_id', '_rev', 'ip', 'description',
+        fields = ('id', '_id', '_rev', 'ip', 'description', 'mac',
                   'credentials', 'default_gateway', 'metadata',
                   'name', 'os', 'owned', 'owner', 'services', 'vulns',
                   'hostnames'
@@ -68,18 +76,6 @@ class HostFilterSet(FilterSet):
     service = ServiceFilter(fields.Str())
 
 
-class ServiceSchema(AutoSchema):
-    # TODO migration: use the schema in ./services.py
-    vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
-    credentials = fields.Integer(attribute='credentials_count', dump_only=True)
-    ports = fields.Integer(attribute='port')
-
-    class Meta:
-        model = Service
-        fields = ('id', 'name', 'description', 'port', 'ports', 'protocol',
-                  'status', 'vulns', 'credentials', 'version')
-
-
 class HostsView(PaginatedMixin,
                 FilterAlchemyMixin,
                 ReadWriteWorkspacedView):
@@ -89,7 +85,8 @@ class HostsView(PaginatedMixin,
     schema_class = HostSchema
     unique_fields = [('ip', )]
     filterset_class = HostFilterSet
-    get_undefer = [Host.open_service_count,
+    get_undefer = [Host.credentials_count,
+                   Host.open_service_count,
                    Host.vulnerability_count]
     get_joinedloads = [Host.hostnames]
 
@@ -102,10 +99,24 @@ class HostsView(PaginatedMixin,
         hostnames = data.pop('hostnames', [])
         host = super(HostsView, self)._perform_create(data, **kwargs)
         for name in hostnames:
-            get_or_create(db.session, Hostname, name=name['key'], host=host,
+            get_or_create(db.session, Hostname, name=name, host=host,
                           workspace=host.workspace)
         db.session.commit()
         return host
+
+    def _update_object(self, obj, data):
+        try:
+            hostnames = data.pop('hostnames')
+        except KeyError:
+            pass
+        else:
+            obj.set_hostnames(hostnames)
+
+        # Required to make the assert pass. This actually makes two requests
+        # to the DB
+        db.session.commit()
+
+        return super(HostsView, self)._update_object(obj, data)
 
     def _envelope_list(self, objects, pagination_metadata=None):
         hosts = []

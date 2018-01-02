@@ -1,6 +1,7 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+import operator
 from datetime import datetime
 
 from sqlalchemy import (
@@ -21,6 +22,7 @@ from sqlalchemy import (
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import backref, relationship, undefer
 from sqlalchemy.sql import select, text, table
+from sqlalchemy.sql.expression import asc, join
 from sqlalchemy import func
 from sqlalchemy.orm import (
     backref,
@@ -219,6 +221,56 @@ class Host(Metadata):
     @property
     def parent(self):
         return
+
+    def set_hostnames(self, new_hostnames):
+        """Override the host's hostnames. Take care of deleting old not
+        used hostnames and to leave the sames the ones that weren't
+        modified
+
+        This function was thought to update existing objects, it shouldn't
+        be used when creating!
+        """
+        return set_children_objects(self, new_hostnames,
+                                    parent_field='hostnames',
+                                    child_field='name')
+
+
+def set_children_objects(instance, value, parent_field, child_field='id'):
+    """
+    Override some kind of children of instance. This is useful in one
+    to many relationships. It takes care of deleting not used children,
+    adding new objects, and keeping the not modified ones the same.
+
+    :param instance: instance of the parent object
+    :param value: list of childs (values of the child_field)
+    :param parent_field: the parent field's relationship to the children name
+    :param child_field: the "lookup field" of the children model
+    """
+    # Get the class of the children. Inspired in
+    # https://stackoverflow.com/questions/6843144/how-to-find-sqlalchemy-remote-side-objects-class-or-class-name-without-db-queri
+    children_model = getattr(
+        type(instance), parent_field).property.mapper.class_
+
+    value = set(value)
+    current_value = getattr(instance, parent_field)
+    current_value_fields = set(map(operator.attrgetter(child_field),
+                                   current_value))
+
+    for existing_child in current_value_fields:
+        if existing_child not in value:
+            # It was removed
+            removed_instance = next(
+                inst for inst in current_value
+                if getattr(inst, child_field) == existing_child)
+            db.session.delete(removed_instance)
+
+    for new_child in value:
+        if new_child in current_value_fields:
+            # it already exists
+            continue
+        kwargs = {child_field: new_child}
+        kwargs['workspace'] = instance.workspace
+        current_value.append(children_model(**kwargs))
 
 
 class Hostname(Metadata):
@@ -465,7 +517,7 @@ class CommandObject(db.Model):
     # We are currently using the column property created. however to avoid losing information
     # we also store the a boolean to know if at the moment of created the object related to the
     # Command was created.
-    created_persistent = Column(Boolean, default=False)
+    created_persistent = Column(Boolean, nullable=False)
 
     __table_args__ = (
         UniqueConstraint('object_id', 'object_type', 'command_id', 'workspace_id',
@@ -476,14 +528,44 @@ class CommandObject(db.Model):
     def parent(self):
         return self.command
 
+    @classmethod
+    def create(cls, obj, command, add_to_session=True, **kwargs):
+        co = cls(obj, workspace=command.workspace, command=command,
+                 created_persistent=True, **kwargs)
+        if add_to_session:
+            db.session.add(co)
+        return co
+
+    def __init__(self, object_=None, **kwargs):
+
+        if object_ is not None:
+            assert 'object_type' not in kwargs
+            assert 'object_id' not in kwargs
+            object_type = object_.__tablename__
+            if object_type is None:
+                if object_.__class__.__name__ in ['Vulnerability',
+                                                'VulnerabilityWeb',
+                                                'VulnerabilityCode']:
+                    object_type = 'vulnerability'
+                else:
+                    raise RuntimeError("Unknown table for object: {}".format(
+                        object_))
+
+            # db.session.flush()
+            assert object_.id is not None, "object must have an ID. Try " \
+                "flushing the session"
+            kwargs['object_id'] = object_.id
+            kwargs['object_type'] = object_type
+        return super(CommandObject, self).__init__(**kwargs)
+
 
 def _make_created_objects_sum(object_type_filter):
     where_conditions = ["command_object.object_type= '%s'" % object_type_filter]
     where_conditions.append("command_object.command_id = command.id")
     where_conditions.append("command_object.workspace_id = command.workspace_id")
     return column_property(
-        select([func.sum(CommandObject.created)]).\
-        select_from(table('command_object')). \
+        select([func.sum(CommandObject.created)]).
+        select_from(table('command_object')).
         where(text(' and '.join(where_conditions)))
     )
 
@@ -519,6 +601,7 @@ class Command(Metadata):
     __tablename__ = 'command'
     id = Column(Integer, primary_key=True)
     command = Column(Text(), nullable=False)
+    tool = Column(Text(), nullable=False)
     start_date = Column(DateTime, nullable=False)
     end_date = Column(DateTime, nullable=True)
     ip = Column(String(250), nullable=False)  # where the command was executed
@@ -609,6 +692,27 @@ class VulnerabilityGeneric(VulnerabilityABC):
         primaryjoin="and_(TagObject.object_id==VulnerabilityGeneric.id, "
                     "TagObject.object_type=='vulnerability')",
         collection_class=set,
+    )
+
+    creator_command_id = column_property(
+        select([CommandObject.command_id])
+        .where(CommandObject.object_type == 'vulnerability')
+        .where(text('command_object.object_id = vulnerability.id'))
+        .where(CommandObject.workspace_id == workspace_id)
+        .order_by(asc(CommandObject.create_date))
+        .limit(1),
+        deferred=True)
+
+    creator_command_tool = column_property(
+        select([Command.tool])
+        .select_from(join(Command, CommandObject,
+                          Command.id == CommandObject.command_id))
+        .where(CommandObject.object_type == 'vulnerability')
+        .where(text('command_object.object_id = vulnerability.id'))
+        .where(CommandObject.workspace_id == workspace_id)
+        .order_by(asc(CommandObject.create_date))
+        .limit(1),
+        deferred=True
     )
 
     __mapper_args__ = {
@@ -1316,25 +1420,6 @@ event.listen(
     'after_create',
     vulnerability_uniqueness.execute_if(dialect='postgresql')
 )
-
-
-def log_command_object_found(command, object, created):
-    object_type = object.__tablename__
-    if object.__class__.__name__ in ['Vulnerability', 'VulnerabilityWeb', 'VulnerabilityCode']:
-        object_type = 'vulnerability'
-
-    db.session.flush()
-    log, log_created = get_or_create(
-        db.session,
-        CommandObject,
-        command=command,
-        object_id=object.id,
-        object_type=object_type,
-        workspace=object.workspace,
-    )
-    if not log_created:
-        # without this if, multiple executions of the importer will write this attribute with False
-        log.created_persistent = created
 
 # We have to import this after all models are defined
 import server.events

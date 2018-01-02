@@ -29,8 +29,8 @@ class ServiceSchema(AutoSchema):
     owner = PrimaryKeyRelatedField('username', dump_only=True,
                                    attribute='creator')
     port = fields.Integer(dump_only=True)  # Port is loaded via ports
-    ports = MutableField(fields.String(),
-                         fields.Method(deserialize='load_ports', serialize='get_ports'),
+    ports = MutableField(fields.Integer(),
+                         fields.Method(deserialize='load_ports'),
                          required=True,
                          attribute='port')
     status = fields.String(default='open')
@@ -44,9 +44,6 @@ class ServiceSchema(AutoSchema):
     def load_ports(self, value):
         # TODO migration: handle empty list and not numeric value
         return str(value.pop())
-
-    def get_ports(self, obj):
-        return [obj.port]
 
     def get_summary(self, obj):
         return "(%s/%s) %s" % (obj.port, obj.protocol, obj.name)

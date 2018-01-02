@@ -18,6 +18,7 @@ except ImportError:
 import flask
 from flask import Flask, session, g
 from flask.json import JSONEncoder
+from flask_sqlalchemy import get_debug_queries
 from flask_security import (
     Security,
     SQLAlchemyUserDatastore,
@@ -27,8 +28,6 @@ from depot.manager import DepotManager
 
 import server.config
 from server.utils.logger import LOGGING_HANDLERS
-logger = logging.getLogger(__name__)
-
 logger = logging.getLogger(__name__)
 
 
@@ -105,6 +104,19 @@ def register_handlers(app):
             user = User.query.filter_by(id=session["user_id"]).first()
             g.user = user
 
+    @app.after_request
+    def log_queries_count(response):
+        queries = get_debug_queries()
+        max_query_time = max(q.duration for q in queries)
+        if len(queries) > 15:
+            logger.warn("Too many queries done (%s) in endpoint %s. "
+                        "Maximum query time: %.2f",
+                        len(queries), flask.request.endpoint, max_query_time)
+            # from collections import Counter
+            # print '\n\n\n'.join(
+            #     map(str,Counter(q.statement for q in queries).most_common()))
+        return response
+
 def create_app(db_connection_string=None, testing=None):
     app = Flask(__name__)
 
@@ -115,6 +127,7 @@ def create_app(db_connection_string=None, testing=None):
     app.config['SECURITY_POST_LOGIN_VIEW'] = '/_api/session'
     app.config['SECURITY_POST_LOGOUT_VIEW'] = '/_api/login'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SQLALCHEMY_RECORD_QUERIES'] = True
     # app.config['SQLALCHEMY_ECHO'] = True
     app.config['SECURITY_PASSWORD_SCHEMES'] = [
         'bcrypt',  # This should be the default value

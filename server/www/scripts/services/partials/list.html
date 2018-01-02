@@ -64,7 +64,7 @@
                                             <a href="" ng-click="toggleSort('version')">Version</a>
                                         </th>
                                         <th>
-                                            <a href="" ng-click="toggleSort('ports')">Ports</a>
+                                            <a href="" ng-click="toggleSort('ports')">Port</a>
                                         </th>
                                         <th>
                                             <a href="" ng-click="toggleSort('protocol')">Protocol</a>
@@ -109,7 +109,7 @@
                                             </a>
                                         </td>
                                         <td>
-                                            <a ng-href="#/credentials/ws/{{workspace}}/sid/{{service._id}}">{{service.credentials}}</a>
+                                            <a ng-href="#/credentials/ws/{{workspace}}/sid/{{service.id}}">{{service.credentials}}</a>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -187,7 +187,7 @@
                                         <div class="col-md-12 input-margin" ng-repeat="hostname in host.hostnames">
                                             <div class="input-group margin-bottom-sm col-md-12">
                                                 <label class="sr-only" for="hostsnames">Hostname</label>
-                                                <input type="text" class="form-control" id="hostsnames" placeholder="Hostname" ng-model="hostname" />
+                                                <input type="text" class="form-control" id="hostsnames" placeholder="Hostname" ng-model="hostname.key" />
                                                 <span class="input-group-addon" ng-click="host.hostnames.splice($index, 1)" ng-hide="host.hostnames.length == 1" ng-if="editing"><i class="fa fa-minus-circle"></i></span>
                                             </div>
                                         </div>
@@ -195,7 +195,7 @@
                                     <span ng-if="!editing">
                                         <div class="col-md-12 input-margin">
                                             <ul>
-                                                <li ng-repeat="hostname in host.hostnames">{{hostname}}</li>
+                                                <li ng-repeat="hostname in host.hostnames">{{hostname.key}}</li>
                                             </ul>
                                         </div>
                                     </span>

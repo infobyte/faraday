@@ -329,7 +329,7 @@ class TestHostAPI:
     def test_create_host_with_hostnames(self, test_client):
         raw_data = {
             "ip": "192.168.0.21",
-            "hostnames": [{"key": "google.com"}],
+            "hostnames": ["google.com"],
             "mac": "00:00:00:00:00:00",
             "description": "",
             "os": "",
@@ -338,6 +338,28 @@ class TestHostAPI:
         }
         res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 201
+        assert res.json['hostnames'] == ['google.com']
+        host = Host.query.get(res.json['id'])
+        assert len(host.hostnames) == 1
+        assert host.hostnames[0].name == 'google.com'
+
+    def test_update_host_with_hostnames(self, test_client, session,
+                                        host_with_hostnames):
+        session.commit()
+        data = {
+            "ip": "192.168.0.21",
+            "hostnames": ["other.com", "test.com"],
+            "mac": "00:00:00:00:00:00",
+            "description": "",
+            "os": "",
+            "owned": False,
+            "owner": ""
+        }
+        res = test_client.put(self.url(host_with_hostnames), data=data)
+        assert res.status_code == 200
+        expected = set(["other.com", "test.com"])
+        assert set(res.json['hostnames']) == expected
+        assert set(hn.name for hn in host_with_hostnames.hostnames) == expected
 
     def test_create_host_with_default_gateway(self, test_client):
         raw_data = {
@@ -392,7 +414,9 @@ class TestHostAPI:
             u'hostnames': [],
             u'id': host.id,
             u'ip': u'10.31.112.21',
-            u'metadata': {u'command_id': None,
+            u'mac': None,
+            u'metadata': {
+                u'command_id': None,
                 u'create_time': int(time.mktime(updated_host.create_date.timetuple())) * 1000,
                 u'creator': u'',
                 u'owner': host.creator.username,

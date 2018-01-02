@@ -2,14 +2,14 @@ import pytest
 
 from test_cases import factories
 from test_api_workspaced_base import (
-    ReadOnlyAPITests,
+    ReadWriteAPITests,
 )
 from server.api.modules.credentials import CredentialView
 from server.models import Credential
 from test_cases.factories import HostFactory, ServiceFactory
 
 
-class TestCredentialsAPIGeneric(ReadOnlyAPITests):
+class TestCredentialsAPIGeneric(ReadWriteAPITests):
     model = Credential
     factory = factories.CredentialFactory
     view_class = CredentialView
@@ -23,7 +23,7 @@ class TestCredentialsAPIGeneric(ReadOnlyAPITests):
         assert res.status_code == 200
         assert 'rows' in res.json
         for vuln in res.json['rows']:
-            assert set([u'id', u'key', u'value']) == set(vuln.keys())
+            assert set([u'_id', u'id', u'key', u'value']) == set(vuln.keys())
             object_properties = [
                 u'_id',
                 u'couchdbid',
@@ -33,13 +33,16 @@ class TestCredentialsAPIGeneric(ReadOnlyAPITests):
                 u'owner',
                 u'password',
                 u'username',
+                u'host_ip',
+                u'service_name',
+                u'target'
             ]
             expected = set(object_properties)
             result = set(vuln['value'].keys())
             assert expected - result == set()
 
     def test_create_from_raw_data_host_as_parent(self, session, test_client,
-                                  workspace, host_factory):
+                                                 workspace, host_factory):
         host = host_factory.create(workspace=workspace)
         session.commit()
         raw_data = {
@@ -59,9 +62,39 @@ class TestCredentialsAPIGeneric(ReadOnlyAPITests):
         }
         res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 201
+        assert res.json['host_ip'] == host.ip
+        assert res.json['service_name'] is None
+        assert res.json['target'] == host.ip
 
-    def test_get_credentials_for_a_host_backwards_compatibility(self, session, test_client):
-        credential = self.factory.create()
+    def test_create_from_raw_data_service_as_parent(
+            self, session, test_client, workspace, service_factory):
+        service = service_factory.create(workspace=workspace)
+        session.commit()
+        raw_data = {
+            "_id":"1.e5069bb0718aa519852e6449448eedd717f1b90d",
+            "name":"name",
+            "username":"username",
+            "metadata":{"update_time":1508794240799,"update_user":"",
+                        "update_action":0,"creator":"UI Web",
+                        "create_time":1508794240799,"update_controller_action":"",
+                        "owner":""},
+            "password":"pass",
+            "type":"Cred",
+            "owner":"",
+            "description":"",
+            "parent": service.id,
+            "parent_type": "Service"
+        }
+        res = test_client.post(self.url(), data=raw_data)
+        assert res.status_code == 201
+        assert res.json['host_ip'] is None
+        assert res.json['service_name'] == service.name
+        assert res.json['target'] == service.host.ip + '/' + service.name
+
+    def test_get_credentials_for_a_host_backwards_compatibility(
+            self, session, test_client, host):
+        credential = self.factory.create(host=host, service=None,
+                                         workspace=self.workspace)
         session.commit()
         res = test_client.get(self.url(workspace=credential.workspace) + '?host_id={0}'.format(credential.host.id))
         assert res.status_code == 200
@@ -103,11 +136,13 @@ class TestCredentialsAPIGeneric(ReadOnlyAPITests):
         res = test_client.put(self.url(workspace=credential.workspace) + str(credential.id) + '/', data=raw_data)
         assert res.status_code == 400
 
-    def test_update_credentials(self, test_client, session):
-        credential = self.factory.create()
+    def test_update_credentials(self, test_client, session, host):
+        credential = self.factory.create(host=host, service=None,
+                                         workspace=self.workspace)
         session.commit()
 
-        raw_data = self._generate_raw_update_data('Name1', 'Username2', 'Password3', parent_id=credential.host.id)
+        raw_data = self._generate_raw_update_data(
+            'Name1', 'Username2', 'Password3', parent_id=credential.host.id)
 
         res = test_client.put(self.url(workspace=credential.workspace) + str(credential.id) + '/', data=raw_data)
         assert res.status_code == 200

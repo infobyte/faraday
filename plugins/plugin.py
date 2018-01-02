@@ -28,7 +28,8 @@ from persistence.server.models import (
     Credential,
     Note,
 )
-from plugins.modelactions import modelactions
+from model.controller import modelactions
+#from plugins.modelactions import modelactions
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
@@ -125,13 +126,17 @@ class PluginBase(object):
     def processOutput(self, term_output):
         output = term_output
         if self.has_custom_output() and os.path.isfile(self.get_custom_file_path()):
-            output = open(self.get_custom_file_path(), 'r').read()
-        self.parseOutputString(output)
+            self._parse_filename(self.get_custom_file_path())
+        else:
+            self.parseOutputString(output)
+
+    def _parse_filename(self, filename):
+        with open(filename, 'rb') as output:
+            self.parseOutputString(output.read())
 
     def processReport(self, filepath):
         if os.path.isfile(filepath):
-            output = open(filepath, 'r').read()
-            self.parseOutputString(output)
+            self._parse_filename(filepath)
 
     def parseOutputString(self, output):
         """
@@ -320,7 +325,7 @@ class PluginBase(object):
 
         cred_obj = model.common.factory.createModelObject(
             Credential.class_signature,
-            username, password=password, parent_id=service_id)
+            username, password=password, parent_id=service_id, parent_type='Service')
 
         cred_obj._metadata.creator = self.id
         self.__addPendingAction(modelactions.ADDCREDSRV, cred_obj)

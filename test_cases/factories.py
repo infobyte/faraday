@@ -398,3 +398,9 @@ class TagFactory(FaradayFactory):
     class Meta:
         model = Tag
         sqlalchemy_session = db.session
+
+
+class NoteFactory(FaradayFactory):
+
+    class Meta:
+        model = Comment

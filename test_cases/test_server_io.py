@@ -121,17 +121,16 @@ class ClientServerAPITests(unittest.TestCase):
 
     @patch('persistence.server.server._get_raw_hosts')
     @patch('persistence.server.server._get_raw_vulns')
-    @patch('persistence.server.server._get_raw_interfaces')
     @patch('persistence.server.server._get_raw_services')
     @patch('persistence.server.server._get_raw_notes')
     @patch('persistence.server.server._get_raw_credentials')
     @patch('persistence.server.server._get_raw_commands')
-    def test_faraday_dictionary_dispatcher_calls(self, mock_hosts, mock_vulns, mock_interfaces,
-                                                 mock_services, mock_notes, mock_credentials, mock_commands):
+    def test_faraday_dictionary_dispatcher_calls(self, mock_hosts, mock_vulns,
+                                                 mock_services, mock_notes,
+                                                 mock_credentials, mock_commands):
         # NOTE: if you finds any bugs here, i have the suspipcion that mock_host is actually mock_commands
         # i mean that the parameters names are wrong. I'd check for that. Good luck.
         server._get_faraday_ready_dictionaries('a', 'hosts', 'whatever')
-        server._get_faraday_ready_dictionaries('a', 'interfaces', 'whatever')
         server._get_faraday_ready_dictionaries('a', 'vulns', 'whatever')
         server._get_faraday_ready_dictionaries('a', 'services', 'whatever')
         server._get_faraday_ready_dictionaries('a', 'notes', 'whatever')
@@ -139,7 +138,6 @@ class ClientServerAPITests(unittest.TestCase):
         server._get_faraday_ready_dictionaries('a', 'commands', 'whatever')
         mock_hosts.assert_called_once_with('a')
         mock_vulns.assert_called_once_with('a')
-        mock_interfaces.assert_called_once_with('a')
         mock_services.assert_called_once_with('a')
         mock_notes.assert_called_once_with('a')
         mock_credentials.assert_called_once_with('a')
@@ -147,14 +145,13 @@ class ClientServerAPITests(unittest.TestCase):
 
     @patch('persistence.server.server.get_hosts', return_value='hosts')
     @patch('persistence.server.server.get_vulns', return_value='vulns')
-    @patch('persistence.server.server.get_interfaces', return_value='interfaces')
     @patch('persistence.server.server.get_services', return_value='services')
     @patch('persistence.server.server.get_credentials', return_value='CREDENTIAL')
     @patch('persistence.server.server.get_notes', return_value='NOTE')
     @patch('persistence.server.server.get_commands', return_value='COMMAND')
-    def test_get_objects(self, not_command, not_note, not_credential, not_service,
-                         not_interface, not_vuln, not_host):
-        obj_sign_to_mock = {'hosts': not_host, 'vulns': not_vuln, 'interfaces': not_interface,
+    def test_get_objects(self, not_command, not_note,
+                         not_credential, not_service, not_vuln, not_host):
+        obj_sign_to_mock = {'hosts': not_host, 'vulns': not_vuln,
                             'services': not_service, 'credentials': not_credential,
                             'notes': not_note, 'commands': not_command}
         for obj_sign in obj_sign_to_mock.keys():

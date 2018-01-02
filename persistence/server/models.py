@@ -219,7 +219,7 @@ def get_vulns(workspace_name, **params):
 
 def get_vuln(workspace_name, vuln_id):
     """Return the Vuln of id vuln_id. None if not found."""
-    return force_unique(get_vulns(workspace_name, couchid=vuln_id))
+    return force_unique(get_vulns(workspace_name, id=vuln_id))
 
 
 def get_web_vulns(workspace_name, **params):
@@ -234,7 +234,7 @@ def get_web_vulns(workspace_name, **params):
 
 def get_web_vuln(workspace_name, vuln_id):
     """Return the WebVuln of id vuln_id. None if not found."""
-    return force_unique(get_web_vulns(workspace_name, couchid=vuln_id))
+    return force_unique(get_web_vulns(workspace_name, id=vuln_id))
 
 
 def get_services(workspace_name, **params):
@@ -249,7 +249,7 @@ def get_services(workspace_name, **params):
 
 def get_service(workspace_name, service_id):
     """Return the Service of id service_id. None if not found."""
-    return force_unique(get_services(workspace_name, service_id=service_id))
+    return force_unique(get_services(workspace_name, id=service_id))
 
 
 def get_credentials(workspace_name, **params):
@@ -264,7 +264,7 @@ def get_credentials(workspace_name, **params):
 
 def get_credential(workspace_name, credential_id):
     """Return the Credential of id credential_id. None if not found."""
-    return force_unique(get_credentials(workspace_name, couchid=credential_id))
+    return force_unique(get_credentials(workspace_name, id=credential_id))
 
 
 def get_notes(workspace_name, **params):
@@ -279,7 +279,7 @@ def get_notes(workspace_name, **params):
 
 def get_note(workspace_name, note_id):
     """Return the Note of id note_id. None if not found."""
-    return force_unique(get_notes(workspace_name, couchid=note_id))
+    return force_unique(get_notes(workspace_name, id=note_id))
 
 
 def get_workspace(workspace_name):
@@ -300,7 +300,7 @@ def get_commands(workspace_name, **params):
 
 def get_command(workspace_name, command_id):
     """Return the Command of id command_id. None if not found."""
-    return force_unique(get_commands(workspace_name, couchid=command_id))
+    return force_unique(get_commands(workspace_name, id=command_id))
 
 
 def get_object(workspace_name, object_signature, object_id):
@@ -404,13 +404,13 @@ def create_vuln_web(workspace_name, vuln_web, command_id):
 
 
 @_ignore_in_changes
-def update_vuln_web(workspace_name, vuln_web):
+def update_vuln_web(workspace_name, vuln_web, command_id):
     """Take a workspace_name and a VulnWeb object and update it in the sever.
 
     Return the server's json response as a dictionary.
     """
     vuln_web_properties = get_vuln_web_properties(vuln_web)
-    return server.update_vuln_web(workspace_name, vuln_web.getID(), **vuln_web_properties)
+    return server.update_vuln_web(workspace_name, command_id, vuln_web.getID(), **vuln_web_properties)
 
 
 @_ignore_in_changes
@@ -423,12 +423,12 @@ def create_note(workspace_name, note, command_id):
 
 
 @_ignore_in_changes
-def update_note(workspace_name, note):
+def update_note(workspace_name, note, command_id):
     """Take a workspace_name and a Note object and update it in the sever.
     Return the server's json response as a dictionary.
     """
     note_properties = get_note_properties(note)
-    return server.update_note(workspace_name, note.getID(), **note_properties)
+    return server.update_note(workspace_name, command_id, note.getID(), **note_properties)
 
 
 @_ignore_in_changes
@@ -701,8 +701,8 @@ class ModelBase(object):
     """
     def __init__(self, obj, workspace_name):
         self._workspace_name = workspace_name
-        self._server_id = obj.get('_id', '')
-        self.id = obj.get('id', None)
+        self._server_id = obj.get('_id', None)
+        self.id = obj.get('id', self._server_id)
         self.name = obj.get('name')
         self.description = obj.get('description', "")
         self.owned = obj.get('owned', False)
@@ -726,8 +726,15 @@ class ModelBase(object):
         self.id_available.set()
 
     def getID(self):
-        if self.id is None:
-            self.id_available.wait(timeout=10)
+        # getId will wait until the id is not None
+        timeout = 1
+        retries = 1
+        max_retries = 6
+        while retries <= max_retries and self.id is None:
+            self.id_available.wait(timeout=timeout)
+            print('Retrying getID timeout {0}'.format(timeout))
+            timeout = timeout << retries - 1
+            retries += 1
         return self.id
 
     @staticmethod
@@ -1074,9 +1081,9 @@ class VulnWeb(Vuln):
         self.website = vuln_web.get('website')
         self.request = vuln_web.get('request')
         self.response = vuln_web.get('response')
-        self.method = vuln_web.get('method')
+        self.method = vuln_web.get('method') or ''
         self.pname = vuln_web.get('pname')
-        self.params = vuln_web.get('params')
+        self.params = vuln_web.get('params') or ''
         self.query = vuln_web.get('query')
         self.resolution = vuln_web.get('resolution')
         self.attachments = vuln_web.get('_attachments')
@@ -1298,7 +1305,7 @@ class Command:
     class_signature = 'CommandRunInformation'
     def __init__(self, command, workspace_name):
         self._workspace_name = workspace_name
-        self.id = command['id']
+        self.id = command.get('id', None) or command.get('_id', None)
         self.command = command['command']
         self.duration = command['duration']
         self.hostname = command['hostname']
@@ -1307,6 +1314,9 @@ class Command:
         self.params = command['params']
         self.user = command['user']
         self.workspace = command['workspace']
+
+    def getID(self):
+        return self.id
 
     def getCommand(self):
         return self.command

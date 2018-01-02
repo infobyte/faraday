@@ -131,7 +131,7 @@ class ReportManager(Thread):
         filenames = []
 
         for root, dirs, files in os.walk(self._report_path, False):
-
+            # skip processed and unprocessed directories
             if root == self._report_path:
                 for name in files:
                     filenames.append(os.path.join(root, name))

@@ -18,9 +18,8 @@ logger = logging.getLogger(__name__)
 
 
 def import_external_reports(workspace_name=None):
-
-    plugin_manager = PluginManager(
-        os.path.join(CONF.getConfigPath(), "plugins"))
+    plugins_path = os.path.join(CONF.getConfigPath(), "plugins")
+    plugin_manager = PluginManager(plugins_path)
     mappers_manager = MapperManager()
 
     if workspace_name:
@@ -36,9 +35,6 @@ def process_workspaces(mappers_manager, plugin_manager, query):
     report_managers = []
     controllers = []
     for workspace in query.all():
-        if workspace.name != 'airbnb':
-            continue
-        print(workspace.name)
         pending_actions = Queue()
         plugin_controller = PluginController(
             'PluginController',

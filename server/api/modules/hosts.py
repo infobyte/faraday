@@ -85,7 +85,8 @@ class HostsView(PaginatedMixin,
     schema_class = HostSchema
     unique_fields = [('ip', )]
     filterset_class = HostFilterSet
-    get_undefer = [Host.open_service_count,
+    get_undefer = [Host.credentials_count,
+                   Host.open_service_count,
                    Host.vulnerability_count]
     get_joinedloads = [Host.hostnames]
 

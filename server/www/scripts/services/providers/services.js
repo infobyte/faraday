@@ -106,16 +106,9 @@ angular.module('faradayApp')
         servicesManager.updateService = function(service, data, ws) {
             var deferred = $q.defer();
             var self = this;
-            this.getService(service._id, ws).then(function(resp) {
-                resp.update(data, ws).then(function() {
-                    // we need to reload the service in order
-                    // to update _rev
-                    service = self._load(service._id, ws, deferred);
-                    deferred.resolve(service);
-                })
-            }, function(){
-                // service doesn't exist
-                deferred.reject("Service doesn't exist");
+            self._get(service._id, service).update(data, ws).then(function(){
+                service = self._load(service._id, ws, deferred);
+                deferred.resolve(service);
             });
             return deferred.promise;
         }

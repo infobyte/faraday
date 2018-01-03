@@ -8,9 +8,9 @@ angular.module('faradayApp').
             response: function(response){
                 return response;
             },
-            
+
             responseError: function(response) {
-                if(response.status === 401 || response.status === 403){
+                if(response.status === 401){
                     var deferred = $q.defer();
                     loginSrv.isAuthenticated().then(function(auth){
                         if(!auth) {
@@ -20,9 +20,16 @@ angular.module('faradayApp').
                         return deferred.reject(response);
                     });
                     return deferred.promise;
+                }else if (response.status === 403) {
+                    $location.path('/forbidden');
                 }else{
                     return $q.reject(response);
                 }
             }
         }
+}]);
+
+angular.module('faradayApp').
+    config(['$httpProvider', function($httpProvider) {
+        $httpProvider.interceptors.push('AuthInterceptor');
     }]);

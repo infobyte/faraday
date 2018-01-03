@@ -9,7 +9,7 @@ from flask import Blueprint
 info_api = Blueprint('info_api', __name__)
 
 
-@info_api.route('/info', methods=['GET'])
+@info_api.route('/v2/info', methods=['GET'])
 def show_info():
     faraday_directory = os.path.dirname(os.path.realpath('faraday.py'))
 

@@ -31,6 +31,7 @@ import server.utils.logger
 from server.models import (
     db,
     Command,
+    CommandObject,
     Comment,
     Credential,
     ExecutiveReport,
@@ -54,7 +55,6 @@ from server.models import (
     VulnerabilityWeb,
     Workspace,
     File,
-    log_command_object_found,
 )
 from server.utils import invalid_chars
 from server.utils.database import get_or_create
@@ -78,6 +78,8 @@ MAPPED_VULN_SEVERITY = OrderedDict([
     ('', 'unclassified'),
 ])
 
+# The objects are imported in this order (the order of the list, the integer
+# isn't related to this)
 OBJ_TYPES = [
             (1, 'CommandRunInformation'),
             (1, 'Host'),
@@ -187,6 +189,8 @@ def set_metadata(document, obj):
             try:
                 if key == 'create_time':
                     obj.create_date = datetime.datetime.fromtimestamp(document['metadata']['create_time'])
+                    if obj.create_date > datetime.datetime.now():
+                        raise Exception('Invalid date!')
                 if key == 'owner':
                     creator = User.query.filter_by(username=value).first()
                     obj.creator = creator
@@ -195,6 +199,71 @@ def set_metadata(document, obj):
                     obj.create_date = datetime.datetime.fromtimestamp(document['metadata']['create_time'] / 1000)
             except TypeError:
                 print('')
+
+
+def map_tool_with_command_id(command_tool_map, document):
+    try:
+        metadata = document['metadata']
+        tool = metadata['creator']
+        command_id = metadata['command_id']
+    except KeyError:
+        # Ignore objects without any of these keys
+        return
+    if not tool or not command_id:
+        # it could be blank
+        return
+    old_tool = command_tool_map.get(command_id)
+    if old_tool is not None and old_tool != tool:
+        logger.warn('Conflicting tool names for command {}: "{}" and "{}". '
+                    'Using "{}"'.format(
+                        command_id,
+                        old_tool,
+                        tool,
+                        tool
+                    ))
+    command_tool_map[command_id] = tool
+
+
+def update_command_tools(workspace, command_tool_map, id_map):
+    if command_tool_map:
+        logger.info("Setting the tool to {} commands".format(
+            len(command_tool_map)))
+    for (command_couchid, tool) in tqdm(command_tool_map.items()):
+        try:
+            map_data = id_map[command_couchid]
+
+            # There should be only one command created
+            assert len(map_data) <= 1
+            map_data = map_data[0]
+        except IndexError:
+            logger.warn("Couldn't find new numeric ID of command {}".format(
+                command_couchid
+            ))
+            continue
+        else:
+            assert map_data['type'] == 'CommandRunInformation'
+            command_id = map_data['id']
+        command = Command.query.get(command_id)
+        if command is None:
+            logger.warn("Couldn't get command {}, mapped to ID {}".format(
+                command_couchid,
+                command_id
+            ))
+            continue
+        assert workspace.id == command.workspace_id
+        if command.tool and command.tool != 'unknown':
+            logger.warn("Command {} (Couch ID {}) has already a tool. "
+                        "Overriding it".format(command_id,
+                                               command_couchid))
+        command.tool = tool
+        session.add(command)
+    session.commit()
+    missing_tool_count = Command.query.filter_by(
+        workspace=workspace, tool="unknown").count()
+    if missing_tool_count:
+        logger.warn("Couldn't find the tool name of {} commands in "
+                    "workspace {}".format(
+                        missing_tool_count, workspace.name))
 
 
 class EntityNotFound(Exception):
@@ -318,8 +387,9 @@ class HostImporter(object):
         for host, created in hosts:
             # we update or set other host attributes in this cycle
             # Ticket #3387: if the 'os' field is None, we default to 'unknown
-            if command:
-                log_command_object_found(command, host, created)
+            if command and created:
+                session.flush()
+                CommandObject.create(host, command)
 
             if not document.get('os'):
                 document['os'] = 'unknown'
@@ -378,8 +448,9 @@ class ServiceImporter(object):
             parent_id = document['_id'].split('.')[0]
         for relational_parent_id in couchdb_relational_map[parent_id]:
             host, created = get_or_create(session, Host, id=relational_parent_id)
-            if command:
-                log_command_object_found(command, host, created)
+            if command and created:
+                session.flush()
+                CommandObject.create(host, command)
             ports = document.get('ports')
             if len(ports) > 2:
                 logger.warn('More than one port found in services!')
@@ -414,8 +485,9 @@ class ServiceImporter(object):
                 service.status = status_mapper.get(couchdb_status, 'open')
                 service.version = document.get('version')
                 service.workspace = workspace
-                if command:
-                    log_command_object_found(command, service, created)
+                if command and created:
+                    session.flush()
+                    CommandObject.create(service, command)
 
                 yield service
 
@@ -455,7 +527,6 @@ class VulnerabilityImporter(object):
                     VulnerabilityWeb,
                     name=document.get('name'),
                     description=document.get('desc'),
-                    severity=severity,
                     service_id=parent.id,
                     method=method,
                     parameter_name=pname,
@@ -467,7 +538,6 @@ class VulnerabilityImporter(object):
             if document['type'] == 'Vulnerability':
                 vuln_params = {
                     'name': document.get('name'),
-                    'severity': severity,
                     'workspace': workspace,
                     'description': document.get('desc')
                 }
@@ -480,6 +550,7 @@ class VulnerabilityImporter(object):
                     Vulnerability,
                     **vuln_params
                 )
+            vulnerability.severity = severity
             vulnerability.confirmed = document.get('confirmed', False) or False
             vulnerability.data = document.get('data')
             vulnerability.ease_of_resolution = document.get('easeofresolution') if document.get('easeofresolution') else None
@@ -491,8 +562,9 @@ class VulnerabilityImporter(object):
             vulnerability.impact_availability = document.get('impact', {}).get('availability')
             vulnerability.impact_confidentiality = document.get('impact', {}).get('confidentiality')
             vulnerability.impact_integrity = document.get('impact', {}).get('integrity')
-            if command:
-                log_command_object_found(command, vulnerability, created)
+            if command and created:
+                session.flush()
+                CommandObject.create(vulnerability, command)
             if document['type'] == 'VulnerabilityWeb':
                 vulnerability.query_string = document.get('query')
                 vulnerability.request = document.get('request')
@@ -598,8 +670,12 @@ class CommandImporter(object):
     DOC_TYPE = 'CommandRunInformation'
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         import_source = 'shell'
-        if document.get('command', '').startswith('Import'):
+        if document.get('command', '').startswith('Import '):
             import_source = 'report'
+            # Now that we have a field that distinguished between shell commands
+            # and imported reports, it is no longer required to directly format
+            # in hte command field
+            document['command'] = document['command'][len('Import '):-1]
 
         start_date = datetime.datetime.fromtimestamp(document.get('itime'))
 
@@ -619,6 +695,7 @@ class CommandImporter(object):
         command.hostname = document.get('hostname', None)
         command.params = document.get('params', None)
         command.user = document.get('user', None)
+        command.tool = 'unknown'  # It will be updated later
         command.workspace = workspace
 
         yield command
@@ -676,8 +753,9 @@ class CredentialImporter(object):
             credential.description = document.get('description', None)
             credential.name = document.get('name', None)
             credential.workspace = workspace
-            if command:
-                log_command_object_found(command, credential, created)
+            if command and created:
+                session.flush()
+                CommandObject.create(credential, command)
             yield credential
 
 
@@ -899,7 +977,7 @@ class ImportCouchDBUsers():
             if user['name'] in admins.keys():
                 # This is an already imported admin user, skip
                 continue
-            logger.info(u'Importing {0}'.format(user['name']))
+            logger.info(u'Importing user {0}'.format(user['name']))
             if not db.session.query(User).filter_by(username=user['name']).first():
                 app.user_datastore.create_user(
                     username=user['name'],
@@ -922,6 +1000,7 @@ class ImportVulnerabilityTemplates():
         self.names = Counter()
 
     def run(self):
+        logger.info("Importing vulnerability templates")
         cwe_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
             username=server.config.couchdb.user,
             password=server.config.couchdb.password,
@@ -940,7 +1019,7 @@ class ImportVulnerabilityTemplates():
             logger.warn(e)
             return
 
-        for cwe in cwes.json()['rows']:
+        for cwe in tqdm(cwes.json()['rows']):
             document = cwe['doc']
             new_severity = self.get_severity(document)
 
@@ -954,7 +1033,18 @@ class ImportVulnerabilityTemplates():
             vuln_template.resolution = document.get('resolution')
             vuln_template.severity = new_severity
 
-            references = document['references'] if isinstance(document['references'], list) else [x.strip() for x in document['references'].split(',')]
+            if isinstance(document['references'], list):
+                references = document['references']
+            elif isinstance(document['references'], (str, unicode)):
+                references = [x.strip()
+                              for x in document['references'].split(',')
+                              if x.strip()]
+            else:
+                logger.warn("Unknown type of vuln template references: {}. "
+                            "Reference data: {}".format(
+                                type(document['references']),
+                                document))
+                continue
             cwe_field = document.get('cwe')
             if cwe_field not in references:
                 references.append(cwe_field)
@@ -1023,7 +1113,6 @@ class ImportLicense():
                                                    notes=document.get('notes'),
                                                    type=document.get('lictype')
                                                    )
-
 
 class ImportCouchDB():
     def _open_couchdb_conn(self):
@@ -1150,6 +1239,7 @@ class ImportCouchDB():
         obj_types = OBJ_TYPES
         couchdb_relational_map = defaultdict(list)
         couchdb_relational_map_by_type = defaultdict(list)
+        command_tool_map = {}
         for level, obj_type in obj_types:
             obj_importer = faraday_importer.get_importer_from_document(obj_type)()
             objs_dict = self.get_objs(couch_url, obj_type, level, workspace)
@@ -1166,8 +1256,13 @@ class ImportCouchDB():
                         if not new_obj:
                             continue
                         set_metadata(raw_obj, new_obj)
+                        map_tool_with_command_id(command_tool_map,
+                                                 raw_obj)
                         session.commit()
                         couchdb_relational_map_by_type[couchdb_id].append({'type': obj_type, 'id': new_obj.id})
                         couchdb_relational_map[couchdb_id].append(new_obj.id)
+        update_command_tools(workspace, command_tool_map,
+                             couchdb_relational_map_by_type)
+        session.commit()
         self.verify_import_data(couchdb_relational_map, couchdb_relational_map_by_type, workspace)
         return created

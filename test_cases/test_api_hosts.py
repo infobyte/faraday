@@ -1,7 +1,14 @@
-import operator
-import pytest
 import time
+import operator
+try:
+    import urlparse
+    from urllib import urlencode
+except: # For Python 3
+    import urllib.parse as urlparse
+    from urllib.parse import urlencode
 from sqlalchemy.orm.util import was_deleted
+
+import pytest
 
 from test_cases import factories
 from test_api_workspaced_base import (
@@ -11,7 +18,8 @@ from test_api_workspaced_base import (
 )
 from server.models import db, Host
 from server.api.modules.hosts import HostsView
-from test_cases.factories import HostFactory
+from test_cases.factories import HostFactory, CommandFactory, \
+    EmptyCommandFactory, WorkspaceFactory
 
 HOSTS_COUNT = 5
 SERVICE_COUNT = [10, 5]  # 10 services to the first host, 5 to the second
@@ -118,7 +126,7 @@ class TestHostAPI:
             "ip": host.ip,
             "description": "aaaaa",
         })
-        assert res.status_code == 400
+        assert res.status_code == 409
         assert Host.query.count() == HOSTS_COUNT + 1
 
     def test_create_a_host_with_ip_of_other_workspace(self, test_client,
@@ -154,7 +162,7 @@ class TestHostAPI:
             "ip": self.workspace.hosts[1].ip,  # Existing IP
             "description": "bbbbb",
         })
-        assert res.status_code == 400
+        assert res.status_code == 409
         session.refresh(host)
         assert host.ip == original_ip
         assert host.description == original_desc  # It shouldn't do a partial update
@@ -321,7 +329,7 @@ class TestHostAPI:
     def test_create_host_with_hostnames(self, test_client):
         raw_data = {
             "ip": "192.168.0.21",
-            "hostnames": [{"key": "google.com"}],
+            "hostnames": ["google.com"],
             "mac": "00:00:00:00:00:00",
             "description": "",
             "os": "",
@@ -330,6 +338,28 @@ class TestHostAPI:
         }
         res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 201
+        assert res.json['hostnames'] == ['google.com']
+        host = Host.query.get(res.json['id'])
+        assert len(host.hostnames) == 1
+        assert host.hostnames[0].name == 'google.com'
+
+    def test_update_host_with_hostnames(self, test_client, session,
+                                        host_with_hostnames):
+        session.commit()
+        data = {
+            "ip": "192.168.0.21",
+            "hostnames": ["other.com", "test.com"],
+            "mac": "00:00:00:00:00:00",
+            "description": "",
+            "os": "",
+            "owned": False,
+            "owner": ""
+        }
+        res = test_client.put(self.url(host_with_hostnames), data=data)
+        assert res.status_code == 200
+        expected = set(["other.com", "test.com"])
+        assert set(res.json['hostnames']) == expected
+        assert set(hn.name for hn in host_with_hostnames.hostnames) == expected
 
     def test_create_host_with_default_gateway(self, test_client):
         raw_data = {
@@ -384,7 +414,9 @@ class TestHostAPI:
             u'hostnames': [],
             u'id': host.id,
             u'ip': u'10.31.112.21',
-            u'metadata': {u'command_id': None,
+            u'mac': None,
+            u'metadata': {
+                u'command_id': None,
                 u'create_time': int(time.mktime(updated_host.create_date.timetuple())) * 1000,
                 u'creator': u'',
                 u'owner': host.creator.username,
@@ -442,3 +474,78 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
                               '?sort=services&sort_dir=asc')
         assert res.status_code == 200
         assert [h['_id'] for h in res.json['data']] == expected_ids
+
+    @pytest.mark.usefixtures("mock_envelope_list")
+    def test_sort_by_update_time(self, test_client, session, second_workspace,
+                                 host_factory):
+        """
+        This test doesn't test only the hosts view, but all the ones that
+        expose a object with metadata.
+        Think twice if you are thinking in removing it
+        """
+        expected = host_factory.create_batch(10, workspace=second_workspace)
+        session.commit()
+        for i in range(len(expected)):
+            if i % 2 == 0:   # Only update some hosts
+                host = expected.pop(0)
+                host.description = 'i was updated'
+                session.add(host)
+                session.commit()
+                expected.append(host)  # Put it on the end
+        res = test_client.get(self.url(workspace=second_workspace) +
+                              '?sort=metadata.update_time&sort_dir=asc')
+        assert res.status_code == 200, res.data
+        assert [h['_id'] for h in res.json['data']] == [h.id for h in expected]
+
+    def test_create_a_host_twice_returns_conflict(self, test_client):
+        res = test_client.post(self.url(), data={
+            "ip": "127.0.0.1",
+            "description": "aaaaa",
+        })
+        assert res.status_code == 201
+        assert Host.query.count() == HOSTS_COUNT + 1
+        host_id = res.json['id']
+        host = Host.query.get(host_id)
+        assert host.ip == "127.0.0.1"
+        assert host.description == "aaaaa"
+        assert host.os is None
+        assert host.workspace == self.workspace
+        res = test_client.post(self.url(), data={
+            "ip": "127.0.0.1",
+            "description": "aaaaa",
+        })
+        assert res.status_code == 409
+        assert res.json['object']['_id'] == host_id
+
+    def test_create_host_from_command(self, test_client, session):
+        command = EmptyCommandFactory.create()
+        session.commit()
+        assert len(command.command_objects) == 0
+        url = self.url(workspace=command.workspace) + '?' + urlencode({'command_id': command.id})
+
+        res = test_client.post(url, data={
+            "ip": "127.0.0.1",
+            "description": "aaaaa",
+        })
+
+        assert res.status_code == 201
+        assert len(command.command_objects) == 1
+        cmd_obj = command.command_objects[0]
+        assert cmd_obj.object_type == 'Host'
+        assert cmd_obj.object_id == res.json['id']
+
+    def test_create_host_cant_assign_command_from_another_workspace(self, test_client, session):
+        command = EmptyCommandFactory.create()
+        new_workspace = WorkspaceFactory.create()
+        session.commit()
+        assert len(command.command_objects) == 0
+        url = self.url(workspace=new_workspace) + '?' + urlencode({'command_id': command.id})
+
+        res = test_client.post(url, data={
+            "ip": "127.0.0.1",
+            "description": "aaaaa",
+        })
+
+        assert res.status_code == 400
+        assert res.json == {u'message': u'Command not found.'}
+        assert len(command.command_objects) == 0

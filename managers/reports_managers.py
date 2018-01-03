@@ -5,14 +5,14 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from threading import Thread
 
 import os
-#import model.api
-import threading
-import time
-import traceback
 import re
-
+import time
+import logging
+import traceback
+from multiprocessing import Process
 from utils.logs import getLogger
 
 try:
@@ -24,11 +24,13 @@ except ImportError:
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
+logger = logging.getLogger(__name__)
 
 
 class ReportProcessor():
-    def __init__(self, plugin_controller):
+    def __init__(self, plugin_controller, ws_name=None):
         self.plugin_controller = plugin_controller
+        self.ws_name = ws_name
 
     def processReport(self, filename):
         """
@@ -49,7 +51,7 @@ class ReportProcessor():
         """Sends a report to the appropiate plugin specified by plugin_id"""
         getLogger(self).info(
             'The file is %s, %s' % (filename, plugin_id))
-        if not self.plugin_controller.processReport(plugin_id, filename):
+        if not self.plugin_controller.processReport(plugin_id, filename, self.ws_name):
             getLogger(self).error(
                 "Faraday doesn't have a plugin for this tool..."
                 " Processing: ABORT")
@@ -57,21 +59,22 @@ class ReportProcessor():
         return True
 
     def onlinePlugin(self, cmd):
-
         _, new_cmd = self.plugin_controller.processCommandInput('0', cmd, './')
         self.plugin_controller.onCommandFinished('0', 0, cmd)
 
 
-class ReportManager(threading.Thread):
-    def __init__(self, timer, ws_name, plugin_controller):
-        threading.Thread.__init__(self)
-        self.setDaemon(True)
+class ReportManager(Thread):
+    def __init__(self, timer, ws_name, plugin_controller, polling=True):
+        Thread.__init__(self)
+        self.polling = polling
+        self.ws_name = ws_name
+        self.daemon = False
         self.timer = timer
         self._stop = False
         self._report_path = os.path.join(CONF.getReportPath(), ws_name)
         self._report_ppath = os.path.join(self._report_path, "process")
         self._report_upath = os.path.join(self._report_path, "unprocessed")
-        self.processor = ReportProcessor(plugin_controller)
+        self.processor = ReportProcessor(plugin_controller, ws_name)
 
         if not os.path.exists(self._report_path):
             os.mkdir(self._report_path)
@@ -83,21 +86,23 @@ class ReportManager(threading.Thread):
             os.mkdir(self._report_upath)
 
     def run(self):
-        tmp_timer = 0
+        tmp_timer = .0
         tmp_timer_sentinel = 0
         while not self._stop:
 
-            time.sleep(1)
-            tmp_timer += 1
+            time.sleep(.1)
+            tmp_timer += .1
             tmp_timer_sentinel += 1
 
             if tmp_timer_sentinel == 1800:
                 tmp_timer_sentinel = 0
                 self.launchSentinel()
 
-            if tmp_timer == self.timer:
+            if tmp_timer >= self.timer:
                 try:
                     self.syncReports()
+                    if not self.polling:
+                        break
                 except Exception:
                     getLogger(self).error(
                         "An exception was captured while saving reports\n%s"
@@ -126,7 +131,7 @@ class ReportManager(threading.Thread):
         filenames = []
 
         for root, dirs, files in os.walk(self._report_path, False):
-
+            # skip processed and unprocessed directories
             if root == self._report_path:
                 for name in files:
                     filenames.append(os.path.join(root, name))
@@ -136,7 +141,7 @@ class ReportManager(threading.Thread):
 
             # If plugin not is detected... move to unprocessed
             if self.processor.processReport(filename) is False:
-
+                logger.info('Plugin not detected. Moving {0} to unprocessed'.format(filename))
                 os.rename(
                     filename,
                     os.path.join(self._report_upath, name))

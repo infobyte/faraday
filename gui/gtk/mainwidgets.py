@@ -222,9 +222,8 @@ class HostsSidebar(Gtk.Widget):
 
     def _find_host_id(self, object_):
         """Return the ID of the object's parent host."""
-        object_id = object_.getID()
-        host_id = object_id.split(".")[0]
-        return host_id
+        if object_.getParentType() == 'Host':
+            return object_.getParent()
 
     def _is_host_in_model_by_host_id(self, host_id):
         """Return a boolean indicating if host_id is in the model"""
@@ -255,7 +254,7 @@ class HostsSidebar(Gtk.Widget):
         vuln_count = host.getVulnAmount()
         os_icon, os_str = self.__decide_icon(host.getOS())
         display_str = str(host)
-        host_iter = self.model.append([host.id, os_icon, os_str, display_str, vuln_count])
+        host_iter = self.model.append([str(host.id), os_icon, os_str, display_str, vuln_count])
         self.host_id_to_iter[host.id] = host_iter
         self.host_amount_in_model += 1
 
@@ -346,7 +345,7 @@ class HostsSidebar(Gtk.Widget):
         """Takes vulns, a list of vulnerability object, and adds them to the
         model by modifying their corresponding hosts in the model. Return None.
         """
-        host_ids = map(self._find_host_id, vulns)
+        host_ids = [host_id for host_id in map(self._find_host_id, vulns) if host_id is not None]
         self._modify_vuln_amounts_of_hosts_in_model(host_ids, lambda x: x + 1)
 
     def remove_relevant_vulns_from_model(self, vulns_ids):

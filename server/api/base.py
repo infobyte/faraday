@@ -13,7 +13,7 @@ from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
 from webargs.flaskparser import FlaskParser, parser, abort
 from webargs.core import ValidationError
-from server.models import Workspace, db
+from server.models import Workspace, db, Command, CommandObject
 import server.utils.logger
 
 logger = server.utils.logger.get_logger(__name__)
@@ -157,10 +157,11 @@ class GenericView(FlaskView):
     @classmethod
     def register(cls, app, *args, **kwargs):
         """Register and add JSON error handler. Use error code
-        400 instead of 422"""
+        400 instead of 409"""
         super(GenericView, cls).register(app, *args, **kwargs)
+
         @app.errorhandler(422)
-        def handle_unprocessable_entity(err):
+        def handle_conflict(err):
             # webargs attaches additional metadata to the `data` attribute
             exc = getattr(err, 'exc')
             if exc:
@@ -171,6 +172,17 @@ class GenericView(FlaskView):
             return flask.jsonify({
                 'messages': messages,
             }), 400
+
+        @app.errorhandler(409)
+        def handle_conflict(err):
+            # webargs attaches additional metadata to the `data` attribute
+            exc = getattr(err, 'exc')
+            if exc:
+                # Get validations from the ValidationError object
+                messages = exc.messages
+            else:
+                messages = ['Invalid request']
+            return flask.jsonify(messages), 409
 
         @app.errorhandler(InvalidUsage)
         def handle_invalid_usage(error):
@@ -217,25 +229,39 @@ class GenericWorkspacedView(GenericView):
         context.update(kwargs)
         return context
 
-    def _validate_uniqueness(self, obj, object_id=None):
+    def _validate_uniqueness(self, obj, object_id=None, unique_fields=None):
         # TODO: Use implementation of GenericView
         assert obj.workspace is not None, "Object must have a " \
             "workspace attribute set to call _validate_uniqueness"
         primary_key_field = inspect(self.model_class).primary_key[0]
-        for field_name in self.unique_fields:
-            field = getattr(self.model_class, field_name)
-            value = getattr(obj, field_name)
-            query = self._get_base_query(obj.workspace.name).filter(
-                field == value)
-            if object_id is not None:
-                # The object already exists in DB, we want to fetch an object
-                # different to this one but with the same unique field
-                query = query.filter(primary_key_field != object_id)
-            if query.one_or_none():
+        query = self._get_base_query(obj.workspace.name)
+        if object_id is not None:
+            # The object already exists in DB, we want to fetch an object
+            # different to this one but with the same unique field
+            query = query.filter(primary_key_field != object_id)
+        if unique_fields is None:
+            # It is usually None, but in some case the child class may want to
+            # override it based on some condition dependent on the request
+            unique_fields = self.unique_fields
+        for field_names in unique_fields:
+            for field_name in field_names:
+                # Use type(obj) instead of self.model_class to be
+                # compatible with polymorphic obejcts (e.g. Vulnerability)
+                field = getattr(type(obj), field_name)
+                value = getattr(obj, field_name)
+                query = query.filter(
+                    field == value)
+
+            existing_obj = query.one_or_none()
+            conflict_data = self._get_schema_class()().dump(existing_obj).data
+            if existing_obj:
                 db.session.rollback()
-                abort(422, ValidationError('Existing value for %s field: %s' % (
-                    field_name, value
-                )))
+                abort(409, ValidationError(
+                    {
+                        'message': 'Existing value for unique columns: %s' % (field_names, ),
+                        'object': conflict_data,
+                    }
+                ))
 
 
 class ListMixin(object):
@@ -282,6 +308,16 @@ class SortableMixin(object):
         # Check that the field is in the schema to prevent unwanted fields
         # value leaking
         schema = self._get_schema_instance(kwargs)
+
+        # Add metadata nested field
+        try:
+            metadata_field = schema.fields.pop('metadata')
+        except KeyError:
+            pass
+        else:
+            for (key, value) in metadata_field.target_schema.fields.items():
+                schema.fields['metadata.' + key] = value
+
         try:
             field_instance = schema.fields[order_field]
         except KeyError:
@@ -388,6 +424,7 @@ class CreateMixin(object):
 
     def post(self, **kwargs):
         context = {'updating': False}
+
         data = self._parse_data(self._get_schema_instance(kwargs, context=context),
                                 flask.request)
         data.pop('id', None)
@@ -407,7 +444,48 @@ class CreateMixin(object):
         return obj
 
 
-class CreateWorkspacedMixin(CreateMixin):
+class CommandMixing():
+    """
+        Created the command obj to log model activity after a command
+        execution via the api (ex. from plugins)
+        This will use GET parameter command_id.
+        NOTE: GET parameters are also available in POST requests
+    """
+
+    def _set_command_id(self, obj, created):
+        try:
+            # validates the data type from user input.
+            command_id = int(flask.request.args.get('command_id', None))
+        except TypeError:
+            command_id = None
+
+        if command_id:
+            command = db.session.query(Command).filter(Command.id==command_id, Command.workspace==obj.workspace).first()
+            if command is None:
+                raise InvalidUsage('Command not found.')
+            # if the object is created and updated in the same command
+            # the command object already exists
+            # we skip the creation.
+            command_object = CommandObject.query.filter_by(
+                object_id=obj.id,
+                object_type=obj.__class__.__name__,
+                command=command,
+                workspace=obj.workspace,
+            ).first()
+            if created or not command_object:
+                command_object = CommandObject(
+                    object_id=obj.id,
+                    object_type=obj.__class__.__name__,
+                    command=command,
+                    workspace=obj.workspace,
+                    created_persistent=created
+                )
+
+            db.session.add(command)
+            db.session.add(command_object)
+
+
+class CreateWorkspacedMixin(CreateMixin, CommandMixing):
     """Add POST /<workspace_name>/ route"""
 
     def _perform_create(self, data, workspace_name):
@@ -422,7 +500,7 @@ class CreateWorkspacedMixin(CreateMixin):
             self._validate_uniqueness(obj)
             db.session.add(obj)
         db.session.commit()
-
+        self._set_command_id(obj, True)
         return obj
 
 
@@ -437,7 +515,8 @@ class UpdateMixin(object):
         # just in case an schema allows id as writable.
         data.pop('id', None)
         self._update_object(obj, data)
-        updated = self._perform_update(object_id, obj, **kwargs)
+        self._perform_update(object_id, obj, **kwargs)
+
         return self._dump(obj, kwargs), 200
 
     def _update_object(self, obj, data):
@@ -451,13 +530,17 @@ class UpdateMixin(object):
         db.session.commit()
 
 
-class UpdateWorkspacedMixin(UpdateMixin):
+class UpdateWorkspacedMixin(UpdateMixin, CommandMixing):
     """Add PUT /<id>/ route"""
 
     def _perform_update(self, object_id, obj, workspace_name):
-        assert not db.session.new
+        # # Make sure that if I created new objects, I had properly commited them
+        # assert not db.session.new
+
         with db.session.no_autoflush:
             obj.workspace = self._get_workspace(workspace_name)
+
+        self._set_command_id(obj, False)
         return super(UpdateWorkspacedMixin, self)._perform_update(
             object_id, obj)
 

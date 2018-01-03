@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('serviceModalEdit',
-        ['$scope', '$modalInstance', '$routeParams','service', 'servicesManager', 'commonsFact',
-        function($scope, $modalInstance, $routeParams, service, servicesManager, commons) {
+        ['$scope', '$modalInstance', '$routeParams', 'SERVICE_STATUSES', 'service', 'servicesManager', 'commonsFact',
+        function($scope, $modalInstance, $routeParams, SERVICE_STATUSES, service, servicesManager, commons) {
 
         init = function() {
             // current Workspace
@@ -26,6 +26,7 @@ angular.module('faradayApp')
             } else {
                 $scope.services_selected = service;
             }
+            $scope.statuses = SERVICE_STATUSES;
         };
 
         $scope.ok = function() {

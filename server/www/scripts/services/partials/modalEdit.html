@@ -39,7 +39,7 @@
                     <h5>Port</h5>
                     <div class="input-margin">
                         <label class="sr-only" for="ports">Port</label>
-                        <input type="number" class="form-control" id="ports" placeholder="Ports" ng-model="service.ports"/>
+                        <input type="number" class="form-control" id="ports" placeholder="Port" ng-model="service.ports"/>
                     </div>
                 </div>
                 <div class="col-md-3 protocol">
@@ -55,7 +55,8 @@
                 <div class="col-md-3">
                     <h5>Status</h5>
                     <label class="sr-only" for="status">Status</label>
-                    <input type="text" class="form-control" id="status" placeholder="Status" ng-model="service.status"/>
+                    <select class="form-control" ng-model="service.status" ng-options="e for e in statuses" id="status">
+                    </select>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
@@ -73,7 +74,7 @@
                                     <a href="" ng-click="toggleSort('description')">Description</a>
                                 </th>
                                 <th>
-                                    <a href="" ng-click="toggleSort('ports')">Ports</a>
+                                    <a href="" ng-click="toggleSort('ports')">Port</a>
                                 </th>
                                 <th>
                                     <a href="" ng-click="toggleSort('protocol')">Protocol</a>

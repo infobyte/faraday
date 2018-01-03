@@ -2,6 +2,7 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 import logging
+
 import os
 from os.path import join, expanduser
 
@@ -17,6 +18,7 @@ except ImportError:
 import flask
 from flask import Flask, session, g
 from flask.json import JSONEncoder
+from flask_sqlalchemy import get_debug_queries
 from flask_security import (
     Security,
     SQLAlchemyUserDatastore,
@@ -26,8 +28,6 @@ from depot.manager import DepotManager
 
 import server.config
 from server.utils.logger import LOGGING_HANDLERS
-logger = logging.getLogger(__name__)
-
 logger = logging.getLogger(__name__)
 
 
@@ -47,7 +47,7 @@ def setup_storage_path():
 
 
 def register_blueprints(app):
-    from server.modules.info import info_api
+    from server.api.modules.info import info_api
     from server.api.modules.commandsrun import commandsrun_api
     from server.api.modules.credentials import credentials_api
     from server.api.modules.doc import doc_api
@@ -59,6 +59,7 @@ def register_blueprints(app):
     from server.api.modules.vulnerability_template import vulnerability_template_api
     from server.api.modules.workspaces import workspace_api
     from server.api.modules.handlers import handlers_api
+    from server.api.modules.comments import comment_api
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(credentials_api)
     app.register_blueprint(doc_api)
@@ -71,6 +72,7 @@ def register_blueprints(app):
     app.register_blueprint(vulnerability_template_api)
     app.register_blueprint(workspace_api)
     app.register_blueprint(handlers_api)
+    app.register_blueprint(comment_api)
 
 
 def check_testing_configuration(testing, app):
@@ -95,12 +97,25 @@ def register_handlers(app):
         view = app.view_functions.get(flask.request.endpoint)
         logged_in = 'user_id' in flask.session
         if (not logged_in and not getattr(view, 'is_public', False)):
-            flask.abort(403)
+            flask.abort(401)
 
         g.user = None
         if logged_in:
             user = User.query.filter_by(id=session["user_id"]).first()
             g.user = user
+
+    @app.after_request
+    def log_queries_count(response):
+        queries = get_debug_queries()
+        max_query_time = max(q.duration for q in queries)
+        if len(queries) > 15:
+            logger.warn("Too many queries done (%s) in endpoint %s. "
+                        "Maximum query time: %.2f",
+                        len(queries), flask.request.endpoint, max_query_time)
+            # from collections import Counter
+            # print '\n\n\n'.join(
+            #     map(str,Counter(q.statement for q in queries).most_common()))
+        return response
 
 def create_app(db_connection_string=None, testing=None):
     app = Flask(__name__)
@@ -112,6 +127,7 @@ def create_app(db_connection_string=None, testing=None):
     app.config['SECURITY_POST_LOGIN_VIEW'] = '/_api/session'
     app.config['SECURITY_POST_LOGOUT_VIEW'] = '/_api/login'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SQLALCHEMY_RECORD_QUERIES'] = True
     # app.config['SQLALCHEMY_ECHO'] = True
     app.config['SECURITY_PASSWORD_SCHEMES'] = [
         'bcrypt',  # This should be the default value
@@ -168,7 +184,6 @@ def create_app(db_connection_string=None, testing=None):
 
     register_blueprints(app)
     register_handlers(app)
-
 
     return app
 

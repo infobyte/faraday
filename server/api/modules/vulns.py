@@ -12,7 +12,7 @@ from flask import Blueprint
 from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
 from sqlalchemy import and_
-from sqlalchemy.orm import joinedload, selectin_polymorphic
+from sqlalchemy.orm import joinedload, selectin_polymorphic, undefer
 from sqlalchemy.orm.exc import NoResultFound
 
 from depot.manager import DepotManager
@@ -42,6 +42,7 @@ from server.schemas import (
     MutableField,
     PrimaryKeyRelatedField,
     SelfNestedField,
+    SeverityField,
     MetadataSchema)
 
 vulns_api = Blueprint('vulns_api', __name__)
@@ -75,6 +76,14 @@ class ImpactSchema(Schema):
     integrity = fields.Boolean(attribute='impact_integrity')
 
 
+class CustomMetadataSchema(MetadataSchema):
+    """
+    Implements command_id and creator logic
+    """
+    command_id = fields.Integer(dump_only=True, attribute='creator_command_id')
+    creator = fields.String(dump_only=True, attribute='creator_command_tool')
+
+
 class VulnerabilitySchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
 
@@ -93,18 +102,21 @@ class VulnerabilitySchema(AutoSchema):
                                fields.String(),
                                required=True)
     tags = PrimaryKeyRelatedField('name', dump_only=True, many=True)
-    easeofresolution = fields.String(attribute='ease_of_resolution', validate=OneOf(Vulnerability.EASE_OF_RESOLUTIONS),)
+    easeofresolution = fields.String(
+        attribute='ease_of_resolution',
+        validate=OneOf(Vulnerability.EASE_OF_RESOLUTIONS),
+        allow_none=True)
     hostnames = PrimaryKeyRelatedField('name', many=True, dump_only=True)
     service = fields.Nested(ServiceSchema(only=[
         '_id', 'ports', 'status', 'protocol', 'name', 'version', 'summary'
     ]), dump_only=True)
     host = fields.Integer(dump_only=True, attribute='host_id')
-    severity = fields.Method(serialize='get_severity', deserialize='load_severity')
+    severity = SeverityField(required=True)
     status = fields.Method(serialize='get_status', deserialize='load_status')  # TODO: this breaks enum validation.
-    type = fields.Method(serialize='get_type', deserialize='load_type')
+    type = fields.Method(serialize='get_type', deserialize='load_type', required=True)
     obj_id = fields.String(dump_only=True, attribute='id')
     target = fields.Method('get_target')
-    metadata = SelfNestedField(MetadataSchema())
+    metadata = SelfNestedField(CustomMetadataSchema())
     date = fields.DateTime(attribute='create_date',
                            dump_only=True)  # This is only used for sorting
 
@@ -145,13 +157,6 @@ class VulnerabilitySchema(AutoSchema):
         assert obj.service_id is not None or obj.host_id is not None
         return 'Service' if obj.service_id is not None else 'Host'
 
-    def get_severity(self, obj):
-        if obj.severity == 'medium':
-            return 'med'
-        if obj.severity == 'informational':
-            return 'info'
-        return obj.severity
-
     def get_status(self, obj):
         if obj.status == 'open':
             return 'opened'
@@ -165,13 +170,6 @@ class VulnerabilitySchema(AutoSchema):
             return obj.service.host.ip
         else:
             return obj.host.ip
-
-    def load_severity(self, value):
-        if value == 'med':
-            return 'medium'
-        if value == 'info':
-            return 'informational'
-        return value
 
     def load_status(self, value):
         if value == 'opened':
@@ -222,6 +220,8 @@ class VulnerabilitySchema(AutoSchema):
         except NoResultFound:
             raise ValidationError('Parent id not found: {}'.format(parent_id))
         data[parent_field] = parent.id
+        # TODO migration: check what happens when updating the parent from
+        # service to host or viceverse
         return data
 
 
@@ -282,17 +282,15 @@ class VulnerabilityFilterSet(FilterSet):
 
         :returns: Filtered SQLALchemy query
         """
+        # TODO migration: this can became a normal filter instead of a custom
+        # one, since now we can use creator_command_id
         command_id = request.args.get('command_id')
-        if command_id:
-            self.query = self.query.join(
-                CommandObject, and_(
-                    VulnerabilityWeb.id == CommandObject.object_id,
-                    CommandObject.object_type == 'vulnerability'))
-
         query = super(VulnerabilityFilterSet, self).filter()
 
         if command_id:
-            query = query.filter(CommandObject.command_id == int(command_id))
+            # query = query.filter(CommandObject.command_id == int(command_id))
+            query = query.filter(VulnerabilityGeneric.creator_command_id ==
+                                 int(command_id))  # TODO migration: handle invalid int()
         return query
 
 
@@ -301,23 +299,33 @@ class VulnerabilityView(PaginatedMixin,
                         ReadWriteWorkspacedView):
     route_base = 'vulns'
     filterset_class = VulnerabilityFilterSet
+    unique_fields_by_class = {
+        'Vulnerability': [('name', 'description', 'host_id', 'service_id')],
+        'VulnerabilityWeb': [('name', 'description', 'service_id', 'method',
+                              'parameter_name', 'path', 'website')],
+    }
 
     model_class_dict = {
         'Vulnerability': Vulnerability,
         'VulnerabilityWeb': VulnerabilityWeb,
-        'VulnerabilityGeneric': VulnerabilityGeneric,
+        'VulnerabilityGeneric': VulnerabilityGeneric,  # For listing objects
     }
     schema_class_dict = {
         'Vulnerability': VulnerabilitySchema,
         'VulnerabilityWeb': VulnerabilityWebSchema
     }
 
+    def _validate_uniqueness(self, obj, object_id=None):
+        unique_fields = self.unique_fields_by_class[obj.__class__.__name__]
+        super(VulnerabilityView, self)._validate_uniqueness(
+            obj, object_id, unique_fields)
+
     def _perform_create(self, data, **kwargs):
         data = self._parse_data(self._get_schema_instance(kwargs),
                                 request)
         # TODO migration: use default values when popping and validate the
         # popped object has the expected type.
-        attachments = data.pop('_attachments')
+        attachments = data.pop('_attachments', {})
 
         # This will be set after setting the workspace
         references = data.pop('references')
@@ -362,6 +370,8 @@ class VulnerabilityView(PaginatedMixin,
             .joinedload(Service.host)
             .joinedload(Host.hostnames),
 
+            undefer(VulnerabilityGeneric.creator_command_id),
+            undefer(VulnerabilityGeneric.creator_command_tool),
             joinedload(VulnerabilityGeneric.evidence),
             joinedload(VulnerabilityGeneric.tags),
         ]
@@ -380,7 +390,9 @@ class VulnerabilityView(PaginatedMixin,
     def _get_schema_class(self):
         assert self.schema_class_dict is not None, "You must define schema_class"
         if request.method == 'POST':
-            requested_type = request.json['type']
+            requested_type = request.json.get('type', None)
+            if not requested_type:
+                raise ValidationError('Type is required.')
             if requested_type not in self.schema_class_dict:
                 raise InvalidUsage('Invalid vulnerability type.')
             return self.schema_class_dict[requested_type]

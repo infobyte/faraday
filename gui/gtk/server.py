@@ -195,7 +195,7 @@ class ServerIO(object):
                 else:
                     tolerance += 1
                     if tolerance == 3:
-                        notification_center.CouchDBConnectionProblem()
+                        notification_center.DBConnectionProblem()
 
         test_server_thread = threading.Thread(target=test_server_connection)
         test_server_thread.daemon = True

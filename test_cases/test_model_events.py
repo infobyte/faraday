@@ -1,5 +1,4 @@
 import pytest
-from server import events
 from test_cases.factories import HostFactory, ServiceFactory
 
 

@@ -6,6 +6,12 @@ angular.module('faradayApp')
     .controller('commercialCtrl', 
         ['$scope', '$location',
         function($scope, $location) {
+            loginSrv.isAuthenticated().then(function(auth){
+                if(!auth) {
+                    $location.path('/login');
+                }
+                return deferred.reject(response);
+            });
         	if ($location.path().split("/")[1] === "executive") {
         		$scope.header = "executive report";
         	} else if ($location.path().split("/")[1] === "comparison") {

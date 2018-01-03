@@ -59,6 +59,8 @@ def pytest_addoption(parser):
     parser.addoption('--connection-string', default='sqlite://',
                      help="Database connection string. Defaults to in-memory "
                      "sqlite if not specified:")
+    parser.addoption('--ignore-nplusone', action='store_true',
+                     help="Globally ignore nplusone errors")
 
 
 @pytest.fixture(scope='session')
@@ -75,6 +77,8 @@ def app(request):
         ctx.pop()
 
     request.addfinalizer(teardown)
+    app.config['NPLUSONE_RAISE'] = not request.config.getoption(
+        '--ignore-nplusone')
     return app
 
 

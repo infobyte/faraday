@@ -3,8 +3,7 @@ import datetime
 from marshmallow import fields, Schema
 from marshmallow.exceptions import ValidationError
 
-from server.api.base import AutoSchema
-from server.models import CommandObject
+from server.models import CommandObject, VulnerabilityABC
 
 
 class JSTimestampField(fields.Integer):
@@ -108,10 +107,35 @@ class MutableField(fields.Field):
         self.write_field._add_to_schema(field_name, schema)
 
 
-class MetadataSchema(Schema):
-    command_id = fields.Method('get_command_id', dump_only=True)
+class SeverityField(fields.String):
+    """
+    Custom field for the severity, with the proper mappings to make
+    it compatible with the web UI
+    """
 
-    creator = fields.Function(lambda x: '')
+    def _serialize(self, value, attr, obj):
+        ret = super(SeverityField, self)._serialize(value, attr, obj)
+        if ret == 'medium':
+            return 'med'
+        elif ret == 'informational':
+            return 'info'
+        return ret
+
+    def _deserialize(self, value, attr, data):
+        ret = super(SeverityField, self)._serialize(value, attr, data)
+        if ret == 'med':
+            return 'medium'
+        elif ret == 'info':
+            return 'informational'
+        if ret not in VulnerabilityABC.SEVERITIES:
+            raise ValidationError("Invalid severity type.")
+        return ret
+
+
+class MetadataSchema(Schema):
+    command_id = fields.Function(lambda x: None, dump_only=True)
+
+    creator = fields.Function(lambda x: '', dump_only=True)
     owner = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
 
     create_time = JSTimestampField(attribute='create_date', dump_only=True)
@@ -120,11 +144,3 @@ class MetadataSchema(Schema):
     update_user = fields.String(default='', dump_only=True)
     update_action = fields.Integer(default=0, dump_only=True)
     update_controller_action = fields.String(default='', dump_only=True)
-
-    def get_command_id(self, obj):
-        command_id = None
-        command_obj = CommandObject.query.filter_by(object_type='vulnerability', object_id=obj.id, workspace_id=obj.workspace_id).first()
-        if command_obj:
-            command_id = command_obj.command_id
-
-        return command_id

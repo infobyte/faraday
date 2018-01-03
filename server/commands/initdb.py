@@ -1,11 +1,13 @@
+import getpass
 import string
 
 import os
 import sys
-import getpass
 from random import SystemRandom
 from tempfile import TemporaryFile
 from subprocess import Popen, PIPE
+
+from sqlalchemy import create_engine
 
 try:
     # py2.7
@@ -16,7 +18,7 @@ except ImportError:
 
 from flask import current_app
 from colorama import init
-from colorama import Fore, Back, Style
+from colorama import Fore
 from sqlalchemy.exc import OperationalError
 
 from config.globals import CONST_FARADAY_HOME_PATH
@@ -51,7 +53,6 @@ class InitDB():
                  * save new configuration on server.ini.
                  * creates tables.
         """
-        current_psql_output = TemporaryFile()
         try:
             config = ConfigParser()
             config.read(LOCAL_CONFIG_FILE)
@@ -61,40 +62,86 @@ class InitDB():
             # we use psql_log_filename for historical saving. we will ask faraday users this file.
             # current_psql_output is for checking psql command already known errors for each execution.
             psql_log_filename = os.path.join(faraday_path_conf, 'logs', 'psql_log.log')
+            configure_existing_user = None
             with open(psql_log_filename, 'a+') as psql_log_file:
-                username, password, process_status = self._configure_postgres(current_psql_output)
-                current_psql_output.seek(0)
-                psql_output = current_psql_output.read()
-                psql_log_file.write(psql_output)
-                current_psql_output.seek(0)
-                psql_output = current_psql_output.read()
-                self._check_psql_output(psql_output, process_status)
-                database_name, process_status = self._create_database(username, current_psql_output)
-                self._check_psql_output(psql_output, process_status)
+                while configure_existing_user is None:
+                    configure_existing_user = raw_input('Do you {blue} already have {white} a postgresql username and password? (yes/no): '.format(blue=Fore.BLUE, white=Fore.WHITE))
+                    if configure_existing_user.lower() == 'yes':
+                        configure_existing_user = True
+                    elif configure_existing_user.lower() == 'no':
+                        configure_existing_user = False
+                    else:
+                        print('Invalid option. Please type "yes" or "no" (ctrl-c to cancel): ')
+                        configure_existing_user = None
+                hostname = raw_input(
+                    'Please enter the postgresql hostname or ip address (enter for "localhost"): ') or 'localhost'
+
+                if not configure_existing_user:
+                    if hostname not in ['localhost', '127.0.0.1']:
+                        print('ERROR: can only create postgresql user on localhost')
+                        sys.exit(1)
+                    current_psql_output = TemporaryFile()
+                    username, password, process_status = self._configure_new_postgres_user(current_psql_output)
+                    current_psql_output.seek(0)
+                    psql_output = current_psql_output.read()
+                    # persist log in the faraday log psql_log.log
+                    psql_log_file.write(psql_output)
+                    self._check_psql_output(current_psql_output, process_status)
+
+                    if hostname.lower() in ['localhost', '127.0.0.1']:
+                        database_name = raw_input(
+                            'Please enter the {blue} database name {white} (press enter to use "faraday"): '.format(
+                                blue=Fore.BLUE, white=Fore.WHITE)) or 'faraday'
+                        current_psql_output = TemporaryFile()
+                        database_name, process_status = self._create_database(database_name, username, current_psql_output)
+                        current_psql_output.seek(0)
+                        self._check_psql_output(current_psql_output, process_status)
+                else:
+                    username, password = self._configure_existing_postgres_user()
+                    database_name = raw_input(
+                        'Please enter the {blue} database name {white} (press enter to use "faraday"): '.format(
+                            blue=Fore.BLUE, white=Fore.WHITE)) or 'faraday'
+
             current_psql_output.close()
-            conn_string = self._save_config(config, username, password, database_name)
+            conn_string = self._save_config(config, username, password, database_name, hostname)
             self._create_tables(conn_string)
+            self._create_admin_user(conn_string)
         except KeyboardInterrupt:
             current_psql_output.close()
             print('User cancelled.')
             sys.exit(1)
 
-    def _check_psql_output(self, psql_log_output, process_status):
-        if 'unknown user: postgres' in psql_log_output:
+    def _create_admin_user(self, conn_string):
+        engine = create_engine(conn_string)
+        random_password = self.generate_random_pw(12)
+        engine.execute("INSERT INTO \"user\" (username, password, is_ldap, active) VALUES ('admin', '{0}', false, true);".format(random_password))
+        print("Admin username created with {red} password{white}: {random_password}".format(random_password=random_password, white=Fore.WHITE, red=Fore.RED))
+
+
+    def _configure_existing_postgres_user(self):
+        username = raw_input('Please enter the postgresql username: ')
+        password = getpass.getpass('Please enter the postgresql password: ')
+
+        return username, password
+
+    def _check_psql_output(self, current_psql_output_file, process_status):
+        psql_output = current_psql_output_file.read()
+        if 'unknown user: postgres' in psql_output:
             print('ERROR: Postgres user not found. Did you install package {blue}postgresql{white}?'.format(blue=Fore.BLUE, white=Fore.WHITE))
-        elif 'could not connect to server' in psql_log_output:
+        elif 'could not connect to server' in psql_output:
             print('ERROR: {red}PostgreSQL service{white} is not running. Please verify that it is running in port 5432 before executing setup script.'.format(red=Fore.RED, white=Fore.WHITE))
         elif process_status > 0:
-            print('ERROR: ' + psql_log_output)
+            print('ERROR: ' + psql_output)
 
         if process_status is not 0:
+            current_psql_output_file.close() # delete temp file
             sys.exit(process_status)
 
     def generate_random_pw(self, pwlen):
         rng = SystemRandom()
         return "".join([rng.choice(string.ascii_letters + string.digits) for _ in xrange(pwlen)])
 
-    def _configure_postgres(self, psql_log_file):
+    def _configure_new_postgres_user(self, psql_log_file):
         """
             This step will create the role on the database.
             we return username and password and those values will be saved in the config file.
@@ -109,29 +156,27 @@ class InitDB():
         p.wait()
         return username, password, p.returncode
 
-    def _create_database(self, username, psql_log_file):
+    def _create_database(self, database_name, username, psql_log_file):
         """
              This step uses the createdb command to add a new database.
         """
         postgres_command = ['sudo', '-u', 'postgres']
-        database_name = raw_input('Please enter the {blue} database name {white} (press enter to use "faraday"): '.format(blue=Fore.BLUE, white=Fore.WHITE)) or 'faraday'
         print('Creating database {0}'.format(database_name))
         command = postgres_command + ['createdb', '-O', username, database_name]
-        p = Popen(command, stderr=psql_log_file, stdout=psql_log_file)
+        p = Popen(command, stderr=psql_log_file, stdout=psql_log_file, cwd='/tmp')
         p.wait()
         return database_name, p.returncode
 
-    def _save_config(self, config, username, password, database_name):
+    def _save_config(self, config, username, password, database_name, hostname):
         """
              This step saves database configuration to server.ini
         """
-        db_server = 'localhost'
         print('Saving database credentials file in {0}'.format(LOCAL_CONFIG_FILE))
 
         conn_string = 'postgresql+psycopg2://{username}:{password}@{server}/{database_name}'.format(
             username=username,
             password=password,
-            server=db_server,
+            server=hostname,
             database_name=database_name
         )
         config.set('database', 'connection_string', conn_string)

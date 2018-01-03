@@ -10,6 +10,9 @@ See the file 'doc/LICENSE' for the license information
 
 import unittest
 import sys
+from Queue import Queue
+from collections import defaultdict
+
 import os
 sys.path.append(os.path.abspath(os.getcwd()))
 from plugins.repo.burp.plugin import BurpPlugin
@@ -21,16 +24,15 @@ from persistence.server.models import (
     Note,
     Host,
     Service,
-)
-from plugins.modelactions import modelactions
-import test_common
+    ModelBase)
 
 
-class BurpTest(unittest.TestCase):
+class TestBurp:
 
     cd = os.path.dirname(os.path.realpath(__file__))
 
-    def setUp(self):
+
+    def test_Plugin_creates_adecuate_objects(self, monkeypatch):
         self.plugin = BurpPlugin()
         factory.register(Host)
         factory.register(Service)
@@ -38,24 +40,27 @@ class BurpTest(unittest.TestCase):
         factory.register(VulnWeb)
         factory.register(Note)
         factory.register(Credential)
-
-    def test_Plugin_creates_adecuate_objects(self):
+        pending_actions = Queue()
+        self.plugin.set_actions_queue(pending_actions)
+        monkeypatch.setattr(ModelBase, 'getID', lambda _: 1)
         self.plugin.processReport(self.cd + '/burp_xml')
-        action = self.plugin._pending_actions.get(block=True)
-        self.assertEqual(action[0], modelactions.ADDHOST)
-        self.assertEqual(action[1].name, "200.20.20.201")
-        # action = self.plugin._pending_actions.get(block=True)
-        # self.assertEqual(action[0], modelactions.ADDINTERFACE)
-        # self.assertEqual(action[2].name, "200.20.20.201")
-        action = self.plugin._pending_actions.get(block=True)
-        self.assertEqual(action[0], modelactions.ADDSERVICEINT)
-        self.assertEqual(action[3].name, 'http')
-        self.assertEqual(action[3].protocol, 'tcp')
-        self.assertEqual(action[3].ports, [80])
-        self.assertEqual(action[3].status, 'open')
-        action = self.plugin._pending_actions.get(block=True)
-        self.assertEqual(action[0], modelactions.ADDNOTESRV)
-        # TODO: Fix broken test
+        actions = defaultdict(list)
+        while not pending_actions.empty():
+            action = self.plugin._pending_actions.get(block=True)
+            actions[action[0]].append(action[1])
+
+        assert actions[2000][0].name == "200.20.20.201"
+        assert actions.keys() == [2000, 20008, 2027, 2040, 2038]
+        assert len(actions[20008]) == 14
+        assert len(actions[2027]) == 14
+        assert len(actions[2040]) == 14
+        assert len(actions[2038]) == 14
+
+        assert all('http' == name for name in map(lambda service: service.name, actions[20008]))
+        assert all([80] == ports for ports in map(lambda service: service.ports, actions[20008]))
+        assert all('tcp' == protocol for protocol in map(lambda service: service.protocol, actions[20008]))
+        assert all('open' for status in map(lambda service: service.status, actions[20008]))
+
         # self.assertEqual(action[3], 'Cleartext submission of password')
 
 if __name__ == '__main__':

@@ -5,12 +5,24 @@
 import json
 
 from server.dao.base import FaradayDAO
-from server.utils.database import paginate, sort_results, apply_search_filter, get_count
+from server.utils.database import (
+    GroupConcat,
+    paginate,
+    sort_results,
+    apply_search_filter,
+    get_count
+)
 
 from sqlalchemy import case
 from sqlalchemy.sql import func
 from sqlalchemy.orm.query import Bundle
-from server.models import Host, Interface, Service, Vulnerability, EntityMetadata
+from server.models import (
+    Host,
+    Service,
+    Vulnerability,
+    EntityMetadata
+)
+
 
 
 class VulnerabilityDAO(FaradayDAO):
@@ -18,43 +30,31 @@ class VulnerabilityDAO(FaradayDAO):
     COLUMNS_MAP = {
         "couchid":          [EntityMetadata.couchdb_id],
         "id":               [Vulnerability.id],
-        "date":             [EntityMetadata.create_time], # TODO: fix search for this field
+        "date":             [EntityMetadata.create_time],  # TODO: fix search for this field
         "confirmed":        [Vulnerability.confirmed],
         "name":             [Vulnerability.name],
         "severity":         [Vulnerability.severity],
-        "service":          [Service.ports, Service.protocol, Service.name],
-        "target":           [Host.name],
+        "service":          [Service.port, Service.protocol, Service.name],
+        "target":           [Host.ip],
         "desc":             [Vulnerability.description],
         "resolution":       [Vulnerability.resolution],
         "data":             [Vulnerability.data],
         "owner":            [EntityMetadata.owner],
-        "owned":            [Vulnerability.owned],
-        "easeofresolution": [Vulnerability.easeofresolution],
+        "ease_of_resolution": [Vulnerability.ease_of_resolution],
         "type":             [EntityMetadata.document_type],
         "status":           [Vulnerability.status],
-        "website":          [Vulnerability.website],
-        "path":             [Vulnerability.path],
-        "request":          [Vulnerability.request],
-        "refs":             [Vulnerability.refs],
         "tags":             [],
         "evidence":         [],
-        "hostnames":        [Interface.hostnames],
         "impact":           [],
-        "method":           [Vulnerability.method],
-        "params":           [Vulnerability.params],
-        "pname":            [Vulnerability.pname],
-        "query":            [Vulnerability.query],
-        "response":         [Vulnerability.response],
         "hostid":           [Host.id],
         "serviceid":        [Service.id],
-        "interfaceid":      [Interface.id],
         "web":              [],
         "issuetracker":     [],
         "creator":          [EntityMetadata.creator],
         "command_id":       [EntityMetadata.command_id]
     }
 
-    STRICT_FILTERING = ["type", "service", "couchid", "hostid", "serviceid", 'interfaceid', 'id', 'status', 'command_id']
+    STRICT_FILTERING = ["type", "service", "couchid", "hostid", "serviceid", 'id', 'status', 'command_id']
 
     def list(self, search=None, page=0, page_size=0, order_by=None, order_dir=None, vuln_filter={}):
         results, count = self.__query_database(search, page, page_size, order_by, order_dir, vuln_filter)
@@ -71,18 +71,17 @@ class VulnerabilityDAO(FaradayDAO):
         # Instead of using SQLAlchemy ORM facilities to fetch rows, we bundle involved columns for
         # organizational and MAINLY performance reasons. Doing it this way, we improve retrieving
         # times from large workspaces almost 2x.
-        vuln_bundle = Bundle('vuln', Vulnerability.id.label('server_id'),Vulnerability.name.label('v_name'),\
+        vuln_bundle = Bundle('vuln', Vulnerability.id.label('server_id'), Vulnerability.name.label('v_name'),\
             Vulnerability.confirmed, Vulnerability.data,\
-            Vulnerability.description, Vulnerability.easeofresolution, Vulnerability.impact_accountability,\
+            Vulnerability.description, Vulnerability.ease_of_resolution, Vulnerability.impact_accountability,\
             Vulnerability.impact_availability, Vulnerability.impact_confidentiality, Vulnerability.impact_integrity,\
-            Vulnerability.refs, Vulnerability.resolution, Vulnerability.severity, Vulnerability.owned, Vulnerability.status,\
-            Vulnerability.website, Vulnerability.path, Vulnerability.request, Vulnerability.response,\
-            Vulnerability.method, Vulnerability.params, Vulnerability.pname, Vulnerability.query,\
+            Vulnerability.resolution, Vulnerability.severity, Vulnerability.status,\
             EntityMetadata.couchdb_id, EntityMetadata.revision, EntityMetadata.create_time, EntityMetadata.creator,\
             EntityMetadata.owner, EntityMetadata.update_action, EntityMetadata.update_controller_action,\
-            EntityMetadata.update_time, EntityMetadata.update_user, EntityMetadata.document_type, EntityMetadata.command_id, Vulnerability.attachments)
-        service_bundle = Bundle('service', Service.name.label('s_name'), Service.ports, Service.protocol, Service.id)
-        host_bundle = Bundle('host', Host.name)
+            EntityMetadata.update_time, EntityMetadata.update_user, EntityMetadata.document_type, EntityMetadata.command_id, \
+            Vulnerability.attachments)
+        service_bundle = Bundle('service', Service.name.label('s_name'), Service.port, Service.protocol, Service.id)
+        host_bundle = Bundle('host', Host.ip)
 
         # IMPORTANT: OUTER JOINS on those tables is IMPERATIVE. Changing them could result in loss of
         # data. For example, on vulnerabilities not associated with any service and instead to its host
@@ -90,17 +89,17 @@ class VulnerabilityDAO(FaradayDAO):
         query = self._session.query(vuln_bundle,
                                     service_bundle,
                                     host_bundle,
-                                    func.group_concat(Interface.hostnames))\
-                             .group_by(Vulnerability.id)\
+                                    GroupConcat(Interface.hostnames))\
+                             .group_by(Vulnerability.id, EntityMetadata.id, Service.id, Host.id)\
                              .outerjoin(EntityMetadata, EntityMetadata.id == Vulnerability.entity_metadata_id)\
                              .outerjoin(Service, Service.id == Vulnerability.service_id)\
                              .outerjoin(Host, Host.id == Vulnerability.host_id)\
-                             .join(Interface, Interface.host_id == Host.id)
+                             .filter(Vulnerability.workspace == self.workspace)
 
         # Apply pagination, sorting and filtering options to the query
         query = self.__specialized_sort(query, order_by, order_dir)
         query = apply_search_filter(query, self.COLUMNS_MAP, search, vuln_filter, self.STRICT_FILTERING)
-        count = get_count(query)
+        count = get_count(query,count_col=Vulnerability.id)
 
         if page_size:
             query = paginate(query, page, page_size)
@@ -117,12 +116,12 @@ class VulnerabilityDAO(FaradayDAO):
             # instead of a lexicographycally one
             column_map = {
                 'severity': [case(
-                    { 'unclassified': 0,
+                    {'unclassified': 0,
                       'info': 1,
                       'low': 2,
                       'med': 3,
                       'high': 4,
-                      'critical': 5 },
+                      'critical': 5},
                     value=Vulnerability.severity
                 )]
             }
@@ -134,6 +133,7 @@ class VulnerabilityDAO(FaradayDAO):
     def __get_vuln_data(self, vuln, service, host, hostnames):
         def get_own_id(couchdb_id):
             return couchdb_id.split('.')[-1]
+
         def get_parent_id(couchdb_id):
             return '.'.join(couchdb_id.split('.')[:-1])
 
@@ -148,7 +148,7 @@ class VulnerabilityDAO(FaradayDAO):
                 'data': vuln.data,
                 'desc': vuln.description,
                 'description': vuln.description,
-                'easeofresolution': vuln.easeofresolution,
+                'ease_of_resolution': vuln.ease_of_resolution,
                 'impact': {
                     'accountability': vuln.impact_accountability,
                     'availability': vuln.impact_availability,
@@ -172,35 +172,27 @@ class VulnerabilityDAO(FaradayDAO):
                 'owned': vuln.owned,
                 'owner': vuln.owner,
                 'parent': get_parent_id(vuln.couchdb_id),
-                'refs': json.loads(vuln.refs),
                 'status': vuln.status,
-                'website': vuln.website,
-                'path': vuln.path,
-                'request': vuln.request,
-                'response': vuln.response,
-                'method': vuln.method,
-                'params': vuln.params,
-                'pname': vuln.pname,
-                'query': vuln.query,
                 'resolution': vuln.resolution,
                 'severity': vuln.severity,
                 'tags': [],
                 'type': vuln.document_type,
-                'target': host.name,
+                'target': Host.ip,
                 'hostnames': hostnames.split(',') if hostnames else '',
-                'service': "(%s/%s) %s" % (service.ports, service.protocol, service.s_name) if service.ports else ''
+                'service': "(%s/%s) %s" % (service.port, service.protocol, service.s_name) if service.port else ''
             }}
 
     def count(self, group_by=None, search=None, vuln_filter={}):
         query = self._session.query(Vulnerability.vuln_type, func.count())\
+                             .filter_by(workspace=self.workspace)\
                              .group_by(Vulnerability.vuln_type)
         query = apply_search_filter(query, self.COLUMNS_MAP, search, vuln_filter)
         total_count = dict(query.all())
 
         # Return total amount of services if no group-by field was provided
-        result_count = { 'total_count':    sum(total_count.values()),
-                         'web_vuln_count': total_count.get('VulnerabilityWeb', 0),
-                         'vuln_count':     total_count.get('Vulnerability', 0), }
+        result_count = {'total_count':    sum(total_count.values()),
+                        'web_vuln_count': total_count.get('VulnerabilityWeb', 0),
+                        'vuln_count':     total_count.get('Vulnerability', 0)}
 
         if group_by is None:
             return result_count
@@ -212,15 +204,13 @@ class VulnerabilityDAO(FaradayDAO):
             return None
 
         col = VulnerabilityDAO.COLUMNS_MAP.get(group_by)[0]
-        vuln_bundle = Bundle('vuln', Vulnerability.id, col)
+        vuln_bundle = Bundle('vuln', col)
         query = self._session.query(vuln_bundle, func.count())\
-                             .group_by(col)\
-                             .outerjoin(EntityMetadata, EntityMetadata.id == Vulnerability.entity_metadata_id)
+                             .group_by(col)
 
         query = apply_search_filter(query, self.COLUMNS_MAP, search, vuln_filter, self.STRICT_FILTERING)
         result = query.all()
 
-        result_count['groups'] = [ { group_by: value[1], 'count': count } for value, count in result ]
+        result_count['groups'] = [{group_by: value[1], 'count': count} for value, count in result]
 
         return result_count
-

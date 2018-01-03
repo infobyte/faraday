@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('cweFact', ['BASEURL', '$http', '$q', 'vulnModelsManager', function(BASEURL, $http, $q, vulnModelsManager) {
+    .factory('cweFact', ['BASEURL', '$http', '$q', 'vulnModelsManager', 'commonsFact', function(BASEURL, $http, $q, vulnModelsManager, commonsFact) {
         var cweFact = {};
 
         // XXX: this is still not using the server
@@ -20,8 +20,8 @@ angular.module('faradayApp')
                     var c = {
                         id: obj.id,
                         cwe: obj.doc.cwe,
-                        name: obj.doc.name,
-                        desc: description,
+                        name: commonsFact.htmlentities(obj.doc.name),
+                        desc: commonsFact.htmlentities(description),
                         resolution: obj.doc.resolution,
                         exploitation: obj.doc.exploitation,
                         refs: obj.doc.references

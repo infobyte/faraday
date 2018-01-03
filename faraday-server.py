@@ -2,10 +2,10 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-import argparse
 import os
-import subprocess
 import sys
+import argparse
+import subprocess
 
 import server.config
 import server.couchdb
@@ -13,6 +13,7 @@ import server.utils.logger
 from server.utils import daemonize
 from utils import dependencies
 from utils.user_input import query_yes_no
+from faraday import FARADAY_BASE
 
 logger = server.utils.logger.get_logger(__name__)
 
@@ -24,10 +25,13 @@ def setup_environment(check_deps=False):
     if check_deps:
 
         # Check dependencies
-        installed_deps, missing_deps = dependencies.check_dependencies(
+        installed_deps, missing_deps, conflict_deps = dependencies.check_dependencies(
             requirements_file=server.config.REQUIREMENTS_FILE)
 
         logger.info("Checking dependencies...")
+
+        if conflict_deps:
+            logger.info("Some dependencies are old. Update them with \"pip install -r requirements_server.txt -U\"")
 
         if missing_deps:
 
@@ -40,20 +44,11 @@ def setup_environment(check_deps=False):
             else:
                 logger.error("Dependencies not met. Please refer to the documentation in order to install them. [%s]",
                              ", ".join(missing_deps))
-                sys.exit(1)
 
         logger.info("Dependencies met")
 
     # Web configuration file generation
     server.config.gen_web_config()
-
-    # Reports DB creation
-    server.couchdb.push_reports()
-
-
-def import_workspaces():
-    import server.importer
-    server.importer.import_workspaces()
 
 
 def stop_server():
@@ -77,16 +72,15 @@ def is_server_running():
 def run_server(args):
     import server.web
 
-    server.database.initialize()
-    server.app.setup()
     web_server = server.web.WebServer(enable_ssl=args.ssl)
 
     daemonize.create_pid_file()
-    logger.info('Faraday Server is ready')
     web_server.run()
+    logger.info('Faraday Server is ready')
 
 
 def main():
+    os.chdir(FARADAY_BASE)
     parser = argparse.ArgumentParser()
     parser.add_argument('--ssl', action='store_true', help='enable HTTPS')
     parser.add_argument('--debug', action='store_true', help='run Faraday Server in debug mode')
@@ -94,6 +88,8 @@ def main():
     parser.add_argument('--stop', action='store_true', help='stop Faraday Server')
     parser.add_argument('--nodeps', action='store_true', help='Skip dependency check')
     parser.add_argument('--no-setup', action='store_true', help=argparse.SUPPRESS)
+    parser.add_argument('--port', help='Overides server.ini port configuration')
+    parser.add_argument('--bind_address', help='Overides server.ini bind_address configuration')
 
     f = open(server.config.VERSION_FILE)
     f_version = f.read().strip()
@@ -114,19 +110,26 @@ def main():
 
     # Overwrites config option if SSL is set by argument
     if args.ssl:
-        server.config.ssl.set('enabled', 'true')
+        server.config.ssl.enabled = 'true'
 
     if not args.no_setup:
         setup_environment(not args.nodeps)
-        import_workspaces()
+
+    if args.port:
+        server.config.faraday_server.port = args.port
+
+    if args.bind_address:
+        server.config.faraday_server.bind_address = args.bind_address
 
     if args.start:
         # Starts a new process on background with --ignore-setup
         # and without --start nor --stop
         devnull = open('/dev/null', 'w')
         params = ['/usr/bin/env', 'python2.7', os.path.join(server.config.FARADAY_BASE, __file__), '--no-setup']
-        if args.ssl: params.append('--ssl')
-        if args.debug: params.append('--debug')
+        if args.ssl:
+            params.append('--ssl')
+        if args.debug:
+            params.append('--debug')
         logger.info('Faraday Server is running as a daemon')
         subprocess.Popen(params, stdout=devnull, stderr=devnull)
     else:

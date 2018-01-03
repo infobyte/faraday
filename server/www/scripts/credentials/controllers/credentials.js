@@ -29,10 +29,10 @@ angular.module('faradayApp')
                 if($routeParams.hId !== undefined){
 
                     // Load all host information needed.
-                    $scope.parentObject.type = 'Host';
+                    $scope.parentObject.parent_type = 'Host';
                     $scope.parentObject.id = $routeParams.hId;
 
-                    ServerAPI.getObj($scope.workspace, $scope.parentObject.id).then(function (response) {
+                    ServerAPI.getObj($scope.workspace, $scope.parentObject.id, 'hosts').then(function (response) {
                         $scope.parentObject.nameHost = response['data']['name'];
                         deferred.resolve();
                     });
@@ -42,16 +42,16 @@ angular.module('faradayApp')
                 if($routeParams.sId !== undefined){
 
                     // Load all service information needed.
-                    $scope.parentObject.type = 'Service';
+                    $scope.parentObject.parent_type = 'Service';
                     $scope.parentObject.id = $routeParams.sId;
 
-                    ServerAPI.getObj($scope.workspace, $scope.parentObject.id).then(function (response) {
+                    ServerAPI.getObj($scope.workspace, $scope.parentObject.id, 'services').then(function (response) {
                         $scope.parentObject.nameService = response['data']['name'];
 
                         // and also, load all host information needed.
-                        var hostId = response['data']['_id'].split('.')[0];
+                        var hostId = response['data']['host_id'];
 
-                        ServerAPI.getObj($scope.workspace, hostId).then(function (response) {
+                        ServerAPI.getObj($scope.workspace, hostId, 'hosts').then(function (response) {
                             $scope.parentObject.nameHost = response['data']['name'];
                             deferred.resolve();
                         });
@@ -65,7 +65,7 @@ angular.module('faradayApp')
             var loadCredentials = function (credentials){
                 credentials.forEach(function(cred){
                     
-                    var object = new credential(cred.value);
+                    var object = new credential(cred.value, cred.value.parent, cred.value.parent_type);
                     object.getParentName($scope.workspace).then(function(response){
                         object.target = response;
                     });
@@ -77,16 +77,16 @@ angular.module('faradayApp')
             var getAndLoadCredentials = function() {
  
                 // Load all credentials, we dont have a parent.
-                if($scope.parentObject.type === undefined){
+                if($scope.parentObject.parent_type === undefined){
                     ServerAPI.getCredentials($scope.workspace).then(function(response){
                         loadCredentials(response.data.rows);
                     });
                 }
                 else {
                     // Load all credentials, filtered by host internal id or service internal id.
-                    if ($scope.parentObject.type === 'Host')
+                    if ($scope.parentObject.parent_type === 'Host')
                         var data = {'host_id': $scope.parentObject.id};
-                    else if ($scope.parentObject.type === 'Service')
+                    else if ($scope.parentObject.parent_type === 'Service')
                         var data = {'service_id': $scope.parentObject.id};
 
                     ServerAPI.getCredentials($scope.workspace, data).then(function(response){
@@ -144,10 +144,10 @@ angular.module('faradayApp')
                 return $q.all(confirmations);
             };
 
-            var createCredential = function(credentialData, parent_id){
+            var createCredential = function(credentialData, parent_id, parent_type){
                 // Add parent id, create credential and save to server.
                 try {
-                    var credentialObj = new credential(credentialData, parent_id);
+                    var credentialObj = new credential(credentialData, parent_id, parent_type);
                     
                     credentialObj.create($scope.workspace).then(function(){
                          $scope.credentials.push(credentialObj);
@@ -188,7 +188,7 @@ angular.module('faradayApp')
                  });
                 modal.result
                     .then(function(data) {
-                       createCredential(data, $scope.parentObject.id);
+                       createCredential(data, $scope.parentObject.id, $scope.parentObject.parent_type);
                     });
             };
 

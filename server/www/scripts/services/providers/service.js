@@ -21,30 +21,13 @@ angular.module('faradayApp')
         Service.prototype = {
             public_properties: public_properties,
             saved_properties: saved_properties,
-            // TODO: instead of using angular.extend, we should check
-            // the attributes we're assigning to the Service
             set: function(data) {
-                // if there's no ID, we need to generate it based on the Service name
-                if(data._id === undefined) {
-                    var ports = data.ports;
-
-                    if(typeof data.ports == "object") {
-                        ports = ports.toString().replace(/,/g,":");
-                    }
-
-                    data['_id'] = data.parent + "." + CryptoJS.SHA1(data.protocol+ "._." + ports).toString();
-                }
                 data.type = "Service";
                 angular.extend(this, data);
-                if( typeof(data.ports) === 'number' ) {
-                    this.ports = data.ports;
-                } else {
-                    this.ports = data.ports[0];
-                }
             },
 
             delete: function(ws) {
-                return ServerAPI.deleteService(ws, this._id, this._rev);
+                return ServerAPI.deleteService(ws, this.id);
             },
 
             update: function(data, ws) {
@@ -67,10 +50,7 @@ angular.module('faradayApp')
                     self.ports = [self.ports];
                 }
 
-                return (self._save(ws, self, false).then(
-                    function(data){
-                        self._rev = data.rev;
-                }));
+                return self._save(ws, self, false);
             },
             _save: function(ws, data, isUpdate) {
                 if (typeof isUpdate === 'undefined') {isUpdate = false};

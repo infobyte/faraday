@@ -29,10 +29,8 @@ angular.module('faradayApp')
             }
 
             ServerAPI.getServicesByHost(workspace, host._id).then(function(response){
-                dashboardSrv.getName(workspace, host._id).then(function(name){
-                    $scope.name = name;
-                    $scope.services = response.data.services;
-                })
+                $scope.name = host.name;
+                $scope.services = response.data;
             });
 
             $scope.ok = function(){

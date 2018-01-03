@@ -50,7 +50,7 @@
                             <!-- .ws-label -->
                         </div>
                         <div ng-if="loadedServices && services.length == 0">
-                            <h4>No services found for {{host.name}}</h4>
+                            <h4>No services found for {{host.ip}}</h4>
                         </div>
                         <div ng-show="loadedServices && services.length > 0">
                             <table class="status-report hosts-list table table-responsive" style="margin-top: 15px">
@@ -64,7 +64,7 @@
                                             <a href="" ng-click="toggleSort('version')">Version</a>
                                         </th>
                                         <th>
-                                            <a href="" ng-click="toggleSort('ports')">Ports</a>
+                                            <a href="" ng-click="toggleSort('ports')">Port</a>
                                         </th>
                                         <th>
                                             <a href="" ng-click="toggleSort('protocol')">Protocol</a>
@@ -109,7 +109,7 @@
                                             </a>
                                         </td>
                                         <td>
-                                            <a ng-href="#/credentials/ws/{{workspace}}/sid/{{service._id}}">{{service.credentials}}</a>
+                                            <a ng-href="#/credentials/ws/{{workspace}}/sid/{{service.id}}">{{service.credentials}}</a>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -137,7 +137,7 @@
                             <h3>
                                 Host details
                                 <span style="float:right">
-                                    <a class="btn btn-sm btn-default" href="#/host/ws/{{workspace}}/hid/{{host._id}}/edit" ng-if="!editing">
+                                    <a class="btn btn-sm btn-default" href="#/host/ws/{{workspace}}/hid/{{host.id}}/edit" ng-if="!editing">
                                         <span class="glyphicon glyphicon-pencil"></span>
                                         Edit
                                     </a>
@@ -145,18 +145,19 @@
                                         <span class="glyphicon glyphicon-trash"></span>
                                         Delete
                                     </button>
-                                    <a class="btn btn-danger" href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-click="loadHosts()" ng-if="editing && !creating">Cancel</a>
+                                    <a class="btn btn-danger" href="#/host/ws/{{workspace}}/hid/{{host.id}}" ng-click="loadHosts()" ng-if="editing && !creating">Cancel</a>
                                     <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()" ng-if="editing">OK</button>
                                 </span>
                             </h3>
                             <div class="form-horizontal">
-                                <div class="form-group" ng-class="{'has-error': !host.name }">
+                                <div class="form-group" ng-class="{'has-error': !host.ip }">
                                     <div class="col-md-12">
                                         <strong ng-if="!editing">Name</strong>
                                         <h5 ng-if="editing">Name</h5>
                                         <label class="sr-only" for="name">Name</label>
-                                        <input type="text" class="form-control" id="name" placeholder="Name" ng-model="host.name" ng-if="editing" required/>
-                                        <p ng-if="!editing">{{host.name}}</p>
+                                        <input type="text" class="form-control" id="ip" placeholder="IP" ng-model="host.ip" ng-if="editing" required/>
+                                        <br ng-if="!editing">
+                                        <span ng-if="!editing">{{host.ip}}</span>
                                         <span class="help-block normal-size" ng-if="editing">
                                             Example: 192.168.0.1
                                         </span>
@@ -164,12 +165,8 @@
                                 </div>
                                 <div class="form-group">
                                     <div class="col-md-6" style="margin-bottom: 15px">
-                                        <div class="checkbox">
-                                            <label>
-                                                <input type="checkbox" id="owned" ng-model="host.owned" ng-disabled="!editing"/>
-                                                <span class="normal-size">Owned</span>
-                                            </label>
-                                        </div><!-- .checkbox -->
+                                        <span>Owned:</span>
+                                        <input class="form-check-input" type="checkbox" id="owned" ng-model="host.owned" ng-disabled="!editing"></input>
                                     </div>
                                     <div class="col-md-12">
                                         <strong ng-if="!editing">Operating System</strong>
@@ -187,38 +184,26 @@
                                         <span class="input-group-addon button-radius" ng-click="newHostnames($event)" ng-if="editing">Add Hostname</span>
                                     </div>
                                     <span ng-if="editing">
-                                        <div class="col-md-12 input-margin" ng-repeat="hostname in interface.hostnames">
+                                        <div class="col-md-12 input-margin" ng-repeat="hostname in host.hostnames">
                                             <div class="input-group margin-bottom-sm col-md-12">
                                                 <label class="sr-only" for="hostsnames">Hostname</label>
                                                 <input type="text" class="form-control" id="hostsnames" placeholder="Hostname" ng-model="hostname.key" />
-                                                <span class="input-group-addon" ng-click="interface.hostnames.splice($index, 1)" ng-hide="interface.hostnames.length == 1" ng-if="editing"><i class="fa fa-minus-circle"></i></span>
+                                                <span class="input-group-addon" ng-click="host.hostnames.splice($index, 1)" ng-hide="host.hostnames.length == 1" ng-if="editing"><i class="fa fa-minus-circle"></i></span>
                                             </div>
                                         </div>
                                     </span>
                                     <span ng-if="!editing">
                                         <div class="col-md-12 input-margin">
                                             <ul>
-                                                <li ng-repeat="hostname in interface.hostnames">{{hostname.key}}</li>
+                                                <li ng-repeat="hostname in host.hostnames">{{hostname.key}}</li>
                                             </ul>
                                         </div>
                                     </span>
                                     <div class="col-md-12">
-                                        <strong ng-if="!editing">IPv4</strong>
-                                        <h5 ng-if="editing">IPv4</h5>
-                                        <input type="text" class="form-control" id="ipv4" placeholder="IPv4" ng-model="interface.ipv4.address" ng-if="editing"/>
-                                        <p ng-if="!editing">{{interface.ipv4.address}}</p>
-                                    </div>
-                                    <div class="col-md-12">
-                                        <strong ng-if="!editing">IPv6</strong>
-                                        <h5 ng-if="editing">IPv6</h5>
-                                        <input type="text" class="form-control" id="ipv6" placeholder="IPv6" ng-model="interface.ipv6.address" ng-if="editing"/>
-                                        <p ng-if="!editing">{{interface.ipv6.address}}</p>
-                                    </div>
-                                    <div class="col-md-12">
                                         <strong ng-if="!editing">MAC</strong>
                                         <h5 ng-if="editing">MAC</h5>
-                                        <input type="text" class="form-control" id="ipv4" placeholder="MAC" ng-model="interface.mac" ng-if="editing"/>
-                                        <p ng-if="!editing">{{interface.mac}}</p>
+                                        <input type="text" class="form-control" id="ipv4" placeholder="MAC" ng-model="host.mac" ng-if="editing"/>
+                                        <p ng-if="!editing">{{host.mac}}</p>
                                     </div>
                                     <div class="col-md-12">
                                         <strong ng-if="!editing">Description</strong>
@@ -227,10 +212,19 @@
                                         <textarea class="form-control" id="description" placeholder="Description" ng-model="host.description" ng-if="editing"></textarea>
                                         <p ng-if="!editing">{{host.description}}</p>
                                     </div>
+                                    <div class="col-md-12">
+                                        <i ng-if="!editing">
+                                            </br>
+                                            <span class="fa fa-clock-o"></span>
+                                            <span> Created</span>
+                                            <span am-time-ago="host.metadata.create_time * 1000"></span>
+                                            <span ng-if="!host.metadata.create_time" am-time-ago="host.metadata.update_time * 1000"></span>
+                                        </i>
+                                    </div>
                                 </div><!-- .form-group -->
                             </div>
                             <div style="float: right">
-                                <a class="btn btn-danger" href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-click="loadHosts()" ng-if="editing && !creating">Cancel</a>
+                                <a class="btn btn-danger" href="#/host/ws/{{workspace}}/hid/{{host.id}}" ng-click="loadHosts()" ng-if="editing && !creating">Cancel</a>
                                 <a class="btn btn-danger" href="#/hosts/ws/{{workspace}}" ng-if="editing && creating">Cancel</a>
                                 <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()" ng-if="editing">OK</button>
                             </div>

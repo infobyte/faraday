@@ -27,7 +27,7 @@ angular.module('faradayApp')
 
         servicesManager._load = function(id, ws, deferred) {
             var self = this;
-            ServerAPI.getServices(ws, {'couchid': id}).
+            ServerAPI.getService(ws, id).
                 then(function(response) {
                     if (response.data.services.length == 1) {
                         var service_data = response.data.services[0].value;
@@ -74,63 +74,31 @@ angular.module('faradayApp')
             return deferred.promise;
         }
 
-        servicesManager.deleteServices = function(id, ws) {
+        servicesManager.deleteServices = function(service, ws) {
             var deferred = $q.defer();
             var self = this;
-            this.getService(id, ws).then(function(service) {
-                service.delete(ws).then(function() {
-                    delete self._objects[id];
-                    deferred.resolve();
-                }, function(){
-                    // host couldn't be deleted
-                    deferred.reject("Error deleting service");
-                });
+            var service = self._get(service.id, service);
+            service.delete(ws).then(function() {
+                delete self._objects[service.id];
+                deferred.resolve();
             }, function(){
-                // host doesn't exist
-                deferred.reject("Service doesn't exist");
-            });
-            return deferred.promise;
-        }
-
-        servicesManager.getServiceVulnCount = function(ws, services) {
-            var deferred = $q.defer();
-            var promises =  [];
-            services.forEach(function(service) {
-                promises.push(ServerAPI.getServices(ws, {'couchid': service._id}));
+                // host couldn't be deleted
+                deferred.reject("Error deleting service");
             });
 
-            $q.all(promises).then(function(services){
-                var result = {};
-                services.forEach(function(service) {
-                    var service_data = service.data.services[0];
-                    result[service_data.id] = service_data.vulns;
-                });
-                deferred.resolve(result);
-            }, function(){
-                deferred.reject([]);
-            });
             return deferred.promise;
         }
 
         servicesManager.createService = function(serviceData, ws) {
             var deferred = $q.defer();
             var self = this;
-
-            this.getServices(ws).then(function(services) {
-                var service = new Service(serviceData);
-                self.getService(service._id, ws).then(function(resp) {
-                    deferred.reject("Service already exists");
-                }, function() {
-                    // host doesn't exist, good to go
-                    service.save(ws).then(function(){
-                        service = self.getService(service._id, ws);
-                        deferred.resolve(service);
-                    }, function(){
-                        // host couldn't be saved
-                        deferred.reject("Error: host couldn't be saved");
-                    })
-                });
-            });
+            var service = new Service(serviceData);
+            service.save(ws).then(function(saved_service){
+                deferred.resolve(saved_service.data);
+            }, function(){
+                // host couldn't be saved
+                deferred.reject("Error: host couldn't be saved");
+            })
 
             return deferred.promise;
         }
@@ -138,16 +106,9 @@ angular.module('faradayApp')
         servicesManager.updateService = function(service, data, ws) {
             var deferred = $q.defer();
             var self = this;
-            this.getService(service._id, ws).then(function(resp) {
-                resp.update(data, ws).then(function() {
-                    // we need to reload the service in order
-                    // to update _rev
-                    service = self._load(service._id, ws, deferred);
-                    deferred.resolve(service);
-                })
-            }, function(){
-                // service doesn't exist
-                deferred.reject("Service doesn't exist");
+            self._get(service._id, service).update(data, ws).then(function(){
+                service = self._load(service._id, ws, deferred);
+                deferred.resolve(service);
             });
             return deferred.promise;
         }

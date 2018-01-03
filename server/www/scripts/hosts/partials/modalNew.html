@@ -12,10 +12,10 @@
     </div>
     <div class="modal-body">
         <div class="form-horizontal">
-            <div class="form-group" ng-class="{'has-error': form.name.$invalid }">
+            <div class="form-group" ng-class="{'has-error': form.ip.$invalid }">
                 <div class="col-md-12">
-                    <label class="sr-only" for="name">Name</label>
-                    <input type="text" class="form-control" id="name" name="name" placeholder="Name" ng-model="hostdata.name" required/>
+                    <label class="sr-only" for="name">IP v4 or v6</label>
+                    <input type="text" class="form-control" id="ip" name="ip" placeholder="IP" ng-model="hostdata.ip" required/>
                     <span class="help-block normal-size">
                         Example: 192.168.0.1
                     </span>
@@ -53,16 +53,6 @@
                         <input type="text" class="form-control" id="hostsnames" placeholder="Hostname" ng-model="hostname.hostname"/>
                         <span class="input-group-addon" ng-click="interfaceData.hostnames.splice($index, 1)" ng-hide="interfaceData.hostnames.length == 1"><i class="fa fa-minus-circle"></i></span>
                     </div>
-                </div>
-            </div><!-- .form-group -->
-            <div class="form-group">
-                <div class="col-md-6" ng-class="{'has-error': form.ipv6.$invalid }">
-                    <label class="sr-only" for="ipv4">IP v4</label>
-                    <input type="text" class="form-control" id="ipv4" name="ipv6" placeholder="IP v4" ng-model="interfaceData.ipv4" ng-required="!interfaceData.ipv6"/>
-                </div>
-                <div class="col-md-6" ng-class="{'has-error': form.ipv4.$invalid }">
-                    <label class="sr-only" for="ipv6">IP v6</label>
-                    <input type="text" class="form-control" id="ipv6" name="ipv4" placeholder="IP v6" ng-model="interfaceData.ipv6" ng-required="!interfaceData.ipv4"/>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">

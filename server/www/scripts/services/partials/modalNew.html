@@ -55,7 +55,8 @@
                 <div class="col-md-3">
                     <h5>Status</h5>
                     <label class="sr-only" for="status">Status</label>
-                    <input type="text" class="form-control" id="status" placeholder="Status" ng-model="service.status"/>
+                    <select class="form-control" ng-model="service.status" ng-options="e for e in statuses">
+                    </select>
                 </div>
             </div><!-- .form-group -->
         </div>

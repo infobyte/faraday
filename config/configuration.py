@@ -4,7 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-import sys, os, string, ast, json
+import os
+import json
 
 try:
     import xml.etree.cElementTree as ET
@@ -38,9 +39,9 @@ CONST_NETWORK_LOCATION = "network_location"
 CONST_PERSISTENCE_PATH = "persistence_path"
 CONST_PERSPECTIVE_VIEW = "perspective_view"
 CONST_REPO_PASSWORD = "repo_password"
-CONST_COUCH_URI = "couch_uri"
-CONST_COUCH_REPLICS = "couch_replics"
-CONST_COUCH_ISREPLICATED = "couch_is_replicated"
+CONST_API_URL = "api_url"
+CONST_API_USERNAME = "api_username"
+CONST_API_PASSWORD = "api_password"
 CONST_REPO_URL = "repo_url"
 CONST_REPO_USER = "repo_user"
 CONST_REPORT_PATH = "report_path"
@@ -56,7 +57,7 @@ CONST_LAST_WORKSPACE = "last_workspace"
 CONST_PLUGIN_SETTINGS = "plugin_settings"
 
 
-DEFAULT_XML = os.path.dirname(__file__) +  "/default.xml"
+DEFAULT_XML = os.path.dirname(__file__) + "/default.xml"
 
 
 class Configuration:
@@ -66,7 +67,8 @@ class Configuration:
 
         self.filepath = xml_file
 
-        if self._isConfig(): self._getConfig()
+        if self._isConfig():
+            self._getConfig()
 
     def _isConfig(self):
         """ Checks whether the given file exists and belongs
@@ -89,7 +91,8 @@ class Configuration:
             return False
 
         finally:
-            if f: f.close()
+            if f:
+                f.close()
 
         return (root == "faraday")
 
@@ -104,7 +107,7 @@ class Configuration:
             return None
         return tree
 
-    def _getValue(self, tree, var, default = None):
+    def _getValue(self, tree, var, default=None):
         """ Returns generic value from a variable on an XML tree. """
 
         elem = tree.findall(var)
@@ -142,9 +145,9 @@ class Configuration:
             self._persistence_path = self._getValue(tree, CONST_PERSISTENCE_PATH)
             self._perspective_view = self._getValue(tree, CONST_PERSISTENCE_PATH)
             self._repo_password = self._getValue(tree, CONST_REPO_PASSWORD)
-            self._couch_uri = self._getValue(tree, CONST_COUCH_URI, default = "")
-            self._couch_replics = self._getValue(tree, CONST_COUCH_REPLICS, default = "")
-            self._couch_is_replicated = bool(self._getValue(tree, CONST_COUCH_ISREPLICATED, default = False))
+            self._api_url = self._getValue(tree, CONST_API_URL)
+            self._api_username = self._getValue(tree, CONST_API_USERNAME)
+            self._api_password = self._getValue(tree, CONST_API_PASSWORD)
             self._repo_url = self._getValue(tree, CONST_REPO_URL)
             self._repo_user = self._getValue(tree, CONST_REPO_USER)
             self._report_path = self._getValue(tree, CONST_REPORT_PATH)
@@ -153,6 +156,9 @@ class Configuration:
             self._last_workspace = self._getValue(tree, CONST_LAST_WORKSPACE, default = "untitled")
             self._plugin_settings = json.loads(self._getValue(tree, CONST_PLUGIN_SETTINGS, default = "{}"))
             self._osint = json.loads(self._getValue(tree, CONST_OSINT, default = "{\"host\": \"shodan.io\",\"icon\": \"shodan\",\"label\": \"Shodan\", \"prefix\": \"/search?query=\", \"suffix\": \"\", \"use_external_icon\": false}"))
+
+            self._db_user = ""
+            self._session_cookies = {}
 
             self._updates_uri = self._getValue(tree, CONST_UPDATEURI, default = "https://www.faradaysec.com/scripts/updates.php")
             self._tkts_uri = self._getValue(tree, CONST_TKTURI,default = "https://www.faradaysec.com/scripts/listener.php")
@@ -238,17 +244,14 @@ class Configuration:
     def getPerspectiveView(self):
         return self._perspective_view
 
-    def getCouchURI(self):
-        if self._couch_uri and self._couch_uri.endswith('/'):
-            return self._couch_uri[:-1]
-        else:
-            return self._couch_uri
+    def getServerURI(self):
+        return self._api_url
 
-    def getCouchReplics(self):
-        return self._couch_replics
+    def getDBSessionCookies(self):
+        return self._session_cookies
 
-    def getCouchIsReplicated(self):
-        return self._couch_is_replicated
+    def getDBUser(self):
+        return self._db_user
 
     def getRepoPassword(self):
         return self._repo_password
@@ -291,6 +294,15 @@ class Configuration:
 
     def getMergeStrategy(self):
         return self._merge_strategy
+
+    def getAPIUrl(self):
+        return self._api_url
+
+    def getAPIUsername(self):
+        return self._api_username
+
+    def getAPIPassword(self):
+        return self._api_password
 
     def setLastWorkspace(self, workspaceName):
         self._last_workspace = workspaceName
@@ -368,6 +380,12 @@ class Configuration:
     def setPerspectiveView(self, val):
         self._perspective_view = val
 
+    def setDBSessionCookies(self, val=None):
+        self._session_cookies = val
+
+    def setDBUser(self, val=None):
+        self._db_user = val
+
     def setRepoPassword(self, val):
         self._repo_password = val
 
@@ -386,14 +404,14 @@ class Configuration:
     def setVersion(self, val):
         self._version = val
 
-    def setCouchUri(self, uri):
-        self._couch_uri = uri
+    def setAPIUrl(self, url):
+        self._server_uri = url
 
-    def setCouchIsReplicated(self, is_it):
-        self._couch_is_replicated = is_it
+    def setAPIUsername(self, username):
+        self._username = username
 
-    def setCouchReplics(self, urls):
-        self._couch_replics = urls
+    def setAPIPassword(self, password):
+        self._password = password
 
     def setPluginSettings(self, settings):
         self._plugin_settings = settings
@@ -420,7 +438,6 @@ class Configuration:
         else:
             if level and (not elem.tail or not elem.tail.strip()):
                 elem.tail = i
-
 
     def saveConfig(self, xml_file="~/.faraday/config/user.xml"):
         """ Saves XML config on new file. """
@@ -540,17 +557,17 @@ class Configuration:
         LAST_WORKSPACE.text = self.getLastWorkspace()
         ROOT.append(LAST_WORKSPACE)
 
-        COUCH_URI = Element(CONST_COUCH_URI)
-        COUCH_URI.text = self.getCouchURI()
-        ROOT.append(COUCH_URI)
+        SERVER_URL = Element(CONST_API_URL)
+        SERVER_URL.text = self.getServerURI()
+        ROOT.append(SERVER_URL)
 
-        COUCH_IS_REPLICATED = Element(CONST_COUCH_ISREPLICATED)
-        COUCH_IS_REPLICATED.text = str(self.getCouchIsReplicated())
-        ROOT.append(COUCH_IS_REPLICATED)
+        SERVER_USERNAME = Element(CONST_API_USERNAME)
+        SERVER_USERNAME.text = self.getAPIUsername()
+        ROOT.append(SERVER_USERNAME)
 
-        COUCH_REPLICS = Element(CONST_COUCH_REPLICS)
-        COUCH_REPLICS.text = self.getCouchReplics()
-        ROOT.append(COUCH_REPLICS)
+        SERVER_PASSWORD = Element(CONST_API_PASSWORD)
+        SERVER_PASSWORD.text = self.getAPIPassword()
+        ROOT.append(SERVER_PASSWORD)
 
         VERSION = Element(CONST_VERSION)
         VERSION.text = self.getVersion()

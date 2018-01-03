@@ -10,6 +10,64 @@ New features in the latest update
 
 TBA:
 ---
+* CouchDB was replaced by PostgreSQL :)
+* Host object changed, now the name property is called ip
+* Interface object was removed
+* Note object was removed and replaced with Comment
+* Communication object was removed and replaced with Comment
+* Show credentials count in summarized report on the dashboard
+* Remove vuln template CWE fields, join it with references
+
+November 17, 2017:
+---
+* Fix bug with tags in models.
+
+November 5, 2017:
+---
+* Added "Last modified" and "Created" in Hosts view
+* Fixed bug when trying to run Faraday as second process and closing the terminal (&!)
+* Fixed bug where it asked for dependencies eternally when you have a different version than the one required
+* Fixed small bug in the update_from_document method
+* Fixed bug, makes the python library dependencies specific to the desired version
+* Fixed GitHub language bar to reflect real code percentage
+* Merge PR #195: Create gentoo_requirements_extras.txt (New Github wiki page)
+* Merge PR #225: Add references to found vulnerabilities in nmap plugin
+* New plugin: Netsparker cloud
+* New plugin: Lynis (Winner of Faraday Challenge 2017)
+* New Fplugin: changes the status of all vulnerabilities of an specific workspace to closed
+* New Fplugin: combines the "create_interface" and "create_host" scripts into one (create_interface_and_host script)
+* New Fplugin: import_csv , now you can import Faraday objects from a CSV
+
+August 11, 2017:
+---
+* Add check to the vuln creation modal for empty targets in the Web UI
+
+August 9, 2017:
+---
+No changes
+
+August 7, 2017:
+---
+* Updated Core Impact plugin to be compatible with 2016 version
+* Improved loading of fields request and website in Burp Plugin
+* Improved Nexpose Full plugin
+* Improved Acunetix plugin to avoid conflicts and missing imported data, and to correctly parse URLs and resolutions
+
+July 19, 2017:
+---
+* Added the ability to select more than one target when creating a vuln in the Web UI
+* Merged PR #182 - problems with zonatransfer.me
+* Fixed bug in Download CSV of Status report with old versions of Firefox.
+* Fixed formula injection vulnerability in export to CSV feature
+* Fixed DOM-based XSS in the Top Services widget of the dashboard
+* Fix in AppScan plugin.
+* Fix HTML injection in Vulnerability template.
+* Add new plugin: Junit XML
+* Improved pagination in new vuln modal of status report
+* Added "Policy Violations" field for Vulnerabilities
+
+May 24, 2017:
+---
 * Fixed bug when editing workspaces created in GTK
 * Improved host search in the WEB UI
 * Extended the config to support different searching engines in the WEB UI

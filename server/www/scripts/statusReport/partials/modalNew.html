@@ -5,35 +5,59 @@
 <form name="form" novalidate>
     <div class="modal-header">
         <div class="modal-button">
-            <button class="btn btn-success" ng-click="modal.ok()" ng-disabled="form.$invalid || modal.data.severity === undefined">OK</button>
+            <button class="btn btn-success" ng-click="modal.ok()" ng-disabled="form.$invalid || modal.data.severity === undefined || (modal.data.type === 'VulnerabilityWeb' && modal.host_parents) || modal.data.parents.length == 0">OK</button>
             <button class="btn btn-danger" ng-click="modal.cancel()">Cancel</button>
         </div>
         <h3 class="modal-title">Vulnerability creation</h3>
     </div>
     <div class="modal-body">
         <div class="form-horizontal">
+            <h5>Target</h5>
+            <div class="form-group">
+                <div class="col-md-10">
+                    <div class="form-group input-accordion">
+                        <input type="text" ng-model="modal.target_filter" class="form-control input-sm" placeholder="Search targets" ng-change="modal.currentPage = 0">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="btn-group btn-small-margin">
+                        <button type="button" class="btn btn-default btn-sm" title="Select page" ng-click="modal.setTargets(true, modal.currentPage*modal.pageSize, modal.pageSize)">
+                            Select page
+                        </button>
+                        <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" title="Select options">
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                            <li ng-show="modal.target_filter && modal.targets_filtered.length > 0">
+                                <a class="ws" ng-click="modal.setTargets(true, 0, modal.targets_filtered.length)">Select all hosts in search</a>
+                            </li>
+                            <li>
+                                <a class="ws" ng-click="modal.setTargets(false, 0, modal.targets.length)">Select all hosts</a>
+                            </li>
+                            <li>
+                                <a class="ws" ng-click="modal.setTargets(false, 0, 0)">Clear selection</a>
+                            </li>
+                        </ul>
+                    </div><!-- .btn-group -->
+                </div>
+            </div>
             <div class="form-group">
                 <div class="col-md-12">
-                    <div class="form-group input-accordion">
-                        <input type="text" ng-model="modal.target_filter" class="form-control input-sm" placeholder="Search" ng-change="modal.currentPage = 0">
-                    </div>
                     <uib-accordion close-others="true">
-                        <uib-accordion-group is-open="isopen" ng-repeat="host in modal.targets_filtered = (modal.targets | filter:modal.target_filter) | startFrom:modal.currentPage*modal.pageSize | limitTo:modal.pageSize">
-                        <uib-accordion-heading>
-                        <a ng-click="modal.setTarget(host)" ng-class="{'multi-selected': host.selected_modalNewCtrl == true}">{{host.name}} ({{host.hostnames[0]}})</a>
-                        <i class="pull-right glyphicon"
-                        ng-class="{'glyphicon glyphicon-minus-sign': isopen, 'glyphicon glyphicon-plus-sign': !isopen}"></i>
-                        </uib-accordion-heading>
-                        <div class="panel-body" ng-repeat="service in host.services">
-                            <a ng-model="service" ng-click="modal.setTarget(service)" ng-class="{'multi-selected': service.selected_modalNewCtrl == true}">{{service.name}}  {{service.ports}}</a>
-                        </div>
+                        <uib-accordion-group is-open="isopen" ng-repeat="host in modal.targets_filtered = (modal.targets | filter:modal.target_filter) | startFrom:modal.currentPage*modal.pageSize | limitTo:modal.pageSize" template-url="scripts/statusReport/partials/accordion-group.html" is-disabled="host.services.length < 1">
+                            <uib-accordion-heading>
+                                <a ng-click="modal.setTarget(host)" ng-class="{'multi-selected': modal.data.parents.indexOf(host) >= 0}">{{host.name}} ({{host.hostnames[0]}})</a>
+                            </uib-accordion-heading>
+                            <div class="panel-body" ng-repeat="service in host.services">
+                                <a ng-model="service" ng-click="modal.setTarget(service)" ng-class="{'multi-selected': modal.data.parents.indexOf(service) >= 0}">{{service.name}}  {{service.ports}}</a>
+                            </div>
                         </uib-accordion-group>
                     </uib-accordion>
                     <div class="showPagination" ng-show="modal.targets_filtered.length > modal.pageSize">
                         <div class="form-group">
                             <ul class="pagination">
                                 <li><a ng-hide="modal.currentPage <= 0" ng-click="modal.currentPage = modal.currentPage - 1"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
-                                <li><a>{{modal.currentPage}}/{{ ((modal.targets_filtered.length / modal.pageSize) | integer)}}</a></li>
+                                <li><a>{{modal.currentPage+1}}/{{ ((modal.targets_filtered.length / modal.pageSize) | integer) + 1}}</a></li>
                                 <li><a ng-hide="modal.currentPage >= ((modal.targets_filtered.length / modal.pageSize) | integer)" ng-click="modal.currentPage = modal.currentPage + 1"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
                             </ul>
                             <ng-form name="goToPage">
@@ -46,22 +70,22 @@
                     </div>
                 </div>
             </div>
+            <div class="alert alert-danger target_not_selected" role="alert" ng-hide="modal.data.parents.length > 0">
+                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                <span class="sr-only">Error:</span>
+                There is no target selected
+                </div>
+            <div class="alert alert-danger target_not_selected" role="alert" ng-show="modal.data.type === 'VulnerabilityWeb' && modal.host_parents">
+                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                <span class="sr-only">Error:</span>
+                Trying to create a Web Vulnerability with one or more Host parents. Please deselect the Host targets or <a href="" ng-click="modal.resetTarget()">click here to deselect all targets</a>
+            </div>
         </div>
 
-        <div class="alert alert-danger target_not_selected" role="alert" ng-hide="modal.data.parent != undefined">
-            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-            <span class="sr-only">Error:</span>
-            There is no target selected
-            </div>
-        <div class="alert alert-danger target_not_selected" role="alert" ng-show="modal.data.type === 'VulnerabilityWeb' && modal.data.parent.type === 'Host'">
-            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-            <span class="sr-only">Error:</span>
-            Vulnerability incompatible with host target, please select a service
-        </div>
         <div class="form-horizontal">
             <div class="form-group">
                 <div class="col-md-12">
-                    <h5>Search vulnerability database templates <a href="https://github.com/infobyte/faraday/wiki/vulnerabilities-database" target="_blank"><span class="glyphicon glyphicon-question-sign" title="Read more about vulnerability templates in Faraday Documentation"></span></a></h5>
+                    <h5>Search vulnerability database templates <a href="https://github.com/infobyte/faraday/wiki/vulnerabilities-database" target="_blank"><span class="glyphicon glyphicon-question-sign" title="Read more about vulnerability templates in the official Faraday Documentation"></span></a></h5>
                     <input type="text" ng-model="modal.cwe_selected" class="form-control input-sm" placeholder="Search for vulnerability templates" uib-typeahead="cwe as cwe.name for cwe in modal.cweList | filter:{name: $viewValue} | limitTo:10" typeahead-on-select="modal.populate($item, $model, $label)">
                 </div>
             </div>
@@ -116,7 +140,7 @@
                 <div class="col-md-12 reference" ng-repeat="reference in modal.data.refs">
                     <div class="input-group margin-bottom-sm">
                         <label class="sr-only" for="vuln-refs">References</label>
-                        <input type="text" class="form-control" id="vuln-refs" placeholder="Reference" ng-model="reference.value"/>
+                        <input type="text" class="form-control" id="vuln-refs" placeholder="Reference" ng-model="reference.value" disabled/>
                         <span class="input-group-addon cursor" ng-click="modal.data.refs.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
                     </div>
                 </div>
@@ -125,6 +149,22 @@
                 <div class="col-md-12">
                     <label class="sr-only" for="vuln-resolution">Vuln Resolution</label>
                     <textarea class="form-control" id="vuln-resolution" placeholder="Resolution" ng-model="modal.data.resolution"></textarea>
+                </div>
+            </div><!-- .form-group -->
+            <div class="form-group">
+                <div class="col-md-12">
+                    <div class="input-group margin-bottom-sm">
+                        <label class="sr-only" for="vuln-policyviolations">Policy Violations</label>
+                        <input type="text" class="form-control" id="vuln-policyviolations" placeholder="Policy Violations" ng-model="modal.new_policyviolation"/>
+                        <span class="input-group-addon cursor" ng-click="modal.newPolicyViolation()"><i class="fa fa-plus-circle"></i></span>
+                    </div>
+                </div>
+                <div class="col-md-12 reference" ng-repeat="policyviolation in modal.data.policyviolations">
+                    <div class="input-group margin-bottom-sm">
+                        <label class="sr-only" for="vuln-policyviolations">Policy Violation</label>
+                        <input type="text" class="form-control" id="vuln-policyviolations" placeholder="Policy Violation" ng-model="policyviolation.value" disabled/>
+                        <span class="input-group-addon cursor" ng-click="modal.data.policyviolations.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
+                    </div>
                 </div>
             </div><!-- .form-group -->
         </div>
@@ -209,7 +249,7 @@
     </div><!-- .modal-body -->
     <div class="modal-footer">
         <div class="modal-button">
-            <button class="btn btn-success" ng-click="modal.ok()" ng-disabled="form.$invalid || modal.data.severity === undefined">OK</button>
+            <button class="btn btn-success" ng-click="modal.ok()" ng-disabled="form.$invalid || modal.data.severity === undefined || (modal.data.type === 'VulnerabilityWeb' && modal.host_parents) || modal.data.parents.length == 0">OK</button>
             <button class="btn btn-danger" ng-click="modal.cancel()">Cancel</button>
         </div>
     </div>

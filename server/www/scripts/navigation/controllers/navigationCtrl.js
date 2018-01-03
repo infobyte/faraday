@@ -29,7 +29,7 @@ angular.module('faradayApp')
                  catch(error){
                      console.log("Can't connect to faradaysec.com");
                  }
-                
+
             }, function() {
                 console.log("Can't connect to faradaysec.com");
             });
@@ -90,7 +90,7 @@ angular.module('faradayApp')
         };
 
         $scope.showNavigation = function() {
-            var noNav = ["home", "index", ""];
+            var noNav = ["", "home", "login", "index"];
             return noNav.indexOf($scope.component) < 0;
         };
 

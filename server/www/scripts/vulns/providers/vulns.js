@@ -4,18 +4,31 @@
 
 angular.module('faradayApp')
     .factory('vulnsManager',
-        ['Vuln', 'WebVuln', 'BASEURL', '$q', 'ServerAPI', 'commonsFact',
-        function(Vuln, WebVuln, BASEURL, $q, ServerAPI, commonsFact) {
+        ['Vuln', 'WebVuln', '$q', 'ServerAPI', 'commonsFact',
+        function(Vuln, WebVuln, $q, ServerAPI, commonsFact) {
         var vulnsManager = {};
 
         vulnsManager.createVuln = function(ws, data) {
-            if(data.type == "Vulnerability") {
-                var vuln = new Vuln(ws, data);
-            } else {
-                var vuln = new WebVuln(ws, data);
-            }
+            var parents = data.parents,
+            promises = [];
 
-            return vuln.save();
+            delete data.parents;
+
+            parents.forEach(function(parent) {
+                // we iterate parents when creating multiple vulns from new vuln modal.
+                data.parent = parent.parent_id;
+                data.parent_type = parent.type
+
+                if(data.type == "Vulnerability") {
+                    var vuln = new Vuln(ws, data);
+                } else {
+                    var vuln = new WebVuln(ws, data);
+                }
+
+                promises.push(vuln.save());
+            });
+
+            return $q.all(promises);
         };
 
         vulnsManager.deleteVuln = function(vuln) {

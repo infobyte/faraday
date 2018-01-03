@@ -48,9 +48,17 @@ var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.
         ];
         return exploitations;
     })())
+    .constant("SERVICE_STATUSES", (function() {
+        var statuses = [
+            "open",
+            "closed",
+            "filtered"
+        ];
+        return statuses;
+    })())
     .constant("STATUSES", (function() {
         var statuses = [
-            "opened",
+            "opened",  // TODO migration: should we change this to "open"?
             "closed",
             "re-opened",
             "risk-accepted"
@@ -222,12 +230,22 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
             controller: 'commercialCtrl',
             title: 'Executive Report | '
         }).
+        when('/login', {
+            templateUrl: 'scripts/auth/partials/login.html',
+            controller: 'loginCtrl',
+            title: 'Login | '
+        }).
         when('/users', {
             templateUrl: 'scripts/commons/partials/commercial.html',
             controller: 'commercialCtrl',
             title: 'Users | '
         }).
         when('/credentials', {
+            templateUrl: 'scripts/credentials/partials/list.html',
+            controller: 'credentialsCtrl',
+            title: 'Credentials | '
+        }).
+        when('/credentials/ws', {
             templateUrl: 'scripts/credentials/partials/list.html',
             controller: 'credentialsCtrl',
             title: 'Credentials | '
@@ -256,12 +274,22 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
             templateUrl: 'scripts/commons/partials/commercial.html',
             controller: 'commercialCtrl'
         }).
+        when('/taskgroup', {
+            templateUrl: 'scripts/commons/partials/commercial.html',
+            controller: 'commercialCtrl',
+            title: 'Methodologies | '
+        }).
+        when('/forbidden', {
+            templateUrl: 'scripts/auth/partials/forbidden.html',
+            title: ' Forbidden |'
+        }).
         otherwise({
-            templateUrl: 'scripts/commons/partials/home.html'
+            templateUrl: 'scripts/commons/partials/home.html',
+            controller: 'homeCtrl'
         });
 }]);
 
-faradayApp.run(['$location', '$rootScope', function($location, $rootScope) {
+faradayApp.run(['$location', '$rootScope', 'loginSrv', function($location, $rootScope, loginSrv) {
     $rootScope.$on('$routeChangeSuccess', function(event, current, previous) {
         if(current.hasOwnProperty('$$route')) {
             $rootScope.title = current.$$route.title;

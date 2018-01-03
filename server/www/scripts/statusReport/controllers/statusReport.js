@@ -33,7 +33,7 @@ angular.module('faradayApp')
 
         var searchFilter = {};
         var paginationOptions = {
-            page: 0,
+            page: 1,
             pageSize: 10,
             defaultPageSizes: [10, 50, 75, 100],
             sortColumn: null,
@@ -104,8 +104,7 @@ angular.module('faradayApp')
                     // Clear selection
                     $scope.gridApi.selection.clearSelectedRows();
 
-                    // ui-grid pages are numbered starting from 1, server-side paging starts at 0
-                    paginationOptions.page = pageNumber - 1;
+                    paginationOptions.page = pageNumber;
                     paginationOptions.pageSize = pageSize;
 
                     // Load new page
@@ -175,7 +174,8 @@ angular.module('faradayApp')
                 "query":            false,
                 "response":         false,
                 "web":              false,
-                "creator":          false
+                "creator":          false,
+                "policyviolations":  false
             };
 
             // created object for columns cookie columns
@@ -393,6 +393,14 @@ angular.module('faradayApp')
                 width: '100',
                 sort: getColumnSort('metadata.creator'),
                 visible: $scope.columns["creator"]
+            });
+            $scope.gridOptions.columnDefs.push({ name : 'policyviolations',
+                displayName : "policy violations",
+                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/policyviolationscolumn.html',
+                headerCellTemplate: header,
+                width: '100',
+                sort: getColumnSort('policyviolations'),
+                visible: $scope.columns["policyviolations"]
             });
         };
 
@@ -736,6 +744,25 @@ angular.module('faradayApp')
                 {options: EASEOFRESOLUTION});
         };
 
+        $scope.editPolicyviolations = function() {
+            editProperty(
+                'scripts/commons/partials/editArray.html',
+                'commonsModalEditArray',
+                'Enter the new policy violations:',
+                'policyviolations',
+                {callback: function (vuln, policyviolations) {
+                    var violations = vuln.policyviolations.concat([]);
+                    policyviolations.forEach(function(policyviolation) {
+                        if(vuln.policyviolations.indexOf(policyviolation) == -1){
+                            violations.push(policyviolation);
+                        }
+                    });
+
+                    return {'policyviolations': violations};
+                }}
+                );
+        };
+
         $scope.editReferences = function() {
             editProperty(
                 'scripts/commons/partials/editArray.html',
@@ -986,9 +1013,7 @@ angular.module('faradayApp')
             });
         };
 
-        $scope.serviceSearch = function(srvStr) {
-            //TODO: this is horrible
-            var srvName = srvStr.split(') ')[1];
+        $scope.serviceSearch = function(srvName) {
             return $scope.encodeUrl(srvName);
         }
 

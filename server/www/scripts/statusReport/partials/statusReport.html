@@ -59,6 +59,7 @@
                         <li><a class="ws" ng-click="editReferences()">Add references</a></li>
                         <li><a class="ws" ng-click="editImpact()">Edit impact</a></li>
                         <li><a class="ws" ng-click="editStatus()">Edit status</a></li>
+                        <li><a class="ws" ng-click="editPolicyviolations()">Edit policy violations</a></li>
                         <li><a class="ws" ng-click="editConfirm()">Confirm/Change to false positive</a></li>
                         <li ng-show="vulnWebSelected" role="separator" class="divider"></li>
                         <li ng-show="vulnWebSelected"><a class="ws" ng-click="editString('method')">Edit method</a></li>
@@ -103,7 +104,7 @@
                             <div class="form-group">
                                 <div class="input-group input-group-sm">
                                     <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search && search != 'confirmed=true'"></span>
-                                    <input type="text" class="form-control" id="filter-by" placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
+                                    <input type="text" class="form-control" id="filter-by" placeholder="enter keywords" ng-change="currentPage = 1" ng-model="searchParams" />
                                     <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
                                         <i class="fa fa-search" ng-if="gridOptions.data.length > 0 || gridOptions.totalItems >= 0"></i>
                                         <i class="fa fa-refresh fa-spin" ng-if="gridOptions.totalItems === null"></i>

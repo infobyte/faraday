@@ -14,6 +14,7 @@ gi.require_version('Gtk', '3.0')
 
 from gi.repository import Gtk, GdkPixbuf, Gdk
 from config.configuration import getInstanceConfiguration
+from persistence.server.server import is_authenticated, login_user, get_user_info, test_server_url
 from model import guiapi
 from decorators import scrollable
 
@@ -49,7 +50,7 @@ class PreferenceWindowDialog(Gtk.Dialog):
         ip_label.set_text("Faraday Server IP or URL")
         main_box.pack_start(ip_label, True, False, 10)
 
-        couch_uri = CONF.getCouchURI()
+        couch_uri = CONF.getServerURI()
         self.ip_entry = Gtk.Entry()
         text = couch_uri if couch_uri else "http://127.0.0.1:5050"
         self.ip_entry.set_text(text)
@@ -74,8 +75,33 @@ class PreferenceWindowDialog(Gtk.Dialog):
         repourl (Couch IP) from self.ip_entry and connect to it if possible.
         """
         repourl = self.ip_entry.get_text()
-        if self.connectCouchCallback(repourl, parent=self):  # success!
+
+        if not test_server_url(repourl):
+            errorDialog(self, "Could not connect to Faraday Server.",
+                        ("Are you sure it is running and that the URL is correct?"))
+            return False
+
+
+        credentials_ok = self.credentialsOK(repourl)
+        couch_connection_ok = self.connectCouchCallback(repourl, parent=self)
+        if credentials_ok and couch_connection_ok:
             self.destroy()
+
+    def credentialsOK(self, repourl):
+        """Pops up a dialog (if necessary) to set up Faraday
+        credentials. Dialog is a LoginDialog which emits a signal marked
+        by 42 when the user clicks its button. The run method returns 42
+        on that click. Function will listen for that 42 at most three times.
+        It's a boolean function, return True if auth ok, False if not.
+        Number 42 was chosen for obvious reasons :) """
+
+        if is_authenticated(repourl, CONF.getDBSessionCookies()):
+            return True
+
+        # if that didn't work...
+        loginDialog = LoginDialog(self)
+        return loginDialog.run(3, repourl, self)
+
 
     def on_click_cancel(self, button=None):
         self.destroy()
@@ -107,6 +133,124 @@ class ForcePreferenceWindowDialog(PreferenceWindowDialog):
     def on_click_cancel(self, button=None):
         """Override on_click_cancel to make it exit Faraday."""
         self.exit_faraday(parent=self)
+
+
+class LoginDialog(Gtk.Dialog):
+    """A simple login dialog with a user and password"""
+    def __init__(self, parent):
+        Gtk.Dialog.__init__(self,
+                            flags=Gtk.DialogFlags.MODAL,
+                            buttons=("OK", Gtk.ResponseType.OK,
+                                     "Cancel", Gtk.ResponseType.CANCEL))
+
+        self.set_default_response(Gtk.ResponseType.OK)
+
+        self.set_keep_above(True)
+
+        self.set_transient_for(parent)
+        content_area = self.get_content_area()
+
+        instructions = Gtk.Label.new("Credentials needed to proceed."
+                                     "You've got 3 tries.")
+        instructions.set_line_wrap(True)
+        instructions.set_max_width_chars(38)
+        content_area.pack_start(instructions, True, True, 10)
+
+        userBox = Gtk.Box()
+        user_label = Gtk.Label()
+        user_label.set_text("User:")
+        self.user_entry = Gtk.Entry()
+        self.user_entry.set_width_chars(24)
+        self.user_entry.set_activates_default(True)
+        userBox.pack_start(user_label, True, True, 3)
+        userBox.pack_start(self.user_entry, False, False, 5)
+        content_area.pack_start(userBox, True, True, 10)
+
+        passwordBox = Gtk.Box()
+        password_label = Gtk.Label()
+        password_label.set_text("Password:")
+        self.password_entry = Gtk.Entry()
+        self.password_entry.set_visibility(False)
+        self.password_entry.set_width_chars(24)
+        self.password_entry.set_activates_default(True)
+        passwordBox.pack_start(password_label, True, True, 3)
+        passwordBox.pack_start(self.password_entry, False, False, 5)
+        content_area.pack_start(passwordBox, True, True, 10)
+
+        self.show_all()
+
+    def getUser(self):
+        if self.user_entry.get_text() is not None:
+            res = self.user_entry.get_text()
+        else:
+            res = ""
+        return res
+
+    def getPassword(self):
+        if self.password_entry.get_text() is not None:
+            res = self.password_entry.get_text()
+        else:
+            res = ""
+        return res
+
+    def run(self, attempts, url, parent):
+        for attempt in range(attempts):
+            run = Gtk.Dialog.run(self)
+
+            if run == Gtk.ResponseType.OK:
+                newUser = self.getUser()
+                newPass = self.getPassword()
+                session_cookie = login_user(url, newUser, newPass)
+                if not session_cookie:
+                    if attempt != attempts-1:
+                        errorDialog(self, ("Invalid credentials!. You "
+                                           "have " +
+                                           str(attempts-1-attempt) +
+                                           " attempt(s) left."))
+                else:
+
+                    CONF.setDBUser(newUser)
+                    CONF.setDBSessionCookies(session_cookie)
+
+                    user_info = get_user_info()
+
+                    if user_info is None or 'userCtx' not in user_info or 'roles' not in user_info['userCtx'] or 'client' in user_info['userCtx']['roles']:
+                        errorDialog(self, ("You can't login as a client. You have " +
+                                           str(attempts - 1 - attempt) +
+                                           " attempt(s) left."))
+                        continue
+
+                    self.destroy()
+
+                    return True
+
+            if run == Gtk.ResponseType.CANCEL or run == -4:
+                # run returns -4 when escape key pressed
+                self.exit()
+                return False
+        else:
+            errorDialog(self, ("Invalid credentials after " +
+                                 str(attempts) + " tries. " +
+                                 "Check your credentials and try again."))
+            self.exit()
+            return False
+
+    def exit(self):
+        self.destroy()
+
+
+class ForceLoginDialog(LoginDialog):
+    """A simple login dialog with a user and password"""
+    def __init__(self, parent, exit_faraday_callback):
+        LoginDialog.__init__(self, parent)
+
+        self.set_deletable(False)
+
+        self.exit_faraday = exit_faraday_callback
+
+    def exit(self, button=None):
+        """Override destroy to make it exit Faraday."""
+        self.exit_faraday()
 
 
 class NewWorkspaceDialog(Gtk.Window):
@@ -566,7 +710,7 @@ class FaradayPluginsDialog(Gtk.Window):
 
 class HostInfoDialog(Gtk.Window):
     """Sets the blueprints for a simple host info window. It will display
-    basic information in labels as well as interfaces/services in a treeview.
+    basic information in labels as well as services in a treeview.
 
     While working in this class, keep in mind the distinction between
     selections (which are part of a model that holds data about an object as
@@ -591,7 +735,7 @@ class HostInfoDialog(Gtk.Window):
         host_info = self.model[0]
 
         host_id = self.model[0][0]
-        couch_url = CONF.getCouchURI()
+        couch_url = CONF.getServerURI()
         base_url = couch_url + "/_ui/#/host/ws/"
         self.edit_url = base_url + active_ws_name + "/hid/" + host_id
 
@@ -715,20 +859,15 @@ class HostInfoDialog(Gtk.Window):
     def create_model(self, host):
         """Return a model for the given host. It holds quite a bit of info.
         It has 15 columns holding the host ID and name as parent,
-        all the information about the interfaces of that host and all the
-        information about the services of those interfaces.
+        all the information about the services.
 
         The model is difficult to draw because of its nested nature, but
         you can think of it like this, keeping in mind each node has
         several columns
 
           HOST
-          -----> INTERFACE1
                    ------------> SERVICE1
                    ------------> SERVICE2
-          -----> INTERFACE2
-                   -----------> SERVICE1
-                   -----------> SERVICE2
 
         And so on and so on, like Zizek says.
         """
@@ -758,60 +897,10 @@ class HostInfoDialog(Gtk.Window):
             """Convenient function to avoid this long line everywhere"""
             return ', '.join([str(word) for word in lst if word])
 
-        def add_interface_to_host_in_model(interface, host_pos, model):
-            """Append an interface to the host within a model.
-            Return the tree_iter represeting the position of the interface
-            within the model. Modifies the model.
-            """
-            ipv4_dic = interface.getIPv4()
-            ipv6_dic = interface.getIPv6()
-            display_str = str(interface)
-
-            position = model.append(host_pos, [interface.getID(),
-                                               interface.getName(),
-                                               interface.getDescription(),
-                                               interface.getMAC(),
-                                               ipv4_dic['mask'],
-                                               ipv4_dic['gateway'],
-                                               lst_to_str(ipv4_dic['DNS']),
-                                               ipv4_dic['address'],
-                                               ipv6_dic['prefix'],
-                                               ipv6_dic['gateway'],
-                                               lst_to_str(ipv6_dic['DNS']),
-                                               ipv6_dic['address'],
-                                               display_str])
-            return position
-
-        def add_service_to_interface_in_model(service, interface_pos, model):
-            """Append a service to an interface at interface_pos in the given
-            model. Return None. Modifies the model"""
-            display_str = service.getName() + " (" + str(len(service.getVulns())) + ")"
-            model.append(interface_pos, [service.getID(),
-                                         service.getName(),
-                                         service.getDescription(),
-                                         service.getProtocol(),
-                                         service.getStatus(),
-                                         lst_to_str(service.getPorts()),
-                                         service.getVersion(),
-                                         "Yes" if service.isOwned() else "No",
-                                         "", "", "", "", display_str])
-
-        interfaces = host.getAllInterfaces()
-        for interface in interfaces:
-            interface_position = add_interface_to_host_in_model(interface,
-                                                                host_position,
-                                                                model)
-            services = interface.getAllServices()
-            for service in services:
-                add_service_to_interface_in_model(service, interface_position,
-                                                  model)
-
-        return model
-
     @scrollable(width=250)
     def create_main_tree_view(self, model):
         """Return a box containing the main tree (the one showing
-        Host/Interfaces/Services) as its content.
+        Host/Services) as its content.
         """
         view = Gtk.TreeView(model)
         view.set_activate_on_single_click(True)
@@ -820,7 +909,7 @@ class HostInfoDialog(Gtk.Window):
         view.expand_all()
 
         renderer = Gtk.CellRendererText()
-        column = Gtk.TreeViewColumn("Host/Interfaces/Services",
+        column = Gtk.TreeViewColumn("Host/Services",
                                     renderer, text=12)
 
         view.append_column(column)
@@ -843,12 +932,12 @@ class HostInfoDialog(Gtk.Window):
         object_info = model[tree_iter]
 
         iter_depth = model.iter_depth(tree_iter)
-        object_type = {0: 'Host', 1: 'Interface', 2: 'Service'}[iter_depth]
+        object_type = {0: 'Host', 1: 'Service'}[iter_depth]
 
         if object_type == 'Host':
             self.set_vuln_model(self.create_vuln_model(self.host))
 
-        elif object_type == 'Interface' or object_type == 'Service':
+        elif object_type == 'Service':
             self.clear(self.specific_info)
             self.change_label_in_frame(self.specific_info_frame, object_type)
             prop_names = self.get_properties_names(object_type)
@@ -999,37 +1088,32 @@ class HostInfoDialog(Gtk.Window):
             return safe_wrapper
 
         object_id = selected_object[0]
-        if object_type == 'Interface':
-            # an interface is a direct child of a host
-            object_ = safely(self.host.getInterface)(object_id)
-        elif object_type == 'Service':
-            # a service is a grand-child of a host, so we should look
-            # for its parent interface and ask her about the child
-            parent_interface_iter = selected_object.get_parent()
-            parent_interface_id = parent_interface_iter[0]
-            parent_interface = safely(self.host.getInterface)(parent_interface_id)
-            if parent_interface:
-                object_ = safely(parent_interface.getService)(object_id)
-            else:
-                object_ = None
+        object_ = None
+        # TODO: fix this code to get services removing interface logic
+        # if object_type == 'Interface':
+        #     # an interface is a direct child of a host
+        #     object_ = safely(self.host.getInterface)(object_id)
+        # elif object_type == 'Service':
+        #     # a service is a grand-child of a host, so we should look
+        #     # for its parent interface and ask her about the child
+        #     parent_interface_iter = selected_object.get_parent()
+        #     parent_interface_id = parent_interface_iter[0]
+        #     parent_interface = safely(self.host.getInterface)(parent_interface_id)
+        #     if parent_interface:
+        #         object_ = safely(parent_interface.getService)(object_id)
+        #     else:
+        #         object_ = None
 
         return object_
 
     def get_properties_names(self, object_type):
         """Return a list with the property names for objects of type
-        Interface, Service, Vulnerability and VulnerabilityWeb (passed as a
+        Service, Vulnerability and VulnerabilityWeb (passed as a
         string).
         """
         if object_type == "Host":
             property_names = ["Name: ", "OS: ", "Owned: ",
                               "Vulnerabilities: "]
-
-        elif object_type == "Interface":
-            property_names = ["Name: ", "Description: ", "MAC: ",
-                              "IPv4 Mask: ", "IPv4 Gateway: ", "IPv4 DNS: ",
-                              "IPv4 Address: ", "IPv6 Prefix: ",
-                              "IPv6 Gateway", "IPv6 DNS: ",
-                              "IPv6 Address: "]
 
         elif object_type == "Service":
             property_names = ["Name: ", "Description: ", "Protocol: ",
@@ -1148,15 +1232,16 @@ class ConflictsDialog(Gtk.Window):
         elif keeper == "left":
             n = 1
 
-        # interface needs a special case, 'cause it's the only object
-        # which resolveConflict() will expect its solution to have a
-        # dicitionary inside the solution dictionary
-        if current_conflict_type != "Interface":
-            solution = {}
-            for row in self.current_conflict_model:
-                solution[row[0].lower()] = self.uncook(row[n], row[4])
-        else:
-            solution = self.case_for_interfaces(self.current_conflict_model, n)
+        # TODO: fix this code to remove interface logic
+        # # interface needs a special case, 'cause it's the only object
+        # # which resolveConflict() will expect its solution to have a
+        # # dicitionary inside the solution dictionary
+        # if current_conflict_type != "Interface":
+        #     solution = {}
+        #     for row in self.current_conflict_model:
+        #         solution[row[0].lower()] = self.uncook(row[n], row[4])
+        # else:
+        #     solution = self.case_for_interfaces(self.current_conflict_model, n)
 
         try:
             guiapi.resolveConflict(self.current_conflict, solution)
@@ -1191,32 +1276,33 @@ class ConflictsDialog(Gtk.Window):
             dialog.destroy()
             self._next_conflict_or_close()
 
-    def case_for_interfaces(self, model, n):
-        """The custom case for the interfaces. Plays a little
-        with the information in the given model to create a solution acceptable
-        by resolveConflict. n is the right or left view, should be
-        either 1 or 2 as integers"""
-        solution = {}
-        solution["ipv4"] = {}
-        solution["ipv6"] = {}
-        for row in model:
-            prop_name = row[0].lower()
-            if prop_name.startswith("ipv4"):
-                prop_name = prop_name.split(" ")[1]
-                if not prop_name.startswith("dns"):
-                    solution["ipv4"][prop_name] = self.uncook(row[n], row[4])
-                elif prop_name.startswith("dns"):
-                    solution["ipv4"]["DNS"] = self.uncook(row[n], row[4])
+    # TODO: refactor or remove this code
+    # def case_for_interfaces(self, model, n):
+    #     """The custom case for the interfaces. Plays a little
+    #     with the information in the given model to create a solution acceptable
+    #     by resolveConflict. n is the right or left view, should be
+    #     either 1 or 2 as integers"""
+    #     solution = {}
+    #     solution["ipv4"] = {}
+    #     solution["ipv6"] = {}
+    #     for row in model:
+    #         prop_name = row[0].lower()
+    #         if prop_name.startswith("ipv4"):
+    #             prop_name = prop_name.split(" ")[1]
+    #             if not prop_name.startswith("dns"):
+    #                 solution["ipv4"][prop_name] = self.uncook(row[n], row[4])
+    #             elif prop_name.startswith("dns"):
+    #                 solution["ipv4"]["DNS"] = self.uncook(row[n], row[4])
 
-            elif prop_name.startswith("ipv6"):
-                prop_name = prop_name.split(" ")[1]
-                if not prop_name.startswith("dns"):
-                    solution["ipv6"][prop_name] = self.uncook(row[n], row[4])
-                elif prop_name.startswith("dns"):
-                    solution["ipv6"]["DNS"] = self.uncook(row[n], row[4])
-            else:
-                solution[prop_name] = self.uncook(row[n], row[4])
-        return solution
+    #         elif prop_name.startswith("ipv6"):
+    #             prop_name = prop_name.split(" ")[1]
+    #             if not prop_name.startswith("dns"):
+    #                 solution["ipv6"][prop_name] = self.uncook(row[n], row[4])
+    #             elif prop_name.startswith("dns"):
+    #                 solution["ipv6"]["DNS"] = self.uncook(row[n], row[4])
+    #         else:
+    #             solution[prop_name] = self.uncook(row[n], row[4])
+    #     return solution
 
     def on_quit(self, button):
         """Exits the window"""
@@ -1321,8 +1407,6 @@ class ConflictsDialog(Gtk.Window):
 
             if conflict_type == "Service":
                 self.fill_service_conflict_model(model, obj1, obj2)
-            elif conflict_type == "Interface":
-                self.fill_interface_conflict_model(model, obj1, obj2)
             elif conflict_type == "Host":
                 self.fill_host_conflict_model(model, obj1, obj2)
             elif conflict_type == "Vulnerability":
@@ -1368,34 +1452,6 @@ class ConflictsDialog(Gtk.Window):
                          obj.isOwned()))
 
         props = ["Name", "Description", "OS", "Owned"]
-        model = self.fill_model_from_props_and_attr(model, attr, props)
-        return model
-
-    def fill_interface_conflict_model(self, model, obj1, obj2):
-        """
-        Precondition: the model has 5 string columns, obj1 && obj2 are
-        interfaces
-        Will get a model and two objects and return a
-        model with all the appropiate information"""
-        attr = []
-        for obj in [obj1, obj2]:
-            attr.append((obj.getName(),
-                         obj.getDescription(),
-                         obj.getHostnames(),
-                         obj.getMAC(),
-                         obj.getIPv4Address(),
-                         obj.getIPv4Mask(),
-                         obj.getIPv4Gateway(),
-                         obj.getIPv4DNS(),
-                         obj.getIPv6Address(),
-                         obj.getIPv6Gateway(),
-                         obj.getIPv6DNS(),
-                         obj.isOwned()))
-
-        props = ["Name", "Description", "Hostnames", "MAC", "IPv4 Address",
-                 "IPv4 Mask", "IPv4 Gateway", "IPv4 DNS", "IPv6 Address",
-                 "IPv6 Gateway", "IPv6 DNS", "Owned"]
-
         model = self.fill_model_from_props_and_attr(model, attr, props)
         return model
 
@@ -1606,7 +1662,10 @@ class ForceChooseWorkspaceDialog(Gtk.Window):
         message = Gtk.Label()
         message.set_text("Your last workspace is not accessible. \n"
                          "You must select one of the below workspaces to "
-                         "continue using Faraday.")
+                         "continue using Faraday. \n"
+                         "If your problem persists, double check you are "
+                         "logged in. You may want to start faraday with the "
+                         "--login flag.")
         return message
 
     @scrollable(height=200)

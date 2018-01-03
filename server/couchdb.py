@@ -16,6 +16,7 @@ from server import config
 
 logger = server.utils.logger.get_logger(__name__)
 
+
 class CouchDBServer(object):
     def __init__(self):
         self.__get_server_uri()
@@ -53,7 +54,7 @@ class CouchDBServer(object):
         return self.__server.delete_db(ws_name)
 
 
-class Workspace(object):
+class CouchDBWorkspace(object):
     def __init__(self, ws_name, couchdb_server_conn=None):
         self.__ws_name = ws_name
         self.__server = couchdb_server_conn or CouchDBServer()
@@ -121,6 +122,7 @@ def get_couchdb_url():
     couchdb_url = "%s://%s:%s" % (config.couchdb.protocol, config.couchdb.host, couchdb_port)
     return couchdb_url
 
+
 def get_auth_info():
     user, passwd = config.couchdb.user, config.couchdb.password
     if (all((user, passwd))):
@@ -128,8 +130,10 @@ def get_auth_info():
     else:
         return None
 
+
 def is_usable_workspace(ws_name):
     return not ws_name.startswith('_') and ws_name not in config.WS_BLACKLIST
+
 
 def list_workspaces_as_user(cookies, credentials=None):
     all_dbs_url = get_couchdb_url() + '/_all_dbs'
@@ -144,8 +148,10 @@ def list_workspaces_as_user(cookies, credentials=None):
     workspaces = filter(is_workspace_accessible_for_user, response.json())
     return { 'workspaces': workspaces }
 
+
 def server_has_access_to(ws_name):
     return has_permissions_for(ws_name, credentials=get_auth_info())
+
 
 def get_workspace(workspace_name, cookies, credentials):
     workspace = _get_workspace_doc(workspace_name, cookies, credentials).json()
@@ -154,10 +160,12 @@ def get_workspace(workspace_name, cookies, credentials):
     workspace['last_seq'] = response.json()['update_seq']
     return workspace
 
+
 def _get_workspace_doc(workspace_name, cookies, credentials):
     # TODO: SANITIZE WORKSPACE NAME IF NECESSARY. POSSIBLE SECURITY BUG
     ws_url = get_couchdb_url() + ('/%s/%s' % (workspace_name, workspace_name))
     return requests.get(ws_url, verify=False, cookies=cookies, auth=credentials)
+
 
 def has_permissions_for(workspace_name, cookies=None, credentials=None):
     response = _get_workspace_doc(workspace_name, cookies, credentials)
@@ -165,12 +173,14 @@ def has_permissions_for(workspace_name, cookies=None, credentials=None):
     # respond 401 if it doesn't have access to it
     return (response.status_code != requests.codes.unauthorized)
 
+
 def get_user_from_session(cookies=None, credentials=None):
     session_url = "%s/_session" % get_couchdb_url()
     res = requests.get(session_url, cookies=cookies, auth=credentials)
     if res.ok:
         user = res.json()['userCtx']['name']
     return user if user else ''
+
 
 def push_reports():
     vmanager = ViewsManager()
@@ -184,6 +194,7 @@ def push_reports():
         logger.debug(traceback.format_exc())
         logger.warning("Reports database couldn't be uploaded. You need to be an admin to do it")
 
+
 def upload_views(workspace):
     """ Upload views with couchdb behind of ViewsManager """
     vmanager = ViewsManager()
@@ -193,6 +204,7 @@ def upload_views(workspace):
         import traceback
         logger.debug(traceback.format_exc())
         logger.warning("Views documents couldn't be uploaded. You need to be an admin to do it")
+
 
 def create_workspace(workspace):
 
@@ -215,6 +227,7 @@ def create_workspace(workspace):
 
     return success
 
+
 def update_workspace(workspace):
     couch_server = CouchDBServer()
     ws = couch_server.get_workspace_handler(workspace.get('name'))
@@ -225,6 +238,7 @@ def update_workspace(workspace):
         # create an error
         response = {'ok': False}
     return response.get('ok', False)
+
 
 def delete_workspace(ws_name):
     couch_server = CouchDBServer()

@@ -228,6 +228,18 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
+        dashboardSrv.getActivityFeed = function(ws) {
+            var deferred = $q.defer();
+
+            ServerAPI.getActivityFeed(ws).then(function(res) {
+                deferred.resolve(res.data);
+            }, function() {
+                deferred.reject();
+            });
+
+            return deferred.promise;
+        };
+
         dashboardSrv.getCommands = function(ws) {
             var deferred = $q.defer();
 
@@ -239,12 +251,14 @@ angular.module('faradayApp')
                         _cmd.user = _cmd.user || "unknown";
                         _cmd.hostname = _cmd.hostname || "unknown";
                         _cmd.ip = _cmd.ip || "0.0.0.0";
-                        if(_cmd.duration == "0" || _cmd.duration == "") {
+                        if(_cmd.duration == "In progres") {
                             _cmd.duration = "In progress";
+                        } else if (_cmd.duration == "Not started") {
+                            _cmd.duration = "Not started";
                         } else if(_cmd.duration != undefined) {
                             _cmd.duration = _cmd.duration.toFixed(2) + "s";
                         }
-                        _cmd.date = _cmd.itime * 1000;                        
+                        _cmd.date = _cmd.itime;
                         tmp.push(_cmd);
                     });
 
@@ -288,10 +302,10 @@ angular.module('faradayApp')
 
         dashboardSrv.getHost = function(ws, host_id) {
             var deferred = $q.defer();
-            ServerAPI.getHosts(ws, {'couchid': host_id})
+            ServerAPI.getHost(ws, host_id)
                 .then(function(res) {
                     if (res.rows == 1) {
-                        deferred.resolve(res.data.rows[0]);
+                        deferred.resolve(res.data);
                     } else {
                         deferred.reject("More than one object found by ID");
                     }
@@ -305,14 +319,7 @@ angular.module('faradayApp')
 
             var deferred = $q.defer();
             ServerAPI.getServicesByHost(ws, host_id).then(function(res){
-                var tmp = [];
-                res.data.services.forEach(function(service){
-                    var _service = service.value;
-                    _service["id"] = service.id;
-                    _service["port"] = _service.ports;
-                    tmp.push(_service);
-                });
-                deferred.resolve(tmp);
+                deferred.resolve(res.data);
             }, function(){
                 deferred.reject();
             });

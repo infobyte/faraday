@@ -9,7 +9,10 @@ import os
 import shutil
 import errno
 
-from logging import NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL
+from logging import (
+    DEBUG,
+    INFO,
+)
 from config import globals as CONSTANTS
 from config.configuration import getInstanceConfiguration
 
@@ -97,5 +100,6 @@ def gen_web_config():
 
 def is_debug_mode():
     return LOGGING_LEVEL is DEBUG
+
 
 parse_and_bind_configuration()

@@ -475,6 +475,28 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
         assert res.status_code == 200
         assert [h['_id'] for h in res.json['data']] == expected_ids
 
+    @pytest.mark.usefixtures("mock_envelope_list")
+    def test_sort_by_update_time(self, test_client, session, second_workspace,
+                                 host_factory):
+        """
+        This test doesn't test only the hosts view, but all the ones that
+        expose a object with metadata.
+        Think twice if you are thinking in removing it
+        """
+        expected = host_factory.create_batch(10, workspace=second_workspace)
+        session.commit()
+        for i in range(len(expected)):
+            if i % 2 == 0:   # Only update some hosts
+                host = expected.pop(0)
+                host.description = 'i was updated'
+                session.add(host)
+                session.commit()
+                expected.append(host)  # Put it on the end
+        res = test_client.get(self.url(workspace=second_workspace) +
+                              '?sort=metadata.update_time&sort_dir=asc')
+        assert res.status_code == 200, res.data
+        assert [h['_id'] for h in res.json['data']] == [h.id for h in expected]
+
     def test_create_a_host_twice_returns_conflict(self, test_client):
         res = test_client.post(self.url(), data={
             "ip": "127.0.0.1",

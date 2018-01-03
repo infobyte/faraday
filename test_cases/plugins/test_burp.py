@@ -57,7 +57,7 @@ class TestBurp:
         assert len(actions[2038]) == 14
 
         assert all('http' == name for name in map(lambda service: service.name, actions[20008]))
-        assert all([80] == ports for ports in map(lambda service: service.ports, actions[20008]))
+        assert all([80] == ports for ports in map(lambda service: service.getPorts(), actions[20008]))
         assert all('tcp' == protocol for protocol in map(lambda service: service.protocol, actions[20008]))
         assert all('open' for status in map(lambda service: service.status, actions[20008]))
 

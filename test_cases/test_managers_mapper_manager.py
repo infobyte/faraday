@@ -80,7 +80,7 @@ OBJ_DATA = {
             'owned': False,
             'owner': 'leo',
             'protocol': 'tcp',
-            'ports': [60],
+            'ports': 60,
             'version': '2',
             'status': 'open',
             'vulns': 0,
@@ -521,7 +521,7 @@ GET_OBJ_DATA = {
                 "id": 1,
                 "credentials": 0,
                 "_id": 1,
-                "ports": [21],
+                "ports": 21,
                 "name": "ssh"
             },
             'serialized_expected_results': {

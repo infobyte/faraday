@@ -879,7 +879,12 @@ class Service(ModelBase):
     def __init__(self, service, workspace_name):
         ModelBase.__init__(self, service, workspace_name)
         self.protocol = service['protocol']
-        self.ports = [int(port) for port in service['ports']]
+        if type(service['ports']) == int:
+            # the new api returns an integer in ports
+            self.ports = [service['ports']]
+        else:
+            # plugin creates a list of strings with the ports
+            self.ports = map(int, service['ports'])
         self.version = service['version']
         self.status = service['status']
         self.vuln_amount = int(service.get('vulns', 0))

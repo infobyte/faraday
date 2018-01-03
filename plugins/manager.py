@@ -108,8 +108,6 @@ class PluginManager(object):
                         module_filename, traceback.format_exc())
                     getLogger(self).debug(msg)
                     getLogger(self).warn(e)
-            else:
-                pass
 
     def getPlugins(self):
         plugins = self._instancePlugins()

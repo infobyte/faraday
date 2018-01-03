@@ -25,6 +25,7 @@ Warning:
 
 import os
 import json
+import logging
 
 try:
     import urlparse
@@ -47,6 +48,7 @@ from persistence.server.changes_stream import CouchChangesStream
 
 # NOTE: Change is you want to use this module by itself.
 # If FARADAY_UP is False, SERVER_URL must be a valid faraday server url
+logger = logging.getLogger(__name__)
 FARADAY_UP = True
 SERVER_URL = "http://127.0.0.1:5985"
 AUTH_USER = ""
@@ -175,6 +177,7 @@ def _unsafe_io_with_server(server_io_function, server_expected_response,
 
     Return the response from the server.
     """
+    answer = None
     try:
         answer = server_io_function(server_url, **payload)
         if answer.status_code == 409:
@@ -185,10 +188,10 @@ def _unsafe_io_with_server(server_io_function, server_expected_response,
             raise Unauthorized(answer)
         if answer.status_code != server_expected_response:
             raise requests.exceptions.RequestException(response=answer)
-    except requests.exceptions.RequestException:
+    except requests.exceptions.RequestException as ex:
+        logger.debug(ex)
         raise CantCommunicateWithServerError(server_io_function, server_url, payload, answer)
     return answer
-
 
 def _parse_json(response_object):
     """Takes a response object and return its response as a dictionary."""

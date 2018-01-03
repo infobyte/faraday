@@ -25,7 +25,6 @@ from tqdm import tqdm
 import server.config
 
 import server.couchdb
-import server.database
 import server.models
 import server.utils.logger
 from server.models import (

@@ -1,14 +1,11 @@
 import os
 import sys
 import unittest
-import tempfile
 import pytest
 
 sys.path.append(os.path.abspath(os.getcwd()))
-from server.app import create_app
-from flask_security import Security, SQLAlchemyUserDatastore
+
 from server.models import db, User, Role
-from server.database import setup_common
 
 
 def endpoint():

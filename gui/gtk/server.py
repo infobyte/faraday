@@ -7,10 +7,13 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-import threading, time, requests
+import time
+import threading
+
 from model.guiapi import notification_center
 from decorators import safe_io_with_server
 from persistence.server import models, server_io_exceptions
+
 
 class ServerIO(object):
     def __init__(self, active_workspace):
@@ -74,7 +77,7 @@ class ServerIO(object):
     def get_host(self, host_id):
         return models.get_host(self.active_workspace, host_id)
 
-    @safe_io_with_server((0,0,0,0))
+    @safe_io_with_server((0, 0, 0, 0))
     def get_workspace_numbers(self):
         return models.get_workspace_numbers(self.active_workspace)
 
@@ -100,82 +103,34 @@ class ServerIO(object):
         exception, of if self.stream is None.
         """
 
-        # There is very arcane, dark magic involved in this method.
-        # What you need to know: do not touch it.
-        # If you touch it, do check out persitence/server/changes_stream.py
-        # there lies _most_ of the darkest magic
-
-        def filter_changes(change, obj_type):
-            local_changes = models.local_changes()
-            cool_types = ("Host", "Interface", "Service", "Vulnerability",
-                          "VulnerabilityWeb", "CommandRunInfomation", "Cred",
-                          "Note")
-
-            if not change.get('changes') or not change['changes'][0].get('rev'):
-                # not a change really right?
-                return None
-
-            is_deleted = bool(change.get('deleted'))
-            if obj_type is None and not is_deleted:
-                # if obj_type is None it's a deleted change. retrieve its type later
-                return None
-
-            if obj_type is not None and obj_type not in cool_types:
-                return None
-
-            if change['changes'][0]['rev'] == local_changes.get(change['id']):
-                del local_changes[change['id']]
-                return None
-
-            if not change or change.get('last_seq'):
-                return None
-
-            if change['id'].startswith('_design'): # XXX: is this still neccesary?
-                return None
-
-            return change
-
-        def notification_dispatcher(obj_id, obj_type, obj_name, deleted, revision):
-            if deleted:
-                obj_name, obj_type = self.get_deleted_object_name_and_type(obj_id)
-                notification_center.deleteObject(obj_id)
-                update = False
-            else:
-                is_new_object = revision.split("-")[0] == "1"
-                obj = self.get_object(obj_type, obj_id)
-                if obj:
-                    if is_new_object:
-                        notification_center.addObject(obj)
-                        update = False
-                    else:
-                        notification_center.editObject(obj)
-                        update = True
-                else:
-                    update = False
-            for var in [var for var in [obj_id, obj_type, obj_name] if var is None]:
-                var = ""
-            notification_center.changeFromInstance(obj_id, obj_type,
-                                                   obj_name, deleted=deleted,
-                                                   update=update)
-
         def get_changes():
-            # dark maaaaaagic *sing with me!* dark maaaaaagic
-            if self.stream:
+            if not self.stream:
+                return False
+            while True:
                 try:
-                    for change, obj_type, obj_name in self.stream:
-                        with self.changes_lock:
-                            change = filter_changes(change, obj_type)
-                        if change:
-                            deleted = bool(change.get('deleted'))
-                            obj_id = change.get('id')
-                            revision = change.get("changes")[-1].get('rev')
-                            notification_dispatcher(obj_id, obj_type, obj_name,
-                                                    deleted, revision)
+                    for obj_information in self.stream:
+                        action = obj_information.get('action')
+                        obj_id = obj_information.get('id')
+                        obj_type = obj_information.get('type')
+                        obj_name = obj_information.get('name')
+                        obj = self.get_object(obj_type, obj_id)
+                        if action == 'CREATE':
+                            notification_center.addObject(obj)
+                        elif action == 'UPDATE':
+                            notification_center.editObject(obj)
+                        elif action == 'DELETE':
+                            notification_center.deleteObject(obj_id, obj_type)
+                        else:
+                            raise Exception('Invalid action')
+                        notification_center.changeFromInstance(
+                                action,
+                                obj_id,
+                                obj_type,
+                                obj_name)
                 except server_io_exceptions.ChangesStreamStoppedAbruptly:
                     notification_center.WorkspaceProblem()
                     return False
-            else:
-                return False
+                time.sleep(0.5)
 
         get_changes_thread = threading.Thread(target=get_changes)
         get_changes_thread.daemon = True

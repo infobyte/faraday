@@ -27,6 +27,8 @@ from nplusone.ext.flask_sqlalchemy import NPlusOne
 from depot.manager import DepotManager
 
 import server.config
+# Load SQLAlchemy Events
+import server.events
 from server.utils.logger import LOGGING_HANDLERS
 logger = logging.getLogger(__name__)
 

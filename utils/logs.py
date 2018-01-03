@@ -28,7 +28,7 @@ def setUpLogger(debug=False):
     logger.setLevel(level)
 
     formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        '%(asctime)s - %(name)s - %(levelname)s [%(filename)s:%(lineno)s - %(funcName)20s() ]  %(message)s')
 
     ch = logging.StreamHandler()
     ch.setFormatter(formatter)

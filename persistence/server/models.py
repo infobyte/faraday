@@ -177,8 +177,7 @@ def get_changes_stream(workspace_name):
     of name workspace_name.
     The change stream will have heartbeet set to 1000.
     """
-    since = server.get_workspace(workspace_name)['last_seq']
-    return server.get_changes_stream(workspace_name, since=since,
+    return server.get_changes_stream(workspace_name,
                                      heartbeat='1000')
 
 

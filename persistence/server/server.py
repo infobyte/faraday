@@ -526,11 +526,11 @@ def _websockets_changes(workspace_name, **extra_params):
 
 
 # cha cha cha chaaaanges!
-def get_changes_stream(workspace_name, since=0, heartbeat='1000', stream_provider=_websockets_changes, **extra_params):
+def get_changes_stream(workspace_name, heartbeat='1000', stream_provider=_websockets_changes, **extra_params):
     """
       stream_provider: A function that returns an instance of a Stream provider
     """
-    return stream_provider(workspace_name, since=since, feed='continuous',
+    return stream_provider(workspace_name, feed='continuous',
                           heartbeat=heartbeat, **extra_params)
 
 def get_workspaces_names():

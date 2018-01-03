@@ -415,14 +415,12 @@ class GuiApp(Gtk.Application, FaradayUi):
         """Very similar to reload_workspaces, but doesn't resource the
         workspace_manager to avoid asking for information to a database
         we can't access."""
-        self.workspace_manager.closeWorkspace()
         self.ws_sidebar.clear_sidebar()
 
     def reload_workspaces(self):
         """Close workspace, resources the workspaces available,
         clears the sidebar of the old workspaces and injects all the new ones
         in there too"""
-        self.workspace_manager.closeWorkspace()
         self.ws_sidebar.clear_sidebar()
         self.ws_sidebar.refresh_sidebar()
 

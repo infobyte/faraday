@@ -1499,7 +1499,7 @@ def is_authenticated(uri, cookies):
         resp = requests.get(uri + "/_api/session", cookies=cookies, timeout=1)
         if resp.status_code != 403:
             user_info = resp.json()
-            return bool(user_info.get('name', {}))
+            return bool(user_info.get('username', {}))
         else:
             return False
     except requests.adapters.ConnectionError:

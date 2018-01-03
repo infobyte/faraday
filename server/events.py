@@ -14,11 +14,12 @@ def new_object_event(mapper, connection, instance):
     # Since we don't have jet a model for workspace we
     # retrieve the name from the connection string
     workspace_name = repr(connection.engine).split('.')[0].split('/')[-1]
+    name = getattr(instance, 'ip', None) or instance.name
     msg = {
         'id': instance.id,
         'action': 'CREATE',
         'type': instance.__class__.__name__,
-        'name': instance.name,
+        'name': name,
         'workspace': workspace_name
     }
     changes_queue.put(msg)
@@ -26,11 +27,12 @@ def new_object_event(mapper, connection, instance):
 
 def delete_object_event(mapper, connection, instance):
     workspace_name = repr(connection.engine).split('.')[0].split('/')[-1]
+    name = getattr(instance, 'ip', None) or instance.name
     msg = {
         'id': instance.id,
         'action': 'DELETE',
         'type': instance.__class__.__name__,
-        'name': instance.name,
+        'name': name,
         'workspace': workspace_name
     }
     changes_queue.put(msg)
@@ -38,11 +40,12 @@ def delete_object_event(mapper, connection, instance):
 
 def update_object_event(mapper, connection, instance):
     workspace_name = repr(connection.engine).split('.')[0].split('/')[-1]
+    name = getattr(instance, 'ip', None) or instance.name
     msg = {
         'id': instance.id,
         'action': 'UPDATE',
         'type': instance.__class__.__name__,
-        'name': instance.name,
+        'name': name,
         'workspace': workspace_name
     }
     changes_queue.put(msg)

@@ -617,10 +617,8 @@ def main():
     setConf()
     checkCouchUrl()
     checkVersion()
-
+    CONF = getInstanceConfiguration()
     if args.login:
-        CONF = getInstanceConfiguration()
-
         if not CONF.getServerURI():
             couchURI = raw_input("Enter the Faraday server [http://127.0.0.1:5985]: ") or "http://127.0.0.1:5985"
 
@@ -632,6 +630,10 @@ def main():
                 sys.exit(-1)
 
         doLoginLoop()
+    else:
+        session_cookie = login_user(CONF.getServerURI(), CONF.getAPIUsername(), CONF.getAPIPassword())
+        if session_cookie:
+            CONF.setDBSessionCookies(session_cookie)
 
     check_faraday_version()
 

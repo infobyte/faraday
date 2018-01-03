@@ -107,7 +107,7 @@ def register_handlers(app):
     @app.after_request
     def log_queries_count(response):
         queries = get_debug_queries()
-        max_query_time = max(q.duration for q in queries)
+        max_query_time = max([q.duration for q in queries] or [0])
         if len(queries) > 15:
             logger.warn("Too many queries done (%s) in endpoint %s. "
                         "Maximum query time: %.2f",

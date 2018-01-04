@@ -157,7 +157,6 @@ def get_workspace(workspace_name, cookies, credentials):
     workspace = _get_workspace_doc(workspace_name, cookies, credentials).json()
     ws_info_url = get_couchdb_url() + ('/%s' % (workspace_name))
     response = requests.get(ws_info_url, verify=False, cookies=cookies, auth=credentials)
-    workspace['last_seq'] = response.json()['update_seq']
     return workspace
 
 

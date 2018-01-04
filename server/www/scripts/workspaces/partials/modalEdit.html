@@ -60,14 +60,17 @@
                     </p>
                 </div>
 
-            </div><!-- .form-group -->
+            </div>
             <div class="form-group">
                 <div class="col-md-12">
-                    <label class="sr-only" for="work-scope">Scope</label>
-                    <textarea class="form-control" id="work-scope"
-                                                   placeholder="Scope" ng-model="workspace.scope"
-                                                                             >
-                    </textarea>
+                    <h5>Scope</h5>
+                    <span class="input-group-addon button-radius" ng-click="newScope($event)">Add scope target</span>
+                </div>
+                <div class="col-md-12 input-margin" ng-repeat="scope in workspace.scope">
+                    <div class="input-group margin-bottom-sm col-md-12">
+                        <input type="text" class="form-control" placeholder="Scope target" ng-model="scope.key"/>
+                        <span class="input-group-addon" ng-click="workspace.scope.splice($index, 1)" ng-hide="workspace.scope.length == 1"><i class="fa fa-minus-circle"></i></span>
+                    </div>
                 </div>
             </div><!-- .form-group -->
         </div><!-- .form-horizontal -->

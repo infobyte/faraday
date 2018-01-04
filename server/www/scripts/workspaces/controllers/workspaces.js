@@ -55,6 +55,9 @@ angular.module('faradayApp')
 
         $scope.onSuccessGet = function(workspace){
             workspace.selected = false;
+            workspace.scope = workspace.scope.map(function(scope){
+                return {key: scope}
+            });
             $scope.workspaces.push(workspace);
         };
 

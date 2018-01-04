@@ -121,7 +121,7 @@ angular.module('faradayApp')
             $scope.onFailInsert);
         };
 
-        $scope.update = function(ws, wsName){
+        $scope.update = function(ws, wsName, finally_){
             if(typeof(ws.duration.start_date) == "number") {
                 start_date = ws.duration.start_date;
             } else if(ws.duration.start_date) {
@@ -145,7 +145,10 @@ angular.module('faradayApp')
                 "type":         ws.type
             };
             workspacesFact.update(workspace, wsName).then(function(workspace) {
+                if (finally_) finally_(workspace);
                 $scope.onSuccessEdit(workspace);
+            }, function(workspace){
+                if (finally_) finally_(workspace);
             });
         };
 
@@ -193,7 +196,16 @@ angular.module('faradayApp')
 
                 modal.result.then(function(workspace) {
                     if(workspace != undefined){
-                        $scope.update(workspace, oldName); 
+
+                        // The API expects list of strings in scope
+                        var old_scope = workspace.scope;
+                        workspace.scope = workspace.scope.map(function(scope){
+                            return scope.key
+                        }).filter(Boolean);
+
+                        $scope.update(workspace, oldName, function(workspace){
+                            workspace.scope = old_scope;
+                        }); 
                     }
                 });
             } else {

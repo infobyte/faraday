@@ -37,6 +37,11 @@ def delete_object_event(mapper, connection, instance):
 
 
 def update_object_event(mapper, connection, instance):
+    delta = instance.update_date - instance.create_date
+    if delta.seconds < 30:
+        # sometimes apis will commit to db to have fk.
+        # this will avoid duplicate messages on websockets
+        return
     name = getattr(instance, 'ip', None) or instance.name
     msg = {
         'id': instance.id,

@@ -57,7 +57,7 @@ angular.module("faradayApp")
             };
 
             var createDbUrl = function(wsName = "") {
-                return APIURL + "ws/" + wsName;
+                return APIURL + "ws/" + wsName + (wsName ? "/" : "");
             }
 
             var createDeleteUrl = createPutUrl;
@@ -489,7 +489,7 @@ angular.module("faradayApp")
 
             ServerAPI.updateWorkspace = function(workspace) {
                 var putUrl = createDbUrl(workspace.name);
-                return send_data(dbUrl, workspace, true, "PUT");
+                return send_data(putUrl, workspace, true, "PUT");
             }
 
             ServerAPI.deleteWorkspace = function(wsName) {

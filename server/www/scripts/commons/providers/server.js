@@ -487,8 +487,8 @@ angular.module("faradayApp")
                 return send_data(dbUrl, data, true, "POST");
             }
 
-            ServerAPI.updateWorkspace = function(workspace) {
-                var putUrl = createDbUrl(workspace.name);
+            ServerAPI.updateWorkspace = function(workspace, wsName) {
+                var putUrl = createDbUrl(wsName || workspace.name);
                 return send_data(putUrl, workspace, true, "PUT");
             }
 

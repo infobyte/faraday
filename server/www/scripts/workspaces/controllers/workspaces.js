@@ -77,7 +77,8 @@ angular.module('faradayApp')
 
         $scope.onSuccessEdit = function(workspace){
             for(var i = 0; i < $scope.workspaces.length; i++) {
-                if($scope.workspaces[i].name == workspace.name){
+                if($scope.workspaces[i]._id == workspace._id){
+                    $scope.workspaces[i].name = workspace.name;
                     $scope.workspaces[i]._rev = workspace._rev;
                     $scope.workspaces[i].description = workspace.description;
                     if ($scope.workspaces[i].duration === undefined)
@@ -117,7 +118,7 @@ angular.module('faradayApp')
             $scope.onFailInsert);
         };
 
-        $scope.update = function(ws){
+        $scope.update = function(ws, wsName){
             if(typeof(ws.duration.start_date) == "number") {
                 start_date = ws.duration.start_date;
             } else if(ws.duration.start_date) {
@@ -140,7 +141,7 @@ angular.module('faradayApp')
                 "scope":        ws.scope,
                 "type":         ws.type
             };
-            workspacesFact.update(workspace).then(function(workspace) {
+            workspacesFact.update(workspace, wsName).then(function(workspace) {
                 $scope.onSuccessEdit(workspace);
             });
         };
@@ -175,6 +176,7 @@ angular.module('faradayApp')
             });
 
             if(workspace){
+                var oldName = workspace.name;
                 var modal = $uibModal.open({
                     templateUrl: 'scripts/workspaces/partials/modalEdit.html',
                     controller: 'workspacesModalEdit',
@@ -188,7 +190,7 @@ angular.module('faradayApp')
 
                 modal.result.then(function(workspace) {
                     if(workspace != undefined){
-                        $scope.update(workspace); 
+                        $scope.update(workspace, oldName); 
                     }
                 });
             } else {

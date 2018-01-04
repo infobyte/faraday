@@ -87,9 +87,9 @@ angular.module('faradayApp')
             return ret;
         };
 
-        workspacesFact.update = function(workspace) {
+        workspacesFact.update = function(workspace, wsName) {
             var deferred = $q.defer();
-            ServerAPI.updateWorkspace(workspace).then(function(data){
+            ServerAPI.updateWorkspace(workspace, wsName).then(function(data){
                 workspace._rev = data.rev;
                 deferred.resolve(workspace);
             });

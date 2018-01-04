@@ -5,13 +5,31 @@
 <form novalidate>
     <div class="modal-header">
         <div class="modal-button">
-            <button class="btn btn-success" ng-click="okEdit()">OK</button>
+            <button class="btn btn-success" ng-click="okEdit()" ng-disabled="form.$invalid || date.$invalid">OK</button>
             <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
         </div>
         <h3 class="modal-title">Edit Workspace: {{workspace.name}}</h3>
     </div>
     <div class="modal-body">
         <div class="form-horizontal">
+            <div class="form-group" ng-class="{'has-error': form.name.$invalid }">
+                <div class="col-md-12">
+                    <ng-form name="form" novalidate> 
+                        <label class="sr-only" for="wsp-name">Workspace Name</label>
+                        <input type="text" class="form-control"
+                                           ng-pattern=/^[a-z][a-z0-9\_\$\(\)\+\-\/]*$/ id="vuln-name" name="name" placeholder="Workspace Name"
+                                                                              ng-model="workspace.name" required/>
+                        <div ng-if="form.$invalid">
+                            <div class="alert alert-danger target_not_selected" role="alert" ng-hide="">
+                                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                                <span class="sr-only">Error:</span>
+                                <button type="button" class="close" data-dismiss="alert"><span area-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                                Workspace name should follow pattern [a-z][a-z0-9_$()+-/]*
+                            </div>
+                        </div>
+                    </ng-form>
+                </div>
+            </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-12">
                     <label class="sr-only" for="vuln-desc">Workspace Description</label>

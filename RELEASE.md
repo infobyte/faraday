@@ -18,6 +18,7 @@ TBA:
 * Show credentials count in summarized report on the dashboard
 * Remove vuln template CWE fields, join it with references
 * Allow to search hosts by hostname
+* Workspace names can be changed from the Web UI
 
 November 17, 2017:
 ---

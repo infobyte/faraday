@@ -12,6 +12,7 @@ from server.models import db, Workspace
 from server.utils.logger import get_logger
 from server.schemas import (
     JSTimestampField,
+    MutableField,
     PrimaryKeyRelatedField,
     SelfNestedField,
 )
@@ -57,7 +58,10 @@ class WorkspaceSchema(AutoSchema):
     stats = SelfNestedField(WorkspaceSummarySchema())
     duration = SelfNestedField(WorkspaceDurationSchema())
     _id = fields.Integer(dump_only=True, attribute='id')
-    scope = PrimaryKeyRelatedField('name', many=True, dump_only=True)
+    scope = MutableField(
+        PrimaryKeyRelatedField('name', many=True, dump_only=True),
+        fields.List(fields.String)
+    )
 
     class Meta:
         model = Workspace
@@ -87,6 +91,18 @@ class WorkspaceView(ReadWriteView):
         except (KeyError, ValueError):
             only_confirmed = False
         return Workspace.query_with_count(only_confirmed)
+
+    def _perform_create(self, data, **kwargs):
+        scope = data.pop('scope', [])
+        workspace = super(WorkspaceView, self)._perform_create(data, **kwargs)
+        workspace.set_scope(scope)
+        db.session.commit()
+        return workspace
+
+    def _update_object(self, obj, data):
+        scope = data.pop('scope', [])
+        obj.set_scope(scope)
+        return super(WorkspaceView, self)._update_object(obj, data)
 
 
 WorkspaceView.register(workspace_api)

@@ -1,7 +1,7 @@
 import time
 import pytest
 
-from server.models import Workspace
+from server.models import Workspace, Scope
 from server.api.modules.workspaces import WorkspaceView
 from test_cases.test_api_non_workspaced_base import ReadWriteAPITests
 from test_cases import factories
@@ -104,10 +104,29 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert res.json['description'] == description
 
     def test_create_with_scope(self, session, test_client):
-        description = 'darkside'
-        raw_data = {'name': 'something', 'description': description}
-        workspace_count_previous = session.query(Workspace).count()
+        desired_scope = [
+            'www.google.com',
+            '127.0.0.1'
+        ]
+        raw_data = {'name': 'something', 'description': 'test',
+                    'scope': desired_scope}
         res = test_client.post('/v2/ws/', data=raw_data)
         assert res.status_code == 201
-        assert workspace_count_previous + 1 == session.query(Workspace).count()
-        assert res.json['description'] == description
+        assert set(res.json['scope']) == set(desired_scope)
+        workspace = Workspace.query.get(res.json['id'])
+        assert set(s.name for s in workspace.scope) == set(desired_scope)
+
+    def test_update_with_scope(self, session, test_client, workspace):
+        session.add(Scope(name='test.com', workspace=workspace))
+        session.add(Scope(name='www.google.com', workspace=workspace))
+        desired_scope = [
+            'www.google.com',
+            '127.0.0.1'
+        ]
+        raw_data = {'name': 'something', 'description': 'test',
+                    'scope': desired_scope}
+        res = test_client.put('/v2/ws/{}/'.format(workspace.name),
+                              data=raw_data)
+        assert res.status_code == 200
+        assert set(res.json['scope']) == set(desired_scope)
+        assert set(s.name for s in workspace.scope) == set(desired_scope)

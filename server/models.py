@@ -235,7 +235,8 @@ class Host(Metadata):
                                     child_field='name')
 
 
-def set_children_objects(instance, value, parent_field, child_field='id'):
+def set_children_objects(instance, value, parent_field, child_field='id',
+                         workspaced=True):
     """
     Override some kind of children of instance. This is useful in one
     to many relationships. It takes care of deleting not used children,
@@ -245,6 +246,7 @@ def set_children_objects(instance, value, parent_field, child_field='id'):
     :param value: list of childs (values of the child_field)
     :param parent_field: the parent field's relationship to the children name
     :param child_field: the "lookup field" of the children model
+    :param workspaced: indicates if the parent model has a workspace
     """
     # Get the class of the children. Inspired in
     # https://stackoverflow.com/questions/6843144/how-to-find-sqlalchemy-remote-side-objects-class-or-class-name-without-db-queri
@@ -269,7 +271,8 @@ def set_children_objects(instance, value, parent_field, child_field='id'):
             # it already exists
             continue
         kwargs = {child_field: new_child}
-        kwargs['workspace'] = instance.workspace
+        if workspaced:
+            kwargs['workspace'] = instance.workspace
         current_value.append(children_model(**kwargs))
 
 
@@ -1086,6 +1089,12 @@ class Workspace(Metadata):
                                           use_column_property=False)
             ),
         )
+
+    def set_scope(self, new_scope):
+        return set_children_objects(self, new_scope,
+                                    parent_field='scope',
+                                    child_field='name',
+                                    workspaced=False)
 
 
 class Scope(Metadata):

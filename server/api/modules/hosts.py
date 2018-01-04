@@ -112,10 +112,6 @@ class HostsView(PaginatedMixin,
         else:
             obj.set_hostnames(hostnames)
 
-        # Required to make the assert pass. This actually makes two requests
-        # to the DB
-        db.session.commit()
-
         return super(HostsView, self)._update_object(obj, data)
 
     def _filter_query(self, query):

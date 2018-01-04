@@ -167,7 +167,12 @@ angular.module('faradayApp')
             });
 
             $scope.modal.result.then(function(workspace) {
-                workspace = $scope.create(workspace.name, workspace.description, workspace.start_date, workspace.end_date, workspace.scope);
+                // The API expects list of strings in scope
+                api_scope = workspace.scope.map(function(scope){
+                    return scope.key
+                }).filter(Boolean);
+
+                workspace = $scope.create(workspace.name, workspace.description, workspace.start_date, workspace.end_date, api_scope);
                 $scope.insert(workspace); 
             });
 
@@ -272,7 +277,7 @@ angular.module('faradayApp')
         $scope.create = function(wname, wdesc, start_date, end_date, scope){
             if(end_date) end_date = end_date.getTime(); else end_date = "";
             if(start_date) start_date = start_date.getTime(); else start_date = "";
-            workspace = {
+            var workspace = {
                 "_id": wname,
                 "customer": "",
                 "name": wname,

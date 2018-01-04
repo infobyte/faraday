@@ -1528,9 +1528,10 @@ def test_server_url(url_to_test):
     False otherwise.
     """
     try:
-        _get("{0}/v2/_api/info".format(url_to_test))
-        test_okey = True
-    except:
+        resp = _get("{0}/_api/v2/info".format(url_to_test))
+        return 'Faraday Server' in resp
+    except Exception as ex:
+        logger.exception(ex)
         test_okey = False
     return test_okey
 

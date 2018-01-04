@@ -130,6 +130,7 @@ def get_credential_properties(credential):
 def get_command_properties(command):
     return {
         'command': command.command,
+        'tool': command.command,
         'user': command.user,
         'ip': command.ip,
         'hostname': command.hostname,

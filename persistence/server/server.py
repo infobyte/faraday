@@ -1356,7 +1356,7 @@ def update_credential(workspace_name, command_id, id, name, username, password,
                              password=password,
                              type="Cred")
 
-def create_command(workspace_name, command, duration=None, hostname=None,
+def create_command(workspace_name, command, tool, duration=None, hostname=None,
                    ip=None, itime=None, params=None, user=None):
     """Creates a command.
 
@@ -1375,6 +1375,7 @@ def create_command(workspace_name, command, duration=None, hostname=None,
     """
     return _save_to_server(workspace_name,
                            command=command,
+                           tool=tool,
                            duration=duration,
                            hostname=hostname,
                            ip=ip,
@@ -1384,7 +1385,7 @@ def create_command(workspace_name, command, duration=None, hostname=None,
                            workspace=workspace_name,
                            type="CommandRunInformation")
 
-def update_command(workspace_name, command_id, command, duration=None, hostname=None,
+def update_command(workspace_name, command_id, command, tool, duration=None, hostname=None,
                    ip=None, itime=None, params=None, user=None):
     """Updates a command.
 
@@ -1405,6 +1406,7 @@ def update_command(workspace_name, command_id, command, duration=None, hostname=
     return _update_in_server(workspace_name,
                              command_id,
                              command=command,
+                             tool=tool,
                              duration=duration,
                              hostname=hostname,
                              ip=ip,

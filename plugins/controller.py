@@ -186,7 +186,8 @@ class PluginController(threading.Thread):
                         'itime': time.time(),
                         'command': cmd.split()[0],
                         'params': ' '.join(cmd.split()[1:])})
-                self._mapper_manager.save(cmd_info)
+                cmd_info.setID(self._mapper_manager.save(cmd_info))
+
                 self._active_plugins[pid] = plugin, cmd_info
 
                 return plugin.id, modified_cmd_string

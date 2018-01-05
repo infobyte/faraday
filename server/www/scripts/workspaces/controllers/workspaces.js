@@ -68,7 +68,12 @@ angular.module('faradayApp')
                 return {key: scope}
             });
             if (workspace.scope.length == 0) workspace.scope.push({key: ''});
-            $scope.workspaces.push(workspace); 
+
+            // Ulgy hack to keep the workspaces sorted alphabetically
+            for (var i = 0; i < $scope.workspaces.length; i++) {
+                if ($scope.workspaces[i].name > workspace.name) break;
+            }
+            $scope.workspaces.splice(i, 0, workspace); 
         };
         
         $scope.onFailInsert = function(error){

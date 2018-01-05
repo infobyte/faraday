@@ -104,5 +104,12 @@ class WorkspaceView(ReadWriteView):
         obj.set_scope(scope)
         return super(WorkspaceView, self)._update_object(obj, data)
 
+    def _dump(self, obj, route_kwargs, **kwargs):
+        # When the object was created or updated it doesn't have the stats
+        # loaded so I have to query it again
+        if not kwargs.get('many') and obj.vulnerability_total_count is None:
+            obj = self._get_object(obj.name)
+        return super(WorkspaceView, self)._dump(obj, route_kwargs, **kwargs)
+
 
 WorkspaceView.register(workspace_api)

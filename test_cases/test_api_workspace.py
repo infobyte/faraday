@@ -103,6 +103,30 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert workspace_count_previous + 1 == session.query(Workspace).count()
         assert res.json['description'] == description
 
+    @pytest.mark.parametrize("stat_name", [
+        'credentials', 'services', 'web_vulns', 'code_vulns', 'std_vulns',
+        'total_vulns'
+    ])
+    def test_create_stat_is_zero(self, test_client, stat_name):
+        raw_data = {'name': 'something', 'description': ''}
+        res = test_client.post('/v2/ws/', data=raw_data)
+        assert res.status_code == 201
+        assert res.json['stats'][stat_name] == 0
+
+    def test_update_stats(self, workspace, session, test_client,
+                          vulnerability_factory,
+                          vulnerability_web_factory):
+        vulnerability_factory.create_batch(10, workspace=workspace)
+        vulnerability_web_factory.create_batch(5, workspace=workspace)
+        session.commit()
+        raw_data = {'name': 'something', 'description': ''}
+        res = test_client.put('/v2/ws/{}/'.format(workspace.name),
+                              data=raw_data)
+        assert res.status_code == 200
+        assert res.json['stats']['web_vulns'] == 5
+        assert res.json['stats']['std_vulns'] == 10
+        assert res.json['stats']['total_vulns'] == 15
+
     def test_create_with_scope(self, session, test_client):
         desired_scope = [
             'www.google.com',

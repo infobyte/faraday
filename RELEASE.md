@@ -19,6 +19,7 @@ TBA:
 * Remove vuln template CWE fields, join it with references
 * Allow to search hosts by hostname
 * Workspace names can be changed from the Web UI
+* Changed the scope field of a workspace from a free text input to a list of targets
 
 November 17, 2017:
 ---

@@ -365,7 +365,7 @@ class PluginProcess(Thread):
         :param output_queue: queue with raw ouput of that the plugin needs.
         :param isReport: output data was read from file.
         """
-        Thread.__init__(self)
+        super(PluginProcess, self).__init__()
         self.output_queue = output_queue
         self.plugin = plugin_instance
         self.isReport = isReport
@@ -385,10 +385,7 @@ class PluginProcess(Thread):
             if output is not None:
                 model.api.devlog('%s: %s' % (proc_name, "New Output"))
                 try:
-                    if self.isReport:
-                        self.plugin.processReport(output)
-                    else:
-                        self.plugin.processOutput(output)
+                    self.plugin.processOutput(output)
                 except Exception as ex:
                     model.api.devlog("Plugin raised an exception:")
                     model.api.devlog(traceback.format_exc())

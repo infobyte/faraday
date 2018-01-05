@@ -6,7 +6,6 @@ See the file 'doc/LICENSE' for the license information
 '''
 import hashlib
 import uuid
-import time
 import socket
 import struct
 import sys

@@ -7,17 +7,14 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-import threading
-
 import os
 import time
-import Queue
 import shlex
-import errno
 import logging
-from multiprocessing import JoinableQueue
-from Queue import Queue, Empty
+from threading import Thread
+from multiprocessing import JoinableQueue, Process
 
+from config.configuration import getInstanceConfiguration
 from plugins.plugin import PluginProcess
 import model.api
 from model.commands_history import CommandRunInformation
@@ -27,11 +24,54 @@ from utils.logs import getLogger
 from config.globals import (
     CONST_FARADAY_HOME_PATH,
     CONST_FARADAY_ZSH_OUTPUT_PATH)
+CONF = getInstanceConfiguration()
 
 logger = logging.getLogger(__name__)
 
 
-class PluginController(threading.Thread):
+class PluginCommiter(Thread):
+
+    def __init__(self, output_queue, output, pending_actions, plugin, command, mapper_manager):
+        super(PluginCommiter, self).__init__()
+        self.output_queue = output_queue
+        self.pending_actions = pending_actions
+        self.stop = False
+        self.plugin = plugin
+        self.command = command
+        self.mapper_manager = mapper_manager
+        self.output = output
+        self._report_path = os.path.join(CONF.getReportPath(), command.workspace)
+        self._report_ppath = os.path.join(self._report_path, "process")
+        self._report_upath = os.path.join(self._report_path, "unprocessed")
+
+    def stop(self):
+        self.stop = True
+
+    def commit(self):
+        logger.debug('Plugin end. Commiting to faraday server.')
+        self.pending_actions.put(
+            (modelactions.PLUGINEND, self.plugin.id, self.command.getID()))
+        self.command.duration = time.time() - self.command.itime
+        self.mapper_manager.update(self.command)
+
+    def run(self):
+        try:
+            self.output_queue.join()
+            self.commit()
+            if os.path.isfile(self.output):
+                # sometimes output is a filepath
+                name = os.path.basename(self.output)
+                os.rename(self.output,
+                    os.path.join(self._report_ppath, name))
+        except Exception as ex:
+            logger.exception(ex)
+            logger.info('Something failed, moving file to unprocessed')
+            os.rename(self.output,
+                      os.path.join(self._report_upath, name))
+
+
+
+class PluginController(Thread):
     """
     TODO: Doc string.
     """
@@ -102,7 +142,18 @@ class PluginController(threading.Thread):
     def stop(self):
         self.stop = True
 
-    def processOutput(self, plugin, output, command_id, isReport=False):
+    def processOutput(self, plugin, output, command, isReport=False):
+        """
+            Process the output of the plugin. This will start the PluginProcess
+            and also PluginCommiter (thread) that will informa to faraday server
+            when the command finished.
+
+        :param plugin: Plugin to execute
+        :param output: read output from plugin or term
+        :param command_id: command id that started the plugin
+        :param isReport: Report or output from shell
+        :return: None
+        """
         output_queue = JoinableQueue()
         plugin.set_actions_queue(self.pending_actions)
 
@@ -113,16 +164,20 @@ class PluginController(threading.Thread):
             "Created plugin_process (%d) for plugin instance (%d)" %
             (id(plugin_process), id(plugin)))
 
-        # TODO: stop this processes
+        self.pending_actions.put((modelactions.PLUGINSTART, plugin.id, command.getID()))
+
+        output_queue.put((output, command.getID()))
+        plugin_commiter = PluginCommiter(
+            output_queue,
+            output,
+            self.pending_actions,
+            plugin,
+            command,
+            self._mapper_manager
+        )
+        plugin_commiter.start()
+        # This process is stopped when plugin commiter joins output queue
         plugin_process.start()
-
-        print('Plugin controller ', self.pending_actions)
-        self.pending_actions.put((modelactions.PLUGINSTART, plugin.id, command_id))
-
-        output_queue.put((output, command_id))
-        output_queue.join()
-
-        self.pending_actions.put((modelactions.PLUGINEND, plugin.id, command_id))
 
     def _processAction(self, action, parameters):
         """
@@ -224,9 +279,8 @@ class PluginController(threading.Thread):
 
         if plugin in self._plugins:
             logger.info('Processing report with plugin {0}'.format(plugin))
-            self.processOutput(self._plugins[plugin], filepath, cmd_info.getID(), True)
-            cmd_info.duration = time.time() - cmd_info.itime
-            self._mapper_manager.update(cmd_info)
+            with open(filepath, 'rb') as output:
+                self.processOutput(self._plugins[plugin], output.read(), cmd_info, True)
             return True
         return False
 

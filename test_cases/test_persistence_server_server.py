@@ -28,7 +28,7 @@ class TestServerFuncions:
         assert server.test_server_url('http://localhost')
 
     @responses.activate
-    def test_test_server_url_another_http_returns_404(self, test_client):
+    def test_test_server_url_another_http_returns_404(self):
         responses.add(responses.GET, 'http://localhost/_api/v2/info',
                       status=404)
         assert not server.test_server_url('http://localhost')

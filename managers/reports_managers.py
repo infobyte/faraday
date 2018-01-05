@@ -5,14 +5,15 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from threading import Thread
+
 
 import os
 import re
 import time
 import logging
 import traceback
-from multiprocessing import Process
+from threading import Thread
+
 from utils.logs import getLogger
 
 try:
@@ -138,8 +139,9 @@ class ReportManager(Thread):
 
         for filename in filenames:
             name = os.path.basename(filename)
-
             # If plugin not is detected... move to unprocessed
+            # PluginCommiter will rename the file to processed or unprocessed
+            # when the plugin finishes
             if self.processor.processReport(filename) is False:
                 logger.info('Plugin not detected. Moving {0} to unprocessed'.format(filename))
                 os.rename(

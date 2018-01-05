@@ -58,6 +58,7 @@ angular.module('faradayApp')
             workspace.scope = workspace.scope.map(function(scope){
                 return {key: scope}
             });
+            if (workspace.scope.length == 0) workspace.scope.push({key: ''});
             $scope.workspaces.push(workspace);
         };
 

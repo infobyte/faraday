@@ -9,6 +9,7 @@ angular.module('faradayApp')
 
         var init = function() {
             $scope.selectall_hosts = false;
+            $scope.showHostnames = true;
             // hosts list
             $scope.hosts = [];
             $scope.totalHosts = 0;

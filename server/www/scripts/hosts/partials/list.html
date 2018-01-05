@@ -44,6 +44,9 @@
                                             <i class="fa fa-refresh fa-spin" ng-if="!loadedVulns"></i>
                                         </span>
                                     </div>
+                                    <div class="input-group input-group-sm">
+                                        <input type="checkbox" ng-model="showHostnames" id="showHostnames" style="margin-left: 20px">Show hostnames
+                                    </div>
                                 </div>
                             </form>
                         </div>
@@ -54,7 +57,7 @@
                                     <th>
                                         <a href="" ng-click="toggleSort('name')">Name</a>
                                     </th>
-                                    <th>
+                                    <th ng-if="showHostnames">
                                         <a href="">Hostnames</a>
                                     </th>
                                     <th>
@@ -88,7 +91,7 @@
                                         <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}">{{host.name}}</a>
                                         <osint-link query="host.name" osint="osint"></osint-link>
                                     </td>
-                                    <td>
+                                    <td ng-if="showHostnames">
                                         <span ng-repeat="hostname in host.hostnames">
                                             {{hostname}} <br>
                                         </span>

@@ -64,6 +64,10 @@ angular.module('faradayApp')
 
         $scope.onSuccessInsert = function(workspace){
             $scope.wss.push(workspace.name); 
+            workspace.scope = workspace.scope.map(function(scope){
+                return {key: scope}
+            });
+            if (workspace.scope.length == 0) workspace.scope.push({key: ''});
             $scope.workspaces.push(workspace); 
         };
         

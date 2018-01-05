@@ -296,6 +296,41 @@ class TestHostAPI:
         expected_host_ids = set(host.id for host in hosts)
         assert shown_hosts_ids == expected_host_ids
 
+    def test_search_ip(self, test_client, session, workspace, host_factory):
+        host = host_factory.create(ip="longname",
+                                   workspace=workspace)
+        session.commit()
+        res = test_client.get(self.url() + '?search=ONGNAM')
+        assert res.status_code == 200
+        assert len(res.json['rows']) == 1
+        assert res.json['rows'][0]['id'] == host.id
+
+    @pytest.mark.usefixtures('host_services')
+    def test_search_service_name(self, test_client, session, workspace,
+                                 service_factory):
+        expected_hosts = [self.hosts[2], self.hosts[4]]
+        for host in expected_hosts:
+            service_factory.create(host=host, name="GOPHER 5",
+                                   workspace=workspace)
+        session.commit()
+        res = test_client.get(self.url() + '?search=gopher')
+        assert res.status_code == 200
+        shown_hosts_ids = set(obj['id'] for obj in res.json['rows'])
+        expected_host_ids = set(host.id for host in expected_hosts)
+        assert shown_hosts_ids == expected_host_ids
+
+    @pytest.mark.usefixtures('host_with_hostnames')
+    def test_search_by_hostname(self, test_client, session, workspace):
+        expected_hosts = [self.hosts[2], self.hosts[4]]
+        for host in expected_hosts:
+            host.set_hostnames(['staging.twitter.com'])
+        session.commit()
+        res = test_client.get(self.url() + '?search=twitter')
+        assert res.status_code == 200
+        shown_hosts_ids = set(obj['id'] for obj in res.json['rows'])
+        expected_host_ids = set(host.id for host in expected_hosts)
+        assert shown_hosts_ids == expected_host_ids
+
     def test_host_with_open_vuln_count_verification(self, test_client, session,
                                                     workspace, host_factory,
                                                     vulnerability_factory,

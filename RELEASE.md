@@ -17,6 +17,7 @@ TBA:
 * Communication object was removed and replaced with Comment
 * Show credentials count in summarized report on the dashboard
 * Remove vuln template CWE fields, join it with references
+* Allow to search hosts by hostname
 
 November 17, 2017:
 ---

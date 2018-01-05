@@ -118,6 +118,20 @@ class HostsView(PaginatedMixin,
 
         return super(HostsView, self)._update_object(obj, data)
 
+    def _filter_query(self, query):
+        query = super(HostsView, self)._filter_query(query)
+        search_term = flask.request.args.get('search', None)
+        if search_term is not None:
+            like_term = '%' + search_term + '%'
+            match_ip = Host.ip.ilike(like_term)
+            match_service_name = Host.services.any(
+                Service.name.ilike(like_term))
+            match_hostname = Host.hostnames.any(Hostname.name.ilike(like_term))
+            query = query.filter(match_ip |
+                                 match_service_name |
+                                 match_hostname)
+        return query
+
     def _envelope_list(self, objects, pagination_metadata=None):
         hosts = []
         for host in objects:

@@ -69,6 +69,8 @@ angular.module('faradayApp')
             });
             if (workspace.scope.length == 0) workspace.scope.push({key: ''});
 
+            $scope.objects[workspace.name] = workspace.stats;
+
             // Ulgy hack to keep the workspaces sorted alphabetically
             for (var i = 0; i < $scope.workspaces.length; i++) {
                 if ($scope.workspaces[i].name > workspace.name) break;
@@ -126,6 +128,7 @@ angular.module('faradayApp')
         $scope.insert = function(workspace){
             delete workspace.selected;
             workspacesFact.put(workspace).then(function(resp){
+                workspace.stats = resp.data.stats;
                 $scope.onSuccessInsert(workspace)
             },
             $scope.onFailInsert);

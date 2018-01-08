@@ -102,8 +102,7 @@
                                         <span ng-if="!host.owned">not yet</span>
                                     </td>
                                     <td>
-                                        <span am-time-ago="host.metadata.update_time * 1000"></span>
-                                        <span ng-if="!host.metadata.update_time" am-time-ago="host.metadata.create_time * 1000"></span>
+                                        <span am-time-ago="host.metadata.update_time"></span>
                                     </td>
                                 </tr>
                             </tbody>

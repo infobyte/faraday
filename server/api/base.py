@@ -308,6 +308,16 @@ class SortableMixin(object):
         # Check that the field is in the schema to prevent unwanted fields
         # value leaking
         schema = self._get_schema_instance(kwargs)
+
+        # Add metadata nested field
+        try:
+            metadata_field = schema.fields.pop('metadata')
+        except KeyError:
+            pass
+        else:
+            for (key, value) in metadata_field.target_schema.fields.items():
+                schema.fields['metadata.' + key] = value
+
         try:
             field_instance = schema.fields[order_field]
         except KeyError:

@@ -32,7 +32,7 @@ class CommandSchema(AutoSchema):
         return datetime.datetime.fromtimestamp(value)
 
     def get_itime(self, obj):
-        return time.mktime(obj.start_date.utctimetuple())
+        return time.mktime(obj.start_date.utctimetuple()) * 1000
 
     def get_duration(self, obj):
         if obj.end_date and obj.start_date:

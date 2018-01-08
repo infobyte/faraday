@@ -176,7 +176,7 @@ class GenericView(FlaskView):
         @app.errorhandler(409)
         def handle_conflict(err):
             # webargs attaches additional metadata to the `data` attribute
-            exc = getattr(err, 'exc')
+            exc = getattr(err, 'exc', None) or getattr(err, 'description', None)
             if exc:
                 # Get validations from the ValidationError object
                 messages = exc.messages

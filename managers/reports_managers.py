@@ -67,9 +67,9 @@ class ReportProcessor():
 class ReportManager(Thread):
     def __init__(self, timer, ws_name, plugin_controller, polling=True):
         Thread.__init__(self)
+        self.setDaemon(True)
         self.polling = polling
         self.ws_name = ws_name
-        self.daemon = False
         self.timer = timer
         self._stop = False
         self._report_path = os.path.join(CONF.getReportPath(), ws_name)

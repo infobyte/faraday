@@ -182,6 +182,7 @@ def _unsafe_io_with_server(server_io_function, server_expected_response,
     Return the response from the server.
     """
     answer = None
+    logger.debug('Sending request to api endpoint {0}'.format(server_url))
     try:
         answer = server_io_function(server_url, **payload)
         if answer.status_code == 409:

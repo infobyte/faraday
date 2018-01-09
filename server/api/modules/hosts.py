@@ -51,13 +51,14 @@ class HostSchema(AutoSchema):
                                default=[]),
         fields.List(fields.String))
     metadata = SelfNestedField(MetadataSchema())
+    type = fields.Function(lambda obj: 'Host')
 
     class Meta:
         model = Host
         fields = ('id', '_id', '_rev', 'ip', 'description', 'mac',
                   'credentials', 'default_gateway', 'metadata',
                   'name', 'os', 'owned', 'owner', 'services', 'vulns',
-                  'hostnames'
+                  'hostnames', 'type',
                   )
 
 

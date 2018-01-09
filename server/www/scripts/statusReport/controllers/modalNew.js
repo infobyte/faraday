@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('modalNewVulnCtrl',
-        ['$modalInstance', '$filter', '$upload', 'EASEOFRESOLUTION', 'commonsFact', 'severities', 'workspace', 'targetFact', 'cweFact',
-        function($modalInstance, $filter, $upload, EASEOFRESOLUTION, commons, severities, workspace, targetFact, cweFact) {
+        ['$modalInstance', '$filter', '$upload', 'EASEOFRESOLUTION', 'commonsFact', 'severities', 'workspace', 'targetFact', 'vulnModelsManager',
+        function($modalInstance, $filter, $upload, EASEOFRESOLUTION, commons, severities, workspace, targetFact, vulnModelsManager) {
 
         var vm = this;
 
@@ -48,7 +48,7 @@ angular.module('faradayApp')
             vm.host_parents = false;
 
             vm.cweList = [];
-            cweFact.get().then(function(data) {
+            vulnModelsManager.get().then(function(data) {
                 vm.cweList = data;
             });
             vm.cweLimit = 5;
@@ -139,7 +139,7 @@ angular.module('faradayApp')
             vm.data.parents = [];
             parents.forEach(function(parent) {
                 var parent_type = "Service";
-                if (Host.prototype.isPrototypeOf(vm.data.parents[0])) {
+                if (Host.prototype.isPrototypeOf(parents[0])) {
                     parent_type = "Host";
                 }
                 vm.data.parents.push({parent_id: parent._id, type:parent_type});
@@ -228,7 +228,7 @@ angular.module('faradayApp')
             vm.data.refs = refs;
 
             var policyviolations = [];
-            item.policyviolations.forEach(function(policyviolation) {
+            if(item.hasOwnProperty('policyviolations')) item.policyviolations.forEach(function(policyviolation) {
                 policyviolations.push({value: policyviolation});
             });
             vm.data.policyviolations = policyviolations;

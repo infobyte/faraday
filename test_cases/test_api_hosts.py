@@ -442,6 +442,7 @@ class TestHostAPI:
         updated_host = Host.query.filter_by(id=host.id).first()
         assert res.json == {
             u'_id': host.id,
+            u'type': 'Host',
             u'_rev': u'',
             u'credentials': 0,
             u'default_gateway': None,

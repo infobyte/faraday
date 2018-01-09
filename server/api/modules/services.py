@@ -40,6 +40,7 @@ class ServiceSchema(AutoSchema):
     vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
     credentials = fields.Integer(attribute='credentials_count', dump_only=True)
     metadata = SelfNestedField(MetadataSchema())
+    type = fields.Function(lambda obj: 'Host')
 
     def load_ports(self, value):
         # TODO migration: handle empty list and not numeric value
@@ -76,7 +77,7 @@ class ServiceSchema(AutoSchema):
 
     class Meta:
         model = Service
-        fields = ('id', '_id', 'status', 'parent',
+        fields = ('id', '_id', 'status', 'parent', 'type',
                   'protocol', 'description', '_rev',
                   'owned', 'owner', 'credentials', 'vulns',
                   'name', 'version', '_id', 'port', 'ports',

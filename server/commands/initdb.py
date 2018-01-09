@@ -118,6 +118,7 @@ class InitDB():
         random_password = self.generate_random_pw(12)
         engine.execute("INSERT INTO \"user\" (username, name, password, is_ldap, active) VALUES ('admin', 'Administrator', '{0}', false, true);".format(random_password))
         CONF = getInstanceConfiguration()
+        CONF.setAPIUrl('http://localhost:5985')
         CONF.setAPIUsername('admin')
         CONF.setAPIPassword(random_password)
         CONF.saveConfig()

@@ -120,6 +120,7 @@ class InitDB():
                        "is_ldap, active) VALUES ('faraday', 'Administrator', "
                        "'{0}', false, true);".format(random_password))
         CONF = getInstanceConfiguration()
+        CONF.setAPIUrl('http://localhost:5985')
         CONF.setAPIUsername('admin')
         CONF.setAPIPassword(random_password)
         CONF.saveConfig()

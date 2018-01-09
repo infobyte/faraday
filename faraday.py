@@ -569,7 +569,7 @@ You have 3 attempts.""")
 
         for attempt in range(1, 4):
 
-            username = raw_input("Username (press enter for admin): ") or "admin"
+            username = raw_input("Username (press enter for faraday): ") or "faraday"
             password = getpass.getpass('Password: ')
 
             session_cookie = login_user(server_url, username, password)

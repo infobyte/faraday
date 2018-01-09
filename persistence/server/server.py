@@ -85,10 +85,11 @@ def _conf():
 
 def _get_base_server_url():
     if FARADAY_UP:
-        server_url = _conf().getServerURI()
+        server_url = _conf().getAPIUrl()
     else:
         server_url = SERVER_URL
-    return server_url[:-1] if server_url[-1] == "/" else server_url
+
+    return server_url.rstrip('/')
 
 
 def _create_server_api_url():

@@ -115,11 +115,12 @@ def _create_server_get_url(workspace_name, object_name=None, object_id=None):
 def _create_server_post_url(workspace_name, obj_type, command_id):
     server_api_url = _create_server_api_url()
     object_end_point_name = OBJECT_TYPE_END_POINT_MAPPER[obj_type]
+    if obj_type == 'comment':
+        object_end_point_name = object_end_point_name.strip('/') + '_unique/'
     post_url = '{0}/ws/{1}/{2}/'.format(server_api_url, workspace_name, object_end_point_name)
     if command_id:
         get_params = {'command_id': command_id}
         post_url += '?' + urlencode(get_params)
-    print(post_url)
     return post_url
 
 
@@ -130,7 +131,6 @@ def _create_server_put_url(workspace_name, obj_type, obj_id, command_id):
     if command_id:
         get_params = {'command_id': command_id}
         put_url += '?' + urlencode(get_params)
-    print(put_url)
     return put_url
 
 

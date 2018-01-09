@@ -108,7 +108,7 @@ def get_vuln_web_properties(vuln_web):
 
 def get_note_properties(note):
     note_dict = {
-        'text': note.getText(),
+        'text': '{0}\n{1}'.format(note.getName(), note.getText()),
         'object_id': note.getObjectID(),
         'object_type': note.getObjectType()
     }

@@ -405,7 +405,7 @@ class Configuration:
         self._version = val
 
     def setAPIUrl(self, url):
-        self._server_uri = url
+        self._api_url = url
 
     def setAPIUsername(self, username):
         self._username = username

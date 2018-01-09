@@ -503,8 +503,9 @@ def checkUpdates():
 
 def checkServerUrl():
     import requests
-    server_url = getInstanceConfiguration().getServerURI()
-    if server_url is None:
+    CONF = getInstanceConfiguration()
+    server_url = CONF.getServerURI()
+    if server_url is None or CONF.getAPIUsername() is None or CONF.getAPIUsername() is None:
         doLoginLoop()
     try:
         requests.get(server_url, timeout=5)
@@ -560,7 +561,8 @@ You have 3 attempts.""")
     try:
 
         CONF = getInstanceConfiguration()
-        if CONF.getAPIUrl() is None:
+        server_url = CONF.getAPIUrl()
+        if server_url is None:
             server_url = raw_input(
             "Please enter the faraday server url (press enter for http://localhost:5985): ") or "http://localhost:5985"
             CONF.setAPIUrl(server_url)

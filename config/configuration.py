@@ -408,10 +408,10 @@ class Configuration:
         self._api_url = url
 
     def setAPIUsername(self, username):
-        self._username = username
+        self._api_username = username
 
     def setAPIPassword(self, password):
-        self._password = password
+        self._api_password = password
 
     def setPluginSettings(self, settings):
         self._plugin_settings = settings

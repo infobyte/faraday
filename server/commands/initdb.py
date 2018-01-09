@@ -7,6 +7,7 @@ from random import SystemRandom
 from tempfile import TemporaryFile
 from subprocess import Popen, PIPE
 
+import sqlalchemy
 from sqlalchemy import create_engine
 
 from config.configuration import getInstanceConfiguration
@@ -116,18 +117,27 @@ class InitDB():
     def _create_admin_user(self, conn_string):
         engine = create_engine(conn_string)
         random_password = self.generate_random_pw(12)
-        engine.execute("INSERT INTO \"user\" (username, name, password, "
+        already_created = False
+        try:
+            engine.execute("INSERT INTO \"user\" (username, name, password, "
                        "is_ldap, active) VALUES ('faraday', 'Administrator', "
                        "'{0}', false, true);".format(random_password))
-        CONF = getInstanceConfiguration()
-        CONF.setAPIUrl('http://localhost:5985')
-        CONF.setAPIUsername('admin')
-        CONF.setAPIPassword(random_password)
-        CONF.saveConfig()
-        print("Admin user created with {red}username: {white}admin and "
-              " {red}password{white}: {"
-              "random_password}".format(random_password=random_password,
-                                        white=Fore.WHITE, red=Fore.RED))
+        except sqlalchemy.exc.IntegrityError:
+            # when re using database user could be created previusly
+            already_created = True
+            print(
+            "{yellow}WARNING{white}: Faraday administrator user already exists.".format(
+                yellow=Fore.YELLOW, white=Fore.WHITE))
+        if not already_created:
+            CONF = getInstanceConfiguration()
+            CONF.setAPIUrl('http://localhost:5985')
+            CONF.setAPIUsername('faraday')
+            CONF.setAPIPassword(random_password)
+            CONF.saveConfig()
+            print("Admin user created with {red}username: {white}faraday and "
+                  " {red}password{white}: {"
+                  "random_password}".format(random_password=random_password,
+                                            white=Fore.WHITE, red=Fore.RED))
 
 
     def _configure_existing_postgres_user(self):
@@ -166,7 +176,16 @@ class InitDB():
         command = postgres_command + ['psql', '-c', 'CREATE ROLE {0} WITH LOGIN PASSWORD \'{1}\';'.format(username, password)]
         p = Popen(command, stderr=psql_log_file, stdout=psql_log_file)
         p.wait()
-        return username, password, p.returncode
+        psql_log_file.seek(0)
+        output = psql_log_file.read()
+        already_exists_error = 'role "{0}" already exists'.format(username)
+        return_code = p.returncode
+        if already_exists_error in output:
+            print("{yellow}WARNING{white}: Role {username} already exists, skipping creation ".format(yellow=Fore.YELLOW, white=Fore.WHITE, username=username))
+            password = getpass.getpass("Database password: ")
+
+            return_code = 0
+        return username, password, return_code
 
     def _create_database(self, database_name, username, psql_log_file):
         """
@@ -177,7 +196,14 @@ class InitDB():
         command = postgres_command + ['createdb', '-O', username, database_name]
         p = Popen(command, stderr=psql_log_file, stdout=psql_log_file, cwd='/tmp')
         p.wait()
-        return database_name, p.returncode
+        return_code = p.returncode
+        psql_log_file.seek(0)
+        output = psql_log_file.read()
+        already_exists_error = 'database creation failed: ERROR:  database "{0}" already exists'.format(database_name)
+        if already_exists_error in output:
+            print('{yellow}WARNING{white}: Database already exists.'.format(yellow=Fore.YELLOW, white=Fore.WHITE))
+            return_code = 0
+        return database_name, return_code
 
     def _save_config(self, config, username, password, database_name, hostname):
         """

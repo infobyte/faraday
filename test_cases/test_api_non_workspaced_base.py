@@ -4,10 +4,10 @@
 
 import pytest
 from sqlalchemy.orm.util import was_deleted
-from server.models import db
 
 API_PREFIX = '/v2/'
 OBJECT_COUNT = 5
+
 
 @pytest.mark.usefixtures('logged_user')
 class GenericAPITest:
@@ -45,8 +45,7 @@ class GenericAPITest:
 
 class ListTestsMixin:
 
-    def test_list_retrieves_all_items_from(self, test_client,
-                                           session):
+    def test_list_retrieves_all_items_from(self, test_client):
         res = test_client.get(self.url())
         assert res.status_code == 200
         if 'rows' in res.json:
@@ -79,7 +78,7 @@ class CreateTestsMixin:
         assert res.status_code == 201
         assert self.model.query.count() == OBJECT_COUNT + 1
         object_id = res.json['id']
-        obj = self.model.query.get(object_id)
+        self.model.query.get(object_id)
 
     def test_create_fails_with_empty_dict(self, test_client):
         res = test_client.post(self.url(), data={})

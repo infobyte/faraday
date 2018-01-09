@@ -29,14 +29,15 @@ def check_faraday_server(url):
 @click.command()
 @click.option('--debug/--no-debug', default=False)
 @click.option('--workspace', default=None)
-def process_reports(debug, workspace):
+@click.option('--disable-polling', default=False)
+def process_reports(debug, workspace, disable_polling):
     setUpLogger(debug)
     configuration = _conf()
     url = '{0}/_api/v2/info'.format(configuration.getServerURI() if FARADAY_UP else SERVER_URL)
     with app.app_context():
         try:
             check_faraday_server(url)
-            import_external_reports(workspace)
+            import_external_reports(workspace, disable_polling)
         except OperationalError as ex:
             print('{0}'.format(ex))
             print('Please verify database is running or configuration on server.ini!')

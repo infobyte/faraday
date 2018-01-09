@@ -9,6 +9,8 @@ from subprocess import Popen, PIPE
 
 from sqlalchemy import create_engine
 
+from config.configuration import getInstanceConfiguration
+
 try:
     # py2.7
     from configparser import ConfigParser, NoSectionError, NoOptionError
@@ -114,7 +116,11 @@ class InitDB():
     def _create_admin_user(self, conn_string):
         engine = create_engine(conn_string)
         random_password = self.generate_random_pw(12)
-        engine.execute("INSERT INTO \"user\" (username, password, is_ldap, active) VALUES ('admin', '{0}', false, true);".format(random_password))
+        engine.execute("INSERT INTO \"user\" (username, name, password, is_ldap, active) VALUES ('admin', 'Administrator', '{0}', false, true);".format(random_password))
+        CONF = getInstanceConfiguration()
+        CONF.setAPIUsername('admin')
+        CONF.setAPIPassword(random_password)
+        CONF.saveConfig()
         print("Admin username created with {red} password{white}: {random_password}".format(random_password=random_password, white=Fore.WHITE, red=Fore.RED))
 
 

@@ -177,8 +177,7 @@ def get_changes_stream(workspace_name):
     of name workspace_name.
     The change stream will have heartbeet set to 1000.
     """
-    since = server.get_workspace(workspace_name)['last_seq']
-    return server.get_changes_stream(workspace_name, since=since,
+    return server.get_changes_stream(workspace_name,
                                      heartbeat='1000')
 
 
@@ -879,7 +878,12 @@ class Service(ModelBase):
     def __init__(self, service, workspace_name):
         ModelBase.__init__(self, service, workspace_name)
         self.protocol = service['protocol']
-        self.ports = [int(port) for port in service['ports']]
+        if type(service['ports']) == int:
+            # the new api returns an integer in ports
+            self.ports = [service['ports']]
+        else:
+            # plugin creates a list of strings with the ports
+            self.ports = map(int, service['ports'])
         self.version = service['version']
         self.status = service['status']
         self.vuln_amount = int(service.get('vulns', 0))

@@ -80,7 +80,7 @@ OBJ_DATA = {
             'owned': False,
             'owner': 'leo',
             'protocol': 'tcp',
-            'ports': [60],
+            'ports': 60,
             'version': '2',
             'status': 'open',
             'vulns': 0,
@@ -252,6 +252,7 @@ OBJ_DATA = {
             'ip': "192.168.124.1",
             'hostname': "mandarina",
             'command': "Import Nexpose:",
+            'tool': "Import Nexpose:",
             'user': "leonardo",
             'workspace': "airbnb",
             'duration': 0.164561,
@@ -260,6 +261,7 @@ OBJ_DATA = {
         },
         'expected_payload':{
             'command': 'Import Nexpose:',
+            'tool': "Import Nexpose:",
             'duration': 0.164561,
             'hostname': 'mandarina',
             'ip': '192.168.124.1',
@@ -521,7 +523,7 @@ GET_OBJ_DATA = {
                 "id": 1,
                 "credentials": 0,
                 "_id": 1,
-                "ports": [21],
+                "ports": 21,
                 "name": "ssh"
             },
             'serialized_expected_results': {
@@ -637,6 +639,7 @@ GET_OBJ_DATA = {
             "ip": "192.168.20.53",
             "hostname": "mandarina",
             "command": "Import Nessus:",
+            "tool": "Import Nessus:",
             "user": "lcubo",
             "workspace": "dsadsa",
             "duration": "In progress",
@@ -645,6 +648,7 @@ GET_OBJ_DATA = {
         },
         'serialized_expected_results': {
             'command': 'Import Nessus:',
+            "tool": "Import Nessus:",
             'duration': 'In progress',
             'hostname': 'mandarina',
             'ip': '192.168.20.53',
@@ -668,6 +672,9 @@ class TestMapperManager():
 
     @pytest.mark.parametrize("obj_class, many_test_data", OBJ_DATA.items())
     def test_save_without_command(self, obj_class, many_test_data, monkeypatch, session):
+        """
+            This test verifies that the request made to the api are the expected ones
+        """
         workspace = WorkspaceFactory.create(name='test')
         session.commit()
         mapper_manager = MapperManager()

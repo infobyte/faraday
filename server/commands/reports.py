@@ -17,7 +17,7 @@ from server.models import Workspace
 logger = logging.getLogger(__name__)
 
 
-def import_external_reports(workspace_name=None):
+def import_external_reports(workspace_name=None, disable_polling=False):
     plugins_path = os.path.join(CONF.getConfigPath(), "plugins")
     plugin_manager = PluginManager(plugins_path)
     mappers_manager = MapperManager()
@@ -27,11 +27,11 @@ def import_external_reports(workspace_name=None):
     else:
         query = Workspace.query
 
-    process_workspaces(mappers_manager, plugin_manager, query)
+    process_workspaces(mappers_manager, plugin_manager, query, disable_polling)
     #controller._pending_actions.join()
 
 
-def process_workspaces(mappers_manager, plugin_manager, query):
+def process_workspaces(mappers_manager, plugin_manager, query, disable_polling):
     report_managers = []
     controllers = []
     for workspace in query.all():
@@ -52,7 +52,7 @@ def process_workspaces(mappers_manager, plugin_manager, query):
             0.1,
             workspace.name,
             plugin_controller,
-            polling=False
+            polling=not disable_polling
         )
         report_managers.append(report_manager)
         report_manager.start()

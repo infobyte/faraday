@@ -21,16 +21,17 @@ class MoreThanOneObjectFoundByID(ServerRequestException):
 
 
 class CantCommunicateWithServerError(ServerRequestException):
-    def __init__(self, function, server_url, payload, response):
+    def __init__(self, function, server_url, payload, response=None):
         self.function = function
         self.server_url = server_url
         self.payload = payload
         self.response = response
 
     def __str__(self):
+        response_text = self.response and self.response.text or ''
         return ("Couldn't get a valid response from the server when requesting "
                 "to URL {0} and function {1}. Response was {2}".format(self.server_url,
-                                                      self.function, self.response.text))
+                                                      self.function, response_text))
 
 class ConflictInDatabase(ServerRequestException):
     def __init__(self, answer):

@@ -5,14 +5,15 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from threading import Thread
+
 
 import os
 import re
 import time
 import logging
 import traceback
-from multiprocessing import Process
+from threading import Thread
+
 from utils.logs import getLogger
 
 try:
@@ -66,9 +67,9 @@ class ReportProcessor():
 class ReportManager(Thread):
     def __init__(self, timer, ws_name, plugin_controller, polling=True):
         Thread.__init__(self)
+        self.setDaemon(True)
         self.polling = polling
         self.ws_name = ws_name
-        self.daemon = False
         self.timer = timer
         self._stop = False
         self._report_path = os.path.join(CONF.getReportPath(), ws_name)
@@ -138,8 +139,9 @@ class ReportManager(Thread):
 
         for filename in filenames:
             name = os.path.basename(filename)
-
             # If plugin not is detected... move to unprocessed
+            # PluginCommiter will rename the file to processed or unprocessed
+            # when the plugin finishes
             if self.processor.processReport(filename) is False:
                 logger.info('Plugin not detected. Moving {0} to unprocessed'.format(filename))
                 os.rename(

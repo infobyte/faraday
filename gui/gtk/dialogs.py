@@ -1232,16 +1232,9 @@ class ConflictsDialog(Gtk.Window):
         elif keeper == "left":
             n = 1
 
-        # TODO: fix this code to remove interface logic
-        # # interface needs a special case, 'cause it's the only object
-        # # which resolveConflict() will expect its solution to have a
-        # # dicitionary inside the solution dictionary
-        # if current_conflict_type != "Interface":
-        #     solution = {}
-        #     for row in self.current_conflict_model:
-        #         solution[row[0].lower()] = self.uncook(row[n], row[4])
-        # else:
-        #     solution = self.case_for_interfaces(self.current_conflict_model, n)
+        solution = {}
+        for row in self.current_conflict_model:
+            solution[row[0].lower()] = self.uncook(row[n], row[4])
 
         try:
             guiapi.resolveConflict(self.current_conflict, solution)

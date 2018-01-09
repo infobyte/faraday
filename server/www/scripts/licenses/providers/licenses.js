@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .factory('licensesManager',
-        ['License', 'BASEURL', 'configSrv', '$http', '$q',
-        function(License, BASEURL, configSrv, $http, $q) {
+        ['License', 'APIURL', '$http', '$q',
+        function(License, APIURL, $http, $q) {
         var licensesManager = {};
 
         licensesManager.licenses = [];
@@ -28,50 +28,6 @@ angular.module('faradayApp')
             "Checkmarx",
             "Other"
         ];
-
-        licensesManager.DBExists = function() {
-            var deferred = $q.defer(),
-            self = this;
-
-            configSrv.promise
-                .then(function() {
-                    var url = BASEURL + configSrv.license_db;
-
-                    $http.head(url)
-                        .then(function(resp) {
-                            // status 200 - DB exists!
-                            deferred.resolve(true);
-                        }, function(resp) {
-                            // status 404 - DB doesn't exist
-                            deferred.resolve(false);
-                        });
-                }, function() {
-                    deferred.reject("Unable to fetch licenses database name.");
-                });
-
-            return deferred.promise;
-        };
-
-        licensesManager.createDB = function() {
-            var deferred = $q.defer(),
-            self = this;
-
-            configSrv.promise
-                .then(function() {
-                    var url = BASEURL + configSrv.license_db;
-
-                    $http.put(url)
-                        .then(function(resp) {
-                            deferred.resolve(true);
-                        }, function(resp) {
-                            deferred.reject(resp);
-                        });
-                }, function() {
-                    deferred.reject("Unable to fetch licenses database name.");
-                });
-
-            return deferred.promise;
-        };
 
         licensesManager.create = function(data) {
             var deferred = $q.defer(),
@@ -121,30 +77,24 @@ angular.module('faradayApp')
             var deferred = $q.defer(),
             self = this;
 
-            configSrv.promise
-                .then(function() {
-                    var url = BASEURL + configSrv.license_db + "/_all_docs?include_docs=true";
+            var url = APIURL + "licenses/";
 
-                    $http.get(url)
-                        .then(function(res) {
-                            var data = res.data;
-                            var licenses = [];
+            $http.get(url)
+                .then(function(res) {
+                    var licenses = [];
+                    res.data.forEach(function(row) {
+                        try {
+                            var new_lic = new License(row);
+                            licenses.push(new_lic);
+                        } catch(e) {
+                            console.log(e.stack);
+                        }
+                    });
 
-                            if(data.hasOwnProperty("rows")) {
-                                data.rows.forEach(function(row) {
-                                    try {
-                                        licenses.push(new License(row.doc));
-                                    } catch(e) {
-                                        console.log(e.stack);
-                                    }
-                                });
-                            }
-
-                            angular.copy(licenses, self.licenses);
-                            deferred.resolve(licenses);
-                        }, function(data, status, headers, config) {
-                            deferred.reject("Unable to retrieve Licenses. " + status);
-                        });
+                    angular.copy(licenses, self.licenses);
+                    deferred.resolve(licenses);
+                }, function(data, status, headers, config) {
+                    deferred.reject("Unable to retrieve Licenses. " + status);
                 });
 
             return deferred.promise;

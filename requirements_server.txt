@@ -13,6 +13,7 @@ requests==2.18.4
 restkit==4.2.2
 service_identity==17.0.0
 SQLAlchemy==1.2.0b2
+sqlalchemy_schemadisplay==1.3
 tqdm==4.15.0
 twisted==17.5.0
 webargs

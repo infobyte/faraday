@@ -25,6 +25,7 @@ Warning:
 
 import os
 import json
+import logging
 
 try:
     import urlparse
@@ -43,10 +44,14 @@ from persistence.server.server_io_exceptions import (WrongObjectSignature,
                                                      ResourceDoesNotExist,
                                                      Unauthorized)
 
-from persistence.server.changes_stream import CouchChangesStream
+from persistence.server.changes_stream import (
+    CouchChangesStream,
+    WebsocketsChangesStream
+)
 
 # NOTE: Change is you want to use this module by itself.
 # If FARADAY_UP is False, SERVER_URL must be a valid faraday server url
+logger = logging.getLogger(__name__)
 FARADAY_UP = True
 SERVER_URL = "http://127.0.0.1:5985"
 AUTH_USER = ""
@@ -80,10 +85,11 @@ def _conf():
 
 def _get_base_server_url():
     if FARADAY_UP:
-        server_url = _conf().getServerURI()
+        server_url = _conf().getAPIUrl()
     else:
         server_url = SERVER_URL
-    return server_url[:-1] if server_url[-1] == "/" else server_url
+
+    return server_url.rstrip('/')
 
 
 def _create_server_api_url():
@@ -110,11 +116,12 @@ def _create_server_get_url(workspace_name, object_name=None, object_id=None):
 def _create_server_post_url(workspace_name, obj_type, command_id):
     server_api_url = _create_server_api_url()
     object_end_point_name = OBJECT_TYPE_END_POINT_MAPPER[obj_type]
+    if obj_type == 'comment':
+        object_end_point_name = object_end_point_name.strip('/') + '_unique/'
     post_url = '{0}/ws/{1}/{2}/'.format(server_api_url, workspace_name, object_end_point_name)
     if command_id:
         get_params = {'command_id': command_id}
         post_url += '?' + urlencode(get_params)
-    print(post_url)
     return post_url
 
 
@@ -125,7 +132,6 @@ def _create_server_put_url(workspace_name, obj_type, obj_id, command_id):
     if command_id:
         get_params = {'command_id': command_id}
         put_url += '?' + urlencode(get_params)
-    print(put_url)
     return put_url
 
 
@@ -175,6 +181,8 @@ def _unsafe_io_with_server(server_io_function, server_expected_response,
 
     Return the response from the server.
     """
+    answer = None
+    logger.debug('Sending request to api endpoint {0}'.format(server_url))
     try:
         answer = server_io_function(server_url, **payload)
         if answer.status_code == 409:
@@ -185,10 +193,10 @@ def _unsafe_io_with_server(server_io_function, server_expected_response,
             raise Unauthorized(answer)
         if answer.status_code != server_expected_response:
             raise requests.exceptions.RequestException(response=answer)
-    except requests.exceptions.RequestException:
+    except requests.exceptions.RequestException as ex:
+        logger.debug(ex)
         raise CantCommunicateWithServerError(server_io_function, server_url, payload, answer)
     return answer
-
 
 def _parse_json(response_object):
     """Takes a response object and return its response as a dictionary."""
@@ -514,9 +522,17 @@ def get_objects(workspace_name, object_signature, **params):
 
     return appropiate_function(workspace_name, **params)
 
+
+def _websockets_changes(workspace_name, **extra_params):
+    return WebsocketsChangesStream(workspace_name, 'localhost', **extra_params)
+
+
 # cha cha cha chaaaanges!
-def get_changes_stream(workspace_name, since=0, heartbeat='1000', **extra_params):
-    return _couch_changes(workspace_name, since=since, feed='continuous',
+def get_changes_stream(workspace_name, heartbeat='1000', stream_provider=_websockets_changes, **extra_params):
+    """
+      stream_provider: A function that returns an instance of a Stream provider
+    """
+    return stream_provider(workspace_name, feed='continuous',
                           heartbeat=heartbeat, **extra_params)
 
 def get_workspaces_names():
@@ -1342,7 +1358,7 @@ def update_credential(workspace_name, command_id, id, name, username, password,
                              password=password,
                              type="Cred")
 
-def create_command(workspace_name, command, duration=None, hostname=None,
+def create_command(workspace_name, command, tool, duration=None, hostname=None,
                    ip=None, itime=None, params=None, user=None):
     """Creates a command.
 
@@ -1361,6 +1377,7 @@ def create_command(workspace_name, command, duration=None, hostname=None,
     """
     return _save_to_server(workspace_name,
                            command=command,
+                           tool=tool,
                            duration=duration,
                            hostname=hostname,
                            ip=ip,
@@ -1370,7 +1387,7 @@ def create_command(workspace_name, command, duration=None, hostname=None,
                            workspace=workspace_name,
                            type="CommandRunInformation")
 
-def update_command(workspace_name, command_id, command, duration=None, hostname=None,
+def update_command(workspace_name, command_id, command, tool, duration=None, hostname=None,
                    ip=None, itime=None, params=None, user=None):
     """Updates a command.
 
@@ -1391,6 +1408,7 @@ def update_command(workspace_name, command_id, command, duration=None, hostname=
     return _update_in_server(workspace_name,
                              command_id,
                              command=command,
+                             tool=tool,
                              duration=duration,
                              hostname=hostname,
                              ip=ip,
@@ -1485,7 +1503,7 @@ def is_authenticated(uri, cookies):
         resp = requests.get(uri + "/_api/session", cookies=cookies, timeout=1)
         if resp.status_code != 403:
             user_info = resp.json()
-            return bool(user_info.get('name', {}))
+            return bool(user_info.get('username', {}))
         else:
             return False
     except requests.adapters.ConnectionError:
@@ -1512,9 +1530,10 @@ def test_server_url(url_to_test):
     False otherwise.
     """
     try:
-        _get("{0}/v2/_api/info".format(url_to_test))
-        test_okey = True
-    except:
+        resp = _get("{0}/_api/v2/info".format(url_to_test))
+        return 'Faraday Server' in resp
+    except Exception as ex:
+        logger.exception(ex)
         test_okey = False
     return test_okey
 

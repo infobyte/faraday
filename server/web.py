@@ -5,6 +5,7 @@
 import os
 import sys
 import functools
+
 import twisted.web
 from twisted.web.resource import Resource
 
@@ -20,11 +21,22 @@ from twisted.internet import ssl, reactor, error
 from twisted.web.static import File
 from twisted.web.util import Redirect
 from twisted.web.wsgi import WSGIResource
+from autobahn.twisted.websocket import (
+    WebSocketServerFactory,
+    listenWS
+)
+import server.config
 from server.utils import logger
+
 from server.app import create_app
+from server.websocket_factories import (
+    WorkspaceServerFactory,
+    BroadcastServerProtocol
+)
 
 app = create_app()  # creates a Flask(__name__) app
 logger = server.utils.logger.get_logger(__name__)
+
 
 class WebServer(object):
     HOME = ''
@@ -71,6 +83,12 @@ class WebServer(object):
     def __build_api_resource(self):
         return WSGIResource(reactor, reactor.getThreadPool(), app)
 
+    def __build_websockets_resource(self):
+        print(u"wss://{0}:9000".format(self.__bind_address))
+        factory = WorkspaceServerFactory(u"ws://{0}:9000".format(self.__bind_address))
+        factory.protocol = BroadcastServerProtocol
+        return factory
+
     def run(self):
         site = twisted.web.server.Site(self.__root_resource)
         if self.__ssl_enabled:
@@ -79,13 +97,13 @@ class WebServer(object):
                 reactor.listenSSL,
                 contextFactory = ssl_context)
         else:
-            self.__couchdb_port = int(server.config.couchdb.port)
             self.__listen_func = reactor.listenTCP
 
         try:
             self.__listen_func(
                 self.__listen_port, site,
                 interface=self.__bind_address)
+            listenWS(self.__build_websockets_resource())
             reactor.run()
         except error.CannotListenError as e:
             logger.error(str(e))

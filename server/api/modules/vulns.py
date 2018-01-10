@@ -115,7 +115,7 @@ class VulnerabilitySchema(AutoSchema):
     status = fields.Method(serialize='get_status', deserialize='load_status')  # TODO: this breaks enum validation.
     type = fields.Method(serialize='get_type', deserialize='load_type', required=True)
     obj_id = fields.String(dump_only=True, attribute='id')
-    target = fields.Method('get_target')
+    target = fields.String(dump_only=True, attribute='target_host_ip')
     metadata = SelfNestedField(CustomMetadataSchema())
     date = fields.DateTime(attribute='create_date',
                            dump_only=True)  # This is only used for sorting
@@ -164,12 +164,6 @@ class VulnerabilitySchema(AutoSchema):
 
     def get_issuetracker(self, obj):
         return {}
-
-    def get_target(self, obj):
-        if obj.service is not None:
-            return obj.service.host.ip
-        else:
-            return obj.host.ip
 
     def load_status(self, value):
         if value == 'opened':
@@ -373,6 +367,7 @@ class VulnerabilityView(PaginatedMixin,
 
             undefer(VulnerabilityGeneric.creator_command_id),
             undefer(VulnerabilityGeneric.creator_command_tool),
+            undefer(VulnerabilityGeneric.target_host_ip),
             joinedload(VulnerabilityGeneric.evidence),
             joinedload(VulnerabilityGeneric.tags),
         ]

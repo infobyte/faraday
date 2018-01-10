@@ -17,12 +17,10 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
-    event,
-    and_)
-from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import backref, relationship, undefer
+    event)
+from sqlalchemy.orm import relationship, undefer
 from sqlalchemy.sql import select, text, table
-from sqlalchemy.sql.expression import asc, join
+from sqlalchemy.sql.expression import asc, case, join
 from sqlalchemy import func
 from sqlalchemy.orm import (
     backref,
@@ -45,7 +43,7 @@ from flask_security import (
     RoleMixin,
     UserMixin,
 )
-from server.utils.database import get_or_create, BooleanToIntColumn
+from server.utils.database import BooleanToIntColumn
 
 
 class SQLAlchemy(OriginalSQLAlchemy):
@@ -712,6 +710,24 @@ class VulnerabilityGeneric(VulnerabilityABC):
         .where(CommandObject.workspace_id == workspace_id)
         .order_by(asc(CommandObject.create_date))
         .limit(1),
+        deferred=True
+    )
+
+    _host_vuln_query = (
+        select([Host.ip])
+        .where(text('vulnerability.host_id = host.id'))
+    )
+    _service_vuln_query = (
+        select([text('host_inner.ip')])
+        .select_from(text('host as host_inner, service'))
+        .where(text('vulnerability.service_id = service.id and '
+                    'host_inner.id = service.host_id'))
+    )
+    target_host_ip = column_property(
+        case([
+            (text('host_id IS NOT null'), _host_vuln_query.as_scalar()),
+            (text('service_id IS NOT null'), _service_vuln_query.as_scalar())
+        ]),
         deferred=True
     )
 

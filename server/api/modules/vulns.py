@@ -6,7 +6,7 @@ import time
 import logging
 from base64 import b64encode, b64decode
 
-from filteralchemy import FilterSet, operators
+from filteralchemy import Filter, FilterSet, operators
 from flask import request, current_app
 from flask import Blueprint
 from marshmallow import Schema, fields, post_load, ValidationError
@@ -249,18 +249,32 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
 _strict_filtering = {'default_operator': operators.Equal}
 
 
+class TargetFilter(Filter):
+    def filter(self, query, model, attr, value):
+        return query.filter(model.target_host_ip == value)
+
+
+class TypeFilter(Filter):
+    def filter(self, query, model, attr, value):
+        type_map = {
+            'Vulnerability': 'vulnerability',
+            'VulnerabilityWeb': 'vulnerability_web',
+        }
+        assert value in type_map
+        return query.filter(model.__table__.c.type == type_map[value])
+
+
 class VulnerabilityFilterSet(FilterSet):
     class Meta(FilterSetMeta):
         model = VulnerabilityWeb  # It has all the fields
         # TODO migration: Check if we should add fields creator, owner,
-        # command, impact, type, service, issuetracker, tags, date, target,
-        # host, easeofresolution, evidence, policy violations, hostnames,
-        # target
+        # command, impact, service, issuetracker, tags, date,
+        # host, easeofresolution, evidence, policy violations, hostnames
         fields = (
             "status", "website", "parameter_name", "query_string", "path",
             "data", "severity", "confirmed", "name", "request", "response",
             "parameters", "resolution", "method", "ease_of_resolution",
-            "description", "command_id")
+            "description", "command_id", "target")
 
         strict_fields = (
             "severity", "confirmed", "method"
@@ -270,6 +284,9 @@ class VulnerabilityFilterSet(FilterSet):
         column_overrides = {
             field: _strict_filtering for field in strict_fields}
         operators = (operators.ILike, operators.Equal)
+    target = TargetFilter(fields.Str())
+    type = TypeFilter(fields.Str(validate=[OneOf(['Vulnerability',
+                                                  'VulnerabilityWeb'])]))
 
     def filter(self):
         """Generate a filtered query from request parameters.

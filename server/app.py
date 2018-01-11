@@ -126,6 +126,10 @@ def create_app(db_connection_string=None, testing=None):
     app.config['SECURITY_USER_IDENTITY_ATTRIBUTES'] = ['username']
     app.config['SECURITY_POST_LOGIN_VIEW'] = '/_api/session'
     app.config['SECURITY_POST_LOGOUT_VIEW'] = '/_api/login'
+    app.config['SECURITY_POST_CHANGE_VIEW'] = '/_api/change'
+    app.config['SECURITY_CHANGEABLE'] = True
+    app.config['SECURITY_SEND_PASSWORD_CHANGE_EMAIL'] = False
+
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SQLALCHEMY_RECORD_QUERIES'] = True
     # app.config['SQLALCHEMY_ECHO'] = True

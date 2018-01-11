@@ -51,7 +51,7 @@ class HostSchema(AutoSchema):
                                default=[]),
         fields.List(fields.String))
     metadata = SelfNestedField(MetadataSchema())
-    type = fields.Function(lambda obj: 'Host')
+    type = fields.Function(lambda obj: 'Host', dump_only=True)
 
     class Meta:
         model = Host

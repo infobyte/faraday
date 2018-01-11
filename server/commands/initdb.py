@@ -3,6 +3,7 @@ import string
 
 import os
 import sys
+import psycopg2
 from random import SystemRandom
 from tempfile import TemporaryFile
 from subprocess import Popen, PIPE
@@ -182,8 +183,34 @@ class InitDB():
         return_code = p.returncode
         if already_exists_error in output:
             print("{yellow}WARNING{white}: Role {username} already exists, skipping creation ".format(yellow=Fore.YELLOW, white=Fore.WHITE, username=username))
-            password = getpass.getpass("Database password: ")
 
+            invalid_pwd = True
+            while invalid_pwd:
+                password = getpass.getpass("Database password (ctrl-c to "
+                                           "cancel): ")
+
+                # check credentials
+                # this case only applies to instances without 'trust' config
+                # todo: check postgres config
+                try:
+                    connection = psycopg2.connect(dbname='postgres',
+                                                  user=username,
+                                                  password=password)
+                    cur = connection.cursor()
+                    cur.execute('SELECT * FROM pg_catalog.pg_tables;')
+                    cur.fetchall()
+                    connection.commit()
+                    connection.close()
+                    invalid_pwd = False
+                except psycopg2.Error as e:
+                    if 'authentication failed' in e.message:
+                        print('{red}ERROR{white}: User {username} already '
+                              'exists and provided password '
+                              'is incorrect'.format(white=Fore.WHITE,
+                                                    red=Fore.RED,
+                                                    username=username))
+                    else:
+                        raise
             return_code = 0
         return username, password, return_code
 
@@ -232,6 +259,8 @@ class InitDB():
             if 'could not connect to server' in ex.message:
                 print('ERROR: {red}PostgreSQL service{white} is not running. Please verify that it is running in port 5432 before executing setup script.'.format(red=Fore.RED, white=Fore.WHITE))
                 sys.exit(1)
+            elif 'password authentication failed' in ex.message:
+                print('ERROR: ')
             else:
                 raise
         except ImportError as ex:

@@ -264,17 +264,22 @@ class TypeFilter(Filter):
         return query.filter(model.__table__.c.type == type_map[value])
 
 
+class CreatorFilter(Filter):
+    def filter(self, query, model, attr, value):
+        return query.filter(model.creator_command_tool == value)
+
+
 class VulnerabilityFilterSet(FilterSet):
     class Meta(FilterSetMeta):
         model = VulnerabilityWeb  # It has all the fields
-        # TODO migration: Check if we should add fields creator, owner,
+        # TODO migration: Check if we should add fields owner,
         # command, impact, service, issuetracker, tags, date,
         # host, easeofresolution, evidence, policy violations, hostnames
         fields = (
             "status", "website", "parameter_name", "query_string", "path",
             "data", "severity", "confirmed", "name", "request", "response",
             "parameters", "resolution", "method", "ease_of_resolution",
-            "description", "command_id", "target")
+            "description", "command_id", "target", "creator")
 
         strict_fields = (
             "severity", "confirmed", "method"
@@ -287,6 +292,7 @@ class VulnerabilityFilterSet(FilterSet):
     target = TargetFilter(fields.Str())
     type = TypeFilter(fields.Str(validate=[OneOf(['Vulnerability',
                                                   'VulnerabilityWeb'])]))
+    creator = CreatorFilter(fields.Str())
 
     def filter(self):
         """Generate a filtered query from request parameters.

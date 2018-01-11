@@ -444,7 +444,7 @@ class CreateMixin(object):
         return obj
 
 
-class CommandMixing():
+class CommandMixin():
     """
         Created the command obj to log model activity after a command
         execution via the api (ex. from plugins)
@@ -485,7 +485,7 @@ class CommandMixing():
             db.session.add(command_object)
 
 
-class CreateWorkspacedMixin(CreateMixin, CommandMixing):
+class CreateWorkspacedMixin(CreateMixin, CommandMixin):
     """Add POST /<workspace_name>/ route"""
 
     def _perform_create(self, data, workspace_name):
@@ -530,7 +530,7 @@ class UpdateMixin(object):
         db.session.commit()
 
 
-class UpdateWorkspacedMixin(UpdateMixin, CommandMixing):
+class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
     """Add PUT /<id>/ route"""
 
     def _perform_update(self, object_id, obj, workspace_name):

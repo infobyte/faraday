@@ -10,6 +10,5 @@ angular.module('faradayApp')
                 if(!auth) {
                     $location.path('/login');
                 }
-                return deferred.reject(response);
             });
         }]);

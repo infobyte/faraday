@@ -497,5 +497,10 @@ angular.module("faradayApp")
                 return _delete(dbUrl, false);
             }
 
+            ServerAPI.changePassword = function(data) {
+                var url = BASEURL + "_api/change";
+                return serverComm('POST', url, data);
+            }
+
         return ServerAPI;
     }]);

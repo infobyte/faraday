@@ -67,6 +67,7 @@ class InitDB():
             # current_psql_output is for checking psql command already known errors for each execution.
             psql_log_filename = os.path.join(faraday_path_conf, 'logs', 'psql_log.log')
             configure_existing_user = None
+            current_psql_output = TemporaryFile()
             with open(psql_log_filename, 'a+') as psql_log_file:
                 while configure_existing_user is None:
                     configure_existing_user = raw_input('Do you {blue} already have {white} a postgresql username and password? (yes/no): '.format(blue=Fore.BLUE, white=Fore.WHITE))
@@ -84,7 +85,7 @@ class InitDB():
                     if hostname not in ['localhost', '127.0.0.1']:
                         print('ERROR: can only create postgresql user on localhost')
                         sys.exit(1)
-                    current_psql_output = TemporaryFile()
+
                     username, password, process_status = self._configure_new_postgres_user(current_psql_output)
                     current_psql_output.seek(0)
                     psql_output = current_psql_output.read()

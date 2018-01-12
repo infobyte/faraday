@@ -55,6 +55,7 @@ class CommandRunInformation(object):
         self.duration = None
         self.params = None
         self.workspace = None
+        self.import_source = None
         self._id = None
         self.id_available = Event()
 

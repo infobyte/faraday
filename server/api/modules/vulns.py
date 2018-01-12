@@ -287,7 +287,8 @@ class VulnerabilityFilterSet(FilterSet):
 
         default_operator = operators.ILike
         column_overrides = {
-            field: _strict_filtering for field in strict_fields}
+            field: _strict_filtering for field in strict_fields
+        }
         operators = (operators.ILike, operators.Equal)
     target = TargetFilter(fields.Str())
     type = TypeFilter(fields.Str(validate=[OneOf(['Vulnerability',

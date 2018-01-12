@@ -51,6 +51,7 @@ OBJECT_TYPES = [
     'credential',
     'service',
     'source_code',
+    'comment',
 ]
 
 

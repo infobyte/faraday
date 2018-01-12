@@ -55,6 +55,7 @@ class PluginCommiter(Thread):
         self.mapper_manager.update(self.command)
 
     def run(self):
+        name = ''
         try:
             self.output_queue.join()
             self.commit()
@@ -239,6 +240,7 @@ class PluginController(Thread):
                 cmd_info = CommandRunInformation(
                     **{'workspace': model.api.getActiveWorkspace().name,
                         'itime': time.time(),
+                        'import_source': 'shell',
                         'command': cmd.split()[0],
                         'params': ' '.join(cmd.split()[1:])})
                 cmd_info.setID(self._mapper_manager.save(cmd_info))
@@ -272,6 +274,7 @@ class PluginController(Thread):
         cmd_info = CommandRunInformation(
             **{'workspace': ws_name,
                 'itime': time.time(),
+                'import_source': 'report',
                 'command': 'Import %s:' % plugin,
                 'params': filepath})
         self._mapper_manager.createMappers(ws_name)

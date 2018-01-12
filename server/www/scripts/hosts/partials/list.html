@@ -61,120 +61,120 @@
                                     <!-- label-list -->
                                 </ul>
                             </div>
-                            <table class="status-report hosts-list table table-responsive">
-                                <thead>
-                                    <tr>
-                                        <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
-                                        <th ng-show="columns['name']">
-                                            <a href="" ng-click="toggleSort('name')">Name</a>
-                                            <a ng-click="toggleShow('name')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
-                                        </th>
-                                        <th ng-show="columns['description']">
-                                            <a href="" ng-click="toggleSort('description')">Description</a>
-                                            <a ng-click="toggleShow('description')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
-                                        </th>
-                                        <th ng-show="columns['os']">
-                                            <a href="" ng-click="toggleSort('os')">OS</a>
-                                            <a ng-click="toggleShow('os')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
-                                        </th>
-                                        <th ng-if="columns['hostnames']">
-                                            <a href="">Hostnames</a>
-                                            <a ng-click="toggleShow('hostnames')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
-                                        </th>
-                                        <th ng-if="columns['mac']">
-                                            <a href="" ng-click="toggleSort('mac')">MAC</a>
-                                            <a ng-click="toggleShow('mac')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
-                                        </th>
-                                        <th ng-show="columns['services']">
-                                            <a href="" ng-click="toggleSort('services')">Open Services</a>
-                                            <a ng-click="toggleShow('services')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
-                                        </th>
-                                        <th ng-show="columns['vulns']">
-                                            <a href="" ng-click="toggleSort('vulns')">Vulns</a>
-                                            <a ng-click="toggleShow('vulns')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
-                                        </th>
-                                        <th ng-show="columns['credentials']">
-                                            <a href="" ng-click="toggleSort('credentials')">Credentials</a>
-                                            <a ng-click="toggleShow('credentials')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
-                                        </th>
-                                        <th ng-show="columns['owned']">
-                                            <a href="" ng-click="toggleSort('owned')">Owned</a>
-                                            <a ng-click="toggleShow('owned')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
-                                        </th>
-                                        <th ng-show="columns['create_time']">
-                                            <a href="" ng-click="toggleSort('metadata.create_time')">Creation time</a>
-                                            <a ng-click="toggleShow('create_time')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
-                                        </th>
-                                        <th ng-show="columns['last_modified']">
-                                            <a href="" ng-click="toggleSort('metadata.update_time')">Last modified</a>
-                                            <a ng-click="toggleShow('last_modified')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr ng-repeat="host in hosts"
-                                        selection-model selection-model-type="checkbox"
-                                                        selection-model-mode="multiple-additive"
-                                                        selection-model-selected-class="multi-selected"
-                                                        selection-model-on-change="selectedHosts()">
-                                        <td><input type="checkbox" name="{{host._id}}"/></td>
-                                        <td ng-show="columns['name']">
-                                            <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}">{{host.name}}</a>
-                                            <osint-link query="host.name" osint="osint"></osint-link>
-                                        </td>
-                                        <td ng-show="columns['description']">
-                                            {{host.description}}
-                                        </td>
-                                        <td ng-show="columns['os']">
-                                            <a ng-href="#/hosts/ws/{{workspace}}/search/os={{host.os}}">
-                                                <img ng-if="host.icon != undefined" ng-src="images/{{host.icon}}.png" uib-tooltip="{{host.os}}"/>
-                                                <span ng-if="host.icon == undefined" class="fa fa-laptop" uib-tooltip="{{host.os}}"></span>
-                                            </a>
-                                        </td>
-                                        <td ng-if="columns['hostnames']">
-                                            <span ng-repeat="hostname in host.hostnames">
-                                                {{hostname}} <br>
-                                            </span>
-                                        </td>
-                                        <td ng-show="columns['mac']">
-                                            {{host.mac}}
-                                        </td>
-                                        <td ng-show="columns['services']"><a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-bind="host.services || '-'"></a></td>
-                                        <td ng-show="columns['vulns']"><a ng-href="#/status/ws/{{workspace}}/search/target={{host.name}}" ng-bind="host.vulns"></a></td>
-                                        <td ng-show="columns['credentials']">
-                                            <a ng-href="#/credentials/ws/{{workspace}}/hid/{{host._id}}">{{host.credentials}}</a>
-                                        </td>
-                                        <td ng-show="columns['owned']">
-                                            <span class="fa fa-exclamation-triangle" aria-hidden="true" ng-if="host.owned"></span>
-                                            <span ng-if="host.owned"> owned</span>
-                                            <span ng-if="!host.owned">not yet</span>
-                                        </td>
-                                        <td ng-show="columns['create_time']">
-                                            <span am-time-ago="host.metadata.create_time"></span>
-                                        </td>
-                                        <td ng-show="columns['last_modified']">
-                                            <span am-time-ago="host.metadata.update_time"></span>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table><!-- #hosts -->
-                            <div class="showPagination">
-                                <div class="form-group">
-                                    <ul class="pagination">
-                                        <li><a ng-hide="prevPageDisabled()" ng-click="prevPage()"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
-                                        <li><a>{{currentPage}}/{{pageCount()}}</a></li>
-                                        <li><a ng-hide="nextPageDisabled()" ng-click="nextPage()"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
-                                    </ul>
-                                    <form name="goToPage" id="goToPageStatus">
-                                        <div class="col-md-2">
-                                            <input type="number" min="1" max="{{pageCount()}}" class="form-control" ng-model="newCurrentPage" placeholder="Go to page"/>
-                                        </div>
-                                        <button class="btn btn-default" ng-click="go()">GO</button>
-                                        <input type="number" min="1" class="form-control vuln_per_page" ng-model=newPageSize placeholder="Number page" />
-                                    </form>
-                                </div>
-                            </div><!-- .showPagination -->
                         </div>
+                        <table class="status-report hosts-list table table-responsive">
+                            <thead>
+                                <tr>
+                                    <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
+                                    <th ng-show="columns['name']">
+                                        <a href="" ng-click="toggleSort('name')">Name</a>
+                                        <a ng-click="toggleShow('name')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
+                                    </th>
+                                    <th ng-show="columns['description']">
+                                        <a href="" ng-click="toggleSort('description')">Description</a>
+                                        <a ng-click="toggleShow('description')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
+                                    </th>
+                                    <th ng-show="columns['os']">
+                                        <a href="" ng-click="toggleSort('os')">OS</a>
+                                        <a ng-click="toggleShow('os')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
+                                    </th>
+                                    <th ng-if="columns['hostnames']">
+                                        <a href="">Hostnames</a>
+                                        <a ng-click="toggleShow('hostnames')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
+                                    </th>
+                                    <th ng-if="columns['mac']">
+                                        <a href="" ng-click="toggleSort('mac')">MAC</a>
+                                        <a ng-click="toggleShow('mac')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
+                                    </th>
+                                    <th ng-show="columns['services']">
+                                        <a href="" ng-click="toggleSort('services')">Open Services</a>
+                                        <a ng-click="toggleShow('services')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
+                                    </th>
+                                    <th ng-show="columns['vulns']">
+                                        <a href="" ng-click="toggleSort('vulns')">Vulns</a>
+                                        <a ng-click="toggleShow('vulns')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
+                                    </th>
+                                    <th ng-show="columns['credentials']">
+                                        <a href="" ng-click="toggleSort('credentials')">Credentials</a>
+                                        <a ng-click="toggleShow('credentials')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
+                                    </th>
+                                    <th ng-show="columns['owned']">
+                                        <a href="" ng-click="toggleSort('owned')">Owned</a>
+                                        <a ng-click="toggleShow('owned')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
+                                    </th>
+                                    <th ng-show="columns['create_time']">
+                                        <a href="" ng-click="toggleSort('metadata.create_time')">Creation time</a>
+                                        <a ng-click="toggleShow('create_time')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
+                                    </th>
+                                    <th ng-show="columns['last_modified']">
+                                        <a href="" ng-click="toggleSort('metadata.update_time')">Last modified</a>
+                                        <a ng-click="toggleShow('last_modified')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="host in hosts"
+                                    selection-model selection-model-type="checkbox"
+                                                    selection-model-mode="multiple-additive"
+                                                    selection-model-selected-class="multi-selected"
+                                                    selection-model-on-change="selectedHosts()">
+                                    <td><input type="checkbox" name="{{host._id}}"/></td>
+                                    <td ng-show="columns['name']">
+                                        <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}">{{host.name}}</a>
+                                        <osint-link query="host.name" osint="osint"></osint-link>
+                                    </td>
+                                    <td ng-show="columns['description']">
+                                        {{host.description}}
+                                    </td>
+                                    <td ng-show="columns['os']">
+                                        <a ng-href="#/hosts/ws/{{workspace}}/search/os={{host.os}}">
+                                            <img ng-if="host.icon != undefined" ng-src="images/{{host.icon}}.png" uib-tooltip="{{host.os}}"/>
+                                            <span ng-if="host.icon == undefined" class="fa fa-laptop" uib-tooltip="{{host.os}}"></span>
+                                        </a>
+                                    </td>
+                                    <td ng-if="columns['hostnames']">
+                                        <span ng-repeat="hostname in host.hostnames">
+                                            {{hostname}} <br>
+                                        </span>
+                                    </td>
+                                    <td ng-show="columns['mac']">
+                                        {{host.mac}}
+                                    </td>
+                                    <td ng-show="columns['services']"><a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-bind="host.services || '-'"></a></td>
+                                    <td ng-show="columns['vulns']"><a ng-href="#/status/ws/{{workspace}}/search/target={{host.name}}" ng-bind="host.vulns"></a></td>
+                                    <td ng-show="columns['credentials']">
+                                        <a ng-href="#/credentials/ws/{{workspace}}/hid/{{host._id}}">{{host.credentials}}</a>
+                                    </td>
+                                    <td ng-show="columns['owned']">
+                                        <span class="fa fa-exclamation-triangle" aria-hidden="true" ng-if="host.owned"></span>
+                                        <span ng-if="host.owned"> owned</span>
+                                        <span ng-if="!host.owned">not yet</span>
+                                    </td>
+                                    <td ng-show="columns['create_time']">
+                                        <span am-time-ago="host.metadata.create_time"></span>
+                                    </td>
+                                    <td ng-show="columns['last_modified']">
+                                        <span am-time-ago="host.metadata.update_time"></span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table><!-- #hosts -->
+                        <div class="showPagination">
+                            <div class="form-group">
+                                <ul class="pagination">
+                                    <li><a ng-hide="prevPageDisabled()" ng-click="prevPage()"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
+                                    <li><a>{{currentPage}}/{{pageCount()}}</a></li>
+                                    <li><a ng-hide="nextPageDisabled()" ng-click="nextPage()"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
+                                </ul>
+                                <form name="goToPage" id="goToPageStatus">
+                                    <div class="col-md-2">
+                                        <input type="number" min="1" max="{{pageCount()}}" class="form-control" ng-model="newCurrentPage" placeholder="Go to page"/>
+                                    </div>
+                                    <button class="btn btn-default" ng-click="go()">GO</button>
+                                    <input type="number" min="1" class="form-control vuln_per_page" ng-model=newPageSize placeholder="Number page" />
+                                </form>
+                            </div>
+                        </div><!-- .showPagination -->
                     </div><!-- .reports -->
                 </div><!-- #reports-main --></div><!-- .right-main -->
             </section><!-- #main -->

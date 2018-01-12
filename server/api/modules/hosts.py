@@ -51,13 +51,14 @@ class HostSchema(AutoSchema):
                                default=[]),
         fields.List(fields.String))
     metadata = SelfNestedField(MetadataSchema())
+    type = fields.Function(lambda obj: 'Host', dump_only=True)
 
     class Meta:
         model = Host
         fields = ('id', '_id', '_rev', 'ip', 'description', 'mac',
                   'credentials', 'default_gateway', 'metadata',
                   'name', 'os', 'owned', 'owner', 'services', 'vulns',
-                  'hostnames'
+                  'hostnames', 'type',
                   )
 
 
@@ -111,10 +112,6 @@ class HostsView(PaginatedMixin,
             pass
         else:
             obj.set_hostnames(hostnames)
-
-        # Required to make the assert pass. This actually makes two requests
-        # to the DB
-        db.session.commit()
 
         return super(HostsView, self)._update_object(obj, data)
 

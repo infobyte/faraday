@@ -17,12 +17,10 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
-    event,
-    and_)
-from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import backref, relationship, undefer
+    event)
+from sqlalchemy.orm import relationship, undefer
 from sqlalchemy.sql import select, text, table
-from sqlalchemy.sql.expression import asc, join
+from sqlalchemy.sql.expression import asc, case, join
 from sqlalchemy import func
 from sqlalchemy.orm import (
     backref,
@@ -45,7 +43,7 @@ from flask_security import (
     RoleMixin,
     UserMixin,
 )
-from server.utils.database import get_or_create, BooleanToIntColumn
+from server.utils.database import BooleanToIntColumn
 
 
 class SQLAlchemy(OriginalSQLAlchemy):
@@ -235,7 +233,8 @@ class Host(Metadata):
                                     child_field='name')
 
 
-def set_children_objects(instance, value, parent_field, child_field='id'):
+def set_children_objects(instance, value, parent_field, child_field='id',
+                         workspaced=True):
     """
     Override some kind of children of instance. This is useful in one
     to many relationships. It takes care of deleting not used children,
@@ -245,6 +244,7 @@ def set_children_objects(instance, value, parent_field, child_field='id'):
     :param value: list of childs (values of the child_field)
     :param parent_field: the parent field's relationship to the children name
     :param child_field: the "lookup field" of the children model
+    :param workspaced: indicates if the parent model has a workspace
     """
     # Get the class of the children. Inspired in
     # https://stackoverflow.com/questions/6843144/how-to-find-sqlalchemy-remote-side-objects-class-or-class-name-without-db-queri
@@ -269,7 +269,8 @@ def set_children_objects(instance, value, parent_field, child_field='id'):
             # it already exists
             continue
         kwargs = {child_field: new_child}
-        kwargs['workspace'] = instance.workspace
+        if workspaced:
+            kwargs['workspace'] = instance.workspace
         current_value.append(children_model(**kwargs))
 
 
@@ -715,6 +716,24 @@ class VulnerabilityGeneric(VulnerabilityABC):
         deferred=True
     )
 
+    _host_vuln_query = (
+        select([Host.ip])
+        .where(text('vulnerability.host_id = host.id'))
+    )
+    _service_vuln_query = (
+        select([text('host_inner.ip')])
+        .select_from(text('host as host_inner, service'))
+        .where(text('vulnerability.service_id = service.id and '
+                    'host_inner.id = service.host_id'))
+    )
+    target_host_ip = column_property(
+        case([
+            (text('host_id IS NOT null'), _host_vuln_query.as_scalar()),
+            (text('service_id IS NOT null'), _service_vuln_query.as_scalar())
+        ]),
+        deferred=True
+    )
+
     __mapper_args__ = {
         'polymorphic_on': type
     }
@@ -1086,6 +1105,12 @@ class Workspace(Metadata):
                                           use_column_property=False)
             ),
         )
+
+    def set_scope(self, new_scope):
+        return set_children_objects(self, new_scope,
+                                    parent_field='scope',
+                                    child_field='name',
+                                    workspaced=False)
 
 
 class Scope(Metadata):

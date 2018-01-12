@@ -1,5 +1,5 @@
 #!groovy
-node {
+node (label: "master"){
     def ENV_PATH = "$HOME/venv/faraday"
     echo "${ENV_PATH}"
 

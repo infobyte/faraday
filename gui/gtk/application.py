@@ -336,7 +336,7 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         preference_window.run()
 
-    def connect_to_couch(self, server_uri, parent=None):
+    def connect_to_couch(self, server_url, parent=None):
         """Tries to connect to a CouchDB on a specified Couch URI.
         Returns the success status of the operation, False for not successful,
         True for successful
@@ -344,14 +344,14 @@ class GuiApp(Gtk.Application, FaradayUi):
         if parent is None:
             parent = self.window
 
-        if not self.serverIO.test_server_url(server_uri):
+        if not self.serverIO.test_server_url(server_url):
             errorDialog(parent, "Could not connect to Faraday Server.",
                         ("Are you sure it is running and that you can "
                          "connect to it? \n Make sure your username and "
                          "password are still valid."))
             success = False
-        elif server_uri.startswith("https://"):
-            if not checkSSL(server_uri):
+        elif server_url.startswith("https://"):
+            if not checkSSL(server_url):
                 errorDialog(self.window,
                             "The SSL certificate validation has failed")
             success = False
@@ -364,7 +364,7 @@ class GuiApp(Gtk.Application, FaradayUi):
                             "client you are runnung. Version numbers must match!")
                 success = False
                 return success
-            CONF.setCouchUri(server_uri)
+            CONF.setAPIUrl(server_url)
             CONF.saveConfig()
             self.reload_workspaces()
             self.open_last_workspace()
@@ -415,14 +415,12 @@ class GuiApp(Gtk.Application, FaradayUi):
         """Very similar to reload_workspaces, but doesn't resource the
         workspace_manager to avoid asking for information to a database
         we can't access."""
-        self.workspace_manager.closeWorkspace()
         self.ws_sidebar.clear_sidebar()
 
     def reload_workspaces(self):
         """Close workspace, resources the workspaces available,
         clears the sidebar of the old workspaces and injects all the new ones
         in there too"""
-        self.workspace_manager.closeWorkspace()
         self.ws_sidebar.clear_sidebar()
         self.ws_sidebar.refresh_sidebar()
 
@@ -594,7 +592,7 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         def delete_object():
             if event.obj_id:
-                GObject.idle_add(self.hosts_sidebar.remove_object, event.obj_id)
+                GObject.idle_add(self.hosts_sidebar.remove_object, event.obj_id, event.obj_type)
                 host_count, service_count, vuln_count = self.update_counts()
                 GObject.idle_add(self.statusbar.update_ws_info, host_count,
                                  service_count, vuln_count)

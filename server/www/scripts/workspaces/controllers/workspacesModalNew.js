@@ -14,7 +14,7 @@ angular.module('faradayApp')
         	$scope.workspace = {
                 "description":  "",
                 "name":         "",
-                "scope":        ""
+                "scope":        [{key: ''}]
         	};
         };
 
@@ -34,6 +34,11 @@ angular.module('faradayApp')
 
             if(isStart) $scope.openedStart = true; else $scope.openedEnd = true;
         };
+
+        $scope.newScope = function($event){
+            $scope.workspace.scope.push({key:''});
+            $event.preventDefault();
+        }
 
         $scope.okNew = function(){
             $modalInstance.close($scope.workspace);

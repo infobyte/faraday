@@ -390,8 +390,10 @@ class LicenseFactory(FaradayFactory):
     def build_dict(cls, **kwargs):
         # Ugly hack to JSON-serialize datetimes
         ret = super(LicenseFactory, cls).build_dict(**kwargs)
-        ret['start_date'] = ret['start_date'].isoformat()
-        ret['end_date'] = ret['end_date'].isoformat()
+        ret['start'] = ret['start_date'].isoformat()
+        ret['end'] = ret['end_date'].isoformat()
+        ret.pop('start_date')
+        ret.pop('end_date')
         return ret
 
 

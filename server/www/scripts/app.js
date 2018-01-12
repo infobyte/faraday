@@ -16,6 +16,10 @@ var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.
         var url = window.location.origin + "/";
         return url;
     })())
+    .constant("APIURL", (function() {
+        var url = window.location.origin + "/_api/v2/";
+        return url;
+    })())
     .constant("EASEOFRESOLUTION", (function() {
         var resolutions = [
             "trivial",

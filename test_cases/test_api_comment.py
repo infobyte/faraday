@@ -64,3 +64,24 @@ class TestCredentialsAPIGeneric(ReadOnlyAPITests):
         res = test_client.post(self.url(workspace=self.workspace), data=raw_comment)
         assert res.status_code == 400
         assert res.json == {u'message': u"Can't comment inexistent object"}
+
+
+    def test_create_unique_comment_for_plugins(self, session, test_client):
+        """
+
+
+        """
+        service = ServiceFactory.create(workspace=self.workspace)
+        session.commit()
+        initial_comment_count = len(session.query(Comment).all())
+        raw_comment = self._create_raw_comment('service', service.id)
+        res = test_client.post(self.url(workspace=self.workspace),
+                               data=raw_comment)
+        assert res.status_code == 201
+        assert len(session.query(Comment).all()) == initial_comment_count + 1
+
+        url = self.url(workspace=self.workspace).strip('/') + '_unique/'
+        res = test_client.post(url, data=raw_comment)
+        assert res.status_code == 409
+        assert 'object' in res.json
+        assert type(res.json) == dict

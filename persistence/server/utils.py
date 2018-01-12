@@ -107,8 +107,11 @@ def get_vuln_web_properties(vuln_web):
 
 
 def get_note_properties(note):
+    text = note.getText()
+    if note.getName():
+        text = '{0}\n{1}'.format(note.getName(), note.getText())
     note_dict = {
-        'text': note.getText(),
+        'text': text,
         'object_id': note.getObjectID(),
         'object_type': note.getObjectType()
     }
@@ -130,6 +133,7 @@ def get_credential_properties(credential):
 def get_command_properties(command):
     return {
         'command': command.command,
+        'tool': command.command,
         'user': command.user,
         'ip': command.ip,
         'hostname': command.hostname,

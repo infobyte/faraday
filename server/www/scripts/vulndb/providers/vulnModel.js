@@ -7,12 +7,15 @@ angular.module('faradayApp').
         function(BASEURL, configSrv, ServerAPI, $http, $q) {
             function VulnModel(data) {
                 this._id = "";
+                this.id = "";
                 this._rev = "";
                 this.cwe = "";
                 this.description = "";
+                this.desc = "";
                 this.exploitation = "";
                 this.name = "";
                 this.references = [];
+                this.refs = [];
                 this.resolution = "";
                 if (data) {
                     if(data.name === undefined || data.name === "") {
@@ -24,13 +27,15 @@ angular.module('faradayApp').
 
             VulnModel.prototype = {
 
-                public_properties: ['exploitation', 'references', 'name', 'resolution', 'cwe', 'description'],
+                public_properties: ['exploitation', 'references', 'name', 'resolution', 'cwe', 'description',
+                                    'desc', 'id', 'refs'],
 
                 set: function(data) {
                     var self = this;
 
                     if(data._id != undefined) {
                         self._id = data._id;
+                        self.id = data._id;
                         if(data._rev !== undefined) {
                             self._rev = data._rev;
                         };

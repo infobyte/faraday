@@ -6,15 +6,10 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-# TODO:
-# - Handle requirements dinamically?
-# - Additionally parse arguments from file.
-
-
-import argparse
 import os
-import shutil
 import sys
+import shutil
+import argparse
 
 from config.configuration import getInstanceConfiguration
 from config.globals import (
@@ -506,20 +501,23 @@ def checkUpdates():
         logger.info("No updates available, enjoy Faraday.")
 
 
-def checkCouchUrl():
+def checkServerUrl():
     import requests
+    CONF = getInstanceConfiguration()
+    server_url = CONF.getServerURI()
+    if server_url is None or CONF.getAPIUsername() is None or CONF.getAPIUsername() is None:
+        doLoginLoop()
     try:
-        requests.get(getInstanceConfiguration().getServerURI(), timeout=5)
+        requests.get(server_url, timeout=5)
     except requests.exceptions.SSLError:
-        print """
+        print("""
         SSL certificate validation failed.
         You can use the --cert option in Faraday
         to set the path of the cert
-        """
+        """)
         sys.exit(-1)
-    except Exception:
-        # Non fatal error
-        pass
+    except requests.exceptions.MissingSchema as ex:
+        print("Check ~/.faraday.config/user.xml server url, the following error was found: {0} ".format(ex))
 
 
 def checkVersion():
@@ -563,20 +561,29 @@ You have 3 attempts.""")
     try:
 
         CONF = getInstanceConfiguration()
+        server_url = CONF.getAPIUrl()
+        if server_url is None:
+            server_url = raw_input(
+            "Please enter the faraday server url (press enter for http://localhost:5985): ") or "http://localhost:5985"
+            CONF.setAPIUrl(server_url)
 
         for attempt in range(1, 4):
 
-            username = raw_input("Username: ")
+            username = raw_input("Username (press enter for faraday): ") or "faraday"
             password = getpass.getpass('Password: ')
-            session_cookie = login_user(CONF.getServerURI(), username, password)
+
+            session_cookie = login_user(server_url, username, password)
             if session_cookie:
-                CONF.setDBUser(username)
+
+                CONF.setAPIUsername(username)
+                CONF.setAPIPassword(password)
                 CONF.setDBSessionCookies(session_cookie)
+                CONF.saveConfig()
 
                 user_info = get_user_info()
 
                 if user_info is None or 'username' not in user_info or 'roles' not in user_info or 'client' in user_info['roles']:
-                    print "You can't login as a client. You have %s attempt(s) left." % (3 - attempt)
+                    print("You can't login as a client. You have %s attempt(s) left." % (3 - attempt))
                     continue
 
                 logger.info('Login successful')
@@ -615,23 +622,25 @@ def main():
         os.environ[REQUESTS_CA_BUNDLE_VAR] = args.cert_path
     checkConfiguration(args.gui)
     setConf()
-    checkCouchUrl()
+    checkServerUrl()
     checkVersion()
-
+    CONF = getInstanceConfiguration()
     if args.login:
-        CONF = getInstanceConfiguration()
-
         if not CONF.getServerURI():
             couchURI = raw_input("Enter the Faraday server [http://127.0.0.1:5985]: ") or "http://127.0.0.1:5985"
 
             if couchURI:
                 CONF.setCouchUri(couchURI)
-                checkCouchUrl()
+                checkServerUrl()
             else:
                 logger.fatal('Please configure couchdb server to authenticate (--login)')
                 sys.exit(-1)
 
         doLoginLoop()
+    else:
+        session_cookie = login_user(CONF.getServerURI(), CONF.getAPIUsername(), CONF.getAPIPassword())
+        if session_cookie:
+            CONF.setDBSessionCookies(session_cookie)
 
     check_faraday_version()
 

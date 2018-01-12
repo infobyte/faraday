@@ -3,8 +3,8 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('modalEditCtrl', ['$modalInstance', 'EASEOFRESOLUTION', 'STATUSES', 'commonsFact', 'severities', 'vuln', 'cweFact', 
-        function($modalInstance, EASEOFRESOLUTION, STATUSES, commons, severities, vuln, cweFact) {
+    .controller('modalEditCtrl', ['$modalInstance', 'EASEOFRESOLUTION', 'STATUSES', 'commonsFact', 'severities', 'vuln', 'vulnModelsManager',
+        function($modalInstance, EASEOFRESOLUTION, STATUSES, commons, severities, vuln, vulnModelsManager) {
         
         var vm = this;
 
@@ -32,7 +32,7 @@ angular.module('faradayApp')
             vm.icons = {};
 
             vm.cweList = [];
-            cweFact.get().then(function(data) {
+            vulnModelsManager.get().then(function(data) {
                 vm.cweList = data;
             });
             vm.cweLimit = 5;

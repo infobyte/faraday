@@ -251,7 +251,7 @@ angular.module('faradayApp')
                         _cmd.user = _cmd.user || "unknown";
                         _cmd.hostname = _cmd.hostname || "unknown";
                         _cmd.ip = _cmd.ip || "0.0.0.0";
-                        if(_cmd.duration == "In progres") {
+                        if(_cmd.duration == "In progress") {
                             _cmd.duration = "In progress";
                         } else if (_cmd.duration == "Not started") {
                             _cmd.duration = "Not started";

@@ -14,12 +14,15 @@ angular.module('faradayApp')
             $scope.totalHosts = 0;
             $scope.columns = {
                 "name": true,
+                "description": false,
                 "hostnames": false,
+                "mac": false,
                 "services": true,
                 "vulns": true,
                 "credentials": true,
                 "os": true,
                 "owned": true,
+                "create_time": true,
                 "last_modified": true,
             };
             // current workspace

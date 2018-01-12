@@ -69,9 +69,17 @@
                                             <a href="" ng-click="toggleSort('name')">Name</a>
                                             <a ng-click="toggleShow('name')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
                                         </th>
+                                        <th ng-show="columns['description']">
+                                            <a href="" ng-click="toggleSort('description')">Description</a>
+                                            <a ng-click="toggleShow('description')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
+                                        </th>
                                         <th ng-if="columns['hostnames']">
                                             <a href="">Hostnames</a>
                                             <a ng-click="toggleShow('hostnames')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
+                                        </th>
+                                        <th ng-if="columns['mac']">
+                                            <a href="" ng-click="toggleSort('mac')">MAC</a>
+                                            <a ng-click="toggleShow('mac')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
                                         </th>
                                         <th ng-show="columns['services']">
                                             <a href="" ng-click="toggleSort('services')">Open Services</a>
@@ -93,6 +101,10 @@
                                             <a href="" ng-click="toggleSort('owned')">Owned</a>
                                             <a ng-click="toggleShow('owned')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
                                         </th>
+                                        <th ng-show="columns['create_time']">
+                                            <a href="" ng-click="toggleSort('metadata.create_time')">Creation time</a>
+                                            <a ng-click="toggleShow('create_time')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
+                                        </th>
                                         <th ng-show="columns['last_modified']">
                                             <a href="" ng-click="toggleSort('metadata.update_time')">Last modified</a>
                                             <a ng-click="toggleShow('last_modified')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
@@ -110,10 +122,16 @@
                                             <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}">{{host.name}}</a>
                                             <osint-link query="host.name" osint="osint"></osint-link>
                                         </td>
+                                        <td ng-show="columns['description']">
+                                            {{host.description}}
+                                        </td>
                                         <td ng-if="columns['hostnames']">
                                             <span ng-repeat="hostname in host.hostnames">
                                                 {{hostname}} <br>
                                             </span>
+                                        </td>
+                                        <td ng-show="columns['mac']">
+                                            {{host.mac}}
                                         </td>
                                         <td ng-show="columns['services']"><a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-bind="host.services || '-'"></a></td>
                                         <td ng-show="columns['vulns']"><a ng-href="#/status/ws/{{workspace}}/search/target={{host.name}}" ng-bind="host.vulns"></a></td>
@@ -130,6 +148,9 @@
                                             <span class="fa fa-exclamation-triangle" aria-hidden="true" ng-if="host.owned"></span>
                                             <span ng-if="host.owned"> owned</span>
                                             <span ng-if="!host.owned">not yet</span>
+                                        </td>
+                                        <td ng-show="columns['create_time']">
+                                            <span am-time-ago="host.metadata.create_time"></span>
                                         </td>
                                         <td ng-show="columns['last_modified']">
                                             <span am-time-ago="host.metadata.update_time"></span>

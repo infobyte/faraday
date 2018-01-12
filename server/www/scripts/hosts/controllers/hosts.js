@@ -12,19 +12,23 @@ angular.module('faradayApp')
             // hosts list
             $scope.hosts = [];
             $scope.totalHosts = 0;
-            $scope.columns = {
-                "name": true,
-                "description": false,
-                "hostnames": false,
-                "mac": false,
-                "services": true,
-                "vulns": true,
-                "credentials": true,
-                "os": true,
-                "owned": true,
-                "create_time": true,
-                "last_modified": true,
-            };
+            if($cookies.get('HColumns')) {
+                $scope.columns = JSON.parse($cookies.get('HColumns'))
+            }else{
+                $scope.columns = {
+                    "name": true,
+                    "description": false,
+                    "hostnames": false,
+                    "mac": false,
+                    "services": true,
+                    "vulns": true,
+                    "credentials": true,
+                    "os": true,
+                    "owned": true,
+                    "create_time": true,
+                    "last_modified": true,
+                };
+            }
             // current workspace
             $scope.workspace = $routeParams.wsId;
 
@@ -285,7 +289,7 @@ angular.module('faradayApp')
 
         $scope.toggleShow = function(column) {
             $scope.columns[column] = !$scope.columns[column];
-            return false;
+            $cookies.put('HColumns', JSON.stringify($scope.columns));
         };
 
         // toggles sort field and order

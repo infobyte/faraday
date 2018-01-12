@@ -73,6 +73,10 @@
                                             <a href="" ng-click="toggleSort('description')">Description</a>
                                             <a ng-click="toggleShow('description')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
                                         </th>
+                                        <th ng-show="columns['os']">
+                                            <a href="" ng-click="toggleSort('os')">OS</a>
+                                            <a ng-click="toggleShow('os')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
+                                        </th>
                                         <th ng-if="columns['hostnames']">
                                             <a href="">Hostnames</a>
                                             <a ng-click="toggleShow('hostnames')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
@@ -92,10 +96,6 @@
                                         <th ng-show="columns['credentials']">
                                             <a href="" ng-click="toggleSort('credentials')">Credentials</a>
                                             <a ng-click="toggleShow('credentials')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
-                                        </th>
-                                        <th ng-show="columns['os']">
-                                            <a href="" ng-click="toggleSort('os')">OS</a>
-                                            <a ng-click="toggleShow('os')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
                                         </th>
                                         <th ng-show="columns['owned']">
                                             <a href="" ng-click="toggleSort('owned')">Owned</a>
@@ -125,6 +125,12 @@
                                         <td ng-show="columns['description']">
                                             {{host.description}}
                                         </td>
+                                        <td ng-show="columns['os']">
+                                            <a ng-href="#/hosts/ws/{{workspace}}/search/os={{host.os}}">
+                                                <img ng-if="host.icon != undefined" ng-src="images/{{host.icon}}.png" uib-tooltip="{{host.os}}"/>
+                                                <span ng-if="host.icon == undefined" class="fa fa-laptop" uib-tooltip="{{host.os}}"></span>
+                                            </a>
+                                        </td>
                                         <td ng-if="columns['hostnames']">
                                             <span ng-repeat="hostname in host.hostnames">
                                                 {{hostname}} <br>
@@ -137,12 +143,6 @@
                                         <td ng-show="columns['vulns']"><a ng-href="#/status/ws/{{workspace}}/search/target={{host.name}}" ng-bind="host.vulns"></a></td>
                                         <td ng-show="columns['credentials']">
                                             <a ng-href="#/credentials/ws/{{workspace}}/hid/{{host._id}}">{{host.credentials}}</a>
-                                        </td>
-                                        <td ng-show="columns['os']">
-                                            <a ng-href="#/hosts/ws/{{workspace}}/search/os={{host.os}}">
-                                                <img ng-if="host.icon != undefined" ng-src="images/{{host.icon}}.png" uib-tooltip="{{host.os}}"/>
-                                                <span ng-if="host.icon == undefined" class="fa fa-laptop" uib-tooltip="{{host.os}}"></span>
-                                            </a>
                                         </td>
                                         <td ng-show="columns['owned']">
                                             <span class="fa fa-exclamation-triangle" aria-hidden="true" ng-if="host.owned"></span>

@@ -47,39 +47,55 @@
                                                 <i class="fa fa-refresh fa-spin" ng-if="!loadedVulns"></i>
                                             </span>
                                         </div>
-                                        <div class="input-group input-group-sm">
-                                            <input type="checkbox" ng-model="showHostnames" id="showHostnames" style="margin-left: 20px">Show hostnames
-                                        </div>
                                     </div>
                                 </form>
+                            </div>
+                            <div class="col-md-12 col-sm-9 col-xs-12" ng-show="hasDisabledFields()">
+                                <h4><span class="label label-default" title="Add columns">Add columns</span></h4>
+                                <ul class="label-list">
+                                    <li ng-repeat="(column, show) in columns">
+                                        <a href="" ng-click="toggleShow(column)" ng-show="!show">
+                                            <span class="label label-primary ws-name">{{column}}</span>
+                                        </a>
+                                    </li>
+                                    <!-- label-list -->
+                                </ul>
                             </div>
                             <table class="status-report hosts-list table table-responsive">
                                 <thead>
                                     <tr>
                                         <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
-                                        <th>
+                                        <th ng-show="columns['name']">
                                             <a href="" ng-click="toggleSort('name')">Name</a>
+                                            <a ng-click="toggleShow('name')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
                                         </th>
-                                        <th ng-if="showHostnames">
+                                        <th ng-if="columns['hostnames']">
                                             <a href="">Hostnames</a>
+                                            <a ng-click="toggleShow('hostnames')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
                                         </th>
-                                        <th>
+                                        <th ng-show="columns['services']">
                                             <a href="" ng-click="toggleSort('services')">Open Services</a>
+                                            <a ng-click="toggleShow('services')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
                                         </th>
-                                        <th>
+                                        <th ng-show="columns['vulns']">
                                             <a href="" ng-click="toggleSort('vulns')">Vulns</a>
+                                            <a ng-click="toggleShow('vulns')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
                                         </th>
-                                        <th>
+                                        <th ng-show="columns['credentials']">
                                             <a href="" ng-click="toggleSort('credentials')">Credentials</a>
+                                            <a ng-click="toggleShow('credentials')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
                                         </th>
-                                        <th>
+                                        <th ng-show="columns['os']">
                                             <a href="" ng-click="toggleSort('os')">OS</a>
+                                            <a ng-click="toggleShow('os')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
                                         </th>
-                                        <th>
+                                        <th ng-show="columns['owned']">
                                             <a href="" ng-click="toggleSort('owned')">Owned</a>
+                                            <a ng-click="toggleShow('owned')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
                                         </th>
-                                        <th>
+                                        <th ng-show="columns['last_modified']">
                                             <a href="" ng-click="toggleSort('metadata.update_time')">Last modified</a>
+                                            <a ng-click="toggleShow('last_modified')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
                                         </th>
                                     </tr>
                                 </thead>
@@ -90,32 +106,32 @@
                                                         selection-model-selected-class="multi-selected"
                                                         selection-model-on-change="selectedHosts()">
                                         <td><input type="checkbox" name="{{host._id}}"/></td>
-                                        <td>
+                                        <td ng-show="columns['name']">
                                             <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}">{{host.name}}</a>
                                             <osint-link query="host.name" osint="osint"></osint-link>
                                         </td>
-                                        <td ng-if="showHostnames">
+                                        <td ng-if="columns['hostnames']">
                                             <span ng-repeat="hostname in host.hostnames">
                                                 {{hostname}} <br>
                                             </span>
                                         </td>
-                                        <td><a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-bind="host.services || '-'"></a></td>
-                                        <td><a ng-href="#/status/ws/{{workspace}}/search/target={{host.name}}" ng-bind="host.vulns"></a></td>
-                                        <td>
+                                        <td ng-show="columns['services']"><a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-bind="host.services || '-'"></a></td>
+                                        <td ng-show="columns['vulns']"><a ng-href="#/status/ws/{{workspace}}/search/target={{host.name}}" ng-bind="host.vulns"></a></td>
+                                        <td ng-show="columns['credentials']">
                                             <a ng-href="#/credentials/ws/{{workspace}}/hid/{{host._id}}">{{host.credentials}}</a>
                                         </td>
-                                        <td>
+                                        <td ng-show="columns['os']">
                                             <a ng-href="#/hosts/ws/{{workspace}}/search/os={{host.os}}">
                                                 <img ng-if="host.icon != undefined" ng-src="images/{{host.icon}}.png" uib-tooltip="{{host.os}}"/>
                                                 <span ng-if="host.icon == undefined" class="fa fa-laptop" uib-tooltip="{{host.os}}"></span>
                                             </a>
                                         </td>
-                                        <td>
+                                        <td ng-show="columns['owned']">
                                             <span class="fa fa-exclamation-triangle" aria-hidden="true" ng-if="host.owned"></span>
                                             <span ng-if="host.owned"> owned</span>
                                             <span ng-if="!host.owned">not yet</span>
                                         </td>
-                                        <td>
+                                        <td ng-show="columns['last_modified']">
                                             <span am-time-ago="host.metadata.update_time"></span>
                                         </td>
                                     </tr>

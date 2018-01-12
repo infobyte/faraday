@@ -9,10 +9,19 @@ angular.module('faradayApp')
 
         var init = function() {
             $scope.selectall_hosts = false;
-            $scope.showHostnames = true;
             // hosts list
             $scope.hosts = [];
             $scope.totalHosts = 0;
+            $scope.columns = {
+                "name": true,
+                "hostnames": false,
+                "services": true,
+                "vulns": true,
+                "credentials": true,
+                "os": true,
+                "owned": true,
+                "last_modified": true,
+            };
             // current workspace
             $scope.workspace = $routeParams.wsId;
 
@@ -263,6 +272,17 @@ angular.module('faradayApp')
             $scope.hosts.forEach(function(host) {
                 host.selected = $scope.selectall_hosts;
             });
+        };
+
+        $scope.hasDisabledFields = function(){
+            return Object.values($scope.columns).some(function(show){
+                return !show
+            });
+        };
+
+        $scope.toggleShow = function(column) {
+            $scope.columns[column] = !$scope.columns[column];
+            return false;
         };
 
         // toggles sort field and order

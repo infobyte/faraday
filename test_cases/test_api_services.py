@@ -1,5 +1,9 @@
 # -*- coding: utf8 -*-
 """Tests for many API endpoints that do not depend on workspace_name"""
+try:
+    from urllib import urlencode
+except ImportError:
+    from urllib.parse import urlencode
 
 import pytest
 import json
@@ -10,7 +14,7 @@ from test_api_workspaced_base import ReadOnlyAPITests
 from server.models import (
     Service
 )
-from test_cases.factories import HostFactory
+from test_cases.factories import HostFactory, EmptyCommandFactory
 
 
 @pytest.mark.usefixtures('logged_user')
@@ -190,3 +194,26 @@ class TestListServiceView(ReadOnlyAPITests):
         res = test_client.put(self.url(service, workspace=service.workspace), data=raw_data)
         assert res.status_code == 200
         assert res.json['id'] == service.id
+
+    def test_create_service_from_command(self, test_client, session):
+        host = HostFactory.create(workspace=self.workspace)
+        command = EmptyCommandFactory.create(workspace=self.workspacegoogle)
+        session.commit()
+        assert len(command.command_objects) == 0
+        url = self.url(workspace=command.workspace) + '?' + urlencode({'command_id': command.id})
+        raw_data = {
+            "name": "SSH",
+            "description": "SSH service",
+            "owned": False,
+            "ports": [22],
+            "protocol": "tcp",
+            "status": "open",
+            "parent": host.id
+        }
+        res = test_client.post(url, data=raw_data)
+
+        assert res.status_code == 201
+        assert len(command.command_objects) == 1
+        cmd_obj = command.command_objects[0]
+        assert cmd_obj.object_type == 'service'
+        assert cmd_obj.object_id == res.json['id']

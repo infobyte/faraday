@@ -468,16 +468,18 @@ class CommandMixin():
             # if the object is created and updated in the same command
             # the command object already exists
             # we skip the creation.
+            object_type = obj.__class__.__table__.name
+
             command_object = CommandObject.query.filter_by(
                 object_id=obj.id,
-                object_type=obj.__class__.__name__,
+                object_type=object_type,
                 command=command,
                 workspace=obj.workspace,
             ).first()
             if created or not command_object:
                 command_object = CommandObject(
                     object_id=obj.id,
-                    object_type=obj.__class__.__name__,
+                    object_type=object_type,
                     command=command,
                     workspace=obj.workspace,
                     created_persistent=created

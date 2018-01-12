@@ -567,7 +567,7 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
         assert res.status_code == 201
         assert len(command.command_objects) == 1
         cmd_obj = command.command_objects[0]
-        assert cmd_obj.object_type == 'Host'
+        assert cmd_obj.object_type == 'host'
         assert cmd_obj.object_id == res.json['id']
 
     def test_create_host_cant_assign_command_from_another_workspace(self, test_client, session):

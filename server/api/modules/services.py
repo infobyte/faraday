@@ -40,7 +40,7 @@ class ServiceSchema(AutoSchema):
     vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
     credentials = fields.Integer(attribute='credentials_count', dump_only=True)
     metadata = SelfNestedField(MetadataSchema())
-    type = fields.Function(lambda obj: 'Host')
+    type = fields.Function(lambda obj: 'Host', dump_only=True)
 
     def load_ports(self, value):
         # TODO migration: handle empty list and not numeric value

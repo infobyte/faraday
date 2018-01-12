@@ -269,7 +269,7 @@ angular.module('faradayApp')
                 headerCellTemplate: header,
                 minWidth: '100',
                 maxWidth: '200',
-                sort: getColumnSort('hostnames'),
+                enableSorting: false,
                 visible: $scope.columns["hostnames"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'target',
@@ -347,6 +347,7 @@ angular.module('faradayApp')
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/impactcolumn.html',
                 headerCellTemplate: header,
                 sort: getColumnSort('impact'),
+                enableSorting: false,
                 visible: $scope.columns["impact"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'method',

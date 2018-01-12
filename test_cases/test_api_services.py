@@ -197,7 +197,7 @@ class TestListServiceView(ReadOnlyAPITests):
 
     def test_create_service_from_command(self, test_client, session):
         host = HostFactory.create(workspace=self.workspace)
-        command = EmptyCommandFactory.create(workspace=self.workspacegoogle)
+        command = EmptyCommandFactory.create(workspace=self.workspace)
         session.commit()
         assert len(command.command_objects) == 0
         url = self.url(workspace=command.workspace) + '?' + urlencode({'command_id': command.id})

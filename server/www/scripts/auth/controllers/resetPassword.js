@@ -26,7 +26,7 @@ angular.module('faradayApp')
         $scope.ok = function(){
             AccountSrv.changePassword($scope.data).then(
                     function(response, statusText, xhrObj){
-                        $scope.modal.close()
+                        $modalInstance.close()
                 }, function(xhrObj, textStatus, err) {
                     if (xhrObj.data.response.errors.password != undefined) {
                         $scope.form.current.$setValidity("current", false);

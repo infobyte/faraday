@@ -6,7 +6,7 @@ import time
 import logging
 from base64 import b64encode, b64decode
 
-from filteralchemy import FilterSet, operators
+from filteralchemy import Filter, FilterSet, operators
 from flask import request, current_app
 from flask import Blueprint
 from marshmallow import Schema, fields, post_load, ValidationError
@@ -115,7 +115,7 @@ class VulnerabilitySchema(AutoSchema):
     status = fields.Method(serialize='get_status', deserialize='load_status')  # TODO: this breaks enum validation.
     type = fields.Method(serialize='get_type', deserialize='load_type', required=True)
     obj_id = fields.String(dump_only=True, attribute='id')
-    target = fields.Method('get_target')
+    target = fields.String(dump_only=True, attribute='target_host_ip')
     metadata = SelfNestedField(CustomMetadataSchema())
     date = fields.DateTime(attribute='create_date',
                            dump_only=True)  # This is only used for sorting
@@ -164,12 +164,6 @@ class VulnerabilitySchema(AutoSchema):
 
     def get_issuetracker(self, obj):
         return {}
-
-    def get_target(self, obj):
-        if obj.service is not None:
-            return obj.service.host.ip
-        else:
-            return obj.host.ip
 
     def load_status(self, value):
         if value == 'opened':
@@ -255,18 +249,37 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
 _strict_filtering = {'default_operator': operators.Equal}
 
 
+class TargetFilter(Filter):
+    def filter(self, query, model, attr, value):
+        return query.filter(model.target_host_ip == value)
+
+
+class TypeFilter(Filter):
+    def filter(self, query, model, attr, value):
+        type_map = {
+            'Vulnerability': 'vulnerability',
+            'VulnerabilityWeb': 'vulnerability_web',
+        }
+        assert value in type_map
+        return query.filter(model.__table__.c.type == type_map[value])
+
+
+class CreatorFilter(Filter):
+    def filter(self, query, model, attr, value):
+        return query.filter(model.creator_command_tool == value)
+
+
 class VulnerabilityFilterSet(FilterSet):
     class Meta(FilterSetMeta):
         model = VulnerabilityWeb  # It has all the fields
-        # TODO migration: Check if we should add fields creator, owner,
-        # command, impact, type, service, issuetracker, tags, date, target,
-        # host, easeofresolution, evidence, policy violations, hostnames,
-        # target
+        # TODO migration: Check if we should add fields owner,
+        # command, impact, service, issuetracker, tags, date,
+        # host, easeofresolution, evidence, policy violations, hostnames
         fields = (
             "status", "website", "parameter_name", "query_string", "path",
             "data", "severity", "confirmed", "name", "request", "response",
             "parameters", "resolution", "method", "ease_of_resolution",
-            "description", "command_id")
+            "description", "command_id", "target", "creator")
 
         strict_fields = (
             "severity", "confirmed", "method"
@@ -276,6 +289,10 @@ class VulnerabilityFilterSet(FilterSet):
         column_overrides = {
             field: _strict_filtering for field in strict_fields}
         operators = (operators.ILike, operators.Equal)
+    target = TargetFilter(fields.Str())
+    type = TypeFilter(fields.Str(validate=[OneOf(['Vulnerability',
+                                                  'VulnerabilityWeb'])]))
+    creator = CreatorFilter(fields.Str())
 
     def filter(self):
         """Generate a filtered query from request parameters.
@@ -299,6 +316,7 @@ class VulnerabilityView(PaginatedMixin,
                         ReadWriteWorkspacedView):
     route_base = 'vulns'
     filterset_class = VulnerabilityFilterSet
+    sort_model_class = VulnerabilityWeb  # It has all the fields
     unique_fields_by_class = {
         'Vulnerability': [('name', 'description', 'host_id', 'service_id')],
         'VulnerabilityWeb': [('name', 'description', 'service_id', 'method',
@@ -372,6 +390,7 @@ class VulnerabilityView(PaginatedMixin,
 
             undefer(VulnerabilityGeneric.creator_command_id),
             undefer(VulnerabilityGeneric.creator_command_tool),
+            undefer(VulnerabilityGeneric.target_host_ip),
             joinedload(VulnerabilityGeneric.evidence),
             joinedload(VulnerabilityGeneric.tags),
         ]

@@ -57,7 +57,7 @@ angular.module("faradayApp")
             };
 
             var createDbUrl = function(wsName = "") {
-                return APIURL + "ws/" + wsName;
+                return APIURL + "ws/" + wsName + (wsName ? "/" : "");
             }
 
             var createDeleteUrl = createPutUrl;
@@ -487,14 +487,19 @@ angular.module("faradayApp")
                 return send_data(dbUrl, data, true, "POST");
             }
 
-            ServerAPI.updateWorkspace = function(workspace) {
-                var putUrl = createDbUrl(workspace.name);
-                return send_data(dbUrl, workspace, true, "PUT");
+            ServerAPI.updateWorkspace = function(workspace, wsName) {
+                var putUrl = createDbUrl(wsName || workspace.name);
+                return send_data(putUrl, workspace, true, "PUT");
             }
 
             ServerAPI.deleteWorkspace = function(wsName) {
                 var dbUrl = createDbUrl(wsName);
                 return _delete(dbUrl, false);
+            }
+
+            ServerAPI.changePassword = function(data) {
+                var url = BASEURL + "_api/change";
+                return serverComm('POST', url, data);
             }
 
         return ServerAPI;

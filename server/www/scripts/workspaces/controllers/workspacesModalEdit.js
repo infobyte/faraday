@@ -25,6 +25,11 @@ angular.module('faradayApp')
         };
         $scope.today();
 
+        $scope.newScope = function($event){
+            $scope.workspace.scope.push({key:''});
+            $event.preventDefault();
+        }
+
         $scope.clear = function () {
             $scope.dt = null;
         };

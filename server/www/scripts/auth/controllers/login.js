@@ -44,7 +44,7 @@ angular.module('faradayApp')
     }]);
 
 angular.module('faradayApp')
-    .controller('loginBarCtrl', ['$scope', '$location', '$cookies','loginSrv', function($scope, $location, $cookies,loginSrv) {
+    .controller('loginBarCtrl', ['$scope', '$location', '$cookies','loginSrv', '$uibModal', function($scope, $location, $cookies,loginSrv,$uibModal) {
         $scope.user = null;
         $scope.auth = loginSrv.isAuth();
 
@@ -69,6 +69,15 @@ angular.module('faradayApp')
                 $cookies.currentUrl = "";
             });
         };
+
+        $scope.changePasswordModal = function(){
+            $scope.modal = $uibModal.open({
+                templateUrl: 'scripts/auth/partials/changePassword.html',
+                controller: 'resetPassword',
+                size: 'lg'
+            });
+        }
+
     }]);
 
 angular.module('faradayApp')

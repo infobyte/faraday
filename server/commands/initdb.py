@@ -3,6 +3,7 @@ import string
 
 import os
 import sys
+import psycopg2
 from random import SystemRandom
 from tempfile import TemporaryFile
 from subprocess import Popen, PIPE
@@ -66,6 +67,7 @@ class InitDB():
             # current_psql_output is for checking psql command already known errors for each execution.
             psql_log_filename = os.path.join(faraday_path_conf, 'logs', 'psql_log.log')
             configure_existing_user = None
+            current_psql_output = TemporaryFile()
             with open(psql_log_filename, 'a+') as psql_log_file:
                 while configure_existing_user is None:
                     configure_existing_user = raw_input('Do you {blue} already have {white} a postgresql username and password? (yes/no): '.format(blue=Fore.BLUE, white=Fore.WHITE))
@@ -83,7 +85,7 @@ class InitDB():
                     if hostname not in ['localhost', '127.0.0.1']:
                         print('ERROR: can only create postgresql user on localhost')
                         sys.exit(1)
-                    current_psql_output = TemporaryFile()
+
                     username, password, process_status = self._configure_new_postgres_user(current_psql_output)
                     current_psql_output.seek(0)
                     psql_output = current_psql_output.read()
@@ -182,8 +184,34 @@ class InitDB():
         return_code = p.returncode
         if already_exists_error in output:
             print("{yellow}WARNING{white}: Role {username} already exists, skipping creation ".format(yellow=Fore.YELLOW, white=Fore.WHITE, username=username))
-            password = getpass.getpass("Database password: ")
 
+            invalid_pwd = True
+            while invalid_pwd:
+                password = getpass.getpass("Database password (ctrl-c to "
+                                           "cancel): ")
+
+                # check credentials
+                # this case only applies to instances without 'trust' config
+                # todo: check postgres config
+                try:
+                    connection = psycopg2.connect(dbname='postgres',
+                                                  user=username,
+                                                  password=password)
+                    cur = connection.cursor()
+                    cur.execute('SELECT * FROM pg_catalog.pg_tables;')
+                    cur.fetchall()
+                    connection.commit()
+                    connection.close()
+                    invalid_pwd = False
+                except psycopg2.Error as e:
+                    if 'authentication failed' in e.message:
+                        print('{red}ERROR{white}: User {username} already '
+                              'exists and provided password '
+                              'is incorrect'.format(white=Fore.WHITE,
+                                                    red=Fore.RED,
+                                                    username=username))
+                    else:
+                        raise
             return_code = 0
         return username, password, return_code
 
@@ -232,6 +260,8 @@ class InitDB():
             if 'could not connect to server' in ex.message:
                 print('ERROR: {red}PostgreSQL service{white} is not running. Please verify that it is running in port 5432 before executing setup script.'.format(red=Fore.RED, white=Fore.WHITE))
                 sys.exit(1)
+            elif 'password authentication failed' in ex.message:
+                print('ERROR: ')
             else:
                 raise
         except ImportError as ex:

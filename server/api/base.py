@@ -298,6 +298,7 @@ class SortableMixin(object):
     sort_field_paremeter_name = "sort"
     sort_direction_paremeter_name = "sort_dir"
     default_sort_direction = "asc"
+    sort_model_class = None  # Override to use a model with more fields
 
     def _get_order_field(self, **kwargs):
         try:
@@ -329,11 +330,12 @@ class SortableMixin(object):
 
         # TODO migration: improve this checking or use a whitelist.
         # Handle PrimaryKeyRelatedField
-        if order_field not in inspect(self.model_class).attrs:
+        model_class = self.sort_model_class or self.model_class
+        if order_field not in inspect(model_class).attrs:
             # It could be something like fields.Method
             raise InvalidUsage("Field not in the DB: %s" % order_field)
 
-        field = getattr(self.model_class, order_field)
+        field = getattr(model_class, order_field)
         sort_dir = flask.request.args.get(self.sort_direction_paremeter_name,
                                           self.default_sort_direction)
         if sort_dir not in ('asc', 'desc'):

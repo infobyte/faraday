@@ -5,6 +5,7 @@ import os
 import re
 import sys
 import json
+import logging
 import datetime
 
 import requests
@@ -63,6 +64,17 @@ COUCHDB_USER_PREFIX = 'org.couchdb.user:'
 COUCHDB_PASSWORD_PREFIX = '-pbkdf2-'
 
 logger = server.utils.logger.get_logger(__name__)
+
+importer_logfile = os.path.expanduser(os.path.join(
+    server.config.CONSTANTS.CONST_FARADAY_HOME_PATH,
+    server.config.CONSTANTS.CONST_FARADAY_LOGS_PATH, 'couchdb-importer.log'))
+importer_file_handler = logging.FileHandler(importer_logfile)
+formatter = logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+importer_file_handler.setFormatter(formatter)
+importer_file_handler.setLevel(logging.DEBUG)
+logger.addHandler(importer_file_handler)
+
 
 session = db.session
 

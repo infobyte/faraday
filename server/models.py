@@ -194,7 +194,7 @@ class Host(Metadata):
 
     __host_vulnerabilities = (
         select([func.count(text('vulnerability.id'))]).
-        select_from('vulnerability').
+        select_from(text('vulnerability')).
         where(text('vulnerability.host_id = host.id')).
         as_scalar()
     )

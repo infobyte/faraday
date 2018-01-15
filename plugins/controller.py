@@ -262,7 +262,7 @@ class PluginController(Thread):
         cmd_info.duration = time.time() - cmd_info.itime
         self._mapper_manager.update(cmd_info)
 
-        self.processOutput(plugin, term_output, cmd_info.getID())
+        self.processOutput(plugin, term_output, cmd_info)
         del self._active_plugins[pid]
         return True
 

@@ -42,7 +42,7 @@ def update_object_event(mapper, connection, instance):
         # sometimes apis will commit to db to have fk.
         # this will avoid duplicate messages on websockets
         return
-    name = getattr(instance, 'ip', None) or instance.name
+    name = getattr(instance, 'ip', None) or getattr(instance, 'name', None)
     msg = {
         'id': instance.id,
         'action': 'UPDATE',

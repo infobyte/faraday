@@ -253,9 +253,10 @@ class HostsSidebar(Gtk.Widget):
         vuln_count = host.getVulnAmount()
         os_icon, os_str = self.__decide_icon(host.getOS())
         display_str = str(host)
-        host_iter = self.model.append([str(host.id), os_icon, os_str, display_str, vuln_count])
-        self.host_id_to_iter[host.id] = host_iter
-        self.host_amount_in_model += 1
+        if str(host.id) not in map(lambda host_data: host_data[0], self.model):
+            host_iter = self.model.append([str(host.id), os_icon, os_str, display_str, vuln_count])
+            self.host_id_to_iter[host.id] = host_iter
+            self.host_amount_in_model += 1
 
     def add_relevant_hosts_to_model(self, hosts):
         """Takes a list of hosts. Add the hosts to the model without going
@@ -481,7 +482,7 @@ class HostsSidebar(Gtk.Widget):
     def create_search_entry(self):
         """Returns a simple search entry"""
         self.search_entry = Gtk.Entry()
-        self.search_entry.set_placeholder_text("Search a host by name...")
+        self.search_entry.set_placeholder_text("Search a host by ip...")
         self.search_entry.connect("activate", self.on_search_enter_key)
         self.search_entry.show()
         return self.search_entry

@@ -826,6 +826,10 @@ class Host(ModelBase):
         self.default_gateway = host.get('default_gateway')
         self.os = host.get('os') if host.get('os') else 'unknown'
         self.vuln_amount = int(host.get('vulns', 0))
+        self.ip = host.get('ip', self.name)
+
+    def getName(self):
+        return self.ip
 
     @staticmethod
     def publicattrsrefs():

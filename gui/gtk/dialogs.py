@@ -881,9 +881,8 @@ class HostInfoDialog(Gtk.Window):
         # the other columns with dummy info
 
         display_str = host.getName() + " (" + str(len(host.getVulns())) + ")"
-        # display_str = str(host)
         owned_status = ("Yes" if host.isOwned() else "No")
-        host_position = model.append(None, [host.getID(), host.getName(),
+        model.append(None, [str(host.getID()), host.getName(),
                                             host.getOS(), owned_status,
                                             str(len(host.getVulns())), "",
                                             "", "", "", "", "", "",
@@ -896,6 +895,8 @@ class HostInfoDialog(Gtk.Window):
         def lst_to_str(lst):
             """Convenient function to avoid this long line everywhere"""
             return ', '.join([str(word) for word in lst if word])
+
+        return model
 
     @scrollable(width=250)
     def create_main_tree_view(self, model):

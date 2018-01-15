@@ -1,17 +1,19 @@
 #!/usr/bin/env python
 
+import re
 import click
 import requests
 from requests import ConnectionError
 from sqlalchemy.exc import OperationalError
 
 from persistence.server.server import _conf, FARADAY_UP, SERVER_URL
-from server.importer import ImportCouchDB
 from server.commands.initdb import InitDB
 from server.commands.faraday_schema_display import DatabaseSchema
 from server.commands.app_urls import show_all_urls
 from server.commands.reset_db import reset_db_all
 from server.commands.reports import import_external_reports
+from server.models import db, User
+from server.importer import ImportCouchDB
 
 from server.web import app
 from utils.logs import setUpLogger
@@ -73,6 +75,38 @@ def database_schema():
     DatabaseSchema().run()
 
 
+def validate_user_unique_field(ctx, param, value):
+    with app.app_context():
+        if User.query.filter_by(**{param.name: value}).count():
+            raise click.ClickException("User already exists")
+    return value
+
+
+def validate_email(ctx, param, value):
+    if not re.match(r'[^@]+@[^@]+\.[^@]+', value):
+        raise click.BadParameter('Invalid email')
+
+    # Also validate that the email doesn't exist in the database
+    return validate_user_unique_field(ctx, param, value)
+
+
+@click.command()
+@click.option('--username', prompt=True, callback=validate_user_unique_field)
+@click.option('--email', prompt=True, callback=validate_email)
+@click.option('--password', prompt=True, hide_input=True,
+              confirmation_prompt=True)
+def create_user(username, email, password):
+    with app.app_context():
+        app.user_datastore.create_user(username=username,
+                                       email=email,
+                                       password=password,
+                                       is_ldap=False)
+        db.session.commit()
+        click.echo(click.style(
+            'User {} created successfully!'.format(username),
+            fg='green', bold=True))
+
+
 cli.add_command(process_reports)
 cli.add_command(reset_db)
 cli.add_command(show_urls)
@@ -80,6 +114,7 @@ cli.add_command(faraday_schema_display)
 cli.add_command(initdb)
 cli.add_command(import_from_couchdb)
 cli.add_command(database_schema)
+cli.add_command(create_user)
 
 
 if __name__ == '__main__':

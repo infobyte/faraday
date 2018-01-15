@@ -45,6 +45,15 @@ from flask_security import (
 )
 from server.utils.database import BooleanToIntColumn
 
+OBJECT_TYPES = [
+    'vulnerability',
+    'host',
+    'credential',
+    'service',
+    'source_code',
+    'comment',
+]
+
 
 class SQLAlchemy(OriginalSQLAlchemy):
     """Override to fix issues when doing a rollback with sqlite driver
@@ -500,7 +509,7 @@ class CommandObject(db.Model):
     id = Column(Integer, primary_key=True)
 
     object_id = Column(Integer, nullable=False)
-    object_type = Column(Text, nullable=False)
+    object_type = Column(Enum(*OBJECT_TYPES, name='object_types'), nullable=False)
 
     command = relationship('Command', backref='command_objects')
     command_id = Column(Integer, ForeignKey('command.id'), index=True)

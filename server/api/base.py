@@ -446,7 +446,7 @@ class CreateMixin(object):
         return obj
 
 
-class CommandMixing():
+class CommandMixin():
     """
         Created the command obj to log model activity after a command
         execution via the api (ex. from plugins)
@@ -468,16 +468,18 @@ class CommandMixing():
             # if the object is created and updated in the same command
             # the command object already exists
             # we skip the creation.
+            object_type = obj.__class__.__table__.name
+
             command_object = CommandObject.query.filter_by(
                 object_id=obj.id,
-                object_type=obj.__class__.__name__,
+                object_type=object_type,
                 command=command,
                 workspace=obj.workspace,
             ).first()
             if created or not command_object:
                 command_object = CommandObject(
                     object_id=obj.id,
-                    object_type=obj.__class__.__name__,
+                    object_type=object_type,
                     command=command,
                     workspace=obj.workspace,
                     created_persistent=created
@@ -487,7 +489,7 @@ class CommandMixing():
             db.session.add(command_object)
 
 
-class CreateWorkspacedMixin(CreateMixin, CommandMixing):
+class CreateWorkspacedMixin(CreateMixin, CommandMixin):
     """Add POST /<workspace_name>/ route"""
 
     def _perform_create(self, data, workspace_name):
@@ -532,7 +534,7 @@ class UpdateMixin(object):
         db.session.commit()
 
 
-class UpdateWorkspacedMixin(UpdateMixin, CommandMixing):
+class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
     """Add PUT /<id>/ route"""
 
     def _perform_update(self, object_id, obj, workspace_name):

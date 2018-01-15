@@ -1322,6 +1322,7 @@ class Command:
         self.params = command['params']
         self.user = command['user']
         self.workspace = command['workspace']
+        self.import_source = command['import_source']
 
     def getID(self):
         return self.id

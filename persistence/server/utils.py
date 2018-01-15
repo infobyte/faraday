@@ -139,5 +139,6 @@ def get_command_properties(command):
         'hostname': command.hostname,
         'itime': command.itime,
         'duration': command.duration,
-        'params': command.params
+        'params': command.params,
+        'import_source': command.import_source,
     }

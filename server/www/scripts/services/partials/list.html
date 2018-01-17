@@ -152,9 +152,9 @@
                             <div class="form-horizontal">
                                 <div class="form-group" ng-class="{'has-error': !host.ip }">
                                     <div class="col-md-12">
-                                        <strong ng-if="!editing">Name</strong>
-                                        <h5 ng-if="editing">Name</h5>
-                                        <label class="sr-only" for="name">Name</label>
+                                        <strong ng-if="!editing">IP</strong>
+                                        <h5 ng-if="editing">IP v4 or v6</h5>
+                                        <label class="sr-only" for="name">IP</label>
                                         <input type="text" class="form-control" id="ip" placeholder="IP" ng-model="host.ip" ng-if="editing" required/>
                                         <br ng-if="!editing">
                                         <span ng-if="!editing">{{host.ip}}</span>

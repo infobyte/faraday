@@ -18,7 +18,7 @@ tqdm==4.15.0
 twisted==17.5.0
 webargs
 marshmallow-sqlalchemy
-filteralchemy
+git+https://github.com/sh4r3m4n/filteralchemy@dev#egg=filteralchemy
 filedepot==0.5.0
 nplusone==0.8.1
 deprecation==1.0.1

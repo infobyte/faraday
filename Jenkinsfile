@@ -24,8 +24,6 @@ node (label: "master"){
             pip install -r $WORKSPACE/requirements_server.txt
             pip install -r $WORKSPACE/requirements_extras.txt
             pip install -r $WORKSPACE/requirements_dev.txt
-            pip uninstall -y filteralchemy
-            pip install -e git+https://github.com/sh4r3m4n/filteralchemy@dev#egg=filteralchemy
             deactivate
            """
     }

@@ -1,4 +1,6 @@
 import json
+import logging
+
 import Cookie
 from collections import defaultdict
 from Queue import Queue, Empty
@@ -11,7 +13,7 @@ from autobahn.twisted.websocket import (
     WebSocketServerProtocol
 )
 
-
+logger =logging.getLogger(__name__)
 changes_queue = Queue()
 
 
@@ -20,11 +22,8 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
     def onConnect(self, request):
         protocol, headers = None, {}
         # see if there already is a cookie set ..
-        print request
+        logger.debug('Websocket request {0}'.format(request))
         if 'cookie' in request.headers:
-            print 'cookie'
-            print (str(request.headers['cookie']))
-            print 'cookie'
             try:
                 cookie = Cookie.SimpleCookie()
                 cookie.load(str(request.headers['cookie']))
@@ -85,13 +84,13 @@ class WorkspaceServerFactory(WebSocketServerFactory):
         reactor.callLater(0.5, self.tick)
 
     def join_workspace(self, client, workspace):
-        print('Join workspace {0}'.format(workspace))
+        logger.debug('Join workspace {0}'.format(workspace))
         if client not in self.workspace_clients[workspace]:
-            print("registered client {}".format(client.peer))
+            logger.debug("registered client {}".format(client.peer))
             self.workspace_clients[workspace].append(client)
 
     def leave_workspace(self, client, workspace_name):
-        print('Leave workspace {0}'.format(workspace_name))
+        logger.debug('Leave workspace {0}'.format(workspace_name))
         self.workspace_clients[workspace_name].remove(client)
 
     def unregister(self, client_to_unregister):
@@ -101,13 +100,13 @@ class WorkspaceServerFactory(WebSocketServerFactory):
         for workspace_name, clients in self.workspace_clients.items():
             for client in clients:
                 if client == client_to_unregister:
-                    print("unregistered client from workspace {0}".format(workspace_name))
+                    logger.debug("unregistered client from workspace {0}".format(workspace_name))
                     self.leave_workspace(client, workspace_name)
                     return
 
     def broadcast(self, msg):
-        print("broadcasting prepared message '{}' ..".format(msg))
+        logger.debug("broadcasting prepared message '{}' ..".format(msg))
         prepared_msg = json.loads(self.prepareMessage(msg).payload)
         for client in self.workspace_clients[prepared_msg['workspace']]:
             reactor.callFromThread(client.sendPreparedMessage, self.prepareMessage(msg))
-            print("prepared message sent to {}".format(client.peer))
+            logger.debug("prepared message sent to {}".format(client.peer))

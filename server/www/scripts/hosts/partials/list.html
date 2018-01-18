@@ -82,21 +82,25 @@
                                         <a href="">Hostnames</a>
                                         <a ng-click="toggleShow('hostnames')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
                                     </th>
+                                    <th ng-if="columns['services']">
+                                        <a href="">Services</a>
+                                        <a ng-click="toggleShow('services')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
+                                    </th>
                                     <th ng-if="columns['mac']">
                                         <a href="" ng-click="toggleSort('mac')">MAC</a>
                                         <a ng-click="toggleShow('mac')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
                                     </th>
-                                    <th ng-show="columns['services']">
+                                    <th ng-show="columns['service_count']">
                                         <a href="" ng-click="toggleSort('services')">Open Services</a>
-                                        <a ng-click="toggleShow('services')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
+                                        <a ng-click="toggleShow('service_count')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
                                     </th>
-                                    <th ng-show="columns['vulns']">
+                                    <th ng-show="columns['vuln_count']">
                                         <a href="" ng-click="toggleSort('vulns')">Vulns</a>
-                                        <a ng-click="toggleShow('vulns')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
+                                        <a ng-click="toggleShow('vuln_count')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
                                     </th>
-                                    <th ng-show="columns['credentials']">
+                                    <th ng-show="columns['credential_count']">
                                         <a href="" ng-click="toggleSort('credentials')">Credentials</a>
-                                        <a ng-click="toggleShow('credentials')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
+                                        <a ng-click="toggleShow('credential_count')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
                                     </th>
                                     <th ng-show="columns['owned']">
                                         <a href="" ng-click="toggleSort('owned')">Owned</a>
@@ -137,12 +141,17 @@
                                             {{hostname}} <br>
                                         </span>
                                     </td>
+                                    <td ng-if="columns['services']">
+                                        <span ng-repeat="summary in host.service_summaries">
+                                            {{summary}} <br>
+                                        </span>
+                                    </td>
                                     <td ng-show="columns['mac']">
                                         {{host.mac}}
                                     </td>
-                                    <td ng-show="columns['services']"><a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-bind="host.services || '-'"></a></td>
-                                    <td ng-show="columns['vulns']"><a ng-href="#/status/ws/{{workspace}}/search/target={{host.name}}" ng-bind="host.vulns"></a></td>
-                                    <td ng-show="columns['credentials']">
+                                    <td ng-show="columns['service_count']"><a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-bind="host.services || '-'"></a></td>
+                                    <td ng-show="columns['vuln_count']"><a ng-href="#/status/ws/{{workspace}}/search/target={{host.name}}" ng-bind="host.vulns"></a></td>
+                                    <td ng-show="columns['credential_count']">
                                         <a ng-href="#/credentials/ws/{{workspace}}/hid/{{host._id}}">{{host.credentials}}</a>
                                     </td>
                                     <td ng-show="columns['owned']">

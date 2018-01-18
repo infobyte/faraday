@@ -50,6 +50,9 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
         WebSocketServerProtocol.connectionLost(self, reason)
         self.factory.unregister(self)
 
+    def sendServerStatus(self, redirectUrl=None, redirectAfter=0):
+        self.sendHtml('This is a websocket port.')
+
 
 class WorkspaceServerFactory(WebSocketServerFactory):
     """

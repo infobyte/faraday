@@ -895,9 +895,9 @@ angular.module('faradayApp')
         $scope.insert = function(vuln) {
             vulnsManager.createVuln($scope.workspace, vuln).then(function() {
                 loadVulns();
-            }, function(message) {
+            }, function(data) {
                 var msg = "The vulnerability couldn't be created";
-                if(message == "409") {
+                if(data.status == 409) {
                     msg += " because a vulnerability with the same parameters already exists in this Workspace";
                 }
                 showMessage(msg);

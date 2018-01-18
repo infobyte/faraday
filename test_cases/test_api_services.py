@@ -217,3 +217,18 @@ class TestListServiceView(ReadOnlyAPITests):
         cmd_obj = command.command_objects[0]
         assert cmd_obj.object_type == 'service'
         assert cmd_obj.object_id == res.json['id']
+
+
+    def test_create_service_without_ost(self, test_client, host, session):
+        session.commit()
+        data = {
+            "name": "ftp",
+            "description": "test. test",
+            "owned": False,
+            "ports": [21],
+            "protocol": "tcp",
+            "status": "open",
+        }
+        res = test_client.post(self.url(), data=data)
+        assert res.status_code == 400
+        assert res.json['messages']['_schema'] == res.json['messages']['_schema']

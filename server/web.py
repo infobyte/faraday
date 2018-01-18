@@ -37,10 +37,29 @@ app = create_app()  # creates a Flask(__name__) app
 logger = server.utils.logger.get_logger(__name__)
 
 
-class FileWithoutDirectoryListing(File):
+class CleanHttpHeadersResource(Resource, object):
+    def render(self, request):
+        request.responseHeaders.removeHeader('Server')
+        return super(CleanHttpHeadersResource, self).render(request)
+
+
+class FileWithoutDirectoryListing(File, CleanHttpHeadersResource):
 
     def directoryListing(self):
         return ForbiddenResource()
+
+
+class FaradayWSGIResource(WSGIResource, object):
+    def render(self, request):
+        request.responseHeaders.removeHeader('Server')
+        return super(FaradayWSGIResource, self).render(request)
+
+
+class FaradayRedirectResource(Redirect, object):
+    def render(self, request):
+        request.responseHeaders.removeHeader('Server')
+        return super(FaradayWSGIResource, self).render(request)
+
 
 class WebServer(object):
     HOME = ''
@@ -71,7 +90,7 @@ class WebServer(object):
         return ssl.DefaultOpenSSLContextFactory(*certs)
 
     def __build_server_tree(self):
-        self.__root_resource = Resource()
+        self.__root_resource = CleanHttpHeadersResource()
         self.__root_resource.putChild(WebServer.HOME, self.__build_web_redirect())
         self.__root_resource.putChild(
             WebServer.UI_URL_PATH, self.__build_web_resource())
@@ -79,13 +98,13 @@ class WebServer(object):
             WebServer.API_URL_PATH, self.__build_api_resource())
 
     def __build_web_redirect(self):
-        return Redirect(WebServer.UI_URL_PATH)
+        return FaradayRedirectResource(WebServer.UI_URL_PATH)
 
     def __build_web_resource(self):
         return FileWithoutDirectoryListing(WebServer.WEB_UI_LOCAL_PATH)
 
     def __build_api_resource(self):
-        return WSGIResource(reactor, reactor.getThreadPool(), app)
+        return FaradayWSGIResource(reactor, reactor.getThreadPool(), app)
 
     def __build_websockets_resource(self):
         logger.info(u"Websocket listening at wss://{0}:9000".format(self.__bind_address))

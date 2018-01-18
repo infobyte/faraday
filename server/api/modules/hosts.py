@@ -52,9 +52,8 @@ class HostSchema(AutoSchema):
         fields.List(fields.String))
     metadata = SelfNestedField(MetadataSchema())
     type = fields.Function(lambda obj: 'Host', dump_only=True)
-    service_summaries = PrimaryKeyRelatedField('summary', attribute='services',
-                                               many=True,
-                                               dump_only=True)
+    service_summaries = fields.Method('get_service_summaries',
+                                      dump_only=True)
 
     class Meta:
         model = Host
@@ -63,6 +62,11 @@ class HostSchema(AutoSchema):
                   'name', 'os', 'owned', 'owner', 'services', 'vulns',
                   'hostnames', 'type', 'service_summaries'
                   )
+
+    def get_service_summaries(self, obj):
+        return [service.summary
+                for service in obj.services
+                if service.status == 'open']
 
 
 class ServiceFilter(Filter):

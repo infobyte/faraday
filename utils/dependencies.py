@@ -11,9 +11,10 @@ import pkg_resources
 
 def check_dependencies(requirements_file='requirements.txt'):
     dependencies_file = open(requirements_file, 'r')
+    filtered_deps = [x for x in dependencies_file.readlines() if not
+    x.startswith('git+')]
 
-    requirements = list(pkg_resources.parse_requirements([x for x in
-                                                          dependencies_file.readlines() if not x.startswith('git+')]))
+    requirements = list(pkg_resources.parse_requirements(filtered_deps))
 
     installed = []
     missing = []

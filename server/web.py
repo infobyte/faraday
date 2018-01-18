@@ -84,7 +84,7 @@ class WebServer(object):
         return WSGIResource(reactor, reactor.getThreadPool(), app)
 
     def __build_websockets_resource(self):
-        print(u"wss://{0}:9000".format(self.__bind_address))
+        logger.info(u"Websocket listening at wss://{0}:9000".format(self.__bind_address))
         factory = WorkspaceServerFactory(u"ws://{0}:9000".format(self.__bind_address))
         factory.protocol = BroadcastServerProtocol
         return factory

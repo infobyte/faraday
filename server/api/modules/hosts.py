@@ -52,13 +52,16 @@ class HostSchema(AutoSchema):
         fields.List(fields.String))
     metadata = SelfNestedField(MetadataSchema())
     type = fields.Function(lambda obj: 'Host', dump_only=True)
+    service_summaries = PrimaryKeyRelatedField('summary', attribute='services',
+                                               many=True,
+                                               dump_only=True)
 
     class Meta:
         model = Host
         fields = ('id', '_id', '_rev', 'ip', 'description', 'mac',
                   'credentials', 'default_gateway', 'metadata',
                   'name', 'os', 'owned', 'owner', 'services', 'vulns',
-                  'hostnames', 'type',
+                  'hostnames', 'type', 'service_summaries'
                   )
 
 
@@ -89,7 +92,7 @@ class HostsView(PaginatedMixin,
     get_undefer = [Host.credentials_count,
                    Host.open_service_count,
                    Host.vulnerability_count]
-    get_joinedloads = [Host.hostnames]
+    get_joinedloads = [Host.hostnames, Host.services]
 
     @route('/<host_id>/services/')
     def service_list(self, workspace_name, host_id):

@@ -465,6 +465,7 @@ class TestHostAPI:
             u'owned': False,
             u'owner': host.creator.username,
             u'services': 0,
+            u'service_summaries': [],
             u'vulns': 0}
 
 
@@ -585,3 +586,24 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
         assert res.status_code == 400
         assert res.json == {u'message': u'Command not found.'}
         assert len(command.command_objects) == 0
+
+    def test_service_summaries(self, test_client, session, service_factory):
+        service_factory.create(name='http', protocol='tcp', port=80,
+                               host=self.first_object,
+                               workspace=self.workspace)
+        service_factory.create(name='https', protocol='tcp', port=443,
+                               host=self.first_object,
+                               workspace=self.workspace)
+        service_factory.create(name='dns', protocol='udp', port=53,
+                               host=self.first_object,
+                               workspace=self.workspace)
+        session.commit()
+        res = test_client.get(self.url(self.first_object))
+        assert res.status_code == 200
+        service_summaries = res.json['service_summaries']
+        service_summaries.sort()  # TODO migration: quit this and define sort
+        assert service_summaries == [
+            '(443/tcp) https',
+            '(53/udp) dns',
+            '(80/tcp) http',
+        ]

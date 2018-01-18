@@ -349,6 +349,10 @@ class Service(Metadata):
     def parent(self):
         return self.host
 
+    @property
+    def summary(self):
+        return "(%s/%s) %s" % (self.port, self.protocol, self.name)
+
 
 class VulnerabilityABC(Metadata):
     # revisar plugin nexpose, netspark para terminar de definir uniques. asegurar que se carguen bien

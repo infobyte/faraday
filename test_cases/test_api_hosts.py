@@ -594,11 +594,14 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
         service_factory.create(name='https', protocol='tcp', port=443,
                                host=self.first_object, status='open',
                                workspace=self.workspace)
-        service_factory.create(name='dns', protocol='udp', port=53,
+        service_factory.create(name='dns', protocol='udp', port=5353,
                                host=self.first_object, status='open',
                                workspace=self.workspace)
         service_factory.create(name='smtp', protocol='tcp', port=25,
                                host=self.first_object, status='filtered',
+                               workspace=self.workspace)
+        service_factory.create(name='dns', protocol='udp', port=53,
+                               host=self.first_object, status='open',
                                workspace=self.workspace)
         service_factory.create(name='other', protocol='udp', port=1234,
                                host=self.first_object, status='closed',
@@ -607,9 +610,9 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
         res = test_client.get(self.url(self.first_object))
         assert res.status_code == 200
         service_summaries = res.json['service_summaries']
-        service_summaries.sort()  # TODO migration: quit this and define sort
         assert service_summaries == [
+            '(80/tcp) http',
             '(443/tcp) https',
             '(53/udp) dns',
-            '(80/tcp) http',
+            '(5353/udp) dns',
         ]

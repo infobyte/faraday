@@ -189,6 +189,11 @@ class Host(Metadata):
     mac = Column(Text, nullable=True)
     net_segment = Column(Text, nullable=True)
 
+    services = relationship(
+        'Service',
+        order_by='Service.protocol,Service.port',
+    )
+
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True,
                           nullable=False)
     workspace = relationship(
@@ -328,7 +333,9 @@ class Service(Metadata):
     banner = Column(Text, nullable=True)
 
     host_id = Column(Integer, ForeignKey('host.id'), index=True, nullable=False)
-    host = relationship('Host', backref='services', foreign_keys=[host_id])
+    host = relationship(
+        'Host',
+        foreign_keys=[host_id])
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(

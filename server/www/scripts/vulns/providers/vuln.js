@@ -191,11 +191,11 @@ angular.module('faradayApp')
                     self._save(resp, false)
                         .then(function(data) {
                             deferred.resolve(self);
-                        }, function(data, status, headers, config) {
-                            deferred.reject(status);
+                        }, function(data) {
+                            deferred.reject(data);
                         });
-                }, function() {
-                    deferred.reject();
+                }, function(data) {
+                    deferred.reject(data);
                 });
 
                 return deferred.promise;

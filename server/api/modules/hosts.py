@@ -120,6 +120,9 @@ class HostsView(PaginatedMixin,
         else:
             obj.set_hostnames(hostnames)
 
+        # A commit is required here, otherwise it breaks (i'm not sure why)
+        db.session.commit()
+
         return super(HostsView, self)._update_object(obj, data)
 
     def _filter_query(self, query):

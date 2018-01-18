@@ -151,6 +151,7 @@ angular.module('faradayApp')
             }
 
             $scope.columns = {
+                "_id":               true,
                 "date":             true,
                 "name":             true,
                 "severity":         true,
@@ -233,6 +234,14 @@ angular.module('faradayApp')
                     '       <div ui-grid-filter></div>'+
                     '   </div>';
 
+            $scope.gridOptions.columnDefs.push({ name : '_id',
+                displayName : "id",
+                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/idcolumn.html',
+                headerCellTemplate: header,
+                width: '50',
+                sort: getColumnSort('_id'),
+                visible: $scope.columns["_id"]
+            });
             $scope.gridOptions.columnDefs.push({ name : 'date',
                 displayName : "date",
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/datecolumn.html',
@@ -930,13 +939,13 @@ angular.module('faradayApp')
                 // Add the total amount of vulnerabilities as an option for pagination
                 // if it is larger than our biggest page size
                 if ($scope.gridOptions.totalItems > paginationOptions.defaultPageSizes[paginationOptions.defaultPageSizes.length - 1]) {
-                    
+
                     $scope.gridOptions.paginationPageSizes = paginationOptions.defaultPageSizes.concat([$scope.gridOptions.totalItems]);
-                    
+
                     // sadly, this will load the vuln list again because it fires a paginationChanged event
                     if ($scope.gridOptions.paginationPageSize > $scope.gridOptions.totalItems)
                         $scope.gridOptions.paginationPageSize = $scope.gridOptions.totalItems;
-                    
+
                     // New vuln and MAX items per page setted => reload page size.
                     if ($scope.gridOptions.paginationPageSize === $scope.gridOptions.totalItems - 1)
                         $scope.gridOptions.paginationPageSize = $scope.gridOptions.totalItems;

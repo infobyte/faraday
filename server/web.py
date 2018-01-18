@@ -7,7 +7,7 @@ import sys
 import functools
 
 import twisted.web
-from twisted.web.resource import Resource
+from twisted.web.resource import Resource, ForbiddenResource
 
 # Ugly hack to make "flask shell" work. It works because when running via flask
 # shell, __file__ will be server/web.py instead of faraday-server.py
@@ -22,7 +22,6 @@ from twisted.web.static import File
 from twisted.web.util import Redirect
 from twisted.web.wsgi import WSGIResource
 from autobahn.twisted.websocket import (
-    WebSocketServerFactory,
     listenWS
 )
 import server.config
@@ -37,6 +36,11 @@ from server.websocket_factories import (
 app = create_app()  # creates a Flask(__name__) app
 logger = server.utils.logger.get_logger(__name__)
 
+
+class FileWithoutDirectoryListing(File):
+
+    def directoryListing(self):
+        return ForbiddenResource()
 
 class WebServer(object):
     HOME = ''
@@ -78,13 +82,13 @@ class WebServer(object):
         return Redirect(WebServer.UI_URL_PATH)
 
     def __build_web_resource(self):
-        return File(WebServer.WEB_UI_LOCAL_PATH)
+        return FileWithoutDirectoryListing(WebServer.WEB_UI_LOCAL_PATH)
 
     def __build_api_resource(self):
         return WSGIResource(reactor, reactor.getThreadPool(), app)
 
     def __build_websockets_resource(self):
-        print(u"wss://{0}:9000".format(self.__bind_address))
+        logger.info(u"Websocket listening at wss://{0}:9000".format(self.__bind_address))
         factory = WorkspaceServerFactory(u"ws://{0}:9000".format(self.__bind_address))
         factory.protocol = BroadcastServerProtocol
         return factory

@@ -136,6 +136,30 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
         res = test_client.put(self.url(workspace=credential.workspace) + str(credential.id) + '/', data=raw_data)
         assert res.status_code == 400
 
+    def test_create_with_invalid_parent_type(
+            self, session, test_client, workspace, service_factory):
+        service = service_factory.create(workspace=workspace)
+        session.commit()
+        raw_data = {
+            "_id":"1.e5069bb0718aa519852e6449448eedd717f1b90d",
+            "name":"name",
+            "username":"username",
+            "metadata":{"update_time":1508794240799,"update_user":"",
+                        "update_action":0,"creator":"UI Web",
+                        "create_time":1508794240799,"update_controller_action":"",
+                        "owner":""},
+            "password":"pass",
+            "type":"Cred",
+            "owner":"",
+            "description":"",
+            "parent": service.id,
+            "parent_type": "Vulnerability"
+        }
+        res = test_client.post(self.url(), data=raw_data)
+        assert res.status_code == 400
+        assert res.json['messages']['_schema'] == ['Unknown parent type: Vulnerability']
+
+
     def test_update_credentials(self, test_client, session, host):
         credential = self.factory.create(host=host, service=None,
                                          workspace=self.workspace)

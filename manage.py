@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 
 import re
+
 import click
 import requests
 from requests import ConnectionError
 from sqlalchemy.exc import OperationalError
+from pgcli.main import PGCli
 
+import server.config
 from persistence.server.server import _conf, FARADAY_UP, SERVER_URL
 from server.commands.initdb import InitDB
 from server.commands.faraday_schema_display import DatabaseSchema
@@ -74,6 +77,14 @@ def import_from_couchdb():
 def database_schema():
     DatabaseSchema().run()
 
+@click.command()
+def sql_shell():
+    conn_string = server.config.database.connection_string.strip("'")
+
+    pgcli = PGCli()
+    pgcli.connect_uri(conn_string)
+    pgcli.run_cli()
+
 
 def validate_user_unique_field(ctx, param, value):
     with app.app_context():
@@ -115,6 +126,7 @@ cli.add_command(initdb)
 cli.add_command(import_from_couchdb)
 cli.add_command(database_schema)
 cli.add_command(create_user)
+cli.add_command(sql_shell)
 
 
 if __name__ == '__main__':

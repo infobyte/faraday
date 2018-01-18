@@ -460,25 +460,6 @@ _/ ____\_____  ____________     __| _/_____   ___.__.
     logger.info("Starting Faraday IDE.")
 
 
-def update():
-    """Updates Faraday IDE.
-
-    Deletes every .pyc file and does a git pull to the official repository.
-
-    """
-    if args.update:
-        CONF = getInstanceConfiguration()
-
-        if not is_authenticated(CONF.getServerURI(), CONF.getDBSessionCookies()):
-            logger.warning("Credentials needed to update.")
-            doLoginLoop()
-
-        from updates.updater import Updater
-        Updater().doUpdates()
-        logger.info("Update process finished with no errors")
-        logger.info("Faraday will start now.")
-
-
 def checkUpdates():
     import requests
     uri = getInstanceConfiguration().getUpdatesUri()
@@ -644,7 +625,6 @@ def main():
 
     check_faraday_version()
 
-    update()
     checkUpdates()
     startFaraday()
 

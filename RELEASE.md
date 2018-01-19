@@ -22,6 +22,7 @@ TBA:
 * Add optional hostnames, services, MAC and description fields to the host list
 * Workspace names can be changed from the Web UI
 * Changed the scope field of a workspace from a free text input to a list of targets
+* Exploitation and severity fields only allow certain values. CWE CVEs were fixed to be valid. A script to convert custom CSVs was added.
 
 November 17, 2017:
 ---

@@ -17,7 +17,7 @@ TBA:
 * Communication object was removed and replaced with Comment
 * Show credentials count in summarized report on the dashboard
 * Remove vuln template CWE fields, join it with references
-* Allow to search hosts by hostname
+* Allow to search hosts by hostname, os and service name
 * Allow the user to specify the desired fields of the host list table
 * Add optional hostnames, services, MAC and description fields to the host list
 * Workspace names can be changed from the Web UI

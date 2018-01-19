@@ -590,28 +590,34 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
     def test_service_summaries(self, test_client, session, service_factory):
         service_factory.create(name='http', protocol='tcp', port=80,
                                host=self.first_object, status='open',
+                               version='nginx',
                                workspace=self.workspace)
         service_factory.create(name='https', protocol='tcp', port=443,
                                host=self.first_object, status='open',
+                               version=None,
                                workspace=self.workspace)
         service_factory.create(name='dns', protocol='udp', port=5353,
                                host=self.first_object, status='open',
+                               version=None,
                                workspace=self.workspace)
         service_factory.create(name='smtp', protocol='tcp', port=25,
                                host=self.first_object, status='filtered',
+                               version=None,
                                workspace=self.workspace)
         service_factory.create(name='dns', protocol='udp', port=53,
                                host=self.first_object, status='open',
+                               version=None,
                                workspace=self.workspace)
         service_factory.create(name='other', protocol='udp', port=1234,
                                host=self.first_object, status='closed',
+                               version=None,
                                workspace=self.workspace)
         session.commit()
         res = test_client.get(self.url(self.first_object))
         assert res.status_code == 200
         service_summaries = res.json['service_summaries']
         assert service_summaries == [
-            '(80/tcp) http',
+            '(80/tcp) http (nginx)',
             '(443/tcp) https',
             '(53/udp) dns',
             '(5353/udp) dns',

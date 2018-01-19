@@ -133,9 +133,11 @@ class HostsView(PaginatedMixin,
             match_ip = Host.ip.ilike(like_term)
             match_service_name = Host.services.any(
                 Service.name.ilike(like_term))
+            match_os = Host.os.ilike(like_term)
             match_hostname = Host.hostnames.any(Hostname.name.ilike(like_term))
             query = query.filter(match_ip |
                                  match_service_name |
+                                 match_os |
                                  match_hostname)
         return query
 

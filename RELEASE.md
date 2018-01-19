@@ -17,11 +17,12 @@ TBA:
 * Communication object was removed and replaced with Comment
 * Show credentials count in summarized report on the dashboard
 * Remove vuln template CWE fields, join it with references
-* Allow to search hosts by hostname
+* Allow to search hosts by hostname, os and service name
 * Allow the user to specify the desired fields of the host list table
 * Add optional hostnames, services, MAC and description fields to the host list
 * Workspace names can be changed from the Web UI
 * Changed the scope field of a workspace from a free text input to a list of targets
+* Exploitation and severity fields only allow certain values. CWE CVEs were fixed to be valid. A script to convert custom CSVs was added.
 
 November 17, 2017:
 ---

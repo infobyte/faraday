@@ -358,7 +358,12 @@ class Service(Metadata):
 
     @property
     def summary(self):
-        return "(%s/%s) %s" % (self.port, self.protocol, self.name)
+        if self.version and self.version.lower() != "unknown":
+            version = " (" + self.version + ")"
+        else:
+            version = ""
+        return "(%s/%s) %s%s" % (self.port, self.protocol, self.name,
+                                  version or "")
 
 
 class VulnerabilityABC(Metadata):

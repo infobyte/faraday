@@ -4,8 +4,11 @@
 import logging
 
 import os
+import string
 from os.path import join, expanduser
+from random import SystemRandom
 
+from server.config import LOCAL_CONFIG_FILE
 from server.models import User
 
 try:
@@ -117,10 +120,24 @@ def register_handlers(app):
             #     map(str,Counter(q.statement for q in queries).most_common()))
         return response
 
+def save_new_secret_key(app):
+    config = ConfigParser()
+    config.read(LOCAL_CONFIG_FILE)
+    rng = SystemRandom()
+    secret_key = "".join([rng.choice(string.ascii_letters + string.digits) for _ in xrange(25)])
+    app.config['SECRET_KEY'] = secret_key
+    config.set('faraday_server', 'secret_key', secret_key)
+    with open(LOCAL_CONFIG_FILE, 'w') as configfile:
+        config.write(configfile)
+
 def create_app(db_connection_string=None, testing=None):
     app = Flask(__name__)
 
-    app.config['SECRET_KEY'] = 'supersecret'
+    try:
+        app.config['SECRET_KEY'] = server.config.faraday_server.secret_key
+    except Exception:
+        save_new_secret_key(app)
+
     app.config['SECURITY_PASSWORD_SINGLE_HASH'] = True
     app.config['WTF_CSRF_ENABLED'] = False
     app.config['SECURITY_USER_IDENTITY_ATTRIBUTES'] = ['username']

@@ -938,7 +938,8 @@ class ImportCouchDBUsers():
         scheme = doc.get('password_scheme', 'unset')
         if scheme != 'pbkdf2':
             # Flask Security will encrypt the password next time the user logs in.
-            logger.warning('Found user {0} without password.'.format(doc.get('name')))
+            logger.warning('Found user {0} without password. Setting its '
+                           'password to "changeme"'.format(doc.get('name')))
             return 'changeme'
         return self.modular_crypt_pbkdf2_sha1(doc['derived_key'], doc['salt'],
                                          doc['iterations'])

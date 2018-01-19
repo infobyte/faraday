@@ -70,21 +70,17 @@
                                         <a href="" ng-click="toggleSort('name')">IP</a>
                                         <a ng-click="toggleShow('name')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
                                     </th>
-                                    <th ng-show="columns['description']">
-                                        <a href="" ng-click="toggleSort('description')">Description</a>
-                                        <a ng-click="toggleShow('description')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
-                                    </th>
                                     <th ng-show="columns['os']">
                                         <a href="" ng-click="toggleSort('os')">OS</a>
                                         <a ng-click="toggleShow('os')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
                                     </th>
-                                    <th ng-if="columns['hostnames']">
-                                        <a href="">Hostnames</a>
-                                        <a ng-click="toggleShow('hostnames')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
-                                    </th>
                                     <th ng-if="columns['services']">
                                         <a href="">Services</a>
                                         <a ng-click="toggleShow('services')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
+                                    </th>
+                                    <th ng-if="columns['hostnames']">
+                                        <a href="">Hostnames</a>
+                                        <a ng-click="toggleShow('hostnames')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
                                     </th>
                                     <th ng-if="columns['mac']">
                                         <a href="" ng-click="toggleSort('mac')">MAC</a>
@@ -105,6 +101,10 @@
                                     <th ng-show="columns['owned']">
                                         <a href="" ng-click="toggleSort('owned')">Owned</a>
                                         <a ng-click="toggleShow('owned')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
+                                    </th>
+                                    <th ng-show="columns['description']">
+                                        <a href="" ng-click="toggleSort('description')">Description</a>
+                                        <a ng-click="toggleShow('description')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
                                     </th>
                                     <th ng-show="columns['create_time']">
                                         <a href="" ng-click="toggleSort('metadata.create_time')">Creation time</a>
@@ -127,23 +127,20 @@
                                         <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}">{{host.name}}</a>
                                         <osint-link query="host.name" osint="osint"></osint-link>
                                     </td>
-                                    <td ng-show="columns['description']">
-                                        {{host.description}}
-                                    </td>
                                     <td ng-show="columns['os']">
                                         <a ng-href="#/hosts/ws/{{workspace}}/search/os={{host.os}}">
                                             <img ng-if="host.icon != undefined" ng-src="images/{{host.icon}}.png" uib-tooltip="{{host.os}}"/>
                                             <span ng-if="host.icon == undefined" class="fa fa-laptop" uib-tooltip="{{host.os}}"></span>
                                         </a>
                                     </td>
-                                    <td ng-if="columns['hostnames']">
-                                        <span ng-repeat="hostname in host.hostnames">
-                                            {{hostname}} <br>
-                                        </span>
-                                    </td>
                                     <td ng-if="columns['services']">
                                         <span ng-repeat="summary in host.service_summaries">
                                             {{summary}} <br>
+                                        </span>
+                                    </td>
+                                    <td ng-if="columns['hostnames']">
+                                        <span ng-repeat="hostname in host.hostnames">
+                                            {{hostname}} <br>
                                         </span>
                                     </td>
                                     <td ng-show="columns['mac']">
@@ -158,6 +155,9 @@
                                         <span class="fa fa-exclamation-triangle" aria-hidden="true" ng-if="host.owned"></span>
                                         <span ng-if="host.owned"> owned</span>
                                         <span ng-if="!host.owned">not yet</span>
+                                    </td>
+                                    <td ng-show="columns['description']">
+                                        {{host.description}}
                                     </td>
                                     <td ng-show="columns['create_time']">
                                         <span am-time-ago="host.metadata.create_time"></span>

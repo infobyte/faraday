@@ -399,15 +399,14 @@ class GuiApp(Gtk.Application, FaradayUi):
         looking for the host."""
         current_ws_name = self.get_active_workspace().name
 
-        # for host in self.model_controller.getAllHosts():
-        host = self.serverIO.get_hosts(couchid=host_id)
+        host = self.serverIO.get_host(host_id)
         if not host:
             self.show_normal_error("The host you clicked isn't accessible. "
                                    "This is most probably due to an internal "
                                    "error.")
             return False
 
-        info_window = HostInfoDialog(self.window, current_ws_name, host[0])
+        info_window = HostInfoDialog(self.window, current_ws_name, host)
         info_window.show_all()
         return True
 

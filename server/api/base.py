@@ -322,6 +322,7 @@ class SortableMixin(object):
         else:
             for (key, value) in metadata_field.target_schema.fields.items():
                 schema.fields['metadata.' + key] = value
+                schema.fields[key] = value
 
         try:
             field_instance = schema.fields[order_field]

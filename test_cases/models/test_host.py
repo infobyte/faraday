@@ -95,3 +95,22 @@ class TestUpdateHostnames:
 
         session.commit()
         assert set(hn.name for hn in host.hostnames) == {'b', 'c'}
+
+    def test_change_one(self, host, session):
+        hn = Hostname(workspace=host.workspace,
+                      host=host,
+                      name='x')
+        session.add(hn)
+        session.commit()
+        host.set_hostnames(['y'])
+
+        assert len(session.deleted) == 1
+        assert session.deleted.pop() is hn
+
+        assert len(session.new) == 1
+        new = session.new.pop()
+        assert new.name == 'y'
+
+        session.commit()
+        assert len(host.hostnames) == 1
+        assert host.hostnames[0].name == 'y'

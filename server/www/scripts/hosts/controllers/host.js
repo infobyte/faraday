@@ -70,7 +70,7 @@ angular.module('faradayApp')
             loadHosts();
             loadServices(hostId);
 
-            $scope.pageSize = 10;
+            $scope.pageSize = 25;
             $scope.currentPage = 1;
             $scope.newCurrentPage = 1;
 

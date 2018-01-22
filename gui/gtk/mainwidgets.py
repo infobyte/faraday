@@ -469,7 +469,7 @@ class HostsSidebar(Gtk.Widget):
         self.page = change_page_number_func(self.page)
         hosts = self.get_hosts_function(page=str(self.page),
                                         page_size=20,
-                                        name=self.search_entry.get_text(),
+                                        search=self.search_entry.get_text(),
                                         sort='vulns',
                                         sort_dir='desc')
         self.reset_model(hosts)

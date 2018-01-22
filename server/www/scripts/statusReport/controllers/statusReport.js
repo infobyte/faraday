@@ -455,8 +455,8 @@ angular.module('faradayApp')
                 });
                 $q.all(promises).then(function(success) {
                     showMessage("Created " + selected.length + " templates successfully.", true);
-                }, function(failed) {
-                    showMessage("Something failed when creating some of the templates.");
+                }, function(failedMessage) {
+                    showMessage(failedMessage);
                 });
             } catch(err) {
                 showMessage("Something failed when creating some of the templates.");

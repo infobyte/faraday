@@ -97,7 +97,13 @@ angular.module('faradayApp').
                                         msg += res.data.messages[item][0];
                                     }
                                 }
-                                deferred.reject("Unable to save the Vuln Model. " + msg);
+                                var message;
+                                if (res.status == 409) {
+                                    message = "Vulnerability template already exists. " + res.data.message
+                                } else {
+                                    message = "Unable to save the Vuln Model. " + msg;
+                                }
+                                deferred.reject(message);
                             } catch(err) {
                                 deferred.reject(err);
                             }

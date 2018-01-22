@@ -150,9 +150,42 @@ class GenericView(FlaskView):
         return FlaskParser().parse(schema, request, locations=('json',),
                                    *args, **kwargs)
 
-    def _validate_uniqueness(self, obj, object_id=None):
-        # TODO: Implement this
-        return True
+    def _validate_uniqueness(self, obj, object_id=None, unique_fields=None):
+        primary_key_field = inspect(self.model_class).primary_key[0]
+
+        if getattr(obj, 'workspace', None):
+            query = self._get_base_query(obj.workspace.name)
+        else:
+            query = self._get_base_query()
+
+        if object_id is not None:
+            # The object already exists in DB, we want to fetch an object
+            # different to this one but with the same unique field
+            query = query.filter(primary_key_field != object_id)
+        if unique_fields is None:
+            # It is usually None, but in some case the child class may want to
+            # override it based on some condition dependent on the request
+            unique_fields = self.unique_fields
+        for field_names in unique_fields:
+            for field_name in field_names:
+                # Use type(obj) instead of self.model_class to be
+                # compatible with polymorphic obejcts (e.g. Vulnerability)
+                field = getattr(type(obj), field_name)
+                value = getattr(obj, field_name)
+                query = query.filter(
+                    field == value)
+
+            existing_obj = query.one_or_none()
+            conflict_data = self._get_schema_class()().dump(existing_obj).data
+            if existing_obj:
+                db.session.rollback()
+                abort(409, ValidationError(
+                    {
+                        'message': 'Existing value for unique columns: %s' % (
+                        field_names,),
+                        'object': conflict_data,
+                    }
+                ))
 
     @classmethod
     def register(cls, app, *args, **kwargs):
@@ -230,38 +263,9 @@ class GenericWorkspacedView(GenericView):
         return context
 
     def _validate_uniqueness(self, obj, object_id=None, unique_fields=None):
-        # TODO: Use implementation of GenericView
         assert obj.workspace is not None, "Object must have a " \
             "workspace attribute set to call _validate_uniqueness"
-        primary_key_field = inspect(self.model_class).primary_key[0]
-        query = self._get_base_query(obj.workspace.name)
-        if object_id is not None:
-            # The object already exists in DB, we want to fetch an object
-            # different to this one but with the same unique field
-            query = query.filter(primary_key_field != object_id)
-        if unique_fields is None:
-            # It is usually None, but in some case the child class may want to
-            # override it based on some condition dependent on the request
-            unique_fields = self.unique_fields
-        for field_names in unique_fields:
-            for field_name in field_names:
-                # Use type(obj) instead of self.model_class to be
-                # compatible with polymorphic obejcts (e.g. Vulnerability)
-                field = getattr(type(obj), field_name)
-                value = getattr(obj, field_name)
-                query = query.filter(
-                    field == value)
-
-            existing_obj = query.one_or_none()
-            conflict_data = self._get_schema_class()().dump(existing_obj).data
-            if existing_obj:
-                db.session.rollback()
-                abort(409, ValidationError(
-                    {
-                        'message': 'Existing value for unique columns: %s' % (field_names, ),
-                        'object': conflict_data,
-                    }
-                ))
+        return  super(GenericWorkspacedView, self)._validate_uniqueness(obj, object_id, unique_fields)
 
 
 class ListMixin(object):

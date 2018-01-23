@@ -58,7 +58,7 @@ class FaradayWSGIResource(WSGIResource, object):
 class FaradayRedirectResource(Redirect, object):
     def render(self, request):
         request.responseHeaders.removeHeader('Server')
-        return super(FaradayWSGIResource, self).render(request)
+        return super(FaradayRedirectResource, self).render(request)
 
 
 class WebServer(object):

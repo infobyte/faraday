@@ -100,9 +100,19 @@ class PluginManager(object):
                     module_path = os.path.join(plugin_repo_path, name)
                     sys.path.append(module_path)
                     module_filename = os.path.join(module_path, "plugin.py")
+                    if not os.path.exists(module_filename):
+                        module_filename = os.path.join(module_path,
+                                                       "plugin.pyc")
+
+                    file_ext = os.path.splitext(module_filename)[1]
+                    if file_ext.lower() == '.py':
+                        self._plugin_modules[name] = imp.load_source(name,
+                                                                     module_filename)
+
+                    elif file_ext.lower() == '.pyc':
+                        self._plugin_modules[name] = imp.load_compiled(name,
+                                                                       module_filename)
                     getLogger(self).debug('Loading plugin {0}'.format(name))
-                    self._plugin_modules[name] = imp.load_source(
-                        name, module_filename)
                 except Exception as e:
                     msg = "An error ocurred while loading plugin %s.\n%s" % (
                         module_filename, traceback.format_exc())

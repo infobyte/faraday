@@ -564,24 +564,6 @@ angular.module('faradayApp')
             loadVulns();
         };
 
-        var showMessage = function(msg, success) {
-            if (! success) { var success = false }
-            if (success) {
-                var templateUrl = 'scripts/commons/partials/modalOK.html';
-            } else {
-                var templateUrl = 'scripts/commons/partials/modalKO.html';
-            }
-            var modal = $uibModal.open({
-                    templateUrl: templateUrl,
-                    controller: 'commonsModalKoCtrl',
-                    resolve: {
-                        msg: function() {
-                            return msg;
-                        }
-                    }
-                });
-        }
-
         // deletes the vulns in the array
         $scope.remove = function(aVulns) {
             aVulns.forEach(function(vuln) {
@@ -678,15 +660,13 @@ angular.module('faradayApp')
                         }
                     }
                 });
-                modal.result.then(function(data) {
-                    vulnsManager.updateVuln(vulns[0], data).then(function(){
-                        loadVulns();
-                    }, function(errorMsg){
-                        showMessage("Error updating vuln " + vulns[0].name + " (" + vulns[0]._id + "): " + errorMsg);
-                    });
+
+                modal.result.then(function() {
+                    loadVulns();
                 });
+
             } else {
-                showMessage('A vulnierabilty must be selected in order to edit');
+                showMessage('A vulnerability must be selected in order to edit');
             }
         };
 
@@ -911,14 +891,7 @@ angular.module('faradayApp')
                 }
                 showMessage(msg);
             });
-            /*
-            // this shouldnt be necessary, we should use Angular formatting options directly in the partial
-            //formating the date
-            var d = new Date(0);
-            d.setUTCSeconds(vuln.date);
-            d = d.getDate() + "/" + (d.getMonth()+1) + "/" + d.getFullYear();
-            vuln.date = d;
-            */
+
         };
 
         var loadVulns = function() {

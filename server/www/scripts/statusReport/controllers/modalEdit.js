@@ -3,8 +3,8 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('modalEditCtrl', ['$modalInstance', 'EASEOFRESOLUTION', 'STATUSES', 'commonsFact', 'severities', 'vuln', 'vulnModelsManager',
-        function($modalInstance, EASEOFRESOLUTION, STATUSES, commons, severities, vuln, vulnModelsManager) {
+    .controller('modalEditCtrl', ['$modalInstance', 'EASEOFRESOLUTION', 'STATUSES', 'commonsFact', 'severities', 'vuln', 'vulnModelsManager', 'vulnsManager',
+        function($modalInstance, EASEOFRESOLUTION, STATUSES, commonsFact, severities, vuln, vulnModelsManager, vulnsManager) {
         
         var vm = this;
 
@@ -75,7 +75,7 @@ angular.module('faradayApp')
             // TODO: EVIDENCE SHOUD BE LOADED ALREADY?    
             if(vm.vuln._attachments !== undefined) {
                 vm.data._attachments = vm.vuln._attachments;
-                vm.icons = commons.loadIcons(vm.data._attachments); 
+                vm.icons = commonsFact.loadIcons(vm.data._attachments);
             }
         };
 
@@ -93,7 +93,7 @@ angular.module('faradayApp')
                     vm.file_name_error = true;
                 }
             });
-            vm.icons = commons.loadIcons(vm._attachments);
+            vm.icons = commonsFact.loadIcons(vm._attachments);
         }
 
         vm.removeEvidence = function(name) {
@@ -123,7 +123,14 @@ angular.module('faradayApp')
                 policyviolations.push(policyviolation.value);
             });
             vm.data.policyviolations = policyviolations;
-            $modalInstance.close(vm.data);
+
+            vulnsManager.updateVuln(vm.vuln, vm.data).then(function(){
+                $modalInstance.close(vm.data);
+            }, function(data){
+                commonsFact.showMessage("Error updating vuln " + vm.vuln.name + " (" + vm.vuln._id + "): " + data.message);
+            });
+
+
         };
 
         vm.cancel = function() {

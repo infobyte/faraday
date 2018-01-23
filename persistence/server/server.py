@@ -1491,7 +1491,7 @@ def login_user(uri, uname, upass):
     auth = {"email": uname, "password": upass}
     try:
         resp = requests.post(uri + "/_api/login", json=auth)
-        if resp.status_code == 400:
+        if resp.status_code == 401:
             return None
         else:
             return resp.cookies

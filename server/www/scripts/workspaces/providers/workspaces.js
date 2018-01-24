@@ -57,9 +57,9 @@ angular.module('faradayApp')
             var deferred = $q.defer();
             ServerAPI.getWorkspace(workspace_name).then(
                 function(response) {
-                deferred.resolve(true);
-            }, function(error) {
-                deferred.resolve(false);
+                deferred.resolve(response);
+            }, function(response) {
+                deferred.reject(response);
             });
             return deferred.promise;
         };

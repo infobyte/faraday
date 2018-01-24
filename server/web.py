@@ -126,11 +126,12 @@ class WebServer(object):
             self.__listen_func(
                 self.__listen_port, site,
                 interface=self.__bind_address)
-            listenWS(self.__build_websockets_resource())
+            listenWS(self.__build_websockets_resource(), interface=self.__bind_address)
             reactor.run()
         except error.CannotListenError as e:
             logger.error(str(e))
             sys.exit(1)
         except Exception as e:
+            logger.debug(e)
             logger.error('Something went wrong when trying to setup the Web UI')
             sys.exit(1)

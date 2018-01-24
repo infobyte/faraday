@@ -107,8 +107,15 @@ class WebServer(object):
         return FaradayWSGIResource(reactor, reactor.getThreadPool(), app)
 
     def __build_websockets_resource(self):
-        logger.info(u"Websocket listening at wss://{0}:9000".format(self.__bind_address))
-        factory = WorkspaceServerFactory(u"ws://{0}:9000".format(self.__bind_address))
+        websocket_port = int(server.config.faraday_server.websocket_port)
+        url = '{0}:{1}'.format(self.__bind_address, websocket_port)
+        if self.__ssl_enabled:
+            url = 'wss://' + url
+        else:
+            url = 'ws://' + url
+        logger.info(u"Websocket listening at {url}".format(url=url))
+
+        factory = WorkspaceServerFactory(url=url)
         factory.protocol = BroadcastServerProtocol
         return factory
 

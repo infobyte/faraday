@@ -89,6 +89,7 @@ def main():
     parser.add_argument('--nodeps', action='store_true', help='Skip dependency check')
     parser.add_argument('--no-setup', action='store_true', help=argparse.SUPPRESS)
     parser.add_argument('--port', help='Overides server.ini port configuration')
+    parser.add_argument('--websocket_port', help='Overides server.ini websocket port configuration')
     parser.add_argument('--bind_address', help='Overides server.ini bind_address configuration')
 
     f = open(server.config.VERSION_FILE)
@@ -120,6 +121,9 @@ def main():
 
     if args.bind_address:
         server.config.faraday_server.bind_address = args.bind_address
+
+    if args.websocket_port:
+        server.config.faraday_server.websocket_port = args.websocket_port
 
     if args.start:
         # Starts a new process on background with --ignore-setup

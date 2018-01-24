@@ -44,9 +44,16 @@ class CleanHttpHeadersResource(Resource, object):
 
 
 class FileWithoutDirectoryListing(File, CleanHttpHeadersResource):
-
     def directoryListing(self):
         return ForbiddenResource()
+
+    def render(self, request):
+        ret = super(FileWithoutDirectoryListing, self).render(request)
+        if self.type == 'text/html':
+            request.responseHeaders.addRawHeader('Content-Security-Policy',
+                                                 'frame-ancestors \'none\'')
+            request.responseHeaders.addRawHeader('X-Frame-Options', 'DENY')
+        return ret
 
 
 class FaradayWSGIResource(WSGIResource, object):

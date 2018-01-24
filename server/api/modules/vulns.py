@@ -177,6 +177,8 @@ class VulnerabilitySchema(AutoSchema):
             return 'vulnerability_web'
 
     def load_parent(self, value):
+        if type(value) != int:
+            raise ValidationError("Invalid parent type")
         return value
 
     @post_load
@@ -203,7 +205,6 @@ class VulnerabilitySchema(AutoSchema):
             parent_class = Service
             parent_field = 'service_id'
         if not parent_class:
-            print('parent_type', parent_type)
             raise ValidationError('Unknown parent type')
 
         try:

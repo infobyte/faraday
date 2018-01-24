@@ -138,7 +138,7 @@ class HostsSidebar(Gtk.Widget):
         self.progress_label = Gtk.Label("")
         self.host_amount_total = 0
         self.host_amount_in_model = 0
-        self.page = 0
+        self.page = 1
         self.host_id_to_iter = {}
         self.linux_icon = icons + "tux.png"
         self.windows_icon = icons + "windows.png"
@@ -194,7 +194,7 @@ class HostsSidebar(Gtk.Widget):
     def reset_model_after_workspace_changed(self, hosts, total_host_amount):
         """Reset the model and also sets the page to 0 and the new total
         host amount will be the length of host."""
-        self.page = 0
+        self.page = 1
         self.host_amount_total = total_host_amount
         self.reset_model(hosts)
         self.update_progress_label()
@@ -426,11 +426,11 @@ class HostsSidebar(Gtk.Widget):
         """Update the sensitity of the prev and next buttons according to the
         page we're on and the total number of pages.
         """
-        self.prev_button.set_sensitive(self.page > 0)  # its a boolean!
+        self.prev_button.set_sensitive(self.page >= 2)  # its a boolean!
 
         # we add one to self.page 'cause they start at zero, but number of pages is
         # always at least one :)
-        self.next_button.set_sensitive(self.number_of_pages > self.page + 1)
+        self.next_button.set_sensitive(self.number_of_pages > self.page)
 
     def get_box(self):
         """Return the sidebar_box, which contains all the elements of the
@@ -477,7 +477,7 @@ class HostsSidebar(Gtk.Widget):
 
     def update_progress_label(self):
         """Updates the progress label with values from self.page and self.number_of_pages."""
-        self.progress_label.set_label("{0} / {1}".format(self.page + 1, self.number_of_pages))
+        self.progress_label.set_label("{0} / {1}".format(self.page , self.number_of_pages))
 
     def create_search_entry(self):
         """Returns a simple search entry"""

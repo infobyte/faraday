@@ -50,8 +50,10 @@ angular.module('faradayApp')
                     $scope.wss = wss;
                 });
 
-                workspacesFact.exists($routeParams.wsId).then(function(resp){
-                    if(resp !== true) {
+                workspacesFact.exists($routeParams.wsId).then(function(response){
+                       // ok! workspace was found.
+                }, function(response){
+                    if(response.status === 404) {
                         $scope.modalWsNoExist();
                     }
                 });

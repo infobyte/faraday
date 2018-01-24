@@ -139,7 +139,7 @@ angular.module('faradayApp')
                             self._rev = response.rev;
                             deferred.resolve();
                         }, function(response) {
-                            deferred.reject(response.data);
+                            deferred.reject(response.data.message);
                         });
                 }
 

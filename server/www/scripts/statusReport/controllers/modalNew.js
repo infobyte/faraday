@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('modalNewVulnCtrl',
-        ['$modalInstance', '$filter', '$upload', 'EASEOFRESOLUTION', 'commonsFact', 'severities', 'workspace', 'targetFact', 'vulnModelsManager',
-        function($modalInstance, $filter, $upload, EASEOFRESOLUTION, commons, severities, workspace, targetFact, vulnModelsManager) {
+        ['$modalInstance', '$filter', '$upload', 'EASEOFRESOLUTION', 'commonsFact', 'severities', 'workspace', 'targetFact', 'vulnModelsManager', 'vulnsManager',
+        function($modalInstance, $filter, $upload, EASEOFRESOLUTION, commonsFact, severities, workspace, targetFact, vulnModelsManager, vulnsManager) {
 
         var vm = this;
 
@@ -105,7 +105,7 @@ angular.module('faradayApp')
                     vm.file_name_error = true;
                 }
             });
-            vm.icons = commons.loadIcons(vm.data._attachments);
+            vm.icons = commonsFact.loadIcons(vm.data._attachments);
         };
 
         vm.removeEvidence = function(name) {
@@ -135,17 +135,15 @@ angular.module('faradayApp')
             });
             vm.data.policyviolations = policyviolations;
 
-            var parents = vm.data.parents;
-            vm.data.parents = [];
-            parents.forEach(function(parent) {
-                var parent_type = "Service";
-                if (Host.prototype.isPrototypeOf(parents[0])) {
-                    parent_type = "Host";
+            vulnsManager.createVuln(vm.workspace, vm.data).then(function(){
+                $modalInstance.close(vm.data);
+            }, function(response){
+                if (response.status == 409) {
+                    commonsFact.showMessage("Error while creating a new Vulnerability " + vm.data.name + " Conflicting Vulnarability with id: " + response.data.object._id + ". " + response.data.message);
+                } else {
+                    commonsFact.showMessage("Error from backend: " + response.status);
                 }
-                vm.data.parents.push({parent_id: parent._id, type:parent_type});
             });
-
-            $modalInstance.close(vm.data);
         };
 
         vm.cancel = function() {

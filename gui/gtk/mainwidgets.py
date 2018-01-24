@@ -147,6 +147,8 @@ class HostsSidebar(Gtk.Widget):
 
     @property
     def number_of_pages(self):
+        if self.host_amount_total == 0:
+            return 1
         return int(math.ceil(float(self.host_amount_total) / 20))
 
     @scrollable(width=160)

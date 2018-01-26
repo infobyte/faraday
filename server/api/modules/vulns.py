@@ -2,16 +2,17 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 import os
-import time
+import io
 import logging
 from base64 import b64encode, b64decode
 
+import flask
 from filteralchemy import Filter, FilterSet, operators
-from flask import request, current_app
+from flask import request
 from flask import Blueprint
+from flask_classful import route
 from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
-from sqlalchemy import and_
 from sqlalchemy.orm import joinedload, selectin_polymorphic, undefer
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -137,13 +138,13 @@ class VulnerabilitySchema(AutoSchema):
         return obj.__class__.__name__
 
     def get_attachments(self, obj):
-        res = []
+        res = {}
 
         for file_obj in obj.evidence:
             ret, errors = EvidenceSchema().dump(file_obj)
             if errors:
                 raise ValidationError(errors, data=ret)
-            res.append(ret)
+            res[file_obj.filename] = ret
 
         return res
 
@@ -452,6 +453,25 @@ class VulnerabilityView(PaginatedMixin,
         if request.args.get('group_by') == 'severity':
             res['groups'] = [convert_group(group) for group in res['groups']]
         return res
+
+    @route('/<vuln_id>/attachment/<attachment_filename>/')
+    def attachment(self, workspace_name, vuln_id, attachment_filename):
+        vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
+            Workspace).filter(VulnerabilityGeneric.id == vuln_id,
+                              Workspace.name == workspace_name).first()
+        if vuln_workspace_check:
+            file_obj = db.session.query(File).filter_by(object_type='vulnerability',
+                                         object_id=vuln_id,
+                                         filename=attachment_filename).first()
+            if file_obj:
+                depot = DepotManager.get()
+                depot_file = depot.get(file_obj.content.get('file_id'))
+                return flask.send_file(
+                    io.BytesIO(depot_file.read()),
+                    attachment_filename=file_obj.filename,
+                    as_attachment=True,
+                    mimetype=depot_file.content_type
+                )
 
 
 VulnerabilityView.register(vulns_api)

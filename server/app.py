@@ -120,6 +120,7 @@ def register_handlers(app):
             #     map(str,Counter(q.statement for q in queries).most_common()))
         return response
 
+
 def save_new_secret_key(app):
     config = ConfigParser()
     config.read(LOCAL_CONFIG_FILE)
@@ -129,6 +130,7 @@ def save_new_secret_key(app):
     config.set('faraday_server', 'secret_key', secret_key)
     with open(LOCAL_CONFIG_FILE, 'w') as configfile:
         config.write(configfile)
+
 
 def create_app(db_connection_string=None, testing=None):
     app = Flask(__name__)

@@ -555,8 +555,9 @@ class GuiApp(Gtk.Application, FaradayUi):
             self.serverIO.active_workspace = event.workspace.name
             host_count, service_count, vuln_count = self.update_counts()
             total_host_amount = self.serverIO.get_hosts_number()
-            first_host_page = self.serverIO.get_hosts(page='0', page_size='20',
+            first_host_page = self.serverIO.get_hosts(page='1', page_size='20',
                                                       sort='vulns', sort_dir='desc')
+
             total_host_amount = self.serverIO.get_workspace_numbers()[0]
             GObject.idle_add(self.statusbar.set_workspace_label, event.workspace.name)
             GObject.idle_add(self.hosts_sidebar.reset_model_after_workspace_changed,

@@ -357,16 +357,25 @@ class VulnerabilityView(PaginatedMixin,
                                 request)
         # TODO migration: use default values when popping and validate the
         # popped object has the expected type.
-        attachments = data.pop('_attachments', {})
-
         # This will be set after setting the workspace
+        attachments = data.pop('_attachments', {})
         references = data.pop('references')
         policyviolations = data.pop('policy_violations')
 
         obj = super(VulnerabilityView, self)._perform_create(data, **kwargs)
         obj.references = references
         obj.policy_violations = policyviolations
+        db.session.commit()
+        self.process_attachments(obj, attachments)
+        return obj
 
+    def process_attachments(self, obj, attachments):
+        old_attachments = db.session.query(File).filter_by(
+            object_id=obj.id,
+            object_type='vulnerability',
+        )
+        for old_attachment in old_attachments:
+            db.session.delete(old_attachment)
         for filename, attachment in attachments.items():
             faraday_file = FaradayUploadedFile(b64decode(attachment['data']))
             get_or_create(
@@ -378,6 +387,12 @@ class VulnerabilityView(PaginatedMixin,
                 filename=os.path.basename(filename),
                 content=faraday_file,
             )
+
+    def _perform_update(self, object_id, obj, data, workspace_name):
+        attachments = data.pop('_attachments', {})
+        obj = super(VulnerabilityView, self)._perform_update(object_id, obj, data, workspace_name)
+        db.session.flush()
+        self.process_attachments(obj, attachments)
         db.session.commit()
         return obj
 

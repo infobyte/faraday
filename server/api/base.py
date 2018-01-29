@@ -524,7 +524,7 @@ class UpdateMixin(object):
         # just in case an schema allows id as writable.
         data.pop('id', None)
         self._update_object(obj, data)
-        self._perform_update(object_id, obj, **kwargs)
+        self._perform_update(object_id, obj, data, **kwargs)
 
         return self._dump(obj, kwargs), 200
 
@@ -532,17 +532,18 @@ class UpdateMixin(object):
         for (key, value) in data.items():
             setattr(obj, key, value)
 
-    def _perform_update(self, object_id, obj):
+    def _perform_update(self, object_id, obj, workspace_name):
         with db.session.no_autoflush:
             self._validate_uniqueness(obj, object_id)
         db.session.add(obj)
         db.session.commit()
+        return obj
 
 
 class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
     """Add PUT /<id>/ route"""
 
-    def _perform_update(self, object_id, obj, workspace_name):
+    def _perform_update(self, object_id, obj, data, workspace_name):
         # # Make sure that if I created new objects, I had properly commited them
         # assert not db.session.new
 
@@ -551,7 +552,7 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
 
         self._set_command_id(obj, False)
         return super(UpdateWorkspacedMixin, self)._perform_update(
-            object_id, obj)
+            object_id, obj, data)
 
 
 class DeleteMixin(object):

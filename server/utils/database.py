@@ -7,6 +7,7 @@ from sqlalchemy.sql import func, asc, desc
 from sqlalchemy.sql.expression import ClauseElement
 from sqlalchemy.sql import expression
 from sqlalchemy.ext import compiler
+from sqlalchemy.engine.reflection import Inspector
 
 
 class ORDER_DIRECTIONS:
@@ -203,3 +204,72 @@ def _integer_to_boolean_postgresql(element, compiler, **kw):
 @compiler.compiles(BooleanToIntColumn, 'sqlite')
 def _integer_to_boolean_sqlite(element, compiler, **kw):
     return element.expression_str
+
+
+def get_object_type_for(instance):
+    object_type = instance.__tablename__
+    if object_type is None:
+        if instance.__class__.__name__ in ['Vulnerability',
+                                          'VulnerabilityWeb',
+                                          'VulnerabilityCode']:
+            object_type = 'vulnerability'
+        else:
+            raise RuntimeError("Unknown table for object: {}".format(
+                instance))
+    return object_type
+
+
+def get_unique_fields(session, instance):
+    table_name = get_object_type_for(instance)
+    if table_name != 'vulnerability':
+        engine = session.connection().engine
+        insp = Inspector.from_engine(engine)
+        unique_constraints = insp.get_unique_constraints(table_name)
+    else:
+        unique_constraints = []
+        unique_constraints.append({
+            'column_names': [
+                'name',
+                'description',
+                'host_id',
+                'service_id',
+                'method',
+                'parameter_name',
+                'path',
+                'website',
+                'workspace_id',
+            ]
+        })
+    if unique_constraints:
+        for unique_constraint in unique_constraints:
+            yield unique_constraint['column_names']
+
+
+def get_conflict_object(session, obj, data):
+    unique_fields_gen = get_unique_fields(session, obj)
+    for unique_fields in unique_fields_gen:
+        relations_fields = filter(
+            lambda unique_field: unique_field.endswith('_id'),
+            unique_fields)
+        unique_fields = filter(
+            lambda unique_field: not unique_field.endswith('_id'),
+            unique_fields)
+        filter_data = {unique_field: data[unique_field] for unique_field in
+                       unique_fields if unique_field in data}
+
+        if 'workspace_id' in relations_fields:
+            relations_fields.remove('workspace_id')
+            filter_data['workspace_id'] = obj.workspace.id
+
+        for relations_field in relations_fields:
+            if relations_field not in data and relations_field.strip('_id') in data:
+                filter_data[relations_field] = data[
+                    relations_field.strip('_id')].id
+            else:
+                relation_id = data.get(relations_field, None)
+                if relation_id:
+                    filter_data[relations_field] = relation_id
+
+        conflict_obj = session.query(obj.__class__).filter_by(
+            **filter_data).first()
+        return conflict_obj

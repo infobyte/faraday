@@ -1,6 +1,7 @@
 import json
 
 import flask
+import sqlalchemy
 from flask import abort, g
 from flask_classful import FlaskView
 from sqlalchemy.orm import joinedload, undefer
@@ -15,6 +16,7 @@ from webargs.flaskparser import FlaskParser, parser, abort
 from webargs.core import ValidationError
 from server.models import Workspace, db, Command, CommandObject
 import server.utils.logger
+from server.utils.database import get_unique_fields, get_conflict_object
 
 logger = server.utils.logger.get_logger(__name__)
 
@@ -443,11 +445,20 @@ class CreateMixin(object):
     def _perform_create(self, data, **kwargs):
         obj = self.model_class(**data)
         # assert not db.session.new
-        with db.session.no_autoflush:
-            # Required because _validate_uniqueness does a select. Doing this
-            # outside a no_autoflush block would result in a premature create.
-            self._validate_uniqueness(obj)
+        try:
             db.session.add(obj)
+            db.session.commit()
+        except sqlalchemy.exc.IntegrityError as ex:
+            db.session.rollback()
+            conflict_obj = get_conflict_object(db.session, obj, data)
+            if conflict_obj:
+                abort(409, ValidationError(
+                    {
+                        'message': 'Existing value',
+                        'object': self._get_schema_class()().dump(
+                            conflict_obj).data,
+                    }
+                ))
         return obj
 
 
@@ -503,12 +514,21 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
         obj = self.model_class(**data)
         obj.workspace = workspace
         # assert not db.session.new
-        with db.session.no_autoflush:
-            # Required because _validate_uniqueness does a select. Doing this
-            # outside a no_autoflush block would result in a premature create.
-            self._validate_uniqueness(obj)
+        try:
             db.session.add(obj)
-        db.session.commit()
+            db.session.commit()
+        except sqlalchemy.exc.IntegrityError as ex:
+            db.session.rollback()
+            conflict_obj = get_conflict_object(db.session, obj, data)
+            if conflict_obj:
+                abort(409, ValidationError(
+                    {
+                        'message': 'Existing value',
+                        'object': self._get_schema_class()().dump(
+                            conflict_obj).data,
+                    }
+                ))
+
         self._set_command_id(obj, True)
         return obj
 

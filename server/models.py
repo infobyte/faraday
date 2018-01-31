@@ -43,7 +43,7 @@ from flask_security import (
     RoleMixin,
     UserMixin,
 )
-from server.utils.database import BooleanToIntColumn
+from server.utils.database import BooleanToIntColumn, get_object_type_for
 
 OBJECT_TYPES = [
     'vulnerability',
@@ -567,15 +567,7 @@ class CommandObject(db.Model):
         if object_ is not None:
             assert 'object_type' not in kwargs
             assert 'object_id' not in kwargs
-            object_type = object_.__tablename__
-            if object_type is None:
-                if object_.__class__.__name__ in ['Vulnerability',
-                                                'VulnerabilityWeb',
-                                                'VulnerabilityCode']:
-                    object_type = 'vulnerability'
-                else:
-                    raise RuntimeError("Unknown table for object: {}".format(
-                        object_))
+            object_type = get_object_type_for(object_)
 
             # db.session.flush()
             assert object_.id is not None, "object must have an ID. Try " \

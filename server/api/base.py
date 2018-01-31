@@ -552,11 +552,21 @@ class UpdateMixin(object):
         for (key, value) in data.items():
             setattr(obj, key, value)
 
-    def _perform_update(self, object_id, obj, workspace_name):
-        with db.session.no_autoflush:
-            self._validate_uniqueness(obj, object_id)
-        db.session.add(obj)
-        db.session.commit()
+    def _perform_update(self, object_id, obj, data, workspace_name=None):
+        try:
+            db.session.add(obj)
+            db.session.commit()
+        except sqlalchemy.exc.IntegrityError as ex:
+            db.session.rollback()
+            conflict_obj = get_conflict_object(db.session, obj, data)
+            if conflict_obj:
+                abort(409, ValidationError(
+                    {
+                        'message': 'Existing value',
+                        'object': self._get_schema_class()().dump(
+                            conflict_obj).data,
+                    }
+                ))
         return obj
 
 
@@ -572,7 +582,7 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
 
         self._set_command_id(obj, False)
         return super(UpdateWorkspacedMixin, self)._perform_update(
-            object_id, obj, data)
+            object_id, obj, data, workspace_name)
 
 
 class DeleteMixin(object):

@@ -16,7 +16,7 @@ from webargs.flaskparser import FlaskParser, parser, abort
 from webargs.core import ValidationError
 from server.models import Workspace, db, Command, CommandObject
 import server.utils.logger
-from server.utils.database import get_unique_fields, get_conflict_object
+from server.utils.database import get_conflict_object
 
 logger = server.utils.logger.get_logger(__name__)
 
@@ -66,7 +66,6 @@ class GenericView(FlaskView):
     }
     lookup_field = 'id'
     lookup_field_type = int
-    unique_fields = []  # Fields unique
 
     # Attributes to improve the performance of list and retrieve views
     get_joinedloads = []  # List of relationships to eagerload
@@ -152,43 +151,6 @@ class GenericView(FlaskView):
         return FlaskParser().parse(schema, request, locations=('json',),
                                    *args, **kwargs)
 
-    def _validate_uniqueness(self, obj, object_id=None, unique_fields=None):
-        primary_key_field = inspect(self.model_class).primary_key[0]
-
-        if getattr(obj, 'workspace', None):
-            query = self._get_base_query(obj.workspace.name)
-        else:
-            query = self._get_base_query()
-
-        if object_id is not None:
-            # The object already exists in DB, we want to fetch an object
-            # different to this one but with the same unique field
-            query = query.filter(primary_key_field != object_id)
-        if unique_fields is None:
-            # It is usually None, but in some case the child class may want to
-            # override it based on some condition dependent on the request
-            unique_fields = self.unique_fields
-        for field_names in unique_fields:
-            for field_name in field_names:
-                # Use type(obj) instead of self.model_class to be
-                # compatible with polymorphic obejcts (e.g. Vulnerability)
-                field = getattr(type(obj), field_name)
-                value = getattr(obj, field_name)
-                query = query.filter(
-                    field == value)
-
-            existing_obj = query.one_or_none()
-            conflict_data = self._get_schema_class()().dump(existing_obj).data
-            if existing_obj:
-                db.session.rollback()
-                abort(409, ValidationError(
-                    {
-                        'message': 'Existing value for unique columns: %s' % (
-                        field_names,),
-                        'object': conflict_data,
-                    }
-                ))
-
     @classmethod
     def register(cls, app, *args, **kwargs):
         """Register and add JSON error handler. Use error code
@@ -233,7 +195,6 @@ class GenericWorkspacedView(GenericView):
     # Default attributes
     route_prefix = '/v2/ws/<workspace_name>/'
     base_args = ['workspace_name']  # Required to prevent double usage of <workspace_name>
-    unique_fields = []  # Fields unique together with workspace_id
 
     def _get_workspace(self, workspace_name):
         try:
@@ -263,11 +224,6 @@ class GenericWorkspacedView(GenericView):
         """Overriden to pass the workspace name to the schema"""
         context.update(kwargs)
         return context
-
-    def _validate_uniqueness(self, obj, object_id=None, unique_fields=None):
-        assert obj.workspace is not None, "Object must have a " \
-            "workspace attribute set to call _validate_uniqueness"
-        return  super(GenericWorkspacedView, self)._validate_uniqueness(obj, object_id, unique_fields)
 
 
 class ListMixin(object):

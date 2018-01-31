@@ -22,8 +22,6 @@ class TestListServiceView(ReadOnlyAPITests):
     model = Service
     factory = factories.ServiceFactory
     api_endpoint = 'services'
-    #unique_fields = ['ip']
-    #update_fields = ['ip', 'description', 'os']
     view_class = ServiceView
 
     def test_service_list_backwards_compatibility(self, test_client,

@@ -29,6 +29,5 @@ class LicenseView(ReadWriteView):
     route_base = 'licenses'
     model_class = License
     schema_class = LicenseSchema
-    unique_fields = []
 
 LicenseView.register(license_api)

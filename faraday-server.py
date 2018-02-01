@@ -7,10 +7,14 @@ import sys
 import argparse
 import subprocess
 
+import sqlalchemy
+
 import server.config
 import server.couchdb
 import server.utils.logger
+from server.models import db, Workspace
 from server.utils import daemonize
+from server.web import app
 from utils import dependencies
 from utils.user_input import query_yes_no
 from faraday import FARADAY_BASE
@@ -79,7 +83,19 @@ def run_server(args):
     logger.info('Faraday Server is ready')
 
 
+def check_postgresql():
+    with app.app_context():
+        try:
+            if not db.session.query(Workspace).count():
+                logger.warn('No workspaces found. Remeber to execute couchdb importer')
+        except sqlalchemy.exc.OperationalError:
+            logger.error(
+                'Could not connect to postgresql, please check database is running or configuration settings are correct.')
+            sys.exit(1)
+
+
 def main():
+    check_postgresql()
     os.chdir(FARADAY_BASE)
     parser = argparse.ArgumentParser()
     parser.add_argument('--ssl', action='store_true', help='enable HTTPS')

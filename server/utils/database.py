@@ -226,6 +226,9 @@ def get_unique_fields(session, instance):
         insp = Inspector.from_engine(engine)
         unique_constraints = insp.get_unique_constraints(table_name)
     else:
+        # Vulnerability unique index can't be retrieved via reflection.
+        # If the unique index changes we need to update here.
+        # A test should fail when the unique index changes
         unique_constraints = []
         unique_constraints.append({
             'column_names': [

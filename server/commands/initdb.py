@@ -140,6 +140,7 @@ class InitDB():
                   " {red}password{white}: {"
                   "random_password}".format(random_password=random_password,
                                             white=Fore.WHITE, red=Fore.RED))
+            print("{yellow} WARNING {white} If you are going to execute couchdb importer you must use the couddb password for faraday user.")
 
 
     def _configure_existing_postgres_user(self):

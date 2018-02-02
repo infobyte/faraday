@@ -8,6 +8,8 @@ from server.models import (
     License,
 )
 from server.api.modules.licenses import LicenseView
+from test_cases.factories import LicenseFactory
+
 
 class LicenseEnvelopedView(LicenseView):
     """A custom view to test that enveloping on generic views work ok"""
@@ -32,3 +34,11 @@ class TestLicensesAPI(ReadWriteAPITests):
         assert new_res.status_code == 200
 
         assert new_res.json == {"object_list": original_res.json}
+
+    def test_license_note_was_missing(self, test_client, session):
+        notes = 'A great note. License'
+        lic = LicenseFactory.create(notes=notes)
+        session.commit()
+        res = test_client.get(self.url(obj=lic))
+        assert res.status_code == 200
+        assert res.json['notes'] == 'A great note. License'

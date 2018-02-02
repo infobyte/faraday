@@ -22,7 +22,9 @@ class LicenseSchema(AutoSchema):
     start = fields.DateTime(attribute='start_date')
     class Meta:
         model = License
-        fields = ('_id', 'id', 'product', 'start', 'end', 'lictype')
+        fields = ('_id', 'id', 'product',
+                  'start', 'end', 'lictype',
+                  'notes')
 
 
 class LicenseView(ReadWriteView):

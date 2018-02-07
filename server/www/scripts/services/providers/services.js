@@ -25,21 +25,18 @@ angular.module('faradayApp')
             return this._objects[id];
         }
 
-        servicesManager._load = function(id, ws, deferred) {
+        servicesManager._load = function(id, ws) {
             var self = this;
+            var deferred = $q.defer();
             ServerAPI.getService(ws, id).
                 then(function(response) {
-                    if (response.data.services.length == 1) {
-                        var service_data = response.data.services[0].value;
-                        var service_id = service_data._id;
-                        var service = self._get(service_id, service_data);
-                        deferred.resolve(service);
-                    } else {
-                        deferred.reject("More than one object found by ID");
-                    }
+
+                    deferred.resolve(new Service(response.data));
+
                 }, function(error) {
                     deferred.reject(error); 
-                })
+                });
+            return deferred.promise;
         };
 
         servicesManager.getService = function(id, ws, force_reload) {
@@ -49,7 +46,7 @@ angular.module('faradayApp')
             if((service) && (!force_reload)) {
                 deferred.resolve(service);
             } else {
-                this._load(id, ws, deferred);
+                return this._load(id, ws);
             }
             return deferred.promise;
         }
@@ -95,9 +92,8 @@ angular.module('faradayApp')
             var service = new Service(serviceData);
             service.save(ws).then(function(saved_service){
                 deferred.resolve(saved_service.data);
-            }, function(){
-                // host couldn't be saved
-                deferred.reject("Error: host couldn't be saved");
+            }, function(response){
+                deferred.reject(response);
             })
 
             return deferred.promise;
@@ -106,9 +102,10 @@ angular.module('faradayApp')
         servicesManager.updateService = function(service, data, ws) {
             var deferred = $q.defer();
             var self = this;
-            self._get(service._id, service).update(data, ws).then(function(){
-                service = self._load(service._id, ws, deferred);
-                deferred.resolve(service);
+            service.update(data, ws).then(function() {
+                deferred.resolve();
+            }, function(response) {
+                deferred.reject(response);
             });
             return deferred.promise;
         }

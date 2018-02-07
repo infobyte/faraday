@@ -245,7 +245,7 @@ angular.module('faradayApp')
              });
 
             modal.result.then(function(data) {
-               $scope.services.push(service);
+               loadServices();
             });
         };
 

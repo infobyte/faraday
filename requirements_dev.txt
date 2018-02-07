@@ -1,4 +1,4 @@
-factory-boy<=2.8.1
+factory-boy
 pytest
 pytest-factoryboy
 responses

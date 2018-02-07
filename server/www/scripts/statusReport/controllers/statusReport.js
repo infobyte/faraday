@@ -235,7 +235,7 @@ angular.module('faradayApp')
                     '   </div>';
 
             $scope.gridOptions.columnDefs.push({ name : '_id',
-                displayName : "id",
+                displayName : "_id",
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/idcolumn.html',
                 headerCellTemplate: header,
                 width: '50',

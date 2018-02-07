@@ -27,7 +27,6 @@ from server.api.base import (
 from server.fields import FaradayUploadedFile
 from server.models import (
     db,
-    Command,
     CommandObject,
     File,
     Host,
@@ -86,14 +85,7 @@ class CustomMetadataSchema(MetadataSchema):
     creator = fields.Method('get_creator', dump_only=True)
 
     def get_creator(self, obj):
-
-        if obj:
-            command = db.session.query(Command, CommandObject.command_id).join(CommandObject).filter_by(
-                object_type='vulnerability',
-                object_id=obj.id).first()
-            if command:
-                return command[0].tool
-        return 'Web UI'
+        return obj.creator_command_tool or 'Web UI'
 
 
 class VulnerabilitySchema(AutoSchema):

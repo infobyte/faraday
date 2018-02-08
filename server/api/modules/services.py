@@ -86,6 +86,7 @@ class ServiceView(ReadWriteWorkspacedView):
     schema_class = ServiceSchema
     count_extra_filters = [Service.status == 'open']
     get_undefer = [Service.credentials_count, Service.vulnerability_count]
+    get_joinedloads = [Service.credentials]
     unique_fields = [('port', 'protocol', 'host')]
 
     def _envelope_list(self, objects, pagination_metadata=None):
@@ -100,10 +101,5 @@ class ServiceView(ReadWriteWorkspacedView):
             'services': services,
         }
 
-    def _get_base_query(self, workspace_name):
-        original = super(ServiceView, self)._get_base_query(workspace_name)
-        return original.options(
-            joinedload(Service.credentials)
-        )
 
 ServiceView.register(services_api)

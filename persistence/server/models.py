@@ -882,6 +882,7 @@ class Service(ModelBase):
     def __init__(self, service, workspace_name):
         ModelBase.__init__(self, service, workspace_name)
         self.protocol = service['protocol']
+        self.parent_id = service['parent']
         if type(service['ports']) == int:
             # the new api returns an integer in ports
             self.ports = [service['ports']]
@@ -921,6 +922,9 @@ class Service(ModelBase):
 
     def __str__(self):
         return "{0} ({1})".format(self.name, self.vuln_amount)
+
+    def getParent(self):
+        return self.parent_id
 
     def getStatus(self):
         return self.status

@@ -20,7 +20,7 @@ credentials_api = Blueprint('credentials_api', __name__)
 class CredentialSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     _rev = fields.String(default='', dump_only=True)
-    owned = fields.Boolean(default=False)
+    owned = fields.Boolean(default=False, dump_only=True)
     owner = fields.String(dump_only=True, attribute='creator.username',
                           default='')
     username = fields.String(default='')
@@ -94,6 +94,8 @@ class CredentialFilterSet(FilterSet):
     class Meta(FilterSetMeta):
         model = Credential
         fields = (
+            'name',
+            'username',
             'host_id',
             'service_id'
         )

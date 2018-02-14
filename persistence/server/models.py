@@ -261,7 +261,7 @@ def get_credentials(workspace_name, **params):
     return _get_faraday_ready_credentials(workspace_name, credentials_dictionary)
 
 
-def get_credential(workspace_name, credential_id, **params):
+def get_credential(workspace_name, credential_id=None, **params):
     """Return the Credential of id credential_id. None if not found."""
     return force_unique(get_credentials(workspace_name, id=credential_id, **params))
 

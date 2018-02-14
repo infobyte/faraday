@@ -373,7 +373,7 @@ def update_service(workspace_name, service, command_id):
 
 
 @_ignore_in_changes
-def create_vuln(workspace_name, vuln, command_id):
+def create_vuln(workspace_name, vuln, command_id=None):
     """Take a workspace_name and an vulnerability object and save it to the
     sever. The rev parameter must be provided if you are updating the object.
     Return the server's json response as a dictionary.
@@ -383,7 +383,7 @@ def create_vuln(workspace_name, vuln, command_id):
 
 
 @_ignore_in_changes
-def update_vuln(workspace_name, vuln, command_id):
+def update_vuln(workspace_name, vuln, command_id=None):
     """Take a workspace_name and a Vuln object and update it in the sever.
 
     Return the server's json response as a dictionary.

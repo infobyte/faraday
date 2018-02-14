@@ -13,7 +13,10 @@ from server.websocket_factories import changes_queue
 def new_object_event(mapper, connection, instance):
     # Since we don't have jet a model for workspace we
     # retrieve the name from the connection string
-    name = getattr(instance, 'ip', None) or instance.name
+    try:
+        name = instance.ip
+    except AttributeError:
+        name = instance.name
     msg = {
         'id': instance.id,
         'action': 'CREATE',

@@ -195,6 +195,8 @@ def _unsafe_io_with_server(server_io_function, server_expected_response,
             raise requests.exceptions.RequestException(response=answer)
     except requests.exceptions.RequestException as ex:
         logger.debug(ex)
+        if answer and 'messages' in answer.json():
+            logger.info('Faraday server error message: {0}'.format(answer.json()['messages']))
         raise CantCommunicateWithServerError(server_io_function, server_url, payload, answer)
     return answer
 

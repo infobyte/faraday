@@ -22,6 +22,10 @@ def main(workspace='', args=None, parser=None):
                         help='Vulnerability severity',
                         choices=['critical', 'high', 'med', 'low', 'info', 'unclassified'],
                         default='unclassified')
+    parser.add_argument('--parent_type',
+                        help='Vulnerability severity',
+                        choices=['Host', 'Service'],
+                        default='unclassified')
 
     parser.add_argument('--resolution', help='Resolution', default='')
     parser.add_argument('--confirmed', help='Is the vulnerability confirmed',
@@ -33,22 +37,38 @@ def main(workspace='', args=None, parser=None):
 
     parsed_args = parser.parse_args(args)
 
-    obj = factory.createModelObject(models.Vuln.class_signature, parsed_args.name, workspace,
+    obj = factory.createModelObject(models.Vuln.class_signature,
+                                    parsed_args.name,
+                                    workspace,
                                     ref=parsed_args.reference,
                                     severity=parsed_args.severity,
                                     resolution=parsed_args.resolution,
                                     confirmed=(parsed_args.confirmed == 'true'),
                                     desc=parsed_args.description,
-                                    parent_id=parsed_args.parent
+                                    parent_id=parsed_args.parent,
+                                    parent_type=parsed_args.parent_type.capitalize()
                                     )
+    params = {
+        'name': parsed_args.name,
+        'description': parsed_args.description,
+        'parent_type': parsed_args.parent_type.capitalize(),
+        'parent': parsed_args.parent,
+    }
 
-    old = models.get_vuln(workspace, obj.getID())
+    old = models.get_vulns(
+        workspace,
+        **params
+    )
 
-    if old is None:
+    if not old:
         if not parsed_args.dry_run:
-            models.create_vuln(workspace, obj)
+            models.create_vuln(workspace, obj, None)
+        old = models.get_vulns(
+            workspace,
+            **params
+        )
     else:
-        print "A vulnerability with ID %s already exists!" % obj.getID()
+        print "A vulnerability with ID %s already exists!" % old[0].getID()
         return 2, None
 
-    return 0, obj.getID()
+    return 0, old[0].getID()

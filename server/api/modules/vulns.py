@@ -181,7 +181,11 @@ class VulnerabilitySchema(AutoSchema):
             return 'vulnerability_web'
 
     def load_parent(self, value):
-        if type(value) != int:
+        try:
+            # sometimes api requests send str or unicode.
+            value = int(value)
+        except ValueError:
+
             raise ValidationError("Invalid parent type")
         return value
 

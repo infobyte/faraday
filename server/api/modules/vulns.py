@@ -303,6 +303,7 @@ class VulnerabilityFilterSet(FilterSet):
     type = TypeFilter(fields.Str(validate=[OneOf(['Vulnerability',
                                                   'VulnerabilityWeb'])]))
     creator = CreatorFilter(fields.Str())
+    severity = Filter(SeverityField())
 
     def filter(self):
         """Generate a filtered query from request parameters.

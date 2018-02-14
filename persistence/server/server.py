@@ -22,6 +22,7 @@ Warning:
     be used with care, specially regarding the ID of objects, which must
     be always unique.
 """
+import urllib
 
 import os
 import json
@@ -96,7 +97,7 @@ def _create_server_api_url():
     """Return the server's api url."""
     return "{0}/_api/v2".format(_get_base_server_url())
 
-def _create_server_get_url(workspace_name, object_name=None, object_id=None):
+def _create_server_get_url(workspace_name, object_name=None, object_id=None, **params):
     """Creates a url to get from the server. Takes the workspace name
     as a string, an object_name paramter which is the object you want to
     query as a string ('hosts', 'interfaces', etc) .
@@ -110,6 +111,8 @@ def _create_server_get_url(workspace_name, object_name=None, object_id=None):
     get_url = '{0}/ws/{1}{2}'.format(_create_server_api_url(),
                                      workspace_name,
                                      object_name)
+    if params:
+        get_url = '{0}?{1}'.format(get_url, urllib.urlencode(params))
     return get_url
 
 
@@ -195,8 +198,11 @@ def _unsafe_io_with_server(server_io_function, server_expected_response,
             raise requests.exceptions.RequestException(response=answer)
     except requests.exceptions.RequestException as ex:
         logger.debug(ex)
-        if answer and 'messages' in answer.json():
-            logger.info('Faraday server error message: {0}'.format(answer.json()['messages']))
+        try:
+            if answer and 'messages' in answer.json():
+                logger.info('Faraday server error message: {0}'.format(answer.json()['messages']))
+        except ValueError:
+            logger.debug('Could not decode json from server')
         raise CantCommunicateWithServerError(server_io_function, server_url, payload, answer)
     return answer
 
@@ -292,7 +298,7 @@ def _get_raw_notes(workspace_name, **params):
 def _get_raw_credentials(workspace_name, **params):
     """Take a workspace name and an arbitrary number of params and
     return a dictionary with the credentials table."""
-    request_url = _create_server_get_url(workspace_name, 'credential', params.get('id', None))
+    request_url = _create_server_get_url(workspace_name, 'credential', params.pop('id', None), **params)
     return _get(request_url, **params)
 
 

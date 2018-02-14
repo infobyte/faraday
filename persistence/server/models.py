@@ -261,9 +261,9 @@ def get_credentials(workspace_name, **params):
     return _get_faraday_ready_credentials(workspace_name, credentials_dictionary)
 
 
-def get_credential(workspace_name, credential_id):
+def get_credential(workspace_name, credential_id, **params):
     """Return the Credential of id credential_id. None if not found."""
-    return force_unique(get_credentials(workspace_name, id=credential_id))
+    return force_unique(get_credentials(workspace_name, id=credential_id, **params))
 
 
 def get_notes(workspace_name, **params):
@@ -431,7 +431,7 @@ def update_note(workspace_name, note, command_id):
 
 
 @_ignore_in_changes
-def create_credential(workspace_name, credential, command_id):
+def create_credential(workspace_name, credential, command_id=None):
     """Take a workspace_name and an credential object and save it to the sever.
     Return the server's json response as a dictionary.
     """
@@ -882,7 +882,7 @@ class Service(ModelBase):
     def __init__(self, service, workspace_name):
         ModelBase.__init__(self, service, workspace_name)
         self.protocol = service['protocol']
-        self.parent_id = service['parent']
+        self.parent_id = service.get('parent') or service.get('host_id') or service.get('service_id')
         if type(service['ports']) == int:
             # the new api returns an integer in ports
             self.ports = [service['ports']]

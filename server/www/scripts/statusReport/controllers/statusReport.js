@@ -343,7 +343,8 @@ angular.module('faradayApp')
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/refscolumn.html',
                 headerCellTemplate: header,
                 sort: getColumnSort('refs'),
-                visible: $scope.columns["refs"]
+                visible: $scope.columns["refs"],
+                enableSorting: false,
             });
             $scope.gridOptions.columnDefs.push({ name : '_attachments',
                 displayName: "evidence",
@@ -410,7 +411,8 @@ angular.module('faradayApp')
                 headerCellTemplate: header,
                 width: '100',
                 sort: getColumnSort('policyviolations'),
-                visible: $scope.columns["policyviolations"]
+                visible: $scope.columns["policyviolations"],
+                enableSorting: false,
             });
         };
 

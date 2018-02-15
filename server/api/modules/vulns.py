@@ -291,7 +291,7 @@ class VulnerabilityFilterSet(FilterSet):
             "description", "command_id", "target", "creator")
 
         strict_fields = (
-            "severity", "confirmed", "method"
+            "severity", "confirmed", "method", "status"
         )
 
         default_operator = operators.ILike

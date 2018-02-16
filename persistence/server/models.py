@@ -239,9 +239,9 @@ def get_web_vulns(workspace_name, **params):
     return _get_faraday_ready_vulns(workspace_name, vulns_web_dictionaries, vulns_type='vulns_web')
 
 
-def get_web_vuln(workspace_name, vuln_id):
+def get_web_vuln(workspace_name, vuln_id=None, **params):
     """Return the WebVuln of id vuln_id. None if not found."""
-    return force_unique(get_web_vulns(workspace_name, id=vuln_id))
+    return force_unique(get_web_vulns(workspace_name, object_id=vuln_id, **params))
 
 
 def get_services(workspace_name, **params):
@@ -401,7 +401,7 @@ def update_vuln(workspace_name, vuln, command_id=None):
 
 
 @_ignore_in_changes
-def create_vuln_web(workspace_name, vuln_web, command_id):
+def create_vuln_web(workspace_name, vuln_web, command_id=None):
     """Take a workspace_name and an vulnerabilityWeb object and save it to the
     sever.
     Return the server's json response as a dictionary.

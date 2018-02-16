@@ -277,7 +277,8 @@ def _get_raw_hosts(workspace_name, **params):
 def _get_raw_vulns(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
     a dictionary with the vulns table."""
-    request_url = _create_server_get_url(workspace_name, 'vulns', params.get('id', None))
+    params = {key: value for key, value in params.items() if value}
+    request_url = _create_server_get_url(workspace_name, 'vulns', **params)
     return _get(request_url, **params)
 
 

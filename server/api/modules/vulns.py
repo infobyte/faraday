@@ -288,12 +288,12 @@ class VulnerabilityFilterSet(FilterSet):
             "status", "website", "parameter_name", "query_string", "path",
             "data", "severity", "confirmed", "name", "request", "response",
             "parameters", "resolution", "method", "ease_of_resolution",
-            "description", "command_id", "target", "creator",
+            "description", "command_id", "target", "creator", "service_id",
             "easeofresolution")
 
         strict_fields = (
             "severity", "confirmed", "method", "status", "easeofresolution",
-            "ease_of_resolution",
+            "ease_of_resolution", "service_id",
         )
 
         default_operator = operators.ILike

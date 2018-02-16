@@ -1,15 +1,14 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-import time
 
-import flask
 from flask import Blueprint
+from filteralchemy import FilterSet, operators
 from marshmallow import fields, post_load, ValidationError
-from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound
 
-from server.api.base import AutoSchema, ReadWriteWorkspacedView
+from server.api.base import AutoSchema, ReadWriteWorkspacedView, FilterSetMeta, \
+    FilterAlchemyMixin
 from server.models import Host, Service, Workspace
 from server.schemas import (
     MetadataSchema,
@@ -80,7 +79,15 @@ class ServiceSchema(AutoSchema):
                   'metadata', 'summary', 'host_id')
 
 
-class ServiceView(ReadWriteWorkspacedView):
+class ServiceFilterSet(FilterSet):
+    class Meta(FilterSetMeta):
+        model = Service
+        fields = ('host_id', 'protocol', 'name', 'port')
+        default_operator = operators.Equal
+        operators = (operators.Equal,)
+
+
+class ServiceView(FilterAlchemyMixin, ReadWriteWorkspacedView):
     route_base = 'services'
     model_class = Service
     schema_class = ServiceSchema
@@ -88,6 +95,7 @@ class ServiceView(ReadWriteWorkspacedView):
     get_undefer = [Service.credentials_count, Service.vulnerability_count]
     get_joinedloads = [Service.credentials]
     unique_fields = [('port', 'protocol', 'host')]
+    filterset_class = ServiceFilterSet
 
     def _envelope_list(self, objects, pagination_metadata=None):
         services = []

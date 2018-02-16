@@ -284,7 +284,7 @@ def _get_raw_vulns(workspace_name, **params):
 def _get_raw_services(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
     a dictionary with the services table."""
-    request_url = _create_server_get_url(workspace_name, 'services', params.get('id', None))
+    request_url = _create_server_get_url(workspace_name, 'services', **params)
     return _get(request_url, **params)
 
 

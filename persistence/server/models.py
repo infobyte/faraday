@@ -254,9 +254,9 @@ def get_services(workspace_name, **params):
     return _get_faraday_ready_services(workspace_name, services_dictionary)
 
 
-def get_service(workspace_name, service_id):
+def get_service(workspace_name, service_id=None, **params):
     """Return the Service of id service_id. None if not found."""
-    return force_unique(get_services(workspace_name, id=service_id))
+    return force_unique(get_services(workspace_name, object_id=service_id, **params))
 
 
 def get_credentials(workspace_name, **params):
@@ -362,7 +362,7 @@ def update_host(workspace_name, host, command_id):
 
 
 @_ignore_in_changes
-def create_service(workspace_name, service, command_id):
+def create_service(workspace_name, service, command_id=None):
     """Take a workspace_name and a service object and save it to the sever.
     Return the server's json response as a dictionary.
     """

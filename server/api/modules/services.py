@@ -42,7 +42,11 @@ class ServiceSchema(AutoSchema):
     type = fields.Function(lambda obj: 'Service', dump_only=True)
 
     def load_ports(self, value):
-        # TODO migration: handle empty list and not numeric value
+        if not isinstance(value, list):
+            raise ValidationError('ports must be a list')
+        if len(value) != 1:
+            raise ValidationError('ports must be a list with exactly one'
+                                  'element')
         return str(value.pop())
 
     @post_load

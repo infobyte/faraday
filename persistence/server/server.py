@@ -270,7 +270,7 @@ def _delete(delete_url, database=False):
 def _get_raw_hosts(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
     a dictionary with the hosts table."""
-    request_url = _create_server_get_url(workspace_name, 'hosts', params.get('id', None))
+    request_url = _create_server_get_url(workspace_name, 'hosts', **params)
     return _get(request_url, **params)
 
 

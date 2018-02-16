@@ -79,7 +79,7 @@ class ServiceFilter(Filter):
 class HostFilterSet(FilterSet):
     class Meta(FilterSetMeta):
         model = Host
-        fields = ('os', 'service')
+        fields = ('ip', 'os', 'service')
         operators = (operators.Equal, operators.Like, operators.ILike)
     service = ServiceFilter(fields.Str())
 

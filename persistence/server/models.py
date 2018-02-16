@@ -33,6 +33,8 @@ FARADAY_UP = True
 MERGE_STRATEGY = None  # you may change it the string 'NEW' to prefer new objects
                        # you may ask why this can be None type or 'New' as a string
                        # the answer is: Faraday.
+logger = logging.getLogger(__name__)
+
 
 def _conf():
     if FARADAY_UP:
@@ -191,9 +193,15 @@ def get_hosts(workspace_name, **params):
     return _get_faraday_ready_hosts(workspace_name, host_dictionaries)
 
 
-def get_host(workspace_name, host_id):
+def get_host(workspace_name, host_id=None, **params):
     """Return the host by host_id. None if it can't be found."""
-    return get_hosts(workspace_name, id=host_id).pop()
+    hosts = get_hosts(workspace_name, object_id=host_id, **params)
+    if len(hosts) == 0:
+        return
+    else:
+        if len(hosts) > 1:
+            logger.warn('More than one hosts found. returning only one of them.')
+        return hosts.pop()
 
 
 def get_all_vulns(workspace_name, **params):
@@ -334,7 +342,7 @@ def get_deleted_object_name_and_type(workspace_name, object_id):
 
 
 @_ignore_in_changes
-def create_host(workspace_name, host, command_id):
+def create_host(workspace_name, host, command_id=None):
     """Take a workspace_name and a host object and save it to the sever.
 
     Return the server's json response as a dictionary.

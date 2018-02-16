@@ -346,7 +346,13 @@ class SortableMixin(object):
         if sort_dir not in ('asc', 'desc'):
             raise InvalidUsage("Invalid value for sorting direction: %s" %
                                sort_dir)
-        return getattr(field, sort_dir)()
+        try:
+            return getattr(field, sort_dir)()
+        except NotImplementedError:
+            # There are some fields that can't be used for sorting
+            raise InvalidUsage("field {} doesn't support sorting".format(
+                order_field
+            ))
 
 
 class PaginatedMixin(object):

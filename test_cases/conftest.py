@@ -46,6 +46,10 @@ class CustomClient(FlaskClient):
                 ('Content-Type', 'application/json'),
             ]
 
+        # Reset queries to make the log_queries_count
+        from flask import _app_ctx_stack
+        _app_ctx_stack.top.sqlalchemy_queries = []
+
         ret = super(CustomClient, self).open(*args, **kwargs)
         if ret.headers.get('content-type') == 'application/json':
             try:

@@ -288,10 +288,12 @@ class VulnerabilityFilterSet(FilterSet):
             "status", "website", "parameter_name", "query_string", "path",
             "data", "severity", "confirmed", "name", "request", "response",
             "parameters", "resolution", "method", "ease_of_resolution",
-            "description", "command_id", "target", "creator")
+            "description", "command_id", "target", "creator",
+            "easeofresolution")
 
         strict_fields = (
-            "severity", "confirmed", "method"
+            "severity", "confirmed", "method", "status", "easeofresolution",
+            "ease_of_resolution",
         )
 
         default_operator = operators.ILike
@@ -303,6 +305,11 @@ class VulnerabilityFilterSet(FilterSet):
     type = TypeFilter(fields.Str(validate=[OneOf(['Vulnerability',
                                                   'VulnerabilityWeb'])]))
     creator = CreatorFilter(fields.Str())
+    severity = Filter(SeverityField())
+    easeofresolution = Filter(fields.String(
+        attribute='ease_of_resolution',
+        validate=OneOf(Vulnerability.EASE_OF_RESOLUTIONS),
+        allow_none=True))
 
     def filter(self):
         """Generate a filtered query from request parameters.

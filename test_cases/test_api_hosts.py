@@ -210,8 +210,8 @@ class TestHostAPI:
         assert other_host.id not in ids_returned
         assert ids_expected == ids_returned
 
-    def test_retrieve_shows_service_count(self, test_client, host_services,
-                                          service_factory):
+    def test_retrieve_shows_service_count(self, test_client, session,
+                                          host_services, service_factory):
         for (host, services) in host_services.items():
             # Adding closed and filtered services shouldn't impact on the
             # service count since it should only count opened services
@@ -219,11 +219,12 @@ class TestHostAPI:
                                          workspace=host.workspace)
             service_factory.create_batch(2, status='filtered', host=host,
                                          workspace=host.workspace)
+            session.commit()
             res = test_client.get(self.url(host))
             assert res.json['services'] == len(services)
 
-    def test_index_shows_service_count(self, test_client, host_services,
-                                       service_factory):
+    def test_index_shows_service_count(self, test_client, session,
+                                       host_services, service_factory):
         ids_map = {host.id: services
                    for (host, services) in host_services.items()}
 
@@ -235,6 +236,7 @@ class TestHostAPI:
             service_factory.create_batch(2, status='filtered', host=host,
                                          workspace=host.workspace)
 
+        session.commit()
         res = test_client.get(self.url())
         assert len(res.json['rows']) >= len(ids_map)  # Some hosts can have no services
         for host in res.json['rows']:
@@ -252,6 +254,7 @@ class TestHostAPI:
         # This shouldn't be shown, they are from other workspace
         host_factory.create_batch(5, workspace=second_workspace, os='Unix')
 
+        session.commit()
         url = self.url() + '?os=Unix'
         res = test_client.get(url)
         assert res.status_code == 200
@@ -273,6 +276,7 @@ class TestHostAPI:
         # This shouldn't be shown anywhere, they are from other workspace
         host_factory.create_batch(5, workspace=second_workspace, os='Unix')
 
+        session.commit()
         res = test_client.get(self.url() + '?os__like=Unix %')
         assert res.status_code == 200
         self.compare_results(hosts, res)
@@ -290,6 +294,7 @@ class TestHostAPI:
         # Hosts that shouldn't be shown
         host_factory.create_batch(5, workspace=workspace)
 
+        session.commit()
         res = test_client.get(self.url() + '?service=IRC')
         assert res.status_code == 200
         shown_hosts_ids = set(obj['id'] for obj in res.json['rows'])

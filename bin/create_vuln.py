@@ -62,7 +62,7 @@ def main(workspace='', args=None, parser=None):
 
     if not old:
         if not parsed_args.dry_run:
-            models.create_vuln(workspace, obj, None)
+            models.create_vuln(workspace, obj)
         old = models.get_vulns(
             workspace,
             **params

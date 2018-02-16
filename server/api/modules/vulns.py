@@ -232,12 +232,12 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
 
     method = fields.String(default='')
     params = fields.String(attribute='parameters', default='')
-    pname = fields.String(dump_only=True, attribute='parameter_name', default='')
+    pname = fields.String(attribute='parameter_name', default='')
     path = fields.String(default='')
     response = fields.String(default='')
     request = fields.String(default='')
     website = fields.String(default='')
-    query = fields.String(dump_only=True, attribute='query_string', default='')
+    query = fields.String(attribute='query_string', default='')
 
     class Meta:
         model = VulnerabilityWeb
@@ -285,11 +285,11 @@ class VulnerabilityFilterSet(FilterSet):
         # command, impact, service, issuetracker, tags, date,
         # host, easeofresolution, evidence, policy violations, hostnames
         fields = (
-            "status", "website", "parameter_name", "query_string", "path",
+            "status", "website", "pname", "query", "path",
             "data", "severity", "confirmed", "name", "request", "response",
-            "parameters", "resolution", "method", "ease_of_resolution",
-            "description", "command_id", "target", "creator",
-            "easeofresolution")
+            "parameters", "params", "resolution", "ease_of_resolution",
+            "description", "command_id", "target", "creator", "method",
+            "easeofresolution", "query_string", "parameter_name")
 
         strict_fields = (
             "severity", "confirmed", "method", "status", "easeofresolution",
@@ -310,6 +310,9 @@ class VulnerabilityFilterSet(FilterSet):
         attribute='ease_of_resolution',
         validate=OneOf(Vulnerability.EASE_OF_RESOLUTIONS),
         allow_none=True))
+    pname = Filter(fields.String(attribute='parameter_name'))
+    query = Filter(fields.String(attribute='query_string'))
+    params = Filter(fields.String(attribute='parameters'))
 
     def filter(self):
         """Generate a filtered query from request parameters.

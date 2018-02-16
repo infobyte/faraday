@@ -116,8 +116,13 @@ class VulnerabilitySchema(AutoSchema):
     ]), dump_only=True)
     host = fields.Integer(dump_only=True, attribute='host_id')
     severity = SeverityField(required=True)
-    status = fields.Method(serialize='get_status', deserialize='load_status')  # TODO: this breaks enum validation.
-    type = fields.Method(serialize='get_type', deserialize='load_type', required=True)
+    status = fields.Method(
+        serialize='get_status',
+        validate=OneOf(Vulnerability.STATUSES + ['opened']),
+        deserialize='load_status')
+    type = fields.Method(serialize='get_type',
+                         deserialize='load_type',
+                         required=True)
     obj_id = fields.String(dump_only=True, attribute='id')
     target = fields.String(dump_only=True, attribute='target_host_ip')
     metadata = SelfNestedField(CustomMetadataSchema())
@@ -232,12 +237,12 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
 
     method = fields.String(default='')
     params = fields.String(attribute='parameters', default='')
-    pname = fields.String(dump_only=True, attribute='parameter_name', default='')
+    pname = fields.String(attribute='parameter_name', default='')
     path = fields.String(default='')
     response = fields.String(default='')
     request = fields.String(default='')
     website = fields.String(default='')
-    query = fields.String(dump_only=True, attribute='query_string', default='')
+    query = fields.String(attribute='query_string', default='')
 
     class Meta:
         model = VulnerabilityWeb
@@ -285,11 +290,11 @@ class VulnerabilityFilterSet(FilterSet):
         # command, impact, service, issuetracker, tags, date,
         # host, easeofresolution, evidence, policy violations, hostnames
         fields = (
-            "status", "website", "parameter_name", "query_string", "path",
+            "status", "website", "pname", "query", "path",
             "data", "severity", "confirmed", "name", "request", "response",
-            "parameters", "resolution", "method", "ease_of_resolution",
-            "description", "command_id", "target", "creator", "service_id",
-            "easeofresolution")
+            "parameters", "params", "resolution", "ease_of_resolution",
+            "description", "command_id", "target", "creator", "method",
+            "easeofresolution", "query_string", "parameter_name", "service_id")
 
         strict_fields = (
             "severity", "confirmed", "method", "status", "easeofresolution",
@@ -310,6 +315,9 @@ class VulnerabilityFilterSet(FilterSet):
         attribute='ease_of_resolution',
         validate=OneOf(Vulnerability.EASE_OF_RESOLUTIONS),
         allow_none=True))
+    pname = Filter(fields.String(attribute='parameter_name'))
+    query = Filter(fields.String(attribute='query_string'))
+    params = Filter(fields.String(attribute='parameters'))
 
     def filter(self):
         """Generate a filtered query from request parameters.

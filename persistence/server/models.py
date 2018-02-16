@@ -421,7 +421,7 @@ def update_vuln_web(workspace_name, vuln_web, command_id):
 
 
 @_ignore_in_changes
-def create_note(workspace_name, note, command_id):
+def create_note(workspace_name, note, command_id=None):
     """Take a workspace_name and an note object and save it to the sever.
     Return the server's json response as a dictionary.
     """

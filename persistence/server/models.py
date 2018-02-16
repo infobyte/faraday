@@ -226,7 +226,7 @@ def get_vulns(workspace_name, **params):
 
 def get_vuln(workspace_name, vuln_id):
     """Return the Vuln of id vuln_id. None if not found."""
-    return force_unique(get_vulns(workspace_name, id=vuln_id))
+    return force_unique(get_vulns(workspace_name, object_id=vuln_id))
 
 
 def get_web_vulns(workspace_name, **params):

@@ -106,13 +106,12 @@ def _create_server_get_url(workspace_name, object_name=None, object_id=None, **p
 
     Return the get_url as a string.
     """
-    object_name = "/{0}".format(object_name) if object_name else ""
-    object_name += "/{0}/".format(object_id) if object_id else ""
+    get_url = "/{0}".format(object_name) if object_name else ""
+    get_url += "/{0}/".format(object_id) if object_id else ""
     get_url = '{0}/ws/{1}{2}'.format(_create_server_api_url(),
                                      workspace_name,
-                                     object_name)
-    if params:
-        get_url = '{0}?{1}'.format(get_url, urllib.urlencode(params))
+                                     get_url)
+
     return get_url
 
 

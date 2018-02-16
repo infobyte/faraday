@@ -138,8 +138,8 @@ def _create_server_put_url(workspace_name, obj_type, obj_id, command_id):
     return put_url
 
 
-def _create_server_delete_url(workspace_name, object_id):
-    return _create_server_post_url(workspace_name, object_id)
+def _create_server_delete_url(workspace_name, obj_type, object_id, command_id=None):
+    return _create_server_put_url(workspace_name, obj_type, object_id, command_id)
 
 # XXX: COUCH IT!
 def _create_couch_get_url(workspace_name, object_id):
@@ -330,12 +330,12 @@ def _save_db_to_server(db_name, **params):
     post_url = _create_server_db_url(db_name)
     return _post(post_url, expected_response=201, **params)
 
-# XXX: SEMI COUCH IT!
-def _delete_from_couch(workspace_name, faraday_object_id):
-    delete_url = _create_server_delete_url(workspace_name, faraday_object_id)
+
+def _delete_from_server(workspace_name, faraday_object_type, faraday_object_id):
+    delete_url = _create_server_delete_url(workspace_name, faraday_object_type, faraday_object_id)
     return _delete(delete_url)
 
-# XXX: COUCH IT!
+
 @_add_session_cookies
 def _couch_changes(workspace_name, **params):
     return CouchChangesStream(workspace_name,
@@ -1454,33 +1454,36 @@ def create_workspace(workspace_name, description, start_date, finish_date,
                               duration=duration,
                               type="Workspace")
 
+
 def delete_host(workspace_name, host_id):
     """Delete host of id host_id from the database."""
-    return _delete_from_couch(workspace_name, host_id)
+    return _delete_from_server(workspace_name, 'Host', host_id)
 
-def delete_interface(workspace_name, interface_id):
-    """Delete interface of id interface_id from the database."""
-    return _delete_from_couch(workspace_name, interface_id)
 
 def delete_service(workspace_name, service_id):
     """Delete service of id service_id from the database."""
-    return _delete_from_couch(workspace_name, service_id)
+    return _delete_from_server(workspace_name, 'Service', service_id)
+
 
 def delete_vuln(workspace_name, vuln_id):
     """Delete vuln of id vuln_id from the database."""
-    return _delete_from_couch(workspace_name, vuln_id)
+    return _delete_from_server(workspace_name, 'Vulnerability', vuln_id)
+
 
 def delete_note(workspace_name, note_id):
     """Delete note of id note_id from the database."""
-    return _delete_from_couch(workspace_name, note_id)
+    return _delete_from_server(workspace_name, note_id)
+
 
 def delete_credential(workspace_name, credential_id):
     """Delete credential of id credential_id from the database."""
-    return _delete_from_couch(workspace_name, credential_id)
+    return _delete_from_server(workspace_name, 'Credential', credential_id)
+
 
 def delete_command(workspace_name, command_id):
     """Delete command of id command_id from the database."""
-    return _delete_from_couch(workspace_name, command_id)
+    return _delete_from_server(workspace_name, 'Command', command_id)
+
 
 def delete_workspace(workspace_name):
     """Delete the couch database of id workspace_name"""

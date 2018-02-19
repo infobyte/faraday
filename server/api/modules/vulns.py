@@ -13,7 +13,7 @@ from flask import Blueprint
 from flask_classful import route
 from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
-from sqlalchemy.orm import joinedload, selectin_polymorphic, undefer
+from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
 from sqlalchemy.orm.exc import NoResultFound
 
 from depot.manager import DepotManager
@@ -283,14 +283,24 @@ class CreatorFilter(Filter):
         return query.filter(model.creator_command_tool == value)
 
 
+class ServiceFilter(Filter):
+    def filter(self, query, model, attr, value):
+        alias = aliased(Service, name='service_filter')
+        return query.join(
+            alias,
+            alias.id == model.__table__.c.service_id).filter(
+                alias.name == value
+        )
+
+
 class VulnerabilityFilterSet(FilterSet):
     class Meta(FilterSetMeta):
         model = VulnerabilityWeb  # It has all the fields
         # TODO migration: Check if we should add fields owner,
-        # command, impact, service, issuetracker, tags, date,
-        # host, easeofresolution, evidence, policy violations, hostnames
+        # command, impact, issuetracker, tags, date, host
+        # evidence, policy violations, hostnames
         fields = (
-            "status", "website", "pname", "query", "path",
+            "status", "website", "pname", "query", "path", "service",
             "data", "severity", "confirmed", "name", "request", "response",
             "parameters", "params", "resolution", "ease_of_resolution",
             "description", "command_id", "target", "creator", "method",
@@ -310,6 +320,7 @@ class VulnerabilityFilterSet(FilterSet):
     type = TypeFilter(fields.Str(validate=[OneOf(['Vulnerability',
                                                   'VulnerabilityWeb'])]))
     creator = CreatorFilter(fields.Str())
+    service = ServiceFilter(fields.Str())
     severity = Filter(SeverityField())
     easeofresolution = Filter(fields.String(
         attribute='ease_of_resolution',

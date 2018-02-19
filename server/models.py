@@ -751,8 +751,10 @@ class VulnerabilityGeneric(VulnerabilityABC):
     )
     target_host_ip = column_property(
         case([
-            (text('host_id IS NOT null'), _host_vuln_query.as_scalar()),
-            (text('service_id IS NOT null'), _service_vuln_query.as_scalar())
+            (text('vulnerability.host_id IS NOT null'),
+                _host_vuln_query.as_scalar()),
+            (text('vulnerability.service_id IS NOT null'),
+                _service_vuln_query.as_scalar())
         ]),
         deferred=True
     )

@@ -40,7 +40,7 @@ def main(workspace='', args=None, parser=None):
                                         parsed_args.name,
                                         workspace,
                                         protocol=parsed_args.protocol,
-                                        ports=ports,
+                                        ports=[port],
                                         status=parsed_args.status,
                                         version=parsed_args.version,
                                         description=parsed_args.description,

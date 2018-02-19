@@ -224,9 +224,9 @@ def get_vulns(workspace_name, **params):
     return _get_faraday_ready_vulns(workspace_name, vulns_dictionaries, vulns_type='vulns')
 
 
-def get_vuln(workspace_name, vuln_id):
+def get_vuln(workspace_name, vuln_id=None, **params):
     """Return the Vuln of id vuln_id. None if not found."""
-    return force_unique(get_vulns(workspace_name, object_id=vuln_id))
+    return force_unique(get_vulns(workspace_name, object_id=vuln_id, **params))
 
 
 def get_web_vulns(workspace_name, **params):
@@ -728,6 +728,12 @@ class ModelBase(object):
     def getParent(self):
         return self.parent_id
 
+    def setParent(self, parent_id):
+        self.parent_id = parent_id
+
+    def setParentType(self, parent_type):
+        self.parent_type = parent_type
+
     def setID(self, id):
         self.id = id
         self.id_available.set()
@@ -1113,6 +1119,7 @@ class VulnWeb(Vuln):
         self.tags = vuln_web.get('tags', list())
         self.target = vuln_web.get('target')
         self.policyviolations = vuln_web.get('policyviolations', list())
+        self.parent_type = 'Service'
 
     @staticmethod
     def publicattrsrefs():

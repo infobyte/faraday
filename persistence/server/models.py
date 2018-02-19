@@ -869,12 +869,8 @@ class Host(ModelBase):
         return self.default_gateway
 
     def getVulns(self):
-        return get_all_vulns(self._workspace_name, hostid=self._server_id)
-    # def getInterface(self, interface_couch_id):
-    #     service = get_interfaces(self._workspace_name, couchid=interface_couch_id)
-    #     return service[0]
-    # def getAllInterfaces(self):
-    #     return get_interfaces(self._workspace_name, host=self._server_id)
+        return get_all_vulns(self._workspace_name, target=self._server_id)
+
     def getServices(self):
         return get_services(self._workspace_name, hostid=self._server_id)
 

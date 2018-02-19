@@ -721,7 +721,6 @@ class HostInfoDialog(Gtk.Window):
         """Creates a window with the information about a given hosts.
         The parent is needed so the window can set transient for
         """
-
         window_title = "Host " + host.name + " information"
         Gtk.Window.__init__(self, title=window_title)
 
@@ -880,11 +879,11 @@ class HostInfoDialog(Gtk.Window):
         # only the ID and the name are needed, but i still need to 'fill'
         # the other columns with dummy info
 
-        display_str = host.getName() + " (" + str(len(host.getVulns())) + ")"
+        display_str = host.getName() + " (" + str(host.getVulnAmount()) + ")"
         owned_status = ("Yes" if host.isOwned() else "No")
         model.append(None, [str(host.getID()), host.getName(),
                                             host.getOS(), owned_status,
-                                            str(len(host.getVulns())), "",
+                                            str(host.getVulnAmount()), "",
                                             "", "", "", "", "", "",
                                             display_str])
 

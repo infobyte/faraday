@@ -215,6 +215,8 @@ angular.module('faradayApp')
             for (var key in item) {
                 if(key != "refs" && key != "policyviolations" && vm.data.hasOwnProperty(key)) {
                     vm.data[key] = item[key];
+                }else if (key === 'exploitation'){
+                    vm.data['severity'] = item['exploitation'];
                 }
             }
 

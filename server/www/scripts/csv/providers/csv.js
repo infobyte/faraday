@@ -28,7 +28,7 @@ angular.module('faradayApp')
                 aProperties.forEach(function(prop) {
                     object = {};
                     if(typeof(v[prop]) === "object") v[prop] = parseObject(v[prop]);
-                    if(typeof(v[prop]) != "undefined" && v[prop] != null) {
+                    if(typeof(v[prop]) != "undefined" && v[prop] != null && typeof(v[prop]) != "number") {
                         object[prop] = cleanCSV(v[prop]);
                     } else {
                         object[prop] = "";

@@ -87,7 +87,7 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-right" role="menu">
                         <li ng-repeat="(column, show) in columns">
-                            <a class="ws" ng-show="show && (column !== '_id' && column !== 'evidence' && column !== 'impact' && column !== 'web' && column !== 'easeofresolution' && column !== 'date')" ng-click="groupBy(column)">{{column}}</a>
+                            <a class="ws" ng-show="show && (column !== '_id' && column !== 'evidence' && column !== 'impact' && column !== 'web' && column !== 'easeofresolution' && column !== 'date' && column !== 'hostnames')" ng-click="groupBy(column)">{{column}}</a>
                         </li>
                     </ul>
                 </div>

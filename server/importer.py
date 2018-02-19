@@ -971,13 +971,16 @@ class ImportCouchDBUsers():
         # Import admin users
         for (username, password) in admins.items():
             logger.info('Creating user {0}'.format(username))
-            if not db.session.query(User).filter_by(username=username).first():
+            admin = db.session.query(User).filter_by(username=username).first()
+            if not admin:
                 app.user_datastore.create_user(
                     username=username,
                     email=username + '@test.com',
                     password=self.convert_couchdb_hash(password),
                     is_ldap=False
                 )
+            else:
+                admin.password=self.convert_couchdb_hash(password)
 
     def import_users(self, all_users, admins):
         # Import non admin users
@@ -990,13 +993,16 @@ class ImportCouchDBUsers():
                 # This is an already imported admin user, skip
                 continue
             logger.info(u'Importing user {0}'.format(user['name']))
-            if not db.session.query(User).filter_by(username=user['name']).first():
+            old_user = db.session.query(User).filter_by(username=user['name']).first()
+            if not old_user:
                 app.user_datastore.create_user(
                     username=user['name'],
                     email=user['name'] + '@test.com',
                     password=self.get_hash_from_document(user),
                     is_ldap=False
                 )
+            else:
+                old_user.password = self.get_hash_from_document(user)
 
     def run(self):
         all_users, admins = self.get_users_and_admins()

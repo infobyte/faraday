@@ -99,7 +99,9 @@ def get_vuln_web_properties(vuln_web):
         'path': vuln_web.getPath(),
         'pname': vuln_web.getPname(),
         'query': vuln_web.getQuery(),
-        'status': vuln_web.getStatus()
+        'status': vuln_web.getStatus(),
+        'parent': vuln_web.getParent(),
+        'parent_type': vuln_web.getParentType(),
     }
     vuln_web_dict.update(get_object_properties(vuln_web))
     vuln_web_dict.update(get_vuln_properties(vuln_web))

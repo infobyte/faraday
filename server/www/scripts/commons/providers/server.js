@@ -238,7 +238,7 @@ angular.module("faradayApp")
                 return get(url);
             }
 
-            ServerAPI.getService = function(wsName, data, objId) {
+            ServerAPI.getService = function(wsName, objId) {
                 var getUrl = createGetUrl(wsName, 'services', objId);
                 return get(getUrl);
             }

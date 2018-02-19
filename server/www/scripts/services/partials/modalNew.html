@@ -15,20 +15,20 @@
             <div class="form-group">
                 <div class="col-md-12">
                     <label class="sr-only" for="service">Name</label>
-                    <input type="text" class="form-control" id="service" name="name" placeholder="Name" ng-model="service.name" />
+                    <input type="text" class="form-control" id="service" name="name" placeholder="Name" ng-model="data.name" />
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-12">
                     <label class="sr-only" for="description">Description</label>
-                    <textarea class="form-control" id="description" placeholder="Description" ng-model="service.description"></textarea>
+                    <textarea class="form-control" id="description" placeholder="Description" ng-model="data.description"></textarea>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-12">
                     <div class="checkbox">
                         <label>
-                            <input type="checkbox" id="owned" ng-model="service.owned"/>
+                            <input type="checkbox" id="owned" ng-model="data.owned"/>
                             <span class="normal-size">Owned</span>
                         </label>
                     </div><!-- .checkbox -->
@@ -39,23 +39,23 @@
                     <h5>Port</h5>
                     <div class="input-margin" ng-class="{'has-error': form.ports.$invalid }">
                         <label class="sr-only" for="ports">Port</label>
-                        <input type="number" class="form-control" id="ports" name="ports" placeholder="Port" ng-model="service.ports" required/>
+                        <input type="number" class="form-control" id="ports" name="ports" placeholder="Port" ng-model="data.ports" required/>
                     </div>
                 </div>
                 <div class="col-md-3 protocol" ng-class="{'has-error': form.protocol.$invalid }">
                     <h5>Protocol</h5>
                     <label class="sr-only" for="protocol">Protocol</label>
-                    <input type="text" class="form-control" id="protocol" name="protocol" placeholder="Protocol" ng-model="service.protocol" required/>
+                    <input type="text" class="form-control" id="protocol" name="protocol" placeholder="Protocol" ng-model="data.protocol" required/>
                 </div>
                 <div class="col-md-3">
                     <h5>Version</h5>
                     <label class="sr-only" for="version">Version</label>
-                    <input type="text" class="form-control" id="version" placeholder="Version" ng-model="service.version"/>
+                    <input type="text" class="form-control" id="version" placeholder="Version" ng-model="data.version"/>
                 </div>
                 <div class="col-md-3">
                     <h5>Status</h5>
                     <label class="sr-only" for="status">Status</label>
-                    <select class="form-control" ng-model="service.status" ng-options="e for e in statuses">
+                    <select class="form-control" ng-model="data.status" ng-options="e for e in statuses">
                     </select>
                 </div>
             </div><!-- .form-group -->

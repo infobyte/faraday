@@ -1,15 +1,14 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-import time
 
-import flask
 from flask import Blueprint
+from filteralchemy import FilterSet, operators
 from marshmallow import fields, post_load, ValidationError
-from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound
 
-from server.api.base import AutoSchema, ReadWriteWorkspacedView
+from server.api.base import AutoSchema, ReadWriteWorkspacedView, FilterSetMeta, \
+    FilterAlchemyMixin
 from server.models import Host, Service, Workspace
 from server.schemas import (
     MetadataSchema,
@@ -39,10 +38,14 @@ class ServiceSchema(AutoSchema):
     vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
     credentials = fields.Integer(attribute='credentials_count', dump_only=True)
     metadata = SelfNestedField(MetadataSchema())
-    type = fields.Function(lambda obj: 'Host', dump_only=True)
+    type = fields.Function(lambda obj: 'Service', dump_only=True)
 
     def load_ports(self, value):
-        # TODO migration: handle empty list and not numeric value
+        if not isinstance(value, list):
+            raise ValidationError('ports must be a list')
+        if len(value) != 1:
+            raise ValidationError('ports must be a list with exactly one'
+                                  'element')
         return str(value.pop())
 
     @post_load
@@ -80,12 +83,22 @@ class ServiceSchema(AutoSchema):
                   'metadata', 'summary', 'host_id')
 
 
-class ServiceView(ReadWriteWorkspacedView):
+class ServiceFilterSet(FilterSet):
+    class Meta(FilterSetMeta):
+        model = Service
+        fields = ('host_id', 'protocol', 'name', 'port')
+        default_operator = operators.Equal
+        operators = (operators.Equal,)
+
+
+class ServiceView(FilterAlchemyMixin, ReadWriteWorkspacedView):
     route_base = 'services'
     model_class = Service
     schema_class = ServiceSchema
     count_extra_filters = [Service.status == 'open']
     get_undefer = [Service.credentials_count, Service.vulnerability_count]
+    get_joinedloads = [Service.credentials]
+    filterset_class = ServiceFilterSet
 
     def _envelope_list(self, objects, pagination_metadata=None):
         services = []
@@ -99,10 +112,5 @@ class ServiceView(ReadWriteWorkspacedView):
             'services': services,
         }
 
-    def _get_base_query(self, workspace_name):
-        original = super(ServiceView, self)._get_base_query(workspace_name)
-        return original.options(
-            joinedload(Service.credentials)
-        )
 
 ServiceView.register(services_api)

@@ -393,8 +393,7 @@ class VulnerabilityABC(Metadata):
     name = Column(Text, nullable=False)
     resolution = Column(Text, nullable=True)
     severity = Column(Enum(*SEVERITIES, name='vulnerability_severity'), nullable=False)
-    risk = Column(Float(3,1), nullable=True)
-    # TODO add evidence
+    risk = Column(Float(3, 1), nullable=True)
 
     impact_accountability = Column(Boolean, default=False)
     impact_availability = Column(Boolean, default=False)
@@ -630,7 +629,6 @@ class Command(Metadata):
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', foreign_keys=[workspace_id])
-    # TODO: add Tool relationship and report_attachment
 
     sum_created_vulnerabilities = _make_created_objects_sum('vulnerability')
 
@@ -745,8 +743,10 @@ class VulnerabilityGeneric(VulnerabilityABC):
     )
     target_host_ip = column_property(
         case([
-            (text('host_id IS NOT null'), _host_vuln_query.as_scalar()),
-            (text('service_id IS NOT null'), _service_vuln_query.as_scalar())
+            (text('vulnerability.host_id IS NOT null'),
+                _host_vuln_query.as_scalar()),
+            (text('vulnerability.service_id IS NOT null'),
+                _service_vuln_query.as_scalar())
         ]),
         deferred=True
     )

@@ -26,9 +26,6 @@ angular.module('faradayApp')
             var hostId = $routeParams.hidId;
             dashboardSrv.getServicesByHost($scope.workspace, hostId)
                 .then(function(services) {
-                    return $q.all(services);
-                })
-                .then(function(services) {
                     $scope.services = services;
 
                     $scope.services.forEach(function(service) {
@@ -248,35 +245,13 @@ angular.module('faradayApp')
              });
 
             modal.result.then(function(data) {
-                $scope.insert(data);
-            });
-        };
-
-        $scope.insert = function(service) {
-            servicesManager.createService(service, $scope.workspace).then(function(service) {
-                $scope.services.push(service);
-            }, function(message) {
-                $uibModal.open(config = {
-                    templateUrl: 'scripts/commons/partials/modalKO.html',
-                    controller: 'commonsModalKoCtrl',
-                    size: 'sm',
-                    resolve: {
-                        msg: function() {
-                            return message;
-                        }
-                    }
-                });
+               loadServices();
             });
         };
 
         $scope.update = function(services, data) {
-            services.forEach(function(service) {
-	            servicesManager.updateService(service, data, $scope.workspace).then(function(s) {
-                    loadServices();
-	            }, function(message) {
-	                console.log(message);
-	            });
-            });
+        //hostId
+            loadServices();
         };
 
         $scope.edit = function() {

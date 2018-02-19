@@ -33,6 +33,8 @@ FARADAY_UP = True
 MERGE_STRATEGY = None  # you may change it the string 'NEW' to prefer new objects
                        # you may ask why this can be None type or 'New' as a string
                        # the answer is: Faraday.
+logger = logging.getLogger(__name__)
+
 
 def _conf():
     if FARADAY_UP:
@@ -191,9 +193,15 @@ def get_hosts(workspace_name, **params):
     return _get_faraday_ready_hosts(workspace_name, host_dictionaries)
 
 
-def get_host(workspace_name, host_id):
+def get_host(workspace_name, host_id=None, **params):
     """Return the host by host_id. None if it can't be found."""
-    return get_hosts(workspace_name, id=host_id).pop()
+    hosts = get_hosts(workspace_name, object_id=host_id, **params)
+    if len(hosts) == 0:
+        return
+    else:
+        if len(hosts) > 1:
+            logger.warn('More than one hosts found. returning only one of them.')
+        return hosts.pop()
 
 
 def get_all_vulns(workspace_name, **params):
@@ -216,9 +224,9 @@ def get_vulns(workspace_name, **params):
     return _get_faraday_ready_vulns(workspace_name, vulns_dictionaries, vulns_type='vulns')
 
 
-def get_vuln(workspace_name, vuln_id):
+def get_vuln(workspace_name, vuln_id=None, **params):
     """Return the Vuln of id vuln_id. None if not found."""
-    return force_unique(get_vulns(workspace_name, id=vuln_id))
+    return force_unique(get_vulns(workspace_name, object_id=vuln_id, **params))
 
 
 def get_web_vulns(workspace_name, **params):
@@ -231,9 +239,9 @@ def get_web_vulns(workspace_name, **params):
     return _get_faraday_ready_vulns(workspace_name, vulns_web_dictionaries, vulns_type='vulns_web')
 
 
-def get_web_vuln(workspace_name, vuln_id):
+def get_web_vuln(workspace_name, vuln_id=None, **params):
     """Return the WebVuln of id vuln_id. None if not found."""
-    return force_unique(get_web_vulns(workspace_name, id=vuln_id))
+    return force_unique(get_web_vulns(workspace_name, object_id=vuln_id, **params))
 
 
 def get_services(workspace_name, **params):
@@ -246,9 +254,9 @@ def get_services(workspace_name, **params):
     return _get_faraday_ready_services(workspace_name, services_dictionary)
 
 
-def get_service(workspace_name, service_id):
+def get_service(workspace_name, service_id=None, **params):
     """Return the Service of id service_id. None if not found."""
-    return force_unique(get_services(workspace_name, id=service_id))
+    return force_unique(get_services(workspace_name, object_id=service_id, **params))
 
 
 def get_credentials(workspace_name, **params):
@@ -261,9 +269,9 @@ def get_credentials(workspace_name, **params):
     return _get_faraday_ready_credentials(workspace_name, credentials_dictionary)
 
 
-def get_credential(workspace_name, credential_id):
+def get_credential(workspace_name, credential_id=None, **params):
     """Return the Credential of id credential_id. None if not found."""
-    return force_unique(get_credentials(workspace_name, id=credential_id))
+    return force_unique(get_credentials(workspace_name, id=credential_id, **params))
 
 
 def get_notes(workspace_name, **params):
@@ -334,7 +342,7 @@ def get_deleted_object_name_and_type(workspace_name, object_id):
 
 
 @_ignore_in_changes
-def create_host(workspace_name, host, command_id):
+def create_host(workspace_name, host, command_id=None):
     """Take a workspace_name and a host object and save it to the sever.
 
     Return the server's json response as a dictionary.
@@ -354,7 +362,7 @@ def update_host(workspace_name, host, command_id):
 
 
 @_ignore_in_changes
-def create_service(workspace_name, service, command_id):
+def create_service(workspace_name, service, command_id=None):
     """Take a workspace_name and a service object and save it to the sever.
     Return the server's json response as a dictionary.
     """
@@ -373,7 +381,7 @@ def update_service(workspace_name, service, command_id):
 
 
 @_ignore_in_changes
-def create_vuln(workspace_name, vuln, command_id):
+def create_vuln(workspace_name, vuln, command_id=None):
     """Take a workspace_name and an vulnerability object and save it to the
     sever. The rev parameter must be provided if you are updating the object.
     Return the server's json response as a dictionary.
@@ -383,7 +391,7 @@ def create_vuln(workspace_name, vuln, command_id):
 
 
 @_ignore_in_changes
-def update_vuln(workspace_name, vuln, command_id):
+def update_vuln(workspace_name, vuln, command_id=None):
     """Take a workspace_name and a Vuln object and update it in the sever.
 
     Return the server's json response as a dictionary.
@@ -393,7 +401,7 @@ def update_vuln(workspace_name, vuln, command_id):
 
 
 @_ignore_in_changes
-def create_vuln_web(workspace_name, vuln_web, command_id):
+def create_vuln_web(workspace_name, vuln_web, command_id=None):
     """Take a workspace_name and an vulnerabilityWeb object and save it to the
     sever.
     Return the server's json response as a dictionary.
@@ -413,7 +421,7 @@ def update_vuln_web(workspace_name, vuln_web, command_id):
 
 
 @_ignore_in_changes
-def create_note(workspace_name, note, command_id):
+def create_note(workspace_name, note, command_id=None):
     """Take a workspace_name and an note object and save it to the sever.
     Return the server's json response as a dictionary.
     """
@@ -431,7 +439,7 @@ def update_note(workspace_name, note, command_id):
 
 
 @_ignore_in_changes
-def create_credential(workspace_name, credential, command_id):
+def create_credential(workspace_name, credential, command_id=None):
     """Take a workspace_name and an credential object and save it to the sever.
     Return the server's json response as a dictionary.
     """
@@ -720,6 +728,12 @@ class ModelBase(object):
     def getParent(self):
         return self.parent_id
 
+    def setParent(self, parent_id):
+        self.parent_id = parent_id
+
+    def setParentType(self, parent_type):
+        self.parent_type = parent_type
+
     def setID(self, id):
         self.id = id
         self.id_available.set()
@@ -882,6 +896,7 @@ class Service(ModelBase):
     def __init__(self, service, workspace_name):
         ModelBase.__init__(self, service, workspace_name)
         self.protocol = service['protocol']
+        self.parent_id = service.get('parent') or service.get('host_id') or service.get('service_id')
         if type(service['ports']) == int:
             # the new api returns an integer in ports
             self.ports = [service['ports']]
@@ -921,6 +936,9 @@ class Service(ModelBase):
 
     def __str__(self):
         return "{0} ({1})".format(self.name, self.vuln_amount)
+
+    def getParent(self):
+        return self.parent_id
 
     def getStatus(self):
         return self.status
@@ -1101,6 +1119,7 @@ class VulnWeb(Vuln):
         self.tags = vuln_web.get('tags', list())
         self.target = vuln_web.get('target')
         self.policyviolations = vuln_web.get('policyviolations', list())
+        self.parent_type = 'Service'
 
     @staticmethod
     def publicattrsrefs():

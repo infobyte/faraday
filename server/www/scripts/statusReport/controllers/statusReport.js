@@ -406,7 +406,11 @@ angular.module('faradayApp')
                 visible: $scope.columns["creator"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'policyviolations',
-                displayName : "policy violations",
+                // The following line breaks the remembering of the field (i.e.
+                // setting it in the SRcolumns cookie), so it is better to
+                // leave it commented (or to debug the problem, which I don't
+                // want to)
+                // displayName : "policy violations",
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/policyviolationscolumn.html',
                 headerCellTemplate: header,
                 width: '100',

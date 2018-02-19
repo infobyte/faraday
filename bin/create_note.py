@@ -19,7 +19,10 @@ logger = logging.getLogger(__name__)
 def main(workspace='', args=None, parser=None):
     logger.warn('Create note will create a comment. fplugin name will be changed to create_comment')
     parser.add_argument('parent', help='Parent ID')
-    parser.add_argument('parent_type', help='Parent Type')
+    parser.add_argument('--parent_type',
+                        help='Vulnerability severity',
+                        choices=['Host', 'Service'],
+                        default='unclassified')
     parser.add_argument('name', help='Note name')
     parser.add_argument('text', help='Note content')
 

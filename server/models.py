@@ -457,6 +457,8 @@ class CustomAssociationSet(_AssociationSet):
                         raise Exception('This should not happend. AssocProxy could not find a conflict obj.')
                     self.col.add(conclict_obj)
                 yield self.creator(value, parent_instance)
+            else:
+                raise
 
     def add(self, value):
         if value not in self:

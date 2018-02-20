@@ -18,6 +18,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     event)
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship, undefer
 from sqlalchemy.sql import select, text, table
 from sqlalchemy.sql.expression import asc, case, join
@@ -53,6 +54,7 @@ OBJECT_TYPES = [
     'source_code',
     'comment',
 ]
+UNIQUE_VIOLATION = '23505'
 
 
 class SQLAlchemy(OriginalSQLAlchemy):
@@ -438,8 +440,28 @@ class CustomAssociationSet(_AssociationSet):
 
     def _create(self, value):
         parent_instance = self.lazy_collection.ref()
-        return self.creator(value, parent_instance)
+        session = db.session
+        conflict_objs = session.new
+        try:
+            yield self.creator(value, parent_instance)
+        except IntegrityError as ex:
+            if ex.orig.pgcode == UNIQUE_VIOLATION:
+                # unique constraint failed at database
+                # other process/thread won us on the commit
+                # we need to fetch already created objs.
+                session.rollback()
+                conflict_obj_names = [obj.name for obj in conflict_objs if obj.name != value]
+                for conflict_obj_name in conflict_obj_names:
+                    conclict_obj = session.query(Reference).filter_by(name=conflict_obj_name).first()
+                    if not conclict_obj:
+                        raise Exception('This should not happend. AssocProxy could not find a conflict obj.')
+                    self.col.add(conclict_obj)
+                yield self.creator(value, parent_instance)
 
+    def add(self, value):
+        if value not in self:
+            for new_value in self._create(value):
+                self.col.add(new_value)
 
 def _build_associationproxy_creator(model_class_name):
     def creator(name, vulnerability):

@@ -5,6 +5,7 @@
 from flask import Blueprint
 from filteralchemy import FilterSet, operators
 from marshmallow import fields, post_load, ValidationError
+from marshmallow.validate import OneOf
 from sqlalchemy.orm.exc import NoResultFound
 
 from server.api.base import AutoSchema, ReadWriteWorkspacedView, FilterSetMeta, \
@@ -32,7 +33,7 @@ class ServiceSchema(AutoSchema):
                          fields.Method(deserialize='load_ports'),
                          required=True,
                          attribute='port')
-    status = fields.String(default='open')
+    status = fields.String(default='open', validate=OneOf(Service.STATUSES))
     parent = fields.Integer(attribute='host_id')  # parent is not required for updates
     host_id = fields.Integer(attribute='host_id', dump_only=True)
     vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)

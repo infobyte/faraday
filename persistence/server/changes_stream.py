@@ -74,7 +74,6 @@ class WebsocketsChangesStream(ChangesStream):
         self.changes_queue = Queue()
         self.workspace_name = workspace_name
         self._response = None
-        websocket.enableTrace(True)
         self.ws = websocket.WebSocketApp(
                 "ws://{0}:9000".format(self._base_url),
                 on_message=self.on_message,

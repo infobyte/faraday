@@ -881,7 +881,7 @@ class HostInfoDialog(Gtk.Window):
 
         display_str = host.getName() + " (" + str(host.getVulnAmount()) + ")"
         owned_status = ("Yes" if host.isOwned() else "No")
-        model.append(None, [str(host.getID()), host.getName(),
+        host_position = model.append(None, [str(host.getID()), host.getName(),
                                             host.getOS(), owned_status,
                                             str(host.getVulnAmount()), "",
                                             "", "", "", "", "", "",
@@ -894,6 +894,24 @@ class HostInfoDialog(Gtk.Window):
         def lst_to_str(lst):
             """Convenient function to avoid this long line everywhere"""
             return ', '.join([str(word) for word in lst if word])
+
+        def add_service_to_host_in_model(service, model):
+            """Append a service to an host in the given
+            model. Return None. Modifies the model"""
+            display_str = service.getName() + " (" + str(len(service.getVulns())) + ")"
+            model.append(host_position, [str(service.getID()),
+                                         service.getName(),
+                                         service.getDescription(),
+                                         service.getProtocol(),
+                                         service.getStatus(),
+                                         lst_to_str(service.getPorts()),
+                                         service.getVersion(),
+                                         "Yes" if service.isOwned() else "No",
+                                         "", "", "", "", display_str])
+
+        services = host.getServices()
+        for service in services:
+            add_service_to_host_in_model(service, model)
 
         return model
 
@@ -1089,20 +1107,8 @@ class HostInfoDialog(Gtk.Window):
 
         object_id = selected_object[0]
         object_ = None
-        # TODO: fix this code to get services removing interface logic
-        # if object_type == 'Interface':
-        #     # an interface is a direct child of a host
-        #     object_ = safely(self.host.getInterface)(object_id)
-        # elif object_type == 'Service':
-        #     # a service is a grand-child of a host, so we should look
-        #     # for its parent interface and ask her about the child
-        #     parent_interface_iter = selected_object.get_parent()
-        #     parent_interface_id = parent_interface_iter[0]
-        #     parent_interface = safely(self.host.getInterface)(parent_interface_id)
-        #     if parent_interface:
-        #         object_ = safely(parent_interface.getService)(object_id)
-        #     else:
-        #         object_ = None
+        if object_type == 'Service':
+            object_ = safely(self.host.getService)(object_id)
 
         return object_
 
@@ -1268,34 +1274,6 @@ class ConflictsDialog(Gtk.Window):
             dialog.run()
             dialog.destroy()
             self._next_conflict_or_close()
-
-    # TODO: refactor or remove this code
-    # def case_for_interfaces(self, model, n):
-    #     """The custom case for the interfaces. Plays a little
-    #     with the information in the given model to create a solution acceptable
-    #     by resolveConflict. n is the right or left view, should be
-    #     either 1 or 2 as integers"""
-    #     solution = {}
-    #     solution["ipv4"] = {}
-    #     solution["ipv6"] = {}
-    #     for row in model:
-    #         prop_name = row[0].lower()
-    #         if prop_name.startswith("ipv4"):
-    #             prop_name = prop_name.split(" ")[1]
-    #             if not prop_name.startswith("dns"):
-    #                 solution["ipv4"][prop_name] = self.uncook(row[n], row[4])
-    #             elif prop_name.startswith("dns"):
-    #                 solution["ipv4"]["DNS"] = self.uncook(row[n], row[4])
-
-    #         elif prop_name.startswith("ipv6"):
-    #             prop_name = prop_name.split(" ")[1]
-    #             if not prop_name.startswith("dns"):
-    #                 solution["ipv6"][prop_name] = self.uncook(row[n], row[4])
-    #             elif prop_name.startswith("dns"):
-    #                 solution["ipv6"]["DNS"] = self.uncook(row[n], row[4])
-    #         else:
-    #             solution[prop_name] = self.uncook(row[n], row[4])
-    #     return solution
 
     def on_quit(self, button):
         """Exits the window"""

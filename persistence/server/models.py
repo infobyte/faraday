@@ -250,7 +250,7 @@ def get_services(workspace_name, **params):
 
     Return a list of Services objects
     """
-    services_dictionary = server.get_services(workspace_name, **params)
+    services_dictionary = server.get_services(workspace_name, **params)[0]
     return _get_faraday_ready_services(workspace_name, services_dictionary)
 
 
@@ -878,8 +878,16 @@ class Host(ModelBase):
         return get_all_vulns(self._workspace_name, target=self._server_id)
 
     def getServices(self):
+        """
+        Get all services of that host
+        """
         return get_services(self._workspace_name, hostid=self._server_id)
 
+    def getService(self):
+        """
+        Get a specific service id
+        """
+        return get_service(self._workspace_name, hostid=self._server_id)
 
 class Service(ModelBase):
     """A simple Service class. Should implement all the methods of the

@@ -369,6 +369,7 @@ class PluginProcess(Thread):
         self.output_queue = output_queue
         self.plugin = plugin_instance
         self.isReport = isReport
+        self.setDaemon(True)
 
     def run(self):
         proc_name = self.name

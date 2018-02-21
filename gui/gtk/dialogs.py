@@ -954,9 +954,12 @@ class HostInfoDialog(Gtk.Window):
 
         if object_type == 'Host':
             self.set_vuln_model(self.create_vuln_model(self.host))
+            self.clear(self.specific_info)
+            self.clear(self.vuln_info)
 
         elif object_type == 'Service':
             self.clear(self.specific_info)
+            self.clear(self.vuln_info)
             self.change_label_in_frame(self.specific_info_frame, object_type)
             prop_names = self.get_properties_names(object_type)
             self.show_info_in_box(object_info, prop_names, self.specific_info)

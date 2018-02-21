@@ -252,7 +252,7 @@ def get_services(workspace_name, **params):
     """
     services_dictionary = server.get_services(workspace_name, **params)
     # List inside of list, use the inside list...
-    if type(services_dictionary[0]) == list:
+    if len(services_dictionary) > 0 and type(services_dictionary[0]) == list:
         services_dictionary = services_dictionary[0]
     return _get_faraday_ready_services(workspace_name, services_dictionary)
 

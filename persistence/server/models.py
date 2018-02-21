@@ -887,7 +887,7 @@ class Host(ModelBase):
         """
         Get all services of this host.
         """
-        return get_services(self._workspace_name, hostid=self._server_id)
+        return get_services(self._workspace_name, host_id=self._server_id)
 
     def getService(self, service_id):
         """
@@ -967,6 +967,12 @@ class Service(ModelBase):
 
     def getVulnsAmount(self):
         return self.vuln_amount
+
+    def getVulns(self):
+        """
+        Get all vulns of this service.
+        """
+        return get_all_vulns(self._workspace_name, service_id=self._server_id)
 
 
 class Vuln(ModelBase):

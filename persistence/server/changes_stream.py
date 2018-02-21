@@ -104,9 +104,7 @@ class WebsocketsChangesStream(ChangesStream):
         print error
 
     def on_close(selg, ws):
-        print "### closed ###"
-
-        print 'open'
+        pass
 
     def __enter__(self):
         return self

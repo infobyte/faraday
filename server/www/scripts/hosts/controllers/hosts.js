@@ -16,6 +16,7 @@ angular.module('faradayApp')
                 $scope.columns = JSON.parse($cookies.get('HColumns'))
             }else{
                 $scope.columns = {
+                    "id": false,
                     "name": true,
                     "description": false,
                     "hostnames": false,

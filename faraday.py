@@ -498,7 +498,7 @@ def checkServerUrl():
         """)
         sys.exit(-1)
     except requests.exceptions.MissingSchema as ex:
-        print("Check ~/.faraday.config/user.xml server url, the following error was found: {0} ".format(ex))
+        print("Check ~/.faraday/config/user.xml server url, the following error was found: {0} ".format(ex))
 
 
 def checkVersion():

@@ -12,24 +12,24 @@ angular.module('faradayApp')
             // hosts list
             $scope.hosts = [];
             $scope.totalHosts = 0;
+            $scope.columns = {
+                "id": false,
+                "ip": true,
+                "description": false,
+                "hostnames": false,
+                "services": false,
+                "mac": false,
+                "service_count": true,
+                "vuln_count": true,
+                "credential_count": true,
+                "os": true,
+                "owned": true,
+                "create_time": true,
+                "last_modified": true,
+            }
             if($cookies.get('HColumns')) {
-                $scope.columns = JSON.parse($cookies.get('HColumns'))
-            }else{
-                $scope.columns = {
-                    "id": false,
-                    "name": true,
-                    "description": false,
-                    "hostnames": false,
-                    "services": false,
-                    "mac": false,
-                    "service_count": true,
-                    "vuln_count": true,
-                    "credential_count": true,
-                    "os": true,
-                    "owned": true,
-                    "create_time": true,
-                    "last_modified": true,
-                };
+                preferences = JSON.parse($cookies.get('HColumns'))
+                angular.extend($scope.columns, preferences);
             }
             // current workspace
             $scope.workspace = $routeParams.wsId;

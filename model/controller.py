@@ -497,20 +497,20 @@ class ModelController(Thread):
     def newHost(self, ip, os="Unknown"):
         return model.common.factory.createModelObject(
             models.Host.class_signature, ip,
-            self.mappers_manager.workspace_name, os=os, parent_id=None)
+            workspace_name=self.mappers_manager.workspace_name, os=os, parent_id=None)
 
     def newService(self, name, protocol="tcp?", ports=[], status="running",
                    version="unknown", description="", parent_id=None):
         return model.common.factory.createModelObject(
             models.Service.class_signature, name,
-            self.mappers_manager.workspace_name, protocol=protocol, ports=ports, status=status,
+            workspace_name=self.mappers_manager.workspace_name, protocol=protocol, ports=ports, status=status,
             version=version, description=description, parent_id=parent_id)
 
     def newVuln(self, name, desc="", ref=None, severity="", resolution="",
                 confirmed=False, parent_id=None):
         return model.common.factory.createModelObject(
             models.Vuln.class_signature, name,
-            self.mappers_manager.workspace_name, desc=desc, ref=ref, severity=severity, resolution=resolution,
+            workspace_name=self.mappers_manager.workspace_name, desc=desc, ref=ref, severity=severity, resolution=resolution,
             confirmed=confirmed, parent_id=parent_id)
 
     def newVulnWeb(self, name, desc="", ref=None, severity="", resolution="",
@@ -519,7 +519,7 @@ class ModelController(Thread):
                    parent_id=None):
         return model.common.factory.createModelObject(
             models.VulnWeb.class_signature, name,
-            self.mappers_manager.workspace_name, desc=desc, ref=ref, severity=severity, resolution=resolution,
+            workspace_name=self.mappers_manager.workspace_name, desc=desc, ref=ref, severity=severity, resolution=resolution,
             website=website, path=path, request=request, response=response,
             method=method, pname=pname, params=params, query=query,
             category=category, confirmed=confirmed, parent_id=parent_id)
@@ -527,12 +527,12 @@ class ModelController(Thread):
     def newNote(self, name, text, parent_id=None):
         return model.common.factory.createModelObject(
             models.Note.class_signature, name,
-            self.mappers_manager.workspace_name, text=text, parent_id=parent_id)
+            workspace_name=self.mappers_manager.workspace_name, text=text, parent_id=parent_id)
 
     def newCred(self, username, password, parent_id=None):
         return model.common.factory.createModelObject(
             models.Credential.class_signature, name,
-            username, password=password, parent_id=parent_id)
+            username, workspace_name=self.mappers_manager.workspace_name, password=password, parent_id=parent_id)
 
     def getHost(self, name):
         hosts_mapper = self.mappers_manager.getMapper(models.Host.class_signature)

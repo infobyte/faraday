@@ -283,8 +283,14 @@ def _get_raw_vulns(workspace_name, **params):
 
 def _get_raw_services(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
-    a dictionary with the services table."""
-    request_url = _create_server_get_url(workspace_name, 'services', **params)
+    a dictionary with the services table.
+    If you provide a hostid, it returns all services of that specified host"""
+
+    if params.get("hostid"):
+        request_url = _create_server_get_url(workspace_name, '', **params) + '/hosts/' + str(params["hostid"]) + "/services"
+    else:
+        request_url = _create_server_get_url(workspace_name, 'services', **params)
+
     return _get(request_url, **params)
 
 

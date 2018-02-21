@@ -45,6 +45,7 @@ class PluginBase(object):
 
         self.data_path = CONF.getDataPath()
         self.persistence_path = CONF.getPersistencePath()
+        self.workspace = CONF.getLastWorkspace()
         # Must be unique. Check that there is not
         # an existant plugin with the same id.
         # TODO: Make script that list current ids.
@@ -167,15 +168,18 @@ class PluginBase(object):
             args = args + (self.command_id, )
         else:
             logger.warn('Warning command id not set for action {0}'.format(args))
-        print('Addpending', args)
+        logger.debug('AddPendingAction', args)
         self._pending_actions.put(args)
 
     def createAndAddHost(self, name, os="unknown"):
+
         host_obj = factory.createModelObject(
             Host.class_signature,
             name,
             os=os,
-            parent_id=None)
+            parent_id=None,
+            workspace_name=self.workspace)
+
         host_obj._metadata.creatoserverr = self.id
         self.__addPendingAction(modelactions.ADDHOST, host_obj)
         return host_obj.getID()
@@ -207,7 +211,8 @@ class PluginBase(object):
             Service.class_signature,
             name, protocol=protocol, ports=ports, status=status,
             version=version, description=description,
-            parent_type='Service', parent_id=host_id)
+            parent_type='Service', parent_id=host_id,
+            workspace_name=self.workspace)
 
         serv_obj._metadata.creator = self.id
         self.__addPendingAction(modelactions.ADDSERVICEHOST, serv_obj)
@@ -220,7 +225,8 @@ class PluginBase(object):
             Vuln.class_signature,
             name, desc=desc, refs=ref, severity=severity,
             resolution=resolution, confirmed=False,
-            parent_id=host_id, parent_type='Host')
+            parent_id=host_id, parent_type='Host',
+            workspace_name=self.workspace)
 
         vuln_obj._metadata.creator = self.id
         self.__addPendingAction(modelactions.ADDVULNHOST, vuln_obj)
@@ -237,7 +243,8 @@ class PluginBase(object):
             Vuln.class_signature,
             name, desc=desc, refs=ref, severity=severity,
             resolution=resolution, confirmed=False,
-            parent_type='Host', parent_id=host_id)
+            parent_type='Host', parent_id=host_id,
+            workspace_name=self.workspace)
 
         vuln_obj._metadata.creator = self.id
         self.__addPendingAction(modelactions.ADDVULNHOST, vuln_obj)
@@ -250,8 +257,8 @@ class PluginBase(object):
             Vuln.class_signature,
             name, desc=desc, refs=ref, severity=severity,
             resolution=resolution, confirmed=False,
-            parent_type='Service', parent_id=service_id
-        )
+            parent_type='Service', parent_id=service_id,
+            workspace_name=self.workspace)
 
         vuln_obj._metadata.creator = self.id
         self.__addPendingAction(modelactions.ADDVULNSRV, vuln_obj)
@@ -270,7 +277,7 @@ class PluginBase(object):
             pname=pname, params=params, query=query,
             category=category, confirmed=False, parent_id=service_id,
             parent_type='Service',
-        )
+            workspace_name=self.workspace)
 
         vulnweb_obj._metadata.creator = self.id
         self.__addPendingAction(modelactions.ADDVULNWEBSRV, vulnweb_obj)
@@ -280,7 +287,8 @@ class PluginBase(object):
 
         note_obj = model.common.factory.createModelObject(
             Note.class_signature,
-            name, text=text, object_id=host_id, object_type='host')
+            name, text=text, object_id=host_id, object_type='host',
+            workspace_name=self.workspace)
 
         note_obj._metadata.creator = self.id
         self.__addPendingAction(modelactions.ADDNOTEHOST, note_obj)
@@ -293,7 +301,8 @@ class PluginBase(object):
 
         note_obj = model.common.factory.createModelObject(
             Note.class_signature,
-            name, text=text, object_id=host_id, object_type='host')
+            name, text=text, object_id=host_id, object_type='host',
+            workspace_name=self.workspace)
 
         note_obj._metadata.creator = self.id
         self.__addPendingAction(modelactions.ADDNOTEHOST, note_obj)
@@ -303,7 +312,8 @@ class PluginBase(object):
 
         note_obj = model.common.factory.createModelObject(
             Note.class_signature,
-            name, text=text, object_id=service_id, object_type='service')
+            name, text=text, object_id=service_id, object_type='service',
+            workspace_name=self.workspace)
 
         note_obj._metadata.creator = self.id
         self.__addPendingAction(modelactions.ADDNOTESRV, note_obj)
@@ -313,7 +323,8 @@ class PluginBase(object):
 
         note_obj = model.common.factory.createModelObject(
             Note.class_signature,
-            name, text=text, object_id=note_id, object_type='comment')
+            name, text=text, object_id=note_id, object_type='comment',
+            workspace_name=self.workspace)
 
         note_obj._metadata.creator = self.id
 
@@ -325,7 +336,8 @@ class PluginBase(object):
 
         cred_obj = model.common.factory.createModelObject(
             Credential.class_signature,
-            username, password=password, parent_id=service_id, parent_type='Service')
+            username, password=password, parent_id=service_id, parent_type='Service',
+            workspace_name=self.workspace)
 
         cred_obj._metadata.creator = self.id
         self.__addPendingAction(modelactions.ADDCREDSRV, cred_obj)

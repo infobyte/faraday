@@ -871,26 +871,29 @@ class Host(ModelBase):
     def getOS(self):
         return self.os
 
-    def getVulnAmount(self):
+    def getVulnsAmount(self):
         return self.vuln_amount
 
     def getDefaultGateway(self):
         return self.default_gateway
 
     def getVulns(self):
-        return get_all_vulns(self._workspace_name, target=self._server_id)
+        """
+        Get all vulns of this host.
+        """
+        return get_all_vulns(self._workspace_name, target=self.ip)
 
     def getServices(self):
         """
-        Get all services of that host
+        Get all services of this host.
         """
         return get_services(self._workspace_name, hostid=self._server_id)
 
-    def getService(self):
+    def getService(self, service_id):
         """
-        Get a specific service id
+        Get a specific service id of this host.
         """
-        return get_service(self._workspace_name, hostid=self._server_id)
+        return get_service(self._workspace_name, hostid=self._server_id, service_id=service_id)
 
 class Service(ModelBase):
     """A simple Service class. Should implement all the methods of the
@@ -962,8 +965,8 @@ class Service(ModelBase):
     def isOwned(self):
         return self.owned
 
-    def getVulns(self):
-        return get_all_vulns(self._workspace_name, serviceid=self._server_id)
+    def getVulnsAmount(self):
+        return self.vuln_amount
 
 
 class Vuln(ModelBase):

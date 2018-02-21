@@ -252,7 +252,7 @@ class HostsSidebar(Gtk.Widget):
 
     def _add_single_host_to_model(self, host):
         """Add a single host to the model. Return None."""
-        vuln_count = host.getVulnAmount()
+        vuln_count = host.getVulnsAmount()
         os_icon, os_str = self.__decide_icon(host.getOS())
         display_str = str(host)
         if str(host.id) not in map(lambda host_data: host_data[0], self.model):
@@ -410,7 +410,7 @@ class HostsSidebar(Gtk.Widget):
             # name is updated with the ammount of vulns
             host = self.get_single_host_function(obj_id)
             if host:
-                self._modify_vuln_amount_of_single_host_in_model(host.getID(), host.getVulnAmount())
+                self._modify_vuln_amount_of_single_host_in_model(host.getID(), host.getVulnsAmount())
 
     def update_object(self, obj):
         """Update the obj in the model, if found there"""

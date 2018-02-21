@@ -879,11 +879,11 @@ class HostInfoDialog(Gtk.Window):
         # only the ID and the name are needed, but i still need to 'fill'
         # the other columns with dummy info
 
-        display_str = host.getName() + " (" + str(host.getVulnAmount()) + ")"
+        display_str = host.getName() + " (" + str(host.getVulnsAmount()) + ")"
         owned_status = ("Yes" if host.isOwned() else "No")
         host_position = model.append(None, [str(host.getID()), host.getName(),
                                             host.getOS(), owned_status,
-                                            str(host.getVulnAmount()), "",
+                                            str(host.getVulnsAmount()), "",
                                             "", "", "", "", "", "",
                                             display_str])
 
@@ -898,7 +898,7 @@ class HostInfoDialog(Gtk.Window):
         def add_service_to_host_in_model(service, model):
             """Append a service to an host in the given
             model. Return None. Modifies the model"""
-            display_str = service.getName() + " (" + str(len(service.getVulns())) + ")"
+            display_str = service.getName() + " (" + str(service.getVulnsAmount()) + ")"
             model.append(host_position, [str(service.getID()),
                                          service.getName(),
                                          service.getDescription(),

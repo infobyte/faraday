@@ -54,20 +54,13 @@ class SelfNestedField(fields.Field):
         super(SelfNestedField, self).__init__(*args, **kwargs)
 
     def _serialize(self, value, attr, obj):
-        ret, errors = self.target_schema.dump(obj)
-        if errors:
-            raise ValidationError(errors, data=ret)
-        return ret
+        return self.target_schema.dump(obj)
 
     def _deserialize(self, value, attr, data):
         """
         It would be awesome if this method could also flatten the dict keys into the parent
         """
-        load = self.target_schema.load(value)
-        if load.errors:
-            raise ValidationError(load.errors)
-
-        return load.data
+        return self.target_schema.load(value)
 
 
 class MutableField(fields.Field):

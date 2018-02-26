@@ -101,7 +101,7 @@ class HostsView(PaginatedMixin,
     @route('/<host_id>/services/')
     def service_list(self, workspace_name, host_id):
         services = self._get_object(host_id, workspace_name).services
-        return ServiceSchema(many=True).dump(services).data
+        return ServiceSchema(many=True).dump(services)
 
     def _perform_create(self, data, **kwargs):
         hostnames = data.pop('hostnames', [])

@@ -77,15 +77,9 @@ class GenericView(FlaskView):
     def _get_schema_instance(self, route_kwargs, **kwargs):
         """Instances a model schema.
 
-        By default it uses sets strict to True
-        but this can be overriden as well as any other parameters in
-        the function's kwargs.
-
         It also uses _set_schema_context to set the context of the
         schema.
         """
-        if 'strict' not in kwargs:
-            kwargs['strict'] = True
         kwargs['context'] = self._set_schema_context(
             kwargs.get('context', {}), **route_kwargs)
         return self._get_schema_class()(**kwargs)
@@ -144,7 +138,7 @@ class GenericView(FlaskView):
         return obj
 
     def _dump(self, obj, route_kwargs, **kwargs):
-        return self._get_schema_instance(route_kwargs, **kwargs).dump(obj).data
+        return self._get_schema_instance(route_kwargs, **kwargs).dump(obj)
 
     def _parse_data(self, schema, request, *args, **kwargs):
         return FlaskParser().parse(schema, request, locations=('json',),
@@ -176,8 +170,8 @@ class GenericView(FlaskView):
                     field == value)
 
             existing_obj = query.one_or_none()
-            conflict_data = self._get_schema_class()().dump(existing_obj).data
             if existing_obj:
+                conflict_data = self._get_schema_class()().dump(existing_obj)
                 db.session.rollback()
                 abort(409, ValidationError(
                     {

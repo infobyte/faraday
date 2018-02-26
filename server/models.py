@@ -1481,10 +1481,24 @@ vulnerability_uniqueness = DDL(
     "COALESCE(website, ''), workspace_id, COALESCE(source_code_id, -1));"
 )
 
+vulnerability_uniqueness_sqlite = DDL(
+    "CREATE UNIQUE INDEX uix_vulnerability ON %(fullname)s "
+    "(name, (description), COALESCE(host_id, -1), COALESCE(service_id, -1), "
+    "COALESCE(method, ''), COALESCE(parameter_name, ''), COALESCE(path, ''), "
+    "COALESCE(website, ''), workspace_id, COALESCE(source_code_id, -1));"
+)
+
+
 event.listen(
     VulnerabilityGeneric.__table__,
     'after_create',
     vulnerability_uniqueness.execute_if(dialect='postgresql')
+)
+
+event.listen(
+    VulnerabilityGeneric.__table__,
+    'after_create',
+    vulnerability_uniqueness_sqlite.execute_if(dialect='sqlite')
 )
 
 # We have to import this after all models are defined

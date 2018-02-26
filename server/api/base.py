@@ -481,7 +481,8 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
             db.session.commit()
         except sqlalchemy.exc.IntegrityError as ex:
             db.session.rollback()
-            conflict_obj = get_conflict_object(db.session, obj, data)
+            workspace = self._get_workspace(workspace_name)
+            conflict_obj = get_conflict_object(db.session, obj, data, workspace)
             if conflict_obj:
                 abort(409, ValidationError(
                     {
@@ -520,7 +521,10 @@ class UpdateMixin(object):
             db.session.commit()
         except sqlalchemy.exc.IntegrityError as ex:
             db.session.rollback()
-            conflict_obj = get_conflict_object(db.session, obj, data)
+            workspace = None
+            if workspace_name:
+                workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
+            conflict_obj = get_conflict_object(db.session, obj, data, workspace)
             if conflict_obj:
                 abort(409, ValidationError(
                     {

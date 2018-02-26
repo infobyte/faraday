@@ -248,7 +248,7 @@ def get_unique_fields(session, instance):
             yield unique_constraint['column_names']
 
 
-def get_conflict_object(session, obj, data):
+def get_conflict_object(session, obj, data, workspace=None):
     unique_fields_gen = get_unique_fields(session, obj)
     for unique_fields in unique_fields_gen:
         relations_fields = filter(
@@ -262,7 +262,7 @@ def get_conflict_object(session, obj, data):
 
         if 'workspace_id' in relations_fields:
             relations_fields.remove('workspace_id')
-            filter_data['workspace_id'] = obj.workspace.id
+            filter_data['workspace_id'] = workspace.id
 
         for relations_field in relations_fields:
             if relations_field not in data and relations_field.strip('_id') in data:

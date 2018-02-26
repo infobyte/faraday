@@ -331,11 +331,10 @@ class TestListCommandView(ReadOnlyAPITests):
         res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 201
 
-
     def test_update_command(self, test_client, session):
         command = self.factory()
         session.commit()
-        raw_data ={
+        raw_data = {
             'command': 'Import Nessus:',
             'tool': 'nessus',
             'duration': 120,
@@ -346,7 +345,10 @@ class TestListCommandView(ReadOnlyAPITests):
             'user': 'lcubo'
         }
 
-        res = test_client.put(self.url(command, workspace=command.workspace), data=raw_data)
+        res = test_client.put(self.url(command, workspace=command.workspace),
+                              data=raw_data)
         assert res.status_code == 200
         updated_command = self.model.query.get(command.id)
-        assert updated_command.end_date == datetime.datetime.fromtimestamp(1511387720.048548) + datetime.timedelta(seconds=120)
+        print updated_command.end_date
+        assert updated_command.end_date == datetime.datetime.fromtimestamp(
+            1511387720.048548) + datetime.timedelta(seconds=120)

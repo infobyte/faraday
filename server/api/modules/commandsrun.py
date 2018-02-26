@@ -17,7 +17,7 @@ from server.utils.web import (
     filter_request_args, get_integer_parameter
 )
 from server.models import Command, Workspace
-from server.schemas import PrimaryKeyRelatedField
+from server.schemas import MutableField, PrimaryKeyRelatedField
 
 commandsrun_api = Blueprint('commandsrun_api', __name__)
 
@@ -25,7 +25,10 @@ commandsrun_api = Blueprint('commandsrun_api', __name__)
 class CommandSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     itime = fields.Method(serialize='get_itime', deserialize='load_itime', required=True, attribute='start_date')
-    duration = fields.Method(serialize='get_duration', allow_none=True)
+    duration = MutableField(
+        fields.Method(serialize='get_duration'),
+        fields.Integer(),
+        allow_none=True)
     workspace = PrimaryKeyRelatedField('name', dump_only=True)
 
     def load_itime(self, value):
@@ -47,7 +50,8 @@ class CommandSchema(AutoSchema):
         # there is a potential bug when updating, the start_date can be changed.
         duration = data.pop('duration', None)
         if duration:
-            data['end_date'] = data['start_date'] + datetime.timedelta(seconds=120)
+            data['end_date'] = data['start_date'] + datetime.timedelta(
+                seconds=duration)
 
     class Meta:
         model = Command

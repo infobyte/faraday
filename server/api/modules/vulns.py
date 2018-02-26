@@ -149,10 +149,7 @@ class VulnerabilitySchema(AutoSchema):
         res = {}
 
         for file_obj in obj.evidence:
-            ret, errors = EvidenceSchema().dump(file_obj)
-            if errors:
-                raise ValidationError(errors, data=ret)
-            res[file_obj.filename] = ret
+            res[file_obj.filename] = EvidenceSchema().dump(file_obj)
 
         return res
 

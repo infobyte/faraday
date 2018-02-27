@@ -145,7 +145,6 @@ class ModelController(Thread):
         self._setupActionDispatcher()
 
         self.objects_with_updates = []
-        self._stop = False
 
     def __getattr__(self, name):
         getLogger(self).debug("ModelObject attribute to refactor: %s" % name)
@@ -317,9 +316,6 @@ class ModelController(Thread):
                 self._saving_model_lock.release()
             except RuntimeError:
                 pass
-
-    def stop(self):
-        self._stop = True
 
     def _main(self):
         """
@@ -493,6 +489,7 @@ class ModelController(Thread):
         getLogger(self).info("Plugin Ended: {0}".format(name))
         self.active_plugins_count -= 1
         self.active_plugins_count_lock.release()
+        self._stop = True
         return True
 
     def _devlog(self, msg, *args, **kwargs):

@@ -23,6 +23,7 @@ TBA:
 * Workspace names can be changed from the Web UI
 * Changed the scope field of a workspace from a free text input to a list of targets
 * Exploitation and severity fields only allow certain values. CWE CVEs were fixed to be valid. A script to convert custom CSVs was added.
+* Web UI path changed from /_ui/ to / (_ui has now a redirection to / for keeping backwards compatibility)
 
 November 17, 2017:
 ---

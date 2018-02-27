@@ -1187,7 +1187,7 @@ class Role(Metadata, RoleMixin):
 
 
 class User(db.Model, UserMixin):
-    __tablename__ = 'user'
+    __tablename__ = 'faraday_user'
     id = Column(Integer, primary_key=True)
     username = Column(String(255), unique=True, nullable=False)
     password = Column(String(255), nullable=True)

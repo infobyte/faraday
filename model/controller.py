@@ -33,7 +33,7 @@ class modelactions:
     DELHOST = 2001
     ADDSERVICEHOST = 2008
     ADDSERVICEHOST = 20008
-    ADDCATEGORY = 2011
+    ADDCATEGORY = 2011  # TODO migration: check why isn't implemented
     ADDVULNHOST = 2017
     DELVULNHOST = 2018
     ADDVULNSRV = 2019
@@ -42,17 +42,17 @@ class modelactions:
     DELNOTEHOST = 2026
     ADDNOTESRV = 2027
     DELNOTESRV = 2028
-    RENAMEROOT = 2029
+    RENAMEROOT = 2029  # TODO migration: check why isn't implemented
     ADDNOTEVULN = 2030
-    DELNOTEVULN = 2031
+    DELNOTEVULN = 2031  # TODO migration: check why isn't implemented
     EDITHOST = 2032
     EDITSERVICE = 2035
     ADDCREDSRV = 2036
     DELCREDSRV = 2037
     ADDVULNWEBSRV = 2038
-    DELVULNWEBSRV = 2039
+    DELVULNWEBSRV = 2039  # TODO migration: check why isn't implemented
     ADDNOTENOTE = 2040
-    DELNOTENOTE = 2041
+    DELNOTENOTE = 2041  # TODO migration: check why isn't implemented
     EDITNOTE = 2042
     EDITVULN = 2043
     ADDNOTE = 2044
@@ -228,7 +228,9 @@ class ModelController(Thread):
             modelactions.DELCRED: self.__del,
             # Plugin states
             modelactions.PLUGINSTART: self._pluginStart,
-            modelactions.PLUGINEND: self._pluginEnd
+            modelactions.PLUGINEND: self._pluginEnd,
+            modelactions.DEVLOG: self._devlog,
+            modelactions.LOG: self._log,
         }
 
     def run(self):
@@ -491,6 +493,16 @@ class ModelController(Thread):
         getLogger(self).info("Plugin Ended: {0}".format(name))
         self.active_plugins_count -= 1
         self.active_plugins_count_lock.release()
+        return True
+
+    def _devlog(self, msg, *args, **kwargs):
+        # I have no idea what I am doing
+        api.devlog(msg)
+        return True
+
+    def _log(self, msg, *args, **kwargs):
+        # I have no idea what I am doing
+        api.log(msg, *args[:-1])
         return True
 
 

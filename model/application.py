@@ -78,7 +78,6 @@ class TimerClass(threading.Thread):
 class MainApplication(object):
 
     def __init__(self, args):
-        setUpLogger()
         self._original_excepthook = sys.excepthook
 
         self.args = args

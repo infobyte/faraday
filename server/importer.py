@@ -984,6 +984,8 @@ class ImportCouchDBUsers():
 
     def import_users(self, all_users, admins):
         # Import non admin users
+        if 'error' in all_users:
+            raise Exception(all_users['reason'])
         for user in all_users['rows']:
             user = user['doc']
             if not user['_id'].startswith(COUCHDB_USER_PREFIX):

@@ -1171,25 +1171,30 @@ class ImportCouchDB():
 
         logger.info('Importing workspaces. Using {0} threads'.format(multiprocessing.cpu_count()))
         workspace_threads = []
-        for workspace_name in tqdm(workspaces_list):
-            logger.debug(u'Setting up workspace {}'.format(workspace_name))
+        with tqdm(total=len(workspaces_list),
+                  unit='B', unit_scale=True, unit_divisor=1024) as pbar:
+            for workspace_name in workspaces_list:
+                logger.debug(u'Setting up workspace {}'.format(workspace_name))
 
-            if not server.couchdb.server_has_access_to(workspace_name):
-                logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
-                             " configuration file has CouchDB admin's credentials set")
-                sys.exit(1)
-            thread = threading.Thread(target=self.import_workspace_into_database, args=(workspace_name, ))
-            thread.daemon = True
-            thread.start()
-            workspace_threads.append(thread)
-            if len(workspace_threads) > multiprocessing.cpu_count():
-                for thread in workspace_threads:
-                    thread.join()
-                    workspace_threads.remove(thread)
+                if not server.couchdb.server_has_access_to(workspace_name):
+                    logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
+                                 " configuration file has CouchDB admin's credentials set")
+                    sys.exit(1)
+                thread = threading.Thread(target=self.import_workspace_into_database, args=(workspace_name, ))
+                thread.daemon = True
+                thread.start()
+                workspace_threads.append(thread)
+                if len(workspace_threads) > multiprocessing.cpu_count():
+                    for thread in workspace_threads:
+                        thread.join()
+                        pbar.update(1)
+                        workspace_threads.remove(thread)
 
-        for thread in workspace_threads:
-            thread.join()
-            #self.import_workspace_into_database(workspace_name)
+            logger.info('Waiting for treads to finish.')
+            for thread in workspace_threads:
+                thread.join()
+                pbar.update(1)
+                #self.import_workspace_into_database(workspace_name)
 
     def get_objs(self, host, obj_type, level, workspace):
         if obj_type == 'Credential':

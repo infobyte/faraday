@@ -75,7 +75,7 @@ angular.module("faradayApp")
                 // return a promise :)
                 if (method === 'GET' || method === 'DELETE') {
                     return $http({method: method, url: url, params: data}).then(success).catch(error);
-                } else { 
+                } else {
                     return $http({method: method, url: url, data: data}).then(success).catch(error);
                 }
             };
@@ -222,7 +222,7 @@ angular.module("faradayApp")
                 var url = createGetUrl(wsName, 'hosts');
                 return get(url, data);
             }
-            
+
             ServerAPI.getVulns = function(wsName, data) {
                 var getUrl = createGetUrl(wsName, 'vulns');
                 return get(getUrl, data);
@@ -289,7 +289,7 @@ angular.module("faradayApp")
                 if (confirmed !== undefined) {
                     payload.confirmed = confirmed;
                 }
-                
+
                 return get(getUrl, payload);
             }
 
@@ -335,11 +335,11 @@ angular.module("faradayApp")
 
                 var url = createGetUrl(wsName, 'vulns') + 'count/';
                 var payload = {'group_by': 'severity'}
-                
+
                 if (confirmed !== undefined) {
                     payload.confirmed = confirmed;
                 }
-                
+
                 return get(url, payload)
             }
 
@@ -500,6 +500,10 @@ angular.module("faradayApp")
             ServerAPI.changePassword = function(data) {
                 var url = BASEURL + "_api/change";
                 return serverComm('POST', url, data);
+            }
+
+            ServerAPI.getExploits = function(cveId) {
+                return get(APIURL + 'vulners/exploits/' + cveId);
             }
 
         return ServerAPI;

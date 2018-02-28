@@ -1,12 +1,16 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+
 import os
 import re
 import sys
 import json
 import logging
 import datetime
+import threading
+import multiprocessing
+
 
 import requests
 from tempfile import NamedTemporaryFile
@@ -42,7 +46,6 @@ from server.models import (
     MethodologyTemplate,
     PolicyViolation,
     Reference,
-    ReferenceTemplate,
     Service,
     Scope,
     Tag,
@@ -55,6 +58,7 @@ from server.models import (
     VulnerabilityWeb,
     Workspace,
     File,
+    SQLAlchemy,
 )
 from server.utils import invalid_chars
 from server.utils.database import get_or_create
@@ -237,9 +241,9 @@ def map_tool_with_command_id(command_tool_map, document):
 
 def update_command_tools(workspace, command_tool_map, id_map):
     if command_tool_map:
-        logger.info("Setting the tool to {} commands".format(
+        logger.debug("Setting the tool to {} commands".format(
             len(command_tool_map)))
-    for (command_couchid, tool) in tqdm(command_tool_map.items()):
+    for (command_couchid, tool) in (command_tool_map.items()):
         try:
             map_data = id_map[command_couchid]
 
@@ -894,7 +898,7 @@ class FaradayEntityImporter(object):
         return None, None
 
     def get_importer_from_document(self, doc_type):
-        logger.info('Getting class importer for {0} in workspace {1}'.format(doc_type, self.workspace_name))
+        logger.debug('Getting class importer for {0} in workspace {1}'.format(doc_type, self.workspace_name))
         importer_class_mapper = {
             'EntityMetadata': EntityMetadataImporter,
             'Host': HostImporter,
@@ -970,7 +974,7 @@ class ImportCouchDBUsers():
     def import_admins(self, admins):
         # Import admin users
         for (username, password) in admins.items():
-            logger.info('Creating user {0}'.format(username))
+            logger.debug('Creating user {0}'.format(username))
             admin = db.session.query(User).filter_by(username=username).first()
             if not admin:
                 app.user_datastore.create_user(
@@ -994,7 +998,7 @@ class ImportCouchDBUsers():
             if user['name'] in admins.keys():
                 # This is an already imported admin user, skip
                 continue
-            logger.info(u'Importing user {0}'.format(user['name']))
+            logger.debug(u'Importing user {0}'.format(user['name']))
             old_user = db.session.query(User).filter_by(username=user['name']).first()
             if not old_user:
                 app.user_datastore.create_user(
@@ -1020,7 +1024,7 @@ class ImportVulnerabilityTemplates():
         self.names = Counter()
 
     def run(self):
-        logger.info("Importing vulnerability templates")
+        logger.debug("Importing vulnerability templates")
         cwe_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
             username=server.config.couchdb.user,
             password=server.config.couchdb.password,
@@ -1039,7 +1043,7 @@ class ImportVulnerabilityTemplates():
             logger.warn(e)
             return
 
-        for cwe in tqdm(cwes.json()['rows']):
+        for cwe in (cwes.json()['rows']):
             document = cwe['doc']
             new_severity = self.get_severity(document)
 
@@ -1165,16 +1169,32 @@ class ImportCouchDB():
         users_import = ImportCouchDBUsers()
         users_import.run()
 
+        logger.info('Importing workspaces. Using {0} threads'.format(multiprocessing.cpu_count()))
+        workspace_threads = []
+        with tqdm(total=len(workspaces_list),
+                  unit='B', unit_scale=True, unit_divisor=1024) as pbar:
+            for workspace_name in workspaces_list:
+                logger.debug(u'Setting up workspace {}'.format(workspace_name))
 
-        for workspace_name in workspaces_list:
-            logger.info(u'Setting up workspace {}'.format(workspace_name))
+                if not server.couchdb.server_has_access_to(workspace_name):
+                    logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
+                                 " configuration file has CouchDB admin's credentials set")
+                    sys.exit(1)
+                thread = threading.Thread(target=self.import_workspace_into_database, args=(workspace_name, ))
+                thread.daemon = True
+                thread.start()
+                workspace_threads.append(thread)
+                if len(workspace_threads) > multiprocessing.cpu_count():
+                    for thread in workspace_threads:
+                        thread.join()
+                        pbar.update(1)
+                        workspace_threads.remove(thread)
 
-            if not server.couchdb.server_has_access_to(workspace_name):
-                logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
-                             " configuration file has CouchDB admin's credentials set")
-                sys.exit(1)
-
-            self.import_workspace_into_database(workspace_name)
+            logger.info('Waiting for treads to finish.')
+            for thread in workspace_threads:
+                thread.join()
+                pbar.update(1)
+                #self.import_workspace_into_database(workspace_name)
 
     def get_objs(self, host, obj_type, level, workspace):
         if obj_type == 'Credential':
@@ -1223,8 +1243,8 @@ class ImportCouchDB():
             missing_ids = set([x for x in missing_ids if not re.match(r'^\_design', x)])
             objs_diff = []
             if missing_ids:
-                logger.info('Downloading missing couchdb docs')
-            for missing_id in tqdm(missing_ids):
+                logger.debug('Downloading missing couchdb docs')
+            for missing_id in (missing_ids):
                 not_imported_obj = get_object_from_couchdb(missing_id, workspace)
 
                 if not_imported_obj['type'] == 'Interface':
@@ -1241,48 +1261,52 @@ class ImportCouchDB():
                         missing_objs_file.write(json.dumps(objs_diff))
 
     def import_workspace_into_database(self, workspace_name):
+        with app.app_context():
 
-        faraday_importer = FaradayEntityImporter(workspace_name)
-        workspace, created = get_or_create(session, Workspace, name=workspace_name)
-        session.commit()
+            faraday_importer = FaradayEntityImporter(workspace_name)
+            workspace, created = get_or_create(session, Workspace, name=workspace_name)
+            session.commit()
 
-        couch_url = "http://{username}:{password}@{hostname}:{port}/{workspace_name}/_temp_view?include_docs=true".format(
-                username=server.config.couchdb.user,
-                password=server.config.couchdb.password,
-                hostname=server.config.couchdb.host,
-                port=server.config.couchdb.port,
-                workspace_name=workspace_name
-        )
+            couch_url = "http://{username}:{password}@{hostname}:{port}/{workspace_name}/_temp_view?include_docs=true".format(
+                    username=server.config.couchdb.user,
+                    password=server.config.couchdb.password,
+                    hostname=server.config.couchdb.host,
+                    port=server.config.couchdb.port,
+                    workspace_name=workspace_name
+            )
 
-        # obj_types are tuples. the first value is the level on the tree
-        # for the desired obj.
-        obj_types = OBJ_TYPES
-        couchdb_relational_map = defaultdict(list)
-        couchdb_relational_map_by_type = defaultdict(list)
-        command_tool_map = {}
-        for level, obj_type in obj_types:
-            obj_importer = faraday_importer.get_importer_from_document(obj_type)()
-            objs_dict = self.get_objs(couch_url, obj_type, level, workspace)
-            for raw_obj in tqdm(objs_dict.get('rows', [])):
-                # we use no_autoflush since some queries triggers flush and some relationship are missing in the middle
-                with session.no_autoflush:
-                    raw_obj = raw_obj['value']
-                    couchdb_id = raw_obj['_id']
+            # obj_types are tuples. the first value is the level on the tree
+            # for the desired obj.
+            obj_types = OBJ_TYPES
+            couchdb_relational_map = defaultdict(list)
+            couchdb_relational_map_by_type = defaultdict(list)
+            command_tool_map = {}
+            for level, obj_type in obj_types:
+                obj_importer = faraday_importer.get_importer_from_document(obj_type)()
+                objs_dict = self.get_objs(couch_url, obj_type, level, workspace)
+                for raw_obj in (objs_dict.get('rows', [])):
+                    # we use no_autoflush since some queries triggers flush and some relationship are missing in the middle
+                    with session.no_autoflush:
+                        raw_obj = raw_obj['value']
+                        couchdb_id = raw_obj['_id']
 
-                    # first let's make sure no invalid chars are present in the Raw objects
-                    raw_obj = invalid_chars.clean_dict(raw_obj)
+                        # first let's make sure no invalid chars are present in the Raw objects
+                        raw_obj = invalid_chars.clean_dict(raw_obj)
 
-                    for new_obj in obj_importer.update_from_document(raw_obj, workspace, level, couchdb_relational_map):
-                        if not new_obj:
-                            continue
-                        set_metadata(raw_obj, new_obj)
-                        map_tool_with_command_id(command_tool_map,
-                                                 raw_obj)
-                        session.commit()
-                        couchdb_relational_map_by_type[couchdb_id].append({'type': obj_type, 'id': new_obj.id})
-                        couchdb_relational_map[couchdb_id].append(new_obj.id)
-        update_command_tools(workspace, command_tool_map,
-                             couchdb_relational_map_by_type)
-        session.commit()
-        self.verify_import_data(couchdb_relational_map, couchdb_relational_map_by_type, workspace)
-        return created
+                        for new_obj in obj_importer.update_from_document(raw_obj, workspace, level, couchdb_relational_map):
+                            if not new_obj:
+                                continue
+                            set_metadata(raw_obj, new_obj)
+                            map_tool_with_command_id(command_tool_map,
+                                                     raw_obj)
+                            session.commit()
+                            couchdb_relational_map_by_type[couchdb_id].append({'type': obj_type, 'id': new_obj.id})
+                            couchdb_relational_map[couchdb_id].append(new_obj.id)
+            update_command_tools(workspace, command_tool_map,
+                                 couchdb_relational_map_by_type)
+            session.commit()
+            self.verify_import_data(couchdb_relational_map, couchdb_relational_map_by_type, workspace)
+
+            session.expunge_all()
+            session.close()
+            return created

@@ -7,6 +7,8 @@ See the file "doc/LICENSE" for the license information
 """
 
 import csv
+from time import mktime
+from datetime import datetime
 from persistence.server import models
 
 WORKSPACE = ""
@@ -118,6 +120,16 @@ def parse_host(register):
     if obj is None:
         return None
     host = models.Host(obj, WORKSPACE)
+
+    try:
+
+        date = register.get("host_metadata_create_time")
+        if date is not None:
+            datetime_object = datetime.strptime(date, "%m/%d/%Y")
+            host._metadata.create_time = mktime(datetime_object.timetuple())
+    except Exception:
+        print "Invalid date", host.name
+
     return host
 
 
@@ -159,6 +171,16 @@ def parse_vulnerability(register):
     if obj is None:
         return None
     vulnerability = models.Vuln(obj, WORKSPACE)
+
+    try:
+
+        date = register.get("vulnerability_metadata_create_time")
+        if date is not None:
+            datetime_object = datetime.strptime(date, "%m/%d/%Y")
+            vulnerability._metadata.create_time = mktime(datetime_object.timetuple())
+    except Exception:
+        print "Invalid date", vulnerability.name
+
     return vulnerability
 
 
@@ -188,6 +210,15 @@ def parse_vulnerability_web(register):
     if obj is None:
         return None
     vulnerability_web = models.VulnWeb(obj, WORKSPACE)
+
+    try:
+        date = register.get("vulnerability_web_metadata_create_time")
+        if date is not None:
+            datetime_object = datetime.strptime(date, "%m/%d/%Y")
+            vulnerability_web._metadata.create_time = mktime(datetime_object.timetuple())
+    except Exception:
+        print "Invalid date", vulnerability_web.name
+
     return vulnerability_web
 
 

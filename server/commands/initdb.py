@@ -121,7 +121,7 @@ class InitDB():
         random_password = self.generate_random_pw(12)
         already_created = False
         try:
-            engine.execute("INSERT INTO \"user\" (username, name, password, "
+            engine.execute("INSERT INTO \"faraday_user\" (username, name, password, "
                        "is_ldap, active) VALUES ('faraday', 'Administrator', "
                        "'{0}', false, true);".format(random_password))
         except sqlalchemy.exc.IntegrityError:

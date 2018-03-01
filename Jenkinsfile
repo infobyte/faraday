@@ -56,7 +56,7 @@ node (label: "master"){
         }
         finally {
             junit "**/xunit.xml"
-            notifyBuild(currentBuild.result, "SQLite")
+            notifyBuild(currentBuild.result, "SQLite Build")
             if (testsError) {
                 throw testsError
             }
@@ -82,7 +82,7 @@ node (label: "master"){
         }
         finally {
             junit "**/xunit-postgres.xml"
-            notifyBuild(currentBuild.result, "PostgreSQL")
+            notifyBuild(currentBuild.result, "PostgreSQL Build")
             if (testsError) {
                 throw testsError
             }

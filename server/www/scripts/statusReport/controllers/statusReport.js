@@ -482,7 +482,7 @@ angular.module('faradayApp')
                 return response.filter(x => !angular.equals(x, {}))
 
             }, function(failed) {
-                showMessage("Something failed searching vulnerability exploits.");
+                commonsFact.showMessage("Something failed searching vulnerability exploits.");
                 return [];
             });
         }
@@ -518,12 +518,12 @@ angular.module('faradayApp')
                     promises.push(self.vulnModelsManager.create(vuln, true));
                 });
                 $q.all(promises).then(function(success) {
-                    showMessage("Created " + selected.length + " templates successfully.", true);
+                    commonsFact.showMessage("Created " + selected.length + " templates successfully.", true);
                 }, function(failedMessage) {
-                    showMessage(failedMessage);
+                    commonsFact.showMessage(failedMessage);
                 });
             } catch(err) {
-                showMessage("Something failed when creating some of the templates.");
+                commonsFact.showMessage("Something failed when creating some of the templates.");
             }
         };
 
@@ -667,7 +667,7 @@ angular.module('faradayApp')
                     $scope.remove(vulns);
                 });
             } else {
-                showMessage('No vulnerabilities were selected to delete');
+                commonsFact.showMessage('No vulnerabilities were selected to delete');
             }
         };
 
@@ -687,7 +687,7 @@ angular.module('faradayApp')
                     loadVulns();
                 }
             }, function(errorMsg){
-                showMessage("Error updating vuln " + vuln.name + " (" + vuln._id + "): " + errorMsg);
+                commonsFact.showMessage("Error updating vuln " + vuln.name + " (" + vuln._id + "): " + errorMsg);
             });
         };
 
@@ -721,7 +721,7 @@ angular.module('faradayApp')
                 });
 
             } else {
-                showMessage('A vulnerability must be selected in order to edit');
+                commonsFact.showMessage('A vulnerability must be selected in order to edit');
             }
         };
 

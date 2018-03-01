@@ -493,7 +493,6 @@ class ModelController(Thread):
         getLogger(self).info("Plugin Ended: {0}".format(name))
         self.active_plugins_count -= 1
         self.active_plugins_count_lock.release()
-        self._stop = True
         return True
 
     def _devlog(self, msg, *args, **kwargs):

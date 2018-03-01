@@ -191,6 +191,7 @@ class MainApplication(object):
         model.api.devlog("stopping model controller thread...")
         model.api.stopAPIServer()
         restapi.stopServer()
+        self._model_controller.stop()
         self._model_controller.join()
         self.timer.stop()
         model.api.devlog("Waiting for controller threads to end...")

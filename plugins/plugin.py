@@ -204,8 +204,14 @@ class PluginBase(object):
                             details="Interface object removed. Use host or service instead. Service will be attached to Host!")
     def createAndAddServiceToInterface(self, host_id, interface_id, name,
                                        protocol="tcp?", ports=[],
-                                       status="running", version="unknown",
+                                       status="open", version="unknown",
                                        description=""):
+        if status not in ("open", "closed", "filtered"):
+            self.log(
+                'Unknown service status %s. Using "open" instead' % status,
+                'WARNING'
+            )
+            status = 'open'
 
         serv_obj = model.common.factory.createModelObject(
             Service.class_signature,

@@ -14,17 +14,15 @@ __prettyname__ = 'Create Vulnerability'
 
 
 def main(workspace='', args=None, parser=None):
+    parser.add_argument('parent_type',
+                        choices=['Host', 'Service'])
     parser.add_argument('parent', help='Parent ID')
     parser.add_argument('name', help='Vulnerability Name')
-    parser.add_argument('--reference', help='Vulnerability reference', default='')  # Fixme
 
+    parser.add_argument('--reference', help='Vulnerability reference', default='')  # Fixme
     parser.add_argument('--severity',
                         help='Vulnerability severity',
                         choices=['critical', 'high', 'med', 'low', 'info', 'unclassified'],
-                        default='unclassified')
-    parser.add_argument('--parent_type',
-                        help='Vulnerability severity',
-                        choices=['Host', 'Service'],
                         default='unclassified')
 
     parser.add_argument('--resolution', help='Resolution', default='')

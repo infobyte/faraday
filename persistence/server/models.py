@@ -251,6 +251,9 @@ def get_services(workspace_name, **params):
     Return a list of Services objects
     """
     services_dictionary = server.get_services(workspace_name, **params)
+    # List inside of list, use the inside list...
+    if len(services_dictionary) > 0 and type(services_dictionary[0]) == list:
+        services_dictionary = services_dictionary[0]
     return _get_faraday_ready_services(workspace_name, services_dictionary)
 
 
@@ -735,6 +738,7 @@ class ModelBase(object):
         self.parent_type = parent_type
 
     def setID(self, id):
+        print('setID {0}'.format(id))
         self.id = id
         self.id_available.set()
 
@@ -868,22 +872,29 @@ class Host(ModelBase):
     def getOS(self):
         return self.os
 
-    def getVulnAmount(self):
+    def getVulnsAmount(self):
         return self.vuln_amount
 
     def getDefaultGateway(self):
         return self.default_gateway
 
     def getVulns(self):
-        return get_all_vulns(self._workspace_name, hostid=self._server_id)
-    # def getInterface(self, interface_couch_id):
-    #     service = get_interfaces(self._workspace_name, couchid=interface_couch_id)
-    #     return service[0]
-    # def getAllInterfaces(self):
-    #     return get_interfaces(self._workspace_name, host=self._server_id)
-    def getServices(self):
-        return get_services(self._workspace_name, hostid=self._server_id)
+        """
+        Get all vulns of this host.
+        """
+        return get_all_vulns(self._workspace_name, target=self.ip)
 
+    def getServices(self):
+        """
+        Get all services of this host.
+        """
+        return get_services(self._workspace_name, host_id=self._server_id)
+
+    def getService(self, service_id):
+        """
+        Get a specific service id of this host.
+        """
+        return get_service(self._workspace_name, hostid=self._server_id, service_id=service_id)
 
 class Service(ModelBase):
     """A simple Service class. Should implement all the methods of the
@@ -955,8 +966,14 @@ class Service(ModelBase):
     def isOwned(self):
         return self.owned
 
+    def getVulnsAmount(self):
+        return self.vuln_amount
+
     def getVulns(self):
-        return get_all_vulns(self._workspace_name, serviceid=self._server_id)
+        """
+        Get all vulns of this service.
+        """
+        return get_all_vulns(self._workspace_name, service_id=self._server_id)
 
 
 class Vuln(ModelBase):

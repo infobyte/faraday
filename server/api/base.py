@@ -298,7 +298,11 @@ class SortableMixin(object):
             # It could be something like fields.Method
             raise InvalidUsage("Field not in the DB: %s" % order_field)
 
-        field = getattr(model_class, order_field)
+        if hasattr(model_class, order_field + '_id'):
+            # Ugly hack to allow sorting by a parent
+            field = getattr(model_class, order_field + '_id')
+        else:
+            field = getattr(model_class, order_field)
         sort_dir = flask.request.args.get(self.sort_direction_paremeter_name,
                                           self.default_sort_direction)
         if sort_dir not in ('asc', 'desc'):

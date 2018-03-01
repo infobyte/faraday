@@ -66,9 +66,13 @@
                             <thead>
                                 <tr>
                                     <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
-                                    <th ng-show="columns['name']">
-                                        <a href="" ng-click="toggleSort('name')">IP</a>
-                                        <a ng-click="toggleShow('name')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
+                                    <th ng-show="columns['id']">
+                                        <a href="" ng-click="toggleSort('id')">ID</a>
+                                        <a ng-click="toggleShow('id')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
+                                    </th>
+                                    <th ng-show="columns['ip']">
+                                        <a href="" ng-click="toggleSort('ip')">IP</a>
+                                        <a ng-click="toggleShow('ip')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
                                     </th>
                                     <th ng-show="columns['os']">
                                         <a href="" ng-click="toggleSort('os')">OS</a>
@@ -123,9 +127,12 @@
                                                     selection-model-selected-class="multi-selected"
                                                     selection-model-on-change="selectedHosts()">
                                     <td><input type="checkbox" name="{{host._id}}"/></td>
-                                    <td ng-show="columns['name']">
-                                        <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}">{{host.name}}</a>
-                                        <osint-link query="host.name" osint="osint"></osint-link>
+                                    <td ng-show="columns['id']">
+                                        <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}">{{host.id}}</a>
+                                    </td>
+                                    <td ng-show="columns['ip']">
+                                        <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}">{{host.ip}}</a>
+                                        <osint-link query="host.ip" osint="osint"></osint-link>
                                     </td>
                                     <td ng-show="columns['os']">
                                         <a ng-href="#/hosts/ws/{{workspace}}/search/os={{host.os}}">

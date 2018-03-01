@@ -69,7 +69,6 @@ class FaradayRedirectResource(Redirect, object):
 
 
 class WebServer(object):
-    HOME = ''
     UI_URL_PATH = '_ui'
     API_URL_PATH = '_api'
     WEB_UI_LOCAL_PATH = os.path.join(server.config.FARADAY_BASE, 'server/www')
@@ -97,15 +96,14 @@ class WebServer(object):
         return ssl.DefaultOpenSSLContextFactory(*certs)
 
     def __build_server_tree(self):
-        self.__root_resource = CleanHttpHeadersResource()
-        self.__root_resource.putChild(WebServer.HOME, self.__build_web_redirect())
-        self.__root_resource.putChild(
-            WebServer.UI_URL_PATH, self.__build_web_resource())
+        self.__root_resource = self.__build_web_resource()
+        self.__root_resource.putChild(WebServer.UI_URL_PATH,
+                                      self.__build_web_redirect())
         self.__root_resource.putChild(
             WebServer.API_URL_PATH, self.__build_api_resource())
 
     def __build_web_redirect(self):
-        return FaradayRedirectResource(WebServer.UI_URL_PATH)
+        return FaradayRedirectResource('/')
 
     def __build_web_resource(self):
         return FileWithoutDirectoryListing(WebServer.WEB_UI_LOCAL_PATH)

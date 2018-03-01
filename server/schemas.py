@@ -2,6 +2,7 @@ import time
 import datetime
 from marshmallow import fields, Schema
 from marshmallow.exceptions import ValidationError
+from dateutil.tz import tzutc
 
 from server.models import CommandObject, VulnerabilityABC
 
@@ -144,3 +145,34 @@ class MetadataSchema(Schema):
     update_user = fields.String(default='', dump_only=True)
     update_action = fields.Integer(default=0, dump_only=True)
     update_controller_action = fields.String(default='', dump_only=True)
+
+
+class StrictDateTimeField(fields.DateTime):
+    """
+    Marshmallow DateTime field with extra parameter to control
+    whether dates should be loaded as tz_aware or not
+    """
+    # Taken from
+    # https://github.com/Nobatek/umongo/blob/14ec7e40ca517071d9374af39f8409223e097253/umongo/marshmallow_bonus.py
+
+    # TODO migration: write me some tests!!!
+
+    def __init__(self, load_as_tz_aware=False, *args, **kwargs):
+        super(StrictDateTimeField, self).__init__(*args, **kwargs)
+        self.load_as_tz_aware = load_as_tz_aware
+
+    def _deserialize(self, value, attr, data):
+        if isinstance(value, datetime.datetime):
+            date = value
+        else:
+            date = super(StrictDateTimeField, self)._deserialize(value, attr, data)
+        if self.load_as_tz_aware:
+            # If datetime is TZ naive, set UTC timezone
+            if date.tzinfo is None or date.tzinfo.utcoffset(date) is None:
+                date = date.replace(tzinfo=tzutc())
+        else:
+            # If datetime is TZ aware, convert it to UTC and remove TZ info
+            if date.tzinfo is not None and date.tzinfo.utcoffset(date) is not None:
+                date.astimezone(tzutc())
+            date = date.replace(tzinfo=None)
+        return date

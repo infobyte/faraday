@@ -68,6 +68,22 @@ class TestListServiceView(ReadOnlyAPITests):
         assert service.port == 21
         assert service.host is host
 
+    def test_create_fails_with_invalid_status(self, test_client,
+                                              host, session):
+        session.commit()
+        data = {
+            "name": "ftp",
+            "description": "test. test",
+            "owned": False,
+            "ports": [21],
+            "protocol": "tcp",
+            "status": "asdasdasd",
+            "parent": host.id
+        }
+        res = test_client.post(self.url(), data=data)
+        assert res.status_code == 400
+        assert 'Not a valid choice' in res.data
+
     def test_create_fails_with_host_of_other_workspace(self, test_client,
                                                        host, session,
                                                        second_workspace):

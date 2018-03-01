@@ -7,11 +7,11 @@ angular.module('faradayApp')
                     ['$scope', '$filter', '$routeParams',
                     '$location', '$uibModal', '$cookies', '$q', '$window', 'BASEURL',
                     'SEVERITIES', 'EASEOFRESOLUTION', 'STATUSES', 'hostsManager', 'commonsFact',
-                     'vulnsManager', 'workspacesFact', 'csvService', 'uiGridConstants', 'vulnModelsManager',
+                     'vulnsManager', 'workspacesFact', 'csvService', 'uiGridConstants', 'vulnModelsManager','ServerAPI',
                     function($scope, $filter, $routeParams,
                         $location, $uibModal, $cookies, $q, $window, BASEURL,
                         SEVERITIES, EASEOFRESOLUTION, STATUSES, hostsManager, commonsFact,
-                             vulnsManager, workspacesFact, csvService, uiGridConstants, vulnModelsManager) {
+                             vulnsManager, workspacesFact, csvService, uiGridConstants, vulnModelsManager, ServerAPI) {
         $scope.baseurl;
         $scope.columns;
         $scope.easeofresolution;
@@ -406,7 +406,11 @@ angular.module('faradayApp')
                 visible: $scope.columns["creator"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'policyviolations',
-                displayName : "policy violations",
+                // The following line breaks the remembering of the field (i.e.
+                // setting it in the SRcolumns cookie), so it is better to
+                // leave it commented (or to debug the problem, which I don't
+                // want to)
+                // displayName : "policy violations",
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/policyviolationscolumn.html',
                 headerCellTemplate: header,
                 width: '100',
@@ -452,6 +456,55 @@ angular.module('faradayApp')
             return res;
         };
 
+        $scope.searchExploits = function(){
+
+            var promises = [];
+            var selected = $scope.getCurrentSelection();
+
+            selected.forEach(function(vuln){
+
+                vuln.refs.forEach(function(ref){
+
+                    if(ref.toLowerCase().startsWith('cve')){
+
+                        var response = ServerAPI.getExploits(ref);
+                        promises.push(response);
+                    }
+                });
+            });
+
+            return $q.all(promises).then(function(modalData){
+
+                var response = modalData.map(function(obj){
+                    return obj.data;
+                });
+
+                return response.filter(x => !angular.equals(x, {}))
+
+            }, function(failed) {
+                showMessage("Something failed searching vulnerability exploits.");
+                return [];
+            });
+        }
+
+        $scope.showExploits = function(){
+
+           $scope.searchExploits().then(function(exploits){
+
+                if(exploits.length > 0){
+
+                    var modal = $uibModal.open({
+                        templateUrl: 'scripts/statusReport/partials/exploitsModal.html',
+                        controller: 'commonsModalExploitsCtrl',
+                        resolve: {
+                            msg: function() {
+                                return exploits;
+                            }
+                        }
+                    });
+                }
+            });
+        }
 
         $scope.saveAsModel = function() {
             var self = this;

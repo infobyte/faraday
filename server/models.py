@@ -10,7 +10,6 @@ from sqlalchemy import (
     Column,
     DateTime,
     Enum,
-    event,
     Float,
     ForeignKey,
     Integer,
@@ -147,7 +146,7 @@ class Metadata(db.Model):
 
     @declared_attr
     def creator_id(cls):
-        return Column(Integer, ForeignKey('user.id'), nullable=True)
+        return Column(Integer, ForeignKey('faraday_user.id'), nullable=True)
 
     @declared_attr
     def creator(cls):
@@ -1191,7 +1190,7 @@ def get(workspace_name):
 class RolesUsers(db.Model):
     __tablename__ = 'roles_users'
     id = Column(Integer(), primary_key=True)
-    user_id = Column('user_id', Integer(), ForeignKey('user.id'))
+    user_id = Column('user_id', Integer(), ForeignKey('faraday_user.id'))
     role_id = Column('role_id', Integer(), ForeignKey('role.id'))
 
 
@@ -1203,7 +1202,7 @@ class Role(Metadata, RoleMixin):
 
 
 class User(db.Model, UserMixin):
-    __tablename__ = 'user'
+    __tablename__ = 'faraday_user'
     id = Column(Integer, primary_key=True)
     username = Column(String(255), unique=True, nullable=False)
     password = Column(String(255), nullable=True)
@@ -1265,7 +1264,7 @@ class UserAvatar(Metadata):
     # photo field will automatically generate thumbnail
     # if the file is a valid image
     photo = Column(UploadedFileField(upload_type=FaradayUploadedFile))
-    user_id = Column('user_id', Integer(), ForeignKey('user.id'))
+    user_id = Column('user_id', Integer(), ForeignKey('faraday_user.id'))
     user = relationship('User', foreign_keys=[user_id])
 
 
@@ -1345,7 +1344,7 @@ class Task(TaskABC):
         'concrete': True
     }
 
-    assigned_to_id = Column(Integer, ForeignKey('user.id'), nullable=True)
+    assigned_to_id = Column(Integer, ForeignKey('faraday_user.id'), nullable=True)
     assigned_to = relationship('User', backref='assigned_tasks', foreign_keys=[assigned_to_id])
 
     methodology_id = Column(

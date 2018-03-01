@@ -28,7 +28,10 @@ class CantCommunicateWithServerError(ServerRequestException):
         self.response = response
 
     def __str__(self):
-        response_text = self.response and self.response.text or ''
+        if self.response is None:
+            response_text = ''
+        else:
+            response_text = self.response.text
         return ("Couldn't get a valid response from the server when requesting "
                 "to URL {0} and function {1}. Response was {2}".format(self.server_url,
                                                       self.function, response_text))

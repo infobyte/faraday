@@ -182,7 +182,7 @@ angular.module('faradayApp')
                 $scope.data.refs = refs;
 
                 $modalInstance.close($scope.data);
-            }       
+            }
         };
 
         $scope.newReference = function() {
@@ -199,3 +199,16 @@ angular.module('faradayApp')
             $modalInstance.dismiss();
         }
     }]);
+
+angular.module('faradayApp')
+    .controller('commonsModalExploitsCtrl',
+            ['$scope', '$modalInstance', 'msg',
+            function($scope, $modalInstance, msg) {
+
+        $scope.objsCve = msg;
+
+        $scope.ok = function() {
+            $modalInstance.close();
+        };
+
+}]);

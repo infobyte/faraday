@@ -411,8 +411,11 @@ class ModelController(Thread):
         return self.mappers_manager.find(obj_id)
 
     def _save_new_object(self, new_object, command_id):
-        res = self.mappers_manager.save(new_object, command_id)
-        new_object.setID(res)
+        res = None
+        try:
+            res = self.mappers_manager.save(new_object, command_id)
+        finally:
+            new_object.setID(res)
         if res:
             notifier.addObject(new_object)
         return res
@@ -436,6 +439,9 @@ class ModelController(Thread):
             old_obj = new_obj.__class__(conflict.answer.json()['object'], new_obj._workspace_name)
             new_obj.setID(old_obj.getID())
             return self._handle_conflict(old_obj, new_obj, command_id)
+        except Exception:
+            new_obj.setID(None)
+            raise
 
     def __edit(self, obj, command_id=None, *args, **kwargs):
         obj.updateAttributes(*args, **kwargs)

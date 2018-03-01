@@ -56,7 +56,7 @@ node (label: "master"){
         }
         finally {
             junit "**/xunit.xml"
-            notifyBuild(currentBuild.result)
+            notifyBuild(currentBuild.result, "SQLite")
             if (testsError) {
                 throw testsError
             }
@@ -82,7 +82,7 @@ node (label: "master"){
         }
         finally {
             junit "**/xunit-postgres.xml"
-            notifyBuild(currentBuild.result)
+            notifyBuild(currentBuild.result, "PostgreSQL")
             if (testsError) {
                 throw testsError
             }
@@ -91,7 +91,7 @@ node (label: "master"){
     }
 }
 
-def notifyBuild(String buildStatus = 'STARTED') {
+def notifyBuild(String buildStatus = 'STARTED', String extraMessage = '') {
   // build status of null means successful
   buildStatus =  buildStatus ?: 'SUCCESSFUL'
 
@@ -99,7 +99,7 @@ def notifyBuild(String buildStatus = 'STARTED') {
   def colorName = 'RED'
   def colorCode = '#FF0000'
   def subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
-  def summary = "${subject} (${env.BUILD_URL})"
+  def summary = "${subject} (${env.BUILD_URL}) " + extraMessage
 
   // Override default values based on build status
   if (buildStatus == 'STARTED') {

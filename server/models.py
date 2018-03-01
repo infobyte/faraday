@@ -394,10 +394,10 @@ class VulnerabilityABC(Metadata):
     severity = Column(Enum(*SEVERITIES, name='vulnerability_severity'), nullable=False)
     risk = Column(Float(3, 1), nullable=True)
 
-    impact_accountability = Column(Boolean, default=False)
-    impact_availability = Column(Boolean, default=False)
-    impact_confidentiality = Column(Boolean, default=False)
-    impact_integrity = Column(Boolean, default=False)
+    impact_accountability = Column(Boolean, default=False, nullable=False)
+    impact_availability = Column(Boolean, default=False, nullable=False)
+    impact_confidentiality = Column(Boolean, default=False, nullable=False)
+    impact_integrity = Column(Boolean, default=False, nullable=False)
 
     __table_args__ = (
         CheckConstraint('1.0 <= risk AND risk <= 10.0',

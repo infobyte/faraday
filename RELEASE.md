@@ -12,6 +12,7 @@ TBA
 ---
 
 * dirb plugin should creates a vulnerability type information instead of a note.
+* Add new plugin ip360
 
 November 17, 2017:
 ---

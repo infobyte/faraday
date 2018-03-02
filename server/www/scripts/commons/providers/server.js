@@ -34,7 +34,7 @@ angular.module("faradayApp")
                 return APIURL + "ws/" + wsName;
             }
 
-            var createDeleteUrl = createPostUrl; 
+            var createDeleteUrl = createPostUrl;
 
             var serverComm = function(method, url, data) {
                 var success = function (response) {
@@ -47,7 +47,7 @@ angular.module("faradayApp")
                 // return a promise :)
                 if (method === 'GET' || method === 'DELETE') {
                     return $http({method: method, url: url, params: data}).then(success).catch(error);
-                } else { 
+                } else {
                     return $http({method: method, url: url, data: data}).then(success).catch(error);
                 }
             };
@@ -79,7 +79,7 @@ angular.module("faradayApp")
                 if (typeof rev_provided === "undefined") {var rev_provided = false;}
                 var deferred = $q.defer();
                 var data = {};
-                
+
                 if (rev_provided === false) {
                     get(url).then(
                         function s(r) {
@@ -162,7 +162,7 @@ angular.module("faradayApp")
             var modCredential = function(createOrUpdate, wsName, credential) {
                 if (typeof credential.owner === "undefined") {credential.owner = ""};
                 if (typeof credential.description === "undefined") {credential.description = ""};
-                return createOrUpdate(wsName, credential._id, credential); 
+                return createOrUpdate(wsName, credential._id, credential);
             }
 
             var modCommand = function(createOrUpdate, wsName, command) {
@@ -193,7 +193,7 @@ angular.module("faradayApp")
                 var url = createGetUrl(wsName, 'hosts');
                 return get(url, data);
             }
-            
+
             ServerAPI.getVulns = function(wsName, data) {
                 var getUrl = createGetUrl(wsName, 'vulns');
                 return get(getUrl, data);
@@ -241,7 +241,7 @@ angular.module("faradayApp")
                 if (confirmed !== undefined) {
                     payload.confirmed = confirmed;
                 }
-                
+
                 return get(getUrl, payload);
             }
 
@@ -287,11 +287,11 @@ angular.module("faradayApp")
 
                 var url = createGetUrl(wsName, 'vulns') + '/count';
                 var payload = {'group_by': 'severity'}
-                
+
                 if (confirmed !== undefined) {
                     payload.confirmed = confirmed;
                 }
-                
+
                 return get(url, payload)
             }
 
@@ -447,6 +447,10 @@ angular.module("faradayApp")
             ServerAPI.deleteWorkspace = function(wsName) {
                 var dbUrl = createDbUrl(wsName);
                 return _delete(dbUrl, false);
+            }
+
+            ServerAPI.getExploits = function(cveId) {
+                return get(APIURL + 'vulners/exploits/' + cveId);
             }
 
         return ServerAPI;

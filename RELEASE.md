@@ -24,6 +24,13 @@ TBA:
 * Changed the scope field of a workspace from a free text input to a list of targets
 * Exploitation and severity fields only allow certain values. CWE CVEs were fixed to be valid. A script to convert custom CSVs was added.
 * Web UI path changed from /_ui/ to / (_ui has now a redirection to / for keeping backwards compatibility)
+* dirb plugin should creates a vulnerability type information instead of a note.
+* Add new plugin ip360
+* Add confirmed column to exported csv from webui
+* Fixes in Arachni plugin
+* Add new parameters --keep-old and --keep-new for faraday CLI
+* Add new screenshot fplugin which takes a screenshot of the ip:ports of a given protocol
+* Add fix for net sparker regular and cloud fix on severity
 
 November 17, 2017:
 ---

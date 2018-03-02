@@ -793,19 +793,30 @@ class ModelBase(object):
     def addUpdate(self, newModelObject, command_id):
         conflict = False
         diff = ModelObjectDiff(self, newModelObject)
+
         for k, v in diff.getPropertiesDiff().items():
             attribute = self.publicattrsrefs().get(k)
             prop_update = self.propertyTieBreaker(attribute, *v)
+            option_choosen = prop_update
 
+            # if there's a strategy set by the user, apply it
             if not isinstance(prop_update, tuple) or _get_merge_strategy():
-                # if there's a strategy set by the user, apply it
-                if isinstance(prop_update, tuple):
-                    prop_update = MergeSolver(_get_merge_strategy())
-                    prop_update = prop_update.solve(prop_update[0], prop_update[1])
 
-                setattr(self, attribute, prop_update)
+                if isinstance(prop_update, tuple):
+                    #Choose the new attribute based in merge strategy: old or new
+                    merge_solver = MergeSolver(_get_merge_strategy())
+                    option_choosen = merge_solver.solve(prop_update[0], prop_update[1])
+
+                #Faraday have duplicated description field, so if we change
+                #description, we need change also, the desc field used in WEBUI
+                if attribute == "description" and (self.class_signature == "Vulnerability" or self.class_signature == "VulnerabilityWeb"):
+                    setattr(self, "desc", option_choosen)
+
+                #Set the new choosen attribute
+                setattr(self, attribute, option_choosen)
             else:
                 conflict = True
+
         if conflict:
             self.updates.append(ConflictUpdate(self, newModelObject))
         return conflict

@@ -17,7 +17,7 @@ TBA
 * Fixes in Arachni plugin
 * Add new parameters --keep-old and --keep-new for faraday CLI
 * Add new screenshot fplugin which takes a screenshot of the ip:ports of a given protocol
-* Add fix for net sparker cloud fix on severity
+* Add fix for net sparker regular and cloud fix on severity
 
 November 17, 2017:
 ---

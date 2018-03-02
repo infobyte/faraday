@@ -16,6 +16,7 @@ TBA
 * Add confirmed column to exported csv from webui
 * Fixes in Arachni plugin
 * Add new parameters --keep-old and --keep-new for faraday CLI
+* Add new screenshot fplugin which takes a screenshot of the ip:ports of a given protocol
 
 November 17, 2017:
 ---

@@ -15,6 +15,7 @@ TBA
 * Add new plugin ip360
 * Add confirmed column to exported csv from webui
 * Fixes in Arachni plugin
+* Add new parameters --keep-old and --keep-new for faraday CLI
 
 November 17, 2017:
 ---

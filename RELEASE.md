@@ -8,6 +8,11 @@ Make sure you run ```./faraday.py --update``` the first time after an update!
 New features in the latest update
 =====================================
 
+TBA
+---
+
+* dirb plugin should creates a vulnerability type information instead of a note.
+
 November 17, 2017:
 ---
 * Fix bug with tags in models.

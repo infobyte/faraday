@@ -145,6 +145,7 @@ class ModelController(Thread):
         self._setupActionDispatcher()
 
         self.objects_with_updates = []
+        self.processing = False
 
     def __getattr__(self, name):
         getLogger(self).debug("ModelObject attribute to refactor: %s" % name)
@@ -325,7 +326,8 @@ class ModelController(Thread):
         This will make host addition and removal "thread-safe" and will
         avoid locking components that need to interact with the model
         """
-        while not self._stop:
+
+        while not self._stop or self.processing:
             # check if thread must finish
             # no plugin should be active to stop the controller
             if self._stop and self.active_plugins_count == 0:
@@ -409,8 +411,11 @@ class ModelController(Thread):
         return self.mappers_manager.find(obj_id)
 
     def _save_new_object(self, new_object, command_id):
-        res = self.mappers_manager.save(new_object, command_id)
-        new_object.setID(res)
+        res = None
+        try:
+            res = self.mappers_manager.save(new_object, command_id)
+        finally:
+            new_object.setID(res)
         if res:
             notifier.addObject(new_object)
         return res
@@ -434,6 +439,9 @@ class ModelController(Thread):
             old_obj = new_obj.__class__(conflict.answer.json()['object'], new_obj._workspace_name)
             new_obj.setID(old_obj.getID())
             return self._handle_conflict(old_obj, new_obj, command_id)
+        except Exception:
+            new_obj.setID(None)
+            raise
 
     def __edit(self, obj, command_id=None, *args, **kwargs):
         obj.updateAttributes(*args, **kwargs)
@@ -478,6 +486,7 @@ class ModelController(Thread):
         self.__addPendingAction(modelactions.PLUGINEND, name)
 
     def _pluginStart(self, name, command_id):
+        self.processing = True
         self.active_plugins_count_lock.acquire()
         getLogger(self).info("Plugin Started: {0}. ".format(name, command_id))
         self.active_plugins_count += 1
@@ -485,11 +494,11 @@ class ModelController(Thread):
         return True
 
     def _pluginEnd(self, name, command_id):
+        self.processing = False
         self.active_plugins_count_lock.acquire()
         getLogger(self).info("Plugin Ended: {0}".format(name))
         self.active_plugins_count -= 1
         self.active_plugins_count_lock.release()
-        self._stop = True
         return True
 
     def _devlog(self, msg, *args, **kwargs):

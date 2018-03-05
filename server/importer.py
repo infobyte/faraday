@@ -573,10 +573,10 @@ class VulnerabilityImporter(object):
 
             vulnerability.owned = document.get('owned', False)
             #vulnerability.attachments = json.dumps(document.get('_attachments', {}))
-            vulnerability.impact_accountability = document.get('impact', {}).get('accountability')
-            vulnerability.impact_availability = document.get('impact', {}).get('availability')
-            vulnerability.impact_confidentiality = document.get('impact', {}).get('confidentiality')
-            vulnerability.impact_integrity = document.get('impact', {}).get('integrity')
+            vulnerability.impact_accountability = document.get('impact', {}).get('accountability') or False
+            vulnerability.impact_availability = document.get('impact', {}).get('availability') or False
+            vulnerability.impact_confidentiality = document.get('impact', {}).get('confidentiality') or False
+            vulnerability.impact_integrity = document.get('impact', {}).get('integrity') or False
             if command and created:
                 session.flush()
                 CommandObject.create(vulnerability, command)

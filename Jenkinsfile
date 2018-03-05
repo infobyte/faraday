@@ -111,6 +111,7 @@ def notifyBuild(String buildStatus = 'STARTED', String extraMessage = '') {
   } else {
     color = 'RED'
     colorCode = '#FF0000'
+    summary = summary + ' @channel'
   }
 
   // Send notifications

@@ -119,8 +119,14 @@ class MainApplication(object):
         )
 
         if self.args.cli:
+
             self.app = CliApp(self._workspace_manager, self._plugin_controller)
-            CONF.setMergeStrategy("new")
+
+            if self.args.keep_old:
+                CONF.setMergeStrategy("old")
+            else:
+                CONF.setMergeStrategy("new")
+
         else:
             self.app = UiFactory.create(self._model_controller,
                                         self._plugin_manager,
@@ -191,6 +197,7 @@ class MainApplication(object):
         model.api.devlog("stopping model controller thread...")
         model.api.stopAPIServer()
         restapi.stopServer()
+        self._model_controller.stop()
         self._model_controller.join()
         self.timer.stop()
         model.api.devlog("Waiting for controller threads to end...")

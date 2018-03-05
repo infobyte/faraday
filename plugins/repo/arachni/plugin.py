@@ -443,21 +443,22 @@ class ArachniPlugin(core.PluginBase):
         # Create issues.
         for issue in parser.issues:
 
-            description = (
-                'Description:\n' +
-                issue.description +
-                '\n\nSolution:\n' +
-                issue.remedy_guidance)
+            description = issue.description.replace('  ', ' ').replace('\n', ' ').replace('.  ', '.\n\n')
+            resol = issue.remedy_guidance.replace('  ', ' ').replace('\n', ' ').replace('.  ', '.\n\n')
 
             references = issue.references
             if issue.cwe != 'None':
                 references.append('CWE-' + issue.cwe)
 
-            issue_id = self.createAndAddVulnWebToService(
+            if resol == 'None':
+                resol = ''
+
+            self.createAndAddVulnWebToService(
                 host_id,
                 service_id,
                 name=issue.name,
                 desc=description,
+                resolution=resol,
                 ref=references,
                 severity=issue.severity,
                 website=self.hostname,

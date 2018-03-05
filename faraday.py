@@ -197,6 +197,8 @@ def getParserArgs():
     parser.add_argument('--nodeps',
                         action="store_true",
                         help='Skip dependency check')
+    parser.add_argument('--keep-old', action='store_true', help='Keep old object in CLI mode if faraday find a conflict')
+    parser.add_argument('--keep-new', action='store_true', help='Keep new object in CLI mode if faraday find a conflict (DEFAULT ACTION)')
 
     f = open(FARADAY_VERSION_FILE)
     f_version = f.read().strip()

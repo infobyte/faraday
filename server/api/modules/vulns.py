@@ -71,10 +71,10 @@ class EvidenceSchema(AutoSchema):
 
 
 class ImpactSchema(Schema):
-    accountability = fields.Boolean(attribute='impact_accountability')
-    availability = fields.Boolean(attribute='impact_availability')
-    confidentiality = fields.Boolean(attribute='impact_confidentiality')
-    integrity = fields.Boolean(attribute='impact_integrity')
+    accountability = fields.Boolean(attribute='impact_accountability', default=False)
+    availability = fields.Boolean(attribute='impact_availability', default=False)
+    confidentiality = fields.Boolean(attribute='impact_confidentiality', default=False)
+    integrity = fields.Boolean(attribute='impact_integrity', default=False)
 
 
 class CustomMetadataSchema(MetadataSchema):

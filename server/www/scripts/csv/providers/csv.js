@@ -31,8 +31,9 @@ angular.module('faradayApp')
                     if(typeof(v[prop]) === "object") v[prop] = parseObject(v[prop]);
                     if(typeof(v[prop]) != "undefined" && v[prop] != null && typeof(v[prop]) != "number" && prop != "confirmed") {
                         object[prop] = cleanCSV(v[prop]);
-                    else
+                    }else{
                         object[prop] = "";
+                    }
 
                     if(prop === "confirmed") object[prop] = v[prop].toString();
                     if(prop === "date") object[prop] = parseDate(v["metadata"]["create_time"] * 1000);

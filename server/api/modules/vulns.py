@@ -462,7 +462,7 @@ class VulnerabilityView(PaginatedMixin,
         if request.method == 'POST':
             requested_type = request.json.get('type', None)
             if not requested_type:
-                raise ValidationError('Type is required.')
+                raise InvalidUsage('Type is required.')
             if requested_type not in self.schema_class_dict:
                 raise InvalidUsage('Invalid vulnerability type.')
             return self.schema_class_dict[requested_type]

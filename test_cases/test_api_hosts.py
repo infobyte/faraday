@@ -7,6 +7,7 @@ except: # For Python 3
     import urllib.parse as urlparse
     from urllib.parse import urlencode
 from sqlalchemy.orm.util import was_deleted
+from hypothesis import given, assume, settings, strategies as st
 
 import pytest
 
@@ -627,3 +628,49 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
             '(53/udp) dns',
             '(5353/udp) dns',
         ]
+
+def host_json():
+    return st.fixed_dictionaries(
+        {
+            "metadata":
+                st.fixed_dictionaries({
+                    "update_time": st.floats(),
+                    "update_user": st.one_of(st.none(), st.text()),
+                    "update_action": st.integers(),
+                    "creator": st.text(),
+                    "create_time": st.integers(),
+                    "update_controller_action": st.text(),
+                    "owner": st.one_of(st.none(), st.text()),
+                    "command_id": st.one_of(st.none(), st.text(), st.integers()),}),
+            "name": st.one_of(st.none(), st.text()),
+            "ip": st.one_of(st.none(), st.text()),
+            "_rev": st.one_of(st.none(), st.text()),
+            "description": st.one_of(st.none(), st.text()),
+            "default_gateway": st.one_of(st.none(), st.text()),
+            "owned": st.booleans(),
+            "services": st.one_of(st.none(), st.integers()),
+            "hostnames": st.lists(st.text()),
+            "vulns": st.one_of(st.none(), st.integers()),
+            "owner": st.one_of(st.none(), st.text()),
+            "credentials": st.one_of(st.none(), st.integers()),
+            "_id": st.one_of(st.none(), st.integers()),
+            "os": st.one_of(st.none(), st.text()),
+            "id": st.one_of(st.none(), st.integers()),
+            "icon": st.one_of(st.none(), st.text())}
+    )
+
+
+@pytest.mark.usefixtures('logged_user')
+def test_hypothesis(host_with_hostnames, test_client, session):
+    session.commit()
+    HostData = host_json()
+
+    @given(HostData)
+    def send_api_request(raw_data):
+
+        ws_name = host_with_hostnames.workspace.name
+        res = test_client.post('/v2/ws/{0}/vulns/'.format(ws_name),
+                               data=raw_data)
+        assert res.status_code in [201, 400, 409]
+
+    send_api_request()

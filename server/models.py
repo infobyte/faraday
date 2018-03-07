@@ -293,7 +293,7 @@ class Hostname(Metadata):
     name = Column(Text, nullable=False)
 
     host_id = Column(Integer, ForeignKey('host.id'), index=True, nullable=False)
-    host = relationship('Host', backref='hostnames')
+    host = relationship('Host', backref=backref("hostnames", cascade="all, delete-orphan"))
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
@@ -767,10 +767,10 @@ class Vulnerability(VulnerabilityGeneric):
     __tablename__ = None
     host_id = Column(Integer, ForeignKey(Host.id), index=True)
     host = relationship(
-                    'Host',
-                    backref='vulnerabilities',
-                    foreign_keys=[host_id],
-                    )
+        'Host',
+        backref=backref("vulnerabilities", cascade="all, delete-orphan"),
+        foreign_keys=[host_id],
+    )
 
     @declared_attr
     def service_id(cls):
@@ -778,7 +778,7 @@ class Vulnerability(VulnerabilityGeneric):
 
     @declared_attr
     def service(cls):
-        return relationship('Service', backref='vulnerabilities')
+        return relationship('Service', backref=backref("vulnerabilities", cascade="all, delete-orphan"))
 
     @property
     def hostnames(self):
@@ -816,7 +816,7 @@ class VulnerabilityWeb(VulnerabilityGeneric):
 
     @declared_attr
     def service(cls):
-        return relationship('Service', backref='vulnerabilities_web')
+        return relationship('Service', backref=backref("vulnerabilities_web", cascade="all, delete-orphan"), cascade='all')
 
     @property
     def parent(self):
@@ -884,7 +884,8 @@ class Reference(Metadata):
     )
     workspace = relationship(
         'Workspace',
-        backref='references',
+        backref=backref("references",
+                        cascade="all, delete-orphan"),
         foreign_keys=[workspace_id],
     )
 
@@ -910,8 +911,13 @@ class ReferenceVulnerabilityAssociation(db.Model):
     vulnerability_id = Column(Integer, ForeignKey('vulnerability.id'), primary_key=True)
     reference_id = Column(Integer, ForeignKey('reference.id'), primary_key=True)
 
-    reference = relationship("Reference", backref="reference_associations", foreign_keys=[reference_id])
-    vulnerability = relationship("Vulnerability", backref="reference_vulnerability_associations", foreign_keys=[vulnerability_id])
+    reference = relationship("Reference",
+                             backref="reference_associations",
+                             foreign_keys=[reference_id])
+    vulnerability = relationship("Vulnerability",
+                                 backref=backref("reference_vulnerability_associations",
+                                                 cascade="all, delete-orphan"),
+                                 foreign_keys=[vulnerability_id])
 
 
 class PolicyViolationVulnerabilityAssociation(db.Model):
@@ -922,7 +928,7 @@ class PolicyViolationVulnerabilityAssociation(db.Model):
     policy_violation_id = Column(Integer, ForeignKey('policy_violation.id'), primary_key=True)
 
     policy_violation = relationship("PolicyViolation", backref="policy_violation_associations", foreign_keys=[policy_violation_id])
-    vulnerability = relationship("Vulnerability", backref="policy_violationvulnerability_associations",
+    vulnerability = relationship("Vulnerability", backref=backref("policy_violationvulnerability_associations", cascade="all, delete-orphan"),
                                  foreign_keys=[vulnerability_id])
 
 
@@ -978,7 +984,8 @@ class PolicyViolation(Metadata):
                         )
     workspace = relationship(
                             'Workspace',
-                            backref='policy_violations',
+                            backref=backref("policy_violations",
+                                            cascade="all, delete-orphan"),
                             foreign_keys=[workspace_id],
                             )
 

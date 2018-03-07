@@ -629,6 +629,7 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
             '(5353/udp) dns',
         ]
 
+
 def host_json():
     return st.fixed_dictionaries(
         {

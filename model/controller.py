@@ -417,18 +417,20 @@ class ModelController(Thread):
         self.__addPendingAction(Modelactions.PLUGINEND, name)
 
     def _pluginStart(self, name, command_id):
-        self.processing = True
         self.active_plugins_count_lock.acquire()
+        self.processing = True
         getLogger(self).info("Plugin Started: {0}. ".format(name, command_id))
         self.active_plugins_count += 1
         self.active_plugins_count_lock.release()
         return True
 
     def _pluginEnd(self, name, command_id):
-        self.processing = False
+
         self.active_plugins_count_lock.acquire()
         getLogger(self).info("Plugin Ended: {0}".format(name))
         self.active_plugins_count -= 1
+        if self.active_plugins_count == 0:
+            self.processing = False
         self.active_plugins_count_lock.release()
         return True
 

@@ -272,7 +272,8 @@ class ModelController(Thread):
                 time.sleep(0.01)
 
     def processAllPendingActions(self):
-        [self.processAction() for i in range(self._pending_actions.qsize())]
+        for _ in range(self._pending_actions.qsize()):
+            self.processAction()
 
     def processAction(self):
         # check the queue for new actions

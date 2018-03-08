@@ -21,7 +21,7 @@ def screenshot(path, protocol, ip, port):
     except ImportError:
         print("Missing dependencies: (selenium). "
               "Install it with pip install selenium. ")
-    sys.exit(1)
+        sys.exit(1)
     driver = webdriver.PhantomJS()
     driver.set_window_size(1024, 768)  # set the window size that you need
     driver.set_page_load_timeout(5)

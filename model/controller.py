@@ -447,7 +447,6 @@ class ModelController(Thread):
         api.log(msg, *args[:-1])
         return True
 
-
     def newHost(self, ip, os="Unknown"):
         return model.common.factory.createModelObject(
             models.Host.class_signature, ip,

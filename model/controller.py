@@ -336,9 +336,8 @@ class ModelController(Thread):
         notifier.editHost(old_object)
         return True
 
-    # XXX: THIS DOESNT WORK
-    def find(self, obj_id):
-        return self.mappers_manager.find(obj_id)
+    def find(self, class_signature, obj_id):
+        return self.mappers_manager.find(class_signature, obj_id)
 
     def _save_new_object(self, new_object, command_id):
         res = None
@@ -425,9 +424,11 @@ class ModelController(Thread):
         return True
 
     def _pluginEnd(self, name, command_id):
-
         self.active_plugins_count_lock.acquire()
         getLogger(self).info("Plugin Ended: {0}".format(name))
+        if self.active_plugins_count == 0:
+            getLogger(self).warn("All plugins ended, but a plugin end action was received.")
+            return True
         self.active_plugins_count -= 1
         if self.active_plugins_count == 0:
             self.processing = False

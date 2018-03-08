@@ -428,6 +428,7 @@ class ModelController(Thread):
         self.active_plugins_count_lock.acquire()
         getLogger(self).info("Plugin Ended: {0}".format(name))
         if self.active_plugins_count == 0:
+            self.active_plugins_count_lock.release()
             getLogger(self).warn("All plugins ended, but a plugin end action was received.")
             return True
         self.active_plugins_count -= 1

@@ -101,7 +101,8 @@ def test_find(get, session):
     controller = ModelController(mappers_manager, pending_actions)
     workspace = WorkspaceFactory.create()
     mappers_manager.createMappers(workspace.name)
-    host = HostFactory.create()
+    host = HostFactory.create(workspace=workspace)
+    session.commit()
     controller.find("Host", host.id)
     assert get.called
     assert get.mock_calls[0][1][0] == 'http://localhost:5985/_api/v2/ws/{0}/hosts/{1}/'.format(workspace.name, host.id)

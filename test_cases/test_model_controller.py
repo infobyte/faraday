@@ -105,6 +105,7 @@ def test_find(get, session):
     session.commit()
     controller.find("Host", host.id)
     assert get.called
-    assert get.mock_calls[0][1][0] == 'http://localhost:5985/_api/v2/ws/{0}/hosts/{1}/'.format(workspace.name, host.id)
+    assert get.mock_calls[0][1][0].endswith(
+        '/_api/v2/ws/{0}/hosts/{1}/'.format(workspace.name, host.id))
     assert get.mock_calls[0][2] == {'object_id': host.id}
 

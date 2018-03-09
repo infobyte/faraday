@@ -27,6 +27,7 @@ class GenericAPITest:
         self.objects = self.factory.create_batch(
             OBJECT_COUNT, workspace=workspace)
         self.first_object = self.objects[0]
+        session.add_all(self.objects)
         session.commit()
         assert workspace.id is not None
         self.workspace = workspace
@@ -65,7 +66,8 @@ class ListTestsMixin:
     def test_list_retrieves_all_items_from_workspace(self, test_client,
                                                      second_workspace,
                                                      session):
-        self.factory.create(workspace=second_workspace)
+        obj = self.factory.create(workspace=second_workspace)
+        session.add(obj)
         session.commit()
         res = test_client.get(self.url())
         assert res.status_code == 200

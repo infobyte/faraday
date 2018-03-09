@@ -816,7 +816,7 @@ class VulnerabilityWeb(VulnerabilityGeneric):
 
     @declared_attr
     def service(cls):
-        return relationship('Service', backref=backref("vulnerabilities_web", cascade="all, delete-orphan"), cascade='all')
+        return relationship('Service', backref=backref("vulnerabilities_web", cascade="all, delete-orphan"))
 
     @property
     def parent(self):

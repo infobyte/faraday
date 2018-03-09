@@ -3,6 +3,7 @@
 # See the file 'doc/LICENSE' for the license information
 import operator
 from datetime import datetime
+from functools import partial
 
 from sqlalchemy import (
     Boolean,
@@ -43,6 +44,9 @@ from flask_security import (
     UserMixin,
 )
 from server.utils.database import BooleanToIntColumn
+
+NonBlankColumn = partial(Column, nullable=False,
+                         info={'allow_blank': False})
 
 OBJECT_TYPES = [
     'vulnerability',
@@ -387,9 +391,9 @@ class VulnerabilityABC(Metadata):
     id = Column(Integer, primary_key=True)
 
     data = Column(Text, nullable=True)
-    description = Column(Text, nullable=False)
+    description = NonBlankColumn(Text)
     ease_of_resolution = Column(Enum(*EASE_OF_RESOLUTIONS, name='vulnerability_ease_of_resolution'), nullable=True)
-    name = Column(Text, nullable=False)
+    name = NonBlankColumn(Text, nullable=False)
     resolution = Column(Text, nullable=True)
     severity = Column(Enum(*SEVERITIES, name='vulnerability_severity'), nullable=False)
     risk = Column(Float(3, 1), nullable=True)

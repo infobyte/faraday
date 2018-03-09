@@ -28,7 +28,10 @@ def new_object_event(mapper, connection, instance):
 
 
 def delete_object_event(mapper, connection, instance):
-    name = getattr(instance, 'ip', None) or instance.name
+    try:
+        name = instance.ip
+    except AttributeError:
+        name = instance.name
     msg = {
         'id': instance.id,
         'action': 'DELETE',

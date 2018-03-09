@@ -109,7 +109,7 @@ class TestHostAPI:
         host = Host.query.get(host_id)
         assert host.ip == "127.0.0.1"
         assert host.description == "aaaaa"
-        assert host.os is None
+        assert host.os == ''
         assert host.workspace == self.workspace
 
     def test_create_a_host_fails_with_missing_desc(self, test_client):
@@ -451,12 +451,12 @@ class TestHostAPI:
             u'type': 'Host',
             u'_rev': u'',
             u'credentials': 0,
-            u'default_gateway': None,
+            u'default_gateway': '',
             u'description': u'',
             u'hostnames': [],
             u'id': host.id,
             u'ip': u'10.31.112.21',
-            u'mac': None,
+            u'mac': '',
             u'metadata': {
                 u'command_id': None,
                 u'create_time': int(time.mktime(updated_host.create_date.timetuple())) * 1000,
@@ -551,7 +551,7 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
         host = Host.query.get(host_id)
         assert host.ip == "127.0.0.1"
         assert host.description == "aaaaa"
-        assert host.os is None
+        assert host.os == ''
         assert host.workspace == self.workspace
         res = test_client.post(self.url(), data={
             "ip": "127.0.0.1",

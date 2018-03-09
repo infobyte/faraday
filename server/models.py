@@ -164,9 +164,9 @@ class Metadata(db.Model):
 class SourceCode(Metadata):
     __tablename__ = 'source_code'
     id = Column(Integer, primary_key=True)
-    filename = Column(Text, nullable=False)
-    function = Column(Text, nullable=True)
-    module = Column(Text, nullable=True)
+    filename = NonBlankColumn(Text)
+    function = BlankColumn(Text)
+    module = BlankColumn(Text)
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', backref='source_codes')
@@ -183,17 +183,17 @@ class SourceCode(Metadata):
 class Host(Metadata):
     __tablename__ = 'host'
     id = Column(Integer, primary_key=True)
-    ip = Column(Text, nullable=False)  # IP v4 or v6
-    description = Column(Text, nullable=True)
-    os = Column(Text, nullable=True)
+    ip = NonBlankColumn(Text)  # IP v4 or v6
+    description = BlankColumn(Text)
+    os = BlankColumn(Text)
 
     owned = Column(Boolean, nullable=False, default=False)
 
-    default_gateway_ip = Column(Text, nullable=True)
-    default_gateway_mac = Column(Text, nullable=True)
+    default_gateway_ip = BlankColumn(Text)
+    default_gateway_mac = BlankColumn(Text)
 
-    mac = Column(Text, nullable=True)
-    net_segment = Column(Text, nullable=True)
+    mac = BlankColumn(Text)
+    net_segment = BlankColumn(Text)
 
     services = relationship(
         'Service',
@@ -397,7 +397,7 @@ class VulnerabilityABC(Metadata):
     description = NonBlankColumn(Text)
     ease_of_resolution = Column(Enum(*EASE_OF_RESOLUTIONS, name='vulnerability_ease_of_resolution'), nullable=True)
     name = NonBlankColumn(Text, nullable=False)
-    resolution = Column(Text, nullable=True)
+    resolution = BlankColumn(Text)
     severity = Column(Enum(*SEVERITIES, name='vulnerability_severity'), nullable=False)
     risk = Column(Float(3, 1), nullable=True)
 
@@ -631,14 +631,14 @@ class Command(Metadata):
 
     __tablename__ = 'command'
     id = Column(Integer, primary_key=True)
-    command = Column(Text(), nullable=False)
-    tool = Column(Text(), nullable=False)
+    command = NonBlankColumn(Text)
+    tool = NonBlankColumn(Text)
     start_date = Column(DateTime, nullable=False)
     end_date = Column(DateTime, nullable=True)
     ip = Column(String(250), nullable=False)  # where the command was executed
     hostname = Column(String(250), nullable=False)  # where the command was executed
-    params = Column(Text(), nullable=True)
-    user = Column(String(250), nullable=True)  # os username where the command was executed
+    params = BlankColumn(Text)
+    user = BlankColumn(String(250))  # os username where the command was executed
     import_source = Column(Enum(*IMPORT_SOURCE, name='import_source_enum'))
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
@@ -806,14 +806,14 @@ class Vulnerability(VulnerabilityGeneric):
 
 class VulnerabilityWeb(VulnerabilityGeneric):
     __tablename__ = None
-    method = Column(Text, nullable=True)
-    parameters = Column(Text, nullable=True)
-    parameter_name = Column(Text, nullable=True)
-    path = Column(Text, nullable=True)
-    query_string = Column(Text, nullable=True)
-    request = Column(Text, nullable=True)
-    response = Column(Text, nullable=True)
-    website = Column(Text, nullable=True)
+    method = BlankColumn(Text)
+    parameters = BlankColumn(Text)
+    parameter_name = BlankColumn(Text)
+    path = BlankColumn(Text)
+    query_string = BlankColumn(Text)
+    request = BlankColumn(Text)
+    response = BlankColumn(Text)
+    website = BlankColumn(Text)
 
     @declared_attr
     def service_id(cls):

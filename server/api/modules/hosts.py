@@ -20,6 +20,7 @@ from server.api.base import (
 from server.schemas import (
     MetadataSchema,
     MutableField,
+    NullToBlankString,
     PrimaryKeyRelatedField,
     SelfNestedField
 )
@@ -35,8 +36,8 @@ class HostSchema(AutoSchema):
     _rev = fields.String(default='')
     ip = fields.String(default='')
     description = fields.String(required=True)  # Explicitly set required=True
-    default_gateway = fields.String(attribute="default_gateway_ip",
-                                    required=False, allow_none=True)
+    default_gateway = NullToBlankString(
+        attribute="default_gateway_ip", required=False)
     name = fields.String(dump_only=True, attribute='ip', default='')
     os = fields.String(default='')
     owned = fields.Boolean(default=False)

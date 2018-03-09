@@ -350,3 +350,31 @@ class TestListCommandView(ReadOnlyAPITests):
         assert res.status_code == 200
         updated_command = self.model.query.get(command.id)
         assert updated_command.end_date == datetime.datetime.fromtimestamp(1511387720.048548) + datetime.timedelta(seconds=120)
+
+    def test_delete_objects_preserve_history(self, session, test_client):
+
+        command = EmptyCommandFactory(command='test', tool='test', workspace=self.workspace)
+        host = HostFactory.create(workspace=self.workspace)
+        session.add(host)
+        session.commit()
+        CommandObjectFactory.create(
+            command=command,
+            object_type='host',
+            object_id=host.id,
+            workspace=self.workspace
+        )
+        session.commit()
+
+        res = test_client.get(u'/v2/ws/{0}/hosts/{1}/'.format(host.workspace.name, host.id))
+        assert res.status_code == 200
+
+        res = test_client.delete(u'/v2/ws/{0}/hosts/{1}/'.format(host.workspace.name, host.id))
+        assert res.status_code == 204
+
+        res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
+        assert res.status_code == 200
+        command_history = filter(lambda hist: hist['_id'] == command.id, res.json)
+        assert len(command_history)
+        command_history = command_history[0]
+        assert command_history['hosts_count'] == 1
+        assert command_history['tool'] == 'test'

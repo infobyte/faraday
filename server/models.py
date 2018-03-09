@@ -47,6 +47,9 @@ from server.utils.database import BooleanToIntColumn
 
 NonBlankColumn = partial(Column, nullable=False,
                          info={'allow_blank': False})
+BlankColumn = partial(Column, nullable=False,
+                      info={'allow_blank': True},
+                      default='')
 
 OBJECT_TYPES = [
     'vulnerability',
@@ -390,7 +393,7 @@ class VulnerabilityABC(Metadata):
     __abstract__ = True
     id = Column(Integer, primary_key=True)
 
-    data = Column(Text, nullable=True)
+    data = BlankColumn(Text)
     description = NonBlankColumn(Text)
     ease_of_resolution = Column(Enum(*EASE_OF_RESOLUTIONS, name='vulnerability_ease_of_resolution'), nullable=True)
     name = NonBlankColumn(Text, nullable=False)

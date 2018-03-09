@@ -7,16 +7,15 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 import os
-import socket
-import zipfile
 import logging
 
 import model.common
 from config.configuration import getInstanceConfiguration
 #from workspace import Workspace
 import model.log
+from model import Modelactions
 from utils.logs import getLogger
-from utils.common import *
+from utils.common import socket, gateway
 import shutil
 #from plugins.api import PluginControllerAPI
 
@@ -90,6 +89,7 @@ def _setUpAPIServer(hostname=None, port=None):
 
                 # register all the api functions to be exposed by the server
                 _xmlrpc_api_server.register_function(createAndAddHost)
+                _xmlrpc_api_server.register_function(createAndAddServiceToHost)
                 _xmlrpc_api_server.register_function(createAndAddNoteToService)
                 _xmlrpc_api_server.register_function(createAndAddNoteToHost)
                 _xmlrpc_api_server.register_function(createAndAddNoteToNote)
@@ -139,6 +139,17 @@ def createAndAddHost(ip, os="Unknown"):
     return None
 
 
+def createAndAddServiceToHost(host_id, name,
+                                       protocol="tcp?", ports=[],
+                                       status="open", version="unknown",
+                                       description=""):
+    service = newService(name, protocol, ports, status, version, description, host_id)
+
+    if addServiceToHost(service):
+        return service.getID()
+    return None
+
+
 # Vulnerability
 def createAndAddVulnToHost(host_id, name, desc, ref, severity, resolution):
     vuln = newVuln(name, desc, ref, severity, resolution, parent_id=host_id)
@@ -168,20 +179,20 @@ def createAndAddVulnWebToService(host_id, service_id, name, desc, ref, severity,
 # Note
 
 def createAndAddNoteToHost(host_id, name, text):
-    note = newNote(name, text, parent_id=host_id)
+    note = newNote(name, text, parent_id=host_id, parent_type='host')
     if addNoteToHost(host_id, note):
         return note.getID()
     return None
 
 
 def createAndAddNoteToService(host_id, service_id, name, text):
-    note = newNote(name, text, parent_id=service_id)
+    note = newNote(name, text, parent_id=service_id, parent_type='service')
     if addNoteToService(host_id, service_id, note):
         return note.getID()
     return None
 
 def createAndAddNoteToNote(host_id, service_id, note_id, name, text):
-    note = newNote(name, text, parent_id=note_id)
+    note = newNote(name, text, parent_id=note_id, parent_type='comment')
     if addNoteToNote(host_id, service_id, note_id, note):
         return note.getID()
     return None
@@ -200,33 +211,37 @@ def createAndAddCredToService(host_id, service_id, username, password):
 
 def addHost(host):
     if host is not None:
-        __model_controller.addHostASYNC(host)
+        __model_controller.add_action((Modelactions.ADDHOST, host))
+            #addHostASYNC(host)
         return True
     return False
 
 
-def addServiceToHost(host_id, service):
-    pass
+def addServiceToHost(service):
+    if service is not None:
+        __model_controller.add_action((Modelactions.ADDSERVICEHOST, service))
+        return True
+    return False
 
 # Vulnerability
 
 def addVulnToHost(host_id, vuln):
     if vuln is not None:
-        __model_controller.addVulnToHostASYNC(host_id, vuln)
+        __model_controller.add_action((Modelactions.ADDVULNHOST, vuln))
         return True
     return False
 
 
 def addVulnToService(host_id, service_id, vuln):
     if vuln is not None:
-        __model_controller.addVulnToServiceASYNC(host_id, service_id, vuln)
+        __model_controller.add_action((Modelactions.ADDVULNSRV, vuln))
         return True
     return False
 
 #VulnWeb
 def addVulnWebToService(host_id, service_id, vuln):
     if vuln is not None:
-        __model_controller.addVulnWebToServiceASYNC(host_id, service_id, vuln)
+        __model_controller.add_action((Modelactions.ADDVULNWEBSRV, vuln))
         return True
     return False
 
@@ -234,33 +249,35 @@ def addVulnWebToService(host_id, service_id, vuln):
 # Notes
 def addNoteToHost(host_id, note):
     if note is not None:
-        __model_controller.addNoteToHostASYNC(host_id, note)
+        __model_controller.add_action(
+            (Modelactions.ADDNOTEHOST, note))
         return True
     return False
 
 
 def addNoteToService(host_id, service_id, note):
     if note is not None:
-        __model_controller.addNoteToServiceASYNC(host_id, service_id, note)
+        __model_controller.add_action(
+            (Modelactions.ADDNOTESRV, note))
         return True
     return False
 
 def addNoteToNote(host_id, service_id, note_id, note):
     if note is not None:
-        __model_controller.addNoteToNoteASYNC(host_id, service_id, note_id, note)
+        __model_controller.add_action((Modelactions.ADDNOTENOTE, note))
         return True
     return False
 
 def addCredToService(host_id, service_id, cred):
     if cred is not None:
-        __model_controller.addCredToServiceASYNC(host_id, service_id, cred)
+        __model_controller.add_action((Modelactions.ADDCREDSRV, cred))
         return True
     return False
 
 #-------------------------------------------------------------------------------
 # APIs to delete elements to model
 #-------------------------------------------------------------------------------
-#TODO: delete funcitons are still missing
+#TODO: delete functions are still missing
 def delHost(hostname):
     __model_controller.delHostASYNC(hostname)
     return True
@@ -343,12 +360,12 @@ def newVulnWeb(name, desc="", ref=None, severity="", resolution="", website="",
         parent_id)
 
 
-def newNote(name, text, parent_id=None):
+def newNote(name, text, parent_id=None, parent_type=None):
     """
     It creates and returns a Note object.
     The created object is not added to the model.
     """
-    return __model_controller.newNote(name, text, parent_id)
+    return __model_controller.newNote(name, text, parent_id, parent_type)
 
 
 def newCred(username, password, parent_id=None):

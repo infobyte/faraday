@@ -739,8 +739,9 @@ class ModelBase(object):
 
     def setID(self, id):
         print('setID {0}'.format(id))
-        self.id = id
-        self.id_available.set()
+        if id:
+            self.id = id
+            self.id_available.set()
 
     def getID(self):
         # getId will wait until the id is not None
@@ -748,8 +749,8 @@ class ModelBase(object):
         retries = 1
         max_retries = 6
         while retries <= max_retries and self.id is None:
-            self.id_available.wait(timeout=timeout)
             print('Retrying getID timeout {0}'.format(timeout))
+            self.id_available.wait(timeout=timeout)
             timeout = timeout << retries - 1
             retries += 1
         return self.id
@@ -1307,8 +1308,8 @@ class Note(ModelBase):
     def __init__(self, note, workspace_name):
         ModelBase.__init__(self, note, workspace_name)
         self.text = note['text']
-        self.object_id = note['object_id']
-        self.object_type = note['object_type']
+        self.object_id = note.get('object_id') or note.get('parent')
+        self.object_type = note.get('object_type') or note.get('parent_type')
 
     def updateAttributes(self, name=None, text=None):
         if name is not None:

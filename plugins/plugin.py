@@ -28,7 +28,7 @@ from persistence.server.models import (
     Credential,
     Note,
 )
-from model.controller import modelactions
+from model import Modelactions
 #from plugins.modelactions import modelactions
 
 from config.configuration import getInstanceConfiguration
@@ -181,7 +181,7 @@ class PluginBase(object):
             workspace_name=self.workspace)
 
         host_obj._metadata.creatoserverr = self.id
-        self.__addPendingAction(modelactions.ADDHOST, host_obj)
+        self.__addPendingAction(Modelactions.ADDHOST, host_obj)
         return host_obj.getID()
 
     @deprecation.deprecated(deprecated_in="3.0", removed_in="3.5",
@@ -217,11 +217,33 @@ class PluginBase(object):
             Service.class_signature,
             name, protocol=protocol, ports=ports, status=status,
             version=version, description=description,
-            parent_type='Service', parent_id=host_id,
+            parent_type='Host', parent_id=host_id,
             workspace_name=self.workspace)
 
         serv_obj._metadata.creator = self.id
-        self.__addPendingAction(modelactions.ADDSERVICEHOST, serv_obj)
+        self.__addPendingAction(Modelactions.ADDSERVICEHOST, serv_obj)
+        return serv_obj.getID()
+
+    def createAndAddServiceToHost(self, host_id, name,
+                                       protocol="tcp?", ports=[],
+                                       status="open", version="unknown",
+                                       description=""):
+        if status not in ("open", "closed", "filtered"):
+            self.log(
+                'Unknown service status %s. Using "open" instead' % status,
+                'WARNING'
+            )
+            status = 'open'
+
+        serv_obj = model.common.factory.createModelObject(
+            Service.class_signature,
+            name, protocol=protocol, ports=ports, status=status,
+            version=version, description=description,
+            parent_type='Host', parent_id=host_id,
+            workspace_name=self.workspace)
+
+        serv_obj._metadata.creator = self.id
+        self.__addPendingAction(Modelactions.ADDSERVICEHOST, serv_obj)
         return serv_obj.getID()
 
     def createAndAddVulnToHost(self, host_id, name, desc="", ref=[],
@@ -235,7 +257,7 @@ class PluginBase(object):
             workspace_name=self.workspace)
 
         vuln_obj._metadata.creator = self.id
-        self.__addPendingAction(modelactions.ADDVULNHOST, vuln_obj)
+        self.__addPendingAction(Modelactions.ADDVULNHOST, vuln_obj)
         return vuln_obj.getID()
 
     @deprecation.deprecated(deprecated_in="3.0", removed_in="3.5",
@@ -253,7 +275,7 @@ class PluginBase(object):
             workspace_name=self.workspace)
 
         vuln_obj._metadata.creator = self.id
-        self.__addPendingAction(modelactions.ADDVULNHOST, vuln_obj)
+        self.__addPendingAction(Modelactions.ADDVULNHOST, vuln_obj)
         return vuln_obj.getID()
 
     def createAndAddVulnToService(self, host_id, service_id, name, desc="",
@@ -267,7 +289,7 @@ class PluginBase(object):
             workspace_name=self.workspace)
 
         vuln_obj._metadata.creator = self.id
-        self.__addPendingAction(modelactions.ADDVULNSRV, vuln_obj)
+        self.__addPendingAction(Modelactions.ADDVULNSRV, vuln_obj)
         return vuln_obj.getID()
 
     def createAndAddVulnWebToService(self, host_id, service_id, name, desc="",
@@ -286,7 +308,7 @@ class PluginBase(object):
             workspace_name=self.workspace)
 
         vulnweb_obj._metadata.creator = self.id
-        self.__addPendingAction(modelactions.ADDVULNWEBSRV, vulnweb_obj)
+        self.__addPendingAction(Modelactions.ADDVULNWEBSRV, vulnweb_obj)
         return vulnweb_obj.getID()
 
     def createAndAddNoteToHost(self, host_id, name, text):
@@ -297,7 +319,7 @@ class PluginBase(object):
             workspace_name=self.workspace)
 
         note_obj._metadata.creator = self.id
-        self.__addPendingAction(modelactions.ADDNOTEHOST, note_obj)
+        self.__addPendingAction(Modelactions.ADDNOTEHOST, note_obj)
         return note_obj.getID()
 
     @deprecation.deprecated(deprecated_in="3.0", removed_in="3.5",
@@ -311,7 +333,7 @@ class PluginBase(object):
             workspace_name=self.workspace)
 
         note_obj._metadata.creator = self.id
-        self.__addPendingAction(modelactions.ADDNOTEHOST, note_obj)
+        self.__addPendingAction(Modelactions.ADDNOTEHOST, note_obj)
         return note_obj.getID()
 
     def createAndAddNoteToService(self, host_id, service_id, name, text):
@@ -322,7 +344,7 @@ class PluginBase(object):
             workspace_name=self.workspace)
 
         note_obj._metadata.creator = self.id
-        self.__addPendingAction(modelactions.ADDNOTESRV, note_obj)
+        self.__addPendingAction(Modelactions.ADDNOTESRV, note_obj)
         return note_obj.getID()
 
     def createAndAddNoteToNote(self, host_id, service_id, note_id, name, text):
@@ -334,7 +356,7 @@ class PluginBase(object):
 
         note_obj._metadata.creator = self.id
 
-        self.__addPendingAction(modelactions.ADDNOTENOTE, note_obj)
+        self.__addPendingAction(Modelactions.ADDNOTENOTE, note_obj)
         return note_obj.getID()
 
     def createAndAddCredToService(self, host_id, service_id, username,
@@ -346,14 +368,14 @@ class PluginBase(object):
             workspace_name=self.workspace)
 
         cred_obj._metadata.creator = self.id
-        self.__addPendingAction(modelactions.ADDCREDSRV, cred_obj)
+        self.__addPendingAction(Modelactions.ADDCREDSRV, cred_obj)
         return cred_obj.getID()
 
     def log(self, msg, level='INFO'):
-        self.__addPendingAction(modelactions.LOG, msg, level)
+        self.__addPendingAction(Modelactions.LOG, msg, level)
 
     def devlog(self, msg):
-        self.__addPendingAction(modelactions.DEVLOG, msg)
+        self.__addPendingAction(Modelactions.DEVLOG, msg)
 
 
 class PluginTerminalOutput(PluginBase):

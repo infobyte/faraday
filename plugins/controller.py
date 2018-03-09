@@ -18,7 +18,7 @@ from config.configuration import getInstanceConfiguration
 from plugins.plugin import PluginProcess
 import model.api
 from model.commands_history import CommandRunInformation
-from model.controller import modelactions
+from model import Modelactions
 from utils.logs import getLogger
 
 from config.globals import (
@@ -50,7 +50,7 @@ class PluginCommiter(Thread):
     def commit(self):
         logger.debug('Plugin end. Commiting to faraday server.')
         self.pending_actions.put(
-            (modelactions.PLUGINEND, self.plugin.id, self.command.getID()))
+            (Modelactions.PLUGINEND, self.plugin.id, self.command.getID()))
         self.command.duration = time.time() - self.command.itime
         self.mapper_manager.update(self.command)
 
@@ -165,7 +165,7 @@ class PluginController(Thread):
             "Created plugin_process (%d) for plugin instance (%d)" %
             (id(plugin_process), id(plugin)))
 
-        self.pending_actions.put((modelactions.PLUGINSTART, plugin.id, command.getID()))
+        self.pending_actions.put((Modelactions.PLUGINSTART, plugin.id, command.getID()))
 
         output_queue.put((output, command.getID()))
         plugin_commiter = PluginCommiter(
@@ -192,25 +192,25 @@ class PluginController(Thread):
 
     def _setupActionDispatcher(self):
         self._actionDispatcher = {
-            modelactions.ADDHOST: model.api.addHost,
-            modelactions.ADDSERVICEHOST: model.api.addServiceToHost,
+            Modelactions.ADDHOST: model.api.addHost,
+            Modelactions.ADDSERVICEHOST: model.api.addServiceToHost,
             #Vulnerability
-            modelactions.ADDVULNHOST: model.api.addVulnToHost,
-            modelactions.ADDVULNSRV: model.api.addVulnToService,
+            Modelactions.ADDVULNHOST: model.api.addVulnToHost,
+            Modelactions.ADDVULNSRV: model.api.addVulnToService,
             #VulnWeb
-            modelactions.ADDVULNWEBSRV: model.api.addVulnWebToService,
+            Modelactions.ADDVULNWEBSRV: model.api.addVulnWebToService,
             #Note
-            modelactions.ADDNOTEHOST: model.api.addNoteToHost,
-            modelactions.ADDNOTESRV: model.api.addNoteToService,
-            modelactions.ADDNOTENOTE: model.api.addNoteToNote,
+            Modelactions.ADDNOTEHOST: model.api.addNoteToHost,
+            Modelactions.ADDNOTESRV: model.api.addNoteToService,
+            Modelactions.ADDNOTENOTE: model.api.addNoteToNote,
             #Creds
-            modelactions.ADDCREDSRV:  model.api.addCredToService,
+            Modelactions.ADDCREDSRV:  model.api.addCredToService,
             #LOG
-            modelactions.LOG: model.api.log,
-            modelactions.DEVLOG: model.api.devlog,
+            Modelactions.LOG: model.api.log,
+            Modelactions.DEVLOG: model.api.devlog,
             # Plugin state
-            modelactions.PLUGINSTART: model.api.pluginStart,
-            modelactions.PLUGINEND: model.api.pluginEnd
+            Modelactions.PLUGINSTART: model.api.pluginStart,
+            Modelactions.PLUGINEND: model.api.pluginEnd
         }
 
     def updatePluginSettings(self, plugin_id, new_settings):

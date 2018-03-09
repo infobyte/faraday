@@ -196,10 +196,10 @@ class Host(Metadata):
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True,
                           nullable=False)
     workspace = relationship(
-                            'Workspace',
-                            backref='hosts',
-                            foreign_keys=[workspace_id]
-                            )
+        'Workspace',
+        foreign_keys=[workspace_id],
+        backref=backref("hosts", cascade="all, delete-orphan")
+        )
 
     open_service_count = _make_generic_count_property(
         'host', 'service', where=text("service.status = 'open'"))
@@ -334,14 +334,16 @@ class Service(Metadata):
     host_id = Column(Integer, ForeignKey('host.id'), index=True, nullable=False)
     host = relationship(
         'Host',
-        foreign_keys=[host_id])
+        foreign_keys=[host_id],
+        cascade='all'
+    )
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
-                            'Workspace',
-                            backref='services',
-                            foreign_keys=[workspace_id]
-                            )
+        'Workspace',
+        backref=backref('services', cascade="all, delete-orphan"),
+        foreign_keys=[workspace_id]
+    )
 
     vulnerability_count = _make_generic_count_property('service',
                                                        'vulnerability')
@@ -529,7 +531,11 @@ class CommandObject(db.Model):
     command_id = Column(Integer, ForeignKey('command.id'), index=True)
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
-    workspace = relationship('Workspace', foreign_keys=[workspace_id])
+    workspace = relationship(
+        'Workspace',
+        foreign_keys=[workspace_id],
+        backref = backref('command_objects', cascade="all, delete-orphan")
+    )
 
     create_date = Column(DateTime, default=datetime.utcnow)
 
@@ -635,7 +641,11 @@ class Command(Metadata):
     import_source = Column(Enum(*IMPORT_SOURCE, name='import_source_enum'))
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
-    workspace = relationship('Workspace', foreign_keys=[workspace_id])
+    workspace = relationship(
+        'Workspace',
+        foreign_keys=[workspace_id],
+        backref=backref('commands', cascade="all, delete-orphan")
+    )
 
     sum_created_vulnerabilities = _make_created_objects_sum('vulnerability')
 
@@ -912,7 +922,9 @@ class ReferenceVulnerabilityAssociation(db.Model):
     reference_id = Column(Integer, ForeignKey('reference.id'), primary_key=True)
 
     reference = relationship("Reference",
-                             backref="reference_associations",
+                             backref=backref(
+                                 "reference_associations",
+                                 cascade="all, delete-orphan"),
                              foreign_keys=[reference_id])
     vulnerability = relationship("Vulnerability",
                                  backref=backref("reference_vulnerability_associations",
@@ -1027,10 +1039,10 @@ class Credential(Metadata):
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
-                            'Workspace',
-                            backref='credentials',
-                            foreign_keys=[workspace_id],
-                            )
+        'Workspace',
+        backref=backref('credentials', cascade="all, delete-orphan"),
+        foreign_keys=[workspace_id],
+    )
 
     __table_args__ = (
         CheckConstraint('(host_id IS NULL AND service_id IS NOT NULL) OR '
@@ -1155,10 +1167,11 @@ class Scope(Metadata):
                         index=True,
                         nullable=False
                         )
-    workspace = relationship('Workspace',
-                             backref=backref('scope', lazy="joined"),
-                             foreign_keys=[workspace_id],
-                             )
+    workspace = relationship(
+        'Workspace',
+         backref=backref('scope', lazy="joined", cascade="all, delete-orphan"),
+         foreign_keys=[workspace_id],
+         )
 
     __table_args__ = (
         UniqueConstraint('name', 'workspace_id',
@@ -1272,7 +1285,10 @@ class Methodology(Metadata):
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
 
-    template = relationship('MethodologyTemplate', backref='methodologies')
+    template = relationship(
+        'MethodologyTemplate',
+        backref=backref('methodologies', cascade="all, delete-orphan")
+    )
     template_id = Column(
                     Integer,
                     ForeignKey('methodology_template.id'),
@@ -1280,7 +1296,10 @@ class Methodology(Metadata):
                     nullable=True,
                     )
 
-    workspace = relationship('Workspace', backref='methodologies')
+    workspace = relationship(
+        'Workspace',
+        backref=backref('methodologies', cascade="all, delete-orphan")
+    )
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
 
     @property
@@ -1344,7 +1363,10 @@ class Task(TaskABC):
                     index=True,
                     nullable=False,
                     )
-    methodology = relationship('Methodology', backref='tasks')
+    methodology = relationship(
+        'Methodology',
+        backref=backref('tasks', cascade="all, delete-orphan")
+    )
 
     template_id = Column(
                     Integer,
@@ -1354,7 +1376,10 @@ class Task(TaskABC):
                     )
     template = relationship('TaskTemplate', backref='tasks')
 
-    workspace = relationship('Workspace', backref='tasks')
+    workspace = relationship(
+        'Workspace',
+        backref=backref('tasks', cascade="all, delete-orphan")
+    )
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
 
     # __table_args__ = (
@@ -1414,7 +1439,11 @@ class Comment(Metadata):
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True,
                           nullable=False)
-    workspace = relationship('Workspace', foreign_keys=[workspace_id])
+    workspace = relationship(
+        'Workspace',
+        foreign_keys=[workspace_id],
+        backref=backref('comments', cascade="all, delete-orphan"),
+    )
 
     object_id = Column(Integer, nullable=False)
     object_type = Column(Text, nullable=False)
@@ -1447,7 +1476,11 @@ class ExecutiveReport(Metadata):
     title = Column(Text, nullable=True)
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
-    workspace = relationship('Workspace', foreign_keys=[workspace_id])
+    workspace = relationship(
+        'Workspace',
+        backref=backref('reports', cascade="all, delete-orphan"),
+        foreign_keys=[workspace_id]
+    )
 
     @property
     def parent(self):

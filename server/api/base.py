@@ -427,6 +427,7 @@ class CreateMixin(object):
                             conflict_obj).data,
                     }
                 ))
+            raise
         return obj
 
 
@@ -497,6 +498,7 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
                             conflict_obj).data,
                     }
                 ))
+            raise
 
         self._set_command_id(obj, True)
         return obj

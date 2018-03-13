@@ -10,7 +10,6 @@ See the file 'doc/LICENSE' for the license information
 import os
 import re
 import time
-import logging
 import traceback
 from threading import Thread
 
@@ -25,7 +24,6 @@ except ImportError:
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
-logger = logging.getLogger(__name__)
 
 
 class ReportProcessor():
@@ -129,28 +127,26 @@ class ReportManager(Thread):
         Synchronize report directory using the DataManager and Plugins online
         We first make sure that all shared reports were added to the repo
         """
-        filenames = []
-
         for root, dirs, files in os.walk(self._report_path, False):
             # skip processed and unprocessed directories
             if root == self._report_path:
                 for name in files:
-                    filenames.append(os.path.join(root, name))
-
-        for filename in filenames:
-            name = os.path.basename(filename)
-            # If plugin not is detected... move to unprocessed
-            # PluginCommiter will rename the file to processed or unprocessed
-            # when the plugin finishes
-            if self.processor.processReport(filename) is False:
-                logger.info('Plugin not detected. Moving {0} to unprocessed'.format(filename))
-                os.rename(
-                    filename,
-                    os.path.join(self._report_upath, name))
-            else:
-                os.rename(
-                    filename,
-                    os.path.join(self._report_ppath, name))
+                    filename = os.path.join(root, name)
+                    name = os.path.basename(filename)
+                    # If plugin not is detected... move to unprocessed
+                    # PluginCommiter will rename the file to processed or unprocessed
+                    # when the plugin finishes
+                    if self.processor.processReport(filename) is False:
+                        getLogger(self).info('Plugin not detected. Moving {0} to unprocessed'.format(filename))
+                        os.rename(
+                            filename,
+                            os.path.join(self._report_upath, name))
+                    else:
+                        getLogger(self).info(
+                            'Detected valid report {0}'.format(filename))
+                        os.rename(
+                            filename,
+                            os.path.join(self._report_ppath, name))
 
         self.onlinePlugins()
 

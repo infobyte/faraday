@@ -45,7 +45,7 @@ node (label: "master"){
         try {
             sh """
                 source ${ENV_PATH}/bin/activate
-                cd $WORKSPACE && pytest -v  --junitxml=$WORKSPACE/xunit.xml || :
+                cd $WORKSPACE && pytest -v --with-hypothesis  --junitxml=$WORKSPACE/xunit.xml || :
                 deactivate
                """
                step([$class: 'CoberturaPublisher', autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/coverage.xml', failNoReports: false, failUnhealthy: false, failUnstable: false, maxNumberOfBuilds: 0, onlyStable: false, sourceEncoding: 'ASCII', zoomCoverageChart: false])
@@ -70,7 +70,7 @@ node (label: "master"){
             withCredentials([string(credentialsId: 'postgresql_connection_string', variable: 'CONN_STRING')]) {
                 sh """
                     source ${ENV_PATH}/bin/activate
-                    cd $WORKSPACE && pytest -v  --junitxml=$WORKSPACE/xunit-postgres.xml --connection-string "$CONN_STRING" || :
+                    cd $WORKSPACE && pytest -v --with-hypothesis --junitxml=$WORKSPACE/xunit-postgres.xml --connection-string "$CONN_STRING" || :
                     deactivate
                 """
                 step([$class: 'CoberturaPublisher', autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/coverage.xml', failNoReports: false, failUnhealthy: false, failUnstable: false, maxNumberOfBuilds: 0, onlyStable: false, sourceEncoding: 'ASCII', zoomCoverageChart: false])

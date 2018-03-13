@@ -12,7 +12,7 @@ from flask import request
 from flask import Blueprint
 from flask_classful import route
 from marshmallow import Schema, fields, post_load, ValidationError
-from marshmallow.validate import OneOf
+from marshmallow.validate import OneOf, Length
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -27,7 +27,6 @@ from server.api.base import (
 from server.fields import FaradayUploadedFile
 from server.models import (
     db,
-    CommandObject,
     File,
     Host,
     Service,
@@ -96,7 +95,8 @@ class VulnerabilitySchema(AutoSchema):
     owned = fields.Boolean(dump_only=True, default=False)
     owner = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
     impact = SelfNestedField(ImpactSchema())
-    desc = fields.String(attribute='description')
+    desc = fields.String(attribute='description', validate=Length(min=1))
+    description = fields.String(dump_only=True)
     policyviolations = fields.List(fields.String,
                                    attribute='policy_violations')
     refs = fields.List(fields.String(), attribute='references')
@@ -462,7 +462,7 @@ class VulnerabilityView(PaginatedMixin,
         if request.method == 'POST':
             requested_type = request.json.get('type', None)
             if not requested_type:
-                raise ValidationError('Type is required.')
+                raise InvalidUsage('Type is required.')
             if requested_type not in self.schema_class_dict:
                 raise InvalidUsage('Invalid vulnerability type.')
             return self.schema_class_dict[requested_type]

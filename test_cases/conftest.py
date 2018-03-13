@@ -70,6 +70,14 @@ def pytest_addoption(parser):
                      "sqlite if not specified:")
     parser.addoption('--ignore-nplusone', action='store_true',
                      help="Globally ignore nplusone errors")
+    parser.addoption("--with-hypothesis", action="store_true",
+                     dest="use_hypothesis", default=False,
+                     help="Run property based tests")
+
+
+def pytest_configure(config):
+    if not config.option.use_hypothesis:
+        config.option.markexpr = 'not hypothesis'
 
 
 @pytest.fixture(scope='session')

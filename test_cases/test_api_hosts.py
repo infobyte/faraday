@@ -7,6 +7,7 @@ except: # For Python 3
     import urllib.parse as urlparse
     from urllib.parse import urlencode
 from sqlalchemy.orm.util import was_deleted
+from hypothesis import given, assume, settings, strategies as st
 
 import pytest
 
@@ -108,7 +109,7 @@ class TestHostAPI:
         host = Host.query.get(host_id)
         assert host.ip == "127.0.0.1"
         assert host.description == "aaaaa"
-        assert host.os is None
+        assert host.os == ''
         assert host.workspace == self.workspace
 
     def test_create_a_host_fails_with_missing_desc(self, test_client):
@@ -451,12 +452,12 @@ class TestHostAPI:
             u'type': 'Host',
             u'_rev': u'',
             u'credentials': 0,
-            u'default_gateway': None,
+            u'default_gateway': '',
             u'description': u'',
             u'hostnames': [],
             u'id': host.id,
             u'ip': u'10.31.112.21',
-            u'mac': None,
+            u'mac': '',
             u'metadata': {
                 u'command_id': None,
                 u'create_time': int(time.mktime(updated_host.create_date.timetuple())) * 1000,
@@ -551,7 +552,7 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
         host = Host.query.get(host_id)
         assert host.ip == "127.0.0.1"
         assert host.description == "aaaaa"
-        assert host.os is None
+        assert host.os == ''
         assert host.workspace == self.workspace
         res = test_client.post(self.url(), data={
             "ip": "127.0.0.1",
@@ -628,3 +629,51 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
             '(53/udp) dns',
             '(5353/udp) dns',
         ]
+
+
+def host_json():
+    return st.fixed_dictionaries(
+        {
+            "metadata":
+                st.fixed_dictionaries({
+                    "update_time": st.floats(),
+                    "update_user": st.one_of(st.none(), st.text()),
+                    "update_action": st.integers(),
+                    "creator": st.text(),
+                    "create_time": st.integers(),
+                    "update_controller_action": st.text(),
+                    "owner": st.one_of(st.none(), st.text()),
+                    "command_id": st.one_of(st.none(), st.text(), st.integers()),}),
+            "name": st.one_of(st.none(), st.text()),
+            "ip": st.one_of(st.none(), st.text()),
+            "_rev": st.one_of(st.none(), st.text()),
+            "description": st.one_of(st.none(), st.text()),
+            "default_gateway": st.one_of(st.none(), st.text()),
+            "owned": st.booleans(),
+            "services": st.one_of(st.none(), st.integers()),
+            "hostnames": st.lists(st.text()),
+            "vulns": st.one_of(st.none(), st.integers()),
+            "owner": st.one_of(st.none(), st.text()),
+            "credentials": st.one_of(st.none(), st.integers()),
+            "_id": st.one_of(st.none(), st.integers()),
+            "os": st.one_of(st.none(), st.text()),
+            "id": st.one_of(st.none(), st.integers()),
+            "icon": st.one_of(st.none(), st.text())}
+    )
+
+
+@pytest.mark.usefixtures('logged_user')
+@pytest.mark.hypothesis
+def test_hypothesis(host_with_hostnames, test_client, session):
+    session.commit()
+    HostData = host_json()
+
+    @given(HostData)
+    def send_api_request(raw_data):
+
+        ws_name = host_with_hostnames.workspace.name
+        res = test_client.post('/v2/ws/{0}/vulns/'.format(ws_name),
+                               data=raw_data)
+        assert res.status_code in [201, 400, 409]
+
+    send_api_request()

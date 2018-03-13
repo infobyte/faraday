@@ -3,6 +3,7 @@
 # See the file 'doc/LICENSE' for the license information
 import operator
 from datetime import datetime
+from functools import partial
 
 from sqlalchemy import (
     Boolean,
@@ -44,6 +45,12 @@ from flask_security import (
     UserMixin,
 )
 from server.utils.database import BooleanToIntColumn, get_object_type_for
+
+NonBlankColumn = partial(Column, nullable=False,
+                         info={'allow_blank': False})
+BlankColumn = partial(Column, nullable=False,
+                      info={'allow_blank': True},
+                      default='')
 
 OBJECT_TYPES = [
     'vulnerability',
@@ -159,9 +166,9 @@ class Metadata(db.Model):
 class SourceCode(Metadata):
     __tablename__ = 'source_code'
     id = Column(Integer, primary_key=True)
-    filename = Column(Text, nullable=False)
-    function = Column(Text, nullable=True)
-    module = Column(Text, nullable=True)
+    filename = NonBlankColumn(Text)
+    function = BlankColumn(Text)
+    module = BlankColumn(Text)
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', backref='source_codes')
@@ -178,17 +185,17 @@ class SourceCode(Metadata):
 class Host(Metadata):
     __tablename__ = 'host'
     id = Column(Integer, primary_key=True)
-    ip = Column(Text, nullable=False)  # IP v4 or v6
-    description = Column(Text, nullable=True)
-    os = Column(Text, nullable=True)
+    ip = NonBlankColumn(Text)  # IP v4 or v6
+    description = BlankColumn(Text)
+    os = BlankColumn(Text)
 
     owned = Column(Boolean, nullable=False, default=False)
 
-    default_gateway_ip = Column(Text, nullable=True)
-    default_gateway_mac = Column(Text, nullable=True)
+    default_gateway_ip = BlankColumn(Text)
+    default_gateway_mac = BlankColumn(Text)
 
-    mac = Column(Text, nullable=True)
-    net_segment = Column(Text, nullable=True)
+    mac = BlankColumn(Text)
+    net_segment = BlankColumn(Text)
 
     services = relationship(
         'Service',
@@ -292,7 +299,7 @@ def set_children_objects(instance, value, parent_field, child_field='id',
 class Hostname(Metadata):
     __tablename__ = 'hostname'
     id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False)
+    name = NonBlankColumn(Text)
 
     host_id = Column(Integer, ForeignKey('host.id'), index=True, nullable=False)
     host = relationship('Host', backref='hostnames')
@@ -322,16 +329,16 @@ class Service(Metadata):
     ]
     __tablename__ = 'service'
     id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=True)
-    description = Column(Text, nullable=True)
+    name = BlankColumn(Text)
+    description = BlankColumn(Text)
     port = Column(Integer, nullable=False)
     owned = Column(Boolean, nullable=False, default=False)
 
-    protocol = Column(Text, nullable=False)
+    protocol = NonBlankColumn(Text)
     status = Column(Enum(*STATUSES, name='service_statuses'), nullable=False)
-    version = Column(Text, nullable=True)
+    version = BlankColumn(Text)
 
-    banner = Column(Text, nullable=True)
+    banner = BlankColumn(Text)
 
     host_id = Column(Integer, ForeignKey('host.id'), index=True, nullable=False)
     host = relationship(
@@ -388,11 +395,11 @@ class VulnerabilityABC(Metadata):
     __abstract__ = True
     id = Column(Integer, primary_key=True)
 
-    data = Column(Text, nullable=True)
-    description = Column(Text, nullable=False)
+    data = BlankColumn(Text)
+    description = NonBlankColumn(Text)
     ease_of_resolution = Column(Enum(*EASE_OF_RESOLUTIONS, name='vulnerability_ease_of_resolution'), nullable=True)
-    name = Column(Text, nullable=False)
-    resolution = Column(Text, nullable=True)
+    name = NonBlankColumn(Text, nullable=False)
+    resolution = BlankColumn(Text)
     severity = Column(Enum(*SEVERITIES, name='vulnerability_severity'), nullable=False)
     risk = Column(Float(3, 1), nullable=True)
 
@@ -640,14 +647,14 @@ class Command(Metadata):
 
     __tablename__ = 'command'
     id = Column(Integer, primary_key=True)
-    command = Column(Text(), nullable=False)
-    tool = Column(Text(), nullable=False)
+    command = NonBlankColumn(Text)
+    tool = NonBlankColumn(Text)
     start_date = Column(DateTime, nullable=False)
     end_date = Column(DateTime, nullable=True)
     ip = Column(String(250), nullable=False)  # where the command was executed
     hostname = Column(String(250), nullable=False)  # where the command was executed
-    params = Column(Text(), nullable=True)
-    user = Column(String(250), nullable=True)  # os username where the command was executed
+    params = BlankColumn(Text)
+    user = BlankColumn(String(250))  # os username where the command was executed
     import_source = Column(Enum(*IMPORT_SOURCE, name='import_source_enum'))
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
@@ -815,14 +822,14 @@ class Vulnerability(VulnerabilityGeneric):
 
 class VulnerabilityWeb(VulnerabilityGeneric):
     __tablename__ = None
-    method = Column(Text, nullable=True)
-    parameters = Column(Text, nullable=True)
-    parameter_name = Column(Text, nullable=True)
-    path = Column(Text, nullable=True)
-    query_string = Column(Text, nullable=True)
-    request = Column(Text, nullable=True)
-    response = Column(Text, nullable=True)
-    website = Column(Text, nullable=True)
+    method = BlankColumn(Text)
+    parameters = BlankColumn(Text)
+    parameter_name = BlankColumn(Text)
+    path = BlankColumn(Text)
+    query_string = BlankColumn(Text)
+    request = BlankColumn(Text)
+    response = BlankColumn(Text)
+    website = BlankColumn(Text)
 
     @declared_attr
     def service_id(cls):
@@ -849,9 +856,9 @@ class VulnerabilityWeb(VulnerabilityGeneric):
 
 class VulnerabilityCode(VulnerabilityGeneric):
     __tablename__ = None
-    code = Column(Text, nullable=True)
-    start_line = Column(Integer, nullable=True)
-    end_line = Column(Integer, nullable=True)
+    code = BlankColumn(Text)
+    start_line = BlankColumn(Text)
+    end_line = BlankColumn(Text)
 
     source_code_id = Column(Integer, ForeignKey(SourceCode.id), index=True)
     source_code = relationship(
@@ -876,7 +883,7 @@ class VulnerabilityCode(VulnerabilityGeneric):
 class ReferenceTemplate(Metadata):
     __tablename__ = 'reference_template'
     id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False)
+    name = NonBlankColumn(Text)
 
     __table_args__ = (
         UniqueConstraint('name', name='uix_reference_template_name'),
@@ -890,7 +897,7 @@ class ReferenceTemplate(Metadata):
 class Reference(Metadata):
     __tablename__ = 'reference'
     id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False)
+    name = NonBlankColumn(Text)
 
     workspace_id = Column(
         Integer,
@@ -968,7 +975,7 @@ class PolicyViolationTemplateVulnerabilityAssociation(db.Model):
 class PolicyViolationTemplate(Metadata):
     __tablename__ = 'policy_violation_template'
     id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False)
+    name = NonBlankColumn(Text)
 
     __table_args__ = (
         UniqueConstraint(
@@ -984,7 +991,7 @@ class PolicyViolationTemplate(Metadata):
 class PolicyViolation(Metadata):
     __tablename__ = 'policy_violation'
     id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False)
+    name = NonBlankColumn(Text)
 
     workspace_id = Column(
                         Integer,
@@ -1019,10 +1026,10 @@ class PolicyViolation(Metadata):
 class Credential(Metadata):
     __tablename__ = 'credential'
     id = Column(Integer, primary_key=True)
-    username = Column(String(250), nullable=False)
-    password = Column(Text(), nullable=False)
-    description = Column(Text(), nullable=True)
-    name = Column(String(250), nullable=True)
+    username = BlankColumn(Text)
+    password = BlankColumn(Text)
+    description = BlankColumn(Text)
+    name = BlankColumn(Text)
 
     host_id = Column(Integer, ForeignKey(Host.id), index=True, nullable=True)
     host = relationship('Host', backref='credentials', foreign_keys=[host_id])
@@ -1089,7 +1096,7 @@ class Workspace(Metadata):
     __tablename__ = 'workspace'
     id = Column(Integer, primary_key=True)
     customer = Column(String(250), nullable=True)  # TBI
-    description = Column(Text(), nullable=True)
+    description = BlankColumn(Text)
     active = Column(Boolean(), nullable=False, default=True)  # TBI
     end_date = Column(DateTime(), nullable=True)
     name = Column(String(250), nullable=False, unique=True)
@@ -1156,7 +1163,7 @@ class Workspace(Metadata):
 class Scope(Metadata):
     __tablename__ = 'scope'
     id = Column(Integer, primary_key=True)
-    name = Column(Text(), nullable=False)
+    name = NonBlankColumn(Text)
 
     workspace_id = Column(
                         Integer,
@@ -1247,20 +1254,20 @@ class File(Metadata):
     __tablename__ = 'file'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    name = Column(Text)
-    filename = Column(Text, nullable=False)
-    description = Column(Text)
+    name = BlankColumn(Text)  # TODO migration: check why blank is allowed
+    filename = NonBlankColumn(Text)
+    description = BlankColumn(Text)
     content = Column(UploadedFileField(upload_type=FaradayUploadedFile),
                      nullable=False)  # plain attached file
     object_id = Column(Integer, nullable=False)
-    object_type = Column(Text, nullable=False)
+    object_type = NonBlankColumn(Text)  # TODO migration: add enum
 
 
 class UserAvatar(Metadata):
     __tablename_ = 'user_avatar'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    name = Column(Text, unique=True)
+    name = BlankColumn(Text, unique=True)
     # photo field will automatically generate thumbnail
     # if the file is a valid image
     photo = Column(UploadedFileField(upload_type=FaradayUploadedFile))
@@ -1272,14 +1279,14 @@ class MethodologyTemplate(Metadata):
     # TODO: reset template_id in methodologies when deleting meth template
     __tablename__ = 'methodology_template'
     id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False)
+    name = NonBlankColumn(Text)
 
 
 class Methodology(Metadata):
     # TODO: add unique constraint -> name, workspace
     __tablename__ = 'methodology'
     id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False)
+    name = NonBlankColumn(Text)
 
     template = relationship('MethodologyTemplate', backref='methodologies')
     template_id = Column(
@@ -1301,8 +1308,8 @@ class TaskABC(Metadata):
     __abstract__ = True
 
     id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False)
-    description = Column(Text, nullable=False)
+    name = NonBlankColumn(Text)
+    description = BlankColumn(Text)
 
 
 class TaskTemplate(TaskABC):
@@ -1378,12 +1385,12 @@ class Task(TaskABC):
 class License(Metadata):
     __tablename__ = 'license'
     id = Column(Integer, primary_key=True)
-    product = Column(Text, nullable=False)
+    product = NonBlankColumn(Text)
     start_date = Column(DateTime, nullable=False)
     end_date = Column(DateTime, nullable=False)
 
-    type = Column(Text, nullable=True)
-    notes = Column(Text, nullable=True)
+    type = BlankColumn(Text)
+    notes = BlankColumn(Text)
 
     __table_args__ = (
         UniqueConstraint('product', 'start_date', 'end_date', name='uix_license_product_start_end_dates'),
@@ -1393,8 +1400,8 @@ class License(Metadata):
 class Tag(Metadata):
     __tablename__ = 'tag'
     id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False, unique=True)
-    slug = Column(Text, nullable=False, unique=True)
+    name = NonBlankColumn(Text, unique=True)
+    slug = NonBlankColumn(Text, unique=True)
 
 
 class TagObject(db.Model):
@@ -1402,7 +1409,7 @@ class TagObject(db.Model):
     id = Column(Integer, primary_key=True)
 
     object_id = Column(Integer, nullable=False)
-    object_type = Column(Text, nullable=False)
+    object_type = NonBlankColumn(Text)  # TODO migration: add enum
 
     tag = relationship('Tag', backref='tagged_objects')
     tag_id = Column(Integer, ForeignKey('tag.id'), index=True)
@@ -1412,7 +1419,7 @@ class Comment(Metadata):
     __tablename__ = 'comment'
     id = Column(Integer, primary_key=True)
 
-    text = Column(Text, nullable=False)
+    text = BlankColumn(Text)
 
     reply_to_id = Column(Integer, ForeignKey('comment.id'))
     reply_to = relationship(
@@ -1426,7 +1433,7 @@ class Comment(Metadata):
     workspace = relationship('Workspace', foreign_keys=[workspace_id])
 
     object_id = Column(Integer, nullable=False)
-    object_type = Column(Text, nullable=False)
+    object_type = NonBlankColumn(Text)  # TODO migration: add enum
 
     @property
     def parent(self):
@@ -1443,17 +1450,17 @@ class ExecutiveReport(Metadata):
     id = Column(Integer, primary_key=True)
 
     grouped = Column(Boolean, nullable=False, default=False)
-    name = Column(Text, nullable=False, index=True)
+    name = NonBlankColumn(Text, index=True)
     status = Column(Enum(*STATUSES, name='executive_report_statuses'), nullable=True)
-    template_name = Column(Text, nullable=False)
+    template_name = NonBlankColumn(Text)
 
-    conclusions = Column(Text, nullable=True)
-    enterprise = Column(Text, nullable=True)
-    objectives = Column(Text, nullable=True)
-    recommendations = Column(Text, nullable=True)
-    scope = Column(Text, nullable=True)
-    summary = Column(Text, nullable=True)
-    title = Column(Text, nullable=True)
+    conclusions = BlankColumn(Text)
+    enterprise = BlankColumn(Text)
+    objectives = BlankColumn(Text)
+    recommendations = BlankColumn(Text)
+    scope = BlankColumn(Text)
+    summary = BlankColumn(Text)
+    title = BlankColumn(Text)
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', foreign_keys=[workspace_id])

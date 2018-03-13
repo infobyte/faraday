@@ -10,11 +10,13 @@ from sqlalchemy.inspection import inspect
 from sqlalchemy import func
 from marshmallow import Schema
 from marshmallow.compat import with_metaclass
+from marshmallow.validate import Length
 from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
 from webargs.flaskparser import FlaskParser, parser, abort
 from webargs.core import ValidationError
 from server.models import Workspace, db, Command, CommandObject
+from server.schemas import NullToBlankString
 import server.utils.logger
 from server.utils.database import get_conflict_object
 
@@ -633,6 +635,23 @@ class ReadWriteWorkspacedView(CreateWorkspacedMixin,
     pass
 
 
+class CustomModelConverter(ModelConverter):
+    """
+    Model converter that automatically sets minimum length
+    validators to not blankable fields
+    """
+    def _add_column_kwargs(self, kwargs, column):
+        super(CustomModelConverter, self)._add_column_kwargs(kwargs, column)
+        if not column.info.get('allow_blank', True):
+            kwargs['validate'].append(Length(min=1))
+
+
+class CustomModelSchemaOpts(ModelSchemaOpts):
+    def __init__(self, *args, **kwargs):
+        super(CustomModelSchemaOpts, self).__init__(*args, **kwargs)
+        self.model_converter = CustomModelConverter
+
+
 class AutoSchema(with_metaclass(ModelSchemaMeta, Schema)):
     """
     A Marshmallow schema that does field introspection based on
@@ -640,7 +659,11 @@ class AutoSchema(with_metaclass(ModelSchemaMeta, Schema)):
     Unlike the marshmallow_sqlalchemy ModelSchema, it doesn't change
     the serialization and deserialization proccess.
     """
-    OPTIONS_CLASS = ModelSchemaOpts
+    OPTIONS_CLASS = CustomModelSchemaOpts
+
+    # Use NullToBlankString instead of fields.String by default on text fields
+    TYPE_MAPPING = Schema.TYPE_MAPPING.copy()
+    TYPE_MAPPING[str] = NullToBlankString
 
 
 class FilterAlchemyModelConverter(ModelConverter):

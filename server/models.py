@@ -842,8 +842,8 @@ class VulnerabilityWeb(VulnerabilityGeneric):
 class VulnerabilityCode(VulnerabilityGeneric):
     __tablename__ = None
     code = BlankColumn(Text)
-    start_line = BlankColumn(Text)
-    end_line = BlankColumn(Text)
+    start_line = Column(Integer, nullable=True)
+    end_line = Column(Integer, nullable=True)
 
     source_code_id = Column(Integer, ForeignKey(SourceCode.id), index=True)
     source_code = relationship(

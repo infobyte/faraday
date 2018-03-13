@@ -814,6 +814,7 @@ class VulnerabilityWeb(VulnerabilityGeneric):
     request = BlankColumn(Text)
     response = BlankColumn(Text)
     website = BlankColumn(Text)
+    status_code = Column(Integer, nullable=True)
 
     @declared_attr
     def service_id(cls):

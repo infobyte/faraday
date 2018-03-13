@@ -16,6 +16,7 @@ from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
 from webargs.flaskparser import FlaskParser, parser, abort
 from webargs.core import ValidationError
 from server.models import Workspace, db, Command, CommandObject
+from server.schemas import NullToBlankString
 import server.utils.logger
 from server.utils.database import get_conflict_object
 
@@ -659,6 +660,10 @@ class AutoSchema(with_metaclass(ModelSchemaMeta, Schema)):
     the serialization and deserialization proccess.
     """
     OPTIONS_CLASS = CustomModelSchemaOpts
+
+    # Use NullToBlankString instead of fields.String by default on text fields
+    TYPE_MAPPING = Schema.TYPE_MAPPING.copy()
+    TYPE_MAPPING[str] = NullToBlankString
 
 
 class FilterAlchemyModelConverter(ModelConverter):

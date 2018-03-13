@@ -133,6 +133,29 @@ class SeverityField(fields.String):
         return ret
 
 
+class NullToBlankString(fields.String):
+    """
+    Custom field that converts null into an empty value. Created for
+    compatibility with the web ui.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(NullToBlankString, self).__init__(*args, **kwargs)
+        # Always make the field nullable because it is translated
+        self.allow_none = True
+        self.default = ''
+
+    def deserialize(self, value, attr=None, data=None):
+        # Validate required fields, deserialize, then validate
+        # deserialized value
+        self._validate_missing(value)
+        if getattr(self, 'allow_none', False) is True and value is None:
+            return ''
+        output = self._deserialize(value, attr, data)
+        self._validate(output)
+        return output
+
+
 class MetadataSchema(Schema):
     command_id = fields.Function(lambda x: None, dump_only=True)
 

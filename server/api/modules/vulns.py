@@ -95,7 +95,7 @@ class VulnerabilitySchema(AutoSchema):
     owned = fields.Boolean(dump_only=True, default=False)
     owner = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
     impact = SelfNestedField(ImpactSchema())
-    desc = fields.String(attribute='description', validate=Length(min=1))
+    desc = fields.String(attribute='description')
     description = fields.String(dump_only=True)
     policyviolations = fields.List(fields.String,
                                    attribute='policy_violations')
@@ -243,6 +243,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
     request = fields.String(default='')
     website = fields.String(default='')
     query = fields.String(attribute='query_string', default='')
+    status_code = fields.Integer(allow_none=True)
 
     class Meta:
         model = VulnerabilityWeb
@@ -255,7 +256,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'desc', 'impact', 'confirmed', 'name',
             'service', 'obj_id', 'type', 'policyviolations',
             'request', '_attachments', 'params',
-            'target', 'resolution', 'method', 'metadata')
+            'target', 'resolution', 'method', 'metadata', 'status_code')
 
 
 # Use this override for filterset fields that filter by en exact match by

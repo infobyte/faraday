@@ -95,7 +95,7 @@ class VulnerabilitySchema(AutoSchema):
     owned = fields.Boolean(dump_only=True, default=False)
     owner = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
     impact = SelfNestedField(ImpactSchema())
-    desc = fields.String(attribute='description', validate=Length(min=1))
+    desc = fields.String(attribute='description')
     description = fields.String(dump_only=True)
     policyviolations = fields.List(fields.String,
                                    attribute='policy_violations')

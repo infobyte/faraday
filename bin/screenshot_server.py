@@ -10,17 +10,18 @@ import os
 import sys
 from persistence.server.server_io_exceptions import ResourceDoesNotExist
 from persistence.server import models
-try:
-    from selenium import webdriver
-except ImportError:
-    print ("Missing dependencies: (selenium). install it with pip install selenium. ")
-    sys.exit(1)
 
 __description__ = 'Takes a Screenshot of the ip:ports of a given protocol'
 __prettyname__ = 'Screenshot_server'
 
 
 def screenshot(path, protocol, ip, port):
+    try:
+        from selenium import webdriver
+    except ImportError:
+        print("Missing dependencies: (selenium). "
+              "Install it with pip install selenium. ")
+        sys.exit(1)
     driver = webdriver.PhantomJS()
     driver.set_window_size(1024, 768)  # set the window size that you need
     driver.set_page_load_timeout(5)
@@ -41,19 +42,19 @@ def main(workspace='', args=None, parser=None):
     parsed_args = parser.parse_args(args)
 
     protocols = parsed_args.protocol.split(",")
-    print (protocols)
+    print(protocols)
     path = parsed_args.path
 
     for protocol in protocols:
 
         if not os.path.exists(path):
-            print ("Invalid Path")
+            print("Invalid Path")
             exit()
 
         try:
             services = models.get_services(workspace)
         except ResourceDoesNotExist:
-            print ("Invalid workspace name: ", workspace)
+            print("Invalid workspace name: ", workspace)
             return 1, None
 
         for service in services:
@@ -66,6 +67,6 @@ def main(workspace='', args=None, parser=None):
                 interface = models.get_interface(workspace, interface_id)
                 ip = interface.ipv4["address"]
 
-                print (protocol + "://" + ip + ":" + port)
+                print(protocol + "://" + ip + ":" + port)
                 screenshot(path, protocol, ip, port)
     return 0, None

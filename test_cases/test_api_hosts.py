@@ -662,6 +662,7 @@ def host_json():
 
 
 @pytest.mark.usefixtures('logged_user')
+@pytest.mark.hypothesis
 def test_hypothesis(host_with_hostnames, test_client, session):
     session.commit()
     HostData = host_json()

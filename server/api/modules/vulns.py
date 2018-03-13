@@ -12,7 +12,7 @@ from flask import request
 from flask import Blueprint
 from flask_classful import route
 from marshmallow import Schema, fields, post_load, ValidationError
-from marshmallow.validate import OneOf
+from marshmallow.validate import OneOf, Length
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -95,7 +95,8 @@ class VulnerabilitySchema(AutoSchema):
     owned = fields.Boolean(dump_only=True, default=False)
     owner = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
     impact = SelfNestedField(ImpactSchema())
-    desc = fields.String(attribute='description')
+    desc = fields.String(attribute='description', validate=Length(min=1))
+    description = fields.String(dump_only=True)
     policyviolations = fields.List(fields.String,
                                    attribute='policy_violations')
     refs = fields.List(fields.String(), attribute='references')

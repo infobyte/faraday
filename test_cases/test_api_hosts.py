@@ -122,6 +122,7 @@ class TestHostAPI:
                                                   test_client, host):
         session.add(host)
         session.commit()
+        assert Host.query.count() == HOSTS_COUNT + 1
 
         res = test_client.post(self.url(), data={
             "ip": host.ip,

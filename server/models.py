@@ -18,6 +18,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     event)
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship, undefer
 from sqlalchemy.sql import select, text, table
 from sqlalchemy.sql.expression import asc, case, join
@@ -43,7 +44,7 @@ from flask_security import (
     RoleMixin,
     UserMixin,
 )
-from server.utils.database import BooleanToIntColumn
+from server.utils.database import BooleanToIntColumn, get_object_type_for
 
 NonBlankColumn = partial(Column, nullable=False,
                          info={'allow_blank': False})
@@ -56,6 +57,7 @@ OBJECT_TYPES = [
     'source_code',
     'comment',
 ]
+UNIQUE_VIOLATION = '23505'
 
 
 class SQLAlchemy(OriginalSQLAlchemy):
@@ -441,8 +443,30 @@ class CustomAssociationSet(_AssociationSet):
 
     def _create(self, value):
         parent_instance = self.lazy_collection.ref()
-        return self.creator(value, parent_instance)
+        session = db.session
+        conflict_objs = session.new
+        try:
+            yield self.creator(value, parent_instance)
+        except IntegrityError as ex:
+            if ex.orig.pgcode == UNIQUE_VIOLATION:
+                # unique constraint failed at database
+                # other process/thread won us on the commit
+                # we need to fetch already created objs.
+                session.rollback()
+                conflict_obj_names = [obj.name for obj in conflict_objs if obj.name != value]
+                for conflict_obj_name in conflict_obj_names:
+                    conclict_obj = session.query(Reference).filter_by(name=conflict_obj_name).first()
+                    if not conclict_obj:
+                        raise Exception('This should not happend. AssocProxy could not find a conflict obj.')
+                    self.col.add(conclict_obj)
+                yield self.creator(value, parent_instance)
+            else:
+                raise
 
+    def add(self, value):
+        if value not in self:
+            for new_value in self._create(value):
+                self.col.add(new_value)
 
 def _build_associationproxy_creator(model_class_name):
     def creator(name, vulnerability):
@@ -569,15 +593,7 @@ class CommandObject(db.Model):
         if object_ is not None:
             assert 'object_type' not in kwargs
             assert 'object_id' not in kwargs
-            object_type = object_.__tablename__
-            if object_type is None:
-                if object_.__class__.__name__ in ['Vulnerability',
-                                                'VulnerabilityWeb',
-                                                'VulnerabilityCode']:
-                    object_type = 'vulnerability'
-                else:
-                    raise RuntimeError("Unknown table for object: {}".format(
-                        object_))
+            object_type = get_object_type_for(object_)
 
             # db.session.flush()
             assert object_.id is not None, "object must have an ID. Try " \
@@ -1469,10 +1485,24 @@ vulnerability_uniqueness = DDL(
     "COALESCE(website, ''), workspace_id, COALESCE(source_code_id, -1));"
 )
 
+vulnerability_uniqueness_sqlite = DDL(
+    "CREATE UNIQUE INDEX uix_vulnerability ON %(fullname)s "
+    "(name, description, COALESCE(host_id, -1), COALESCE(service_id, -1), "
+    "COALESCE(method, ''), COALESCE(parameter_name, ''), COALESCE(path, ''), "
+    "COALESCE(website, ''), workspace_id, COALESCE(source_code_id, -1));"
+)
+
+
 event.listen(
     VulnerabilityGeneric.__table__,
     'after_create',
     vulnerability_uniqueness.execute_if(dialect='postgresql')
+)
+
+event.listen(
+    VulnerabilityGeneric.__table__,
+    'after_create',
+    vulnerability_uniqueness_sqlite.execute_if(dialect='sqlite')
 )
 
 # We have to import this after all models are defined

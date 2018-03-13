@@ -44,7 +44,10 @@ from flask_security import (
     RoleMixin,
     UserMixin,
 )
-from server.utils.database import BooleanToIntColumn, get_object_type_for
+from server.utils.database import (
+    BooleanToIntColumn,
+    get_object_type_for,
+    is_unique_constraint_violation)
 
 NonBlankColumn = partial(Column, nullable=False,
                          info={'allow_blank': False})
@@ -60,7 +63,6 @@ OBJECT_TYPES = [
     'source_code',
     'comment',
 ]
-UNIQUE_VIOLATION = '23505'
 
 
 class SQLAlchemy(OriginalSQLAlchemy):
@@ -451,20 +453,19 @@ class CustomAssociationSet(_AssociationSet):
         try:
             yield self.creator(value, parent_instance)
         except IntegrityError as ex:
-            if ex.orig.pgcode == UNIQUE_VIOLATION:
-                # unique constraint failed at database
-                # other process/thread won us on the commit
-                # we need to fetch already created objs.
-                session.rollback()
-                conflict_obj_names = [obj.name for obj in conflict_objs if obj.name != value]
-                for conflict_obj_name in conflict_obj_names:
-                    conclict_obj = session.query(Reference).filter_by(name=conflict_obj_name).first()
-                    if not conclict_obj:
-                        raise Exception('This should not happend. AssocProxy could not find a conflict obj.')
-                    self.col.add(conclict_obj)
-                yield self.creator(value, parent_instance)
-            else:
+            if not is_unique_constraint_violation(ex):
                 raise
+            # unique constraint failed at database
+            # other process/thread won us on the commit
+            # we need to fetch already created objs.
+            session.rollback()
+            conflict_obj_names = [obj.name for obj in conflict_objs if obj.name != value]
+            for conflict_obj_name in conflict_obj_names:
+                conclict_obj = session.query(Reference).filter_by(name=conflict_obj_name).first()
+                if not conclict_obj:
+                    raise Exception('This should not happend. AssocProxy could not find a conflict obj.')
+                self.col.add(conclict_obj)
+            yield self.creator(value, parent_instance)
 
     def add(self, value):
         if value not in self:

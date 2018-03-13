@@ -301,3 +301,16 @@ def get_conflict_object(session, obj, data, workspace=None):
         conflict_obj = session.query(klass).filter(
             filter_data).first()
         return conflict_obj
+
+
+UNIQUE_VIOLATION = '23505'
+
+
+def is_unique_constraint_violation(exception):
+    from server.models import db
+    if db.engine.dialect != 'postgresql':
+        # Not implemened for RDMS other than postgres, we can't live without
+        # this, it is just an extra check
+        return True
+    assert isinstance(exception.orig.pgcode, str)
+    return exception.orig.pgcode == UNIQUE_VIOLATION

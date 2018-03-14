@@ -532,7 +532,8 @@ class VulnerabilityTemplate(VulnerabilityABC):
     )
 
     references = association_proxy(
-        'reference_template_instances', 'name',
+        'reference_template_instances',
+        'name',
         proxy_factory=CustomAssociationSet,
         creator=_build_associationproxy_creator_non_workspaced('ReferenceTemplate')
     )
@@ -545,7 +546,8 @@ class VulnerabilityTemplate(VulnerabilityABC):
     )
 
     policy_violations = association_proxy(
-        'policy_violation_template_instances', 'name',
+        'policy_violation_template_instances',
+        'name',
         proxy_factory=CustomAssociationSet,
         creator=_build_associationproxy_creator_non_workspaced('PolicyViolationTemplate')
     )
@@ -975,8 +977,17 @@ class ReferenceTemplateVulnerabilityAssociation(db.Model):
     vulnerability_id = Column(Integer, ForeignKey('vulnerability_template.id'), primary_key=True)
     reference_id = Column(Integer, ForeignKey('reference_template.id'), primary_key=True)
 
-    reference = relationship("ReferenceTemplate", backref="reference_template_associations", foreign_keys=[reference_id])
-    vulnerability = relationship("VulnerabilityTemplate", backref="reference_template_vulnerability_associations", foreign_keys=[vulnerability_id])
+    reference = relationship(
+        "ReferenceTemplate",
+        foreign_keys=[reference_id],
+        backref=backref('reference_template_associations', cascade="all, delete-orphan")
+    )
+    vulnerability = relationship(
+        "VulnerabilityTemplate",
+        backref=backref('reference_template_vulnerability_associations',
+                        cascade="all, delete-orphan"),
+        foreign_keys=[vulnerability_id]
+    )
 
 
 class PolicyViolationTemplateVulnerabilityAssociation(db.Model):

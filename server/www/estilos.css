@@ -389,6 +389,9 @@ ul.label-list {
 	font-size: 12px !important;
     margin: 5px;
 }
+table thead th span {
+	color: black;
+}
 table thead th a {
 	color: #2E91D8;
 	font-weight: normal;

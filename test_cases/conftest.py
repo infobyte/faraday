@@ -1,3 +1,5 @@
+from tempfile import NamedTemporaryFile
+
 import os
 import sys
 import json
@@ -14,7 +16,7 @@ from server.models import db
 from test_cases import factories
 
 
-
+TEMPORATY_SQLITE = NamedTemporaryFile()
 # Discover factories to automatically register them to pytest-factoryboy and to
 # override its session
 enabled_factories = []
@@ -59,11 +61,22 @@ class CustomClient(FlaskClient):
 
 
 def pytest_addoption(parser):
-    parser.addoption('--connection-string', default='sqlite://',
+    # currently for tests using sqlite and memory have problem while using transactions
+    # we need to review sqlite configuraitons for persistence using PRAGMA.
+    print(TEMPORATY_SQLITE.name)
+    parser.addoption('--connection-string', default='sqlite:////{0}'.format(TEMPORATY_SQLITE.name),
                      help="Database connection string. Defaults to in-memory "
                      "sqlite if not specified:")
     parser.addoption('--ignore-nplusone', action='store_true',
                      help="Globally ignore nplusone errors")
+    parser.addoption("--with-hypothesis", action="store_true",
+                     dest="use_hypothesis", default=False,
+                     help="Run property based tests")
+
+
+def pytest_configure(config):
+    if not config.option.use_hypothesis:
+        config.option.markexpr = 'not hypothesis'
 
 
 @pytest.fixture(scope='session')
@@ -77,6 +90,7 @@ def app(request):
     ctx.push()
 
     def teardown():
+        TEMPORATY_SQLITE.close()
         ctx.pop()
 
     request.addfinalizer(teardown)

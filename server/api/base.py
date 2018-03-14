@@ -1,6 +1,7 @@
 import json
 
 import flask
+import sqlalchemy
 from flask import abort, g
 from flask_classful import FlaskView
 from sqlalchemy.orm import joinedload, undefer
@@ -9,12 +10,15 @@ from sqlalchemy.inspection import inspect
 from sqlalchemy import func
 from marshmallow import Schema
 from marshmallow.compat import with_metaclass
+from marshmallow.validate import Length
 from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
 from webargs.flaskparser import FlaskParser, parser, abort
 from webargs.core import ValidationError
 from server.models import Workspace, db, Command, CommandObject
+from server.schemas import NullToBlankString
 import server.utils.logger
+from server.utils.database import get_conflict_object
 
 logger = server.utils.logger.get_logger(__name__)
 
@@ -64,7 +68,6 @@ class GenericView(FlaskView):
     }
     lookup_field = 'id'
     lookup_field_type = int
-    unique_fields = []  # Fields unique
 
     # Attributes to improve the performance of list and retrieve views
     get_joinedloads = []  # List of relationships to eagerload
@@ -150,43 +153,6 @@ class GenericView(FlaskView):
         return FlaskParser().parse(schema, request, locations=('json',),
                                    *args, **kwargs)
 
-    def _validate_uniqueness(self, obj, object_id=None, unique_fields=None):
-        primary_key_field = inspect(self.model_class).primary_key[0]
-
-        if getattr(obj, 'workspace', None):
-            query = self._get_base_query(obj.workspace.name)
-        else:
-            query = self._get_base_query()
-
-        if object_id is not None:
-            # The object already exists in DB, we want to fetch an object
-            # different to this one but with the same unique field
-            query = query.filter(primary_key_field != object_id)
-        if unique_fields is None:
-            # It is usually None, but in some case the child class may want to
-            # override it based on some condition dependent on the request
-            unique_fields = self.unique_fields
-        for field_names in unique_fields:
-            for field_name in field_names:
-                # Use type(obj) instead of self.model_class to be
-                # compatible with polymorphic obejcts (e.g. Vulnerability)
-                field = getattr(type(obj), field_name)
-                value = getattr(obj, field_name)
-                query = query.filter(
-                    field == value)
-
-            existing_obj = query.one_or_none()
-            conflict_data = self._get_schema_class()().dump(existing_obj).data
-            if existing_obj:
-                db.session.rollback()
-                abort(409, ValidationError(
-                    {
-                        'message': 'Existing value for unique columns: %s' % (
-                        field_names,),
-                        'object': conflict_data,
-                    }
-                ))
-
     @classmethod
     def register(cls, app, *args, **kwargs):
         """Register and add JSON error handler. Use error code
@@ -231,7 +197,6 @@ class GenericWorkspacedView(GenericView):
     # Default attributes
     route_prefix = '/v2/ws/<workspace_name>/'
     base_args = ['workspace_name']  # Required to prevent double usage of <workspace_name>
-    unique_fields = []  # Fields unique together with workspace_id
 
     def _get_workspace(self, workspace_name):
         try:
@@ -261,11 +226,6 @@ class GenericWorkspacedView(GenericView):
         """Overriden to pass the workspace name to the schema"""
         context.update(kwargs)
         return context
-
-    def _validate_uniqueness(self, obj, object_id=None, unique_fields=None):
-        assert obj.workspace is not None, "Object must have a " \
-            "workspace attribute set to call _validate_uniqueness"
-        return  super(GenericWorkspacedView, self)._validate_uniqueness(obj, object_id, unique_fields)
 
 
 class ListMixin(object):
@@ -453,11 +413,20 @@ class CreateMixin(object):
     def _perform_create(self, data, **kwargs):
         obj = self.model_class(**data)
         # assert not db.session.new
-        with db.session.no_autoflush:
-            # Required because _validate_uniqueness does a select. Doing this
-            # outside a no_autoflush block would result in a premature create.
-            self._validate_uniqueness(obj)
+        try:
             db.session.add(obj)
+            db.session.commit()
+        except sqlalchemy.exc.IntegrityError as ex:
+            db.session.rollback()
+            conflict_obj = get_conflict_object(db.session, obj, data)
+            if conflict_obj:
+                abort(409, ValidationError(
+                    {
+                        'message': 'Existing value',
+                        'object': self._get_schema_class()().dump(
+                            conflict_obj).data,
+                    }
+                ))
         return obj
 
 
@@ -513,12 +482,22 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
         obj = self.model_class(**data)
         obj.workspace = workspace
         # assert not db.session.new
-        with db.session.no_autoflush:
-            # Required because _validate_uniqueness does a select. Doing this
-            # outside a no_autoflush block would result in a premature create.
-            self._validate_uniqueness(obj)
+        try:
             db.session.add(obj)
-        db.session.commit()
+            db.session.commit()
+        except sqlalchemy.exc.IntegrityError as ex:
+            db.session.rollback()
+            workspace = self._get_workspace(workspace_name)
+            conflict_obj = get_conflict_object(db.session, obj, data, workspace)
+            if conflict_obj:
+                abort(409, ValidationError(
+                    {
+                        'message': 'Existing value',
+                        'object': self._get_schema_class()().dump(
+                            conflict_obj).data,
+                    }
+                ))
+
         self._set_command_id(obj, True)
         return obj
 
@@ -542,11 +521,24 @@ class UpdateMixin(object):
         for (key, value) in data.items():
             setattr(obj, key, value)
 
-    def _perform_update(self, object_id, obj, workspace_name):
-        with db.session.no_autoflush:
-            self._validate_uniqueness(obj, object_id)
-        db.session.add(obj)
-        db.session.commit()
+    def _perform_update(self, object_id, obj, data, workspace_name=None):
+        try:
+            db.session.add(obj)
+            db.session.commit()
+        except sqlalchemy.exc.IntegrityError as ex:
+            db.session.rollback()
+            workspace = None
+            if workspace_name:
+                workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
+            conflict_obj = get_conflict_object(db.session, obj, data, workspace)
+            if conflict_obj:
+                abort(409, ValidationError(
+                    {
+                        'message': 'Existing value',
+                        'object': self._get_schema_class()().dump(
+                            conflict_obj).data,
+                    }
+                ))
         return obj
 
 
@@ -562,7 +554,7 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
 
         self._set_command_id(obj, False)
         return super(UpdateWorkspacedMixin, self)._perform_update(
-            object_id, obj, data)
+            object_id, obj, data, workspace_name)
 
 
 class DeleteMixin(object):
@@ -643,6 +635,23 @@ class ReadWriteWorkspacedView(CreateWorkspacedMixin,
     pass
 
 
+class CustomModelConverter(ModelConverter):
+    """
+    Model converter that automatically sets minimum length
+    validators to not blankable fields
+    """
+    def _add_column_kwargs(self, kwargs, column):
+        super(CustomModelConverter, self)._add_column_kwargs(kwargs, column)
+        if not column.info.get('allow_blank', True):
+            kwargs['validate'].append(Length(min=1))
+
+
+class CustomModelSchemaOpts(ModelSchemaOpts):
+    def __init__(self, *args, **kwargs):
+        super(CustomModelSchemaOpts, self).__init__(*args, **kwargs)
+        self.model_converter = CustomModelConverter
+
+
 class AutoSchema(with_metaclass(ModelSchemaMeta, Schema)):
     """
     A Marshmallow schema that does field introspection based on
@@ -650,7 +659,11 @@ class AutoSchema(with_metaclass(ModelSchemaMeta, Schema)):
     Unlike the marshmallow_sqlalchemy ModelSchema, it doesn't change
     the serialization and deserialization proccess.
     """
-    OPTIONS_CLASS = ModelSchemaOpts
+    OPTIONS_CLASS = CustomModelSchemaOpts
+
+    # Use NullToBlankString instead of fields.String by default on text fields
+    TYPE_MAPPING = Schema.TYPE_MAPPING.copy()
+    TYPE_MAPPING[str] = NullToBlankString
 
 
 class FilterAlchemyModelConverter(ModelConverter):

@@ -21,6 +21,7 @@ from collections import (
     OrderedDict
 )
 from slugify import slugify
+from sqlalchemy import Text, String
 from binascii import unhexlify
 
 from IPy import IP
@@ -115,6 +116,51 @@ OBJ_TYPES = [
             (4, 'Vulnerability'),
             (4, 'VulnerabilityWeb'),
         ]
+
+
+# Really ugly hack to avoid setting to null non-nullable text columns
+for model in (
+        Command,
+        CommandObject,
+        Comment,
+        Credential,
+        ExecutiveReport,
+        Host,
+        Hostname,
+        License,
+        Methodology,
+        MethodologyTemplate,
+        PolicyViolation,
+        Reference,
+        Service,
+        Scope,
+        Tag,
+        TagObject,
+        Task,
+        TaskTemplate,
+        User,
+        Vulnerability,
+        VulnerabilityWeb,
+        VulnerabilityTemplate,
+        Workspace,
+        File,
+        ):
+    old_setattr = model.__setattr__
+
+    def __setattr__(self, key, value):
+        assert self.__table__ is not None
+        try:
+            column = self.__table__.columns[key]
+        except KeyError:
+            pass
+        else:
+            if (isinstance(column.type, (Text, String))
+                    and not column.nullable
+                    and value is None):
+                value = ''
+        return old_setattr(self, key, value)
+
+    model.__setattr__ = __setattr__
 
 
 def get_object_from_couchdb(couchdb_id, workspace):

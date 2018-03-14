@@ -2,3 +2,4 @@ factory-boy
 pytest
 pytest-factoryboy
 responses
+hypothesis==3.48.0

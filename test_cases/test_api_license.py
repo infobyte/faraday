@@ -2,6 +2,7 @@
 """Tests for many API endpoints that do not depend on workspace_name"""
 
 import pytest
+import pytz
 from hypothesis import given, strategies as st
 
 from test_cases import factories
@@ -73,6 +74,8 @@ def test_hypothesis_license(test_client):
 
     @given(LicenseData)
     def send_api_request(raw_data):
+        raw_data['start'] = pytz.UTC.localize(raw_data['start']).isoformat()
+        raw_data['end'] = pytz.UTC.localize(raw_data['end']).isoformat()
         res = test_client.post('_api/v2/licenses/', data=raw_data)
         assert res.status_code in [201, 400, 409]
 

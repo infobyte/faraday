@@ -9,8 +9,8 @@
         <div id="workspace-progress-reference" class="center-lg-6" ng-if="wsProgress">
             <uib-progressbar value="wsProgress" class="progress-striped">{{wsProgress}}%</uib-progressbar>
             <ul class="label-list">
-                <li><span class="label label-default">Start date: {{wsStart | date:"MM/dd/yyyy"}}</span></li>
-                <li><span class="label label-default">End date: {{wsEnd | date:"MM/dd/yyyy"}}</span></li>
+                <li><span class="label label-default">Start date: {{wsStart | amUtc | amDateFormat:'MM/DD/YYYY'}}</span></li>
+                <li><span class="label label-default">End date: {{wsEnd | amUtc | amDateFormat:'MM/DD/YYYY'}}</span></li>
             </ul>
         </div><!-- #workspace-progress-reference .center-lg-6 -->
         <div ng-if="!wsProgress" class="alert alert-info alert-dismissible no-margin-bottom">

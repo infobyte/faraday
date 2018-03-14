@@ -275,7 +275,7 @@ class PluginController(Thread):
             **{'workspace': ws_name,
                 'itime': time.time(),
                 'import_source': 'report',
-                'command': 'Import %s:' % plugin,
+                'command': plugin,
                 'params': filepath})
         self._mapper_manager.createMappers(ws_name)
         cmd_info.setID(self._mapper_manager.save(cmd_info))

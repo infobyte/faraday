@@ -47,7 +47,7 @@ class CommandSchema(AutoSchema):
         # there is a potential bug when updating, the start_date can be changed.
         duration = data.pop('duration', None)
         if duration:
-            data['end_date'] = data['start_date'] + datetime.timedelta(seconds=120)
+            data['end_date'] = data['start_date'] + datetime.timedelta(seconds=duration)
 
     class Meta:
         model = Command

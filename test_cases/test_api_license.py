@@ -2,6 +2,8 @@
 """Tests for many API endpoints that do not depend on workspace_name"""
 
 import pytest
+from hypothesis import given, strategies as st
+
 from test_cases import factories
 from test_api_non_workspaced_base import ReadWriteAPITests, API_PREFIX
 from server.models import (
@@ -42,3 +44,36 @@ class TestLicensesAPI(ReadWriteAPITests):
         res = test_client.get(self.url(obj=lic))
         assert res.status_code == 200
         assert res.json['notes'] == 'A great note. License'
+
+
+def license_json():
+    return st.fixed_dictionaries(
+        {
+            "lictype": st.one_of(st.none(), st.text()),
+            "metadata": st.fixed_dictionaries({
+                "update_time": st.floats(),
+                "update_user": st.one_of(st.none(), st.text()),
+                "update_action": st.integers(),
+                "creator": st.one_of(st.none(), st.text()),
+                "create_time": st.floats(),
+                "update_controller_action": st.one_of(st.none(), st.text()),
+            "owner": st.one_of(st.none(), st.text())}),
+            "notes": st.one_of(st.none(), st.text()),
+            "product": st.one_of(st.none(), st.text()),
+            "start": st.datetimes(),
+            "end": st.datetimes(),
+            "type": st.one_of(st.none(), st.text())
+         })
+
+
+@pytest.mark.usefixtures('logged_user')
+@pytest.mark.hypothesis
+def test_hypothesis_license(test_client):
+    LicenseData = license_json()
+
+    @given(LicenseData)
+    def send_api_request(raw_data):
+        res = test_client.post('_api/v2/licenses/', data=raw_data)
+        assert res.status_code in [201, 400, 409]
+
+    send_api_request()

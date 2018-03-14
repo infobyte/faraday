@@ -1,5 +1,8 @@
 import time
 import operator
+
+import pytz
+
 try:
     import urlparse
     from urllib import urlencode
@@ -460,12 +463,12 @@ class TestHostAPI:
             u'mac': '',
             u'metadata': {
                 u'command_id': None,
-                u'create_time': int(time.mktime(updated_host.create_date.timetuple())) * 1000,
+                u'create_time': pytz.UTC.localize(updated_host.create_date).isoformat(),
                 u'creator': u'',
                 u'owner': host.creator.username,
                 u'update_action': 0,
                 u'update_controller_action': u'',
-                u'update_time': int(time.mktime(updated_host.update_date.timetuple())) * 1000,
+                u'update_time': pytz.UTC.localize(updated_host.update_date).isoformat(),
                 u'update_user': u''},
             u'name': u'10.31.112.21',
             u'os': u'Microsoft Windows Server 2008 R2 Standard Service Pack 1',

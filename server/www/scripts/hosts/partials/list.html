@@ -167,10 +167,10 @@
                                         {{host.description}}
                                     </td>
                                     <td ng-show="columns['create_time']">
-                                        <span am-time-ago="host.metadata.create_time"></span>
+                                        <span am-time-ago="host.metadata.create_time" am-preprocess="utc"></span>
                                     </td>
                                     <td ng-show="columns['last_modified']">
-                                        <span am-time-ago="host.metadata.update_time"></span>
+                                        <span am-time-ago="host.metadata.update_time" am-preprocess="utc"></span>
                                     </td>
                                 </tr>
                             </tbody>

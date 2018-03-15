@@ -7,13 +7,6 @@ from dateutil.tz import tzutc
 from server.models import VulnerabilityABC
 
 
-class FilteredString(fields.String):
-
-    def _serialize(self, value, attr, obj):
-        value = value.replace('\0', '')
-        return super(FilteredString, self)._serialize(value, attr, obj)
-
-
 class JSTimestampField(fields.Integer):
     """A field to serialize datetime objects into javascript
     compatible timestamps (like time.time()) * 1000"""
@@ -144,6 +137,8 @@ class NullToBlankString(fields.String):
     """
     Custom field that converts null into an empty value. Created for
     compatibility with the web ui.
+
+    Cleans null 0x00 in the string to avoid postgresql bug.
     """
 
     def __init__(self, *args, **kwargs):
@@ -155,6 +150,9 @@ class NullToBlankString(fields.String):
     def deserialize(self, value, attr=None, data=None):
         # Validate required fields, deserialize, then validate
         # deserialized value
+        if value:
+            value = value.replace('\0',
+                              '')  # Postgres does not allow nul 0x00 in the strings.
         self._validate_missing(value)
         if getattr(self, 'allow_none', False) is True and value is None:
             return ''

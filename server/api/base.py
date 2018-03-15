@@ -18,7 +18,10 @@ from webargs.core import ValidationError
 from server.models import Workspace, db, Command, CommandObject
 from server.schemas import NullToBlankString
 import server.utils.logger
-from server.utils.database import get_conflict_object
+from server.utils.database import (
+    get_conflict_object,
+    is_unique_constraint_violation
+    )
 
 logger = server.utils.logger.get_logger(__name__)
 
@@ -417,6 +420,8 @@ class CreateMixin(object):
             db.session.add(obj)
             db.session.commit()
         except sqlalchemy.exc.IntegrityError as ex:
+            if not is_unique_constraint_violation(ex):
+                raise
             db.session.rollback()
             conflict_obj = get_conflict_object(db.session, obj, data)
             if conflict_obj:
@@ -427,6 +432,8 @@ class CreateMixin(object):
                             conflict_obj).data,
                     }
                 ))
+            else:
+                raise
         return obj
 
 
@@ -486,6 +493,8 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
             db.session.add(obj)
             db.session.commit()
         except sqlalchemy.exc.IntegrityError as ex:
+            if not is_unique_constraint_violation(ex):
+                raise
             db.session.rollback()
             workspace = self._get_workspace(workspace_name)
             conflict_obj = get_conflict_object(db.session, obj, data, workspace)
@@ -497,6 +506,8 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
                             conflict_obj).data,
                     }
                 ))
+            else:
+                raise
 
         self._set_command_id(obj, True)
         return obj
@@ -526,6 +537,8 @@ class UpdateMixin(object):
             db.session.add(obj)
             db.session.commit()
         except sqlalchemy.exc.IntegrityError as ex:
+            if not is_unique_constraint_violation(ex):
+                raise
             db.session.rollback()
             workspace = None
             if workspace_name:
@@ -539,6 +552,8 @@ class UpdateMixin(object):
                             conflict_obj).data,
                     }
                 ))
+            else:
+                raise
         return obj
 
 

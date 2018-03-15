@@ -1,9 +1,12 @@
-bcrypt
+autobahn==17.10.1
+bcrypt==3.1.4
 couchdbkit==0.6.5
+colorama==0.3.9
 Flask-SQLAlchemy==2.3.1
 flask-classful==0.14
 Flask-Security==3.0.0
 flask==0.12.2
+IPy==0.83
 marshmallow
 Pillow==4.2.1
 psycopg2==2.7.3.2
@@ -25,3 +28,4 @@ filedepot==0.5.0
 nplusone==0.8.1
 deprecation==1.0.1
 pgcli==1.8.2
+websocket-client==0.46.0

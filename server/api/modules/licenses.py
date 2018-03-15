@@ -11,7 +11,7 @@ from server.api.base import (
     ReadWriteView,
     AutoSchema,
 )
-from server.schemas import StrictDateTimeField
+from server.schemas import StrictDateTimeField, FilteredString
 
 license_api = Blueprint('license_api', __name__)
 
@@ -20,7 +20,7 @@ class LicenseSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     end = StrictDateTimeField(load_as_tz_aware=False, attribute='end_date')
     start = StrictDateTimeField(load_as_tz_aware=False, attribute='start_date')
-    lictype = fields.String(attribute='type')
+    lictype = FilteredString(attribute='type')
 
     class Meta:
         model = License

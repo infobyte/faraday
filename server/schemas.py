@@ -4,7 +4,14 @@ from marshmallow import fields, Schema
 from marshmallow.exceptions import ValidationError
 from dateutil.tz import tzutc
 
-from server.models import CommandObject, VulnerabilityABC
+from server.models import VulnerabilityABC
+
+
+class FilteredString(fields.String):
+
+    def _serialize(self, value, attr, obj):
+        value = value.replace('\0', '')
+        return super(FilteredString, self)._serialize(value, attr, obj)
 
 
 class JSTimestampField(fields.Integer):

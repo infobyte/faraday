@@ -69,14 +69,15 @@ def license_json():
 
 @pytest.mark.usefixtures('logged_user')
 @pytest.mark.hypothesis
-def test_hypothesis_license(test_client):
+def test_hypothesis_license(test_client, session):
+    session.commit()
     LicenseData = license_json()
 
     @given(LicenseData)
     def send_api_request(raw_data):
         raw_data['start'] = pytz.UTC.localize(raw_data['start']).isoformat()
         raw_data['end'] = pytz.UTC.localize(raw_data['end']).isoformat()
-        res = test_client.post('_api/v2/licenses/', data=raw_data)
+        res = test_client.post('v2/licenses/', data=raw_data)
         assert res.status_code in [201, 400, 409]
 
     send_api_request()

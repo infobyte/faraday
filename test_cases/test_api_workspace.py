@@ -31,10 +31,11 @@ class TestWorkspaceAPI(ReadWriteAPITests):
                         test_client,
                         session,
                         querystring):
-        vulnerability_factory.create_batch(8, workspace=self.first_object,
+        vulns = vulnerability_factory.create_batch(8, workspace=self.first_object,
                                            confirmed=False)
-        vulnerability_factory.create_batch(5, workspace=self.first_object,
+        vulns += vulnerability_factory.create_batch(5, workspace=self.first_object,
                                            confirmed=True)
+        session.add_all(vulns)
         session.commit()
         res = test_client.get(self.url(self.first_object) + querystring)
         assert res.status_code == 200
@@ -50,10 +51,11 @@ class TestWorkspaceAPI(ReadWriteAPITests):
                                   test_client,
                                   session,
                                   querystring):
-        vulnerability_factory.create_batch(8, workspace=self.first_object,
+        vulns = vulnerability_factory.create_batch(8, workspace=self.first_object,
                                            confirmed=False)
-        vulnerability_factory.create_batch(5, workspace=self.first_object,
+        vulns += vulnerability_factory.create_batch(5, workspace=self.first_object,
                                            confirmed=True)
+        session.add_all(vulns)
         session.commit()
         res = test_client.get(self.url(self.first_object) + querystring)
         assert res.status_code == 200
@@ -116,8 +118,9 @@ class TestWorkspaceAPI(ReadWriteAPITests):
     def test_update_stats(self, workspace, session, test_client,
                           vulnerability_factory,
                           vulnerability_web_factory):
-        vulnerability_factory.create_batch(10, workspace=workspace)
-        vulnerability_web_factory.create_batch(5, workspace=workspace)
+        vulns = vulnerability_factory.create_batch(10, workspace=workspace)
+        vulns += vulnerability_web_factory.create_batch(5, workspace=workspace)
+        session.add_all(vulns)
         session.commit()
         raw_data = {'name': 'something', 'description': ''}
         res = test_client.put('/v2/ws/{}/'.format(workspace.name),

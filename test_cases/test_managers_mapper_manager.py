@@ -762,10 +762,12 @@ class TestMapperManager():
 
         for test_data in many_test_data:
             relational_model = test_data['factory'].create()
+            session.add(relational_model)
             session.commit()
             raw_data = test_data['data']
             if test_data['parent']:
                 parent = test_data['parent']['parent_factory'].create()
+                session.add(parent)
                 session.commit()
 
                 test_data['data']['parent'] = parent.id
@@ -802,9 +804,9 @@ class TestMapperManager():
     def test_update_with_command(self, obj_class, many_test_data, monkeypatch, session):
         if obj_class in [Command]:
             return
-        session.commit()
         workspace = WorkspaceFactory.create(name='test')
         command = CommandFactory.create(workspace=workspace)
+        session.add(command)
         session.commit()
         mapper_manager = MapperManager()
         mapper_manager.createMappers(workspace.name)
@@ -813,6 +815,7 @@ class TestMapperManager():
             raw_data = test_data['data']
             if test_data['parent']:
                 parent = test_data['parent']['parent_factory'].create()
+                session.add(parent)
                 session.commit()
                 test_data['data']['parent'] = parent.id
                 test_data['data']['parent_type'] = test_data['parent']['parent_type']
@@ -820,6 +823,7 @@ class TestMapperManager():
                 if obj_class in [Vuln, Credential]:
                     test_data['expected_payload']['parent_type'] = test_data['parent']['parent_type']
             relational_model = test_data['factory'].create()
+            session.add(relational_model)
             session.commit()
             def mock_server_put(put_url, update=False, expected_response=201, **params):
                 assert put_url == '{0}/ws/test/{1}/{2}/?command_id={3}'.format(
@@ -845,6 +849,7 @@ class TestMapperManager():
     def test_find_obj_by_id(self, obj_class, many_test_data, session, monkeypatch):
         for test_data in many_test_data:
             persisted_obj = test_data['factory'].create()
+            session.add(persisted_obj)
             session.commit()
             mapper_manager = MapperManager()
             mapper_manager.createMappers(persisted_obj.workspace.name)

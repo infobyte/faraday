@@ -7,7 +7,6 @@ import inspect
 import pytest
 from factory import Factory
 from flask.testing import FlaskClient
-from nplusone.core import signals
 from sqlalchemy import event
 from pytest_factoryboy import register
 

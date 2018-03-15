@@ -1,13 +1,19 @@
 import sys
+import logging
 import inspect
 from models import (
     Host,
     Service,
+    TagObject,
+    Comment,
+    File,
 )
 
 from sqlalchemy import event
-
+from server.models import db
 from server.websocket_factories import changes_queue
+
+logger = logging.getLogger(__name__)
 
 
 def new_object_event(mapper, connection, instance):
@@ -28,7 +34,10 @@ def new_object_event(mapper, connection, instance):
 
 
 def delete_object_event(mapper, connection, instance):
-    name = getattr(instance, 'ip', None) or instance.name
+    try:
+        name = instance.ip
+    except AttributeError:
+        name = instance.name
     msg = {
         'id': instance.id,
         'action': 'DELETE',
@@ -36,7 +45,20 @@ def delete_object_event(mapper, connection, instance):
         'name': name,
         'workspace': instance.workspace.name
     }
+    db.session.query(TagObject).filter_by(
+        object_id=instance.id,
+        object_type=msg['type'].lower(),
+    ).delete()
+    db.session.query(Comment).filter_by(
+        object_id=instance.id,
+        object_type=msg['type'].lower(),
+    ).delete()
+    db.session.query(File).filter_by(
+        object_id=instance.id,
+        object_type=msg['type'].lower(),
+    ).delete()
     changes_queue.put(msg)
+
 
 
 def update_object_event(mapper, connection, instance):

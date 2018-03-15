@@ -205,10 +205,10 @@ class Host(Metadata):
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True,
                           nullable=False)
     workspace = relationship(
-                            'Workspace',
-                            backref='hosts',
-                            foreign_keys=[workspace_id]
-                            )
+        'Workspace',
+        foreign_keys=[workspace_id],
+        backref=backref("hosts", cascade="all, delete-orphan")
+        )
 
     open_service_count = _make_generic_count_property(
         'host', 'service', where=text("service.status = 'open'"))
@@ -302,7 +302,7 @@ class Hostname(Metadata):
     name = NonBlankColumn(Text)
 
     host_id = Column(Integer, ForeignKey('host.id'), index=True, nullable=False)
-    host = relationship('Host', backref='hostnames')
+    host = relationship('Host', backref=backref("hostnames", cascade="all, delete-orphan"))
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
@@ -343,14 +343,16 @@ class Service(Metadata):
     host_id = Column(Integer, ForeignKey('host.id'), index=True, nullable=False)
     host = relationship(
         'Host',
-        foreign_keys=[host_id])
+        foreign_keys=[host_id],
+        cascade='all'
+    )
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
-                            'Workspace',
-                            backref='services',
-                            foreign_keys=[workspace_id]
-                            )
+        'Workspace',
+        backref=backref('services', cascade="all, delete-orphan"),
+        foreign_keys=[workspace_id]
+    )
 
     vulnerability_count = _make_generic_count_property('service',
                                                        'vulnerability')
@@ -530,7 +532,8 @@ class VulnerabilityTemplate(VulnerabilityABC):
     )
 
     references = association_proxy(
-        'reference_template_instances', 'name',
+        'reference_template_instances',
+        'name',
         proxy_factory=CustomAssociationSet,
         creator=_build_associationproxy_creator_non_workspaced('ReferenceTemplate')
     )
@@ -543,7 +546,8 @@ class VulnerabilityTemplate(VulnerabilityABC):
     )
 
     policy_violations = association_proxy(
-        'policy_violation_template_instances', 'name',
+        'policy_violation_template_instances',
+        'name',
         proxy_factory=CustomAssociationSet,
         creator=_build_associationproxy_creator_non_workspaced('PolicyViolationTemplate')
     )
@@ -560,7 +564,11 @@ class CommandObject(db.Model):
     command_id = Column(Integer, ForeignKey('command.id'), index=True)
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
-    workspace = relationship('Workspace', foreign_keys=[workspace_id])
+    workspace = relationship(
+        'Workspace',
+        foreign_keys=[workspace_id],
+        backref = backref('command_objects', cascade="all, delete-orphan")
+    )
 
     create_date = Column(DateTime, default=datetime.utcnow)
 
@@ -658,7 +666,11 @@ class Command(Metadata):
     import_source = Column(Enum(*IMPORT_SOURCE, name='import_source_enum'))
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
-    workspace = relationship('Workspace', foreign_keys=[workspace_id])
+    workspace = relationship(
+        'Workspace',
+        foreign_keys=[workspace_id],
+        backref=backref('commands', cascade="all, delete-orphan")
+    )
 
     sum_created_vulnerabilities = _make_created_objects_sum('vulnerability')
 
@@ -790,10 +802,10 @@ class Vulnerability(VulnerabilityGeneric):
     __tablename__ = None
     host_id = Column(Integer, ForeignKey(Host.id), index=True)
     host = relationship(
-                    'Host',
-                    backref='vulnerabilities',
-                    foreign_keys=[host_id],
-                    )
+        'Host',
+        backref=backref("vulnerabilities", cascade="all, delete-orphan"),
+        foreign_keys=[host_id],
+    )
 
     @declared_attr
     def service_id(cls):
@@ -801,7 +813,7 @@ class Vulnerability(VulnerabilityGeneric):
 
     @declared_attr
     def service(cls):
-        return relationship('Service', backref='vulnerabilities')
+        return relationship('Service', backref=backref("vulnerabilities", cascade="all, delete-orphan"))
 
     @property
     def hostnames(self):
@@ -840,7 +852,7 @@ class VulnerabilityWeb(VulnerabilityGeneric):
 
     @declared_attr
     def service(cls):
-        return relationship('Service', backref='vulnerabilities_web')
+        return relationship('Service', backref=backref("vulnerabilities_web", cascade="all, delete-orphan"))
 
     @property
     def parent(self):
@@ -908,7 +920,8 @@ class Reference(Metadata):
     )
     workspace = relationship(
         'Workspace',
-        backref='references',
+        backref=backref("references",
+                        cascade="all, delete-orphan"),
         foreign_keys=[workspace_id],
     )
 
@@ -934,8 +947,15 @@ class ReferenceVulnerabilityAssociation(db.Model):
     vulnerability_id = Column(Integer, ForeignKey('vulnerability.id'), primary_key=True)
     reference_id = Column(Integer, ForeignKey('reference.id'), primary_key=True)
 
-    reference = relationship("Reference", backref="reference_associations", foreign_keys=[reference_id])
-    vulnerability = relationship("Vulnerability", backref="reference_vulnerability_associations", foreign_keys=[vulnerability_id])
+    reference = relationship("Reference",
+                             backref=backref(
+                                 "reference_associations",
+                                 cascade="all, delete-orphan"),
+                             foreign_keys=[reference_id])
+    vulnerability = relationship("Vulnerability",
+                                 backref=backref("reference_vulnerability_associations",
+                                                 cascade="all, delete-orphan"),
+                                 foreign_keys=[vulnerability_id])
 
 
 class PolicyViolationVulnerabilityAssociation(db.Model):
@@ -946,7 +966,7 @@ class PolicyViolationVulnerabilityAssociation(db.Model):
     policy_violation_id = Column(Integer, ForeignKey('policy_violation.id'), primary_key=True)
 
     policy_violation = relationship("PolicyViolation", backref="policy_violation_associations", foreign_keys=[policy_violation_id])
-    vulnerability = relationship("Vulnerability", backref="policy_violationvulnerability_associations",
+    vulnerability = relationship("Vulnerability", backref=backref("policy_violationvulnerability_associations", cascade="all, delete-orphan"),
                                  foreign_keys=[vulnerability_id])
 
 
@@ -957,8 +977,17 @@ class ReferenceTemplateVulnerabilityAssociation(db.Model):
     vulnerability_id = Column(Integer, ForeignKey('vulnerability_template.id'), primary_key=True)
     reference_id = Column(Integer, ForeignKey('reference_template.id'), primary_key=True)
 
-    reference = relationship("ReferenceTemplate", backref="reference_template_associations", foreign_keys=[reference_id])
-    vulnerability = relationship("VulnerabilityTemplate", backref="reference_template_vulnerability_associations", foreign_keys=[vulnerability_id])
+    reference = relationship(
+        "ReferenceTemplate",
+        foreign_keys=[reference_id],
+        backref=backref('reference_template_associations', cascade="all, delete-orphan")
+    )
+    vulnerability = relationship(
+        "VulnerabilityTemplate",
+        backref=backref('reference_template_vulnerability_associations',
+                        cascade="all, delete-orphan"),
+        foreign_keys=[vulnerability_id]
+    )
 
 
 class PolicyViolationTemplateVulnerabilityAssociation(db.Model):
@@ -1002,7 +1031,8 @@ class PolicyViolation(Metadata):
                         )
     workspace = relationship(
                             'Workspace',
-                            backref='policy_violations',
+                            backref=backref("policy_violations",
+                                            cascade="all, delete-orphan"),
                             foreign_keys=[workspace_id],
                             )
 
@@ -1044,10 +1074,10 @@ class Credential(Metadata):
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
-                            'Workspace',
-                            backref='credentials',
-                            foreign_keys=[workspace_id],
-                            )
+        'Workspace',
+        backref=backref('credentials', cascade="all, delete-orphan"),
+        foreign_keys=[workspace_id],
+    )
 
     __table_args__ = (
         CheckConstraint('(host_id IS NULL AND service_id IS NOT NULL) OR '
@@ -1172,10 +1202,11 @@ class Scope(Metadata):
                         index=True,
                         nullable=False
                         )
-    workspace = relationship('Workspace',
-                             backref=backref('scope', lazy="joined"),
-                             foreign_keys=[workspace_id],
-                             )
+    workspace = relationship(
+        'Workspace',
+         backref=backref('scope', lazy="joined", cascade="all, delete-orphan"),
+         foreign_keys=[workspace_id],
+         )
 
     __table_args__ = (
         UniqueConstraint('name', 'workspace_id',
@@ -1289,7 +1320,10 @@ class Methodology(Metadata):
     id = Column(Integer, primary_key=True)
     name = NonBlankColumn(Text)
 
-    template = relationship('MethodologyTemplate', backref='methodologies')
+    template = relationship(
+        'MethodologyTemplate',
+        backref=backref('methodologies', cascade="all, delete-orphan")
+    )
     template_id = Column(
                     Integer,
                     ForeignKey('methodology_template.id'),
@@ -1297,7 +1331,10 @@ class Methodology(Metadata):
                     nullable=True,
                     )
 
-    workspace = relationship('Workspace', backref='methodologies')
+    workspace = relationship(
+        'Workspace',
+        backref=backref('methodologies', cascade="all, delete-orphan")
+    )
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
 
     @property
@@ -1361,7 +1398,10 @@ class Task(TaskABC):
                     index=True,
                     nullable=False,
                     )
-    methodology = relationship('Methodology', backref='tasks')
+    methodology = relationship(
+        'Methodology',
+        backref=backref('tasks', cascade="all, delete-orphan")
+    )
 
     template_id = Column(
                     Integer,
@@ -1371,7 +1411,10 @@ class Task(TaskABC):
                     )
     template = relationship('TaskTemplate', backref='tasks')
 
-    workspace = relationship('Workspace', backref='tasks')
+    workspace = relationship(
+        'Workspace',
+        backref=backref('tasks', cascade="all, delete-orphan")
+    )
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
 
     # __table_args__ = (
@@ -1431,7 +1474,11 @@ class Comment(Metadata):
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True,
                           nullable=False)
-    workspace = relationship('Workspace', foreign_keys=[workspace_id])
+    workspace = relationship(
+        'Workspace',
+        foreign_keys=[workspace_id],
+        backref=backref('comments', cascade="all, delete-orphan"),
+    )
 
     object_id = Column(Integer, nullable=False)
     object_type = NonBlankColumn(Text)  # TODO migration: add enum
@@ -1464,7 +1511,11 @@ class ExecutiveReport(Metadata):
     title = BlankColumn(Text)
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
-    workspace = relationship('Workspace', foreign_keys=[workspace_id])
+    workspace = relationship(
+        'Workspace',
+        backref=backref('reports', cascade="all, delete-orphan"),
+        foreign_keys=[workspace_id]
+    )
 
     @property
     def parent(self):

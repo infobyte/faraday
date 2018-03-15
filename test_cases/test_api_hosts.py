@@ -633,6 +633,18 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
             '(5353/udp) dns',
         ]
 
+    def test_delete_host_with_blank_ip(self, session, test_client):
+        """
+            Bug found while deleting data from workspaces.
+            If we don't allow blank in name we should delete this test.
+        """
+        host = self.factory.create(ip='')
+        session.add(host)
+        session.commit()
+
+        res = test_client.delete(self.url(host, workspace=host.workspace))
+        assert res.status_code == 204
+
 
 def host_json():
     return st.fixed_dictionaries(

@@ -4,10 +4,6 @@
 
 <form name="form" novalidate>
     <div class="modal-header">
-        <div class="modal-button">
-            <button class="btn btn-success" ng-click="_import()" ng-disabled="form.$invalid">OK</button>
-            <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
-        </div>
         <h3 class="modal-title">Import CSV</h3>
     </div>
     <div class="modal-body">
@@ -21,7 +17,7 @@
         <input type="file" id="file" name="file"/>
     </div><!-- .modal-body -->
     <div class="modal-footer">
-        <div class="modal-button">
+        <div class="modal-button btn-toolbar">
             <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="_import()">OK</button>
             <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
         </div>

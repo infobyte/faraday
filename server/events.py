@@ -4,7 +4,10 @@ import inspect
 from models import (
     Host,
     Service,
-    TagObject, Comment)
+    TagObject,
+    Comment,
+    File,
+)
 
 from sqlalchemy import event
 from server.models import db
@@ -47,8 +50,12 @@ def delete_object_event(mapper, connection, instance):
         object_type=msg['type'].lower(),
     ).delete()
     db.session.query(Comment).filter_by(
-        object_id = instance.id,
-        object_type = msg['type'].lower(),
+        object_id=instance.id,
+        object_type=msg['type'].lower(),
+    ).delete()
+    db.session.query(File).filter_by(
+        object_id=instance.id,
+        object_type=msg['type'].lower(),
     ).delete()
     changes_queue.put(msg)
 

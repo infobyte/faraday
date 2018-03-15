@@ -21,6 +21,8 @@ class LicenseSchema(AutoSchema):
     end = StrictDateTimeField(load_as_tz_aware=False, attribute='end_date')
     start = StrictDateTimeField(load_as_tz_aware=False, attribute='start_date')
     lictype = FilteredString(attribute='type')
+    notes = FilteredString(attribute='notes')
+    product = FilteredString(attribute='product')
 
     class Meta:
         model = License

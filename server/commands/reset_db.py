@@ -3,7 +3,8 @@ from server.models import db
 def reset_db_all():
     # It might be  required to do a cascade delete to correctly the
     # vulnerability table
-    for table in ('vulnerability', 'vulnerability_template', 'comment'):
+    for table in ('vulnerability', 'vulnerability_template', 'comment',
+                  'faraday_user'):
         try:
             db.engine.execute('DROP TABLE {} CASCADE'.format(table))
         except:

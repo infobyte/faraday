@@ -1227,22 +1227,11 @@ def get(workspace_name):
     return db.session.query(Workspace).filter_by(name=workspace_name).first()
 
 
-class RolesUsers(db.Model):
-    __tablename__ = 'roles_users'
-    id = Column(Integer(), primary_key=True)
-    user_id = Column('user_id', Integer(), ForeignKey('faraday_user.id'))
-    role_id = Column('role_id', Integer(), ForeignKey('role.id'))
-
-
-class Role(Metadata, RoleMixin):
-    __tablename__ = 'role'
-    id = Column(Integer(), primary_key=True)
-    name = Column(String(80), unique=True)
-    description = Column(String(255), nullable=True)
-
-
 class User(db.Model, UserMixin):
+
     __tablename__ = 'faraday_user'
+    ROLES = ['admin', 'pentester', 'client']
+
     id = Column(Integer, primary_key=True)
     username = Column(String(255), unique=True, nullable=False)
     password = Column(String(255), nullable=True)
@@ -1256,31 +1245,27 @@ class User(db.Model, UserMixin):
     login_count = Column(Integer)  # flask-security
     active = Column(Boolean(), default=True, nullable=False)  # TBI flask-security
     confirmed_at = Column(DateTime())
-    roles = relationship('Role', secondary='roles_users',
-                         backref=backref('users', lazy='dynamic'))
+    role = Column(Enum(*ROLES, name='user_roles'),
+                  nullable=False, default='client')
     # TODO: add  many to many relationship to add permission to workspace
 
-    @property
-    def role(self):
-        """ "admin", "pentester", "client" or None """
+    def __init__(self, *args, **kwargs):
+        # added for compatibility with flask security
         try:
-            return next(role_name for role_name
-                        in ['admin', 'pentester', 'client']
-                        if self.has_role(role_name))
-        except StopIteration:
-            return None
-
-    def get_security_payload(self):
-        return {
-            "username": self.username,
-            "role": self.role,
-            "roles": [role.name for role in self.roles],  # Deprectated
-            "name": self.email
-        }
+            kwargs.pop('roles')
+        except KeyError:
+            pass
+        super(User, self).__init__(*args, **kwargs)
 
     def __repr__(self):
         return '<%sUser: %s>' % ('LDAP ' if self.is_ldap else '',
                                  self.username)
+
+    def get_security_payload(self):
+        return {
+            "username": self.username,
+            "name": self.email
+        }
 
 
 class File(Metadata):

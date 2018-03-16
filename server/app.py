@@ -190,9 +190,10 @@ def create_app(db_connection_string=None, testing=None):
     db.init_app(app)
 
     # Setup Flask-Security
-    app.user_datastore = SQLAlchemyUserDatastore(db,
-                                                 server.models.User,
-                                                 server.models.Role)
+    app.user_datastore = SQLAlchemyUserDatastore(
+        db,
+        user_model=server.models.User,
+        role_model=None)  # We won't use flask security roles feature
     Security(app, app.user_datastore)
     # Make API endpoints require a login user by default. Based on
     # https://stackoverflow.com/questions/13428708/best-way-to-make-flask-logins-login-required-the-default

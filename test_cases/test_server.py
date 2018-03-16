@@ -5,7 +5,7 @@ import pytest
 
 sys.path.append(os.path.abspath(os.getcwd()))
 
-from server.models import db, User, Role
+from server.models import db
 
 
 def endpoint():

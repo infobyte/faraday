@@ -7,6 +7,7 @@ import inspect
 import pytest
 from factory import Factory
 from flask.testing import FlaskClient
+from flask_principal import Identity, identity_changed
 from sqlalchemy import event
 from pytest_factoryboy import register
 
@@ -241,8 +242,11 @@ def login_as(test_client, user):
     with test_client.session_transaction() as sess:
         # Without this line the test breaks. Taken from
         # http://pythonhosted.org/Flask-Testing/#testing-with-sqlalchemy
+        assert user.id is not None
         db.session.add(user)
         sess['user_id'] = user.id
+        identity_changed.send(test_client.application,
+                              identity=Identity(user.id))
 
 
 @pytest.fixture

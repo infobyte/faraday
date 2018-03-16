@@ -1132,7 +1132,7 @@ class Workspace(Metadata):
     active = Column(Boolean(), nullable=False, default=True)  # TBI
     end_date = Column(DateTime(), nullable=True)
     name = Column(String(250), nullable=False, unique=True)
-    public = Column(Boolean(), nullable=False, default=True)  # TBI
+    public = Column(Boolean(), nullable=False, default=False)  # TBI
     start_date = Column(DateTime(), nullable=True)
 
     credential_count = _make_generic_count_property('workspace', 'credential')

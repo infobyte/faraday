@@ -1219,6 +1219,18 @@ class Scope(Metadata):
         return
 
 
+class WorkspacePermission(db.Model):
+    __tablename__ = "workspace_permission_association"
+    id = Column(Integer, primary_key=True)
+    workspace_id = Column(
+        Integer, ForeignKey('workspace.id'), nullable=False)
+    workspace = relationship('Workspace')
+
+    user_id = Column(Integer, ForeignKey('faraday_user.id'), nullable=False)
+    user = relationship('User',
+                        foreign_keys=[user_id])
+
+
 def is_valid_workspace(workspace_name):
     return db.session.query(server.models.Workspace).filter_by(name=workspace_name).first() is not None
 

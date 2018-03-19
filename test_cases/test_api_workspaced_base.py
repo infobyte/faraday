@@ -172,6 +172,9 @@ class UpdateTestsMixin:
         assert res.json['id'] == expected_id
 
 
+class CountTestsMixin:
+    pass
+
 
 class DeleteTestsMixin:
 
@@ -200,6 +203,7 @@ class PaginationTestsMixin(OriginalPaginationTestsMixin):
 class ReadWriteTestsMixin(ListTestsMixin,
                           RetrieveTestsMixin,
                           CreateTestsMixin,
+                          CountTestsMixin,
                           UpdateTestsMixin,
                           DeleteTestsMixin):
     pass

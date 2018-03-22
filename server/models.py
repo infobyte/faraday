@@ -651,8 +651,8 @@ class Command(Metadata):
     tool = NonBlankColumn(Text)
     start_date = Column(DateTime, nullable=False)
     end_date = Column(DateTime, nullable=True)
-    ip = Column(String(250), nullable=False)  # where the command was executed
-    hostname = Column(String(250), nullable=False)  # where the command was executed
+    ip = BlankColumn(String(250))  # where the command was executed
+    hostname = BlankColumn(String(250))  # where the command was executed
     params = BlankColumn(Text)
     user = BlankColumn(String(250))  # os username where the command was executed
     import_source = Column(Enum(*IMPORT_SOURCE, name='import_source_enum'))
@@ -1122,11 +1122,11 @@ def _make_vuln_count_property(type_=None, only_confirmed=False,
 class Workspace(Metadata):
     __tablename__ = 'workspace'
     id = Column(Integer, primary_key=True)
-    customer = Column(String(250), nullable=True)  # TBI
+    customer = BlankColumn(String(250))  # TBI
     description = BlankColumn(Text)
     active = Column(Boolean(), nullable=False, default=True)  # TBI
     end_date = Column(DateTime(), nullable=True)
-    name = Column(String(250), nullable=False, unique=True)
+    name = NonBlankColumn(String(250), unique=True)
     public = Column(Boolean(), nullable=False, default=True)  # TBI
     start_date = Column(DateTime(), nullable=True)
 
@@ -1239,15 +1239,15 @@ class Role(Metadata, RoleMixin):
 class User(db.Model, UserMixin):
     __tablename__ = 'faraday_user'
     id = Column(Integer, primary_key=True)
-    username = Column(String(255), unique=True, nullable=False)
+    username = NonBlankColumn(String(255), unique=True)
     password = Column(String(255), nullable=True)
     email = Column(String(255), unique=True, nullable=True)  # TBI
-    name = Column(String(255), nullable=True)  # TBI
+    name = BlankColumn(String(255))  # TBI
     is_ldap = Column(Boolean(), nullable=False, default=False)
     last_login_at = Column(DateTime())  # flask-security
     current_login_at = Column(DateTime())  # flask-security
-    last_login_ip = Column(String(100))  # flask-security
-    current_login_ip = Column(String(100))  # flask-security
+    last_login_ip = BlankColumn(String(100))  # flask-security
+    current_login_ip = BlankColumn(String(100))  # flask-security
     login_count = Column(Integer)  # flask-security
     active = Column(Boolean(), default=True, nullable=False)  # TBI flask-security
     confirmed_at = Column(DateTime())

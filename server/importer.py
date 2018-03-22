@@ -231,12 +231,13 @@ def create_tags(raw_tags, parent_id, parent_type):
     for tag_name in [x.strip() for x in raw_tags if x.strip()]:
         tag, tag_created = get_or_create(session, Tag, name=tag_name, slug=slugify(tag_name))
         session.commit()
-
+        parent_type = parent_type.lower()
+        parent_type = parent_type.replace('web', '')
         relation, relation_created = get_or_create(
             session,
             TagObject,
             object_id=parent_id,
-            object_type=parent_type.lower(),
+            object_type=parent_type,
             tag_id=tag.id,
         )
         session.commit()
@@ -1215,9 +1216,9 @@ class ImportCouchDB():
         users_import = ImportCouchDBUsers()
         users_import.run()
 
-        logger.info('Importing workspaces. Using {0} threads'.format(multiprocessing.cpu_count()))
+        logger.info('Importing workspaces. Using {0} threads'.format(multiprocessing.cpu_count() * 2))
         workspace_threads = []
-        with tqdm(total=len(workspaces_list),
+        with tqdm(total=len(workspaces_list) * 18,
                   unit='B', unit_scale=True, unit_divisor=1024) as pbar:
             for workspace_name in workspaces_list:
                 logger.debug(u'Setting up workspace {}'.format(workspace_name))
@@ -1226,11 +1227,11 @@ class ImportCouchDB():
                     logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
                                  " configuration file has CouchDB admin's credentials set")
                     sys.exit(1)
-                thread = threading.Thread(target=self.import_workspace_into_database, args=(workspace_name, ))
+                thread = threading.Thread(target=self.import_workspace_into_database, args=(workspace_name, pbar))
                 thread.daemon = True
                 thread.start()
                 workspace_threads.append(thread)
-                if len(workspace_threads) > multiprocessing.cpu_count():
+                if len(workspace_threads) > multiprocessing.cpu_count() * 2:
                     for thread in workspace_threads:
                         thread.join()
                         pbar.update(1)
@@ -1306,7 +1307,7 @@ class ImportCouchDB():
                     with open(missing_objs_filename, 'w') as missing_objs_file:
                         missing_objs_file.write(json.dumps(objs_diff))
 
-    def import_workspace_into_database(self, workspace_name):
+    def import_workspace_into_database(self, workspace_name, pbar):
         with app.app_context():
 
             faraday_importer = FaradayEntityImporter(workspace_name)
@@ -1348,6 +1349,7 @@ class ImportCouchDB():
                             session.commit()
                             couchdb_relational_map_by_type[couchdb_id].append({'type': obj_type, 'id': new_obj.id})
                             couchdb_relational_map[couchdb_id].append(new_obj.id)
+                pbar.update(1)
             update_command_tools(workspace, command_tool_map,
                                  couchdb_relational_map_by_type)
             session.commit()

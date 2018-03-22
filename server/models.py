@@ -62,7 +62,8 @@ OBJECT_TYPES = [
     'service',
     'source_code',
     'comment',
-    'executive_report'
+    'executive_report',
+    'workspace'
 ]
 
 

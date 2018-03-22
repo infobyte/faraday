@@ -236,7 +236,7 @@ def create_tags(raw_tags, parent_id, parent_type):
             session,
             TagObject,
             object_id=parent_id,
-            object_type=parent_type,
+            object_type=parent_type.lower(),
             tag_id=tag.id,
         )
         session.commit()
@@ -688,7 +688,7 @@ class VulnerabilityImporter(object):
                 File,
                 filename=attachment_name,
                 object_id=vulnerability.id,
-                object_type=vulnerability.__class__.__name__)
+                object_type='vulnerability')
             file.content = attachment_file.read()
 
             attachment_file.close()
@@ -721,7 +721,7 @@ class VulnerabilityImporter(object):
                 workspace=workspace
             )
             session.flush()
-            if created and reference not in map(lambda  ref: ref.name, references):
+            if created and reference not in map(lambda ref: ref.name, references):
                 references.add(reference)
         return references
 
@@ -772,7 +772,7 @@ class NoteImporter(object):
             Comment,
             text='{0}\n{1}'.format(document.get('text', ''), document.get('description', '')),
             object_id=couchdb_relational_map[parent_document.get('_id')],
-            object_type=parent_document['type'],
+            object_type=parent_document['type'].lower(),
             workspace=workspace)
         yield comment
 
@@ -921,7 +921,7 @@ class CommunicationImporter(object):
             Comment,
             text=document.get('text'),
             object_id=workspace.id,
-            object_type='Workspace',
+            object_type='workspace',
             workspace=workspace)
         yield comment
 

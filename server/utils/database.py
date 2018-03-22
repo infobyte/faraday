@@ -297,10 +297,11 @@ def get_conflict_object(session, obj, data, workspace=None):
                     filter_data.append(
                         table.columns[relations_field] == relation_id)
 
-        filter_data = reduce(operator.and_, filter_data)
-        conflict_obj = session.query(klass).filter(
-            filter_data).first()
-        return conflict_obj
+        if filter_data:
+            filter_data = reduce(operator.and_, filter_data)
+            return session.query(klass).filter(filter_data).first()
+        else:
+            return
 
 
 UNIQUE_VIOLATION = '23505'

@@ -62,6 +62,7 @@ OBJECT_TYPES = [
     'service',
     'source_code',
     'comment',
+    'executive_report'
 ]
 
 
@@ -367,17 +368,6 @@ class Service(Metadata):
     @property
     def parent(self):
         return self.host
-
-    @property
-    def summary(self):
-        if self.version and self.version.lower() != "unknown":
-            version = " (" + self.version + ")"
-        else:
-            version = ""
-        return "(%s/%s) %s%s" % (self.port, self.protocol, self.name,
-                                  version or "")
-
-
 class VulnerabilityABC(Metadata):
     # revisar plugin nexpose, netspark para terminar de definir uniques. asegurar que se carguen bien
     EASE_OF_RESOLUTIONS = [
@@ -797,8 +787,12 @@ class VulnerabilityGeneric(VulnerabilityABC):
     __mapper_args__ = {
         'polymorphic_on': type
     }
-
-
+    @property
+    def attachments(self):
+        return db.session.query(File).filter_by(
+            object_id=self.id,
+            object_type='vulnerability'
+        )
 class Vulnerability(VulnerabilityGeneric):
     __tablename__ = None
     host_id = Column(Integer, ForeignKey(Host.id), index=True)
@@ -1293,9 +1287,7 @@ class File(Metadata):
     content = Column(UploadedFileField(upload_type=FaradayUploadedFile),
                      nullable=False)  # plain attached file
     object_id = Column(Integer, nullable=False)
-    object_type = NonBlankColumn(Text)  # TODO migration: add enum
-
-
+    object_type = Column(Enum(*OBJECT_TYPES, name='object_types'), nullable=False)
 class UserAvatar(Metadata):
     __tablename_ = 'user_avatar'
 
@@ -1454,8 +1446,7 @@ class TagObject(db.Model):
     id = Column(Integer, primary_key=True)
 
     object_id = Column(Integer, nullable=False)
-    object_type = NonBlankColumn(Text)  # TODO migration: add enum
-
+    object_type = Column(Enum(*OBJECT_TYPES, name='object_types'), nullable=False)
     tag = relationship('Tag', backref='tagged_objects')
     tag_id = Column(Integer, ForeignKey('tag.id'), index=True)
 
@@ -1482,8 +1473,7 @@ class Comment(Metadata):
     )
 
     object_id = Column(Integer, nullable=False)
-    object_type = NonBlankColumn(Text)  # TODO migration: add enum
-
+    object_type = Column(Enum(*OBJECT_TYPES, name='object_types'), nullable=False)
     @property
     def parent(self):
         return
@@ -1500,7 +1490,7 @@ class ExecutiveReport(Metadata):
 
     grouped = Column(Boolean, nullable=False, default=False)
     name = NonBlankColumn(Text, index=True)
-    status = Column(Enum(*STATUSES, name='executive_report_statuses'), nullable=True)
+    status = Column(Enum(*STATUSES, name='executive_report_statuses'), nullable=False, default='processing')
     template_name = NonBlankColumn(Text)
 
     conclusions = BlankColumn(Text)
@@ -1510,19 +1500,29 @@ class ExecutiveReport(Metadata):
     scope = BlankColumn(Text)
     summary = BlankColumn(Text)
     title = BlankColumn(Text)
-
+    confirmed = Column(Boolean, nullable=False, default=False)
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
         backref=backref('reports', cascade="all, delete-orphan"),
         foreign_keys=[workspace_id]
     )
-
+    tags = relationship(
+        "Tag",
+        secondary="tag_object",
+        primaryjoin="and_(TagObject.object_id==ExecutiveReport.id, "
+                    "TagObject.object_type=='executive_report')",
+        collection_class=set,
+    )
     @property
     def parent(self):
         return
-
-
+    @property
+    def attachments(self):
+        return db.session.query(File).filter_by(
+            object_id=self.id,
+            object_type='executive_report'
+        )
 # This constraint uses Columns from different classes
 # Since it applies to the table vulnerability it should be adVulnerability.ded to the Vulnerability class
 # However, since it contains columns from children classes, this cannot be done

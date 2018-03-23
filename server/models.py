@@ -369,6 +369,17 @@ class Service(Metadata):
     @property
     def parent(self):
         return self.host
+
+    @property
+    def summary(self):
+        if self.version and self.version.lower() != "unknown":
+            version = " (" + self.version + ")"
+        else:
+            version = ""
+        return "(%s/%s) %s%s" % (self.port, self.protocol, self.name,
+                                 version or "")
+
+
 class VulnerabilityABC(Metadata):
     # revisar plugin nexpose, netspark para terminar de definir uniques. asegurar que se carguen bien
     EASE_OF_RESOLUTIONS = [

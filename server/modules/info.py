@@ -5,6 +5,7 @@
 import flask
 import os
 from server.app import app
+from server.config import gen_web_config
 
 
 @app.route('/info', methods=['GET'])
@@ -20,3 +21,8 @@ def show_info():
     response.status_code = 200
 
     return response
+
+
+@app.route('/config')
+def get_config():
+    return flask.jsonify(gen_web_config())

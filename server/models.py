@@ -63,7 +63,8 @@ OBJECT_TYPES = [
     'source_code',
     'comment',
     'executive_report',
-    'workspace'
+    'workspace',
+    'task'
 ]
 
 
@@ -710,6 +711,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
     confirmed = Column(Boolean, nullable=False, default=False)
     status = Column(Enum(*STATUSES, name='vulnerability_statuses'), nullable=False, default="open")
     type = Column(Enum(*VULN_TYPES, name='vulnerability_types'), nullable=False)
+    issuetracker = Column(Text)
 
     workspace_id = Column(
                         Integer,
@@ -802,12 +804,15 @@ class VulnerabilityGeneric(VulnerabilityABC):
     __mapper_args__ = {
         'polymorphic_on': type
     }
+
     @property
     def attachments(self):
         return db.session.query(File).filter_by(
             object_id=self.id,
             object_type='vulnerability'
         )
+
+
 class Vulnerability(VulnerabilityGeneric):
     __tablename__ = None
     host_id = Column(Integer, ForeignKey(Host.id), index=True)
@@ -1108,7 +1113,7 @@ class Credential(Metadata):
 
 
 def _make_vuln_count_property(type_=None, only_confirmed=False,
-                              use_column_property=True):
+                              use_column_property=True, extra_query=None):
     query = (select([func.count(text('vulnerability.id'))]).
              select_from(table('vulnerability')).
              where(text('vulnerability.workspace_id = workspace.id'))
@@ -1119,14 +1124,17 @@ def _make_vuln_count_property(type_=None, only_confirmed=False,
         # In this case type_ is supplied from a whitelist so this is safe
         query = query.where(text("vulnerability.type = '%s'" % type_))
     if only_confirmed:
-        if str(db.engine.url).startswith('sqlite://'):
+        if db.session.bind.dialect.name == 'sqlite':
             # SQLite has no "true" expression, we have to use the integer 1
             # instead
             query = query.where(text("vulnerability.confirmed = 1"))
-        else:
+        elif db.session.bind.dialect.name == 'postgresql':
             # I suppose that we're using PostgreSQL, that can't compare
             # booleans with integers
             query = query.where(text("vulnerability.confirmed = true"))
+
+    if extra_query:
+        query = query.where(text(extra_query))
     if use_column_property:
         return column_property(query, deferred=True)
     else:
@@ -1300,6 +1308,8 @@ class File(Metadata):
                      nullable=False)  # plain attached file
     object_id = Column(Integer, nullable=False)
     object_type = Column(Enum(*OBJECT_TYPES, name='object_types'), nullable=False)
+
+
 class UserAvatar(Metadata):
     __tablename_ = 'user_avatar'
 
@@ -1376,6 +1386,18 @@ class TaskTemplate(TaskABC):
     # )
 
 
+class TaskAssignedTo(db.Model):
+    __tablename__ = "task_assigned_to_association"
+    id = Column(Integer, primary_key=True)
+    task_id = Column(
+        Integer, ForeignKey('task.id'), nullable=False)
+    task = relationship('Task')
+
+    user_id = Column(Integer, ForeignKey('faraday_user.id'), nullable=False)
+    user = relationship('User',
+                        foreign_keys=[user_id])
+
+
 class Task(TaskABC):
     STATUSES = [
         'new',
@@ -1394,8 +1416,9 @@ class Task(TaskABC):
         'concrete': True
     }
 
-    assigned_to_id = Column(Integer, ForeignKey('faraday_user.id'), nullable=True)
-    assigned_to = relationship('User', backref='assigned_tasks', foreign_keys=[assigned_to_id])
+    assigned_to = relationship(
+        "User",
+        secondary="task_assigned_to_association")
 
     methodology_id = Column(
                     Integer,
@@ -1486,6 +1509,7 @@ class Comment(Metadata):
 
     object_id = Column(Integer, nullable=False)
     object_type = Column(Enum(*OBJECT_TYPES, name='object_types'), nullable=False)
+
     @property
     def parent(self):
         return
@@ -1513,6 +1537,8 @@ class ExecutiveReport(Metadata):
     summary = BlankColumn(Text)
     title = BlankColumn(Text)
     confirmed = Column(Boolean, nullable=False, default=False)
+    vuln_count = Column(Integer, default=0)  # saves the amount of vulns when the report was generated.
+
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
@@ -1529,12 +1555,15 @@ class ExecutiveReport(Metadata):
     @property
     def parent(self):
         return
+
     @property
     def attachments(self):
         return db.session.query(File).filter_by(
             object_id=self.id,
             object_type='executive_report'
         )
+
+
 # This constraint uses Columns from different classes
 # Since it applies to the table vulnerability it should be adVulnerability.ded to the Vulnerability class
 # However, since it contains columns from children classes, this cannot be done

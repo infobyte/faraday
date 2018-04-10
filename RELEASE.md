@@ -8,6 +8,10 @@ Make sure you run ```./faraday.py --update``` the first time after an update!
 New features in the latest update
 =====================================
 
+April 10, 2018:
+---
+* Fix bug with tornado version 5.0 and GTK client.
+
 November 17, 2017:
 ---
 * Fix bug with tags in models.

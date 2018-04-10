@@ -1,6 +1,8 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+import string
+from random import SystemRandom
 
 import os
 import re
@@ -579,6 +581,18 @@ class VulnerabilityImporter(object):
                 parent = session.query(Host).filter_by(id=parent_id).first()
             if level == 4:
                 parent = session.query(Service).filter_by(id=parent_id).first()
+            owner_name = document.get('owner', None)
+            creator = None
+            if owner_name:
+                creator = session.query(User).filter_by(username=owner_name).first()
+
+            if not creator:
+                rng = SystemRandom()
+                password =  "".join(
+                    [rng.choice(string.ascii_letters + string.digits) for _ in
+                     xrange(12)])
+                creator, _ = get_or_create(session, User, username=owner_name)
+                creator.password = password
             if document['type'] == 'VulnerabilityWeb':
                 method = document.get('method')
                 path = document.get('path')
@@ -595,13 +609,15 @@ class VulnerabilityImporter(object):
                     path=path,
                     website=website,
                     workspace=workspace,
+                    creator=creator,
                 )
 
             if document['type'] == 'Vulnerability':
                 vuln_params = {
                     'name': document.get('name'),
                     'workspace': workspace,
-                    'description': document.get('desc')
+                    'description': document.get('desc'),
+                    'creator': creator,
                 }
                 if type(parent) == Host:
                     vuln_params.update({'host_id': parent.id})
@@ -613,6 +629,7 @@ class VulnerabilityImporter(object):
                     **vuln_params
                 )
             vulnerability.severity = severity
+            vulnerability.creator = creator
             vulnerability.confirmed = document.get('confirmed', False) or False
             vulnerability.data = document.get('data')
             vulnerability.ease_of_resolution = document.get('easeofresolution') if document.get('easeofresolution') else None

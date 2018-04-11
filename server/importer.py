@@ -892,7 +892,14 @@ class TaskImporter(object):
             task.methodology = methodology
 
         task.description = document.get('description')
-        task.assigned_to = session.query(User).filter_by(username=document.get('username')).first()
+
+        assigned_users = []
+
+        for username in document.get('assigned_to', []):
+            if username:
+                assigned_users.append(session.query(User).filter_by(username=username).first())
+
+        task.assigned_to = assigned_users
 
         mapped_status = {
             'New': 'new',

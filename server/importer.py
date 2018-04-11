@@ -478,6 +478,8 @@ class HostImporter(object):
         if interface['network_segment']:
             host.net_segment = interface['network_segment']
         if interface['description']:
+            if not host.description:
+                host.description = ''
             host.description += '\n Interface data: {0}'.format(interface['description'])
         if type(interface['hostnames']) in (str, unicode):
             interface['hostnames'] = [interface['hostnames']]

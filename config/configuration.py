@@ -66,6 +66,7 @@ class Configuration:
         """ Initializer that handles a configuration automagically. """
 
         self.filepath = xml_file
+        self._api_con_info = ''
 
         if self._isConfig():
             self._getConfig()

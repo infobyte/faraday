@@ -1,4 +1,5 @@
 import getpass
+import shutil
 import string
 
 import os
@@ -12,6 +13,7 @@ import sqlalchemy
 from sqlalchemy import create_engine
 
 from config.configuration import getInstanceConfiguration
+from faraday import FARADAY_USER_CONFIG_XML, FARADAY_BASE_CONFIG_XML
 
 try:
     # py2.7
@@ -122,15 +124,18 @@ class InitDB():
         already_created = False
         try:
             engine.execute("INSERT INTO \"faraday_user\" (username, name, password, "
-                       "is_ldap, active) VALUES ('faraday', 'Administrator', "
-                       "'{0}', false, true);".format(random_password))
-        except sqlalchemy.exc.IntegrityError:
+                       "is_ldap, active, last_login_ip, current_login_ip, role) VALUES ('faraday', 'Administrator', "
+                       "'{0}', false, true, '127.0.0.1', '127.0.0.1', 'admin');".format(random_password))
+        except sqlalchemy.exc.IntegrityError as ex:
+            print(ex)
             # when re using database user could be created previusly
             already_created = True
             print(
             "{yellow}WARNING{white}: Faraday administrator user already exists.".format(
                 yellow=Fore.YELLOW, white=Fore.WHITE))
         if not already_created:
+            if not os.path.isfile(FARADAY_USER_CONFIG_XML):
+                shutil.copy(FARADAY_BASE_CONFIG_XML, FARADAY_USER_CONFIG_XML)
             CONF = getInstanceConfiguration()
             CONF.setAPIUrl('http://localhost:5985')
             CONF.setAPIUsername('faraday')

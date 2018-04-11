@@ -136,11 +136,7 @@ class InitDB():
         if not already_created:
             if not os.path.isfile(FARADAY_USER_CONFIG_XML):
                 shutil.copy(FARADAY_BASE_CONFIG_XML, FARADAY_USER_CONFIG_XML)
-            CONF = getInstanceConfiguration()
-            CONF.setAPIUrl('http://localhost:5985')
-            CONF.setAPIUsername('faraday')
-            CONF.setAPIPassword(random_password)
-            CONF.saveConfig()
+
             print("Admin user created with {red}username: {white}faraday and "
                   " {red}password{white}: {"
                   "random_password}".format(random_password=random_password,

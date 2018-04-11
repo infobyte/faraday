@@ -565,7 +565,7 @@ You have 3 attempts.""")
 
                 user_info = get_user_info()
 
-                if user_info is None or 'username' not in user_info or 'roles' not in user_info or 'client' in user_info['roles']:
+                if user_info is None or 'username' not in user_info:
                     print("You can't login as a client. You have %s attempt(s) left." % (3 - attempt))
                     continue
 

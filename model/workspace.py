@@ -22,7 +22,9 @@ class Workspace(object):
     """
     class_signature = "Workspace"
 
-    def __init__(self, name, desc=None, manager=None, shared=CONF.getAutoShareWorkspace()):
+    def __init__(self, name, desc=None, manager=None, shared=None):
+        if not shared:
+            shared = CONF.getAutoShareWorkspace()
         self.name = name
         self.description = desc
         self.customer = ""

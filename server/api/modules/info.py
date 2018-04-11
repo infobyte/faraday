@@ -5,7 +5,6 @@ import os
 
 import flask
 from flask import Blueprint
-from server.app import app
 from server.config import gen_web_config
 
 
@@ -26,6 +25,6 @@ def show_info():
     return response
 
 
-@app.route('/config')
+@info_api.route('/config')
 def get_config():
     return flask.jsonify(gen_web_config())

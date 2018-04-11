@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('configSrv', ['$http', function($http) {
+    .factory('configSrv', ['$http', 'BASEURL', function($http, BASEURL) {
 
         var p = $http.get(BASEURL + '_api/config')
             .then(function(conf) {

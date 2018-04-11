@@ -42,6 +42,9 @@ node_modules
 # Couch
 .couchadmin
 
+# Ignore faraday server pid
+server/.faraday-server.pid
+
 #Ignore images executive report
 reports/executive/images/ease-of-resolution-piechart.png
 reports/executive/images/impact-piechart.png

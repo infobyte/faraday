@@ -611,7 +611,6 @@ class VulnerabilityImporter(object):
                     path=path,
                     website=website,
                     workspace=workspace,
-                    creator=creator,
                 )
 
             if document['type'] == 'Vulnerability':
@@ -619,7 +618,6 @@ class VulnerabilityImporter(object):
                     'name': document.get('name'),
                     'workspace': workspace,
                     'description': document.get('desc'),
-                    'creator': creator,
                 }
                 if type(parent) == Host:
                     vuln_params.update({'host_id': parent.id})

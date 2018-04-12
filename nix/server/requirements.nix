@@ -23,7 +23,10 @@ let
       self: super: {
         bootstrapped-pip = super.bootstrapped-pip.overrideDerivation (old: {
           patchPhase = old.patchPhase + ''
-            sed -i               -e "s|paths_to_remove.remove(auto_confirm)|#paths_to_remove.remove(auto_confirm)|"                -e "s|self.uninstalled = paths_to_remove|#self.uninstalled = paths_to_remove|"                  $out/${pkgs.python35.sitePackages}/pip/req/req_install.py
+            sed -i \
+              -e "s|paths_to_remove.remove(auto_confirm)|#paths_to_remove.remove(auto_confirm)|"  \
+              -e "s|self.uninstalled = paths_to_remove|#self.uninstalled = paths_to_remove|"  \
+                $out/${pkgs.python35.sitePackages}/pip/req/req_install.py
           '';
         });
       };
@@ -40,11 +43,13 @@ let
         buildInputs = [ makeWrapper ] ++ (builtins.attrValues pkgs);
         buildCommand = ''
           mkdir -p $out/bin
-          ln -s ${pythonPackages.python.interpreter}               $out/bin/${pythonPackages.python.executable}
-          for dep in ${builtins.concatStringsSep " "               (builtins.attrValues pkgs)}; do
+          ln -s ${pythonPackages.python.interpreter} \
+              $out/bin/${pythonPackages.python.executable}
+          for dep in ${builtins.concatStringsSep " "
+              (builtins.attrValues pkgs)}; do
             if [ -d "$dep/bin" ]; then
               for prog in "$dep/bin/"*; do
-                if [ -f $prog ]; then
+                if [ -x "$prog" ] && [ -f "$prog" ]; then
                   ln -s $prog $out/bin/`basename $prog`
                 fi
               done
@@ -55,7 +60,8 @@ let
           done
           pushd $out/bin
           ln -s ${pythonPackages.python.executable} python
-          ln -s ${pythonPackages.python.executable}               python2
+          ln -s ${pythonPackages.python.executable} \
+              python2
           popd
         '';
         passthru.interpreter = pythonPackages.python;
@@ -66,7 +72,9 @@ let
       mkDerivation = pythonPackages.buildPythonPackage;
       packages = pkgs;
       overrideDerivation = drv: f:
-        pythonPackages.buildPythonPackage (drv.drvAttrs // f drv.drvAttrs //                                            { meta = drv.meta; });
+        pythonPackages.buildPythonPackage (
+          drv.drvAttrs // f drv.drvAttrs // { meta = drv.meta; }
+        );
       withPackages = pkgs'':
         withPackages (pkgs // pkgs'');
     };
@@ -74,7 +82,6 @@ let
   python = withPackages {};
 
   generated = self: {
-
     "Automat" = python.mkDerivation {
       name = "Automat-0.6.0";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/de/05/b8e453085cf8a7f27bb1226596f4ccf5cc9e758377d60284f990bbdc592c/Automat-0.6.0.tar.gz"; sha256 = "3c1fd04ecf08ac87b4dd3feae409542e9bf7827257097b2b6ed5692f69d6f6a8"; };
@@ -92,8 +99,6 @@ let
       };
     };
 
-
-
     "Babel" = python.mkDerivation {
       name = "Babel-2.5.3";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/0e/d5/9b1d6a79c975d0e9a32bd337a1465518c2519b14b214682ca9892752417e/Babel-2.5.3.tar.gz"; sha256 = "8ce4cb6fdd4393edd323227cba3a077bceb2a6ce5201c902c65e730046f41f14"; };
@@ -108,8 +113,6 @@ let
         description = "Internationalization utilities";
       };
     };
-
-
 
     "Faker" = python.mkDerivation {
       name = "Faker-0.8.13";
@@ -129,8 +132,6 @@ let
       };
     };
 
-
-
     "Flask" = python.mkDerivation {
       name = "Flask-0.12.2";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/eb/12/1c7bd06fcbd08ba544f25bf2c6612e305a70ea51ca0eda8007344ec3f123/Flask-0.12.2.tar.gz"; sha256 = "49f44461237b69ecd901cc7ce66feea0319b9158743dd27a2899962ab214dac1"; };
@@ -148,8 +149,6 @@ let
         description = "A microframework based on Werkzeug, Jinja2 and good intentions";
       };
     };
-
-
 
     "Flask-BabelEx" = python.mkDerivation {
       name = "Flask-BabelEx-0.9.3";
@@ -169,8 +168,6 @@ let
       };
     };
 
-
-
     "Flask-Classful" = python.mkDerivation {
       name = "Flask-Classful-0.14.0";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/b7/2a/26d548a19ce7411f49ddb0abd3c3319f4ab47354cc4354225e5a7a91a6bf/Flask-Classful-0.14.0.tar.gz"; sha256 = "036589065f0f6e35e37c1146616cb1b82b2bf1111f68e02a8939478b32bf524d"; };
@@ -186,8 +183,6 @@ let
       };
     };
 
-
-
     "Flask-Login" = python.mkDerivation {
       name = "Flask-Login-0.4.1";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/c1/ff/bd9a4d2d81bf0c07d9e53e8cd3d675c56553719bbefd372df69bf1b3c1e4/Flask-Login-0.4.1.tar.gz"; sha256 = "c815c1ac7b3e35e2081685e389a665f2c74d7e077cb93cecabaea352da4752ec"; };
@@ -202,8 +197,6 @@ let
         description = "User session management for Flask";
       };
     };
-
-
 
     "Flask-Mail" = python.mkDerivation {
       name = "Flask-Mail-0.9.1";
@@ -221,8 +214,6 @@ let
       };
     };
 
-
-
     "Flask-Principal" = python.mkDerivation {
       name = "Flask-Principal-0.4.0";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/14/c7/2531aca6ab7baa3774fde2dfc9c9dd6d5a42576a1013a93701bfdc402fdd/Flask-Principal-0.4.0.tar.gz"; sha256 = "f5d6134b5caebfdbb86f32d56d18ee44b080876a27269560a96ea35f75c99453"; };
@@ -239,8 +230,6 @@ let
       };
     };
 
-
-
     "Flask-SQLAlchemy" = python.mkDerivation {
       name = "Flask-SQLAlchemy-2.3.1";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/d0/24/fb7c9d97f0f2ac2f484b867796f6fde1b5064ec753eaa68ce49ac8584b5e/Flask-SQLAlchemy-2.3.1.tar.gz"; sha256 = "ab879cf88d30f2961dd9b4d709dcd31a25e0306855324c7d9a74fca6ad6ef8c3"; };
@@ -256,8 +245,6 @@ let
         description = "Adds SQLAlchemy support to your Flask application";
       };
     };
-
-
 
     "Flask-Security" = python.mkDerivation {
       name = "Flask-Security-3.0.0";
@@ -287,8 +274,6 @@ let
       };
     };
 
-
-
     "Flask-WTF" = python.mkDerivation {
       name = "Flask-WTF-0.14.2";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/ba/15/00a9693180f214225a2c0b1bb9077f3b0b21f2e86522cbba22e8ad6e570c/Flask-WTF-0.14.2.tar.gz"; sha256 = "5d14d55cfd35f613d99ee7cba0fc3fbbe63ba02f544d349158c14ca15561cc36"; };
@@ -305,8 +290,6 @@ let
       };
     };
 
-
-
     "IPy" = python.mkDerivation {
       name = "IPy-0.83";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/88/28/79162bfc351a3f1ab44d663ab3f03fb495806fdb592170990a1568ffbf63/IPy-0.83.tar.gz"; sha256 = "61da5a532b159b387176f6eabf11946e7458b6df8fb8b91ff1d345ca7a6edab8"; };
@@ -319,8 +302,6 @@ let
         description = "Class and tools for handling of IPv4 and IPv6 addresses and networks";
       };
     };
-
-
 
     "Jinja2" = python.mkDerivation {
       name = "Jinja2-2.10";
@@ -338,8 +319,6 @@ let
       };
     };
 
-
-
     "MarkupSafe" = python.mkDerivation {
       name = "MarkupSafe-1.0";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/4d/de/32d741db316d8fdb7680822dd37001ef7a448255de9699ab4bfcbdf4172b/MarkupSafe-1.0.tar.gz"; sha256 = "a6be69091dac236ea9c6bc7d012beab42010fa914c459791d627dad4910eb665"; };
@@ -352,8 +331,6 @@ let
         description = "Implements a XML/HTML/XHTML Markup safe string for Python";
       };
     };
-
-
 
     "Pillow" = python.mkDerivation {
       name = "Pillow-4.2.1";
@@ -370,8 +347,6 @@ let
       };
     };
 
-
-
     "Pygments" = python.mkDerivation {
       name = "Pygments-2.2.0";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/71/2a/2e4e77803a8bd6408a2903340ac498cb0a2181811af7c9ec92cb70b0308a/Pygments-2.2.0.tar.gz"; sha256 = "dbae1046def0efb574852fab9e90209b23f556367b5a320c0bcb871c77c3e8cc"; };
@@ -384,8 +359,6 @@ let
         description = "Pygments is a syntax highlighting package written in Python.";
       };
     };
-
-
 
     "SQLAlchemy" = python.mkDerivation {
       name = "SQLAlchemy-1.2.0b2";
@@ -401,8 +374,6 @@ let
         description = "Database Abstraction Library";
       };
     };
-
-
 
     "Twisted" = python.mkDerivation {
       name = "Twisted-17.5.0";
@@ -428,8 +399,6 @@ let
       };
     };
 
-
-
     "Unidecode" = python.mkDerivation {
       name = "Unidecode-1.0.22";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/9d/36/49d0ee152b6a1631f03a541532c6201942430060aa97fe011cf01a2cce64/Unidecode-1.0.22.tar.gz"; sha256 = "8c33dd588e0c9bc22a76eaa0c715a5434851f726131bd44a6c26471746efabf5"; };
@@ -442,8 +411,6 @@ let
         description = "ASCII transliterations of Unicode text";
       };
     };
-
-
 
     "WTForms" = python.mkDerivation {
       name = "WTForms-2.1";
@@ -459,8 +426,6 @@ let
         description = "A flexible forms validation and rendering library for python web development.";
       };
     };
-
-
 
     "Werkzeug" = python.mkDerivation {
       name = "Werkzeug-0.14.1";
@@ -478,8 +443,6 @@ let
       };
     };
 
-
-
     "asn1crypto" = python.mkDerivation {
       name = "asn1crypto-0.24.0";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/fc/f1/8db7daa71f414ddabfa056c4ef792e1461ff655c2ae2928a2b675bfed6b4/asn1crypto-0.24.0.tar.gz"; sha256 = "9d5c20441baf0cb60a4ac34cc447c6c189024b6b4c6cd7877034f4965c464e49"; };
@@ -492,8 +455,6 @@ let
         description = "Fast ASN.1 parser and serializer with definitions for private keys, public keys, certificates, CRL, OCSP, CMS, PKCS#3, PKCS#7, PKCS#8, PKCS#12, PKCS#5, X.509 and TSP";
       };
     };
-
-
 
     "attrs" = python.mkDerivation {
       name = "attrs-17.4.0";
@@ -513,8 +474,6 @@ let
         description = "Classes Without Boilerplate";
       };
     };
-
-
 
     "autobahn" = python.mkDerivation {
       name = "autobahn-17.10.1";
@@ -538,8 +497,6 @@ let
       };
     };
 
-
-
     "backports.csv" = python.mkDerivation {
       name = "backports.csv-1.0.5";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/6a/0b/2071ad285e87dd26f5c02147ba13abf7ec777ff20416a60eb15ea204ca76/backports.csv-1.0.5.tar.gz"; sha256 = "8c421385cbc6042ba90c68c871c5afc13672acaf91e1508546d6cda6725ebfc6"; };
@@ -552,23 +509,6 @@ let
         description = "Backport of Python 3 csv module";
       };
     };
-
-
-
-    "backports.ssl-match-hostname" = python.mkDerivation {
-      name = "backports.ssl-match-hostname-3.5.0.1";
-      src = pkgs.fetchurl { url = "https://pypi.python.org/packages/76/21/2dc61178a2038a5cb35d14b61467c6ac632791ed05131dda72c20e7b9e23/backports.ssl_match_hostname-3.5.0.1.tar.gz"; sha256 = "502ad98707319f4a51fa2ca1c677bd659008d27ded9f6380c79e8932e38dcdf2"; };
-      doCheck = commonDoCheck;
-      buildInputs = commonBuildInputs;
-      propagatedBuildInputs = [ ];
-      meta = with pkgs.stdenv.lib; {
-        homepage = "http://bitbucket.org/brandon/backports.ssl_match_hostname";
-        license = licenses.psfl;
-        description = "The ssl.match_hostname() function from Python 3.5";
-      };
-    };
-
-
 
     "bcrypt" = python.mkDerivation {
       name = "bcrypt-3.1.4";
@@ -587,8 +527,6 @@ let
       };
     };
 
-
-
     "beautifulsoup4" = python.mkDerivation {
       name = "beautifulsoup4-4.6.0";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/fa/8d/1d14391fdaed5abada4e0f63543fef49b8331a34ca60c88bd521bcf7f782/beautifulsoup4-4.6.0.tar.gz"; sha256 = "808b6ac932dccb0a4126558f7dfdcf41710dd44a4ef497a0bb59a77f9f078e89"; };
@@ -601,8 +539,6 @@ let
         description = "Screen-scraping library";
       };
     };
-
-
 
     "blinker" = python.mkDerivation {
       name = "blinker-1.4";
@@ -617,8 +553,6 @@ let
       };
     };
 
-
-
     "certifi" = python.mkDerivation {
       name = "certifi-2018.1.18";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/15/d4/2f888fc463d516ff7bf2379a4e9a552fef7f22a94147655d9b1097108248/certifi-2018.1.18.tar.gz"; sha256 = "edbc3f203427eef571f79a7692bb160a2b0f7ccaa31953e99bd17e307cf63f7d"; };
@@ -631,8 +565,6 @@ let
         description = "Python package for providing Mozilla's CA Bundle.";
       };
     };
-
-
 
     "cffi" = python.mkDerivation {
       name = "cffi-1.11.5";
@@ -649,8 +581,6 @@ let
       };
     };
 
-
-
     "chardet" = python.mkDerivation {
       name = "chardet-3.0.4";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/fc/bb/a5768c230f9ddb03acc9ef3f0d4a3cf93462473795d18e9535498c8f929d/chardet-3.0.4.tar.gz"; sha256 = "84ab92ed1c4d4f16916e05906b6b75a6c0fb5db821cc65e70cbd64a3e2a5eaae"; };
@@ -663,8 +593,6 @@ let
         description = "Universal encoding detector for Python 2 and 3";
       };
     };
-
-
 
     "cli-helpers" = python.mkDerivation {
       name = "cli-helpers-1.0.2";
@@ -684,8 +612,6 @@ let
       };
     };
 
-
-
     "click" = python.mkDerivation {
       name = "click-6.7";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/95/d9/c3336b6b5711c3ab9d1d3a80f1a3e2afeb9d8c02a7166462f6cc96570897/click-6.7.tar.gz"; sha256 = "f15516df478d5a56180fbf80e68f206010e6d160fc39fa508b65e035fd75130b"; };
@@ -699,8 +625,6 @@ let
       };
     };
 
-
-
     "colorama" = python.mkDerivation {
       name = "colorama-0.3.9";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/e6/76/257b53926889e2835355d74fec73d82662100135293e17d382e2b74d1669/colorama-0.3.9.tar.gz"; sha256 = "48eb22f4f8461b1df5734a074b57042430fb06e1d61bd1e11b078c0fe6d7a1f1"; };
@@ -713,8 +637,6 @@ let
         description = "Cross-platform colored terminal text.";
       };
     };
-
-
 
     "configobj" = python.mkDerivation {
       name = "configobj-5.0.6";
@@ -731,8 +653,6 @@ let
       };
     };
 
-
-
     "constantly" = python.mkDerivation {
       name = "constantly-15.1.0";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/95/f1/207a0a478c4bb34b1b49d5915e2db574cadc415c9ac3a7ef17e29b2e8951/constantly-15.1.0.tar.gz"; sha256 = "586372eb92059873e29eba4f9dec8381541b4d3834660707faf8ba59146dfc35"; };
@@ -746,8 +666,6 @@ let
       };
     };
 
-
-
     "cookies" = python.mkDerivation {
       name = "cookies-2.2.1";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/f3/95/b66a0ca09c5ec9509d8729e0510e4b078d2451c5e33f47bd6fc33c01517c/cookies-2.2.1.tar.gz"; sha256 = "d6b698788cae4cfa4e62ef8643a9ca332b79bd96cb314294b864ae8d7eb3ee8e"; };
@@ -760,8 +678,6 @@ let
         description = "Friendlier RFC 6265-compliant cookie parser/renderer";
       };
     };
-
-
 
     "couchdbkit" = python.mkDerivation {
       name = "couchdbkit-0.6.5";
@@ -778,8 +694,6 @@ let
       };
     };
 
-
-
     "coverage" = python.mkDerivation {
       name = "coverage-4.5.1";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/35/fe/e7df7289d717426093c68d156e0fd9117c8f4872b6588e8a8928a0f68424/coverage-4.5.1.tar.gz"; sha256 = "56e448f051a201c5ebbaa86a5efd0ca90d327204d8b059ab25ad0f35fbfd79f1"; };
@@ -792,8 +706,6 @@ let
         description = "Code coverage measurement for Python";
       };
     };
-
-
 
     "cryptography" = python.mkDerivation {
       name = "cryptography-2.2.2";
@@ -818,8 +730,6 @@ let
       };
     };
 
-
-
     "deprecation" = python.mkDerivation {
       name = "deprecation-1.0.1";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/8c/e3/e5c66eba8fa2fd567065fa70ada98b990f449f74fb812b408fa7aafe82c9/deprecation-1.0.1.tar.gz"; sha256 = "b9bff5cc91f601ef2a8a0200bc6cde3f18a48c2ed3d1ecbfc16076b14b3ad935"; };
@@ -833,8 +743,6 @@ let
       };
     };
 
-
-
     "enum34" = python.mkDerivation {
       name = "enum34-1.1.6";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/bf/3e/31d502c25302814a7c2f1d3959d2a3b3f78e509002ba91aea64993936876/enum34-1.1.6.tar.gz"; sha256 = "8ad8c4783bf61ded74527bffb48ed9b54166685e4230386a9ed9b1279e2df5b1"; };
@@ -847,8 +755,6 @@ let
         description = "Python 3.4 Enum backported to 3.3, 3.2, 3.1, 2.7, 2.6, 2.5, and 2.4";
       };
     };
-
-
 
     "factory-boy" = python.mkDerivation {
       name = "factory-boy-2.10.0";
@@ -864,8 +770,6 @@ let
         description = "A versatile test fixtures replacement based on thoughtbot's factory_bot for Ruby.";
       };
     };
-
-
 
     "filedepot" = python.mkDerivation {
       name = "filedepot-0.5.0";
@@ -887,11 +791,9 @@ let
       };
     };
 
-
-
     "filteralchemy" = python.mkDerivation {
       name = "filteralchemy-0.1.0";
-      src = pkgs.fetchurl { url = "https://pypi.python.org/packages/ad/3c/20280257ee8411e905fdd09e4bf7f2bbc37d7e47986413c57b30acb473a0/filteralchemy-0.1.0.tar.gz"; sha256 = "38b9784aa85d31a393282eb2b313e5955b5c7632d9bbfc5c653c040e937a7d96"; };
+      src = pkgs.fetchgit { url = "https://github.com/sh4r3m4n/filteralchemy.git"; sha256 = "0zq1hnnsbvm004r4gq44c2ld2axzh0k4692vzxf74ip5g9fq4kka"; rev = "9ecc951c74786a8174a1d1c278a2c932945e1906"; };
       doCheck = commonDoCheck;
       buildInputs = commonBuildInputs;
       propagatedBuildInputs = [
@@ -906,8 +808,6 @@ let
       };
     };
 
-
-
     "funcsigs" = python.mkDerivation {
       name = "funcsigs-1.0.2";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/94/4a/db842e7a0545de1cdb0439bb80e6e42dfe82aaeaadd4072f2263a4fbed23/funcsigs-1.0.2.tar.gz"; sha256 = "a7bb0f2cf3a3fd1ab2732cb49eba4252c2af4240442415b4abce3b87022a8f50"; };
@@ -920,8 +820,6 @@ let
         description = "Python function signatures from PEP362 for Python 2.6, 2.7 and 3.2+";
       };
     };
-
-
 
     "http-parser" = python.mkDerivation {
       name = "http-parser-0.8.3";
@@ -936,8 +834,6 @@ let
       };
     };
 
-
-
     "humanize" = python.mkDerivation {
       name = "humanize-0.5.1";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/8c/e0/e512e4ac6d091fc990bbe13f9e0378f34cf6eecd1c6c268c9e598dcf5bb9/humanize-0.5.1.tar.gz"; sha256 = "a43f57115831ac7c70de098e6ac46ac13be00d69abbf60bdcac251344785bb19"; };
@@ -950,8 +846,6 @@ let
         description = "python humanize utilities";
       };
     };
-
-
 
     "hyperlink" = python.mkDerivation {
       name = "hyperlink-18.0.0";
@@ -967,8 +861,6 @@ let
         description = "A featureful, immutable, and correct URL for Python.";
       };
     };
-
-
 
     "hypothesis" = python.mkDerivation {
       name = "hypothesis-3.48.0";
@@ -990,8 +882,6 @@ let
       };
     };
 
-
-
     "idna" = python.mkDerivation {
       name = "idna-2.6";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/f4/bd/0467d62790828c23c47fc1dfa1b1f052b24efdf5290f071c7a91d0d82fd3/idna-2.6.tar.gz"; sha256 = "2c6a5de3089009e3da7c5dde64a141dbc8551d5b7f6cf4ed7c2568d0cc520a8f"; };
@@ -1004,8 +894,6 @@ let
         description = "Internationalized Domain Names in Applications (IDNA)";
       };
     };
-
-
 
     "incremental" = python.mkDerivation {
       name = "incremental-17.5.0";
@@ -1023,8 +911,6 @@ let
       };
     };
 
-
-
     "inflection" = python.mkDerivation {
       name = "inflection-0.3.1";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/d5/35/a6eb45b4e2356fe688b21570864d4aa0d0a880ce387defe9c589112077f8/inflection-0.3.1.tar.gz"; sha256 = "18ea7fb7a7d152853386523def08736aa8c32636b047ade55f7578c4edeb16ca"; };
@@ -1037,8 +923,6 @@ let
         description = "A port of Ruby on Rails inflector to Python";
       };
     };
-
-
 
     "ipaddress" = python.mkDerivation {
       name = "ipaddress-1.0.19";
@@ -1053,8 +937,6 @@ let
       };
     };
 
-
-
     "itsdangerous" = python.mkDerivation {
       name = "itsdangerous-0.24";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/dc/b4/a60bcdba945c00f6d608d8975131ab3f25b22f2bcfe1dab221165194b2d4/itsdangerous-0.24.tar.gz"; sha256 = "cbb3fcf8d3e33df861709ecaf89d9e6629cff0a217bc2848f1b41cd30d360519"; };
@@ -1067,8 +949,6 @@ let
         description = "Various helpers to pass trusted data to untrusted environments and back.";
       };
     };
-
-
 
     "marshmallow" = python.mkDerivation {
       name = "marshmallow-2.15.0";
@@ -1085,8 +965,6 @@ let
       };
     };
 
-
-
     "marshmallow-sqlalchemy" = python.mkDerivation {
       name = "marshmallow-sqlalchemy-0.13.2";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/22/e4/47fbf458292cab8a17641b69cec3d77b127bd2400139164838a0b67133e7/marshmallow-sqlalchemy-0.13.2.tar.gz"; sha256 = "9804ef2829f781f469a06528d107c2a763f109c687266ab8b1f000f9684184ae"; };
@@ -1102,8 +980,6 @@ let
         description = "SQLAlchemy integration with the marshmallow (de)serialization library";
       };
     };
-
-
 
     "mock" = python.mkDerivation {
       name = "mock-2.0.0";
@@ -1124,8 +1000,6 @@ let
       };
     };
 
-
-
     "more-itertools" = python.mkDerivation {
       name = "more-itertools-4.1.0";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/db/0b/f5660bf6299ec5b9f17bd36096fa8148a1c843fa77ddfddf9bebac9301f7/more-itertools-4.1.0.tar.gz"; sha256 = "c9ce7eccdcb901a2c75d326ea134e0886abfbea5f93e91cc95de9507c0816c44"; };
@@ -1140,8 +1014,6 @@ let
         description = "More routines for operating on iterables, beyond itertools";
       };
     };
-
-
 
     "nplusone" = python.mkDerivation {
       name = "nplusone-0.8.1";
@@ -1159,8 +1031,6 @@ let
       };
     };
 
-
-
     "olefile" = python.mkDerivation {
       name = "olefile-0.45.1";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/d3/8a/e0f0e56d6a542dd987f9290ef7b5164636ee597ce8c2932c19c78292d5ec/olefile-0.45.1.zip"; sha256 = "2b6575f5290de8ab1086f8c5490591f7e0885af682c7c1793bdaf6e64078d385"; };
@@ -1173,8 +1043,6 @@ let
         description = "Python package to parse, read and write Microsoft OLE2 files (Structured Storage or Compound Document, Microsoft Office) - Improved version of the OleFileIO module from PIL, the Python Image Library.";
       };
     };
-
-
 
     "passlib" = python.mkDerivation {
       name = "passlib-1.7.1";
@@ -1192,8 +1060,6 @@ let
       };
     };
 
-
-
     "pbr" = python.mkDerivation {
       name = "pbr-4.0.2";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/c6/46/f414e7d9ba9621c8acd3e7a82e08c47e0de34ad3e213c16e458b6c04d432/pbr-4.0.2.tar.gz"; sha256 = "dae4aaa78eafcad10ce2581fc34d694faa616727837fd8e55c1a00951ad6744f"; };
@@ -1206,8 +1072,6 @@ let
         description = "Python Build Reasonableness";
       };
     };
-
-
 
     "pgcli" = python.mkDerivation {
       name = "pgcli-1.8.2";
@@ -1233,8 +1097,6 @@ let
       };
     };
 
-
-
     "pgspecial" = python.mkDerivation {
       name = "pgspecial-1.10.0";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/d5/d8/cd12f64c42b9878e3e677ba2c43f7abdc87eadba5f18b640f8efda555b55/pgspecial-1.10.0.tar.gz"; sha256 = "eadb0108cdbcf8b38a69bcc9e403b352dbd6d30622e417f48e659180150ee1b6"; };
@@ -1251,8 +1113,6 @@ let
       };
     };
 
-
-
     "pluggy" = python.mkDerivation {
       name = "pluggy-0.6.0";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/11/bf/cbeb8cdfaffa9f2ea154a30ae31a9d04a1209312e2919138b4171a1f8199/pluggy-0.6.0.tar.gz"; sha256 = "7f8ae7f5bdf75671a718d2daf0a64b7885f74510bcd98b1a0bb420eb9a9d0cff"; };
@@ -1265,8 +1125,6 @@ let
         description = "plugin and hook calling mechanisms for python";
       };
     };
-
-
 
     "prompt-toolkit" = python.mkDerivation {
       name = "prompt-toolkit-1.0.15";
@@ -1284,8 +1142,6 @@ let
       };
     };
 
-
-
     "psycopg2" = python.mkDerivation {
       name = "psycopg2-2.7.3.2";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/dd/47/000b405d73ca22980684fd7bd3318690cc03cfa3b2ae1c5b7fff8050b28a/psycopg2-2.7.3.2.tar.gz"; sha256 = "5c3213be557d0468f9df8fe2487eaf2990d9799202c5ff5cb8d394d09fad9b2a"; };
@@ -1299,8 +1155,6 @@ let
       };
     };
 
-
-
     "py" = python.mkDerivation {
       name = "py-1.5.3";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/f7/84/b4c6e84672c4ceb94f727f3da8344037b62cee960d80e999b1cd9b832d83/py-1.5.3.tar.gz"; sha256 = "29c9fab495d7528e80ba1e343b958684f4ace687327e6f789a94bf3d1915f881"; };
@@ -1313,8 +1167,6 @@ let
         description = "library with cross-python path, ini-parsing, io, code, log facilities";
       };
     };
-
-
 
     "pyOpenSSL" = python.mkDerivation {
       name = "pyOpenSSL-17.2.0";
@@ -1333,8 +1185,6 @@ let
       };
     };
 
-
-
     "pyasn1" = python.mkDerivation {
       name = "pyasn1-0.4.2";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/eb/3d/b7d0fdf4a882e26674c68c20f40682491377c4db1439870f5b6f862f76ed/pyasn1-0.4.2.tar.gz"; sha256 = "d258b0a71994f7770599835249cece1caef3c70def868c4915e6e5ca49b67d15"; };
@@ -1347,8 +1197,6 @@ let
         description = "ASN.1 types and codecs";
       };
     };
-
-
 
     "pyasn1-modules" = python.mkDerivation {
       name = "pyasn1-modules-0.2.1";
@@ -1365,8 +1213,6 @@ let
       };
     };
 
-
-
     "pycparser" = python.mkDerivation {
       name = "pycparser-2.18";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/8c/2d/aad7f16146f4197a11f8e91fb81df177adcc2073d36a17b1491fd09df6ed/pycparser-2.18.tar.gz"; sha256 = "99a8ca03e29851d96616ad0404b4aad7d9ee16f25c9f9708a11faf2810f7b226"; };
@@ -1379,8 +1225,6 @@ let
         description = "C parser in Python";
       };
     };
-
-
 
     "pydot" = python.mkDerivation {
       name = "pydot-1.2.4";
@@ -1397,8 +1241,6 @@ let
       };
     };
 
-
-
     "pyparsing" = python.mkDerivation {
       name = "pyparsing-2.2.0";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/3c/ec/a94f8cf7274ea60b5413df054f82a8980523efd712ec55a59e7c3357cf7c/pyparsing-2.2.0.tar.gz"; sha256 = "0832bcf47acd283788593e7a0f542407bd9550a55a8a8435214a1960e04bcb04"; };
@@ -1411,8 +1253,6 @@ let
         description = "Python parsing module";
       };
     };
-
-
 
     "pytest" = python.mkDerivation {
       name = "pytest-3.5.0";
@@ -1435,8 +1275,6 @@ let
       };
     };
 
-
-
     "pytest-factoryboy" = python.mkDerivation {
       name = "pytest-factoryboy-2.0.1";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/80/15/294f84a4d3159f6be5524b8f02b70aae82c86e2341c27ac00fdd26b0d44f/pytest-factoryboy-2.0.1.tar.gz"; sha256 = "ad438d191d2b2a0f26956d437c1963875db573147a84ffd85d7bbeaefae22458"; };
@@ -1454,8 +1292,6 @@ let
       };
     };
 
-
-
     "python-dateutil" = python.mkDerivation {
       name = "python-dateutil-2.6.0";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/51/fc/39a3fbde6864942e8bb24c93663734b74e281b984d1b8c4f95d64b0c21f6/python-dateutil-2.6.0.tar.gz"; sha256 = "62a2f8df3d66f878373fd0072eacf4ee52194ba302e00082828e0d263b0418d2"; };
@@ -1470,8 +1306,6 @@ let
         description = "Extensions to the standard Python datetime module";
       };
     };
-
-
 
     "python-slugify" = python.mkDerivation {
       name = "python-slugify-1.2.4";
@@ -1488,8 +1322,6 @@ let
       };
     };
 
-
-
     "pytz" = python.mkDerivation {
       name = "pytz-2018.4";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/10/76/52efda4ef98e7544321fd8d5d512e11739c1df18b0649551aeccfb1c8376/pytz-2018.4.tar.gz"; sha256 = "c06425302f2cf668f1bba7a0a03f3c1d34d4ebeef2c72003da308b3947c7f749"; };
@@ -1502,8 +1334,6 @@ let
         description = "World timezone definitions, modern and historical";
       };
     };
-
-
 
     "requests" = python.mkDerivation {
       name = "requests-2.18.4";
@@ -1525,8 +1355,6 @@ let
       };
     };
 
-
-
     "responses" = python.mkDerivation {
       name = "responses-0.9.0";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/67/cb/0a5390f7b8944cfa7e4079a839adba964d858d27a60af7b2683248148339/responses-0.9.0.tar.gz"; sha256 = "c6082710f4abfb60793899ca5f21e7ceb25aabf321560cc0726f8b59006811c9"; };
@@ -1547,8 +1375,6 @@ let
       };
     };
 
-
-
     "restkit" = python.mkDerivation {
       name = "restkit-4.2.2";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/76/b9/d90120add1be718f853c53008cf5b62d74abad1d32bd1e7097dd913ae053/restkit-4.2.2.tar.gz"; sha256 = "c0bda8eb7c643b5e818b612dab49121393abc8589c6cbe9b84085079d598599d"; };
@@ -1564,8 +1390,6 @@ let
         description = "Python REST kit";
       };
     };
-
-
 
     "service-identity" = python.mkDerivation {
       name = "service-identity-17.0.0";
@@ -1586,8 +1410,6 @@ let
       };
     };
 
-
-
     "setproctitle" = python.mkDerivation {
       name = "setproctitle-1.1.10";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/5a/0d/dc0d2234aacba6cf1a729964383e3452c52096dc695581248b548786f2b3/setproctitle-1.1.10.tar.gz"; sha256 = "6283b7a58477dd8478fbb9e76defb37968ee4ba47b05ec1c053cb39638bd7398"; };
@@ -1600,8 +1422,6 @@ let
         description = "A Python module to customize the process title";
       };
     };
-
-
 
     "six" = python.mkDerivation {
       name = "six-1.11.0";
@@ -1616,8 +1436,6 @@ let
       };
     };
 
-
-
     "socketpool" = python.mkDerivation {
       name = "socketpool-0.5.3";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/d1/39/fae99a735227234ffec389b252c6de2bc7816bf627f56b4c558dc46c85aa/socketpool-0.5.3.tar.gz"; sha256 = "a06733434a56c4b60b8fcaa168102d2386253d36425804d55532a6bbbda6e2ec"; };
@@ -1631,8 +1449,6 @@ let
       };
     };
 
-
-
     "speaklater" = python.mkDerivation {
       name = "speaklater-1.3";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/11/92/5ae1effe0ccb8561c034a0111d53c8788660ddb7ed4992f0da1bb5c525e5/speaklater-1.3.tar.gz"; sha256 = "59fea336d0eed38c1f0bf3181ee1222d0ef45f3a9dd34ebe65e6bfffdd6a65a9"; };
@@ -1645,8 +1461,6 @@ let
         description = "implements a lazy string for python useful for use with gettext";
       };
     };
-
-
 
     "sqlalchemy-schemadisplay" = python.mkDerivation {
       name = "sqlalchemy-schemadisplay-1.3";
@@ -1663,8 +1477,6 @@ let
       };
     };
 
-
-
     "sqlparse" = python.mkDerivation {
       name = "sqlparse-0.2.4";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/79/3c/2ad76ba49f9e3d88d2b58e135b7821d93741856d1fe49970171f73529303/sqlparse-0.2.4.tar.gz"; sha256 = "ce028444cfab83be538752a2ffdb56bc417b7784ff35bb9a3062413717807dec"; };
@@ -1677,8 +1489,6 @@ let
         description = "Non-validating SQL parser";
       };
     };
-
-
 
     "tabulate" = python.mkDerivation {
       name = "tabulate-0.8.2";
@@ -1695,8 +1505,6 @@ let
       };
     };
 
-
-
     "terminaltables" = python.mkDerivation {
       name = "terminaltables-3.1.0";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/9b/c4/4a21174f32f8a7e1104798c445dacdc1d4df86f2f26722767034e4de4bff/terminaltables-3.1.0.tar.gz"; sha256 = "f3eb0eb92e3833972ac36796293ca0906e998dc3be91fbe1f8615b331b853b81"; };
@@ -1709,8 +1517,6 @@ let
         description = "Generate simple tables in terminals from a nested list of strings.";
       };
     };
-
-
 
     "text-unidecode" = python.mkDerivation {
       name = "text-unidecode-1.2";
@@ -1725,8 +1531,6 @@ let
       };
     };
 
-
-
     "tqdm" = python.mkDerivation {
       name = "tqdm-4.15.0";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/01/f7/2058bd94a903f445e8ff19c0af64b9456187acab41090ff2da21c7c7e193/tqdm-4.15.0.tar.gz"; sha256 = "6ec1dc74efacf2cda936b4a6cf4082ce224c76763bdec9f17e437c8cfcaa9953"; };
@@ -1739,8 +1543,6 @@ let
         description = "Fast, Extensible Progress Meter";
       };
     };
-
-
 
     "txaio" = python.mkDerivation {
       name = "txaio-2.10.0";
@@ -1761,8 +1563,6 @@ let
       };
     };
 
-
-
     "urllib3" = python.mkDerivation {
       name = "urllib3-1.22";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/ee/11/7c59620aceedcc1ef65e156cc5ce5a24ef87be4107c2b74458464e437a5d/urllib3-1.22.tar.gz"; sha256 = "cc44da8e1145637334317feebd728bd869a35285b93cbb4cca2577da7e62db4f"; };
@@ -1782,8 +1582,6 @@ let
       };
     };
 
-
-
     "wcwidth" = python.mkDerivation {
       name = "wcwidth-0.1.7";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/55/11/e4a2bb08bb450fdbd42cc709dd40de4ed2c472cf0ccb9e64af22279c5495/wcwidth-0.1.7.tar.gz"; sha256 = "3df37372226d6e63e1b1e1eda15c594bca98a22d33a23832a90998faa96bc65e"; };
@@ -1796,8 +1594,6 @@ let
         description = "Measures number of Terminal column cells of wide-character codes";
       };
     };
-
-
 
     "webargs" = python.mkDerivation {
       name = "webargs-2.1.0";
@@ -1814,8 +1610,6 @@ let
       };
     };
 
-
-
     "websocket-client" = python.mkDerivation {
       name = "websocket-client-0.46.0";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/83/91/162f2c76729633d1dc36b09746895c7766bc183bba94cb4d2ec398676060/websocket_client-0.46.0.tar.gz"; sha256 = "933f6bbf08b381f2adbca9e93d7e7958ba212b42c73acb310b18f0fbe74f3738"; };
@@ -1831,8 +1625,6 @@ let
       };
     };
 
-
-
     "zope.interface" = python.mkDerivation {
       name = "zope.interface-4.4.3";
       src = pkgs.fetchurl { url = "https://pypi.python.org/packages/bd/d2/25349ed41f9dcff7b3baf87bd88a4c82396cf6e02f1f42bb68657a3132af/zope.interface-4.4.3.tar.gz"; sha256 = "d6d26d5dfbfd60c65152938fcb82f949e8dada37c041f72916fef6621ba5c5ce"; };
@@ -1847,12 +1639,11 @@ let
         description = "Interfaces for Python";
       };
     };
-
   };
   localOverridesFile = ./requirements_override.nix;
   overrides = import localOverridesFile { inherit pkgs python; };
   commonOverrides = [
-
+    
   ];
   allOverrides =
     (if (builtins.pathExists localOverridesFile)

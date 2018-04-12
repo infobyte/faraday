@@ -16,4 +16,14 @@ self: super: {
       (drv: drv.name != self.Twisted.name)
       old.propagatedBuildInputs);
   });
+  hypothesis = python.overrideDerivation super.hypothesis (old: {
+    propagatedBuildInputs = (builtins.filter
+      (drv: drv.name != self.attrs.name)
+      old.propagatedBuildInputs);
+  });
+  attrs = python.overrideDerivation super.attrs (old: {
+    propagatedBuildInputs = (builtins.filter
+      (drv: drv.name != self.hypothesis.name && drv.name != self.pytest.name)
+      old.propagatedBuildInputs);
+  });
 }

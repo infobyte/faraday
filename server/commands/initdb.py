@@ -177,10 +177,10 @@ class InitDB():
             except psycopg2.Error as e:
                 if 'authentication failed' in e.message:
                     print('{red}ERROR{white}: User {username} already '
-                          'exists and provided password '
-                          'is incorrect'.format(white=Fore.WHITE,
-                                                red=Fore.RED,
-                                                username=username))
+                          'exists'.format(white=Fore.WHITE,
+                                          red=Fore.RED,
+                                          username=username))
+                    sys.exit(1)
                 else:
                     raise
             return_code = 0

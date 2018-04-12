@@ -593,7 +593,7 @@ class VulnerabilityImporter(object):
                 password =  "".join(
                     [rng.choice(string.ascii_letters + string.digits) for _ in
                      xrange(12)])
-                creator, _ = get_or_create(session, User, username=owner_name)
+                creator, _ = get_or_create(session, User, username=owner_name, active=False)
                 creator.password = password
             if document['type'] == 'VulnerabilityWeb':
                 method = document.get('method')

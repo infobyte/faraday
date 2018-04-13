@@ -18,10 +18,15 @@ angular.module('faradayApp').
                             $cookies.currentComponent;
                         }
                         return deferred.reject(response);
-                    });
+                    }.error(function(auth){
+                        // I don't know what i'm doing. But appeareantly if i don't put this
+                        // angular may fail with a horrible stack trace
+                        return deferred.reject(response);
+                    }));
                     return deferred.promise;
                 }else if (response.status === 403) {
                     $location.path('/forbidden');
+                    return $q.reject(response);
                 }else{
                     return $q.reject(response);
                 }

@@ -130,14 +130,16 @@ class WebServer(object):
             ssl_context = self.__load_ssl_certs()
             self.__listen_func = functools.partial(
                 reactor.listenSSL,
-                contextFactory = ssl_context)
+                contextFactory=ssl_context)
         else:
             self.__listen_func = reactor.listenTCP
 
         try:
+            # web and static content
             self.__listen_func(
                 self.__listen_port, site,
                 interface=self.__bind_address)
+            # websockets
             listenWS(self.__build_websockets_resource(), interface=self.__bind_address)
             reactor.run()
         except error.CannotListenError as e:

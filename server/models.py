@@ -467,12 +467,12 @@ class CustomAssociationSet(_AssociationSet):
             # other process/thread won us on the commit
             # we need to fetch already created objs.
             session.rollback()
-            conflict_obj_names = [obj.name for obj in conflict_objs if obj.name != value]
-            for conflict_obj_name in conflict_obj_names:
-                conclict_obj = session.query(Reference).filter_by(name=conflict_obj_name).first()
-                if not conclict_obj:
-                    raise Exception('This should not happend. AssocProxy could not find a conflict obj.')
-                self.col.add(conclict_obj)
+            for conflict_obj in conflict_objs:
+                if conflict_obj.name == value:
+                    continue
+                persisted_conclict_obj = session.query(conflict_obj.__class__).filter_by(name=conflict_obj.name).first()
+                if persisted_conclict_obj:
+                    self.col.add(persisted_conclict_obj)
             yield self.creator(value, parent_instance)
 
     def add(self, value):

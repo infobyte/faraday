@@ -208,6 +208,7 @@ class Host(Metadata):
     services = relationship(
         'Service',
         order_by='Service.protocol,Service.port',
+        cascade="all, delete-orphan"
     )
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True,
@@ -1078,14 +1079,17 @@ class Credential(Metadata):
     name = BlankColumn(Text)
 
     host_id = Column(Integer, ForeignKey(Host.id), index=True, nullable=True)
-    host = relationship('Host', backref='credentials', foreign_keys=[host_id])
+    host = relationship(
+        'Host',
+        backref=backref("credentials", cascade="all, delete-orphan"),
+        foreign_keys=[host_id])
 
     service_id = Column(Integer, ForeignKey(Service.id), index=True, nullable=True)
     service = relationship(
-                        'Service',
-                        backref='credentials',
-                        foreign_keys=[service_id],
-                        )
+        'Service',
+        backref=backref('credentials', cascade="all, delete-orphan"),
+        foreign_keys=[service_id],
+        )
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(

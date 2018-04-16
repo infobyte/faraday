@@ -164,6 +164,7 @@ def test_find(get, url_endpoint, test_data, session):
     workspace = WorkspaceFactory.create()
     mappers_manager.createMappers(workspace.name)
     obj = test_data['factory'].create(workspace=workspace)
+    session.add(obj)
     session.commit()
     result = controller.find(test_data['class_signature'], obj.id)
     assert get.called

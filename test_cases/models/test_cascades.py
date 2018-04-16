@@ -1,6 +1,6 @@
 import pytest
 from contextlib import contextmanager
-from server.models import CommandObject
+from server.models import CommandObject, File
 
 def test_delete_user(workspace, session):
     assert workspace.creator
@@ -55,6 +55,24 @@ class TestCascadeDelete:
             vuln.references = ['CVE-1234', 'CVE-4331']
             vuln.policy_violations = ["PCI-DSS"]
 
+        self.attachment = File(
+            name='test.png',
+            filename='test.png',
+            content='test',
+            object_type='vulnerability',
+            object_id=self.service_vuln.id,
+        )
+        self.session.add(self.attachment)
+
+        self.host_attachment = File(
+            name='test.png',
+            filename='test.png',
+            content='test',
+            object_type='host',
+            object_id=self.host.id,
+        )
+        self.session.add(self.host_attachment)
+
         self.command = empty_command_factory.create(workspace=workspace)
         CommandObject.create(self.host_vuln, self.command)
         CommandObject.create(self.service_vuln, self.command)
@@ -80,3 +98,11 @@ class TestCascadeDelete:
     def test_delete_workspace(self):
         self.session.delete(self.workspace)
         self.session.commit()
+
+    def test_delete_vuln_attachments(self):
+        with self.assert_deletes(self.attachment):
+            self.session.delete(self.service_vuln)
+
+    def test_delete_host_attachments(self):
+        with self.assert_deletes(self.host_attachment):
+            self.session.delete(self.host)

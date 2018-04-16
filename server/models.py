@@ -751,6 +751,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
         primaryjoin="and_(File.object_id==VulnerabilityGeneric.id, "
                     "File.object_type=='vulnerability')",
         foreign_keys="File.object_id",
+        cascade="all, delete-orphan"
     )
 
     tags = relationship(

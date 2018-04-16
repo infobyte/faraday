@@ -1,6 +1,12 @@
 import pytest
 from contextlib import contextmanager
-from server.models import CommandObject, File
+from server.models import (
+    CommandObject,
+    Comment,
+    File,
+    Methodology,
+    Task
+)
 
 def test_delete_user(workspace, session):
     assert workspace.creator
@@ -73,6 +79,22 @@ class TestCascadeDelete:
         )
         self.session.add(self.host_attachment)
 
+        self.comment = Comment(
+            text="test",
+            object_type='host',
+            object_id=self.host.id,
+            workspace=self.workspace
+        )
+        self.session.add(self.comment)
+
+        self.reply_comment = Comment(
+            text="ok",
+            object_type='host',
+            object_id=self.host.id,
+            workspace=self.workspace,
+            reply_to=self.comment,
+        )
+
         self.command = empty_command_factory.create(workspace=workspace)
         CommandObject.create(self.host_vuln, self.command)
         CommandObject.create(self.service_vuln, self.command)
@@ -95,13 +117,24 @@ class TestCascadeDelete:
                                  self.host_cred, self.service_cred):
             self.session.delete(self.host)
 
-    def test_delete_workspace(self):
+    def test_delete_workspace(self, user):
+        methodology = Methodology(name='test', workspace=self.workspace)
+        task = Task(methodology=methodology, assigned_to=[user],
+                    name="test",
+                    workspace=self.workspace)
+        self.session.add(task)
+        self.session.commit()
+
         self.session.delete(self.workspace)
         self.session.commit()
 
     def test_delete_vuln_attachments(self):
         with self.assert_deletes(self.attachment):
             self.session.delete(self.service_vuln)
+
+    def test_host_comments(self):
+        with self.assert_deletes(self.comment, self.reply_comment):
+            self.session.delete(self.host)
 
     def test_delete_host_attachments(self):
         with self.assert_deletes(self.host_attachment):

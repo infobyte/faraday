@@ -1353,7 +1353,7 @@ class Methodology(Metadata):
 
     workspace = relationship(
         'Workspace',
-        backref=backref('methodologies', cascade="all, delete-orphan")
+        backref=backref('methodologies', cascade="all, delete-orphan"),
     )
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
 

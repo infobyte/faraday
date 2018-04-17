@@ -353,7 +353,6 @@ class Service(Metadata):
     host = relationship(
         'Host',
         foreign_keys=[host_id],
-        cascade='all'
     )
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)

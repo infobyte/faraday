@@ -172,3 +172,8 @@ class TestCascadeDelete:
             self.session.delete(self.user)
         for obj in objs:
             assert obj.creator is None
+
+    def test_delete_service_keeps_parents(self):
+        with self.assert_deletes(self.host, self.user, self.workspace,
+                                 should_delete=False):
+            self.session.delete(self.service)

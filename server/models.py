@@ -1401,8 +1401,10 @@ class TaskAssignedTo(db.Model):
     task = relationship('Task')
 
     user_id = Column(Integer, ForeignKey('faraday_user.id'), nullable=False)
-    user = relationship('User',
-                        foreign_keys=[user_id])
+    user = relationship(
+        'User',
+        foreign_keys=[user_id],
+        backref=backref('assigned_tasks', cascade="all, delete-orphan"))
 
 
 class Task(TaskABC):

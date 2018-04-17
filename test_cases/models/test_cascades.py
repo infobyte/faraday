@@ -7,6 +7,7 @@ from server.models import (
     Methodology,
     MethodologyTemplate,
     Task,
+    TaskAssignedTo,
     TaskTemplate
 )
 
@@ -137,6 +138,12 @@ class TestCascadeDelete:
         )
         session.add(self.methodology_template_task)
 
+        self.methodology_task_assigned = TaskAssignedTo(
+            task=self.methodology_task,
+            user=self.user,
+        )
+        session.add(self.methodology_task_assigned)
+
         session.commit()
 
     @contextmanager
@@ -213,3 +220,15 @@ class TestCascadeDelete:
     def test_delete_methodology_template_deletes_task(self):
         with self.assert_deletes(self.methodology_template_task):
             self.session.delete(self.methodology_template)
+
+    def test_delete_task_deletes_assignations(self):
+        with self.assert_deletes(self.methodology_task_assigned):
+            self.session.delete(self.methodology_task)
+
+    def test_delete_task_assignation_keeps_user(self):
+        with self.assert_deletes(self.user, should_delete=False):
+            self.session.delete(self.methodology_task_assigned)
+
+    def test_delete_user_deletes_assignations(self):
+        with self.assert_deletes(self.methodology_task_assigned):
+            self.session.delete(self.user)

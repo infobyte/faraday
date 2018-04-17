@@ -3,9 +3,9 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('configSrv', ['$http', function($http) {
+    .factory('configSrv', ['$http', 'BASEURL', function($http, BASEURL) {
 
-        var p = $http.get('config/config.json')
+        var p = $http.get(BASEURL + '_api/config')
             .then(function(conf) {
                 configSrv.faraday_version = conf.data.ver;
             });

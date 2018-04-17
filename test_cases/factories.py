@@ -367,7 +367,7 @@ class CommentFactory(WorkspaceObjectFactory):
     """
     text = FuzzyText()
     object_id = FuzzyInteger(1)
-    object_type = FuzzyChoice(['Host', 'Service', 'Comment'])
+    object_type = FuzzyChoice(['host', 'service', 'comment'])
 
 
     class Meta:

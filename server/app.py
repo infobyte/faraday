@@ -8,7 +8,7 @@ import string
 from os.path import join, expanduser
 from random import SystemRandom
 
-from server.config import LOCAL_CONFIG_FILE
+from server.config import LOCAL_CONFIG_FILE, copy_default_config_to_local
 from server.models import User
 
 try:
@@ -122,6 +122,8 @@ def register_handlers(app):
 
 
 def save_new_secret_key(app):
+    if not os.path.exists(LOCAL_CONFIG_FILE):
+        copy_default_config_to_local()
     config = ConfigParser()
     config.read(LOCAL_CONFIG_FILE)
     rng = SystemRandom()

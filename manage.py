@@ -4,6 +4,7 @@ import re
 
 import click
 import requests
+import sys
 from requests import ConnectionError
 from sqlalchemy.exc import OperationalError
 from pgcli.main import PGCli
@@ -108,6 +109,9 @@ def validate_email(ctx, param, value):
               confirmation_prompt=True)
 def create_user(username, email, password):
     with app.app_context():
+        if db.session.query(User).count() > 0:
+            print("Can't create more users. Please contact support")
+            sys.exit(1)
         app.user_datastore.create_user(username=username,
                                        email=email,
                                        password=password,

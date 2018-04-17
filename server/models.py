@@ -62,6 +62,9 @@ OBJECT_TYPES = [
     'service',
     'source_code',
     'comment',
+    'executive_report',
+    'workspace',
+    'task'
 ]
 
 
@@ -155,7 +158,10 @@ class Metadata(db.Model):
 
     @declared_attr
     def creator_id(cls):
-        return Column(Integer, ForeignKey('faraday_user.id'), nullable=True)
+        return Column(
+            Integer,
+            ForeignKey('faraday_user.id', ondelete="SET NULL"),
+            nullable=True)
 
     @declared_attr
     def creator(cls):
@@ -202,6 +208,7 @@ class Host(Metadata):
     services = relationship(
         'Service',
         order_by='Service.protocol,Service.port',
+        cascade="all, delete-orphan"
     )
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True,
@@ -375,7 +382,7 @@ class Service(Metadata):
         else:
             version = ""
         return "(%s/%s) %s%s" % (self.port, self.protocol, self.name,
-                                  version or "")
+                                 version or "")
 
 
 class VulnerabilityABC(Metadata):
@@ -461,12 +468,12 @@ class CustomAssociationSet(_AssociationSet):
             # other process/thread won us on the commit
             # we need to fetch already created objs.
             session.rollback()
-            conflict_obj_names = [obj.name for obj in conflict_objs if obj.name != value]
-            for conflict_obj_name in conflict_obj_names:
-                conclict_obj = session.query(Reference).filter_by(name=conflict_obj_name).first()
-                if not conclict_obj:
-                    raise Exception('This should not happend. AssocProxy could not find a conflict obj.')
-                self.col.add(conclict_obj)
+            for conflict_obj in conflict_objs:
+                if conflict_obj.name == value:
+                    continue
+                persisted_conclict_obj = session.query(conflict_obj.__class__).filter_by(name=conflict_obj.name).first()
+                if persisted_conclict_obj:
+                    self.col.add(persisted_conclict_obj)
             yield self.creator(value, parent_instance)
 
     def add(self, value):
@@ -660,8 +667,8 @@ class Command(Metadata):
     tool = NonBlankColumn(Text)
     start_date = Column(DateTime, nullable=False)
     end_date = Column(DateTime, nullable=True)
-    ip = Column(String(250), nullable=False)  # where the command was executed
-    hostname = Column(String(250), nullable=False)  # where the command was executed
+    ip = BlankColumn(String(250))  # where the command was executed
+    hostname = BlankColumn(String(250))  # where the command was executed
     params = BlankColumn(Text)
     user = BlankColumn(String(250))  # os username where the command was executed
     import_source = Column(Enum(*IMPORT_SOURCE, name='import_source_enum'))
@@ -705,6 +712,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
     confirmed = Column(Boolean, nullable=False, default=False)
     status = Column(Enum(*STATUSES, name='vulnerability_statuses'), nullable=False, default="open")
     type = Column(Enum(*VULN_TYPES, name='vulnerability_types'), nullable=False)
+    issuetracker = Column(Text)
 
     workspace_id = Column(
                         Integer,
@@ -743,6 +751,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
         primaryjoin="and_(File.object_id==VulnerabilityGeneric.id, "
                     "File.object_type=='vulnerability')",
         foreign_keys="File.object_id",
+        cascade="all, delete-orphan"
     )
 
     tags = relationship(
@@ -797,6 +806,13 @@ class VulnerabilityGeneric(VulnerabilityABC):
     __mapper_args__ = {
         'polymorphic_on': type
     }
+
+    @property
+    def attachments(self):
+        return db.session.query(File).filter_by(
+            object_id=self.id,
+            object_type='vulnerability'
+        )
 
 
 class Vulnerability(VulnerabilityGeneric):
@@ -1064,14 +1080,17 @@ class Credential(Metadata):
     name = BlankColumn(Text)
 
     host_id = Column(Integer, ForeignKey(Host.id), index=True, nullable=True)
-    host = relationship('Host', backref='credentials', foreign_keys=[host_id])
+    host = relationship(
+        'Host',
+        backref=backref("credentials", cascade="all, delete-orphan"),
+        foreign_keys=[host_id])
 
     service_id = Column(Integer, ForeignKey(Service.id), index=True, nullable=True)
     service = relationship(
-                        'Service',
-                        backref='credentials',
-                        foreign_keys=[service_id],
-                        )
+        'Service',
+        backref=backref('credentials', cascade="all, delete-orphan"),
+        foreign_keys=[service_id],
+        )
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
@@ -1099,7 +1118,7 @@ class Credential(Metadata):
 
 
 def _make_vuln_count_property(type_=None, only_confirmed=False,
-                              use_column_property=True):
+                              use_column_property=True, extra_query=None):
     query = (select([func.count(text('vulnerability.id'))]).
              select_from(table('vulnerability')).
              where(text('vulnerability.workspace_id = workspace.id'))
@@ -1110,14 +1129,17 @@ def _make_vuln_count_property(type_=None, only_confirmed=False,
         # In this case type_ is supplied from a whitelist so this is safe
         query = query.where(text("vulnerability.type = '%s'" % type_))
     if only_confirmed:
-        if str(db.engine.url).startswith('sqlite://'):
+        if db.session.bind.dialect.name == 'sqlite':
             # SQLite has no "true" expression, we have to use the integer 1
             # instead
             query = query.where(text("vulnerability.confirmed = 1"))
-        else:
+        elif db.session.bind.dialect.name == 'postgresql':
             # I suppose that we're using PostgreSQL, that can't compare
             # booleans with integers
             query = query.where(text("vulnerability.confirmed = true"))
+
+    if extra_query:
+        query = query.where(text(extra_query))
     if use_column_property:
         return column_property(query, deferred=True)
     else:
@@ -1127,7 +1149,7 @@ def _make_vuln_count_property(type_=None, only_confirmed=False,
 class Workspace(Metadata):
     __tablename__ = 'workspace'
     id = Column(Integer, primary_key=True)
-    customer = Column(String(250), nullable=True)  # TBI
+    customer = BlankColumn(String(250))  # TBI
     description = BlankColumn(Text)
     active = Column(Boolean(), nullable=False, default=True)  # TBI
     end_date = Column(DateTime(), nullable=True)
@@ -1245,15 +1267,15 @@ class User(db.Model, UserMixin):
     ROLES = ['admin', 'pentester', 'client']
 
     id = Column(Integer, primary_key=True)
-    username = Column(String(255), unique=True, nullable=False)
+    username = NonBlankColumn(String(255), unique=True)
     password = Column(String(255), nullable=True)
     email = Column(String(255), unique=True, nullable=True)  # TBI
-    name = Column(String(255), nullable=True)  # TBI
+    name = BlankColumn(String(255))  # TBI
     is_ldap = Column(Boolean(), nullable=False, default=False)
     last_login_at = Column(DateTime())  # flask-security
     current_login_at = Column(DateTime())  # flask-security
-    last_login_ip = Column(String(100))  # flask-security
-    current_login_ip = Column(String(100))  # flask-security
+    last_login_ip = BlankColumn(String(100))  # flask-security
+    current_login_ip = BlankColumn(String(100))  # flask-security
     login_count = Column(Integer)  # flask-security
     active = Column(Boolean(), default=True, nullable=False)  # TBI flask-security
     confirmed_at = Column(DateTime())
@@ -1290,7 +1312,7 @@ class File(Metadata):
     content = Column(UploadedFileField(upload_type=FaradayUploadedFile),
                      nullable=False)  # plain attached file
     object_id = Column(Integer, nullable=False)
-    object_type = NonBlankColumn(Text)  # TODO migration: add enum
+    object_type = Column(Enum(*OBJECT_TYPES, name='object_types'), nullable=False)
 
 
 class UserAvatar(Metadata):
@@ -1331,7 +1353,7 @@ class Methodology(Metadata):
 
     workspace = relationship(
         'Workspace',
-        backref=backref('methodologies', cascade="all, delete-orphan")
+        backref=backref('methodologies', cascade="all, delete-orphan"),
     )
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
 
@@ -1369,6 +1391,18 @@ class TaskTemplate(TaskABC):
     # )
 
 
+class TaskAssignedTo(db.Model):
+    __tablename__ = "task_assigned_to_association"
+    id = Column(Integer, primary_key=True)
+    task_id = Column(
+        Integer, ForeignKey('task.id'), nullable=False)
+    task = relationship('Task')
+
+    user_id = Column(Integer, ForeignKey('faraday_user.id'), nullable=False)
+    user = relationship('User',
+                        foreign_keys=[user_id])
+
+
 class Task(TaskABC):
     STATUSES = [
         'new',
@@ -1387,8 +1421,9 @@ class Task(TaskABC):
         'concrete': True
     }
 
-    assigned_to_id = Column(Integer, ForeignKey('faraday_user.id'), nullable=True)
-    assigned_to = relationship('User', backref='assigned_tasks', foreign_keys=[assigned_to_id])
+    assigned_to = relationship(
+        "User",
+        secondary="task_assigned_to_association")
 
     methodology_id = Column(
                     Integer,
@@ -1451,8 +1486,7 @@ class TagObject(db.Model):
     id = Column(Integer, primary_key=True)
 
     object_id = Column(Integer, nullable=False)
-    object_type = NonBlankColumn(Text)  # TODO migration: add enum
-
+    object_type = Column(Enum(*OBJECT_TYPES, name='object_types'), nullable=False)
     tag = relationship('Tag', backref='tagged_objects')
     tag_id = Column(Integer, ForeignKey('tag.id'), index=True)
 
@@ -1479,7 +1513,7 @@ class Comment(Metadata):
     )
 
     object_id = Column(Integer, nullable=False)
-    object_type = NonBlankColumn(Text)  # TODO migration: add enum
+    object_type = Column(Enum(*OBJECT_TYPES, name='object_types'), nullable=False)
 
     @property
     def parent(self):
@@ -1497,7 +1531,7 @@ class ExecutiveReport(Metadata):
 
     grouped = Column(Boolean, nullable=False, default=False)
     name = NonBlankColumn(Text, index=True)
-    status = Column(Enum(*STATUSES, name='executive_report_statuses'), nullable=True)
+    status = Column(Enum(*STATUSES, name='executive_report_statuses'), nullable=False, default='processing')
     template_name = NonBlankColumn(Text)
 
     conclusions = BlankColumn(Text)
@@ -1507,6 +1541,8 @@ class ExecutiveReport(Metadata):
     scope = BlankColumn(Text)
     summary = BlankColumn(Text)
     title = BlankColumn(Text)
+    confirmed = Column(Boolean, nullable=False, default=False)
+    vuln_count = Column(Integer, default=0)  # saves the amount of vulns when the report was generated.
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
@@ -1514,10 +1550,23 @@ class ExecutiveReport(Metadata):
         backref=backref('reports', cascade="all, delete-orphan"),
         foreign_keys=[workspace_id]
     )
-
+    tags = relationship(
+        "Tag",
+        secondary="tag_object",
+        primaryjoin="and_(TagObject.object_id==ExecutiveReport.id, "
+                    "TagObject.object_type=='executive_report')",
+        collection_class=set,
+    )
     @property
     def parent(self):
         return
+
+    @property
+    def attachments(self):
+        return db.session.query(File).filter_by(
+            object_id=self.id,
+            object_type='executive_report'
+        )
 
 
 # This constraint uses Columns from different classes

@@ -1,4 +1,5 @@
 import getpass
+import shutil
 import string
 
 import os
@@ -12,6 +13,7 @@ import sqlalchemy
 from sqlalchemy import create_engine
 
 from config.configuration import getInstanceConfiguration
+from faraday import FARADAY_USER_CONFIG_XML, FARADAY_BASE_CONFIG_XML
 
 try:
     # py2.7
@@ -69,43 +71,20 @@ class InitDB():
             configure_existing_user = None
             current_psql_output = TemporaryFile()
             with open(psql_log_filename, 'a+') as psql_log_file:
-                while configure_existing_user is None:
-                    configure_existing_user = raw_input('Do you {blue} already have {white} a postgresql username and password? (yes/no): '.format(blue=Fore.BLUE, white=Fore.WHITE))
-                    if configure_existing_user.lower() == 'yes':
-                        configure_existing_user = True
-                    elif configure_existing_user.lower() == 'no':
-                        configure_existing_user = False
-                    else:
-                        print('Invalid option. Please type "yes" or "no" (ctrl-c to cancel): ')
-                        configure_existing_user = None
-                hostname = raw_input(
-                    'Please enter the postgresql hostname or ip address (enter for "localhost"): ') or 'localhost'
+                hostname = 'localhost'
+                username, password, process_status = self._configure_new_postgres_user(current_psql_output)
+                current_psql_output.seek(0)
+                psql_output = current_psql_output.read()
+                # persist log in the faraday log psql_log.log
+                psql_log_file.write(psql_output)
+                self._check_psql_output(current_psql_output, process_status)
 
-                if not configure_existing_user:
-                    if hostname not in ['localhost', '127.0.0.1']:
-                        print('ERROR: can only create postgresql user on localhost')
-                        sys.exit(1)
-
-                    username, password, process_status = self._configure_new_postgres_user(current_psql_output)
+                if hostname.lower() in ['localhost', '127.0.0.1']:
+                    database_name = 'faraday'
+                    current_psql_output = TemporaryFile()
+                    database_name, process_status = self._create_database(database_name, username, current_psql_output)
                     current_psql_output.seek(0)
-                    psql_output = current_psql_output.read()
-                    # persist log in the faraday log psql_log.log
-                    psql_log_file.write(psql_output)
                     self._check_psql_output(current_psql_output, process_status)
-
-                    if hostname.lower() in ['localhost', '127.0.0.1']:
-                        database_name = raw_input(
-                            'Please enter the {blue} database name {white} (press enter to use "faraday"): '.format(
-                                blue=Fore.BLUE, white=Fore.WHITE)) or 'faraday'
-                        current_psql_output = TemporaryFile()
-                        database_name, process_status = self._create_database(database_name, username, current_psql_output)
-                        current_psql_output.seek(0)
-                        self._check_psql_output(current_psql_output, process_status)
-                else:
-                    username, password = self._configure_existing_postgres_user()
-                    database_name = raw_input(
-                        'Please enter the {blue} database name {white} (press enter to use "faraday"): '.format(
-                            blue=Fore.BLUE, white=Fore.WHITE)) or 'faraday'
 
             current_psql_output.close()
             conn_string = self._save_config(config, username, password, database_name, hostname)
@@ -122,20 +101,18 @@ class InitDB():
         already_created = False
         try:
             engine.execute("INSERT INTO \"faraday_user\" (username, name, password, "
-                       "is_ldap, active) VALUES ('faraday', 'Administrator', "
-                       "'{0}', false, true);".format(random_password))
-        except sqlalchemy.exc.IntegrityError:
+                       "is_ldap, active, last_login_ip, current_login_ip, role) VALUES ('faraday', 'Administrator', "
+                       "'{0}', false, true, '127.0.0.1', '127.0.0.1', 'admin');".format(random_password))
+        except sqlalchemy.exc.IntegrityError as ex:
             # when re using database user could be created previusly
             already_created = True
             print(
             "{yellow}WARNING{white}: Faraday administrator user already exists.".format(
                 yellow=Fore.YELLOW, white=Fore.WHITE))
         if not already_created:
-            CONF = getInstanceConfiguration()
-            CONF.setAPIUrl('http://localhost:5985')
-            CONF.setAPIUsername('faraday')
-            CONF.setAPIPassword(random_password)
-            CONF.saveConfig()
+            if not os.path.isfile(FARADAY_USER_CONFIG_XML):
+                shutil.copy(FARADAY_BASE_CONFIG_XML, FARADAY_USER_CONFIG_XML)
+
             print("Admin user created with {red}username: {white}faraday and "
                   " {red}password{white}: {"
                   "random_password}".format(random_password=random_password,
@@ -173,7 +150,7 @@ class InitDB():
         """
         username_default = 'faraday_db_admin'
         print('This script will {blue} create a new postgres user {white} and {blue} save faraday-server settings {white}(server.ini). '.format(blue=Fore.BLUE, white=Fore.WHITE))
-        username = raw_input('Please enter the new {blue} database username {white} (press enter to use "{0}"): '.format(username_default, blue=Fore.BLUE, white=Fore.WHITE)) or username_default
+        username = 'faraday'
         postgres_command = ['sudo', '-u', 'postgres']
         password = self.generate_random_pw(25)
         command = postgres_command + ['psql', '-c', 'CREATE ROLE {0} WITH LOGIN PASSWORD \'{1}\';'.format(username, password)]
@@ -186,33 +163,26 @@ class InitDB():
         if already_exists_error in output:
             print("{yellow}WARNING{white}: Role {username} already exists, skipping creation ".format(yellow=Fore.YELLOW, white=Fore.WHITE, username=username))
 
-            invalid_pwd = True
-            while invalid_pwd:
-                password = getpass.getpass("Database password (ctrl-c to "
-                                           "cancel): ")
 
-                # check credentials
-                # this case only applies to instances without 'trust' config
-                # todo: check postgres config
-                try:
-                    connection = psycopg2.connect(dbname='postgres',
-                                                  user=username,
-                                                  password=password)
-                    cur = connection.cursor()
-                    cur.execute('SELECT * FROM pg_catalog.pg_tables;')
-                    cur.fetchall()
-                    connection.commit()
-                    connection.close()
-                    invalid_pwd = False
-                except psycopg2.Error as e:
-                    if 'authentication failed' in e.message:
-                        print('{red}ERROR{white}: User {username} already '
-                              'exists and provided password '
-                              'is incorrect'.format(white=Fore.WHITE,
-                                                    red=Fore.RED,
-                                                    username=username))
-                    else:
-                        raise
+            try:
+                connection = psycopg2.connect(dbname='postgres',
+                                              user=username,
+                                              password=password)
+                cur = connection.cursor()
+                cur.execute('SELECT * FROM pg_catalog.pg_tables;')
+                cur.fetchall()
+                connection.commit()
+                connection.close()
+                invalid_pwd = False
+            except psycopg2.Error as e:
+                if 'authentication failed' in e.message:
+                    print('{red}ERROR{white}: User {username} already '
+                          'exists'.format(white=Fore.WHITE,
+                                          red=Fore.RED,
+                                          username=username))
+                    sys.exit(1)
+                else:
+                    raise
             return_code = 0
         return username, password, return_code
 

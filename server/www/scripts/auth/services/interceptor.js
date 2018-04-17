@@ -22,6 +22,7 @@ angular.module('faradayApp').
                     return deferred.promise;
                 }else if (response.status === 403) {
                     $location.path('/forbidden');
+                    return $q.reject(response);
                 }else{
                     return $q.reject(response);
                 }

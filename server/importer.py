@@ -1,6 +1,8 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+import string
+from random import SystemRandom
 
 import os
 import re
@@ -231,7 +233,8 @@ def create_tags(raw_tags, parent_id, parent_type):
     for tag_name in [x.strip() for x in raw_tags if x.strip()]:
         tag, tag_created = get_or_create(session, Tag, name=tag_name, slug=slugify(tag_name))
         session.commit()
-
+        parent_type = parent_type.lower()
+        parent_type = parent_type.replace('web', '')
         relation, relation_created = get_or_create(
             session,
             TagObject,
@@ -475,6 +478,8 @@ class HostImporter(object):
         if interface['network_segment']:
             host.net_segment = interface['network_segment']
         if interface['description']:
+            if not host.description:
+                host.description = ''
             host.description += '\n Interface data: {0}'.format(interface['description'])
         if type(interface['hostnames']) in (str, unicode):
             interface['hostnames'] = [interface['hostnames']]
@@ -578,6 +583,18 @@ class VulnerabilityImporter(object):
                 parent = session.query(Host).filter_by(id=parent_id).first()
             if level == 4:
                 parent = session.query(Service).filter_by(id=parent_id).first()
+            owner_name = document.get('owner', None)
+            creator = None
+            if owner_name:
+                creator = session.query(User).filter_by(username=owner_name).first()
+
+            if not creator:
+                rng = SystemRandom()
+                password =  "".join(
+                    [rng.choice(string.ascii_letters + string.digits) for _ in
+                     xrange(12)])
+                creator, _ = get_or_create(session, User, username=owner_name, active=False)
+                creator.password = password
             if document['type'] == 'VulnerabilityWeb':
                 method = document.get('method')
                 path = document.get('path')
@@ -600,7 +617,7 @@ class VulnerabilityImporter(object):
                 vuln_params = {
                     'name': document.get('name'),
                     'workspace': workspace,
-                    'description': document.get('desc')
+                    'description': document.get('desc'),
                 }
                 if type(parent) == Host:
                     vuln_params.update({'host_id': parent.id})
@@ -612,6 +629,7 @@ class VulnerabilityImporter(object):
                     **vuln_params
                 )
             vulnerability.severity = severity
+            vulnerability.creator = creator
             vulnerability.confirmed = document.get('confirmed', False) or False
             vulnerability.data = document.get('data')
             vulnerability.ease_of_resolution = document.get('easeofresolution') if document.get('easeofresolution') else None
@@ -688,7 +706,7 @@ class VulnerabilityImporter(object):
                 File,
                 filename=attachment_name,
                 object_id=vulnerability.id,
-                object_type=vulnerability.__class__.__name__)
+                object_type='vulnerability')
             file.content = attachment_file.read()
 
             attachment_file.close()
@@ -721,7 +739,7 @@ class VulnerabilityImporter(object):
                 workspace=workspace
             )
             session.flush()
-            if created and reference not in map(lambda  ref: ref.name, references):
+            if created and reference not in map(lambda ref: ref.name, references):
                 references.add(reference)
         return references
 
@@ -772,7 +790,7 @@ class NoteImporter(object):
             Comment,
             text='{0}\n{1}'.format(document.get('text', ''), document.get('description', '')),
             object_id=couchdb_relational_map[parent_document.get('_id')],
-            object_type=parent_document['type'],
+            object_type=parent_document['type'].lower(),
             workspace=workspace)
         yield comment
 
@@ -874,7 +892,14 @@ class TaskImporter(object):
             task.methodology = methodology
 
         task.description = document.get('description')
-        task.assigned_to = session.query(User).filter_by(username=document.get('username')).first()
+
+        assigned_users = []
+
+        for username in document.get('assigned_to', []):
+            if username:
+                assigned_users.append(session.query(User).filter_by(username=username).first())
+
+        task.assigned_to = assigned_users
 
         mapped_status = {
             'New': 'new',
@@ -921,7 +946,7 @@ class CommunicationImporter(object):
             Comment,
             text=document.get('text'),
             object_id=workspace.id,
-            object_type='Workspace',
+            object_type='workspace',
             workspace=workspace)
         yield comment
 
@@ -1215,9 +1240,9 @@ class ImportCouchDB():
         users_import = ImportCouchDBUsers()
         users_import.run()
 
-        logger.info('Importing workspaces. Using {0} threads'.format(multiprocessing.cpu_count()))
+        logger.info('Importing workspaces. Using {0} threads'.format(multiprocessing.cpu_count() * 2))
         workspace_threads = []
-        with tqdm(total=len(workspaces_list),
+        with tqdm(total=len(workspaces_list) * 18,
                   unit='B', unit_scale=True, unit_divisor=1024) as pbar:
             for workspace_name in workspaces_list:
                 logger.debug(u'Setting up workspace {}'.format(workspace_name))
@@ -1226,11 +1251,11 @@ class ImportCouchDB():
                     logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
                                  " configuration file has CouchDB admin's credentials set")
                     sys.exit(1)
-                thread = threading.Thread(target=self.import_workspace_into_database, args=(workspace_name, ))
+                thread = threading.Thread(target=self.import_workspace_into_database, args=(workspace_name, pbar))
                 thread.daemon = True
                 thread.start()
                 workspace_threads.append(thread)
-                if len(workspace_threads) > multiprocessing.cpu_count():
+                if len(workspace_threads) > multiprocessing.cpu_count() * 2:
                     for thread in workspace_threads:
                         thread.join()
                         pbar.update(1)
@@ -1306,7 +1331,7 @@ class ImportCouchDB():
                     with open(missing_objs_filename, 'w') as missing_objs_file:
                         missing_objs_file.write(json.dumps(objs_diff))
 
-    def import_workspace_into_database(self, workspace_name):
+    def import_workspace_into_database(self, workspace_name, pbar):
         with app.app_context():
 
             faraday_importer = FaradayEntityImporter(workspace_name)
@@ -1348,6 +1373,7 @@ class ImportCouchDB():
                             session.commit()
                             couchdb_relational_map_by_type[couchdb_id].append({'type': obj_type, 'id': new_obj.id})
                             couchdb_relational_map[couchdb_id].append(new_obj.id)
+                pbar.update(1)
             update_command_tools(workspace, command_tool_map,
                                  couchdb_relational_map_by_type)
             session.commit()

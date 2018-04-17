@@ -25,28 +25,31 @@ CONF = getInstanceConfiguration()
 
 _plugin_controller_api = None
 _http_server = None
-
-
+ioloop_instance = None
 def startServer():
     global _http_server
+    global ioloop_instance
     if _http_server is not None:
-        IOLoop.instance().start()
+        ioloop_instance.start()
 
 
 def stopServer():
     global _http_server
+    global ioloop_instance
     if _http_server is not None:
-        IOLoop.instance().stop()
+        ioloop_instance.stop()
         _http_server.stop()
 
 
 def startAPIs(plugin_controller, model_controller, hostname, port):
     global _rest_controllers
     global _http_server
+    global ioloop_instance
     _rest_controllers = [PluginControllerAPI(plugin_controller), ModelControllerAPI(model_controller)]
 
     app = Flask('APISController')
 
+    ioloop_instance = IOLoop.current()
     _http_server = HTTPServer(WSGIContainer(app))
     while True:
         try:
@@ -75,9 +78,6 @@ def startAPIs(plugin_controller, model_controller, hostname, port):
     logging.getLogger("tornado.access").addHandler(logger.getLogger(app))
     logging.getLogger("tornado.access").propagate = False
     threading.Thread(target=startServer).start()
-
-def stopAPIs():
-    stopServer()
 
 
 class RESTApi(object):

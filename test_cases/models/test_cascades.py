@@ -5,7 +5,9 @@ from server.models import (
     Comment,
     File,
     Methodology,
-    Task
+    MethodologyTemplate,
+    Task,
+    TaskTemplate
 )
 
 def test_delete_user(workspace, session):
@@ -110,6 +112,31 @@ class TestCascadeDelete:
         CommandObject.create(self.host_vuln, self.command)
         CommandObject.create(self.service_vuln, self.command)
 
+        self.methodology_template = MethodologyTemplate(
+            name="test",
+        )
+        session.add(self.methodology_template)
+
+        self.methodology_template_task = TaskTemplate(
+            name="aaaa",
+            template=self.methodology_template
+        )
+        session.add(self.methodology_template)
+
+        self.methodology = Methodology(
+            name="test",
+            template=self.methodology_template,
+            workspace=self.workspace)
+        session.add(self.methodology)
+
+        self.methodology_task = Task(
+            name="aaaa",
+            workspace=self.workspace,
+            template=self.methodology_template_task,
+            methodology=self.methodology
+        )
+        session.add(self.methodology_template_task)
+
         session.commit()
 
     @contextmanager
@@ -177,3 +204,12 @@ class TestCascadeDelete:
         with self.assert_deletes(self.host, self.user, self.workspace,
                                  should_delete=False):
             self.session.delete(self.service)
+
+    def test_delete_methodology_template_keeps_child(self):
+        with self.assert_deletes(self.methodology, self.methodology_task,
+                                 should_delete=False):
+            self.session.delete(self.methodology_template)
+
+    def test_delete_methodology_template_deletes_task(self):
+        with self.assert_deletes(self.methodology_template_task):
+            self.session.delete(self.methodology_template)

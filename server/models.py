@@ -1341,11 +1341,12 @@ class Methodology(Metadata):
 
     template = relationship(
         'MethodologyTemplate',
-        backref=backref('methodologies', cascade="all, delete-orphan")
+        backref=backref('methodologies')
     )
     template_id = Column(
                     Integer,
-                    ForeignKey('methodology_template.id'),
+                    ForeignKey('methodology_template.id',
+                               ondelete="SET NULL"),
                     index=True,
                     nullable=True,
                     )
@@ -1377,7 +1378,9 @@ class TaskTemplate(TaskABC):
         'concrete': True
     }
 
-    template = relationship('MethodologyTemplate', backref='tasks')
+    template = relationship(
+        'MethodologyTemplate',
+        backref=backref('tasks', cascade="all, delete-orphan"))
     template_id = Column(
                     Integer,
                     ForeignKey('methodology_template.id'),

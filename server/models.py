@@ -1168,6 +1168,10 @@ class Workspace(Metadata):
     vulnerability_standard_count = query_expression()
     vulnerability_total_count = query_expression()
 
+    workspace_permission_instances = relationship(
+        "WorkspacePermission",
+        cascade="all, delete-orphan")
+
     @classmethod
     def query_with_count(cls, only_confirmed):
         """
@@ -1252,6 +1256,10 @@ class WorkspacePermission(db.Model):
     user = relationship('User',
                         foreign_keys=[user_id])
 
+    @property
+    def parent(self):
+        return
+
 
 def is_valid_workspace(workspace_name):
     return db.session.query(server.models.Workspace).filter_by(name=workspace_name).first() is not None
@@ -1282,6 +1290,10 @@ class User(db.Model, UserMixin):
     role = Column(Enum(*ROLES, name='user_roles'),
                   nullable=False, default='client')
     # TODO: add  many to many relationship to add permission to workspace
+
+    workspace_permission_instances = relationship(
+        "WorkspacePermission",
+        cascade="all, delete-orphan")
 
     def __init__(self, *args, **kwargs):
         # added for compatibility with flask security

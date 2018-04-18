@@ -57,6 +57,7 @@ angular.module("faradayApp")
             };
 
             var createDbUrl = function(wsName) {
+                wsName = wsName || "";
                 return APIURL + "ws/" + wsName + (wsName ? "/" : "");
             }
 

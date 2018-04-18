@@ -84,6 +84,9 @@ angular.module('faradayApp')
                 controller: 'commonsModalKoCtrl',
                 resolve: {
                     msg: function() {
+                        if (error.status == 409){
+                            return "A workspace with that name already exists"
+                        }
                         return error;
                     }
                 }

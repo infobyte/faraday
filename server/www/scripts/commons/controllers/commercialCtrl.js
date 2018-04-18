@@ -10,7 +10,6 @@ angular.module('faradayApp')
                 if(!auth) {
                     $location.path('/login');
                 }
-                return deferred.reject(response);
             });
         	if ($location.path().split("/")[1] === "executive") {
         		$scope.header = "executive report";

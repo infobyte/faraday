@@ -35,8 +35,9 @@ angular.module('faradayApp')
                         object[prop] = "";
                     }
 
+                    if(prop === "_id") object[prop] = v[prop].toString();
                     if(prop === "confirmed") object[prop] = v[prop].toString();
-                    if(prop === "date") object[prop] = parseDate(v["metadata"]["create_time"] * 1000);
+                    if(prop === "date") object[prop] = parseDate(new Date(v["metadata"]["create_time"]));
                     if(prop === "creator") object[prop] = excelEscape(v["metadata"]["creator"]);
                     if(prop === "web") {
                         if(v.type === "Vulnerability") {

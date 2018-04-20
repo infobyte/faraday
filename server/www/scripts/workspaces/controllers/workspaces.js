@@ -84,6 +84,9 @@ angular.module('faradayApp')
                 controller: 'commonsModalKoCtrl',
                 resolve: {
                     msg: function() {
+                        if (error.status == 409){
+                            return "A workspace with that name already exists"
+                        }
                         return error;
                     }
                 }
@@ -160,8 +163,20 @@ angular.module('faradayApp')
             workspacesFact.update(workspace, wsName).then(function(workspace) {
                 if (finally_) finally_(workspace);
                 $scope.onSuccessEdit(workspace);
-            }, function(workspace){
+            }, function(error){
                 if (finally_) finally_(workspace);
+                var modal = $uibModal.open({
+                    templateUrl: 'scripts/commons/partials/modalKO.html',
+                    controller: 'commonsModalKoCtrl',
+                    resolve: {
+                        msg: function() {
+                            if (error.status == 409){
+                                return "A workspace with that name already exists"
+                            }
+                            return error;
+                        }
+                    }
+                });
             });
         };
 
@@ -213,18 +228,15 @@ angular.module('faradayApp')
                 });
 
                 modal.result.then(function(workspace) {
-                    if(workspace != undefined){
+                    // The API expects list of strings in scope
+                    var old_scope = workspace.scope;
+                    workspace.scope = workspace.scope.map(function(scope){
+                        return scope.key
+                    }).filter(Boolean);
 
-                        // The API expects list of strings in scope
-                        var old_scope = workspace.scope;
-                        workspace.scope = workspace.scope.map(function(scope){
-                            return scope.key
-                        }).filter(Boolean);
-
-                        $scope.update(workspace, oldName, function(workspace){
-                            workspace.scope = old_scope;
-                        }); 
-                    }
+                    $scope.update(workspace, oldName, function(workspace){
+                        workspace.scope = old_scope;
+                    }); 
                 });
             } else {
                 var modal = $uibModal.open({

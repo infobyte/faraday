@@ -5,8 +5,11 @@ from server.models import (
     Comment,
     File,
     Methodology,
+    MethodologyTemplate,
     Task,
-    WorkspacePermission
+    TaskAssignedTo,
+    TaskTemplate,
+    WorkspacePermission,
 )
 
 def test_delete_user(workspace, session):
@@ -113,6 +116,37 @@ class TestCascadeDelete:
         CommandObject.create(self.host_vuln, self.command)
         CommandObject.create(self.service_vuln, self.command)
 
+        self.methodology_template = MethodologyTemplate(
+            name="test",
+        )
+        session.add(self.methodology_template)
+
+        self.methodology_template_task = TaskTemplate(
+            name="aaaa",
+            template=self.methodology_template
+        )
+        session.add(self.methodology_template)
+
+        self.methodology = Methodology(
+            name="test",
+            template=self.methodology_template,
+            workspace=self.workspace)
+        session.add(self.methodology)
+
+        self.methodology_task = Task(
+            name="aaaa",
+            workspace=self.workspace,
+            template=self.methodology_template_task,
+            methodology=self.methodology
+        )
+        session.add(self.methodology_template_task)
+
+        self.methodology_task_assigned = TaskAssignedTo(
+            task=self.methodology_task,
+            user=self.user,
+        )
+        session.add(self.methodology_task_assigned)
+
         session.commit()
 
     @contextmanager
@@ -178,3 +212,29 @@ class TestCascadeDelete:
                 self.session.delete(self.user)
         for obj in objs:
             assert obj.creator is None
+
+    def test_delete_service_keeps_parents(self):
+        with self.assert_deletes(self.host, self.user, self.workspace,
+                                 should_delete=False):
+            self.session.delete(self.service)
+
+    def test_delete_methodology_template_keeps_child(self):
+        with self.assert_deletes(self.methodology, self.methodology_task,
+                                 should_delete=False):
+            self.session.delete(self.methodology_template)
+
+    def test_delete_methodology_template_deletes_task(self):
+        with self.assert_deletes(self.methodology_template_task):
+            self.session.delete(self.methodology_template)
+
+    def test_delete_task_deletes_assignations(self):
+        with self.assert_deletes(self.methodology_task_assigned):
+            self.session.delete(self.methodology_task)
+
+    def test_delete_task_assignation_keeps_user(self):
+        with self.assert_deletes(self.user, should_delete=False):
+            self.session.delete(self.methodology_task_assigned)
+
+    def test_delete_user_deletes_assignations(self):
+        with self.assert_deletes(self.methodology_task_assigned):
+            self.session.delete(self.user)

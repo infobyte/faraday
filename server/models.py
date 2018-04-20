@@ -353,7 +353,6 @@ class Service(Metadata):
     host = relationship(
         'Host',
         foreign_keys=[host_id],
-        cascade='all'
     )
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
@@ -1354,11 +1353,12 @@ class Methodology(Metadata):
 
     template = relationship(
         'MethodologyTemplate',
-        backref=backref('methodologies', cascade="all, delete-orphan")
+        backref=backref('methodologies')
     )
     template_id = Column(
                     Integer,
-                    ForeignKey('methodology_template.id'),
+                    ForeignKey('methodology_template.id',
+                               ondelete="SET NULL"),
                     index=True,
                     nullable=True,
                     )
@@ -1390,7 +1390,9 @@ class TaskTemplate(TaskABC):
         'concrete': True
     }
 
-    template = relationship('MethodologyTemplate', backref='tasks')
+    template = relationship(
+        'MethodologyTemplate',
+        backref=backref('tasks', cascade="all, delete-orphan"))
     template_id = Column(
                     Integer,
                     ForeignKey('methodology_template.id'),
@@ -1411,8 +1413,10 @@ class TaskAssignedTo(db.Model):
     task = relationship('Task')
 
     user_id = Column(Integer, ForeignKey('faraday_user.id'), nullable=False)
-    user = relationship('User',
-                        foreign_keys=[user_id])
+    user = relationship(
+        'User',
+        foreign_keys=[user_id],
+        backref=backref('assigned_tasks', cascade="all, delete-orphan"))
 
 
 class Task(TaskABC):

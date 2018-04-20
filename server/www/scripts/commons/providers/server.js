@@ -56,7 +56,8 @@ angular.module("faradayApp")
                 return APIURL + objectType + "/" + objectId + "/";
             };
 
-            var createDbUrl = function(wsName = "") {
+            var createDbUrl = function(wsName) {
+                wsName = wsName || "";
                 return APIURL + "ws/" + wsName + (wsName ? "/" : "");
             }
 

@@ -92,6 +92,8 @@ angular.module('faradayApp')
             ServerAPI.updateWorkspace(workspace, wsName).then(function(data){
                 workspace._rev = data.rev;
                 deferred.resolve(workspace);
+            }, function(err){
+                deferred.reject(err);
             });
             return deferred.promise;
         };

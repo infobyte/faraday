@@ -60,6 +60,7 @@ from server.models import (
     VulnerabilityTemplate,
     VulnerabilityWeb,
     Workspace,
+    WorkspacePermission,
     File,
     SQLAlchemy,
 )
@@ -849,6 +850,18 @@ class WorkspaceImporter(object):
             workspace.end_date = datetime.datetime.fromtimestamp(float(document.get('duration')['end'])/1000)
         for scope in [x.strip() for x in document.get('scope', '').split('\n') if x.strip()]:
             scope_obj, created = get_or_create(session, Scope, name=scope, workspace=workspace)
+        users = document.get('users', [])
+        if not users:
+            workspace.public = True
+        for username in users:
+            user = session.query(User).filter_by(username=username).first()
+            if user is None:
+                logger.warn('User {} not found but it has permissions for '
+                            'workspace {}. Ignoring'.format(username,
+                                                            workspace.name))
+                continue
+            (perm, created) = get_or_create(session, WorkspacePermission,
+                                            user=user, workspace=workspace)
         yield workspace
 
 

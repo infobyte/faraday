@@ -1052,7 +1052,8 @@ class ImportCouchDBUsers():
                     username=username,
                     email=username + '@test.com',
                     password=self.convert_couchdb_hash(password),
-                    is_ldap=False
+                    is_ldap=False,
+                    role='admin'
                 )
             else:
                 admin.password=self.convert_couchdb_hash(password)
@@ -1069,6 +1070,17 @@ class ImportCouchDBUsers():
             if user['name'] in admins.keys():
                 # This is an already imported admin user, skip
                 continue
+            try:
+                role = user['roles'][0]
+            except (KeyError, IndexError):
+                role = 'client'
+            else:
+                if role not in ['admin', 'client', 'pentester']:
+                    logger.warn(
+                        "Invalid role for user {}: {}".format(user['name'],
+                                                              role)
+                    )
+                    role = 'client'
             logger.debug(u'Importing user {0}'.format(user['name']))
             old_user = db.session.query(User).filter_by(username=user['name']).first()
             if not old_user:
@@ -1076,7 +1088,8 @@ class ImportCouchDBUsers():
                     username=user['name'],
                     email=user['name'] + '@test.com',
                     password=self.get_hash_from_document(user),
-                    is_ldap=False
+                    is_ldap=False,
+                    role=role,
                 )
             else:
                 old_user.password = self.get_hash_from_document(user)

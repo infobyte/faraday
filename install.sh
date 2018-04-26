@@ -52,14 +52,21 @@ if [[ "$os" =~ "Debian 8".*|"stretch/sid".* ]]; then
     update=1
 fi
 
-if [ "$update" -eq 0 ]; then
-    apt-get update
-    update=1
-fi
+if [[ "$os" =~ "Debian|Ubuntu" ]]; then
+    if [ "$update" -eq 0 ]; then
+        apt-get update
+        update=1
+    fi
+    for pkg in build-essential ipython python-setuptools python-pip python-dev libpq-dev libffi-dev couchdb gir1.2-gtk-3.0 gir1.2-vte-2.91 gir1.2-vte-2.90 python-gobject zsh curl; do
+        apt-get install -y $pkg
+    done
 
-for pkg in build-essential ipython python-setuptools python-pip python-dev libpq-dev libffi-dev couchdb gir1.2-gtk-3.0 gir1.2-vte-2.91 gir1.2-vte-2.90 python-gobject zsh curl; do
-    sudo apt-get install -y $pkg
-done
+elif [[ "$os" =~ "Fedora release [0-9]+" ]]; then
+    for pkg in python-pip gcc python-devel libffi-devel openssl-devel couchdb; do
+        dnf install $pkg 
+    done
+
+fi
 
 pip2 install -r requirements.txt
 

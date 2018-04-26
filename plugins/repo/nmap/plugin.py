@@ -223,15 +223,16 @@ class Host(object):
         @return A list of (os_vendor_family_gen, accuracy)
         """
         # OS information about host with great acurracy.
+
         osclasses = self.node.findall('os/osclass')
         if osclasses == []:
             osclasses = self.node.findall('os/osmatch/osclass')
 
         for osclass in osclasses:
-            os_vendor = osclass.get("vendor")
-            os_family = osclass.get("osfamily")
-            os_gen = osclass.get("osgen")
-            accuracy = osclass.get("accuracy")
+            os_vendor = osclass.get("vendor", "unknown")
+            os_family = osclass.get("osfamily", "unknown")
+            os_gen = osclass.get("osgen", "unknown")
+            accuracy = osclass.get("accuracy", "unknown")
 
             yield ("%s %s %s" % (os_vendor, os_family, os_gen), accuracy)
 
@@ -239,8 +240,9 @@ class Host(object):
         if osclasses == []:
             services = self.node.findall("ports/port/service")
             for service in services:
-                ostype = service.get("ostype")
+                ostype = service.get("ostype", "unknown")
                 yield ("%s" % ostype, 0)
+
 
     def top_os_guess(self):
         """

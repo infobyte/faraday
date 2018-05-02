@@ -11,7 +11,8 @@ $.ajaxSetup({
 var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.bootstrap', 'angularFileUpload',
                                                 'filter', 'ngClipboard', 'ngCookies', 'cfp.hotkeys', 'chart.js',
                                                 'ui.grid', 'ui.grid.selection', 'ui.grid.grouping', 'ngSanitize',
-                                                'ui.grid.pagination', 'ui.grid.pinning', 'angularMoment', 'ui-notification'])
+                                                'ui.grid.pagination', 'ui.grid.pinning', 'angularMoment', 'ui-notification',
+                                                'tandibar/ng-rollbar'])
     .constant("BASEURL", (function() {
         var url = window.location.origin + "/";
         return url;
@@ -70,8 +71,8 @@ var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.
         return statuses;
     })());
 
-faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
-                   function($routeProvider, ngClipProvider, $uibTooltipProvider) {
+faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider', 'RollbarProvider',
+                   function($routeProvider, ngClipProvider, $uibTooltipProvider, RollbarProvider) {
     $uibTooltipProvider.options({
         appendToBody: true
     });
@@ -291,6 +292,12 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
             templateUrl: 'scripts/commons/partials/home.html',
             controller: 'homeCtrl'
         });
+        RollbarProvider.init({
+            accessToken: "70f0c36ae96d4ffc90394565b42c5bf9",
+            captureUncaught: true,
+            payload: {
+                    environment: "devel"
+        }});
 }]);
 
 faradayApp.run(['$location', '$rootScope', 'loginSrv', function($location, $rootScope, loginSrv) {

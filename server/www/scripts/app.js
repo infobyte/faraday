@@ -217,11 +217,6 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider', 'R
             controller: 'workspacesCtrl',
             title: 'Workspaces | '
         }).
-        when('/communication', {
-            templateUrl: 'scripts/commons/partials/commercial.html',
-            controller: 'commercialCtrl',
-            title: 'Communication | '
-        }).
         when('/comparison', {
             templateUrl: 'scripts/commons/partials/commercial.html',
             controller: 'commercialCtrl'

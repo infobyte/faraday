@@ -99,7 +99,7 @@ class ServiceView(FilterAlchemyMixin, ReadWriteWorkspacedView):
     schema_class = ServiceSchema
     count_extra_filters = [Service.status == 'open']
     get_undefer = [Service.credentials_count, Service.vulnerability_count]
-    get_joinedloads = [Service.credentials]
+    get_joinedloads = [Service.credentials, Service.update_user]
     filterset_class = ServiceFilterSet
 
     def _envelope_list(self, objects, pagination_metadata=None):

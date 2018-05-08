@@ -167,6 +167,17 @@ class Metadata(db.Model):
     def creator(cls):
         return relationship('User', foreign_keys=[cls.creator_id])
 
+    @declared_attr
+    def update_user_id(cls):
+        return Column(
+            Integer,
+            ForeignKey('faraday_user.id', ondelete="SET NULL"),
+            nullable=True)
+
+    @declared_attr
+    def update_user(cls):
+        return relationship('User', foreign_keys=[cls.update_user_id])
+
     create_date = Column(DateTime, default=datetime.utcnow)
     update_date = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

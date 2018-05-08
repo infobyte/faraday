@@ -109,7 +109,7 @@ class CredentialView(FilterAlchemyMixin, ReadWriteWorkspacedView):
     model_class = Credential
     schema_class = CredentialSchema
     filterset_class = CredentialFilterSet
-    get_joinedloads = [Credential.host, Credential.service]
+    get_joinedloads = [Credential.host, Credential.service, Credential.update_user]
 
     def _envelope_list(self, objects, pagination_metadata=None):
         credentials = []

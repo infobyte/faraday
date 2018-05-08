@@ -96,7 +96,7 @@ class HostsView(PaginatedMixin,
     get_undefer = [Host.credentials_count,
                    Host.open_service_count,
                    Host.vulnerability_count]
-    get_joinedloads = [Host.hostnames, Host.services]
+    get_joinedloads = [Host.hostnames, Host.services, Host.update_user]
 
     @route('/<host_id>/services/')
     def service_list(self, workspace_name, host_id):

@@ -452,7 +452,7 @@ class TestHostAPI:
         updated_host = Host.query.filter_by(id=host.id).first()
         assert res.json == {
             u'_id': host.id,
-            u'type': 'Host',
+            u'type': u'Host',
             u'_rev': u'',
             u'credentials': 0,
             u'default_gateway': '',
@@ -469,7 +469,7 @@ class TestHostAPI:
                 u'update_action': 0,
                 u'update_controller_action': u'',
                 u'update_time': pytz.UTC.localize(updated_host.update_date).isoformat(),
-                u'update_user': u''},
+                u'update_user': None},
             u'name': u'10.31.112.21',
             u'os': u'Microsoft Windows Server 2008 R2 Standard Service Pack 1',
             u'owned': False,

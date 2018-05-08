@@ -441,7 +441,7 @@ class VulnerabilityView(PaginatedMixin,
             joinedload(VulnerabilityWeb.service)
             .joinedload(Service.host)
             .joinedload(Host.hostnames),
-
+            joinedload(VulnerabilityGeneric.update_user),
             undefer(VulnerabilityGeneric.creator_command_id),
             undefer(VulnerabilityGeneric.creator_command_tool),
             undefer(VulnerabilityGeneric.target_host_ip),

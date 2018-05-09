@@ -108,7 +108,8 @@ def register_handlers(app):
             g.user = user
             if user is None:
                 logger.warn("Unknown user id {}".format(session["user_id"]))
-                flask.abort(403)
+                del flask.session['user_id']
+                flask.abort(401)  # 403 would be better but breaks the web ui
                 return
 
     @app.after_request

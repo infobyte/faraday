@@ -106,6 +106,10 @@ def register_handlers(app):
         if logged_in:
             user = User.query.filter_by(id=session["user_id"]).first()
             g.user = user
+            if user is None:
+                logger.warn("Unknown user id {}".format(session["user_id"]))
+                flask.abort(403)
+                return
 
     @app.after_request
     def log_queries_count(response):

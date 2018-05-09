@@ -3,11 +3,10 @@ from __future__ import absolute_import
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 
-import ConfigParser
-import json
 import os
 import shutil
 import errno
+import ConfigParser
 
 from logging import (
     DEBUG,
@@ -19,10 +18,6 @@ from config.configuration import getInstanceConfiguration
 LOGGING_LEVEL = INFO
 
 FARADAY_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-FARADAY_SERVER_DBS_DIR = os.path.join(CONSTANTS.CONST_FARADAY_HOME_PATH, 'workspaces')
-if not os.path.exists(FARADAY_SERVER_DBS_DIR):
-    # Temporary hack, remove me
-    os.mkdir(FARADAY_SERVER_DBS_DIR)
 FARADAY_SERVER_PID_FILE = os.path.join(
     CONSTANTS.CONST_FARADAY_HOME_PATH, 'faraday-server.pid')
 REQUIREMENTS_FILE = os.path.join(FARADAY_BASE, 'requirements_server.txt')

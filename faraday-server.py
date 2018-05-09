@@ -79,10 +79,6 @@ def run_server(args):
     web_server = server.web.WebServer(enable_ssl=args.ssl)
 
     daemonize.create_pid_file()
-    with app.app_context():
-        if db.session.query(User).count() > 1:
-            print("Can't start faraday-server. User invariant failed. Please contact support")
-            sys.exit(1)
     web_server.run()
     logger.info('Faraday Server is ready')
 

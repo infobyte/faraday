@@ -107,14 +107,15 @@ def validate_email(ctx, param, value):
 @click.option('--email', prompt=True, callback=validate_email)
 @click.option('--password', prompt=True, hide_input=True,
               confirmation_prompt=True)
-def create_user(username, email, password):
+def createsuperuser(username, email, password):
     with app.app_context():
-        if db.session.query(User).count() > 0:
+        if db.session.query(User).filter_by(active=True).count() > 0:
             print("Can't create more users. Please contact support")
             sys.exit(1)
         app.user_datastore.create_user(username=username,
                                        email=email,
                                        password=password,
+                                       role='admin',
                                        is_ldap=False)
         db.session.commit()
         click.echo(click.style(
@@ -129,7 +130,7 @@ cli.add_command(faraday_schema_display)
 cli.add_command(initdb)
 cli.add_command(import_from_couchdb)
 cli.add_command(database_schema)
-cli.add_command(create_user)
+cli.add_command(createsuperuser)
 cli.add_command(sql_shell)
 
 

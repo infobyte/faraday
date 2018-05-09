@@ -127,7 +127,7 @@ angular.module('faradayApp')
             vulnsManager.updateVuln(vm.vuln, vm.data).then(function(){
                 $modalInstance.close(vm.data);
             }, function(data){
-                commonsFact.showMessage("Error updating vuln " + vm.vuln.name + " (" + vm.vuln._id + "): " + data.message);
+                commonsFact.showMessage("Error updating vuln " + vm.vuln.name + " (" + vm.vuln._id + "): " + (data.message || JSON.stringify(data.messages)));
             });
 
 

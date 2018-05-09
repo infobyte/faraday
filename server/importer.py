@@ -60,6 +60,7 @@ from server.models import (
     VulnerabilityTemplate,
     VulnerabilityWeb,
     Workspace,
+    WorkspacePermission,
     File,
     SQLAlchemy,
 )
@@ -849,6 +850,18 @@ class WorkspaceImporter(object):
             workspace.end_date = datetime.datetime.fromtimestamp(float(document.get('duration')['end'])/1000)
         for scope in [x.strip() for x in document.get('scope', '').split('\n') if x.strip()]:
             scope_obj, created = get_or_create(session, Scope, name=scope, workspace=workspace)
+        users = document.get('users', [])
+        if not users:
+            workspace.public = True
+        for username in users:
+            user = session.query(User).filter_by(username=username).first()
+            if user is None:
+                logger.warn('User {} not found but it has permissions for '
+                            'workspace {}. Ignoring'.format(username,
+                                                            workspace.name))
+                continue
+            (perm, created) = get_or_create(session, WorkspacePermission,
+                                            user=user, workspace=workspace)
         yield workspace
 
 
@@ -1052,7 +1065,8 @@ class ImportCouchDBUsers():
                     username=username,
                     email=username + '@test.com',
                     password=self.convert_couchdb_hash(password),
-                    is_ldap=False
+                    is_ldap=False,
+                    role='admin'
                 )
             else:
                 admin.password=self.convert_couchdb_hash(password)
@@ -1069,6 +1083,17 @@ class ImportCouchDBUsers():
             if user['name'] in admins.keys():
                 # This is an already imported admin user, skip
                 continue
+            try:
+                role = user['roles'][0]
+            except (KeyError, IndexError):
+                role = 'client'
+            else:
+                if role not in ['admin', 'client', 'pentester']:
+                    logger.warn(
+                        "Invalid role for user {}: {}".format(user['name'],
+                                                              role)
+                    )
+                    role = 'client'
             logger.debug(u'Importing user {0}'.format(user['name']))
             old_user = db.session.query(User).filter_by(username=user['name']).first()
             if not old_user:
@@ -1076,7 +1101,8 @@ class ImportCouchDBUsers():
                     username=user['name'],
                     email=user['name'] + '@test.com',
                     password=self.get_hash_from_document(user),
-                    is_ldap=False
+                    is_ldap=False,
+                    role=role,
                 )
             else:
                 old_user.password = self.get_hash_from_document(user)

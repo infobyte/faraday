@@ -8,7 +8,8 @@ from server.models import (
     MethodologyTemplate,
     Task,
     TaskAssignedTo,
-    TaskTemplate
+    TaskTemplate,
+    WorkspacePermission,
 )
 
 def test_delete_user(workspace, session):
@@ -32,6 +33,8 @@ class TestCascadeDelete:
         workspace.set_scope(['*.infobytesec.com', '192.168.1.0/24'])
         self.user = user
         self.workspace = workspace
+        self.permission = WorkspacePermission(user=user, workspace=workspace)
+        session.add(self.permission)
         self.host = service.host
         self.host.set_hostnames(['a.com', 'b.com'])
         self.service = service
@@ -178,8 +181,10 @@ class TestCascadeDelete:
         self.session.add(task)
         self.session.commit()
 
-        self.session.delete(self.workspace)
-        self.session.commit()
+        with self.assert_deletes(self.permission):
+            with self.assert_deletes(self.user, should_delete=False):
+                self.session.delete(self.workspace)
+                self.session.commit()
 
     def test_delete_vuln_attachments(self):
         with self.assert_deletes(self.attachment):
@@ -203,7 +208,8 @@ class TestCascadeDelete:
         for obj in objs:
             assert obj.creator is not None
         with self.assert_deletes(*objs, should_delete=False):
-            self.session.delete(self.user)
+            with self.assert_deletes(self.permission):
+                self.session.delete(self.user)
         for obj in objs:
             assert obj.creator is None
 

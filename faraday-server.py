@@ -90,7 +90,7 @@ def check_postgresql():
                 logger.warn('No workspaces found. Remeber to execute couchdb importer')
         except sqlalchemy.exc.OperationalError:
             logger.error(
-                'Could not connect to postgresql, please check if database is running or configuration settings are correct.')
+                'Could not connect to postgresql, please check if database is running or configuration settings are correct. For first time installations execute python manage.py initdb')
             sys.exit(1)
 
 

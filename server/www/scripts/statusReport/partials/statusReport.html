@@ -31,6 +31,35 @@
             <!-- #ws-control -->
 
             <div class="button-control col-md-6 col-sm-6 col-xs-12">
+                <div id="add-columns" class="btn-group btn-small-margin">
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Add columns">
+                        Add columns
+                    </button>
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Add Columns">
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                        <li ng-repeat="(column, show) in columns">
+                            <a class="ws" ng-click="toggleShow(column, show)" ng-show="!show">{{column}}</a>
+                        </li>
+                    </ul>
+                </div>
+                <div id="group-by" class="btn-group btn-small-margin">
+                    <button type="button" ng-if="propertyGroupBy" class="btn btn-danger" title="Clear" ng-click="clearGroupBy()">
+                        <i class="fa fa-times"></i>
+                    </button>
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="{{propertyGroupBy || 'Group By'}}">
+                        {{ (propertyGroupBy | uppercase) || "Group By"}}
+                    </button>
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Group By">
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                        <li ng-repeat="(column, show) in columns">
+                            <a class="ws" ng-show="show && (column !== 'evidence' && column !== 'impact' && column !== 'web' && column !== 'easeofresolution' && column !== 'date')" ng-click="groupBy(column)">{{column}}</a>
+                        </li>
+                    </ul>
+                </div>
                 <button id="delete" type="button" class="btn btn-default" title="Delete selected items" ng-click="delete()">
                     <span class="glyphicon glyphicon-trash"></span>
                     Delete
@@ -101,7 +130,7 @@
             </div>
             <!-- .col-md-6 .col-sm-6 .col-xs-12 -->
             <div class="reports">
-                <div class="row">
+                <div class="row-fix">
                     <div class="col-md-6 col-sm-3 col-xs-11">
                         <form role="form" ng-submit="searchFor(true, searchParams)">
                             <div class="form-group">
@@ -116,20 +145,9 @@
                             </div>
                         </form>
                     </div>
-                    <div class="col-md-12 col-sm-9 col-xs-12">
-                        <h4><span class="label label-default" title="Add columns">Add columns</span></h4>
-                        <ul class="label-list">
-                            <li ng-repeat="(column, show) in columns">
-                                <a href="" ng-click="toggleShow(column, show)" ng-show="!show">
-                                    <span class="label label-primary ws-name">{{column}}</span>
-                                </a>
-                            </li>
-                            <!-- label-list -->
-                        </ul>
-                    </div>
                 </div>
 
-                <div ui-grid="gridOptions" ui-grid-grouping ui-grid-selection ui-grid-pagination ui-grid-pinning class="grid"></div>
+                <div ui-grid="gridOptions" ui-grid-grouping ui-grid-selection ui-grid-pagination ui-grid-pinning ui-grid-resize-columns class="grid" ng-style="{'height' : gridHeight }"></div>
 
                 <div id="counter">
                     <span>Total</span>

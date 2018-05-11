@@ -589,7 +589,7 @@ class VulnerabilityImporter(object):
             if owner_name:
                 creator = session.query(User).filter_by(username=owner_name).first()
 
-            if not creator:
+            if not creator and owner_name:
                 rng = SystemRandom()
                 password =  "".join(
                     [rng.choice(string.ascii_letters + string.digits) for _ in

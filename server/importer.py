@@ -561,6 +561,18 @@ class ServiceImporter(object):
                 yield service
 
 
+def get_or_create_user(session, username):
+    rng = SystemRandom()
+    password =  "".join(
+        [rng.choice(string.ascii_letters + string.digits) for _ in
+            xrange(12)])
+    creator, _ = get_or_create(session, User, username=username, defaults={'active': False})
+    creator.password = password
+    session.add(creator) # remove me
+    session.commit() # remove me
+    return creator
+
+
 class VulnerabilityImporter(object):
     DOC_TYPE = ['Vulnerability', 'VulnerabilityWeb']
 
@@ -587,17 +599,7 @@ class VulnerabilityImporter(object):
             if level == 4:
                 parent = session.query(Service).filter_by(id=parent_id).first()
             owner_name = document.get('owner', None)
-            creator = None
-            if owner_name:
-                creator = session.query(User).filter_by(username=owner_name).first()
-
-            if not creator and owner_name:
-                rng = SystemRandom()
-                password =  "".join(
-                    [rng.choice(string.ascii_letters + string.digits) for _ in
-                     xrange(12)])
-                creator, _ = get_or_create(session, User, username=owner_name, active=False)
-                creator.password = password
+            creator = get_or_create_user(session, owner_name)
             if document['type'] == 'VulnerabilityWeb':
                 method = document.get('method')
                 path = document.get('path')
@@ -951,6 +953,11 @@ class ReportsImporter(object):
         report.objectives = document.get('objectives')
         report.grouped = document.get('grouped', False)
         report.workspace = workspace
+        try:
+            report.vuln_count = document['totalVulns']['total']
+        except KeyError:
+            logger.warning("Couldn't load vuln count of report".format(doc.get('_id')))
+        report.creator = get_or_create_user(session, document.get('owner'))
         session.flush()
         old_attachments = session.query(File).filter_by(
             object_id=report.id,

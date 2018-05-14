@@ -910,7 +910,9 @@ class TaskImporter(object):
 
         for username in document.get('assigned_to', []):
             if username:
-                assigned_users.append(session.query(User).filter_by(username=username).first())
+                user = session.query(User).filter_by(username=username).first()
+                if user:
+                    assigned_users.append(user)
 
         task.assigned_to = assigned_users
 

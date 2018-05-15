@@ -45,7 +45,7 @@ node (label: "master"){
         try {
             sh """
                 source ${ENV_PATH}/bin/activate
-                cd $WORKSPACE && pytest -v --with-hypothesis  --junitxml=$WORKSPACE/xunit.xml || :
+                cd $WORKSPACE && pytest -v --junitxml=$WORKSPACE/xunit.xml || :
                 deactivate
                """
                step([$class: 'CoberturaPublisher', autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/coverage.xml', failNoReports: false, failUnhealthy: false, failUnstable: false, maxNumberOfBuilds: 0, onlyStable: false, sourceEncoding: 'ASCII', zoomCoverageChart: false])

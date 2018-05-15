@@ -488,8 +488,11 @@ def checkServerUrl():
     import requests
     CONF = getInstanceConfiguration()
     server_url = CONF.getServerURI()
+
     if server_url is None or CONF.getAPIUsername() is None or CONF.getAPIUsername() is None:
         doLoginLoop()
+        server_url = CONF.getServerURI()
+
     try:
         requests.get(server_url, timeout=5)
     except requests.exceptions.SSLError:

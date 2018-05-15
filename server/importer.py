@@ -949,6 +949,7 @@ class ReportsImporter(object):
         report.status = document.get('status')
         # TODO: add tags
         report.conclusions = document.get('conclusions')
+        report.confirmed = document.get('confirmed', False)
         report.summary = document.get('summary')
         report.recommendations = document.get('recommendations')
         report.enterprise = document.get('enterprise')

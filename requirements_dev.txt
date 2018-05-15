@@ -1,4 +1,4 @@
-factory-boy
+factory-boy==2.10.0
 pytest
 pytest-factoryboy
 responses

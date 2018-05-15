@@ -566,8 +566,10 @@ def get_or_create_user(session, username):
     password =  "".join(
         [rng.choice(string.ascii_letters + string.digits) for _ in
             xrange(12)])
-    creator, _ = get_or_create(session, User, username=username, defaults={'active': False})
-    creator.password = password
+    creator, created = get_or_create(session, User, username=username)
+    if created:
+        creator.active = False
+        creator.password = password
     session.add(creator) # remove me
     session.commit() # remove me
     return creator

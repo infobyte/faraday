@@ -26,7 +26,7 @@
 .page-header .subtitle {
     font-size: 14px;
     font-weight: 600;
-    color: #E8E7E8;
+    color: #a3a3a3;
 }
 
 .img-wrapper {
@@ -64,7 +64,7 @@
     padding-right: 10px;
     border: none;
     background: none;
-    color: #E0E0E0;
+    color: #7c7c7c;
 }
 
 .workspace-switcher :hover{

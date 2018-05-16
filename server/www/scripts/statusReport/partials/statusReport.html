@@ -4,28 +4,16 @@
 
 <section id="main" class="seccion clearfix">
     <div class="right-main">
+		<div ng-controller="headerCtrl" ng-include="'scripts/commons/partials/header.html'"></div>
         <div id="reports-main" class="fila clearfix">
-            <div class="ws-label">
-                <h2><span id="ws-name" title="Current workspace">Status report for {{ workspace }} ({{ confirmed === false ? 'all vulns' : 'confirmed' }}) ({{gridOptions.totalItems}} vulns)</span></h2>
-                <!-- WS name -->
-            </div>
             <!-- .ws-label -->
             <div id="ws-control" class="btn-group btn-small-margin">
                 <button file-exporter="csv()" type="button" class="btn btn-success" title="Download CSV for current workspace">
                     <span class="glyphicon glyphicon-download"></span>
                 </button>
-                <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace" onclick="location.reload()">
-                    <span class="glyphicon glyphicon-refresh"></span>
-                </button>
                 <button type="button" class="btn btn-danger" title="{{ confirmed === true ? 'All vulns' : 'Confirmed vulns' }}" ng-click="toggleFilter()">
                     <span class="glyphicon glyphicon-filter" ng-style="{ 'opacity': (confirmed === true) ? '1' : '0.7' }"></span>
                 </button>
-                <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
-                    Change workspace <span class="caret"></span>
-                </button>
-                <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
-                    <li ng-repeat="ws in workspaces"><a href="#/status/ws/{{ws}}" class="ws">{{ws}}</a></li>
-                </ul>
                 <!-- WS navigation -->
             </div>
             <!-- #ws-control -->

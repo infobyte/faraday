@@ -16,12 +16,7 @@ angular.module('faradayApp')
                 workspacesFact.list().then(function(wss) {
                     $scope.workspaces = wss;
                 });
-
-                vulnsManager.getVulns($scope.workspace, null, null, null, null, null)
-                    .then(function(response) {
-                        $scope.totalItems = response.count;
-                    });
-
+                
                 dashboardSrv.setConfirmedFromCookie();
                 dashboardSrv.startTimer();
             };

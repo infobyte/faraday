@@ -100,7 +100,7 @@ header.head {
                 }
 
 .left-nav {
-    background: rgb(31, 30, 30);
+    border-top: 9px solid #464646;
     width: 76px;
     height: 100%;
     position: fixed;
@@ -118,8 +118,13 @@ header.head {
             -moz-transition: all .3s ease;
             -webkit-transition: all .3s ease;
     }
-    	aside nav a:hover {background-color: #d13434;}
-    	aside nav a.active {background-color: #e1372f;}
+    	aside nav a:hover {
+            background-color: #d9d9d9;
+        }
+
+    	aside nav a.active {
+            background-color: #d9d9d9;
+        }
 
         .left-nav {
             width: 64px;
@@ -127,17 +132,25 @@ header.head {
         }
 
         .left-nav .head {
-            margin-top: 9px;
             height: 72px;
             text-align: left;
             z-index:1000;
             background-color: #de4456;
             padding: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .left-nav .head a img{
+            height: 24px;
+            width: 24px;
+            flex:1
         }
 
         .left-nav nav a img{
-            width: 36px;
-            height: 36px;
+            height: 30px;
+            width: 30px;
         }
 
         .left-nav ul {
@@ -147,7 +160,7 @@ header.head {
 .right-main {
     position: absolute;
     top: 0px;
-    border-top: 3px solid black;
+    border-top: 3px solid #464646;
     right: 0;
     bottom: 0;
     left: 64px;

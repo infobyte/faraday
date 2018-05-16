@@ -59,17 +59,13 @@ p {margin-bottom: 1em;}
         .unsexto {width: 85px;}
 
 header.head {
-    height: 50px;
+    margin-top: 9px;
+    height: 72px;
     text-align: left;
     position: fixed;
-    width:100%;
     z-index:1000;
+    background-color: #de4456;
 }
-/* header.head .logo-container{
-    background-color:#E0E0E0;
-    width: 61px;
-    height: 50px;
-} */
     header.head .logo {
         margin: 7px 12px;
         width: 38px;
@@ -85,6 +81,7 @@ header.head {
         header.head nav .menu li {
             float: left;
         }
+
             header.head nav .menu li a {
                 display: inline-block;
                 color:#fff;
@@ -102,8 +99,8 @@ header.head {
                     background: #DF3936;
                 }
 
-aside {
-    background: #E0E0E0;
+.left-nav {
+    background: rgb(31, 30, 30);
     width: 76px;
     height: 100%;
     position: fixed;
@@ -125,22 +122,36 @@ aside {
     	aside nav a.active {background-color: #e1372f;}
 
         .left-nav {
-            position:fixed;
-            padding-top:60px;
-            left:0;
-            width: 61px;
+            width: 64px;
             z-index: 1;
         }
-        aside nav a img{
+
+        .left-nav .head {
+            margin-top: 9px;
+            height: 72px;
+            text-align: left;
+            z-index:1000;
+            background-color: #de4456;
+            padding: 12px;
+        }
+
+        .left-nav nav a img{
             width: 36px;
             height: 36px;
         }
+
+        .left-nav ul {
+            background-color: #E7E6E7;
+        }
+
 .right-main {
     position: absolute;
-    top: 0;
+    top: 0px;
+    border-top: 3px solid black;
     right: 0;
     bottom: 0;
     left: 64px;
+    background-color: #F4F3F4;
 }
 .seccion {
     padding: 0px;
@@ -202,9 +213,7 @@ article.untercio{
                         position: relative;
                     }
                         .sin_padding h2{padding-bottom: 16px;}
-.ws-label{
-    margin-bottom: 25px;
-}
+
 /* ==== General COLORS ==== */
 /* Backgrounds Legacy */
 .fondo-rojo, .fondo-high, .fondo-error, .fondo-opened {background-color: #DF3936 !important;}

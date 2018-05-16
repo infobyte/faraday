@@ -4,48 +4,80 @@
 
 <section id="main" class="seccion clearfix">
     <div class="right-main">
-        <div id="reports-main" class="fila clearfix">
-            <h2 class="ws-label">
-                <span id="ws-name" title="Current workspace">
-                    Dashboard for {{ workspace }} ({{props["confirmed"] === false ? 'all vulns' : 'confirmed' }})
-                </span><!-- WS name -->
-                <div id="ws-control" class="btn-group">
-                    <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace" ng-click="reload()">
-                        <span class="glyphicon glyphicon-refresh"></span>
-                    </button>
-                    <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
-                        Change workspace <span class="caret"></span>
-                    </button>
-                    <ul id="nav" class="dropdown-menu dropdown-menu-left margin" role="menu">
-                        <li ng-repeat="ws in workspaces"><a href="#/dashboard/ws/{{ws}}" class="ws" >{{ws}}</a></li>
-                    </ul><!-- WS navigation -->
-                    <button type="button" class="btn btn-danger vulns-filter" title="{{props['confirmed'] === false ? 'View confirmed vulns' : 'View all vulns'}}" ng-click="toggleConfirmed()">
-                        {{props["confirmed"] === false ? 'View confirmed vulns' : 'View all vulns'}} <span class="glyphicon glyphicon-filter"></span>
-                    </button>
-                </div><!-- #ws-control -->
-            </h2><!-- .ws-label -->
-            <div class="reports">
-            </div><!-- .reports -->
-            <div>
-                <div ng-include="'scripts/dashboard/partials/top-services.html'"></div>
-                <div ng-include="'scripts/dashboard/partials/top-hosts.html'"></div>
-                <div ng-include="'scripts/dashboard/partials/vulns-piechart.html'"></div>
-                <div ng-include="'scripts/dashboard/partials/services.html'"></div>
-                <div ng-include="'scripts/dashboard/partials/summarized.html'"></div>
-                <div class="row-fix">
-                    <div class="col-lg-6 col-lg-left">
-                        <div ng-include="'scripts/dashboard/partials/activityFeed.html'"></div>
-                        <div ng-include="'scripts/dashboard/partials/last-vulns.html'"></div>
-                        <div ng-include="'scripts/dashboard/partials/compound.html'"></div>
-                    </div>
-                    <div class="col-lg-6 col-lg-right">
-                        <div ng-include="'scripts/dashboard/partials/vulns-by-severity.html'"></div>
-                        <div ng-include="'scripts/dashboard/partials/vulns-by-price.html'"></div>
-                        <div ng-include="'scripts/dashboard/partials/commands-list.html'"></div>
-                        <div ng-include="'scripts/dashboard/partials/workspace-progress.html'"></div>
-                    </div>
-                </div><!-- .rows -->
-            </div><!-- ng-controller -->
-        </div><!-- #reports-main -->
+        <div class="page-header" class="clearfix">
+            <div class="img-wrapper">
+                <img src="images/ico-dashboard-menu.svg" class="icon" alt="Dashboard"/>
+            </div>
+			<div class="switcher-wrapper">
+				<div class="dropdown">  
+					<button id="workspaceSwitcher" type="button" class="btn btn-default dropdown-toggle workspace-switcher" data-toggle="dropdown" title="Change current workspace">
+						<span class="title">
+							{{ workspace }}
+						</span>
+						<span class="caret"></span>
+					</button>
+					<ul class="dropdown-menu" role="menu" aria-labelledby="workspaceSwitcher">
+						<li ng-repeat="ws in workspaces"><a href="#/dashboard/ws/{{ws}}" class="ws" >{{ws}}</a></li>
+					</ul>
+				</div>
+				<span class="subtitle">
+					{{totalItems}} vulns total
+				</span>
+			</div>
+
+			<div class="controls-wrapper">
+				<button id="refresh" type="button" class="btn" title="Refresh current workspace" onclick="location.reload()">
+					<span class="glyphicon glyphicon-refresh"></span>
+				</button>
+				<button type="button" class="btn" title="">
+					<span class="glyphicon glyphicon-cog"></span>
+				</button>
+			</div>
+			<div class="flex-spacer"></div>
+            <div class="user-menu-wrapper">
+                <div ng-controller="loginBarCtrl">
+					<div class="btn-group dropdown" ng-if="auth" uib-dropdown="" is-open="status.isopen">
+						<button id="single-button" type="button" class="btn btn-default dropdown-toggle user-dropdown" uib-dropdown-toggle="" ng-disabled="disabled" aria-haspopup="true" aria-expanded="true">
+							<span>{{user.name}} </span>
+							<i class="glyphicon glyphicon-user"></i>
+							<span class="caret"></span>
+						</button>
+						<ul class="dropdown-menu dropdown-menu-right" uib-dropdown-menu="" role="menu" aria-labelledby="single-button">
+							<li role="menuitem"><a href="#/workspaces">Workspaces</a></li>
+							<li role="menuitem"><a href="#/users">Users</a></li>
+							<li role="menuitem"><a href="#/licenses">Licenses</a></li>
+							<li class="divider"></li>
+							<li role="menuitem"><a href="" ng-click="changePasswordModal()">Change password</a></li>
+							<li role="menuitem"><a href="" ng-click="logout()">Logout</a></li>
+							<li class="divider"></li>
+							<li role="menuitem"><a href="#/help">Help</a></li>
+							<li role="menuitem"><a href="" ng-click="about()">About</a></li>
+						</ul>
+					</div>
+                </div>
+            </div>
+        </div>
+        <div class="reports">
+        </div><!-- .reports -->
+        <div>
+            <div ng-include="'scripts/dashboard/partials/top-services.html'"></div>
+            <div ng-include="'scripts/dashboard/partials/top-hosts.html'"></div>
+            <div ng-include="'scripts/dashboard/partials/vulns-piechart.html'"></div>
+            <div ng-include="'scripts/dashboard/partials/services.html'"></div>
+            <div ng-include="'scripts/dashboard/partials/summarized.html'"></div>
+            <div class="row-fix">
+                <div class="col-lg-6 col-lg-left">
+                    <div ng-include="'scripts/dashboard/partials/activityFeed.html'"></div>
+                    <div ng-include="'scripts/dashboard/partials/last-vulns.html'"></div>
+                    <div ng-include="'scripts/dashboard/partials/compound.html'"></div>
+                </div>
+                <div class="col-lg-6 col-lg-right">
+                    <div ng-include="'scripts/dashboard/partials/vulns-by-severity.html'"></div>
+                    <div ng-include="'scripts/dashboard/partials/vulns-by-price.html'"></div>
+                    <div ng-include="'scripts/dashboard/partials/commands-list.html'"></div>
+                    <div ng-include="'scripts/dashboard/partials/workspace-progress.html'"></div>
+                </div>
+            </div><!-- .rows -->
+        </div><!-- ng-controller -->
     </div><!-- .right-main -->
 </section>

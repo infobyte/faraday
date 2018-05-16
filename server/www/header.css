@@ -1,0 +1,84 @@
+.page-header {
+    margin-top: 0px;
+    padding-top: 19px;
+    padding-left: 30px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    height: 69px;
+}
+
+.page-header h3 {
+    margin: 0px;
+}
+
+.page-header .icon {
+    width: 28px;
+    height: 28px;
+}
+
+.page-header .title {
+    font-size: 16px;
+    font-weight: 600;
+    display: inline-flex;
+}
+
+.page-header .subtitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: #E8E7E8;
+}
+
+.img-wrapper {
+    width: 36px;
+}
+
+.switcher-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-width: 200px;
+    line-height: 1;
+}
+
+.switcher-wrapper .dropdown {
+    border: none;
+    background: none;
+}
+
+.switcher-wrapper .dropdown .open {
+    border: none;
+    background: none;
+}
+
+#workspaceSwitcher {
+    padding: 0px;
+    border: none;
+    background: none;
+}
+
+.controls-wrapper button, .user-dropdown{
+    padding: 6px;
+    font-size: 18px;
+    padding-left: 10px;
+    padding-right: 10px;
+    border: none;
+    background: none;
+    color: #E0E0E0;
+}
+
+.workspace-switcher :hover{
+    background: none;
+}
+
+.user-menu-wrapper {
+    align-self: flex-end;
+}
+
+.flex-spacer {
+    flex: 1;
+}
+
+.ws-label{
+    margin-bottom: 25px;
+}

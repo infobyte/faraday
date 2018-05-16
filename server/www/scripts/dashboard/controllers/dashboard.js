@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('dashboardCtrl',
-        ['$scope', '$filter', '$route', '$routeParams', '$location', 'dashboardSrv', 'workspacesFact',
-        function($scope, $filter, $route, $routeParams, $location, dashboardSrv, workspacesFact) {
+        ['$scope', '$filter', '$route', '$routeParams', '$location', 'dashboardSrv', 'workspacesFact', 'vulnsManager',
+        function($scope, $filter, $route, $routeParams, $location, dashboardSrv, workspacesFact, vulnsManager) {
             $scope.props = dashboardSrv.props;
 
             init = function() {
@@ -16,6 +16,12 @@ angular.module('faradayApp')
                 workspacesFact.list().then(function(wss) {
                     $scope.workspaces = wss;
                 });
+
+                vulnsManager.getVulns($scope.workspace, null, null, null, null, null)
+                    .then(function(response) {
+                        $scope.totalItems = response.count;
+                    });
+
                 dashboardSrv.setConfirmedFromCookie();
                 dashboardSrv.startTimer();
             };

@@ -738,7 +738,6 @@ class ModelBase(object):
         self.parent_type = parent_type
 
     def setID(self, id):
-        print('setID {0}'.format(id))
         if id:
             self.id = id
             self.id_available.set()

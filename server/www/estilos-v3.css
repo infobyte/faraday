@@ -1,0 +1,116 @@
+body {
+  background-image: url(images/fondofaraday4k.jpg) !important;
+}
+
+#login-container {
+  width: 410px;
+  margin-top: 180px;
+  background-color: #FFF;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#form-signin {
+  padding: 72px 36px 40px 36px;
+  height: 378px;
+}
+
+#form-signin > h3 {
+  font-weight: 600;
+  font-size: 21px;
+}
+
+.height-xxl {
+  height: 45px;
+}
+
+.border-red {
+  border-top-color: #de4456;
+}
+
+.border-strong {
+  border-top-style: solid;
+  border-top-width: 5px;
+}
+
+.mt-sm {
+  margin-top: 10px;
+}
+
+.margin-top-18px {
+  margin-top: 18px;
+}
+
+.clear-margin {
+  margin: 0px;
+}
+
+.btn-frd {
+  display: inline-block;
+  padding: 10px 12px;
+  margin-bottom: 0;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.42857143;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  -ms-touch-action: manipulation;
+  touch-action: manipulation;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  background-image: none;
+  border: 1px solid transparent;
+  border-radius: 0px;
+  color: #FFF;
+}
+
+.btn-frd.disabled, .btn-frd[disabled], fieldset[disabled] .btn-frd {
+  cursor: not-allowed;
+  filter: alpha(opacity=65);
+  -webkit-box-shadow: none;
+  box-shadow: none;
+  opacity: .65;
+}
+
+.btn-xl {
+  height: 54px;
+}
+
+.bg-blue {
+  background-color: #2c8dee;
+}
+
+.fg-blue {
+  color: #2c8dee
+}
+
+.fg-red {
+  color: #de4456
+}
+
+.font-bold {
+  font-weight: bold;
+}
+
+.font-xs {
+  font-size: 11px;
+}
+
+.frd-icon {
+  background-repeat: no-repeat;
+}
+
+.frd-icon-lock {
+  background-image: url("images/lock.png");
+  width: 15px;
+  height: 20px;
+}
+
+#form-signin .placeholder .frd-icon-lock {
+  position: relative;
+  bottom: 5px;
+}

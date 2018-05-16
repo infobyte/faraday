@@ -110,6 +110,11 @@ class ModelControllerAPI(RESTApi):
 
     def getRoutes(self):
         routes = []
+
+        routes.append(Route(path='/model/interface',
+                              view_func=self.createInterface,
+                              methods=['PUT']))
+
         routes.append(Route(path='/model/edit/vulns',
                               view_func=self.postEditVulns,
                               methods=['POST']))
@@ -240,6 +245,11 @@ class ModelControllerAPI(RESTApi):
         return self._create(
             self.controller.newHost,
             ['name', 'os'])
+
+    def createInterface(self):
+        return jsonify(
+            code=200,
+            id=request.get_json().get("parent_id"))
 
     def createService(self):
         return self._create(

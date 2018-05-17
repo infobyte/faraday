@@ -212,7 +212,7 @@ def get_children_from_couch(workspace, parent_couchdb_id, child_type):
     try:
         r = requests.put(view_url, json=view_data)
     except requests.exceptions.RequestException as e:
-        logger.warn(e)
+        logger.exception(e)
         return []
 
     # and now, finally query it!
@@ -226,7 +226,7 @@ def get_children_from_couch(workspace, parent_couchdb_id, child_type):
     try:
         r = requests.get(couch_url)
     except requests.exceptions.RequestException as e:
-        logger.warn(e)
+        logger.exception(e)
         return []
 
     return r.json()['rows']
@@ -1179,7 +1179,7 @@ class ImportVulnerabilityTemplates():
             logger.warn('Unable to retrieve Vulnerability Templates Database. Moving on.')
             return
         except requests.exceptions.RequestException as e:
-            logger.warn(e)
+            logger.exception(e)
             return
 
         for cwe in (cwes.json()['rows']):
@@ -1262,7 +1262,7 @@ class ImportLicense():
             logger.warn('Unable to retrieve Licenses Database. Moving on.')
             return
         except requests.exceptions.RequestException as e:
-            logger.warn(e)
+            logger.exception(e)
             return
 
         for license in licenses.json()['rows']:

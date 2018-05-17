@@ -14,6 +14,7 @@
   top: 16px;
   z-index: 2;
   font-size: 16px;
+  font-weight: 400;
   transition: all 100ms ease-in-out;
   width: 100%;
   cursor: text;
@@ -26,6 +27,7 @@
   z-index: 1;
   width: 100%;
   font-size: 16px;
+  font-weight: 400;
   border: 0;
   border-bottom: 1px dashed #A1A1A1;
   transition: border-color 100ms ease-in-out;
@@ -43,7 +45,7 @@
 
 .form-input input.has-error,
 .form-input textarea.has-error {
-  border-bottom: 2px dashed #de4456;
+  border-bottom: 1px dashed #de4456;
   cursor: text;
 }
 

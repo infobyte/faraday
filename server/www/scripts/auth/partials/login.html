@@ -6,8 +6,8 @@
     <div id="login-container" class="border-red border-strong">
 	    <section id="main" class="">
 		    <div id="form-signin">
-          <img src="images/logo-faraday.svg" class="height-xxl"/>
-					<h3 class="margin-top-18px">Sign in</h3>
+          <img src="images/logo-faraday.svg" class="height-39px"/>
+					<h3 class="margin-top-22px">Sign in</h3>
           <div class="form-input">
             <label>
               <input id="username" ng-model="data.user" ng-change="checkResetError()" ng-keyup="$event.keyCode == 13 && login()" ng-class="{'has-error': errorMessage !== undefined }" required>
@@ -28,7 +28,7 @@
           </div>
 					<p class="font-xs font-bold fg-red pull-left margin-top-18px">{{errorMessage}}</p>
 		    </div><!-- .form-signin -->
-        <button class="btn-frd btn-xl bg-blue btn-block" type="submit" ng-click="login()" ng-disabled="data.user == null || data.pass == null">Login</button>
+        <button class="btn-frd btn-xl bg-blue btn-block" type="submit" ng-click="login()">Login</button>
 			</section>
     </div>
 	</div>

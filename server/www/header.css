@@ -1,42 +1,60 @@
-.page-header {
+.faraday-page-header {
     margin-top: 0px;
-    padding-top: 19px;
+    padding-top: 9px;
     padding-left: 30px;
+    padding-bottom: 9px;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    height: 69px;
+    height: 78px;
+    margin-bottom: 20px;
 }
 
-.page-header h3 {
+.faraday-page-header h3 {
     margin: 0px;
 }
 
-.page-header .icon {
+.faraday-page-header .icon {
     width: 28px;
     height: 28px;
 }
 
-.page-header .title {
+.faraday-page-header .title {
     font-size: 16px;
-    font-weight: 600;
+    font-weight: bold;
     display: inline-flex;
 }
 
-.page-header .subtitle {
+.faraday-page-header .subtitle {
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 300;
     color: #a3a3a3;
+    float: left;
+}
+
+.workspace-selector-wrapper {
+    border-radius: 5px;
+    margin-right: 20px;
+    padding: 10px;
+}
+
+.workspace-selector-wrapper, .workspace-switcher {
+    display: flex;
+}
+
+.workspace-selector-wrapper:hover {
+    background-color: #ebebeb
 }
 
 .img-wrapper {
     width: 36px;
 }
 
+.img-wrapper img {
+    float: left;
+}
+
 .switcher-wrapper {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
     min-width: 200px;
     line-height: 1;
 }
@@ -57,6 +75,10 @@
     background: none;
 }
 
+.controls-wrapper {
+    padding-top: 10px;
+}
+
 .controls-wrapper button, .user-dropdown{
     padding: 6px;
     font-size: 18px;
@@ -64,6 +86,28 @@
     padding-right: 10px;
     border: none;
     background: none;
+    color: #7c7c7c;
+}
+
+.controls-wrapper button {
+    border-left: solid 1px #a3a3a3;
+    border-radius: 0px;
+    width:55px;
+}
+
+.workspace-switcher-title {
+    display: flex;
+    width: 190px;
+}
+
+.workspace-switcher-title .title{
+    width: 90%;
+}
+
+.workspace-switcher-title .caret-container{
+    width: 10%;
+    position: relative;
+    top:8px;
     color: #7c7c7c;
 }
 

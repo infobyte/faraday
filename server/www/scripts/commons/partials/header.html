@@ -1,25 +1,33 @@
-<div class="page-header" class="clearfix">
-    <div class="img-wrapper" ng-switch="location">
-        <img ng-switch-when="dashboard" src="images/ico-dashboard-menu.svg" class="icon" alt="Dashboard"/>
-        <img ng-switch-when="status" src="images/ico-status-menu.svg" class="icon" alt="Status Report"/>
-        <img ng-switch-when="hosts" src="images/ico-hosts-menu.svg" class="icon" alt="Hosts"/>
-        <img ng-switch-when="credentials" src="images/ico-credentials-menu.svg" class="icon" alt="Credentials"/>
-    </div>
-    <div class="switcher-wrapper">
-        <div class="dropdown">  
-            <button id="workspaceSwitcher" type="button" class="btn btn-default dropdown-toggle workspace-switcher" data-toggle="dropdown" title="Change current workspace">
-                <span class="title">
-                    {{ workspace }}
-                </span>
-                <span class="caret"></span>
-            </button>
-            <ul class="dropdown-menu" role="menu" aria-labelledby="workspaceSwitcher">
-                <li ng-repeat="ws in workspaces"><a href="#/dashboard/ws/{{ws}}" class="ws" >{{ws}}</a></li>
-            </ul>
+<div class="faraday-page-header" class="clearfix">
+    <div class="workspace-selector-wrapper">
+        <div class="switcher-wrapper">
+            <div class="dropdown">  
+                <button id="workspaceSwitcher" type="button" class="btn btn-default dropdown-toggle workspace-switcher" data-toggle="dropdown" title="Change current workspace">
+                    <div class="img-wrapper" ng-switch="location">
+                        <img ng-switch-when="dashboard" src="images/ico-dashboard-menu.svg" class="icon" alt="Dashboard"/>
+                        <img ng-switch-when="status" src="images/ico-status-menu.svg" class="icon" alt="Status Report"/>
+                        <img ng-switch-when="hosts" src="images/ico-hosts-menu.svg" class="icon" alt="Hosts"/>
+                        <img ng-switch-when="credentials" src="images/ico-credentials-menu.svg" class="icon" alt="Credentials"/>
+                    </div>
+                    <div class="workspace-switcher-title-wrapper">
+                        <div class="workspace-switcher-title">
+                            <span class="title">
+                                {{ workspace }}
+                            </span>
+                            <span class="caret-container">
+                                <span class="caret"></span>
+                            </span>
+                        </div>
+                        <span class="subtitle">
+                            {{totalItems}} vulns total
+                        </span>
+                    </div>
+                </button>
+                <ul class="dropdown-menu" role="menu" aria-labelledby="workspaceSwitcher">
+                    <li ng-repeat="ws in workspaces"><a href="#/dashboard/ws/{{ws}}" class="ws" >{{ws}}</a></li>
+                </ul>
+            </div>
         </div>
-        <span class="subtitle">
-            {{totalItems}} vulns total
-        </span>
     </div>
     <div class="controls-wrapper">
         <button id="refresh" type="button" class="btn" title="Refresh current workspace" onclick="location.reload()">

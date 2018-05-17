@@ -101,7 +101,7 @@ header.head {
 
 .left-nav {
     border-top: 9px solid #464646;
-    width: 76px;
+    width: 68px;
     height: 100%;
     position: fixed;
     top:0px;
@@ -153,7 +153,7 @@ header.head {
             width: 30px;
         }
 
-        .left-nav ul {
+        .left-nav {
             background-color: #E7E6E7;
         }
 

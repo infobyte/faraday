@@ -30,7 +30,6 @@ from config.globals import (
 )
 from utils import dependencies
 from utils.logs import getLogger, setUpLogger
-from utils.profilehooks import profile
 from utils.user_input import query_yes_no
 
 from persistence.server import server
@@ -78,7 +77,6 @@ def getParserArgs():
         fromfile_prefix_chars='@')
 
     parser_connection = parser.add_argument_group('connection')
-    parser_profile = parser.add_argument_group('profiling')
 
     parser_connection.add_argument('-n', '--hostname',
                                    action="store",
@@ -101,24 +99,6 @@ def getParserArgs():
                                    default=None,
                                    type=int,
                                    help="Sets the port where the api RESTful server will listen. Default = 9977")
-
-    parser_profile.add_argument('--profile', action="store_true",
-                                dest="profile",
-                                default=False,
-                                help="Enables application profiling. When this option is used --profile-output and --profile-depth can also be used. Default = disabled")
-
-    parser_profile.add_argument('--profile-output',
-                                action="store",
-                                dest="profile_output",
-                                default=None,
-                                help="Sets the profile output filename. If no value is provided, standard output will be used")
-
-    parser_profile.add_argument('--profile-depth',
-                                action="store",
-                                dest="profile_depth",
-                                type=int,
-                                default=500,
-                                help="Sets the profile number of entries (depth). Default = 500")
 
     parser.add_argument('--disable-excepthook',
                         action="store_true",
@@ -239,26 +219,6 @@ def check_dependencies_or_exit():
 
     logger.info("Dependencies met")
 
-
-def startProfiler(app, output, depth):
-    """Profiler handler.
-
-    Will start a profiler on the given application in a specified output with
-    a custom depth.
-
-    TODO: Check if it's necessary to add a dummy in case o failed import.
-
-    """
-
-    logger.warning("[!] Faraday will be started with a profiler attached."
-                   "Performance may be affected.")
-
-    start = profile(app,
-                    filename=output,
-                    entries=depth)
-    return start
-
-
 def setConf():
     """User configuration management and instantiation.
 
@@ -306,14 +266,9 @@ def startFaraday():
         logger.info("Main application ExceptHook enabled.")
         main_app.enableExceptHook()
 
-    if args.profile:
-        logger.info("Starting main application with profiler.")
-        start = startProfiler(main_app.start,
-                              args.profile_output,
-                              args.profile_depth)
-    else:
-        logger.info("Starting main application.")
-        start = main_app.start
+    logger.info("Starting main application.")
+    start = main_app.start
+
     from colorama import Fore, Back, Style
     import string
     serverURL = getInstanceConfiguration().getServerURI()

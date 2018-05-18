@@ -1,3 +1,4 @@
+# -*- coding: utf8 -*-
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
@@ -423,8 +424,10 @@ class HostImporter(object):
         host_ips = [name_or_ip for name_or_ip in self.retrieve_ips_from_host_document(document)]
         interfaces = get_children_from_couch(workspace, document.get('_id'), 'Interface')
         command = None
-        if 'metadata' in document and 'command_id' in document['metadata'] and document['metadata']['command_id']:
+        try:
             command = session.query(Command).get(couchdb_relational_map[document['metadata']['command_id']][0])
+        except (KeyError, IndexError):
+            command = None
 
         for interface in interfaces:
             interface = interface['value']
@@ -521,9 +524,16 @@ class ServiceImporter(object):
                 session.flush()
                 CommandObject.create(host, command)
             ports = document.get('ports')
-            if len(ports) > 2:
+            if len(ports) > 1:
                 logger.warn('More than one port found in services!')
             for port in ports:
+                if port > (2**31 - 1):
+                    # Bigger than the maximum int supported by postgres
+                    logger.warn('Port number {} to big for service {}. '
+                                'Ignoring service'.format(
+                            port, document['_id']
+                    ))
+                    continue
                 service, created = get_or_create(session,
                                                  Service,
                                                  name=document.get('name'),
@@ -961,7 +971,7 @@ class ReportsImporter(object):
         try:
             report.vuln_count = document['totalVulns']['total']
         except KeyError:
-            logger.warning("Couldn't load vuln count of report".format(doc.get('_id')))
+            logger.warning("Couldn't load vuln count of report".format(document.get('_id')))
         report.creator = get_or_create_user(session, document.get('owner'))
         session.flush()
         old_attachments = session.query(File).filter_by(

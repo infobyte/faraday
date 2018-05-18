@@ -204,8 +204,9 @@ def get_children_from_couch(workspace, parent_couchdb_id, child_type):
     view_data = {
         "views": {
             "children_by_parent_and_type": {
-                "map": "function(doc) { id_parent = doc._id.split('.').slice(0, -1).join('.');"
-                "key = [id_parent,doc.type]; emit(key, doc); }"
+                "map":
+                    "function(doc) { id_parent = doc._id.split('.').slice(0, -1).join('.');"
+                    "key = [id_parent,doc.type]; emit(key, doc); }"
             }
         }
     }
@@ -536,13 +537,19 @@ class ServiceImporter(object):
             if len(ports) > 1:
                 logger.warn('More than one port found in services!')
             for port in ports:
+                try:
+                    port = int(port)
+                except ValueError:
+                    logger.warn('Port {} of service {} is not a valid '
+                                'integer. Using port 65534'.format(repr(port)))
+                    port = 65534
                 if port > (2**31 - 1):
                     # Bigger than the maximum int supported by postgres
-                    logger.warn('Port number {} to big for service {}. '
-                                'Ignoring service'.format(
+                    logger.warn('Port number {} too big for service {}. '
+                                'Using port 65535'.format(
                             port, document['_id']
                     ))
-                    continue
+                    port = 65535
                 service, created = get_or_create(session,
                                                  Service,
                                                  name=document.get('name'),

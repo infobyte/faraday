@@ -204,8 +204,9 @@ def get_children_from_couch(workspace, parent_couchdb_id, child_type):
     view_data = {
         "views": {
             "children_by_parent_and_type": {
-                "map": "function(doc) { id_parent = doc._id.split('.').slice(0, -1).join('.');"
-                "key = [id_parent,doc.type]; emit(key, doc); }"
+                "map":
+                    "function(doc) { id_parent = doc._id.split('.').slice(0, -1).join('.');"
+                    "key = [id_parent,doc.type]; emit(key, doc); }"
             }
         }
     }
@@ -226,6 +227,15 @@ def get_children_from_couch(workspace, parent_couchdb_id, child_type):
 
     try:
         r = requests.get(couch_url)
+    except requests.exceptions.RequestException as e:
+        logger.error('Network error in CouchDB request {}'.format(
+            couch_url,
+            r.status_code,
+            r.text))
+        logger.exception(e)
+        return []
+
+    try:
         r.raise_for_status()
     except requests.exceptions.RequestException as e:
         logger.error('Error in CouchDB request {}. '
@@ -518,8 +528,10 @@ class ServiceImporter(object):
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         #  service was always below interface, not it's below host.
         command = None
-        if 'command_id' in document['metadata'] and document['metadata']['command_id']:
+        try:
             command = session.query(Command).get(couchdb_relational_map[document['metadata']['command_id']][0])
+        except (KeyError, IndexError):
+            command = None
         try:
             parent_id = document['parent'].split('.')[0]
         except KeyError:
@@ -534,13 +546,19 @@ class ServiceImporter(object):
             if len(ports) > 1:
                 logger.warn('More than one port found in services!')
             for port in ports:
+                try:
+                    port = int(port)
+                except ValueError:
+                    logger.warn('Port {} of service {} is not a valid '
+                                'integer. Using port 65534'.format(repr(port)))
+                    port = 65534
                 if port > (2**31 - 1):
                     # Bigger than the maximum int supported by postgres
-                    logger.warn('Port number {} to big for service {}. '
-                                'Ignoring service'.format(
+                    logger.warn('Port number {} too big for service {}. '
+                                'Using port 65535'.format(
                             port, document['_id']
                     ))
-                    continue
+                    port = 65535
                 service, created = get_or_create(session,
                                                  Service,
                                                  name=document.get('name'),
@@ -597,8 +615,10 @@ class VulnerabilityImporter(object):
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         command = None
-        if 'command_id' in document['metadata'] and document['metadata']['command_id']:
+        try:
             command = session.query(Command).get(couchdb_relational_map[document['metadata']['command_id']][0])
+        except (KeyError, IndexError):
+            command = None
         vulnerability = None
         couch_parent_id = document.get('parent', None)
         if not couch_parent_id:
@@ -824,8 +844,10 @@ class CredentialImporter(object):
     DOC_TYPE = 'Cred'
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         command = None
-        if 'command_id' in document['metadata'] and document['metadata']['command_id']:
+        try:
             command = session.query(Command).get(couchdb_relational_map[document['metadata']['command_id']][0])
+        except (KeyError, IndexError):
+            command = None
         parents = []
         if level == 2:
             parent_ids = couchdb_relational_map[document['_id'].split('.')[0]]

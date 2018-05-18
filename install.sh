@@ -10,13 +10,13 @@ if [ $EUID -ne 0 ]; then
  exit 1
 fi
 
-pip2 install -r requirements_server.txt
-pip2 install -r requirements.txt
-
 apt-get update
 
 for pkg in build-essential python-setuptools python-pip python-dev libpq-dev libffi-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 python-gobject zsh curl; do
     apt-get install -y $pkg
 done
+
+pip2 install -r requirements_server.txt
+pip2 install -r requirements.txt
 
 echo "You can now run Faraday, enjoy!"

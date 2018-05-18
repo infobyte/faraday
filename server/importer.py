@@ -226,7 +226,13 @@ def get_children_from_couch(workspace, parent_couchdb_id, child_type):
 
     try:
         r = requests.get(couch_url)
+        r.raise_for_status()
     except requests.exceptions.RequestException as e:
+        logger.error('Error in CouchDB request {}. '
+                     'Status code: {}. '
+                     'Body: {}'.format(couch_url,
+                                       r.status_code,
+                                       r.text))
         logger.exception(e)
         return []
 

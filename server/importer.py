@@ -518,8 +518,10 @@ class ServiceImporter(object):
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         #  service was always below interface, not it's below host.
         command = None
-        if 'command_id' in document['metadata'] and document['metadata']['command_id']:
+        try:
             command = session.query(Command).get(couchdb_relational_map[document['metadata']['command_id']][0])
+        except (KeyError, IndexError):
+            command = None
         try:
             parent_id = document['parent'].split('.')[0]
         except KeyError:
@@ -597,8 +599,10 @@ class VulnerabilityImporter(object):
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         command = None
-        if 'command_id' in document['metadata'] and document['metadata']['command_id']:
+        try:
             command = session.query(Command).get(couchdb_relational_map[document['metadata']['command_id']][0])
+        except (KeyError, IndexError):
+            command = None
         vulnerability = None
         couch_parent_id = document.get('parent', None)
         if not couch_parent_id:
@@ -824,8 +828,10 @@ class CredentialImporter(object):
     DOC_TYPE = 'Cred'
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         command = None
-        if 'command_id' in document['metadata'] and document['metadata']['command_id']:
+        try:
             command = session.query(Command).get(couchdb_relational_map[document['metadata']['command_id']][0])
+        except (KeyError, IndexError):
+            command = None
         parents = []
         if level == 2:
             parent_ids = couchdb_relational_map[document['_id'].split('.')[0]]

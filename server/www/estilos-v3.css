@@ -45,8 +45,20 @@ body {
   margin-top: 22px;
 }
 
+.margin-top-30px {
+  margin-top: 30px;
+}
+
+.margin-top-37px {
+  margin-top: 37px;
+}
+
 .clear-margin {
   margin: 0px;
+}
+
+.clear-margin-bottom {
+  margin-bottom: 0px;
 }
 
 .btn-frd {
@@ -54,7 +66,7 @@ body {
   padding: 10px 12px;
   margin-bottom: 0;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.42857143;
   text-align: center;
   white-space: nowrap;
@@ -109,12 +121,18 @@ body {
 }
 
 .frd-icon-lock {
-  background-image: url("images/lock.png");
-  width: 15px;
-  height: 20px;
+  background-image: url("images/icon-login-password-lock.svg");
+  width: 24px;
+  height: 24px;
 }
 
 #form-signin .placeholder .frd-icon-lock {
   position: relative;
-  bottom: 5px;
+  bottom: 10px;
+}
+
+#footer-login {
+  position: fixed;
+  bottom: 0px;
+  right: 15px;
 }

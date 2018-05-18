@@ -1,41 +1,36 @@
 <!-- Faraday Penetration Test IDE -->
 <!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
 <!-- See the file 'doc/LICENSE' for the license information -->
-<section id="login-main" class="seccion clearfix">
-  <div class="contenedor">
-    <div id="login-container" class="border-red border-strong">
-	    <section id="main" class="">
-		    <div id="form-signin">
-          <img src="images/logo-faraday.svg" class="height-39px"/>
-					<h3 class="margin-top-22px">Sign in</h3>
-          <div class="form-input">
-            <label>
-              <input id="username" ng-model="data.user" ng-change="checkResetError()" ng-keyup="$event.keyCode == 13 && login()" ng-class="{'has-error': errorMessage !== undefined }" required>
-              <span class="placeholder">Enter your username</span>
-            </label>
-          </div>
-          <div class="form-input">
-            <label>
-              <input id="password" type="password" ng-model="data.pass" ng-change="checkResetError()" ng-keyup="$event.keyCode == 13 && login()" ng-class="{'has-error': errorMessage !== undefined }" required>
-              <span class="placeholder">
-                Password
-                <div class="frd-icon frd-icon-lock pull-right"></div>
-              </span>
-            </label>
-          </div>
-          <div class="text-right mt-sm">
-            <p class="font-xs fg-blue">Forgot password?</p>
-          </div>
-					<p class="font-xs font-bold fg-red pull-left margin-top-18px">{{errorMessage}}</p>
-		    </div><!-- .form-signin -->
-        <button class="btn-frd btn-xl bg-blue btn-block" type="submit" ng-click="login()">Login</button>
-			</section>
-    </div>
-	</div>
-	<p class="normal-size footer_centrado">Faraday Professional - <a href="https://www.faradaysec.com">faradaysec.com</a></p>
-</section>
-
-<section role=stage id=branding>
-	<canvas width=3000 height=1000></canvas>
-</section>
-<script src=script/animacion.js></script>
+<div id="login-main" class="">
+  <div id="login-container" class="border-red border-strong">
+    <section id="main" class="">
+	    <div id="form-signin">
+        <img src="images/logo-faraday.svg" class="height-39px"/>
+				<h3 class="clear-margin-bottom margin-top-22px">Sign in</h3>
+        <div class="form-input margin-top-30px">
+          <label>
+            <input id="username" ng-model="data.user" ng-change="checkResetError()" ng-keyup="$event.keyCode == 13 && login()" ng-class="{'has-error': errorMessage !== undefined }" required>
+            <span class="placeholder">Enter your username</span>
+          </label>
+        </div>
+        <div class="form-input margin-top-30px">
+          <label>
+            <input id="password" type="password" ng-model="data.pass" ng-change="checkResetError()" ng-keyup="$event.keyCode == 13 && login()" ng-class="{'has-error': errorMessage !== undefined }" required>
+            <span class="placeholder">
+              Password
+              <div class="frd-icon frd-icon-lock pull-right"></div>
+            </span>
+          </label>
+        </div>
+        <div class="text-right margin-top-37px">
+          <p class="font-xs fg-blue">Forgot password?</p>
+        </div>
+				<p class="font-xs font-bold fg-red pull-left margin-top-18px">{{errorMessage}}</p>
+	    </div><!-- .form-signin -->
+      <button class="btn-frd btn-xl bg-blue btn-block" type="submit" ng-click="login()">Login</button>
+		</section>
+  </div>
+  <div id="footer-login">
+    <p class="normal-size fg-blue">Faraday Professional - <a class="fg-blue" href="https://www.faradaysec.com">faradaysec.com</a></p>
+  </div>
+</div>

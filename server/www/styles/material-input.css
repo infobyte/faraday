@@ -55,4 +55,5 @@
 .form-input textarea:valid + .placeholder {
   cursor: text;
   opacity: 0;
+  z-index: -1;
 }

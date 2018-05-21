@@ -2,60 +2,24 @@
 <!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
 <!-- See the file 'doc/LICENSE' for the license information -->
 
-<section id="main" class="seccion clearfix">
+<section id="main" class="status-report seccion clearfix">
     <div class="right-main">
 		<div ng-controller="headerCtrl" ng-include="'scripts/commons/partials/header.html'"></div>
         <div id="reports-main" class="fila clearfix">
-            <!-- .ws-label -->
-            <div id="ws-control" class="btn-group btn-small-margin">
-                <button file-exporter="csv()" type="button" class="btn btn-success" title="Download CSV for current workspace">
-                    <span class="glyphicon glyphicon-download"></span>
-                </button>
-                <button type="button" class="btn btn-danger" title="{{ confirmed === true ? 'All vulns' : 'Confirmed vulns' }}" ng-click="toggleFilter()">
-                    <span class="glyphicon glyphicon-filter" ng-style="{ 'opacity': (confirmed === true) ? '1' : '0.7' }"></span>
-                </button>
-                <!-- WS navigation -->
-            </div>
-            <!-- #ws-control -->
-
-            <div class="button-control col-md-6 col-sm-6 col-xs-12">
-                <div id="add-columns" class="btn-group btn-small-margin">
-                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Add columns">
-                        Add columns
+            <div class="button-control col-md-12 col-sm-12 col-xs-12">
+                <div class="control-wrapper control-new">
+                    <button type="button" class="btn btn-success btn-new" title="New Vulns" ng-click="new()">
+                        New
                     </button>
-                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Add Columns">
-                        <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
-                        <li ng-repeat="(column, show) in columns">
-                            <a class="ws" ng-click="toggleShow(column, show)" ng-show="!show">{{column}}</a>
-                        </li>
-                    </ul>
                 </div>
-                <div id="group-by" class="btn-group btn-small-margin">
-                    <button type="button" ng-if="propertyGroupBy" class="btn btn-danger" title="Clear" ng-click="clearGroupBy()">
-                        <i class="fa fa-times"></i>
+                <div class="control-wrapper">
+                    <button type="button" class="btn" title="Delete selected items" ng-click="delete()">
+                        <span class="glyphicon glyphicon-trash"></span>
                     </button>
-                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="{{propertyGroupBy || 'Group By'}}">
-                        {{ (propertyGroupBy | uppercase) || "Group By"}}
-                    </button>
-                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Group By">
-                        <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
-                        <li ng-repeat="(column, show) in columns">
-                            <a class="ws" ng-show="show && (column !== 'evidence' && column !== 'impact' && column !== 'web' && column !== 'easeofresolution' && column !== 'date')" ng-click="groupBy(column)">{{column}}</a>
-                        </li>
-                    </ul>
                 </div>
-                <button id="delete" type="button" class="btn btn-default" title="Delete selected items" ng-click="delete()">
-                    <span class="glyphicon glyphicon-trash"></span>
-                    Delete
-                </button>
-                <div id="merge" class="btn-group btn-small-margin">
-                    <button type="button" class="btn btn-default" title="Edit selected vulns" ng-click="edit()" ng-disabled="getCurrentSelection().length != 1">
-                        <span class="glyphicon glyphicon-pencil"></span>
-                        Edit
+                <div class="control-wrapper control-edit">
+                    <button type="button" class="btn edit" title="Edit selected vulns" ng-click="edit()" ng-disabled="getCurrentSelection().length != 1">        
+                        <img src="images/icon-toolbar-edit.svg" class="edit-icon" />
                     </button>
                     <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="SingleActions" ng-show="getCurrentSelection().length === 1">
                         <span class="caret"></span>
@@ -64,7 +28,7 @@
                         <li><a class="ws" ng-click="saveAsModel()">Create template</a></li>
                         <li><a class="ws" ng-click="showExploits()">Search exploits</a></li>
                     </ul>
-                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Actions" ng-hide="getCurrentSelection().length < 2">
+                    <button type="button" class="btn dropdown-toggle" data-toggle="dropdown" title="Actions" ng-hide="getCurrentSelection().length < 2">
                         <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-right" role="menu" ng-show="getCurrentSelection().length >= 2">
@@ -95,47 +59,66 @@
                         <li><a class="ws" ng-click="showExploits()">Search exploits</a></li>
                     </ul>
                 </div>
-                <div id="group-by" class="btn-group btn-small-margin">
-                    <button type="button" ng-if="propertyGroupBy" class="btn btn-danger" title="Clear" ng-click="clearGroupBy()">
-                        <i class="fa fa-times"></i>
-                    </button>
-                    <button type="button" class="btn btn-default" title="{{propertyGroupBy || 'Group By'}}">
-                        {{ (propertyGroupBy | uppercase) || "Group By"}}
-                    </button>
-                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Group By">
-                        <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
-                        <li ng-repeat="(column, show) in columns">
-                            <a class="ws" ng-show="show && (column !== '_id' && column !== 'evidence' && column !== 'impact' && column !== 'web' && column !== 'easeofresolution' && column !== 'date' && column !== 'hostnames')" ng-click="groupBy(column)">{{column}}</a>
-                        </li>
-                    </ul>
-                </div>
-                <button id="new" type="button" class="btn btn-success" title="New Vulns" ng-click="new()">
-                    <span class="glyphicon glyphicon-plus-sign"></span>
-                    New
-                </button>
-            </div>
-            <!-- .col-md-6 .col-sm-6 .col-xs-12 -->
-            <div class="reports">
-                <div class="row-fix">
-                    <div class="col-md-6 col-sm-3 col-xs-11">
-                        <form role="form" ng-submit="searchFor(true, searchParams)">
-                            <div class="form-group">
-                                <div class="input-group input-group-sm">
-                                    <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search && search != 'confirmed=true'"></span>
-                                    <input type="text" class="form-control" id="filter-by" placeholder="enter keywords" ng-change="currentPage = 1" ng-model="searchParams" />
-                                    <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
-                                        <i class="fa fa-search" ng-if="gridOptions.data.length > 0 || gridOptions.totalItems >= 0"></i>
-                                        <i class="fa fa-refresh fa-spin" ng-if="gridOptions.totalItems === null"></i>
-                                    </span>
-                                </div>
+                <div class="control-wrapper search-wrapper">
+                    <form role="form" ng-submit="searchFor(true, searchParams)">
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search && search != 'confirmed=true'"></span>
+                                <input type="text" class="form-control" placeholder="Enter keywords" ng-change="currentPage = 1" ng-model="searchParams" />
+                                <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
+                                    <i class="fa fa-search" ng-if="gridOptions.data.length > 0 || gridOptions.totalItems >= 0"></i>
+                                    <i class="fa fa-refresh fa-spin" ng-if="gridOptions.totalItems === null"></i>
+                                </span>
                             </div>
-                        </form>
+                        </div>
+                    </form>
+                </div>
+                <div class="control-wrapper filter-wrapper">
+                    <button type="button" class="btn" title="{{ confirmed === true ? 'All vulns' : 'Confirmed vulns' }}" ng-click="toggleFilter()">
+                        <img src="{{ (confirmed === true) ? 'images/icon-toolbar-confirmed-on.svg' : 'images/icon-toolbar-confirmed-off.svg'}}" class="edit-icon" ng-style="{ 'opacity': (confirmed === true) ? '1' : '0.7' }" />
+                    </button>
+                </div>
+                <div class="control-wrapper download-wrapper">
+                    <button file-exporter="csv()" type="button" class="btn" title="Download CSV for current workspace">
+                            <img src="{{ (confirmed === true) ? 'images/icon-toolbar-confirmed-on.svg' : 'images/icon-toolbar-download.svg'}}" class="download-icon" />
+                    </button>
+                </div>
+                <div class="space-wrapper"></div>
+                <div class="control-wrapper control-wrap-right">
+                    <div class="btn-group">
+                        <button type="button" ng-if="propertyGroupBy" class="btn btn-danger" title="Clear" ng-click="clearGroupBy()">
+                            <i class="fa fa-times"></i>
+                        </button>
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="{{propertyGroupBy || 'Group By'}}">
+                            {{ (propertyGroupBy | uppercase) || "Group By"}}
+                        </button>
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Group By">
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                            <li ng-repeat="(column, show) in columns">
+                                <a class="ws" ng-show="show && (column !== 'evidence' && column !== 'impact' && column !== 'web' && column !== 'easeofresolution' && column !== 'date')" ng-click="groupBy(column)">{{column}}</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Add columns">
+                            Add columns
+                        </button>
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Add Columns">
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                            <li ng-repeat="(column, show) in columns">
+                                <a class="ws" ng-click="toggleShow(column, show)" ng-show="!show">{{column}}</a>
+                            </li>
+                        </ul>
                     </div>
                 </div>
-
-                <div ui-grid="gridOptions" ui-grid-grouping ui-grid-selection ui-grid-pagination ui-grid-pinning ui-grid-resize-columns class="grid" ng-style="{'height' : gridHeight }"></div>
+            </div>
+            <div class="reports col-md-12 col-sm-12 col-xs-12">
+                
+                <div ui-grid="gridOptions" ui-grid-grouping ui-grid-selection ui-grid-pagination ui-grid-pinning ui-grid-resize-columns class="grid status-report-grid" ng-style="{'height' : gridHeight }"></div>
 
                 <div id="counter">
                     <span>Total</span>

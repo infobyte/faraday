@@ -1,1 +1,50 @@
-<div ng-if="row.entity._id != undefined"><div ng-if="!col.grouping || col.grouping.groupPriority === undefined || col.grouping.groupPriority === null || ( row.groupHeader && col.grouping.groupPriority === row.treeLevel )" class="ui-grid-cell-contents"><a href="#/status/ws/{{grid.appScope.workspace}}/search/status={{COL_FIELD}}\"><span class="label vuln fondo-{{COL_FIELD}}">{{COL_FIELD | uppercase}}</span></a></div></div><div ng-if="row.groupHeader && col.grouping.groupPriority !== undefined"><span class="label vuln fondo-{{COL_FIELD}}">{{COL_FIELD | uppercase}}</span></div>
+<div ng-if="row.entity._id != undefined">
+    <div ng-if="!col.grouping || col.grouping.groupPriority === undefined || col.grouping.groupPriority === null || ( row.groupHeader && col.grouping.groupPriority === row.treeLevel )" class="ui-grid-cell-contents">
+        <div ng-switch="COL_FIELD">
+            <div class="alert-success" ng-switch-when="closed">
+                <a href="#/status/ws/{{grid.appScope.workspace}}/search/status={{COL_FIELD}}\">
+                    <span >{{COL_FIELD | uppercase}}</span>
+                </a>
+            </div>
+            <div class="alert-warning" ng-switch-when="opened">
+                <a href="#/status/ws/{{grid.appScope.workspace}}/search/status={{COL_FIELD}}\">
+                    <span >{{COL_FIELD | uppercase}}</span>
+                </a>
+            </div>
+            <div class="alert-danger" ng-switch-when="re-opened">
+                <a href="#/status/ws/{{grid.appScope.workspace}}/search/status={{COL_FIELD}}\">
+                    <span class="">{{COL_FIELD | uppercase}}</span>
+                </a>
+            </div>
+            <div class="alert-info" ng-switch-when="risk-accepted">
+                <a href="#/status/ws/{{grid.appScope.workspace}}/search/status={{COL_FIELD}}\">
+                    <span >{{COL_FIELD | uppercase}}</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+<div ng-if="row.groupHeader && col.grouping.groupPriority !== undefined">
+    <div ng-switch="COL_FIELD">
+        <div class="alert-success" ng-switch-when="closed">
+            <a href="#/status/ws/{{grid.appScope.workspace}}/search/status={{COL_FIELD}}\">
+                <span >{{COL_FIELD | uppercase}}</span>
+            </a>
+        </div>
+        <div class="alert-warning" ng-switch-when="opened">
+            <a href="#/status/ws/{{grid.appScope.workspace}}/search/status={{COL_FIELD}}\">
+                <span >{{COL_FIELD | uppercase}}</span>
+            </a>
+        </div>
+        <div class="alert-danger" ng-switch-when="re-opened">
+            <a href="#/status/ws/{{grid.appScope.workspace}}/search/status={{COL_FIELD}}\">
+                <span class="">{{COL_FIELD | uppercase}}</span>
+            </a>
+        </div>
+        <div class="alert-info" ng-switch-when="risk-accepted">
+            <a href="#/status/ws/{{grid.appScope.workspace}}/search/status={{COL_FIELD}}\">
+                <span >{{COL_FIELD | uppercase}}</span>
+            </a>
+        </div>
+    </div>
+</div>

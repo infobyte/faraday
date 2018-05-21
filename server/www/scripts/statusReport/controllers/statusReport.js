@@ -180,13 +180,13 @@ angular.module("faradayApp")
                 "target":           true,
                 "desc":             true,
                 "resolution":       false,
-                "data":             true,
+                "data":             false,
                 "easeofresolution": false,
-                "status":           false,
+                "status":           true,
                 "website":          false,
                 "path":             false,
                 "request":          false,
-                "refs":             true,
+                "refs":             false,
                 "evidence":         false,
                 "hostnames":        true,
                 "impact":           false,
@@ -208,9 +208,9 @@ angular.module("faradayApp")
                 $scope.columnsWidths = {
                     "name":             "120",
                     "service":          "110",
-                    "hostnames":        "100",
+                    "hostnames":        "130",
                     "target":           "100",
-                    "desc":             "300",
+                    "desc":             "200",
                     "resolution":       "170",
                     "data":             "170",
                     "easeofresolution": "140",
@@ -261,8 +261,7 @@ angular.module("faradayApp")
         };
 
         var defineColumns = function() {
-            $scope.gridOptions.columnDefs.push({ name: "selectAll", width: "20", enableColumnResizing: false,headerCellTemplate: "<i class=\"fa fa-check cursor\" ng-click=\"grid.appScope.selectAll()\" ng-style=\"{'opacity':(grid.appScope.selected === true) ? '1':'0.6'}\"></i>", pinnedLeft:true });
-            $scope.gridOptions.columnDefs.push({ name: "confirmVuln", width: "23", enableColumnResizing: false, headerCellTemplate: "<div></div>", cellTemplate: "scripts/statusReport/partials/ui-grid/confirmbutton.html" });
+            $scope.gridOptions.columnDefs.push({ name: "confirmVuln", width: "23", enableColumnResizing: false, headerCellTemplate:  "<i class=\"fa fa-check cursor\" ng-click=\"grid.appScope.selectAll()\" ng-style=\"{'opacity':(grid.appScope.selected === true) ? '1':'0.6'}\"></i>", cellTemplate: "scripts/statusReport/partials/ui-grid/confirmbutton.html" });
 
             function getColumnSort(columnName){
                 if($cookies.get("SRsortColumn") === columnName){
@@ -278,7 +277,7 @@ angular.module("faradayApp")
             var header = '<div ng-class="{ \'sortable\': sortable }">'+
                     '       <div class="ui-grid-cell-contents" col-index="renderIndex" title="TOOLTIP">{{ col.displayName CUSTOM_FILTERS }}'+
                     '           <a href="" ng-click="grid.appScope.toggleShow(col.displayName, true)">'+
-                    '               <span style="color:#000;" class="glyphicon glyphicon-remove"></span>'+
+                    '               <span class="glyphicon glyphicon-remove"></span>'+
                     '           </a>'+
                     '           <span ui-grid-visible="col.sort.direction" ng-class="{ \'ui-grid-icon-up-dir\': col.sort.direction == asc, \'ui-grid-icon-down-dir\': col.sort.direction == desc, \'ui-grid-icon-blank\': !col.sort.direction }">&nbsp;</span>'+
                     '       </div>'+
@@ -306,15 +305,6 @@ angular.module("faradayApp")
                 sort: getColumnSort('severity'),
                 sortingAlgorithm: compareSeverities,
                 enableColumnResizing: false
-            });
-            $scope.gridOptions.columnDefs.push({ name : 'date',
-                displayName : "date",
-                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/datecolumn.html',
-                headerCellTemplate: header,
-                width: '80',
-                enableColumnResizing: false,
-                sort: getColumnSort('date'),
-                visible: $scope.columns["date"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'name',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/namecolumn.html',
@@ -375,13 +365,6 @@ angular.module("faradayApp")
                 visible: $scope.columns["easeofresolution"],
                 width: $scope.columnsWidths['easeofresolution'],
             });
-            $scope.gridOptions.columnDefs.push({ name : 'status',
-                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/statuscolumn.html',
-                headerCellTemplate: header,
-                width: $scope.columnsWidths['status'],
-                sort: getColumnSort('status'),
-                visible: $scope.columns["status"]
-            });
             $scope.gridOptions.columnDefs.push({ name : 'website',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/defaultcolumn.html',
                 headerCellTemplate: header,
@@ -402,6 +385,22 @@ angular.module("faradayApp")
                 sort: getColumnSort('request'),
                 visible: $scope.columns["request"],
                 width: $scope.columnsWidths['request'],
+            });
+            $scope.gridOptions.columnDefs.push({ name : 'date',
+                displayName : "date",
+                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/datecolumn.html',
+                headerCellTemplate: header,
+                width: '80',
+                enableColumnResizing: false,
+                sort: getColumnSort('date'),
+                visible: $scope.columns["date"]
+            });
+            $scope.gridOptions.columnDefs.push({ name : 'status',
+                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/statuscolumn.html',
+                headerCellTemplate: header,
+                width: $scope.columnsWidths['status'],
+                sort: getColumnSort('status'),
+                visible: $scope.columns["status"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'refs',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/refscolumn.html',

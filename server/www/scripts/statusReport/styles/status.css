@@ -1,0 +1,158 @@
+.status-report-grid .ui-grid-header{
+    border-top: solid #E5E5E5 6px;
+    border-bottom: 2px solid #d8d8d8;
+    background: none;
+    color: #E9E9E9;
+    padding: 0px;
+    height: 45px;
+}
+
+.status-report-grid .ui-grid-header .ui-grid-cell-contents {
+    color: #7c7c7c;
+    padding: 9px 5px 9px 5px !important;
+    text-align: center;
+}
+
+.status-report-grid .ui-grid-cell-contents {
+    text-align: center;
+}
+
+.status-report-grid .ui-grid-header-cell{
+    border-right: solid #E9E9E9 1px;
+    text-align: center;
+}
+
+.status-report-grid .ui-grid-header-cell i, .status-report-grid .grid_id{
+
+    padding: 9px 5px 9px 5px !important;
+}
+
+.status-report-grid .ui-grid-row {
+    height: 45px;
+}
+
+.status-report-grid .grid_id .ui-grid-cell-contents{ 
+    position: relative;
+    top: 3px;
+}
+
+.status-report-grid .ui-grid-row-selected .ui-grid-cell{
+    background-color: #007bff !important;
+}
+.control-edit .edit-icon, .download-wrapper .download-icon {
+    height: 20px;
+    color: #000;
+    position: relative;
+    bottom: 2px;
+}
+
+.status-report-grid .ui-grid-header-cell{
+    text-align: center;
+}
+
+.download-wrapper {
+    bottom: 5px;
+}
+
+.status-report-grid .ui-grid-header-cell .glyphicon-remove{
+    color: #ccc;
+    font-size: 8px;
+    font-weight: lighter;
+    top: 0px;
+    left: 4px;
+}
+
+.search-wrapper .form-group{
+    margin: 0px;
+}
+
+.status-report-grid .ui-grid-contents-wrapper{
+    clear: both;
+}
+
+.status-report-grid .ui-grid-cell {
+    border: none ;
+}
+
+.button-control {
+    display:flex;
+    flex-direction: row;
+    padding-right: 20px;
+    padding-left: 0px;
+    padding-bottom: 17px;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#reports-main {
+    padding: 40px 0 0 24px;
+}
+
+#reports-main .reports{
+    padding: 0px;
+}
+
+.search-wrapper {
+    width: 385px;
+    padding: 0px;
+    margin-right: 16px;
+    margin-left: 16px;
+}
+
+.search-wrapper input{
+    height: 40px !important;
+    font-size: 14px;
+}
+
+.search-wrapper .input-group input, .search-wrapper .input-group span {
+    border: none;
+    border-radius: 0px;
+    background-color: #FFFFFF
+}
+
+.control-wrapper {
+    font-size: 14px;
+}
+
+.space-wrapper{
+    flex:1
+}
+
+.control-wrapper button{
+    border-radius: 0px; 
+}
+
+.control-wrapper > button{
+    border: none; 
+    background: none;
+    width: 47px;
+    height: 33px;
+}
+
+.control-edit {
+    padding-right: 0px;
+}
+
+.control-edit .edit {
+    width: 30px;
+}
+
+.control-edit .dropdown-toggle {
+    padding-right: 0px;
+    padding-left: 0px;
+    width: 10px;
+}
+
+button.btn-new {
+    width:95px;
+    height:33px;
+    background-color: #5cb85c;
+}
+
+.control-wrap-right {
+    justify-self: flex-end;
+}
+
+.control-new{
+    margin-right: 16px;
+}

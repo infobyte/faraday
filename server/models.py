@@ -722,7 +722,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
     confirmed = Column(Boolean, nullable=False, default=False)
     status = Column(Enum(*STATUSES, name='vulnerability_statuses'), nullable=False, default="open")
     type = Column(Enum(*VULN_TYPES, name='vulnerability_types'), nullable=False)
-    issuetracker = Column(Text)
+    issuetracker = BlankColumn(Text)
 
     workspace_id = Column(
                         Integer,
@@ -1608,9 +1608,9 @@ CheckConstraint('((Vulnerability.host_id IS NOT NULL)::int+'
 
 vulnerability_uniqueness = DDL(
     "CREATE UNIQUE INDEX uix_vulnerability ON %(fullname)s "
-    "(name, md5(description), COALESCE(host_id, -1), COALESCE(service_id, -1), "
-    "COALESCE(method, ''), COALESCE(parameter_name, ''), COALESCE(path, ''), "
-    "COALESCE(website, ''), workspace_id, COALESCE(source_code_id, -1));"
+    "(md5(name), md5(description), COALESCE(host_id, -1), COALESCE(service_id, -1), "
+    "COALESCE(md5(method), ''), COALESCE(md5(parameter_name), ''), COALESCE(md5(path), ''), "
+    "COALESCE(md5(website), ''), workspace_id, COALESCE(source_code_id, -1));"
 )
 
 vulnerability_uniqueness_sqlite = DDL(

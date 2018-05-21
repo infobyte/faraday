@@ -89,6 +89,8 @@ def _setUpAPIServer(hostname=None, port=None):
 
                 # register all the api functions to be exposed by the server
                 _xmlrpc_api_server.register_function(createAndAddHost)
+                _xmlrpc_api_server.register_function(createAndAddInterface)
+                _xmlrpc_api_server.register_function(createAndAddServiceToInterface)
                 _xmlrpc_api_server.register_function(createAndAddServiceToHost)
                 _xmlrpc_api_server.register_function(createAndAddNoteToService)
                 _xmlrpc_api_server.register_function(createAndAddNoteToHost)
@@ -138,6 +140,20 @@ def createAndAddHost(ip, os="Unknown"):
         return host.getID()
     return None
 
+def createAndAddInterface(host_id, name="", mac="00:00:00:00:00:00", ipv4_address="0.0.0.0", ipv4_mask="0.0.0.0",
+                 ipv4_gateway="0.0.0.0", ipv4_dns=[], ipv6_address="0000:0000:0000:0000:0000:0000:0000:0000",
+                 ipv6_prefix="00", ipv6_gateway="0000:0000:0000:0000:0000:0000:0000:0000", ipv6_dns=[],
+                 network_segment="", hostname_resolution=[]):
+    return host_id
+
+def createAndAddServiceToInterface(host_id, interface_id, name, protocol = "tcp?",
+                ports = [], status = "running", version = "unknown", description = ""):
+
+    # interface_id unused, now unique parent of service is host_id
+    service = newService(name, protocol, ports, status, version, description, parent_id=host_id)
+    if addServiceToHost(service):
+        return service.getID()
+    return None
 
 def createAndAddServiceToHost(host_id, name,
                                        protocol="tcp?", ports=[],

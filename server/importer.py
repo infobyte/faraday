@@ -1,6 +1,8 @@
+# -*- coding: utf8 -*-
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+from base64 import b64decode
 import string
 from random import SystemRandom
 
@@ -35,6 +37,7 @@ import server.config
 import server.couchdb
 import server.models
 import server.utils.logger
+from server.fields import FaradayUploadedFile
 from server.models import (
     db,
     Command,
@@ -201,8 +204,9 @@ def get_children_from_couch(workspace, parent_couchdb_id, child_type):
     view_data = {
         "views": {
             "children_by_parent_and_type": {
-                "map": "function(doc) { id_parent = doc._id.split('.').slice(0, -1).join('.');"
-                "key = [id_parent,doc.type]; emit(key, doc); }"
+                "map":
+                    "function(doc) { id_parent = doc._id.split('.').slice(0, -1).join('.');"
+                    "key = [id_parent,doc.type]; emit(key, doc); }"
             }
         }
     }
@@ -210,7 +214,7 @@ def get_children_from_couch(workspace, parent_couchdb_id, child_type):
     try:
         r = requests.put(view_url, json=view_data)
     except requests.exceptions.RequestException as e:
-        logger.warn(e)
+        logger.exception(e)
         return []
 
     # and now, finally query it!
@@ -224,7 +228,22 @@ def get_children_from_couch(workspace, parent_couchdb_id, child_type):
     try:
         r = requests.get(couch_url)
     except requests.exceptions.RequestException as e:
-        logger.warn(e)
+        logger.error('Network error in CouchDB request {}'.format(
+            couch_url,
+            r.status_code,
+            r.text))
+        logger.exception(e)
+        return []
+
+    try:
+        r.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        logger.error('Error in CouchDB request {}. '
+                     'Status code: {}. '
+                     'Body: {}'.format(couch_url,
+                                       r.status_code,
+                                       r.text))
+        logger.exception(e)
         return []
 
     return r.json()['rows']
@@ -232,7 +251,8 @@ def get_children_from_couch(workspace, parent_couchdb_id, child_type):
 
 def create_tags(raw_tags, parent_id, parent_type):
     for tag_name in [x.strip() for x in raw_tags if x.strip()]:
-        tag, tag_created = get_or_create(session, Tag, name=tag_name, slug=slugify(tag_name))
+        tag, tag_created = get_or_create(session, Tag, slug=slugify(tag_name))
+        tag.name = tag_name
         session.commit()
         parent_type = parent_type.lower()
         parent_type = parent_type.replace('web', '')
@@ -421,8 +441,10 @@ class HostImporter(object):
         host_ips = [name_or_ip for name_or_ip in self.retrieve_ips_from_host_document(document)]
         interfaces = get_children_from_couch(workspace, document.get('_id'), 'Interface')
         command = None
-        if 'metadata' in document and 'command_id' in document['metadata'] and document['metadata']['command_id']:
+        try:
             command = session.query(Command).get(couchdb_relational_map[document['metadata']['command_id']][0])
+        except (KeyError, IndexError):
+            command = None
 
         for interface in interfaces:
             interface = interface['value']
@@ -506,8 +528,10 @@ class ServiceImporter(object):
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         #  service was always below interface, not it's below host.
         command = None
-        if 'command_id' in document['metadata'] and document['metadata']['command_id']:
+        try:
             command = session.query(Command).get(couchdb_relational_map[document['metadata']['command_id']][0])
+        except (KeyError, IndexError):
+            command = None
         try:
             parent_id = document['parent'].split('.')[0]
         except KeyError:
@@ -519,9 +543,22 @@ class ServiceImporter(object):
                 session.flush()
                 CommandObject.create(host, command)
             ports = document.get('ports')
-            if len(ports) > 2:
+            if len(ports) > 1:
                 logger.warn('More than one port found in services!')
             for port in ports:
+                try:
+                    port = int(port)
+                except ValueError:
+                    logger.warn('Port {} of service {} is not a valid '
+                                'integer. Using port 65534'.format(repr(port)))
+                    port = 65534
+                if port > (2**31 - 1):
+                    # Bigger than the maximum int supported by postgres
+                    logger.warn('Port number {} too big for service {}. '
+                                'Using port 65535'.format(
+                            port, document['_id']
+                    ))
+                    port = 65535
                 service, created = get_or_create(session,
                                                  Service,
                                                  name=document.get('name'),
@@ -559,13 +596,29 @@ class ServiceImporter(object):
                 yield service
 
 
+def get_or_create_user(session, username):
+    rng = SystemRandom()
+    password =  "".join(
+        [rng.choice(string.ascii_letters + string.digits) for _ in
+            xrange(12)])
+    creator, created = get_or_create(session, User, username=username)
+    if created:
+        creator.active = False
+        creator.password = password
+    session.add(creator) # remove me
+    session.commit() # remove me
+    return creator
+
+
 class VulnerabilityImporter(object):
     DOC_TYPE = ['Vulnerability', 'VulnerabilityWeb']
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         command = None
-        if 'command_id' in document['metadata'] and document['metadata']['command_id']:
+        try:
             command = session.query(Command).get(couchdb_relational_map[document['metadata']['command_id']][0])
+        except (KeyError, IndexError):
+            command = None
         vulnerability = None
         couch_parent_id = document.get('parent', None)
         if not couch_parent_id:
@@ -585,17 +638,7 @@ class VulnerabilityImporter(object):
             if level == 4:
                 parent = session.query(Service).filter_by(id=parent_id).first()
             owner_name = document.get('owner', None)
-            creator = None
-            if owner_name:
-                creator = session.query(User).filter_by(username=owner_name).first()
-
-            if not creator:
-                rng = SystemRandom()
-                password =  "".join(
-                    [rng.choice(string.ascii_letters + string.digits) for _ in
-                     xrange(12)])
-                creator, _ = get_or_create(session, User, username=owner_name, active=False)
-                creator.password = password
+            creator = get_or_create_user(session, owner_name)
             if document['type'] == 'VulnerabilityWeb':
                 method = document.get('method')
                 path = document.get('path')
@@ -801,8 +844,10 @@ class CredentialImporter(object):
     DOC_TYPE = 'Cred'
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         command = None
-        if 'command_id' in document['metadata'] and document['metadata']['command_id']:
+        try:
             command = session.query(Command).get(couchdb_relational_map[document['metadata']['command_id']][0])
+        except (KeyError, IndexError):
+            command = None
         parents = []
         if level == 2:
             parent_ids = couchdb_relational_map[document['_id'].split('.')[0]]
@@ -910,7 +955,9 @@ class TaskImporter(object):
 
         for username in document.get('assigned_to', []):
             if username:
-                assigned_users.append(session.query(User).filter_by(username=username).first())
+                user = session.query(User).filter_by(username=username).first()
+                if user:
+                    assigned_users.append(user)
 
         task.assigned_to = assigned_users
 
@@ -941,6 +988,7 @@ class ReportsImporter(object):
         report.status = document.get('status')
         # TODO: add tags
         report.conclusions = document.get('conclusions')
+        report.confirmed = document.get('confirmed', False)
         report.summary = document.get('summary')
         report.recommendations = document.get('recommendations')
         report.enterprise = document.get('enterprise')
@@ -949,6 +997,39 @@ class ReportsImporter(object):
         report.objectives = document.get('objectives')
         report.grouped = document.get('grouped', False)
         report.workspace = workspace
+        try:
+            report.vuln_count = document['totalVulns']['total']
+        except KeyError:
+            logger.warning("Couldn't load vuln count of report".format(document.get('_id')))
+        report.creator = get_or_create_user(session, document.get('owner'))
+        session.flush()
+        old_attachments = session.query(File).filter_by(
+            object_id=report.id,
+            object_type='vulnerability',
+        )
+        for old_attachment in old_attachments:
+            db.session.delete(old_attachment)
+        for filename, attachment in document.get('_attachments', {}).items():
+            attachment_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
+                username=server.config.couchdb.user,
+                password=server.config.couchdb.password,
+                hostname=server.config.couchdb.host,
+                port=server.config.couchdb.port,
+                path='{0}/{1}/{2}'.format(workspace.name, document.get('_id'),
+                                          filename)
+            )
+            response = requests.get(attachment_url)
+            response.raw.decode_content = True
+            faraday_file = response.content
+            file, created = get_or_create(
+                session,
+                File,
+                object_id=report.id,
+                object_type='executive_report',
+                name=os.path.splitext(os.path.basename(filename))[0],
+                filename=os.path.basename(filename),
+            )
+            file.content=faraday_file
         yield report
 
 
@@ -1137,7 +1218,7 @@ class ImportVulnerabilityTemplates():
             logger.warn('Unable to retrieve Vulnerability Templates Database. Moving on.')
             return
         except requests.exceptions.RequestException as e:
-            logger.warn(e)
+            logger.exception(e)
             return
 
         for cwe in (cwes.json()['rows']):
@@ -1220,7 +1301,7 @@ class ImportLicense():
             logger.warn('Unable to retrieve Licenses Database. Moving on.')
             return
         except requests.exceptions.RequestException as e:
-            logger.warn(e)
+            logger.exception(e)
             return
 
         for license in licenses.json()['rows']:

@@ -68,7 +68,6 @@ class InitDB():
             # we use psql_log_filename for historical saving. we will ask faraday users this file.
             # current_psql_output is for checking psql command already known errors for each execution.
             psql_log_filename = os.path.join(faraday_path_conf, 'logs', 'psql_log.log')
-            configure_existing_user = None
             current_psql_output = TemporaryFile()
             with open(psql_log_filename, 'a+') as psql_log_file:
                 hostname = 'localhost'
@@ -103,7 +102,7 @@ class InitDB():
             engine.execute("INSERT INTO \"faraday_user\" (username, name, password, "
                        "is_ldap, active, last_login_ip, current_login_ip, role) VALUES ('faraday', 'Administrator', "
                        "'{0}', false, true, '127.0.0.1', '127.0.0.1', 'admin');".format(random_password))
-        except sqlalchemy.exc.IntegrityError as ex:
+        except sqlalchemy.exc.IntegrityError:
             # when re using database user could be created previusly
             already_created = True
             print(
@@ -133,7 +132,8 @@ class InitDB():
         elif 'could not connect to server' in psql_output:
             print('ERROR: {red}PostgreSQL service{white} is not running. Please verify that it is running in port 5432 before executing setup script.'.format(red=Fore.RED, white=Fore.WHITE))
         elif process_status > 0:
-            print('ERROR: ' + psql_output)
+            current_psql_output_file.seek(0)
+            print('ERROR: ' + current_psql_output_file.read())
 
         if process_status is not 0:
             current_psql_output_file.close() # delete temp file
@@ -148,10 +148,11 @@ class InitDB():
             This step will create the role on the database.
             we return username and password and those values will be saved in the config file.
         """
-        username_default = 'faraday_db_admin'
         print('This script will {blue} create a new postgres user {white} and {blue} save faraday-server settings {white}(server.ini). '.format(blue=Fore.BLUE, white=Fore.WHITE))
         username = 'faraday'
         postgres_command = ['sudo', '-u', 'postgres']
+        if sys.platform == 'darwin':
+            postgres_command = []
         password = self.generate_random_pw(25)
         command = postgres_command + ['psql', '-c', 'CREATE ROLE {0} WITH LOGIN PASSWORD \'{1}\';'.format(username, password)]
         p = Popen(command, stderr=psql_log_file, stdout=psql_log_file)
@@ -163,7 +164,6 @@ class InitDB():
         if already_exists_error in output:
             print("{yellow}WARNING{white}: Role {username} already exists, skipping creation ".format(yellow=Fore.YELLOW, white=Fore.WHITE, username=username))
 
-
             try:
                 connection = psycopg2.connect(dbname='postgres',
                                               user=username,
@@ -173,7 +173,6 @@ class InitDB():
                 cur.fetchall()
                 connection.commit()
                 connection.close()
-                invalid_pwd = False
             except psycopg2.Error as e:
                 if 'authentication failed' in e.message:
                     print('{red}ERROR{white}: User {username} already '
@@ -191,6 +190,9 @@ class InitDB():
              This step uses the createdb command to add a new database.
         """
         postgres_command = ['sudo', '-u', 'postgres']
+        if sys.platform == 'darwin':
+            postgres_command = []
+
         print('Creating database {0}'.format(database_name))
         command = postgres_command + ['createdb', '-O', username, database_name]
         p = Popen(command, stderr=psql_log_file, stdout=psql_log_file, cwd='/tmp')

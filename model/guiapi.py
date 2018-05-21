@@ -24,7 +24,7 @@ def setMainApp(ref):
     global __the_mainapp
     __the_mainapp = ref
     notification_center.setUiApp(__the_mainapp)
-    
+
 def getMainApp():
     global __the_mainapp
     return __the_mainapp
@@ -32,12 +32,12 @@ def getMainApp():
 def getMainWindow():
     global __the_mainapp
     return __the_mainapp.getMainWindow()
-    
+
 def postCustomEvent(event, receiver=None):
     if receiver is None:
         receiver = getMainWindow()
     __the_mainapp.postEvent(receiver, event)
-    
+
 def sendCustomEvent(event, receiver=None):
     if receiver is None:
         receiver = getMainWindow()
@@ -84,7 +84,7 @@ def createAndAddInterface(host_id, name = "", mac = "00:00:00:00:00:00",
     return None
 
 
-def createAndAddServiceToInterface(host_id, interface_id, name, protocol = "tcp?", 
+def createAndAddServiceToInterface(host_id, interface_id, name, protocol = "tcp?",
                 ports = [], status = "running", version = "unknown", description = ""):
     service = model.api.newService(name, protocol, ports, status, version, description, parent_id=interface_id)
     if addServiceToInterface(host_id, interface_id, service):
@@ -157,33 +157,22 @@ def createAndAddVulnWeb(model_object, name, desc, website, path, ref=None,
 
 
 def createAndAddNoteToHost(host_id, name, text):
-    note = model.api.newNote(name, text, parent_id=host_id)
-    if addNoteToHost(host_id, note):
-        return note.getID()
+
     return None
 
 
 def createAndAddNoteToInterface(host_id, interface_id, name, text):
-    note = model.api.newNote(name, text, parent_id=interface_id)
-    if addNoteToInterface(host_id, interface_id, note):
-        return note.getID()
+
     return None
 
 
 def createAndAddNoteToService(host_id, service_id, name, text):
-    note = model.api.newNote(name, text, parent_id=service_id)
-    if addNoteToService(host_id, service_id, note):
-        return note.getID()
+
     return None
 
 
 def createAndAddNote(model_object, name, text):
-    note = model.api.newNote(name, text, parent_id=model_object.getID())
-    if addNote(model_object.getID(), note):
-        return note.getID()
     return None
-
-
 def createAndAddCred(model_object, username, password):
     cred = model.api.newCred(username, password, parent_id=model_object.getID())
     if addCred(model_object.getID(), cred):
@@ -255,7 +244,7 @@ def addVuln(model_object_id, vuln):
         return True
     return False
 
-       
+
 
 def addNoteToHost(host_id, note):
     if note is not None:
@@ -287,7 +276,7 @@ def addNote(model_object_id, note):
         return True
     return False
 
-      
+
 def addCred(model_object_id, cred):
     if cred is not None:
         __model_controller.addCredSYNC(model_object_id, cred)
@@ -336,16 +325,16 @@ def delServiceFromApplication(host_id, application_id, service_id):
 def delVulnFromApplication(vuln, hostname, appname):
     __model_controller.delVulnFromApplicationSYNC(hostname, appname, vuln)
     return True
-                                                                                
+
 def delVulnFromInterface(vuln, hostname, intname):
     __model_controller.delVulnFromInterfaceSYNC(hostname,intname, vuln)
     return True
-                                                                                
+
 def delVulnFromHost(vuln, hostname):
     __model_controller.delVulnFromHostSYNC(hostname,vuln)
     return True
 
-                                                                                
+
 def delVulnFromService(vuln, hostname, srvname):
     __model_controller.delVulnFromServiceSYNC(hostname,srvname, vuln)
     return True
@@ -354,21 +343,21 @@ def delVuln(model_object_id, vuln_id):
     __model_controller.delVulnSYNC(model_object_id, vuln_id)
     return True
 
-       
-                                                                                
+
+
 def delNoteFromApplication(note, hostname, appname):
     __model_controller.delNoteFromApplicationSYNC(hostname, appname, note)
     return True
-                                                                                
+
 def delNoteFromInterface(note, hostname, intname):
     __model_controller.delNoteFromInterfaceSYNC(hostname,intname, note)
     return True
-                                                                                
+
 def delNoteFromHost(note, hostname):
     __model_controller.delNoteFromHostSYNC(hostname, note)
     return True
 
-                                                                                
+
 def delNoteFromService(note, hostname, srvname):
     __model_controller.delNoteFromServiceSYNC(hostname,srvname, note)
     return True
@@ -377,7 +366,7 @@ def delNote(model_object_id, note_id):
     __model_controller.delNoteSYNC(model_object_id, note_id)
     return True
 
-     
+
 def delCred(model_object_id, cred_id):
     __model_controller.delCredSYNC(model_object_id, cred_id)
     return True
@@ -386,14 +375,14 @@ def delCredFromHost(cred, hostname):
     __model_controller.delCredFromHostSYNC(hostname, cred)
     return True
 
-                                                                                
+
 def delCredFromService(cred, hostname, srvname):
     __model_controller.delCredFromServiceSYNC(hostname,srvname, cred)
     return True
 
 
-                                                                                
-              
+
+
 
 def editHost(host, name=None, description=None, os=None, owned=None):
     __model_controller.editHostSYNC(host, name, description, os, owned)
@@ -407,9 +396,9 @@ def editApplication(application, name, description, status, version, owned):
     __model_controller.editApplicationSYNC(application, name, description, status, version, owned)
     return True
 
-def editInterface(interface, name=None, description=None, hostnames=None, mac=None, ipv4=None, ipv6=None, network_segment=None, 
+def editInterface(interface, name=None, description=None, hostnames=None, mac=None, ipv4=None, ipv6=None, network_segment=None,
                   amount_ports_opened=None, amount_ports_closed=None, amount_ports_filtered=None, owned=None):
-    __model_controller.editInterfaceSYNC(interface, name, description, hostnames, mac, ipv4, ipv6, network_segment, 
+    __model_controller.editInterfaceSYNC(interface, name, description, hostnames, mac, ipv4, ipv6, network_segment,
                   amount_ports_opened, amount_ports_closed, amount_ports_filtered, owned)
     return True
 

@@ -26,7 +26,7 @@ from persistence.server.models import (
     Vuln,
     VulnWeb,
     Credential,
-    Note,
+    Note
 )
 from model import Modelactions
 #from plugins.modelactions import modelactions
@@ -312,52 +312,16 @@ class PluginBase(object):
         return vulnweb_obj.getID()
 
     def createAndAddNoteToHost(self, host_id, name, text):
+        return None
 
-        note_obj = model.common.factory.createModelObject(
-            Note.class_signature,
-            name, text=text, object_id=host_id, object_type='host',
-            workspace_name=self.workspace)
-
-        note_obj._metadata.creator = self.id
-        self.__addPendingAction(Modelactions.ADDNOTEHOST, note_obj)
-        return note_obj.getID()
-
-    @deprecation.deprecated(deprecated_in="3.0", removed_in="3.5",
-                            current_version=VERSION,
-                            details="Interface object removed. Use host or service instead. Note will be added to Host")
     def createAndAddNoteToInterface(self, host_id, interface_id, name, text):
-
-        note_obj = model.common.factory.createModelObject(
-            Note.class_signature,
-            name, text=text, object_id=host_id, object_type='host',
-            workspace_name=self.workspace)
-
-        note_obj._metadata.creator = self.id
-        self.__addPendingAction(Modelactions.ADDNOTEHOST, note_obj)
-        return note_obj.getID()
+        return None
 
     def createAndAddNoteToService(self, host_id, service_id, name, text):
-
-        note_obj = model.common.factory.createModelObject(
-            Note.class_signature,
-            name, text=text, object_id=service_id, object_type='service',
-            workspace_name=self.workspace)
-
-        note_obj._metadata.creator = self.id
-        self.__addPendingAction(Modelactions.ADDNOTESRV, note_obj)
-        return note_obj.getID()
+        return None
 
     def createAndAddNoteToNote(self, host_id, service_id, note_id, name, text):
-
-        note_obj = model.common.factory.createModelObject(
-            Note.class_signature,
-            name, text=text, object_id=note_id, object_type='comment',
-            workspace_name=self.workspace)
-
-        note_obj._metadata.creator = self.id
-
-        self.__addPendingAction(Modelactions.ADDNOTENOTE, note_obj)
-        return note_obj.getID()
+        return None
 
     def createAndAddCredToService(self, host_id, service_id, username,
                                   password):

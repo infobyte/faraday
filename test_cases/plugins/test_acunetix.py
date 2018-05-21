@@ -57,12 +57,10 @@ class TestAcunetixParser:
             action = self.plugin._pending_actions.get(block=True)
             actions[action[0]].append(action[1])
 
-        assert actions.keys() == [2000, 20008, 2027, 2040, 2038]
+        assert actions.keys() == [2000, 20008, 2038]
         assert len(actions[2000]) == 1
         assert actions[2000][0].name == "5.175.17.140"
         assert len(actions[20008]) == 1
-        assert len(actions[2027]) == 1
-        assert len(actions[2040]) == 1
         assert len(actions[2038]) == 52
 
         assert actions[20008][0].ports == [80]

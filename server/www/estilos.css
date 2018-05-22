@@ -112,6 +112,7 @@ header.head {
         display: block;
         padding: 8px 0;
         color: #fff;
+        opacity: .4;
         text-align: center;
         transition: all .3s ease;
             -ms-transition: all .3s ease;
@@ -120,10 +121,15 @@ header.head {
     }
     	aside nav a:hover {
             background-color: #d9d9d9;
+            opacity: 1;
         }
 
     	aside nav a.active {
             background-color: #d9d9d9;
+        }
+
+        .left-nav ul{
+            margin-top: 10px;
         }
 
         .left-nav {

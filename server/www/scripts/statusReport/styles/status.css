@@ -9,8 +9,8 @@
 
 .status-report-grid .ui-grid-header .ui-grid-cell-contents {
     color: #7c7c7c;
-    padding: 9px 5px 9px 5px !important;
-    text-align: center;
+    padding: 9px 9px 9px 5px !important;
+    text-align: left;
 }
 
 .status-report-grid .ui-grid-cell-contents {
@@ -23,8 +23,7 @@
 }
 
 .status-report-grid .ui-grid-header-cell i, .status-report-grid .grid_id{
-
-    padding: 9px 5px 9px 5px !important;
+    padding: 11px 9px 9px 5px !important
 }
 
 .status-report-grid .ui-grid-row {
@@ -37,13 +36,31 @@
 }
 
 .status-report-grid .ui-grid-row-selected .ui-grid-cell{
-    background-color: #007bff !important;
+    background-color: #8DA2B7 !important;
+    color: #FFFFFF;
 }
-.control-edit .edit-icon, .download-wrapper .download-icon {
+
+.status-report-grid .ui-grid-row-selected a{
+    color: #FFFFFF;
+}
+
+.status-report-grid .no-background{
+    background: none;
+}
+
+.control-edit {
+    width:44px;
+}
+
+.control-edit .edit-icon, .download-wrapper .download-icon, .control-wrapper .delete-icon, .search-wrapper .search-icon {
     height: 20px;
     color: #000;
     position: relative;
     bottom: 2px;
+}
+
+.status-report-grid .confirm-icon {
+    width: 40%;
 }
 
 .status-report-grid .ui-grid-header-cell{
@@ -85,7 +102,7 @@
 }
 
 #reports-main {
-    padding: 40px 0 0 24px;
+    padding: 0px 0 0 24px;
 }
 
 #reports-main .reports{
@@ -102,6 +119,7 @@
 .search-wrapper input{
     height: 40px !important;
     font-size: 14px;
+    box-shadow: none;
 }
 
 .search-wrapper .input-group input, .search-wrapper .input-group span {
@@ -114,8 +132,13 @@
     font-size: 14px;
 }
 
+.filter-wrapper .confirm-button{
+    position: relative;
+    bottom: 1px;
+}
+
 .space-wrapper{
-    flex:1
+    flex:1;
 }
 
 .control-wrapper button{
@@ -131,6 +154,12 @@
 
 .control-edit {
     padding-right: 0px;
+    position: relative;
+}
+
+.control-edit .dropdown-menu-right{
+    left: 0px !important;
+    width: 245px;
 }
 
 .control-edit .edit {

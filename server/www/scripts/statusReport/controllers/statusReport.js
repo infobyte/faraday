@@ -218,7 +218,7 @@ angular.module("faradayApp")
                     "website":          "90",
                     "path":             "90",
                     "request":          "90",
-                    "refs":             "120",
+                    "refs":             "20",
                     "_attachments":     "100",
                     "impact":           "90",
                     "method":           "90",
@@ -261,7 +261,7 @@ angular.module("faradayApp")
         };
 
         var defineColumns = function() {
-            $scope.gridOptions.columnDefs.push({ name: "confirmVuln", width: "23", enableColumnResizing: false, headerCellTemplate:  "<i class=\"fa fa-check cursor\" ng-click=\"grid.appScope.selectAll()\" ng-style=\"{'opacity':(grid.appScope.selected === true) ? '1':'0.6'}\"></i>", cellTemplate: "scripts/statusReport/partials/ui-grid/confirmbutton.html" });
+            $scope.gridOptions.columnDefs.push({ name: "confirmVuln", width: "45", enableColumnResizing: false, headerCellTemplate:  "<i class=\"fa fa-check cursor\" ng-click=\"grid.appScope.selectAll()\" ng-style=\"{'opacity':(grid.appScope.selected === true) ? '1':'0.6'}\"></i>", cellTemplate: "scripts/statusReport/partials/ui-grid/confirmbutton.html" });
 
             function getColumnSort(columnName){
                 if($cookies.get("SRsortColumn") === columnName){
@@ -291,7 +291,6 @@ angular.module("faradayApp")
                 displayName : "_id",
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/idcolumn.html',
                 headerCellTemplate: header,
-                width: '50',
                 sort: getColumnSort('_id'),
                 visible: $scope.columns["_id"]
             });
@@ -300,7 +299,6 @@ angular.module("faradayApp")
                 headerCellTemplate: header,
                 displayName : "sev",
                 type: 'string',
-                width: '70',
                 visible: $scope.columns["severity"],
                 sort: getColumnSort('severity'),
                 sortingAlgorithm: compareSeverities,
@@ -390,7 +388,6 @@ angular.module("faradayApp")
                 displayName : "date",
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/datecolumn.html',
                 headerCellTemplate: header,
-                width: '80',
                 enableColumnResizing: false,
                 sort: getColumnSort('date'),
                 visible: $scope.columns["date"]

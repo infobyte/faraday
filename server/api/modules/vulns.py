@@ -453,6 +453,17 @@ class VulnerabilityView(PaginatedMixin,
             [Vulnerability, VulnerabilityWeb]
         ), *joinedloads)
 
+    def _filter_query(self, query):
+        query = super(VulnerabilityView, self)._filter_query(query)
+        search_term = flask.request.args.get('search', None)
+        if search_term is not None:
+            # TODO migration: add more fields to free text search
+            like_term = '%' + search_term + '%'
+            match_name = VulnerabilityGeneric.name.ilike(like_term)
+            match_desc = VulnerabilityGeneric.description.ilike(like_term)
+            query = query.filter(match_name | match_desc)
+        return query
+
     @property
     def model_class(self):
         if request.method == 'POST':

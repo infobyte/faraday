@@ -7,6 +7,12 @@ angular.module('faradayApp')
         ['$scope', '$routeParams', '$location', 'dashboardSrv', 'workspacesFact', 'vulnsManager',
         function($scope, $routeParams, $location, dashboardSrv, workspacesFact, vulnsManager) {
 
+
+            $scope.showHeader = function() {
+                var noNav = ["", "home", "login", "index"];
+                return noNav.indexOf($scope.component) < 0;
+            };
+
             init = function(name) {
                 $scope.location = $location.path().split('/')[1];
                 $scope.workspace = $routeParams.wsId;

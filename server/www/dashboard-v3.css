@@ -1,0 +1,89 @@
+.bg-white {
+  background-color: #FFF;
+}
+
+.border-right {
+  border-right: 1px solid #e7e7e7;
+}
+
+.dashboard-label-wrapper {
+  text-align: left;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.dashboard-label-wrapper > .label {
+  padding: 5px;
+  width: 100%;
+  display: block;
+}
+
+.label-gray {
+  background-color: #a1a1a1;
+}
+
+.m0 {
+  margin: 0px !important;
+}
+
+.mt-md {
+  margin-top: 10px;
+}
+
+.p0 {
+  padding: 0px !important;
+}
+
+.pl0 {
+  padding-left: 0px !important;
+}
+
+.p-md {
+  padding: 10px;
+}
+
+.ph-sm {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.ph-md {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.ph-xxl {
+  padding-left: 45px;
+  padding-right: 45px;
+}
+
+.pl-sm {
+  padding-left: 5px;
+}
+
+.pr-sm {
+  padding-right: 5px;
+}
+
+.progress-bar-tall {
+  height: 57px;
+}
+
+.progress-bar-tall > .progress-bar > span {
+  top: 20px;
+  position: relative;
+}
+
+.progress-bar-light-blue > .progress-bar {
+  background-color: #409ccd;
+}
+
+.panel {
+  -webkit-box-shadow: none;
+  box-shadow: none;
+  border-radius: 0px;
+}
+
+.text-left {
+  text-align: left !important;
+}

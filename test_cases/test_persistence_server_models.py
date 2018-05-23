@@ -3,6 +3,8 @@ import pytest
 import responses
 import requests
 
+import server.config
+
 from test_api_workspaced_base import GenericAPITest
 
 from test_cases.factories import VulnerabilityWebFactory, VulnerabilityFactory
@@ -63,11 +65,14 @@ class TestVulnPersistanceModelsFuncions(GenericAPITest):
                 u'_id': v.getID(),
                 u'resolution': v.getResolution()
                 }
+
+        port = server.config.faraday_server.port
+
         responses.add(responses.PUT,
-                      'http://localhost:5985/_api/v2/ws/{0}/vulns/{1}/'.format(self.workspace.name, v.id),
+                      'http://localhost:{0}/_api/v2/ws/{1}/vulns/{2}/'.format(port,self.workspace.name, v.id),
                       json=resp, status=200)
 
-        a = requests.put('http://localhost:5985/_api/v2/ws/{0}/vulns/{1}/'.format(self.workspace.name, v.id))
+        a = requests.put('http://localhost:{0}/_api/v2/ws/{1}/vulns/{2}/'.format(port,self.workspace.name, v.id))
 
         try:
             models.update_vuln(self.workspace.name, v)
@@ -135,11 +140,14 @@ class TestVulnWebPersistanceModelsFuncions(GenericAPITest):
                 u'_id': v.getID(),
                 u'resolution': v.getResolution()
                 }
+
+        port = server.config.faraday_server.port
+
         responses.add(responses.PUT,
-                      'http://localhost:5985/_api/v2/ws/{0}/vulns/{1}/'.format(self.workspace.name, v.id),
+                      'http://localhost:{0}/_api/v2/ws/{1}/vulns/{2}/'.format(port,self.workspace.name, v.id),
                       json=resp, status=200)
 
-        a = requests.put('http://localhost:5985/_api/v2/ws/{0}/vulns/{1}/'.format(self.workspace.name, v.id))
+        a = requests.put('http://localhost:{0}/_api/v2/ws/{1}/vulns/{2}/'.format(port,self.workspace.name, v.id))
 
         try:
             models.update_vuln_web(self.workspace.name, v)

@@ -20,9 +20,9 @@
                 <td align="left">
                     <span ng-if="cmd.import_source == 'report'" class="fa fa-upload"/>
                     <span ng-if="cmd.import_source == 'shell'" class="fa fa-terminal"/>
-                    <b class="capitalize">{{cmd.user || Anonymous}}</b>
-                    <span ng-if="cmd.import_source == 'shell'" uib-tooltip="{{ cmd.command + ' ' + cmd.params}}">ran {{cmd.command}}</span>
-                    <span ng-if="cmd.import_source == 'report'" uib-tooltip="Import {{ cmd.command + ': ' + cmd.params}}">imported {{cmd.tool == 'unknown' ? cmd.command : cmd.tool}} report</span>
+                    <b class="capitalize fg-blue">{{cmd.user || Anonymous}}</b>
+                    <span ng-if="cmd.import_source == 'shell'" uib-tooltip="{{ cmd.command + ' ' + cmd.params}}">ran <strong>{{cmd.command}}</strong></span>
+                    <span ng-if="cmd.import_source == 'report'" uib-tooltip="Import {{ cmd.command + ': ' + cmd.params}}">imported <strong>{{cmd.tool == 'unknown' ? cmd.command : cmd.tool}}</strong> report</span>
                     <span> and found</span>
                     <span ng-if="cmd.hosts_count == 0 && cmd.services_count == 0 && cmd.vulnerabilities_count == 0 "> nothing</span>
                     <span ng-if="cmd.hosts_count != 0 || cmd.services_count != 0 || cmd.vulnerabilities_count != 0 ">: </span>
@@ -33,7 +33,7 @@
                     <span ng-if="(cmd.hosts_count != 0 && cmd.services_count != 0 && cmd.vulnerabilities_count != 0) || (cmd.hosts_count == 0 && cmd.services_count != 0 && cmd.vulnerabilities_count != 0)"> & </span>
                     <span ng-if="cmd.vulnerabilities_count > 0"><a ng-click="navigate('/status/ws/' + workspace + '/search/command_id=' + cmd._id)"> {{cmd.vulnerabilities_count}} {{cmd.vulnerabilities_count == 1 ? 'vulnerability' : 'vulnerabilities'}}</a></span>
                     <span ng-if="cmd.criticalIssue > 0">- {{cmd.criticalIssue}} {{cmd.criticalIssue == 1 ? 'is' : 'are'}} rated as <b>Critical</b>.</span>
-                    <span class ="small-size" am-time-ago="cmd.date" am-preprocess="utc"/>
+                    <span class ="small-size fg-light-gray" am-time-ago="cmd.date" am-preprocess="utc"/>
                 </td>
             </tr>
         </tbody>

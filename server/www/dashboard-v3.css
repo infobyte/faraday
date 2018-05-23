@@ -87,3 +87,19 @@
 .text-left {
   text-align: left !important;
 }
+
+.dashboard .progress-bar span {
+  font-weight: bold;
+}
+
+.dashboard table thead th span {
+  color: #3393d4;
+}
+
+.fg-blue {
+  color: #3393d4;
+}
+
+.fg-light-gray {
+  color: #a1a1a1;
+}

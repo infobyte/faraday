@@ -302,19 +302,16 @@ angular.module("faradayApp")
                 visible: $scope.columns["severity"],
                 sort: getColumnSort('severity'),
                 sortingAlgorithm: compareSeverities,
-                enableColumnResizing: false
             });
             $scope.gridOptions.columnDefs.push({ name : 'name',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/namecolumn.html',
                 headerCellTemplate: header,
-                width: $scope.columnsWidths['name'],
                 sort: getColumnSort('name'),
                 visible: $scope.columns["name"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'service',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/servicecolumn.html',
                 headerCellTemplate: header,
-                width: $scope.columnsWidths['service'],
                 visible: $scope.columns["service"],
                 sort: getColumnSort('service'),
             });
@@ -324,21 +321,18 @@ angular.module("faradayApp")
                 minWidth: '100',
                 maxWidth: '200',
                 enableSorting: false,
-                width: $scope.columnsWidths['hostname'],
                 sort: getColumnSort('hostnames'),
                 visible: $scope.columns["hostnames"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'target',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/targetcolumn.html',
                 headerCellTemplate: header,
-                width: $scope.columnsWidths['target'],
                 sort: getColumnSort('target'),
                 visible: $scope.columns["target"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'desc',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/desccolumn.html',
                 headerCellTemplate: header,
-                width: $scope.columnsWidths['desc'],
                 sort: getColumnSort('desc'),
                 visible: $scope.columns["desc"]
             });
@@ -347,55 +341,48 @@ angular.module("faradayApp")
                 headerCellTemplate: header,
                 sort: getColumnSort('resolution'),
                 visible: $scope.columns["resolution"],
-                width: $scope.columnsWidths['resolution'],
             });
             $scope.gridOptions.columnDefs.push({ name : 'data',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/resolutioncolumn.html',
                 headerCellTemplate: header,
                 sort: getColumnSort('data'),
                 visible: $scope.columns["data"],
-                width: $scope.columnsWidths['data'],
             });
             $scope.gridOptions.columnDefs.push({ name : 'easeofresolution',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/defaultcolumn.html',
                 headerCellTemplate: header,
+                minWidth: '150',
                 sort: getColumnSort('easeofresolution'),
                 visible: $scope.columns["easeofresolution"],
-                width: $scope.columnsWidths['easeofresolution'],
             });
             $scope.gridOptions.columnDefs.push({ name : 'website',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/defaultcolumn.html',
                 headerCellTemplate: header,
                 sort: getColumnSort('website'),
                 visible: $scope.columns["website"],
-                width: $scope.columnsWidths['website'],
             });
             $scope.gridOptions.columnDefs.push({ name : 'path',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/defaultcolumn.html',
                 headerCellTemplate: header,
                 sort: getColumnSort('path'),
                 visible: $scope.columns["path"],
-                width: $scope.columnsWidths['path'],
             });
             $scope.gridOptions.columnDefs.push({ name : 'request',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/resolutioncolumn.html',
                 headerCellTemplate: header,
                 sort: getColumnSort('request'),
                 visible: $scope.columns["request"],
-                width: $scope.columnsWidths['request'],
             });
             $scope.gridOptions.columnDefs.push({ name : 'date',
                 displayName : "date",
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/datecolumn.html',
                 headerCellTemplate: header,
-                enableColumnResizing: false,
                 sort: getColumnSort('date'),
                 visible: $scope.columns["date"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'status',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/statuscolumn.html',
                 headerCellTemplate: header,
-                width: $scope.columnsWidths['status'],
                 sort: getColumnSort('status'),
                 visible: $scope.columns["status"]
             });
@@ -405,7 +392,6 @@ angular.module("faradayApp")
                 sort: getColumnSort('refs'),
                 visible: $scope.columns["refs"],
                 enableSorting: false,
-                width: $scope.columnsWidths['refs'],
             });
             $scope.gridOptions.columnDefs.push({ name : '_attachments',
                 displayName: "evidence",
@@ -413,7 +399,6 @@ angular.module("faradayApp")
                 headerCellTemplate: header,
                 sort: getColumnSort('_attachments'),
                 visible: $scope.columns["evidence"],
-                width: $scope.columnsWidths['_attachments'],
             });
             $scope.gridOptions.columnDefs.push({ name : 'impact',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/impactcolumn.html',
@@ -421,35 +406,30 @@ angular.module("faradayApp")
                 sort: getColumnSort('impact'),
                 enableSorting: false,
                 visible: $scope.columns["impact"],
-                width: $scope.columnsWidths['impact'],
             });
             $scope.gridOptions.columnDefs.push({ name : 'method',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/defaultcolumn.html',
                 headerCellTemplate: header,
                 sort: getColumnSort('method'),
                 visible: $scope.columns["method"],
-                width: $scope.columnsWidths['method'],
             });
             $scope.gridOptions.columnDefs.push({ name : 'params',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/defaultcolumn.html',
                 headerCellTemplate: header,
                 sort: getColumnSort('params'),
                 visible: $scope.columns["params"],
-                width: $scope.columnsWidths['params'],
             });
             $scope.gridOptions.columnDefs.push({ name : 'pname',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/defaultcolumn.html',
                 headerCellTemplate: header,
                 sort: getColumnSort('pname'),
                 visible: $scope.columns["pname"],
-                width: $scope.columnsWidths['pname'],
             });
             $scope.gridOptions.columnDefs.push({ name : 'query',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/defaultcolumn.html',
                 headerCellTemplate: header,
                 sort: getColumnSort('query'),
                 visible: $scope.columns["query"],
-                width: $scope.columnsWidths['query'],
             });
             $scope.gridOptions.columnDefs.push({ name : 'response',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/resolutioncolumn.html',
@@ -461,7 +441,6 @@ angular.module("faradayApp")
             $scope.gridOptions.columnDefs.push({ name : 'web',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/webcolumn.html',
                 headerCellTemplate: header,
-                width: $scope.columnsWidths['web'],
                 sort: getColumnSort('web'),
                 visible: $scope.columns["web"]
             });
@@ -469,7 +448,6 @@ angular.module("faradayApp")
                 displayName : "creator",
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/creatorcolumn.html',
                 headerCellTemplate: header,
-                width: $scope.columnsWidths['metadata.creator'],
                 sort: getColumnSort('metadata.creator'),
                 visible: $scope.columns["creator"]
             });
@@ -481,7 +459,6 @@ angular.module("faradayApp")
                 // displayName : "policy violations",
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/policyviolationscolumn.html',
                 headerCellTemplate: header,
-                width: $scope.columnsWidths['policyviolations'],
                 sort: getColumnSort('policyviolations'),
                 visible: $scope.columns["policyviolations"],
                 enableSorting: false,

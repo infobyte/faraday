@@ -52,6 +52,11 @@
   padding-right: 10px;
 }
 
+.ph-xl {
+  padding-left: 30px;
+  padding-right: 30px;  
+}
+
 .ph-xxl {
   padding-left: 45px;
   padding-right: 45px;
@@ -102,4 +107,10 @@
 
 .fg-light-gray {
   color: #a1a1a1;
+}
+
+.seccion.dashboard article header h2{
+  margin: 0px;
+  padding-left: 20px;
+  padding-right: 20px;
 }

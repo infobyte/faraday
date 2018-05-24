@@ -344,6 +344,13 @@ angular.module("faradayApp")
                 return get(url, payload)
             }
 
+            ServerAPI.getVulnsGroupedBy = function(wsName, groupBy) {
+                var url = createGetUrl(wsName, 'vulns') + 'count/';
+                var payload = {'group_by': groupBy}
+
+                return get(url, payload)
+            }
+
             ServerAPI.createHost = function(wsName, host) {
                 return modHost(createObject, wsName, host);
             }

@@ -5,11 +5,11 @@
       <span class="glyphicon glyphicon-info-sign" uib-tooltip="Workspace progress according to Scope dates"></span>
     </h2>
   </header>
-  <div>
-    <div id="workspace-progress-reference" class="ph-md" ng-if="wsProgress">
+  <div class="ph-xl">
+    <div id="workspace-progress-reference" ng-if="wsProgress">
       <uib-progressbar value="wsProgress" class="progress-bar-light-blue progress-bar-tall">{{wsProgress}}%</uib-progressbar>
     </div><!-- #workspace-progress-reference .center-lg-6 -->
-    <div class="ph-md">
+    <div>
       <div class="dashboard-label-wrapper">
         <span class="label label-gray">Start date: {{wsStart | amUtc | amDateFormat:'MM/DD/YYYY'}}</span>
       </div>

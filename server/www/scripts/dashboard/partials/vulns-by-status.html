@@ -3,11 +3,10 @@
 <!-- See the file 'doc/LICENSE' for the license information -->
 
 <div ng-controller="vulnsByStatusCtrl">
-    <article id='vulnsByStatus' class='panel m0'>
+    <article id='vulnsByStatus' class='small-widget-height panel m0'>
         <header>
             <h2>
-                <a>Vulnerabilities by status</a>
-                <span class="glyphicon glyphicon-info-sign" uib-tooltip="Top 5 services with the largest quantity of hosts"></span>
+                Vulnerabilities by status
             </h2>
         </header>
         <div id="doughnut" ng-if="loaded && vulnsByStatus.length !== 0">

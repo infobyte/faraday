@@ -6,6 +6,10 @@
   border-right: 1px solid #e7e7e7;
 }
 
+.small-widget-height {
+  height: 195px;
+}
+
 .dashboard-label-wrapper {
   text-align: left;
   margin-top: 10px;
@@ -54,7 +58,7 @@
 
 .ph-xl {
   padding-left: 30px;
-  padding-right: 30px;  
+  padding-right: 30px;
 }
 
 .ph-xxl {

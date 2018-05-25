@@ -122,13 +122,13 @@ body {
 
 .frd-icon-lock {
   background-image: url("images/icon-login-password-lock.svg");
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
 }
 
 #form-signin .placeholder .frd-icon-lock {
   position: relative;
-  bottom: 10px;
+  bottom: 5px;
 }
 
 #footer-login {

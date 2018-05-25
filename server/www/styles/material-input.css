@@ -35,6 +35,7 @@
   padding: 0;
   margin: 0;
   color: #a1a1a1;
+  box-shadow: none; /* Firefox defaults to red so we clean it */
 }
 .form-input textarea {
   min-height: 30px;

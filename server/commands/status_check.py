@@ -1,10 +1,7 @@
 import requests
-import subprocess
 import sqlalchemy
 import socket
-import server.utils.logger
 import os
-import term
 from colorama import init
 from colorama import Fore, Back, Style
 from server.utils.daemonize import is_server_running
@@ -16,67 +13,55 @@ from utils import dependencies
 
 CONF = getInstanceConfiguration()
 
-logger = server.utils.logger.get_logger()
 
 init()
 
 
 def check_server_running():
-    print('Checking if Faraday Server is running...')
 
     pid = is_server_running()
-    if pid is not None:
-        print('    Faraday Server is Running. PID:{PID} {green} Running. {white}\
-        '.format(green=Fore.GREEN, PID=pid, white=Fore.WHITE))
-        return True
-    else:
-        print('    Faraday Server is not running {red} Not Running. {white} \
-        '.format(red=Fore.RED, white=Fore.WHITE))
-        return True
-
+    return pid
+    
 def check_open_ports():
     pass
 
 def check_postgres():
-    print('Checking if PostgreSQL is running...')
-
     with app.app_context():
         try:
             result = str(db.engine.execute("SELECT version()"))
-            print('    PostgreSQL is running. {green} OK. {white}'.format(green=Fore.GREEN, white=Fore.WHITE))
+            return result 
         except sqlalchemy.exc.OperationalError:
-            print('    Could not connect to postgresql, please check if database is running. {red} FAILED. {white}' \
-                .format(red=Fore.RED, white=Fore.WHITE))
-    
+            return None
+            
+
 def check_client():
-    print('Checking if Faraday Client is running...')
 
     port_rest = CONF.getApiRestfulConInfoPort()
 
     try:
         response_rest = requests.get('http://localhost:%s/status/check' % port_rest)
-        print('    Faraday GTK is running. {green} OK. {white}'.format(green=Fore.GREEN, white=Fore.WHITE))
+        return True 
     except requests.exceptions.ConnectionError:
-        print('    WARNING. Faraday GTK is not running. {red}FAILED{white}'.format(red=Fore.RED, white=Fore.WHITE))
+        return False
+
+
 
 def check_server_dependencies():
-    print('Checking Faraday Server dependencies...')
 
     installed_deps, missing_deps, conflict_deps = dependencies.check_dependencies(
         requirements_file='requirements_server.txt')
 
     if conflict_deps:
-        print('    Some dependencies are old. Update them with \"pip install -r requirements_server.txt -U\". {red} FAILED. {white} ' \
-            .format(red=Fore.RED, white=Fore.WHITE))
-        print(','.join(conflict_deps))
-    if missing_deps:     
-        print('    Dependencies not met. Please refer to the documentation in order to install them. ')
+        return True, conflict_deps
+        
+    if missing_deps:
+        return 0, missing_deps     
 
     if not conflict_deps and not missing_deps:  
-        print('    Dependencies met. {green}OK{white}'.format(green=Fore.GREEN, white=Fore.WHITE))
+        return None, None
+
 
 def check_client_dependencies():
-    print('Checking Faraday Client dependencies...')
 
     installed_deps, missing_deps, conflict_deps = dependencies.check_dependencies(
         requirements_file='requirements.txt')
@@ -85,20 +70,18 @@ def check_client_dependencies():
             conflict_deps.remove('argparse')
     
     if conflict_deps:
-        print('    Some dependencies are old. Update them with \"pip install -r requirements.txt -U\". {red} FAILED. {white}' \
-            .format(red=Fore.RED, white=Fore.WHITE))
-        print(','.join(conflict_deps))
+        return True, conflict_deps
+        
+    if missing_deps:
+        return 0, missing_deps     
 
-    if missing_deps:     
-        print('    Dependencies not met. Please refer to the documentation in order to install them.{red} FAILED. {white}' \
-            .format(red=Fore.RED, white=Fore.WHITE))
+    if not conflict_deps and not missing_deps:  
+        return None, None
 
-    if not conflict_deps and not missing_deps:
-        print('    Dependencies met. {green}OK{white}'.format(green=Fore.GREEN, white=Fore.WHITE))
+
 
 
 def check_credentials():
-    print('Checking credentials...')
 
     api_username = CONF.getAPIUsername()
     api_password = CONF.getAPIPassword()
@@ -109,36 +92,119 @@ def check_credentials():
         r = requests.post('http://localhost:5985/_api/login', json=values)
 
         if r.status_code == 200 and 'user' in r.json()['response']:
-            print('    Credentials matched. {green} OK. {white}'.format(green=Fore.GREEN, white=Fore.WHITE))
+            return 200
+            
         elif r.status_code == 400:
-            print('    Error. Credentials does not match. {red}FAILED{white}'.format(red=RED, white=WHITE))
+            return 400
+
         elif r.status_code == 500:
-            print('    Server failed with unexpected error. check if databaseservice is working. {red}FAILED{white}' \
-                .format(red=Fore.RED, white=Fore.WHITE))
+            return 500
     except requests.exceptions.ConnectionError:
-        print('    Faraday Server not running. {red}FAILED{white}'.format(red=Fore.RED, white=Fore.WHITE))
+        return None
+
 
 def check_storage_permission():
-    print('Checking Storage folder\'s permissions...')
 
-    path ='/home/javier/.faraday/storage/test'
+    home = os.path.expanduser("~")
+    path = home+'/.faraday/storage/test'
 
     try:
         os.mkdir(path)
-        print('    ~/.faraday/storage -> Permission accepted. {green} OK. {white}'.format(green=Fore.GREEN, white=Fore.WHITE))
         os.rmdir(path)
+        return True        
     except OSError:
-        print('    ~/.faraday/storage -> Permission denied. {red}FAILED{white}'\
-            .format(red=Fore.RED, white=Fore.WHITE))
+        return None
 
 
 def full_status_check():
-    print('{red} Incomplete Check {white}.'.format(red=Fore.RED, white=Fore.WHITE))
-    check_server_running()
+     
+
+    #Prints the status of PostreSQL using check_postgres()
+    print('\n{white}Checking if postgreSQL is running...'.format(white=Fore.WHITE))   
+    result = check_postgres()
+    if result:
+        print('[{green}+{white}] PostgreSQL is running'.\
+            format(green=Fore.GREEN, white=Fore.WHITE))
+    
+    else:
+        print('[{red}-{white}] Could not connect to postgresql, please check if database is running'\
+            .format(red=Fore.RED, white=Fore.WHITE))
+        return
+
+    print('\n{white}Checking if Faraday is running...'.format(white=Fore.WHITE))
+    if check_client():
+        print('[{green}+{white}] Faraday GTK is running'.\
+            format(green=Fore.GREEN, white=Fore.WHITE))
+    else:
+        print('[{yellow}-{white}] Faraday GTK is not running'\
+            .format(yellow=Fore.YELLOW, white=Fore.WHITE))
+
+    #Prints Status of the server using check_server_running()
+    pid = check_server_running()
+    if pid is not None:
+        print('[{green}+{white}] Faraday Server is Running. PID:{PID} \
+        '.format(green=Fore.GREEN, PID=pid, white=Fore.WHITE))
+    else:
+        print('[{red}-{white}] Faraday Server is not running {white} \
+        '.format(red=Fore.RED, white=Fore.WHITE))
+    
+
     check_open_ports()
-    check_postgres()
-    check_client()
-    check_server_dependencies()
-    check_client_dependencies()
-    check_credentials()
-    check_storage_permission()
+
+
+
+
+    print('\n{white}Checking Faraday dependencies...'.format(white=Fore.WHITE))   
+    
+    status, server_dep = check_server_dependencies()
+    
+    if status == True:
+        print('[{red}-{white}] Some server dependencies are old. Update them with \"pip install -r requirements_server.txt -U\"' \
+            .format(red=Fore.RED, white=Fore.WHITE))
+        print(('[{blue}*{white}] Failed dependencies: ' + ','.join(server_dep))\
+            .format(blue=Fore.BLUE, white=Fore.WHITE))
+    elif status == 0:
+        print('[{red}-{white}] Server dependencies not met. Install them with \"pip install -r requirements_server.txt -U\"'\
+            .format(red=Fore.RED, white=Fore.WHITE))
+        print(('[{blue}*{white}] Failed dependencies: ' + ','.join(server_dep))\
+            .format(blue=Fore.BLUE, white=Fore.WHITE))
+    else:
+        print('[{green}+{white}] Server dependencies met' \
+            .format(green=Fore.GREEN, white=Fore.WHITE))
+
+    status, client_dep = check_client_dependencies()
+    if status == True:
+        print('[{red}-{white}] Some client dependencies are old. Update them with \"pip install -r requirements.txt -U\"' \
+            .format(red=Fore.RED, white=Fore.WHITE))
+        print(('[{blue}*{white}] Failed dependencies: ' + ','.join(client_dep))\
+            .format(blue=Fore.BLUE, white=Fore.WHITE))
+    elif status == 0:
+        print('[{red}-{white}] Client dependencies not met. Install them with \"pip install -r requirements.txt -U\" (' + ','.join(client_dep) + ')')\
+            .format(red=Fore.RED, white=Fore.WHITE)
+            
+    else:
+        print('[{green}+{white}] Client dependencies met'\
+            .format(green=Fore.GREEN, white=Fore.WHITE))
+        
+
+    print('\n{white}Checking Faraday config...{white}'.format(white=Fore.WHITE))
+    if pid and result:    
+        status_code = check_credentials()
+        if status_code == 200:
+            print('[{green}+{white}] Credentials matched'.format(green=Fore.GREEN, white=Fore.WHITE))
+        elif status_code == 400:
+            print('[{red}-{white}] Error. Credentials does not match' \
+                .format(red=RED, white=WHITE))
+    else:
+        print('[{red}-{white}] Either Faraday Server not running or database not working'.format(red=Fore.RED, white=Fore.WHITE))
+    
+#        elif status_code == 500:
+#            print('[{red}FAIL{white}]    Server failed with unexpected error. check if databaseservice is working.' \
+#                .format(red=Fore.RED, white=Fore.WHITE))
+
+    if check_storage_permission():
+        print('[{green}+{white}] ~/.faraday/storage -> Permission accepted' \
+            .format(green=Fore.GREEN, white=Fore.WHITE))
+    else:
+        print('[{red}-{white}] ~/.faraday/storage -> Permission denied'\
+            .format(red=Fore.RED, white=Fore.WHITE))

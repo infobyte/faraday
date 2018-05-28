@@ -1,4 +1,4 @@
-<article id="compound" class='panel panel-default' ng-controller="compoundCtrl">
+<article class='panel panel-default' ng-controller="compoundCtrl">
     <header>
         <h2><a href="#/hosts/ws/{{workspace}}">Hosts</a>
             <span class="glyphicon glyphicon-info-sign" uib-tooltip="All hosts, each one showing its service count and operating system. By clicking on a host IP you can access a list with all of its services"></span>
@@ -11,28 +11,30 @@
         </button>
         <p>No hosts found yet.</p>
     </div>
-    <table id="hosts" ng-if="hosts.length > 0" class="tablesorter table table-striped table-fixed">
-        <thead>
-            <tr>
-                <th class="col-xs-6"><a href="" ng-click="toggleSort('name')">Host</a></th>
-                <th class="col-xs-4"><a href="" ng-click="toggleSort('services')">Services</a></th>
-                <th class="col-xs-2"><a href="" ng-click="toggleSort('os')">OS</a></th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr ng-repeat="host in hosts | limitTo:5">
-                <td class="col-xs-6">
-                    <a href="" class="host" ng-click="showServices(host)">{{host.name}}</a>
-                    <osint-link query="host.name" osint="osint"></osint-link>
-                </td>
-                <td class="col-xs-6">{{host.services}}</td>
-                <td class="col-xs-4">
-                    <img ng-if="host.icon != undefined" ng-src="images/{{host.icon}}.png" uib-tooltip="{{host.os}}"/>
-                    <span ng-if="host.icon == undefined" class="fa fa-laptop" uib-tooltip="{{host.os}}"></span>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="ph-xl">
+      <table id="hosts" ng-if="hosts.length > 0" class="tablesorter table table-striped text-left">
+          <thead>
+              <tr>
+                  <th class="text-left"><span ng-click="toggleSort('name')">Host</span></th>
+                  <th class="text-left"><span ng-click="toggleSort('services')">Services</span></th>
+                  <th class="text-left"><span ng-click="toggleSort('os')">OS</span></th>
+              </tr>
+          </thead>
+          <tbody>
+              <tr ng-repeat="host in hosts | limitTo:5">
+                  <td class="">
+                      <a href="" class="host" ng-click="showServices(host)">{{host.name}}</a>
+                      <osint-link query="host.name" osint="osint"></osint-link>
+                  </td>
+                  <td class="">{{host.services}}</td>
+                  <td class="">
+                      <img ng-if="host.icon != undefined" ng-src="images/{{host.icon}}.png" uib-tooltip="{{host.os}}"/>
+                      <span ng-if="host.icon == undefined" class="fa fa-laptop" uib-tooltip="{{host.os}}"></span>
+                  </td>
+              </tr>
+          </tbody>
+      </table>
+    </div>
     <!-- <div class="showPagination" ng-show="totalHosts > 10">
         <div class="form-group">
             <ul class="pagination">

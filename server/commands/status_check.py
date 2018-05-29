@@ -2,6 +2,7 @@ import requests
 import sqlalchemy
 import socket
 import os
+import server.config
 from colorama import init
 from colorama import Fore, Back, Style
 from server.utils.daemonize import is_server_running
@@ -48,11 +49,12 @@ def check_client():
     port_rest = CONF.getApiRestfulConInfoPort()
 
     try:
-        response_rest = requests.get('http://%s:%s/status/check' % port_rest, server.config.faraday_server.bind_address)
+        response_rest = requests.get('http://{}:{}/status/check'.format(server.config.faraday_server.bind_address,port_rest))
         return True 
     except requests.exceptions.ConnectionError:
         return False
-
+    except requests.exceptions.InvalidURL:
+    	return False
 
 
 def check_server_dependencies():
@@ -163,27 +165,24 @@ def full_status_check():
     status, server_dep = check_server_dependencies()
     
     if status == True:
-        print('[{red}-{white}] Some server dependencies are old. Update them with \"pip install -r requirements_server.txt -U\"' \
-            .format(red=Fore.RED, white=Fore.WHITE))
-        print(('[{blue}*{white}] Failed dependencies: ' + ','.join(server_dep))\
-            .format(blue=Fore.BLUE, white=Fore.WHITE))
+        print('[{red}-{white}] Some server dependencies are old. Update them with \"pip install -r requirements_server.txt -U\": (' + ','.join(server_dep) + ')') \
+            .format(red=Fore.RED, white=Fore.WHITE)
+
     elif status == 0:
-        print('[{red}-{white}] Server dependencies not met. Install them with \"pip install -r requirements_server.txt -U\"'\
-            .format(red=Fore.RED, white=Fore.WHITE))
-        print(('[{blue}*{white}] Failed dependencies: ' + ','.join(server_dep))\
-            .format(blue=Fore.BLUE, white=Fore.WHITE))
+        print('[{red}-{white}] Client dependencies not met. Install them with \"pip install -r requirements_server.txt -U\": (' + ','.join(server_dep) + ')')\
+            .format(red=Fore.RED, white=Fore.WHITE)
+        
     else:
         print('[{green}+{white}] Server dependencies met' \
             .format(green=Fore.GREEN, white=Fore.WHITE))
 
     status, client_dep = check_client_dependencies()
     if status == True:
-        print('[{red}-{white}] Some client dependencies are old. Update them with \"pip install -r requirements.txt -U\"' \
-            .format(red=Fore.RED, white=Fore.WHITE))
-        print(('[{blue}*{white}] Failed dependencies: ' + ','.join(client_dep))\
-            .format(blue=Fore.BLUE, white=Fore.WHITE))
+        print('[{red}-{white}] Some client dependencies are old. Update them with \"pip install -r requirements.txt -U\": (' + ','.join(client_dep) + ')') \
+            .format(red=Fore.RED, white=Fore.WHITE)
+        
     elif status == 0:
-        print('[{red}-{white}] Client dependencies not met. Install them with \"pip install -r requirements.txt -U\" (' + ','.join(client_dep) + ')')\
+        print('[{red}-{white}] Client dependencies not met. Install them with \"pip install -r requirements.txt -U\": (' + ','.join(client_dep) + ')')\
             .format(red=Fore.RED, white=Fore.WHITE)
             
     else:
@@ -198,7 +197,7 @@ def full_status_check():
             print('[{green}+{white}] Credentials matched'.format(green=Fore.GREEN, white=Fore.WHITE))
         elif status_code == 400:
             print('[{red}-{white}] Error. Credentials does not match' \
-                .format(red=RED, white=WHITE))
+                .format(red=Fore.RED, white=Fore.WHITE))
     else:
         print('[{red}-{white}] Either Faraday Server not running or database not working'.format(red=Fore.RED, white=Fore.WHITE))
 
@@ -211,7 +210,7 @@ def full_status_check():
 
     if check_open_ports():
         print "[{green}+{white}]Port {PORT} in {ad} is open"\
-            .format(PORT=server.config.faraday_server.port, green=Fore.GREEN,ad=server.config.faraday_server.bind_address)
+            .format(PORT=server.config.faraday_server.port, green=Fore.GREEN,white=Fore.WHITE,ad=server.config.faraday_server.bind_address)
     else:
         print "[{red}-{white}] in {ad} is not open"\
-            .format(PORT=server.config.faraday_server.port,red=Fore.RED,ad =server.config.faraday_server.bind_address)
+            .format(PORT=server.config.faraday_server.port,red=Fore.RED,white=Fore.WHITE,ad =server.config.faraday_server.bind_address)

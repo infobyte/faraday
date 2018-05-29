@@ -22,8 +22,17 @@ def check_server_running():
     pid = is_server_running()
     return pid
     
+
 def check_open_ports():
-    pass
+   address =  server.config.faraday_server.bind_address
+   port = int(server.config.faraday_server.port)
+   sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+   result = sock.connect_ex((address,port))
+   if result == 0:
+       return True
+   else:
+       return False
+       
 
 def check_postgres():
     with app.app_context():
@@ -39,7 +48,7 @@ def check_client():
     port_rest = CONF.getApiRestfulConInfoPort()
 
     try:
-        response_rest = requests.get('http://localhost:%s/status/check' % port_rest)
+        response_rest = requests.get('http://%s:%s/status/check' % port_rest, server.config.faraday_server.bind_address)
         return True 
     except requests.exceptions.ConnectionError:
         return False
@@ -147,11 +156,6 @@ def full_status_check():
     else:
         print('[{red}-{white}] Faraday Server is not running {white} \
         '.format(red=Fore.RED, white=Fore.WHITE))
-    
-
-    check_open_ports()
-
-
 
 
     print('\n{white}Checking Faraday dependencies...'.format(white=Fore.WHITE))   
@@ -197,10 +201,6 @@ def full_status_check():
                 .format(red=RED, white=WHITE))
     else:
         print('[{red}-{white}] Either Faraday Server not running or database not working'.format(red=Fore.RED, white=Fore.WHITE))
-    
-#        elif status_code == 500:
-#            print('[{red}FAIL{white}]    Server failed with unexpected error. check if databaseservice is working.' \
-#                .format(red=Fore.RED, white=Fore.WHITE))
 
     if check_storage_permission():
         print('[{green}+{white}] ~/.faraday/storage -> Permission accepted' \
@@ -208,3 +208,10 @@ def full_status_check():
     else:
         print('[{red}-{white}] ~/.faraday/storage -> Permission denied'\
             .format(red=Fore.RED, white=Fore.WHITE))
+
+    if check_open_ports():
+        print "[{green}+{white}]Port {PORT} in {ad} is open"\
+            .format(PORT=server.config.faraday_server.port, green=Fore.GREEN,ad=server.config.faraday_server.bind_address)
+    else:
+        print "[{red}-{white}] in {ad} is not open"\
+            .format(PORT=server.config.faraday_server.port,red=Fore.RED,ad =server.config.faraday_server.bind_address)

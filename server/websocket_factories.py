@@ -4,6 +4,7 @@ import itsdangerous
 
 import Cookie
 import server.utils
+import server.utils.logger
 from collections import defaultdict
 from Queue import Queue, Empty
 

@@ -17,6 +17,10 @@
     text-align: left;
 }
 
+.status-report-grid .ui-grid-cell-contents.confirm-toggle{
+    text-align: center;
+}
+
 .status-report-grid .ui-grid-header-cell{
     border-right: solid #E9E9E9 1px;
     text-align: center;

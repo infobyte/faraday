@@ -13,7 +13,7 @@
         <p>No vulnerabilities found yet.</p>
     </div>
     <div class='main box'>
-        <div ng-repeat="(severity, count) in vulns" class="bg-white col-lg-2 cursor m0 p0" ng-class="{'border-right': $last === false}">
+        <div ng-repeat="(severity, count) in vulns" class="bg-white col-lg-2 col-md-2 col-sm-2 col-xs-3 cursor m0 p0" ng-class="{'border-right': $last === false}">
             <article class="dato2 bg-white" ng-click="navigate('/status/ws/'+workspace+'/search/severity='+severity)">
                 <section>
                     <div class="nro text-{{severity}}">{{count}}</div>

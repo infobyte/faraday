@@ -19,10 +19,10 @@ angular.module('faradayApp')
                           $scope.loaded = true;
 
                           vulnerabilityColors = {
-                            'open': '#DF3936',
-                            'close': '#A1CE31',
-                            're-open': '#DFBF35',
-                            'risk-accept': '#2e97bd'
+                            'open': '#e77273',
+                            'closed': '#bddd72',
+                            're-opened': '#e7d174',
+                            'risk-accepted': '#7aabd9'
                           };
 
                           vulnsByStatus.forEach(function(vuln, index) {

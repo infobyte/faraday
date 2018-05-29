@@ -45,10 +45,10 @@ angular.module('faradayApp')
 
         dashboardSrv.vulnColors = [
             "#932EBE",  // critical
-            "#DF3936",  // high
-            "#DFBF35",  // med
-            "#A1CE31",  // low
-            "#428BCA",  // info
+            "#e77273",  // high
+            "#e7d174",  // med
+            "#bddd72",  // low
+            "#7aabd9",  // info
             "#999999"   // unclassified
         ];
 

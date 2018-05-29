@@ -1,5 +1,5 @@
 .status-report-grid .ui-grid-header{
-    border-top: solid #E5E5E5 6px;
+    border-top: solid #E5E5E5 2px;
     border-bottom: 2px solid #d8d8d8;
     background: none;
     color: #E9E9E9;
@@ -14,7 +14,7 @@
 }
 
 .status-report-grid .ui-grid-cell-contents {
-    text-align: center;
+    text-align: left;
 }
 
 .status-report-grid .ui-grid-header-cell{
@@ -28,6 +28,10 @@
 
 .status-report-grid .ui-grid-row {
     height: 45px;
+}
+
+.status-report-grid .date-cell {
+    opacity: 0.5;
 }
 
 .status-report-grid .grid_id .ui-grid-cell-contents{ 
@@ -52,11 +56,59 @@
     width:44px;
 }
 
+.status-report-grid .ui-grid-pager-panel {
+    background-color: #f1f1f1;
+}
+
+.status-report-grid .status.opened {
+    background-color: rgba(223, 57, 54, .6) !important;
+    text-align: center;
+}
+
+.status-report-grid .status-wrapper {
+    height: 100%;
+}
+
+.status-report-grid .status.opened span {
+    color: #DF3936;
+}
+
+.status-report-grid .status.risk-accepted {
+    background-color: rgba(46, 151, 189, 0.6) !important;
+    text-align: center;
+}
+
+.status-report-grid .status.re-opened span {
+    color: rgba(223, 191, 53, 1);
+}
+
+.status-report-grid .status.re-opened {
+    background-color: rgba(223, 191, 53, 0.6) !important;
+    text-align: center;
+}
+
+.status-report-grid .status.risk-accepted span {
+    color: rgba(46, 151, 189, 1);
+}
+
+.status-report-grid .status.closed {
+    background-color: rgba(161, 206, 49, 0.6) !important;
+    text-align: center;
+}
+
+.status-report-grid .status.closed span {
+    color: rgba(161, 206, 49, 1);
+}
+
 .control-edit .edit-icon, .download-wrapper .download-icon, .control-wrapper .delete-icon, .search-wrapper .search-icon {
     height: 20px;
     color: #000;
     position: relative;
     bottom: 2px;
+}
+
+.search-wrapper .search-icon {
+    bottom: 0px;
 }
 
 .status-report-grid .confirm-icon {

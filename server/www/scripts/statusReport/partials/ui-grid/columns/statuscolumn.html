@@ -1,7 +1,7 @@
-<div ng-if="row.entity._id != undefined">
-    <div ng-if="!col.grouping || col.grouping.groupPriority === undefined || col.grouping.groupPriority === null || ( row.groupHeader && col.grouping.groupPriority === row.treeLevel )" class="ui-grid-cell-contents">
+<div ng-if="row.entity._id != undefined" class="status-wrapper">
+    <div ng-if="!col.grouping || col.grouping.groupPriority === undefined || col.grouping.groupPriority === null || ( row.groupHeader && col.grouping.groupPriority === row.treeLevel )" class="ui-grid-cell-contents status {{COL_FIELD}}">
         <div ng-switch="COL_FIELD">
-            <div class="alert-success no-background" ng-switch-when="closed">
+            <div class="alert-success fondo-success no-background" ng-switch-when="closed">
                 <a href="#/status/ws/{{grid.appScope.workspace}}/search/status={{COL_FIELD}}\">
                     <span >{{COL_FIELD | uppercase}}</span>
                 </a>
@@ -24,14 +24,14 @@
         </div>
     </div>
 </div>
-<div ng-if="row.groupHeader && col.grouping.groupPriority !== undefined">
+<div ng-if="row.groupHeader && col.grouping.groupPriority !== undefined"  class="status-wrapper">
     <div ng-switch="COL_FIELD">
-        <div class="alert-success no-background" ng-switch-when="closed">
+        <div class="alert-success fondo-success no-background" ng-switch-when="closed">
             <a href="#/status/ws/{{grid.appScope.workspace}}/search/status={{COL_FIELD}}\">
                 <span >{{COL_FIELD | uppercase}}</span>
             </a>
         </div>
-        <div class="alert-warning no-background" ng-switch-when="opened">
+        <div class="alert-warning  no-background" ng-switch-when="opened">
             <a href="#/status/ws/{{grid.appScope.workspace}}/search/status={{COL_FIELD}}\">
                 <span >{{COL_FIELD | uppercase}}</span>
             </a>

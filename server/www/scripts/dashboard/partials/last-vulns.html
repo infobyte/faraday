@@ -1,9 +1,11 @@
-<article class='panel panel-default left-big-box' ng-controller="lastVulnsCtrl">
-        <header>
-            <h2>Last Vulnerabilities
-                <span class="glyphicon glyphicon-info-sign" uib-tooltip="Last vulnerabilities added"></span>
-            </h2>
-        </header>
+<article class='panel left-big-box' ng-controller="lastVulnsCtrl">
+    <header>
+        <h2>Last Vulnerabilities
+            <span class="glyphicon glyphicon-info-sign" uib-tooltip="Last vulnerabilities added"></span>
+        </h2>
+    </header>
+
+    <div class="ph-xl">
         <div ng-if="vulns.length == 0" class="alert alert-info alert-dismissible no-margin-bottom">
             <button type="button" class="close" data-dismiss="alert">
                 <span aria-hidden="true">&times;</span>
@@ -11,14 +13,14 @@
             </button>
             <p>No vulnerabilities found yet.</p>
         </div>
-        <table ng-if="vulns.length > 0" class="tablesorter table table-striped last-vuln">
+        <table ng-if="vulns.length > 0" class="tablesorter table table-striped last-vuln text-left">
             <thead>
                 <tr>
-                    <th><span>Severity</span></th>
-                    <th><span>Target</span></th>
-                    <th><span>Name</span></th>
-                    <th><span>Web</span></th>
-                    <th><span>Date</span></th>
+                    <th class="text-left"><span>Severity</span></th>
+                    <th class="text-left"><span>Target</span></th>
+                    <th class="text-left"><span>Name</span></th>
+                    <th class="text-left"><span>Web</span></th>
+                    <th class="text-left"><span>Date</span></th>
                 </tr>
             </thead>
             <tbody>
@@ -36,4 +38,5 @@
                 </tr>
             </tbody>
         </table>
+    </div>
 </article>

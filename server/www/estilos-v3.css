@@ -1,10 +1,14 @@
-body {
+#login-main {
   background-image: url(images/fondofaraday4k.jpg) !important;
+  width: 100%;
+  height: 100%;
+  display: inline-block;
+  position: absolute;
 }
 
 #login-container {
   width: 410px;
-  margin-top: 180px;
+  margin-top: 160px;
   background-color: #FFF;
   margin-left: auto;
   margin-right: auto;
@@ -122,13 +126,13 @@ body {
 
 .frd-icon-lock {
   background-image: url("images/icon-login-password-lock.svg");
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
 }
 
 #form-signin .placeholder .frd-icon-lock {
   position: relative;
-  bottom: 10px;
+  bottom: 5px;
 }
 
 #footer-login {

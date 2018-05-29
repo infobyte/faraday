@@ -391,10 +391,10 @@ class VulnerabilityView(PaginatedMixin,
         obj.references = references
         obj.policy_violations = policyviolations
         db.session.commit()
-        self.process_attachments(obj, attachments)
+        self._process_attachments(obj, attachments)
         return obj
 
-    def process_attachments(self, obj, attachments):
+    def _process_attachments(self, obj, attachments):
         old_attachments = db.session.query(File).filter_by(
             object_id=obj.id,
             object_type='vulnerability',
@@ -417,7 +417,7 @@ class VulnerabilityView(PaginatedMixin,
         attachments = data.pop('_attachments', {})
         obj = super(VulnerabilityView, self)._perform_update(object_id, obj, data, workspace_name)
         db.session.flush()
-        self.process_attachments(obj, attachments)
+        self._process_attachments(obj, attachments)
         db.session.commit()
         return obj
 

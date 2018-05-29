@@ -5,9 +5,9 @@ colorama>=0.3.9
 Flask-SQLAlchemy>=2.3.1
 flask-classful>=0.14
 Flask-Security>=3.0.0
-flask>=0.12.2
+flask<1.0
 IPy>=0.83
-marshmallow
+marshmallow==2.15.3
 Pillow>=4.2.1
 psycopg2>=2.7.3.2
 pyasn1-modules>=0.0.11

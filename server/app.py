@@ -64,6 +64,7 @@ def register_blueprints(app):
     from server.api.modules.workspaces import workspace_api
     from server.api.modules.handlers import handlers_api
     from server.api.modules.comments import comment_api
+    from server.api.modules.websocket_auth import websocket_auth_api
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(credentials_api)
     app.register_blueprint(host_api)
@@ -76,6 +77,7 @@ def register_blueprints(app):
     app.register_blueprint(workspace_api)
     app.register_blueprint(handlers_api)
     app.register_blueprint(comment_api)
+    app.register_blueprint(websocket_auth_api)
 
 
 def check_testing_configuration(testing, app):

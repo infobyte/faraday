@@ -114,6 +114,10 @@ def register_handlers(app):
 
     @app.after_request
     def log_queries_count(response):
+        if flask.request.method not in ['GET', 'HEAD']:
+            # We did most optimizations for read only endpoints
+            # TODO migrations: improve optimization and remove this if
+            return response
         queries = get_debug_queries()
         max_query_time = max([q.duration for q in queries] or [0])
         if len(queries) > 15:

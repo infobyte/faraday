@@ -648,7 +648,7 @@ class VulnerabilityImporter(object):
                     session,
                     VulnerabilityWeb,
                     name=document.get('name'),
-                    description=document.get('desc'),
+                    description=document.get('desc').strip().strip('\n'),
                     service_id=parent.id,
                     method=method,
                     parameter_name=pname,
@@ -661,7 +661,7 @@ class VulnerabilityImporter(object):
                 vuln_params = {
                     'name': document.get('name'),
                     'workspace': workspace,
-                    'description': document.get('desc'),
+                    'description': document.get('desc').strip().strip('\n'),
                 }
                 if type(parent) == Host:
                     vuln_params.update({'host_id': parent.id})
@@ -1001,7 +1001,8 @@ class ReportsImporter(object):
             report.vuln_count = document['totalVulns']['total']
         except KeyError:
             logger.warning("Couldn't load vuln count of report".format(document.get('_id')))
-        report.creator = get_or_create_user(session, document.get('owner'))
+        if document.get('owner'):
+            report.creator = get_or_create_user(session, document.get('owner'))
         session.flush()
         old_attachments = session.query(File).filter_by(
             object_id=report.id,

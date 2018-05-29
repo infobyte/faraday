@@ -92,9 +92,16 @@ class WebsocketsChangesStream(ChangesStream):
         super(WebsocketsChangesStream, self).stop()
 
     def on_open(self, ws):
+        from persistence.server.server import _create_server_api_url, _post
+        r = _post(
+            _create_server_api_url() +
+            '/ws/{}/websocket_token/'.format(self.workspace_name),
+            expected_response=200)
+        token = r['token']
         self.ws.send(json.dumps({
             'action': 'JOIN_WORKSPACE',
             'workspace': self.workspace_name,
+            'token': token,
         }))
 
     def on_message(self, ws, message):

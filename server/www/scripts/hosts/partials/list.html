@@ -3,17 +3,17 @@
 <!-- See the file 'doc/LICENSE' for the license information -->
 
 <section id="main" class="seccion clearfix">
-    <div class="right-main">            
+    <div class="right-main">
         <div ng-controller="headerCtrl" ng-include="'scripts/commons/partials/header.html'"></div>
         <div id="reports-main" class="fila clearfix">
             <div class="button-control col-md-12 col-sm-12 col-xs-12">
                 <div class="control-wrapper control-new">
-                    <button type="button" class="btn btn-success btn-new" title="New hosts" href="#/host/ws/{{workspace}}/new">
+                    <button type="button" class="btn btn-success btn-new" title="New hosts" ng-click="new()">
                         New
                     </button>
                 </div>
                 <div class="control-wrapper control-edit">
-                    <button type="button" class="btn edit" title="Edit selected hosts" ng-disabled="selectedHosts().length > 1" ng-click="edit()">        
+                    <button type="button" class="btn edit" title="Edit selected hosts" ng-disabled="selectedHosts().length > 1" ng-click="edit()">
                         <img src="images/icon-toolbar-edit.svg" class="edit-icon" />
                     </button>
                 </div>
@@ -129,7 +129,7 @@
                                     <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}">{{host.id}}</a>
                                 </div>
                             </td>
-                            <td class="ui-grid-cell-contents" 
+                            <td class="ui-grid-cell-contents"
                                 ng-show="columns['ip']">
                                 <div class="">
                                     <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}">{{host.ip}}</a>
@@ -179,7 +179,7 @@
                                     <a ng-href="#/status/ws/{{workspace}}/search/target={{host.name}}" ng-bind="host.vulns"></a>
                                 </div>
                             </td>
-                            <td class="ui-grid-cell-contents" 
+                            <td class="ui-grid-cell-contents"
                                 ng-show="columns['credential_count']">
                                 <a ng-href="#/credentials/ws/{{workspace}}/hid/{{host._id}}">{{host.credentials}}</a>
                             </td>
@@ -203,7 +203,7 @@
                                     <span am-time-ago="host.metadata.create_time" am-preprocess="utc"></span>
                                 </div>
                             </td>
-                            <td 
+                            <td
                                 class="ui-grid-cell-contents"
                                 ng-show="columns['last_modified']">
                                 <div class="">

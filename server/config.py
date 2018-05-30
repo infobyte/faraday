@@ -26,12 +26,15 @@ VERSION_FILE = os.path.join(FARADAY_BASE, CONSTANTS.CONST_VERSION_FILE)
 REPORTS_VIEWS_DIR = os.path.join(FARADAY_BASE, 'views/reports')
 LOCAL_CONFIG_FILE = os.path.expanduser(
     os.path.join(CONSTANTS.CONST_FARADAY_HOME_PATH, 'config/server.ini'))
+LOCAL_REPORTS_FOLDER = os.path.expanduser(
+    os.path.join(CONSTANTS.CONST_FARADAY_HOME_PATH, 'uploaded_reports/'))
 
 CONFIG_FILES = [DEFAULT_CONFIG_FILE, LOCAL_CONFIG_FILE]
 WS_BLACKLIST = CONSTANTS.CONST_BLACKDBS
 
 
 def copy_default_config_to_local():
+
     if os.path.exists(LOCAL_CONFIG_FILE):
         return
 
@@ -44,6 +47,13 @@ def copy_default_config_to_local():
 
     # Copy default config file into faraday local config
     shutil.copyfile(DEFAULT_CONFIG_FILE, LOCAL_CONFIG_FILE)
+
+    if not os.path.exists(LOCAL_REPORTS_FOLDER):
+        try:
+            os.makedirs(LOCAL_REPORTS_FOLDER)
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise
 
     from server.utils.logger import get_logger
     get_logger(__name__).info(u"Local faraday-server configuration created at {}".format(LOCAL_CONFIG_FILE))

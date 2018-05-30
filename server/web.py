@@ -32,6 +32,7 @@ from server.websocket_factories import (
     WorkspaceServerFactory,
     BroadcastServerProtocol
 )
+from server.api.modules.upload_reports import RawReportProcessor
 
 app = create_app()  # creates a Flask(__name__) app
 logger = server.utils.logger.get_logger(__name__)
@@ -141,6 +142,9 @@ class WebServer(object):
             self.__listen_func = reactor.listenTCP
 
         try:
+            # start threads and processes
+            raw_report_processor = RawReportProcessor()
+            raw_report_processor.start()
             # web and static content
             self.__listen_func(
                 self.__listen_port, site,

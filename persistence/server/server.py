@@ -1503,7 +1503,7 @@ def server_info():
 def login_user(uri, uname, upass):
     auth = {"email": uname, "password": upass}
     try:
-        resp = requests.post(uri + "/_api/login", json=auth)
+        resp = requests.post(urlparse.urljoin(uri, "/_api/login"), json=auth)
         if resp.status_code == 401:
             return None
         else:
@@ -1516,7 +1516,7 @@ def login_user(uri, uname, upass):
 
 def is_authenticated(uri, cookies):
     try:
-        resp = requests.get(uri + "/_api/session", cookies=cookies, timeout=1)
+        resp = requests.get(urlparse.urljoin(uri, "/_api/session"), cookies=cookies, timeout=1)
         if resp.status_code != 403:
             user_info = resp.json()
             return bool(user_info.get('username', {}))
@@ -1555,7 +1555,7 @@ def test_server_url(url_to_test):
 
 def get_user_info():
     try:
-        resp = requests.get(_get_base_server_url() + "/_api/session", cookies=_conf().getDBSessionCookies(), timeout=1)
+        resp = requests.get(urlparse.urljoin(_get_base_server_url(), "/_api/session"), cookies=_conf().getDBSessionCookies(), timeout=1)
         if resp.status_code != 403:
             return resp.json()
         else:

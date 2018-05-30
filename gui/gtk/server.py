@@ -86,8 +86,8 @@ class ServerIO(object):
         return models.server_info()
 
     @safe_io_with_server(False)
-    def test_server_url(self, url):
-        return models.test_server_url(url)
+    def check_server_url(self, url):
+        return models.check_server_url(url)
 
     @safe_io_with_server(None)
     def get_changes_stream(self):

@@ -5,7 +5,7 @@ import sqlalchemy
 from flask import abort, g
 from flask_classful import FlaskView
 from sqlalchemy.orm import joinedload, undefer
-from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm.exc import NoResultFound, ObjectDeletedError
 from sqlalchemy.inspection import inspect
 from sqlalchemy import func
 from marshmallow import Schema
@@ -150,7 +150,10 @@ class GenericView(FlaskView):
         return obj
 
     def _dump(self, obj, route_kwargs, **kwargs):
-        return self._get_schema_instance(route_kwargs, **kwargs).dump(obj).data
+        try:
+            return self._get_schema_instance(route_kwargs, **kwargs).dump(obj).data
+        except ObjectDeletedError:
+            return []
 
     def _parse_data(self, schema, request, *args, **kwargs):
         return FlaskParser().parse(schema, request, locations=('json',),

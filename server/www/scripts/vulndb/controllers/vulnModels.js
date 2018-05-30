@@ -340,6 +340,7 @@ angular.module('faradayApp')
                 $scope.toggleSort = function(field) {
                     $scope.toggleSortField(field);
                     $scope.toggleReverse();
+                    $scope.sort();
                 };
 
                 // toggles column sort field
@@ -350,6 +351,10 @@ angular.module('faradayApp')
                 // toggle column sort order
                 $scope.toggleReverse = function() {
                     $scope.reverse = !$scope.reverse;
+                };
+
+                $scope.clearSearch = function() {
+                  $scope.search = '';
                 };
 
                 var equalAsSets = function(a, b) {

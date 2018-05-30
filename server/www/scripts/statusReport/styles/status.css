@@ -60,6 +60,28 @@
     width:44px;
 }
 
+.status-report-grid .ui-grid-row:last-child .ui-grid-cell{
+    border:none;
+}
+
+.checkbox-select{
+    text-align: center !important;
+}
+
+.hosts-list .ui-grid-header .ui-grid-cell-contents{
+    padding: 8px 3px 11px 5px !important
+}
+
+.hosts-list .ui-grid-header .ui-grid-cell-contents span{
+    color: #7c7c7c;
+}
+
+.hosts-list .ui-grid-header .hosts-list-checkall{
+    position: relative;
+    top: 3px;
+    left: 7px;
+}
+
 .status-report-grid .ui-grid-pager-panel {
     background-color: #f1f1f1;
 }

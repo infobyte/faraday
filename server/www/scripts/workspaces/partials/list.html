@@ -11,7 +11,7 @@
                         <div class="col-md-4">
                             <span id="ws-name" title="Workspaces">Workspaces</span><!-- WS name -->
                         </div>
-                        <div class="col-md-3 pull-right">
+                        <!-- <div class="col-md-3 pull-right">
                             <button id="delete" type="button" class="btn btn-default" title="Delete selected Workspaces" ng-click="delete()">
                                 <span class="glyphicon glyphicon-trash"></span>
                                 Delete
@@ -36,11 +36,41 @@
                                     </span>
                                 </div>
                             </div>
-                        </div>
+                        </div> -->
                     </div>
                 </div>
             </h2><!-- .ws-label -->
-            <div class="reports">
+            <div class="reports col-md-12 col-sm-12 col-xs-12">
+                <div class="button-control justify-flex-start  col-md-12 col-sm-12 col-xs-12">
+                    <div class="control-wrapper control-new">
+                        <button id="merge" type="button" class="btn btn-success btn-new" title="New Workspace" ng-click="new()">
+                            New
+                        </button>
+                    </div>
+                    <div class="control-wrapper control-edit">
+                        <button type="button" class="btn edit" title="Edit selected Workspaces" ng-click="edit()">
+                            <img src="images/icon-toolbar-edit.svg" class="edit-icon" />
+                        </button>
+                    </div>
+                    <div class="control-wrapper">
+                        <button  id="delete" type="button" class="btn" title="Delete selected Workspaces" ng-click="delete()">
+                            <img src="images/icon-toolbar-delete.svg" class="delete-icon" />
+                        </button>
+                    </div>
+                    <div class="control-wrapper search-wrapper">
+                        <form role="form">
+                            <div class="form-group">
+                                <div class="input-group">
+                                    <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-if="search && search != 'confirmed=true'" ng-click="clearSearch()"></span>
+                                    <input type="text" class="form-control" placeholder="Enter keywords" ng-model="search" />
+                                    <span class="input-group-addon glyphicon-btn">
+                                        <img src="images/icon-toolbar-searchbar-loupe.svg" class="search-icon" />
+                                    </span>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
                 <table class="table-v3 table table-responsive">
                     <thead>
                         <tr class="ui-grid-header">

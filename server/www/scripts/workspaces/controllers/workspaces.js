@@ -16,7 +16,7 @@ angular.module('faradayApp')
             $scope.workspaces = [];
             $scope.wss = [];
             // $scope.newworkspace = {};
-            
+
             var hash_tmp = window.location.hash.split("/")[1];
             switch (hash_tmp){
                 case "status":
@@ -63,7 +63,7 @@ angular.module('faradayApp')
         };
 
         $scope.onSuccessInsert = function(workspace){
-            $scope.wss.push(workspace.name); 
+            $scope.wss.push(workspace.name);
             workspace.scope = workspace.scope.map(function(scope){
                 return {key: scope}
             });
@@ -75,9 +75,9 @@ angular.module('faradayApp')
             for (var i = 0; i < $scope.workspaces.length; i++) {
                 if ($scope.workspaces[i].name > workspace.name) break;
             }
-            $scope.workspaces.splice(i, 0, workspace); 
+            $scope.workspaces.splice(i, 0, workspace);
         };
-        
+
         $scope.onFailInsert = function(error){
             var modal = $uibModal.open({
                 templateUrl: 'scripts/commons/partials/modalKO.html',
@@ -90,7 +90,7 @@ angular.module('faradayApp')
                         return error;
                     }
                 }
-            }); 
+            });
         };
 
         $scope.onSuccessEdit = function(workspace){
@@ -109,7 +109,7 @@ angular.module('faradayApp')
             };
         };
 
-        $scope.onSuccessDelete = function(workspace_name){ 
+        $scope.onSuccessDelete = function(workspace_name){
             remove =  function(arr, item) {
                 for(var i = arr.length; i--;) {
                     if(arr[i] === item) {
@@ -119,7 +119,7 @@ angular.module('faradayApp')
                 return arr;
             };
 
-            $scope.wss = remove($scope.wss, workspace_name); 
+            $scope.wss = remove($scope.wss, workspace_name);
             for(var i = 0; i < $scope.workspaces.length; i++) {
                 if($scope.workspaces[i].name == workspace_name){
                     $scope.workspaces.splice(i, 1);
@@ -127,7 +127,7 @@ angular.module('faradayApp')
                 }
             };
         };
-      
+
         $scope.insert = function(workspace){
             delete workspace.selected;
             workspacesFact.put(workspace).then(function(resp){
@@ -187,7 +187,7 @@ angular.module('faradayApp')
         };
 
         // Modals methods
-        $scope.new = function(){ 
+        $scope.new = function(){
             $scope.modal = $uibModal.open({
                 templateUrl: 'scripts/workspaces/partials/modalNew.html',
                 controller: 'workspacesModalNew',
@@ -201,12 +201,12 @@ angular.module('faradayApp')
                 }).filter(Boolean);
 
                 workspace = $scope.create(workspace.name, workspace.description, workspace.start_date, workspace.end_date, api_scope);
-                $scope.insert(workspace); 
+                $scope.insert(workspace);
             });
 
         };
 
-        $scope.edit = function(){ 
+        $scope.edit = function(){
             var workspace;
             $scope.workspaces.forEach(function(w) {
                 if(w.selected) {
@@ -236,7 +236,7 @@ angular.module('faradayApp')
 
                     $scope.update(workspace, oldName, function(workspace){
                         workspace.scope = old_scope;
-                    }); 
+                    });
                 });
             } else {
                 var modal = $uibModal.open({
@@ -278,7 +278,7 @@ angular.module('faradayApp')
                 $scope.modal.result.then(function() {
                     $scope.workspaces.forEach(function(w) {
                         if(w.selected == true)
-                            $scope.remove(w.name); 
+                            $scope.remove(w.name);
                     });
                 });
             } else {
@@ -322,6 +322,10 @@ angular.module('faradayApp')
         };
         $scope.dashboardRedirect = function(path){
             $location.path("/dashboard/ws/"+path);
+        };
+
+        $scope.clearSearch = function() {
+          $scope.search = '';
         };
 
         $scope.init();

@@ -1541,7 +1541,7 @@ def check_faraday_version():
     if info is not None and version != info['Version']:
         raise RuntimeError('Client and server versions do not match')
 
-def test_server_url(url_to_test):
+def check_server_url(url_to_test):
     """Return True if the url_to_test is indeed a valid Faraday Server URL.
     False otherwise.
     """

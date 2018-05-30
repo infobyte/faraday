@@ -140,3 +140,7 @@
   bottom: 0px;
   right: 15px;
 }
+
+.justify-flex-start {
+    justify-content: flex-start !important;
+}

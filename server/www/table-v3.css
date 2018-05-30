@@ -7,7 +7,8 @@
     height: 45px;
 }
 
-.table-v3 .ui-grid-header .ui-grid-cell-contents {
+.table-v3 .ui-grid-header .ui-grid-cell-contents,
+.table-v3 .ui-grid-header .ui-grid-cell-contents span {
     color: #7c7c7c;
     padding: 9px 3px 9px 5px !important;
     text-align: left;
@@ -15,6 +16,7 @@
 
 .table-v3 .ui-grid-cell-contents {
     text-align: left;
+    border: none;
 }
 
 .table-v3 .ui-grid-cell-contents.confirm-toggle{
@@ -126,4 +128,10 @@
 
 .table-v3 .ui-grid-cell {
     border: none ;
+}
+
+.table-v3 .ui-grid-header .hosts-list-checkall{
+    position: relative;
+    top: 3px;
+    left: 7px;
 }

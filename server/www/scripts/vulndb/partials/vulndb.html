@@ -6,56 +6,56 @@
     <div class="right-main">
         <div ng-controller="headerCtrl" ng-include="'scripts/commons/partials/header.html'"></div>
         <div id="reports-main" class="fila clearfix">
-            <div class="reports col-md-12 col-sm-12 col-xs-12">
-                <div class="button-control col-md-6 col-sm-6 col-xs-12">
-                    <div id="merge" class="btn-group btn-small-margin">
-                        <button id="import" type="button" class="btn btn-success" title="Import from CSV" ng-click="disabledClick || importCSV()">
-                            <span class="glyphicon glyphicon-upload"></span>
-                            Import
-                        </button>
-                    </div>
-                    <button id="delete" type="button" class="btn btn-default" title="Delete selected items" ng-click="disabledClick || delete()">
-                        <span class="glyphicon glyphicon-trash"></span>
-                        Delete
+          <div class="reports col-md-12 col-sm-12 col-xs-12">
+            <div class="button-control justify-flex-start  col-md-12 col-sm-12 col-xs-12">
+                <div class="control-wrapper control-new">
+                    <button id="import" type="button" class="btn btn-success btn-new" title="Import from CSV" ng-click="disabledClick || importCSV()">
+                        Import
                     </button>
-                    <div id="merge" class="btn-group btn-small-margin">
-                        <button type="button" class="btn btn-default" title="Edit selected vulns" ng-click="disabledClick || edit()" ng-disabled="selectedModels().length != 1">
-                            <span class="glyphicon glyphicon-pencil"></span>
-                            Edit
-                        </button>
-                    </div>
-                    <button id="new" type="button" class="btn btn-success" title="New Vulnerablity Model" ng-click="disabledClick || new()">
-                        <span class="glyphicon glyphicon-plus-sign"></span>
-                        New
-                    </button>
-                </div><!-- .col-md-6 .col-sm-6 .col-xs-12 -->
-                <div class="form-group">
-                        <div class="input-group">
-                            <input type="text" class="form-control input-sm" ng-model="search" placeholder="enter keywords" />
-                            <span class="input-group-btn">
-                                <button class="btn btn-sm" type="button">
-                                    <i class="fa fa-search"></i>
-                                </button>
-                            </span>
-                        </div>
                 </div>
-            <table class="status-report licenses-list table table-responsive">
+                <div class="control-wrapper control-edit">
+                    <button type="button" class="btn edit" title="Edit selected vulns" ng-click="disabledClick || edit()">
+                        <img src="images/icon-toolbar-edit.svg" class="edit-icon" />
+                    </button>
+                </div>
+                <div class="control-wrapper">
+                    <button  id="delete" type="button" class="btn" title="Delete selected items" ng-click="disabledClick || delete()">
+                        <img src="images/icon-toolbar-delete.svg" class="delete-icon" />
+                    </button>
+                </div>
+                <div class="control-wrapper search-wrapper">
+                    <form role="form">
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-if="search && search != 'confirmed=true'" ng-click="clearSearch()"></span>
+                                <input type="text" class="form-control" placeholder="Enter keywords" ng-model="search" />
+                                <span class="input-group-addon glyphicon-btn">
+                                    <img src="images/icon-toolbar-searchbar-loupe.svg" class="search-icon" />
+                                </span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <table class="table-v3 licenses-list table table-responsive">
                 <thead>
-                    <tr>
-                        <th><input type="checkbox" ng-model="selectall" ng-click="disabledClick || checkAll()"/></th>
-                        <th>
-                            <a href="" ng-click="toggleSort('name')">Name</a>
+                    <tr class="ui-grid-header">
+                        <th class="ui-grid-cell-contents ui-grid-header-cell hosts-list-checkall">
+                          <input type="checkbox" ng-model="selectall" ng-click="disabledClick || checkAll()"/>
                         </th>
-                        <th>
-                            <a href="" ng-click="toggleSort('description')">Description</a>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('name')">Name</span>
                         </th>
-                        <th>
-                            <a href="" ng-click="toggleSort('resolution')">Resolution</a>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('description')">Description</span>
                         </th>
-                        <th>
-                            <a href="" ng-click="toggleSort('exploitation')">Exploitation</a>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('resolution')">Resolution</span>
                         </th>
-                        <th></th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('exploitation')">Exploitation</span>
+                        </th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -64,12 +64,11 @@
                         selection-model-mode="multiple-additive"
                         selection-model-selected-class="multi-selected"
                         selection-model-on-change="selectedModels()">
-                        <td><input type="checkbox" name="{{model._id}}"/></td>
-                        <td>{{model.name}}</td>
-                        <td>{{model.description}}</td>
-                        <td>{{model.resolution}}</td>
-                        <td>{{model.exploitation}}</td>
-                        </div>
+                        <td class="ui-grid-cell-contents checkbox-select"><input type="checkbox" name="{{model._id}}"/></td>
+                        <td class="ui-grid-cell-contents">{{model.name}}</td>
+                        <td class="ui-grid-cell-contents">{{model.description}}</td>
+                        <td class="ui-grid-cell-contents">{{model.resolution}}</td>
+                        <td class="ui-grid-cell-contents">{{model.exploitation}}</td>
                     </tr>
                 </tbody>
             </table>
@@ -88,6 +87,6 @@
                         </form>
                     </div>
             </div><!-- .showPagination -->
-        </div><!-- .reports -->
-    </div><!-- #reports-main --></div><!-- .right-main -->
+        </div><!-- #reports-main -->
+    </div><!-- .right-main -->
 </section><!-- #main -->

@@ -291,7 +291,7 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider', 'R
             accessToken: "70f0c36ae96d4ffc90394565b42c5bf9",
             captureUncaught: true,
             payload: {
-                    environment: "white"
+                    environment: "white-newdesign"
         }});
 }]);
 

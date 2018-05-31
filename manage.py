@@ -75,6 +75,7 @@ def faraday_schema_display():
 def initdb():
     with app.app_context():
         InitDB().run()
+        ImportCouchDB().run()
 
 @click.command()
 def import_from_couchdb():

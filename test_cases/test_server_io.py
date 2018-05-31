@@ -16,7 +16,7 @@ from persistence.server import server_io_exceptions
 from mock import MagicMock, patch
 
 server.FARADAY_UP = False
-server.SERVER_URL = "http://localhost:5984"
+server.SERVER_URL = "http://localhost:5985"
 example_url = "http://just_some_url"
 
 
@@ -24,7 +24,7 @@ class ClientServerAPITests(unittest.TestCase):
 
     def setUp(self):
         self.ws_name = "a_ws"
-        self.server_api_url = "http://localhost:5984/_api"
+        self.server_api_url = "http://localhost:5985/_api"
 
     def test_get_base_server_url(self):
         s = server._get_base_server_url()

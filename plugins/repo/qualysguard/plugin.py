@@ -175,7 +175,7 @@ class ResultsAssetReport():
 
         self.severity_dict = {
             '1': 'info',
-            '2': 'low',
+            '2': 'info',
             '3': 'med',
             '4': 'high',
             '5': 'critical'}

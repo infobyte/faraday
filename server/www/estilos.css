@@ -202,6 +202,7 @@ article.untercio{
 .fondo-gris1, .fondo-unclassified {background-color: #999 !important;}
 .fondo-blanco {background-color: #fff !important;}
 .fondo-info, .fondo-risk-accepted {background-color: #2e97bd !important;}
+.fondo-informational, .fondo-risk-accepted {background-color: #2e97bd !important;}
 .fondo-naranja, .fondo-medium, .fondo-med, .fondo-re-opened {background-color: #DFBF35 !important;}
 .fondo-amarillo, .fondo-low, .fondo-closed , .fondo-created{background-color: #A1CE31 !important;}
 .fondo-violeta {background-color: #932ebe !important;}
@@ -387,6 +388,9 @@ ul.label-list {
 .label-list span.label, .label-list a span.label {
 	font-size: 12px !important;
     margin: 5px;
+}
+table thead th span {
+	color: black;
 }
 table thead th a {
 	color: #2E91D8;
@@ -809,6 +813,45 @@ span.input-group-addon.button-radius{
 .normal-size {
     font-size: 14px !important;
 }
+/* Login */
+.contenedor {
+  position: relative;
+}
+.centrado {
+  position: absolute;
+  width: 300px;
+  background: #dd3b3c;
+  left: 50%;
+  margin-left: -150px;
+  top: 150px;
+  padding: 40px 20px 20px;
+  text-align: center;
+  color: #fff;
+}
+.footer_centrado {
+    position: absolute;
+    width: 50%;
+    left: 75%;
+    margin-left: -150px;
+    top: 95%;
+    text-align: center;
+    color: #fff;
+}
+.faraday-iso {
+  position: absolute;
+
+  width: 80px;
+
+
+  margin-left: -40px;
+
+  left: 50%;
+
+  top: -60px;
+
+}
+
+/* Login */
 .upsize {
     font-size: 13px;
     cursor: pointer;
@@ -1147,4 +1190,9 @@ a.button-disable{cursor: not-allowed;pointer-events: none;opacity: 0.5}
 
 .accordion-expand-button-disabled {
     display: none !important;
+}
+
+.header_right {
+    /* TODO: this is a fast hack, maybe there is a better way to do this */
+    margin-top: -2.25%;
 }

@@ -7,11 +7,11 @@ angular.module('faradayApp')
                     ['$scope', '$filter', '$routeParams',
                     '$location', '$uibModal', '$cookies', '$q', '$window', 'BASEURL',
                     'SEVERITIES', 'EASEOFRESOLUTION', 'STATUSES', 'hostsManager', 'commonsFact',
-                     'vulnsManager', 'workspacesFact', 'csvService', 'uiGridConstants', 'vulnModelsManager',
+                     'vulnsManager', 'workspacesFact', 'csvService', 'uiGridConstants', 'vulnModelsManager','ServerAPI',
                     function($scope, $filter, $routeParams,
                         $location, $uibModal, $cookies, $q, $window, BASEURL,
                         SEVERITIES, EASEOFRESOLUTION, STATUSES, hostsManager, commonsFact,
-                             vulnsManager, workspacesFact, csvService, uiGridConstants, vulnModelsManager) {
+                             vulnsManager, workspacesFact, csvService, uiGridConstants, vulnModelsManager, ServerAPI) {
         $scope.baseurl;
         $scope.columns;
         $scope.easeofresolution;
@@ -33,7 +33,7 @@ angular.module('faradayApp')
 
         var searchFilter = {};
         var paginationOptions = {
-            page: 0,
+            page: 1,
             pageSize: 10,
             defaultPageSizes: [10, 50, 75, 100],
             sortColumn: null,
@@ -104,8 +104,7 @@ angular.module('faradayApp')
                     // Clear selection
                     $scope.gridApi.selection.clearSelectedRows();
 
-                    // ui-grid pages are numbered starting from 1, server-side paging starts at 0
-                    paginationOptions.page = pageNumber - 1;
+                    paginationOptions.page = pageNumber;
                     paginationOptions.pageSize = pageSize;
 
                     // Load new page
@@ -152,6 +151,7 @@ angular.module('faradayApp')
             }
 
             $scope.columns = {
+                "_id":               true,
                 "date":             true,
                 "name":             true,
                 "severity":         true,
@@ -234,6 +234,14 @@ angular.module('faradayApp')
                     '       <div ui-grid-filter></div>'+
                     '   </div>';
 
+            $scope.gridOptions.columnDefs.push({ name : '_id',
+                displayName : "_id",
+                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/idcolumn.html',
+                headerCellTemplate: header,
+                width: '50',
+                sort: getColumnSort('_id'),
+                visible: $scope.columns["_id"]
+            });
             $scope.gridOptions.columnDefs.push({ name : 'date',
                 displayName : "date",
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/datecolumn.html',
@@ -270,7 +278,7 @@ angular.module('faradayApp')
                 headerCellTemplate: header,
                 minWidth: '100',
                 maxWidth: '200',
-                sort: getColumnSort('hostnames'),
+                enableSorting: false,
                 visible: $scope.columns["hostnames"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'target',
@@ -335,7 +343,8 @@ angular.module('faradayApp')
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/refscolumn.html',
                 headerCellTemplate: header,
                 sort: getColumnSort('refs'),
-                visible: $scope.columns["refs"]
+                visible: $scope.columns["refs"],
+                enableSorting: false,
             });
             $scope.gridOptions.columnDefs.push({ name : '_attachments',
                 displayName: "evidence",
@@ -348,6 +357,7 @@ angular.module('faradayApp')
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/impactcolumn.html',
                 headerCellTemplate: header,
                 sort: getColumnSort('impact'),
+                enableSorting: false,
                 visible: $scope.columns["impact"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'method',
@@ -396,12 +406,17 @@ angular.module('faradayApp')
                 visible: $scope.columns["creator"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'policyviolations',
-                displayName : "policy violations",
+                // The following line breaks the remembering of the field (i.e.
+                // setting it in the SRcolumns cookie), so it is better to
+                // leave it commented (or to debug the problem, which I don't
+                // want to)
+                // displayName : "policy violations",
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/policyviolationscolumn.html',
                 headerCellTemplate: header,
                 width: '100',
                 sort: getColumnSort('policyviolations'),
-                visible: $scope.columns["policyviolations"]
+                visible: $scope.columns["policyviolations"],
+                enableSorting: false,
             });
         };
 
@@ -441,6 +456,55 @@ angular.module('faradayApp')
             return res;
         };
 
+        $scope.searchExploits = function(){
+
+            var promises = [];
+            var selected = $scope.getCurrentSelection();
+
+            selected.forEach(function(vuln){
+
+                vuln.refs.forEach(function(ref){
+
+                    if(ref.toLowerCase().startsWith('cve')){
+
+                        var response = ServerAPI.getExploits(ref);
+                        promises.push(response);
+                    }
+                });
+            });
+
+            return $q.all(promises).then(function(modalData){
+
+                var response = modalData.map(function(obj){
+                    return obj.data;
+                });
+
+                return response.filter(function(x){!angular.equals(x, {})})
+
+            }, function(failed) {
+                commonsFact.showMessage("Something failed searching vulnerability exploits.");
+                return [];
+            });
+        }
+
+        $scope.showExploits = function(){
+
+           $scope.searchExploits().then(function(exploits){
+
+                if(exploits.length > 0){
+
+                    var modal = $uibModal.open({
+                        templateUrl: 'scripts/statusReport/partials/exploitsModal.html',
+                        controller: 'commonsModalExploitsCtrl',
+                        resolve: {
+                            msg: function() {
+                                return exploits;
+                            }
+                        }
+                    });
+                }
+            });
+        }
 
         $scope.saveAsModel = function() {
             var self = this;
@@ -454,12 +518,12 @@ angular.module('faradayApp')
                     promises.push(self.vulnModelsManager.create(vuln, true));
                 });
                 $q.all(promises).then(function(success) {
-                    showMessage("Created " + selected.length + " templates successfully.", true);
-                }, function(failed) {
-                    showMessage("Something failed when creating some of the templates.");
+                    commonsFact.showMessage("Created " + selected.length + " templates successfully.", true);
+                }, function(failedMessage) {
+                    commonsFact.showMessage(failedMessage);
                 });
             } catch(err) {
-                showMessage("Something failed when creating some of the templates.");
+                commonsFact.showMessage("Something failed when creating some of the templates.");
             }
         };
 
@@ -555,24 +619,6 @@ angular.module('faradayApp')
             loadVulns();
         };
 
-        var showMessage = function(msg, success) {
-            if (! success) { var success = false }
-            if (success) {
-                var templateUrl = 'scripts/commons/partials/modalOK.html';
-            } else {
-                var templateUrl = 'scripts/commons/partials/modalKO.html';
-            }
-            var modal = $uibModal.open({
-                    templateUrl: templateUrl,
-                    controller: 'commonsModalKoCtrl',
-                    resolve: {
-                        msg: function() {
-                            return msg;
-                        }
-                    }
-                });
-        }
-
         // deletes the vulns in the array
         $scope.remove = function(aVulns) {
             aVulns.forEach(function(vuln) {
@@ -621,7 +667,7 @@ angular.module('faradayApp')
                     $scope.remove(vulns);
                 });
             } else {
-                showMessage('No vulnerabilities were selected to delete');
+                commonsFact.showMessage('No vulnerabilities were selected to delete');
             }
         };
 
@@ -641,7 +687,7 @@ angular.module('faradayApp')
                     loadVulns();
                 }
             }, function(errorMsg){
-                showMessage("Error updating vuln " + vuln.name + " (" + vuln._id + "): " + errorMsg);
+                commonsFact.showMessage("Error updating vuln " + vuln.name + " (" + vuln._id + "): " + errorMsg);
             });
         };
 
@@ -669,15 +715,13 @@ angular.module('faradayApp')
                         }
                     }
                 });
-                modal.result.then(function(data) {
-                    vulnsManager.updateVuln(vulns[0], data).then(function(){
-                        loadVulns();
-                    }, function(errorMsg){
-                        showMessage("Error updating vuln " + vulns[0].name + " (" + vulns[0]._id + "): " + errorMsg);
-                    });
+
+                modal.result.then(function() {
+                    loadVulns();
                 });
+
             } else {
-                showMessage('A vulnierabilty must be selected in order to edit');
+                commonsFact.showMessage('A vulnerability must be selected in order to edit');
             }
         };
 
@@ -892,26 +936,6 @@ angular.module('faradayApp')
             });
         };
 
-        $scope.insert = function(vuln) {
-            vulnsManager.createVuln($scope.workspace, vuln).then(function() {
-                loadVulns();
-            }, function(message) {
-                var msg = "The vulnerability couldn't be created";
-                if(message == "409") {
-                    msg += " because a vulnerability with the same parameters already exists in this Workspace";
-                }
-                showMessage(msg);
-            });
-            /*
-            // this shouldnt be necessary, we should use Angular formatting options directly in the partial
-            //formating the date
-            var d = new Date(0);
-            d.setUTCSeconds(vuln.date);
-            d = d.getDate() + "/" + (d.getMonth()+1) + "/" + d.getFullYear();
-            vuln.date = d;
-            */
-        };
-
         var loadVulns = function() {
             delete searchFilter.confirmed;
             if ($scope.confirmed)
@@ -930,13 +954,13 @@ angular.module('faradayApp')
                 // Add the total amount of vulnerabilities as an option for pagination
                 // if it is larger than our biggest page size
                 if ($scope.gridOptions.totalItems > paginationOptions.defaultPageSizes[paginationOptions.defaultPageSizes.length - 1]) {
-                    
+
                     $scope.gridOptions.paginationPageSizes = paginationOptions.defaultPageSizes.concat([$scope.gridOptions.totalItems]);
-                    
+
                     // sadly, this will load the vuln list again because it fires a paginationChanged event
                     if ($scope.gridOptions.paginationPageSize > $scope.gridOptions.totalItems)
                         $scope.gridOptions.paginationPageSize = $scope.gridOptions.totalItems;
-                    
+
                     // New vuln and MAX items per page setted => reload page size.
                     if ($scope.gridOptions.paginationPageSize === $scope.gridOptions.totalItems - 1)
                         $scope.gridOptions.paginationPageSize = $scope.gridOptions.totalItems;
@@ -961,7 +985,7 @@ angular.module('faradayApp')
              });
 
             modal.result.then(function(data) {
-                $scope.insert(data);
+                loadVulns();
             });
         };
 
@@ -1014,9 +1038,7 @@ angular.module('faradayApp')
             });
         };
 
-        $scope.serviceSearch = function(srvStr) {
-            //TODO: this is horrible
-            var srvName = srvStr.split(') ')[1];
+        $scope.serviceSearch = function(srvName) {
             return $scope.encodeUrl(srvName);
         }
 

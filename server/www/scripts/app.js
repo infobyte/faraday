@@ -11,9 +11,14 @@ $.ajaxSetup({
 var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.bootstrap', 'angularFileUpload',
                                                 'filter', 'ngClipboard', 'ngCookies', 'cfp.hotkeys', 'chart.js',
                                                 'ui.grid', 'ui.grid.selection', 'ui.grid.grouping', 'ngSanitize',
-                                                'ui.grid.pagination', 'ui.grid.pinning', 'angularMoment', 'ui-notification'])
+                                                'ui.grid.pagination', 'ui.grid.pinning', 'angularMoment', 'ui-notification',
+                                                'tandibar/ng-rollbar'])
     .constant("BASEURL", (function() {
         var url = window.location.origin + "/";
+        return url;
+    })())
+    .constant("APIURL", (function() {
+        var url = window.location.origin + "/_api/v2/";
         return url;
     })())
     .constant("EASEOFRESOLUTION", (function() {
@@ -48,9 +53,17 @@ var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.
         ];
         return exploitations;
     })())
+    .constant("SERVICE_STATUSES", (function() {
+        var statuses = [
+            "open",
+            "closed",
+            "filtered"
+        ];
+        return statuses;
+    })())
     .constant("STATUSES", (function() {
         var statuses = [
-            "opened",
+            "opened",  // TODO migration: should we change this to "open"?
             "closed",
             "re-opened",
             "risk-accepted"
@@ -58,8 +71,8 @@ var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.
         return statuses;
     })());
 
-faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
-                   function($routeProvider, ngClipProvider, $uibTooltipProvider) {
+faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider', 'RollbarProvider',
+                   function($routeProvider, ngClipProvider, $uibTooltipProvider, RollbarProvider) {
     $uibTooltipProvider.options({
         appendToBody: true
     });
@@ -204,11 +217,6 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
             controller: 'workspacesCtrl',
             title: 'Workspaces | '
         }).
-        when('/communication', {
-            templateUrl: 'scripts/commons/partials/commercial.html',
-            controller: 'commercialCtrl',
-            title: 'Communication | '
-        }).
         when('/comparison', {
             templateUrl: 'scripts/commons/partials/commercial.html',
             controller: 'commercialCtrl'
@@ -221,6 +229,11 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
             templateUrl: 'scripts/commons/partials/commercial.html',
             controller: 'commercialCtrl',
             title: 'Executive Report | '
+        }).
+        when('/login', {
+            templateUrl: 'scripts/auth/partials/login.html',
+            controller: 'loginCtrl',
+            title: 'Login | '
         }).
         when('/users', {
             templateUrl: 'scripts/commons/partials/commercial.html',
@@ -266,12 +279,23 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
             controller: 'commercialCtrl',
             title: 'Methodologies | '
         }).
+        when('/forbidden', {
+            templateUrl: 'scripts/auth/partials/forbidden.html',
+            title: ' Forbidden |'
+        }).
         otherwise({
-            templateUrl: 'scripts/commons/partials/home.html'
+            templateUrl: 'scripts/commons/partials/home.html',
+            controller: 'homeCtrl'
         });
+        RollbarProvider.init({
+            accessToken: "70f0c36ae96d4ffc90394565b42c5bf9",
+            captureUncaught: true,
+            payload: {
+                    environment: "white"
+        }});
 }]);
 
-faradayApp.run(['$location', '$rootScope', function($location, $rootScope) {
+faradayApp.run(['$location', '$rootScope', 'loginSrv', function($location, $rootScope, loginSrv) {
     $rootScope.$on('$routeChangeSuccess', function(event, current, previous) {
         if(current.hasOwnProperty('$$route')) {
             $rootScope.title = current.$$route.title;

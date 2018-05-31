@@ -7,10 +7,14 @@ import sys
 import argparse
 import subprocess
 
+import sqlalchemy
+
 import server.config
 import server.couchdb
 import server.utils.logger
+from server.models import db, Workspace, User
 from server.utils import daemonize
+from server.web import app
 from utils import dependencies
 from utils.user_input import query_yes_no
 from faraday import FARADAY_BASE
@@ -25,10 +29,13 @@ def setup_environment(check_deps=False):
     if check_deps:
 
         # Check dependencies
-        installed_deps, missing_deps = dependencies.check_dependencies(
+        installed_deps, missing_deps, conflict_deps = dependencies.check_dependencies(
             requirements_file=server.config.REQUIREMENTS_FILE)
 
         logger.info("Checking dependencies...")
+
+        if conflict_deps:
+            logger.info("Some dependencies are old. Update them with \"pip install -r requirements_server.txt -U\"")
 
         if missing_deps:
 
@@ -46,14 +53,6 @@ def setup_environment(check_deps=False):
 
     # Web configuration file generation
     server.config.gen_web_config()
-
-    # Reports DB creation
-    server.couchdb.push_reports()
-
-
-def import_workspaces():
-    import server.importer
-    server.importer.import_workspaces()
 
 
 def stop_server():
@@ -77,16 +76,26 @@ def is_server_running():
 def run_server(args):
     import server.web
 
-    server.database.initialize()
-    server.app.setup()
     web_server = server.web.WebServer(enable_ssl=args.ssl)
 
     daemonize.create_pid_file()
-    logger.info('Faraday Server is ready')
     web_server.run()
+    logger.info('Faraday Server is ready')
+
+
+def check_postgresql():
+    with app.app_context():
+        try:
+            if not db.session.query(Workspace).count():
+                logger.warn('No workspaces found. Remeber to execute couchdb importer')
+        except sqlalchemy.exc.OperationalError:
+            logger.error(
+                'Could not connect to postgresql, please check if database is running or configuration settings are correct. For first time installations execute python manage.py initdb')
+            sys.exit(1)
 
 
 def main():
+    check_postgresql()
     os.chdir(FARADAY_BASE)
     parser = argparse.ArgumentParser()
     parser.add_argument('--ssl', action='store_true', help='enable HTTPS')
@@ -95,6 +104,9 @@ def main():
     parser.add_argument('--stop', action='store_true', help='stop Faraday Server')
     parser.add_argument('--nodeps', action='store_true', help='Skip dependency check')
     parser.add_argument('--no-setup', action='store_true', help=argparse.SUPPRESS)
+    parser.add_argument('--port', help='Overides server.ini port configuration')
+    parser.add_argument('--websocket_port', help='Overides server.ini websocket port configuration')
+    parser.add_argument('--bind_address', help='Overides server.ini bind_address configuration')
 
     f = open(server.config.VERSION_FILE)
     f_version = f.read().strip()
@@ -115,19 +127,29 @@ def main():
 
     # Overwrites config option if SSL is set by argument
     if args.ssl:
-        server.config.ssl.set('enabled', 'true')
+        server.config.ssl.enabled = 'true'
 
     if not args.no_setup:
         setup_environment(not args.nodeps)
-        import_workspaces()
+
+    if args.port:
+        server.config.faraday_server.port = args.port
+
+    if args.bind_address:
+        server.config.faraday_server.bind_address = args.bind_address
+
+    if args.websocket_port:
+        server.config.faraday_server.websocket_port = args.websocket_port
 
     if args.start:
         # Starts a new process on background with --ignore-setup
         # and without --start nor --stop
         devnull = open('/dev/null', 'w')
         params = ['/usr/bin/env', 'python2.7', os.path.join(server.config.FARADAY_BASE, __file__), '--no-setup']
-        if args.ssl: params.append('--ssl')
-        if args.debug: params.append('--debug')
+        if args.ssl:
+            params.append('--ssl')
+        if args.debug:
+            params.append('--debug')
         logger.info('Faraday Server is running as a daemon')
         subprocess.Popen(params, stdout=devnull, stderr=devnull)
     else:

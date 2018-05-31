@@ -22,6 +22,7 @@ CONF = getInstanceConfiguration()
 
 
 class PluginManager(object):
+
     def __init__(self, plugin_repo_path):
         self._controllers = {}
         self._plugin_modules = {}
@@ -74,7 +75,7 @@ class PluginManager(object):
 
     def _instancePlugins(self):
         plugins = {}
-        for module in self._plugin_modules.itervalues():
+        for module in self._plugin_modules.values():
             new_plugin = module.createPlugin()
             self._verifyPlugin(new_plugin)
             plugins[new_plugin.id] = new_plugin
@@ -99,15 +100,24 @@ class PluginManager(object):
                     module_path = os.path.join(plugin_repo_path, name)
                     sys.path.append(module_path)
                     module_filename = os.path.join(module_path, "plugin.py")
-                    self._plugin_modules[name] = imp.load_source(
-                        name, module_filename)
+                    if not os.path.exists(module_filename):
+                        module_filename = os.path.join(module_path,
+                                                       "plugin.pyc")
+
+                    file_ext = os.path.splitext(module_filename)[1]
+                    if file_ext.lower() == '.py':
+                        self._plugin_modules[name] = imp.load_source(name,
+                                                                     module_filename)
+
+                    elif file_ext.lower() == '.pyc':
+                        self._plugin_modules[name] = imp.load_compiled(name,
+                                                                       module_filename)
+                    getLogger(self).debug('Loading plugin {0}'.format(name))
                 except Exception as e:
                     msg = "An error ocurred while loading plugin %s.\n%s" % (
                         module_filename, traceback.format_exc())
                     getLogger(self).debug(msg)
                     getLogger(self).warn(e)
-            else:
-                pass
 
     def getPlugins(self):
         plugins = self._instancePlugins()

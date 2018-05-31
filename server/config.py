@@ -3,25 +3,26 @@ from __future__ import absolute_import
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 
-import ConfigParser
-import json
 import os
 import shutil
 import errno
+import ConfigParser
 
-from logging import NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL
+from logging import (
+    DEBUG,
+    INFO,
+)
 from config import globals as CONSTANTS
 from config.configuration import getInstanceConfiguration
 
 LOGGING_LEVEL = INFO
 
 FARADAY_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-FARADAY_SERVER_DBS_DIR = os.path.join(FARADAY_BASE, 'server/workspaces')
-FARADAY_SERVER_PID_FILE = os.path.join(FARADAY_BASE, 'server/.faraday-server.pid')
+FARADAY_SERVER_PID_FILE = os.path.join(
+    CONSTANTS.CONST_FARADAY_HOME_PATH, 'faraday-server.pid')
 REQUIREMENTS_FILE = os.path.join(FARADAY_BASE, 'requirements_server.txt')
 DEFAULT_CONFIG_FILE = os.path.join(FARADAY_BASE, 'server/default.ini')
 VERSION_FILE = os.path.join(FARADAY_BASE, CONSTANTS.CONST_VERSION_FILE)
-WEB_CONFIG_FILE = os.path.join(FARADAY_BASE, 'server/www/config/config.json')
 REPORTS_VIEWS_DIR = os.path.join(FARADAY_BASE, 'views/reports')
 LOCAL_CONFIG_FILE = os.path.expanduser(
     os.path.join(CONSTANTS.CONST_FARADAY_HOME_PATH, 'config/server.ini'))
@@ -89,13 +90,11 @@ def gen_web_config():
         "osint": __get_osint(),
         'vuln_model_db': CONSTANTS.CONST_VULN_MODEL_DB
     }
-    if os.path.isfile(WEB_CONFIG_FILE):
-        os.remove(WEB_CONFIG_FILE)
-    with open(WEB_CONFIG_FILE, "w") as doc_file:
-        json.dump(doc, doc_file)
+    return doc
 
 
 def is_debug_mode():
     return LOGGING_LEVEL is DEBUG
+
 
 parse_and_bind_configuration()

@@ -9,7 +9,21 @@ angular.module('faradayApp')
         workspacesFact.list = function() {
             var deferred = $q.defer();
             ServerAPI.getWorkspacesNames().
-                then(function(response) { deferred.resolve(response.data.workspaces) }, errorHandler);
+                then(function(response) {
+                    var names = [];
+                    response.data.forEach(function(workspace){
+                        names.push(workspace.name);
+                    });
+                    deferred.resolve(names);
+                }, errorHandler);
+            return deferred.promise;
+        };
+
+        workspacesFact.getWorkspaces = function() {
+            var deferred = $q.defer();
+            ServerAPI.getWorkspaces().
+                then(function(response)
+                    { deferred.resolve(response.data) }, errorHandler);
             return deferred.promise;
         };
 
@@ -31,19 +45,10 @@ angular.module('faradayApp')
         workspacesFact.getDuration = function(workspace_name) {
             var deferred = $q.defer();
             ServerAPI.getWorkspace(workspace_name).then(function(workspace) {
-                var ws = workspace.data;
-                var dur = {};
-
-                if(ws.hasOwnProperty('duration')) {
-                    if(ws.duration.hasOwnProperty('start') && ws.duration.hasOwnProperty('end')) {
-                        dur.start = ws.duration.start;
-                        dur.end = ws.duration.end;
-                    }
-                } else if(ws.hasOwnProperty('sdate') && ws.hasOwnProperty('fdate')) {
-                    dur.start = ws.sdate;
-                    dur.end = ws.fdate;
-                }
-                deferred.resolve(dur);
+                deferred.resolve({
+                    "start": workspace.data.duration.start_date,
+                    "end": workspace.data.duration.end_date
+                });
             });
             return deferred.promise;
         };
@@ -52,9 +57,9 @@ angular.module('faradayApp')
             var deferred = $q.defer();
             ServerAPI.getWorkspace(workspace_name).then(
                 function(response) {
-                deferred.resolve(true);
-            }, function(error) {
-                deferred.resolve(false);
+                deferred.resolve(response);
+            }, function(response) {
+                deferred.reject(response);
             });
             return deferred.promise;
         };
@@ -82,11 +87,13 @@ angular.module('faradayApp')
             return ret;
         };
 
-        workspacesFact.update = function(workspace) {
+        workspacesFact.update = function(workspace, wsName) {
             var deferred = $q.defer();
-            ServerAPI.updateWorkspace(workspace).then(function(data){
+            ServerAPI.updateWorkspace(workspace, wsName).then(function(data){
                 workspace._rev = data.rev;
                 deferred.resolve(workspace);
+            }, function(err){
+                deferred.reject(err);
             });
             return deferred.promise;
         };

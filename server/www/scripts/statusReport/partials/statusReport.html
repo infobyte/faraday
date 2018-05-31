@@ -45,6 +45,7 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-right" role="menu">
                         <li><a class="ws" ng-click="saveAsModel()">Create template</a></li>
+                        <li><a class="ws" ng-click="showExploits()">Search exploits</a></li>
                     </ul>
                     <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Actions" ng-hide="getCurrentSelection().length < 2">
                         <span class="caret"></span>
@@ -73,6 +74,8 @@
                         <li role="separator" class="divider"></li>
                         <li><a class="ws" ng-click="editCWE()">From vulnerability template</a></li>
                         <li><a class="ws" ng-click="saveAsModel()">Create vulnerability templates</a></li>
+                        <li role="separator" class="divider"></li>
+                        <li><a class="ws" ng-click="showExploits()">Search exploits</a></li>
                     </ul>
                 </div>
                 <div id="group-by" class="btn-group btn-small-margin">
@@ -87,7 +90,7 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-right" role="menu">
                         <li ng-repeat="(column, show) in columns">
-                            <a class="ws" ng-show="show && (column !== 'evidence' && column !== 'impact' && column !== 'web' && column !== 'easeofresolution' && column !== 'date')" ng-click="groupBy(column)">{{column}}</a>
+                            <a class="ws" ng-show="show && (column !== '_id' && column !== 'evidence' && column !== 'impact' && column !== 'web' && column !== 'easeofresolution' && column !== 'date' && column !== 'hostnames')" ng-click="groupBy(column)">{{column}}</a>
                         </li>
                     </ul>
                 </div>
@@ -104,7 +107,7 @@
                             <div class="form-group">
                                 <div class="input-group input-group-sm">
                                     <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search && search != 'confirmed=true'"></span>
-                                    <input type="text" class="form-control" id="filter-by" placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
+                                    <input type="text" class="form-control" id="filter-by" placeholder="enter keywords" ng-change="currentPage = 1" ng-model="searchParams" />
                                     <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
                                         <i class="fa fa-search" ng-if="gridOptions.data.length > 0 || gridOptions.totalItems >= 0"></i>
                                         <i class="fa fa-refresh fa-spin" ng-if="gridOptions.totalItems === null"></i>

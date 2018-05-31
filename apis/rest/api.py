@@ -25,28 +25,31 @@ CONF = getInstanceConfiguration()
 
 _plugin_controller_api = None
 _http_server = None
-
-
+ioloop_instance = None
 def startServer():
     global _http_server
+    global ioloop_instance
     if _http_server is not None:
-        IOLoop.instance().start()
+        ioloop_instance.start()
 
 
 def stopServer():
     global _http_server
+    global ioloop_instance
     if _http_server is not None:
-        IOLoop.instance().stop()
+        ioloop_instance.stop()
         _http_server.stop()
 
 
 def startAPIs(plugin_controller, model_controller, hostname, port):
     global _rest_controllers
     global _http_server
+    global ioloop_instance
     _rest_controllers = [PluginControllerAPI(plugin_controller), ModelControllerAPI(model_controller)]
 
     app = Flask('APISController')
 
+    ioloop_instance = IOLoop.current()
     _http_server = HTTPServer(WSGIContainer(app))
     while True:
         try:
@@ -75,9 +78,6 @@ def startAPIs(plugin_controller, model_controller, hostname, port):
     logging.getLogger("tornado.access").addHandler(logger.getLogger(app))
     logging.getLogger("tornado.access").propagate = False
     threading.Thread(target=startServer).start()
-
-def stopAPIs():
-    stopServer()
 
 
 class RESTApi(object):
@@ -110,6 +110,11 @@ class ModelControllerAPI(RESTApi):
 
     def getRoutes(self):
         routes = []
+
+        routes.append(Route(path='/model/interface',
+                              view_func=self.createInterface,
+                              methods=['PUT']))
+
         routes.append(Route(path='/model/edit/vulns',
                               view_func=self.postEditVulns,
                               methods=['POST']))
@@ -125,10 +130,6 @@ class ModelControllerAPI(RESTApi):
         routes.append(Route(path='/model/webvulns',
                             view_func=self.listWebVulns,
                             methods=['GET']))
-
-        routes.append(Route(path='/model/interface',
-                            view_func=self.createInterface,
-                            methods=['PUT']))
 
         routes.append(Route(path='/model/service',
                             view_func=self.createService,
@@ -246,12 +247,9 @@ class ModelControllerAPI(RESTApi):
             ['name', 'os'])
 
     def createInterface(self):
-        return self._create(
-            self.controller.newInterface,
-            ['name', 'mac', 'ipv6_address', 'ipv4_mask', 'ipv4_gateway',
-             'ipv4_dns', 'ipv6_address', 'ipv6_prefix', 'ipv6_gateway',
-             'ipv6_dns', 'network_segment', 'hostname_resolution',
-             'parent_id'])
+        return jsonify(
+            code=200,
+            id=request.get_json().get("parent_id"))
 
     def createService(self):
         return self._create(
@@ -272,9 +270,7 @@ class ModelControllerAPI(RESTApi):
              'params', 'query', 'category', 'parent_id'])
 
     def createNote(self):
-        return self._create(
-            self.controller.newNote,
-            ['name', 'text', 'parent_id'])
+        return jsonify(code=200)
 
     def createCred(self):
         return self._create(

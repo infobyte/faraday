@@ -6,11 +6,14 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+import traceback
 
 import os
 import sys
 import threading
 import webbrowser
+
+import restkit
 
 try:
     import gi
@@ -48,7 +51,8 @@ from gui.gui_app import FaradayUi
 from config.configuration import getInstanceConfiguration
 from utils.logs import getLogger
 from appwindow import AppWindow
-from persistence.server.server import check_faraday_version
+
+from persistence.server.server import is_authenticated, check_faraday_version, Unauthorized
 
 from server import ServerIO
 from dialogs import PreferenceWindowDialog
@@ -63,6 +67,7 @@ from dialogs import ForceNewWorkspaceDialog
 from dialogs import ForcePreferenceWindowDialog
 from dialogs import errorDialog
 from dialogs import ImportantErrorDialog
+from dialogs import LoginDialog, ForceLoginDialog
 from dialogs import FaradayPluginsDialog
 
 from mainwidgets import Sidebar
@@ -161,27 +166,37 @@ class GuiApp(Gtk.Application, FaradayUi):
         return creation_ok
 
     def remove_workspace(self, button, ws_name):
-        """Removes a workspace. If the workspace to be deleted is the one
-        selected, it moves you to the one above it on the list. If there
-        aren't more workspaces left, you will be forced to create one.
-        The clears and refreshes
-        sidebar"""
-        model.api.log("Removing Workspace: %s" % ws_name)
-        server_response = self.getWorkspaceManager().removeWorkspace(ws_name)
-        if server_response:
+        """Removes a workspace. If the workspace deleted is currently active,
+        a signal will be incoming vis postUpdates() and force the user to
+        select another workspace."""
+        try:
+            model.api.log("Removing Workspace: %s" % ws_name)
+            self.getWorkspaceManager().removeWorkspace(ws_name)
             self.ws_sidebar.clear_sidebar()
             self.ws_sidebar.refresh_sidebar()
-            available_workspaces = self.serverIO.get_workspaces_names()
-            if available_workspaces:
-                self.select_last_workspace_in_list(available_workspaces)
-            else:
-                self.handle_no_active_workspace()
+        except restkit.errors.Unauthorized:
+            model.notification_center.showDialog(
+                "You're not authorized to delete this workspace.\n"
+                "Make sure you're an admin and that you're logged in.",
+                "ERROR")
+        except Exception:
+            traceback_str = traceback.format_exc()
+            model.api.log("An exception was captured while deleting "
+                          "workspace %s\n%s" % (ws_name, traceback_str),
+                          "ERROR")
+
+        available_workspaces = self.serverIO.get_workspaces_names()
+        if available_workspaces:
+            self.select_last_workspace_in_list(available_workspaces)
+        else:
+            self.handle_no_active_workspace()
 
     def lost_db_connection(self, explanatory_message=None,
                            handle_connection_lost=None,
                            connect_to_a_different_couch=None):
         """Creates a simple dialog with an error message to inform the user
         some kind of problem has happened and the connection was lost.
+        Returns whether the login dialog should be shown or not
         """
 
         # NOTE: if we start faraday without CouchDB, both the signal coming
@@ -226,9 +241,21 @@ class GuiApp(Gtk.Application, FaradayUi):
         cancel_button = dialog.add_button("Exit Faraday", 0)
         cancel_button.connect("clicked", self.on_quit)
 
+        if hasattr(self, 'force_new_workspace_dialog'):
+            # The dialog to create a new workspace is open. Lets close it
+            new_workspace_dialog = getattr(self, 'force_new_workspace_dialog')
+
+            new_workspace_dialog.destroy()
+            setattr(self, 'force_new_workspace_dialog', None)
+
         response = dialog.run()
         if response == Gtk.ResponseType.DELETE_EVENT:
             GObject.idle_add(self.exit_faraday_without_confirm)
+
+        elif response in [0, 42, 43]:
+            return False
+
+        return True
 
     def handle_no_active_workspace(self):
         """If there's been a problem opening a workspace or for some reason
@@ -264,6 +291,7 @@ class GuiApp(Gtk.Application, FaradayUi):
                                              self.workspace_manager,
                                              self.ws_sidebar,
                                              self.exit_faraday)
+            self.force_new_workspace_dialog = dialog
 
         dialog.connect("destroy", change_flag)
         dialog.show_all()
@@ -308,7 +336,7 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         preference_window.run()
 
-    def connect_to_couch(self, server_uri, parent=None):
+    def connect_to_couch(self, server_url, parent=None):
         """Tries to connect to a CouchDB on a specified Couch URI.
         Returns the success status of the operation, False for not successful,
         True for successful
@@ -316,14 +344,14 @@ class GuiApp(Gtk.Application, FaradayUi):
         if parent is None:
             parent = self.window
 
-        if not self.serverIO.test_server_url(server_uri):
+        if not self.serverIO.check_server_url(server_url):
             errorDialog(parent, "Could not connect to Faraday Server.",
                         ("Are you sure it is running and that you can "
                          "connect to it? \n Make sure your username and "
                          "password are still valid."))
             success = False
-        elif server_uri.startswith("https://"):
-            if not checkSSL(server_uri):
+        elif server_url.startswith("https://"):
+            if not checkSSL(server_url):
                 errorDialog(self.window,
                             "The SSL certificate validation has failed")
             success = False
@@ -336,7 +364,7 @@ class GuiApp(Gtk.Application, FaradayUi):
                             "client you are runnung. Version numbers must match!")
                 success = False
                 return success
-            CONF.setCouchUri(server_uri)
+            CONF.setAPIUrl(server_url)
             CONF.saveConfig()
             self.reload_workspaces()
             self.open_last_workspace()
@@ -346,7 +374,7 @@ class GuiApp(Gtk.Application, FaradayUi):
 
     def handle_connection_lost(self, button=None, dialog=None):
         """Tries to connect to Couch using the same URI"""
-        couch_uri = CONF.getCouchURI()
+        couch_uri = CONF.getServerURI()
         if self.connect_to_couch(couch_uri, parent=dialog):
             reconnected = True
             if dialog is not None:
@@ -360,7 +388,7 @@ class GuiApp(Gtk.Application, FaradayUi):
     def update_counts(self):
         """Returns the counts of hosts, services and vulns on the current
         workspace."""
-        hosts, interfaces, services, vulns = self.serverIO.get_workspace_numbers()
+        hosts, services, vulns = self.serverIO.get_workspace_numbers()
         return hosts, services, vulns
 
     def show_host_info(self, host_id):
@@ -371,15 +399,14 @@ class GuiApp(Gtk.Application, FaradayUi):
         looking for the host."""
         current_ws_name = self.get_active_workspace().name
 
-        # for host in self.model_controller.getAllHosts():
-        host = self.serverIO.get_hosts(couchid=host_id)
+        host = self.serverIO.get_host(host_id)
         if not host:
             self.show_normal_error("The host you clicked isn't accessible. "
                                    "This is most probably due to an internal "
                                    "error.")
             return False
 
-        info_window = HostInfoDialog(self.window, current_ws_name, host[0])
+        info_window = HostInfoDialog(self.window, current_ws_name, host)
         info_window.show_all()
         return True
 
@@ -387,14 +414,12 @@ class GuiApp(Gtk.Application, FaradayUi):
         """Very similar to reload_workspaces, but doesn't resource the
         workspace_manager to avoid asking for information to a database
         we can't access."""
-        self.workspace_manager.closeWorkspace()
         self.ws_sidebar.clear_sidebar()
 
     def reload_workspaces(self):
         """Close workspace, resources the workspaces available,
         clears the sidebar of the old workspaces and injects all the new ones
         in there too"""
-        self.workspace_manager.closeWorkspace()
         self.ws_sidebar.clear_sidebar()
         self.ws_sidebar.refresh_sidebar()
 
@@ -530,8 +555,9 @@ class GuiApp(Gtk.Application, FaradayUi):
             self.serverIO.active_workspace = event.workspace.name
             host_count, service_count, vuln_count = self.update_counts()
             total_host_amount = self.serverIO.get_hosts_number()
-            first_host_page = self.serverIO.get_hosts(page='0', page_size='20',
+            first_host_page = self.serverIO.get_hosts(page='1', page_size='20',
                                                       sort='vulns', sort_dir='desc')
+
             total_host_amount = self.serverIO.get_workspace_numbers()[0]
             GObject.idle_add(self.statusbar.set_workspace_label, event.workspace.name)
             GObject.idle_add(self.hosts_sidebar.reset_model_after_workspace_changed,
@@ -566,7 +592,7 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         def delete_object():
             if event.obj_id:
-                GObject.idle_add(self.hosts_sidebar.remove_object, event.obj_id)
+                GObject.idle_add(self.hosts_sidebar.remove_object, event.obj_id, event.obj_type)
                 host_count, service_count, vuln_count = self.update_counts()
                 GObject.idle_add(self.statusbar.update_ws_info, host_count,
                                  service_count, vuln_count)
@@ -737,9 +763,19 @@ class GuiApp(Gtk.Application, FaradayUi):
         model.guiapi.notification_center.registerWidget(self.window)
 
         if self.serverIO.server_info() is None:
-            self.lost_db_connection(
+
+            should_login = self.lost_db_connection(
                 handle_connection_lost=self.handle_connection_lost,
                 connect_to_a_different_couch=self.force_change_couch_url)
+
+            if not should_login:
+                return
+
+        if not is_authenticated(CONF.getServerURI(), CONF.getDBSessionCookies()):
+            loginDialog = ForceLoginDialog(self.window,
+                                           self.exit_faraday_without_confirm)
+            loginDialog.run(3, CONF.getServerURI(), self.window)
+            self.reload_workspaces()
 
         workspace_argument_set = self.open_workspace_from_args()
         if not workspace_argument_set:
@@ -842,7 +878,11 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         def on_file_selected(plugin_id, report):
             """Send the plugin_id and the report file to be processed"""
-            self.report_manager.sendReportToPluginById(plugin_id, report)
+            try:
+                self.report_manager.sendReportToPluginById(plugin_id, report)
+            except Unauthorized:
+                self.show_normal_error("You are not authorized to write data "
+                                       "to this workspace.")
 
         plugin_response, plugin_id = select_plugin()
 
@@ -884,15 +924,9 @@ class GuiApp(Gtk.Application, FaradayUi):
         preference_window.show_all()
 
     def on_click_go_to_web_ui_button(self, action=None, param=None):
-        """Opens the dashboard of the current workspace on a new tab of
-        the user's default browser
-        """
-        couch_url = CONF.getCouchURI()
-        ws_name = self.workspace_manager.getActiveWorkspace()
-        if not ws_name:
-            ws_url = couch_url + "/_ui/"
-        else:
-            ws_url = couch_url + "/_ui/#/dashboard/ws/" + ws_name.name
+        """Opens the login on a new tab of the user's default browser"""
+
+        ws_url = CONF.getServerURI() + "/_ui/#/login"
         webbrowser.open(ws_url, new=2)
 
     def on_help_dispatch(self, action, param=None):

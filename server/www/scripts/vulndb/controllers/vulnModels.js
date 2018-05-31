@@ -2,7 +2,6 @@ angular.module('faradayApp')
     .controller('vulnModelsCtrl',
         ['$scope', '$filter', '$http', '$q', '$uibModal', 'ServerAPI', 'csvService', 'commonsFact', 'vulnModelsManager',
             function($scope, $filter, $http, $q, $uibModal, ServerAPI, csvService, commonsFact, vulnModelsManager) {
-                $scope.db_exists = false;
                 $scope.models = [];
                 $scope.loaded_models = false;
                 $scope.totalModels = 0;
@@ -19,34 +18,14 @@ angular.module('faradayApp')
                     $scope.reverse = true;
                     $scope.currentPage = 1;
 
-                    vulnModelsManager.DBExists()
-                        .then(function(exists) {
-                            if (!exists) {
-                                $uibModal.open({
-                                    templateUrl: 'scripts/vulndb/partials/modalCreateDB.html',
-                                    controller: 'vulndbModalCreateDB',
-                                    size: 'lg'
-                                }).result.then(function(data) {
-                                    if (data) {
-                                        $scope.db_exists = true;
-                                    }
-                                }, function(message) {
-                                    // no db created, do nothing!
-                                });
-                            } else {
-                                $scope.db_exists = true;
-                                vulnModelsManager.get()
-                                    .then(function() {
-                                        $scope.models = vulnModelsManager.models;
-                                        $scope.loaded_models = true;
-                                    });
-                                vulnModelsManager.getSize().
-                                    then(function() {
-                                        $scope.totalModels = vulnModelsManager.totalNumberOfModels;
-                                    });
-                            }
-                        }, function(message) {
-                            commonsFact.errorDialog(message);
+                    vulnModelsManager.get()
+                        .then(function() {
+                            $scope.models = vulnModelsManager.models;
+                            $scope.loaded_models = true;
+                        });
+                    vulnModelsManager.getSize()
+                        .then(function() {
+                            $scope.totalModels = vulnModelsManager.totalNumberOfModels;
                         });
 
                     $scope.$watch(function() {

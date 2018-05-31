@@ -7,15 +7,16 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 """
 
-import argparse
-import imp
-import inspect
 import os
-import shlex
 import sys
-import signal
-import readline
+import imp
+import shlex
 import atexit
+import signal
+import inspect
+import argparse
+import readline
+from Queue import Queue
 
 parent_path = os.path.abspath(os.path.join(__file__, '../..'))
 sys.path.insert(0, parent_path)
@@ -53,7 +54,8 @@ def dispatch(args, unknown, help):
 
     # We need the ModelController to register all available models
     mappers_manager = MapperManager()
-    model_controller = ModelController(mappers_manager)
+    pending_actions = Queue()
+    model_controller = ModelController(mappers_manager, pending_actions)
 
     if not args.command:
         print help

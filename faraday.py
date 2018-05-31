@@ -6,24 +6,34 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-# TODO:
-# - Handle requirements dinamically?
-# - Additionally parse arguments from file.
-
-
-import argparse
 import os
-import shutil
 import sys
+import shutil
+import argparse
 
 from config.configuration import getInstanceConfiguration
-from config.globals import *
+from config.globals import (
+    CONST_USER_HOME,
+    CONST_FARADAY_HOME_PATH,
+    CONST_FARADAY_PLUGINS_PATH,
+    CONST_FARADAY_PLUGINS_REPO_PATH,
+    CONST_FARADAY_IMAGES,
+    CONST_FARADAY_USER_CFG,
+    CONST_FARADAY_BASE_CFG,
+    CONST_USER_ZSHRC,
+    CONST_FARADAY_ZSHRC,
+    CONST_ZSH_PATH,
+    CONST_FARADAY_ZSH_FARADAY,
+    CONST_VERSION_FILE,
+    CONST_REQUIREMENTS_FILE,
+    CONST_FARADAY_FOLDER_LIST,
+)
 from utils import dependencies
 from utils.logs import getLogger, setUpLogger
-from utils.profilehooks import profile
 from utils.user_input import query_yes_no
 
 from persistence.server import server
+from persistence.server.server import is_authenticated, login_user, get_user_info
 
 USER_HOME = os.path.expanduser(CONST_USER_HOME)
 FARADAY_BASE = os.path.dirname(os.path.realpath(__file__))
@@ -67,7 +77,6 @@ def getParserArgs():
         fromfile_prefix_chars='@')
 
     parser_connection = parser.add_argument_group('connection')
-    parser_profile = parser.add_argument_group('profiling')
 
     parser_connection.add_argument('-n', '--hostname',
                                    action="store",
@@ -91,29 +100,17 @@ def getParserArgs():
                                    type=int,
                                    help="Sets the port where the api RESTful server will listen. Default = 9977")
 
-    parser_profile.add_argument('--profile', action="store_true",
-                                dest="profile",
-                                default=False,
-                                help="Enables application profiling. When this option is used --profile-output and --profile-depth can also be used. Default = disabled")
-
-    parser_profile.add_argument('--profile-output',
-                                action="store",
-                                dest="profile_output",
-                                default=None,
-                                help="Sets the profile output filename. If no value is provided, standard output will be used")
-
-    parser_profile.add_argument('--profile-depth',
-                                action="store",
-                                dest="profile_depth",
-                                type=int,
-                                default=500,
-                                help="Sets the profile number of entries (depth). Default = 500")
-
     parser.add_argument('--disable-excepthook',
                         action="store_true",
                         dest="disable_excepthook",
                         default=False,
                         help="Disable the application exception hook that allows to send error reports to developers.")
+
+    parser.add_argument('--login',
+                        action="store_true",
+                        dest="login",
+                        default=False,
+                        help="Enable prompt for authentication Database credentials")
 
     parser.add_argument('--dev-mode',
                         action="store_true",
@@ -171,7 +168,17 @@ def getParserArgs():
                         default=False,
                         help="Enables debug mode. Default = disabled")
 
-    parser.add_argument('--nodeps', action='store_true', help='Skip dependency check')
+    parser.add_argument('--creds-file',
+                        action="store",
+                        dest="creds_file",
+                        default=None,
+                        help="File containing user's credentials to be used in cli mode")
+
+    parser.add_argument('--nodeps',
+                        action="store_true",
+                        help='Skip dependency check')
+    parser.add_argument('--keep-old', action='store_true', help='Keep old object in CLI mode if faraday find a conflict')
+    parser.add_argument('--keep-new', action='store_true', help='Keep new object in CLI mode if faraday find a conflict (DEFAULT ACTION)')
 
     f = open(FARADAY_VERSION_FILE)
     f_version = f.read().strip()
@@ -190,9 +197,12 @@ def check_dependencies_or_exit():
 
     """
 
-    installed_deps, missing_deps = dependencies.check_dependencies(requirements_file=FARADAY_REQUIREMENTS_FILE)
+    installed_deps, missing_deps, conflict_deps = dependencies.check_dependencies(requirements_file=FARADAY_REQUIREMENTS_FILE)
 
     logger.info("Checking dependencies...")
+
+    if conflict_deps:
+        logger.info("Some dependencies are old. Update them with \"pip install -r requirements_server.txt -U\"")
 
     if missing_deps:
 
@@ -208,26 +218,6 @@ def check_dependencies_or_exit():
             sys.exit(1)
 
     logger.info("Dependencies met")
-
-
-def startProfiler(app, output, depth):
-    """Profiler handler.
-
-    Will start a profiler on the given application in a specified output with
-    a custom depth.
-
-    TODO: Check if it's necessary to add a dummy in case o failed import.
-
-    """
-
-    logger.warning("[!] Faraday will be started with a profiler attached."
-                   "Performance may be affected.")
-
-    start = profile(app,
-                    filename=output,
-                    entries=depth)
-    return start
-
 
 def setConf():
     """User configuration management and instantiation.
@@ -276,19 +266,14 @@ def startFaraday():
         logger.info("Main application ExceptHook enabled.")
         main_app.enableExceptHook()
 
-    if args.profile:
-        logger.info("Starting main application with profiler.")
-        start = startProfiler(main_app.start,
-                              args.profile_output,
-                              args.profile_depth)
-    else:
-        logger.info("Starting main application.")
-        start = main_app.start
+    logger.info("Starting main application.")
+    start = main_app.start
+
     from colorama import Fore, Back, Style
     import string
-    couchURL = getInstanceConfiguration().getCouchURI()
-    if couchURL:
-        url = "%s/_ui" % couchURL
+    serverURL = getInstanceConfiguration().getServerURI()
+    if serverURL:
+        url = "%s/_ui" % serverURL
         print(Fore.WHITE + Style.BRIGHT + "\n*" + string.center("faraday ui is ready", 53 - 6))
         print(
             Fore.WHITE + Style.BRIGHT + "Make sure you got couchdb up and running.\nIf couchdb is up, point your browser to: \n[%s]" % url)
@@ -432,19 +417,6 @@ _/ ____\_____  ____________     __| _/_____   ___.__.
     logger.info("Starting Faraday IDE.")
 
 
-def update():
-    """Updates Faraday IDE.
-
-    Deletes every .pyc file and does a git pull to the official repository.
-
-    """
-    if args.update:
-        from updates.updater import Updater
-        Updater().doUpdates()
-        logger.info("Update process finished with no errors")
-        logger.info("Faraday will start now.")
-
-
 def checkUpdates():
     import requests
     uri = getInstanceConfiguration().getUpdatesUri()
@@ -467,20 +439,26 @@ def checkUpdates():
         logger.info("No updates available, enjoy Faraday.")
 
 
-def checkCouchUrl():
+def checkServerUrl():
     import requests
+    CONF = getInstanceConfiguration()
+    server_url = CONF.getServerURI()
+
+    if server_url is None or CONF.getAPIUsername() is None or CONF.getAPIUsername() is None:
+        doLoginLoop()
+        server_url = CONF.getServerURI()
+
     try:
-        requests.get(getInstanceConfiguration().getCouchURI(), timeout=5)
+        requests.get(server_url, timeout=5)
     except requests.exceptions.SSLError:
-        print """
+        print("""
         SSL certificate validation failed.
         You can use the --cert option in Faraday
         to set the path of the cert
-        """
+        """)
         sys.exit(-1)
-    except Exception as e:
-        # Non fatal error
-        pass
+    except requests.exceptions.MissingSchema as ex:
+        print("Check ~/.faraday/config/user.xml server url, the following error was found: {0} ".format(ex))
 
 
 def checkVersion():
@@ -496,7 +474,7 @@ def checkVersion():
         getInstanceConfiguration().setVersion(f_version)
         f.close()
 
-    except Exception as e:
+    except Exception:
         getLogger("launcher").error(
             "It seems that something's wrong with your version\nPlease contact customer support")
         sys.exit(-1)
@@ -510,6 +488,55 @@ def check_faraday_version():
                                     "you are running. Version numbers must match!")
 
         sys.exit(2)
+
+
+def doLoginLoop():
+    """ Sets the username and passwords from the command line.
+    If --login flag is set then username and password is set """
+
+    import getpass
+
+    print("""\nTo login please provide your valid DB Credentials.\n
+You have 3 attempts.""")
+
+    try:
+
+        CONF = getInstanceConfiguration()
+        server_url = CONF.getAPIUrl()
+        if server_url is None:
+            server_url = raw_input(
+            "Please enter the faraday server url (press enter for http://localhost:5985): ") or "http://localhost:5985"
+            CONF.setAPIUrl(server_url)
+
+        for attempt in range(1, 4):
+
+            username = raw_input("Username (press enter for faraday): ") or "faraday"
+            password = getpass.getpass('Password: ')
+
+            session_cookie = login_user(server_url, username, password)
+            if session_cookie:
+
+                CONF.setAPIUsername(username)
+                CONF.setAPIPassword(password)
+                CONF.setDBSessionCookies(session_cookie)
+                CONF.saveConfig()
+
+                user_info = get_user_info()
+
+                if user_info is None or 'username' not in user_info:
+                    print("You can't login as a client. You have %s attempt(s) left." % (3 - attempt))
+                    continue
+
+                logger.info('Login successful')
+
+                break
+            print('Login failed, please try again. You have %d more attempts' % (3 - attempt))
+
+        else:
+            logger.fatal('Invalid credentials, 3 attempts failed. Quitting Faraday...')
+            sys.exit(-1)
+    except KeyboardInterrupt:
+        sys.exit(0)
 
 
 def main():
@@ -536,12 +563,28 @@ def main():
         os.environ[REQUESTS_CA_BUNDLE_VAR] = args.cert_path
     checkConfiguration(args.gui)
     setConf()
-    checkCouchUrl()
+    checkServerUrl()
     checkVersion()
+    CONF = getInstanceConfiguration()
+    if args.login:
+        if not CONF.getServerURI():
+            couchURI = raw_input("Enter the Faraday server [http://127.0.0.1:5985]: ") or "http://127.0.0.1:5985"
+
+            if couchURI:
+                CONF.setCouchUri(couchURI)
+                checkServerUrl()
+            else:
+                logger.fatal('Please configure couchdb server to authenticate (--login)')
+                sys.exit(-1)
+
+        doLoginLoop()
+    else:
+        session_cookie = login_user(CONF.getServerURI(), CONF.getAPIUsername(), CONF.getAPIPassword())
+        if session_cookie:
+            CONF.setDBSessionCookies(session_cookie)
 
     check_faraday_version()
 
-    update()
     checkUpdates()
     startFaraday()
 

@@ -8,6 +8,31 @@ Make sure you run ```./faraday.py --update``` the first time after an update!
 New features in the latest update
 =====================================
 
+TBA:
+---
+* CouchDB was replaced by PostgreSQL :)
+* Host object changed, now the name property is called ip
+* Interface object was removed
+* Note object was removed and replaced with Comment
+* Communication object was removed and replaced with Comment
+* Show credentials count in summarized report on the dashboard
+* Remove vuln template CWE fields, join it with references
+* Allow to search hosts by hostname, os and service name
+* Allow the user to specify the desired fields of the host list table
+* Add optional hostnames, services, MAC and description fields to the host list
+* Workspace names can be changed from the Web UI
+* Changed the scope field of a workspace from a free text input to a list of targets
+* Exploitation and severity fields only allow certain values. CWE CVEs were fixed to be valid. A script to convert custom CSVs was added.
+* Web UI path changed from /_ui/ to / (_ui has now a redirection to / for keeping backwards compatibility)
+* dirb plugin should creates a vulnerability type information instead of a note.
+* Add new plugin ip360
+* Add confirmed column to exported csv from webui
+* Fixes in Arachni plugin
+* Add new parameters --keep-old and --keep-new for faraday CLI
+* Add new screenshot fplugin which takes a screenshot of the ip:ports of a given protocol
+* Add fix for net sparker regular and cloud fix on severity
+* Removed Chat feature (data is kept inside notes)
+
 November 17, 2017:
 ---
 * Fix bug with tags in models.

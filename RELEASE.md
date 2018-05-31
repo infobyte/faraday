@@ -10,6 +10,7 @@ New features in the latest update
 
 TBA:
 ---
+* Add reconng plugin
 * CouchDB was replaced by PostgreSQL :)
 * Host object changed, now the name property is called ip
 * Interface object was removed

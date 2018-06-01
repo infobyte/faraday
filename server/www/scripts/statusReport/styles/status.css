@@ -79,7 +79,7 @@
 .hosts-list .ui-grid-header .hosts-list-checkall{
     position: relative;
     top: 3px;
-    left: 7px;
+    text-align: center;
 }
 
 .status-report-grid .ui-grid-pager-panel {

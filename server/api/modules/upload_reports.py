@@ -1,4 +1,4 @@
-# Faraday Penetration Test IDE
+    # Faraday Penetration Test IDE
 # Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 
@@ -12,20 +12,21 @@ import random
 import logging
 import model.api
 
-from flask import request, abort, jsonify, Blueprint
+from flask import request, abort, jsonify, Blueprint, session
 from werkzeug.utils import secure_filename
 
 from server.utils.logger import get_logger
 from server.utils.web import gzipped
 
 from model.controller import ModelController
-from model.cli_app import CliApp
 
 from plugins.controller import PluginController
 from plugins.manager import PluginManager
 
-from managers.workspace_manager import WorkspaceManager
 from managers.mapper_manager import MapperManager
+from managers.reports_managers import ReportProcessor
+
+from server.models import User
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
@@ -39,16 +40,12 @@ class RawReportProcessor(Thread):
     def __init__(self):
 
         super(RawReportProcessor, self).__init__()
-        plugin_manager = PluginManager(os.path.join(CONF.getConfigPath(), "plugins"))
 
-        mappers_manager = MapperManager()
         self.pending_actions = Queue()
 
+        plugin_manager = PluginManager(os.path.join(CONF.getConfigPath(), "plugins"))
+        mappers_manager = MapperManager()
         model_controller = ModelController(mappers_manager, self.pending_actions)
-
-        workspace_manager = WorkspaceManager(mappers_manager)
-        CONF.setMergeStrategy("new")
-        model.api.setUpAPIs(model_controller, workspace_manager, 0, 0)
         model_controller.start()
 
         plugin_controller = PluginController(
@@ -57,22 +54,18 @@ class RawReportProcessor(Thread):
             mappers_manager,
             self.pending_actions)
 
-        self.cli_import = CliApp(workspace_manager, plugin_controller)
+        self.processor = ReportProcessor(plugin_controller, None)
 
     def run(self):
 
         while True:
             try:
 
-                workspace, file_path = UPLOAD_REPORTS_QUEUE.get()
+                workspace, file_path, username = UPLOAD_REPORTS_QUEUE.get()
                 logger.info('Processing raw report {0}'.format(file_path))
 
-                class Arg():
-                    def __init__(self):
-                        self.workspace = workspace
-                        self.filename = file_path
-
-                self.cli_import.run(Arg())
+                self.processor.ws_name = workspace
+                self.processor.processReport(file_path, user=username)
             except KeyboardInterrupt:
                 break
 
@@ -83,7 +76,6 @@ def file_upload(workspace=None):
     """
     Upload a report file to Server and process that report with Faraday client plugins.
     """
-
     get_logger(__name__).debug("Importing new plugin report in server...")
 
     if 'file' not in request.files:
@@ -107,6 +99,7 @@ def file_upload(workspace=None):
         with open(file_path, 'w') as output:
             output.write(report_file.read())
 
-    UPLOAD_REPORTS_QUEUE.put((workspace, file_path))
+    user = User.query.filter_by(id=session["user_id"]).first()
+    UPLOAD_REPORTS_QUEUE.put((workspace, file_path, user.username))
 
     return jsonify({"status": "processing"})

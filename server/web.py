@@ -74,10 +74,10 @@ class WebServer(object):
     WEB_UI_LOCAL_PATH = os.path.join(server.config.FARADAY_BASE, 'server/www')
 
     def __init__(self, enable_ssl=False):
-        logger.info('Starting web server at port {0} with bind address {1}. SSL {2}'.format(
-            server.config.faraday_server.port,
+        logger.info('Starting web server at {}://{}:{}/'.format(
+            'https' if enable_ssl else 'http',
             server.config.faraday_server.bind_address,
-            enable_ssl))
+            server.config.faraday_server.port))
         self.__ssl_enabled = enable_ssl
         self.__config_server()
         self.__build_server_tree()
@@ -118,7 +118,13 @@ class WebServer(object):
             url = 'wss://' + url
         else:
             url = 'ws://' + url
-        logger.info(u"Websocket listening at {url}".format(url=url))
+        # logger.info(u"Websocket listening at {url}".format(url=url))
+        logger.info('Starting websocket server at port {0} with bind address {1}. '
+                    'SSL {2}'.format(
+            websocket_port,
+            self.__bind_address,
+            self.__ssl_enabled
+        ))
 
         factory = WorkspaceServerFactory(url=url)
         factory.protocol = BroadcastServerProtocol
@@ -146,6 +152,6 @@ class WebServer(object):
             logger.error(str(e))
             sys.exit(1)
         except Exception as e:
-            logger.debug(e)
             logger.error('Something went wrong when trying to setup the Web UI')
+            logger.exception(e)
             sys.exit(1)

@@ -1,4 +1,4 @@
 beautifulsoup4>=4.6.0
 psycopg2>=2.7.3
 w3af_api_client>=1.1.7
-selenium==3.9.0
+selenium>=3.9.0

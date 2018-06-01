@@ -8,6 +8,7 @@ import argparse
 import subprocess
 
 import sqlalchemy
+from colorama import init, Fore
 
 import server.config
 import server.couchdb
@@ -20,6 +21,7 @@ from utils.user_input import query_yes_no
 from faraday import FARADAY_BASE
 
 logger = server.utils.logger.get_logger(__name__)
+init()
 
 
 def setup_environment(check_deps=False):
@@ -90,7 +92,7 @@ def check_postgresql():
                 logger.warn('No workspaces found. Remeber to execute couchdb importer')
         except sqlalchemy.exc.OperationalError:
             logger.error(
-                'Could not connect to postgresql, please check if database is running or configuration settings are correct. For first time installations execute python manage.py initdb')
+                    '\n\n{RED}Could not connect to postgresql.\nPlease check{WHITE}: \n{YELLOW}  * if database is running \n  * configuration settings are correct. \n\n{RED}For first time installations execute{WHITE}: \n\n {GREEN} python manage.py initdb\n\n'.format(GREEN=Fore.GREEN, YELLOW=Fore.YELLOW, WHITE=Fore.WHITE, RED=Fore.RED))
             sys.exit(1)
 
 

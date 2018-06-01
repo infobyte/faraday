@@ -195,22 +195,12 @@ def createAndAddVulnWebToService(host_id, service_id, name, desc, ref, severity,
 # Note
 
 def createAndAddNoteToHost(host_id, name, text):
-    note = newNote(name, text, parent_id=host_id, parent_type='host')
-    if addNoteToHost(host_id, note):
-        return note.getID()
     return None
 
-
 def createAndAddNoteToService(host_id, service_id, name, text):
-    note = newNote(name, text, parent_id=service_id, parent_type='service')
-    if addNoteToService(host_id, service_id, note):
-        return note.getID()
     return None
 
 def createAndAddNoteToNote(host_id, service_id, note_id, name, text):
-    note = newNote(name, text, parent_id=note_id, parent_type='comment')
-    if addNoteToNote(host_id, service_id, note_id, note):
-        return note.getID()
     return None
 
 def createAndAddCredToService(host_id, service_id, username, password):

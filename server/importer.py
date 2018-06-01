@@ -648,7 +648,7 @@ class VulnerabilityImporter(object):
                     session,
                     VulnerabilityWeb,
                     name=document.get('name'),
-                    description=document.get('desc'),
+                    description=document.get('desc').strip().strip('\n'),
                     service_id=parent.id,
                     method=method,
                     parameter_name=pname,
@@ -661,7 +661,7 @@ class VulnerabilityImporter(object):
                 vuln_params = {
                     'name': document.get('name'),
                     'workspace': workspace,
-                    'description': document.get('desc'),
+                    'description': document.get('desc').strip().strip('\n'),
                 }
                 if type(parent) == Host:
                     vuln_params.update({'host_id': parent.id})
@@ -1001,7 +1001,8 @@ class ReportsImporter(object):
             report.vuln_count = document['totalVulns']['total']
         except KeyError:
             logger.warning("Couldn't load vuln count of report".format(document.get('_id')))
-        report.creator = get_or_create_user(session, document.get('owner'))
+        if document.get('owner'):
+            report.creator = get_or_create_user(session, document.get('owner'))
         session.flush()
         old_attachments = session.query(File).filter_by(
             object_id=report.id,
@@ -1438,6 +1439,28 @@ class ImportCouchDB():
                     with open(missing_objs_filename, 'w') as missing_objs_file:
                         missing_objs_file.write(json.dumps(objs_diff))
 
+    def import_level_objects(self, couch_url, faraday_importer, couchdb_relational_map_by_type, couchdb_relational_map, command_tool_map, level, obj_type, workspace):
+        obj_importer = faraday_importer.get_importer_from_document(obj_type)()
+        objs_dict = self.get_objs(couch_url, obj_type, level, workspace)
+        for raw_obj in (objs_dict.get('rows', [])):
+            # we use no_autoflush since some queries triggers flush and some relationship are missing in the middle
+            with session.no_autoflush:
+                raw_obj = raw_obj['value']
+                couchdb_id = raw_obj['_id']
+
+                # first let's make sure no invalid chars are present in the Raw objects
+                raw_obj = invalid_chars.clean_dict(raw_obj)
+
+                for new_obj in obj_importer.update_from_document(raw_obj, workspace, level, couchdb_relational_map):
+                    if not new_obj:
+                        continue
+                    set_metadata(raw_obj, new_obj)
+                    map_tool_with_command_id(command_tool_map,
+                                             raw_obj)
+                    session.commit()
+                    couchdb_relational_map_by_type[couchdb_id].append({'type': obj_type, 'id': new_obj.id})
+                    couchdb_relational_map[couchdb_id].append(new_obj.id)
+
     def import_workspace_into_database(self, workspace_name, pbar):
         with app.app_context():
 
@@ -1446,11 +1469,11 @@ class ImportCouchDB():
             session.commit()
 
             couch_url = "http://{username}:{password}@{hostname}:{port}/{workspace_name}/_temp_view?include_docs=true".format(
-                    username=server.config.couchdb.user,
-                    password=server.config.couchdb.password,
-                    hostname=server.config.couchdb.host,
-                    port=server.config.couchdb.port,
-                    workspace_name=workspace_name
+                username=server.config.couchdb.user,
+                password=server.config.couchdb.password,
+                hostname=server.config.couchdb.host,
+                port=server.config.couchdb.port,
+                workspace_name=workspace_name
             )
 
             # obj_types are tuples. the first value is the level on the tree
@@ -1460,26 +1483,20 @@ class ImportCouchDB():
             couchdb_relational_map_by_type = defaultdict(list)
             command_tool_map = {}
             for level, obj_type in obj_types:
-                obj_importer = faraday_importer.get_importer_from_document(obj_type)()
-                objs_dict = self.get_objs(couch_url, obj_type, level, workspace)
-                for raw_obj in (objs_dict.get('rows', [])):
-                    # we use no_autoflush since some queries triggers flush and some relationship are missing in the middle
-                    with session.no_autoflush:
-                        raw_obj = raw_obj['value']
-                        couchdb_id = raw_obj['_id']
-
-                        # first let's make sure no invalid chars are present in the Raw objects
-                        raw_obj = invalid_chars.clean_dict(raw_obj)
-
-                        for new_obj in obj_importer.update_from_document(raw_obj, workspace, level, couchdb_relational_map):
-                            if not new_obj:
-                                continue
-                            set_metadata(raw_obj, new_obj)
-                            map_tool_with_command_id(command_tool_map,
-                                                     raw_obj)
-                            session.commit()
-                            couchdb_relational_map_by_type[couchdb_id].append({'type': obj_type, 'id': new_obj.id})
-                            couchdb_relational_map[couchdb_id].append(new_obj.id)
+                try:
+                    self.import_level_objects(
+                        couch_url,
+                        faraday_importer,
+                        couchdb_relational_map_by_type,
+                        couchdb_relational_map,
+                        command_tool_map,
+                        level,
+                        obj_type,
+                        workspace
+                    )
+                except Exception as ex:
+                    logger.exception(ex)
+                    raise
                 pbar.update(1)
             update_command_tools(workspace, command_tool_map,
                                  couchdb_relational_map_by_type)

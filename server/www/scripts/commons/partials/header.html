@@ -1,5 +1,5 @@
-<div class="faraday-page-header" class="clearfix" ng-if="showHeader()">
-    <div class="workspace-selector-wrapper">
+<div class="faraday-page-header" class="clearfix">
+    <div ng-if="showSwitcher()" class="workspace-selector-wrapper">
         <div class="switcher-wrapper">
             <div class="dropdown">  
                 <button id="workspaceSwitcher" type="button" class="btn btn-default dropdown-toggle workspace-switcher" data-toggle="dropdown" title="Change current workspace">
@@ -8,6 +8,9 @@
                         <img ng-switch-when="status" src="images/ico-status-menu.svg" class="icon" alt="Status Report"/>
                         <img ng-switch-when="hosts" src="images/ico-hosts-menu.svg" class="icon" alt="Hosts"/>
                         <img ng-switch-when="credentials" src="images/ico-credentials-menu.svg" class="icon" alt="Credentials"/>
+                        <img ng-switch-when="executive" src="images/ico-executive-menu.svg" class="icon" alt="Executive Report"/>
+                        <img ng-switch-when="taskgroup" src="images/ico-tasks-menu.svg" class="icon" alt="Tasks"/>
+                        <img ng-switch-when="vulndb" src="images/ico-vulnerability-templates-menu.svg" class="icon" alt="Vulns"/>
                     </div>
                     <div class="workspace-switcher-title-wrapper">
                         <div class="workspace-switcher-title">
@@ -27,6 +30,17 @@
                     <li ng-repeat="ws in workspaces"><a href="#/{{location}}/ws/{{ws}}" class="ws" >{{ws}}</a></li>
                 </ul>
             </div>
+        </div>
+    </div>
+    <div ng-if="!showSwitcher()" class="icon-wrapper">
+        <div class="" ng-switch="location">
+            <img ng-switch-when="dashboard" src="images/ico-dashboard-menu.svg" class="icon" alt="Dashboard"/>
+            <img ng-switch-when="status" src="images/ico-status-menu.svg" class="icon" alt="Status Report"/>
+            <img ng-switch-when="hosts" src="images/ico-hosts-menu.svg" class="icon" alt="Hosts"/>
+            <img ng-switch-when="credentials" src="images/ico-credentials-menu.svg" class="icon" alt="Credentials"/>
+            <img ng-switch-when="executive" src="images/ico-executive-menu.svg" class="icon" alt="Executive Report"/>
+            <img ng-switch-when="taskgroup" src="images/ico-tasks-menu.svg" class="icon" alt="Tasks"/>
+            <img ng-switch-when="vulndb" src="images/ico-vulnerability-templates-menu.svg" class="icon" alt="Vulns"/>
         </div>
     </div>
     <div class="controls-wrapper">

@@ -7,12 +7,11 @@ angular.module('faradayApp')
         ['$scope', '$routeParams', '$location', 'dashboardSrv', 'workspacesFact', 'vulnsManager',
         function($scope, $routeParams, $location, dashboardSrv, workspacesFact, vulnsManager) {
 
-
-            $scope.showHeader = function() {
-                var noNav = ["", "home", "login", "index"];
-                return noNav.indexOf($scope.component) < 0;
+            $scope.showSwitcher = function() {
+                var noSwitcher = ["", "home", "login", "index", "vulndb", "credentials", "workspaces", "users", "licenses"];
+                return noSwitcher.indexOf($scope.component) < 0;
             };
-
+            
             $scope.getVulnsNum = function() {
                 return vulnsManager.getVulnsNum();
             };

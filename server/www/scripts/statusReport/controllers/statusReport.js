@@ -297,7 +297,7 @@ angular.module("faradayApp")
             $scope.gridOptions.columnDefs.push({ name : 'severity',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/severitycolumn.html',
                 headerCellTemplate: header,
-                displayName : "sev",
+                displayName : "severity",
                 type: 'string',
                 visible: $scope.columns["severity"],
                 sort: getColumnSort('severity'),

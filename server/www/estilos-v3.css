@@ -144,3 +144,7 @@
 .justify-flex-start {
     justify-content: flex-start !important;
 }
+
+.max-sized-table {
+  max-width: 1200px;
+}

@@ -13,6 +13,10 @@ angular.module('faradayApp')
                 return noNav.indexOf($scope.component) < 0;
             };
 
+            $scope.getVulnsNum = function() {
+                return vulnsManager.getVulnsNum();
+            };
+
             init = function(name) {
                 $scope.location = $location.path().split('/')[1];
                 $scope.workspace = $routeParams.wsId;
@@ -21,11 +25,6 @@ angular.module('faradayApp')
                 workspacesFact.list().then(function(wss) {
                     $scope.workspaces = wss;
                 });
-
-                vulnsManager.getVulns($scope.workspace, null, null, null, null, null)
-                    .then(function(response) {
-                        $scope.totalItems = response.count;
-                    });
             };
 
             init();

@@ -313,6 +313,8 @@ angular.module("faradayApp")
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/servicecolumn.html',
                 headerCellTemplate: header,
                 visible: $scope.columns["service"],
+                field: "service.summary",
+                displayName : "service",
                 sort: getColumnSort('service'),
             });
              $scope.gridOptions.columnDefs.push({ name : 'hostnames',
@@ -383,6 +385,7 @@ angular.module("faradayApp")
             $scope.gridOptions.columnDefs.push({ name : 'status',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/statuscolumn.html',
                 headerCellTemplate: header,
+                field: "status",
                 sort: getColumnSort('status'),
                 visible: $scope.columns["status"]
             });

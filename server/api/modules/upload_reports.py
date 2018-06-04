@@ -1,4 +1,4 @@
-    # Faraday Penetration Test IDE
+# Faraday Penetration Test IDE
 # Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 
@@ -27,6 +27,7 @@ from managers.mapper_manager import MapperManager
 from managers.reports_managers import ReportProcessor
 
 from server.models import User
+from persistence.server import server
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
@@ -61,11 +62,14 @@ class RawReportProcessor(Thread):
         while True:
             try:
 
-                workspace, file_path, username = UPLOAD_REPORTS_QUEUE.get()
+                workspace, file_path, username, cookie = UPLOAD_REPORTS_QUEUE.get()
                 logger.info('Processing raw report {0}'.format(file_path))
 
+                # Cookie of user, used to create objects in server with the right owner.
+                server.FARADAY_UPLOAD_REPORTS_WEB_COOKIE = cookie
                 self.processor.ws_name = workspace
                 self.processor.processReport(file_path, user=username)
+
             except KeyboardInterrupt:
                 break
 
@@ -100,6 +104,6 @@ def file_upload(workspace=None):
             output.write(report_file.read())
 
     user = User.query.filter_by(id=session["user_id"]).first()
-    UPLOAD_REPORTS_QUEUE.put((workspace, file_path, user.username))
+    UPLOAD_REPORTS_QUEUE.put((workspace, file_path, user.username, request.cookies))
 
     return jsonify({"status": "processing"})

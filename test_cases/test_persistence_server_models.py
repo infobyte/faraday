@@ -21,7 +21,7 @@ class TestVulnPersistanceModelsFuncions(GenericAPITest):
         fo = self.first_object
         conf_mock = Mock()
         getInstanceConfigurationMock.return_value = conf_mock
-        port = server.config.faraday_server.port
+        port = 5984
         conf_mock.getDBSessionCookies.return_value = None
         conf_mock.getAPIUrl.return_value = 'http://localhost:{0}'.format(port)
         conf_mock.getServerURI.return_value = 'http://localhost:{0}'.format(port)
@@ -96,7 +96,7 @@ class TestVulnWebPersistanceModelsFuncions(GenericAPITest):
 
         conf_mock = Mock()
         getInstanceConfigurationMock.return_value = conf_mock
-        port = server.config.faraday_server.port
+        port = 5984
         conf_mock.getDBSessionCookies.return_value = None
         conf_mock.getAPIUrl.return_value = 'http://localhost:{0}'.format(port)
         conf_mock.getServerURI.return_value = 'http://localhost:{0}'.format(port)
@@ -155,8 +155,6 @@ class TestVulnWebPersistanceModelsFuncions(GenericAPITest):
                 u'_id': v.getID(),
                 u'resolution': v.getResolution()
                 }
-
-        port = server.config.faraday_server.port
 
         responses.add(responses.PUT,
                       'http://localhost:{0}/_api/v2/ws/{1}/vulns/{2}/'.format(port,self.workspace.name, v.id),

@@ -31,7 +31,7 @@ class ReportProcessor():
         self.plugin_controller = plugin_controller
         self.ws_name = ws_name
 
-    def processReport(self, filename):
+    def processReport(self, filename, user=""):
         """
         Process one Report
         """
@@ -44,13 +44,13 @@ class ReportProcessor():
                 'Plugin not found: automatic and manual try!')
             return False
 
-        return self.sendReport(parser.report_type, filename)
+        return self.sendReport(parser.report_type, filename, user=user)
 
-    def sendReport(self, plugin_id, filename):
+    def sendReport(self, plugin_id, filename, user=""):
         """Sends a report to the appropiate plugin specified by plugin_id"""
         getLogger(self).info(
             'The file is %s, %s' % (filename, plugin_id))
-        if not self.plugin_controller.processReport(plugin_id, filename, self.ws_name):
+        if not self.plugin_controller.processReport(plugin_id, filename, self.ws_name, user=user):
             getLogger(self).error(
                 "Faraday doesn't have a plugin for this tool..."
                 " Processing: ABORT")
@@ -343,7 +343,7 @@ class ReportParser(object):
         elif "netsparker" == tag:
             return "Netsparker"
         elif "netsparker-cloud" == tag:
-            return "NetsparkerCloud"            
+            return "NetsparkerCloud"
         elif "maltego" == tag:
             return "Maltego"
         elif "lynis" == tag:

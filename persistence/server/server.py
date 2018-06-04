@@ -53,7 +53,10 @@ from persistence.server.changes_stream import (
 # NOTE: Change is you want to use this module by itself.
 # If FARADAY_UP is False, SERVER_URL must be a valid faraday server url
 logger = logging.getLogger(__name__)
+
 FARADAY_UP = True
+FARADAY_UPLOAD_REPORTS_WEB_COOKIE = None
+
 SERVER_URL = "http://127.0.0.1:5985"
 AUTH_USER = ""
 AUTH_PASS = ""
@@ -167,7 +170,10 @@ def _add_session_cookies(func):
     adds authentication to the parameters.
     """
     def wrapper(*args, **kwargs):
-        kwargs['cookies'] = _conf().getDBSessionCookies()
+        if FARADAY_UPLOAD_REPORTS_WEB_COOKIE:
+            kwargs['cookies'] = FARADAY_UPLOAD_REPORTS_WEB_COOKIE
+        else:
+            kwargs['cookies'] = _conf().getDBSessionCookies()
         response = func(*args, **kwargs)
         return response
     return wrapper if FARADAY_UP else func

@@ -262,12 +262,9 @@ def startFaraday():
     serverURL = getInstanceConfiguration().getServerURI()
     if serverURL:
         url = "%s/_ui" % serverURL
-        print(Fore.WHITE + Style.BRIGHT + "\n*" + string.center("faraday ui is ready", 53 - 6))
+        print(Fore.WHITE + Style.BRIGHT + "\n* " + "Faraday UI is ready")
         print(
-            Fore.WHITE + Style.BRIGHT + "Make sure you got couchdb up and running.\nIf couchdb is up, point your browser to: \n[%s]" % url)
-    else:
-        print(
-            Fore.WHITE + Style.BRIGHT + "Please config Couchdb for fancy HTML5 Dashboard (https://github.com/infobyte/faraday/wiki/Couchdb)")
+            Fore.WHITE + Style.BRIGHT + "Point your browser to: \n[%s]" % url)
 
     print(Fore.RESET + Back.RESET + Style.RESET_ALL)
 
@@ -540,7 +537,7 @@ def main():
                 CONF.setAPIUrl(couchURI)
                 checkServerUrl()
             else:
-                logger.fatal('Please configure couchdb server to authenticate (--login)')
+                logger.fatal('Please configure Faraday server to authenticate (--login)')
                 sys.exit(-1)
 
         doLoginLoop()

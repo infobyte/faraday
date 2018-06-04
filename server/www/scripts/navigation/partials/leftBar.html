@@ -10,52 +10,52 @@
     <nav>
         <ul>
             <li>
-                <a href="#/dashboard/ws/{{workspace}}" class="ws-dashboard" style="color: #ffffff !important" uib-tooltip="Dashboard" tooltip-placement="right">
+                <a href="#/dashboard/ws/{{workspace}}" class="ws-dashboard" ng-class="{'active' : component == 'dashboard'}" style="color: #ffffff !important" uib-tooltip="Dashboard" tooltip-placement="right">
                     <img src="images/ico-dashboard-menu.svg" alt="Dashboard"/>
                 </a>
             </li>
             <li>
-                <a href="#/status/ws/{{workspace}}" class="status-report" style="color: #ffffff !important" uib-tooltip="Status Report" tooltip-placement="right">
+                <a href="#/status/ws/{{workspace}}" class="status-report" ng-class="{'active' : component == 'status'}" style="color: #ffffff !important" uib-tooltip="Status Report" tooltip-placement="right">
                     <img src="images/ico-status-menu.svg" alt="Status Report"/>
                 </a>
             </li>
             <li>
-                <a href="#/hosts/ws/{{workspace}}" class="workspaces" style="color: #ffffff !important" uib-tooltip="Hosts" tooltip-placement="right">
+                <a href="#/hosts/ws/{{workspace}}" class="workspaces" ng-class="{'active' : component == 'hosts'}" style="color: #ffffff !important" uib-tooltip="Hosts" tooltip-placement="right">
                     <img src="images/ico-hosts-menu.svg" alt="Hosts"/>
                 </a>
             </li>
             <li>
-                <a href="#/credentials/ws/{{workspace}}" class="workspaces" style="color: #ffffff !important" uib-tooltip="Credentials" tooltip-placement="right">
+                <a href="#/credentials/ws/{{workspace}}" class="workspaces" ng-class="{'active' : component == 'credentials'}" style="color: #ffffff !important" uib-tooltip="Credentials" tooltip-placement="right">
                     <img src="images/ico-credentials-menu.svg" alt="Credentials"/>
                 </a>
             </li>
             <li>
-                <a href="#/executive" class="executive-report" style="color: #ffffff !important" uib-tooltip="Executive Report" tooltip-placement="right">
+                <a href="#/executive" class="executive-report" ng-class="{'active' : component == 'executive'}" style="color: #ffffff !important" uib-tooltip="Executive Report" tooltip-placement="right">
                     <img src="images/ico-executive-menu.svg" alt="Executive Report"/>
                 </a>
             </li>
             <li>
-                <a href="#/taskgroup" class="executive-report" style="color: #ffffff !important" uib-tooltip="Tasks" tooltip-placement="right">
+                <a href="#/taskgroup" class="executive-report" ng-class="{'active' : component == 'taskgroup'}" style="color: #ffffff !important" uib-tooltip="Tasks" tooltip-placement="right">
                     <img src="images/ico-tasks-menu.svg" alt="Tasks"/>
                 </a>
             </li>
             <li>
-                <a href="#/comparison" class="executive-report" style="color: #ffffff !important" uib-tooltip="Workspaces Comparison" tooltip-placement="right">
+                <a href="#/comparison" class="executive-report" ng-class="{'active' : component == 'comparison'}" style="color: #ffffff !important" uib-tooltip="Workspaces Comparison" tooltip-placement="right">
                     <img src="images/ico-workspace-comparison-menu.svg" alt="Workspaces Comparison"/>
                 </a>
             </li>
             <li>
-                <a href="#/webshell" class="executive-report" style="color: #ffffff !important" uib-tooltip="Web Shell" tooltip-placement="right">
+                <a href="#/webshell" class="executive-report" ng-class="{'active' : component == 'webshell'}" style="color: #ffffff !important" uib-tooltip="Web Shell" tooltip-placement="right">
                     <img src="images/ico-web-shell-menu.svg" alt="Webshell"/>
                 </a>
             </li>
             <li>
-                <a href="#/vulndb" class="status-report" style="color: #ffffff !important" uib-tooltip="Vulnerability Templates" tooltip-placement="right">
+                <a href="#/vulndb" class="status-report" ng-class="{'active' : component == 'vulndb'}" style="color: #ffffff !important" uib-tooltip="Vulnerability Templates" tooltip-placement="right">
                     <img src="images/ico-vulnerability-templates-menu.svg" alt="Vulnerability Templates"/>
                 </a>
             </li>
             <li>
-                <a href="#/data_analysis" class="status-report" style="color: #ffffff !important" uib-tooltip="Data Analysis" tooltip-placement="right">
+                <a href="#/data_analysis" class="status-report" ng-class="{'active' : component == 'data_analysis'}" style="color: #ffffff !important" uib-tooltip="Data Analysis" tooltip-placement="right">
                     <img src="images/ico-data-analysis-menu.svg" alt="Data Analysis"/>
                 </a>
             </li>

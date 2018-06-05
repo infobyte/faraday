@@ -59,10 +59,14 @@ class RawReportProcessor(Thread):
             self.end_event)
 
         self.processor = ReportProcessor(plugin_controller, None)
+        self._stop = False
+
+    def stop(self):
+        self.model_controller.stop()
+        self._stop = True
 
     def run(self):
-
-        while True:
+        while not self._stop:
             try:
                 workspace, file_path, cookie = UPLOAD_REPORTS_QUEUE.get(False, timeout=0.1)
                 logger.info('Processing raw report {0}'.format(file_path))
@@ -77,9 +81,8 @@ class RawReportProcessor(Thread):
                 self.end_event.wait()
                 self.end_event.clear()
             except Empty:
-                continue
+                time.sleep(0.1)
             except KeyboardInterrupt as ex:
-                self.model_controller.stop()
                 break
 
 

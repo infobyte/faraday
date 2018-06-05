@@ -27,6 +27,7 @@ import urllib
 import os
 import json
 import logging
+import ConfigParser
 
 try:
     import urlparse
@@ -70,6 +71,10 @@ OBJECT_TYPE_END_POINT_MAPPER = {
     'Cred': 'credential',
 }
 
+from config import globals as CONSTANTS
+LOCAL_CONFIG_FILE = os.path.expanduser(
+    os.path.join(CONSTANTS.CONST_FARADAY_HOME_PATH, 'config/server.ini'))
+
 
 def _conf():
 
@@ -79,7 +84,7 @@ def _conf():
     # If you are running this libs outside of Faraday, cookies are not setted.
     # you need get a valid cookie auth and set that.
     # Fplugin run in other instance, so this dont generate any trouble.
-    if not CONF.getDBSessionCookies():
+    if not CONF.getDBSessionCookies() and not FARADAY_UPLOAD_REPORTS_WEB_COOKIE:
         server_url = CONF.getServerURI() if FARADAY_UP else SERVER_URL
         cookie = login_user(server_url, CONF.getAPIUsername(), CONF.getAPIPassword())
         CONF.setDBSessionCookies(cookie)
@@ -88,10 +93,19 @@ def _conf():
 
 
 def _get_base_server_url():
-    if FARADAY_UP:
+    if FARADAY_UPLOAD_REPORTS_WEB_COOKIE:
+        parser = ConfigParser.SafeConfigParser()
+        parser.read(LOCAL_CONFIG_FILE)
+        server_url = 'http://{0}:{1}'.format(
+                parser.get('faraday_server', 'bind_address'),
+                parser.get('faraday_server', 'port'))
+        logger.info('Detected upload cookie. Using server_url as {0}'.format(server_url))
+    elif FARADAY_UP:
         server_url = _conf().getAPIUrl()
+        logger.info('Detected faraday client running. Using server_url as {0}'.format(server_url))
     else:
         server_url = SERVER_URL
+        logger.info('Could not detect upload or client running. Using default server_url as {0}'.format(server_url))
 
     return server_url.rstrip('/')
 

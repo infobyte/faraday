@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 class PluginCommiter(Thread):
 
-    def __init__(self, output_queue, output, pending_actions, plugin, command, mapper_manager):
+    def __init__(self, output_queue, output, pending_actions, plugin, command, mapper_manager, end_event=None):
         super(PluginCommiter, self).__init__()
         self.output_queue = output_queue
         self.pending_actions = pending_actions
@@ -43,6 +43,7 @@ class PluginCommiter(Thread):
         self._report_path = os.path.join(CONF.getReportPath(), command.workspace)
         self._report_ppath = os.path.join(self._report_path, "process")
         self._report_upath = os.path.join(self._report_path, "unprocessed")
+        self.end_event = end_event
 
     def stop(self):
         self.stop = True
@@ -53,6 +54,8 @@ class PluginCommiter(Thread):
             (Modelactions.PLUGINEND, self.plugin.id, self.command.getID()))
         self.command.duration = time.time() - self.command.itime
         self.mapper_manager.update(self.command)
+        if self.end_event:
+            self.end_event.set()
 
     def run(self):
         name = ''
@@ -76,7 +79,7 @@ class PluginController(Thread):
     """
     TODO: Doc string.
     """
-    def __init__(self, id, plugin_manager, mapper_manager, pending_actions):
+    def __init__(self, id, plugin_manager, mapper_manager, pending_actions, end_event=None):
         super(PluginController, self).__init__()
         self.plugin_manager = plugin_manager
         self._plugins = plugin_manager.getPlugins()
@@ -92,6 +95,7 @@ class PluginController(Thread):
         self.plugin_manager.addController(self, self.id)
         self.stop = False
         self.pending_actions = pending_actions
+        self.end_event = end_event
 
     def _find_plugin(self, plugin_id):
         return self._plugins.get(plugin_id, None)
@@ -166,7 +170,6 @@ class PluginController(Thread):
             (id(plugin_process), id(plugin)))
 
         self.pending_actions.put((Modelactions.PLUGINSTART, plugin.id, command.getID()))
-
         output_queue.put((output, command.getID()))
         plugin_commiter = PluginCommiter(
             output_queue,
@@ -174,7 +177,8 @@ class PluginController(Thread):
             self.pending_actions,
             plugin,
             command,
-            self._mapper_manager
+            self._mapper_manager,
+            self.end_event,
         )
         plugin_commiter.start()
         # This process is stopped when plugin commiter joins output queue
@@ -268,32 +272,24 @@ class PluginController(Thread):
         del self._active_plugins[pid]
         return True
 
-    def processReport(self, plugin, filepath, ws_name=None, user=""):
+    def processReport(self, plugin, filepath, ws_name=None):
         if not ws_name:
             ws_name = model.api.getActiveWorkspace().name
-        if user:
-            cmd_info = CommandRunInformation(
-                **{'workspace': ws_name,
-                    'itime': time.time(),
-                    'import_source': 'report',
-                    'command': plugin,
-                    'params': filepath,
-                    'user': user})
-        else:
-            cmd_info = CommandRunInformation(
-                **{'workspace': ws_name,
-                    'itime': time.time(),
-                    'import_source': 'report',
-                    'command': plugin,
-                    'params': filepath})
+        cmd_info = CommandRunInformation(
+            **{'workspace': ws_name,
+                'itime': time.time(),
+                'import_source': 'report',
+                'command': plugin,
+                'params': filepath,
+            })
         self._mapper_manager.createMappers(ws_name)
-        cmd_info.setID(self._mapper_manager.save(cmd_info))
-
+        command_id = self._mapper_manager.save(cmd_info)
+        cmd_info.setID(command_id)
         if plugin in self._plugins:
             logger.info('Processing report with plugin {0}'.format(plugin))
             with open(filepath, 'rb') as output:
                 self.processOutput(self._plugins[plugin], output.read(), cmd_info, True)
-            return True
+            return command_id
         return False
 
     def clearActivePlugins(self):

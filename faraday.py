@@ -118,23 +118,11 @@ def getParserArgs():
                         default=False,
                         help="Enable dev mode. This will use the user config and plugin folder.")
 
-    parser.add_argument('--ignore-deps',
-                        action="store_true",
-                        dest="ignore_deps",
-                        default=False,
-                        help="Ignore python dependencies resolution.")
-
-    parser.add_argument('--update',
-                        action="store_true",
-                        dest="update",
-                        default=False,
-                        help="Update Faraday IDE.")
-
     parser.add_argument('--cert',
                         action="store",
                         dest="cert_path",
                         default=None,
-                        help="Path to the valid CouchDB certificate")
+                        help="Path to the valid Faraday server certificate")
 
     parser.add_argument('--gui',
                         action="store",
@@ -274,12 +262,9 @@ def startFaraday():
     serverURL = getInstanceConfiguration().getServerURI()
     if serverURL:
         url = "%s/_ui" % serverURL
-        print(Fore.WHITE + Style.BRIGHT + "\n*" + string.center("faraday ui is ready", 53 - 6))
+        print(Fore.WHITE + Style.BRIGHT + "\n* " + "Faraday UI is ready")
         print(
-            Fore.WHITE + Style.BRIGHT + "Make sure you got couchdb up and running.\nIf couchdb is up, point your browser to: \n[%s]" % url)
-    else:
-        print(
-            Fore.WHITE + Style.BRIGHT + "Please config Couchdb for fancy HTML5 Dashboard (https://github.com/infobyte/faraday/wiki/Couchdb)")
+            Fore.WHITE + Style.BRIGHT + "Point your browser to: \n[%s]" % url)
 
     print(Fore.RESET + Back.RESET + Style.RESET_ALL)
 
@@ -461,25 +446,6 @@ def checkServerUrl():
         print("Check ~/.faraday/config/user.xml server url, the following error was found: {0} ".format(ex))
 
 
-def checkVersion():
-    try:
-        f = open(FARADAY_VERSION_FILE)
-        f_version = f.read().strip()
-        if not args.update:
-            if getInstanceConfiguration().getVersion() is not None and getInstanceConfiguration().getVersion() != f_version:
-                logger.warning("You have different version of Faraday since your last run.\nRun ./faraday.py --update to update configuration!")
-                if query_yes_no('Do you want to close Faraday?', 'yes'):
-                    sys.exit(-1)
-
-        getInstanceConfiguration().setVersion(f_version)
-        f.close()
-
-    except Exception:
-        getLogger("launcher").error(
-            "It seems that something's wrong with your version\nPlease contact customer support")
-        sys.exit(-1)
-
-
 def check_faraday_version():
     try:
         server.check_faraday_version()
@@ -540,10 +506,8 @@ You have 3 attempts.""")
 
 
 def main():
-    """Main.
-
+    """
     Main function for launcher.
-
     """
     os.chdir(FARADAY_BASE)
 
@@ -564,17 +528,16 @@ def main():
     checkConfiguration(args.gui)
     setConf()
     checkServerUrl()
-    checkVersion()
     CONF = getInstanceConfiguration()
     if args.login:
         if not CONF.getServerURI():
             couchURI = raw_input("Enter the Faraday server [http://127.0.0.1:5985]: ") or "http://127.0.0.1:5985"
 
             if couchURI:
-                CONF.setCouchUri(couchURI)
+                CONF.setAPIUrl(couchURI)
                 checkServerUrl()
             else:
-                logger.fatal('Please configure couchdb server to authenticate (--login)')
+                logger.fatal('Please configure Faraday server to authenticate (--login)')
                 sys.exit(-1)
 
         doLoginLoop()
@@ -584,7 +547,6 @@ def main():
             CONF.setDBSessionCookies(session_cookie)
 
     check_faraday_version()
-
     checkUpdates()
     startFaraday()
 

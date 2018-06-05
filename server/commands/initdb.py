@@ -1,3 +1,9 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 import getpass
 import shutil
 import string
@@ -13,7 +19,8 @@ import sqlalchemy
 from sqlalchemy import create_engine
 
 from config.configuration import getInstanceConfiguration
-from faraday import FARADAY_USER_CONFIG_XML, FARADAY_BASE_CONFIG_XML
+from faraday import FARADAY_USER_CONFIG_XML, FARADAY_BASE_CONFIG_XML, \
+    FARADAY_BASE
 
 try:
     # py2.7
@@ -221,6 +228,15 @@ class InitDB():
         config.set('database', 'connection_string', conn_string)
         with open(LOCAL_CONFIG_FILE, 'w') as configfile:
             config.write(configfile)
+        alembic_config = ConfigParser()
+        alembic_config_filename = os.path.join(FARADAY_BASE, 'alembic.ini')
+        print(alembic_config_filename)
+        alembic_config.read(alembic_config_filename)
+        print('Saving database credentials file in {0}'.format(
+            alembic_config_filename))
+        alembic_config.set('alembic', 'sqlalchemy.url', conn_string)
+        with open(alembic_config_filename, 'w') as configfile:
+            alembic_config.write(configfile)
         return conn_string
 
     def _create_tables(self, conn_string):

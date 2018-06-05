@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 
 import re
 
@@ -16,6 +22,7 @@ from server.commands.faraday_schema_display import DatabaseSchema
 from server.commands.app_urls import show_all_urls
 from server.commands.reset_db import reset_db_all
 from server.commands.reports import import_external_reports
+from server.commands.status_check import full_status_check
 from server.models import db, User
 from server.importer import ImportCouchDB
 
@@ -68,6 +75,7 @@ def faraday_schema_display():
 def initdb():
     with app.app_context():
         InitDB().run()
+        ImportCouchDB().run()
 
 @click.command()
 def import_from_couchdb():
@@ -85,6 +93,11 @@ def sql_shell():
     pgcli = PGCli()
     pgcli.connect_uri(conn_string)
     pgcli.run_cli()
+
+
+@click.command()
+def status_check():
+    full_status_check()
 
 
 def validate_user_unique_field(ctx, param, value):
@@ -132,6 +145,7 @@ cli.add_command(import_from_couchdb)
 cli.add_command(database_schema)
 cli.add_command(createsuperuser)
 cli.add_command(sql_shell)
+cli.add_command(status_check)
 
 
 if __name__ == '__main__':

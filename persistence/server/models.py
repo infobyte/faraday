@@ -679,9 +679,9 @@ def server_info():
     return server.server_info()
 
 
-def test_server_url(url_to_test):
+def check_server_url(url_to_test):
     """Return True if url_to_test/_api/info is accessible, False otherwise"""
-    return server.test_server_url(url_to_test)
+    return server.check_server_url(url_to_test)
 
 
 # NOTE: the whole 'which arguments are mandatory and which type should they be"

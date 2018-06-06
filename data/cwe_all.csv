@@ -1310,7 +1310,7 @@ the current working directory.
 In some cases, the attack can be conducted remotely, such as when SMB or WebDAV network shares are used.
 In some Unix-based systems, a PATH might be created that contains an empty element, e.g. by splicing an empty variable into the PATH. This empty element can be interpreted as equivalent to the current working directory, which might be an untrusted search element.",,unclassified,"Double clicking on MS Office documents from Windows Explorer may execute arbitrary programs in some cases
 ACROS Security: Remote Binary Planting in Apple iTunes for Windows (ASPR #2010-08-18-1)
-Automatic Detection of Vulnerable Dynamic Component Loadings: http://www.cs.ucdavis.edu/research/tech-reports/2010/CSE-2010-2.pdf 
+Automatic Detection of Vulnerable Dynamic Component Loadings: http://www.cs.ucdavis.edu/research/tech-reports/2010/CSE-2010-2.pdf
 Dynamic-Link Library Search Order: http://msdn.microsoft.com/en-us/library/ms682586%28v=VS.85%29.aspx
 Dynamic-Link Library Security: http://msdn.microsoft.com/en-us/library/ff919712%28VS.85%29.aspx
 An update on the DLL-preloading remote attack vector: http://blogs.technet.com/b/srd/archive/2010/08/23/an-update-on-the-dll-preloading-remote-attack-vector.aspx
@@ -2126,7 +2126,7 @@ Best Practices for ASP.NET MVC: http://blogs.msdn.com/b/aspnetue/archive/2010/09
 Mass assignment in Rails applications: http://blog.mhartl.com/2008/09/21/mass-assignment-in-rails-applications/
 Secure your Rails apps!: http://pragtob.wordpress.com/2012/03/06/secure-your-rails-apps/
 Ruby On Rails Security Guide: http://guides.rubyonrails.org/security.html#mass-assignment
-Mass Assignment Vulnerability in ASP.NET MVC: http://freshbrewedcode.com/joshbush/2012/03/05/mass-assignment-aspnet-mvc/ 
+Mass Assignment Vulnerability in ASP.NET MVC: http://freshbrewedcode.com/joshbush/2012/03/05/mass-assignment-aspnet-mvc/
 6 Ways To Avoid Mass Assignment in ASP.NET MVC: http://odetocode.com/blogs/scott/archive/2012/03/11/complete-guide-to-mass-assignment-in-asp-net-mvc.aspx
 PHP Object Injection: https://www.owasp.org/index.php/PHP_Object_Injection
 Unserializing user-supplied data, a bad idea: http://heine.familiedeelstra.com/security/unserialize
@@ -2300,7 +2300,7 @@ Se ha detectado un problema en las versiones de apache 1.3.0, 2.0.x hasta 2.0.64
 ,ES-Robots.txt,"Robots.txt revela directorios sensibles. Un atacante busca directamente robots.txt para encontrar puntos desde donde comenzar su ataque.
 ","Es conveniente manejar nombres de directorios que no describan el contenido, en especial en directorios sensibles. Por ejemplo en lugar de /setup o /app_data llamar al directorio /Dir_Code1. De esta manera no revelar a un atacante que clase de informacion contiene un directorio, que se intenta ocultar de los buscadores (mediante robots.txt)
 Otra practica que se me ocurre es la utilizacion de parametros. Por ejemplo:
-Disallow: /*AB/$ 
+Disallow: /*AB/$
 Esto desactivará cualquier carpeta que termine con ""AB"" por ejemplo /sourceAB/. Evitando pasar cualquier dato a un atacante y centralizando las carpetas sensibles y ocultandolas simplemente colocando ""AB"" al final.",informational,
 ,ES-Typical Login Web,"Archivo de Login nombrado de manera ""comun"".
 ",Esto facilita a los robots de ataque encontrar paginas sensibles. Se recomienda no usar nombres estandard para paginas de login.,unclassified,
@@ -2311,7 +2311,7 @@ Esto desactivará cualquier carpeta que termine con ""AB"" por ejemplo /sourceAB
 <machineKey validation=""3DES""/>",unclassified,
 ,ES-Insecure Captcha,"La resolucion del Captcha esta incluida en el mismo codigo:
 
-<img id=""ctl01_mainContent_imgCaptcha"" src=""http://test-www.bancofalabella.com.co/Data/Sites/1/ImgTemp/ImageFormat_THHvB.png"" 
+<img id=""ctl01_mainContent_imgCaptcha"" src=""http://test-www.bancofalabella.com.co/Data/Sites/1/ImgTemp/ImageFormat_THHvB.png""
 style=""border-width:0px;"" />
 
 Siendo la respuesta THHvB
@@ -2376,24 +2376,24 @@ Guía de cómo evitar estos ataques (en inglés): https://www.owasp.org/index.ph
 ","Es posible que el modo debug muestre datos sensibles del servidor.
 Mas informacion de como desactivar el modo debug:
 http://support.microsoft.com/default.aspx?scid=kb;es-us;815157",unclassified,
-,ES-Unicode tranfsormation Issues,"La pagina es vulnerable a varias tranformaciones de Unicode como ""Best-Fit Mappings"", ""Overlong byte sequences"" y ""Ill-formed sequences"". 
-Best-Fit Mappings ocurre cuando el caracter X es tranformado por un totalmente diferente caracter Y. En general, best-fit mappings occure cuando el caracter es transcodeado entre Unicode y otro encodificado. 
+,ES-Unicode tranfsormation Issues,"La pagina es vulnerable a varias tranformaciones de Unicode como ""Best-Fit Mappings"", ""Overlong byte sequences"" y ""Ill-formed sequences"".
+Best-Fit Mappings ocurre cuando el caracter X es tranformado por un totalmente diferente caracter Y. En general, best-fit mappings occure cuando el caracter es transcodeado entre Unicode y otro encodificado.
 
 ************************************
 
-""Overlong byte sequences"" (no la forma corta) - UTF-8 allows for different representations of characters that also have a shorter form. For security reasons, a UTF-8 decoder must not accept UTF-8 sequences that are longer than necessary to encode a character. For example, the character U+000A (line feed) must be accepted from a UTF-8 stream only in the form 0x0A, but not in any of the following five possible overlong forms: 
-0xC0 0x8A 
-0xE0 0x80 0x8A 
-0xF0 0x80 0x80 0x8A 
-0xF8 0x80 0x80 0x80 0x8A 
-0xFC 0x80 0x80 0x80 0x80 0x8A 
+""Overlong byte sequences"" (no la forma corta) - UTF-8 allows for different representations of characters that also have a shorter form. For security reasons, a UTF-8 decoder must not accept UTF-8 sequences that are longer than necessary to encode a character. For example, the character U+000A (line feed) must be accepted from a UTF-8 stream only in the form 0x0A, but not in any of the following five possible overlong forms:
+0xC0 0x8A
+0xE0 0x80 0x8A
+0xF0 0x80 0x80 0x8A
+0xF8 0x80 0x80 0x80 0x8A
+0xFC 0x80 0x80 0x80 0x80 0x8A
 
-Ill-Formed Subsequences As REQUIRED by UNICODE 3.0, and noted in the Unicode Technical Report #36, if a leading byte is followed by an invalid successor byte, then it should NOT consume it. 
+Ill-Formed Subsequences As REQUIRED by UNICODE 3.0, and noted in the Unicode Technical Report #36, if a leading byte is followed by an invalid successor byte, then it should NOT consume it.
 
 
 Software vulnerabilities arise when Best-Fit mappings occur. For example, characters can be manipulated to bypass string handling filters, such as cross-site scripting (XSS) or SQL Injection filters, WAF's, and IDS devices. Overlong UTF-8 sequence could be abused to bypass UTF-8 substring tests that look only for the shortest possible encoding.
 ","Se debe identificar el origen de esta tranformacion Unicode y reparar el problema. Se deja links a paginas con informacion:
-Links with more information: 
+Links with more information:
 http://www.blackhat.com/presentations/bh-usa-09/WEBER/BHUSA09-Weber-UnicodeSecurityPreview-PAPER.pdf
 http://www.cl.cam.ac.uk/~mgk25/unicode.html
 http://sirdarckcat.blogspot.ro/2009/10/couple-of-unicode-issues-on-php-and.html
@@ -2415,9 +2415,9 @@ http://blog.jquery.com/2011/09/01/jquery-1-6-3-released/",unclassified,
 
  <link href=""http://_SERVER['HOST']"" (Joomla)
 
-...haciendo un apend de keys secretas y tokens: 
+...haciendo un apend de keys secretas y tokens:
  <a href=""http://_SERVER['HOST']?token=topsecret""> (Django, Gallery y otros)
-....e importante directamente scripts: 
+....e importante directamente scripts:
  <script src=""http://_SERVER['HOST']/misc/jquery.js?v=1.4.4""> (Various)
 ","La aplicacion web deberia usar una variable ""SERVER_NAME"" en lugar de basarse en le Host header.",high,
 ,ES-Login Page password-guessing attack,"Un problema común con el que se encuentran los programadores web son los ataques de fuerza bruta de logins. Un ataque de fuerza bruta es un intento de adivinar la contraseña por sistemáticamente probar todas las posibles combinaciones de números, letras y símbolos hasta descubrir la convencional correcta. Este ataque se mejora utilizando diccionarios con palabras comunes y combinaciones de las mismas
@@ -2428,15 +2428,15 @@ Mas información:
 https://www.owasp.org/index.php/Blocking_Brute_Force_Attacks",unclassified,
 ,ES-Error page web server version disclosure (Pagina de error mostrando version de servidor ),"Pidiendo una pagina que no existe el servidor responde con un error. En esta pagina de error se encuentran datos que contienen version del servidor web y/o modulos activados en este. Dicha informacion puede ser usada para mejorar las tacticas del atacante sabiendo a que se enfrenta
 ",Se debe configurar paginas de error customizadas evitando mostrar esta informacion.,low,
-,ES-Weak SSL,"El servidor esta utiizando un cifrado SSL dèbil. 
+,ES-Weak SSL,"El servidor esta utiizando un cifrado SSL dèbil.
 
-Weak SSL ciphers (SSL2 on port 443): 
+Weak SSL ciphers (SSL2 on port 443):
 
 SSL2_CK_RC4_128_EXPORT40_WITH_MD5 - Low strength
 SSL2_CK_RC2_128_CBC_EXPORT40_WITH_MD5 - Low strength
 SSL2_CK_DES_64_CBC_WITH_MD5 - Low strength
 
-Weak SSL ciphers (SSL3 on port 443): 
+Weak SSL ciphers (SSL3 on port 443):
 
 SSL3_CK_RSA_RC4_40_MD5 - Low strength
 SSL3_CK_RSA_RC2_40_MD5 - Low strength
@@ -2445,7 +2445,7 @@ SSL3_CK_RSA_DES_64_CBC_SHA - Low strength
 SSL3_CK_EDH_RSA_DES_40_CBC_SHA - Low strength
 SSL3_CK_EDH_RSA_DES_64_CBC_SHA - Low strength
 
-Weak SSL ciphers (TLS1 on port 443): 
+Weak SSL ciphers (TLS1 on port 443):
 
 TLS1_CK_RSA_EXPORT_WITH_RC4_40_MD5 - Low strength
 TLS1_CK_RSA_EXPORT_WITH_RC2_CBC_40_MD5 - Low strength
@@ -2493,7 +2493,7 @@ Se ha detectado un problema en las versiones de apache 1.3.0, 2.0.x hasta 2.0.64
 ,EN-Robots.txt,"Robots.txt revela directorios sensibles. Un atacante busca directamente robots.txt para encontrar puntos desde donde comenzar su ataque.
 ","Es conveniente manejar nombres de directorios que no describan el contenido, en especial en directorios sensibles. Por ejemplo en lugar de /setup o /app_data llamar al directorio /Dir_Code1. De esta manera no revelar a un atacante que clase de informacion contiene un directorio, que se intenta ocultar de los buscadores (mediante robots.txt)
 Otra practica que se me ocurre es la utilizacion de parametros. Por ejemplo:
-Disallow: /*AB/$ 
+Disallow: /*AB/$
 Esto desactivará cualquier carpeta que termine con ""AB"" por ejemplo /sourceAB/. Evitando pasar cualquier dato a un atacante y centralizando las carpetas sensibles y ocultandolas simplemente colocando ""AB"" al final.",unclassified,
 ,EN-Typical Login Web,"Archivo de Login nombrado de manera ""comun"".
 ",Esto facilita a los robots de ataque encontrar paginas sensibles. Se recomienda no usar nombres estandard para paginas de login.,unclassified,
@@ -2504,7 +2504,7 @@ Esto desactivará cualquier carpeta que termine con ""AB"" por ejemplo /sourceAB
 <machineKey validation=""3DES""/>",unclassified,
 ,EN-Insecure Captcha,"La resolucion del Captcha esta incluida en el mismo codigo:
 
-<img id=""ctl01_mainContent_imgCaptcha"" src=""http://test-www.bancofalabella.com.co/Data/Sites/1/ImgTemp/ImageFormat_THHvB.png"" 
+<img id=""ctl01_mainContent_imgCaptcha"" src=""http://test-www.bancofalabella.com.co/Data/Sites/1/ImgTemp/ImageFormat_THHvB.png""
 style=""border-width:0px;"" />
 
 Siendo la respuesta THHvB
@@ -2529,7 +2529,7 @@ Datos: http://fd.the-wildcat.de/apache_e36a9cf46c.php
 ",It's important to configure the timout values on the Webserver. Here is a link to a guide on how to prevent this kind of attack: https://community.qualys.com/blogs/securitylabs/2011/11/02/how-to-protect-against-slow-http-attacks,medium,
 ,EN-Clickjacking,"It might be possible for a web page controlled by an attacker to load the content of this response within an iframe on the attacker's page. This may enable a ""clickjacking"" attack, in which the attacker's page overlays the target application's interface with a different interface provided by the attacker. By inducing victim users to perform actions such as mouse clicks and keystrokes, the attacker can cause them to unwittingly carry out actions within the application that is being targeted. This technique allows the attacker to circumvent defenses against cross-site request forgery, and may result in unauthorized actions. Ref:http://javascript.info/tutorial/clickjacking
 ","To effectively prevent framing attacks, the application should return a response header with the name X-Frame-Options and the value DENY to prevent framing altogether, or the value SAMEORIGIN to allow framing only by pages on the same origin as the response itself.",low,
-,EN-OPTIONS method is enabled,"HTTP OPTIONS method is enabled on this web server. The OPTIONS method provides a list of the methods that are supported by the web server, it represents a request for information about the communication options available on the request/response chain identified by the Request-URI. 
+,EN-OPTIONS method is enabled,"HTTP OPTIONS method is enabled on this web server. The OPTIONS method provides a list of the methods that are supported by the web server, it represents a request for information about the communication options available on the request/response chain identified by the Request-URI.
 The OPTIONS method may expose sensitive information that may help an malicious user to prepare more advanced attacks.
 ",It's recommended to disable OPTIONS Method on the web server.,low,
 ,EN-TLS1/SSLv3 Renegotiation Vulnerability,"A vulnerability in the way SSL and TLS protocols allow renegotiation requests may allow an attacker to inject plaintext into an application protocol stream. This could result in a situation where the attacker may be able to issue commands to the server that appear to be coming from a legitimate source. This issue affects SSL version 3.0 and newer and TLS version 1.0 and newer.
@@ -2547,7 +2547,7 @@ User credentials are transmitted over an unencrypted channel. This information s
 The impact of this vulnerability
 A third party may be able to read the user credentials by intercepting an unencrypted HTTP connection.
 ","Because user credentials are considered sensitive information, should always be transferred to the server over an encrypted connection (HTTPS).",unclassified,
-,EN-URL Redirection,"This script is possibly vulnerable to URL redirection attacks. 
+,EN-URL Redirection,"This script is possibly vulnerable to URL redirection attacks.
 
 URL redirection is sometimes used as a part of phishing attacks that confuse visitors about which web site they are visiting.
 
@@ -2556,38 +2556,38 @@ A remote attacker can redirect users from your website to a specified URL. This 
 ",Your script should properly sanitize user input.,unclassified,
 ,EN-Microsoft IIS tilde directory enumeration,"It is possible to detect short names of files and directories which have an 8.3 file naming scheme equivalent in Windows by using some vectors in several versions of Microsoft IIS. For instance, it is possible to detect all short-names of "".aspx"" files as they have 4 letters in their extensions. This can be a major issue especially for the .Net websites which are vulnerable to direct URL access as an attacker can find important files and folders that they are not normally visible.
 ",There is a way to disable Windows 8.3 short name creation.You can create a registry key named NtfsDisable8dot3NameCreation in HKLMSYSTEMCurrentControlSetControlFileSystem and set it to 1. That should disable short names creation. Refer to this Microsoft TechNet article to read more about the solution.,unclassified,
-,EN-SQL Injection,"SQL injection is a vulnerability that allows an attacker to alter back-end SQL statements by manipulating the user input. An SQL injection occurs when web applications accept user input that is directly placed into a SQL statement and doesn't properly filter out dangerous characters. 
+,EN-SQL Injection,"SQL injection is a vulnerability that allows an attacker to alter back-end SQL statements by manipulating the user input. An SQL injection occurs when web applications accept user input that is directly placed into a SQL statement and doesn't properly filter out dangerous characters.
 
 This is one of the most common application layer attacks currently being used on the Internet. Despite the fact that it is relatively easy to protect against, there is a large number of web applications vulnerable.
 
-An attacker may execute arbitrary SQL statements on the vulnerable system. This may compromise the integrity of your database and/or expose sensitive information. 
+An attacker may execute arbitrary SQL statements on the vulnerable system. This may compromise the integrity of your database and/or expose sensitive information.
 
 Depending on the back-end database in use, SQL injection vulnerabilities lead to varying levels of data/system access for the attacker. It may be possible to not only manipulate existing queries, but to UNION in arbitrary data, use sub selects, or append additional queries. In some cases, it may be possible to read in or write out to files, or to execute shell commands on the underlying operating system.
 
 Certain SQL Servers such as Microsoft SQL Server contain stored and extended procedures (database server functions). If an attacker can obtain access to these procedures it may be possible to compromise the entire machine.
-","Your script should filter metacharacters from user input. 
+","Your script should filter metacharacters from user input.
 Check detailed information for more information about fixing this vulnerability.
 Detailed information",unclassified,
 ,EN-ASP.NET debugging enabled,"ASP.NET debugging is enabled on this application. It is recommended to disable debug mode before deploying a production application. By default, debugging is disabled, and although debugging is frequently enabled to troubleshoot a problem, it is also frequently not disabled again after the problem is resolved.
 ","It may be possible to disclose sensitive information about the web sever the ASP.NET application.
-More information on how to fix it: 
+More information on how to fix it:
 http://support.microsoft.com/default.aspx?scid=kb;en-us;815157",unclassified,
-,EN-Unicode tranformation Issues,"This page is vulnerable to various Unicode transformation issues such as Best-Fit Mappings, Overlong byte sequences, Ill-formed sequences. 
-Best-Fit Mappings occurs when a character X gets transformed to an entirely different character Y. In general, best-fit mappings occur when characters are transcoded between Unicode and another encoding. 
+,EN-Unicode tranformation Issues,"This page is vulnerable to various Unicode transformation issues such as Best-Fit Mappings, Overlong byte sequences, Ill-formed sequences.
+Best-Fit Mappings occurs when a character X gets transformed to an entirely different character Y. In general, best-fit mappings occur when characters are transcoded between Unicode and another encoding.
 
-Overlong byte sequences (non-shortest form) - UTF-8 allows for different representations of characters that also have a shorter form. For security reasons, a UTF-8 decoder must not accept UTF-8 sequences that are longer than necessary to encode a character. For example, the character U+000A (line feed) must be accepted from a UTF-8 stream only in the form 0x0A, but not in any of the following five possible overlong forms: 
-0xC0 0x8A 
-0xE0 0x80 0x8A 
-0xF0 0x80 0x80 0x8A 
-0xF8 0x80 0x80 0x80 0x8A 
-0xFC 0x80 0x80 0x80 0x80 0x8A 
+Overlong byte sequences (non-shortest form) - UTF-8 allows for different representations of characters that also have a shorter form. For security reasons, a UTF-8 decoder must not accept UTF-8 sequences that are longer than necessary to encode a character. For example, the character U+000A (line feed) must be accepted from a UTF-8 stream only in the form 0x0A, but not in any of the following five possible overlong forms:
+0xC0 0x8A
+0xE0 0x80 0x8A
+0xF0 0x80 0x80 0x8A
+0xF8 0x80 0x80 0x80 0x8A
+0xFC 0x80 0x80 0x80 0x80 0x8A
 
-Ill-Formed Subsequences As REQUIRED by UNICODE 3.0, and noted in the Unicode Technical Report #36, if a leading byte is followed by an invalid successor byte, then it should NOT consume it. 
+Ill-Formed Subsequences As REQUIRED by UNICODE 3.0, and noted in the Unicode Technical Report #36, if a leading byte is followed by an invalid successor byte, then it should NOT consume it.
 
 
 Software vulnerabilities arise when Best-Fit mappings occur. For example, characters can be manipulated to bypass string handling filters, such as cross-site scripting (XSS) or SQL Injection filters, WAF's, and IDS devices. Overlong UTF-8 sequence could be abused to bypass UTF-8 substring tests that look only for the shortest possible encoding.
 ","Identiy the source of these Unicode transformation issues and fix them. Consult the web references bellow for more information.
-Links with more information: 
+Links with more information:
 http://www.blackhat.com/presentations/bh-usa-09/WEBER/BHUSA09-Weber-UnicodeSecurityPreview-PAPER.pdf
 http://www.cl.cam.ac.uk/~mgk25/unicode.html
 http://sirdarckcat.blogspot.ro/2009/10/couple-of-unicode-issues-on-php-and.html
@@ -2599,21 +2599,21 @@ Malicious users may inject JavaScript, VBScript, ActiveX, HTML or Flash into a v
 
 https://www.owasp.org/index.php/Unrestricted_File_Upload
 https://www.owasp.org/index.php/Testing_for_Stored_Cross_site_scripting_(OWASP-DV-002)",unclassified,
-,EN-Possible virtual host found,"Virtual hosting is a method for hosting multiple domain names (with separate handling of each name) on a single server (or pool of servers). This allows one server to share its resources, such as memory and processor cycles, without requiring all services provided to use the same host name. 
+,EN-Possible virtual host found,"Virtual hosting is a method for hosting multiple domain names (with separate handling of each name) on a single server (or pool of servers). This allows one server to share its resources, such as memory and processor cycles, without requiring all services provided to use the same host name.
 
 This web server is responding differently when the Host header is manipulated and various common virtual hosts are tested. This could indicate there is a Virtual Host present.
 ",Consult the virtual host configuration and check if this virtual host should be publicly accessible,unclassified,
-,EN-Host header attack,"An attacker can manipulate the Host header as seen by the web application and cause the application to behave in unexpected ways. 
-Developers often resort to the exceedingly untrustworthy HTTP Host header (_SERVER[""HTTP_HOST""] in PHP). 
-Even otherwise-secure applications trust this value enough to write it to the page without HTML-encoding it with code equivalent to: 
+,EN-Host header attack,"An attacker can manipulate the Host header as seen by the web application and cause the application to behave in unexpected ways.
+Developers often resort to the exceedingly untrustworthy HTTP Host header (_SERVER[""HTTP_HOST""] in PHP).
+Even otherwise-secure applications trust this value enough to write it to the page without HTML-encoding it with code equivalent to:
 
  <link href=""http://_SERVER['HOST']"" (Joomla)
-...and append secret keys and tokens to links containing it: 
+...and append secret keys and tokens to links containing it:
 
  <a href=""http://_SERVER['HOST']?token=topsecret""> (Django, Gallery, others)
-....and even directly import scripts from it: 
+....and even directly import scripts from it:
 
- <script src=""http://_SERVER['HOST']/misc/jquery.js?v=1.4.4""> (Various) 
+ <script src=""http://_SERVER['HOST']/misc/jquery.js?v=1.4.4""> (Various)
 
 Host header *********evilhostDx5oMrAd.com was reflected inside a A tag (href attribute).
 ","The web application should use the SERVER_NAME instead of the Host header. It should also create a dummy vhost that catches all requests with unrecognized Host headers. This can also be done under Nginx by specifying a non-wildcard SERVER_NAME, and under Apache by using a non-wildcard serverName and turning the UseCanonicalName directive on. Consult references for detailed information.",unclassified,
@@ -2622,20 +2622,20 @@ Malicious users may inject JavaScript, VBScript, ActiveX, HTML or Flash into a v
 ","Update to the latest version of jQuery.
 More info: http://ma.la/jquery_xss/
 http://blog.jquery.com/2011/09/01/jquery-1-6-3-released/",unclassified,
-,EN-Login Page password-guessing attack,"A common threat web developers face is a password-guessing attack known as a brute force attack. A brute-force attack is an attempt to discover a password by systematically trying every possible combination of letters, numbers, and symbols until you discover the one correct combination that works. 
+,EN-Login Page password-guessing attack,"A common threat web developers face is a password-guessing attack known as a brute force attack. A brute-force attack is an attempt to discover a password by systematically trying every possible combination of letters, numbers, and symbols until you discover the one correct combination that works.
 
-This login page doesn't have any protection against password-guessing attacks (brute force attacks). It's recommended to implement some type of account lockout after a defined number of incorrect password attempts. Consult Web references for more information about fixing this problem. 
+This login page doesn't have any protection against password-guessing attacks (brute force attacks). It's recommended to implement some type of account lockout after a defined number of incorrect password attempts. Consult Web references for more information about fixing this problem.
 
 The scanner tested 10 invalid credentials and no account lockout was detected.
-","It's recommended to implement some type of account lockout after a defined number of incorrect password attempts. 
+","It's recommended to implement some type of account lockout after a defined number of incorrect password attempts.
 More info:
 https://www.owasp.org/index.php/Blocking_Brute_Force_Attacks",unclassified,
 ,EN-Error page web server version disclosure,"By requesting a page that doesn't exist, an error page was returned. This error page contains the web server version number and a list of modules enabled on this server. This information can be used to conduct further attacks. Possible sensitive information disclosure.
 ","If you are using Apache, you can setup a custom 404 page by following the instructions provided in the References section.",unclassified,
-,EN-SSL weak ciphers,"The remote host supports the use of SSL ciphers that offer either weak encryption or no encryption at all. 
+,EN-SSL weak ciphers,"The remote host supports the use of SSL ciphers that offer either weak encryption or no encryption at all.
 This vulnerability affects Server.
 ",Reconfigure the affected application to avoid use of weak ciphers.,unclassified,
-,EN-CRIME SSL/TLS attack,"Compression Ratio Info-leak Made Easy (CRIME) is a security exploit against secret web cookies over connections using the HTTPS and SPDY protocols that also use data compression. When used to recover the content of secret authentication cookies, it allows an attacker to perform session hijacking on an authenticated web session, allowing the launching of further attacks. 
+,EN-CRIME SSL/TLS attack,"Compression Ratio Info-leak Made Easy (CRIME) is a security exploit against secret web cookies over connections using the HTTPS and SPDY protocols that also use data compression. When used to recover the content of secret authentication cookies, it allows an attacker to perform session hijacking on an authenticated web session, allowing the launching of further attacks.
 
 CRIME is a client-side attack, but the server can protect the client by refusing to use the feature combinations which can be attacked. For CRIME, the weakness is Deflate compression. This alert is issued if the server accepts Deflate compression.
 
@@ -2677,17 +2677,17 @@ Si un servidor posee servicio 'FTP anonymous' solamente con teclear la palabra �
 Un atacante que intente loguearse con una lista de usuarios por defecto podría comprometer el servicio.
 En este caso en particular el usuario “admin” es muy común en servidores Tomcat, y cuenta con privilegios para ejecutar código, por lo que debe ser protegido con una contraseña fuerte.
 ",Aplicar una política de seguridad al servidor que obligue el uso de contraseñas de acuerdo con las políticas de seguridad interna.,high,
-,ES-Wpad Spoofing,"En los ambientes Windows ante una falla a resolver un nombre de host, 
-realizan una segunda búsqueda utilizando NetBios. La naturaleza de este 
-pedido realizado utilizando broadcast es inseguro si no se tienen 
+,ES-Wpad Spoofing,"En los ambientes Windows ante una falla a resolver un nombre de host,
+realizan una segunda búsqueda utilizando NetBios. La naturaleza de este
+pedido realizado utilizando broadcast es inseguro si no se tienen
 recaudos.
 
-Un atacante podría utilizar esta vulnerabilidad para 
+Un atacante podría utilizar esta vulnerabilidad para
 registrar el dominio WPAD en netbios con el fin de redirigir y modificar
  el tráfico de las workstations con las que comparte el segmento de red.
- Este ataque podría derivar en la captura de credenciales o hashes que 
+ Este ataque podría derivar en la captura de credenciales o hashes que
 le brinden acceso a sistemas críticos.
-","Deshabilitar la configuración automática de proxy en los equipos 
+","Deshabilitar la configuración automática de proxy en los equipos
 windows, y registrar el nombre de domino wpad, para que ningún equipo de
  la red pueda impersonarlo.",high,
 ,ES-Servicio de Telnet,"Las credenciales de usuario se transmiten sobre un canal sin cifrar (servicio telnet).
@@ -2703,8 +2703,8 @@ Un atacante capaz de interceptar el tráfico entre los hosts y el usuario remoto
 > Utilizar la opción de Active Directory “Account is sensitive and cannot be delegated” (sólo aplica a los logueos interactivos, pero ayuda a reforzar la seguridad de la cuenta).
 
 Referencias:
-http://carnal0wnage.attackresearch.com/2008/05/token-passing-with-incognito-part-2.html 
-http://pentestmonkey.net/uncategorized/from-local-admin-to-domain-admin 
+http://carnal0wnage.attackresearch.com/2008/05/token-passing-with-incognito-part-2.html
+http://pentestmonkey.net/uncategorized/from-local-admin-to-domain-admin
 http://www.offensive-security.com/metasploit-unleashed/Fun_With_Incognito",high,
 ,ES-Denegacion de Servicios(DOS),"un ataque de denegación de servicios, también llamado ataque DoS (de las siglas en inglés Denial of Service) o DDoS (de Distributed Denial of Service), es un ataque a un sistema de computadoras o red que causa que un servicio o recurso sea inaccesible a los usuarios legítimos. Normalmente provoca la pérdida de la conectividad de la red por el consumo del ancho de banda de la red de la víctima o sobrecarga de los recursos computacionales del sistema de la víctima
 ",La forma de prevenirlo: https://www.owasp.org/index.php/Denial_of_Service,high,
@@ -2728,7 +2728,7 @@ En Apache modificando el archivo httpd.conf ( php_flag display_errors off)",uncl
 ",,unclassified,
 ,ES-Usuarios por defecto(default users),"Se debe evitar utilizar usuarios y contraseñas por defecto, pues el sistema puede quedar suseptible a un ataque de fuerza bruta o de diccionario.
 ",Cambiar usuarios y contraseñas de acuerdo a las politicas de la empresa,unclassified,
-,ES-Sslstrip Attack,"Dado que la página no esta utilizando https para proteger sus credenciales, el panel de ingreso esta implementedo mediante http, y no https, es posible modificar los recursos obtenidos, si el atacante logra intereceptar la comunicación entre ambos sitios. 
+,ES-Sslstrip Attack,"Dado que la página no esta utilizando https para proteger sus credenciales, el panel de ingreso esta implementedo mediante http, y no https, es posible modificar los recursos obtenidos, si el atacante logra intereceptar la comunicación entre ambos sitios.
 ","Cargar todos los recursos a través de https, para los recursos externos recomendamos incluir los mismo de la siguiente manera src=""//dominio.com/recurso.js"" de esta manera el navegador automaticamete incluye el protocolo http o https segun la conexion inicial que genera.",high,
 ,ES-Enumerar Usuarios,"
 ",,medium,
@@ -2740,7 +2740,7 @@ En Apache modificando el archivo httpd.conf ( php_flag display_errors off)",uncl
 ",Evitar ,medium,
 ,ES-Credenciales Debiles md5,"Se detecto que dentro del request  se envía el nombre de usuario y  la contraseña hasheada. Si bien la contraseña utiliza una funcion de md5, lo hace sin salt para protegerla.
  Con lo cual un atacante que la intercepte, puede decifrar el md5 para luego obtener la contraseña en texto plano junto con el usuario para acceder al sistema.
-","Aplicar una política de seguridad al servidor que obligue el uso de contraseñas de acuerdo con las políticas de seguridad interna. 
+","Aplicar una política de seguridad al servidor que obligue el uso de contraseñas de acuerdo con las políticas de seguridad interna.
 Se recomienda un cifrado mas robusto con la funcion salt",high,
 ,ES-CSRF,"Un ataque CSRF fuerza al navegador web validado de una víctima a enviar una petición a una aplicación web vulnerable, la cual entonces realiza la acción elegida a través de la víctima. Al contrario que en los ataques XSS, los cuales explotan la confianza que un usuario tiene en un sitio en particular, el cross site request forgery explota la confianza que un sitio tiene en un usuario en particular.
 ","Recomendamos la imprementacion de un feature anti-csrf  con el fin de autenticar todoslos request,en particual aquellas peticiones sensibles como por ejemplo el cambiode contraseñas y asignacion de roles (dar permisos de administrador a un usuario). El framework de ASP.net cuenta con este feature llamado viewstate (https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)_Prevention_Cheat_Sheet#Viewstate_.28ASP.NET.29)",medium,
@@ -2756,15 +2756,15 @@ Se recomienda un cifrado mas robusto con la funcion salt",high,
 ",La aplicación debería utilizar otros mecanismos para el envió de las sessiones como cookies o campos ocultos enviados a traves de métodos de POST ,medium,
 ,ES-Autenticacion sin HTTPS,"La aplicación web no utiliza HTTPS para la autenticación de usuarios al sistema. Las credenciales de usuario y contraseña, viajan en texto plano con lo cual un atacante podría obtener dichas credenciales para un posterior acceso
 ",Siempre utilizar HTTPS para autenticar usuarios,high,
-,Es-Version Obsoleta / Desactualizada,"El servidor se encuentra utilizando una versión de Apache Tomcat MUY desactualizada (Apache Tomcat/4.1.31), la cual es vulnerable a multiples vulnerabilidades publicas. Actualmente la ultima versión estable es la 8.0.9 
+,Es-Version Obsoleta / Desactualizada,"El servidor se encuentra utilizando una versión de Apache Tomcat MUY desactualizada (Apache Tomcat/4.1.31), la cual es vulnerable a multiples vulnerabilidades publicas. Actualmente la ultima versión estable es la 8.0.9
 ","Recomendación actualizar y desactivar los mensajes de error del servidor, que puedan brindar información extra a un atacante",medium,
 ,ES-Numero de Tarjeta en Texto Plano,"La respuesta del servidor, contiene el numero de tarjeta de crédito y otra información sensible que debería evitarse enviar en texto plano.
 ",Utilizar HTTPS en todo el sitio en donde la información sensible pueda ser expuesta.,high,
 ,ES-Server Version Discloure,"El servidor web responde con la version del sistema facilitando a un atacante saber contra que se enfrenta
 ","Filtrar en las respuestas del servidor, cualquier dato que demuestre la version del servidor y del sistema operativo del mismo",low,
-,EN-Insecure crossdomain.xml file,"The browser security model normally prevents web content from one domain from accessing data from another domain. This is commonly known as the ""same origin policy"". URL policy files grant cross-domain permissions for reading data. They permit operations that are not permitted by default. The URL policy file is located, by default, in the root directory of the target server, with the name crossdomain.xml (for example, at www.example.com/crossdomain.xml). 
+,EN-Insecure crossdomain.xml file,"The browser security model normally prevents web content from one domain from accessing data from another domain. This is commonly known as the ""same origin policy"". URL policy files grant cross-domain permissions for reading data. They permit operations that are not permitted by default. The URL policy file is located, by default, in the root directory of the target server, with the name crossdomain.xml (for example, at www.example.com/crossdomain.xml).
 
-When a domain is specified in crossdomain.xml file, the site declares that it is willing to allow the operators of any servers in that domain to obtain any document on the server where the policy file resides. The crossdomain.xml file deployed on this website opens the server to all domains (use of a single asterisk ""*"" as a pure wildcard is supported) like so: 
+When a domain is specified in crossdomain.xml file, the site declares that it is willing to allow the operators of any servers in that domain to obtain any document on the server where the policy file resides. The crossdomain.xml file deployed on this website opens the server to all domains (use of a single asterisk ""*"" as a pure wildcard is supported) like so:
 <cross-domain-policy>
 <allow-access-from domain=""*"" />
 </cross-domain-policy>
@@ -2773,27 +2773,27 @@ This practice is suitable for public servers, but should not be used for sites l
 Using an insecure cross-domain policy file could expose your site to various attacks.
 ","Carefully evaluate which sites will be allowed to make cross-domain calls. Consider network topology and any authentication mechanisms that will be affected by the configuration or implementation of the cross-domain policy.
 ",medium,
-,ES-Archivo crossdomain.xml inseguro,"El modelo de seguridad del navegador normalmente previene el contenido web de ser accedido desde otro dominio. Esto comunmente es conocido como ""same origin policy"" (""politica del mismo origen""). Lo politica de archivos URL garantiza acceso cross-dominio para leer datos. Permiten operaciones que no son permitidas por defecto. La politica de acceso de archivo URL esta localizado, por defecto, en el directorio raiz del servidor destino, con el nombre crossdomain.xml (por ejemplo en www.ejemplo.com/crossdomain.xml). 
+,ES-Archivo crossdomain.xml inseguro,"El modelo de seguridad del navegador normalmente previene el contenido web de ser accedido desde otro dominio. Esto comunmente es conocido como ""same origin policy"" (""politica del mismo origen""). Lo politica de archivos URL garantiza acceso cross-dominio para leer datos. Permiten operaciones que no son permitidas por defecto. La politica de acceso de archivo URL esta localizado, por defecto, en el directorio raiz del servidor destino, con el nombre crossdomain.xml (por ejemplo en www.ejemplo.com/crossdomain.xml).
 
-Cuando un dominio es especificado en el archivo crossdomain.xml, el sitio declara que esta dispuesto a dar acceso a operadores de cualqueir server en ese dominio para obtener cualquier documento donde la regla reside. El archivo crossdomain.xml desplegado en este servidor web abre el servidor a todos los dominios (uso de un unico asterisco ""*"" de comodin es soportado) Como por ejemplo: 
+Cuando un dominio es especificado en el archivo crossdomain.xml, el sitio declara que esta dispuesto a dar acceso a operadores de cualqueir server en ese dominio para obtener cualquier documento donde la regla reside. El archivo crossdomain.xml desplegado en este servidor web abre el servidor a todos los dominios (uso de un unico asterisco ""*"" de comodin es soportado) Como por ejemplo:
 <cross-domain-policy>
 <allow-access-from domain=""*"" />
 </cross-domain-policy>
 
-Esta practica es correcta para servidores publicos, pero no deberia ser usada en servidores que se encuentran tras un firewall porque puede permitir acceso a areas protejidas. No deberia ser usada para sitios que requieren autenticacion en forma de contraseñas o cookies. 
+Esta practica es correcta para servidores publicos, pero no deberia ser usada en servidores que se encuentran tras un firewall porque puede permitir acceso a areas protejidas. No deberia ser usada para sitios que requieren autenticacion en forma de contraseñas o cookies.
 ","Detenidamente evaluar que sitios deben tener permitido el acceso cross-dominio. Considerar la topologia de red y todos los mecanismos de autenticacion afectados por la configuracion o implementacion de la politica cross-domain.
 ",medium,
 ,EN-BREACH attack,"This web application is potentially vulnerable to the BREACH attack.
-An attacker with the ability to: 
-Inject partial chosen plaintext into a victim's requests 
-Measure the size of encrypted traffic 
-can leverage information leaked by compression to recover targeted parts of the plaintext. 
+An attacker with the ability to:
+Inject partial chosen plaintext into a victim's requests
+Measure the size of encrypted traffic
+can leverage information leaked by compression to recover targeted parts of the plaintext.
 
-BREACH (Browser Reconnaissance & Exfiltration via Adaptive Compression of Hypertext) is a category of vulnerabilities and not a specific instance affecting a specific piece of software. To be vulnerable, a web application must: 
+BREACH (Browser Reconnaissance & Exfiltration via Adaptive Compression of Hypertext) is a category of vulnerabilities and not a specific instance affecting a specific piece of software. To be vulnerable, a web application must:
 
-Be served from a server that uses HTTP-level compression 
-Reflect user-input in HTTP response bodies 
-Reflect a secret (such as a CSRF token) in HTTP response bodies 
+Be served from a server that uses HTTP-level compression
+Reflect user-input in HTTP response bodies
+Reflect a secret (such as a CSRF token) in HTTP response bodies
 
 
 This alert was issued because the following conditions were met:
@@ -2801,15 +2801,15 @@ The page content is served via HTTPS
 The server is using HTTP-level compression
 URL encoded GET input next was reflected into the HTTP response body.
 HTTP response body contains a secret named csrfmiddlewaretoken
-","The mitigations are ordered by effectiveness (not by their practicality - as this may differ from one application to another). 
+","The mitigations are ordered by effectiveness (not by their practicality - as this may differ from one application to another).
 
-Disabling HTTP compression 
-Separating secrets from user input 
-Randomizing secrets per request 
-Masking secrets (effectively randomizing by XORing with a random secret per request) 
-Protecting vulnerable pages with CSRF 
-Length hiding (by adding random number of bytes to the responses) 
-Rate-limiting the requests 
+Disabling HTTP compression
+Separating secrets from user input
+Randomizing secrets per request
+Masking secrets (effectively randomizing by XORing with a random secret per request)
+Protecting vulnerable pages with CSRF
+Length hiding (by adding random number of bytes to the responses)
+Rate-limiting the requests
 
 More information http://breachattack.com/",unclassified,
 ,ES-Archivos de backup en servidor de producción,"La aplicación web tiene multiples archivos de buckup disponibles para ser descargados, los cuales brindan información de la tecnología que se utiliza en el sitio, así como código fuente de las aplicaciones, nombres de usuarios, rutas de acceso y multiple información sensible del mismo.
@@ -2821,9 +2821,9 @@ More information http://breachattack.com/",unclassified,
 ",Evitar exponer toda información sensible del sistema,high,
 ,ES-Revelación de IP interno,"La aplicación expone ip/s interno, con lo cual si por algun vector de ataque un atacante logra acceder al servidor o servicio podría continuar la explotación por dicho vector
 ",Evitar exponer toda información sensible y privada del sistemadel sistema,low,
-,ES-Archivos e información de desarollo en ambientes productivos,"Podemos ver código de programacion, con ejemplos concretos del funcionamiento interno y 
-de la lógica utilizada a la hora de programar, dejando en evidencia 
-informacion como nombres de usuarios, email, dni, telefonos, etc 
+,ES-Archivos e información de desarollo en ambientes productivos,"Podemos ver código de programacion, con ejemplos concretos del funcionamiento interno y
+de la lógica utilizada a la hora de programar, dejando en evidencia
+informacion como nombres de usuarios, email, dni, telefonos, etc
 ",Evitar exponer toda información sensible y privada del sistemadel sistema,high,
 ,ES-Sentencias SQL sin Prepared Statement,"Se detecto que se utilizan una mala implementacion de sentencias SQL concatenando las variables manualmente pudiendo un atacante realizar ataques de SQL Injection
 ","Utilizar para la sentencia de SQL Prepared Statement
@@ -2834,8 +2834,6 @@ https://www.owasp.org/index.php/Query_Parameterization_Cheat_Sheet#Prepared_Stat
 https://www.owasp.org/index.php/Testing_for_MySQL#Read_from_a_File",high,
 ,ES-Servidor productivo y desarrollo,"Por lo que pudimos observar este servidor sirve tanto para produccion como desarrollo, contiene muchisima informacion y pruebas que deberian ser eliminadas.
 ","Eliminar el contenido de desarrollo, dejar solo lo necesario para el entorno productivo",high,
-,ES-Servidor productivo y desarrollo,"Por lo que pudimos observar este servidor sirve tanto para produccion como desarrollo, contiene muchisima informacion y pruebas que deberian ser eliminadas.
-","Eliminar el contenido de desarrollo, dejar solo lo necesario para el entorno productivo",high,
 ,EN-Internal IP Address Disclosure,"A string matching an internal IPv4 address was found on this page. This may disclose information about the IP addressing scheme of the internal network. This information can be used to conduct further attacks.
 ",Prevent this information from being displayed to the user,low,
 ,ES-Internal IP Address Disclosure,"Una cadena coincidente con una direccion interna de IPv4 fue encontrada en esta pagina. Esto lleva a divulgar informacion sensible acerca del esquema de la red interna. Esta informacion puede ser usada para generar ataques especificos.
@@ -2844,7 +2842,7 @@ https://www.owasp.org/index.php/Testing_for_MySQL#Read_from_a_File",high,
 ",Set the Page.EnableViewStateMac property to true on any pages where the ViewState is not currently signed.,low,
 ,ES-Cisco ASA Error,"El Cisco ASA es vulnerable a un Information Leak (CVE-2014-3392), un atacante podria obtener credenciales em base a un error.
 ",Actualizar a la ultima version del firmware del CISCO ASA,high,
-,ES-Listado de directorios,"Evitar listar directorios, muchas veces a partir de aqui se pueden realizar distintos vectores de ataques, por claves almacenadas en archivos ocultos o por tener acceso a archivos de configuracion. 
+,ES-Listado de directorios,"Evitar listar directorios, muchas veces a partir de aqui se pueden realizar distintos vectores de ataques, por claves almacenadas en archivos ocultos o por tener acceso a archivos de configuracion.
 ","Evitar listar directorios, es recomendable que se desabiliten o se resguarden con algun tipo de autenticacion.",low,
 ,EN-Cifrado Debil (SSL weak ciphers),"El host remoto es compatible con el uso de sistemas de cifrado SSL que ofrecen ya sea cifrado debil o sin cifrado en absoluto.
 Esta vulnerabilidad afecta Server.

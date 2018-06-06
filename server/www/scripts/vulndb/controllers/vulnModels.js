@@ -170,36 +170,6 @@ angular.module('faradayApp')
                     });
                 };
 
-                $scope.importFromWorkspace = function() {
-                    var modal = $uibModal.open({
-                        templateUrl: 'scripts/vulndb/partials/importFromWs.html',
-                        controller: 'vulnModelModalImportFromWs',
-                        size: 'sm',
-                        resolve: { }
-                    });
-
-                    modal.result.then(function(data) {
-                        document.body.style.cursor='wait';
-                        ServerAPI.getVulns(data).then(
-                            function(vulns_data) {
-                                $scope.disabledClick = true;
-                                var vulns = vulns_data.data.vulnerabilities;
-                                vulns.forEach(function(vuln) {
-                                    var relevant_vuln = {};
-                                    relevant_vuln.name = vuln.value.name;
-                                    relevant_vuln.description = vuln.value.desc;
-                                    relevant_vuln.resolution = vuln.value.resolution;
-                                    relevant_vuln.exploitation = vuln.value.severity;
-                                    relevant_vuln.references = vuln.value.refs;
-                                    $scope.insert(relevant_vuln);
-                                });
-                            }).then(function() {
-                                document.body.style.cursor = "default";
-                                $scope.disabledClick = false;
-                            });
-                        });
-                };
-
                 $scope.delete = function() {
                     var selected = $scope.selectedModels();
 

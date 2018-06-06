@@ -23,11 +23,12 @@ class TestVulnPersistanceModelsFuncions(GenericAPITest):
 
     @responses.activate
     @patch('config.configuration.getInstanceConfiguration')
+    @patch('persistence.server.server.SERVER_URL', 'http://localhost:5985')
     def test_persistence_server_update_vuln(self, getInstanceConfigurationMock):
         fo = self.first_object
         conf_mock = Mock()
         getInstanceConfigurationMock.return_value = conf_mock
-        port = 5984
+        port = 5985
         conf_mock.getDBSessionCookies.return_value = None
         conf_mock.getAPIUrl.return_value = 'http://localhost:{0}'.format(port)
         conf_mock.getServerURI.return_value = 'http://localhost:{0}'.format(port)
@@ -97,12 +98,13 @@ class TestVulnWebPersistanceModelsFuncions(GenericAPITest):
 
     @responses.activate
     @patch('config.configuration.getInstanceConfiguration')
+    @patch('persistence.server.server.SERVER_URL', 'http://localhost:5985')
     def test_persistence_server_update_vuln_web(self, getInstanceConfigurationMock):
         fo = self.first_object
 
         conf_mock = Mock()
         getInstanceConfigurationMock.return_value = conf_mock
-        port = 5984
+        port = 5985
         conf_mock.getDBSessionCookies.return_value = None
         conf_mock.getAPIUrl.return_value = 'http://localhost:{0}'.format(port)
         conf_mock.getServerURI.return_value = 'http://localhost:{0}'.format(port)

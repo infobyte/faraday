@@ -27,7 +27,7 @@ import urllib
 import os
 import json
 import logging
-import ConfigParser
+from ConfigParser import SafeConfigParser
 
 try:
     import urlparse
@@ -77,7 +77,6 @@ LOCAL_CONFIG_FILE = os.path.expanduser(
 
 
 def _conf():
-
     from config.configuration import getInstanceConfiguration
     CONF = getInstanceConfiguration()
 
@@ -94,7 +93,7 @@ def _conf():
 
 def _get_base_server_url():
     if FARADAY_UPLOAD_REPORTS_WEB_COOKIE:
-        parser = ConfigParser.SafeConfigParser()
+        parser = SafeConfigParser()
         parser.read(LOCAL_CONFIG_FILE)
         server_url = 'http://{0}:{1}'.format(
                 parser.get('faraday_server', 'bind_address'),

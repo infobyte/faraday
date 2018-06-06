@@ -32,6 +32,7 @@ TBA:
 * Add new screenshot fplugin which takes a screenshot of the ip:ports of a given protocol
 * Add fix for net sparker regular and cloud fix on severity
 * Removed Chat feature (data is kept inside notes)
+* Plugin reports now can be imported in the server, from the Web UI
 
 November 17, 2017:
 ---

@@ -4,10 +4,8 @@
 
 <section id="main" class="seccion clearfix">
     <div class="right-main">
+        <div ng-controller="headerCtrl" ng-include="'scripts/commons/partials/header.html'"></div>
       <div id="reports-main" class="fila clearfix">
-        <h2 class="ws-label">
-            <span id="ws-name" title="Licenses">Licenses ({{licenses.length}})</span><!-- WS name -->
-        </h2><!-- .ws-label -->
         <div class="reports col-md-12 col-sm-12 col-xs-12">
             <div class="button-control justify-flex-start col-md-12 col-sm-12 col-xs-12">
                 <div class="control-wrapper control-new">

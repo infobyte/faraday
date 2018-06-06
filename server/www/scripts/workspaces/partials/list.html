@@ -48,6 +48,8 @@
                             <th class="ui-grid-cell-contents ui-grid-header-cell">End Date</th>
                             <th class="ui-grid-cell-contents ui-grid-header-cell">Vulns</th>
                             <th class="ui-grid-cell-contents ui-grid-header-cell">Hosts</th>
+
+                            <th class="ui-grid-cell-contents ui-grid-header-cell">Last Modified</th>
                             <th class="ui-grid-cell-contents ui-grid-header-cell">Services</th>
                         </tr>
                     </thead>
@@ -63,6 +65,7 @@
                             <td class="ui-grid-cell-contents" ng-bind="ws.duration.end_date | amUtc | amDateFormat:'MM/DD/YYYY'"></td>
                             <td class="ui-grid-cell-contents"><a href="#/status/ws/{{ws.name}}">{{objects[ws.name]['total_vulns']}}</a></td>
                             <td class="ui-grid-cell-contents"><a href="#/hosts/ws/{{ws.name}}">{{objects[ws.name]['hosts']}}</a></td>
+                            <td class="ui-grid-cell-contents" ng-bind="ws.last_modified | amUtc | amDateFormat:'MM/DD/YYYY'"></td>
                             <td class="ui-grid-cell-contents" ng-bind="objects[ws.name]['services']"></td>
                         </tr>
                     </tbody>

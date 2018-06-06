@@ -20,7 +20,6 @@ from persistence.server.server import _conf, FARADAY_UP, SERVER_URL
 from server.commands.initdb import InitDB
 from server.commands.faraday_schema_display import DatabaseSchema
 from server.commands.app_urls import show_all_urls
-from server.commands.reset_db import reset_db_all
 from server.commands.reports import import_external_reports
 from server.commands.status_check import full_status_check
 from server.models import db, User
@@ -57,11 +56,6 @@ def process_reports(debug, workspace, polling):
         except ConnectionError:
             print('Can\'t connect to {0}. Please check if the server is running.'.format(url))
 
-
-@click.command()
-def reset_db():
-    with app.app_context():
-        reset_db_all()
 
 @click.command()
 def show_urls():
@@ -129,7 +123,7 @@ def createsuperuser(username, email, password):
                                        email=email,
                                        password=password,
                                        role='admin',
-                                       is_ldap=False)
+                                       is_ldap=False)   
         db.session.commit()
         click.echo(click.style(
             'User {} created successfully!'.format(username),
@@ -137,7 +131,6 @@ def createsuperuser(username, email, password):
 
 
 cli.add_command(process_reports)
-cli.add_command(reset_db)
 cli.add_command(show_urls)
 cli.add_command(faraday_schema_display)
 cli.add_command(initdb)

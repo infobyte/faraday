@@ -86,6 +86,7 @@
     background-color: #f1f1f1;
 }
 
+
 .status-report-grid .status.opened {
     background-color: rgba(223, 57, 54, .4) !important;
     text-align: center;
@@ -270,3 +271,14 @@ button.btn-new {
     margin-right: 16px;
 }
 
+
+.status-report-grid .ui-grid-row-selected .ui-grid-cell .status {
+    color: white !important;
+    background-color:transparent !important;
+}
+
+
+.status-report-grid .ui-grid-row-selected .ui-grid-cell .status span {
+    color: white !important;
+    background-color:transparent !important;
+}

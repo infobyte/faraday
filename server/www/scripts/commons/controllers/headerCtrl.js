@@ -4,16 +4,23 @@
 
 angular.module('faradayApp')
     .controller('headerCtrl',
-        ['$scope', '$routeParams', '$location', 'dashboardSrv', 'workspacesFact', 'vulnsManager',
-        function($scope, $routeParams, $location, dashboardSrv, workspacesFact, vulnsManager) {
+        ['$scope', '$routeParams', '$location', '$cookies', 'dashboardSrv', 'workspacesFact', 'vulnsManager',
+        function($scope, $routeParams, $location, $cookies, dashboardSrv, workspacesFact, vulnsManager) {
+            $scope.confirmed = ($cookies.get('confirmed') == undefined) ? false : JSON.parse($cookies.get('confirmed'));
 
             $scope.showSwitcher = function() {
                 var noSwitcher = ["", "home", "login", "index", "vulndb", "credentials", "workspaces", "users", "licenses"];
                 return noSwitcher.indexOf($scope.component) < 0;
             };
-            
+
             $scope.getVulnsNum = function() {
                 return vulnsManager.getVulnsNum();
+            };
+
+            $scope.toggleConfirmed = function() {
+                $scope.confirmed = !$scope.confirmed;
+                dashboardSrv.setConfirmed($scope.confirmed);
+                dashboardSrv.updateData();
             };
 
             init = function(name) {

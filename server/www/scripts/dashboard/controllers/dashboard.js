@@ -16,17 +16,13 @@ angular.module('faradayApp')
                 workspacesFact.list().then(function(wss) {
                     $scope.workspaces = wss;
                 });
-                
+
                 dashboardSrv.setConfirmedFromCookie();
                 dashboardSrv.startTimer();
             };
 
             $scope.navigate = function(route) {
                 $location.path(route);
-            };
-
-            $scope.toggleConfirmed = function() {
-                dashboardSrv.setConfirmed();
             };
 
             $scope.$on('$destroy', function(){

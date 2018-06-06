@@ -1,3 +1,8 @@
+.dashboard .filter-wrapper .confirm-button {
+    position: relative;
+    bottom: 4px;
+}
+
 .dashboard .faraday-page-header {
   margin-bottom: 0px;
 }

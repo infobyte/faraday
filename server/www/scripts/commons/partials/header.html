@@ -1,7 +1,7 @@
 <div class="faraday-page-header" class="clearfix">
     <div ng-if="showSwitcher()" class="workspace-selector-wrapper">
         <div class="switcher-wrapper">
-            <div class="dropdown">  
+            <div class="dropdown">
                 <button id="workspaceSwitcher" type="button" class="btn btn-default dropdown-toggle workspace-switcher" data-toggle="dropdown" title="Change current workspace">
                     <div class="img-wrapper" ng-switch="location">
                         <img ng-switch-when="dashboard" src="images/ico-dashboard-menu.svg" class="icon" alt="Dashboard"/>
@@ -54,6 +54,11 @@
         <button type="button" class="btn" title="">
             <span class="glyphicon glyphicon-cog"></span>
         </button>
+        <span ng-if="location === 'dashboard'" class="control-wrapper filter-wrapper">
+            <button type="button" class="btn confirm-button" title="{{ confirmed === true ? 'All vulns' : 'Confirmed vulns' }}" ng-click="toggleConfirmed()">
+                <img src="{{ confirmed === true ? 'images/icon-toolbar-confirmed-on.svg' : 'images/icon-toolbar-confirmed-off.svg'}}" class="confirm-icon" ng-style="{ 'opacity': (confirmed === true) ? '1' : '0.7' }" />
+            </button>
+        </span>
     </div>
     <div class="flex-spacer"></div>
     <div class="user-menu-wrapper">

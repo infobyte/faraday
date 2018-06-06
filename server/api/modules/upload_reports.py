@@ -14,7 +14,9 @@ import logging
 import model.api
 
 from flask import request, abort, jsonify, Blueprint, session, make_response
+from flask_wtf.csrf import validate_csrf
 from werkzeug.utils import secure_filename
+from wtforms import ValidationError
 
 from server.utils.logger import get_logger
 from server.utils.web import gzipped
@@ -96,6 +98,11 @@ def file_upload(workspace=None):
 
     if 'file' not in request.files:
         abort(400)
+
+    try:
+        validate_csrf(request.form.get('csrf_token'))
+    except ValidationError:
+        abort(403)
 
     report_file = request.files['file']
 

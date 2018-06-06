@@ -13,7 +13,15 @@ import random
 import logging
 import model.api
 
-from flask import request, abort, jsonify, Blueprint, session, make_response
+from flask import (
+    redirect,
+    request,
+    abort,
+    jsonify,
+    Blueprint,
+    session,
+    make_response
+)
 from flask_wtf.csrf import validate_csrf
 from werkzeug.utils import secure_filename
 from wtforms import ValidationError
@@ -125,5 +133,6 @@ def file_upload(workspace=None):
     UPLOAD_REPORTS_QUEUE.put((workspace, file_path, request.cookies))
     command_id = UPLOAD_REPORTS_CMD_QUEUE.get()
     if command_id:
-        return jsonify({"status": "processing", "command_id": command_id})
+        # return jsonify({"status": "processing", "command_id": command_id})
+        return redirect('/#/dashboard/ws/' + workspace)
     abort(make_response(jsonify(message="Invalid file."), 400))

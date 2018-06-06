@@ -78,8 +78,16 @@
   padding-left: 5px;
 }
 
+.pl {
+  padding-left: 15px;
+}
+
 .pr-sm {
   padding-right: 5px;
+}
+
+.pr {
+  padding-right: 15px !important;
 }
 
 .progress-bar-tall {

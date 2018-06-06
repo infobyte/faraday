@@ -32,6 +32,14 @@ LOCAL_REPORTS_FOLDER = os.path.expanduser(
 CONFIG_FILES = [DEFAULT_CONFIG_FILE, LOCAL_CONFIG_FILE]
 WS_BLACKLIST = CONSTANTS.CONST_BLACKDBS
 
+if not os.path.exists(LOCAL_REPORTS_FOLDER):
+    try:
+        os.makedirs(LOCAL_REPORTS_FOLDER)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+
+
 
 def copy_default_config_to_local():
 
@@ -47,13 +55,6 @@ def copy_default_config_to_local():
 
     # Copy default config file into faraday local config
     shutil.copyfile(DEFAULT_CONFIG_FILE, LOCAL_CONFIG_FILE)
-
-    if not os.path.exists(LOCAL_REPORTS_FOLDER):
-        try:
-            os.makedirs(LOCAL_REPORTS_FOLDER)
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
 
     from server.utils.logger import get_logger
     get_logger(__name__).info(u"Local faraday-server configuration created at {}".format(LOCAL_CONFIG_FILE))

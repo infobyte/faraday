@@ -5,6 +5,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 from server.models import db
+from server.web import app
 
 def reset_db_all():
     # It might be  required to do a cascade delete to correctly the
@@ -18,3 +19,22 @@ def reset_db_all():
     db.drop_all()
     db.create_all()
 
+
+def reset_db():
+    with app.app_context():
+        reset_db_all()
+
+
+if __name__ == '__main__':
+    option = False
+    while True:
+        print("You are going to delete all info from the DB, this is not undoable, are you sure to follow? [Y/N]")
+        option = raw_input()
+
+        if option.upper() in ['Y', 'N', 'YES', 'NO']:
+            break
+        else:
+            print(str(option) + " option is invalid.")
+
+    if option.upper() in ['Y', 'YES']:
+        reset_db()

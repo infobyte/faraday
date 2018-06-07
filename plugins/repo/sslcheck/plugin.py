@@ -12,6 +12,8 @@ import re
 import os
 import sys
 import random
+import tempfile
+
 
 try:
     import xml.etree.cElementTree as ET
@@ -111,7 +113,13 @@ class SslcheckPlugin(core.PluginBase):
         else:
 
             if not os.path.exists(self._output_file_path):
-                return False
+                if output:
+                    temp_file = tempfile.NamedTemporaryFile()
+                    temp_file.write(output)
+                    temp_file.flush()
+                    self._output_file_path = temp_file.name
+                else:
+                    return False
             parser = SslcheckParser(self._output_file_path)
             # print parser.result
             # print parser.hostinfo

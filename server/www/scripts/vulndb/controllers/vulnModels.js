@@ -10,6 +10,7 @@ angular.module('faradayApp')
                 $scope.search = '';
                 $scope.currentPage;
                 $scope.pageSize = 20;
+                $scope.loading = false;
 
                 var init = function() {
                     // table stuff
@@ -123,6 +124,7 @@ angular.module('faradayApp')
                                 // not completed doing whatever is defined on step
                                 var length = datas.length;
                                 var counter = 0;
+                                $scope.loading = true;
                                 datas.forEach(function(data) {
                                     $scope.insert(data).then(function() {
                                         counter = counter + 1;
@@ -133,6 +135,7 @@ angular.module('faradayApp')
                                                 $scope.models = vulnModelsManager.models;
                                             });
 
+                                            $scope.loading = false;
                                             document.body.style.cursor = "default";
                                             $scope.disabledClick = false;
                                         }

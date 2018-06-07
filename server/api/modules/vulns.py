@@ -294,6 +294,16 @@ class ServiceFilter(Filter):
         )
 
 
+class CustomILike(operators.Operator):
+    """A filter operator that puts a % in the beggining and in the
+    end of the search string to force a partial search"""
+
+    def __call__(self, query, model, attr, value):
+        column = getattr(model, attr)
+        condition = column.ilike('%' + value + '%')
+        return query.filter(condition)
+
+
 class VulnerabilityFilterSet(FilterSet):
     class Meta(FilterSetMeta):
         model = VulnerabilityWeb  # It has all the fields
@@ -314,11 +324,11 @@ class VulnerabilityFilterSet(FilterSet):
             "ease_of_resolution", "service_id",
         )
 
-        default_operator = operators.ILike
+        default_operator = CustomILike
         column_overrides = {
             field: _strict_filtering for field in strict_fields
         }
-        operators = (operators.ILike, operators.Equal)
+        operators = (CustomILike, operators.Equal)
     target = TargetFilter(fields.Str())
     type = TypeFilter(fields.Str(validate=[OneOf(['Vulnerability',
                                                   'VulnerabilityWeb'])]))

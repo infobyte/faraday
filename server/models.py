@@ -836,7 +836,8 @@ class Vulnerability(VulnerabilityGeneric):
 
     @declared_attr
     def service_id(cls):
-        return VulnerabilityGeneric.__table__.c.get('service_id', Column(Integer, db.ForeignKey('service.id')))
+        return VulnerabilityGeneric.__table__.c.get('service_id', Column(Integer, db.ForeignKey('service.id'),
+                                                                         index=True))
 
     @declared_attr
     def service(cls):

@@ -5,6 +5,7 @@ colorama>=0.3.9
 Flask-SQLAlchemy>=2.3.1
 flask-classful>=0.14
 Flask-Security>=3.0.0
+flask-session>=0.3.1
 flask<1.0
 IPy>=0.83
 marshmallow==2.15.3

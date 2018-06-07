@@ -10,16 +10,20 @@ import subprocess
 import sqlalchemy
 from colorama import init, Fore
 
-import server.config
-import server.couchdb
-import server.utils.logger
-from server.models import db, Workspace, User
-from server.utils import daemonize
-from server.web import app
-from utils import dependencies
-from utils.user_input import query_yes_no
-from faraday import FARADAY_BASE
-
+try:
+    import server.config
+    import server.couchdb
+    import server.utils.logger
+    from server.models import db, Workspace, User
+    from server.utils import daemonize
+    from server.web import app
+    from utils import dependencies
+    from utils.user_input import query_yes_no
+    from faraday import FARADAY_BASE
+except ImportError as ex:
+    print(ex)
+    print('Missing dependencies.\nPlease execute: pip install -r requirements_server.txt')
+    sys.exit(1)
 logger = server.utils.logger.get_logger(__name__)
 init()
 

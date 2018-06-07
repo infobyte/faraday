@@ -116,7 +116,7 @@
                 </div>
             </div>
             <div class="reports col-md-12 col-sm-12 col-xs-12">
-                
+                <i ng-if="loading" class="fa fa-spinner fa-spin loading-spinner"></i>
                 <div ui-grid="gridOptions" ui-grid-grouping ui-grid-selection ui-grid-pagination ui-grid-pinning ui-grid-resize-columns class="grid status-report-grid" ng-style="{'height' : gridHeight }"></div>
 
                 <div id="counter">

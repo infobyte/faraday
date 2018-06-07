@@ -54,7 +54,7 @@ angular.module("faradayApp")
             $scope.vulns = [];
             $scope.selected = false;
             $scope.vulnModelsManager = vulnModelsManager;
-
+            $scope.loading = true;
             $scope.gridOptions = {
                 multiSelect: true,
                 enableSelectAll: true,
@@ -976,6 +976,7 @@ angular.module("faradayApp")
 
         var loadVulns = function() {
             delete searchFilter.confirmed;
+            $scope.loading = true;
             if ($scope.confirmed)
                 searchFilter.confirmed = true;
             // load all vulnerabilities
@@ -986,6 +987,7 @@ angular.module("faradayApp")
                                   paginationOptions.sortColumn,
                                   paginationOptions.sortDirection)
             .then(function(response) {
+                $scope.loading = false;
                 $scope.gridOptions.data = response.vulnerabilities;
                 $scope.gridOptions.totalItems = response.count;
 

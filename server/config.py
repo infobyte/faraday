@@ -19,6 +19,8 @@ LOGGING_LEVEL = INFO
 
 FARADAY_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 FARADAY_SERVER_SESSIONS_DIR = os.path.join(CONSTANTS.CONST_FARADAY_HOME_PATH, 'session')
+if not os.path.exists(CONSTANTS.CONST_FARADAY_HOME_PATH):
+    os.mkdir(CONSTANTS.CONST_FARADAY_HOME_PATH)
 if not os.path.exists(FARADAY_SERVER_SESSIONS_DIR):
     # Temporary hack, remove me
     os.mkdir(FARADAY_SERVER_SESSIONS_DIR)

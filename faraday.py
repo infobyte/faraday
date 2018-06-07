@@ -66,6 +66,8 @@ FARADAY_DEFAULT_PORT_XMLRPC = 9876
 FARADAY_DEFAULT_PORT_REST = 9977
 FARADAY_DEFAULT_HOST = "localhost"
 
+logger = getLogger(__name__)
+
 
 def getParserArgs():
     """Parser setup for faraday launcher arguments.

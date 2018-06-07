@@ -26,6 +26,7 @@ from flask_wtf.csrf import validate_csrf
 from werkzeug.utils import secure_filename
 from wtforms import ValidationError
 
+from faraday import setupPlugins
 from server.utils.logger import get_logger
 from server.utils.web import gzipped
 
@@ -41,19 +42,20 @@ from server.models import User
 from persistence.server import server
 
 from config.configuration import getInstanceConfiguration
-CONF = getInstanceConfiguration()
 
-upload_api = Blueprint('upload_reports', __name__)
+CONF = getInstanceConfiguration()
 logger = logging.getLogger(__name__)
 UPLOAD_REPORTS_QUEUE = MultiProcessingQueue()
 UPLOAD_REPORTS_CMD_QUEUE = MultiProcessingQueue()
+upload_api = Blueprint('upload_reports', __name__)
+
 
 
 class RawReportProcessor(Thread):
     def __init__(self):
 
         super(RawReportProcessor, self).__init__()
-
+        setupPlugins()
         self.pending_actions = Queue()
 
         plugin_manager = PluginManager(os.path.join(CONF.getConfigPath(), "plugins"))
@@ -94,6 +96,9 @@ class RawReportProcessor(Thread):
                 time.sleep(0.1)
             except KeyboardInterrupt as ex:
                 break
+            except Exception as ex:
+                logger.exception(ex)
+                continue
 
 
 @gzipped

@@ -18,6 +18,10 @@ from config.configuration import getInstanceConfiguration
 LOGGING_LEVEL = INFO
 
 FARADAY_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+FARADAY_SERVER_SESSIONS_DIR = os.path.join(CONSTANTS.CONST_FARADAY_HOME_PATH, 'session')
+if not os.path.exists(FARADAY_SERVER_SESSIONS_DIR):
+    # Temporary hack, remove me
+    os.mkdir(FARADAY_SERVER_SESSIONS_DIR)
 FARADAY_SERVER_PID_FILE = os.path.join(
     CONSTANTS.CONST_FARADAY_HOME_PATH, 'faraday-server.pid')
 REQUIREMENTS_FILE = os.path.join(FARADAY_BASE, 'requirements_server.txt')
@@ -26,12 +30,23 @@ VERSION_FILE = os.path.join(FARADAY_BASE, CONSTANTS.CONST_VERSION_FILE)
 REPORTS_VIEWS_DIR = os.path.join(FARADAY_BASE, 'views/reports')
 LOCAL_CONFIG_FILE = os.path.expanduser(
     os.path.join(CONSTANTS.CONST_FARADAY_HOME_PATH, 'config/server.ini'))
+LOCAL_REPORTS_FOLDER = os.path.expanduser(
+    os.path.join(CONSTANTS.CONST_FARADAY_HOME_PATH, 'uploaded_reports/'))
 
 CONFIG_FILES = [DEFAULT_CONFIG_FILE, LOCAL_CONFIG_FILE]
 WS_BLACKLIST = CONSTANTS.CONST_BLACKDBS
 
+if not os.path.exists(LOCAL_REPORTS_FOLDER):
+    try:
+        os.makedirs(LOCAL_REPORTS_FOLDER)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+
+
 
 def copy_default_config_to_local():
+
     if os.path.exists(LOCAL_CONFIG_FILE):
         return
 

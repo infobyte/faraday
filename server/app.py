@@ -26,6 +26,7 @@ from flask_security import (
     Security,
     SQLAlchemyUserDatastore,
 )
+from flask.ext.session import Session
 from nplusone.ext.flask_sqlalchemy import NPlusOne
 from depot.manager import DepotManager
 
@@ -64,6 +65,7 @@ def register_blueprints(app):
     from server.api.modules.workspaces import workspace_api
     from server.api.modules.handlers import handlers_api
     from server.api.modules.comments import comment_api
+    from server.api.modules.upload_reports import upload_api
     from server.api.modules.websocket_auth import websocket_auth_api
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(credentials_api)
@@ -77,6 +79,7 @@ def register_blueprints(app):
     app.register_blueprint(workspace_api)
     app.register_blueprint(handlers_api)
     app.register_blueprint(comment_api)
+    app.register_blueprint(upload_api)
     app.register_blueprint(websocket_auth_api)
 
 
@@ -162,6 +165,9 @@ def create_app(db_connection_string=None, testing=None):
     app.config['SECURITY_CHANGEABLE'] = True
     app.config['SECURITY_SEND_PASSWORD_CHANGE_EMAIL'] = False
 
+    app.config['SESSION_TYPE'] = 'filesystem'
+    app.config['SESSION_FILE_DIR'] = server.config.FARADAY_SERVER_SESSIONS_DIR
+
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SQLALCHEMY_RECORD_QUERIES'] = True
     # app.config['SQLALCHEMY_ECHO'] = True
@@ -201,6 +207,7 @@ def create_app(db_connection_string=None, testing=None):
 
     from server.models import db
     db.init_app(app)
+    Session(app)
 
     # Setup Flask-Security
     app.user_datastore = SQLAlchemyUserDatastore(

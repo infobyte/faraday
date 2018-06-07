@@ -10,6 +10,9 @@ New features in the latest update
 
 TBA:
 ---
+* Allow to upload report file from external tools from the web
+* Fix sshcheck import file from GTK
+* Add reconng plugin
 * CouchDB was replaced by PostgreSQL :)
 * Host object changed, now the name property is called ip
 * Interface object was removed
@@ -32,6 +35,7 @@ TBA:
 * Add new screenshot fplugin which takes a screenshot of the ip:ports of a given protocol
 * Add fix for net sparker regular and cloud fix on severity
 * Removed Chat feature (data is kept inside notes)
+* Plugin reports now can be imported in the server, from the Web UI
 
 November 17, 2017:
 ---

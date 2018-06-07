@@ -20,12 +20,9 @@ angular.module('faradayApp')
 
                     vulnModelsManager.get()
                         .then(function() {
+                            $scope.totalModels = vulnModelsManager.totalNumberOfModels;
                             $scope.models = vulnModelsManager.models;
                             $scope.loaded_models = true;
-                        });
-                    vulnModelsManager.getSize()
-                        .then(function() {
-                            $scope.totalModels = vulnModelsManager.totalNumberOfModels;
                         });
 
                     $scope.$watch(function() {
@@ -130,6 +127,12 @@ angular.module('faradayApp')
                                     $scope.insert(data).then(function() {
                                         counter = counter + 1;
                                         if (length == counter) {
+
+                                            vulnModelsManager.get().then(function() {
+                                                $scope.totalModels = vulnModelsManager.totalNumberOfModels;
+                                                $scope.models = vulnModelsManager.models;
+                                            });
+
                                             document.body.style.cursor = "default";
                                             $scope.disabledClick = false;
                                         }

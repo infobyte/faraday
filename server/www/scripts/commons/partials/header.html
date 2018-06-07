@@ -56,7 +56,8 @@
         </button>
         <span ng-if="location === 'dashboard'" class="control-wrapper filter-wrapper">
             <button type="button" class="btn confirm-button" title="{{ confirmed === true ? 'All vulns' : 'Confirmed vulns' }}" ng-click="toggleConfirmed()">
-                <img src="{{ confirmed === true ? 'images/icon-toolbar-confirmed-on.svg' : 'images/icon-toolbar-confirmed-off.svg'}}" class="confirm-icon" ng-style="{ 'opacity': (confirmed === true) ? '1' : '0.7' }" />
+                <img ng-if="confirmed === true" src="images/icon-toolbar-confirmed-on.svg" class="confirm-icon" ng-style="{ 'opacity': '1' }" />
+                <img ng-if="confirmed !== true" src="images/icon-toolbar-confirmed-off.svg" class="confirm-icon" ng-style="{ 'opacity': '0.7' }" />
             </button>
         </span>
     </div>

@@ -85,14 +85,14 @@ angular.module('faradayApp')
                     ids.forEach(function(id) {
                         var deferred = $q.defer();
 
-                        vulnModelsManager.delete(id)
+                        var promise = vulnModelsManager.delete(id)
                             .then(function(resp) {
                                 deferred.resolve(resp);
                             }, function(message) {
                                 deferred.reject(message);
                             });
 
-                        confirmations.push(deferred);
+                        confirmations.push(promise);
                     });
 
                     return $q.all(confirmations);
@@ -204,7 +204,13 @@ angular.module('faradayApp')
                                 }
                             }
                         }).result.then(function() {
-                            $scope.remove(selected);
+                            $scope.remove(selected).then(function(){
+
+                                vulnModelsManager.get().then(function() {
+                                    $scope.totalModels = vulnModelsManager.totalNumberOfModels;
+                                    $scope.models = vulnModelsManager.models;
+                                });
+                            });
                         }, function() {
                             //dismised, do nothing
                         });
@@ -228,12 +234,18 @@ angular.module('faradayApp')
 
                     modal.result
                         .then(function(data) {
-                            $scope.insert(data);
+                            $scope.insert(data).then(function() {
+
+                                vulnModelsManager.get().then(function() {
+                                    $scope.totalModels = vulnModelsManager.totalNumberOfModels;
+                                    $scope.models = vulnModelsManager.models;
+                                });
+                            });
                         });
                 };
 
                 $scope.update = function(model, data) {
-                    vulnModelsManager.update(model, data)
+                    return vulnModelsManager.update(model, data)
                         .catch(function(message) {
                             commonsFact.errorDialog(message);
                         });
@@ -254,7 +266,14 @@ angular.module('faradayApp')
                         });
 
                         modal.result.then(function(data) {
-                            $scope.update(model, data);
+                            $scope.update(model, data).then(function() {
+
+                                vulnModelsManager.get().then(function() {
+                                    $scope.totalModels = vulnModelsManager.totalNumberOfModels;
+                                    $scope.models = vulnModelsManager.models;
+                                });
+
+                            });
                         });
                     } else {
                         commonsFact.errorDialog("No Vulnerability Models were selected to edit.");

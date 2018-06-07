@@ -26,6 +26,7 @@ from flask_security import (
     Security,
     SQLAlchemyUserDatastore,
 )
+from flask.ext.session import Session
 from nplusone.ext.flask_sqlalchemy import NPlusOne
 from depot.manager import DepotManager
 
@@ -164,6 +165,9 @@ def create_app(db_connection_string=None, testing=None):
     app.config['SECURITY_CHANGEABLE'] = True
     app.config['SECURITY_SEND_PASSWORD_CHANGE_EMAIL'] = False
 
+    app.config['SESSION_TYPE'] = 'filesystem'
+    app.config['SESSION_FILE_DIR'] = server.config.FARADAY_SERVER_SESSIONS_DIR
+
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SQLALCHEMY_RECORD_QUERIES'] = True
     # app.config['SQLALCHEMY_ECHO'] = True
@@ -203,6 +207,7 @@ def create_app(db_connection_string=None, testing=None):
 
     from server.models import db
     db.init_app(app)
+    Session(app)
 
     # Setup Flask-Security
     app.user_datastore = SQLAlchemyUserDatastore(

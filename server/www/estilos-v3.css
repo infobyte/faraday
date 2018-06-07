@@ -148,3 +148,11 @@
 .max-sized-table {
   max-width: 1200px;
 }
+
+.loading-spinner {
+  position: absolute;
+  top: 180px;
+  left: 50%;
+  z-index: 1000;
+  font-size: 30px;
+}

@@ -32,7 +32,7 @@ except ImportError:
 from flask import current_app
 from colorama import init
 from colorama import Fore
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import OperationalError, ProgrammingError
 
 from config.globals import CONST_FARADAY_HOME_PATH
 from server.config import LOCAL_CONFIG_FILE
@@ -253,6 +253,9 @@ class InitDB():
                 print('ERROR: ')
             else:
                 raise
+        except ProgrammingError as ex:
+            print(ex)
+            print('Please check postgres user permissions.')
         except ImportError as ex:
             if 'psycopg2' in ex:
                 print(

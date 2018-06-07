@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('headerCtrl',
-        ['$scope', '$routeParams', '$location', '$cookies', 'dashboardSrv', 'workspacesFact', 'vulnsManager',
-        function($scope, $routeParams, $location, $cookies, dashboardSrv, workspacesFact, vulnsManager) {
+        ['$scope', '$routeParams', '$location', '$cookies', 'dashboardSrv', 'workspacesFact', 'vulnsManager', '$uibModal',
+        function($scope, $routeParams, $location, $cookies, dashboardSrv, workspacesFact, vulnsManager, $uibModal) {
             $scope.confirmed = ($cookies.get('confirmed') == undefined) ? false : JSON.parse($cookies.get('confirmed'));
 
             $scope.showSwitcher = function() {
@@ -23,14 +23,101 @@ angular.module('faradayApp')
                 dashboardSrv.updateData();
             };
 
+            $scope.updateWorkspace = function(ws, wsName, finally_){
+                if(typeof(ws.duration.start_date) == "number") {
+                    start_date = ws.duration.start_date;
+                } else if(ws.duration.start_date) {
+                    start_date = ws.duration.start_date.getTime();
+                } else {start_date = "";}
+                if(typeof(ws.duration.end_date) == "number") {
+                    end_date = ws.duration.end_date;
+                } else if(ws.duration.end_date) {
+                    end_date = ws.duration.end_date.getTime();
+                } else {end_date = "";}
+                duration = {'start_date': start_date, 'end_date': end_date};
+                workspace = {
+                    "_id":          ws._id,
+                    "_rev":         ws._rev,
+                    "children":     ws.children,
+                    "customer":     ws.customer,
+                    "description":  ws.description,
+                    "duration":     duration,
+                    "name":         ws.name,
+                    "scope":        ws.scope,
+                    "type":         ws.type
+                };
+                workspacesFact.update(workspace, wsName).then(function(workspace) {
+                    if (finally_) finally_(workspace);
+                    $location.path($scope.location + "/ws/" + workspace.name);
+                }, function(error){
+                    if (finally_) finally_(workspace);
+                    var modal = $uibModal.open({
+                        templateUrl: 'scripts/commons/partials/modalKO.html',
+                        controller: 'commonsModalKoCtrl',
+                        resolve: {
+                            msg: function() {
+                                if (error.status == 409){
+                                    return "A workspace with that name already exists";
+                                }
+                                return error;
+                            }
+                        }
+                    });
+                });
+            };
+
+            $scope.editWorkspace = function() {
+                if($scope.workspace !== undefined) {
+                    var workspace;
+                    $scope.workspaces.forEach(function(w) {
+                        if(w.name === $scope.workspace) {
+                            workspace = w;
+                        }
+                    });
+
+                    var oldName = $scope.workspace;
+                    var modal = $uibModal.open({
+                        templateUrl: 'scripts/workspaces/partials/modalEdit.html',
+                        controller: 'workspacesModalEdit',
+                        size: 'lg',
+                        resolve: {
+                            ws: function() {
+                                return workspace;
+                            }
+                        }
+                    });
+
+                    modal.result.then(function(workspace) {
+                        // The API expects list of strings in scope
+                        var old_scope = workspace.scope;
+                        workspace.scope = workspace.scope.map(function(scope){
+                            return scope.key;
+                        }).filter(Boolean);
+
+                        $scope.updateWorkspace(workspace, oldName, function(workspace){
+                            workspace.scope = old_scope;
+                        });
+                    });
+                }
+            };
+
+            getWorkspaces = function() {
+                workspacesFact.getWorkspaces().then(function(wss) {
+                    $scope.workspacesNames = [];
+                    $scope.workspaces = [];
+
+                    wss.forEach(function(ws){
+                        $scope.workspacesNames.push(ws.name);
+                        $scope.workspaces.push(ws);
+                    });
+                });
+            };
+
             init = function(name) {
                 $scope.location = $location.path().split('/')[1];
                 $scope.workspace = $routeParams.wsId;
-                $scope.workspaces = [];
 
-                workspacesFact.list().then(function(wss) {
-                    $scope.workspaces = wss;
-                });
+                getWorkspaces();
             };
 
             init();

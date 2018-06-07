@@ -1,13 +1,12 @@
 .faraday-page-header {
     margin-top: 0px;
     padding-top: 9px;
-    padding-left: 30px;
+    padding-left: 13px;
     padding-bottom: 9px;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     height: 78px;
-    margin-bottom: 20px;
 }
 
 .faraday-page-header h3 {

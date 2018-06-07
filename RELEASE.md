@@ -10,6 +10,9 @@ New features in the latest update
 
 TBA:
 ---
+* Allow to upload report file from external tools from the web
+* Fix sshcheck import file from GTK
+* Add reconng plugin
 * CouchDB was replaced by PostgreSQL :)
 * Host object changed, now the name property is called ip
 * Interface object was removed

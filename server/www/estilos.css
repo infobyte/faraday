@@ -776,7 +776,7 @@ text.host-name{font-size: 13px;font-weight:bold;}
     .left_auth{margin:5px;float:right;margin-top: -40px;}
 
         div.box div.columna {
-            background-color: #F5F5F5; color: #6B6565!important;
+            background-color: #fff; color: #6B6565!important;
         }
         div.box div.columna:hover {
             background-color: #E9E9E9; color: #6B6565!important;

@@ -401,7 +401,7 @@ article.untercio{
 
 /* datos grandes con fondo de color */
 .dato2 * {
-    text-align: center;
+    text-align: left;
 }
 .dato2:hover {
 

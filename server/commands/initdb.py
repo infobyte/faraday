@@ -228,15 +228,6 @@ class InitDB():
         config.set('database', 'connection_string', conn_string)
         with open(LOCAL_CONFIG_FILE, 'w') as configfile:
             config.write(configfile)
-        alembic_config = ConfigParser()
-        alembic_config_filename = os.path.join(FARADAY_BASE, 'alembic.ini')
-        print(alembic_config_filename)
-        alembic_config.read(alembic_config_filename)
-        print('Saving database credentials file in {0}'.format(
-            alembic_config_filename))
-        alembic_config.set('alembic', 'sqlalchemy.url', conn_string)
-        with open(alembic_config_filename, 'w') as configfile:
-            alembic_config.write(configfile)
         return conn_string
 
     def _create_tables(self, conn_string):

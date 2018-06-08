@@ -1,4 +1,12 @@
 from __future__ import with_statement
+
+import sys
+import os
+sys.path.append(os.getcwd())
+import server.config
+from server.web import app
+from server.models import db
+
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 from logging.config import fileConfig
@@ -35,7 +43,7 @@ def run_migrations_offline():
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    url = server.config.database.connection_string
     context.configure(
         url=url, target_metadata=target_metadata, literal_binds=True)
 
@@ -50,19 +58,17 @@ def run_migrations_online():
     and associate a connection with the context.
 
     """
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
-        prefix='sqlalchemy.',
-        poolclass=pool.NullPool)
+    with app.app_context():
+        connectable = db.engine
 
-    with connectable.connect() as connection:
-        context.configure(
-            connection=connection,
-            target_metadata=target_metadata
-        )
+        with connectable.connect() as connection:
+            context.configure(
+                connection=connection,
+                target_metadata=target_metadata
+            )
 
-        with context.begin_transaction():
-            context.run_migrations()
+            with context.begin_transaction():
+                context.run_migrations()
 
 if context.is_offline_mode():
     run_migrations_offline()

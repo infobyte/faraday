@@ -4,6 +4,11 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+
+import sys
+import os
+sys.path.append(os.getcwd())
+
 from server.models import db
 from server.web import app
 
@@ -28,7 +33,7 @@ def reset_db():
 if __name__ == '__main__':
     option = False
     while True:
-        print("You are going to delete all info from the DB, this is not undoable, are you sure to follow? [Y/N]")
+        print "You are going to delete all info from the DB, this is not undoable, are you sure to follow? [Y/N]",
         option = raw_input()
 
         if option.upper() in ['Y', 'N', 'YES', 'NO']:

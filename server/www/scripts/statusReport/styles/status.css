@@ -15,6 +15,7 @@
 
 .status-report-grid .ui-grid-cell-contents {
     text-align: left;
+    font-size: 11px;
 }
 
 .status-report-grid .ui-grid-cell-contents.confirm-toggle{
@@ -88,7 +89,7 @@
 
 
 .status-report-grid .status.opened {
-    background-color: rgba(223, 57, 54, .4) !important;
+    background-color: #F6E6E9 !important;
     text-align: center;
 }
 
@@ -97,34 +98,38 @@
 }
 
 .status-report-grid .status.opened span {
-    color: #DF3936;
+    color: #DB3130;
+    font-size: 11px;
 }
 
 .status-report-grid .status.risk-accepted {
-    background-color: rgba(46, 151, 189, 0.4) !important;
+    background-color: #288DB4 !important;
     text-align: center;
 }
 
 .status-report-grid .status.re-opened span {
-    color: rgba(223, 191, 53, 1);
+    color: #DBB72F;
+    font-size: 11px;
 }
 
 .status-report-grid .status.re-opened {
-    background-color: rgba(223, 191, 53, 0.4) !important;
+    background-color: #F5F2E5 !important;
     text-align: center;
 }
 
 .status-report-grid .status.risk-accepted span {
-    color: rgba(46, 151, 189, 1);
+    color: #DBEBF1;
+    font-size: 11px;
 }
 
 .status-report-grid .status.closed {
-    background-color: rgba(161, 206, 49, 0.4) !important;
+    background-color: #E5F5D6 !important;
     text-align: center;
 }
 
 .status-report-grid .status.closed span {
-    color: rgba(161, 206, 49, 1);
+    color: #97F72C;
+    font-size: 11px;
 }
 
 .control-edit .edit-icon, .download-wrapper .download-icon, .control-wrapper .delete-icon, .search-wrapper .search-icon {
@@ -281,4 +286,8 @@ button.btn-new {
 .status-report-grid .ui-grid-row-selected .ui-grid-cell .status span {
     color: white !important;
     background-color:transparent !important;
+}
+
+.status-report-grid .ui-grid-pager-panel {
+    bottom: -18px;
 }

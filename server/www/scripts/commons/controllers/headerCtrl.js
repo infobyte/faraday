@@ -14,7 +14,7 @@ angular.module('faradayApp')
             };
 
             $scope.getVulnsNum = function() {
-                return vulnsManager.getVulnsNum();
+                return vulnsManager.getVulnsNum($routeParams.wsId);
             };
 
             $scope.toggleConfirmed = function() {
@@ -69,9 +69,11 @@ angular.module('faradayApp')
             $scope.editWorkspace = function() {
                 if($scope.workspace !== undefined) {
                     var workspace;
-                    $scope.workspaces.forEach(function(w) {
+                    var index = -1;
+                    $scope.workspaces.forEach(function(w, i) {
                         if(w.name === $scope.workspace) {
                             workspace = w;
+                            index = i;
                         }
                     });
 
@@ -89,13 +91,14 @@ angular.module('faradayApp')
 
                     modal.result.then(function(workspace) {
                         // The API expects list of strings in scope
-                        var old_scope = workspace.scope;
+                        // var old_scope = workspace.scope;
                         workspace.scope = workspace.scope.map(function(scope){
                             return scope.key;
                         }).filter(Boolean);
 
                         $scope.updateWorkspace(workspace, oldName, function(workspace){
-                            workspace.scope = old_scope;
+                            // workspace.scope = old_scope;
+                            $scope.workspaces[index] = angular.copy(workspace);
                         });
                     });
                 }
@@ -103,11 +106,11 @@ angular.module('faradayApp')
 
             getWorkspaces = function() {
                 workspacesFact.getWorkspaces().then(function(wss) {
-                    $scope.workspacesNames = [];
+                    // $scope.workspacesNames = [];
                     $scope.workspaces = [];
 
                     wss.forEach(function(ws){
-                        $scope.workspacesNames.push(ws.name);
+                        // $scope.workspacesNames.push(ws.name);
                         $scope.workspaces.push(ws);
                     });
                 });
@@ -116,6 +119,8 @@ angular.module('faradayApp')
             init = function(name) {
                 $scope.location = $location.path().split('/')[1];
                 $scope.workspace = $routeParams.wsId;
+                if($routeParams.wsId)
+                    vulnsManager.loadVulnsCounter($routeParams.wsId);
 
                 getWorkspaces();
             };

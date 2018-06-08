@@ -4,12 +4,8 @@
             <span class="glyphicon glyphicon-info-sign" uib-tooltip="All hosts, each one showing its service count and operating system. By clicking on a host IP you can access a list with all of its services"></span>
         </h2>
     </header>
-    <div ng-if="hosts.length == 0" class="alert alert-info alert-dismissible no-margin-bottom">
-        <button type="button" class="close" data-dismiss="alert">
-            <span aria-hidden="true">&times;</span>
-            <span class="sr-only">Close</span>
-        </button>
-        <p>No hosts found yet.</p>
+    <div ng-if="hosts.length === 0" class="no-info-overlay">
+        <p class="no-info-text">No hosts found yet.</p>
     </div>
     <div class="ph-xl">
       <table id="hosts" ng-if="hosts.length > 0" class="tablesorter table table-striped text-left">

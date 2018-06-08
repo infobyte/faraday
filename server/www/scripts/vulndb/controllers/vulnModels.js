@@ -15,7 +15,7 @@ angular.module('faradayApp')
                 var init = function() {
                     // table stuff
                     $scope.selectall_models = false;
-                    $scope.sort_field = "end";
+                    $scope.sort_field = "name";
                     $scope.reverse = true;
                     $scope.currentPage = 1;
 

@@ -32,7 +32,7 @@ except ImportError:
 from flask import current_app
 from colorama import init
 from colorama import Fore
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import OperationalError, ProgrammingError
 
 from config.globals import CONST_FARADAY_HOME_PATH
 from server.config import LOCAL_CONFIG_FILE
@@ -119,9 +119,9 @@ class InitDB():
             if not os.path.isfile(FARADAY_USER_CONFIG_XML):
                 shutil.copy(FARADAY_BASE_CONFIG_XML, FARADAY_USER_CONFIG_XML)
 
-            print("Admin user created with {red}username: {white}faraday and "
-                  " {red}password{white}: {"
-                  "random_password}".format(random_password=random_password,
+            print("Admin user created with \n\n{red}username: {white}faraday \n"
+                  "{red}password:{white} {"
+                  "random_password} \n".format(random_password=random_password,
                                             white=Fore.WHITE, red=Fore.RED))
             print("{yellow}WARNING{white}: If you are going to execute couchdb importer you must use the couchdb password for faraday user.".format(white=Fore.WHITE, yellow=Fore.YELLOW))
 
@@ -253,6 +253,9 @@ class InitDB():
                 print('ERROR: ')
             else:
                 raise
+        except ProgrammingError as ex:
+            print(ex)
+            print('Please check postgres user permissions.')
         except ImportError as ex:
             if 'psycopg2' in ex:
                 print(

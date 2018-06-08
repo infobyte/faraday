@@ -287,21 +287,16 @@ angular.module("faradayApp")
                     '       <div ui-grid-filter></div>'+
                     '   </div>';
 
-            $scope.gridOptions.columnDefs.push({ name : '_id',
-                displayName : "_id",
-                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/idcolumn.html',
-                headerCellTemplate: header,
-                sort: getColumnSort('_id'),
-                visible: $scope.columns["_id"]
-            });
             $scope.gridOptions.columnDefs.push({ name : 'severity',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/severitycolumn.html',
                 headerCellTemplate: header,
-                displayName : "severity",
+                displayName : "sev",
                 type: 'string',
                 visible: $scope.columns["severity"],
                 sort: getColumnSort('severity'),
                 sortingAlgorithm: compareSeverities,
+                maxWidth: 50,
+                minWidth: 50,
             });
             $scope.gridOptions.columnDefs.push({ name : 'name',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/namecolumn.html',
@@ -374,20 +369,6 @@ angular.module("faradayApp")
                 headerCellTemplate: header,
                 sort: getColumnSort('request'),
                 visible: $scope.columns["request"],
-            });
-            $scope.gridOptions.columnDefs.push({ name : 'date',
-                displayName : "date",
-                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/datecolumn.html',
-                headerCellTemplate: header,
-                sort: getColumnSort('date'),
-                visible: $scope.columns["date"]
-            });
-            $scope.gridOptions.columnDefs.push({ name : 'status',
-                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/statuscolumn.html',
-                headerCellTemplate: header,
-                field: "status",
-                sort: getColumnSort('status'),
-                visible: $scope.columns["status"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'refs',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/refscolumn.html',
@@ -465,6 +446,33 @@ angular.module("faradayApp")
                 sort: getColumnSort('policyviolations'),
                 visible: $scope.columns["policyviolations"],
                 enableSorting: false,
+            });
+
+            $scope.gridOptions.columnDefs.push({ name : '_id',
+                displayName : "id",
+                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/idcolumn.html',
+                headerCellTemplate: header,
+                sort: getColumnSort('_id'),
+                visible: $scope.columns["_id"],
+                maxWidth: 60,
+            });
+            $scope.gridOptions.columnDefs.push({ name : 'date',
+                displayName : "date",
+                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/datecolumn.html',
+                headerCellTemplate: header,
+                sort: getColumnSort('date'),
+                visible: $scope.columns["date"],
+                maxWidth: 100,
+                minWidth: 100,
+            });
+            $scope.gridOptions.columnDefs.push({ name : 'status',
+                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/statuscolumn.html',
+                headerCellTemplate: header,
+                field: "status",
+                sort: getColumnSort('status'),
+                visible: $scope.columns["status"],
+                maxWidth: 90,
+                minWidth: 90,
             });
         };
 

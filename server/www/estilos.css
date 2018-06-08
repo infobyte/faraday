@@ -172,6 +172,9 @@ header.head {
     bottom: 0;
     left: 64px;
     background-color: #F4F3F4;
+    -webkit-border-top-left-radius: 10px;
+    -moz-border-radius-topleft: 10px;
+    border-top-left-radius: 10px;
 }
 .seccion {
     padding: 0px;
@@ -734,7 +737,7 @@ text.host-name{font-size: 13px;font-weight:bold;}
             color: #000000 !important;
         }
     }
-    
+
     #sec {
         float: right;
         margin-top: -34px;

@@ -22,7 +22,13 @@ def reset_db_all():
         except:
             pass
     db.drop_all()
-    db.create_all()
+
+    # db.create_all()
+    # Ugly hack to create tables and also setting alembic revision
+    import server.config
+    conn_string = server.config.database.connection_string
+    from server.commands.initdb import InitDB
+    InitDB()._create_tables(conn_string)
 
 
 def reset_db():

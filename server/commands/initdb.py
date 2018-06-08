@@ -242,11 +242,13 @@ class InitDB():
                 sys.exit(1)
             elif 'password authentication failed' in ex.message:
                 print('ERROR: ')
+                sys.exit(1)
             else:
                 raise
         except ProgrammingError as ex:
             print(ex)
             print('Please check postgres user permissions.')
+            sys.exit(1)
         except ImportError as ex:
             if 'psycopg2' in ex:
                 print(
@@ -254,3 +256,8 @@ class InitDB():
                 sys.exit(1)
             else:
                 raise
+        else:
+            from alembic.config import Config
+            from alembic import command
+            alembic_cfg = Config(os.path.join(os.getcwd(), 'alembic.ini'))
+            command.stamp(alembic_cfg, "head")

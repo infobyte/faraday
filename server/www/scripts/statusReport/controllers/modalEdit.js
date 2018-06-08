@@ -3,11 +3,17 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('modalEditCtrl', ['$modalInstance', 'EASEOFRESOLUTION', 'STATUSES', 'commonsFact', 'severities', 'vuln', 'vulnModelsManager', 'vulnsManager',
-        function($modalInstance, EASEOFRESOLUTION, STATUSES, commonsFact, severities, vuln, vulnModelsManager, vulnsManager) {
-        
+    .controller('modalEditCtrl',
+                    ['$modalInstance', '$routeParams','EASEOFRESOLUTION', 'STATUSES', 'commonsFact',
+                     'BASEURL', 'severities', 'vuln', 'cweFact', 'referenceFact',
+                     'encodeURIComponentFilter',
+                function($modalInstance, $routeParams,EASEOFRESOLUTION, STATUSES, commonsFact,
+                    BASEURL, severities, vuln, cweFact, referenceFact,
+                    encodeURIComponent) {
+
         var vm = this;
 
+        vm.baseurl;
         vm.saveAsModelDisabled = false;
         vm.easeofresolution;
         vm.new_ref;
@@ -30,6 +36,7 @@ angular.module('faradayApp')
             vm.new_ref = "";
             vm.new_policyviolation = "";
             vm.icons = {};
+            vm.baseurl = BASEURL;
 
             vm.cweList = [];
             vulnModelsManager.get().then(function(data) {
@@ -39,8 +46,9 @@ angular.module('faradayApp')
             vm.cwe_filter = "";
 
             vm.file_name_error = false;
- 
+
             vm.data = {
+                _id: undefined,
                 _attachments: {},
                 confirmed: false,
                 data: "",
@@ -56,11 +64,11 @@ angular.module('faradayApp')
                 refs: {},
                 resolution: "",
                 severity: undefined,
-                method: "", 
-                path: "", 
-                pname: "", 
+                method: "",
+                path: "",
+                pname: "",
                 params: "",
-                query: "", 
+                query: "",
                 request: "",
                 response: "",
                 website: "",
@@ -72,7 +80,7 @@ angular.module('faradayApp')
 
             vm.populate(vm.vuln);
 
-            // TODO: EVIDENCE SHOUD BE LOADED ALREADY?    
+            // TODO: EVIDENCE SHOUD BE LOADED ALREADY?
             if(vm.vuln._attachments !== undefined) {
                 vm.data._attachments = vm.vuln._attachments;
                 vm.icons = commonsFact.loadIcons(vm.data._attachments);
@@ -83,10 +91,11 @@ angular.module('faradayApp')
             vm.modelMessage = "Done."
             vm.vulnModelsManager.create(vm.data);
             vm.saveAsModelDisabled = true;
-        }
-        
+        };
+
         vm.selectedFiles = function(files, e) {
             files.forEach(function(file) {
+                file.newfile = true;
                 if(file.name.charAt(0) != "_") {
                     if(!vm.data._attachments.hasOwnProperty(file)) vm.data._attachments[file.name] = file;
                 } else {
@@ -99,7 +108,7 @@ angular.module('faradayApp')
         vm.removeEvidence = function(name) {
             delete vm.data._attachments[name];
             delete vm.icons[name];
-        }
+        };
 
         vm.toggleImpact = function(key) {
             vm.data.impact[key] = !vm.data.impact[key];
@@ -145,7 +154,17 @@ angular.module('faradayApp')
                     vm.new_ref = "";
                 }
             }
-        }
+        };
+
+        vm.openReference = function(text) {
+            window.open(referenceFact.processReference(text), '_blank');
+        };
+
+        vm.openEvidence = function(name) {
+            var currentEvidence = vm.data._attachments[name];
+            if (!currentEvidence.newfile)
+                window.open(vm.baseurl + $routeParams.wsId + '/' + vm.data._id + '/' + encodeURIComponent(name), '_blank');
+        };
 
         vm.newPolicyViolation = function() {
             if (vm.new_policyviolation != "") {
@@ -155,7 +174,7 @@ angular.module('faradayApp')
                     vm.new_policyviolation = "";
                 }
             }
-        }
+        };
 
         vm.populate = function(item) {
             for (var key in vm.data) {
@@ -176,7 +195,7 @@ angular.module('faradayApp')
                 policyviolations.push({value: policyviolation});
             });
             vm.data.policyviolations = policyviolations;
-        }
+        };
 
         init();
     }]);

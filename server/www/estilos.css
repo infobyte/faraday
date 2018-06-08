@@ -172,6 +172,9 @@ header.head {
     bottom: 0;
     left: 64px;
     background-color: #F4F3F4;
+    -webkit-border-top-left-radius: 10px;
+    -moz-border-radius-topleft: 10px;
+    border-top-left-radius: 10px;
 }
 .seccion {
     padding: 0px;
@@ -734,7 +737,7 @@ text.host-name{font-size: 13px;font-weight:bold;}
             color: #000000 !important;
         }
     }
-    
+
     #sec {
         float: right;
         margin-top: -34px;
@@ -773,7 +776,7 @@ text.host-name{font-size: 13px;font-weight:bold;}
     .left_auth{margin:5px;float:right;margin-top: -40px;}
 
         div.box div.columna {
-            background-color: #F5F5F5; color: #6B6565!important;
+            background-color: #fff; color: #6B6565!important;
         }
         div.box div.columna:hover {
             background-color: #E9E9E9; color: #6B6565!important;

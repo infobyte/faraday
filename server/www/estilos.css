@@ -401,23 +401,44 @@ article.untercio{
 
 /* datos grandes con fondo de color */
 .dato2 * {
-    text-align: left;
+    text-align: center;
 }
 .dato2:hover {
 
 }
-    .dato2 .nro {
-        font-size: 300%;
-        font-weight: 400;
-        letter-spacing: -.1em;
-    }
-    .dato2 .txt {
-        font-size: 11px;
-        text-transform: uppercase;
-    }
-    .dato2 span{
-        cursor: pointer;
-    }
+.dato2 .nro {
+    font-size: 300%;
+    font-weight: 400;
+    letter-spacing: -.1em;
+}
+.dato2 .txt {
+    font-size: 11px;
+    text-transform: uppercase;
+}
+.dato2 span{
+    cursor: pointer;
+}
+
+
+.dato-left * {
+    text-align: left;
+}
+.dato-left:hover {
+
+}
+.dato-left .nro {
+    font-size: 300%;
+    font-weight: 400;
+    letter-spacing: -.1em;
+}
+.dato-left .txt {
+    font-size: 11px;
+    text-transform: uppercase;
+}
+.dato-left span{
+    cursor: pointer;
+}
+
 
 /* TABLES - Table sorter for status report*/
 ul.label-list {

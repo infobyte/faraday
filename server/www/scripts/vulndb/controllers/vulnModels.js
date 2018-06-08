@@ -311,6 +311,8 @@ angular.module('faradayApp')
                     $scope.selectall_models = !$scope.selectall_models;
 
                     tmp_models = $filter('filter')($scope.models, $scope.search);
+                    // orderBy:sort_field: reverse
+                    tmp_models = $filter('orderBy')(tmp_models, $scope.sort_field, $scope.reverse);
                     tmp_models = tmp_models.slice(this.currentPage * this.pageSize-20, this.currentPage * this.pageSize);
                     tmp_models.forEach(function(model) {
                         model.selected = $scope.selectall_models;

@@ -63,10 +63,18 @@ class WorkspaceSchema(AutoSchema):
         fields.List(fields.String)
     )
 
+    create_date = fields.DateTime(attribute='create_date',
+                           dump_only=True)
+
+    update_date = fields.DateTime(attribute='update_date',
+                           dump_only=True)
+
+
     class Meta:
         model = Workspace
         fields = ('_id', 'id', 'customer', 'description', 'active',
-                  'duration', 'name', 'public', 'scope', 'stats')
+                  'duration', 'name', 'public', 'scope', 'stats',
+                  'create_date', 'update_date')
 
     @post_load
     def post_load_duration(self, data):

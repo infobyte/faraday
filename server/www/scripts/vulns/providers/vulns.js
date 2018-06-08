@@ -4,9 +4,10 @@
 
 angular.module('faradayApp')
     .factory('vulnsManager',
-        ['Vuln', 'WebVuln', '$q', 'ServerAPI', 'commonsFact',
-        function(Vuln, WebVuln, $q, ServerAPI, commonsFact) {
+        ['Vuln', 'WebVuln', '$q', 'ServerAPI', 'commonsFact', 'workspacesFact',
+        function(Vuln, WebVuln, $q, ServerAPI, commonsFact, workspacesFact) {
         var vulnsManager = {};
+        var vulnsCounter = 0;
 
         vulnsManager.createVuln = function(ws, data) {
             var parents = data.parents,
@@ -61,13 +62,24 @@ angular.module('faradayApp')
                             console.log(e.stack);
                         }
                     }
-
-                    result.count = response.data.count
+                    vulnsCounter = response.data.count;
+                    result.count = response.data.count;
                     deferred.resolve(result);
                 }, function(response) {
                     deferred.reject("Unable to retrieve vulnerabilities from server");
                 });
             return deferred.promise;
+        };
+
+        vulnsManager.loadVulnsCounter = function(ws){
+            // Ugly hack to populate the vulnsCounter global variable
+            workspacesFact.get(ws).then(function(data){
+                vulnsCounter = data.stats.total_vulns;
+            })
+        };
+
+        vulnsManager.getVulnsNum = function() {
+            return vulnsCounter;
         };
 
         vulnsManager.updateVuln = function(vuln, data) {

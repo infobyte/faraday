@@ -196,7 +196,11 @@ angular.module('faradayApp')
             // toggle column sort order
             $scope.toggleReverse = function() {
                 $scope.reverse = !$scope.reverse;
-            }
+            };
+
+            $scope.clearSearch = function() {
+              $scope.search = '';
+            };
 
             init();
     }]);

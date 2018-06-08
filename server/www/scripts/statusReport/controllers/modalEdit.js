@@ -5,10 +5,10 @@
 angular.module('faradayApp')
     .controller('modalEditCtrl',
                     ['$modalInstance', '$routeParams','EASEOFRESOLUTION', 'STATUSES', 'commonsFact',
-                     'BASEURL', 'severities', 'vuln', 'cweFact', 'referenceFact',
+                     'BASEURL', 'severities', 'vuln', 'vulnModelsManager', 'vulnsManager', 'referenceFact',
                      'encodeURIComponentFilter',
                 function($modalInstance, $routeParams,EASEOFRESOLUTION, STATUSES, commonsFact,
-                    BASEURL, severities, vuln, cweFact, referenceFact,
+                    BASEURL, severities, vuln, vulnModelsManager, vulnsManager, referenceFact,
                     encodeURIComponent) {
 
         var vm = this;

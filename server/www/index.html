@@ -21,12 +21,19 @@
     <link rel="stylesheet" type="text/css" href="script/font.opensans.css" />
     <link rel="stylesheet" type="text/css" href="normalize.css" />
     <link rel="stylesheet" type="text/css" href="estilos.css" />
+    <link rel="stylesheet" type="text/css" href="styles/material-input.css" />
     <link rel="stylesheet" type="text/css" href="script/animate.css" />
     <link rel="stylesheet" href="script/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="styles/font-awesome.css" />
     <link rel="stylesheet" type="text/css" href="styles/angular-hotkeys.css" />
     <link rel="stylesheet" type="text/css" href="script/angular-chart.css" />
     <link rel="stylesheet" type="text/css" href="script/ui-grid.css" />
+    <!-- Custom css will have priority -->
+    <link rel="stylesheet" type="text/css" href="estilos-v3.css" />
+    <link rel="stylesheet" type="text/css" href="dashboard-v3.css" />
+    <link rel="stylesheet" type="text/css" href="header.css" />
+    <link rel="stylesheet" type="text/css" href="scripts/statusReport/styles/status.css" />
+    <link rel="stylesheet" type="text/css" href="table-v3.css" />
 
     <!-- Icons -->
     <link href="favicon.ico" rel="shortcut icon">
@@ -64,34 +71,11 @@
 
 <body ng-controller="loginBackgroundCtrl" ng-class="{'login': isLogin}">
 <div id="cont">
-        <div class="wrapper" ng-controller="indexCtrl">
-            <header class="head" ng-show="!isLogin">
-                <a href="#" class="ws-dashboard" uib-tooltip="{{version}}" tooltip-placement="bottom"><img class="logo animated fadeInDown" src="images/logo-faraday.svg" alt="Faraday home | WS Dashboard"/></a>
-                <div ng-controller="loginBarCtrl" ng-switch="auth">
-                    <div ng-switch-when="true" class="header_right">
-                        <div class="btn-group dropdown" uib-dropdown="" is-open="status.isopen">
-                            <button id="single-button" type="button" class="btn btn-default dropdown-toggle" uib-dropdown-toggle="" ng-disabled="disabled" aria-haspopup="true" aria-expanded="true">
-                                <span>{{user.name}} </span><i class="fa fa-cog fa-lg"></i> <span class="caret"></span>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-right" uib-dropdown-menu="" role="menu" aria-labelledby="single-button">
-                                <li role="menuitem"><a href="#/workspaces">Workspaces</a></li>
-                                <li role="menuitem"><a href="#/users">Users</a></li>
-                                <li role="menuitem"><a href="#/licenses">Licenses</a></li>
-                                <li class="divider"></li>
-                                <li role="menuitem"><a href="" ng-click="changePasswordModal()">Change password</a></li>
-                                <li role="menuitem"><a href="" ng-click="logout()">Logout</a></li>
-                                <li class="divider"></li>
-                                <li role="menuitem"><a href="#/help">Help</a></li>
-                                <li role="menuitem"><a href="" ng-click="about()">About</a></li>
-                            </ul>
-                        </div><!-- .btn-group -->
-                    </div><!-- ng-switch=true -->
-                </div><!-- ng-controller=loginBarCtrl -->
-            </header>
-            <div ng-controller="navigationCtrl" ng-include="'scripts/navigation/partials/leftBar.html'"></div>
-            <div ng-view></div>
-        </div><!--!/#wrapper -->
-    </div><!--!/#container -->
+    <div class="wrapper" ng-controller="indexCtrl">
+        <div ng-controller="navigationCtrl" ng-include="'scripts/navigation/partials/leftBar.html'"></div>
+        <div ng-view></div>
+    </div><!--!/#wrapper -->
+</div><!--!/#container -->
 
     <script type="text/javascript" src="scripts/app.js"></script>
     <script type="text/javascript" src="scripts/attachments/providers/attachments.js"></script>
@@ -99,6 +83,7 @@
     <script type="text/javascript" src="scripts/commons/directives/osintLink.js"></script>
     <script type="text/javascript" src="scripts/commons/directives/file.js"></script>
     <script type="text/javascript" src="scripts/commons/controllers/modal.js"></script>
+    <script type="text/javascript" src="scripts/commons/controllers/headerCtrl.js"></script>
     <script type="text/javascript" src="scripts/commons/controllers/commercialCtrl.js"></script>
     <script type="text/javascript" src="scripts/commons/controllers/homeCtrl.js"></script>
     <script type="text/javascript" src="scripts/commons/providers/commons.js"></script>
@@ -168,6 +153,7 @@
     <script type="text/javascript" src="scripts/dashboard/controllers/vulnsByPriceCtrl.js"></script>
     <script type="text/javascript" src="scripts/dashboard/controllers/vulnsBySeverityCtrl.js"></script>
     <script type="text/javascript" src="scripts/dashboard/controllers/vulnsPiechartCtrl.js"></script>
+    <script type="text/javascript" src="scripts/dashboard/controllers/vulnsByStatusCtrl.js"></script>
     <script type="text/javascript" src="scripts/dashboard/controllers/workspaceProgressCtrl.js"></script>
     <script type="text/javascript" src="scripts/dashboard/controllers/activityFeedCtrl.js"></script>
     <script type="text/javascript" src="scripts/dashboard/providers/dashboard.js"></script>

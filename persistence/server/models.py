@@ -748,7 +748,8 @@ class ModelBase(object):
         retries = 1
         max_retries = 6
         while retries <= max_retries and self.id is None:
-            print('Retrying getID timeout {0}'.format(timeout))
+            if timeout >= 8:
+                logger.info('Retrying getID timeout {0}'.format(timeout))
             self.id_available.wait(timeout=timeout)
             timeout = timeout << retries - 1
             retries += 1

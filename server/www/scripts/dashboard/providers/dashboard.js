@@ -45,10 +45,10 @@ angular.module('faradayApp')
 
         dashboardSrv.vulnColors = [
             "#932EBE",  // critical
-            "#DF3936",  // high
-            "#DFBF35",  // med
-            "#A1CE31",  // low
-            "#428BCA",  // info
+            "#e77273",  // high
+            "#e7d174",  // med
+            "#bddd72",  // low
+            "#7aabd9",  // info
             "#999999"   // unclassified
         ];
 
@@ -208,9 +208,22 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
+        dashboardSrv.getVulnerabilitiesGroupedBy = function(ws, groupBy) {
+            var deferred = $q.defer();
+
+            ServerAPI.getVulnsGroupedBy(ws, groupBy)
+                .then(function(res) {
+                    deferred.resolve(res.data.groups);
+                }, function() {
+                    deferred.reject("Unable to get Vulnerabilities");
+                });
+
+            return deferred.promise;
+        };
+
         dashboardSrv.getObjectsCount = function(ws) {
             var deferred = $q.defer();
-            // Confirmed empty = All vulns 
+            // Confirmed empty = All vulns
             var confirmed = undefined;
 
             if (dashboardSrv.props['confirmed']) {
@@ -290,7 +303,7 @@ angular.module('faradayApp')
         dashboardSrv.getHostsCountByCommandId = function(ws, command_id) {
 
             var deferred = $q.defer();
-          
+
             ServerAPI.getHosts(ws, {"command_id": command_id })
                 .then(function(res) {
                     deferred.resolve(res.data);

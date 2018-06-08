@@ -3,13 +3,16 @@
 <!-- See the file 'doc/LICENSE' for the license information -->
 
 <div ng-controller="vulnsByStatusCtrl">
-    <article id='vulnsByStatus' class='small-widget-height panel m0'>
+    <article id='vulnsByStatus' class='small-widget-height panel m0' ng-class="{'height-auto': loaded === true && data.key.length === 0}">
         <header>
             <h2>
                 Vulnerabilities by status
             </h2>
         </header>
-        <div id="doughnut" ng-if="loaded && vulnsByStatus.length !== 0">
+        <div ng-if="loaded && data.key.length === 0" class="no-info-overlay">
+            <p class="no-info-text">No vulnerabilities found yet.</p>
+        </div>
+        <div id="doughnut" ng-if="loaded && data.key.length !== 0">
             <canvas id="doughnut" class="chart chart-doughnut" chart-data="data.value" chart-labels="data.key"
             chart-colours="data.colors" chart-options="data.options"></canvas>
         </div>

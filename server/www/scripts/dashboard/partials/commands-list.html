@@ -1,15 +1,11 @@
-<article id='' class='panel' ng-controller="commandsCtrl">
+<article class='panel' ng-controller="commandsCtrl">
     <header>
         <h2>Commands History
             <span class="glyphicon glyphicon-info-sign" uib-tooltip="Shows current WS executed commands"></span>
         </h2>
     </header>
-    <div ng-if="commands.length == 0" class="alert alert-info alert-dismissible no-margin-bottom">
-        <button type="button" class="close" data-dismiss="alert">
-            <span aria-hidden="true">&times;</span>
-            <span class="sr-only">Close</span>
-        </button>
-        <p>No commands found yet.</p>
+    <div ng-if="commands.length === 0" class="no-info-overlay">
+        <p class="no-info-text">No commands found yet.</p>
     </div>
     <div class="ph-xl">
         <table id="" ng-if="commands.length > 0" class="tablesorter table table-striped last-vuln text-left">

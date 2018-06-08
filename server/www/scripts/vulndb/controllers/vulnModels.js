@@ -10,16 +10,17 @@ angular.module('faradayApp')
                 $scope.search = '';
                 $scope.currentPage;
                 $scope.pageSize = 20;
-
+                $scope.loading = false;
                 var init = function() {
                     // table stuff
                     $scope.selectall_models = false;
                     $scope.sort_field = "end";
                     $scope.reverse = true;
                     $scope.currentPage = 1;
-
+                    $scope.loading = true;
                     vulnModelsManager.get()
                         .then(function() {
+                            $scope.loading = false;
                             $scope.models = vulnModelsManager.models;
                             $scope.loaded_models = true;
                         });
@@ -239,8 +240,13 @@ angular.module('faradayApp')
                 };
 
                 $scope.insert = function(data) {
+                    $scope.loading = false;
                     return vulnModelsManager.create(data)
+                        .then(function(data) {
+                            $scope.loading = false;
+                        })
                         .catch(function(message) {
+                            $scope.loading = false;
                             commonsFact.errorDialog(message);
                         });
                 };

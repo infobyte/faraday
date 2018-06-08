@@ -14,7 +14,7 @@ angular.module('faradayApp')
             };
 
             $scope.getVulnsNum = function() {
-                return vulnsManager.getVulnsNum();
+                return vulnsManager.getVulnsNum($routeParams.wsId);
             };
 
             $scope.toggleConfirmed = function() {
@@ -119,6 +119,8 @@ angular.module('faradayApp')
             init = function(name) {
                 $scope.location = $location.path().split('/')[1];
                 $scope.workspace = $routeParams.wsId;
+                if($routeParams.wsId)
+                    vulnsManager.loadVulnsCounter($routeParams.wsId);
 
                 getWorkspaces();
             };

@@ -75,7 +75,7 @@
                 </div>
                 <div class="control-wrapper filter-wrapper">
                     <button type="button" class="btn confirm-button" title="{{ confirmed === true ? 'All vulns' : 'Confirmed vulns' }}" ng-click="toggleFilter()">
-                        <img src="{{ (confirmed === true) ? 'images/icon-toolbar-confirmed-on.svg' : 'images/icon-toolbar-confirmed-off.svg'}}" class="confirm-icon" ng-style="{ 'opacity': (confirmed === true) ? '1' : '0.7' }" />
+                        <img ng-src="{{ (confirmed === true) ? 'images/icon-toolbar-confirmed-on.svg' : 'images/icon-toolbar-confirmed-off.svg'}}" class="confirm-icon" ng-style="{ 'opacity': (confirmed === true) ? '1' : '0.7' }" />
                     </button>
                 </div>
                 <div class="control-wrapper download-wrapper">

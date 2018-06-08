@@ -8,6 +8,7 @@ angular.module('faradayApp')
         function(Vuln, WebVuln, $q, ServerAPI, commonsFact, workspacesFact) {
         var vulnsManager = {};
         var vulnsCounter = 0;
+        var totalVulns = 0;
 
         vulnsManager.createVuln = function(ws, data) {
             var parents = data.parents,
@@ -75,11 +76,16 @@ angular.module('faradayApp')
             // Ugly hack to populate the vulnsCounter global variable
             workspacesFact.get(ws).then(function(data){
                 vulnsCounter = data.stats.total_vulns;
+                totalVulns = data.stats.total_vulns;
             })
         };
 
-        vulnsManager.getVulnsNum = function() {
-            return vulnsCounter;
+        vulnsManager.getVulnsNum = function(ws) {
+            if( vulnsCounter > 0) {
+                return vulnsCounter;
+            }else{
+                return totalVulns;
+            }
         };
 
         vulnsManager.updateVuln = function(vuln, data) {

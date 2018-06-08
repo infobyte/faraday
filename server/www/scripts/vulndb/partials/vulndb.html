@@ -34,12 +34,12 @@
                                     <img src="images/icon-toolbar-searchbar-loupe.svg" class="search-icon" />
                                 </span>
                             </div>
-                            <span ng-show="loading"> Importing templates...</span>
                         </div>
                     </form>
                 </div>
                 <div class="space-wrapper"></div>
                 <div class="control-wrapper control-wrap-right">
+                    <span class="ui-grid-cell-contents" ng-show="loading"> Importing templates...</span>
                     <button id="import" type="button" class="btn btn-success btn-new" title="Import from CSV" ng-click="disabledClick || importCSV()">
                         Import
                     </button>
@@ -63,7 +63,6 @@
                         <th class="ui-grid-cell-contents ui-grid-header-cell">
                             <span ng-click="toggleSort('exploitation')">Exploitation</span>
                         </th>
-                        <th class="ui-grid-cell-contents ui-grid-header-cell"></th>
                     </tr>
                 </thead>
                 <tbody>

@@ -14,7 +14,7 @@
                     </button>
                 </div>
                 <div class="control-wrapper control-edit">
-                    <button type="button" class="btn edit" title="Edit selected vulns" ng-click="edit()" ng-disabled="getCurrentSelection().length != 1">        
+                    <button type="button" class="btn edit" title="Edit selected vulns" ng-click="edit()" ng-disabled="getCurrentSelection().length != 1">
                         <img src="images/icon-toolbar-edit.svg" class="edit-icon" />
                     </button>
                     <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="SingleActions" ng-show="getCurrentSelection().length === 1">
@@ -82,6 +82,25 @@
                     <button file-exporter="csv()" type="button" class="btn" title="Download CSV for current workspace">
                         <img src="images/icon-toolbar-download.svg" class="download-icon" />
                     </button>
+                </div>
+                <div class="control-wrapper download-wrapper" ng-hide="fileUploadEnabled === true">
+                    <button ng-click="enableFileUpload()" type="button" class="btn" title="Upload CSV for current workspace">
+                        <img src="images/icon-toolbar-download.svg" class="download-icon rotate-180"/>
+                    </button>
+                </div>
+                <div class="pl" ng-show="fileUploadEnabled === true">
+                    <span class="file-container">
+                        <button ng-if="fileToUpload === undefined" type="button" class="btn btn-success btn-labeled no-border-radius">
+                            <span class="btn-label"><i class="fa fa-upload"></i>
+                        </span>Select file</button>
+                        <input type="file" file-model="fileToUpload" ng-class="{'file-selected': fileToUpload !== undefined}">
+                    </span>
+                    <span ng-if="fileToUpload !== undefined">
+                        <button type="button" class="btn btn-success btn-labeled no-border-radius" title="Upload selected file" ng-click="uploadFile()">
+                            <span class="btn-label"><i class="fa fa-upload"></i>
+                        </span>Upload file</button>
+                        <p class="file-name">{{fileToUpload.name}}</p>
+                    </span>
                 </div>
                 <div class="space-wrapper"></div>
                 <div class="control-wrapper control-wrap-right">

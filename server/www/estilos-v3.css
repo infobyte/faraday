@@ -175,3 +175,42 @@
 .height-auto {
   height: auto !important;
 }
+
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
+.file-name {
+  display: inline-block;
+  font-size: smaller;
+  padding-left: 10px;
+}
+
+.file-container {
+  overflow: hidden;
+  position: relative;
+}
+
+.file-container button {
+  border-radius: 0px;
+}
+
+.no-border-radius {
+  border-radius: 0px;
+}
+
+.file-container [type=file] {
+  cursor: inherit;
+  display: block;
+  filter: alpha(opacity=0);
+  opacity: 0;
+  position: absolute;
+  right: 0;
+  top: -6px;
+  width: 105px;
+  height: 34px;
+}
+
+.file-selected {
+  z-index: -999;
+}

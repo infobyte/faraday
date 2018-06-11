@@ -214,3 +214,6 @@
 .file-selected {
   z-index: -999;
 }
+.jumbotron {
+  background-color: #f4f3f4;
+}

@@ -34,6 +34,7 @@ from colorama import init
 from colorama import Fore
 from sqlalchemy.exc import OperationalError
 
+import server.config
 from config.globals import CONST_FARADAY_HOME_PATH
 from server.config import LOCAL_CONFIG_FILE
 init()
@@ -95,7 +96,11 @@ class InitDB():
             current_psql_output.close()
             conn_string = self._save_config(config, username, password, database_name, hostname)
             self._create_tables(conn_string)
-            self._create_admin_user(conn_string)
+            couchdb_config_present = server.config.couchdb
+            if not (couchdb_config_present and couchdb_config_present.user and couchdb_config_present.password):
+                self._create_admin_user(conn_string)
+            else:
+                print('Skipping new admin creation since couchdb configuration was found.')
         except KeyboardInterrupt:
             current_psql_output.close()
             print('User cancelled.')
@@ -156,7 +161,7 @@ class InitDB():
             we return username and password and those values will be saved in the config file.
         """
         print('This script will {blue} create a new postgres user {white} and {blue} save faraday-server settings {white}(server.ini). '.format(blue=Fore.BLUE, white=Fore.WHITE))
-        username = 'faraday'
+        username = 'faraday_postgresql'
         postgres_command = ['sudo', '-u', 'postgres']
         if sys.platform == 'darwin':
             postgres_command = []
@@ -172,6 +177,7 @@ class InitDB():
             print("{yellow}WARNING{white}: Role {username} already exists, skipping creation ".format(yellow=Fore.YELLOW, white=Fore.WHITE, username=username))
 
             try:
+                password = server.config.database.connection_string.split(':')[2].split('@')[0]
                 connection = psycopg2.connect(dbname='postgres',
                                               user=username,
                                               password=password)

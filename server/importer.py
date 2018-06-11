@@ -81,7 +81,7 @@ importer_logfile = os.path.expanduser(os.path.join(
     server.config.CONSTANTS.CONST_FARADAY_LOGS_PATH, 'couchdb-importer.log'))
 importer_file_handler = logging.FileHandler(importer_logfile)
 formatter = logging.Formatter(
-    '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        '%(asctime)s - %(name)s:%(lineno)d - %(levelname)s - %(message)s')
 importer_file_handler.setFormatter(formatter)
 importer_file_handler.setLevel(logging.DEBUG)
 logger.addHandler(importer_file_handler)
@@ -1327,6 +1327,7 @@ class ImportCouchDB():
             logger.error(u"CouchDB is not running at {}. Check faraday-server's"\
                 " configuration and make sure CouchDB is running".format(
                 server.couchdb.get_couchdb_url()))
+            logger.error(u'Please start CouchDB and re-execute the importer with: \n\n --> python manage.py import_from_couchdb <--')
             sys.exit(1)
 
         except Unauthorized:

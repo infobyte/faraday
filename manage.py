@@ -69,7 +69,11 @@ def faraday_schema_display():
 def initdb():
     with app.app_context():
         InitDB().run()
-        ImportCouchDB().run()
+        couchdb_config_present = server.config.couchdb
+        if couchdb_config_present and couchdb_config_present.user and couchdb_config_present.password:
+            print('Importing data from CouchDB, please wait...')
+            ImportCouchDB().run()
+            print('All users from CouchDB were imported. You can login with your old username/password to faraday now.')
 
 @click.command()
 def import_from_couchdb():
@@ -123,7 +127,7 @@ def createsuperuser(username, email, password):
                                        email=email,
                                        password=password,
                                        role='admin',
-                                       is_ldap=False)   
+                                       is_ldap=False)
         db.session.commit()
         click.echo(click.style(
             'User {} created successfully!'.format(username),

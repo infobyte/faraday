@@ -32,7 +32,7 @@ except ImportError:
 from flask import current_app
 from colorama import init
 from colorama import Fore
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import OperationalError, ProgrammingError
 
 from config.globals import CONST_FARADAY_HOME_PATH
 from server.config import LOCAL_CONFIG_FILE
@@ -228,15 +228,6 @@ class InitDB():
         config.set('database', 'connection_string', conn_string)
         with open(LOCAL_CONFIG_FILE, 'w') as configfile:
             config.write(configfile)
-        alembic_config = ConfigParser()
-        alembic_config_filename = os.path.join(FARADAY_BASE, 'alembic.ini')
-        print(alembic_config_filename)
-        alembic_config.read(alembic_config_filename)
-        print('Saving database credentials file in {0}'.format(
-            alembic_config_filename))
-        alembic_config.set('alembic', 'sqlalchemy.url', conn_string)
-        with open(alembic_config_filename, 'w') as configfile:
-            alembic_config.write(configfile)
         return conn_string
 
     def _create_tables(self, conn_string):
@@ -251,8 +242,13 @@ class InitDB():
                 sys.exit(1)
             elif 'password authentication failed' in ex.message:
                 print('ERROR: ')
+                sys.exit(1)
             else:
                 raise
+        except ProgrammingError as ex:
+            print(ex)
+            print('Please check postgres user permissions.')
+            sys.exit(1)
         except ImportError as ex:
             if 'psycopg2' in ex:
                 print(
@@ -260,3 +256,8 @@ class InitDB():
                 sys.exit(1)
             else:
                 raise
+        else:
+            from alembic.config import Config
+            from alembic import command
+            alembic_cfg = Config(os.path.join(os.getcwd(), 'alembic.ini'))
+            command.stamp(alembic_cfg, "head")

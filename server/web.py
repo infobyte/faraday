@@ -161,8 +161,13 @@ class WebServer(object):
                 self.__listen_port, site,
                 interface=self.__bind_address)
             # websockets
-            listenWS(self.__build_websockets_resource(), interface=self.__bind_address)
+            try:
+                listenWS(self.__build_websockets_resource(), interface=self.__bind_address)
+            except :
+                logger.warn('Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
+            logger.info('Faraday Server is ready')
             reactor.run()
+
         except error.CannotListenError as e:
             logger.error(str(e))
             sys.exit(1)

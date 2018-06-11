@@ -4,6 +4,7 @@
 # See the file 'doc/LICENSE' for the license information
 import os
 import sys
+import socket
 import argparse
 import subprocess
 
@@ -69,7 +70,7 @@ def stop_server():
 def is_server_running():
     pid = daemonize.is_server_running()
     if pid is not None:
-        logger.error("Faraday Server is already running. PID: {}".format(pid))
+        logger.warn("Faraday Server is already running. PID: {}".format(pid))
         return True
     else:
         return False
@@ -82,7 +83,6 @@ def run_server(args):
 
     daemonize.create_pid_file()
     web_server.run()
-    logger.info('Faraday Server is ready')
 
 
 def check_postgresql():
@@ -123,6 +123,13 @@ def main():
 
     if args.stop:
         sys.exit(0 if stop_server() else 1)
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    result = sock.connect_ex((args.bind_address or server.config.faraday_server.bind_address, int(args.port or server.config.faraday_server.port)))
+
+    if result == 0:
+        logger.error("Faraday server port in use. Check your processes and run the server again...")
+        sys.exit(1)
 
     if is_server_running():
         sys.exit(1)

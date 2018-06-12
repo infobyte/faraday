@@ -1127,7 +1127,7 @@ angular.module("faradayApp")
                 }
             }).then(
                 function(d) {
-                    $window.location.reload();
+                    $location.path("/dashboard/ws/" + $routeParams.wsId);
                 }
             );
         };

@@ -1128,6 +1128,9 @@ angular.module("faradayApp")
             }).then(
                 function(d) {
                     $location.path("/dashboard/ws/" + $routeParams.wsId);
+                },
+                function(d){
+                    commonsFact.showMessage("Error uploading report");
                 }
             );
         };

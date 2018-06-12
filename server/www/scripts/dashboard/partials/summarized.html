@@ -16,7 +16,7 @@
             <div class='main' ng-class="{'height-auto': objectsCount.length === 0}">
                 <div class='box'>
                     <div ng-repeat="obj in objectsCount" class="columna unquinto">
-                        <article class="dato-left">
+                        <article class="dato2">
                                 <div ng-switch on="obj.key">
                                     <div class="nro" ng-switch-when="total vulns"><a href="#/status/ws/{{workspace}}">{{obj.value}}</a></div>
                                     <div class="nro" ng-switch-when="hosts"><a href="#/hosts/ws/{{workspace}}">{{obj.value}}</a></div>

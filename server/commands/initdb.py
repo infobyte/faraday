@@ -133,6 +133,7 @@ class InitDB():
         return username, password
 
     def _check_psql_output(self, current_psql_output_file, process_status):
+        current_psql_output_file.seek(0)
         psql_output = current_psql_output_file.read()
         if 'unknown user: postgres' in psql_output:
             print('ERROR: Postgres user not found. Did you install package {blue}postgresql{white}?'.format(blue=Fore.BLUE, white=Fore.WHITE))

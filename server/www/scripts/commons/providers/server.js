@@ -180,7 +180,6 @@ angular.module("faradayApp")
 
             var createNonWorkspacedObject = function(id, data, collectionName) {
                 var postUrl = createNonWorkspacedPostUrl(id, collectionName);
-                console.log(collectionName);
                 return send_data(postUrl, data, false, "POST");
             };
 

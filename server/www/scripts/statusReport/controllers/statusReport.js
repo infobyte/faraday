@@ -8,11 +8,11 @@ angular.module("faradayApp")
                      "$location", "$uibModal", "$cookies", "$q", "$window", "BASEURL",
                      "SEVERITIES", "EASEOFRESOLUTION", "STATUSES", "hostsManager", "commonsFact",
                      "vulnsManager", "workspacesFact", "csvService", "uiGridConstants", "vulnModelsManager",
-                     "referenceFact", "ServerAPI",
+                     "referenceFact", "ServerAPI", '$http',
                     function($scope, $filter, $routeParams,
                         $location, $uibModal, $cookies, $q, $window, BASEURL,
                         SEVERITIES, EASEOFRESOLUTION, STATUSES, hostsManager, commonsFact,
-                        vulnsManager, workspacesFact, csvService, uiGridConstants, vulnModelsManager, referenceFact, ServerAPI) {
+                        vulnsManager, workspacesFact, csvService, uiGridConstants, vulnModelsManager, referenceFact, ServerAPI, $http) {
         $scope.baseurl;
         $scope.columns;
         $scope.columnsWidths;
@@ -1089,6 +1089,47 @@ angular.module("faradayApp")
 
         $scope.serviceSearch = function(srvName) {
             return $scope.encodeUrl(srvName);
+        };
+
+        function toggleFileUpload() {
+            if($scope.fileUploadEnabled === false) {
+                $scope.fileUploadEnabled = true;
+            } else {
+                $scope.fileUploadEnabled = false;
+                $scope.fileToUpload = undefined;
+            }
+        }
+
+        $scope.enableFileUpload = function() {
+            if($scope.fileUploadEnabled === undefined) {
+                $http.get('/_api/session').then(
+                  function(d) {
+                    $scope.csrf_token = d.data.csrf_token;
+                    $scope.fileUploadEnabled = true;
+                  }
+                );
+            } else {
+              toggleFileUpload();
+            }
+        };
+
+        $scope.uploadFile = function() {
+            var fd = new FormData();
+            fd.append('csrf_token', $scope.csrf_token);
+            fd.append('file', $scope.fileToUpload);
+            $http.post('http://localhost:5985/_api/v2/ws/' + $scope.workspace + '/upload_report', fd, {
+                transformRequest: angular.identity,
+                withCredentials: false,
+                headers: {'Content-Type': undefined},
+                responseType: "arraybuffer",
+                params: {
+                  fd
+                }
+            }).then(
+                function(d) {
+                    $window.location.reload();
+                }
+            );
         };
 
         $scope.concatForTooltip = function (items, isArray, useDoubleLinebreak) {

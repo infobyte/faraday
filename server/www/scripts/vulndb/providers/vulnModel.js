@@ -99,7 +99,8 @@ angular.module('faradayApp').
                                 }
                                 var message;
                                 if (res.status == 409) {
-                                    message = "Vulnerability template already exists. " + res.data.message
+                                    console.log("Vulnerability template already exists. " + res.data.message + " ID: " + res.data.object._id);
+                                    deferred.resolve(self);
                                 } else {
                                     message = "Unable to save the Vuln Model. " + msg;
                                 }
@@ -108,8 +109,6 @@ angular.module('faradayApp').
                                 deferred.reject(err);
                             }
                         });
-
-
                     return deferred.promise;
                 }
             };

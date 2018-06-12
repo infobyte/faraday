@@ -9,7 +9,11 @@ angular.module('faradayApp')
             $scope.confirmed = ($cookies.get('confirmed') == undefined) ? false : JSON.parse($cookies.get('confirmed'));
 
             $scope.showSwitcher = function() {
-                var noSwitcher = ["", "home", "login", "index", "workspaces", "users", "licenses"];
+                var noSwitcher = [
+                    "", "home", "login", "index", "workspaces", "users", "licenses",
+                    "taskgroup", "executive", // Only for white versions!!
+                    "vulndb", "comparison", "webshell"
+                ];
                 return noSwitcher.indexOf($scope.component) < 0;
             };
 

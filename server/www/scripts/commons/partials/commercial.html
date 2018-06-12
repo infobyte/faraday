@@ -4,7 +4,9 @@
 
 <section id="main" class="seccion clearfix">
     <div class="faraday-header-border-fix"></div>
-    <div class="right-main"><div id="reports-main" class="fila clearfix">
+    <div class="right-main">
+        <div ng-controller="headerCtrl" ng-include="'scripts/commons/partials/header.html'"></div>
+        <div id="reports-main" class="fila clearfix">
         <div class="jumbotron" ng-class="{ 'jumbotron-font':header === 'workspace comparison' }">
             <h1><b>Welcome to the <span style="text-transform: capitalize;">{{header}}</span> panel!</b></h1>
             <p>This feature belongs to our commercial versions</p>

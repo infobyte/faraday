@@ -11,9 +11,6 @@ import re
 import click
 import requests
 import sys
-from requests import ConnectionError
-from sqlalchemy.exc import OperationalError
-from pgcli.main import PGCli
 
 import server.config
 from persistence.server.server import _conf, FARADAY_UP, SERVER_URL
@@ -43,6 +40,16 @@ def check_faraday_server(url):
 @click.option('--workspace', default=None)
 @click.option('--polling/--no-polling', default=True)
 def process_reports(debug, workspace, polling):
+    try:
+        from requests import ConnectionError
+    except ImportError:
+        print('Python requests was not found. Please install it with: pip install requests')
+        sys.exit(1)
+    try:
+        from sqlalchemy.exc import OperationalError
+    except ImportError:
+        print('SQLAlchemy was not found please install it with: pip install sqlalchemy')
+        sys.exit(1)
     setUpLogger(debug)
     configuration = _conf()
     url = '{0}/_api/v2/info'.format(configuration.getServerURI() if FARADAY_UP else SERVER_URL)
@@ -86,6 +93,11 @@ def database_schema():
 
 @click.command()
 def sql_shell():
+    try:
+        from pgcli.main import PGCli
+    except ImportError:
+        print('PGCli was not found, please install it with: pip install pgcli')
+        sys.exit(1)
     conn_string = server.config.database.connection_string.strip("'")
 
     pgcli = PGCli()

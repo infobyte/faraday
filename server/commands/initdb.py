@@ -138,6 +138,7 @@ class InitDB():
         return username, password
 
     def _check_psql_output(self, current_psql_output_file, process_status):
+        current_psql_output_file.seek(0)
         psql_output = current_psql_output_file.read()
         if 'unknown user: postgres' in psql_output:
             print('ERROR: Postgres user not found. Did you install package {blue}postgresql{white}?'.format(blue=Fore.BLUE, white=Fore.WHITE))
@@ -145,7 +146,7 @@ class InitDB():
             print('ERROR: {red}PostgreSQL service{white} is not running. Please verify that it is running in port 5432 before executing setup script.'.format(red=Fore.RED, white=Fore.WHITE))
         elif process_status > 0:
             current_psql_output_file.seek(0)
-            print('ERROR: ' + current_psql_output_file.read())
+            print('ERROR: ' + psql_output)
 
         if process_status is not 0:
             current_psql_output_file.close() # delete temp file

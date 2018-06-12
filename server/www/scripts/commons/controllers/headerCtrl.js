@@ -81,6 +81,13 @@ angular.module('faradayApp')
                         }
                     });
 
+                    // copy pasted from server/www/scripts/workspaces/controllers/workspaces.js
+                    // it makes scope work properly (i think)
+                    workspace.scope = workspace.scope.map(function(scope){
+                        return {key: scope}
+                    });
+                    if (workspace.scope.length == 0) workspace.scope.push({key: ''});
+
                     var oldName = $scope.workspace;
                     var modal = $uibModal.open({
                         templateUrl: 'scripts/workspaces/partials/modalEdit.html',

@@ -602,7 +602,7 @@ class CommandObject(db.Model):
 
     __table_args__ = (
         UniqueConstraint('object_id', 'object_type', 'command_id', 'workspace_id',
-                         name='uix_command_object_object_id_object_type_command_id_workspace_id'),
+                         name='uix_command_object_objid_objtype_command_id_ws'),
     )
 
     @property

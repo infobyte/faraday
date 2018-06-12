@@ -36,6 +36,15 @@ TBA:
 * Add fix for net sparker regular and cloud fix on severity
 * Removed Chat feature (data is kept inside notes)
 * Plugin reports now can be imported in the server, from the Web UI
+* Add CVSS score to reference field in Nessus plugin.
+* Add HP Webinspect plugin.
+* Fix unicode characters bug in Netsparker plugin.
+* Fix qualys plugin.
+* Fix bugs with MACOS and GTK.
+
+April 10, 2018:
+---
+* Fix bug with tornado version 5.0 and GTK client.
 
 November 17, 2017:
 ---

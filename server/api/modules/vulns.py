@@ -366,6 +366,7 @@ class VulnerabilityView(PaginatedMixin,
     route_base = 'vulns'
     filterset_class = VulnerabilityFilterSet
     sort_model_class = VulnerabilityWeb  # It has all the fields
+    sort_pass_silently = True  # For compatibility with the Web UI
     unique_fields_by_class = {
         'Vulnerability': [('name', 'description', 'host_id', 'service_id')],
         'VulnerabilityWeb': [('name', 'description', 'service_id', 'method',

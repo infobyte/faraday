@@ -336,6 +336,21 @@ let
       };
     };
 
+    "Mako" = python.mkDerivation {
+      name = "Mako-1.0.7";
+      src = pkgs.fetchurl { url = "https://files.pythonhosted.org/packages/eb/f3/67579bb486517c0d49547f9697e36582cd19dafb5df9e687ed8e22de57fa/Mako-1.0.7.tar.gz"; sha256 = "4e02fde57bd4abb5ec400181e4c314f56ac3e49ba4fb8b0d50bba18cb27d25ae"; };
+      doCheck = commonDoCheck;
+      buildInputs = commonBuildInputs;
+      propagatedBuildInputs = [
+      self."MarkupSafe"
+    ];
+      meta = with pkgs.stdenv.lib; {
+        homepage = "http://www.makotemplates.org/";
+        license = licenses.mit;
+        description = "A super-fast templating language that borrows the  best ideas from the existing templating languages.";
+      };
+    };
+
     "MarkupSafe" = python.mkDerivation {
       name = "MarkupSafe-1.0";
       src = pkgs.fetchurl { url = "https://files.pythonhosted.org/packages/4d/de/32d741db316d8fdb7680822dd37001ef7a448255de9699ab4bfcbdf4172b/MarkupSafe-1.0.tar.gz"; sha256 = "a6be69091dac236ea9c6bc7d012beab42010fa914c459791d627dad4910eb665"; };
@@ -428,8 +443,8 @@ let
     };
 
     "WTForms" = python.mkDerivation {
-      name = "WTForms-2.2";
-      src = pkgs.fetchurl { url = "https://files.pythonhosted.org/packages/36/70/bae10eb7de058f0810e8651966e2328235c84f60fd0d05183c1b7bf3e9aa/WTForms-2.2.tar.gz"; sha256 = "49c6dc46a188db98be7582046db35bae3e4701b71a2e8f4212873289cd51553a"; };
+      name = "WTForms-2.2.1";
+      src = pkgs.fetchurl { url = "https://files.pythonhosted.org/packages/cd/1d/7221354ebfc32b868740d02e44225c2ce00769b0d3dc370e463e2bc4b446/WTForms-2.2.1.tar.gz"; sha256 = "0cdbac3e7f6878086c334aa25dc5a33869a3954e9d1e015130d65a69309b3b61"; };
       doCheck = commonDoCheck;
       buildInputs = commonBuildInputs;
       propagatedBuildInputs = [
@@ -455,6 +470,24 @@ let
         homepage = "https://www.palletsprojects.org/p/werkzeug/";
         license = licenses.bsdOriginal;
         description = "The comprehensive WSGI web application library.";
+      };
+    };
+
+    "alembic" = python.mkDerivation {
+      name = "alembic-0.9.9";
+      src = pkgs.fetchurl { url = "https://files.pythonhosted.org/packages/89/03/756d5b8e1c90bf283c3f435766aa3f20208d1c3887579dd8f2122e01d5f4/alembic-0.9.9.tar.gz"; sha256 = "85bd3ea7633024e4930900bc64fb58f9742dedbc6ebb6ecf25be2ea9a3c1b32e"; };
+      doCheck = commonDoCheck;
+      buildInputs = commonBuildInputs;
+      propagatedBuildInputs = [
+      self."Mako"
+      self."SQLAlchemy"
+      self."python-dateutil"
+      self."python-editor"
+    ];
+      meta = with pkgs.stdenv.lib; {
+        homepage = "http://bitbucket.org/zzzeek/alembic";
+        license = licenses.mit;
+        description = "A database migration tool for SQLAlchemy.";
       };
     };
 
@@ -1397,6 +1430,19 @@ let
         homepage = "https://dateutil.readthedocs.io";
         license = licenses.bsdOriginal;
         description = "Extensions to the standard Python datetime module";
+      };
+    };
+
+    "python-editor" = python.mkDerivation {
+      name = "python-editor-1.0.3";
+      src = pkgs.fetchurl { url = "https://files.pythonhosted.org/packages/65/1e/adf6e000ea5dc909aa420352d6ba37f16434c8a3c2fa030445411a1ed545/python-editor-1.0.3.tar.gz"; sha256 = "a3c066acee22a1c94f63938341d4fb374e3fdd69366ed6603d7b24bed1efc565"; };
+      doCheck = commonDoCheck;
+      buildInputs = commonBuildInputs;
+      propagatedBuildInputs = [ ];
+      meta = with pkgs.stdenv.lib; {
+        homepage = "https://github.com/fmoo/python-editor";
+        license = "License :: OSI Approved :: Apache Software License";
+        description = "Programmatically open an editor, capture the result.";
       };
     };
 

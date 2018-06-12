@@ -146,7 +146,7 @@ class InitDB():
             print('ERROR: {red}PostgreSQL service{white} is not running. Please verify that it is running in port 5432 before executing setup script.'.format(red=Fore.RED, white=Fore.WHITE))
         elif process_status > 0:
             current_psql_output_file.seek(0)
-            print('ERROR: ' + current_psql_output_file.read())
+            print('ERROR: ' + psql_output)
 
         if process_status is not 0:
             current_psql_output_file.close() # delete temp file

@@ -4,25 +4,11 @@
 
 <section id="main" class="seccion clearfix">
   <div class="faraday-header-border-fix"></div>
-  <div class="right-main"><div id="reports-main" class="fila clearfix">
-      <h2 class="ws-label">
-          <span id="ws-name" title="Hosts" ng-if="editing && host._id">Editing {{hostName}} in {{workspace}}</span><!-- WS name -->
-          <span id="ws-name" title="Hosts" ng-if="editing && !host._id">Creating host</span><!-- WS name -->
-          <span id="ws-name" title="Hosts" ng-if="!editing">Viewing {{hostName}} in {{workspace}}</span><!-- WS name -->
-          <div id="ws-control" class="btn-group">
-              <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace" onclick="location.reload()">
-                  <span class="glyphicon glyphicon-refresh"></span>
-              </button>
-              <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
-                  Change workspace <span class="caret"></span>
-              </button>
-              <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
-                  <li ng-repeat="ws in workspaces"><a href="#/hosts/ws/{{ws}}" class="ws" >{{ws}}</a></li>
-              </ul><!-- WS navigation -->
-          </div><!-- #ws-control -->
-      </h2>
+  <div class="right-main">
+      <div ng-controller="headerCtrl" ng-include="'scripts/commons/partials/header.html'"></div>
+      <div id="reports-main" class="fila clearfix">
       <span ng-hide="!showServices" class="reports col-md-8 col-sm-8 col-xs-8 pr">
-          <h3>Host services</h3>
+          <h3>Services for host {{hostName}}</h3>
           <div class="button-control col-md-12 col-sm-12 col-xs-12">
             <div class="control-wrapper control-new">
               <button type="button" class="btn btn-success btn-new" title="New service" ng-click="new()">

@@ -6,17 +6,6 @@
     </h2>
   </header>
   <div class="ph-xl">
-    <div id="workspace-progress-reference" ng-if="wsProgress">
-      <uib-progressbar value="wsProgress" class="progress-bar-light-blue progress-bar-tall">{{wsProgress}}%</uib-progressbar>
-    </div><!-- #workspace-progress-reference .center-lg-6 -->
-    <div>
-      <div class="dashboard-label-wrapper">
-        <span class="label label-gray">Start date: {{wsStart | amUtc | amDateFormat:'MM/DD/YYYY'}}</span>
-      </div>
-      <div class="dashboard-label-wrapper">
-        <span class="label label-gray">End date: {{wsEnd | amUtc | amDateFormat:'MM/DD/YYYY'}}</span>
-      </div>
-    </div>
     <div ng-if="!wsProgress" class="alert alert-info alert-dismissible no-margin-bottom">
       <button type="button" class="close" data-dismiss="alert">
         <span aria-hidden="true">&times;</span>
@@ -24,5 +13,18 @@
       </button>
       <p>Start date and end date are required</p>
     </div><!-- ng-if -->
+    <div id="workspace-progress-reference" ng-if="wsProgress">
+      <uib-progressbar value="wsProgress" class="progress-bar-light-blue progress-bar-tall">{{wsProgress}}%</uib-progressbar>
+    </div><!-- #workspace-progress-reference .center-lg-6 -->
+    <div>
+      <div class="dashboard-label-wrapper">
+        <span class="label label-gray" ng-if="wsStart">Start date: {{wsStart | amUtc | amDateFormat:'MM/DD/YYYY'}}</span>
+        <span class="label label-gray" ng-if="!wsStart">The workspace doesn't have a start date</span>
+      </div>
+      <div class="dashboard-label-wrapper">
+        <span class="label label-gray" ng-if="wsEnd">End date: {{wsEnd | amUtc | amDateFormat:'MM/DD/YYYY'}}</span>
+        <span class="label label-gray" ng-if="!wsEnd">The workspace doesn't have an end date</span>
+      </div>
+    </div>
   </div>
 </article>

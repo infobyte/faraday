@@ -1,3 +1,5 @@
+import sys
+import re
 from plugins import core
 from urlparse import urljoin, urlparse
 
@@ -16,6 +18,8 @@ class WfuzzPlugin(core.PluginBase):
         self.port = None
         self.protocol = None
         self.fail = None
+        self._command_regex = re.compile(
+            r'^(wfuzz).*?')
 
     def parseData(self, output):
 
@@ -50,14 +54,14 @@ class WfuzzPlugin(core.PluginBase):
 
 
     def parseOutputString(self, output, debug=False):
-        output_list = output.split('\n')
 
-        print output_list
+        output_list = output.split('\n')
     	info = self.parseData(output_list)
 
         target = info['target']
         target_url = urlparse(target)
         port = 80
+        
         if target_url.scheme == 'https':
             port = 443
         custom_port = target_url.netloc.split(':')
@@ -92,6 +96,7 @@ class WfuzzPlugin(core.PluginBase):
                 path=path
             ) 
 
+
     
 def createPlugin():
     return WfuzzPlugin()
@@ -100,4 +105,4 @@ def createPlugin():
 if __name__ == '__main__':
     parser = WfuzzPlugin()
     with open("/home/javier/salida", "r") as report:
-        parser.parseOutputString(report)
+        parser.parseOutputString(report.read())

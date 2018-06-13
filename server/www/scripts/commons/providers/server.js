@@ -258,8 +258,8 @@ angular.module("faradayApp")
                 return get(getUrl, data);
             }
 
-            ServerAPI.getCommands = function(wsName, data) {
-                var getUrl = createGetUrl(wsName, 'commands');
+            ServerAPI.getCommands = function(wsName, data, onlyLastCommands) {
+                var getUrl = createGetUrl(wsName, 'commands') + (onlyLastCommands ? '?page_size=10&page=1' : '');
                 return get(getUrl, data);
             }
 

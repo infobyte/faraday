@@ -256,7 +256,7 @@ angular.module('faradayApp')
         dashboardSrv.getCommands = function(ws) {
             var deferred = $q.defer();
 
-            ServerAPI.getCommands(ws)
+            ServerAPI.getCommands(ws, undefined, true)
                 .then(function(res) {
                     var tmp = [];
                     res.data.commands.forEach(function(cmd) {

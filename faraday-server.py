@@ -131,11 +131,11 @@ def main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     result = sock.connect_ex((args.bind_address or server.config.faraday_server.bind_address, int(args.port or server.config.faraday_server.port)))
 
-    if result == 0:
-        logger.error("Faraday server port in use. Check your processes and run the server again...")
+    if is_server_running():
         sys.exit(1)
 
-    if is_server_running():
+    if result == 0:
+        logger.error("Faraday server port in use. Check your processes and run the server again...")
         sys.exit(1)
 
     # Overwrites config option if SSL is set by argument

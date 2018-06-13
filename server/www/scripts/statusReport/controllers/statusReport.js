@@ -46,6 +46,7 @@ angular.module("faradayApp")
 
         var init = function() {
             $scope.baseurl = BASEURL;
+            console.log($scope.baseurl);
             $scope.severities = SEVERITIES;
             $scope.easeofresolution = EASEOFRESOLUTION;
             $scope.propertyGroupBy = $routeParams.groupbyId;
@@ -1112,12 +1113,11 @@ angular.module("faradayApp")
               toggleFileUpload();
             }
         };
-
         $scope.uploadFile = function() {
             var fd = new FormData();
             fd.append('csrf_token', $scope.csrf_token);
             fd.append('file', $scope.fileToUpload);
-            $http.post('http://localhost:5985/_api/v2/ws/' + $scope.workspace + '/upload_report', fd, {
+            $http.post($scope.baseurl + '_api/v2/ws/' + $scope.workspace + '/upload_report', fd, {
                 transformRequest: angular.identity,
                 withCredentials: false,
                 headers: {'Content-Type': undefined},

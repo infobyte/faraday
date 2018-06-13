@@ -18,13 +18,14 @@ ROOT_LOGGER = u'faraday-server'
 LOGGING_HANDLERS = []
 LVL_SETTABLE_HANDLERS = []
 
+
 def setup_logging():
     logger = logging.getLogger(ROOT_LOGGER)
     logger.propagate = False
     logger.setLevel(logging.DEBUG)
 
     formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s {%(threadName)s} [%(filename)s:%(lineno)s - %(funcName)20s() ]  %(message)s')
+        '%(asctime)s - %(name)s - %(levelname)s {%(threadName)s} [%(filename)s:%(lineno)s - %(funcName)s() ]  %(message)s')
 
     setup_console_logging(formatter)
     setup_file_logging(formatter)

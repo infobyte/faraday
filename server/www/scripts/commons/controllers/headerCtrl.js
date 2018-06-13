@@ -12,7 +12,7 @@ angular.module('faradayApp')
                 var noSwitcher = [
                     "", "home", "login", "index", "workspaces", "users", "licenses",
                     "taskgroup", "executive", // Only for white versions!!
-                    "vulndb", "comparison", "webshell", "help", "forbidden"
+                    "vulndb", "comparison", "webshell", "help", "forbidden", "data_analysis"
                 ];
                 return noSwitcher.indexOf($scope.component) < 0;
             };

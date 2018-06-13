@@ -24,10 +24,11 @@ def setup_logging():
     logger.setLevel(logging.DEBUG)
 
     formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        '%(asctime)s - %(name)s - %(levelname)s {%(threadName)s} [%(filename)s:%(lineno)s - %(funcName)20s() ]  %(message)s')
 
     setup_console_logging(formatter)
     setup_file_logging(formatter)
+
 
 def setup_console_logging(formatter):
     console_handler = logging.StreamHandler()
@@ -35,6 +36,7 @@ def setup_console_logging(formatter):
     console_handler.setLevel(server.config.LOGGING_LEVEL)
     add_handler(console_handler)
     LVL_SETTABLE_HANDLERS.append(console_handler)
+
 
 def setup_file_logging(formatter):
     create_logging_path()
@@ -44,10 +46,12 @@ def setup_file_logging(formatter):
     file_handler.setLevel(logging.DEBUG)
     add_handler(file_handler)
 
+
 def add_handler(handler):
     logger = logging.getLogger(ROOT_LOGGER)
     logger.addHandler(handler)
     LOGGING_HANDLERS.append(handler)
+
 
 def get_logger(obj=None):
     """Creates a logger named by a string or an object's class name.
@@ -64,10 +68,12 @@ def get_logger(obj=None):
 
     return logger
 
+
 def set_logging_level(level):
     server.config.LOGGING_LEVEL = level
     for handler in LVL_SETTABLE_HANDLERS:
         handler.setLevel(level)
+
 
 def create_logging_path():
     try:

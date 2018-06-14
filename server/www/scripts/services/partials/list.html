@@ -11,7 +11,7 @@
           <h3>Services for host {{hostName}}</h3>
           <div class="button-control col-md-12 col-sm-12 col-xs-12">
             <div class="control-wrapper control-new">
-              <button type="button" class="btn btn-success btn-new" title="New service" ng-click="new()">
+              <button type="button" class="btn btn-success btn-new" title="New service" ng-click="new()" style="padding:0px 0px">
                   New service
               </button>
             </div>
@@ -25,7 +25,8 @@
                 <img src="images/icon-toolbar-delete.svg" class="delete-icon" />
               </button>
             </div>
-							<div class="control-wrapper search-wrapper">
+            <div class="space-wrapper"></div>
+			    <div class="control-wrapper search-wrapper">
                     <form role="form" ng-submit="searchFor(true, searchParams)" class="ng-pristine ng-valid">
                         <div class="form-group">
                             <div class="input-group">

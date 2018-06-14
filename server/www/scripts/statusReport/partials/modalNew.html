@@ -92,7 +92,7 @@
             <div class="form-group">
                 <div class="col-md-4">
                     <h5>Type</h5>
-                    <select class="form-control" ng-model="modal.data.type" ng-options="option.value as option.name for option in modal.vuln_types">
+                    <select class="form-control" ng-model="modal.data.type" ng-options="option.value as option.name for option in modal.vuln_types"  style="padding:0px 12px;">
                     </select>
                 </div>
                 <div class="col-md-4 severities">
@@ -106,7 +106,7 @@
                 </div>
                 <div class="col-md-4">
                     <h5>Ease of Resolution</h5>
-                    <select class="form-control" ng-model="modal.data.easeofresolution" ng-options="e for e in modal.easeofresolution">
+                    <select class="form-control" ng-model="modal.data.easeofresolution" ng-options="e for e in modal.easeofresolution"  style="padding:0px 12px;">
                         <option value=""></option>
                     </select>
                 </div>

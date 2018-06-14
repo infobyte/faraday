@@ -1288,3 +1288,24 @@ a.button-disable{cursor: not-allowed;pointer-events: none;opacity: 0.5}
 .tooltip-inner {
     white-space: pre-wrap;
 }
+
+/* deduplication of CSS - StatusResport */
+.label-impact {
+    display: inline;
+    padding: .2em .6em .3em;
+    font-size: 100%;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    -webkit-border-radius: .25em;
+    border-radius: .25em
+  }
+  .label-default-impact {
+    background-color: #777
+  }
+  .label-success-impact {
+    background-color: #5cb85c
+  }

@@ -218,10 +218,10 @@
         </div><!-- .animate-switch-container -->
 
         <h4>Impact</h4>
-        <div ng-repeat="(key, value) in modal.data.impact" class="normal-size" style="cursor: pointer;">
-            <h4><span ng-class="{'label label-default': !value, 'label label-success': value}" ng-click="modal.toggleImpact(key)">{{key}}</span></h4>
-        </div><!-- .normal-size -->
-
+        <h4><span ng-repeat="(key, value) in modal.data.impact" class="normal-size" style="cursor: pointer;">
+            <span ng-class="{'label-impact label-default-impact': !value, 'label-impact label-success-impact': value}" ng-click="modal.toggleImpact(key)">{{key}}</span>
+        </span></h4><!-- .normal-size -->
+        <div>
         <h4>Evidence</h4>
         <div class="alert alert-danger normal-size" role="alert" ng-if="modal.file_name_error">
           <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>

@@ -14,7 +14,7 @@
                     <th class="text-left"><span>Severity</span></th>
                     <th class="text-left"><span>Target</span></th>
                     <th class="text-left"><span>Name</span></th>
-                    <th class="text-left"><span>Web</span></th>
+                    <th class="text-left"><span>Owner</span></th>
                     <th class="text-left"><span>Date</span></th>
                 </tr>
             </thead>
@@ -25,10 +25,7 @@
                         <a href="" ng-click="navigate('/status/ws/'+workspace+'/search/target='+vuln.target)">{{vuln.target}}</a>
                     </td>
                     <td class="wrapword"><a href="" ng-click="navigate('/status/ws/'+workspace+'/search/name='+vuln.name)">{{vuln.name}}</a></td>
-                    <td>
-                        <span class="glyphicon glyphicon-ok" ng-show="vuln.web"></span>
-                        <span class="glyphicon glyphicon-remove" ng-show="!vuln.web"></span>
-                    </td>
+
                     <td><a href="" ng-click="navigate('/status/ws/'+workspace+'/search/owner='+vuln.owner)">{{vuln.owner}}</a></td>
                     <td><span am-time-ago="vuln.metadata.create_time" am-preprocess="utc"></span></td>
                 </tr>

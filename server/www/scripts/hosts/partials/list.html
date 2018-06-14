@@ -198,14 +198,14 @@
                                     {{host.description}}
                                 </div>
                             </td>
-                            <td class="ui-grid-cell-contents"
+                            <td class="ui-grid-cell-contents date-cell"
                                 ng-show="columns['create_time']">
                                 <div class="">
                                     <span am-time-ago="host.metadata.create_time" am-preprocess="utc"></span>
                                 </div>
                             </td>
                             <td
-                                class="ui-grid-cell-contents"
+                                class="ui-grid-cell-contents date-cell"
                                 ng-show="columns['last_modified']">
                                 <div class="">
                                     <span am-time-ago="host.metadata.update_time" am-preprocess="utc"></span>

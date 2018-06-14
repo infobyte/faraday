@@ -105,7 +105,9 @@ class MainApplication(object):
         self._model_controller = ModelController(self._mappers_manager, pending_actions)
 
         self._plugin_manager = PluginManager(
-            os.path.join(CONF.getConfigPath(), "plugins"))
+            os.path.join(CONF.getConfigPath(), "plugins"),
+            pending_actions=pending_actions,
+        )
 
         self._workspace_manager = WorkspaceManager(
             self._mappers_manager)

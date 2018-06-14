@@ -23,11 +23,12 @@ CONF = getInstanceConfiguration()
 
 class PluginManager(object):
 
-    def __init__(self, plugin_repo_path):
+    def __init__(self, plugin_repo_path, pending_actions=None):
         self._controllers = {}
         self._plugin_modules = {}
         self._loadPlugins(plugin_repo_path)
         self._plugin_settings = {}
+        self.pending_actions = pending_actions
         self._loadSettings()
 
     def addController(self, controller, id):
@@ -77,6 +78,7 @@ class PluginManager(object):
         plugins = {}
         for module in self._plugin_modules.values():
             new_plugin = module.createPlugin()
+            new_plugin.set_actions_queue(self.pending_actions)
             self._verifyPlugin(new_plugin)
             plugins[new_plugin.id] = new_plugin
         return plugins
@@ -121,9 +123,9 @@ class PluginManager(object):
 
     def getPlugins(self):
         plugins = self._instancePlugins()
-        for id, plugin in plugins.items():
-            if id in self._plugin_settings:
-                plugin.updateSettings(self._plugin_settings[id]["settings"])
+        for _id, plugin in plugins.items():
+            if _id in self._plugin_settings:
+                plugin.updateSettings(self._plugin_settings[_id]["settings"])
         return plugins
 
     def _verifyPlugin(self, new_plugin):

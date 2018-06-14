@@ -374,7 +374,7 @@ article.untercio{
 /* Home Menu grande > Corporate */
 .home-list.corporate .item:nth-child(5), .home-list.corporate .item:nth-child(9), .home-list.corporate .item:nth-child(13) {clear:left;}
 
-
+/* Home Animate Icon Order FlipIn */
 .item:nth-child(0) {-webkit-animation-delay: 0s;}
 .item:nth-child(1) {-webkit-animation-delay: 0.1s;}
 .item:nth-child(2) {-webkit-animation-delay: 0.2s;}
@@ -385,6 +385,10 @@ article.untercio{
 .item:nth-child(7) {-webkit-animation-delay: 0.7s;}
 .item:nth-child(8) {-webkit-animation-delay: 0.8s;}
 .item:nth-child(9) {-webkit-animation-delay: 0.9s;}
+.item:nth-child(10) {-webkit-animation-delay: 1.0s;}
+.item:nth-child(11) {-webkit-animation-delay: 1.1s;}
+.item:nth-child(12) {-webkit-animation-delay: 1.2s;}
+
 /* Icons on Home */
 .icons-color-home{color: #B3B4B5;}
 .fa.host{font-size: 2.6em;}

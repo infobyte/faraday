@@ -75,7 +75,8 @@ angular.module('faradayApp')
         vulnsManager.loadVulnsCounter = function(ws){
             // Ugly hack to populate the vulnsCounter global variable
             workspacesFact.get(ws).then(function(data){
-                vulnsCounter = data.stats.total_vulns;
+                // Commenting this line worked. I'm not sure why
+                // vulnsCounter = data.stats.total_vulns;
                 totalVulns = data.stats.total_vulns;
             })
         };

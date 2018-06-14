@@ -17,9 +17,12 @@ angular.module('faradayApp')
                 return noSwitcher.indexOf($scope.component) < 0;
             };
 
-            $scope.getVulnsNum = function() {
-                return vulnsManager.getVulnsNum($routeParams.wsId);
-            };
+            // Ugly, ugly, ugly hack
+            $scope.vulnsNum = vulnsManager.getVulnsNum($routeParams.wsId);
+            setInterval(function(){
+                $scope.vulnsNum = vulnsManager.getVulnsNum($routeParams.wsId);
+                $scope.$apply();
+            }, 500)
 
             $scope.toggleConfirmed = function() {
                 $scope.confirmed = !$scope.confirmed;

@@ -9,7 +9,7 @@ $.ajaxSetup({
 });
 
 var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.bootstrap', 'angularFileUpload',
-                                                'filter', 'ngClipboard', 'ngCookies', 'cfp.hotkeys', 'chart.js',
+                                                'filter', 'angular-clipboard', 'ngCookies', 'cfp.hotkeys', 'chart.js',
                                                 'ui.grid', 'ui.grid.selection', 'ui.grid.grouping', 'ngSanitize',
                                                 'ui.grid.pagination', 'ui.grid.pinning', 'angularMoment', 'ui-notification',
                                                 'tandibar/ng-rollbar', 'ui.grid.resizeColumns'])
@@ -71,12 +71,11 @@ var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.
         return statuses;
     })());
 
-faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider', 'RollbarProvider',
-                   function($routeProvider, ngClipProvider, $uibTooltipProvider, RollbarProvider) {
+faradayApp.config(['$routeProvider', '$uibTooltipProvider', 'RollbarProvider',
+                   function($routeProvider, $uibTooltipProvider, RollbarProvider) {
     $uibTooltipProvider.options({
         appendToBody: true
     });
-    ngClipProvider.setPath("script/ZeroClipboard.swf");
     $routeProvider.
         when('/dashboard/ws/:wsId', {
             templateUrl: 'scripts/dashboard/partials/dashboard.html',

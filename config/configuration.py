@@ -42,6 +42,9 @@ CONST_REPO_PASSWORD = "repo_password"
 CONST_API_URL = "api_url"
 CONST_API_USERNAME = "api_username"
 CONST_API_PASSWORD = "api_password"
+CONST_COUCH_URI = "couch_uri"
+CONST_COUCH_REPLICS = "couch_replics"
+CONST_COUCH_ISREPLICATED = "couch_is_replicated"
 CONST_REPO_URL = "repo_url"
 CONST_REPO_USER = "repo_user"
 CONST_REPORT_PATH = "report_path"
@@ -149,6 +152,9 @@ class Configuration:
             self._api_url = self._getValue(tree, CONST_API_URL)
             self._api_username = self._getValue(tree, CONST_API_USERNAME)
             self._api_password = self._getValue(tree, CONST_API_PASSWORD)
+            self._couch_uri = self._getValue(tree, CONST_COUCH_URI, default = "")
+            self._couch_replics = self._getValue(tree, CONST_COUCH_REPLICS, default = "")
+            self._couch_is_replicated = bool(self._getValue(tree, CONST_COUCH_ISREPLICATED, default = False))
             self._repo_url = self._getValue(tree, CONST_REPO_URL)
             self._repo_user = self._getValue(tree, CONST_REPO_USER)
             self._report_path = self._getValue(tree, CONST_REPORT_PATH)
@@ -305,6 +311,18 @@ class Configuration:
     def getAPIPassword(self):
         return self._api_password
 
+    def getCouchURI(self):
+        if self._couch_uri and self._couch_uri.endswith('/'):
+            return self._couch_uri[:-1]
+        else:
+            return self._couch_uri
+
+    def getCouchReplics(self):
+        return self._couch_replics
+
+    def getCouchIsReplicated(self):
+        return self._couch_is_replicated
+
     def setLastWorkspace(self, workspaceName):
         self._last_workspace = workspaceName
 
@@ -413,6 +431,15 @@ class Configuration:
 
     def setAPIPassword(self, password):
         self._api_password = password
+
+    def setCouchUri(self, uri):
+        self._couch_uri = uri
+
+    def setCouchIsReplicated(self, is_it):
+        self._couch_is_replicated = is_it
+
+    def setCouchReplics(self, urls):
+        self._couch_replics = urls
 
     def setPluginSettings(self, settings):
         self._plugin_settings = settings
@@ -569,6 +596,18 @@ class Configuration:
         SERVER_PASSWORD = Element(CONST_API_PASSWORD)
         SERVER_PASSWORD.text = self.getAPIPassword()
         ROOT.append(SERVER_PASSWORD)
+
+        COUCH_URI = Element(CONST_COUCH_URI)
+        COUCH_URI.text = self.getCouchURI()
+        ROOT.append(COUCH_URI)
+
+        COUCH_IS_REPLICATED = Element(CONST_COUCH_ISREPLICATED)
+        COUCH_IS_REPLICATED.text = str(self.getCouchIsReplicated())
+        ROOT.append(COUCH_IS_REPLICATED)
+
+        COUCH_REPLICS = Element(CONST_COUCH_REPLICS)
+        COUCH_REPLICS.text = self.getCouchReplics()
+        ROOT.append(COUCH_REPLICS)
 
         VERSION = Element(CONST_VERSION)
         VERSION.text = self.getVersion()

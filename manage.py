@@ -1,20 +1,22 @@
 #!/usr/bin/env python
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 
 import re
 
 import click
 import requests
 import sys
-from requests import ConnectionError
-from sqlalchemy.exc import OperationalError
-from pgcli.main import PGCli
 
 import server.config
 from persistence.server.server import _conf, FARADAY_UP, SERVER_URL
 from server.commands.initdb import InitDB
 from server.commands.faraday_schema_display import DatabaseSchema
 from server.commands.app_urls import show_all_urls
-from server.commands.reset_db import reset_db_all
 from server.commands.reports import import_external_reports
 from server.commands.status_check import full_status_check
 from server.models import db, User
@@ -38,6 +40,16 @@ def check_faraday_server(url):
 @click.option('--workspace', default=None)
 @click.option('--polling/--no-polling', default=True)
 def process_reports(debug, workspace, polling):
+    try:
+        from requests import ConnectionError
+    except ImportError:
+        print('Python requests was not found. Please install it with: pip install requests')
+        sys.exit(1)
+    try:
+        from sqlalchemy.exc import OperationalError
+    except ImportError:
+        print('SQLAlchemy was not found please install it with: pip install sqlalchemy')
+        sys.exit(1)
     setUpLogger(debug)
     configuration = _conf()
     url = '{0}/_api/v2/info'.format(configuration.getServerURI() if FARADAY_UP else SERVER_URL)
@@ -53,11 +65,6 @@ def process_reports(debug, workspace, polling):
 
 
 @click.command()
-def reset_db():
-    with app.app_context():
-        reset_db_all()
-
-@click.command()
 def show_urls():
     show_all_urls()
 
@@ -69,6 +76,11 @@ def faraday_schema_display():
 def initdb():
     with app.app_context():
         InitDB().run()
+        couchdb_config_present = server.config.couchdb
+        if couchdb_config_present and couchdb_config_present.user and couchdb_config_present.password:
+            print('Importing data from CouchDB, please wait...')
+            ImportCouchDB().run()
+            print('All users from CouchDB were imported. You can login with your old username/password to faraday now.')
 
 @click.command()
 def import_from_couchdb():
@@ -81,6 +93,11 @@ def database_schema():
 
 @click.command()
 def sql_shell():
+    try:
+        from pgcli.main import PGCli
+    except ImportError:
+        print('PGCli was not found, please install it with: pip install pgcli')
+        sys.exit(1)
     conn_string = server.config.database.connection_string.strip("'")
 
     pgcli = PGCli()
@@ -130,7 +147,6 @@ def createsuperuser(username, email, password):
 
 
 cli.add_command(process_reports)
-cli.add_command(reset_db)
 cli.add_command(show_urls)
 cli.add_command(faraday_schema_display)
 cli.add_command(initdb)

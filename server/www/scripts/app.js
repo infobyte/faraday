@@ -12,7 +12,7 @@ var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.
                                                 'filter', 'ngClipboard', 'ngCookies', 'cfp.hotkeys', 'chart.js',
                                                 'ui.grid', 'ui.grid.selection', 'ui.grid.grouping', 'ngSanitize',
                                                 'ui.grid.pagination', 'ui.grid.pinning', 'angularMoment', 'ui-notification',
-                                                'tandibar/ng-rollbar'])
+                                                'tandibar/ng-rollbar', 'ui.grid.resizeColumns'])
     .constant("BASEURL", (function() {
         var url = window.location.origin + "/";
         return url;
@@ -291,7 +291,7 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider', 'R
             accessToken: "70f0c36ae96d4ffc90394565b42c5bf9",
             captureUncaught: true,
             payload: {
-                    environment: "white"
+                    environment: "white-newdesign"
         }});
 }]);
 

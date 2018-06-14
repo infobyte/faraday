@@ -59,15 +59,16 @@ p {margin-bottom: 1em;}
         .unsexto {width: 85px;}
 
 header.head {
-    background: #3a3a3a;
-    height: 50px;
+    margin-top: 9px;
+    height: 72px;
     text-align: left;
     position: fixed;
-    width:100%;
     z-index:1000;
+    background-color: #de4456;
 }
     header.head .logo {
-        margin: 15px 20px;
+        margin: 7px 12px;
+        width: 38px;
     }
     header.head nav {
         height: 50px;
@@ -80,6 +81,7 @@ header.head {
         header.head nav .menu li {
             float: left;
         }
+
             header.head nav .menu li a {
                 display: inline-block;
                 color:#fff;
@@ -97,9 +99,9 @@ header.head {
                     background: #DF3936;
                 }
 
-aside {
-    background: #3A3A3A;
-    width: 76px;
+.left-nav {
+    border-top: 9px solid #464646;
+    width: 68px;
     height: 100%;
     position: fixed;
     top:0px;
@@ -110,32 +112,73 @@ aside {
         display: block;
         padding: 8px 0;
         color: #fff;
+        opacity: .4;
         text-align: center;
         transition: all .3s ease;
             -ms-transition: all .3s ease;
             -moz-transition: all .3s ease;
             -webkit-transition: all .3s ease;
     }
-    	aside nav a:hover {background-color: #d13434;}
-    	aside nav a.active {background-color: #e1372f;}
-    	
+    	aside nav a:hover {
+            background-color: #d9d9d9;
+            opacity: 1;
+        }
+
+    	aside nav a.active {
+            background-color: #d9d9d9;
+            opacity: 1;
+        }
+
+        .left-nav ul{
+            margin-top: 10px;
+        }
+
         .left-nav {
-            position:fixed;
-            top:50px;
-            left:0;
-            width: 61px;
+            width: 64px;
             z-index: 1;
         }
+
+        .left-nav .head {
+            height: 72px;
+            text-align: left;
+            z-index:1000;
+            background-color: #de4456;
+            padding: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .left-nav .head a img{
+            height: 24px;
+            width: 24px;
+            flex:1
+        }
+
+        .left-nav nav a img{
+            height: 30px;
+            width: 30px;
+        }
+
+        .left-nav {
+            background-color: #E7E6E7;
+        }
+
 .right-main {
     position: absolute;
-    top: 0;
+    top: 0px;
+    border-top: 3px solid #464646;
     right: 0;
     bottom: 0;
     left: 64px;
+    background-color: #F4F3F4;
+    -webkit-border-top-left-radius: 10px;
+    -moz-border-radius-topleft: 10px;
+    border-top-left-radius: 10px;
 }
 .seccion {
     padding: 0px;
-    width: 101%;
+    width: 100%;
     float: left;
 }
     .seccion.treemap{
@@ -155,7 +198,7 @@ article.untercio{
 }
     .seccion article {
         min-height: 85px;
-        font-size: 13px;
+        font-size: 11px;
         text-align: left;
     }
         .seccion article header {
@@ -363,18 +406,39 @@ article.untercio{
 .dato2:hover {
 
 }
-    .dato2 .nro {
-        font-size: 300%;
-        font-weight: 400;
-        letter-spacing: -.1em;
-    }
-    .dato2 .txt {
-        font-size: 11px;
-        text-transform: uppercase;        
-    }
-    .dato2 span{
-        cursor: pointer;
-    }
+.dato2 .nro {
+    font-size: 300%;
+    font-weight: 400;
+    letter-spacing: -.1em;
+}
+.dato2 .txt {
+    font-size: 11px;
+    text-transform: uppercase;
+}
+.dato2 span{
+    cursor: pointer;
+}
+
+
+.dato-left * {
+    text-align: left;
+}
+.dato-left:hover {
+
+}
+.dato-left .nro {
+    font-size: 300%;
+    font-weight: 400;
+    letter-spacing: -.1em;
+}
+.dato-left .txt {
+    font-size: 11px;
+    text-transform: uppercase;
+}
+.dato-left span{
+    cursor: pointer;
+}
+
 
 /* TABLES - Table sorter for status report*/
 ul.label-list {
@@ -460,7 +524,7 @@ div.modal-button .btn.btn-success{float: right}
 div.modal-footer button.btn{bottom: 1%;right: 1%;}
 div.modal-footer button.btn.btn-success{right: 10%}
 div.modal-footer button.btn-footer{position: absolute;}
-.modal-content table.csv-export.status-report{ 
+.modal-content table.csv-export.status-report{
     width: 60%;
 }
 
@@ -477,8 +541,8 @@ table.status-report {
 		table.status-report thead th a {
 			color: #3a3a3a;
 			text-shadow: 0 1px 0 #fff;
-		}   
-table.status-report thead tr th, table.status-report tfoot tr th {   
+		}
+table.status-report thead tr th, table.status-report tfoot tr th {
     background-image: linear-gradient(to bottom,#E8EFF0 0,#DDDDDD 100%);
 		background-image: -webkit-linear-gradient(top,#E8EFF0 0,#DDDDDD 100%);
 		filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#E8EFF0', endColorstr='#DDDDDD', GradientType=0);
@@ -627,7 +691,7 @@ select.ng-valid{
         #bar svg{margin-left: -10px;}
 
 #contenido{text-align: left;}
-#sequence { 
+#sequence {
   height: 0px;
 }
     #sequence text, #legend text {
@@ -694,8 +758,7 @@ text.host-name{font-size: 13px;font-weight:bold;}
             color: #000000 !important;
         }
     }
-    /* Workspaces list - Open*/
-    div.button-control.col-md-6.col-sm-6.col-xs-12 {display: block; float: right}
+
     #sec {
         float: right;
         margin-top: -34px;
@@ -722,19 +785,19 @@ text.host-name{font-size: 13px;font-weight:bold;}
             border-radius: 10px;
             color: #FFF;
         }
-    .box{   
+    .box{
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
         justify-content: center;
         align-items: center;
     }
-    #merge, #delete, #new, #tags, #group-by, left{margin:5px;float:right}
+    #merge, #delete, #new, #tags, #group-by, #add-columns, left{margin:5px;float:right}
     .left_auths{margin:5px;float:right;margin-top: -52px;}
     .left_auth{margin:5px;float:right;margin-top: -40px;}
 
         div.box div.columna {
-            background-color: #F5F5F5; color: #6B6565!important;
+            background-color: #fff; color: #6B6565!important;
         }
         div.box div.columna:hover {
             background-color: #E9E9E9; color: #6B6565!important;
@@ -745,7 +808,7 @@ text.host-name{font-size: 13px;font-weight:bold;}
 @media screen and (min-width: 1380px){
     .treemap{margin-left:13%;}
     .seccion.treemap{margin-left: 20%}
-    #byservices .col-lg-3, #summarized .col-lg-3{width: 28%;margin: 0px -2% 0px 1%;}
+    #byservices .col-lg-3, #summarized .col-lg-3{width: 28%;margin: 0px -2% 0px 0.5%;}
     #compound .tablesorter tbody td span, #compound .tablesorter tbody td img{margin-right: 50px}
     #list .tablesorter tbody td:nth-child(2){width: 34%}
 }
@@ -771,7 +834,7 @@ text.host-name{font-size: 13px;font-weight:bold;}
 }
     a.ws-link span.impact-ok{top: 2px;left: -4px;color: #5cb85c;}
     a.ws-link span.impact-del{top: 3px;left: 2px;color: #d9534f;}
-a.ws-link:hover {    
+a.ws-link:hover {
     color: #ffffff;
     text-decoration: none;
 }
@@ -876,95 +939,95 @@ aside .alert.alert-danger.alert-dismissible{
     z-index: 1000;
 }
 
-.label-unclassified { 
-      color: #FFFFFF; 
-        background-color: #444147; 
-          border-color: #444147; 
-} 
- 
- .label-unclassified:hover, 
- .label-unclassified:focus, 
- .label-unclassified:active, 
- .label-unclassified.active, 
- .open .dropdown-toggle.label-unclassified { 
-       color: #FFFFFF; 
-         background-color: #111012; 
-           border-color: #444147; 
- } 
-  
-  .label-unclassified:active, 
-  .label-unclassified.active, 
-  .open .dropdown-toggle.label-unclassified { 
-        background-image: none; 
-  } 
-   
-   .label-unclassified.disabled, 
-   .label-unclassified[disabled], 
-   fieldset[disabled] .label-unclassified, 
-   .label-unclassified.disabled:hover, 
-   .label-unclassified[disabled]:hover, 
-   fieldset[disabled] .label-unclassified:hover, 
-   .label-unclassified.disabled:focus, 
-   .label-unclassified[disabled]:focus, 
-   fieldset[disabled] .label-unclassified:focus, 
-   .label-unclassified.disabled:active, 
-   .label-unclassified[disabled]:active, 
-   fieldset[disabled] .label-unclassified:active, 
-   .label-unclassified.disabled.active, 
-   .label-unclassified[disabled].active, 
-   fieldset[disabled] .label-unclassified.active { 
-         background-color: #444147; 
-           border-color: #444147; 
-   } 
-    
-    .label-unclassified .badge { 
-          color: #444147; 
-            background-color: #FFFFFF; 
+.label-unclassified {
+      color: #FFFFFF;
+        background-color: #444147;
+          border-color: #444147;
+}
+
+ .label-unclassified:hover,
+ .label-unclassified:focus,
+ .label-unclassified:active,
+ .label-unclassified.active,
+ .open .dropdown-toggle.label-unclassified {
+       color: #FFFFFF;
+         background-color: #111012;
+           border-color: #444147;
+ }
+
+  .label-unclassified:active,
+  .label-unclassified.active,
+  .open .dropdown-toggle.label-unclassified {
+        background-image: none;
+  }
+
+   .label-unclassified.disabled,
+   .label-unclassified[disabled],
+   fieldset[disabled] .label-unclassified,
+   .label-unclassified.disabled:hover,
+   .label-unclassified[disabled]:hover,
+   fieldset[disabled] .label-unclassified:hover,
+   .label-unclassified.disabled:focus,
+   .label-unclassified[disabled]:focus,
+   fieldset[disabled] .label-unclassified:focus,
+   .label-unclassified.disabled:active,
+   .label-unclassified[disabled]:active,
+   fieldset[disabled] .label-unclassified:active,
+   .label-unclassified.disabled.active,
+   .label-unclassified[disabled].active,
+   fieldset[disabled] .label-unclassified.active {
+         background-color: #444147;
+           border-color: #444147;
+   }
+
+    .label-unclassified .badge {
+          color: #444147;
+            background-color: #FFFFFF;
     }
-.label-high { 
-      color: #ffffff; 
-        background-color: #DF3936; 
-          border-color: #DF3936; 
-} 
- 
- .label-high:hover, 
- .label-high:focus, 
- .label-high:active, 
- .label-high.active, 
- .open .dropdown-toggle.label-high { 
-       color: #ffffff; 
-         background-color: #992826; 
-           border-color: #DF3936; 
- } 
-  
-  .label-high:active, 
-  .label-high.active, 
-  .open .dropdown-toggle.label-high { 
-        background-image: none; 
-  } 
-   
-   .label-high.disabled, 
-   .label-high[disabled], 
-   fieldset[disabled] .label-high, 
-   .label-high.disabled:hover, 
-   .label-high[disabled]:hover, 
-   fieldset[disabled] .label-high:hover, 
-   .label-high.disabled:focus, 
-   .label-high[disabled]:focus, 
-   fieldset[disabled] .label-high:focus, 
-   .label-high.disabled:active, 
-   .label-high[disabled]:active, 
-   fieldset[disabled] .label-high:active, 
-   .label-high.disabled.active, 
-   .label-high[disabled].active, 
-   fieldset[disabled] .label-high.active { 
-         background-color: #DF3936; 
-           border-color: #DF3936; 
-   } 
-    
-    .label-high .badge { 
-          color: #DF3936; 
-            background-color: #ffffff; 
+.label-high {
+      color: #ffffff;
+        background-color: #DF3936;
+          border-color: #DF3936;
+}
+
+ .label-high:hover,
+ .label-high:focus,
+ .label-high:active,
+ .label-high.active,
+ .open .dropdown-toggle.label-high {
+       color: #ffffff;
+         background-color: #992826;
+           border-color: #DF3936;
+ }
+
+  .label-high:active,
+  .label-high.active,
+  .open .dropdown-toggle.label-high {
+        background-image: none;
+  }
+
+   .label-high.disabled,
+   .label-high[disabled],
+   fieldset[disabled] .label-high,
+   .label-high.disabled:hover,
+   .label-high[disabled]:hover,
+   fieldset[disabled] .label-high:hover,
+   .label-high.disabled:focus,
+   .label-high[disabled]:focus,
+   fieldset[disabled] .label-high:focus,
+   .label-high.disabled:active,
+   .label-high[disabled]:active,
+   fieldset[disabled] .label-high:active,
+   .label-high.disabled.active,
+   .label-high[disabled].active,
+   fieldset[disabled] .label-high.active {
+         background-color: #DF3936;
+           border-color: #DF3936;
+   }
+
+    .label-high .badge {
+          color: #DF3936;
+            background-color: #ffffff;
     }
 .btn-small-margin {
     margin-bottom: 15px !important;
@@ -1081,26 +1144,48 @@ div.btn-group .dropdown-menu.margin{margin-left: 38px}
 /* UI GRID */
 .ui-grid-cell.ui-grid-disable-selection.ui-grid-row-header-cell{pointer-events: auto!important;}
 .grid {
-  height: 98vh;
+  height: 100%;
+}
+.ui-grid-cell-contents{
+    padding-top: 12px !important;
+}
+.ui-grid-cell-contents p{
+    margin-bottom: 0;
 }
 .ui-grid-cell-contents.left-rows.text-center.ng-scope{white-space: normal!important; }
 .ui-grid .ui-grid-row:nth-child(odd) .ui-grid-cell .ui-grid-cell-contents .crop-text, .ui-grid .ui-grid-row:nth-child(even) .ui-grid-cell .ui-grid-cell-contents .crop-text, .ui-grid-cell-contents{
     white-space: pre;
     word-wrap: break-word!important;
+    font-size: 13px !important;
 }
 .grid.ui-grid{font-family: 12px!important;}
 .ui-grid-cell-contents.row-tooltip.text-center{white-space: normal!important; }
 .white-space{white-space: pre!important; word-wrap: break-word;}
 .ui-grid-cell-contents.center > .pos-middle.crop-text{top: 2%!important;white-space: inherit!important;}
 .overflow-cell{
-    height: 95px!important;
+    height: 30px!important;
     overflow-y: auto!important;
 }
 div.ui-grid-header-cell .ui-grid-cell-contents{white-space: normal;}
 div.alert.alert-danger.alert-dismissible .ws-list{text-align: center; text-transform: uppercase; padding: 10px}
 div.alert.alert-danger.alert-dismissible .ws-list a:hover{text-decoration: none}
+.grid .ui-grid-header {
+    padding: 3px 5px;
+}
+.ui-grid-text-center {
+    text-align: center;
+}
 a.button-disable{cursor: not-allowed;pointer-events: none;opacity: 0.5}
 .almost-expired{background-color: #dca7a7 !important}
+
+.row-fix:before,.row-fix:after {
+    display: table;
+    content: " ";
+}
+
+.row-fix:after {
+    clear: both;
+}
 
 #custom-search-input{
     border: solid 1px #E4E4E4;
@@ -1195,4 +1280,7 @@ a.button-disable{cursor: not-allowed;pointer-events: none;opacity: 0.5}
 .header_right {
     /* TODO: this is a fast hack, maybe there is a better way to do this */
     margin-top: -2.25%;
+}
+.tooltip-inner {
+    white-space: pre-wrap;
 }

@@ -602,7 +602,7 @@ class CommandObject(db.Model):
 
     __table_args__ = (
         UniqueConstraint('object_id', 'object_type', 'command_id', 'workspace_id',
-                         name='uix_command_object_object_id_object_type_command_id_workspace_id'),
+                         name='uix_command_object_objid_objtype_command_id_ws'),
     )
 
     @property
@@ -836,7 +836,8 @@ class Vulnerability(VulnerabilityGeneric):
 
     @declared_attr
     def service_id(cls):
-        return VulnerabilityGeneric.__table__.c.get('service_id', Column(Integer, db.ForeignKey('service.id')))
+        return VulnerabilityGeneric.__table__.c.get('service_id', Column(Integer, db.ForeignKey('service.id'),
+                                                                         index=True))
 
     @declared_attr
     def service(cls):
@@ -1163,7 +1164,7 @@ class Workspace(Metadata):
     description = BlankColumn(Text)
     active = Column(Boolean(), nullable=False, default=True)  # TBI
     end_date = Column(DateTime(), nullable=True)
-    name = Column(String(250), nullable=False, unique=True)
+    name = NonBlankColumn(String(250), unique=True, nullable=False)
     public = Column(Boolean(), nullable=False, default=False)  # TBI
     start_date = Column(DateTime(), nullable=True)
 

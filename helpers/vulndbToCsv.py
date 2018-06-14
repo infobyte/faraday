@@ -3,6 +3,7 @@
 '''
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 Author: Ezequiel Tavella
+See the file 'doc/LICENSE' for the license information
 
 This script generate a CSV file with information about the vulndb database.
 CSV Format:

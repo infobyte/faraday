@@ -11,6 +11,7 @@ angular.module('faradayApp')
             $scope.sortField = 'name';
             $scope.sortReverse = false;
             $scope.clipText = "Copy to Clipboard";
+            $scope.workspace = workspace
 
             // toggles sort field and order
             $scope.toggleSort = function(field) {

@@ -49,10 +49,10 @@
         </tbody>
             <div class="col md-12" style="border-top:0px solid #e5e5e5">
                     <div>
-                        <i class="fa fa-laptop"></i><span> OS: {{host.os | limitTo: 40}}</span> 
+                        <i class="fa fa-laptop"></i><span> OS: {{host.os | limitTo: 40}}</span>
                         <div class="pull-right">
-                            <i class="glyphicon glyphicon-user"></i> {{host.metadata.owner}} was created <span am-time-ago="host.metadata.create_time"></span>
-                    
+                            <i class="glyphicon glyphicon-user"></i> Created by {{host.metadata.owner}} <span am-time-ago="host.metadata.create_time"></span>
+
                         </div>
                     </div>
             </div><!-- .col md-12 -->

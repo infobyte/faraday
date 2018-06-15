@@ -57,17 +57,17 @@
             <p ng-switch-when="users" style="font-size: 20px;"> Users </p>
             <p ng-switch-when="licenses" style="font-size: 20px;"> Licenses </p>
             <p ng-switch-when="help" style="font-size: 20px;"> Help </p>
-            
+
         </div>
     </div>
     <div class="controls-wrapper">
-        <button id="refresh" type="button" class="btn" title="Refresh current workspace" onclick="location.reload()">
+        <button ng-if="workspace" id="refresh" type="button" class="btn" title="Refresh current workspace" onclick="location.reload()">
             <span class="glyphicon glyphicon-refresh"></span>
         </button>
-        <button ng-if="showSwitcher()" type="button" class="btn" title="Edit current workspace" ng-click="editWorkspace()">
+        <button ng-if="showSwitcher() && workspace" type="button" class="btn" title="Edit current workspace" ng-click="editWorkspace()">
             <span class="glyphicon glyphicon-cog"></span>
         </button>
-        <span ng-if="location === 'dashboard'" class="control-wrapper filter-wrapper">
+        <span ng-if="location === 'dashboard' && workspace" class="control-wrapper filter-wrapper">
             <button type="button" class="btn confirm-button" title="{{ confirmed === true ? 'All vulns' : 'Confirmed vulns' }}" ng-click="toggleConfirmed()">
                 <img ng-src="{{ confirmed === true ? 'images/icon-toolbar-confirmed-on.svg' : 'images/icon-toolbar-confirmed-off.svg'}}" class="confirm-icon" ng-style="{ 'opacity': (confirmed === true) ? '1' : '0.7' }" />
             </button>

@@ -26,7 +26,6 @@ from flask_wtf.csrf import validate_csrf
 from werkzeug.utils import secure_filename
 from wtforms import ValidationError
 
-from faraday import setupPlugins
 from server.utils.logger import get_logger
 from server.utils.web import gzipped
 
@@ -55,6 +54,7 @@ class RawReportProcessor(Thread):
     def __init__(self):
 
         super(RawReportProcessor, self).__init__()
+        from faraday import setupPlugins
         setupPlugins()
         self.pending_actions = Queue()
 

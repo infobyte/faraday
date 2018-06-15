@@ -138,8 +138,8 @@ def _setUpAPIServer(hostname=None, port=None):
 # plugin created the object
 
 
-def createAndAddHost(ip, os="Unknown"):
-    host = newHost(ip, os)
+def createAndAddHost(ip, os="Unknown", hostnames=None):
+    host = newHost(ip, os, hostnames=hostnames)
     if addHost(host):
         return host.getID()
     return None
@@ -328,12 +328,12 @@ def delCredFromService(cred, hostname, srvname):
 # CREATION APIS
 #-------------------------------------------------------------------------------
 
-def newHost(ip, os = "Unknown"):
+def newHost(ip, os = "Unknown", hostnames=None):
     """
     It creates and returns a Host object.
     The object created is not added to the model.
     """
-    return __model_controller.newHost(ip, os)
+    return __model_controller.newHost(ip, os, hostnames=hostnames)
 
 
 def newService(name, protocol = "tcp?", ports = [], status = "running",

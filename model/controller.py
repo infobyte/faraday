@@ -447,10 +447,10 @@ class ModelController(Thread):
         api.log(msg, *args[:-1])
         return True
 
-    def newHost(self, ip, os="Unknown"):
+    def newHost(self, ip, os="Unknown", hostnames=None):
         return model.common.factory.createModelObject(
             models.Host.class_signature, ip,
-            workspace_name=self.mappers_manager.workspace_name, os=os, parent_id=None)
+            workspace_name=self.mappers_manager.workspace_name, os=os, parent_id=None, hostnames=hostnames)
 
     def newService(self, name, protocol="tcp?", ports=[], status="running",
                    version="unknown", description="", parent_id=None):

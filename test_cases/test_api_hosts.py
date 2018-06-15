@@ -26,7 +26,7 @@ from test_api_workspaced_base import (
     ReadWriteAPITests,
     PaginationTestsMixin,
 )
-from server.models import db, Host
+from server.models import db, Host, Hostname
 from server.api.modules.hosts import HostsView
 from test_cases.factories import HostFactory, CommandFactory, \
     EmptyCommandFactory, WorkspaceFactory
@@ -650,6 +650,28 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
 
         res = test_client.delete(self.url(host, workspace=host.workspace))
         assert res.status_code == 204
+
+    def test_update_hostname(self, session, test_client):
+        host = HostFactory.create()
+        session.add(host)
+        session.commit()
+        data = {
+            "description":"",
+            "default_gateway":"",
+            "ip":"127.0.0.1",
+            "owned":False,
+            "name":"127.0.0.1",
+            "mac":"",
+            "hostnames":["dasdas"],
+            "owner":"faraday",
+            "os":"Unknown",
+        }
+
+        res = test_client.put('v2/ws/{0}/hosts/{1}/'.format(host.workspace.name, host.id), data=data)
+        assert res.status_code == 200
+
+        assert session.query(Hostname).filter_by(host=host).count() == 1
+        assert session.query(Hostname).all()[0].name == 'dasdas'
 
 
 def host_json():

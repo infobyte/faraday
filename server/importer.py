@@ -17,6 +17,7 @@ import multiprocessing
 
 
 import requests
+from requests.exceptions import HTTPError, RequestException
 from tempfile import NamedTemporaryFile
 
 from collections import (
@@ -213,7 +214,7 @@ def get_children_from_couch(workspace, parent_couchdb_id, child_type):
 
     try:
         r = requests.put(view_url, json=view_data)
-    except requests.exceptions.RequestException as e:
+    except RequestException as e:
         logger.exception(e)
         return []
 
@@ -227,7 +228,7 @@ def get_children_from_couch(workspace, parent_couchdb_id, child_type):
 
     try:
         r = requests.get(couch_url)
-    except requests.exceptions.RequestException as e:
+    except RequestException as e:
         logger.error('Network error in CouchDB request {}'.format(
             couch_url,
             r.status_code,
@@ -237,7 +238,7 @@ def get_children_from_couch(workspace, parent_couchdb_id, child_type):
 
     try:
         r.raise_for_status()
-    except requests.exceptions.RequestException as e:
+    except RequestException as e:
         logger.error('Error in CouchDB request {}. '
                      'Status code: {}. '
                      'Body: {}'.format(couch_url,
@@ -1215,10 +1216,10 @@ class ImportVulnerabilityTemplates():
         try:
             cwes = requests.get(cwe_url)
             cwes.raise_for_status()
-        except requests.exceptions.HTTPError:
+        except HTTPError:
             logger.warn('Unable to retrieve Vulnerability Templates Database. Moving on.')
             return
-        except requests.exceptions.RequestException as e:
+        except RequestException as e:
             logger.exception(e)
             return
 
@@ -1298,10 +1299,10 @@ class ImportLicense():
         try:
             licenses = requests.get(licenses_url)
             licenses.raise_for_status()
-        except requests.exceptions.HTTPError:
+        except HTTPError:
             logger.warn('Unable to retrieve Licenses Database. Moving on.')
             return
-        except requests.exceptions.RequestException as e:
+        except RequestException as e:
             logger.exception(e)
             return
 

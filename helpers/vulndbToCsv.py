@@ -3,14 +3,13 @@
 '''
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 Author: Ezequiel Tavella
-See the file 'doc/LICENSE' for the license information
 
 This script generate a CSV file with information about the vulndb database.
 CSV Format:
 cwe,name,desc_summary,description,resolution,exploitation,references
 '''
 from subprocess import call
-from os import walk
+from os import walk, path
 import json
 import csv
 
@@ -100,18 +99,17 @@ def main():
         for file_db in files:
 
             print '[*]Parsing ' + file_db
-            with open(root + file_db, 'r') as file_object:
+            with open(path.join(root, file_db), 'r') as file_object:
 
                 csv_content = JsonToCsv(file_object)
-
                 result = (
-                csv_content.cwe,
-                csv_content.name,
-                csv_content.description,
-                csv_content.resolution,
-                '',
-                ' '.join(csv_content.references),
-                csv_content.severity
+                    csv_content.cwe,
+                    csv_content.name,
+                    csv_content.description,
+                    csv_content.resolution,
+                    '',
+                    ' '.join(csv_content.references or []),
+                    csv_content.severity
                 )
 
                 writer.writerow(result)

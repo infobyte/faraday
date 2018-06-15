@@ -346,8 +346,8 @@ def update_command_tools(workspace, command_tool_map, id_map):
     missing_tool_count = Command.query.filter_by(
         workspace=workspace, tool="unknown").count()
     if missing_tool_count:
-        logger.warn("Couldn't find the tool name of {} commands in "
-                    "workspace {}".format(
+        logger.debug("Couldn't find the tool name of {} commands in "
+                     "workspace {}".format(
                         missing_tool_count, workspace.name))
 
 

@@ -16,7 +16,7 @@ import traceback
 
 from plugins.controller import PluginController
 from config.configuration import getInstanceConfiguration
-from utils.logs import getLogger
+import server.utils.logger
 
 CONF = getInstanceConfiguration()
 
@@ -96,6 +96,9 @@ class PluginManager(object):
         sys.path.append(plugin_repo_path)
 
         dir_name_regexp = re.compile(r"^[\d\w\-\_]+$")
+        if not os.path.exists(plugin_repo_path):
+            server.utils.logger.get_logger(self).error('Plugins path could not be opened, no pluging will be available!')
+            return
         for name in os.listdir(plugin_repo_path):
             if dir_name_regexp.match(name):
                 try:

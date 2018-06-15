@@ -10,6 +10,7 @@ New features in the latest update
 
 TBA:
 ---
+* Add brutexss plugin
 * Allow to upload report file from external tools from the web
 * Fix sshcheck import file from GTK
 * Add reconng plugin

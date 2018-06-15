@@ -117,12 +117,12 @@ class PluginManager(object):
                     elif file_ext.lower() == '.pyc':
                         self._plugin_modules[name] = imp.load_compiled(name,
                                                                        module_filename)
-                    getLogger(self).debug('Loading plugin {0}'.format(name))
+                    server.utils.logger.get_logger(self).debug('Loading plugin {0}'.format(name))
                 except Exception as e:
                     msg = "An error ocurred while loading plugin %s.\n%s" % (
                         module_filename, traceback.format_exc())
-                    getLogger(self).debug(msg)
-                    getLogger(self).warn(e)
+                    server.utils.logger.get_logger(self).debug(msg)
+                    server.utils.logger.get_logger(self).warn(e)
 
     def getPlugins(self):
         plugins = self._instancePlugins()

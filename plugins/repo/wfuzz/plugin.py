@@ -1,5 +1,6 @@
 import re
 import sys
+import string
 from urlparse import urljoin, urlparse
 
 from plugins import core
@@ -29,10 +30,12 @@ class WfuzzPlugin(core.PluginBase):
             'findings' : []
         }
         for line in output:
-
+            # remove stdout hidden chars
+            line = ''.join([char for char in line if char in string.printable])
+            line = line.strip('\r').replace('[0K', '').replace('[0m', '')
             if line.startswith('Target'):
                 data['target'] = line[8:].rstrip()
-
+                continue
             if line.startswith('0'):
                 aux = line.split('  ')
                 res = {}
@@ -52,7 +55,6 @@ class WfuzzPlugin(core.PluginBase):
         return data
 
     def parseOutputString(self, output, debug=False):
-
         output_list = output.split('\n')
         info = self.parseData(output_list)
 

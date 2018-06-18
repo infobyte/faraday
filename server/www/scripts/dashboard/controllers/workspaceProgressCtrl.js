@@ -33,7 +33,7 @@ angular.module('faradayApp')
                 today = new Date(),
                 total = 0;
 
-                if(duration.start == "" || duration.end == "") {
+                if(!duration.start || !duration.end) {
                     progress = null;
                 } else {
                     today = today.getTime();

@@ -6,7 +6,7 @@ angular.module('faradayApp')
     .controller('navigationCtrl', ['$scope', '$http', '$route', '$routeParams', '$cookies', '$location', '$interval', '$uibModal', 'configSrv', 'workspacesFact', 'Notification',
         function($scope, $http, $route, $routeParams, $cookies, $location, $interval, $uibModal, configSrv, workspacesFact, Notification) {
 
-        $scope.workspace = "asd";
+        $scope.workspace = "";
         $scope.component = "";
         var componentsNeedsWS = ["dashboard","status","hosts"];
 

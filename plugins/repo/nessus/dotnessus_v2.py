@@ -32,6 +32,7 @@ MULTI_VALUED_ATTS = [
     'cve',
     'bid',
     'xref',
+    'cvss_base_score'
 ]
 
 # HOST_(START|END) date format

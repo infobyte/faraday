@@ -10,8 +10,7 @@ angular.module('faradayApp').
                 vulnModelsManager.models = [];
                 vulnModelsManager.totalNumberOfModels = 0;
 
-                vulnModelsManager.create = function(data, outsider) {
-                    if (outsider === undefined) { var outsider = false; };
+                    vulnModelsManager.create = function(data) {
                     var deferred = $q.defer();
                     var self = this;
 
@@ -19,17 +18,9 @@ angular.module('faradayApp').
                         var vulnModel = new VulnModel(data);
                         vulnModel.save()
                             .then(function(resp) {
-                                if (outsider) {
-                                    deferred.resolve(resp);
-                                } else {
-                                    vulnModelsManager.get()
-                                        .then(function() {
-                                            self.updateState(self.totalNumberOfModels + 1);
-                                            deferred.resolve(self);
-                                        }, function(reason) {
-                                            deferred.reject(reason);
-                                        });
-                                }}, function(reason) {
+                                self.updateState(self.totalNumberOfModels + 1);
+                                deferred.resolve(resp);
+                            }, function(reason) {
                                 deferred.reject(reason);
                             });
                     } catch(e) {
@@ -44,14 +35,9 @@ angular.module('faradayApp').
                     var self = this;
 
                     vulnModel.remove().
-                        then(function() {
-                            vulnModelsManager.get().
-                                then(function(resp) {
-                                    self.updateState(self.totalNumberOfModels - 1);
-                                    deferred.resolve(resp);
-                                }, function(reason) {
-                                    deferred.reject(reason);
-                                });
+                        then(function(resp) {
+                            self.updateState(self.totalNumberOfModels - 1);
+                            deferred.resolve(resp);
                         }, function(err) {
                             deferred.reject(err);
                         });
@@ -65,6 +51,7 @@ angular.module('faradayApp').
                     ServerAPI.getVulnerabilityTemplates()
                         .then(function(res) {
                             var data = res.data;
+                            self.updateState(data.total_rows);
                             var vulnModels = [];
 
                             if (data.hasOwnProperty("rows")) {
@@ -105,7 +92,6 @@ angular.module('faradayApp').
                     this.totalNumberOfModels = numberOfModels;
                 };
 
-
                 vulnModelsManager.update = function(vulnModel, data) {
                     var deferred = $q.defer();
                     var self = this;
@@ -115,13 +101,8 @@ angular.module('faradayApp').
                     }
 
                     vulnModel.update(data).
-                        then(function() {
-                            vulnModelsManager.get().
-                                then(function(resp) {
-                                    deferred.resolve(resp);
-                                }, function(reason) {
-                                    deferred.reject(reason);
-                                });
+                        then(function(resp) {
+                            deferred.resolve(resp);
                         }, function(err) {
                             deferred.reject(err);
                         });

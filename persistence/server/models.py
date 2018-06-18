@@ -857,6 +857,7 @@ class Host(ModelBase):
         self.os = host.get('os') if host.get('os') else 'unknown'
         self.vuln_amount = int(host.get('vulns', 0))
         self.ip = host.get('ip', self.name)
+        self.hostnames = host.get('hostnames', []) if host.get('hostnames') else []
 
     def getName(self):
         return self.ip
@@ -889,6 +890,12 @@ class Host(ModelBase):
 
     def getDefaultGateway(self):
         return self.default_gateway
+
+    def getHostnames(self):
+        return self.hostnames
+
+    def setHostnames(self, hostnames):
+        self.hostnames = hostnames
 
     def getVulns(self):
         """

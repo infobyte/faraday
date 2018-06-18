@@ -224,8 +224,8 @@ class PluginController(Thread):
         if plugin_id in self._plugins:
             self._plugins[plugin_id].updateSettings(new_settings)
 
-    def createPluginSet(self, id):
-        self.plugin_sets[id] = self.plugin_manager.getPlugins()
+    def createPluginSet(self, pid):
+        self.plugin_sets[pid] = self.plugin_manager.getPlugins()
 
     def processCommandInput(self, pid, cmd, pwd):
         """

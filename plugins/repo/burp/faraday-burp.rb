@@ -7,7 +7,7 @@
 #__author__	= "Francisco Amato"
 #__copyright__	= "Copyright (c) 2014, Infobyte LLC"
 #__credits__	= ["Francisco Amato", "Micaela Ranea Sanchez"]
-#__version__	= "1.3.0"
+#__version__	= "1.4.0"
 #__maintainer__ = "Francisco Amato"
 #__email__	= "famato@infobytesec.com"
 #__status__	= "Development"
@@ -17,7 +17,7 @@ require "xmlrpc/client"
 require "pp"
 
 
-PLUGINVERSION="Faraday v1.3 Ruby"
+PLUGINVERSION="Faraday v1.4 Ruby"
 #Tested: Burp Professional v1.6.09
 
 XMLRPC::Config.module_eval do
@@ -249,10 +249,6 @@ class BurpExtender
 			  [],"",host)
 
       s_id = @server.call("createAndAddServiceToInterface",h_id, i_id, issue.getProtocol(),"tcp",[port],"open")
-
-      #Save website
-      n_id = @server.call("createAndAddNoteToService",h_id,s_id,"website","")
-      n2_id = @server.call("createAndAddNoteToNote",h_id,s_id,n_id,host,"")
 
       path = ""
       response = ""

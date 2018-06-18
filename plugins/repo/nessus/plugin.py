@@ -138,6 +138,8 @@ class NessusPlugin(core.PluginBase):
                 ref = []
                 if v.get('cve'):
                     ref.append(", ".join(v.get('cve')))
+                if v.get('cvss_base_score'):
+                    ref.append("CVSS: " + ", ".join(v.get('cvss_base_score')))
                 if v.get('bid'):
                     ref.append(", ".join(v.get('bid')))
                 if v.get('xref'):

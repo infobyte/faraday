@@ -16,18 +16,19 @@ import traceback
 
 from plugins.controller import PluginController
 from config.configuration import getInstanceConfiguration
-from utils.logs import getLogger
+import server.utils.logger
 
 CONF = getInstanceConfiguration()
 
 
 class PluginManager(object):
 
-    def __init__(self, plugin_repo_path):
+    def __init__(self, plugin_repo_path, pending_actions=None):
         self._controllers = {}
         self._plugin_modules = {}
         self._loadPlugins(plugin_repo_path)
         self._plugin_settings = {}
+        self.pending_actions = pending_actions
         self._loadSettings()
 
     def addController(self, controller, id):
@@ -77,6 +78,7 @@ class PluginManager(object):
         plugins = {}
         for module in self._plugin_modules.values():
             new_plugin = module.createPlugin()
+            new_plugin.set_actions_queue(self.pending_actions)
             self._verifyPlugin(new_plugin)
             plugins[new_plugin.id] = new_plugin
         return plugins
@@ -94,6 +96,9 @@ class PluginManager(object):
         sys.path.append(plugin_repo_path)
 
         dir_name_regexp = re.compile(r"^[\d\w\-\_]+$")
+        if not os.path.exists(plugin_repo_path):
+            server.utils.logger.get_logger(self).error('Plugins path could not be opened, no pluging will be available!')
+            return
         for name in os.listdir(plugin_repo_path):
             if dir_name_regexp.match(name):
                 try:
@@ -112,18 +117,18 @@ class PluginManager(object):
                     elif file_ext.lower() == '.pyc':
                         self._plugin_modules[name] = imp.load_compiled(name,
                                                                        module_filename)
-                    getLogger(self).debug('Loading plugin {0}'.format(name))
+                    server.utils.logger.get_logger(self).debug('Loading plugin {0}'.format(name))
                 except Exception as e:
                     msg = "An error ocurred while loading plugin %s.\n%s" % (
                         module_filename, traceback.format_exc())
-                    getLogger(self).debug(msg)
-                    getLogger(self).warn(e)
+                    server.utils.logger.get_logger(self).debug(msg)
+                    server.utils.logger.get_logger(self).warn(e)
 
     def getPlugins(self):
         plugins = self._instancePlugins()
-        for id, plugin in plugins.items():
-            if id in self._plugin_settings:
-                plugin.updateSettings(self._plugin_settings[id]["settings"])
+        for _id, plugin in plugins.items():
+            if _id in self._plugin_settings:
+                plugin.updateSettings(self._plugin_settings[_id]["settings"])
         return plugins
 
     def _verifyPlugin(self, new_plugin):

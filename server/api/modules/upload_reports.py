@@ -26,7 +26,6 @@ from flask_wtf.csrf import validate_csrf
 from werkzeug.utils import secure_filename
 from wtforms import ValidationError
 
-from faraday import setupPlugins
 from server.utils.logger import get_logger
 from server.utils.web import gzipped
 
@@ -55,6 +54,7 @@ class RawReportProcessor(Thread):
     def __init__(self):
 
         super(RawReportProcessor, self).__init__()
+        from faraday import setupPlugins
         setupPlugins()
         self.pending_actions = Queue()
 
@@ -81,7 +81,7 @@ class RawReportProcessor(Thread):
         while not self._stop:
             try:
                 workspace, file_path, cookie = UPLOAD_REPORTS_QUEUE.get(False, timeout=0.1)
-                logger.info('Processing raw report {0}'.format(file_path))
+                get_logger().info('Processing raw report {0}'.format(file_path))
 
                 # Cookie of user, used to create objects in server with the right owner.
                 server.FARADAY_UPLOAD_REPORTS_WEB_COOKIE = cookie
@@ -91,13 +91,15 @@ class RawReportProcessor(Thread):
                 if not command_id:
                     continue
                 self.end_event.wait()
+                get_logger().info('Report processing of report {0} finished'.format(file_path))
                 self.end_event.clear()
             except Empty:
                 time.sleep(0.1)
             except KeyboardInterrupt as ex:
-                break
+                get_logger().info('Keyboard interrupt, stopping report processing thread')
+                self.stop()
             except Exception as ex:
-                logger.exception(ex)
+                get_logger().exception(ex)
                 continue
 
 
@@ -136,8 +138,4 @@ def file_upload(workspace=None):
             output.write(report_file.read())
 
     UPLOAD_REPORTS_QUEUE.put((workspace, file_path, request.cookies))
-    command_id = UPLOAD_REPORTS_CMD_QUEUE.get()
-    if command_id:
-        # return jsonify({"status": "processing", "command_id": command_id})
-        return redirect('/#/dashboard/ws/' + workspace)
-    abort(make_response(jsonify(message="Invalid file."), 400))
+    return redirect('/#/dashboard/ws/' + workspace)

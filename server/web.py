@@ -133,12 +133,13 @@ class WebServer(object):
         return factory
 
     def install_signal(self):
-        def signal_handler(*args):
-            logger.info("Stopping threads, please wait...")
-            # teardown()
-            self.raw_report_processor.stop()
-            reactor.stop()
         for sig in (SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM):
+            def signal_handler(*args):
+                logger.info("Stopping threads, please wait...")
+                # teardown()
+                self.raw_report_processor.stop()
+                reactor.stop()
+
             signal(sig, signal_handler)
 
     def run(self):

@@ -10,6 +10,7 @@ New features in the latest update
 
 TBA:
 ---
+* Add xsssniper plugin
 * Fix W3af, Zap
 * Add brutexss plugin
 * Allow to upload report file from external tools from the web

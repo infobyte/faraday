@@ -244,6 +244,9 @@ class WapitiPlugin(core.PluginBase):
         """
 
         self._output_file_path = "/root/dev/faraday/trunk/src/report/wapiti2.3.0_abaco.xml"
+        #TODO FOR mig_white_4896... if NOT debug
+        # OR replace all if/else with
+        # parser = WapitiXmlParser(output)
         if debug:
             parser = WapitiXmlParser(output)
         else:

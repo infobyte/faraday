@@ -10,6 +10,7 @@ New features in the latest update
 
 TBA:
 ---
+* Add new plugin wfuzz
 * Add xsssniper plugin
 * Fix W3af, Zap
 * Add brutexss plugin

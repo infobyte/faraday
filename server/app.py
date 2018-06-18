@@ -26,7 +26,7 @@ from flask_security import (
     Security,
     SQLAlchemyUserDatastore,
 )
-from flask.ext.session import Session
+from flask_session import Session
 from nplusone.ext.flask_sqlalchemy import NPlusOne
 from depot.manager import DepotManager
 

@@ -84,7 +84,11 @@ class W3afXmlParser(object):
         """
         bugtype = ""
 
-        scaninfo = tree.findall('scan-info')[0]
+        if len(tree.findall('scan-info')) == 0:
+            scaninfo = tree.findall('scaninfo')[0]
+        else:
+            scaninfo = tree.findall('scan-info')[0]
+
         self.target = scaninfo.get('target')
         host = re.search(
             "(http|https|ftp)\://([a-zA-Z0-9\.\-]+(\:[a-zA-Z0-9\.&amp;%\$\-]+)*@)*((25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9])\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[0-9])|localhost|([a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\.(com|edu|gov|int|mil|net|org|biz|arpa|info|name|pro|aero|coop|museum|[a-zA-Z]{2}))[\:]*([0-9]+)*([/]*($|[a-zA-Z0-9\.\,\?\'\\\+&amp;%\$#\=~_\-]+)).*?$", self.target)
@@ -165,16 +169,26 @@ class Item(object):
 
         self.req = self.resp = ''
         for tx in self.node.findall('http-transactions/http-transaction'):
-            self.req = tx.find('http-request/status').text
-            for h in tx.findall('http-request/headers/header'):
+            if tx.find('http-request'):
+                hreq = tx.find('http-request')
+            else:
+                hreq = tx.find('httprequest')
+
+            if tx.find('http-response'):
+                hres = tx.find('http-response')
+            else:
+                hres = tx.find('httpresponse')
+
+            self.req = hreq.find('status').text
+            for h in hreq.findall('headers/header'):
                 self.req += "\n%s: %s" % (h.get('field'), h.get('content'))
 
-            self.resp = tx.find('http-response/status').text
-            for h in tx.findall('http-response/headers/header'):
+            self.resp = hres.find('status').text
+            for h in hres.findall('headers/header'):
                 self.resp += "\n%s: %s" % (h.get('field'), h.get('content'))
 
-            if tx.find('http-response/body'):
-                self.resp += "\n%s" % tx.find('http-response/body').text
+            if hres.find('body'):
+                self.resp += "\n%s" % hres.find('body').text
 
     def do_clean(self, value):
         myreturn = ""

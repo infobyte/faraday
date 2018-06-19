@@ -5,6 +5,7 @@
 import os
 import sys
 import functools
+from signal import SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM, signal
 
 import twisted.web
 from twisted.web.resource import Resource, ForbiddenResource
@@ -32,6 +33,7 @@ from server.websocket_factories import (
     WorkspaceServerFactory,
     BroadcastServerProtocol
 )
+from server.api.modules.upload_reports import RawReportProcessor
 
 app = create_app()  # creates a Flask(__name__) app
 logger = server.utils.logger.get_logger(__name__)
@@ -130,6 +132,16 @@ class WebServer(object):
         factory.protocol = BroadcastServerProtocol
         return factory
 
+    def install_signal(self):
+        for sig in (SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM):
+            def signal_handler(*args):
+                logger.info("Stopping threads, please wait...")
+                # teardown()
+                self.raw_report_processor.stop()
+                reactor.stop()
+
+            signal(sig, signal_handler)
+
     def run(self):
         site = twisted.web.server.Site(self.__root_resource)
         if self.__ssl_enabled:
@@ -141,13 +153,22 @@ class WebServer(object):
             self.__listen_func = reactor.listenTCP
 
         try:
+            self.install_signal()
+            # start threads and processes
+            self.raw_report_processor = RawReportProcessor()
+            self.raw_report_processor.start()
             # web and static content
             self.__listen_func(
                 self.__listen_port, site,
                 interface=self.__bind_address)
             # websockets
-            listenWS(self.__build_websockets_resource(), interface=self.__bind_address)
+            try:
+                listenWS(self.__build_websockets_resource(), interface=self.__bind_address)
+            except :
+                logger.warn('Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
+            logger.info('Faraday Server is ready')
             reactor.run()
+
         except error.CannotListenError as e:
             logger.error(str(e))
             sys.exit(1)

@@ -27,6 +27,7 @@ import urllib
 import os
 import json
 import logging
+from ConfigParser import SafeConfigParser
 
 try:
     import urlparse
@@ -53,7 +54,10 @@ from persistence.server.changes_stream import (
 # NOTE: Change is you want to use this module by itself.
 # If FARADAY_UP is False, SERVER_URL must be a valid faraday server url
 logger = logging.getLogger(__name__)
+
 FARADAY_UP = True
+FARADAY_UPLOAD_REPORTS_WEB_COOKIE = None
+
 SERVER_URL = "http://127.0.0.1:5985"
 AUTH_USER = ""
 AUTH_PASS = ""
@@ -67,16 +71,19 @@ OBJECT_TYPE_END_POINT_MAPPER = {
     'Cred': 'credential',
 }
 
+from config import globals as CONSTANTS
+LOCAL_CONFIG_FILE = os.path.expanduser(
+    os.path.join(CONSTANTS.CONST_FARADAY_HOME_PATH, 'config/server.ini'))
+
 
 def _conf():
-
     from config.configuration import getInstanceConfiguration
     CONF = getInstanceConfiguration()
 
     # If you are running this libs outside of Faraday, cookies are not setted.
     # you need get a valid cookie auth and set that.
     # Fplugin run in other instance, so this dont generate any trouble.
-    if not CONF.getDBSessionCookies():
+    if not CONF.getDBSessionCookies() and not FARADAY_UPLOAD_REPORTS_WEB_COOKIE:
         server_url = CONF.getServerURI() if FARADAY_UP else SERVER_URL
         cookie = login_user(server_url, CONF.getAPIUsername(), CONF.getAPIPassword())
         CONF.setDBSessionCookies(cookie)
@@ -85,10 +92,19 @@ def _conf():
 
 
 def _get_base_server_url():
-    if FARADAY_UP:
+    if FARADAY_UPLOAD_REPORTS_WEB_COOKIE:
+        parser = SafeConfigParser()
+        parser.read(LOCAL_CONFIG_FILE)
+        server_url = 'http://{0}:{1}'.format(
+                parser.get('faraday_server', 'bind_address'),
+                parser.get('faraday_server', 'port'))
+        logger.info('Detected upload cookie. Using server_url as {0}'.format(server_url))
+    elif FARADAY_UP:
         server_url = _conf().getAPIUrl()
+        logger.info('Detected faraday client running. Using server_url as {0}'.format(server_url))
     else:
         server_url = SERVER_URL
+        logger.info('Could not detect upload or client running. Using default server_url as {0}'.format(server_url))
 
     return server_url.rstrip('/')
 
@@ -167,7 +183,10 @@ def _add_session_cookies(func):
     adds authentication to the parameters.
     """
     def wrapper(*args, **kwargs):
-        kwargs['cookies'] = _conf().getDBSessionCookies()
+        if FARADAY_UPLOAD_REPORTS_WEB_COOKIE:
+            kwargs['cookies'] = FARADAY_UPLOAD_REPORTS_WEB_COOKIE
+        else:
+            kwargs['cookies'] = _conf().getDBSessionCookies()
         response = func(*args, **kwargs)
         return response
     return wrapper if FARADAY_UP else func
@@ -811,7 +830,7 @@ def get_services_number(workspace_name, **params):
     Returns:
         The amount of services in the workspace as an integer.
     """
-    return int(get_workspace_summary(workspace_name)['interfaces'])
+    return int(get_workspace_summary(workspace_name)['services'])
 
 def get_interfaces_number(workspace_name, **params):
     """
@@ -870,7 +889,7 @@ def get_commands_number(workspace_name, **params):
 
 def create_host(workspace_name, command_id, ip, os, default_gateway=None,
                 description="", metadata=None, owned=False, owner="",
-                parent=None):
+                parent=None, hostnames=None):
     """Create a host.
 
     Args:
@@ -899,11 +918,12 @@ def create_host(workspace_name, command_id, ip, os, default_gateway=None,
                            owner=owner,
                            parent=parent,
                            description=description,
+                           hostnames=hostnames,
                            type="Host")
 
 def update_host(workspace_name, command_id, id, ip, os, default_gateway="",
                 description="", metadata=None, owned=False, owner="",
-                parent=None):
+                parent=None, hostnames=None):
     """Updates a host.
 
     Args:
@@ -933,6 +953,7 @@ def update_host(workspace_name, command_id, id, ip, os, default_gateway="",
                              owner=owner,
                              parent=parent,
                              description=description,
+                             hostnames=hostnames,
                              type="Host")
 
 
@@ -1556,7 +1577,7 @@ def check_server_url(url_to_test):
 def get_user_info():
     try:
         resp = requests.get(urlparse.urljoin(_get_base_server_url(), "/_api/session"), cookies=_conf().getDBSessionCookies(), timeout=1)
-        if resp.status_code != 403:
+        if (resp.status_code != 401) and (resp.status_code != 403):
             return resp.json()
         else:
             return False

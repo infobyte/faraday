@@ -33,7 +33,7 @@ from model import Modelactions
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
-VERSION = server.config.__get_version()
+VERSION = server.config.__get_version().split('+')[0]
 logger = logging.getLogger(__name__)
 
 
@@ -171,14 +171,15 @@ class PluginBase(object):
         logger.debug('AddPendingAction', args)
         self._pending_actions.put(args)
 
-    def createAndAddHost(self, name, os="unknown"):
+    def createAndAddHost(self, name, os="unknown", hostnames=None):
 
         host_obj = factory.createModelObject(
             Host.class_signature,
             name,
             os=os,
             parent_id=None,
-            workspace_name=self.workspace)
+            workspace_name=self.workspace,
+            hostnames=hostnames)
 
         host_obj._metadata.creatoserverr = self.id
         self.__addPendingAction(Modelactions.ADDHOST, host_obj)

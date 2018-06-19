@@ -105,7 +105,9 @@ class MainApplication(object):
         self._model_controller = ModelController(self._mappers_manager, pending_actions)
 
         self._plugin_manager = PluginManager(
-            os.path.join(CONF.getConfigPath(), "plugins"))
+            os.path.join(CONF.getConfigPath(), "plugins"),
+            pending_actions=pending_actions,
+        )
 
         self._workspace_manager = WorkspaceManager(
             self._mappers_manager)
@@ -178,11 +180,11 @@ class MainApplication(object):
 
             exit_code = self.app.run(self.args)
 
-        except Exception:
-            print "There was an error while starting Faraday"
-            print "-" * 50
-            traceback.print_exc()
-            print "-" * 50
+        except Exception as exception:
+            print "There was an error while starting Faraday:"
+            print "*" * 3,
+            print exception, # instead of traceback.print_exc()
+            print "*" * 3
             exit_code = -1
 
         finally:
@@ -198,7 +200,9 @@ class MainApplication(object):
         model.api.stopAPIServer()
         restapi.stopServer()
         self._model_controller.stop()
-        self._model_controller.join()
+        if self._model_controller.isAlive():
+            # runs only if thread has started, i.e. self._model_controller.start() is run first
+            self._model_controller.join()
         self.timer.stop()
         model.api.devlog("Waiting for controller threads to end...")
         return exit_code

@@ -140,13 +140,13 @@ def start_server():
 def stop_server():
     """Stops Faraday Server if it isn't running"""
     logger = get_logger(__name__)
-
     pid = is_server_running()
     if pid is None:
         logger.error('Faraday Server is not running')
         return False
 
     try:
+        logger.info('Sending SIGTERM to pid {0}'.format(pid))
         os.kill(pid, signal.SIGTERM)
     except OSError, err:
         if err.errno == errno.EPERM:

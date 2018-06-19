@@ -10,6 +10,13 @@ New features in the latest update
 
 TBA:
 ---
+* Add new plugin wfuzz
+* Add xsssniper plugin
+* Fix W3af, Zap
+* Add brutexss plugin
+* Allow to upload report file from external tools from the web
+* Fix sshcheck import file from GTK
+* Add reconng, sublist3r, HP Webinspect, dirsearch and ip360 plugins
 * CouchDB was replaced by PostgreSQL :)
 * Host object changed, now the name property is called ip
 * Interface object was removed
@@ -25,14 +32,21 @@ TBA:
 * Exploitation and severity fields only allow certain values. CWE CVEs were fixed to be valid. A script to convert custom CSVs was added.
 * Web UI path changed from /_ui/ to / (_ui has now a redirection to / for keeping backwards compatibility)
 * dirb plugin should creates a vulnerability type information instead of a note.
-* Add new plugin ip360
 * Add confirmed column to exported csv from webui
 * Fixes in Arachni plugin
 * Add new parameters --keep-old and --keep-new for faraday CLI
 * Add new screenshot fplugin which takes a screenshot of the ip:ports of a given protocol
 * Add fix for net sparker regular and cloud fix on severity
 * Removed Chat feature (data is kept inside notes)
-* Add new plugin wfuzz
+* Plugin reports now can be imported in the server, from the Web UI
+* Add CVSS score to reference field in Nessus plugin.
+* Fix unicode characters bug in Netsparker plugin.
+* Fix qualys plugin.
+* Fix bugs with MACOS and GTK.
+
+April 10, 2018:
+---
+* Fix bug with tornado version 5.0 and GTK client.
 
 November 17, 2017:
 ---

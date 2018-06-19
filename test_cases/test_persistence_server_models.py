@@ -1,7 +1,14 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 import persistence.server.models as models
 import pytest
 import responses
 import requests
+from mock import Mock, patch
 
 import server.config
 
@@ -15,8 +22,18 @@ class TestVulnPersistanceModelsFuncions(GenericAPITest):
     factory = VulnerabilityFactory
 
     @responses.activate
-    def test_persistence_server_update_vuln(self):
+    @patch('config.configuration.getInstanceConfiguration')
+    @patch('persistence.server.server.SERVER_URL', 'http://localhost:5985')
+    def test_persistence_server_update_vuln(self, getInstanceConfigurationMock):
         fo = self.first_object
+        conf_mock = Mock()
+        getInstanceConfigurationMock.return_value = conf_mock
+        port = 5985
+        conf_mock.getDBSessionCookies.return_value = None
+        conf_mock.getAPIUrl.return_value = 'http://localhost:{0}'.format(port)
+        conf_mock.getServerURI.return_value = 'http://localhost:{0}'.format(port)
+        conf_mock.getAPIUsername.return_value = 'faraday'
+        conf_mock.getAPIPassword.return_value = 'mocked_password'
 
         vuln = {'desc': fo.description, 'data': fo.data, 'severity': fo.severity, 'refs': list(fo.references),
                 'confirmed': fo.confirmed, 'resolution': fo.resolution, 'status': fo.status,
@@ -66,18 +83,13 @@ class TestVulnPersistanceModelsFuncions(GenericAPITest):
                 u'resolution': v.getResolution()
                 }
 
-        port = server.config.faraday_server.port
-
         responses.add(responses.PUT,
                       'http://localhost:{0}/_api/v2/ws/{1}/vulns/{2}/'.format(port,self.workspace.name, v.id),
                       json=resp, status=200)
 
         a = requests.put('http://localhost:{0}/_api/v2/ws/{1}/vulns/{2}/'.format(port,self.workspace.name, v.id))
 
-        try:
-            models.update_vuln(self.workspace.name, v)
-        except TypeError as e:
-            pytest.fail(e.message)
+        models.update_vuln(self.workspace.name, v)
 
 
 @pytest.mark.usefixtures('logged_user')
@@ -85,8 +97,19 @@ class TestVulnWebPersistanceModelsFuncions(GenericAPITest):
     factory = VulnerabilityWebFactory
 
     @responses.activate
-    def test_persistence_server_update_vuln_web(self):
+    @patch('config.configuration.getInstanceConfiguration')
+    @patch('persistence.server.server.SERVER_URL', 'http://localhost:5985')
+    def test_persistence_server_update_vuln_web(self, getInstanceConfigurationMock):
         fo = self.first_object
+
+        conf_mock = Mock()
+        getInstanceConfigurationMock.return_value = conf_mock
+        port = 5985
+        conf_mock.getDBSessionCookies.return_value = None
+        conf_mock.getAPIUrl.return_value = 'http://localhost:{0}'.format(port)
+        conf_mock.getServerURI.return_value = 'http://localhost:{0}'.format(port)
+        conf_mock.getAPIUsername.return_value = 'faraday'
+        conf_mock.getAPIPassword.return_value = 'mocked_password'
 
         vuln_web = {'desc': fo.description, 'data': fo.data, 'severity': fo.severity, 'refs': list(fo.references),
                     'confirmed': fo.confirmed, 'resolution': fo.resolution, 'status': fo.status,
@@ -141,15 +164,10 @@ class TestVulnWebPersistanceModelsFuncions(GenericAPITest):
                 u'resolution': v.getResolution()
                 }
 
-        port = server.config.faraday_server.port
-
         responses.add(responses.PUT,
                       'http://localhost:{0}/_api/v2/ws/{1}/vulns/{2}/'.format(port,self.workspace.name, v.id),
                       json=resp, status=200)
 
         a = requests.put('http://localhost:{0}/_api/v2/ws/{1}/vulns/{2}/'.format(port,self.workspace.name, v.id))
 
-        try:
-            models.update_vuln_web(self.workspace.name, v)
-        except TypeError as e:
-            pytest.fail(e.message)
+        models.update_vuln_web(self.workspace.name, v)

@@ -20,6 +20,7 @@ import server.config
 import model.api
 import model.common
 from model.common import factory
+from persistence.server.models import get_host , update_host
 from persistence.server.models import (
     Host,
     Service,
@@ -198,6 +199,14 @@ class PluginBase(object):
 
         # We don't use interface anymore, so return a host id to maintain
         # backwards compatibility
+        # Little hack because we dont want change all the plugins for add hostnames in Host object.
+        # SHRUG
+        try:
+            host = get_host(self.workspace, host_id=host_id)
+            host.hostnames = hostname_resolution
+            update_host(self.workspace, host, command_id=self.command_id)
+        except:
+            logger.info("Error updating Host with right hostname resolution...")
         return host_id
 
     @deprecation.deprecated(deprecated_in="3.0", removed_in="3.5",

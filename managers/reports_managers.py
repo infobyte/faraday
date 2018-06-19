@@ -51,7 +51,7 @@ class ReportProcessor():
         """Sends a report to the appropiate plugin specified by plugin_id"""
         getLogger(self).info(
             'The file is %s, %s' % (filename, plugin_id))
-        command_id = self.plugin_controller.processReport(plugin_id, filename, self.ws_name)
+        command_id = self.plugin_controller.processReport(plugin_id, filename, ws_name=self.ws_name)
         if not command_id:
             getLogger(self).error(
                 "Faraday doesn't have a plugin for this tool..."

@@ -25,8 +25,9 @@ from server.importer import ImportCouchDB
 from server.web import app
 from utils.logs import setUpLogger
 
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
-@click.group()
+@click.group(context_settings=CONTEXT_SETTINGS)
 def cli():
     pass
 
@@ -35,7 +36,7 @@ def check_faraday_server(url):
     return requests.get(url)
 
 
-@click.command()
+@click.command(help="Enable importation of plugins reports in ~/.faraday folder")
 @click.option('--debug/--no-debug', default=False)
 @click.option('--workspace', default=None)
 @click.option('--polling/--no-polling', default=True)
@@ -64,15 +65,11 @@ def process_reports(debug, workspace, polling):
             print('Can\'t connect to {0}. Please check if the server is running.'.format(url))
 
 
-@click.command()
+@click.command(help="Show all URLs in Faraday Server API")
 def show_urls():
     show_all_urls()
 
-@click.command()
-def faraday_schema_display():
-    DatabaseSchema().run()
-
-@click.command()
+@click.command(help="Create Faraday DB in Postgresql, also tables and indexes")
 def initdb():
     with app.app_context():
         InitDB().run()
@@ -82,16 +79,16 @@ def initdb():
             ImportCouchDB().run()
             print('All users from CouchDB were imported. You can login with your old username/password to faraday now.')
 
-@click.command()
+@click.command(help="Import all your data from Couchdb Faraday databases")
 def import_from_couchdb():
     with app.app_context():
         ImportCouchDB().run()
 
-@click.command()
+@click.command(help="Create a PNG image with Faraday model object")
 def database_schema():
     DatabaseSchema().run()
 
-@click.command()
+@click.command(help="Open a SQL Shell connected to postgresql 'Faraday DB'")
 def sql_shell():
     try:
         from pgcli.main import PGCli
@@ -105,7 +102,7 @@ def sql_shell():
     pgcli.run_cli()
 
 
-@click.command()
+@click.command(help="Check critical modules in Faraday server application")
 def status_check():
     full_status_check()
 
@@ -125,7 +122,7 @@ def validate_email(ctx, param, value):
     return validate_user_unique_field(ctx, param, value)
 
 
-@click.command()
+@click.command(help="Create ADMIN user for Faraday application")
 @click.option('--username', prompt=True, callback=validate_user_unique_field)
 @click.option('--email', prompt=True, callback=validate_email)
 @click.option('--password', prompt=True, hide_input=True,
@@ -148,7 +145,6 @@ def createsuperuser(username, email, password):
 
 cli.add_command(process_reports)
 cli.add_command(show_urls)
-cli.add_command(faraday_schema_display)
 cli.add_command(initdb)
 cli.add_command(import_from_couchdb)
 cli.add_command(database_schema)
@@ -159,4 +155,3 @@ cli.add_command(status_check)
 
 if __name__ == '__main__':
     cli()
-

@@ -597,18 +597,20 @@ class ServiceImporter(object):
                 yield service
 
 
+user_lock = threading.Lock()
 def get_or_create_user(session, username):
-    rng = SystemRandom()
-    password =  "".join(
-        [rng.choice(string.ascii_letters + string.digits) for _ in
-            xrange(12)])
-    creator, created = get_or_create(session, User, username=username)
-    if created:
-        creator.active = False
-        creator.password = password
-    session.add(creator) # remove me
-    session.commit() # remove me
-    return creator
+    with user_lock:
+        rng = SystemRandom()
+        password =  "".join(
+            [rng.choice(string.ascii_letters + string.digits) for _ in
+                xrange(12)])
+        creator, created = get_or_create(session, User, username=username)
+        if created:
+            creator.active = False
+            creator.password = password
+        session.add(creator) # remove me
+        session.commit() # remove me
+        return creator
 
 
 class VulnerabilityImporter(object):

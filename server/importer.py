@@ -597,18 +597,20 @@ class ServiceImporter(object):
                 yield service
 
 
+user_lock = threading.Lock()
 def get_or_create_user(session, username):
-    rng = SystemRandom()
-    password =  "".join(
-        [rng.choice(string.ascii_letters + string.digits) for _ in
-            xrange(12)])
-    creator, created = get_or_create(session, User, username=username)
-    if created:
-        creator.active = False
-        creator.password = password
-    session.add(creator) # remove me
-    session.commit() # remove me
-    return creator
+    with user_lock:
+        rng = SystemRandom()
+        password =  "".join(
+            [rng.choice(string.ascii_letters + string.digits) for _ in
+                xrange(12)])
+        creator, created = get_or_create(session, User, username=username)
+        if created:
+            creator.active = False
+            creator.password = password
+        session.add(creator) # remove me
+        session.commit() # remove me
+        return creator
 
 
 class VulnerabilityImporter(object):
@@ -896,6 +898,7 @@ class WorkspaceImporter(object):
             workspace.end_date = datetime.datetime.fromtimestamp(float(document.get('duration')['end'])/1000)
         for scope in [x.strip() for x in document.get('scope', '').split('\n') if x.strip()]:
             scope_obj, created = get_or_create(session, Scope, name=scope, workspace=workspace)
+            session.flush()  # This fixes integrity errors for duplicate scope elements
         users = document.get('users', [])
         if not users:
             workspace.public = True

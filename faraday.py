@@ -490,8 +490,7 @@ You have 3 attempts.""")
                 CONF.saveConfig()
 
                 user_info = get_user_info()
-
-                if user_info is None or 'username' not in user_info:
+                if (user_info is None) or (not user_info) or ('username' not in user_info):
                     print("You can't login as a client. You have %s attempt(s) left." % (3 - attempt))
                     continue
 

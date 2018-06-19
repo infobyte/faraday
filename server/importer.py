@@ -533,11 +533,11 @@ class ServiceImporter(object):
             command = session.query(Command).get(couchdb_relational_map[document['metadata']['command_id']][0])
         except (KeyError, IndexError):
             command = None
-        try:
-            parent_id = document['parent'].split('.')[0]
-        except KeyError:
-            # some services are missing the parent key
-            parent_id = document['_id'].split('.')[0]
+
+        # This should be safe because _id is always present and split never
+        # returns an empty list
+        parent_id = (document.get('parent') or document.get('_id')).split('.')[0]
+
         for relational_parent_id in couchdb_relational_map[parent_id]:
             host, created = get_or_create(session, Host, id=relational_parent_id)
             if command and created:

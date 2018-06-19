@@ -479,7 +479,7 @@ class CustomAssociationSet(_AssociationSet):
             # we need to fetch already created objs.
             session.rollback()
             for conflict_obj in conflict_objs:
-                if conflict_obj.name == value:
+                if hasattr(conflict_obj, 'name') and conflict_obj.name == value:
                     continue
                 persisted_conclict_obj = session.query(conflict_obj.__class__).filter_by(name=conflict_obj.name).first()
                 if persisted_conclict_obj:
@@ -1240,9 +1240,10 @@ class Scope(Metadata):
                         index=True,
                         nullable=False
                         )
+
     workspace = relationship(
         'Workspace',
-         backref=backref('scope', lazy="joined", cascade="all, delete-orphan"),
+         backref=backref('scope', cascade="all, delete-orphan"),
          foreign_keys=[workspace_id],
          )
 

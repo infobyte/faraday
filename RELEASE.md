@@ -10,6 +10,9 @@ New features in the latest update
 
 TBA:
 ---
+* Add new plugin wfuzz
+* Add xsssniper plugin
+* Fix W3af, Zap
 * Add brutexss plugin
 * Allow to upload report file from external tools from the web
 * Fix sshcheck import file from GTK

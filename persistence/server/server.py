@@ -1577,7 +1577,7 @@ def check_server_url(url_to_test):
 def get_user_info():
     try:
         resp = requests.get(urlparse.urljoin(_get_base_server_url(), "/_api/session"), cookies=_conf().getDBSessionCookies(), timeout=1)
-        if resp.status_code != 403:
+        if (resp.status_code != 401) and (resp.status_code != 403):
             return resp.json()
         else:
             return False

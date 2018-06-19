@@ -1240,9 +1240,10 @@ class Scope(Metadata):
                         index=True,
                         nullable=False
                         )
+
     workspace = relationship(
         'Workspace',
-         backref=backref('scope', lazy="joined", cascade="all, delete-orphan"),
+         backref=backref('scope', cascade="all, delete-orphan"),
          foreign_keys=[workspace_id],
          )
 

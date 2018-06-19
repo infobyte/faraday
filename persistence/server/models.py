@@ -1035,6 +1035,8 @@ class Vuln(ModelBase):
             return True
         if key == "status":
             return True
+        if key == "refs":
+            return True
         return False
 
     def tieBreak(self, key, prop1, prop2):
@@ -1042,6 +1044,10 @@ class Vuln(ModelBase):
         Return the 'choosen one'
         Return a tuple with prop1, prop2 if we cant resolve conflict.
         """
+
+        if key == "refs":
+            prop1.extend([x for x in prop2 if x not in prop1])
+            return prop1
 
         if key == "confirmed":
             return True
@@ -1268,6 +1274,9 @@ class VulnWeb(Vuln):
             return True
         if key == "status":
             return True
+        if key == "refs":
+            return True
+
         return False
 
     def tieBreak(self, key, prop1, prop2):
@@ -1275,6 +1284,10 @@ class VulnWeb(Vuln):
         Return the 'choosen one'
         Return a tuple with prop1, prop2 if we cant resolve conflict.
         """
+
+        if key == "refs":
+            prop1.extend([x for x in prop2 if x not in prop1])
+            return prop1
 
         if key == "response":
             return self._resolve_response(prop1, prop2)

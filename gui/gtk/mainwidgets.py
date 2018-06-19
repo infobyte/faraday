@@ -402,8 +402,10 @@ class HostsSidebar(Gtk.Widget):
         """Remove an obj of id obj_id from the model, if found there"""
         if obj_type == 'Host':
             self.remove_host(host_id=obj_id)
-        # elif not is_host and self._is_vuln_of_host(vuln_id=obj_id, host_id=potential_host_id):
-        #     self.remove_vuln(vuln_id=obj_id)
+        elif obj_type == 'Service':
+            # Yeah, we query to server about services
+            # We are not using a cached version of model
+            pass
         else:
             # Since we don't know the type of the delete object,
             # we have to assume it's a vulnerability so the host's

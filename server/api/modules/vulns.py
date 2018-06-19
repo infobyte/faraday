@@ -264,6 +264,11 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
 _strict_filtering = {'default_operator': operators.Equal}
 
 
+class IDFilter(Filter):
+    def filter(self, query, model, attr, value):
+        return query.filter(model.id == value)
+
+
 class TargetFilter(Filter):
     def filter(self, query, model, attr, value):
         return query.filter(model.target_host_ip == value)
@@ -311,7 +316,7 @@ class VulnerabilityFilterSet(FilterSet):
         # command, impact, issuetracker, tags, date, host
         # evidence, policy violations, hostnames
         fields = (
-            "status", "website", "pname", "query", "path", "service",
+            "id", "status", "website", "pname", "query", "path", "service",
             "data", "severity", "confirmed", "name", "request", "response",
             "parameters", "params", "resolution", "ease_of_resolution",
             "description", "command_id", "target", "creator", "method",
@@ -325,10 +330,12 @@ class VulnerabilityFilterSet(FilterSet):
         )
 
         default_operator = CustomILike
+        # next line uses dict comprehensions!
         column_overrides = {
             field: _strict_filtering for field in strict_fields
         }
         operators = (CustomILike, operators.Equal)
+    id = IDFilter(fields.Int())
     target = TargetFilter(fields.Str())
     type = TypeFilter(fields.Str(validate=[OneOf(['Vulnerability',
                                                   'VulnerabilityWeb'])]))

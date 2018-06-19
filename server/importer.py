@@ -452,12 +452,14 @@ class HostImporter(object):
             if check_ip_address(interface['ipv4']['address']):
                 interface_ip = interface['ipv4']['address']
                 host, created = get_or_create(session, Host, ip=interface_ip, workspace=workspace)
+                session.flush()
                 host.default_gateway_ip = interface['ipv4']['gateway']
                 self.merge_with_host(host, interface, workspace)
                 hosts.append((host, created))
             if check_ip_address(interface['ipv6']['address']):
                 interface_ip = interface['ipv6']['address']
                 host, created = get_or_create(session, Host, ip=interface_ip, workspace=workspace)
+                session.flush()
                 host.default_gateway_ip = interface['ipv6']['gateway']
                 self.merge_with_host(host, interface, workspace)
                 hosts.append((host, created))

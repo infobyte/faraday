@@ -243,7 +243,7 @@ class BurpExtender
     begin
       rt = @server.call("devlog", "[BURP] New issue generation")
 
-      h_id = @server.call("createAndAddHost",ip, "unknown")
+      h_id = @server.call("createAndAddHost",ip, "unknown", [host])
       i_id = @server.call("createAndAddInterface",h_id, ip,"00:00:00:00:00:00", ip, "0.0.0.0", "0.0.0.0",[],
 			  "0000:0000:0000:0000:0000:0000:0000:0000","00","0000:0000:0000:0000:0000:0000:0000:0000",
 			  [],"",host)

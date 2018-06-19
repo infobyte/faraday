@@ -287,6 +287,7 @@ class PluginController(Thread):
         cmd_info.setID(command_id)
         if plugin in self._plugins:
             logger.info('Processing report with plugin {0}'.format(plugin))
+            self._plugins[plugin].workspace = ws_name
             with open(filepath, 'rb') as output:
                 self.processOutput(self._plugins[plugin], output.read(), cmd_info, True)
             return command_id

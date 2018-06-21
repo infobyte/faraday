@@ -349,6 +349,10 @@ class VulnerabilityFilterSet(FilterSet):
     pname = Filter(fields.String(attribute='parameter_name'))
     query = Filter(fields.String(attribute='query_string'))
     params = Filter(fields.String(attribute='parameters'))
+    status = Filter(fields.Function(
+        deserialize=lambda val: 'open' if val == 'opened' else val,
+        validate=OneOf(Vulnerability.STATUSES + ['opened'])
+    ))
 
     def filter(self):
         """Generate a filtered query from request parameters.

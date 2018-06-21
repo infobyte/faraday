@@ -131,7 +131,7 @@ def main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     result = sock.connect_ex((args.bind_address or server.config.faraday_server.bind_address, int(args.port or server.config.faraday_server.port)))
 
-    if is_server_running():
+    if is_server_running() and result == 0:
         sys.exit(1)
 
     if result == 0:

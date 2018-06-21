@@ -62,8 +62,8 @@ def setup_environment(check_deps=False):
     server.config.gen_web_config()
 
 
-def stop_server():
-    if not daemonize.stop_server():
+def stop_server(port):
+    if not daemonize.stop_server(port):
         # Exists with an error if it couldn't close the server
         return False
     else:
@@ -71,8 +71,8 @@ def stop_server():
         return True
 
 
-def is_server_running():
-    pid = daemonize.is_server_running()
+def is_server_running(port):
+    pid = daemonize.is_server_running(port)
     if pid is not None:
         logger.warn("Faraday Server is already running. PID: {}".format(pid))
         return True
@@ -84,8 +84,7 @@ def run_server(args):
     import server.web
 
     web_server = server.web.WebServer(enable_ssl=args.ssl)
-
-    daemonize.create_pid_file()
+    daemonize.create_pid_file(args.port)
     web_server.run()
 
 
@@ -110,7 +109,7 @@ def main():
     parser.add_argument('--stop', action='store_true', help='stop Faraday Server')
     parser.add_argument('--nodeps', action='store_true', help='Skip dependency check')
     parser.add_argument('--no-setup', action='store_true', help=argparse.SUPPRESS)
-    parser.add_argument('--port', help='Overides server.ini port configuration')
+    parser.add_argument('--port', help='Overides server.ini port configuration', default=5985)
     parser.add_argument('--websocket_port', help='Overides server.ini websocket port configuration')
     parser.add_argument('--bind_address', help='Overides server.ini bind_address configuration')
 
@@ -126,12 +125,12 @@ def main():
         server.utils.logger.set_logging_level(server.config.DEBUG)
 
     if args.stop:
-        sys.exit(0 if stop_server() else 1)
+        sys.exit(0 if stop_server(args.port) else 1)
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     result = sock.connect_ex((args.bind_address or server.config.faraday_server.bind_address, int(args.port or server.config.faraday_server.port)))
 
-    if is_server_running():
+    if is_server_running(args.port):
         sys.exit(1)
 
     if result == 0:

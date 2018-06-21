@@ -137,10 +137,10 @@ def start_server():
     WORKDIR = server.config.FARADAY_BASE
     createDaemon()
 
-def stop_server():
+def stop_server(port):
     """Stops Faraday Server if it isn't running"""
     logger = get_logger(__name__)
-    pid = is_server_running()
+    pid = is_server_running(port)
     if pid is None:
         logger.error('Faraday Server is not running')
         return False
@@ -158,11 +158,11 @@ def stop_server():
 
     return True
 
-def is_server_running():
+def is_server_running(port):
     """Returns server PID if it is running. Otherwise returns None"""
     logger = get_logger(__name__)
 
-    pid = get_server_pid()
+    pid = get_server_pid(port)
     if pid is None:
         return None
 
@@ -170,7 +170,7 @@ def is_server_running():
         os.kill(pid, 0)
     except OSError, err:
         if err.errno == errno.ESRCH:
-            remove_pid_file()
+            remove_pid_file(port)
             return None
         elif err.errno == errno.EPERM:
             logger.warning("Server is running BUT the current user"\
@@ -181,13 +181,13 @@ def is_server_running():
     else:
         return pid
 
-def get_server_pid():
+def get_server_pid(port):
     logger = get_logger(__name__)
 
-    if not os.path.isfile(server.config.FARADAY_SERVER_PID_FILE):
+    if not os.path.isfile(server.config.FARADAY_SERVER_PID_FILE.format(port)):
         return None
 
-    with open(server.config.FARADAY_SERVER_PID_FILE, 'r') as pid_file:
+    with open(server.config.FARADAY_SERVER_PID_FILE.format(port), 'r') as pid_file:
         # If PID file is badly written, delete it and
         # assume server is not running
         try:
@@ -198,14 +198,13 @@ def get_server_pid():
                 'if Faraday Server is effectively running')
             remove_pid_file()
             return None
-    
+
     return pid
 
-def create_pid_file():
-    with open(server.config.FARADAY_SERVER_PID_FILE, 'w') as pid_file:
+def create_pid_file(port):
+    with open(server.config.FARADAY_SERVER_PID_FILE.format(port), 'w') as pid_file:
         pid_file.write('{}'.format(os.getpid()))
     atexit.register(remove_pid_file)
 
-def remove_pid_file():
-    os.remove(server.config.FARADAY_SERVER_PID_FILE)
-
+def remove_pid_file(port):
+    os.remove(server.config.FARADAY_SERVER_PID_FILE.format(port))

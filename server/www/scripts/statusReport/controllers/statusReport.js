@@ -211,7 +211,7 @@ angular.module("faradayApp")
                     "service":          "110",
                     "hostnames":        "130",
                     "target":           "100",
-                    "desc":             "200",
+                    "desc":             "600",
                     "resolution":       "170",
                     "data":             "170",
                     "easeofresolution": "140",
@@ -332,7 +332,9 @@ angular.module("faradayApp")
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/desccolumn.html',
                 headerCellTemplate: header,
                 sort: getColumnSort('desc'),
-                visible: $scope.columns["desc"]
+                visible: $scope.columns["desc"],
+                minWidth: '300',
+                maxWidth: '600',
             });
             $scope.gridOptions.columnDefs.push({ name : 'resolution',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/resolutioncolumn.html',

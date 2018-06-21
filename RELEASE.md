@@ -10,14 +10,25 @@ New features in the latest update
 
 TBA:
 ---
+* Add hostname to host
+* Interface removed from model and from persistence server lib (fplugin)
+* Performance iprovements on the backend
+* Add quick change workspace name (from all views)
+* Allow user to change workspace
+* New faraday styles in all webui views
+* Add search by id for vulnerabilities
 * Add new plugin sslyze
 * Add new plugin wfuzz
 * Add xsssniper plugin
-* Fix W3af, Zap
+* Fix W3af, Zap plugins
 * Add brutexss plugin
 * Allow to upload report file from external tools from the web
 * Fix sshcheck import file from GTK
-* Add reconng, sublist3r, HP Webinspect, dirsearch and ip360 plugins
+* Add reconng plugin
+* Add sublist3r plugin
+* Add HP Webinspect plugin
+* Add dirsearch plugin
+* Add ip360 plugin
 * CouchDB was replaced by PostgreSQL :)
 * Host object changed, now the name property is called ip
 * Interface object was removed

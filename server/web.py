@@ -5,7 +5,7 @@
 import os
 import sys
 import functools
-from signal import SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM, signal
+from signal import SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM, SIG_DFL, signal
 
 import twisted.web
 from twisted.web.resource import Resource, ForbiddenResource
@@ -134,15 +134,17 @@ class WebServer(object):
 
     def install_signal(self):
         for sig in (SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM):
-            def signal_handler(*args):
-                logger.info("Stopping threads, please wait...")
-                # teardown()
-                self.raw_report_processor.stop()
-                reactor.stop()
+            signal(sig, SIG_DFL)
 
-            signal(sig, signal_handler)
+
 
     def run(self):
+        def signal_handler(*args):
+            logger.info("Stopping threads, please wait...")
+            # teardown()
+            self.raw_report_processor.stop()
+            reactor.stop()
+
         site = twisted.web.server.Site(self.__root_resource)
         if self.__ssl_enabled:
             ssl_context = self.__load_ssl_certs()
@@ -167,6 +169,7 @@ class WebServer(object):
             except :
                 logger.warn('Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
             logger.info('Faraday Server is ready')
+            reactor.addSystemEventTrigger('before', 'shutdown', signal_handler)
             reactor.run()
 
         except error.CannotListenError as e:

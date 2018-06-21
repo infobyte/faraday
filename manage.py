@@ -143,6 +143,20 @@ def createsuperuser(username, email, password):
             fg='green', bold=True))
 
 
+@click.command(help="Create database tables. Requires a functional "
+               "PostgreSQL database configured in the server.ini")
+def create_tables():
+    with app.app_context():
+        # Ugly hack to create tables and also setting alembic revision
+        import server.config
+        conn_string = server.config.database.connection_string
+        from server.commands.initdb import InitDB
+        InitDB()._create_tables(conn_string)
+        click.echo(click.style(
+            'Tables created successfully!',
+            fg='green', bold=True))
+
+
 cli.add_command(process_reports)
 cli.add_command(show_urls)
 cli.add_command(initdb)
@@ -151,6 +165,7 @@ cli.add_command(database_schema)
 cli.add_command(createsuperuser)
 cli.add_command(sql_shell)
 cli.add_command(status_check)
+cli.add_command(create_tables)
 
 
 if __name__ == '__main__':

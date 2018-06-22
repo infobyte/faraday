@@ -33,7 +33,8 @@ from server.models import (
     Vulnerability,
     VulnerabilityWeb,
     VulnerabilityGeneric,
-    Workspace
+    Workspace,
+    Hostname
 )
 from server.utils.database import get_or_create
 
@@ -298,6 +299,21 @@ class ServiceFilter(Filter):
                 alias.name == value
         )
 
+class HostnamesFilter(Filter):
+    def filter(self, query, model, attr, value):
+        alias = aliased(Hostname, name='hostname_filter')
+
+        service_hostnames_query = query.join(Service, Service.id == Vulnerability.service_id).\
+           join(Host).\
+           join(alias).\
+           filter(alias.name == value)
+
+        host_hostnames_query = query.join(Host, Host.id == Vulnerability.host_id).\
+            join(alias).\
+            filter(alias.name == value)
+
+        query = service_hostnames_query.union(host_hostnames_query)
+        return query
 
 class CustomILike(operators.Operator):
     """A filter operator that puts a % in the beggining and in the
@@ -353,6 +369,7 @@ class VulnerabilityFilterSet(FilterSet):
         deserialize=lambda val: 'open' if val == 'opened' else val,
         validate=OneOf(Vulnerability.STATUSES + ['opened'])
     ))
+    hostnames = HostnamesFilter(fields.Str())
 
     def filter(self):
         """Generate a filtered query from request parameters.

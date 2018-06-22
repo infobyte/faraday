@@ -1610,14 +1610,14 @@ CheckConstraint('((Vulnerability.host_id IS NOT NULL)::int+'
 
 vulnerability_uniqueness = DDL(
     "CREATE UNIQUE INDEX uix_vulnerability ON %(fullname)s "
-    "(md5(name), md5(description), COALESCE(host_id, -1), COALESCE(service_id, -1), "
+    "(md5(name), md5(description), type, COALESCE(host_id, -1), COALESCE(service_id, -1), "
     "COALESCE(md5(method), ''), COALESCE(md5(parameter_name), ''), COALESCE(md5(path), ''), "
     "COALESCE(md5(website), ''), workspace_id, COALESCE(source_code_id, -1));"
 )
 
 vulnerability_uniqueness_sqlite = DDL(
     "CREATE UNIQUE INDEX uix_vulnerability ON %(fullname)s "
-    "(name, description, COALESCE(host_id, -1), COALESCE(service_id, -1), "
+    "(name, description, type, COALESCE(host_id, -1), COALESCE(service_id, -1), "
     "COALESCE(method, ''), COALESCE(parameter_name, ''), COALESCE(path, ''), "
     "COALESCE(website, ''), workspace_id, COALESCE(source_code_id, -1));"
 )

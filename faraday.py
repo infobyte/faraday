@@ -420,6 +420,9 @@ def checkUpdates():
         resp = resp.text.strip()
     except Exception as e:
         logger.error(e)
+    version = getInstanceConfiguration().getVersion()
+    if 'b' in version.split("+")[0]:
+        return
     if not resp == u'OK':
         logger.info("You have available updates. Run ./faraday.py --update to catchup!")
     else:

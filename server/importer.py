@@ -592,8 +592,8 @@ class ServiceImporter(object):
                 service.status = status_mapper.get(couchdb_status, 'open')
                 service.version = document.get('version')
                 service.workspace = workspace
+                session.flush()
                 if command and created:
-                    session.flush()
                     CommandObject.create(service, command)
 
                 yield service
@@ -690,8 +690,8 @@ class VulnerabilityImporter(object):
             vulnerability.impact_availability = document.get('impact', {}).get('availability') or False
             vulnerability.impact_confidentiality = document.get('impact', {}).get('confidentiality') or False
             vulnerability.impact_integrity = document.get('impact', {}).get('integrity') or False
+            session.flush()
             if command and created:
-                session.flush()
                 CommandObject.create(vulnerability, command)
             if document['type'] == 'VulnerabilityWeb':
                 vulnerability.query_string = document.get('query')

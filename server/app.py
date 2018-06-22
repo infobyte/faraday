@@ -207,7 +207,7 @@ def create_app(db_connection_string=None, testing=None):
 
     from server.models import db
     db.init_app(app)
-    Session(app)
+    #Session(app)
 
     # Setup Flask-Security
     app.user_datastore = SQLAlchemyUserDatastore(

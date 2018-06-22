@@ -336,7 +336,7 @@ def update_command_tools(workspace, command_tool_map, id_map):
                 command_id
             ))
             continue
-        assert workspace.id == command.workspace_id
+        assert workspace.id == command.workspace_id, (workspace.id, command.workspace_id)
         if command.tool and command.tool != 'unknown':
             logger.warn("Command {} (Couch ID {}) has already a tool. "
                         "Overriding it".format(command_id,
@@ -812,6 +812,7 @@ class CommandImporter(object):
             Command,
             command=document.get('command', None),
             start_date=start_date,
+            workspace=workspace,
 
         )
         if document.get('duration'):

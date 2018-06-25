@@ -303,14 +303,16 @@ class HostnamesFilter(Filter):
     def filter(self, query, model, attr, value):
         alias = aliased(Hostname, name='hostname_filter')
 
+        value_list = value.split(",")
+
         service_hostnames_query = query.join(Service, Service.id == Vulnerability.service_id).\
            join(Host).\
            join(alias).\
-           filter(alias.name == value)
+           filter(alias.name.in_(value_list))
 
         host_hostnames_query = query.join(Host, Host.id == Vulnerability.host_id).\
             join(alias).\
-            filter(alias.name == value)
+            filter(alias.name.in_(value_list))
 
         query = service_hostnames_query.union(host_hostnames_query)
         return query

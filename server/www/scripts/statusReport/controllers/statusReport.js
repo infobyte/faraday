@@ -46,7 +46,6 @@ angular.module("faradayApp")
 
         var init = function() {
             $scope.baseurl = BASEURL;
-            console.log($scope.baseurl);
             $scope.severities = SEVERITIES;
             $scope.easeofresolution = EASEOFRESOLUTION;
             $scope.propertyGroupBy = $routeParams.groupbyId;

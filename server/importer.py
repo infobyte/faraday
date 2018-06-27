@@ -564,13 +564,13 @@ class ServiceImporter(object):
                     port = 65535
                 service, created = get_or_create(session,
                                                  Service,
-                                                 name=document.get('name'),
+                                                 protocol=document.get('protocol'),
                                                  port=port,
                                                  host=host)
                 service.description = document.get('description')
                 service.owned = document.get('owned', False)
                 service.banner = document.get('banner')
-                service.protocol = document.get('protocol')
+                service.name = document.get('name')
                 if not document.get('status'):
                     logger.warning('Service {0} with empty status. Using \'open\' as status'.format(document['_id']))
                     document['status'] = 'open'

@@ -91,6 +91,11 @@ class Item(object):
     @param item_node A item_node taken from an netsparker xml tree
     """
 
+    def re_map_severity(self, severity):
+        if severity == "Important":
+            return "high"
+        return severity
+
     def __init__(self, item_node):
         self.node = item_node
         self.url = self.get_text_from_subnode("url")
@@ -108,7 +113,7 @@ class Item(object):
             self.port = host.group(11)
 
         self.name = self.get_text_from_subnode("type")
-        self.severity = self.get_text_from_subnode("severity")
+        self.severity = self.re_map_severity(self.get_text_from_subnode("severity"))
         self.certainty = self.get_text_from_subnode("certainty")
         self.method = self.get_text_from_subnode("vulnerableparametertype")
         self.param = self.get_text_from_subnode("vulnerableparameter")
@@ -116,9 +121,9 @@ class Item(object):
         self.request = self.get_text_from_subnode("rawrequest")
         self.response = self.get_text_from_subnode("rawresponse")
         if self.response:
-            self.response = self.response.encode("base64")[:-1]
+            self.response = self.response.encode("ascii",errors="backslashreplace") 
         if self.request:
-            self.request = self.request.encode("base64")[:-1]
+            self.request = self.request.encode("ascii",errors="backslashreplace") 
 
         self.kvulns = []
         for v in self.node.findall("knownvulnerabilities/knownvulnerability"):

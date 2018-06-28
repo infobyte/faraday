@@ -25,6 +25,8 @@ pip-log.txt
 .coverage
 .tox
 nosetests.xml
+test_cases/.cache/
+test_cases/htmlcov/
 
 # Translations
 *.mo
@@ -60,3 +62,7 @@ jsconfig.json
 
 # vFeed DB
 data/vfeed.db
+
+# Images based on DB Schema
+entity_dbschema.png
+uml_schema.png

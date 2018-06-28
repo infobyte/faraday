@@ -22,7 +22,9 @@ class Workspace(object):
     """
     class_signature = "Workspace"
 
-    def __init__(self, name, desc=None, manager=None, shared=CONF.getAutoShareWorkspace()):
+    def __init__(self, name, desc=None, manager=None, shared=None):
+        if not shared:
+            shared = CONF.getAutoShareWorkspace()
         self.name = name
         self.description = desc
         self.customer = ""
@@ -60,14 +62,14 @@ class Workspace(object):
     def getStartDate(self):
         return self.start_date
 
-    def setStartDate(self, sdate):
-        self.start_date = sdate
+    def setStartDate(self, start_date):
+        self.start_date = start_date
 
-    def getFinishDate(self):
-        return self.finish_date
+    def getEndDate(self):
+        return self.end_date
 
-    def setFinishDate(self, fdate):
-        self.finish_date = fdate
+    def setEndDate(self, edate):
+        self.end_date = edate
 
     def isActive(self):
         return self.name == self._workspace_manager.getActiveWorkspace().name

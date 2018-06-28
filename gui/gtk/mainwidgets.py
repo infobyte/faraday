@@ -9,7 +9,6 @@ See the file 'doc/LICENSE' for the license information
 import gi
 import os
 import math
-import operator
 import webbrowser
 
 gi.require_version('Gtk', '3.0')
@@ -139,7 +138,7 @@ class HostsSidebar(Gtk.Widget):
         self.progress_label = Gtk.Label("")
         self.host_amount_total = 0
         self.host_amount_in_model = 0
-        self.page = 0
+        self.page = 1
         self.host_id_to_iter = {}
         self.linux_icon = icons + "tux.png"
         self.windows_icon = icons + "windows.png"
@@ -148,6 +147,8 @@ class HostsSidebar(Gtk.Widget):
 
     @property
     def number_of_pages(self):
+        if self.host_amount_total == 0:
+            return 1
         return int(math.ceil(float(self.host_amount_total) / 20))
 
     @scrollable(width=160)
@@ -195,7 +196,7 @@ class HostsSidebar(Gtk.Widget):
     def reset_model_after_workspace_changed(self, hosts, total_host_amount):
         """Reset the model and also sets the page to 0 and the new total
         host amount will be the length of host."""
-        self.page = 0
+        self.page = 1
         self.host_amount_total = total_host_amount
         self.reset_model(hosts)
         self.update_progress_label()
@@ -222,9 +223,8 @@ class HostsSidebar(Gtk.Widget):
 
     def _find_host_id(self, object_):
         """Return the ID of the object's parent host."""
-        object_id = object_.getID()
-        host_id = object_id.split(".")[0]
-        return host_id
+        if object_.getParentType() == 'Host':
+            return object_.getParent()
 
     def _is_host_in_model_by_host_id(self, host_id):
         """Return a boolean indicating if host_id is in the model"""
@@ -252,12 +252,13 @@ class HostsSidebar(Gtk.Widget):
 
     def _add_single_host_to_model(self, host):
         """Add a single host to the model. Return None."""
-        vuln_count = host.getVulnAmount()
+        vuln_count = host.getVulnsAmount()
         os_icon, os_str = self.__decide_icon(host.getOS())
         display_str = str(host)
-        host_iter = self.model.append([host.id, os_icon, os_str, display_str, vuln_count])
-        self.host_id_to_iter[host.id] = host_iter
-        self.host_amount_in_model += 1
+        if str(host.id) not in map(lambda host_data: host_data[0], self.model):
+            host_iter = self.model.append([str(host.id), os_icon, os_str, display_str, vuln_count])
+            self.host_id_to_iter[host.id] = host_iter
+            self.host_amount_in_model += 1
 
     def add_relevant_hosts_to_model(self, hosts):
         """Takes a list of hosts. Add the hosts to the model without going
@@ -346,7 +347,7 @@ class HostsSidebar(Gtk.Widget):
         """Takes vulns, a list of vulnerability object, and adds them to the
         model by modifying their corresponding hosts in the model. Return None.
         """
-        host_ids = map(self._find_host_id, vulns)
+        host_ids = [host_id for host_id in map(self._find_host_id, vulns) if host_id is not None]
         self._modify_vuln_amounts_of_hosts_in_model(host_ids, lambda x: x + 1)
 
     def remove_relevant_vulns_from_model(self, vulns_ids):
@@ -397,21 +398,21 @@ class HostsSidebar(Gtk.Widget):
         if object_type == "Vulnerability" or object_type == "VulnerabilityWeb":
             self.add_vuln(vuln=obj)
 
-    def remove_object(self, obj_id):
+    def remove_object(self, obj_id, obj_type):
         """Remove an obj of id obj_id from the model, if found there"""
-        potential_host_id = obj_id.split('.')[0]
-        is_host = len(obj_id.split('.')) == 1
-        if is_host:
+        if obj_type == 'Host':
             self.remove_host(host_id=obj_id)
-        # elif not is_host and self._is_vuln_of_host(vuln_id=obj_id, host_id=potential_host_id):
-        #     self.remove_vuln(vuln_id=obj_id)
+        elif obj_type == 'Service':
+            # Yeah, we query to server about services
+            # We are not using a cached version of model
+            pass
         else:
             # Since we don't know the type of the delete object,
             # we have to assume it's a vulnerability so the host's
             # name is updated with the ammount of vulns
-            host = self.get_single_host_function(potential_host_id)
+            host = self.get_single_host_function(obj_id)
             if host:
-                self._modify_vuln_amount_of_single_host_in_model(host.getID(), host.getVulnAmount())
+                self._modify_vuln_amount_of_single_host_in_model(host.getID(), host.getVulnsAmount())
 
     def update_object(self, obj):
         """Update the obj in the model, if found there"""
@@ -429,11 +430,11 @@ class HostsSidebar(Gtk.Widget):
         """Update the sensitity of the prev and next buttons according to the
         page we're on and the total number of pages.
         """
-        self.prev_button.set_sensitive(self.page > 0)  # its a boolean!
+        self.prev_button.set_sensitive(self.page >= 2)  # its a boolean!
 
         # we add one to self.page 'cause they start at zero, but number of pages is
         # always at least one :)
-        self.next_button.set_sensitive(self.number_of_pages > self.page + 1)
+        self.next_button.set_sensitive(self.number_of_pages > self.page)
 
     def get_box(self):
         """Return the sidebar_box, which contains all the elements of the
@@ -472,7 +473,7 @@ class HostsSidebar(Gtk.Widget):
         self.page = change_page_number_func(self.page)
         hosts = self.get_hosts_function(page=str(self.page),
                                         page_size=20,
-                                        name=self.search_entry.get_text(),
+                                        search=self.search_entry.get_text(),
                                         sort='vulns',
                                         sort_dir='desc')
         self.reset_model(hosts)
@@ -480,12 +481,12 @@ class HostsSidebar(Gtk.Widget):
 
     def update_progress_label(self):
         """Updates the progress label with values from self.page and self.number_of_pages."""
-        self.progress_label.set_label("{0} / {1}".format(self.page + 1, self.number_of_pages))
+        self.progress_label.set_label("{0} / {1}".format(self.page , self.number_of_pages))
 
     def create_search_entry(self):
         """Returns a simple search entry"""
         self.search_entry = Gtk.Entry()
-        self.search_entry.set_placeholder_text("Search a host by name...")
+        self.search_entry.set_placeholder_text("Search a host by ip...")
         self.search_entry.connect("activate", self.on_search_enter_key)
         self.search_entry.show()
         return self.search_entry

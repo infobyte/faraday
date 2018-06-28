@@ -3,17 +3,20 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp').
-    factory('VulnModel', ['BASEURL', 'configSrv', '$http', '$q',
-        function(BASEURL, configSrv, $http, $q) {
+    factory('VulnModel', ['BASEURL', 'configSrv', 'ServerAPI', '$http', '$q',
+        function(BASEURL, configSrv, ServerAPI, $http, $q) {
             function VulnModel(data) {
                 this._id = "";
+                this.id = "";
                 this._rev = "";
-                this.exploitation = "";
-                this.references = [];
-                this.name = "";
-                this.resolution = "";
                 this.cwe = "";
                 this.description = "";
+                this.desc = "";
+                this.exploitation = "";
+                this.name = "";
+                this.references = [];
+                this.refs = [];
+                this.resolution = "";
                 if (data) {
                     if(data.name === undefined || data.name === "") {
                         throw new Error("Unable to create a Vulnerability Model whithout a name");
@@ -24,13 +27,15 @@ angular.module('faradayApp').
 
             VulnModel.prototype = {
 
-                public_properties: ['exploitation', 'references', 'name', 'resolution', 'cwe', 'description'],
+                public_properties: ['exploitation', 'references', 'name', 'resolution', 'cwe', 'description',
+                                    'desc', 'id', 'refs'],
 
                 set: function(data) {
                     var self = this;
 
                     if(data._id != undefined) {
                         self._id = data._id;
+                        self.id = data._id;
                         if(data._rev !== undefined) {
                             self._rev = data._rev;
                         };
@@ -47,19 +52,12 @@ angular.module('faradayApp').
                     var deferred = $q.defer();
                     var self = this;
 
-                    configSrv.promise.
-                        then(function() {
-                            var url = BASEURL + configSrv.vulnModelsDB + "/" + self._id + "?rev=" + self._rev;
-
-                            $http.delete(url).
-                                then(function(resp) {
-                                    deferred.resolve(resp);
-                                }, function(data, status, headers, config) {
-                                    deferred.reject("Unable to delete Vuln Model from DB. " + status)
-                                });
-                        }, function(reason) {
-                            deferred.reject(reason);
-                        });
+                    ServerAPI.deleteVulnerabilityTemplate(self._id)
+                        .then(function(resp) {
+                            deferred.resolve(resp);
+                        }, function(data, status, headers, config) {
+                            deferred.reject("Unable to delete Vuln Model from DB. " + status)
+                    });
 
                     return deferred.promise;
                 },
@@ -68,21 +66,13 @@ angular.module('faradayApp').
                     var deferred = $q.defer();
                     var self = this;
 
-                    configSrv.promise.
-                        then(function() {
-                            var url = BASEURL + configSrv.vulnModelsDB + "/" + self._id;
-
-                            $http.put(url, data).
-                                then(function(res) {
-                                    self.set(res.data);
-                                    self._rev = res.data.rev;
-                                    deferred.resolve(self);
-                                }, function(res) {
-                                    deferred.reject("Unable to update the Vuln Model. " + res.data.reason);
-                                });
-                        }, function(reason) {
-                            deferred.reject(reason);
-                        });
+                    ServerAPI.updateVulnerabilityTemplate(data)
+                        .then(function(res) {
+                            self.set(res.data);
+                            deferred.resolve(self);
+                        }, function(res) {
+                            deferred.reject("Unable to update the Vuln Model. " + JSON.stringify(res.data));
+                    });
                     return deferred.promise;
                 },
 
@@ -93,26 +83,32 @@ angular.module('faradayApp').
                     delete this._id;
                     delete this._rev;
 
-                    configSrv.promise.
-                        then(function() {
-                            var url = BASEURL + configSrv.vulnModelsDB;
-
-                            $http.post(url, self).
-                                then(function(data) {
-                                    self._id = data.id;
-                                    self._rev = data.rev;
-                                    deferred.resolve(self);
-                                }, function(res) {
-                                    try {
-                                        deferred.reject("Unable to save the Vuln Model. " + res.data.reason);
-                                    } catch(err) {
-                                        deferred.reject(err);
+                    ServerAPI.createVulnerabilityTemplate(self)
+                        .then(function(data) {
+                            self._id = data.id;
+                            self._rev = data.rev;
+                            deferred.resolve(self);
+                        }, function(res) {
+                            try {
+                                var msg = '';
+                                for(var item in res.data.messages) {
+                                    if(res.data.messages.hasOwnProperty(item)) {
+                                        msg += item.charAt(0).toUpperCase() + item.slice(1) + ": ";
+                                        msg += res.data.messages[item][0];
                                     }
-                                });
-                        }, function(reason) {
-                            deferred.reject(reason);
+                                }
+                                var message;
+                                if (res.status == 409) {
+                                    console.log("Vulnerability template already exists. " + res.data.message + " ID: " + res.data.object._id);
+                                    deferred.resolve(self);
+                                } else {
+                                    message = "Unable to save the Vuln Model. " + msg;
+                                }
+                                deferred.reject(message);
+                            } catch(err) {
+                                deferred.reject(err);
+                            }
                         });
-
                     return deferred.promise;
                 }
             };

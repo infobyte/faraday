@@ -5,7 +5,7 @@
 <form name="form" novalidate>
     <div class="modal-header">
         <div class="modal-button">
-            <button class="btn btn-success" ng-click="ok()" ng-disabled="form.$invalid || (model.name == '')">OK</button>
+            <button class="btn btn-success" ng-click="ok()" ng-disabled="form.$invalid || (data.name == '') || (data.exploitation === '')">OK</button>
             <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
         </div>
         <h3 class="modal-title">New Vulnerability Model</h3>
@@ -18,16 +18,10 @@
                     <input type="text" name="name" class="form-control" placeholder="Name" ng-model="data.name" required>
                 </div><!-- .col-md-6 -->
                 <div class="col-md-12">
-                    <p class="has-error" ng-show="(form.product.$touched && form.product.$error.required)">
+                    <p class="has-error" ng-show="(form.name.$touched && form.name.$error.required)">
                         <span class="help-block">Vulnerability Model name is required</span>
                     </p>
                 </div><!-- .col-md-12 -->
-            </div><!-- .form-group -->
-            <div class="form-group">
-                <div class="col-md-12">
-                    <label for="CWE">CWE</label>
-                    <textarea class="form-control" name="cwe" placeholder="CWE" ng-model="data.cwe"></textarea>
-                </div>
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-12">
@@ -49,21 +43,27 @@
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-12">
-                    <label for="Explotation">Explotation</label>
-                    <button type="button" class="btn btn-default dropdown-toggle" name="exploitation" data-toggle="dropdown" title="Choose exploitation" ng-class="{'button-error': data.exploitation === undefined}">
+                    <label for="Explotation">Explotation *</label>
+                    <button type="button" class="btn btn-default dropdown-toggle" name="exploitation" data-toggle="dropdown"
+                            title="Choose exploitation" ng-class="{'button-error': modal.data.exploitation === undefined}">
                     {{data.exploitation || 'Choose exploitation'}} <span class="caret"></span>
                     </button>
                     <ul id="nav" class="dropdown-menu dropdown-menu-left" role="menu">
                         <li ng-repeat="s in exploitations"><a href="" class="ws color-{{s}}" ng-click="data.exploitation=s">{{s}}</a></li>
                     </ul><!-- WS navigation -->
-                </div>
+                </div><!-- .col-md-12 -->
+                <div class="col-md-12">
+                    <p class="has-error" ng-show="(form.exploitation.$touched && form.exploitation.$error.required)">
+                        <span class="help-block">Vulnerability Model exploitation is required</span>
+                    </p>
+                </div><!-- .col-md-12 -->
             </div>
             <p>All fields marked * are required</p>
         </div><!-- .form-horizontal -->
     </div><!-- .modal-body -->
     <div class="modal-footer">
         <div class="modal-button">
-            <button class="btn btn-success" ng-disabled="form.$invalid || (data.name == '')" ng-click="ok()">OK</button>
+            <button class="btn btn-success" ng-disabled="form.$invalid || (data.name == '') || (data.exploitation === '')" ng-click="ok()">OK</button>
             <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
         </div>
     </div>

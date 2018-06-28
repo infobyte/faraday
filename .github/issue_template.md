@@ -12,7 +12,7 @@ Paste the output of the *./faraday.py --version* command
 
 ## Component Name
 
-If you know where the problem lays indicate it: 
+If you know where the problem lays indicate it:
 WebGui/GTKGui/Plugin/Console/Continuous Scanning/Etc.
 
 ## Steps to reproduce
@@ -42,7 +42,7 @@ If you don't find anything on the logs, please provide screenshots of the error.
 
 ### Configuration files
 
-Mention any settings you have changed/added/removed. 
+Mention any settings you have changed/added/removed.
 
 ### Reports/Extra data
 
@@ -51,11 +51,10 @@ If you are having issues with plugins, please attach relevant files if possible.
 
 ### OS
 
-Provide information on your operating system. Example: 
+Provide information on your operating system. Example:
 
-$ cat /etc/lsb-release 
+$ cat /etc/lsb-release
 DISTRIB_ID=Ubuntu
 DISTRIB_RELEASE=16.10
 DISTRIB_CODENAME=yakkety
 DISTRIB_DESCRIPTION="Ubuntu 16.10"
-

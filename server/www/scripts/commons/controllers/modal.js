@@ -138,9 +138,9 @@ angular.module('faradayApp')
         }
     }]);
 angular.module('faradayApp')
-    .controller('commonsModalEditCWE', ['$scope', '$modalInstance', 'msg', 'cweFact', function($scope, $modalInstance, msg, cweFact) {
+    .controller('commonsModalEditCWE', ['$scope', '$modalInstance', 'msg', 'vulnModelsManager', function($scope, $modalInstance, msg, vulnModelsManager) {
         $scope.cweList = [];
-        cweFact.get().then(function(data) {
+        vulnModelsManager.get().then(function(data) {
             $scope.cweList = data;
         });
         $scope.cweLimit = 5;
@@ -182,7 +182,7 @@ angular.module('faradayApp')
                 $scope.data.refs = refs;
 
                 $modalInstance.close($scope.data);
-            }       
+            }
         };
 
         $scope.newReference = function() {
@@ -199,3 +199,16 @@ angular.module('faradayApp')
             $modalInstance.dismiss();
         }
     }]);
+
+angular.module('faradayApp')
+    .controller('commonsModalExploitsCtrl',
+            ['$scope', '$modalInstance', 'msg',
+            function($scope, $modalInstance, msg) {
+
+        $scope.objsCve = msg;
+
+        $scope.ok = function() {
+            $modalInstance.close();
+        };
+
+}]);

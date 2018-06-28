@@ -21,7 +21,7 @@ __email__      = "famato@infobytesec.com"
 __status__     = "Development"
 
 # Configuration
-SHODAN_API_KEY = "lT3whkyVHH7iAtP28iNIq7hVNlK638vR"
+SHODAN_API_KEY = ""
 
 def strip_non_ascii(string):
     ''' Returns the string without non ASCII characters'''
@@ -32,27 +32,27 @@ def send_faraday(result):
     print 'IP: %s' % result['ip_str']
 
     if result['data'] is not None:
-        result['data'] = base64.b64encode(strip_non_ascii(str(result['data']))) #fix: to avoid non ascii caracters
-
+        result['data'] = base64.b64encode(str(strip_non_ascii(result['data']))) #fix: to avoid non ascii caracters
     if args.debug == "1":
     	print '==============='
         for key in result.keys():
            print "kname:" + key + ", value:" + str(result[key])
 
     h_id = api.createAndAddHost(str(result['ip_str']),str(result['os']) if result['os'] is not None else "")
-    i_id = api.createAndAddInterface(h_id,str(result['ip_str']),"00:00:00:00:00:00", str(result['ip_str']), "0.0.0.0", "0.0.0.0",[],
-          "0000:0000:0000:0000:0000:0000:0000:0000","00","0000:0000:0000:0000:0000:0000:0000:0000",
-          [],"",result['hostnames'] if result['hostnames'] is not None else [])
-    s_id = api.createAndAddServiceToInterface(h_id, i_id, str(result['product']) if result.has_key('product') else str(result['port']),
-        "tcp",str(result['port']),"open",str(result['version']) if result.has_key('version') else "")
+    #i_id = api.createAndAddInterface(h_id,str(result['ip_str']),"00:00:00:00:00:00", str(result['ip_str']), "0.0.0.0", "0.0.0.0",[],
+    #      "0000:0000:0000:0000:0000:0000:0000:0000","00","0000:0000:0000:0000:0000:0000:0000:0000",
+    #      [],"",result['hostnames'] if result['hostnames'] is not None else [])
+    s_id = api.createAndAddServiceToHost(h_id, str(result['product']) if result.has_key('product') else str(result['port']),
+        "tcp",[str(result['port'])],"open",str(result['version']) if result.has_key('version') else "")
+
     if result['data'] is not None:
-    	n_id = api.createAndAddNoteToService(h_id,s_id,"shadon_response",str(result['data']))
+    	n_id = api.createAndAddNoteToService(h_id, s_id, "shadon_response", str(result['data']))
 
     #Notes - Information geo/shadon
-    n_id = api.createAndAddNoteToHost(h_id,"geo_country",result['location']['country_name'] if result['location']['country_name']  is not None else "" )
-    n_id = api.createAndAddNoteToHost(h_id,"geo_latitude",result['location']['latitude'] if result['location']['latitude']  is not None else "")
-    n_id = api.createAndAddNoteToHost(h_id,"geo_longitude",result['location']['longitude']  if result['location']['longitude']  is not None else "")
-    n_id = api.createAndAddNoteToHost(h_id,"shadon_q",args.shodan_query)
+    n_id = api.createAndAddNoteToHost(h_id, "geo_country", result['location']['country_name'] if result['location']['country_name']  is not None else "" )
+    n_id = api.createAndAddNoteToHost(h_id, "geo_latitude", result['location']['latitude'] if result['location']['latitude']  is not None else "")
+    n_id = api.createAndAddNoteToHost(h_id, "geo_longitude", result['location']['longitude']  if result['location']['longitude']  is not None else "")
+    n_id = api.createAndAddNoteToHost(h_id, "shadon_q", args.shodan_query)
 
 # Input validation
 

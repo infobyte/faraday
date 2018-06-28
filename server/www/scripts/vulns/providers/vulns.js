@@ -4,18 +4,20 @@
 
 angular.module('faradayApp')
     .factory('vulnsManager',
-        ['Vuln', 'WebVuln', 'BASEURL', '$q', 'ServerAPI', 'commonsFact',
-        function(Vuln, WebVuln, BASEURL, $q, ServerAPI, commonsFact) {
+        ['Vuln', 'WebVuln', '$q', 'ServerAPI', 'commonsFact', 'workspacesFact',
+        function(Vuln, WebVuln, $q, ServerAPI, commonsFact, workspacesFact) {
         var vulnsManager = {};
+        var vulnsCounter = 0;
+        var totalVulns = 0;
 
         vulnsManager.createVuln = function(ws, data) {
             var parents = data.parents,
             promises = [];
 
-            delete data.parents;
-
-            parents.forEach(function(parent_id) {
-                data.parent = parent_id;
+            parents.forEach(function(parent) {
+                // we iterate parents when creating multiple vulns from new vuln modal.
+                data.parent = parent.id;
+                data.parent_type = parent.type
 
                 if(data.type == "Vulnerability") {
                     var vuln = new Vuln(ws, data);
@@ -61,13 +63,30 @@ angular.module('faradayApp')
                             console.log(e.stack);
                         }
                     }
-
-                    result.count = response.data.count
+                    vulnsCounter = response.data.count;
+                    result.count = response.data.count;
                     deferred.resolve(result);
                 }, function(response) {
                     deferred.reject("Unable to retrieve vulnerabilities from server");
                 });
             return deferred.promise;
+        };
+
+        vulnsManager.loadVulnsCounter = function(ws){
+            // Ugly hack to populate the vulnsCounter global variable
+            workspacesFact.get(ws).then(function(data){
+                // Commenting this line worked. I'm not sure why
+                // vulnsCounter = data.stats.total_vulns;
+                totalVulns = data.stats.total_vulns;
+            })
+        };
+
+        vulnsManager.getVulnsNum = function(ws) {
+            if( vulnsCounter > 0) {
+                return vulnsCounter;
+            }else{
+                return totalVulns;
+            }
         };
 
         vulnsManager.updateVuln = function(vuln, data) {

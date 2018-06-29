@@ -163,11 +163,12 @@ class InitDB():
         """
         print('This script will {blue} create a new postgres user {white} and {blue} save faraday-server settings {white}(server.ini). '.format(blue=Fore.BLUE, white=Fore.WHITE))
         username = 'faraday_postgresql'
-        postgres_command = ['sudo', '-u', 'postgres']
+        postgres_command = ['sudo', '-u', 'postgres', 'psql']
         if sys.platform == 'darwin':
-            postgres_command = []
+            print('{blue}MAC OS detected{white}'.format(blue=Fore.BLUE, white=Fore.WHITE))
+            postgres_command = ['psql', 'postgres']
         password = self.generate_random_pw(25)
-        command = postgres_command + ['psql', '-c', 'CREATE ROLE {0} WITH LOGIN PASSWORD \'{1}\';'.format(username, password)]
+        command = postgres_command + [ '-c', 'CREATE ROLE {0} WITH LOGIN PASSWORD \'{1}\';'.format(username, password)]
         p = Popen(command, stderr=psql_log_file, stdout=psql_log_file)
         p.wait()
         psql_log_file.seek(0)

@@ -489,7 +489,7 @@ def doLoginLoop():
 
                 user_info = get_user_info()
                 if (user_info is None) or (not user_info) or ('username' not in user_info):
-                    print("You can't login as a client. You have %s attempt(s) left." % (3 - attempt))
+                    print('Login failed, please try again. You have %d more attempts' % (3 - attempt))
                     continue
 
                 logger.info('Login successful: {0}'.format(api_username))

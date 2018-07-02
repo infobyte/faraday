@@ -1,15 +1,16 @@
 #!/usr/bin/env python2.7
 '''
 Faraday Penetration Test IDE
-Copyright (C) 2014  Infobyte LLC (http://www.infobytesec.com/)
+Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-
 '''
 
 import os
 import sys
 import shutil
+import getpass
 import argparse
+import requests.exceptions
 
 from config.configuration import getInstanceConfiguration
 from config.globals import (
@@ -66,10 +67,12 @@ FARADAY_DEFAULT_PORT_XMLRPC = 9876
 FARADAY_DEFAULT_PORT_REST = 9977
 FARADAY_DEFAULT_HOST = "localhost"
 
+logger = getLogger(__name__)
+
 
 def getParserArgs():
-    """Parser setup for faraday launcher arguments.
-
+    """
+    Parser setup for faraday launcher arguments.
     """
 
     parser = argparse.ArgumentParser(
@@ -118,23 +121,11 @@ def getParserArgs():
                         default=False,
                         help="Enable dev mode. This will use the user config and plugin folder.")
 
-    parser.add_argument('--ignore-deps',
-                        action="store_true",
-                        dest="ignore_deps",
-                        default=False,
-                        help="Ignore python dependencies resolution.")
-
-    parser.add_argument('--update',
-                        action="store_true",
-                        dest="update",
-                        default=False,
-                        help="Update Faraday IDE.")
-
     parser.add_argument('--cert',
                         action="store",
                         dest="cert_path",
                         default=None,
-                        help="Path to the valid CouchDB certificate")
+                        help="Path to the valid Faraday server certificate")
 
     parser.add_argument('--gui',
                         action="store",
@@ -186,15 +177,13 @@ def getParserArgs():
     parser.add_argument('-v', '--version', action='version',
                         version='Faraday v{version}'.format(version=f_version))
 
-    # args = parser.parse_args(['@parser_args.cfg'])
     return parser.parse_args()
 
 
 def check_dependencies_or_exit():
-    """Dependency resolver based on a previously specified CONST_REQUIREMENTS_FILE.
-
+    """
+    Dependency resolver based on a previously specified CONST_REQUIREMENTS_FILE.
     Currently checks a list of dependencies from a file and exits if they are not met.
-
     """
 
     installed_deps, missing_deps, conflict_deps = dependencies.check_dependencies(requirements_file=FARADAY_REQUIREMENTS_FILE)
@@ -220,11 +209,10 @@ def check_dependencies_or_exit():
     logger.info("Dependencies met")
 
 def setConf():
-    """User configuration management and instantiation.
-
+    """
+    User configuration management and instantiation.
     Setting framework configuration based either on previously user saved
     settings or default ones.
-
     """
 
     logger.info("Setting configuration.")
@@ -270,16 +258,12 @@ def startFaraday():
     start = main_app.start
 
     from colorama import Fore, Back, Style
-    import string
     serverURL = getInstanceConfiguration().getServerURI()
     if serverURL:
         url = "%s/_ui" % serverURL
-        print(Fore.WHITE + Style.BRIGHT + "\n*" + string.center("faraday ui is ready", 53 - 6))
+        print(Fore.WHITE + Style.BRIGHT + "\n* " + "Faraday UI is ready")
         print(
-            Fore.WHITE + Style.BRIGHT + "Make sure you got couchdb up and running.\nIf couchdb is up, point your browser to: \n[%s]" % url)
-    else:
-        print(
-            Fore.WHITE + Style.BRIGHT + "Please config Couchdb for fancy HTML5 Dashboard (https://github.com/infobyte/faraday/wiki/Couchdb)")
+            Fore.WHITE + Style.BRIGHT + "Point your browser to: \n[%s]" % url)
 
     print(Fore.RESET + Back.RESET + Style.RESET_ALL)
 
@@ -289,7 +273,8 @@ def startFaraday():
 
 
 def setupPlugins(dev_mode=False):
-    """Checks and handles Faraday's plugin status.
+    """
+    Checks and handles Faraday's plugin status.
 
     When dev_mode is True, the user enters in development mode and the plugins
     will be replaced with the latest ones.
@@ -299,7 +284,6 @@ def setupPlugins(dev_mode=False):
 
     TODO: When dependencies are not satisfied ask user if he wants to try and
     run faraday with a inestability warning.
-
     """
 
     if dev_mode:
@@ -316,11 +300,11 @@ def setupPlugins(dev_mode=False):
 
 
 def setupZSH():
-    """Cheks and handles Faraday's integration with ZSH.
+    """
+    Checks and handles Faraday's integration with ZSH.
 
     If the user has a .zshrc file, it gets copied and integrated with
     faraday's zsh plugin.
-
     """
 
     if os.path.isfile(USER_ZSHRC):
@@ -338,7 +322,8 @@ def setupZSH():
 
 
 def setupXMLConfig():
-    """Checks user configuration file status.
+    """
+    Checks user configuration file status.
 
     If there is no custom config the default one will be copied as a default.
     """
@@ -351,7 +336,8 @@ def setupXMLConfig():
 
 
 def setupImages():
-    """ Copy png icons
+    """
+    Copy png icons
     """
     if os.path.exists(FARADAY_USER_IMAGES):
         shutil.rmtree(FARADAY_USER_IMAGES)
@@ -359,7 +345,8 @@ def setupImages():
 
 
 def checkConfiguration(gui_type):
-    """Checks if the environment is ready to run Faraday.
+    """
+    Checks if the environment is ready to run Faraday.
 
     Checks different environment requirements and sets them before starting
     Faraday. This includes checking for plugin folders, libraries,
@@ -377,8 +364,8 @@ def checkConfiguration(gui_type):
 
 
 def setupFolders(folderlist):
-    """Checks if a list of folders exists and creates them otherwise.
-
+    """
+    Checks if a list of folders exists and creates them otherwise.
     """
 
     for folder in folderlist:
@@ -387,8 +374,8 @@ def setupFolders(folderlist):
 
 
 def checkFolder(folder):
-    """Checks whether a folder exists and creates it if it doesn't.
-
+    """
+    Checks whether a folder exists and creates it if it doesn't.
     """
 
     if not os.path.isdir(folder):
@@ -398,8 +385,8 @@ def checkFolder(folder):
 
 
 def printBanner():
-    """Prints Faraday's ascii banner.
-
+    """
+    Prints Faraday's ascii banner.
     """
     from colorama import Fore, Back, Style
     print (Fore.RED + """
@@ -433,158 +420,135 @@ def checkUpdates():
         resp = resp.text.strip()
     except Exception as e:
         logger.error(e)
+    version = getInstanceConfiguration().getVersion()
+    if 'b' in version.split("+")[0]:
+        return
     if not resp == u'OK':
         logger.info("You have available updates. Run ./faraday.py --update to catchup!")
     else:
         logger.info("No updates available, enjoy Faraday.")
 
 
-def checkServerUrl():
-    import requests
-    CONF = getInstanceConfiguration()
-    server_url = CONF.getServerURI()
-
-    if server_url is None or CONF.getAPIUsername() is None or CONF.getAPIUsername() is None:
-        doLoginLoop()
-        server_url = CONF.getServerURI()
-
-    try:
-        requests.get(server_url, timeout=5)
-    except requests.exceptions.SSLError:
-        print("""
-        SSL certificate validation failed.
-        You can use the --cert option in Faraday
-        to set the path of the cert
-        """)
-        sys.exit(-1)
-    except requests.exceptions.MissingSchema as ex:
-        print("Check ~/.faraday/config/user.xml server url, the following error was found: {0} ".format(ex))
-
-
-def checkVersion():
-    try:
-        f = open(FARADAY_VERSION_FILE)
-        f_version = f.read().strip()
-        if not args.update:
-            if getInstanceConfiguration().getVersion() is not None and getInstanceConfiguration().getVersion() != f_version:
-                logger.warning("You have different version of Faraday since your last run.\nRun ./faraday.py --update to update configuration!")
-                if query_yes_no('Do you want to close Faraday?', 'yes'):
-                    sys.exit(-1)
-
-        getInstanceConfiguration().setVersion(f_version)
-        f.close()
-
-    except Exception:
-        getLogger("launcher").error(
-            "It seems that something's wrong with your version\nPlease contact customer support")
-        sys.exit(-1)
-
-
 def check_faraday_version():
     try:
         server.check_faraday_version()
     except RuntimeError:
-        getLogger("launcher").error("The server is running a different Faraday version than the client "
-                                    "you are running. Version numbers must match!")
-
+        getLogger("launcher").error(
+            "The server is running a different Faraday version than the client you are running. Version numbers must match!")
         sys.exit(2)
 
 
+def try_login_user(server_uri, api_username, api_password):
+    
+    try:
+        session_cookie = login_user(server_uri, api_username, api_password)
+        return session_cookie
+    except requests.exceptions.SSLError:
+        print("SSL certificate validation failed.\nYou can use the --cert option in Faraday to set the path of the cert")
+        sys.exit(-1)
+    except requests.exceptions.MissingSchema:
+        print("The Faraday server URL is incorrect, please try again.")
+        sys.exit(-2)
+
+
 def doLoginLoop():
-    """ Sets the username and passwords from the command line.
-    If --login flag is set then username and password is set """
-
-    import getpass
-
-    print("""\nTo login please provide your valid DB Credentials.\n
-You have 3 attempts.""")
+    """ 
+    Sets the username and passwords from the command line.
+    If --login flag is set then username and password is set 
+    """
 
     try:
 
         CONF = getInstanceConfiguration()
-        server_url = CONF.getAPIUrl()
-        if server_url is None:
-            server_url = raw_input(
-            "Please enter the faraday server url (press enter for http://localhost:5985): ") or "http://localhost:5985"
-            CONF.setAPIUrl(server_url)
+        old_server_url = CONF.getAPIUrl()
+
+        if old_server_url is None:
+            new_server_url = raw_input(
+            "\nPlease enter the Faraday server URL (Press enter for http://localhost:5985): ") or "http://localhost:5985"
+        else:
+            new_server_url = raw_input(
+                "\nPlease enter the Faraday server URL (Press enter for last used: {}): ".format(old_server_url)) or old_server_url
+        
+        CONF.setAPIUrl(new_server_url)
+
+        print("""\nTo login please provide your valid Faraday credentials.\nYou have 3 attempts.""")
 
         for attempt in range(1, 4):
 
-            username = raw_input("Username (press enter for faraday): ") or "faraday"
-            password = getpass.getpass('Password: ')
+            api_username = raw_input("Username (press enter for faraday): ") or "faraday"
+            api_password = getpass.getpass('Password: ')
 
-            session_cookie = login_user(server_url, username, password)
+            session_cookie = try_login_user(new_server_url, api_username, api_password)
+
             if session_cookie:
 
-                CONF.setAPIUsername(username)
-                CONF.setAPIPassword(password)
+                CONF.setAPIUsername(api_username)
+                CONF.setAPIPassword(api_password)
                 CONF.setDBSessionCookies(session_cookie)
                 CONF.saveConfig()
 
                 user_info = get_user_info()
-
-                if user_info is None or 'username' not in user_info:
-                    print("You can't login as a client. You have %s attempt(s) left." % (3 - attempt))
+                if (user_info is None) or (not user_info) or ('username' not in user_info):
+                    print('Login failed, please try again. You have %d more attempts' % (3 - attempt))
                     continue
 
-                logger.info('Login successful')
-
+                logger.info('Login successful: {0}'.format(api_username))
                 break
+
             print('Login failed, please try again. You have %d more attempts' % (3 - attempt))
 
         else:
             logger.fatal('Invalid credentials, 3 attempts failed. Quitting Faraday...')
             sys.exit(-1)
+
     except KeyboardInterrupt:
         sys.exit(0)
 
 
+def login(forced_login):
+
+    CONF = getInstanceConfiguration()
+    server_uri = CONF.getServerURI()
+    api_username = CONF.getAPIUsername()
+    api_password = CONF.getAPIPassword()
+    
+    if forced_login:
+        doLoginLoop()
+        return
+
+    if server_uri and api_username and api_password:
+
+        session_cookie = try_login_user(server_uri, api_username, api_password)
+
+        if session_cookie:
+            CONF.setDBSessionCookies(session_cookie)
+            logger.info('Login successful: {0}'.format(api_username))
+            return
+    
+    doLoginLoop()
+
+
 def main():
-    """Main.
-
+    """
     Main function for launcher.
-
     """
     os.chdir(FARADAY_BASE)
 
     global logger, args
 
     logger = getLogger("launcher")
-
     args = getParserArgs()
     setupFolders(CONST_FARADAY_FOLDER_LIST)
     setUpLogger(args.debug)
-
     if not args.nodeps:
         check_dependencies_or_exit()
-
     printBanner()
     if args.cert_path:
         os.environ[REQUESTS_CA_BUNDLE_VAR] = args.cert_path
     checkConfiguration(args.gui)
     setConf()
-    checkServerUrl()
-    checkVersion()
-    CONF = getInstanceConfiguration()
-    if args.login:
-        if not CONF.getServerURI():
-            couchURI = raw_input("Enter the Faraday server [http://127.0.0.1:5985]: ") or "http://127.0.0.1:5985"
-
-            if couchURI:
-                CONF.setCouchUri(couchURI)
-                checkServerUrl()
-            else:
-                logger.fatal('Please configure couchdb server to authenticate (--login)')
-                sys.exit(-1)
-
-        doLoginLoop()
-    else:
-        session_cookie = login_user(CONF.getServerURI(), CONF.getAPIUsername(), CONF.getAPIPassword())
-        if session_cookie:
-            CONF.setDBSessionCookies(session_cookie)
-
+    login(args.login)
     check_faraday_version()
-
     checkUpdates()
     startFaraday()
 

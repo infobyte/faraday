@@ -8,7 +8,7 @@
             <button class="btn btn-success" ng-click="modal.ok()" ng-disabled="formEdit.$invalid || modal.data.severity === undefined">OK</button>
             <button class="btn btn-danger" ng-click="modal.cancel()">Cancel</button>
         </div>
-        <h3 class="modal-title">Vuln edit</h3>
+        <h3 class="modal-title">Vulnerability edit</h3>
     </div>
     <div class="modal-body">
         <div class="form-horizontal">
@@ -30,19 +30,18 @@
                 </div>
                 <div class="col-md-3">
                     <h5>Ease of Resolution</h5>
-                    <select class="form-control" ng-model="modal.data.easeofresolution" ng-options="e as e for e in modal.easeofresolution">
+                    <select class="form-control" ng-model="modal.data.easeofresolution" ng-options="e as e for e in modal.easeofresolution"  style="padding:0px 12px;">
                         <option value=""></option>
                     </select>
                 </div>
                 <div class="col-md-3">
                     <h5>Status</h5>
-                    <select class="form-control" ng-model="modal.data.status" ng-options="e as e for e in modal.statuses">
+                    <select class="form-control" ng-model="modal.data.status" ng-options="e as e for e in modal.statuses" style="padding:0px 12px;">
                     </select>
                 </div>
                 <div class="col-md-3">
                     <h5>Confirmed</h5>
                     <input type="checkbox" id="confirmed" ng-model="modal.data.confirmed" />
-                    <span class="normal-size">Confirmed</span>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group" ng-class="{'has-error': formEdit.name.$invalid }">
@@ -54,7 +53,7 @@
             <div class="form-group" ng-class="{'has-error': formEdit.desc.$invalid }">
                 <div class="col-md-12">
                     <label class="sr-only" for="vuln-desc">Vuln description</label>
-                    <textarea class="form-control" id="vuln-desc" name="desc" placeholder="Description" ng-model="modal.data.desc" required></textarea>
+                    <textarea class="form-control" id="vuln-desc" name="desc" placeholder="Description" ng-model="modal.data.desc" required="" style="margin: 0px 2px 0px 0px; height: 239px; width: 867px;"></textarea></textarea>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
@@ -74,7 +73,7 @@
                 <div class="col-md-12 reference" ng-repeat="reference in modal.data.refs">
                     <div class="input-group margin-bottom-sm">
                         <label class="sr-only" for="vuln-refs">References</label>
-                        <input type="text" class="form-control" id="vuln-refs" placeholder="Reference" ng-model="reference.value" disabled/>
+                        <input type="text" class="form-control" id="vuln-refs" placeholder="Reference" ng-model="reference.value" ng-click="modal.openReference(reference.value)" role="button" readonly />
                         <span class="input-group-addon cursor" ng-click="modal.data.refs.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
                     </div>
                 </div>
@@ -146,9 +145,10 @@
         </div><!-- .form-horizontal -->
 
         <h4>Impact</h4>
-        <div ng-repeat="(key, value) in modal.data.impact" class="normal-size" style="cursor: pointer;">
-            <h4><span ng-class="{'label label-default': !value, 'label label-success': value}" ng-click="modal.toggleImpact(key)">{{key}}</span></h4>
-        </div><!-- .normal-size -->
+        <h4><span ng-repeat="(key, value) in modal.data.impact" class="normal-size" style="cursor: pointer;">
+            <span ng-class="{'label-impact label-default-impact': !value, 'label-impact label-success-impact': value}" ng-click="modal.toggleImpact(key)">{{key}}</span>
+        </span></h4><!-- .normal-size -->
+        <div>
 
         <div>
             <h4>Evidence</h4>
@@ -165,7 +165,7 @@
                 <ul>
                     <li ng-repeat="(name, file) in modal.data._attachments">
                         <div class="btn-group">
-                            <button type="button" class="btn btn-default">
+                            <button type="button" class="btn btn-default" ng-click="modal.openEvidence(name)">
                                 <span class="fa {{icons[name]}}" title="Evidence {{name | decodeURIComponent}}"></span> {{name | decodeURIComponent}}
                             </button><!-- ng-repeat -->
                             <button type="button" class="btn btn-danger" ng-click="modal.removeEvidence(name)">

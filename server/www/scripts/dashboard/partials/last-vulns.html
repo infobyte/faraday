@@ -1,24 +1,21 @@
-<article class='panel panel-default left-big-box' ng-controller="lastVulnsCtrl">
-        <header>
-            <h2>Last Vulnerabilities
-                <span class="glyphicon glyphicon-info-sign" uib-tooltip="Last vulnerabilities added"></span>
-            </h2>
-        </header>
-        <div ng-if="vulns.length == 0" class="alert alert-info alert-dismissible no-margin-bottom">
-            <button type="button" class="close" data-dismiss="alert">
-                <span aria-hidden="true">&times;</span>
-                <span class="sr-only">Close</span>
-            </button>
-            <p>No vulnerabilities found yet.</p>
-        </div>
-        <table ng-if="vulns.length > 0" class="tablesorter table table-striped last-vuln">
+<article class='panel left-big-box' ng-controller="lastVulnsCtrl">
+    <header>
+        <h2>Last Vulnerabilities
+            <span class="glyphicon glyphicon-info-sign" uib-tooltip="Last vulnerabilities added"></span>
+        </h2>
+    </header>
+    <div ng-if="vulns.length === 0" class="no-info-overlay">
+        <p class="no-info-text">No vulnerabilities found yet.</p>
+    </div>
+    <div class="ph-xl">
+        <table ng-if="vulns.length > 0" class="tablesorter table table-striped last-vuln text-left">
             <thead>
                 <tr>
-                    <th><span>Severity</span></th>
-                    <th><span>Target</span></th>
-                    <th><span>Name</span></th>
-                    <th><span>Web</span></th>
-                    <th><span>Date</span></th>
+                    <th class="text-left"><span>Severity</span></th>
+                    <th class="text-left"><span>Target</span></th>
+                    <th class="text-left"><span>Name</span></th>
+                    <th class="text-left"><span>Owner</span></th>
+                    <th class="text-left"><span>Date</span></th>
                 </tr>
             </thead>
             <tbody>
@@ -28,12 +25,11 @@
                         <a href="" ng-click="navigate('/status/ws/'+workspace+'/search/target='+vuln.target)">{{vuln.target}}</a>
                     </td>
                     <td class="wrapword"><a href="" ng-click="navigate('/status/ws/'+workspace+'/search/name='+vuln.name)">{{vuln.name}}</a></td>
-                    <td>
-                        <span class="glyphicon glyphicon-ok" ng-show="vuln.web"></span>
-                        <span class="glyphicon glyphicon-remove" ng-show="!vuln.web"></span>
-                    </td>
+
+                    <td><a href="" ng-click="navigate('/status/ws/'+workspace+'/search/owner='+vuln.owner)">{{vuln.owner}}</a></td>
                     <td><span am-time-ago="vuln.metadata.create_time" am-preprocess="utc"></span></td>
                 </tr>
             </tbody>
         </table>
+    </div>
 </article>

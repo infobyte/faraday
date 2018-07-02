@@ -479,7 +479,7 @@ class CustomAssociationSet(_AssociationSet):
             # we need to fetch already created objs.
             session.rollback()
             for conflict_obj in conflict_objs:
-                if conflict_obj.name == value:
+                if hasattr(conflict_obj, 'name') and conflict_obj.name == value:
                     continue
                 persisted_conclict_obj = session.query(conflict_obj.__class__).filter_by(name=conflict_obj.name).first()
                 if persisted_conclict_obj:
@@ -602,7 +602,7 @@ class CommandObject(db.Model):
 
     __table_args__ = (
         UniqueConstraint('object_id', 'object_type', 'command_id', 'workspace_id',
-                         name='uix_command_object_object_id_object_type_command_id_workspace_id'),
+                         name='uix_command_object_objid_objtype_command_id_ws'),
     )
 
     @property
@@ -836,7 +836,8 @@ class Vulnerability(VulnerabilityGeneric):
 
     @declared_attr
     def service_id(cls):
-        return VulnerabilityGeneric.__table__.c.get('service_id', Column(Integer, db.ForeignKey('service.id')))
+        return VulnerabilityGeneric.__table__.c.get('service_id', Column(Integer, db.ForeignKey('service.id'),
+                                                                         index=True))
 
     @declared_attr
     def service(cls):
@@ -1163,7 +1164,7 @@ class Workspace(Metadata):
     description = BlankColumn(Text)
     active = Column(Boolean(), nullable=False, default=True)  # TBI
     end_date = Column(DateTime(), nullable=True)
-    name = Column(String(250), nullable=False, unique=True)
+    name = NonBlankColumn(String(250), unique=True, nullable=False)
     public = Column(Boolean(), nullable=False, default=False)  # TBI
     start_date = Column(DateTime(), nullable=True)
 
@@ -1239,9 +1240,10 @@ class Scope(Metadata):
                         index=True,
                         nullable=False
                         )
+
     workspace = relationship(
         'Workspace',
-         backref=backref('scope', lazy="joined", cascade="all, delete-orphan"),
+         backref=backref('scope', cascade="all, delete-orphan"),
          foreign_keys=[workspace_id],
          )
 
@@ -1608,14 +1610,14 @@ CheckConstraint('((Vulnerability.host_id IS NOT NULL)::int+'
 
 vulnerability_uniqueness = DDL(
     "CREATE UNIQUE INDEX uix_vulnerability ON %(fullname)s "
-    "(md5(name), md5(description), COALESCE(host_id, -1), COALESCE(service_id, -1), "
+    "(md5(name), md5(description), type, COALESCE(host_id, -1), COALESCE(service_id, -1), "
     "COALESCE(md5(method), ''), COALESCE(md5(parameter_name), ''), COALESCE(md5(path), ''), "
     "COALESCE(md5(website), ''), workspace_id, COALESCE(source_code_id, -1));"
 )
 
 vulnerability_uniqueness_sqlite = DDL(
     "CREATE UNIQUE INDEX uix_vulnerability ON %(fullname)s "
-    "(name, description, COALESCE(host_id, -1), COALESCE(service_id, -1), "
+    "(name, description, type, COALESCE(host_id, -1), COALESCE(service_id, -1), "
     "COALESCE(method, ''), COALESCE(parameter_name, ''), COALESCE(path, ''), "
     "COALESCE(website, ''), workspace_id, COALESCE(source_code_id, -1));"
 )

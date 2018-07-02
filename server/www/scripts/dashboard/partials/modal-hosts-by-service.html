@@ -7,30 +7,40 @@
 </div>
 
 <div class="modal-body">
-    <table class="status-report">
+    <table class="table-v3 services-list table table-responsive">
         <thead>
-            <tr>
-                <th><a href="" ng-click="toggleSort('owned')">Owned</a></th>
-                <th><a href="" ng-click="toggleSort('name')">Name</a></th>
-                <th><a href="" ng-click="toggleSort('os')">OS</a></th>
+            <tr class="ui-grid-header">
+                <th class="ui-grid-cell-contents ui-grid-header-cell">
+                    <span href="" ng-click="toggleSort('owned')">Owned</span>
+                </th>
+                <th class="ui-grid-cell-contents ui-grid-header-cell">
+                    <span href="" ng-click="toggleSort('name')">Name</span>
+                </th>
+                <th class="ui-grid-cell-contents ui-grid-header-cell">
+                    <span href="" ng-click="toggleSort('os')">OS</span>
+                </th>
             </tr>
         </thead>
         <tbody>
-            <tr ng-repeat="host in hosts | orderBy:sortField:sortReverse">
-                <td><input disabled type="checkbox" ng-model="host.owned"/></td>
-                <td>
-                    {{host.name}}
+            <tr class="ui-grid-row" ng-repeat="host in hosts | orderBy:sortField:sortReverse">
+                <td class="ui-grid-cell-contents">
+                    <input disabled type="checkbox" ng-model="host.owned"/>
+                </td>
+                <td class="ui-grid-cell-contents">
+                    <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}" class="ng-binding"  ng-click="ok()">{{host.name}}</a>
                     <osint-link query="host.name" osint="osint"></osint-link>
                 </td>
-                <td>{{host.os}}</td>
+                <td class="ui-grid-cell-contents">
+                    {{host.os}}
+                </td>
             </tr>
         </tbody>
     </table>
     <div class="form-group">
-        <button class="btn btn-danger" clip-copy="clip" clip-click="messageCopied()">{{clipText}}</button>
+        <button class="btn btn-danger" clipboard supported="supported" text="clip" on-copied="messageCopied()">{{clipText}}</button>
     </div>
 </div>
 
-<div class="modal-footer">
+<div class="modal-footer btn-group">
     <button class="btn btn-success" ng-click="ok()">OK</button>
 </div>

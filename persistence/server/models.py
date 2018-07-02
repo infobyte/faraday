@@ -748,7 +748,8 @@ class ModelBase(object):
         retries = 1
         max_retries = 6
         while retries <= max_retries and self.id is None:
-            print('Retrying getID timeout {0}'.format(timeout))
+            if timeout >= 8:
+                logger.info('Retrying getID timeout {0}'.format(timeout))
             self.id_available.wait(timeout=timeout)
             timeout = timeout << retries - 1
             retries += 1
@@ -856,6 +857,7 @@ class Host(ModelBase):
         self.os = host.get('os') if host.get('os') else 'unknown'
         self.vuln_amount = int(host.get('vulns', 0))
         self.ip = host.get('ip', self.name)
+        self.hostnames = host.get('hostnames', []) if host.get('hostnames') else []
 
     def getName(self):
         return self.ip
@@ -888,6 +890,12 @@ class Host(ModelBase):
 
     def getDefaultGateway(self):
         return self.default_gateway
+
+    def getHostnames(self):
+        return self.hostnames
+
+    def setHostnames(self, hostnames):
+        self.hostnames = hostnames
 
     def getVulns(self):
         """
@@ -1027,6 +1035,8 @@ class Vuln(ModelBase):
             return True
         if key == "status":
             return True
+        if key == "refs":
+            return True
         return False
 
     def tieBreak(self, key, prop1, prop2):
@@ -1034,6 +1044,10 @@ class Vuln(ModelBase):
         Return the 'choosen one'
         Return a tuple with prop1, prop2 if we cant resolve conflict.
         """
+
+        if key == "refs":
+            prop1.extend([x for x in prop2 if x not in prop1])
+            return prop1
 
         if key == "confirmed":
             return True
@@ -1260,6 +1274,9 @@ class VulnWeb(Vuln):
             return True
         if key == "status":
             return True
+        if key == "refs":
+            return True
+
         return False
 
     def tieBreak(self, key, prop1, prop2):
@@ -1267,6 +1284,10 @@ class VulnWeb(Vuln):
         Return the 'choosen one'
         Return a tuple with prop1, prop2 if we cant resolve conflict.
         """
+
+        if key == "refs":
+            prop1.extend([x for x in prop2 if x not in prop1])
+            return prop1
 
         if key == "response":
             return self._resolve_response(prop1, prop2)

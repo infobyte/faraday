@@ -199,10 +199,18 @@ class Item(object):
 
         self.items = []
 
-        for instance in item_node.find('instances'):
+        if item_node.find('instances'):
+            arr = item_node.find('instances')
+        else:
+            arr = [item_node]
 
-            uri = instance.find('uri').text
+        for elem in arr:
+            uri = elem.find('uri').text
+            self.parse_uri(uri)
 
+        self.requests = "\n".join([i['uri'] for i in self.items])
+
+    def parse_uri(self, uri):
             mregex = re.search(
                 "(http|https|ftp)\://([a-zA-Z0-9\.\-]+(\:[a-zA-Z0-9\.&amp"
                 ";%\$\-]+)*@)*((25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]"
@@ -238,7 +246,6 @@ class Item(object):
             }
             self.items.append(item)
 
-        self.requests = "\n".join([i['uri'] for i in self.items])
 
     def get_text_from_subnode(self, subnode_xpath_expr):
         """

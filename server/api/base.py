@@ -1,3 +1,9 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 import json
 
 import flask
@@ -5,7 +11,7 @@ import sqlalchemy
 from flask import abort, g
 from flask_classful import FlaskView
 from sqlalchemy.orm import joinedload, undefer
-from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm.exc import NoResultFound, ObjectDeletedError
 from sqlalchemy.inspection import inspect
 from sqlalchemy import func
 from marshmallow import Schema
@@ -150,7 +156,10 @@ class GenericView(FlaskView):
         return obj
 
     def _dump(self, obj, route_kwargs, **kwargs):
-        return self._get_schema_instance(route_kwargs, **kwargs).dump(obj).data
+        try:
+            return self._get_schema_instance(route_kwargs, **kwargs).dump(obj).data
+        except ObjectDeletedError:
+            return []
 
     def _parse_data(self, schema, request, *args, **kwargs):
         return FlaskParser().parse(schema, request, locations=('json',),
@@ -264,6 +273,7 @@ class SortableMixin(object):
     """Enables custom sorting by a field specified by te user"""
     sort_field_paremeter_name = "sort"
     sort_direction_paremeter_name = "sort_dir"
+    sort_pass_silently = False
     default_sort_direction = "asc"
     sort_model_class = None  # Override to use a model with more fields
 
@@ -290,6 +300,9 @@ class SortableMixin(object):
         try:
             field_instance = schema.fields[order_field]
         except KeyError:
+            if self.sort_pass_silently:
+                logger.warn("Unknown field: %s" % order_field)
+                return self.order_field
             raise InvalidUsage("Unknown field: %s" % order_field)
 
         # Translate from the field name in the schema to the database field
@@ -300,6 +313,9 @@ class SortableMixin(object):
         # Handle PrimaryKeyRelatedField
         model_class = self.sort_model_class or self.model_class
         if order_field not in inspect(model_class).attrs:
+            if self.sort_pass_silently:
+                logger.warn("Field not in the DB: %s" % order_field)
+                return self.order_field
             # It could be something like fields.Method
             raise InvalidUsage("Field not in the DB: %s" % order_field)
 
@@ -311,11 +327,20 @@ class SortableMixin(object):
         sort_dir = flask.request.args.get(self.sort_direction_paremeter_name,
                                           self.default_sort_direction)
         if sort_dir not in ('asc', 'desc'):
+            if self.sort_pass_silently:
+                logger.warn("Invalid value for sorting direction: %s" %
+                            sort_dir)
+                return self.order_field
             raise InvalidUsage("Invalid value for sorting direction: %s" %
                                sort_dir)
         try:
             return getattr(field, sort_dir)()
         except NotImplementedError:
+            if self.sort_pass_silently:
+                logger.warn("field {} doesn't support sorting".format(
+                    order_field
+                ))
+                return self.order_field
             # There are some fields that can't be used for sorting
             raise InvalidUsage("field {} doesn't support sorting".format(
                 order_field

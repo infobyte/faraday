@@ -1,8 +1,15 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 import time
 import pytest
 
 from server.models import Workspace, Scope
 from server.api.modules.workspaces import WorkspaceView
+from test_cases.conftest import ignore_nplusone
 from test_cases.test_api_non_workspaced_base import ReadWriteAPITests
 from test_cases import factories
 
@@ -157,3 +164,8 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert res.status_code == 200
         assert set(res.json['scope']) == set(desired_scope)
         assert set(s.name for s in workspace.scope) == set(desired_scope)
+
+    @ignore_nplusone
+    def test_list_retrieves_all_items_from(self, test_client):
+        super(TestWorkspaceAPI, self).test_list_retrieves_all_items_from(test_client)
+

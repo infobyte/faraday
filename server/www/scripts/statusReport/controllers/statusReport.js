@@ -594,6 +594,7 @@ angular.module("faradayApp")
                     vuln.exploitation = vuln.severity;
                     vuln.description = vuln.desc;
                     vuln.desc_summary = vuln.desc;
+                    vuln.references = vuln.refs;
                     promises.push(self.vulnModelsManager.create(vuln, true));
                 });
                 $q.all(promises).then(function(success) {

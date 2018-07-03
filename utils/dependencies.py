@@ -5,14 +5,20 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 import sys
-import pip
+try:
+    from pip import main
+except ImportError:
+    # pip 10 compat
+    from pip._internal import main
 import pkg_resources
 
 
 def check_dependencies(requirements_file='requirements.txt'):
     dependencies_file = open(requirements_file, 'r')
+    filtered_deps = [x for x in dependencies_file.readlines() if not
+    x.startswith('git+')]
 
-    requirements = list(pkg_resources.parse_requirements(dependencies_file))
+    requirements = list(pkg_resources.parse_requirements(filtered_deps))
 
     installed = []
     missing = []
@@ -35,4 +41,4 @@ def install_packages(packages):
         pip_cmd = ['install', package, '-U']
         if not hasattr(sys, 'real_prefix'):
             pip_cmd.append('--user')
-        pip.main(pip_cmd)
+        main(pip_cmd)

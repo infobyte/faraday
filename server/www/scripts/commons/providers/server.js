@@ -56,8 +56,9 @@ angular.module("faradayApp")
                 return APIURL + objectType + "/" + objectId + "/";
             };
 
-            var createDbUrl = function(wsName = "") {
-                return APIURL + "ws/" + wsName;
+            var createDbUrl = function(wsName) {
+                wsName = wsName || "";
+                return APIURL + "ws/" + wsName + (wsName ? "/" : "");
             }
 
             var createDeleteUrl = createPutUrl;
@@ -75,7 +76,7 @@ angular.module("faradayApp")
                 // return a promise :)
                 if (method === 'GET' || method === 'DELETE') {
                     return $http({method: method, url: url, params: data}).then(success).catch(error);
-                } else { 
+                } else {
                     return $http({method: method, url: url, data: data}).then(success).catch(error);
                 }
             };
@@ -179,7 +180,6 @@ angular.module("faradayApp")
 
             var createNonWorkspacedObject = function(id, data, collectionName) {
                 var postUrl = createNonWorkspacedPostUrl(id, collectionName);
-                console.log(collectionName);
                 return send_data(postUrl, data, false, "POST");
             };
 
@@ -222,7 +222,7 @@ angular.module("faradayApp")
                 var url = createGetUrl(wsName, 'hosts');
                 return get(url, data);
             }
-            
+
             ServerAPI.getVulns = function(wsName, data) {
                 var getUrl = createGetUrl(wsName, 'vulns');
                 return get(getUrl, data);
@@ -238,7 +238,7 @@ angular.module("faradayApp")
                 return get(url);
             }
 
-            ServerAPI.getService = function(wsName, data, objId) {
+            ServerAPI.getService = function(wsName, objId) {
                 var getUrl = createGetUrl(wsName, 'services', objId);
                 return get(getUrl);
             }
@@ -258,8 +258,8 @@ angular.module("faradayApp")
                 return get(getUrl, data);
             }
 
-            ServerAPI.getCommands = function(wsName, data) {
-                var getUrl = createGetUrl(wsName, 'commands');
+            ServerAPI.getCommands = function(wsName, data, onlyLastCommands) {
+                var getUrl = createGetUrl(wsName, 'commands') + (onlyLastCommands ? '?page_size=10&page=1' : '');
                 return get(getUrl, data);
             }
 
@@ -289,7 +289,7 @@ angular.module("faradayApp")
                 if (confirmed !== undefined) {
                     payload.confirmed = confirmed;
                 }
-                
+
                 return get(getUrl, payload);
             }
 
@@ -335,11 +335,21 @@ angular.module("faradayApp")
 
                 var url = createGetUrl(wsName, 'vulns') + 'count/';
                 var payload = {'group_by': 'severity'}
-                
+
                 if (confirmed !== undefined) {
                     payload.confirmed = confirmed;
                 }
-                
+
+                return get(url, payload)
+            }
+
+            ServerAPI.getVulnsGroupedBy = function(wsName, groupBy, confirmed) {
+                var url = createGetUrl(wsName, 'vulns') + 'count/';
+                var payload = {'group_by': groupBy}
+                if (confirmed) {
+                    payload.confirmed = confirmed;
+                }
+
                 return get(url, payload)
             }
 
@@ -487,14 +497,23 @@ angular.module("faradayApp")
                 return send_data(dbUrl, data, true, "POST");
             }
 
-            ServerAPI.updateWorkspace = function(workspace) {
-                var putUrl = createDbUrl(workspace.name);
-                return send_data(dbUrl, workspace, true, "PUT");
+            ServerAPI.updateWorkspace = function(workspace, wsName) {
+                var putUrl = createDbUrl(wsName || workspace.name);
+                return send_data(putUrl, workspace, true, "PUT");
             }
 
             ServerAPI.deleteWorkspace = function(wsName) {
                 var dbUrl = createDbUrl(wsName);
                 return _delete(dbUrl, false);
+            }
+
+            ServerAPI.changePassword = function(data) {
+                var url = BASEURL + "_api/change";
+                return serverComm('POST', url, data);
+            }
+
+            ServerAPI.getExploits = function(cveId) {
+                return get(APIURL + 'vulners/exploits/' + cveId);
             }
 
         return ServerAPI;

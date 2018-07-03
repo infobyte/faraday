@@ -257,6 +257,24 @@ angular.module('faradayApp')
             return url;
         };
 
+        commonsFact.showMessage = function(msg, success) {
+            if (! success) { var success = false }
+            if (success) {
+                var templateUrl = 'scripts/commons/partials/modalOK.html';
+            } else {
+                var templateUrl = 'scripts/commons/partials/modalKO.html';
+            }
+            var modal = $uibModal.open({
+                    templateUrl: templateUrl,
+                    controller: 'commonsModalKoCtrl',
+                    resolve: {
+                        msg:  function() {
+                            return msg;
+                        },
+                    }
+                });
+        }
+
         commonsFact.errorDialog = function(message) {
             $uibModal.open(config = {
                 templateUrl: 'scripts/commons/partials/modalKO.html',

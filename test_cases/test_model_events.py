@@ -1,5 +1,10 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 import pytest
-from server import events
 from test_cases.factories import HostFactory, ServiceFactory
 
 

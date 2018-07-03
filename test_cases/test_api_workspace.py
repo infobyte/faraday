@@ -1,8 +1,15 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 import time
 import pytest
 
-from server.models import Workspace
+from server.models import Workspace, Scope
 from server.api.modules.workspaces import WorkspaceView
+from test_cases.conftest import ignore_nplusone
 from test_cases.test_api_non_workspaced_base import ReadWriteAPITests
 from test_cases import factories
 
@@ -31,10 +38,11 @@ class TestWorkspaceAPI(ReadWriteAPITests):
                         test_client,
                         session,
                         querystring):
-        vulnerability_factory.create_batch(8, workspace=self.first_object,
+        vulns = vulnerability_factory.create_batch(8, workspace=self.first_object,
                                            confirmed=False)
-        vulnerability_factory.create_batch(5, workspace=self.first_object,
+        vulns += vulnerability_factory.create_batch(5, workspace=self.first_object,
                                            confirmed=True)
+        session.add_all(vulns)
         session.commit()
         res = test_client.get(self.url(self.first_object) + querystring)
         assert res.status_code == 200
@@ -50,10 +58,11 @@ class TestWorkspaceAPI(ReadWriteAPITests):
                                   test_client,
                                   session,
                                   querystring):
-        vulnerability_factory.create_batch(8, workspace=self.first_object,
+        vulns = vulnerability_factory.create_batch(8, workspace=self.first_object,
                                            confirmed=False)
-        vulnerability_factory.create_batch(5, workspace=self.first_object,
+        vulns += vulnerability_factory.create_batch(5, workspace=self.first_object,
                                            confirmed=True)
+        session.add_all(vulns)
         session.commit()
         res = test_client.get(self.url(self.first_object) + querystring)
         assert res.status_code == 200
@@ -103,11 +112,60 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert workspace_count_previous + 1 == session.query(Workspace).count()
         assert res.json['description'] == description
 
-    def test_create_with_scope(self, session, test_client):
-        description = 'darkside'
-        raw_data = {'name': 'something', 'description': description}
-        workspace_count_previous = session.query(Workspace).count()
+    @pytest.mark.parametrize("stat_name", [
+        'credentials', 'services', 'web_vulns', 'code_vulns', 'std_vulns',
+        'total_vulns'
+    ])
+    def test_create_stat_is_zero(self, test_client, stat_name):
+        raw_data = {'name': 'something', 'description': ''}
         res = test_client.post('/v2/ws/', data=raw_data)
         assert res.status_code == 201
-        assert workspace_count_previous + 1 == session.query(Workspace).count()
-        assert res.json['description'] == description
+        assert res.json['stats'][stat_name] == 0
+
+    def test_update_stats(self, workspace, session, test_client,
+                          vulnerability_factory,
+                          vulnerability_web_factory):
+        vulns = vulnerability_factory.create_batch(10, workspace=workspace)
+        vulns += vulnerability_web_factory.create_batch(5, workspace=workspace)
+        session.add_all(vulns)
+        session.commit()
+        raw_data = {'name': 'something', 'description': ''}
+        res = test_client.put('/v2/ws/{}/'.format(workspace.name),
+                              data=raw_data)
+        assert res.status_code == 200
+        assert res.json['stats']['web_vulns'] == 5
+        assert res.json['stats']['std_vulns'] == 10
+        assert res.json['stats']['total_vulns'] == 15
+
+    def test_create_with_scope(self, session, test_client):
+        desired_scope = [
+            'www.google.com',
+            '127.0.0.1'
+        ]
+        raw_data = {'name': 'something', 'description': 'test',
+                    'scope': desired_scope}
+        res = test_client.post('/v2/ws/', data=raw_data)
+        assert res.status_code == 201
+        assert set(res.json['scope']) == set(desired_scope)
+        workspace = Workspace.query.get(res.json['id'])
+        assert set(s.name for s in workspace.scope) == set(desired_scope)
+
+    def test_update_with_scope(self, session, test_client, workspace):
+        session.add(Scope(name='test.com', workspace=workspace))
+        session.add(Scope(name='www.google.com', workspace=workspace))
+        desired_scope = [
+            'www.google.com',
+            '127.0.0.1'
+        ]
+        raw_data = {'name': 'something', 'description': 'test',
+                    'scope': desired_scope}
+        res = test_client.put('/v2/ws/{}/'.format(workspace.name),
+                              data=raw_data)
+        assert res.status_code == 200
+        assert set(res.json['scope']) == set(desired_scope)
+        assert set(s.name for s in workspace.scope) == set(desired_scope)
+
+    @ignore_nplusone
+    def test_list_retrieves_all_items_from(self, test_client):
+        super(TestWorkspaceAPI, self).test_list_retrieves_all_items_from(test_client)
+

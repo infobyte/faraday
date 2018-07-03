@@ -1,20 +1,33 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 import json
 
 import flask
+import sqlalchemy
 from flask import abort, g
 from flask_classful import FlaskView
 from sqlalchemy.orm import joinedload, undefer
-from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm.exc import NoResultFound, ObjectDeletedError
 from sqlalchemy.inspection import inspect
 from sqlalchemy import func
 from marshmallow import Schema
 from marshmallow.compat import with_metaclass
+from marshmallow.validate import Length
 from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
 from webargs.flaskparser import FlaskParser, parser, abort
 from webargs.core import ValidationError
-from server.models import Workspace, db
+from server.models import Workspace, db, Command, CommandObject
+from server.schemas import NullToBlankString
 import server.utils.logger
+from server.utils.database import (
+    get_conflict_object,
+    is_unique_constraint_violation
+    )
 
 logger = server.utils.logger.get_logger(__name__)
 
@@ -222,7 +235,10 @@ class GenericView(FlaskView):
 
         TODO migration: document route_kwargs
         """
-        return self._get_schema_instance(route_kwargs, **kwargs).dump(obj).data
+        try:
+            return self._get_schema_instance(route_kwargs, **kwargs).dump(obj).data
+        except ObjectDeletedError:
+            return []
 
     def _parse_data(self, schema, request, *args, **kwargs):
         """Deserializes from a Flask request to a dict with valid
@@ -250,13 +266,12 @@ class GenericView(FlaskView):
 
     @classmethod
     def register(cls, app, *args, **kwargs):
-        """Given a flask app or blueprint, register the view and add a JSON
-        error handler. Use error code 400 instead of 422"""
-
+        """Register and add JSON error handler. Use error code
+        400 instead of 409"""
         super(GenericView, cls).register(app, *args, **kwargs)
 
         @app.errorhandler(422)
-        def handle_unprocessable_entity(err):
+        def handle_conflict(err):
             # webargs attaches additional metadata to the `data` attribute
             exc = getattr(err, 'exc')
             if exc:
@@ -267,6 +282,17 @@ class GenericView(FlaskView):
             return flask.jsonify({
                 'messages': messages,
             }), 400
+
+        @app.errorhandler(409)
+        def handle_conflict(err):
+            # webargs attaches additional metadata to the `data` attribute
+            exc = getattr(err, 'exc', None) or getattr(err, 'description', None)
+            if exc:
+                # Get validations from the ValidationError object
+                messages = exc.messages
+            else:
+                messages = ['Invalid request']
+            return flask.jsonify(messages), 409
 
         @app.errorhandler(InvalidUsage)
         def handle_invalid_usage(error):
@@ -282,7 +308,6 @@ class GenericWorkspacedView(GenericView):
     # Default attributes
     route_prefix = '/v2/ws/<workspace_name>/'
     base_args = ['workspace_name']  # Required to prevent double usage of <workspace_name>
-    unique_fields = []  # Fields unique together with workspace_id
 
     def _get_workspace(self, workspace_name):
         try:
@@ -312,26 +337,6 @@ class GenericWorkspacedView(GenericView):
         """Overriden to pass the workspace name to the schema"""
         context.update(kwargs)
         return context
-
-    def _validate_uniqueness(self, obj, object_id=None):
-        # TODO: Use implementation of GenericView
-        assert obj.workspace is not None, "Object must have a " \
-            "workspace attribute set to call _validate_uniqueness"
-        primary_key_field = inspect(self.model_class).primary_key[0]
-        for field_name in self.unique_fields:
-            field = getattr(self.model_class, field_name)
-            value = getattr(obj, field_name)
-            query = self._get_base_query(obj.workspace.name).filter(
-                field == value)
-            if object_id is not None:
-                # The object already exists in DB, we want to fetch an object
-                # different to this one but with the same unique field
-                query = query.filter(primary_key_field != object_id)
-            if query.one_or_none():
-                db.session.rollback()
-                abort(422, ValidationError('Existing value for %s field: %s' % (
-                    field_name, value
-                )))
 
 
 class ListMixin(object):
@@ -367,7 +372,9 @@ class SortableMixin(object):
     """Enables custom sorting by a field specified by te user"""
     sort_field_paremeter_name = "sort"
     sort_direction_paremeter_name = "sort_dir"
+    sort_pass_silently = False
     default_sort_direction = "asc"
+    sort_model_class = None  # Override to use a model with more fields
 
     def _get_order_field(self, **kwargs):
         try:
@@ -378,9 +385,23 @@ class SortableMixin(object):
         # Check that the field is in the schema to prevent unwanted fields
         # value leaking
         schema = self._get_schema_instance(kwargs)
+
+        # Add metadata nested field
+        try:
+            metadata_field = schema.fields.pop('metadata')
+        except KeyError:
+            pass
+        else:
+            for (key, value) in metadata_field.target_schema.fields.items():
+                schema.fields['metadata.' + key] = value
+                schema.fields[key] = value
+
         try:
             field_instance = schema.fields[order_field]
         except KeyError:
+            if self.sort_pass_silently:
+                logger.warn("Unknown field: %s" % order_field)
+                return self.order_field
             raise InvalidUsage("Unknown field: %s" % order_field)
 
         # Translate from the field name in the schema to the database field
@@ -389,17 +410,40 @@ class SortableMixin(object):
 
         # TODO migration: improve this checking or use a whitelist.
         # Handle PrimaryKeyRelatedField
-        if order_field not in inspect(self.model_class).attrs:
+        model_class = self.sort_model_class or self.model_class
+        if order_field not in inspect(model_class).attrs:
+            if self.sort_pass_silently:
+                logger.warn("Field not in the DB: %s" % order_field)
+                return self.order_field
             # It could be something like fields.Method
             raise InvalidUsage("Field not in the DB: %s" % order_field)
 
-        field = getattr(self.model_class, order_field)
+        if hasattr(model_class, order_field + '_id'):
+            # Ugly hack to allow sorting by a parent
+            field = getattr(model_class, order_field + '_id')
+        else:
+            field = getattr(model_class, order_field)
         sort_dir = flask.request.args.get(self.sort_direction_paremeter_name,
                                           self.default_sort_direction)
         if sort_dir not in ('asc', 'desc'):
+            if self.sort_pass_silently:
+                logger.warn("Invalid value for sorting direction: %s" %
+                            sort_dir)
+                return self.order_field
             raise InvalidUsage("Invalid value for sorting direction: %s" %
                                sort_dir)
-        return getattr(field, sort_dir)()
+        try:
+            return getattr(field, sort_dir)()
+        except NotImplementedError:
+            if self.sort_pass_silently:
+                logger.warn("field {} doesn't support sorting".format(
+                    order_field
+                ))
+                return self.order_field
+            # There are some fields that can't be used for sorting
+            raise InvalidUsage("field {} doesn't support sorting".format(
+                order_field
+            ))
 
 
 class PaginatedMixin(object):
@@ -484,6 +528,7 @@ class CreateMixin(object):
 
     def post(self, **kwargs):
         context = {'updating': False}
+
         data = self._parse_data(self._get_schema_instance(kwargs, context=context),
                                 flask.request)
         data.pop('id', None)
@@ -495,15 +540,71 @@ class CreateMixin(object):
     def _perform_create(self, data, **kwargs):
         obj = self.model_class(**data)
         # assert not db.session.new
-        with db.session.no_autoflush:
-            # Required because _validate_uniqueness does a select. Doing this
-            # outside a no_autoflush block would result in a premature create.
-            self._validate_uniqueness(obj)
+        try:
             db.session.add(obj)
+            db.session.commit()
+        except sqlalchemy.exc.IntegrityError as ex:
+            if not is_unique_constraint_violation(ex):
+                raise
+            db.session.rollback()
+            conflict_obj = get_conflict_object(db.session, obj, data)
+            if conflict_obj:
+                abort(409, ValidationError(
+                    {
+                        'message': 'Existing value',
+                        'object': self._get_schema_class()().dump(
+                            conflict_obj).data,
+                    }
+                ))
+            else:
+                raise
         return obj
 
 
-class CreateWorkspacedMixin(CreateMixin):
+class CommandMixin():
+    """
+        Created the command obj to log model activity after a command
+        execution via the api (ex. from plugins)
+        This will use GET parameter command_id.
+        NOTE: GET parameters are also available in POST requests
+    """
+
+    def _set_command_id(self, obj, created):
+        try:
+            # validates the data type from user input.
+            command_id = int(flask.request.args.get('command_id', None))
+        except TypeError:
+            command_id = None
+
+        if command_id:
+            command = db.session.query(Command).filter(Command.id==command_id, Command.workspace==obj.workspace).first()
+            if command is None:
+                raise InvalidUsage('Command not found.')
+            # if the object is created and updated in the same command
+            # the command object already exists
+            # we skip the creation.
+            object_type = obj.__class__.__table__.name
+
+            command_object = CommandObject.query.filter_by(
+                object_id=obj.id,
+                object_type=object_type,
+                command=command,
+                workspace=obj.workspace,
+            ).first()
+            if created or not command_object:
+                command_object = CommandObject(
+                    object_id=obj.id,
+                    object_type=object_type,
+                    command=command,
+                    workspace=obj.workspace,
+                    created_persistent=created
+                )
+
+            db.session.add(command)
+            db.session.add(command_object)
+
+
+class CreateWorkspacedMixin(CreateMixin, CommandMixin):
     """Add POST /<workspace_name>/ route"""
 
     def _perform_create(self, data, workspace_name):
@@ -512,13 +613,27 @@ class CreateWorkspacedMixin(CreateMixin):
         obj = self.model_class(**data)
         obj.workspace = workspace
         # assert not db.session.new
-        with db.session.no_autoflush:
-            # Required because _validate_uniqueness does a select. Doing this
-            # outside a no_autoflush block would result in a premature create.
-            self._validate_uniqueness(obj)
+        try:
             db.session.add(obj)
-        db.session.commit()
+            db.session.commit()
+        except sqlalchemy.exc.IntegrityError as ex:
+            if not is_unique_constraint_violation(ex):
+                raise
+            db.session.rollback()
+            workspace = self._get_workspace(workspace_name)
+            conflict_obj = get_conflict_object(db.session, obj, data, workspace)
+            if conflict_obj:
+                abort(409, ValidationError(
+                    {
+                        'message': 'Existing value',
+                        'object': self._get_schema_class()().dump(
+                            conflict_obj).data,
+                    }
+                ))
+            else:
+                raise
 
+        self._set_command_id(obj, True)
         return obj
 
 
@@ -533,29 +648,52 @@ class UpdateMixin(object):
         # just in case an schema allows id as writable.
         data.pop('id', None)
         self._update_object(obj, data)
-        updated = self._perform_update(object_id, obj, **kwargs)
+        self._perform_update(object_id, obj, data, **kwargs)
+
         return self._dump(obj, kwargs), 200
 
     def _update_object(self, obj, data):
         for (key, value) in data.items():
             setattr(obj, key, value)
 
-    def _perform_update(self, object_id, obj):
-        with db.session.no_autoflush:
-            self._validate_uniqueness(obj, object_id)
-        db.session.add(obj)
-        db.session.commit()
+    def _perform_update(self, object_id, obj, data, workspace_name=None):
+        try:
+            db.session.add(obj)
+            db.session.commit()
+        except sqlalchemy.exc.IntegrityError as ex:
+            if not is_unique_constraint_violation(ex):
+                raise
+            db.session.rollback()
+            workspace = None
+            if workspace_name:
+                workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
+            conflict_obj = get_conflict_object(db.session, obj, data, workspace)
+            if conflict_obj:
+                abort(409, ValidationError(
+                    {
+                        'message': 'Existing value',
+                        'object': self._get_schema_class()().dump(
+                            conflict_obj).data,
+                    }
+                ))
+            else:
+                raise
+        return obj
 
 
-class UpdateWorkspacedMixin(UpdateMixin):
+class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
     """Add PUT /<id>/ route"""
 
-    def _perform_update(self, object_id, obj, workspace_name):
-        assert not db.session.new
+    def _perform_update(self, object_id, obj, data, workspace_name):
+        # # Make sure that if I created new objects, I had properly commited them
+        # assert not db.session.new
+
         with db.session.no_autoflush:
             obj.workspace = self._get_workspace(workspace_name)
+
+        self._set_command_id(obj, False)
         return super(UpdateWorkspacedMixin, self)._perform_update(
-            object_id, obj)
+            object_id, obj, data, workspace_name)
 
 
 class DeleteMixin(object):
@@ -636,6 +774,23 @@ class ReadWriteWorkspacedView(CreateWorkspacedMixin,
     pass
 
 
+class CustomModelConverter(ModelConverter):
+    """
+    Model converter that automatically sets minimum length
+    validators to not blankable fields
+    """
+    def _add_column_kwargs(self, kwargs, column):
+        super(CustomModelConverter, self)._add_column_kwargs(kwargs, column)
+        if not column.info.get('allow_blank', True):
+            kwargs['validate'].append(Length(min=1))
+
+
+class CustomModelSchemaOpts(ModelSchemaOpts):
+    def __init__(self, *args, **kwargs):
+        super(CustomModelSchemaOpts, self).__init__(*args, **kwargs)
+        self.model_converter = CustomModelConverter
+
+
 class AutoSchema(with_metaclass(ModelSchemaMeta, Schema)):
     """
     A Marshmallow schema that does field introspection based on
@@ -643,7 +798,11 @@ class AutoSchema(with_metaclass(ModelSchemaMeta, Schema)):
     Unlike the marshmallow_sqlalchemy ModelSchema, it doesn't change
     the serialization and deserialization proccess.
     """
-    OPTIONS_CLASS = ModelSchemaOpts
+    OPTIONS_CLASS = CustomModelSchemaOpts
+
+    # Use NullToBlankString instead of fields.String by default on text fields
+    TYPE_MAPPING = Schema.TYPE_MAPPING.copy()
+    TYPE_MAPPING[str] = NullToBlankString
 
 
 class FilterAlchemyModelConverter(ModelConverter):

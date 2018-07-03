@@ -9,11 +9,16 @@ $.ajaxSetup({
 });
 
 var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.bootstrap', 'angularFileUpload',
-                                                'filter', 'ngClipboard', 'ngCookies', 'cfp.hotkeys', 'chart.js',
+                                                'filter', 'angular-clipboard', 'ngCookies', 'cfp.hotkeys', 'chart.js',
                                                 'ui.grid', 'ui.grid.selection', 'ui.grid.grouping', 'ngSanitize',
-                                                'ui.grid.pagination', 'ui.grid.pinning', 'angularMoment', 'ui-notification'])
+                                                'ui.grid.pagination', 'ui.grid.pinning', 'angularMoment', 'ui-notification',
+                                                'ui.grid.resizeColumns'])
     .constant("BASEURL", (function() {
         var url = window.location.origin + "/";
+        return url;
+    })())
+    .constant("APIURL", (function() {
+        var url = window.location.origin + "/_api/v2/";
         return url;
     })())
     .constant("EASEOFRESOLUTION", (function() {
@@ -66,12 +71,11 @@ var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.
         return statuses;
     })());
 
-faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
-                   function($routeProvider, ngClipProvider, $uibTooltipProvider) {
+faradayApp.config(['$routeProvider', '$uibTooltipProvider',
+                   function($routeProvider, $uibTooltipProvider) {
     $uibTooltipProvider.options({
         appendToBody: true
     });
-    ngClipProvider.setPath("script/ZeroClipboard.swf");
     $routeProvider.
         when('/dashboard/ws/:wsId', {
             templateUrl: 'scripts/dashboard/partials/dashboard.html',
@@ -212,11 +216,6 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
             controller: 'workspacesCtrl',
             title: 'Workspaces | '
         }).
-        when('/communication', {
-            templateUrl: 'scripts/commons/partials/commercial.html',
-            controller: 'commercialCtrl',
-            title: 'Communication | '
-        }).
         when('/comparison', {
             templateUrl: 'scripts/commons/partials/commercial.html',
             controller: 'commercialCtrl'
@@ -279,8 +278,13 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
             controller: 'commercialCtrl',
             title: 'Methodologies | '
         }).
+        when('/forbidden', {
+            templateUrl: 'scripts/auth/partials/forbidden.html',
+            title: ' Forbidden |'
+        }).
         otherwise({
-            templateUrl: 'scripts/commons/partials/home.html'
+            templateUrl: 'scripts/commons/partials/home.html',
+            controller: 'homeCtrl'
         });
 }]);
 
@@ -289,13 +293,5 @@ faradayApp.run(['$location', '$rootScope', 'loginSrv', function($location, $root
         if(current.hasOwnProperty('$$route')) {
             $rootScope.title = current.$$route.title;
         }
-    });
-    $rootScope.$on('$routeChangeStart', function(event){
-        // Require in all routes (except the login one)
-        // Taken from http://stackoverflow.com/questions/26145871/redirect-on-all-routes-to-login-if-not-authenticated
-        // I don't know why this doesn't cause an infinite loop
-        loginSrv.isAuthenticated().then(function(auth){
-            if(!auth) $location.path('/login');
-        });
     });
 }]);

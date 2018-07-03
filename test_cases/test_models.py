@@ -1,3 +1,9 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 import unittest
 import json
 from persistence.server import models
@@ -8,7 +14,7 @@ HOST_JSON_STRING = '{"_id":1,"id":"08d3b6545ec70897daf05cd471f4166a8e605c00","ke
 
 INTERFACE_JSON_STRING = '{"_id":1,"id":"08d3b6545ec70897daf05cd471f4166a8e605c00.02946afc59c50a4d76c1adbb082c2d5439baf50a","key":"08d3b6545ec70897daf05cd471f4166a8e605c00.02946afc59c50a4d76c1adbb082c2d5439baf50a","value":{"_id":"08d3b6545ec70897daf05cd471f4166a8e605c00.02946afc59c50a4d76c1adbb082c2d5439baf50a","_rev":"1-c279e0906d2b1f02b832a99d5f58f99c","description":"","host_id":1,"hostnames":["qa3app09"],"ipv4":{"DNS":[],"address":"10.31.112.29","gateway":"0.0.0.0","mask":"0.0.0.0"},"ipv6":{"DNS":[],"address":"0000:0000:0000:0000:0000:0000:0000:0000","gateway":"0000:0000:0000:0000:0000:0000:0000:0000","prefix":"00"},"mac":"00:50:56:81:01:e3","metadata":{"create_time":1475852074.456803,"creator":"","owner":"","update_action":0,"update_controller_action":"ModelControler._processAction ModelControler.newInterface","update_time":1475852074.456803,"update_user":""},"name":"10.31.112.29","network_segment":"","owned":false,"owner":"","ports":{"closed":null,"filtered":null,"opened":null}}}'
 
-SERVICE_JSON_STRING = '{"_id":1,"id":"08d3b6545ec70897daf05cd471f4166a8e605c00.02946afc59c50a4d76c1adbb082c2d5439baf50a.029384202ef91fff5892042392875595fb0b41ed","key":"08d3b6545ec70897daf05cd471f4166a8e605c00.02946afc59c50a4d76c1adbb082c2d5439baf50a.029384202ef91fff5892042392875595fb0b41ed","value":{"_id":"08d3b6545ec70897daf05cd471f4166a8e605c00.02946afc59c50a4d76c1adbb082c2d5439baf50a.029384202ef91fff5892042392875595fb0b41ed","_rev":"1-73ef6b9e6488fd05823b89e36bbbb626","description":"","metadata":{"create_time":1475852074.457551,"creator":"","owner":"","update_action":0,"update_controller_action":"ModelControler._processAction ModelControler.newService","update_time":1475852074.457551,"update_user":""},"name":"msrdp","owned":false,"owner":"","ports":[3389],"protocol":"tcp","status":"open","version":"unknown"},"vulns":8}'
+SERVICE_JSON_STRING = '{"_id":1,"id":"08d3b6545ec70897daf05cd471f4166a8e605c00.02946afc59c50a4d76c1adbb082c2d5439baf50a.029384202ef91fff5892042392875595fb0b41ed","key":"08d3b6545ec70897daf05cd471f4166a8e605c00.02946afc59c50a4d76c1adbb082c2d5439baf50a.029384202ef91fff5892042392875595fb0b41ed","value":{"_id":"08d3b6545ec70897daf05cd471f4166a8e605c00.02946afc59c50a4d76c1adbb082c2d5439baf50a.029384202ef91fff5892042392875595fb0b41ed","_rev":"1-73ef6b9e6488fd05823b89e36bbbb626","description":"","metadata":{"create_time":1475852074.457551,"creator":"","owner":"","update_action":0,"update_controller_action":"ModelControler._processAction ModelControler.newService","update_time":1475852074.457551,"update_user":""},"name":"msrdp","owned":false,"owner":"","ports":[3389],"protocol":"tcp","status":"open","version":"unknown", "host_id": 1},"vulns":8}'
 
 VULN_JSON_STRING = '{"_id":8,"id":"08d3b6545ec70897daf05cd471f4166a8e605c00.2a21f3916b8c9a40e70b2fc6b7ea8f7a3a498558","key":"08d3b6545ec70897daf05cd471f4166a8e605c00.2a21f3916b8c9a40e70b2fc6b7ea8f7a3a498558","value":{"_attachments":{},"_id":"08d3b6545ec70897daf05cd471f4166a8e605c00.2a21f3916b8c9a40e70b2fc6b7ea8f7a3a498558","_rev":"1-28cb6b1372f4712dbbf7b8e1e23699e4","confirmed":false,"data":"","desc":"Each ethernet MAC address starts with a 24-bit Organizationally Unique Identifier.\\nThese OUI are registered by IEEE.\\nOutput: The following card manufacturers were identified :\\n\\n00:50:56:81:01:e3 : VMware, Inc.","description":"Each ethernet MAC address starts with a 24-bit Organizationally Unique Identifier.\\nThese OUI are registered by IEEE.\\nOutput: The following card manufacturers were identified :\\n\\n00:50:56:81:01:e3 : VMware, Inc.","easeofresolution":null,"hostnames":["qa3app09"],"impact":{"accountability":null,"availability":null,"confidentiality":null,"integrity":null},"issuetracker":{},"metadata":{"create_time":1475852074.459108,"creator":"","owner":"","update_action":0,"update_controller_action":"ModelControler._processAction ModelControler.newVuln","update_time":1475852074.459108,"update_user":""},"method":null,"name":"Ethernet Card Manufacturer Detection","obj_id":"2a21f3916b8c9a40e70b2fc6b7ea8f7a3a498558","owned":"false","owner":"","params":"","parent":"08d3b6545ec70897daf05cd471f4166a8e605c00","path":null,"pname":null,"query":null,"refs":[],"request":null,"resolution":"n/a","response":null,"service":"","severity":"info","status":"","tags":[],"target":"10.31.112.29","type":"Vulnerability","website":null}}'
 
@@ -73,18 +79,3 @@ class ModelsTest(unittest.TestCase):
         self.assertTrue(all([isinstance(s, models.Service) for s in services]))
         self.assertTrue(all([isinstance(v, models.Vuln) for v in vulns]))
         self.assertTrue(all([isinstance(v, models.VulnWeb) for v in vulns_web]))
-
-    def test_id_creation(self):
-        # ideally, the flatten dictionary should be provided and shouldnt depend upon
-        # our implementation.
-        # ideally.
-        classes = [models.Host, models.Service, models.Vuln, models.VulnWeb, models.Note]
-        dicts = [self.a_host_dictionary, self.a_service_dictionary,
-                 self.a_vuln_dictionary, self.a_vuln_web_dictionary, self.a_note_dictionary]
-        dicts = map(models._flatten_dictionary, dicts)
-        for class_, dictionary in zip(classes, dicts):
-            expected_id = dictionary['id']
-            parent_id = '.'.join(expected_id.split('.')[:-1])
-            obj = class_(dictionary, self.ws)
-            obj.setID(parent_id)
-            self.assertEqual(expected_id, unicode(obj.id))

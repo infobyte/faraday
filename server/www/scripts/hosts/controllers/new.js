@@ -37,9 +37,17 @@ angular.module('faradayApp')
             };
 
             $scope.insert = function(hostdata) {
+                // The API expects list of strings in hostnames
+                var old_hostnames = $scope.host.hostnames;
+                $scope.host.hostnames = $scope.host.hostnames.map(function(hostname){
+                    return hostname.key
+                }).filter(Boolean);
+
                 hostsManager.createHost(hostdata, $scope.workspace).then(function(host) {
+                    $scope.host.hostnames = old_hostnames;
                     $location.path('/host/ws/' + $scope.workspace + '/hid/' + host.data.id);
                 }, function(message) {
+                    $scope.host.hostnames = old_hostnames;
                     $uibModal.open({
                         templateUrl: 'scripts/commons/partials/modalKO.html',
                         controller: 'commonsModalKoCtrl',

@@ -16,7 +16,7 @@ angular.module('faradayApp')
             $scope.workspaces = [];
             $scope.wss = [];
             // $scope.newworkspace = {};
-            
+
             var hash_tmp = window.location.hash.split("/")[1];
             switch (hash_tmp){
                 case "status":
@@ -55,29 +55,48 @@ angular.module('faradayApp')
 
         $scope.onSuccessGet = function(workspace){
             workspace.selected = false;
+            workspace.scope = workspace.scope.map(function(scope){
+                return {key: scope}
+            });
+            if (workspace.scope.length == 0) workspace.scope.push({key: ''});
             $scope.workspaces.push(workspace);
         };
 
         $scope.onSuccessInsert = function(workspace){
-            $scope.wss.push(workspace.name); 
-            $scope.workspaces.push(workspace); 
+            $scope.wss.push(workspace.name);
+            workspace.scope = workspace.scope.map(function(scope){
+                return {key: scope}
+            });
+            if (workspace.scope.length == 0) workspace.scope.push({key: ''});
+
+            $scope.objects[workspace.name] = workspace.stats;
+
+            // Ulgy hack to keep the workspaces sorted alphabetically
+            for (var i = 0; i < $scope.workspaces.length; i++) {
+                if ($scope.workspaces[i].name > workspace.name) break;
+            }
+            $scope.workspaces.splice(i, 0, workspace);
         };
-        
+
         $scope.onFailInsert = function(error){
             var modal = $uibModal.open({
                 templateUrl: 'scripts/commons/partials/modalKO.html',
                 controller: 'commonsModalKoCtrl',
                 resolve: {
                     msg: function() {
+                        if (error.status == 409){
+                            return "A workspace with that name already exists"
+                        }
                         return error;
                     }
                 }
-            }); 
+            });
         };
 
         $scope.onSuccessEdit = function(workspace){
             for(var i = 0; i < $scope.workspaces.length; i++) {
-                if($scope.workspaces[i].name == workspace.name){
+                if($scope.workspaces[i]._id == workspace._id){
+                    $scope.workspaces[i].name = workspace.name;
                     $scope.workspaces[i]._rev = workspace._rev;
                     $scope.workspaces[i].description = workspace.description;
                     if ($scope.workspaces[i].duration === undefined)
@@ -90,7 +109,7 @@ angular.module('faradayApp')
             };
         };
 
-        $scope.onSuccessDelete = function(workspace_name){ 
+        $scope.onSuccessDelete = function(workspace_name){
             remove =  function(arr, item) {
                 for(var i = arr.length; i--;) {
                     if(arr[i] === item) {
@@ -100,7 +119,7 @@ angular.module('faradayApp')
                 return arr;
             };
 
-            $scope.wss = remove($scope.wss, workspace_name); 
+            $scope.wss = remove($scope.wss, workspace_name);
             for(var i = 0; i < $scope.workspaces.length; i++) {
                 if($scope.workspaces[i].name == workspace_name){
                     $scope.workspaces.splice(i, 1);
@@ -108,16 +127,17 @@ angular.module('faradayApp')
                 }
             };
         };
-      
+
         $scope.insert = function(workspace){
             delete workspace.selected;
             workspacesFact.put(workspace).then(function(resp){
+                workspace.stats = resp.data.stats;
                 $scope.onSuccessInsert(workspace)
             },
             $scope.onFailInsert);
         };
 
-        $scope.update = function(ws){
+        $scope.update = function(ws, wsName, finally_){
             if(typeof(ws.duration.start_date) == "number") {
                 start_date = ws.duration.start_date;
             } else if(ws.duration.start_date) {
@@ -140,8 +160,23 @@ angular.module('faradayApp')
                 "scope":        ws.scope,
                 "type":         ws.type
             };
-            workspacesFact.update(workspace).then(function(workspace) {
+            workspacesFact.update(workspace, wsName).then(function(workspace) {
+                if (finally_) finally_(workspace);
                 $scope.onSuccessEdit(workspace);
+            }, function(error){
+                if (finally_) finally_(workspace);
+                var modal = $uibModal.open({
+                    templateUrl: 'scripts/commons/partials/modalKO.html',
+                    controller: 'commonsModalKoCtrl',
+                    resolve: {
+                        msg: function() {
+                            if (error.status == 409){
+                                return "A workspace with that name already exists"
+                            }
+                            return error;
+                        }
+                    }
+                });
             });
         };
 
@@ -152,7 +187,7 @@ angular.module('faradayApp')
         };
 
         // Modals methods
-        $scope.new = function(){ 
+        $scope.new = function(){
             $scope.modal = $uibModal.open({
                 templateUrl: 'scripts/workspaces/partials/modalNew.html',
                 controller: 'workspacesModalNew',
@@ -160,13 +195,18 @@ angular.module('faradayApp')
             });
 
             $scope.modal.result.then(function(workspace) {
-                workspace = $scope.create(workspace.name, workspace.description, workspace.start_date, workspace.end_date, workspace.scope);
-                $scope.insert(workspace); 
+                // The API expects list of strings in scope
+                api_scope = workspace.scope.map(function(scope){
+                    return scope.key
+                }).filter(Boolean);
+
+                workspace = $scope.create(workspace.name, workspace.description, workspace.start_date, workspace.end_date, api_scope);
+                $scope.insert(workspace);
             });
 
         };
 
-        $scope.edit = function(){ 
+        $scope.edit = function(){
             var workspace;
             $scope.workspaces.forEach(function(w) {
                 if(w.selected) {
@@ -175,6 +215,7 @@ angular.module('faradayApp')
             });
 
             if(workspace){
+                var oldName = workspace.name;
                 var modal = $uibModal.open({
                     templateUrl: 'scripts/workspaces/partials/modalEdit.html',
                     controller: 'workspacesModalEdit',
@@ -187,9 +228,15 @@ angular.module('faradayApp')
                 });
 
                 modal.result.then(function(workspace) {
-                    if(workspace != undefined){
-                        $scope.update(workspace); 
-                    }
+                    // The API expects list of strings in scope
+                    var old_scope = workspace.scope;
+                    workspace.scope = workspace.scope.map(function(scope){
+                        return scope.key
+                    }).filter(Boolean);
+
+                    $scope.update(workspace, oldName, function(workspace){
+                        workspace.scope = old_scope;
+                    });
                 });
             } else {
                 var modal = $uibModal.open({
@@ -231,7 +278,7 @@ angular.module('faradayApp')
                 $scope.modal.result.then(function() {
                     $scope.workspaces.forEach(function(w) {
                         if(w.selected == true)
-                            $scope.remove(w.name); 
+                            $scope.remove(w.name);
                     });
                 });
             } else {
@@ -255,7 +302,7 @@ angular.module('faradayApp')
         $scope.create = function(wname, wdesc, start_date, end_date, scope){
             if(end_date) end_date = end_date.getTime(); else end_date = "";
             if(start_date) start_date = start_date.getTime(); else start_date = "";
-            workspace = {
+            var workspace = {
                 "_id": wname,
                 "customer": "",
                 "name": wname,
@@ -275,6 +322,10 @@ angular.module('faradayApp')
         };
         $scope.dashboardRedirect = function(path){
             $location.path("/dashboard/ws/"+path);
+        };
+
+        $scope.clearSearch = function() {
+          $scope.search = '';
         };
 
         $scope.init();

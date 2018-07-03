@@ -2,11 +2,13 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 
+import operator
 from sqlalchemy import distinct, Boolean
 from sqlalchemy.sql import func, asc, desc
 from sqlalchemy.sql.expression import ClauseElement
 from sqlalchemy.sql import expression
 from sqlalchemy.ext import compiler
+from sqlalchemy.engine.reflection import Inspector
 
 
 class ORDER_DIRECTIONS:
@@ -203,3 +205,114 @@ def _integer_to_boolean_postgresql(element, compiler, **kw):
 @compiler.compiles(BooleanToIntColumn, 'sqlite')
 def _integer_to_boolean_sqlite(element, compiler, **kw):
     return element.expression_str
+
+
+def get_object_type_for(instance):
+    object_type = instance.__tablename__
+    if object_type is None:
+        if instance.__class__.__name__ in ['Vulnerability',
+                                          'VulnerabilityWeb',
+                                          'VulnerabilityCode']:
+            object_type = 'vulnerability'
+        else:
+            raise RuntimeError("Unknown table for object: {}".format(
+                instance))
+    return object_type
+
+
+def get_unique_fields(session, instance):
+    table_name = get_object_type_for(instance)
+    if table_name != 'vulnerability':
+        engine = session.connection().engine
+        insp = Inspector.from_engine(engine)
+        unique_constraints = insp.get_unique_constraints(table_name)
+    else:
+        # Vulnerability unique index can't be retrieved via reflection.
+        # If the unique index changes we need to update here.
+        # A test should fail when the unique index changes
+        unique_constraints = []
+        unique_constraints.append({
+            'column_names': [
+                'name',
+                'description',
+                'type',
+                'host_id',
+                'service_id',
+                'method',
+                'parameter_name',
+                'path',
+                'website',
+                'workspace_id',
+            ]
+        })
+    if unique_constraints:
+        for unique_constraint in unique_constraints:
+            yield unique_constraint['column_names']
+
+
+def get_conflict_object(session, obj, data, workspace=None):
+    unique_fields_gen = get_unique_fields(session, obj)
+    for unique_fields in unique_fields_gen:
+        relations_fields = filter(
+            lambda unique_field: unique_field.endswith('_id'),
+            unique_fields)
+        unique_fields = filter(
+            lambda unique_field: not unique_field.endswith('_id'),
+            unique_fields)
+
+        if get_object_type_for(obj) == 'vulnerability':
+            # This is a special key due to model inheritance
+            from server.models import VulnerabilityGeneric
+            klass = VulnerabilityGeneric
+        else:
+            klass = obj.__class__
+
+        table = klass.__table__
+        assert (klass is not None and table is not None)
+
+        filter_data = []
+        for unique_field in unique_fields:
+            column = table.columns[unique_field]
+            try:
+                value = data[unique_field]
+            except KeyError:
+                if column.default is None:
+                    # No default nor data value, ignore the field
+                    continue
+                value = column.default.arg
+            filter_data.append(column == value)
+
+        if 'workspace_id' in relations_fields:
+            relations_fields.remove('workspace_id')
+            filter_data.append(table.columns['workspace_id'] == workspace.id)
+
+        for relations_field in relations_fields:
+            if relations_field not in data and relations_field.strip('_id') in data:
+                related_object = data[relations_field.strip('_id')]
+                assert related_object.id is not None
+                filter_data.append(
+                    table.columns[relations_field] == related_object.id)
+            else:
+                relation_id = data.get(relations_field, None)
+                if relation_id:
+                    filter_data.append(
+                        table.columns[relations_field] == relation_id)
+
+        if filter_data:
+            filter_data = reduce(operator.and_, filter_data)
+            return session.query(klass).filter(filter_data).first()
+        else:
+            return
+
+
+UNIQUE_VIOLATION = '23505'
+
+
+def is_unique_constraint_violation(exception):
+    from server.models import db
+    if db.engine.dialect.name != 'postgresql':
+        # Not implemened for RDMS other than postgres, we can't live without
+        # this, it is just an extra check
+        return True
+    assert isinstance(exception.orig.pgcode, str)
+    return exception.orig.pgcode == UNIQUE_VIOLATION

@@ -6,8 +6,8 @@
 
 angular.module('faradayApp')
     .controller('credentialsCtrl',
-        ['$scope', '$filter', '$q', '$uibModal', '$routeParams', '$window', 'commonsFact', 'credential', 'ServerAPI', 'workspacesFact',
-        function($scope, $filter, $q, $uibModal, $routeParams, $window, commonsFact, credential, ServerAPI, workspacesFact) {
+        ['$scope', '$filter', '$q', '$uibModal', '$routeParams', '$window', 'commonsFact', 'credential', 'ServerAPI', 'workspacesFact', 'vulnsManager',
+        function($scope, $filter, $q, $uibModal, $routeParams, $window, commonsFact, credential, ServerAPI, workspacesFact, vulnsManager) {
 
             $scope.workspace;
             $scope.workspaces;
@@ -49,7 +49,7 @@ angular.module('faradayApp')
                         $scope.parentObject.nameService = response['data']['name'];
 
                         // and also, load all host information needed.
-                        var hostId = response['data']['_id'].split('.')[0];
+                        var hostId = response['data']['host_id'];
 
                         ServerAPI.getObj($scope.workspace, hostId, 'hosts').then(function (response) {
                             $scope.parentObject.nameHost = response['data']['name'];
@@ -112,6 +112,9 @@ angular.module('faradayApp')
                 getParent().then(function(){
                     getAndLoadCredentials();
                 });
+
+                // Make the workspace vuln counter work
+                vulnsManager.loadVulnsCounter($scope.workspace);
             };
 
             var removeFromView = function(credential){

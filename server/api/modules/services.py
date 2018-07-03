@@ -1,15 +1,15 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-import time
 
-import flask
 from flask import Blueprint
+from filteralchemy import FilterSet, operators
 from marshmallow import fields, post_load, ValidationError
-from sqlalchemy.orm import joinedload
+from marshmallow.validate import OneOf
 from sqlalchemy.orm.exc import NoResultFound
 
-from server.api.base import AutoSchema, ReadWriteWorkspacedView
+from server.api.base import AutoSchema, ReadWriteWorkspacedView, FilterSetMeta, \
+    FilterAlchemyMixin
 from server.models import Host, Service, Workspace
 from server.schemas import (
     MetadataSchema,
@@ -29,24 +29,26 @@ class ServiceSchema(AutoSchema):
     owner = PrimaryKeyRelatedField('username', dump_only=True,
                                    attribute='creator')
     port = fields.Integer(dump_only=True)  # Port is loaded via ports
-    ports = MutableField(fields.String(),
-                         fields.Method(deserialize='load_port'),
+    ports = MutableField(fields.Integer(),
+                         fields.Method(deserialize='load_ports'),
                          required=True,
                          attribute='port')
-    status = fields.String(default='open')
-    parent = fields.Integer(attribute='host_id', load_only=True)  # parent is not required for updates
+    status = fields.String(default='open', validate=OneOf(Service.STATUSES),
+                           required=True, allow_none=False)
+    parent = fields.Integer(attribute='host_id')  # parent is not required for updates
     host_id = fields.Integer(attribute='host_id', dump_only=True)
-    summary = fields.Method('get_summary')
     vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
     credentials = fields.Integer(attribute='credentials_count', dump_only=True)
     metadata = SelfNestedField(MetadataSchema())
+    type = fields.Function(lambda obj: 'Service', dump_only=True)
 
-    def load_port(self, value):
-        # TODO migration: handle empty list and not numeric value
+    def load_ports(self, value):
+        if not isinstance(value, list):
+            raise ValidationError('ports must be a list')
+        if len(value) != 1:
+            raise ValidationError('ports must be a list with exactly one'
+                                  'element')
         return str(value.pop())
-
-    def get_summary(self, obj):
-        return "(%s/%s) %s" % (obj.port, obj.protocol, obj.name)
 
     @post_load
     def post_load_parent(self, data):
@@ -76,19 +78,29 @@ class ServiceSchema(AutoSchema):
 
     class Meta:
         model = Service
-        fields = ('id', '_id', 'status', 'parent',
+        fields = ('id', '_id', 'status', 'parent', 'type',
                   'protocol', 'description', '_rev',
                   'owned', 'owner', 'credentials', 'vulns',
                   'name', 'version', '_id', 'port', 'ports',
                   'metadata', 'summary', 'host_id')
 
 
-class ServiceView(ReadWriteWorkspacedView):
+class ServiceFilterSet(FilterSet):
+    class Meta(FilterSetMeta):
+        model = Service
+        fields = ('host_id', 'protocol', 'name', 'port')
+        default_operator = operators.Equal
+        operators = (operators.Equal,)
+
+
+class ServiceView(FilterAlchemyMixin, ReadWriteWorkspacedView):
     route_base = 'services'
     model_class = Service
     schema_class = ServiceSchema
     count_extra_filters = [Service.status == 'open']
     get_undefer = [Service.credentials_count, Service.vulnerability_count]
+    get_joinedloads = [Service.credentials, Service.update_user]
+    filterset_class = ServiceFilterSet
 
     def _envelope_list(self, objects, pagination_metadata=None):
         services = []
@@ -102,10 +114,5 @@ class ServiceView(ReadWriteWorkspacedView):
             'services': services,
         }
 
-    def _get_base_query(self, workspace_name):
-        original = super(ServiceView, self)._get_base_query(workspace_name)
-        return original.options(
-            joinedload(Service.credentials)
-        )
 
 ServiceView.register(services_api)

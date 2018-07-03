@@ -2,17 +2,18 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 import os
-import time
+import io
 import logging
 from base64 import b64encode, b64decode
 
-from filteralchemy import FilterSet, operators
-from flask import request, current_app
+import flask
+from filteralchemy import Filter, FilterSet, operators
+from flask import request
 from flask import Blueprint
+from flask_classful import route
 from marshmallow import Schema, fields, post_load, ValidationError
-from marshmallow.validate import OneOf
-from sqlalchemy import and_
-from sqlalchemy.orm import joinedload, selectin_polymorphic
+from marshmallow.validate import OneOf, Length
+from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
 from sqlalchemy.orm.exc import NoResultFound
 
 from depot.manager import DepotManager
@@ -26,14 +27,14 @@ from server.api.base import (
 from server.fields import FaradayUploadedFile
 from server.models import (
     db,
-    CommandObject,
     File,
     Host,
     Service,
     Vulnerability,
     VulnerabilityWeb,
     VulnerabilityGeneric,
-    Workspace
+    Workspace,
+    Hostname
 )
 from server.utils.database import get_or_create
 
@@ -42,6 +43,7 @@ from server.schemas import (
     MutableField,
     PrimaryKeyRelatedField,
     SelfNestedField,
+    SeverityField,
     MetadataSchema)
 
 vulns_api = Blueprint('vulns_api', __name__)
@@ -69,10 +71,21 @@ class EvidenceSchema(AutoSchema):
 
 
 class ImpactSchema(Schema):
-    accountability = fields.Boolean(attribute='impact_accountability')
-    availability = fields.Boolean(attribute='impact_availability')
-    confidentiality = fields.Boolean(attribute='impact_confidentiality')
-    integrity = fields.Boolean(attribute='impact_integrity')
+    accountability = fields.Boolean(attribute='impact_accountability', default=False)
+    availability = fields.Boolean(attribute='impact_availability', default=False)
+    confidentiality = fields.Boolean(attribute='impact_confidentiality', default=False)
+    integrity = fields.Boolean(attribute='impact_integrity', default=False)
+
+
+class CustomMetadataSchema(MetadataSchema):
+    """
+    Implements command_id and creator logic
+    """
+    command_id = fields.Integer(dump_only=True, attribute='creator_command_id')
+    creator = fields.Method('get_creator', dump_only=True)
+
+    def get_creator(self, obj):
+        return obj.creator_command_tool or 'Web UI'
 
 
 class VulnerabilitySchema(AutoSchema):
@@ -84,6 +97,7 @@ class VulnerabilitySchema(AutoSchema):
     owner = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
     impact = SelfNestedField(ImpactSchema())
     desc = fields.String(attribute='description')
+    description = fields.String(dump_only=True)
     policyviolations = fields.List(fields.String,
                                    attribute='policy_violations')
     refs = fields.List(fields.String(), attribute='references')
@@ -93,18 +107,26 @@ class VulnerabilitySchema(AutoSchema):
                                fields.String(),
                                required=True)
     tags = PrimaryKeyRelatedField('name', dump_only=True, many=True)
-    easeofresolution = fields.String(attribute='ease_of_resolution', validate=OneOf(Vulnerability.EASE_OF_RESOLUTIONS),)
+    easeofresolution = fields.String(
+        attribute='ease_of_resolution',
+        validate=OneOf(Vulnerability.EASE_OF_RESOLUTIONS),
+        allow_none=True)
     hostnames = PrimaryKeyRelatedField('name', many=True, dump_only=True)
     service = fields.Nested(ServiceSchema(only=[
         '_id', 'ports', 'status', 'protocol', 'name', 'version', 'summary'
     ]), dump_only=True)
     host = fields.Integer(dump_only=True, attribute='host_id')
-    severity = fields.Method(serialize='get_severity', deserialize='load_severity')
-    status = fields.Method(serialize='get_status', deserialize='load_status')  # TODO: this breaks enum validation.
-    type = fields.Method(serialize='get_type', deserialize='load_type')
+    severity = SeverityField(required=True)
+    status = fields.Method(
+        serialize='get_status',
+        validate=OneOf(Vulnerability.STATUSES + ['opened']),
+        deserialize='load_status')
+    type = fields.Method(serialize='get_type',
+                         deserialize='load_type',
+                         required=True)
     obj_id = fields.String(dump_only=True, attribute='id')
-    target = fields.Method('get_target')
-    metadata = SelfNestedField(MetadataSchema())
+    target = fields.String(dump_only=True, attribute='target_host_ip')
+    metadata = SelfNestedField(CustomMetadataSchema())
     date = fields.DateTime(attribute='create_date',
                            dump_only=True)  # This is only used for sorting
 
@@ -125,13 +147,13 @@ class VulnerabilitySchema(AutoSchema):
         return obj.__class__.__name__
 
     def get_attachments(self, obj):
-        res = []
+        res = {}
 
         for file_obj in obj.evidence:
             ret, errors = EvidenceSchema().dump(file_obj)
             if errors:
                 raise ValidationError(errors, data=ret)
-            res.append(ret)
+            res[file_obj.filename] = ret
 
         return res
 
@@ -145,13 +167,6 @@ class VulnerabilitySchema(AutoSchema):
         assert obj.service_id is not None or obj.host_id is not None
         return 'Service' if obj.service_id is not None else 'Host'
 
-    def get_severity(self, obj):
-        if obj.severity == 'medium':
-            return 'med'
-        if obj.severity == 'informational':
-            return 'info'
-        return obj.severity
-
     def get_status(self, obj):
         if obj.status == 'open':
             return 'opened'
@@ -159,19 +174,6 @@ class VulnerabilitySchema(AutoSchema):
 
     def get_issuetracker(self, obj):
         return {}
-
-    def get_target(self, obj):
-        if obj.service is not None:
-            return obj.service.host.ip
-        else:
-            return obj.host.ip
-
-    def load_severity(self, value):
-        if value == 'med':
-            return 'medium'
-        if value == 'info':
-            return 'informational'
-        return value
 
     def load_status(self, value):
         if value == 'opened':
@@ -185,6 +187,12 @@ class VulnerabilitySchema(AutoSchema):
             return 'vulnerability_web'
 
     def load_parent(self, value):
+        try:
+            # sometimes api requests send str or unicode.
+            value = int(value)
+        except ValueError:
+
+            raise ValidationError("Invalid parent type")
         return value
 
     @post_load
@@ -211,7 +219,6 @@ class VulnerabilitySchema(AutoSchema):
             parent_class = Service
             parent_field = 'service_id'
         if not parent_class:
-            print('parent_type', parent_type)
             raise ValidationError('Unknown parent type')
 
         try:
@@ -222,6 +229,8 @@ class VulnerabilitySchema(AutoSchema):
         except NoResultFound:
             raise ValidationError('Parent id not found: {}'.format(parent_id))
         data[parent_field] = parent.id
+        # TODO migration: check what happens when updating the parent from
+        # service to host or viceverse
         return data
 
 
@@ -229,12 +238,13 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
 
     method = fields.String(default='')
     params = fields.String(attribute='parameters', default='')
-    pname = fields.String(dump_only=True, attribute='parameter_name', default='')
+    pname = fields.String(attribute='parameter_name', default='')
     path = fields.String(default='')
     response = fields.String(default='')
     request = fields.String(default='')
     website = fields.String(default='')
-    query = fields.String(dump_only=True, attribute='query_string', default='')
+    query = fields.String(attribute='query_string', default='')
+    status_code = fields.Integer(allow_none=True)
 
     class Meta:
         model = VulnerabilityWeb
@@ -247,7 +257,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'desc', 'impact', 'confirmed', 'name',
             'service', 'obj_id', 'type', 'policyviolations',
             'request', '_attachments', 'params',
-            'target', 'resolution', 'method', 'metadata')
+            'target', 'resolution', 'method', 'metadata', 'status_code')
 
 
 # Use this override for filterset fields that filter by en exact match by
@@ -255,44 +265,128 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
 _strict_filtering = {'default_operator': operators.Equal}
 
 
+class IDFilter(Filter):
+    def filter(self, query, model, attr, value):
+        return query.filter(model.id == value)
+
+
+class TargetFilter(Filter):
+    def filter(self, query, model, attr, value):
+        return query.filter(model.target_host_ip.ilike("%" + value + "%"))
+
+
+class TypeFilter(Filter):
+    def filter(self, query, model, attr, value):
+        type_map = {
+            'Vulnerability': 'vulnerability',
+            'VulnerabilityWeb': 'vulnerability_web',
+        }
+        assert value in type_map
+        return query.filter(model.__table__.c.type == type_map[value])
+
+
+class CreatorFilter(Filter):
+    def filter(self, query, model, attr, value):
+        return query.filter(model.creator_command_tool == value)
+
+
+class ServiceFilter(Filter):
+    def filter(self, query, model, attr, value):
+        alias = aliased(Service, name='service_filter')
+        return query.join(
+            alias,
+            alias.id == model.__table__.c.service_id).filter(
+                alias.name == value
+        )
+
+class HostnamesFilter(Filter):
+    def filter(self, query, model, attr, value):
+        alias = aliased(Hostname, name='hostname_filter')
+
+        value_list = value.split(",")
+
+        service_hostnames_query = query.join(Service, Service.id == Vulnerability.service_id).\
+           join(Host).\
+           join(alias).\
+           filter(alias.name.in_(value_list))
+
+        host_hostnames_query = query.join(Host, Host.id == Vulnerability.host_id).\
+            join(alias).\
+            filter(alias.name.in_(value_list))
+
+        query = service_hostnames_query.union(host_hostnames_query)
+        return query
+
+class CustomILike(operators.Operator):
+    """A filter operator that puts a % in the beggining and in the
+    end of the search string to force a partial search"""
+
+    def __call__(self, query, model, attr, value):
+        column = getattr(model, attr)
+        condition = column.ilike('%' + value + '%')
+        return query.filter(condition)
+
+
 class VulnerabilityFilterSet(FilterSet):
     class Meta(FilterSetMeta):
         model = VulnerabilityWeb  # It has all the fields
-        # TODO migration: Check if we should add fields creator, owner,
-        # command, impact, type, service, issuetracker, tags, date, target,
-        # host, easeofresolution, evidence, policy violations, hostnames,
-        # target
+        # TODO migration: Check if we should add fields owner,
+        # command, impact, issuetracker, tags, date, host
+        # evidence, policy violations, hostnames
         fields = (
-            "status", "website", "parameter_name", "query_string", "path",
+            "id", "status", "website", "pname", "query", "path", "service",
             "data", "severity", "confirmed", "name", "request", "response",
-            "parameters", "resolution", "method", "ease_of_resolution",
-            "description", "command_id")
-
-        strict_fields = (
-            "severity", "confirmed", "method"
+            "parameters", "params", "resolution", "ease_of_resolution",
+            "description", "command_id", "target", "creator", "method",
+            "easeofresolution", "query_string", "parameter_name", "service_id",
+            "status_code"
         )
 
-        default_operator = operators.ILike
+        strict_fields = (
+            "severity", "confirmed", "method", "status", "easeofresolution",
+            "ease_of_resolution", "service_id",
+        )
+
+        default_operator = CustomILike
+        # next line uses dict comprehensions!
         column_overrides = {
-            field: _strict_filtering for field in strict_fields}
-        operators = (operators.ILike, operators.Equal)
+            field: _strict_filtering for field in strict_fields
+        }
+        operators = (CustomILike, operators.Equal)
+    id = IDFilter(fields.Int())
+    target = TargetFilter(fields.Str())
+    type = TypeFilter(fields.Str(validate=[OneOf(['Vulnerability',
+                                                  'VulnerabilityWeb'])]))
+    creator = CreatorFilter(fields.Str())
+    service = ServiceFilter(fields.Str())
+    severity = Filter(SeverityField())
+    easeofresolution = Filter(fields.String(
+        attribute='ease_of_resolution',
+        validate=OneOf(Vulnerability.EASE_OF_RESOLUTIONS),
+        allow_none=True))
+    pname = Filter(fields.String(attribute='parameter_name'))
+    query = Filter(fields.String(attribute='query_string'))
+    params = Filter(fields.String(attribute='parameters'))
+    status = Filter(fields.Function(
+        deserialize=lambda val: 'open' if val == 'opened' else val,
+        validate=OneOf(Vulnerability.STATUSES + ['opened'])
+    ))
+    hostnames = HostnamesFilter(fields.Str())
 
     def filter(self):
         """Generate a filtered query from request parameters.
 
         :returns: Filtered SQLALchemy query
         """
+        # TODO migration: this can became a normal filter instead of a custom
+        # one, since now we can use creator_command_id
         command_id = request.args.get('command_id')
-        if command_id:
-            self.query = self.query.join(
-                CommandObject, and_(
-                    VulnerabilityWeb.id == CommandObject.object_id,
-                    CommandObject.object_type == 'vulnerability'))
-
         query = super(VulnerabilityFilterSet, self).filter()
 
         if command_id:
-            query = query.filter(CommandObject.command_id == int(command_id))
+            # query = query.filter(CommandObject.command_id == int(command_id))
+            query = query.filter(VulnerabilityGeneric.creator_command_id ==
+                                 int(command_id))  # TODO migration: handle invalid int()
         return query
 
 
@@ -301,32 +395,53 @@ class VulnerabilityView(PaginatedMixin,
                         ReadWriteWorkspacedView):
     route_base = 'vulns'
     filterset_class = VulnerabilityFilterSet
+    sort_model_class = VulnerabilityWeb  # It has all the fields
+    sort_pass_silently = True  # For compatibility with the Web UI
+    unique_fields_by_class = {
+        'Vulnerability': [('name', 'description', 'host_id', 'service_id')],
+        'VulnerabilityWeb': [('name', 'description', 'service_id', 'method',
+                              'parameter_name', 'path', 'website')],
+    }
 
     model_class_dict = {
         'Vulnerability': Vulnerability,
         'VulnerabilityWeb': VulnerabilityWeb,
-        'VulnerabilityGeneric': VulnerabilityGeneric,
+        'VulnerabilityGeneric': VulnerabilityGeneric,  # For listing objects
     }
     schema_class_dict = {
         'Vulnerability': VulnerabilitySchema,
         'VulnerabilityWeb': VulnerabilityWebSchema
     }
 
+    def _validate_uniqueness(self, obj, object_id=None):
+        unique_fields = self.unique_fields_by_class[obj.__class__.__name__]
+        super(VulnerabilityView, self)._validate_uniqueness(
+            obj, object_id, unique_fields)
+
     def _perform_create(self, data, **kwargs):
         data = self._parse_data(self._get_schema_instance(kwargs),
                                 request)
         # TODO migration: use default values when popping and validate the
         # popped object has the expected type.
-        attachments = data.pop('_attachments')
-
         # This will be set after setting the workspace
+        attachments = data.pop('_attachments', {})
         references = data.pop('references')
         policyviolations = data.pop('policy_violations')
 
         obj = super(VulnerabilityView, self)._perform_create(data, **kwargs)
         obj.references = references
         obj.policy_violations = policyviolations
+        db.session.commit()
+        self._process_attachments(obj, attachments)
+        return obj
 
+    def _process_attachments(self, obj, attachments):
+        old_attachments = db.session.query(File).filter_by(
+            object_id=obj.id,
+            object_type='vulnerability',
+        )
+        for old_attachment in old_attachments:
+            db.session.delete(old_attachment)
         for filename, attachment in attachments.items():
             faraday_file = FaradayUploadedFile(b64decode(attachment['data']))
             get_or_create(
@@ -338,6 +453,12 @@ class VulnerabilityView(PaginatedMixin,
                 filename=os.path.basename(filename),
                 content=faraday_file,
             )
+
+    def _perform_update(self, object_id, obj, data, workspace_name):
+        attachments = data.pop('_attachments', {})
+        obj = super(VulnerabilityView, self)._perform_update(object_id, obj, data, workspace_name)
+        db.session.flush()
+        self._process_attachments(obj, attachments)
         db.session.commit()
         return obj
 
@@ -361,7 +482,10 @@ class VulnerabilityView(PaginatedMixin,
             joinedload(VulnerabilityWeb.service)
             .joinedload(Service.host)
             .joinedload(Host.hostnames),
-
+            joinedload(VulnerabilityGeneric.update_user),
+            undefer(VulnerabilityGeneric.creator_command_id),
+            undefer(VulnerabilityGeneric.creator_command_tool),
+            undefer(VulnerabilityGeneric.target_host_ip),
             joinedload(VulnerabilityGeneric.evidence),
             joinedload(VulnerabilityGeneric.tags),
         ]
@@ -369,6 +493,17 @@ class VulnerabilityView(PaginatedMixin,
             VulnerabilityGeneric,
             [Vulnerability, VulnerabilityWeb]
         ), *joinedloads)
+
+    def _filter_query(self, query):
+        query = super(VulnerabilityView, self)._filter_query(query)
+        search_term = flask.request.args.get('search', None)
+        if search_term is not None:
+            # TODO migration: add more fields to free text search
+            like_term = '%' + search_term + '%'
+            match_name = VulnerabilityGeneric.name.ilike(like_term)
+            match_desc = VulnerabilityGeneric.description.ilike(like_term)
+            query = query.filter(match_name | match_desc)
+        return query
 
     @property
     def model_class(self):
@@ -380,7 +515,9 @@ class VulnerabilityView(PaginatedMixin,
     def _get_schema_class(self):
         assert self.schema_class_dict is not None, "You must define schema_class"
         if request.method == 'POST':
-            requested_type = request.json['type']
+            requested_type = request.json.get('type', None)
+            if not requested_type:
+                raise InvalidUsage('Type is required.')
             if requested_type not in self.schema_class_dict:
                 raise InvalidUsage('Invalid vulnerability type.')
             return self.schema_class_dict[requested_type]
@@ -419,6 +556,25 @@ class VulnerabilityView(PaginatedMixin,
         if request.args.get('group_by') == 'severity':
             res['groups'] = [convert_group(group) for group in res['groups']]
         return res
+
+    @route('/<vuln_id>/attachment/<attachment_filename>/')
+    def attachment(self, workspace_name, vuln_id, attachment_filename):
+        vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
+            Workspace).filter(VulnerabilityGeneric.id == vuln_id,
+                              Workspace.name == workspace_name).first()
+        if vuln_workspace_check:
+            file_obj = db.session.query(File).filter_by(object_type='vulnerability',
+                                         object_id=vuln_id,
+                                         filename=attachment_filename).first()
+            if file_obj:
+                depot = DepotManager.get()
+                depot_file = depot.get(file_obj.content.get('file_id'))
+                return flask.send_file(
+                    io.BytesIO(depot_file.read()),
+                    attachment_filename=file_obj.filename,
+                    as_attachment=True,
+                    mimetype=depot_file.content_type
+                )
 
 
 VulnerabilityView.register(vulns_api)

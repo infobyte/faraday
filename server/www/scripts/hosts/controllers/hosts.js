@@ -12,6 +12,25 @@ angular.module('faradayApp')
             // hosts list
             $scope.hosts = [];
             $scope.totalHosts = 0;
+            $scope.columns = {
+                "id": false,
+                "ip": true,
+                "description": false,
+                "hostnames": false,
+                "services": false,
+                "mac": false,
+                "service_count": true,
+                "vuln_count": true,
+                "credential_count": true,
+                "os": true,
+                "owned": true,
+                "create_time": true,
+                "last_modified": true,
+            }
+            if($cookies.get('HColumns')) {
+                preferences = JSON.parse($cookies.get('HColumns'))
+                angular.extend($scope.columns, preferences);
+            }
             // current workspace
             $scope.workspace = $routeParams.wsId;
 
@@ -65,7 +84,7 @@ angular.module('faradayApp')
         };
 
         var createCredential = function(credentialData, parent_id){
-            
+
             // Add parent id, create credential and save to server.
             try {
                 var credentialObj = new credential(credentialData, parent_id);
@@ -205,18 +224,7 @@ angular.module('faradayApp')
         }
 
         $scope.new = function() {
-            var modal = $uibModal.open({
-                templateUrl: 'scripts/hosts/partials/modalNew.html',
-                controller: 'hostsModalNew',
-                size: 'lg',
-                resolve: {}
-             });
-
-            modal.result.then(function(data) {
-                var hostdata = data[0];
-                var credentialData = data[1];
-                $scope.insert(hostdata, credentialData);
-            });
+            $location.path('/host/ws/' + $scope.workspace + '/new');
         };
 
         $scope.update = function(host, hostdata) {
@@ -262,6 +270,17 @@ angular.module('faradayApp')
             $scope.hosts.forEach(function(host) {
                 host.selected = $scope.selectall_hosts;
             });
+        };
+
+        $scope.hasDisabledFields = function(){
+            return Object.values($scope.columns).some(function(show){
+                return !show
+            });
+        };
+
+        $scope.toggleShow = function(column) {
+            $scope.columns[column] = !$scope.columns[column];
+            $cookies.put('HColumns', JSON.stringify($scope.columns));
         };
 
         // toggles sort field and order

@@ -4,7 +4,7 @@
 
 <form name="form" novalidate>
     <div class="modal-header">
-        <div class="modal-button">
+        <div class="modal-button btn-toolbar">
             <button class="btn btn-success" ng-click="modal.ok()" ng-disabled="form.$invalid || modal.data.severity === undefined || (modal.data.type === 'VulnerabilityWeb' && modal.host_parents) || modal.data.parents.length == 0">OK</button>
             <button class="btn btn-danger" ng-click="modal.cancel()">Cancel</button>
         </div>
@@ -92,7 +92,7 @@
             <div class="form-group">
                 <div class="col-md-4">
                     <h5>Type</h5>
-                    <select class="form-control" ng-model="modal.data.type" ng-options="option.value as option.name for option in modal.vuln_types">
+                    <select class="form-control" ng-model="modal.data.type" ng-options="option.value as option.name for option in modal.vuln_types"  style="padding:0px 12px;">
                     </select>
                 </div>
                 <div class="col-md-4 severities">
@@ -106,7 +106,7 @@
                 </div>
                 <div class="col-md-4">
                     <h5>Ease of Resolution</h5>
-                    <select class="form-control" ng-model="modal.data.easeofresolution" ng-options="e for e in modal.easeofresolution">
+                    <select class="form-control" ng-model="modal.data.easeofresolution" ng-options="e for e in modal.easeofresolution"  style="padding:0px 12px;">
                         <option value=""></option>
                     </select>
                 </div>
@@ -120,7 +120,7 @@
             <div class="form-group" ng-class="{'has-error': form.desc.$invalid }">
                 <div class="col-md-12">
                     <label class="sr-only" for="vuln-desc">Vuln description</label>
-                    <textarea class="form-control" id="vuln-desc" name="desc" placeholder="Description" ng-model="modal.data.desc" required></textarea>
+                    <textarea class="form-control" id="vuln-desc" name="desc" placeholder="Description" ng-model="modal.data.desc" required="" style="margin: 0px 2px 0px 0px; height: 239px; width: 867px;"></textarea></textarea>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
@@ -218,10 +218,10 @@
         </div><!-- .animate-switch-container -->
 
         <h4>Impact</h4>
-        <div ng-repeat="(key, value) in modal.data.impact" class="normal-size" style="cursor: pointer;">
-            <h4><span ng-class="{'label label-default': !value, 'label label-success': value}" ng-click="modal.toggleImpact(key)">{{key}}</span></h4>
-        </div><!-- .normal-size -->
-
+        <h4><span ng-repeat="(key, value) in modal.data.impact" class="normal-size" style="cursor: pointer;">
+            <span ng-class="{'label-impact label-default-impact': !value, 'label-impact label-success-impact': value}" ng-click="modal.toggleImpact(key)">{{key}}</span>
+        </span></h4><!-- .normal-size -->
+        <div>
         <h4>Evidence</h4>
         <div class="alert alert-danger normal-size" role="alert" ng-if="modal.file_name_error">
           <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
@@ -248,7 +248,7 @@
         </div><!-- #evidenceFiles -->
     </div><!-- .modal-body -->
     <div class="modal-footer">
-        <div class="modal-button">
+        <div class="modal-button btn-toolbar">
             <button class="btn btn-success" ng-click="modal.ok()" ng-disabled="form.$invalid || modal.data.severity === undefined || (modal.data.type === 'VulnerabilityWeb' && modal.host_parents) || modal.data.parents.length == 0">OK</button>
             <button class="btn btn-danger" ng-click="modal.cancel()">Cancel</button>
         </div>

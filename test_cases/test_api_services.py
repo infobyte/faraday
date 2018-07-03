@@ -1,7 +1,18 @@
 # -*- coding: utf8 -*-
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 """Tests for many API endpoints that do not depend on workspace_name"""
+try:
+    from urllib import urlencode
+except ImportError:
+    from urllib.parse import urlencode
 
 import pytest
+import json
 
 from server.api.modules.services import ServiceView
 from test_cases import factories
@@ -9,7 +20,7 @@ from test_api_workspaced_base import ReadOnlyAPITests
 from server.models import (
     Service
 )
-from test_cases.factories import HostFactory
+from test_cases.factories import HostFactory, EmptyCommandFactory
 
 
 @pytest.mark.usefixtures('logged_user')
@@ -17,8 +28,6 @@ class TestListServiceView(ReadOnlyAPITests):
     model = Service
     factory = factories.ServiceFactory
     api_endpoint = 'services'
-    #unique_fields = ['ip']
-    #update_fields = ['ip', 'description', 'os']
     view_class = ServiceView
 
     def test_service_list_backwards_compatibility(self, test_client,
@@ -65,6 +74,52 @@ class TestListServiceView(ReadOnlyAPITests):
         assert service.port == 21
         assert service.host is host
 
+    def test_create_fails_with_invalid_status(self, test_client,
+                                              host, session):
+        session.commit()
+        data = {
+            "name": "ftp",
+            "description": "test. test",
+            "owned": False,
+            "ports": [21],
+            "protocol": "tcp",
+            "status": "asdasdasd",
+            "parent": host.id
+        }
+        res = test_client.post(self.url(), data=data)
+        assert res.status_code == 400
+        assert 'Not a valid choice' in res.data
+
+    def test_create_fails_with_no_status(self, test_client,
+                                         host, session):
+        session.commit()
+        data = {
+            "name": "ftp",
+            "description": "test. test",
+            "owned": False,
+            "ports": [21],
+            "protocol": "tcp",
+            "parent": host.id
+        }
+        res = test_client.post(self.url(), data=data)
+        assert res.status_code == 400
+        assert 'Missing data' in res.data
+
+    def test_create_fails_with_no_host_id(self, test_client,
+                                          host, session):
+        session.commit()
+        data = {
+            "name": "ftp",
+            "description": "test. test",
+            "owned": False,
+            "ports": [21],
+            "protocol": "tcp",
+            "status": "open",
+        }
+        res = test_client.post(self.url(), data=data)
+        assert res.status_code == 400
+        assert 'Parent id is required' in res.data
+
     def test_create_fails_with_host_of_other_workspace(self, test_client,
                                                        host, session,
                                                        second_workspace):
@@ -102,6 +157,23 @@ class TestListServiceView(ReadOnlyAPITests):
         res = test_client.put(self.url(self.first_object), data=data)
         assert res.status_code == 400
         assert 'Can\'t change service parent.' in res.data
+
+    def test_create_service_returns_conflict_if_already_exists(self, test_client, host, session):
+        session.commit()
+        service = self.first_object
+        data = {
+            "name": service.name,
+            "description": service.description,
+            "owned": service.owned,
+            "ports": [service.port],
+            "protocol": service.protocol,
+            "status": service.status,
+            "parent": service.host_id
+        }
+        res = test_client.post(self.url(workspace=service.workspace), data=data)
+        assert res.status_code == 409
+        message = json.loads(res.data)
+        assert message['object']['_id'] == service.id
 
     def _raw_put_data(self, id, parent=None, status='open', protocol='tcp', ports=None):
         if not ports:
@@ -172,3 +244,41 @@ class TestListServiceView(ReadOnlyAPITests):
         res = test_client.put(self.url(service, workspace=service.workspace), data=raw_data)
         assert res.status_code == 200
         assert res.json['id'] == service.id
+
+    def test_create_service_from_command(self, test_client, session):
+        host = HostFactory.create(workspace=self.workspace)
+        command = EmptyCommandFactory.create(workspace=self.workspace)
+        session.commit()
+        assert len(command.command_objects) == 0
+        url = self.url(workspace=command.workspace) + '?' + urlencode({'command_id': command.id})
+        raw_data = {
+            "name": "SSH",
+            "description": "SSH service",
+            "owned": False,
+            "ports": [22],
+            "protocol": "tcp",
+            "status": "open",
+            "parent": host.id
+        }
+        res = test_client.post(url, data=raw_data)
+
+        assert res.status_code == 201
+        assert len(command.command_objects) == 1
+        cmd_obj = command.command_objects[0]
+        assert cmd_obj.object_type == 'service'
+        assert cmd_obj.object_id == res.json['id']
+
+
+    def test_create_service_without_ost(self, test_client, host, session):
+        session.commit()
+        data = {
+            "name": "ftp",
+            "description": "test. test",
+            "owned": False,
+            "ports": [21],
+            "protocol": "tcp",
+            "status": "open",
+        }
+        res = test_client.post(self.url(), data=data)
+        assert res.status_code == 400
+        assert res.json['messages']['_schema'] == res.json['messages']['_schema']

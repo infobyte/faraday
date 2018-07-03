@@ -1,13 +1,23 @@
+# -*- coding: utf8 -*-
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+from base64 import b64decode
+import string
+from random import SystemRandom
+
 import os
 import re
 import sys
 import json
+import logging
 import datetime
+import threading
+import multiprocessing
+
 
 import requests
+from requests.exceptions import HTTPError, RequestException
 from tempfile import NamedTemporaryFile
 
 from collections import (
@@ -16,6 +26,7 @@ from collections import (
     OrderedDict
 )
 from slugify import slugify
+from sqlalchemy import Text, String
 from binascii import unhexlify
 
 from IPy import IP
@@ -25,12 +36,13 @@ from tqdm import tqdm
 import server.config
 
 import server.couchdb
-import server.database
 import server.models
 import server.utils.logger
+from server.fields import FaradayUploadedFile
 from server.models import (
     db,
     Command,
+    CommandObject,
     Comment,
     Credential,
     ExecutiveReport,
@@ -41,7 +53,6 @@ from server.models import (
     MethodologyTemplate,
     PolicyViolation,
     Reference,
-    ReferenceTemplate,
     Service,
     Scope,
     Tag,
@@ -53,8 +64,9 @@ from server.models import (
     VulnerabilityTemplate,
     VulnerabilityWeb,
     Workspace,
+    WorkspacePermission,
     File,
-    log_command_object_found,
+    SQLAlchemy,
 )
 from server.utils import invalid_chars
 from server.utils.database import get_or_create
@@ -64,6 +76,17 @@ COUCHDB_USER_PREFIX = 'org.couchdb.user:'
 COUCHDB_PASSWORD_PREFIX = '-pbkdf2-'
 
 logger = server.utils.logger.get_logger(__name__)
+
+importer_logfile = os.path.expanduser(os.path.join(
+    server.config.CONSTANTS.CONST_FARADAY_HOME_PATH,
+    server.config.CONSTANTS.CONST_FARADAY_LOGS_PATH, 'couchdb-importer.log'))
+importer_file_handler = logging.FileHandler(importer_logfile)
+formatter = logging.Formatter(
+        '%(asctime)s - %(name)s:%(lineno)d - %(levelname)s - %(message)s')
+importer_file_handler.setFormatter(formatter)
+importer_file_handler.setLevel(logging.DEBUG)
+logger.addHandler(importer_file_handler)
+
 
 session = db.session
 
@@ -78,6 +101,8 @@ MAPPED_VULN_SEVERITY = OrderedDict([
     ('', 'unclassified'),
 ])
 
+# The objects are imported in this order (the order of the list, the integer
+# isn't related to this)
 OBJ_TYPES = [
             (1, 'CommandRunInformation'),
             (1, 'Host'),
@@ -98,6 +123,51 @@ OBJ_TYPES = [
             (4, 'Vulnerability'),
             (4, 'VulnerabilityWeb'),
         ]
+
+
+# Really ugly hack to avoid setting to null non-nullable text columns
+for model in (
+        Command,
+        CommandObject,
+        Comment,
+        Credential,
+        ExecutiveReport,
+        Host,
+        Hostname,
+        License,
+        Methodology,
+        MethodologyTemplate,
+        PolicyViolation,
+        Reference,
+        Service,
+        Scope,
+        Tag,
+        TagObject,
+        Task,
+        TaskTemplate,
+        User,
+        Vulnerability,
+        VulnerabilityWeb,
+        VulnerabilityTemplate,
+        Workspace,
+        File,
+        ):
+    old_setattr = model.__setattr__
+
+    def __setattr__(self, key, value):
+        assert self.__table__ is not None
+        try:
+            column = self.__table__.columns[key]
+        except KeyError:
+            pass
+        else:
+            if (isinstance(column.type, (Text, String))
+                    and not column.nullable
+                    and value is None):
+                value = ''
+        return old_setattr(self, key, value)
+
+    model.__setattr__ = __setattr__
 
 
 def get_object_from_couchdb(couchdb_id, workspace):
@@ -135,16 +205,17 @@ def get_children_from_couch(workspace, parent_couchdb_id, child_type):
     view_data = {
         "views": {
             "children_by_parent_and_type": {
-                "map": "function(doc) { id_parent = doc._id.split('.').slice(0, -1).join('.');"
-                "key = [id_parent,doc.type]; emit(key, doc); }"
+                "map":
+                    "function(doc) { id_parent = doc._id.split('.').slice(0, -1).join('.');"
+                    "key = [id_parent,doc.type]; emit(key, doc); }"
             }
         }
     }
 
     try:
         r = requests.put(view_url, json=view_data)
-    except requests.exceptions.RequestException as e:
-        logger.warn(e)
+    except RequestException as e:
+        logger.exception(e)
         return []
 
     # and now, finally query it!
@@ -157,8 +228,23 @@ def get_children_from_couch(workspace, parent_couchdb_id, child_type):
 
     try:
         r = requests.get(couch_url)
-    except requests.exceptions.RequestException as e:
-        logger.warn(e)
+    except RequestException as e:
+        logger.error('Network error in CouchDB request {}'.format(
+            couch_url,
+            r.status_code,
+            r.text))
+        logger.exception(e)
+        return []
+
+    try:
+        r.raise_for_status()
+    except RequestException as e:
+        logger.error('Error in CouchDB request {}. '
+                     'Status code: {}. '
+                     'Body: {}'.format(couch_url,
+                                       r.status_code,
+                                       r.text))
+        logger.exception(e)
         return []
 
     return r.json()['rows']
@@ -166,9 +252,11 @@ def get_children_from_couch(workspace, parent_couchdb_id, child_type):
 
 def create_tags(raw_tags, parent_id, parent_type):
     for tag_name in [x.strip() for x in raw_tags if x.strip()]:
-        tag, tag_created = get_or_create(session, Tag, name=tag_name, slug=slugify(tag_name))
+        tag, tag_created = get_or_create(session, Tag, slug=slugify(tag_name))
+        tag.name = tag_name
         session.commit()
-
+        parent_type = parent_type.lower()
+        parent_type = parent_type.replace('web', '')
         relation, relation_created = get_or_create(
             session,
             TagObject,
@@ -187,6 +275,8 @@ def set_metadata(document, obj):
             try:
                 if key == 'create_time':
                     obj.create_date = datetime.datetime.fromtimestamp(document['metadata']['create_time'])
+                    if obj.create_date > datetime.datetime.now():
+                        raise Exception('Invalid date!')
                 if key == 'owner':
                     creator = User.query.filter_by(username=value).first()
                     obj.creator = creator
@@ -195,6 +285,71 @@ def set_metadata(document, obj):
                     obj.create_date = datetime.datetime.fromtimestamp(document['metadata']['create_time'] / 1000)
             except TypeError:
                 print('')
+
+
+def map_tool_with_command_id(command_tool_map, document):
+    try:
+        metadata = document['metadata']
+        tool = metadata['creator']
+        command_id = metadata['command_id']
+    except KeyError:
+        # Ignore objects without any of these keys
+        return
+    if not tool or not command_id:
+        # it could be blank
+        return
+    old_tool = command_tool_map.get(command_id)
+    if old_tool is not None and old_tool != tool:
+        logger.warn('Conflicting tool names for command {}: "{}" and "{}". '
+                    'Using "{}"'.format(
+                        command_id,
+                        old_tool,
+                        tool,
+                        tool
+                    ))
+    command_tool_map[command_id] = tool
+
+
+def update_command_tools(workspace, command_tool_map, id_map):
+    if command_tool_map:
+        logger.debug("Setting the tool to {} commands".format(
+            len(command_tool_map)))
+    for (command_couchid, tool) in (command_tool_map.items()):
+        try:
+            map_data = id_map[command_couchid]
+
+            # There should be only one command created
+            assert len(map_data) <= 1
+            map_data = map_data[0]
+        except IndexError:
+            logger.warn("Couldn't find new numeric ID of command {}".format(
+                command_couchid
+            ))
+            continue
+        else:
+            assert map_data['type'] == 'CommandRunInformation'
+            command_id = map_data['id']
+        command = Command.query.get(command_id)
+        if command is None:
+            logger.warn("Couldn't get command {}, mapped to ID {}".format(
+                command_couchid,
+                command_id
+            ))
+            continue
+        assert workspace.id == command.workspace_id, (workspace.id, command.workspace_id)
+        if command.tool and command.tool != 'unknown':
+            logger.warn("Command {} (Couch ID {}) has already a tool. "
+                        "Overriding it".format(command_id,
+                                               command_couchid))
+        command.tool = tool
+        session.add(command)
+    session.commit()
+    missing_tool_count = Command.query.filter_by(
+        workspace=workspace, tool="unknown").count()
+    if missing_tool_count:
+        logger.debug("Couldn't find the tool name of {} commands in "
+                     "workspace {}".format(
+                        missing_tool_count, workspace.name))
 
 
 class EntityNotFound(Exception):
@@ -287,20 +442,24 @@ class HostImporter(object):
         host_ips = [name_or_ip for name_or_ip in self.retrieve_ips_from_host_document(document)]
         interfaces = get_children_from_couch(workspace, document.get('_id'), 'Interface')
         command = None
-        if 'metadata' in document and 'command_id' in document['metadata'] and document['metadata']['command_id']:
+        try:
             command = session.query(Command).get(couchdb_relational_map[document['metadata']['command_id']][0])
+        except (KeyError, IndexError):
+            command = None
 
         for interface in interfaces:
             interface = interface['value']
             if check_ip_address(interface['ipv4']['address']):
                 interface_ip = interface['ipv4']['address']
                 host, created = get_or_create(session, Host, ip=interface_ip, workspace=workspace)
+                session.flush()
                 host.default_gateway_ip = interface['ipv4']['gateway']
                 self.merge_with_host(host, interface, workspace)
                 hosts.append((host, created))
             if check_ip_address(interface['ipv6']['address']):
                 interface_ip = interface['ipv6']['address']
                 host, created = get_or_create(session, Host, ip=interface_ip, workspace=workspace)
+                session.flush()
                 host.default_gateway_ip = interface['ipv6']['gateway']
                 self.merge_with_host(host, interface, workspace)
                 hosts.append((host, created))
@@ -318,8 +477,9 @@ class HostImporter(object):
         for host, created in hosts:
             # we update or set other host attributes in this cycle
             # Ticket #3387: if the 'os' field is None, we default to 'unknown
-            if command:
-                log_command_object_found(command, host, created)
+            if command and created:
+                session.flush()
+                CommandObject.create(host, command)
 
             if not document.get('os'):
                 document['os'] = 'unknown'
@@ -344,6 +504,8 @@ class HostImporter(object):
         if interface['network_segment']:
             host.net_segment = interface['network_segment']
         if interface['description']:
+            if not host.description:
+                host.description = ''
             host.description += '\n Interface data: {0}'.format(interface['description'])
         if type(interface['hostnames']) in (str, unicode):
             interface['hostnames'] = [interface['hostnames']]
@@ -369,30 +531,46 @@ class ServiceImporter(object):
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         #  service was always below interface, not it's below host.
         command = None
-        if 'command_id' in document['metadata'] and document['metadata']['command_id']:
-            command = session.query(Command).get(couchdb_relational_map[document['metadata']['command_id']][0])
         try:
-            parent_id = document['parent'].split('.')[0]
-        except KeyError:
-            # some services are missing the parent key
-            parent_id = document['_id'].split('.')[0]
+            command = session.query(Command).get(couchdb_relational_map[document['metadata']['command_id']][0])
+        except (KeyError, IndexError):
+            command = None
+
+        # This should be safe because _id is always present and split never
+        # returns an empty list
+        parent_id = (document.get('parent') or document.get('_id')).split('.')[0]
+
         for relational_parent_id in couchdb_relational_map[parent_id]:
             host, created = get_or_create(session, Host, id=relational_parent_id)
-            if command:
-                log_command_object_found(command, host, created)
+            if command and created:
+                session.flush()
+                CommandObject.create(host, command)
             ports = document.get('ports')
-            if len(ports) > 2:
+            if len(ports) > 1:
                 logger.warn('More than one port found in services!')
             for port in ports:
+                try:
+                    port = int(port)
+                except ValueError:
+                    logger.warn('Port {} of service {} is not a valid '
+                                'integer. Using port 65534'.format(repr(port)))
+                    port = 65534
+                if port > (2**31 - 1):
+                    # Bigger than the maximum int supported by postgres
+                    logger.warn('Port number {} too big for service {}. '
+                                'Using port 65535'.format(
+                            port, document['_id']
+                    ))
+                    port = 65535
                 service, created = get_or_create(session,
                                                  Service,
-                                                 name=document.get('name'),
+                                                 protocol=document.get('protocol'),
                                                  port=port,
                                                  host=host)
                 service.description = document.get('description')
                 service.owned = document.get('owned', False)
                 service.banner = document.get('banner')
-                service.protocol = document.get('protocol')
+                service.name = document.get('name')
                 if not document.get('status'):
                     logger.warning('Service {0} with empty status. Using \'open\' as status'.format(document['_id']))
                     document['status'] = 'open'
@@ -414,10 +592,27 @@ class ServiceImporter(object):
                 service.status = status_mapper.get(couchdb_status, 'open')
                 service.version = document.get('version')
                 service.workspace = workspace
-                if command:
-                    log_command_object_found(command, service, created)
+                session.flush()
+                if command and created:
+                    CommandObject.create(service, command)
 
                 yield service
+
+
+user_lock = threading.Lock()
+def get_or_create_user(session, username):
+    with user_lock:
+        rng = SystemRandom()
+        password =  "".join(
+            [rng.choice(string.ascii_letters + string.digits) for _ in
+                xrange(12)])
+        creator, created = get_or_create(session, User, username=username)
+        if created:
+            creator.active = False
+            creator.password = password
+        session.add(creator) # remove me
+        session.commit() # remove me
+        return creator
 
 
 class VulnerabilityImporter(object):
@@ -425,8 +620,10 @@ class VulnerabilityImporter(object):
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         command = None
-        if 'command_id' in document['metadata'] and document['metadata']['command_id']:
+        try:
             command = session.query(Command).get(couchdb_relational_map[document['metadata']['command_id']][0])
+        except (KeyError, IndexError):
+            command = None
         vulnerability = None
         couch_parent_id = document.get('parent', None)
         if not couch_parent_id:
@@ -445,6 +642,8 @@ class VulnerabilityImporter(object):
                 parent = session.query(Host).filter_by(id=parent_id).first()
             if level == 4:
                 parent = session.query(Service).filter_by(id=parent_id).first()
+            owner_name = document.get('owner', None)
+            creator = get_or_create_user(session, owner_name)
             if document['type'] == 'VulnerabilityWeb':
                 method = document.get('method')
                 path = document.get('path')
@@ -454,8 +653,7 @@ class VulnerabilityImporter(object):
                     session,
                     VulnerabilityWeb,
                     name=document.get('name'),
-                    description=document.get('desc'),
-                    severity=severity,
+                    description=document.get('desc').strip().strip('\n'),
                     service_id=parent.id,
                     method=method,
                     parameter_name=pname,
@@ -467,9 +665,8 @@ class VulnerabilityImporter(object):
             if document['type'] == 'Vulnerability':
                 vuln_params = {
                     'name': document.get('name'),
-                    'severity': severity,
                     'workspace': workspace,
-                    'description': document.get('desc')
+                    'description': document.get('desc').strip().strip('\n'),
                 }
                 if type(parent) == Host:
                     vuln_params.update({'host_id': parent.id})
@@ -480,6 +677,8 @@ class VulnerabilityImporter(object):
                     Vulnerability,
                     **vuln_params
                 )
+            vulnerability.severity = severity
+            vulnerability.creator = creator
             vulnerability.confirmed = document.get('confirmed', False) or False
             vulnerability.data = document.get('data')
             vulnerability.ease_of_resolution = document.get('easeofresolution') if document.get('easeofresolution') else None
@@ -487,12 +686,13 @@ class VulnerabilityImporter(object):
 
             vulnerability.owned = document.get('owned', False)
             #vulnerability.attachments = json.dumps(document.get('_attachments', {}))
-            vulnerability.impact_accountability = document.get('impact', {}).get('accountability')
-            vulnerability.impact_availability = document.get('impact', {}).get('availability')
-            vulnerability.impact_confidentiality = document.get('impact', {}).get('confidentiality')
-            vulnerability.impact_integrity = document.get('impact', {}).get('integrity')
-            if command:
-                log_command_object_found(command, vulnerability, created)
+            vulnerability.impact_accountability = document.get('impact', {}).get('accountability') or False
+            vulnerability.impact_availability = document.get('impact', {}).get('availability') or False
+            vulnerability.impact_confidentiality = document.get('impact', {}).get('confidentiality') or False
+            vulnerability.impact_integrity = document.get('impact', {}).get('integrity') or False
+            session.flush()
+            if command and created:
+                CommandObject.create(vulnerability, command)
             if document['type'] == 'VulnerabilityWeb':
                 vulnerability.query_string = document.get('query')
                 vulnerability.request = document.get('request')
@@ -555,7 +755,7 @@ class VulnerabilityImporter(object):
                 File,
                 filename=attachment_name,
                 object_id=vulnerability.id,
-                object_type=vulnerability.__class__.__name__)
+                object_type='vulnerability')
             file.content = attachment_file.read()
 
             attachment_file.close()
@@ -588,7 +788,7 @@ class VulnerabilityImporter(object):
                 workspace=workspace
             )
             session.flush()
-            if created and reference not in map(lambda  ref: ref.name, references):
+            if created and reference not in map(lambda ref: ref.name, references):
                 references.add(reference)
         return references
 
@@ -598,8 +798,12 @@ class CommandImporter(object):
     DOC_TYPE = 'CommandRunInformation'
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         import_source = 'shell'
-        if document.get('command', '').startswith('Import'):
+        if document.get('command', '').startswith('Import '):
             import_source = 'report'
+            # Now that we have a field that distinguished between shell commands
+            # and imported reports, it is no longer required to directly format
+            # in hte command field
+            document['command'] = document['command'][len('Import '):-1]
 
         start_date = datetime.datetime.fromtimestamp(document.get('itime'))
 
@@ -608,6 +812,7 @@ class CommandImporter(object):
             Command,
             command=document.get('command', None),
             start_date=start_date,
+            workspace=workspace,
 
         )
         if document.get('duration'):
@@ -619,6 +824,7 @@ class CommandImporter(object):
         command.hostname = document.get('hostname', None)
         command.params = document.get('params', None)
         command.user = document.get('user', None)
+        command.tool = 'unknown'  # It will be updated later
         command.workspace = workspace
 
         yield command
@@ -634,7 +840,7 @@ class NoteImporter(object):
             Comment,
             text='{0}\n{1}'.format(document.get('text', ''), document.get('description', '')),
             object_id=couchdb_relational_map[parent_document.get('_id')],
-            object_type=parent_document['type'],
+            object_type=parent_document['type'].lower(),
             workspace=workspace)
         yield comment
 
@@ -644,8 +850,10 @@ class CredentialImporter(object):
     DOC_TYPE = 'Cred'
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         command = None
-        if 'command_id' in document['metadata'] and document['metadata']['command_id']:
+        try:
             command = session.query(Command).get(couchdb_relational_map[document['metadata']['command_id']][0])
+        except (KeyError, IndexError):
+            command = None
         parents = []
         if level == 2:
             parent_ids = couchdb_relational_map[document['_id'].split('.')[0]]
@@ -676,8 +884,9 @@ class CredentialImporter(object):
             credential.description = document.get('description', None)
             credential.name = document.get('name', None)
             credential.workspace = workspace
-            if command:
-                log_command_object_found(command, credential, created)
+            if command and created:
+                session.flush()
+                CommandObject.create(credential, command)
             yield credential
 
 
@@ -692,6 +901,19 @@ class WorkspaceImporter(object):
             workspace.end_date = datetime.datetime.fromtimestamp(float(document.get('duration')['end'])/1000)
         for scope in [x.strip() for x in document.get('scope', '').split('\n') if x.strip()]:
             scope_obj, created = get_or_create(session, Scope, name=scope, workspace=workspace)
+            session.flush()  # This fixes integrity errors for duplicate scope elements
+        users = document.get('users', [])
+        if not users:
+            workspace.public = True
+        for username in users:
+            user = session.query(User).filter_by(username=username).first()
+            if user is None:
+                logger.warn('User {} not found but it has permissions for '
+                            'workspace {}. Ignoring'.format(username,
+                                                            workspace.name))
+                continue
+            (perm, created) = get_or_create(session, WorkspacePermission,
+                                            user=user, workspace=workspace)
         yield workspace
 
 
@@ -735,7 +957,16 @@ class TaskImporter(object):
             task.methodology = methodology
 
         task.description = document.get('description')
-        task.assigned_to = session.query(User).filter_by(username=document.get('username')).first()
+
+        assigned_users = []
+
+        for username in document.get('assigned_to', []):
+            if username:
+                user = session.query(User).filter_by(username=username).first()
+                if user:
+                    assigned_users.append(user)
+
+        task.assigned_to = assigned_users
 
         mapped_status = {
             'New': 'new',
@@ -764,6 +995,7 @@ class ReportsImporter(object):
         report.status = document.get('status')
         # TODO: add tags
         report.conclusions = document.get('conclusions')
+        report.confirmed = document.get('confirmed', False)
         report.summary = document.get('summary')
         report.recommendations = document.get('recommendations')
         report.enterprise = document.get('enterprise')
@@ -772,6 +1004,40 @@ class ReportsImporter(object):
         report.objectives = document.get('objectives')
         report.grouped = document.get('grouped', False)
         report.workspace = workspace
+        try:
+            report.vuln_count = document['totalVulns']['total']
+        except KeyError:
+            logger.warning("Couldn't load vuln count of report".format(document.get('_id')))
+        if document.get('owner'):
+            report.creator = get_or_create_user(session, document.get('owner'))
+        session.flush()
+        old_attachments = session.query(File).filter_by(
+            object_id=report.id,
+            object_type='vulnerability',
+        )
+        for old_attachment in old_attachments:
+            db.session.delete(old_attachment)
+        for filename, attachment in document.get('_attachments', {}).items():
+            attachment_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
+                username=server.config.couchdb.user,
+                password=server.config.couchdb.password,
+                hostname=server.config.couchdb.host,
+                port=server.config.couchdb.port,
+                path='{0}/{1}/{2}'.format(workspace.name, document.get('_id'),
+                                          filename)
+            )
+            response = requests.get(attachment_url)
+            response.raw.decode_content = True
+            faraday_file = response.content
+            file, created = get_or_create(
+                session,
+                File,
+                object_id=report.id,
+                object_type='executive_report',
+                name=os.path.splitext(os.path.basename(filename))[0],
+                filename=os.path.basename(filename),
+            )
+            file.content=faraday_file
         yield report
 
 
@@ -782,7 +1048,7 @@ class CommunicationImporter(object):
             Comment,
             text=document.get('text'),
             object_id=workspace.id,
-            object_type='Workspace',
+            object_type='workspace',
             workspace=workspace)
         yield comment
 
@@ -805,7 +1071,7 @@ class FaradayEntityImporter(object):
         return None, None
 
     def get_importer_from_document(self, doc_type):
-        logger.info('Getting class importer for {0} in workspace {1}'.format(doc_type, self.workspace_name))
+        logger.debug('Getting class importer for {0} in workspace {1}'.format(doc_type, self.workspace_name))
         importer_class_mapper = {
             'EntityMetadata': EntityMetadataImporter,
             'Host': HostImporter,
@@ -849,7 +1115,8 @@ class ImportCouchDBUsers():
         scheme = doc.get('password_scheme', 'unset')
         if scheme != 'pbkdf2':
             # Flask Security will encrypt the password next time the user logs in.
-            logger.warning('Found user {0} without password.'.format(doc.get('name')))
+            logger.warning('Found user {0} without password. Setting its '
+                           'password to "changeme"'.format(doc.get('name')))
             return 'changeme'
         return self.modular_crypt_pbkdf2_sha1(doc['derived_key'], doc['salt'],
                                          doc['iterations'])
@@ -880,17 +1147,23 @@ class ImportCouchDBUsers():
     def import_admins(self, admins):
         # Import admin users
         for (username, password) in admins.items():
-            logger.info('Creating user {0}'.format(username))
-            if not db.session.query(User).filter_by(username=username).first():
+            logger.debug('Creating user {0}'.format(username))
+            admin = db.session.query(User).filter_by(username=username).first()
+            if not admin:
                 app.user_datastore.create_user(
                     username=username,
                     email=username + '@test.com',
                     password=self.convert_couchdb_hash(password),
-                    is_ldap=False
+                    is_ldap=False,
+                    role='admin'
                 )
+            else:
+                admin.password=self.convert_couchdb_hash(password)
 
     def import_users(self, all_users, admins):
         # Import non admin users
+        if 'error' in all_users:
+            raise Exception(all_users['reason'])
         for user in all_users['rows']:
             user = user['doc']
             if not user['_id'].startswith(COUCHDB_USER_PREFIX):
@@ -899,14 +1172,29 @@ class ImportCouchDBUsers():
             if user['name'] in admins.keys():
                 # This is an already imported admin user, skip
                 continue
-            logger.info(u'Importing {0}'.format(user['name']))
-            if not db.session.query(User).filter_by(username=user['name']).first():
+            try:
+                role = user['roles'][0]
+            except (KeyError, IndexError):
+                role = 'client'
+            else:
+                if role not in ['admin', 'client', 'pentester']:
+                    logger.warn(
+                        "Invalid role for user {}: {}".format(user['name'],
+                                                              role)
+                    )
+                    role = 'client'
+            logger.debug(u'Importing user {0}'.format(user['name']))
+            old_user = db.session.query(User).filter_by(username=user['name']).first()
+            if not old_user:
                 app.user_datastore.create_user(
                     username=user['name'],
                     email=user['name'] + '@test.com',
                     password=self.get_hash_from_document(user),
-                    is_ldap=False
+                    is_ldap=False,
+                    role=role,
                 )
+            else:
+                old_user.password = self.get_hash_from_document(user)
 
     def run(self):
         all_users, admins = self.get_users_and_admins()
@@ -922,6 +1210,7 @@ class ImportVulnerabilityTemplates():
         self.names = Counter()
 
     def run(self):
+        logger.debug("Importing vulnerability templates")
         cwe_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
             username=server.config.couchdb.user,
             password=server.config.couchdb.password,
@@ -933,14 +1222,14 @@ class ImportVulnerabilityTemplates():
         try:
             cwes = requests.get(cwe_url)
             cwes.raise_for_status()
-        except requests.exceptions.HTTPError:
+        except HTTPError:
             logger.warn('Unable to retrieve Vulnerability Templates Database. Moving on.')
             return
-        except requests.exceptions.RequestException as e:
-            logger.warn(e)
+        except RequestException as e:
+            logger.exception(e)
             return
 
-        for cwe in cwes.json()['rows']:
+        for cwe in (cwes.json()['rows']):
             document = cwe['doc']
             new_severity = self.get_severity(document)
 
@@ -954,7 +1243,18 @@ class ImportVulnerabilityTemplates():
             vuln_template.resolution = document.get('resolution')
             vuln_template.severity = new_severity
 
-            references = document['references'] if isinstance(document['references'], list) else [x.strip() for x in document['references'].split(',')]
+            if isinstance(document['references'], list):
+                references = document['references']
+            elif isinstance(document['references'], (str, unicode)):
+                references = [x.strip()
+                              for x in document['references'].split(',')
+                              if x.strip()]
+            else:
+                logger.warn("Unknown type of vuln template references: {}. "
+                            "Reference data: {}".format(
+                                type(document['references']),
+                                document))
+                continue
             cwe_field = document.get('cwe')
             if cwe_field not in references:
                 references.append(cwe_field)
@@ -1005,11 +1305,11 @@ class ImportLicense():
         try:
             licenses = requests.get(licenses_url)
             licenses.raise_for_status()
-        except requests.exceptions.HTTPError:
+        except HTTPError:
             logger.warn('Unable to retrieve Licenses Database. Moving on.')
             return
-        except requests.exceptions.RequestException as e:
-            logger.warn(e)
+        except RequestException as e:
+            logger.exception(e)
             return
 
         for license in licenses.json()['rows']:
@@ -1024,7 +1324,6 @@ class ImportLicense():
                                                    type=document.get('lictype')
                                                    )
 
-
 class ImportCouchDB():
     def _open_couchdb_conn(self):
         try:
@@ -1035,6 +1334,7 @@ class ImportCouchDB():
             logger.error(u"CouchDB is not running at {}. Check faraday-server's"\
                 " configuration and make sure CouchDB is running".format(
                 server.couchdb.get_couchdb_url()))
+            logger.error(u'Please start CouchDB and re-execute the importer with: \n\n --> python manage.py import_from_couchdb <--')
             sys.exit(1)
 
         except Unauthorized:
@@ -1056,16 +1356,32 @@ class ImportCouchDB():
         users_import = ImportCouchDBUsers()
         users_import.run()
 
+        logger.info('Importing workspaces. Using {0} threads'.format(multiprocessing.cpu_count() * 2))
+        workspace_threads = []
+        with tqdm(total=len(workspaces_list) * 18,
+                  unit='B', unit_scale=True, unit_divisor=1024) as pbar:
+            for workspace_name in workspaces_list:
+                logger.debug(u'Setting up workspace {}'.format(workspace_name))
 
-        for workspace_name in workspaces_list:
-            logger.info(u'Setting up workspace {}'.format(workspace_name))
+                if not server.couchdb.server_has_access_to(workspace_name):
+                    logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
+                                 " configuration file has CouchDB admin's credentials set")
+                    sys.exit(1)
+                thread = threading.Thread(target=self.import_workspace_into_database, args=(workspace_name, pbar))
+                thread.daemon = True
+                thread.start()
+                workspace_threads.append(thread)
+                if len(workspace_threads) > multiprocessing.cpu_count() * 2:
+                    for thread in workspace_threads:
+                        thread.join()
+                        pbar.update(1)
+                        workspace_threads.remove(thread)
 
-            if not server.couchdb.server_has_access_to(workspace_name):
-                logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
-                             " configuration file has CouchDB admin's credentials set")
-                sys.exit(1)
-
-            self.import_workspace_into_database(workspace_name)
+            logger.info('Waiting for treads to finish.')
+            for thread in workspace_threads:
+                thread.join()
+                pbar.update(1)
+                #self.import_workspace_into_database(workspace_name)
 
     def get_objs(self, host, obj_type, level, workspace):
         if obj_type == 'Credential':
@@ -1114,8 +1430,8 @@ class ImportCouchDB():
             missing_ids = set([x for x in missing_ids if not re.match(r'^\_design', x)])
             objs_diff = []
             if missing_ids:
-                logger.info('Downloading missing couchdb docs')
-            for missing_id in tqdm(missing_ids):
+                logger.debug('Downloading missing couchdb docs')
+            for missing_id in (missing_ids):
                 not_imported_obj = get_object_from_couchdb(missing_id, workspace)
 
                 if not_imported_obj['type'] == 'Interface':
@@ -1131,43 +1447,70 @@ class ImportCouchDB():
                     with open(missing_objs_filename, 'w') as missing_objs_file:
                         missing_objs_file.write(json.dumps(objs_diff))
 
-    def import_workspace_into_database(self, workspace_name):
+    def import_level_objects(self, couch_url, faraday_importer, couchdb_relational_map_by_type, couchdb_relational_map, command_tool_map, level, obj_type, workspace):
+        obj_importer = faraday_importer.get_importer_from_document(obj_type)()
+        objs_dict = self.get_objs(couch_url, obj_type, level, workspace)
+        for raw_obj in (objs_dict.get('rows', [])):
+            # we use no_autoflush since some queries triggers flush and some relationship are missing in the middle
+            with session.no_autoflush:
+                raw_obj = raw_obj['value']
+                couchdb_id = raw_obj['_id']
 
-        faraday_importer = FaradayEntityImporter(workspace_name)
-        workspace, created = get_or_create(session, Workspace, name=workspace_name)
-        session.commit()
+                # first let's make sure no invalid chars are present in the Raw objects
+                raw_obj = invalid_chars.clean_dict(raw_obj)
 
-        couch_url = "http://{username}:{password}@{hostname}:{port}/{workspace_name}/_temp_view?include_docs=true".format(
+                for new_obj in obj_importer.update_from_document(raw_obj, workspace, level, couchdb_relational_map):
+                    if not new_obj:
+                        continue
+                    set_metadata(raw_obj, new_obj)
+                    map_tool_with_command_id(command_tool_map,
+                                             raw_obj)
+                    session.commit()
+                    couchdb_relational_map_by_type[couchdb_id].append({'type': obj_type, 'id': new_obj.id})
+                    couchdb_relational_map[couchdb_id].append(new_obj.id)
+
+    def import_workspace_into_database(self, workspace_name, pbar):
+        with app.app_context():
+
+            faraday_importer = FaradayEntityImporter(workspace_name)
+            workspace, created = get_or_create(session, Workspace, name=workspace_name)
+            session.commit()
+
+            couch_url = "http://{username}:{password}@{hostname}:{port}/{workspace_name}/_temp_view?include_docs=true".format(
                 username=server.config.couchdb.user,
                 password=server.config.couchdb.password,
                 hostname=server.config.couchdb.host,
                 port=server.config.couchdb.port,
                 workspace_name=workspace_name
-        )
+            )
 
-        # obj_types are tuples. the first value is the level on the tree
-        # for the desired obj.
-        obj_types = OBJ_TYPES
-        couchdb_relational_map = defaultdict(list)
-        couchdb_relational_map_by_type = defaultdict(list)
-        for level, obj_type in obj_types:
-            obj_importer = faraday_importer.get_importer_from_document(obj_type)()
-            objs_dict = self.get_objs(couch_url, obj_type, level, workspace)
-            for raw_obj in tqdm(objs_dict.get('rows', [])):
-                # we use no_autoflush since some queries triggers flush and some relationship are missing in the middle
-                with session.no_autoflush:
-                    raw_obj = raw_obj['value']
-                    couchdb_id = raw_obj['_id']
+            # obj_types are tuples. the first value is the level on the tree
+            # for the desired obj.
+            obj_types = OBJ_TYPES
+            couchdb_relational_map = defaultdict(list)
+            couchdb_relational_map_by_type = defaultdict(list)
+            command_tool_map = {}
+            for level, obj_type in obj_types:
+                try:
+                    self.import_level_objects(
+                        couch_url,
+                        faraday_importer,
+                        couchdb_relational_map_by_type,
+                        couchdb_relational_map,
+                        command_tool_map,
+                        level,
+                        obj_type,
+                        workspace
+                    )
+                except Exception as ex:
+                    logger.exception(ex)
+                    raise
+                pbar.update(1)
+            update_command_tools(workspace, command_tool_map,
+                                 couchdb_relational_map_by_type)
+            session.commit()
+            self.verify_import_data(couchdb_relational_map, couchdb_relational_map_by_type, workspace)
 
-                    # first let's make sure no invalid chars are present in the Raw objects
-                    raw_obj = invalid_chars.clean_dict(raw_obj)
-
-                    for new_obj in obj_importer.update_from_document(raw_obj, workspace, level, couchdb_relational_map):
-                        if not new_obj:
-                            continue
-                        set_metadata(raw_obj, new_obj)
-                        session.commit()
-                        couchdb_relational_map_by_type[couchdb_id].append({'type': obj_type, 'id': new_obj.id})
-                        couchdb_relational_map[couchdb_id].append(new_obj.id)
-        self.verify_import_data(couchdb_relational_map, couchdb_relational_map_by_type, workspace)
-        return created
+            session.expunge_all()
+            session.close()
+            return created

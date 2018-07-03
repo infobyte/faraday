@@ -1,3 +1,11 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
+from tempfile import NamedTemporaryFile
+
 import os
 import sys
 import json
@@ -5,7 +13,7 @@ import inspect
 import pytest
 from factory import Factory
 from flask.testing import FlaskClient
-from nplusone.core import signals
+from flask_principal import Identity, identity_changed
 from sqlalchemy import event
 from pytest_factoryboy import register
 
@@ -15,7 +23,7 @@ from server.models import db
 from test_cases import factories
 
 
-
+TEMPORATY_SQLITE = NamedTemporaryFile()
 # Discover factories to automatically register them to pytest-factoryboy and to
 # override its session
 enabled_factories = []
@@ -46,6 +54,10 @@ class CustomClient(FlaskClient):
                 ('Content-Type', 'application/json'),
             ]
 
+        # Reset queries to make the log_queries_count
+        from flask import _app_ctx_stack
+        _app_ctx_stack.top.sqlalchemy_queries = []
+
         ret = super(CustomClient, self).open(*args, **kwargs)
         if ret.headers.get('content-type') == 'application/json':
             try:
@@ -56,9 +68,22 @@ class CustomClient(FlaskClient):
 
 
 def pytest_addoption(parser):
-    parser.addoption('--connection-string', default='sqlite://',
+    # currently for tests using sqlite and memory have problem while using transactions
+    # we need to review sqlite configuraitons for persistence using PRAGMA.
+    print(TEMPORATY_SQLITE.name)
+    parser.addoption('--connection-string', default='sqlite:////{0}'.format(TEMPORATY_SQLITE.name),
                      help="Database connection string. Defaults to in-memory "
                      "sqlite if not specified:")
+    parser.addoption('--ignore-nplusone', action='store_true',
+                     help="Globally ignore nplusone errors")
+    parser.addoption("--with-hypothesis", action="store_true",
+                     dest="use_hypothesis", default=False,
+                     help="Run property based tests")
+
+
+def pytest_configure(config):
+    if not config.option.use_hypothesis:
+        config.option.markexpr = 'not hypothesis'
 
 
 @pytest.fixture(scope='session')
@@ -72,9 +97,12 @@ def app(request):
     ctx.push()
 
     def teardown():
+        TEMPORATY_SQLITE.close()
         ctx.pop()
 
     request.addfinalizer(teardown)
+    app.config['NPLUSONE_RAISE'] = not request.config.getoption(
+        '--ignore-nplusone')
     return app
 
 
@@ -220,8 +248,11 @@ def login_as(test_client, user):
     with test_client.session_transaction() as sess:
         # Without this line the test breaks. Taken from
         # http://pythonhosted.org/Flask-Testing/#testing-with-sqlalchemy
+        assert user.id is not None
         db.session.add(user)
         sess['user_id'] = user.id
+        identity_changed.send(test_client.application,
+                              identity=Identity(user.id))
 
 
 @pytest.fixture

@@ -17,8 +17,15 @@ from server.api.base import (
     FilterAlchemyMixin,
     FilterSetMeta,
 )
-from server.schemas import PrimaryKeyRelatedField, MetadataSchema, SelfNestedField
+from server.schemas import (
+    MetadataSchema,
+    MutableField,
+    NullToBlankString,
+    PrimaryKeyRelatedField,
+    SelfNestedField
+)
 from server.models import Host, Service, db, Hostname
+from server.api.modules.services import ServiceSchema
 
 host_api = Blueprint('host_api', __name__)
 
@@ -29,7 +36,8 @@ class HostSchema(AutoSchema):
     _rev = fields.String(default='')
     ip = fields.String(default='')
     description = fields.String(required=True)  # Explicitly set required=True
-    default_gateway = fields.String(attribute="default_gateway_ip", allow_none=True)
+    default_gateway = NullToBlankString(
+        attribute="default_gateway_ip", required=False)
     name = fields.String(dump_only=True, attribute='ip', default='')
     os = fields.String(default='')
     owned = fields.Boolean(default=False)
@@ -37,20 +45,29 @@ class HostSchema(AutoSchema):
     services = fields.Integer(attribute='open_service_count', dump_only=True)
     vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
     credentials = fields.Integer(attribute='credentials_count', dump_only=True)
-    hostnames = PrimaryKeyRelatedField('name', many=True,
-                                       attribute="hostnames",
-                                       # TODO migration: make it writable
-                                       dump_only=True,  # Only for now
-                                       default=[])
+    hostnames = MutableField(
+        PrimaryKeyRelatedField('name', many=True,
+                               attribute="hostnames",
+                               dump_only=True,
+                               default=[]),
+        fields.List(fields.String))
     metadata = SelfNestedField(MetadataSchema())
+    type = fields.Function(lambda obj: 'Host', dump_only=True)
+    service_summaries = fields.Method('get_service_summaries',
+                                      dump_only=True)
 
     class Meta:
         model = Host
-        fields = ('id', '_id', '_rev', 'ip', 'description',
+        fields = ('id', '_id', '_rev', 'ip', 'description', 'mac',
                   'credentials', 'default_gateway', 'metadata',
                   'name', 'os', 'owned', 'owner', 'services', 'vulns',
-                  'hostnames'
+                  'hostnames', 'type', 'service_summaries'
                   )
+
+    def get_service_summaries(self, obj):
+        return [service.summary
+                for service in obj.services
+                if service.status == 'open']
 
 
 class ServiceFilter(Filter):
@@ -63,21 +80,9 @@ class ServiceFilter(Filter):
 class HostFilterSet(FilterSet):
     class Meta(FilterSetMeta):
         model = Host
-        fields = ('os', 'service')
+        fields = ('ip', 'os', 'service')
         operators = (operators.Equal, operators.Like, operators.ILike)
     service = ServiceFilter(fields.Str())
-
-
-class ServiceSchema(AutoSchema):
-    # TODO migration: use the schema in ./services.py
-    vulns = fields.Integer(attribute='vulnerability_count', dump_only=True)
-    credentials = fields.Integer(attribute='credentials_count', dump_only=True)
-    ports = fields.Integer(attribute='port')
-
-    class Meta:
-        model = Service
-        fields = ('id', 'name', 'description', 'port', 'ports', 'protocol',
-                  'status', 'vulns', 'credentials', 'version')
 
 
 class HostsView(PaginatedMixin,
@@ -87,11 +92,11 @@ class HostsView(PaginatedMixin,
     model_class = Host
     order_field = Host.ip.asc()
     schema_class = HostSchema
-    unique_fields = ['ip']
     filterset_class = HostFilterSet
-    get_undefer = [Host.open_service_count,
+    get_undefer = [Host.credentials_count,
+                   Host.open_service_count,
                    Host.vulnerability_count]
-    get_joinedloads = [Host.hostnames]
+    get_joinedloads = [Host.hostnames, Host.services, Host.update_user]
 
     @route('/<host_id>/services/')
     def service_list(self, workspace_name, host_id):
@@ -102,10 +107,39 @@ class HostsView(PaginatedMixin,
         hostnames = data.pop('hostnames', [])
         host = super(HostsView, self)._perform_create(data, **kwargs)
         for name in hostnames:
-            get_or_create(db.session, Hostname, name=name['key'], host=host,
+            get_or_create(db.session, Hostname, name=name, host=host,
                           workspace=host.workspace)
         db.session.commit()
         return host
+
+    def _update_object(self, obj, data):
+        try:
+            hostnames = data.pop('hostnames')
+        except KeyError:
+            pass
+        else:
+            obj.set_hostnames(hostnames)
+
+        # A commit is required here, otherwise it breaks (i'm not sure why)
+        db.session.commit()
+
+        return super(HostsView, self)._update_object(obj, data)
+
+    def _filter_query(self, query):
+        query = super(HostsView, self)._filter_query(query)
+        search_term = flask.request.args.get('search', None)
+        if search_term is not None:
+            like_term = '%' + search_term + '%'
+            match_ip = Host.ip.ilike(like_term)
+            match_service_name = Host.services.any(
+                Service.name.ilike(like_term))
+            match_os = Host.os.ilike(like_term)
+            match_hostname = Host.hostnames.any(Hostname.name.ilike(like_term))
+            query = query.filter(match_ip |
+                                 match_service_name |
+                                 match_os |
+                                 match_hostname)
+        return query
 
     def _envelope_list(self, objects, pagination_metadata=None):
         hosts = []

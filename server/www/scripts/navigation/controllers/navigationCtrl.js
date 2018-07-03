@@ -6,7 +6,7 @@ angular.module('faradayApp')
     .controller('navigationCtrl', ['$scope', '$http', '$route', '$routeParams', '$cookies', '$location', '$interval', '$uibModal', 'configSrv', 'workspacesFact', 'Notification',
         function($scope, $http, $route, $routeParams, $cookies, $location, $interval, $uibModal, configSrv, workspacesFact, Notification) {
 
-        $scope.workspace = "asd";
+        $scope.workspace = "";
         $scope.component = "";
         var componentsNeedsWS = ["dashboard","status","hosts"];
 
@@ -50,8 +50,10 @@ angular.module('faradayApp')
                     $scope.wss = wss;
                 });
 
-                workspacesFact.exists($routeParams.wsId).then(function(resp){
-                    if(resp !== true) {
+                workspacesFact.exists($routeParams.wsId).then(function(response){
+                       // ok! workspace was found.
+                }, function(response){
+                    if(response.status === 404) {
                         $scope.modalWsNoExist();
                     }
                 });

@@ -4,13 +4,14 @@
 
 angular.module('faradayApp')
     .controller('summarizedCtrlHostsModal',
-        ['$scope', '$modalInstance', 'dashboardSrv', 'workspace', 'srv_name', 'osint', 
+        ['$scope', '$modalInstance', 'dashboardSrv', 'workspace', 'srv_name', 'osint',
         function($scope, $modalInstance, dashboardSrv, workspace, srv_name, osint) {
-            
+
             $scope.osint = osint;
             $scope.sortField = 'name';
             $scope.sortReverse = false;
             $scope.clipText = "Copy to Clipboard";
+            $scope.workspace = workspace
 
             // toggles sort field and order
             $scope.toggleSort = function(field) {

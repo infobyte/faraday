@@ -1,10 +1,16 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 import time
 import datetime
 from marshmallow import fields, Schema
 from marshmallow.exceptions import ValidationError
+from dateutil.tz import tzutc
 
-from server.api.base import AutoSchema
-from server.models import CommandObject
+from server.models import VulnerabilityABC
 
 
 class JSTimestampField(fields.Integer):
@@ -108,23 +114,99 @@ class MutableField(fields.Field):
         self.write_field._add_to_schema(field_name, schema)
 
 
-class MetadataSchema(Schema):
-    command_id = fields.Method('get_command_id', dump_only=True)
+class SeverityField(fields.String):
+    """
+    Custom field for the severity, with the proper mappings to make
+    it compatible with the web UI
+    """
 
-    creator = fields.Function(lambda x: '')
+    def _serialize(self, value, attr, obj):
+        ret = super(SeverityField, self)._serialize(value, attr, obj)
+        if ret == 'medium':
+            return 'med'
+        elif ret == 'informational':
+            return 'info'
+        return ret
+
+    def _deserialize(self, value, attr, data):
+        ret = super(SeverityField, self)._serialize(value, attr, data)
+        if ret == 'med':
+            return 'medium'
+        elif ret == 'info':
+            return 'informational'
+        if ret not in VulnerabilityABC.SEVERITIES:
+            raise ValidationError("Invalid severity type.")
+        return ret
+
+
+class NullToBlankString(fields.String):
+    """
+    Custom field that converts null into an empty value. Created for
+    compatibility with the web ui.
+
+    Cleans null 0x00 in the string to avoid postgresql bug.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(NullToBlankString, self).__init__(*args, **kwargs)
+        # Always make the field nullable because it is translated
+        self.allow_none = True
+        self.default = ''
+
+    def deserialize(self, value, attr=None, data=None):
+        # Validate required fields, deserialize, then validate
+        # deserialized value
+        if value:
+            value = value.replace('\0',
+                              '')  # Postgres does not allow nul 0x00 in the strings.
+        self._validate_missing(value)
+        if getattr(self, 'allow_none', False) is True and value is None:
+            return ''
+        output = self._deserialize(value, attr, data)
+        self._validate(output)
+        return output
+
+
+class MetadataSchema(Schema):
+    command_id = fields.Function(lambda x: None, dump_only=True)
+
+    creator = fields.Function(lambda x: '', dump_only=True)
     owner = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
 
-    create_time = JSTimestampField(attribute='create_date', dump_only=True)
-    update_time = JSTimestampField(attribute='update_date', dump_only=True)
+    update_time = fields.DateTime(attribute='update_date', dump_only=True)
+    create_time = fields.DateTime(attribute='create_date', dump_only=True)
 
     update_user = fields.String(default='', dump_only=True)
     update_action = fields.Integer(default=0, dump_only=True)
     update_controller_action = fields.String(default='', dump_only=True)
 
-    def get_command_id(self, obj):
-        command_id = None
-        command_obj = CommandObject.query.filter_by(object_type='vulnerability', object_id=obj.id, workspace_id=obj.workspace_id).first()
-        if command_obj:
-            command_id = command_obj.command_id
 
-        return command_id
+class StrictDateTimeField(fields.DateTime):
+    """
+    Marshmallow DateTime field with extra parameter to control
+    whether dates should be loaded as tz_aware or not
+    """
+    # Taken from
+    # https://github.com/Nobatek/umongo/blob/14ec7e40ca517071d9374af39f8409223e097253/umongo/marshmallow_bonus.py
+
+    # TODO migration: write me some tests!!!
+
+    def __init__(self, load_as_tz_aware=False, *args, **kwargs):
+        super(StrictDateTimeField, self).__init__(*args, **kwargs)
+        self.load_as_tz_aware = load_as_tz_aware
+
+    def _deserialize(self, value, attr, data):
+        if isinstance(value, datetime.datetime):
+            date = value
+        else:
+            date = super(StrictDateTimeField, self)._deserialize(value, attr, data)
+        if self.load_as_tz_aware:
+            # If datetime is TZ naive, set UTC timezone
+            if date.tzinfo is None or date.tzinfo.utcoffset(date) is None:
+                date = date.replace(tzinfo=tzutc())
+        else:
+            # If datetime is TZ aware, convert it to UTC and remove TZ info
+            if date.tzinfo is not None and date.tzinfo.utcoffset(date) is not None:
+                date.astimezone(tzutc())
+            date = date.replace(tzinfo=None)
+        return date

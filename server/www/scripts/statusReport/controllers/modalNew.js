@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('modalNewVulnCtrl',
-        ['$modalInstance', '$filter', '$upload', 'EASEOFRESOLUTION', 'commonsFact', 'severities', 'workspace', 'targetFact', 'cweFact',
-        function($modalInstance, $filter, $upload, EASEOFRESOLUTION, commons, severities, workspace, targetFact, cweFact) {
+        ['$modalInstance', '$filter', '$upload', 'EASEOFRESOLUTION', 'commonsFact', 'severities', 'workspace', 'targetFact', 'vulnModelsManager', 'vulnsManager',
+        function($modalInstance, $filter, $upload, EASEOFRESOLUTION, commonsFact, severities, workspace, targetFact, vulnModelsManager, vulnsManager) {
 
         var vm = this;
 
@@ -48,7 +48,7 @@ angular.module('faradayApp')
             vm.host_parents = false;
 
             vm.cweList = [];
-            cweFact.get().then(function(data) {
+            vulnModelsManager.get().then(function(data) {
                 vm.cweList = data;
             });
             vm.cweLimit = 5;
@@ -105,7 +105,7 @@ angular.module('faradayApp')
                     vm.file_name_error = true;
                 }
             });
-            vm.icons = commons.loadIcons(vm.data._attachments);
+            vm.icons = commonsFact.loadIcons(vm.data._attachments);
         };
 
         vm.removeEvidence = function(name) {
@@ -135,17 +135,15 @@ angular.module('faradayApp')
             });
             vm.data.policyviolations = policyviolations;
 
-            var parents = vm.data.parents;
-            vm.data.parents = [];
-            parents.forEach(function(parent) {
-                var parent_type = "Service";
-                if (Host.prototype.isPrototypeOf(vm.data.parents[0])) {
-                    parent_type = "Host";
+            vulnsManager.createVuln(vm.workspace, vm.data).then(function(){
+                $modalInstance.close(vm.data);
+            }, function(response){
+                if (response.status == 409) {
+                    commonsFact.showMessage("Error while creating a new Vulnerability " + vm.data.name + " Conflicting Vulnerability with id: " + response.data.object._id + ". " + response.data.message);
+                } else {
+                    commonsFact.showMessage("Error from backend: " + response.status);
                 }
-                vm.data.parents.push({parent_id: parent._id, type:parent_type});
             });
-
-            $modalInstance.close(vm.data);
         };
 
         vm.cancel = function() {
@@ -217,6 +215,8 @@ angular.module('faradayApp')
             for (var key in item) {
                 if(key != "refs" && key != "policyviolations" && vm.data.hasOwnProperty(key)) {
                     vm.data[key] = item[key];
+                }else if (key === 'exploitation'){
+                    vm.data['severity'] = item['exploitation'];
                 }
             }
 
@@ -228,7 +228,7 @@ angular.module('faradayApp')
             vm.data.refs = refs;
 
             var policyviolations = [];
-            item.policyviolations.forEach(function(policyviolation) {
+            if(item.hasOwnProperty('policyviolations')) item.policyviolations.forEach(function(policyviolation) {
                 policyviolations.push({value: policyviolation});
             });
             vm.data.policyviolations = policyviolations;

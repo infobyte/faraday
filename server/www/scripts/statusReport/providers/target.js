@@ -12,7 +12,7 @@ angular.module('faradayApp')
             var hosts_dict = {};
             hostsManager.getHosts(workspace).then(function(resp) {
                 resp.hosts.forEach(function(host) {
-                    host.hostnames = [];
+                    host.hostnames = host.hostnames || [];
                     host.services = [];
                     hosts_dict[host._id] = host;
                     res.push(host);

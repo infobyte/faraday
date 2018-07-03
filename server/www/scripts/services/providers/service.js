@@ -38,10 +38,7 @@ angular.module('faradayApp')
                     self.ports = [self.ports];
                 }
 
-                return (self._save(ws, self, true).then(
-                    function(data) {
-                        self._rev = data.rev;
-                }));
+                return self._save(ws, self, true);
             },
             save: function(ws) {
                 var self = this;

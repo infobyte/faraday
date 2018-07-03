@@ -128,8 +128,8 @@ angular.module('faradayApp')
                             .then(function(response) {
                                 self.set(self.ws, vuln);
                                 deferred.resolve();
-                            }, function() {
-                                deferred.reject();
+                            }, function(response) {
+                                deferred.reject(response.data);
                             });
                     });
                 } else {
@@ -138,8 +138,8 @@ angular.module('faradayApp')
                             self.set(self.ws, vuln);
                             self._rev = response.rev;
                             deferred.resolve();
-                        }, function() {
-                            deferred.reject();
+                        }, function(response) {
+                            deferred.reject(response.data.message);
                         });
                 }
 
@@ -191,11 +191,11 @@ angular.module('faradayApp')
                     self._save(resp, false)
                         .then(function(data) {
                             deferred.resolve(self);
-                        }, function(data, status, headers, config) {
-                            deferred.reject(status);
+                        }, function(data) {
+                            deferred.reject(data);
                         });
-                }, function() {
-                    deferred.reject();
+                }, function(data) {
+                    deferred.reject(data);
                 });
 
                 return deferred.promise;

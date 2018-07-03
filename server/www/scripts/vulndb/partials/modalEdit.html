@@ -4,7 +4,7 @@
 
 <form name="form" ng-submit="ok()" novalidate>
     <div class="modal-header">
-        <div class="modal-button">
+        <div class="modal-button btn-toolbar">
             <button class="btn btn-success" ng-click="ok()" ng-disabled="form.$invalid">OK</button>
             <button type="button" class="btn btn-danger" ng-click="cancel()">Cancel</button>
         </div>
@@ -22,12 +22,6 @@
                         <span class="help-block">Vulnerability Model name is required</span>
                     </p>
                 </div><!-- .col-md-12 -->
-            </div><!-- .form-group -->
-            <div class="form-group">
-                <div class="col-md-12">
-                    <label for="CWE">CWE</label>
-                    <textarea class="form-control" name="cwe" placeholder="CWE" ng-model="data.cwe"></textarea>
-                </div>
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-12">
@@ -62,7 +56,7 @@
         </div><!-- .form-horizontal -->
     </div><!-- .modal-body -->
     <div class="modal-footer">
-        <div class="modal-button">
+        <div class="modal-button btn-toolbar">
             <button class="btn btn-success" ng-disabled="form.$invalid || (data.name == '')" ng-click="ok()">OK</button>
             <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
         </div>

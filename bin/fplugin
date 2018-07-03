@@ -7,15 +7,16 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 """
 
-import argparse
-import imp
-import inspect
 import os
-import shlex
 import sys
-import signal
-import readline
+import imp
+import shlex
 import atexit
+import signal
+import inspect
+import argparse
+import readline
+from Queue import Queue
 
 parent_path = os.path.abspath(os.path.join(__file__, '../..'))
 sys.path.insert(0, parent_path)
@@ -25,6 +26,7 @@ from colorama import Fore
 from config.configuration import getInstanceConfiguration
 from managers.mapper_manager import MapperManager
 from model.controller import ModelController
+from persistence.server.server import login_user
 
 CONF = getInstanceConfiguration()
 
@@ -47,16 +49,24 @@ def signal_handler(signal, frame):
     os._exit(0)
 
 
-def dispatch(args, unknown, help):
+def dispatch(args, unknown, user_help, username, password):
+    session_cookie = login_user(args.url, username, password)
+    if not session_cookie:
+        raise UserWarning('Invalid credentials!')
+    else:
+        CONF.setDBUser(username)
+        CONF.setDBSessionCookies(session_cookie)
+
     if '--' in unknown:
         unknown.remove('--')
 
     # We need the ModelController to register all available models
     mappers_manager = MapperManager()
-    model_controller = ModelController(mappers_manager)
+    pending_actions = Queue()
+    model_controller = ModelController(mappers_manager, pending_actions)
 
     if not args.command:
-        print help
+        print(user_help)
         if not args.interactive:
             sys.exit(1)
 
@@ -77,6 +87,8 @@ def dispatch(args, unknown, help):
     module_fplugin = imp.load_source('module_fplugin', plugin_path)
     module_fplugin.models.server.FARADAY_UP = False
     module_fplugin.models.server.SERVER_URL = args.url
+    module_fplugin.models.server.AUTH_USER = username
+    module_fplugin.models.server.AUTH_PASS = password
 
     call_main = getattr(module_fplugin, 'main', None)
 
@@ -165,11 +177,19 @@ if __name__ == '__main__':
         help='Faraday Server URL. Example: http://localhost:5985',
         default='http://localhost:5985')
 
+    parser.add_argument(
+        '--username',
+        required=True)
+
+    parser.add_argument(
+        '--password',
+        required=True)
+
     # Only parse known args. Unknown ones will be passed on the the called script
     args, unknown = parser.parse_known_args()
 
     if not args.interactive:
-        dispatch(args, unknown, parser.format_help())
+        dispatch(args, unknown, parser.format_help(), args.username, args.password)
     else:
 
         # print "Loading command history..."
@@ -213,7 +233,7 @@ if __name__ == '__main__':
                 parsed_args, new_unknown = parser.parse_known_args(new_args)
                 parsed_args.interactive = True
 
-                last_id = dispatch(parsed_args, new_unknown, parser.format_help()) or last_id
+                last_id = dispatch(parsed_args, new_unknown, parser.format_help(), args.username, args.password) or last_id
                 # print '$last = %s' % last_id
             except (EOFError, KeyboardInterrupt):
                 print 'Bye Bye!'

@@ -12,9 +12,32 @@ angular.module('faradayApp')
         loadHosts = function(){
             hostsManager.getHost($routeParams.hidId, $scope.workspace, true)
                 .then(function(host) {
-                	$scope.host = host;
+                    $scope.host = host;
+                    $scope.host.hostnames = $scope.host.hostnames.map(function(hostname){
+                        return {key: hostname}
+                    });
                     $scope.hostName = host.ip; // User can edit $scope.host.name but not $scope.hostName
                     $scope.loadIcons();
+                });
+        };
+
+        loadServices = function(){
+            // services by host
+            var hostId = $routeParams.hidId;
+            dashboardSrv.getServicesByHost($scope.workspace, hostId)
+                .then(function(services) {
+                    $scope.services = services;
+
+                    $scope.services.forEach(function(service) {
+                        service.uri = encodeURIComponent(encodeURIComponent("(" + service.ports + "/" + service.protocol + ") " + service.name));
+                    });
+
+                    $scope.loadedServices = true;
+
+                    return services;
+                })
+                .catch(function(e) {
+                    console.log(e);
                 });
         };
 
@@ -40,30 +63,11 @@ angular.module('faradayApp')
                     $scope.workspaces = wss;
                 });
 
-            // current host
+            // current host and its services
             loadHosts();
+            loadServices(hostId);
 
-            // services by host
-            dashboardSrv.getServicesByHost($scope.workspace, hostId)
-                .then(function(services) {
-                    return $q.all(services);
-                })
-                .then(function(services) {
-                    $scope.services = services;
-
-                    $scope.services.forEach(function(service) {
-                        service.uri = encodeURIComponent(encodeURIComponent("(" + service.ports + "/" + service.protocol + ") " + service.name));
-                    });
-
-                    $scope.loadedServices = true;
-
-                    return services;
-                })
-                .catch(function(e) {
-                    console.log(e);
-                });
-
-            $scope.pageSize = 10;
+            $scope.pageSize = 25;
             $scope.currentPage = 1;
             $scope.newCurrentPage = 1;
 
@@ -103,10 +107,11 @@ angular.module('faradayApp')
             var date = new Date(),
             timestamp = date.getTime()/1000.0;
 
-            // The objectToArray transform is necessary to call updateHost correctly
-            // If I don't restore the object after the call hostnames won't be shown in the host
+            // The API expects list of strings in hostnames
             var old_hostnames = $scope.host.hostnames;
-            $scope.host.hostnames = commons.objectToArray($scope.host.hostnames.filter(Boolean));
+            $scope.host.hostnames = $scope.host.hostnames.map(function(hostname){
+                return hostname.key
+            }).filter(Boolean);
 
             $scope.hostdata = $scope.host;
             $scope.hostdata.metadata['update_time'] = timestamp;
@@ -114,8 +119,11 @@ angular.module('faradayApp')
 
             hostsManager.updateHost($scope.host, $scope.hostdata,
                                     $scope.workspace).then(function(){
+                                        $scope.host.hostnames = old_hostnames;
                                         $scope.hostnames = old_hostnames;
                                         $location.path('/host/ws/' + $scope.workspace + '/hid/' + $scope.host._id);
+                                    }, function(){
+                                        $scope.host.hostnames = old_hostnames;
                                     });
         };
 
@@ -237,34 +245,13 @@ angular.module('faradayApp')
              });
 
             modal.result.then(function(data) {
-                $scope.insert(data);
-            });
-        };
-
-        $scope.insert = function(service) {
-            servicesManager.createService(service, $scope.workspace).then(function(service) {
-                $scope.services.push(service);
-            }, function(message) {
-                $uibModal.open(config = {
-                    templateUrl: 'scripts/commons/partials/modalKO.html',
-                    controller: 'commonsModalKoCtrl',
-                    size: 'sm',
-                    resolve: {
-                        msg: function() {
-                            return message;
-                        }
-                    }
-                });
+               loadServices();
             });
         };
 
         $scope.update = function(services, data) {
-            services.forEach(function(service) {
-	            servicesManager.updateService(service, data, $scope.workspace).then(function(s) {
-	            }, function(message) {
-	                console.log(message);
-	            });
-            });
+        //hostId
+            loadServices();
         };
 
         $scope.edit = function() {

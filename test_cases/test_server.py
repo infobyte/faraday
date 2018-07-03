@@ -1,14 +1,17 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 import os
 import sys
 import unittest
-import tempfile
 import pytest
 
 sys.path.append(os.path.abspath(os.getcwd()))
-from server.app import create_app
-from flask_security import Security, SQLAlchemyUserDatastore
-from server.models import db, User, Role
-from server.database import setup_common
+
+from server.models import db
 
 
 def endpoint():
@@ -38,17 +41,17 @@ class TestAuthentication(BaseAPITestCase, unittest.TestCase):
     """Tests related to allow/dissallow access depending of whether
     the user is logged in or not"""
 
-    def test_403_when_getting_an_existent_view_and_not_logged(self):
+    def test_401_when_getting_an_existent_view_and_not_logged(self):
         res = self.app.get('/')
-        self.assertEqual(res.status_code, 403)
+        self.assertEqual(res.status_code, 401)
 
-    def test_403_when_posting_an_existent_view_and_not_logged(self):
+    def test_401_when_posting_an_existent_view_and_not_logged(self):
         res = self.app.post('/', 'data')
-        self.assertEqual(res.status_code, 403)
+        self.assertEqual(res.status_code, 401)
 
-    def test_403_when_accessing_a_non_existent_view_and_not_logged(self):
+    def test_401_when_accessing_a_non_existent_view_and_not_logged(self):
         res = self.app.post('/dfsdfsdd', 'data')
-        self.assertEqual(res.status_code, 403)
+        self.assertEqual(res.status_code, 401)
 
     def test_200_when_not_logged_but_endpoint_is_public(self):
         endpoint.is_public = True
@@ -56,7 +59,7 @@ class TestAuthentication(BaseAPITestCase, unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         del endpoint.is_public
 
-    def test_403_when_logged_user_is_inactive(self):
+    def test_401_when_logged_user_is_inactive(self):
         with self.flask_app.app_context():
             # Without this line the test breaks. Taken from
             # http://pythonhosted.org/Flask-Testing/#testing-with-sqlalchemy
@@ -64,13 +67,13 @@ class TestAuthentication(BaseAPITestCase, unittest.TestCase):
 
             self.assertTrue(self.flask_app.user_datastore.deactivate_user(self.user))
         res = self.app.get('/')
-        self.assertEqual(res.status_code, 403)
+        self.assertEqual(res.status_code, 401)
 
-    def test_403_when_logged_user_is_deleted(self):
+    def test_401_when_logged_user_is_deleted(self):
         with self.flask_app.app_context():
             self.flask_app.user_datastore.delete_user(self.user)
         res = self.app.get('/')
-        self.assertEqual(res.status_code, 403)
+        self.assertEqual(res.status_code, 401)
 
 
 class TestAuthenticationPytest(BaseAPITestCase):

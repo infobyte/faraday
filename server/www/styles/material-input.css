@@ -1,0 +1,61 @@
+.form-input {
+  margin: 20px 0px 10px 0px;
+  width: 100%;
+}
+.form-input label {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 25px;
+}
+.form-input .placeholder {
+  position: absolute;
+  display: block;
+  top: 16px;
+  z-index: 2;
+  font-size: 16px;
+  font-weight: 400;
+  transition: all 100ms ease-in-out;
+  width: 100%;
+  cursor: text;
+  color: #a1a1a1;
+}
+.form-input input,
+.form-input textarea {
+  position: absolute;
+  top: 15px;
+  z-index: 1;
+  width: 100%;
+  font-size: 16px;
+  font-weight: 300;
+  border: 0;
+  border-bottom: 1px dashed #d4d4d4;
+  transition: border-color 100ms ease-in-out;
+  outline: none;
+  padding: 0;
+  margin: 0;
+  color: #a1a1a1;
+  box-shadow: none; /* Firefox defaults to red so we clean it */
+}
+.form-input textarea {
+  min-height: 30px;
+  padding: 8px 0;
+}
+.form-input input {
+  height: 25px;
+}
+
+.form-input input.has-error,
+.form-input textarea.has-error {
+  border-bottom: 1px dashed #de4456;
+  cursor: text;
+}
+
+.form-input input:focus + .placeholder,
+.form-input input:valid + .placeholder,
+.form-input textarea:focus + .placeholder,
+.form-input textarea:valid + .placeholder {
+  cursor: text;
+  opacity: 0;
+  z-index: -1;
+}

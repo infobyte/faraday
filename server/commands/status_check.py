@@ -18,12 +18,13 @@ CONF = getInstanceConfiguration()
 init()
 
 
-def check_postgres():
-	tmp = os.popen("ps -Af").read()
-	if "postgresql" in tmp:
-		return True
-	else:
-		return False
+def check_postgres():	
+    with app.app_context():
+        try:
+            result = db.engine.execute("SELECT version()")
+            return result 
+        except sqlalchemy.exc.OperationalError:
+            return None
 
 
 def check_active_user():
@@ -142,7 +143,7 @@ def full_status_check():
     else:
         print('[{red}-{white}] Could not connect to PostgreSQL, please check if database is running'\
             .format(red=Fore.RED, white=Fore.WHITE))
-        return
+
 
     if check_active_user():
     	print("[{green}+{white}] Active user exists".format(green=Fore.GREEN, white=Fore.WHITE))

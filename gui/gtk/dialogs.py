@@ -6,15 +6,16 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-import gi
 import webbrowser
+import gi
 import os
 
 gi.require_version('Gtk', '3.0')
 
+from persistence.server.server import ResourceDoesNotExist
 from gi.repository import Gtk, GdkPixbuf, Gdk
 from config.configuration import getInstanceConfiguration
-from persistence.server.server import is_authenticated, login_user, get_user_info, test_server_url
+from persistence.server.server import is_authenticated, login_user, get_user_info, check_server_url
 from model import guiapi
 from decorators import scrollable
 
@@ -76,7 +77,7 @@ class PreferenceWindowDialog(Gtk.Dialog):
         """
         repourl = self.ip_entry.get_text()
 
-        if not test_server_url(repourl):
+        if not check_server_url(repourl):
             errorDialog(self, "Could not connect to Faraday Server.",
                         ("Are you sure it is running and that the URL is correct?"))
             return False
@@ -1262,7 +1263,7 @@ class ConflictsDialog(Gtk.Window):
             dialog.run()
             dialog.destroy()
 
-        except KeyError: # TODO: revert this hack to prevent exception when
+        except ResourceDoesNotExist: # TODO: revert this hack to prevent exception when
                          # fixing conflict of non existent object
             dialog = Gtk.MessageDialog(self, 0,
                                        Gtk.MessageType.INFO,

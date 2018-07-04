@@ -33,7 +33,8 @@ from server.models import (
     Vulnerability,
     VulnerabilityWeb,
     VulnerabilityGeneric,
-    Workspace
+    Workspace,
+    Hostname
 )
 from server.utils.database import get_or_create
 
@@ -264,9 +265,14 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
 _strict_filtering = {'default_operator': operators.Equal}
 
 
+class IDFilter(Filter):
+    def filter(self, query, model, attr, value):
+        return query.filter(model.id == value)
+
+
 class TargetFilter(Filter):
     def filter(self, query, model, attr, value):
-        return query.filter(model.target_host_ip == value)
+        return query.filter(model.target_host_ip.ilike("%" + value + "%"))
 
 
 class TypeFilter(Filter):
@@ -293,6 +299,33 @@ class ServiceFilter(Filter):
                 alias.name == value
         )
 
+class HostnamesFilter(Filter):
+    def filter(self, query, model, attr, value):
+        alias = aliased(Hostname, name='hostname_filter')
+
+        value_list = value.split(",")
+
+        service_hostnames_query = query.join(Service, Service.id == Vulnerability.service_id).\
+           join(Host).\
+           join(alias).\
+           filter(alias.name.in_(value_list))
+
+        host_hostnames_query = query.join(Host, Host.id == Vulnerability.host_id).\
+            join(alias).\
+            filter(alias.name.in_(value_list))
+
+        query = service_hostnames_query.union(host_hostnames_query)
+        return query
+
+class CustomILike(operators.Operator):
+    """A filter operator that puts a % in the beggining and in the
+    end of the search string to force a partial search"""
+
+    def __call__(self, query, model, attr, value):
+        column = getattr(model, attr)
+        condition = column.ilike('%' + value + '%')
+        return query.filter(condition)
+
 
 class VulnerabilityFilterSet(FilterSet):
     class Meta(FilterSetMeta):
@@ -301,7 +334,7 @@ class VulnerabilityFilterSet(FilterSet):
         # command, impact, issuetracker, tags, date, host
         # evidence, policy violations, hostnames
         fields = (
-            "status", "website", "pname", "query", "path", "service",
+            "id", "status", "website", "pname", "query", "path", "service",
             "data", "severity", "confirmed", "name", "request", "response",
             "parameters", "params", "resolution", "ease_of_resolution",
             "description", "command_id", "target", "creator", "method",
@@ -314,11 +347,13 @@ class VulnerabilityFilterSet(FilterSet):
             "ease_of_resolution", "service_id",
         )
 
-        default_operator = operators.ILike
+        default_operator = CustomILike
+        # next line uses dict comprehensions!
         column_overrides = {
             field: _strict_filtering for field in strict_fields
         }
-        operators = (operators.ILike, operators.Equal)
+        operators = (CustomILike, operators.Equal)
+    id = IDFilter(fields.Int())
     target = TargetFilter(fields.Str())
     type = TypeFilter(fields.Str(validate=[OneOf(['Vulnerability',
                                                   'VulnerabilityWeb'])]))
@@ -332,6 +367,11 @@ class VulnerabilityFilterSet(FilterSet):
     pname = Filter(fields.String(attribute='parameter_name'))
     query = Filter(fields.String(attribute='query_string'))
     params = Filter(fields.String(attribute='parameters'))
+    status = Filter(fields.Function(
+        deserialize=lambda val: 'open' if val == 'opened' else val,
+        validate=OneOf(Vulnerability.STATUSES + ['opened'])
+    ))
+    hostnames = HostnamesFilter(fields.Str())
 
     def filter(self):
         """Generate a filtered query from request parameters.
@@ -356,6 +396,7 @@ class VulnerabilityView(PaginatedMixin,
     route_base = 'vulns'
     filterset_class = VulnerabilityFilterSet
     sort_model_class = VulnerabilityWeb  # It has all the fields
+    sort_pass_silently = True  # For compatibility with the Web UI
     unique_fields_by_class = {
         'Vulnerability': [('name', 'description', 'host_id', 'service_id')],
         'VulnerabilityWeb': [('name', 'description', 'service_id', 'method',
@@ -384,17 +425,17 @@ class VulnerabilityView(PaginatedMixin,
         # popped object has the expected type.
         # This will be set after setting the workspace
         attachments = data.pop('_attachments', {})
-        references = data.pop('references')
-        policyviolations = data.pop('policy_violations')
+        references = data.pop('references', [])
+        policyviolations = data.pop('policy_violations', [])
 
         obj = super(VulnerabilityView, self)._perform_create(data, **kwargs)
         obj.references = references
         obj.policy_violations = policyviolations
         db.session.commit()
-        self.process_attachments(obj, attachments)
+        self._process_attachments(obj, attachments)
         return obj
 
-    def process_attachments(self, obj, attachments):
+    def _process_attachments(self, obj, attachments):
         old_attachments = db.session.query(File).filter_by(
             object_id=obj.id,
             object_type='vulnerability',
@@ -417,7 +458,7 @@ class VulnerabilityView(PaginatedMixin,
         attachments = data.pop('_attachments', {})
         obj = super(VulnerabilityView, self)._perform_update(object_id, obj, data, workspace_name)
         db.session.flush()
-        self.process_attachments(obj, attachments)
+        self._process_attachments(obj, attachments)
         db.session.commit()
         return obj
 
@@ -452,6 +493,17 @@ class VulnerabilityView(PaginatedMixin,
             VulnerabilityGeneric,
             [Vulnerability, VulnerabilityWeb]
         ), *joinedloads)
+
+    def _filter_query(self, query):
+        query = super(VulnerabilityView, self)._filter_query(query)
+        search_term = flask.request.args.get('search', None)
+        if search_term is not None:
+            # TODO migration: add more fields to free text search
+            like_term = '%' + search_term + '%'
+            match_name = VulnerabilityGeneric.name.ilike(like_term)
+            match_desc = VulnerabilityGeneric.description.ilike(like_term)
+            query = query.filter(match_name | match_desc)
+        return query
 
     @property
     def model_class(self):

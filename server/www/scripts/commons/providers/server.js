@@ -180,7 +180,6 @@ angular.module("faradayApp")
 
             var createNonWorkspacedObject = function(id, data, collectionName) {
                 var postUrl = createNonWorkspacedPostUrl(id, collectionName);
-                console.log(collectionName);
                 return send_data(postUrl, data, false, "POST");
             };
 
@@ -259,8 +258,8 @@ angular.module("faradayApp")
                 return get(getUrl, data);
             }
 
-            ServerAPI.getCommands = function(wsName, data) {
-                var getUrl = createGetUrl(wsName, 'commands');
+            ServerAPI.getCommands = function(wsName, data, onlyLastCommands) {
+                var getUrl = createGetUrl(wsName, 'commands') + (onlyLastCommands ? '?page_size=10&page=1' : '');
                 return get(getUrl, data);
             }
 
@@ -338,6 +337,16 @@ angular.module("faradayApp")
                 var payload = {'group_by': 'severity'}
 
                 if (confirmed !== undefined) {
+                    payload.confirmed = confirmed;
+                }
+
+                return get(url, payload)
+            }
+
+            ServerAPI.getVulnsGroupedBy = function(wsName, groupBy, confirmed) {
+                var url = createGetUrl(wsName, 'vulns') + 'count/';
+                var payload = {'group_by': groupBy}
+                if (confirmed) {
                     payload.confirmed = confirmed;
                 }
 

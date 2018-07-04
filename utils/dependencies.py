@@ -5,7 +5,11 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 import sys
-import pip
+try:
+    from pip import main
+except ImportError:
+    # pip 10 compat
+    from pip._internal import main
 import pkg_resources
 
 
@@ -37,4 +41,4 @@ def install_packages(packages):
         pip_cmd = ['install', package, '-U']
         if not hasattr(sys, 'real_prefix'):
             pip_cmd.append('--user')
-        pip.main(pip_cmd)
+        main(pip_cmd)

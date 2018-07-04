@@ -344,7 +344,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         if parent is None:
             parent = self.window
 
-        if not self.serverIO.test_server_url(server_url):
+        if not self.serverIO.check_server_url(server_url):
             errorDialog(parent, "Could not connect to Faraday Server.",
                         ("Are you sure it is running and that you can "
                          "connect to it? \n Make sure your username and "

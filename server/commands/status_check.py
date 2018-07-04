@@ -225,5 +225,5 @@ def full_status_check():
         print "[{green}+{white}] Port {PORT} in {ad} is open"\
             .format(PORT=server.config.faraday_server.port, green=Fore.GREEN,white=Fore.WHITE,ad=server.config.faraday_server.bind_address)
     else:
-        print "[{red}-{white}] Port {PORT} in {ad} is not open"\
+        print "[{red}-{white}] in {ad} is not open"\
             .format(PORT=server.config.faraday_server.port,red=Fore.RED,white=Fore.WHITE,ad =server.config.faraday_server.bind_address)

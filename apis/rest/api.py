@@ -270,9 +270,7 @@ class ModelControllerAPI(RESTApi):
              'params', 'query', 'category', 'parent_id'])
 
     def createNote(self):
-        return self._create(
-            self.controller.newNote,
-            ['name', 'text', 'parent_id'])
+        return jsonify(code=200)
 
     def createCred(self):
         return self._create(

@@ -118,6 +118,10 @@ def _setUpAPIServer(hostname=None, port=None):
                         raise Exception("No ports available!")
                     CONF.setApiConInfo(hostname, port)
                     CONF.saveConfig()
+                elif exception.errno == 48:
+                    # Address already open
+                    # Another instance of faraday.py already running
+                    raise Exception("Another instance of faraday.py already running!")
                 else:
                     raise exception
             except Exception as e:
@@ -134,8 +138,8 @@ def _setUpAPIServer(hostname=None, port=None):
 # plugin created the object
 
 
-def createAndAddHost(ip, os="Unknown"):
-    host = newHost(ip, os)
+def createAndAddHost(ip, os="Unknown", hostnames=None):
+    host = newHost(ip, os, hostnames=hostnames)
     if addHost(host):
         return host.getID()
     return None
@@ -195,22 +199,12 @@ def createAndAddVulnWebToService(host_id, service_id, name, desc, ref, severity,
 # Note
 
 def createAndAddNoteToHost(host_id, name, text):
-    note = newNote(name, text, parent_id=host_id, parent_type='host')
-    if addNoteToHost(host_id, note):
-        return note.getID()
     return None
 
-
 def createAndAddNoteToService(host_id, service_id, name, text):
-    note = newNote(name, text, parent_id=service_id, parent_type='service')
-    if addNoteToService(host_id, service_id, note):
-        return note.getID()
     return None
 
 def createAndAddNoteToNote(host_id, service_id, note_id, name, text):
-    note = newNote(name, text, parent_id=note_id, parent_type='comment')
-    if addNoteToNote(host_id, service_id, note_id, note):
-        return note.getID()
     return None
 
 def createAndAddCredToService(host_id, service_id, username, password):
@@ -334,12 +328,12 @@ def delCredFromService(cred, hostname, srvname):
 # CREATION APIS
 #-------------------------------------------------------------------------------
 
-def newHost(ip, os = "Unknown"):
+def newHost(ip, os = "Unknown", hostnames=None):
     """
     It creates and returns a Host object.
     The object created is not added to the model.
     """
-    return __model_controller.newHost(ip, os)
+    return __model_controller.newHost(ip, os, hostnames=hostnames)
 
 
 def newService(name, protocol = "tcp?", ports = [], status = "running",

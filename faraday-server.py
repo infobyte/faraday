@@ -4,22 +4,29 @@
 # See the file 'doc/LICENSE' for the license information
 import os
 import sys
+import socket
 import argparse
 import subprocess
 
 import sqlalchemy
+from colorama import init, Fore
 
-import server.config
-import server.couchdb
-import server.utils.logger
-from server.models import db, Workspace, User
-from server.utils import daemonize
-from server.web import app
-from utils import dependencies
-from utils.user_input import query_yes_no
-from faraday import FARADAY_BASE
-
+try:
+    import server.config
+    import server.couchdb
+    import server.utils.logger
+    from server.models import db, Workspace, User
+    from server.utils import daemonize
+    from server.web import app
+    from utils import dependencies
+    from utils.user_input import query_yes_no
+    from faraday import FARADAY_BASE
+except ImportError as ex:
+    print(ex)
+    print('Missing dependencies.\nPlease execute: pip install -r requirements_server.txt')
+    sys.exit(1)
 logger = server.utils.logger.get_logger(__name__)
+init()
 
 
 def setup_environment(check_deps=False):
@@ -67,7 +74,7 @@ def stop_server():
 def is_server_running():
     pid = daemonize.is_server_running()
     if pid is not None:
-        logger.error("Faraday Server is already running. PID: {}".format(pid))
+        logger.warn("Faraday Server is already running. PID: {}".format(pid))
         return True
     else:
         return False
@@ -80,7 +87,6 @@ def run_server(args):
 
     daemonize.create_pid_file()
     web_server.run()
-    logger.info('Faraday Server is ready')
 
 
 def check_postgresql():
@@ -90,7 +96,7 @@ def check_postgresql():
                 logger.warn('No workspaces found. Remeber to execute couchdb importer')
         except sqlalchemy.exc.OperationalError:
             logger.error(
-                'Could not connect to postgresql, please check if database is running or configuration settings are correct. For first time installations execute python manage.py initdb')
+                    '\n\n{RED}Could not connect to postgresql.\n{WHITE}Please check: \n{YELLOW}  * if database is running \n  * configuration settings are correct. \n\n{WHITE}For first time installations execute{WHITE}: \n\n {GREEN} python manage.py initdb\n\n'.format(GREEN=Fore.GREEN, YELLOW=Fore.YELLOW, WHITE=Fore.WHITE, RED=Fore.RED))
             sys.exit(1)
 
 
@@ -122,7 +128,14 @@ def main():
     if args.stop:
         sys.exit(0 if stop_server() else 1)
 
-    if is_server_running():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    result = sock.connect_ex((args.bind_address or server.config.faraday_server.bind_address, int(args.port or server.config.faraday_server.port)))
+
+    if is_server_running() and result == 0:
+        sys.exit(1)
+
+    if result == 0:
+        logger.error("Faraday server port in use. Check your processes and run the server again...")
         sys.exit(1)
 
     # Overwrites config option if SSL is set by argument

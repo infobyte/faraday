@@ -48,13 +48,10 @@ class TestNessusParser:
             actions[action[0]].append(action[1])
 
         assert actions[2000][0].name == "12.233.108.201"
-        assert actions.keys() == [2017, 20008, 2027, 2000, 2038, 2040]
+        assert actions.keys() == [2000, 2017, 2038, 20008]
         assert len(actions[20008]) == 1
-        assert len(actions[2027]) == 1
         assert len(actions[2038]) == 1
-        assert len(actions[2040]) == 1
 
-        assert actions[2040][0].name == "preprod.boardvantage.net"
         assert actions[2038][0].name == "Nessus SYN scanner"
 
         assert actions[20008][0].ports == [443]

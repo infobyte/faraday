@@ -1,3 +1,9 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 from functools import partial
 
 import pytest
@@ -49,6 +55,7 @@ OBJ_DATA = {
             'name': '192.168.0.20',
             'description': 'My computer',
             'default_gateway': '192.168.0.1',
+            'hostnames': [],
             'os': 'Debian',
             'owned': False,
             'owner': 'leo'
@@ -59,6 +66,7 @@ OBJ_DATA = {
                 'default_gateway': '192.168.0.1',
                 'description': 'My computer',
                 'ip': '192.168.0.20',
+                'hostnames': [],
                 'os': 'Debian',
                 'owned': False,
                 'owner': 'leo',
@@ -485,6 +493,7 @@ GET_OBJ_DATA = {
                 'description': 'Test description',
                 'ip': '192.168.1.1',
                 'os': 'Linux 2.6.9',
+                'hostnames': [],
                 'owned': False,
                 'owner': 'leonardo'}
 

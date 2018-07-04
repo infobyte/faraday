@@ -11,6 +11,7 @@ angular.module('faradayApp')
             $scope.sortField = 'port';
             $scope.sortReverse = false;
             $scope.osint = osint;
+            $scope.workspace = workspace
 
             // toggles sort field and order
             $scope.toggleSort = function(field) {

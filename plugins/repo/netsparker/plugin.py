@@ -121,9 +121,9 @@ class Item(object):
         self.request = self.get_text_from_subnode("rawrequest")
         self.response = self.get_text_from_subnode("rawresponse")
         if self.response:
-            self.response = self.response.encode("base64")[:-1]
+            self.response = self.response.encode("ascii",errors="backslashreplace") 
         if self.request:
-            self.request = self.request.encode("base64")[:-1]
+            self.request = self.request.encode("ascii",errors="backslashreplace") 
 
         self.kvulns = []
         for v in self.node.findall("knownvulnerabilities/knownvulnerability"):

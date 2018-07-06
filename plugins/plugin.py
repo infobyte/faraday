@@ -34,7 +34,7 @@ from model import Modelactions
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
-VERSION = server.config.__get_version().split('+')[0]
+VERSION = server.config.__get_version().split('-')[0].split('rc')[0]
 logger = logging.getLogger(__name__)
 
 

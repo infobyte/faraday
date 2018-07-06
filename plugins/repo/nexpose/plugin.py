@@ -8,13 +8,11 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 from __future__ import with_statement
-from plugins import core
-from model import api
 import re
 import os
-import pprint
-import sys
 
+from plugins import core
+from model import api
 try:
     import xml.etree.cElementTree as ET
     import xml.etree.ElementTree as ET_ORIG
@@ -52,7 +50,7 @@ class NexposeXmlParser(object):
         tree = self.parse_xml(xml_output)
         if tree:
             vulns = self.get_vulns_list(tree)
-            self.items = [data for data in self.get_items(tree,vulns)]
+            self.items = [data for data in self.get_items(tree, vulns)]
 
         else:
             self.items = []
@@ -79,7 +77,7 @@ class NexposeXmlParser(object):
         @return items A list of Host instances
         """
         for node in tree.findall("nodes/node"):
-            yield Item(node,vulnerabilities)
+            yield Item(node, vulnerabilities)
 
     def get_vulns_list(self, tree):
         """
@@ -88,7 +86,7 @@ class NexposeXmlParser(object):
         vulns_list = []
         for self.issues in tree.findall("VulnerabilityDefinitions/vulnerability"):
             vulns_list.append(self.issues)
-        
+
         return vulns_list
 
 
@@ -107,12 +105,12 @@ class Item(object):
         # Checking node's vulns
         node_tests_list = self.get_tests('tests')
         self.vulns_list = vulnerability
-        self.node_vulns = self.check_vulns(node_tests_list, self.vulns_list)        
+        self.node_vulns = self.check_vulns(node_tests_list, self.vulns_list)
         # Checking service's vulns
         self.service = self.get_service('endpoints/endpoint', item_node)
 
 
-    def get_service(self,path,item_node):
+    def get_service(self, path, item_node):
         """
         Gets a service.
 
@@ -122,7 +120,7 @@ class Item(object):
         for srv in item_node.findall(path):
             self.node = srv
             item = {}
-            tests_list = self.get_tests('services/service/tests')            
+            tests_list = self.get_tests('services/service/tests')
             item['name'] = self.get_name_from_service('services/service')
             item['port'] = srv.get('port')
             item['protocol'] = srv.get('protocol')
@@ -132,7 +130,7 @@ class Item(object):
             self.srv.append(item)
 
         return self.srv
-    
+
 
     def get_name_from_service(self, service_path):
         """
@@ -153,9 +151,9 @@ class Item(object):
         @return attribute 'product' from a host or a service
         """
         sub_node = self.node.find(path)
-        if sub_node is not None:     
+        if sub_node is not None:
             return sub_node.attrib['product']
-        
+
         return None
 
     def get_tests(self, test_path):
@@ -185,13 +183,13 @@ class Item(object):
                     vuln_attributes['id'] = vuln.attrib['id']
                     vuln_attributes['ref'] = self.get_vulns_ref(vuln)
                     vuln_attributes['severity'] = self.severity_format(vuln.attrib['severity'])
-                    vuln_attributes['description'] = self.convert_to_flat_text(vuln,'description')
-                    vuln_attributes['resolution'] = self.convert_to_flat_text(vuln,'solution')
+                    vuln_attributes['description'] = self.convert_to_flat_text(vuln, 'description')
+                    vuln_attributes['resolution'] = self.convert_to_flat_text(vuln, 'solution')
                     checked_vulns.append(vuln_attributes)
-        
+
         return checked_vulns
 
-    def severity_format(self,severity):
+    def severity_format(self, severity):
         """
         Convert Nexpose severity format into Faraday API severity format
 
@@ -244,7 +242,7 @@ class Item(object):
 
         return source
 
-    def get_text_from_reference(self,vulnerability, reference_path):
+    def get_text_from_reference(self, vulnerability, reference_path):
         """
         Gets text from the references of a vulnerability.
 
@@ -256,13 +254,13 @@ class Item(object):
 
         return None
 
-    def convert_to_flat_text(self,vuln,tag):
+    def convert_to_flat_text(self, vuln, tag):
         """
         Converts texts from multiples elements into one flat text
 
         @return returns new text
         """
-        self.description = vuln.find(tag)      
+        self.description = vuln.find(tag)
         xml_str = self.description.itertext()
         aux_string  = []
         strings_list = [data for data in xml_str]
@@ -306,7 +304,13 @@ class NexposePlugin(core.PluginBase):
             host_id = self.createAndAddHost(item.ip, item.os)
 
             for vuln in item.node_vulns:
-                vuln_id = self.createAndAddVulnToHost(host_id, vuln['id'], ref=vuln['ref'], severity=vuln['severity'], desc=vuln['description'], resolution=vuln['resolution'])
+                vuln_id = self.createAndAddVulnToHost(
+                    host_id, vuln['id'],
+                    ref=vuln['ref'],
+                    severity=vuln['severity'],
+                    desc=vuln['description'],
+                    resolution=vuln['resolution']
+                )
 
             for srv in item.service:
                 service_id = self.createAndAddServiceToHost(host_id, srv['name'],
@@ -317,7 +321,14 @@ class NexposePlugin(core.PluginBase):
                                                            version=srv['version'])
                 for vuln in srv['vulns']:
                     vuln_id = self.createAndAddVulnToService(
-                            host_id, service_id, vuln['id'], ref=vuln['ref'], severity=vuln['severity'], desc=vuln['description'], resolution=vuln['resolution'])
+                            host_id,
+                            service_id,
+                            vuln['id'],
+                            ref=vuln['ref'],
+                            severity=vuln['severity'],
+                            desc=vuln['description'],
+                            resolution=vuln['resolution']
+                    )
         del parser
 
     def processCommandString(self, username, current_path, command_string):

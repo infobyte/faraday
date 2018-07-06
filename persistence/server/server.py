@@ -27,7 +27,6 @@ import urllib
 import os
 import json
 import logging
-from ConfigParser import SafeConfigParser
 
 try:
     import urlparse
@@ -57,6 +56,7 @@ logger = logging.getLogger(__name__)
 
 FARADAY_UP = True
 FARADAY_UPLOAD_REPORTS_WEB_COOKIE = None
+FARADAY_UPLOAD_REPORTS_OVERWRITE_SERVER_URL = None
 
 SERVER_URL = "http://127.0.0.1:5985"
 AUTH_USER = ""
@@ -92,13 +92,11 @@ def _conf():
 
 
 def _get_base_server_url():
-    if FARADAY_UPLOAD_REPORTS_WEB_COOKIE:
-        parser = SafeConfigParser()
-        parser.read(LOCAL_CONFIG_FILE)
-        server_url = 'http://{0}:{1}'.format(
-                parser.get('faraday_server', 'bind_address'),
-                parser.get('faraday_server', 'port'))
-        logger.info('Detected upload cookie. Using server_url as {0}'.format(server_url))
+
+    # Faraday server is running, and this module is used by upload_reports...
+    if FARADAY_UPLOAD_REPORTS_OVERWRITE_SERVER_URL:
+        server_url = FARADAY_UPLOAD_REPORTS_OVERWRITE_SERVER_URL
+        logger.info('Detected upload cookie Using server_url as {0}'.format(server_url))
     elif FARADAY_UP:
         server_url = _conf().getAPIUrl()
         logger.info('Detected faraday client running. Using server_url as {0}'.format(server_url))

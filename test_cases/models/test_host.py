@@ -186,9 +186,9 @@ class TestHostAPI(ReadOnlyAPITests):
 
         assert res.status_code == 200
 
-        for index, host in enumerate(hosts_to_query):
-            assert res.json['res'][index]['total'] == VULN_BY_HOST + VULN_BY_SERVICE * SERVICE_BY_HOST
-            assert host.id in map(lambda x: x['host_id'], res.json['res'])
+        for host in hosts_to_query:
+            assert res.json['hosts'][str(host.id)]['total'] == VULN_BY_HOST + VULN_BY_SERVICE * SERVICE_BY_HOST
+            assert str(host.id) in res.json['hosts']
 
     # This test the api endpoint for some of the host in the ws, with existing other host in other ws and ask for the
     # other hosts
@@ -235,9 +235,9 @@ class TestHostAPI(ReadOnlyAPITests):
 
         assert res.status_code == 200
 
-        for index, host in enumerate(hosts_to_query):
-            assert res.json['res'][index]['total'] == VULN_BY_HOST + VULN_BY_SERVICE * SERVICE_BY_HOST
-            assert host.id in map(lambda x: x['host_id'], res.json['res'])
+        for host in hosts_to_query:
+            assert res.json['hosts'][str(host.id)]['total'] == VULN_BY_HOST + VULN_BY_SERVICE * SERVICE_BY_HOST
+            assert str(host.id) in res.json['hosts']
 
         for host in hosts_not_to_query_w2:
-            assert host.id not in map(lambda x: x['host_id'], res.json['res'])
+            assert str(host.id) not in res.json['hosts']

@@ -124,13 +124,13 @@ class HostsView(PaginatedMixin,
         host_ids = flask.request.args.get('hosts', '')
         host_id_list = host_ids.split(',')
 
-        res_dict = {'res':[]}
+        res_dict = {'hosts':{}}
 
         host_count_schema = HostCountSchema()
         host_count = Host.query_with_count(False, host_id_list, workspace_name)
 
         for host in host_count.all():
-            res_dict["res"].append(host_count_schema.dump(host).data)
+            res_dict["hosts"][host.id] = host_count_schema.dump(host).data
         # return counts.data
 
         return res_dict

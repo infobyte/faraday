@@ -425,8 +425,8 @@ class VulnerabilityView(PaginatedMixin,
         # popped object has the expected type.
         # This will be set after setting the workspace
         attachments = data.pop('_attachments', {})
-        references = data.pop('references')
-        policyviolations = data.pop('policy_violations')
+        references = data.pop('references', [])
+        policyviolations = data.pop('policy_violations', [])
 
         obj = super(VulnerabilityView, self)._perform_create(data, **kwargs)
         obj.references = references

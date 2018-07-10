@@ -7,8 +7,14 @@ See the file 'doc/LICENSE' for the license information
 import random
 import pytest
 from functools import partial
-from server.models import Hostname
+from server.models import Hostname, Host
 
+from server.api.modules.hosts import HostsView
+
+from test_cases.test_api_workspaced_base import (
+    ReadOnlyAPITests)
+from test_cases import factories
+from test_cases.factories import WorkspaceFactory
 
 @pytest.mark.parametrize(
     "with_host_vulns,with_service_vulns", [[True, False],
@@ -120,3 +126,118 @@ class TestUpdateHostnames:
         session.commit()
         assert len(host.hostnames) == 1
         assert host.hostnames[0].name == 'y'
+
+HOST_TO_QUERY_AMOUNT = 3
+HOST_NOT_TO_QUERY_AMOUNT = 2
+SERVICE_BY_HOST = 3
+VULN_BY_HOST = 2
+VULN_BY_SERVICE = 1
+
+class TestHostAPI(ReadOnlyAPITests):
+    model = Host
+    factory = factories.HostFactory
+    api_endpoint = 'hosts'
+    view_class = HostsView
+
+    # This test the api endpoint for some of the host in the ws, with existing other host with vulns in the same and
+    # other ws
+    @pytest.mark.parametrize('querystring', ['countVulns/?hosts={}',
+                                             ])
+    def test_vuln_count(self,
+                        vulnerability_factory,
+                        host_factory,
+                        service_factory,
+                        workspace_factory,
+                        test_client,
+                        session,
+                        querystring):
+
+        workspace1 = workspace_factory.create()
+        workspace2 = workspace_factory.create()
+        session.add(workspace1)
+        session.add(workspace2)
+        session.commit()
+
+        hosts_to_query = host_factory.create_batch(HOST_TO_QUERY_AMOUNT, workspace=workspace1)
+        hosts_not_to_query = host_factory.create_batch(HOST_NOT_TO_QUERY_AMOUNT, workspace=workspace1)
+        hosts_not_to_query_w2 = host_factory.create_batch(HOST_NOT_TO_QUERY_AMOUNT, workspace=workspace2)
+        hosts = hosts_to_query + hosts_not_to_query + hosts_not_to_query_w2
+
+        services = []
+        vulns = []
+
+        session.add_all(hosts)
+
+        for host in hosts:
+            services += service_factory.create_batch(SERVICE_BY_HOST, host=host, workspace=host.workspace)
+            vulns += vulnerability_factory.create_batch(VULN_BY_HOST, host=host, service=None, workspace=host.workspace)
+
+        session.add_all(services)
+
+        for service in services:
+            vulns += vulnerability_factory.create_batch(VULN_BY_SERVICE, service=service, host=None,
+                                                        workspace=service.workspace)
+
+        session.add_all(vulns)
+        session.commit()
+
+        url = self.url(workspace=workspace1) + querystring.format(",".join(map(lambda x: str(x.id), hosts_to_query)))
+        res = test_client.get(url)
+
+        assert res.status_code == 200
+
+        for index, host in enumerate(hosts_to_query):
+            assert res.json['res'][index]['total'] == VULN_BY_HOST + VULN_BY_SERVICE * SERVICE_BY_HOST
+            assert host.id in map(lambda x: x['host_id'], res.json['res'])
+
+    # This test the api endpoint for some of the host in the ws, with existing other host in other ws and ask for the
+    # other hosts
+    @pytest.mark.parametrize('querystring', [ 'countVulns/?hosts={}',
+    ])
+    def test_vuln_count_ignore_other_ws(self,
+                        vulnerability_factory,
+                        host_factory,
+                        service_factory,
+                        workspace_factory,
+                        test_client,
+                        session,
+                        querystring):
+
+        workspace1 = workspace_factory.create()
+        workspace2 = workspace_factory.create()
+        session.add(workspace1)
+        session.add(workspace2)
+        session.commit()
+
+        hosts_to_query = host_factory.create_batch(HOST_TO_QUERY_AMOUNT, workspace=workspace1)
+        hosts_not_to_query_w2 = host_factory.create_batch(HOST_NOT_TO_QUERY_AMOUNT, workspace=workspace2)
+        hosts = hosts_to_query + hosts_not_to_query_w2
+
+        services = []
+        vulns = []
+
+        session.add_all(hosts)
+
+        for host in hosts:
+            services += service_factory.create_batch(SERVICE_BY_HOST, host=host, workspace=host.workspace)
+            vulns += vulnerability_factory.create_batch(VULN_BY_HOST, host=host, service=None, workspace=host.workspace)
+
+        session.add_all(services)
+
+        for service in services:
+            vulns += vulnerability_factory.create_batch(VULN_BY_SERVICE, service=service, host=None, workspace=service.workspace)
+
+        session.add_all(vulns)
+        session.commit()
+
+        url = self.url(workspace=workspace1) + querystring.format(",".join(map(lambda x: str(x.id), hosts)))
+        res = test_client.get(url)
+
+        assert res.status_code == 200
+
+        for index, host in enumerate(hosts_to_query):
+            assert res.json['res'][index]['total'] == VULN_BY_HOST + VULN_BY_SERVICE * SERVICE_BY_HOST
+            assert host.id in map(lambda x: x['host_id'], res.json['res'])
+
+        for host in hosts_not_to_query_w2:
+            assert host.id not in map(lambda x: x['host_id'], res.json['res'])

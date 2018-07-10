@@ -264,6 +264,7 @@ class Host(Metadata):
     vulnerability_critical_count = query_expression()
     vulnerability_low_count = query_expression()
     vulnerability_unclassified_count = query_expression()
+    vulnerability_total_count = query_expression()
 
     @classmethod
     def query_with_count(cls, only_confirmed, host_ids, workspace_name):
@@ -326,6 +327,15 @@ class Host(Metadata):
                     only_confirmed = only_confirmed,
                     use_column_property = False,
                     extra_query = "vulnerability.severity='unclassified'",
+                    get_hosts_vulns = True
+                )
+            ),
+            with_expression(
+                cls.vulnerability_total_count,
+                _make_vuln_count_property(
+                    type_ = None,
+                    only_confirmed = only_confirmed,
+                    use_column_property = False,
                     get_hosts_vulns = True
                 )
             ),

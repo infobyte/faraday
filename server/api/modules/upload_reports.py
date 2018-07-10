@@ -49,7 +49,6 @@ UPLOAD_REPORTS_CMD_QUEUE = MultiProcessingQueue()
 upload_api = Blueprint('upload_reports', __name__)
 
 
-
 class RawReportProcessor(Thread):
     def __init__(self):
 
@@ -58,7 +57,14 @@ class RawReportProcessor(Thread):
         setupPlugins()
         self.pending_actions = Queue()
 
-        plugin_manager = PluginManager(os.path.join(CONF.getConfigPath(), "plugins"))
+        try:
+            plugin_manager = PluginManager(os.path.join(CONF.getConfigPath(), "plugins"))
+        except AttributeError:
+            get_logger().warning(
+                "Upload reports in WEB-UI not configurated, run Faraday client and try again...")
+            self._stop = True
+            return
+
         mappers_manager = MapperManager()
         self.model_controller = ModelController(mappers_manager, self.pending_actions)
         self.model_controller.start()
@@ -130,9 +136,14 @@ def file_upload(workspace=None):
         random_prefix = ''.join(random.choice(chars) for x in range(12))
         raw_report_filename = '{0}{1}'.format(random_prefix, secure_filename(report_file.filename))
 
-        file_path = os.path.join(
-            CONF.getConfigPath(),
-            'uploaded_reports/{0}'.format(raw_report_filename))
+        try:
+            file_path = os.path.join(
+                CONF.getConfigPath(),
+                'uploaded_reports/{0}'.format(raw_report_filename))
+        except AttributeError:
+            get_logger().warning(
+                "Upload reports in WEB-UI not configurated, run Faraday client and try again...")
+            abort(make_response(jsonify(message="Upload reports not configurated: Run faraday client and start Faraday server again"), 500))
 
         with open(file_path, 'w') as output:
             output.write(report_file.read())

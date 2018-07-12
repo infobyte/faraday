@@ -66,6 +66,9 @@ def clean_char(char):
             if char == rep:
                 #print ord(char), char.encode('ascii', 'ignore')
                 return new_char
+        #get here if pass all controls, so try to encode or throw UnicodeEncodeError
+        char.encode()
+
         return char
     except UnicodeEncodeError:
         # Ugly hack triggered when importing some strange objects

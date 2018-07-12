@@ -191,8 +191,8 @@ class TestHostAPI(ReadOnlyAPITests):
             assert str(host.id) in res.json['hosts']
 
     # This test the api endpoint for some of the host in the ws, with existing other host in other ws and ask for the
-    # other hosts
-    @pytest.mark.parametrize('querystring', [ 'countVulns/?hosts={}',
+    # other hosts and test the api endpoint for all of the host in the ws, retrieving all host when none is required
+    @pytest.mark.parametrize('querystring', [ 'countVulns/?hosts={}', 'countVulns/',
     ])
     def test_vuln_count_ignore_other_ws(self,
                         vulnerability_factory,
@@ -234,6 +234,7 @@ class TestHostAPI(ReadOnlyAPITests):
         res = test_client.get(url)
 
         assert res.status_code == 200
+        assert len(res.json['hosts']) == HOST_TO_QUERY_AMOUNT
 
         for host in hosts_to_query:
             assert res.json['hosts'][str(host.id)]['total'] == VULN_BY_HOST + VULN_BY_SERVICE * SERVICE_BY_HOST

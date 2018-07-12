@@ -487,6 +487,13 @@ angular.module("faradayApp")
                     column.grouping = { groupPriority: 0 };
                     paginationOptions.sortColumn = colname;
                     paginationOptions.sortDirection = 'asc';
+                }else if (colname === 'sev' && $scope.propertyGroupBy === 'severity'){
+                    // Ugly ugly hack so I don't have to change the displayName of
+                    // severity from "sev" to "severity"
+                    console.log('columns', $scope.columns);
+                    column.grouping = { groupPriority: 0 };
+                    paginationOptions.sortColumn = 'severity';
+                    paginationOptions.sortDirection = 'asc'
                 }
             }
         };

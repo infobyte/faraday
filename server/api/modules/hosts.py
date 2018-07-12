@@ -121,8 +121,11 @@ class HostsView(PaginatedMixin,
 
     @route('/countVulns/')
     def count_vulns(self, workspace_name):
-        host_ids = flask.request.args.get('hosts', '')
-        host_id_list = host_ids.split(',')
+        host_ids = flask.request.args.get('hosts', None)
+        if host_ids:
+            host_id_list = host_ids.split(',')
+        else:
+            host_id_list = None
 
         res_dict = {'hosts':{}}
 

@@ -268,7 +268,9 @@ class Host(Metadata):
 
     @classmethod
     def query_with_count(cls, only_confirmed, host_ids, workspace_name):
-        query = cls.query.join(Workspace).filter(cls.id.in_(host_ids)).filter(Workspace.name == workspace_name)
+        query = cls.query.join(Workspace).filter(Workspace.name == workspace_name)
+        if host_ids:
+            query = query.filter(cls.id.in_(host_ids))
         return query.options(
             with_expression(
                 cls.vulnerability_info_count,
@@ -292,13 +294,13 @@ class Host(Metadata):
             ),
             with_expression(
                 cls.vulnerability_high_count,
-               _make_vuln_count_property(
+                _make_vuln_count_property(
                     type_ = None,
                     only_confirmed = only_confirmed,
                     use_column_property = False,
                     extra_query = "vulnerability.severity='high'",
                     get_hosts_vulns = True
-               )
+                )
             ),
             with_expression(
                 cls.vulnerability_critical_count,

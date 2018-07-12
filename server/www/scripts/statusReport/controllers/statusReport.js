@@ -968,14 +968,6 @@ angular.module("faradayApp")
             });
             modal.result.then(function(data) {
                 $scope.getCurrentSelection().forEach(function(vuln) {
-                    var references = vuln.refs.concat([]);
-                    data.refs.forEach(function(ref) {
-                        if(vuln.refs.indexOf(ref) == -1){
-                            references.push(ref);
-                        }
-                    });
-                    data.refs = references;
-
                     vulnsManager.updateVuln(vuln, data).then(function(vulns){
                     }, function(errorMsg){
                         // TODO: show errors somehow

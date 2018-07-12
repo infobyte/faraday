@@ -564,7 +564,10 @@ class CustomAssociationSet(_AssociationSet):
             # we need to fetch already created objs.
             session.rollback()
             for conflict_obj in conflict_objs:
-                if hasattr(conflict_obj, 'name') and conflict_obj.name == value:
+                if not hasattr(conflict_obj, 'name'):
+                    # The session can hold elements without a name (altough it shouldn't)
+                    continue
+                if conflict_obj.name == value:
                     continue
                 persisted_conclict_obj = session.query(conflict_obj.__class__).filter_by(name=conflict_obj.name).first()
                 if persisted_conclict_obj:

@@ -39,7 +39,7 @@ class GuiApp(FaradayUi):
                  "check configuration.") % workspace)
             getLogger(self).error(
                     "You may try and go to ~/.faraday/config/user.xml "
-                    "to set a valid couch_uri and last_workspace")
+                    "to set a valid api_uri and last_workspace")
             getLogger(self).error(str(e))
             return -1
         workspace = ws.name

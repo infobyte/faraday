@@ -18,9 +18,12 @@ from subprocess import Popen, PIPE
 import sqlalchemy
 from sqlalchemy import create_engine
 
-from config.configuration import getInstanceConfiguration
-from faraday import FARADAY_USER_CONFIG_XML, FARADAY_BASE_CONFIG_XML, \
+from config.configuration import Configuration
+from faraday import (
+    FARADAY_USER_CONFIG_XML,
+    FARADAY_BASE_CONFIG_XML,
     FARADAY_BASE
+)
 
 try:
     # py2.7
@@ -131,7 +134,10 @@ class InitDB():
             print("{yellow}WARNING{white}: If you are going to execute couchdb importer you must use the couchdb password for faraday user.".format(white=Fore.WHITE, yellow=Fore.YELLOW))
 
     def _save_user_xml(self, random_password):
-        conf = getInstanceConfiguration()
+        user_xml = os.path.expanduser("~/.faraday/config/user.xml")
+        if not os.path.exists(user_xml):
+            shutil.copy(FARADAY_BASE_CONFIG_XML, user_xml)
+        conf = Configuration(user_xml)
         conf.setAPIUrl('http://localhost:5985')
         conf.setAPIUsername('faraday')
         conf.setAPIPassword(random_password)

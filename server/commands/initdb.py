@@ -123,13 +123,19 @@ class InitDB():
         if not already_created:
             if not os.path.isfile(FARADAY_USER_CONFIG_XML):
                 shutil.copy(FARADAY_BASE_CONFIG_XML, FARADAY_USER_CONFIG_XML)
-
+            self._save_user_xml(random_password)
             print("Admin user created with \n\n{red}username: {white}faraday \n"
                   "{red}password:{white} {"
                   "random_password} \n".format(random_password=random_password,
                                             white=Fore.WHITE, red=Fore.RED))
             print("{yellow}WARNING{white}: If you are going to execute couchdb importer you must use the couchdb password for faraday user.".format(white=Fore.WHITE, yellow=Fore.YELLOW))
 
+    def _save_user_xml(self, random_password):
+        conf = getInstanceConfiguration()
+        conf.setAPIUrl('http://localhost:5985')
+        conf.setAPIUsername('faraday')
+        conf.setAPIPassword(random_password)
+        conf.saveConfig()
 
     def _configure_existing_postgres_user(self):
         username = raw_input('Please enter the postgresql username: ')

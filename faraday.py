@@ -451,16 +451,20 @@ def try_login_user(server_uri, api_username, api_password):
         sys.exit(-2)
 
 
-def doLoginLoop():
-    """ 
+def doLoginLoop(force_login=False):
+    """
     Sets the username and passwords from the command line.
-    If --login flag is set then username and password is set 
+    If --login flag is set then username and password is set
     """
 
     try:
 
         CONF = getInstanceConfiguration()
         old_server_url = CONF.getAPIUrl()
+        api_username = CONF.getAPIUsername()
+        api_password = CONF.getAPIPassword()
+        if old_server_url and api_username and api_password and not force_login:
+            return
 
         if old_server_url is None:
             new_server_url = raw_input(
@@ -511,9 +515,9 @@ def login(forced_login):
     server_uri = CONF.getServerURI()
     api_username = CONF.getAPIUsername()
     api_password = CONF.getAPIPassword()
-    
+
     if forced_login:
-        doLoginLoop()
+        doLoginLoop(forced_login)
         return
 
     if server_uri and api_username and api_password:
@@ -524,7 +528,7 @@ def login(forced_login):
             CONF.setDBSessionCookies(session_cookie)
             logger.info('Login successful: {0}'.format(api_username))
             return
-    
+
     doLoginLoop()
 
 

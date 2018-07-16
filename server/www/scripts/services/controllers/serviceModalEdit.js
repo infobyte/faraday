@@ -35,9 +35,7 @@ angular.module('faradayApp')
             timestamp = date.getTime()/1000.0;
 
             for (var i = 0; i < $scope.servicesSelected.length; i++) {
-                console.log($scope.servicesSelected[i]._id);
                 updateAll.push(servicesManager.getService($scope.servicesSelected[i]._id, ws, false).then(function(serviceObj){
-                    console.log(serviceObj._id);
                     $scope.data['_id'] = serviceObj._id;
                     return servicesManager.updateService(serviceObj, $scope.data, $routeParams.wsId);
                 }));

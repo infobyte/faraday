@@ -38,7 +38,7 @@ angular.module("faradayApp")
         var searchFilter = {};
         var paginationOptions = {
             page: 1,
-            pageSize: 10,
+            pageSize: 100,
             defaultPageSizes: [10, 50, 75, 100],
             sortColumn: null,
             sortDirection: null

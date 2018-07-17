@@ -14,7 +14,6 @@ import logging
 import model.api
 
 from flask import (
-    redirect,
     request,
     abort,
     jsonify,
@@ -149,4 +148,4 @@ def file_upload(workspace=None):
             output.write(report_file.read())
 
     UPLOAD_REPORTS_QUEUE.put((workspace, file_path, request.cookies))
-    return redirect('/#/dashboard/ws/' + workspace)
+    return make_response(jsonify(message="ok"), 200)

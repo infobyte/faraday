@@ -1122,15 +1122,12 @@ angular.module("faradayApp")
                 withCredentials: false,
                 headers: {'Content-Type': undefined},
                 responseType: "arraybuffer",
-                params: {
-                  fd
-                }
             }).then(
                 function(d) {
                     $location.path("/dashboard/ws/" + $routeParams.wsId);
                 },
                 function(d){
-                    commonsFact.showMessage("Error uploading report");
+                        commonsFact.showMessage("Error uploading report");
                 }
             );
         };

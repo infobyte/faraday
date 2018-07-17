@@ -12,7 +12,6 @@ import sys
 import json
 import logging
 import datetime
-import threading
 import multiprocessing
 
 
@@ -599,20 +598,18 @@ class ServiceImporter(object):
                 yield service
 
 
-user_lock = threading.Lock()
 def get_or_create_user(session, username):
-    with user_lock:
-        rng = SystemRandom()
-        password =  "".join(
-            [rng.choice(string.ascii_letters + string.digits) for _ in
-                xrange(12)])
-        creator, created = get_or_create(session, User, username=username)
-        if created:
-            creator.active = False
-            creator.password = password
-        session.add(creator) # remove me
-        session.commit() # remove me
-        return creator
+    rng = SystemRandom()
+    password =  "".join(
+        [rng.choice(string.ascii_letters + string.digits) for _ in
+            xrange(12)])
+    creator, created = get_or_create(session, User, username=username)
+    if created:
+        creator.active = False
+        creator.password = password
+    session.add(creator) # remove me
+    session.commit() # remove me
+    return creator
 
 
 class VulnerabilityImporter(object):
@@ -1367,21 +1364,7 @@ class ImportCouchDB():
                     logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
                                  " configuration file has CouchDB admin's credentials set")
                     sys.exit(1)
-                thread = threading.Thread(target=self.import_workspace_into_database, args=(workspace_name, pbar))
-                thread.daemon = True
-                thread.start()
-                workspace_threads.append(thread)
-                if len(workspace_threads) > multiprocessing.cpu_count() * 2:
-                    for thread in workspace_threads:
-                        thread.join()
-                        pbar.update(1)
-                        workspace_threads.remove(thread)
-
-            logger.info('Waiting for treads to finish.')
-            for thread in workspace_threads:
-                thread.join()
-                pbar.update(1)
-                #self.import_workspace_into_database(workspace_name)
+                self.import_workspace_into_database(workspace_name, pbar)
 
     def get_objs(self, host, obj_type, level, workspace):
         if obj_type == 'Credential':

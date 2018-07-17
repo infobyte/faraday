@@ -343,9 +343,12 @@ angular.module("faradayApp")
                 return get(url, payload)
             }
 
-            ServerAPI.getVulnsGroupedBy = function(wsName, groupBy) {
+            ServerAPI.getVulnsGroupedBy = function(wsName, groupBy, confirmed) {
                 var url = createGetUrl(wsName, 'vulns') + 'count/';
                 var payload = {'group_by': groupBy}
+                if (confirmed) {
+                    payload.confirmed = confirmed;
+                }
 
                 return get(url, payload)
             }

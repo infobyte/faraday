@@ -208,10 +208,10 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
-        dashboardSrv.getVulnerabilitiesGroupedBy = function(ws, groupBy) {
+        dashboardSrv.getVulnerabilitiesGroupedBy = function(ws, groupBy, confirmed) {
             var deferred = $q.defer();
 
-            ServerAPI.getVulnsGroupedBy(ws, groupBy)
+            ServerAPI.getVulnsGroupedBy(ws, groupBy, confirmed)
                 .then(function(res) {
                     deferred.resolve(res.data.groups);
                 }, function() {

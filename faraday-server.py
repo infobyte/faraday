@@ -94,6 +94,11 @@ def check_postgresql():
         try:
             if not db.session.query(Workspace).count():
                 logger.warn('No workspaces found. Remeber to execute couchdb importer')
+        except sqlalchemy.exc.ArgumentError:
+            logger.error(
+                '\n\b{RED}Please check you postgresql connection string in server.ini at .faraday on your ohme directory.{WHITE} \n'.format(RED=Fore.RED, WHITE=Fore.WHITE)
+            )
+            sys.exit(1)
         except sqlalchemy.exc.OperationalError:
             logger.error(
                     '\n\n{RED}Could not connect to postgresql.\n{WHITE}Please check: \n{YELLOW}  * if database is running \n  * configuration settings are correct. \n\n{WHITE}For first time installations execute{WHITE}: \n\n {GREEN} python manage.py initdb\n\n'.format(GREEN=Fore.GREEN, YELLOW=Fore.YELLOW, WHITE=Fore.WHITE, RED=Fore.RED))

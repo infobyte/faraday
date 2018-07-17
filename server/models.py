@@ -1226,7 +1226,7 @@ def _make_vuln_count_property(type_=None, only_confirmed=False,
             isouter=True
         )
 
-    query = (select([func.count(text('vulnerability.id'))]).
+    query = (select([func.count(text('distinct(vulnerability.id)'))]).
              select_from(from_clause)
              )
     if get_hosts_vulns:

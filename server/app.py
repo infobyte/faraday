@@ -5,6 +5,7 @@ import logging
 
 import os
 import string
+import datetime
 from os.path import join, expanduser
 from random import SystemRandom
 
@@ -181,6 +182,7 @@ def create_app(db_connection_string=None, testing=None):
         # 'sha512_crypt',
         'plaintext',  # TODO: remove it
     ]
+    app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=12)
     try:
         storage_path = server.config.storage.path
     except AttributeError:

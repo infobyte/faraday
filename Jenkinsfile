@@ -90,6 +90,20 @@ node (label: "master"){
 
         }
     }
+
+    stage ("Run Closure Compiler") {
+        try {
+            sh """
+                java -jar /home/faraday/closure-compiler-v20180610.jar $WORKSPACE/server/www/scripts
+            """
+        }
+        catch (err) {
+            currentBuild.result = 'FAILURE'
+        }
+        finally {
+            notifyBuild(currentBuild.result, "PostgreSQL Build")
+        }
+    }
 }
 
 def notifyBuild(String buildStatus = 'STARTED', String extraMessage = '') {

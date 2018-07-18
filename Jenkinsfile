@@ -101,7 +101,7 @@ node (label: "master"){
             currentBuild.result = 'FAILURE'
         }
         finally {
-            notifyBuild(currentBuild.result, "PostgreSQL Build")
+            notifyBuild(currentBuild.result, "Closure compiler")
         }
     }
 }

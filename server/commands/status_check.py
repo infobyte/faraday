@@ -1,3 +1,9 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 import os
 import sys
 import socket
@@ -96,10 +102,14 @@ def check_credentials():
     api_username = CONF.getAPIUsername()
     api_password = CONF.getAPIPassword()
     
+    address =  server.config.faraday_server.bind_address
+    port = int(server.config.faraday_server.port)
+    
     values = {'email': api_username , 'password': api_password}
  
     try:
-        r = requests.post('http://localhost:5985/_api/login', json=values)
+        r = requests.post('http://{ADDRESS}:{PORT}/_api/login'.format(ADDRESS=address,PORT=port), json=values)
+
         if r.status_code == 200 and 'user' in r.json()['response']:
             return 200            
         elif r.status_code == 400:

@@ -38,7 +38,7 @@ angular.module("faradayApp")
         var searchFilter = {};
         var paginationOptions = {
             page: 1,
-            pageSize: 10,
+            pageSize: 100,
             defaultPageSizes: [10, 50, 75, 100],
             sortColumn: null,
             sortDirection: null
@@ -1122,15 +1122,12 @@ angular.module("faradayApp")
                 withCredentials: false,
                 headers: {'Content-Type': undefined},
                 responseType: "arraybuffer",
-                params: {
-                  fd
-                }
             }).then(
                 function(d) {
                     $location.path("/dashboard/ws/" + $routeParams.wsId);
                 },
                 function(d){
-                    commonsFact.showMessage("Error uploading report");
+                        commonsFact.showMessage("Error uploading report");
                 }
             );
         };

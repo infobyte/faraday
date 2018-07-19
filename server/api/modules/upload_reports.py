@@ -11,16 +11,14 @@ import time
 import string
 import random
 import logging
-import model.api
+import server.config as FaradayServerConfig
 
 from flask import (
     request,
     abort,
-    jsonify,
     Blueprint,
-    session,
-    make_response
 )
+
 from flask_wtf.csrf import validate_csrf
 from werkzeug.utils import secure_filename
 from wtforms import ValidationError
@@ -36,7 +34,6 @@ from plugins.manager import PluginManager
 from managers.mapper_manager import MapperManager
 from managers.reports_managers import ReportProcessor
 
-from server.models import User
 from persistence.server import server
 
 from config.configuration import getInstanceConfiguration
@@ -54,6 +51,7 @@ class RawReportProcessor(Thread):
         super(RawReportProcessor, self).__init__()
         from faraday import setupPlugins
         setupPlugins()
+
         self.pending_actions = Queue()
 
         try:
@@ -65,9 +63,11 @@ class RawReportProcessor(Thread):
             return
 
         mappers_manager = MapperManager()
+
         self.model_controller = ModelController(mappers_manager, self.pending_actions)
         self.model_controller.start()
         self.end_event = Event()
+
         plugin_controller = PluginController(
             'PluginController',
             plugin_manager,
@@ -85,24 +85,33 @@ class RawReportProcessor(Thread):
     def run(self):
         while not self._stop:
             try:
+
                 workspace, file_path, cookie = UPLOAD_REPORTS_QUEUE.get(False, timeout=0.1)
                 get_logger().info('Processing raw report {0}'.format(file_path))
 
                 # Cookie of user, used to create objects in server with the right owner.
                 server.FARADAY_UPLOAD_REPORTS_WEB_COOKIE = cookie
+                server.FARADAY_UPLOAD_REPORTS_OVERWRITE_SERVER_URL = "http://{0}:{1}".format(
+                    FaradayServerConfig.faraday_server.bind_address, FaradayServerConfig.faraday_server.port)
+
                 self.processor.ws_name = workspace
+
                 command_id = self.processor.processReport(file_path)
                 UPLOAD_REPORTS_CMD_QUEUE.put(command_id)
                 if not command_id:
                     continue
+
                 self.end_event.wait()
                 get_logger().info('Report processing of report {0} finished'.format(file_path))
                 self.end_event.clear()
+
             except Empty:
                 time.sleep(0.1)
+
             except KeyboardInterrupt as ex:
                 get_logger().info('Keyboard interrupt, stopping report processing thread')
                 self.stop()
+
             except Exception as ex:
                 get_logger().exception(ex)
                 continue

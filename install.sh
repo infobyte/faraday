@@ -28,7 +28,7 @@ then
     apt-get update
 
     #Install community dependencies
-    for pkg in build-essential python-setuptools python-pip python-dev libpq-dev libffi-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 python-gobject zsh curl python-psycopg2 ; do
+    for pkg in build-essential python-setuptools python-pip python-dev libpq-dev libffi-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 python-gobject zsh curl python-psycopg2 postgresql; do
         apt-get install -y $pkg
     done
 fi

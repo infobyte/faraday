@@ -48,8 +48,9 @@ def check_postgres():
             result = str(db.engine.execute("SELECT version()"))
             return result 
         except sqlalchemy.exc.OperationalError:
+            return False
+        except sqlalchemy.exc.ArgumentError:
             return None
-            
 
 def check_client():
 
@@ -141,8 +142,13 @@ def print_postgresql_status():
         print('[{green}+{white}] PostgreSQL is running'.\
             format(green=Fore.GREEN, white=Fore.WHITE))
         return exit_code
-    else:
-        print('[{red}-{white}] Could not connect to postgresql, please check if database is running'\
+    elif result == False:
+        print('[{red}-{white}] Could not connect to PostgreSQL, please check if database is running'\
+            .format(red=Fore.RED, white=Fore.WHITE))
+        exit_code = 1
+        return exit_code
+    elif result == None:
+        print('[{red}-{white}] Database not initialized. Execute: python manage.py initdb'\
             .format(red=Fore.RED, white=Fore.WHITE))
         exit_code = 1
         return exit_code

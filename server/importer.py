@@ -1328,14 +1328,14 @@ class ImportCouchDB():
             workspaces_list = couchdb_server_conn.list_workspaces()
 
         except RequestError:
-            logger.error(u"CouchDB is not running at {}. Check faraday-server's"\
+            print(u"CouchDB is not running at {}. Check faraday-server's"\
                 " configuration and make sure CouchDB is running".format(
                 server.couchdb.get_couchdb_url()))
             logger.error(u'Please start CouchDB and re-execute the importer with: \n\n --> python manage.py import_from_couchdb <--')
             sys.exit(1)
 
         except Unauthorized:
-            logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
+            print(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
                 " configuration file has CouchDB admin's credentials set")
             sys.exit(1)
 

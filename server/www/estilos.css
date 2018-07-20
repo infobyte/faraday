@@ -196,16 +196,16 @@ article.untercio{
 .untercio article{
     height: 20%;
 }
-    .seccion article {
-        min-height: 85px;
-        font-size: 11px;
-        text-align: left;
-    }
-        .seccion article header {
-            background: #FFFFFF;
-            min-height: 40px;
-            text-align: left;
-        }
+.seccion article {
+    min-height: 85px;
+    font-size: 11px;
+    text-align: left;
+}
+.seccion article header {
+    background: #FFFFFF;
+    min-height: 40px;
+    text-align: left;
+}
             .seccion article header h2 {
                 color: #101010;
                 font-size: 14px;

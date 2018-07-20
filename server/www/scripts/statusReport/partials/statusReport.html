@@ -14,7 +14,7 @@
                     </button>
                 </div>
                 <div class="control-wrapper control-edit">
-                    <button type="button" class="btn edit" title="Edit selected vulns" ng-click="edit()" ng-disabled="getCurrentSelection().length != 1">
+                    <button type="button" class="btn btn-default edit" title="Edit selected vulns" ng-click="edit()" ng-disabled="getCurrentSelection().length != 1">
                         <img src="images/icon-toolbar-edit.svg" class="edit-icon" />
                     </button>
                     <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="SingleActions" ng-show="getCurrentSelection().length === 1">
@@ -24,7 +24,7 @@
                         <li><a class="ws" ng-click="saveAsModel()">Create template</a></li>
                         <li><a class="ws" ng-click="showExploits()">Search exploits</a></li>
                     </ul>
-                    <button type="button" class="btn dropdown-toggle" data-toggle="dropdown" title="Actions" ng-hide="getCurrentSelection().length < 2">
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Actions" ng-hide="getCurrentSelection().length < 2">
                         <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-right" role="menu" ng-show="getCurrentSelection().length >= 2">
@@ -56,7 +56,7 @@
                     </ul>
                 </div>
                 <div class="control-wrapper">
-                    <button type="button" class="btn" title="Delete selected items" ng-click="delete()">
+                    <button type="button" class="btn btn-default" title="Delete selected items" ng-click="delete()">
                         <img src="images/icon-toolbar-delete.svg" class="delete-icon" />
                     </button>
                 </div>
@@ -74,18 +74,18 @@
                     </form>
                 </div>
                 <div class="control-wrapper filter-wrapper">
-                    <button type="button" class="btn confirm-button" title="{{ confirmed === true ? 'All vulns' : 'Confirmed vulns' }}" ng-click="toggleFilter()">
+                    <button type="button" class="btn btn-default confirm-button" title="{{ confirmed === true ? 'All vulns' : 'Confirmed vulns' }}" ng-click="toggleFilter()">
                         <img ng-src="{{ (confirmed === true) ? 'images/icon-toolbar-confirmed-on.svg' : 'images/icon-toolbar-confirmed-off.svg'}}" class="confirm-icon" ng-style="{ 'opacity': (confirmed === true) ? '1' : '0.7' }" />
                     </button>
                 </div>
                 <div class="control-wrapper download-wrapper">
-                    <button file-exporter="csv()" type="button" class="btn" title="Download CSV for current workspace">
+                    <button file-exporter="csv()" type="button" class="btn btn-default" title="Download CSV for current workspace">
                         <img src="images/icon-toolbar-download.svg" class="download-icon" />
                     </button>
                 </div>
                 <div class="control-wrapper download-wrapper" ng-hide="fileUploadEnabled === true">
-                    <button ng-click="enableFileUpload()" type="button" class="btn" title="Upload a report">
-                        <img src="images/icon-toolbar-download.svg" class="download-icon rotate-180"/>
+                    <button ng-click="enableFileUpload()" type="button" class="btn btn-default" title="Upload a report">
+                        <img src="images/icon-toolbar-upload.svg"/>
                     </button>
                 </div>
                 <div class="pl" ng-show="fileUploadEnabled === true">

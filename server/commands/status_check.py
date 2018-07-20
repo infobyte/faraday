@@ -1,25 +1,32 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
+import os
+import sys
+import socket
+import argparse
 import requests
 import sqlalchemy
-import socket
-import os
 import server.config
 from colorama import init
+from server.web import app
+from server.models import db
+from utils import dependencies
 from colorama import Fore, Back, Style
 from server.utils.daemonize import is_server_running
-from server.models import db
-from server.web import app
 from config.configuration import getInstanceConfiguration
-from utils import dependencies
+from config import globals as CONSTANTS
 
 
 CONF = getInstanceConfiguration()
-
 
 init()
 
 
 def check_server_running():
-
     pid = is_server_running()
     return pid
     
@@ -90,35 +97,34 @@ def check_client_dependencies():
         return None, None
 
 
-
-
 def check_credentials():
 
     api_username = CONF.getAPIUsername()
     api_password = CONF.getAPIPassword()
     
+    address =  server.config.faraday_server.bind_address
+    port = int(server.config.faraday_server.port)
+    
     values = {'email': api_username , 'password': api_password}
  
     try:
-        r = requests.post('http://localhost:5985/_api/login', json=values)
+        r = requests.post('http://{ADDRESS}:{PORT}/_api/login'.format(ADDRESS=address,PORT=port), json=values)
 
         if r.status_code == 200 and 'user' in r.json()['response']:
-            return 200
-            
+            return 200            
         elif r.status_code == 400:
             return 400
-
         elif r.status_code == 500:
             return 500
+
     except requests.exceptions.ConnectionError:
         return None
 
 
 def check_storage_permission():
-
-    home = os.path.expanduser("~")
-    path = home+'/.faraday/storage/test'
-
+    
+    path = os.path.join(CONSTANTS.CONST_FARADAY_HOME_PATH,'storage/test')
+    
     try:
         os.mkdir(path)
         os.rmdir(path)
@@ -127,22 +133,34 @@ def check_storage_permission():
         return None
 
 
-def full_status_check():
-     
-
-    #Prints the status of PostreSQL using check_postgres()
-    print('\n{white}Checking if postgreSQL is running...'.format(white=Fore.WHITE))   
+def print_postgresql_status():
+    """Prints the status of PostgreSQL using check_postgres()"""
+    exit_code = 0
     result = check_postgres()
     if result:
         print('[{green}+{white}] PostgreSQL is running'.\
             format(green=Fore.GREEN, white=Fore.WHITE))
-    
+        return exit_code
     else:
         print('[{red}-{white}] Could not connect to postgresql, please check if database is running'\
             .format(red=Fore.RED, white=Fore.WHITE))
-        return
+        exit_code = 1
+        return exit_code
 
-    print('\n{white}Checking if Faraday is running...'.format(white=Fore.WHITE))
+
+def print_faraday_status():
+    """Prints Status of farday using check_server_running() and check_client"""
+
+    #Prints Status of the server using check_server_running()
+    pid = check_server_running()
+    if pid is not None:
+        print('[{green}+{white}] Faraday Server is running. PID:{PID} \
+        '.format(green=Fore.GREEN, PID=pid, white=Fore.WHITE))
+    else:
+        print('[{red}-{white}] Faraday Server is not running {white} \
+        '.format(red=Fore.RED, white=Fore.WHITE))
+
+    #Prints Status of the client using check_client()
     if check_client():
         print('[{green}+{white}] Faraday GTK is running'.\
             format(green=Fore.GREEN, white=Fore.WHITE))
@@ -150,26 +168,17 @@ def full_status_check():
         print('[{yellow}-{white}] Faraday GTK is not running'\
             .format(yellow=Fore.YELLOW, white=Fore.WHITE))
 
-    #Prints Status of the server using check_server_running()
-    pid = check_server_running()
-    if pid is not None:
-        print('[{green}+{white}] Faraday Server is Running. PID:{PID} \
-        '.format(green=Fore.GREEN, PID=pid, white=Fore.WHITE))
-    else:
-        print('[{red}-{white}] Faraday Server is not running {white} \
-        '.format(red=Fore.RED, white=Fore.WHITE))
 
-
-    print('\n{white}Checking Faraday dependencies...'.format(white=Fore.WHITE))   
+def print_depencencies_status():
+    """Prints Status of the dependencies using check_server_dependencies() and check_client_dependencies()"""
     
     status, server_dep = check_server_dependencies()
-    
     if status == True:
-        print('[{red}-{white}] Some server dependencies are old. Update them with \"pip install -r requirements_server.txt -U\": (' + ','.join(server_dep) + ')') \
+        print('[{red}-{white}] Some server dependencies are old: [' + ', '.join(server_dep) + ']. Update them with \"pip install -r requirements_server.txt -U\"') \
             .format(red=Fore.RED, white=Fore.WHITE)
 
     elif status == 0:
-        print('[{red}-{white}] Client dependencies not met. Install them with \"pip install -r requirements_server.txt -U\": (' + ','.join(server_dep) + ')')\
+        print('[{red}-{white}] Client dependencies not met: [' + ', '.join(server_dep) + '] Install them with \"pip install -r requirements_server.txt -U\"')\
             .format(red=Fore.RED, white=Fore.WHITE)
         
     else:
@@ -178,11 +187,11 @@ def full_status_check():
 
     status, client_dep = check_client_dependencies()
     if status == True:
-        print('[{red}-{white}] Some client dependencies are old. Update them with \"pip install -r requirements.txt -U\": (' + ','.join(client_dep) + ')') \
+        print('[{red}-{white}] Some client dependencies are old: [' + ', '.join(client_dep) + ']. Update them with \"pip install -r requirements.txt -U\"') \
             .format(red=Fore.RED, white=Fore.WHITE)
         
     elif status == 0:
-        print('[{red}-{white}] Client dependencies not met. Install them with \"pip install -r requirements.txt -U\": (' + ','.join(client_dep) + ')')\
+        print('[{red}-{white}] Client dependencies not met: [' + ', '.join(client_dep) + ']. Install them with \"pip install -r requirements.txt -U\"')\
             .format(red=Fore.RED, white=Fore.WHITE)
             
     else:
@@ -190,7 +199,11 @@ def full_status_check():
             .format(green=Fore.GREEN, white=Fore.WHITE))
         
 
-    print('\n{white}Checking Faraday config...{white}'.format(white=Fore.WHITE))
+def print_config_status():
+    """Prints Status of the configuration using check_credentials(), check_storage_permission() and check_open_ports()"""
+    
+    pid = check_server_running()
+    result = check_postgres()
     if pid and result:    
         status_code = check_credentials()
         if status_code == 200:
@@ -199,18 +212,33 @@ def full_status_check():
             print('[{red}-{white}] Error. Credentials does not match' \
                 .format(red=Fore.RED, white=Fore.WHITE))
     else:
-        print('[{red}-{white}] Either Faraday Server not running or database not working'.format(red=Fore.RED, white=Fore.WHITE))
+        print('[{red}-{white}] Credentials can not be checked. Either Faraday Server not running or database not working'.format(red=Fore.RED, white=Fore.WHITE))
 
     if check_storage_permission():
-        print('[{green}+{white}] ~/.faraday/storage -> Permission accepted' \
+        print('[{green}+{white}] /.faraday/storage -> Permission accepted' \
             .format(green=Fore.GREEN, white=Fore.WHITE))
     else:
-        print('[{red}-{white}] ~/.faraday/storage -> Permission denied'\
+        print('[{red}-{white}] /.faraday/storage -> Permission denied'\
             .format(red=Fore.RED, white=Fore.WHITE))
 
     if check_open_ports():
         print "[{green}+{white}] Port {PORT} in {ad} is open"\
             .format(PORT=server.config.faraday_server.port, green=Fore.GREEN,white=Fore.WHITE,ad=server.config.faraday_server.bind_address)
     else:
-        print "[{red}-{white}] in {ad} is not open"\
+        print "[{red}-{white}] Port {PORT} in {ad} is not open"\
             .format(PORT=server.config.faraday_server.port,red=Fore.RED,white=Fore.WHITE,ad =server.config.faraday_server.bind_address)
+
+
+def full_status_check():
+    print('\n{white}Checking if postgreSQL is running...'.format(white=Fore.WHITE))  
+    print_postgresql_status()
+
+    print('\n{white}Checking if Faraday is running...'.format(white=Fore.WHITE))
+    print_faraday_status()
+
+    print('\n{white}Checking Faraday dependencies...'.format(white=Fore.WHITE))   
+    print_depencencies_status()
+
+    print('\n{white}Checking Faraday config...{white}'.format(white=Fore.WHITE))
+    print_config_status()
+    

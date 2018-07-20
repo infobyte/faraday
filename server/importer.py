@@ -1354,17 +1354,14 @@ class ImportCouchDB():
         users_import.run()
 
         logger.info('Importing workspaces. Using {0} threads'.format(multiprocessing.cpu_count() * 2))
-        workspace_threads = []
-        with tqdm(total=len(workspaces_list) * 18,
-                  unit='B', unit_scale=True, unit_divisor=1024) as pbar:
-            for workspace_name in workspaces_list:
-                logger.debug(u'Setting up workspace {}'.format(workspace_name))
+        for workspace_name in tqdm(workspaces_list):
+            logger.debug(u'Setting up workspace {}'.format(workspace_name))
 
-                if not server.couchdb.server_has_access_to(workspace_name):
-                    logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
-                                 " configuration file has CouchDB admin's credentials set")
-                    sys.exit(1)
-                self.import_workspace_into_database(workspace_name, pbar)
+            if not server.couchdb.server_has_access_to(workspace_name):
+                logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
+                             " configuration file has CouchDB admin's credentials set")
+                sys.exit(1)
+            self.import_workspace_into_database(workspace_name)
 
     def get_objs(self, host, obj_type, level, workspace):
         if obj_type == 'Credential':
@@ -1452,7 +1449,7 @@ class ImportCouchDB():
                     couchdb_relational_map_by_type[couchdb_id].append({'type': obj_type, 'id': new_obj.id})
                     couchdb_relational_map[couchdb_id].append(new_obj.id)
 
-    def import_workspace_into_database(self, workspace_name, pbar):
+    def import_workspace_into_database(self, workspace_name):
         with app.app_context():
 
             faraday_importer = FaradayEntityImporter(workspace_name)
@@ -1488,7 +1485,6 @@ class ImportCouchDB():
                 except Exception as ex:
                     logger.exception(ex)
                     raise
-                pbar.update(1)
             update_command_tools(workspace, command_tool_map,
                                  couchdb_relational_map_by_type)
             session.commit()

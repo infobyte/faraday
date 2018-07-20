@@ -1354,7 +1354,7 @@ class ImportCouchDB():
         users_import.run()
 
         logger.info('Importing workspaces. Using {0} threads'.format(multiprocessing.cpu_count() * 2))
-        for workspace_name in tqdm(workspaces_list):
+        for workspace_name in workspaces_list:
             logger.debug(u'Setting up workspace {}'.format(workspace_name))
 
             if not server.couchdb.server_has_access_to(workspace_name):
@@ -1430,7 +1430,8 @@ class ImportCouchDB():
     def import_level_objects(self, couch_url, faraday_importer, couchdb_relational_map_by_type, couchdb_relational_map, command_tool_map, level, obj_type, workspace):
         obj_importer = faraday_importer.get_importer_from_document(obj_type)()
         objs_dict = self.get_objs(couch_url, obj_type, level, workspace)
-        for raw_obj in (objs_dict.get('rows', [])):
+        print('Importing {0} from workspace {1}'.format(obj_type, workspace.name))
+        for raw_obj in tqdm(objs_dict.get('rows', [])):
             # we use no_autoflush since some queries triggers flush and some relationship are missing in the middle
             with session.no_autoflush:
                 raw_obj = raw_obj['value']

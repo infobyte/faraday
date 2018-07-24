@@ -1386,14 +1386,22 @@ class ImportCouchDB():
                 if parent_couchdb_id:
                     break
             if not parent_couchdb_id:
-                raise Exception('Could not found couchdb id!')
+                logger.warn('Could not found couchdb id! This is fine if you created hosts after migration')
+                continue
             vulns = get_children_from_couch(workspace, parent_couchdb_id, 'Vulnerability')
             interfaces = get_children_from_couch(workspace, parent_couchdb_id, 'Interface')
             for interface in interfaces:
                 interface = interface['value']
                 vulns += get_children_from_couch(workspace, interface.get('_id'), 'Vulnerability')
 
-            assert len(set(map(lambda vuln: vuln['value'].get('name'), vulns))) == len(set(map(lambda vuln: vuln.name, host.vulnerabilities)))
+            old_host_count = len(set(map(lambda vuln: vuln['value'].get('name'), vulns)))
+            new_host_count = len(set(map(lambda vuln: vuln.name, host.vulnerabilities)))
+            if old_host_count != new_host_count:
+                logger.info("Host count didn't match")
+                if old_host_count < new_host_count:
+                    logger.warn('More host were found in postgreSQL. This is normal if you used the workspace {0}'.format(workspace.id))
+                if new_host_count < old_host_count:
+                    logger.error('Some hosts were not imported!!')
 
     def verify_import_data(self, couchdb_relational_map, couchdb_relational_map_by_type, workspace):
         self.verify_host_vulns_count_is_correct(couchdb_relational_map, couchdb_relational_map_by_type, workspace)

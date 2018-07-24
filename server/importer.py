@@ -1375,7 +1375,8 @@ class ImportCouchDB():
 
     def verify_host_vulns_count_is_correct(self, couchdb_relational_map, couchdb_relational_map_by_type, workspace):
         hosts = session.query(Host).filter_by(workspace=workspace)
-        for host in hosts:
+        logger.info('Verifying data migratio')
+        for host in tqdm(hosts, total=hosts.count()):
             parent_couchdb_id = None
             for couchdb_id, relational_ids in couchdb_relational_map_by_type.items():
                 for obj_data in relational_ids:

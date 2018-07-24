@@ -1494,7 +1494,7 @@ class ImportCouchDB():
                     )
                 except Exception as ex:
                     logger.exception(ex)
-                    raise
+                    continue
             update_command_tools(workspace, command_tool_map,
                                  couchdb_relational_map_by_type)
             session.commit()

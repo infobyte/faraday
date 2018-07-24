@@ -266,6 +266,10 @@ angular.module('faradayApp')
                 });
             };
 
+            $scope.clearSearch = function() {
+                $scope.search = '';
+            }
+
             // toggles sort field and order
             $scope.toggleSort = function(field) {
                 $scope.toggleSortField(field);

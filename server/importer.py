@@ -652,10 +652,10 @@ class VulnerabilityImporter(object):
                     name=document.get('name'),
                     description=document.get('desc').strip().strip('\n'),
                     service_id=parent.id,
-                    method=method,
-                    parameter_name=pname,
-                    path=path,
-                    website=website,
+                    method=method or '',
+                    parameter_name=pname or '',
+                    path=path or '',
+                    website=website or '',
                     workspace=workspace,
                 )
 

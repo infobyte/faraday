@@ -575,6 +575,9 @@ class VulnerabilityView(PaginatedMixin,
                     as_attachment=True,
                     mimetype=depot_file.content_type
                 )
-
+            else:
+                flask.abort(404, "File not found")
+        else:
+            flask.abort(404, "Vulnerability not found")
 
 VulnerabilityView.register(vulns_api)

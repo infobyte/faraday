@@ -27,6 +27,10 @@ from collections import (
 from slugify import slugify
 from sqlalchemy import Text, String
 from binascii import unhexlify
+try:
+    from urllib import quote
+except ImportError:
+    from urllib.parse import quote
 
 from IPy import IP
 from passlib.utils.binary import ab64_encode
@@ -739,9 +743,23 @@ class VulnerabilityImporter(object):
                 password=server.config.couchdb.password,
                 hostname=server.config.couchdb.host,
                 port=server.config.couchdb.port,
-                path='{0}/{1}/{2}'.format(workspace.name, document.get('_id'), attachment_name)
+                path='{0}/{1}/{2}'.format(
+                    workspace.name,
+                    document.get('_id'),
+                    quote(attachment_name))
             )
-            response = requests.get(attachment_url)
+            try:
+                response = requests.get(attachment_url)
+                response.raise_for_status()
+            except HTTPError:
+                logger.warn(
+                    'Unable to fetch attachment {} from workspace '
+                    '{}'.format(
+                        attachment_name, workspace.name
+                    )
+                )
+                logger.debug('Attachment URL: {}'.format(attachment_url))
+                continue
             response.raw.decode_content = True
             attachment_file = NamedTemporaryFile()
             attachment_file.write(response.content)
@@ -1375,7 +1393,7 @@ class ImportCouchDB():
 
     def verify_host_vulns_count_is_correct(self, couchdb_relational_map, couchdb_relational_map_by_type, workspace):
         hosts = session.query(Host).filter_by(workspace=workspace)
-        logger.info('Verifying data migratio')
+        logger.info('Verifying data migration')
         for host in tqdm(hosts, total=hosts.count()):
             parent_couchdb_id = None
             for couchdb_id, relational_ids in couchdb_relational_map_by_type.items():

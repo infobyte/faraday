@@ -20,11 +20,10 @@ node (label: "master"){
         sh """
             source ${ENV_PATH}/bin/activate
             pip install virtualenv responses
-            pip install 'Tornado<5.0.0'
-            pip install -r $WORKSPACE/requirements.txt
-            pip install -r $WORKSPACE/requirements_server.txt
-            pip install -r $WORKSPACE/requirements_extras.txt
-            pip install -r $WORKSPACE/requirements_dev.txt
+            pip install -U -r $WORKSPACE/requirements.txt
+            pip install -U -r $WORKSPACE/requirements_server.txt
+            pip install -U -r $WORKSPACE/requirements_extras.txt
+            pip install -U -r $WORKSPACE/requirements_dev.txt
             deactivate
            """
     }

@@ -256,12 +256,12 @@ class PluginBase(object):
         self.__addPendingAction(Modelactions.ADDSERVICEHOST, serv_obj)
         return serv_obj.getID()
 
-    def createAndAddVulnToHost(self, host_id, name, desc="", ref=[],
+    def createAndAddVulnToHost(self, host_id, name, data="", desc="", ref=[],
                                severity="", resolution=""):
 
         vuln_obj = model.common.factory.createModelObject(
             Vuln.class_signature,
-            name, desc=desc, refs=ref, severity=severity,
+            name, data=data, desc=desc, refs=ref, severity=severity,
             resolution=resolution, confirmed=False,
             parent_id=host_id, parent_type='Host',
             workspace_name=self.workspace)
@@ -273,13 +273,13 @@ class PluginBase(object):
     @deprecation.deprecated(deprecated_in="3.0", removed_in="3.5",
                             current_version=VERSION,
                             details="Interface object removed. Use host or service instead. Vuln will be added to Host")
-    def createAndAddVulnToInterface(self, host_id, interface_id, name,
+    def createAndAddVulnToInterface(self, host_id, interface_id, name, data="",
                                     desc="", ref=[], severity="",
                                     resolution=""):
 
         vuln_obj = model.common.factory.createModelObject(
             Vuln.class_signature,
-            name, desc=desc, refs=ref, severity=severity,
+            name, data=data, desc=desc, refs=ref, severity=severity,
             resolution=resolution, confirmed=False,
             parent_type='Host', parent_id=host_id,
             workspace_name=self.workspace)
@@ -288,12 +288,12 @@ class PluginBase(object):
         self.__addPendingAction(Modelactions.ADDVULNHOST, vuln_obj)
         return vuln_obj.getID()
 
-    def createAndAddVulnToService(self, host_id, service_id, name, desc="",
+    def createAndAddVulnToService(self, host_id, service_id, name, desc="", data="",
                                   ref=[], severity="", resolution=""):
 
         vuln_obj = model.common.factory.createModelObject(
             Vuln.class_signature,
-            name, desc=desc, refs=ref, severity=severity,
+            name, data=data, desc=desc, refs=ref, severity=severity,
             resolution=resolution, confirmed=False,
             parent_type='Service', parent_id=service_id,
             workspace_name=self.workspace)
@@ -302,14 +302,14 @@ class PluginBase(object):
         self.__addPendingAction(Modelactions.ADDVULNSRV, vuln_obj)
         return vuln_obj.getID()
 
-    def createAndAddVulnWebToService(self, host_id, service_id, name, desc="",
+    def createAndAddVulnWebToService(self, host_id, service_id, name, data="", desc="",
                                      ref=[], severity="", resolution="",
                                      website="", path="", request="",
                                      response="", method="", pname="",
                                      params="", query="", category=""):
         vulnweb_obj = model.common.factory.createModelObject(
             VulnWeb.class_signature,
-            name, desc=desc, refs=ref, severity=severity,
+            name, data=data, desc=desc, refs=ref, severity=severity,
             resolution=resolution, website=website, path=path,
             request=request, response=response, method=method,
             pname=pname, params=params, query=query,

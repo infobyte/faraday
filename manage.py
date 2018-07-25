@@ -142,7 +142,7 @@ def change_password():
     if password is None or password == "":
         print "Invalid password"
         exit
-    change_pass.b(username, password)
+    change_pass.changes_password(username, password)
 
 def validate_user_unique_field(ctx, param, value):
     with app.app_context():

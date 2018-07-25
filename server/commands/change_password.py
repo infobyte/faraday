@@ -1,7 +1,7 @@
 from server.web import app
 from server.models import User, db
 
-def b(username, password):
+def changes_password(username, password):
     with app.app_context():
         user = User.query.filter_by(username=username).first()
         if user:

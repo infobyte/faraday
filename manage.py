@@ -17,7 +17,7 @@ from persistence.server.server import _conf, FARADAY_UP, SERVER_URL
 from server.commands.initdb import InitDB
 from server.commands.faraday_schema_display import DatabaseSchema
 from server.commands.app_urls import show_all_urls
-from server.commands.import_reports import import_external_reports
+from server.commands.reports import import_external_reports
 from server.commands import status_check as status_check_functions
 from server.commands import change_password as change_pass
 from server.models import db, User

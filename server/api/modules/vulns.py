@@ -287,7 +287,8 @@ class TypeFilter(Filter):
 
 class CreatorFilter(Filter):
     def filter(self, query, model, attr, value):
-        return query.filter(model.creator_command_tool == value)
+        return query.filter(model.creator_command_tool.ilike(
+            '%' + value + '%'))
 
 
 class ServiceFilter(Filter):

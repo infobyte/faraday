@@ -15,6 +15,7 @@ from colorama import init
 from server.web import app
 from server.models import db
 from utils import dependencies
+from requests.exceptions import InvalidURL, ConnectionError
 from colorama import Fore, Back, Style
 from server.utils.daemonize import is_server_running
 from config.configuration import getInstanceConfiguration
@@ -55,12 +56,14 @@ def check_client():
 
     port_rest = CONF.getApiRestfulConInfoPort()
 
+    if port_rest is None:
+        port_rest = "9977"
     try:
         response_rest = requests.get('http://{}:{}/status/check'.format(server.config.faraday_server.bind_address,port_rest))
         return True 
-    except requests.exceptions.ConnectionError:
+    except ConnectionError:
         return False
-    except requests.exceptions.InvalidURL:
+    except InvalidURL:
     	return False
 
 
@@ -117,7 +120,7 @@ def check_credentials():
         elif r.status_code == 500:
             return 500
 
-    except requests.exceptions.ConnectionError:
+    except ConnectionError:
         return None
 
 

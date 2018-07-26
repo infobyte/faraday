@@ -469,7 +469,7 @@ class SqlmapPlugin(PluginTerminalOutput):
             i_id,
             name=dbms_version,
             protocol="tcp",
-            status="down",
+            status="closed",
             version=str(dbms_version),
             ports=[str(db_port)],
             description="DB detect by SQLi")

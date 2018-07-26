@@ -12,6 +12,25 @@ angular.module('faradayApp')
             // hosts list
             $scope.hosts = [];
             $scope.totalHosts = 0;
+            $scope.columns = {
+                "id": false,
+                "ip": true,
+                "description": false,
+                "hostnames": false,
+                "services": false,
+                "mac": false,
+                "service_count": true,
+                "vuln_count": true,
+                "credential_count": true,
+                "os": true,
+                "owned": true,
+                "create_time": true,
+                "last_modified": true,
+            }
+            if($cookies.get('HColumns')) {
+                preferences = JSON.parse($cookies.get('HColumns'))
+                angular.extend($scope.columns, preferences);
+            }
             // current workspace
             $scope.workspace = $routeParams.wsId;
 
@@ -50,7 +69,7 @@ angular.module('faradayApp')
 
         var loadHosts = function() {
             hostsManager.getHosts(
-                $scope.workspace, $scope.currentPage - 1,
+                $scope.workspace, $scope.currentPage,
                 $scope.pageSize, $scope.expression,
                 $scope.sortField, $scope.sortDirection)
                 .then(function(batch) {
@@ -65,7 +84,7 @@ angular.module('faradayApp')
         };
 
         var createCredential = function(credentialData, parent_id){
-            
+
             // Add parent id, create credential and save to server.
             try {
                 var credentialObj = new credential(credentialData, parent_id);
@@ -180,10 +199,9 @@ angular.module('faradayApp')
             }
         };
 
-        $scope.insert = function(hostdata, interfaceData, credentialData) {
+        $scope.insert = function(hostdata, credentialData) {
 
-            var interfaceData = $scope.createInterface(hostdata, interfaceData);
-            hostsManager.createHost(hostdata, interfaceData, $scope.workspace).then(function(host) {
+            hostsManager.createHost(hostdata, $scope.workspace).then(function(host) {
                 if(credentialData.name && credentialData.username && credentialData.password){
                     createCredential(credentialData, hostdata._id);
                     host.credentials = 1;
@@ -206,23 +224,11 @@ angular.module('faradayApp')
         }
 
         $scope.new = function() {
-            var modal = $uibModal.open({
-                templateUrl: 'scripts/hosts/partials/modalNew.html',
-                controller: 'hostsModalNew',
-                size: 'lg',
-                resolve: {}
-             });
-
-            modal.result.then(function(data) {
-                var hostdata = data[0];
-                var interfaceData = data[1];
-                var credentialData = data[2];
-                $scope.insert(hostdata, interfaceData, credentialData);
-            });
+            $location.path('/host/ws/' + $scope.workspace + '/new');
         };
 
-        $scope.update = function(host, hostdata, interfaceData) {
-            hostsManager.updateHost(host, hostdata, interfaceData, $scope.workspace).then(function() {
+        $scope.update = function(host, hostdata) {
+            hostsManager.updateHost(host, hostdata, $scope.workspace).then(function() {
                 // load icons in case an operating system changed
                 $scope.loadIcons();
                 loadHosts();
@@ -249,51 +255,6 @@ angular.module('faradayApp')
             }
         };
 
-        $scope.createInterface = function (hostData, interfaceData){
-            if(typeof(hostData.ipv4) == "undefined") hostData.ipv4 = "";
-            if(typeof(hostData.ipv6) == "undefined") hostData.ipv6 = "";
-            var interfaceData = {
-                "_id": CryptoJS.SHA1(hostData.name).toString() + "." + CryptoJS.SHA1("" + "._." + interfaceData.ipv4 + "._." + interfaceData.ipv6).toString(),
-                "description": "",
-                "hostnames": interfaceData.hostnames,
-                "ipv4": {
-                    "mask": "0.0.0.0",
-                    "gateway": "0.0.0.0",
-                    "DNS": [],
-                    "address": interfaceData.ipv4
-                },
-                "ipv6": {
-                    "prefix": "00",
-                    "gateway": "0000.0000.0000.0000",
-                    "DNS": [],
-                    "address": interfaceData.ipv6
-                },
-                "mac": interfaceData.mac,
-                "metadata": {
-                    "update_time": new Date().getTime(),
-                    "update_user": "",
-                    "update_action": 0,
-                    "creator": "",
-                    "create_time": new Date().getTime(),
-                    "update_controller_action": "",
-                    "owner": "",
-
-                },
-                "name": hostData.name,
-                "network_segment": "",
-                "owned": false,
-                "owner": "",
-                "parent": CryptoJS.SHA1(hostData.name).toString(),
-                "ports": {
-                   "filtered": 0,
-                   "opened": 0,
-                   "closed": 0
-                },
-                "type": "Interface"
-            };
-            return interfaceData;
-        };
-
         $scope.selectedHosts = function() {
             var selected = [];
             $scope.hosts.forEach(function(host) {
@@ -309,6 +270,17 @@ angular.module('faradayApp')
             $scope.hosts.forEach(function(host) {
                 host.selected = $scope.selectall_hosts;
             });
+        };
+
+        $scope.hasDisabledFields = function(){
+            return Object.values($scope.columns).some(function(show){
+                return !show
+            });
+        };
+
+        $scope.toggleShow = function(column) {
+            $scope.columns[column] = !$scope.columns[column];
+            $cookies.put('HColumns', JSON.stringify($scope.columns));
         };
 
         // toggles sort field and order

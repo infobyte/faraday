@@ -4,11 +4,11 @@
 
 angular.module('faradayApp')
     .controller('serviceModalNew',
-        ['$scope', '$modalInstance', '$routeParams', 'host', 'servicesManager', 'hostsManager',
-        function($scope, $modalInstance, $routeParams, host, servicesManager, hostsManager) {
+        ['$scope', '$modalInstance', '$routeParams', 'SERVICE_STATUSES', 'host', 'servicesManager', 'hostsManager', 'commonsFact',
+        function($scope, $modalInstance, $routeParams, SERVICE_STATUSES, host, servicesManager, hostsManager, commonsFact) {
 
         init = function() {
-            $scope.service = {
+            $scope.data = {
                 "name": "",
                 "description": "",
                 "owned": false,
@@ -16,22 +16,20 @@ angular.module('faradayApp')
                 "ports": "",
                 "protocol": "",
                 "parent": "",
-                "status": "",
+                "status": "open",
                 "version": ""
             };
             // current Workspace
             var ws = $routeParams.wsId;
-
-            hostsManager.getInterfaces(ws, host._id).then(function(resp) {
-                $scope.service.parent = resp[0].value._id;
-            });
+            $scope.data.parent = host.id;
+            $scope.statuses = SERVICE_STATUSES;
         };
 
         $scope.ok = function() {
             var date = new Date(),
             timestamp = date.getTime()/1000.0;
 
-            $scope.service.metadata = {
+            $scope.data.metadata = {
                 "update_time": timestamp,
                 "update_user":  "",
                 "update_action": 0,
@@ -40,8 +38,15 @@ angular.module('faradayApp')
                 "update_controller_action": "UI Web New",
                 "owner": ""
             };
-
-            $modalInstance.close($scope.service);
+            servicesManager.createService($scope.data, $routeParams.wsId).then(function() {
+                $modalInstance.close($scope.data);
+            }, function(response) {
+                if (response.status == 409) {
+                    commonsFact.showMessage("Error while creating a new Service " + response.data.name + " Conflicting Vulnarability with id: " + response.data.object._id + ". " + response.data.message);
+                } else {
+                    commonsFact.showMessage("Error from backend: " + response.status);
+                }
+            });
         };
 
         $scope.cancel = function() {

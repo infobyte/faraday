@@ -45,10 +45,10 @@ angular.module('faradayApp')
 
         dashboardSrv.vulnColors = [
             "#932EBE",  // critical
-            "#DF3936",  // high
-            "#DFBF35",  // med
-            "#A1CE31",  // low
-            "#428BCA",  // info
+            "#e77273",  // high
+            "#e7d174",  // med
+            "#bddd72",  // low
+            "#7aabd9",  // info
             "#999999"   // unclassified
         ];
 
@@ -208,9 +208,22 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
+        dashboardSrv.getVulnerabilitiesGroupedBy = function(ws, groupBy, confirmed) {
+            var deferred = $q.defer();
+
+            ServerAPI.getVulnsGroupedBy(ws, groupBy, confirmed)
+                .then(function(res) {
+                    deferred.resolve(res.data.groups);
+                }, function() {
+                    deferred.reject("Unable to get Vulnerabilities");
+                });
+
+            return deferred.promise;
+        };
+
         dashboardSrv.getObjectsCount = function(ws) {
             var deferred = $q.defer();
-            // Confirmed empty = All vulns 
+            // Confirmed empty = All vulns
             var confirmed = undefined;
 
             if (dashboardSrv.props['confirmed']) {
@@ -228,10 +241,22 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
+        dashboardSrv.getActivityFeed = function(ws) {
+            var deferred = $q.defer();
+
+            ServerAPI.getActivityFeed(ws).then(function(res) {
+                deferred.resolve(res.data);
+            }, function() {
+                deferred.reject();
+            });
+
+            return deferred.promise;
+        };
+
         dashboardSrv.getCommands = function(ws) {
             var deferred = $q.defer();
 
-            ServerAPI.getCommands(ws)
+            ServerAPI.getCommands(ws, undefined, true)
                 .then(function(res) {
                     var tmp = [];
                     res.data.commands.forEach(function(cmd) {
@@ -239,12 +264,14 @@ angular.module('faradayApp')
                         _cmd.user = _cmd.user || "unknown";
                         _cmd.hostname = _cmd.hostname || "unknown";
                         _cmd.ip = _cmd.ip || "0.0.0.0";
-                        if(_cmd.duration == "0" || _cmd.duration == "") {
+                        if(_cmd.duration == "In progress") {
                             _cmd.duration = "In progress";
+                        } else if (_cmd.duration == "Not started") {
+                            _cmd.duration = "Not started";
                         } else if(_cmd.duration != undefined) {
                             _cmd.duration = _cmd.duration.toFixed(2) + "s";
                         }
-                        _cmd.date = _cmd.itime * 1000;                        
+                        _cmd.date = _cmd.itime;
                         tmp.push(_cmd);
                     });
 
@@ -276,7 +303,7 @@ angular.module('faradayApp')
         dashboardSrv.getHostsCountByCommandId = function(ws, command_id) {
 
             var deferred = $q.defer();
-          
+
             ServerAPI.getHosts(ws, {"command_id": command_id })
                 .then(function(res) {
                     deferred.resolve(res.data);
@@ -288,10 +315,10 @@ angular.module('faradayApp')
 
         dashboardSrv.getHost = function(ws, host_id) {
             var deferred = $q.defer();
-            ServerAPI.getHosts(ws, {'couchid': host_id})
+            ServerAPI.getHost(ws, host_id)
                 .then(function(res) {
                     if (res.rows == 1) {
-                        deferred.resolve(res.data.rows[0]);
+                        deferred.resolve(res.data);
                     } else {
                         deferred.reject("More than one object found by ID");
                     }
@@ -305,14 +332,7 @@ angular.module('faradayApp')
 
             var deferred = $q.defer();
             ServerAPI.getServicesByHost(ws, host_id).then(function(res){
-                var tmp = [];
-                res.data.services.forEach(function(service){
-                    var _service = service.value;
-                    _service["id"] = service.id;
-                    _service["port"] = _service.ports;
-                    tmp.push(_service);
-                });
-                deferred.resolve(tmp);
+                deferred.resolve(res.data);
             }, function(){
                 deferred.reject();
             });

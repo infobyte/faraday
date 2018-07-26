@@ -41,7 +41,6 @@ def exception_handler(type, value, tb):
     Since this handler may be called from threads, the dialog must be created
     using gtk idle_add or signals to avoid issues.
     """
-    import requests
     import hashlib
     import platform
 

@@ -24,11 +24,16 @@ angular.module('faradayApp')
                 }
             };
 
+            // Used to set the order ob the items
+            countFields = ['hosts', 'credentials', 'services', 'std_vulns',
+                           'total_vulns', 'web_vulns']
+
             $scope.loadData = function() {
                 dashboardSrv.getObjectsCount($scope.workspace)
                     .then(function(obj_count) {
                         $scope.objectsCount = [];
-                        for (var property in obj_count) {
+                        // for (var property in obj_count) {
+                        countFields.forEach(function(property){
                             if (obj_count.hasOwnProperty(property) && obj_count[property] > 0) {
                                 var tmp_obj = {};
                                 tmp_obj["value"] = obj_count[property];
@@ -38,7 +43,7 @@ angular.module('faradayApp')
                                 tmp_obj["key"] = property.replace("_", " ");
                                 $scope.objectsCount.push(tmp_obj);
                             }
-                        }
+                        });
                     });
             };
 

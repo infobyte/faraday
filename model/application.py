@@ -8,16 +8,20 @@ See the file 'doc/LICENSE' for the license information
 import os
 import sys
 import signal
+import json
 import threading
-import requests
-
 from json import loads
 from time import sleep
+from Queue import Queue
+
+import requests
 
 from model.controller import ModelController
 from managers.workspace_manager import WorkspaceManager
 from plugins.controller import PluginController
+from persistence.server.server import login_user
 
+from utils.logs import setUpLogger
 import model.api
 import model.guiapi
 import apis.rest.api as restapi
@@ -78,12 +82,32 @@ class MainApplication(object):
 
         self.args = args
 
-        self._mappers_manager = MapperManager()
+        logger = getLogger(self)
+        if args.creds_file:
+            try:
+                with open(args.creds_file, 'r') as fp:
+                    creds = json.loads(fp.read())
+                    username = creds.get('username')
+                    password = creds.get('password')
+                    session_cookie = login_user(CONF.getServerURI(),
+                                                username, password)
+                    if session_cookie:
+                        logger.info('Login successful')
+                        CONF.setDBUser(username)
+                        CONF.setDBSessionCookies(session_cookie)
+                    else:
+                        logger.error('Login failed')
+            except (IOError, ValueError):
+                logger.error("Credentials file couldn't be loaded")
 
-        self._model_controller = ModelController(self._mappers_manager)
+        self._mappers_manager = MapperManager()
+        pending_actions = Queue()
+        self._model_controller = ModelController(self._mappers_manager, pending_actions)
 
         self._plugin_manager = PluginManager(
-            os.path.join(CONF.getConfigPath(), "plugins"))
+            os.path.join(CONF.getConfigPath(), "plugins"),
+            pending_actions=pending_actions,
+        )
 
         self._workspace_manager = WorkspaceManager(
             self._mappers_manager)
@@ -92,12 +116,19 @@ class MainApplication(object):
         self._plugin_controller = PluginController(
             'PluginController',
             self._plugin_manager,
-            self._mappers_manager
+            self._mappers_manager,
+            pending_actions
         )
 
         if self.args.cli:
+
             self.app = CliApp(self._workspace_manager, self._plugin_controller)
-            CONF.setMergeStrategy("new")
+
+            if self.args.keep_old:
+                CONF.setMergeStrategy("old")
+            else:
+                CONF.setMergeStrategy("new")
+
         else:
             self.app = UiFactory.create(self._model_controller,
                                         self._plugin_manager,
@@ -110,7 +141,7 @@ class MainApplication(object):
 
     def on_connection_lost(self):
         """All it does is send a notification to the notification center"""
-        model.guiapi.notification_center.CouchDBConnectionProblem()
+        model.guiapi.notification_center.DBConnectionProblem()
 
     def enableExceptHook(self):
         sys.excepthook = exception_handler
@@ -149,11 +180,11 @@ class MainApplication(object):
 
             exit_code = self.app.run(self.args)
 
-        except Exception:
-            print "There was an error while starting Faraday"
-            print "-" * 50
-            traceback.print_exc()
-            print "-" * 50
+        except Exception as exception:
+            print "There was an error while starting Faraday:"
+            print "*" * 3,
+            print exception, # instead of traceback.print_exc()
+            print "*" * 3
             exit_code = -1
 
         finally:
@@ -169,7 +200,9 @@ class MainApplication(object):
         model.api.stopAPIServer()
         restapi.stopServer()
         self._model_controller.stop()
-        self._model_controller.join()
+        if self._model_controller.isAlive():
+            # runs only if thread has started, i.e. self._model_controller.start() is run first
+            self._model_controller.join()
         self.timer.stop()
         model.api.devlog("Waiting for controller threads to end...")
         return exit_code

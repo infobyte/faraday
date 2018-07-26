@@ -1,0 +1,1198 @@
+1/tcp	tcpmux
+7/tcp	echo
+7/udp	echo
+9/tcp	discard
+9/udp	discard
+11/tcp	systat
+13/tcp	daytime
+13/udp	daytime
+15/tcp	netstat
+17/tcp	qotd
+18/tcp	msp
+18/udp	msp
+19/tcp	chargen
+19/udp	chargen
+20/tcp	ftp-data
+21/tcp	ftp
+21/udp	fsp
+22/tcp	ssh
+22/udp	ssh
+23/tcp	telnet
+25/tcp	smtp
+37/tcp	time
+37/udp	time
+39/udp	rlp
+42/tcp	nameserver
+43/tcp	whois
+49/tcp	tacacs
+49/udp	tacacs
+50/tcp	re-mail-ck
+50/udp	re-mail-ck
+53/tcp	domain
+53/udp	domain
+57/tcp	mtp
+65/tcp	tacacs-ds
+65/udp	tacacs-ds
+67/tcp	bootps
+67/udp	bootps
+68/tcp	bootpc
+68/udp	bootpc
+69/udp	tftp
+70/tcp	gopher
+70/udp	gopher
+77/tcp	rje
+79/tcp	finger
+80/tcp	http
+80/udp	http
+87/tcp	link
+88/tcp	kerberos
+88/udp	kerberos
+95/tcp	supdup
+101/tcp	hostnames
+102/tcp	iso-tsap
+104/tcp	acr-nema
+104/udp	acr-nema
+105/tcp	csnet-ns
+105/udp	csnet-ns
+107/tcp	rtelnet
+107/udp	rtelnet
+109/tcp	pop2
+109/udp	pop2
+110/tcp	pop3
+110/udp	pop3
+111/tcp	sunrpc
+111/udp	sunrpc
+113/tcp	auth
+115/tcp	sftp
+117/tcp	uucp-path
+119/tcp	nntp
+123/tcp	ntp
+123/udp	ntp
+129/tcp	pwdgen
+129/udp	pwdgen
+135/tcp	loc-srv
+135/udp	loc-srv
+137/tcp	netbios-ns
+137/udp	netbios-ns
+138/tcp	netbios-dgm
+138/udp	netbios-dgm
+139/tcp	netbios-ssn
+139/udp	netbios-ssn
+143/tcp	imap2
+143/udp	imap2
+161/tcp	snmp
+161/udp	snmp
+162/tcp	snmp-trap
+162/udp	snmp-trap
+163/tcp	cmip-man
+163/udp	cmip-man
+164/tcp	cmip-agent
+164/udp	cmip-agent
+174/tcp	mailq
+174/udp	mailq
+177/tcp	xdmcp
+177/udp	xdmcp
+178/tcp	nextstep
+178/udp	nextstep
+179/tcp	bgp
+179/udp	bgp
+191/tcp	prospero
+191/udp	prospero
+194/tcp	irc
+194/udp	irc
+199/tcp	smux
+199/udp	smux
+201/tcp	at-rtmp
+201/udp	at-rtmp
+202/tcp	at-nbp
+202/udp	at-nbp
+204/tcp	at-echo
+204/udp	at-echo
+206/tcp	at-zis
+206/udp	at-zis
+209/tcp	qmtp
+209/udp	qmtp
+210/tcp	z3950
+210/udp	z3950
+213/tcp	ipx
+213/udp	ipx
+220/tcp	imap3
+220/udp	imap3
+345/tcp	pawserv
+345/udp	pawserv
+346/tcp	zserv
+346/udp	zserv
+347/tcp	fatserv
+347/udp	fatserv
+369/tcp	rpc2portmap
+369/udp	rpc2portmap
+370/tcp	codaauth2
+370/udp	codaauth2
+371/tcp	clearcase
+371/udp	clearcase
+372/tcp	ulistserv
+372/udp	ulistserv
+389/tcp	ldap
+389/udp	ldap
+406/tcp	imsp
+406/udp	imsp
+427/tcp	svrloc
+427/udp	svrloc
+443/tcp	https
+443/udp	https
+444/tcp	snpp
+444/udp	snpp
+445/tcp	microsoft-ds
+445/udp	microsoft-ds
+464/tcp	kpasswd
+464/udp	kpasswd
+465/tcp	urd
+487/tcp	saft
+487/udp	saft
+500/tcp	isakmp
+500/udp	isakmp
+554/tcp	rtsp
+554/udp	rtsp
+607/tcp	nqs
+607/udp	nqs
+610/tcp	npmp-local
+610/udp	npmp-local
+611/tcp	npmp-gui
+611/udp	npmp-gui
+612/tcp	hmmp-ind
+612/udp	hmmp-ind
+623/udp	asf-rmcp
+628/tcp	qmqp
+628/udp	qmqp
+631/tcp	ipp
+631/udp	ipp
+512/tcp	exec
+512/udp	biff
+513/tcp	login
+513/udp	who
+514/tcp	shell
+514/udp	syslog
+515/tcp	printer
+517/udp	talk
+518/udp	ntalk
+520/udp	route
+525/udp	timed
+526/tcp	tempo
+530/tcp	courier
+531/tcp	conference
+532/tcp	netnews
+533/udp	netwall
+538/tcp	gdomap
+538/udp	gdomap
+540/tcp	uucp
+543/tcp	klogin
+544/tcp	kshell
+546/tcp	dhcpv6-client
+546/udp	dhcpv6-client
+547/tcp	dhcpv6-server
+547/udp	dhcpv6-server
+548/tcp	afpovertcp
+548/udp	afpovertcp
+549/tcp	idfp
+549/udp	idfp
+556/tcp	remotefs
+563/tcp	nntps
+563/udp	nntps
+587/tcp	submission
+587/udp	submission
+636/tcp	ldaps
+636/udp	ldaps
+655/tcp	tinc
+655/udp	tinc
+706/tcp	silc
+706/udp	silc
+749/tcp	kerberos-adm
+765/tcp	webster
+765/udp	webster
+873/tcp	rsync
+873/udp	rsync
+989/tcp	ftps-data
+990/tcp	ftps
+992/tcp	telnets
+992/udp	telnets
+993/tcp	imaps
+993/udp	imaps
+994/tcp	ircs
+994/udp	ircs
+995/tcp	pop3s
+995/udp	pop3s
+1080/tcp	socks
+1080/udp	socks
+1093/tcp	proofd
+1093/udp	proofd
+1094/tcp	rootd
+1094/udp	rootd
+1194/tcp	openvpn
+1194/udp	openvpn
+1099/tcp	rmiregistry
+1099/udp	rmiregistry
+1214/tcp	kazaa
+1214/udp	kazaa
+1241/tcp	nessus
+1241/udp	nessus
+1352/tcp	lotusnote
+1352/udp	lotusnote
+1433/tcp	ms-sql-s
+1433/udp	ms-sql-s
+1434/tcp	ms-sql-m
+1434/udp	ms-sql-m
+1524/tcp	ingreslock
+1524/udp	ingreslock
+1525/tcp	prospero-np
+1525/udp	prospero-np
+1645/tcp	datametrics
+1645/udp	datametrics
+1646/tcp	sa-msg-port
+1646/udp	sa-msg-port
+1649/tcp	kermit
+1649/udp	kermit
+1677/tcp	groupwise
+1677/udp	groupwise
+1701/tcp	l2f
+1701/udp	l2f
+1812/tcp	radius
+1812/udp	radius
+1813/tcp	radius-acct
+1813/udp	radius-acct
+1863/tcp	msnp
+1863/udp	msnp
+1957/tcp	unix-status
+1958/tcp	log-server
+1959/tcp	remoteping
+2000/tcp	cisco-sccp
+2000/udp	cisco-sccp
+2010/tcp	search
+2010/tcp	pipe-server
+2049/tcp	nfs
+2049/udp	nfs
+2086/tcp	gnunet
+2086/udp	gnunet
+2101/tcp	rtcm-sc104
+2101/udp	rtcm-sc104
+2119/tcp	gsigatekeeper
+2119/udp	gsigatekeeper
+2135/tcp	gris
+2135/udp	gris
+2401/tcp	cvspserver
+2401/udp	cvspserver
+2430/tcp	venus
+2430/udp	venus
+2431/tcp	venus-se
+2431/udp	venus-se
+2432/tcp	codasrv
+2432/udp	codasrv
+2433/tcp	codasrv-se
+2433/udp	codasrv-se
+2583/tcp	mon
+2583/udp	mon
+2628/tcp	dict
+2628/udp	dict
+2792/tcp	f5-globalsite
+2792/udp	f5-globalsite
+2811/tcp	gsiftp
+2811/udp	gsiftp
+2947/tcp	gpsd
+2947/udp	gpsd
+3050/tcp	gds-db
+3050/udp	gds-db
+3130/tcp	icpv2
+3130/udp	icpv2
+3260/tcp	iscsi-target
+3306/tcp	mysql
+3306/udp	mysql
+3493/tcp	nut
+3493/udp	nut
+3632/tcp	distcc
+3632/udp	distcc
+3689/tcp	daap
+3689/udp	daap
+3690/tcp	svn
+3690/udp	svn
+4031/tcp	suucp
+4031/udp	suucp
+4094/tcp	sysrqd
+4094/udp	sysrqd
+4190/tcp	sieve
+4369/tcp	epmd
+4369/udp	epmd
+4373/tcp	remctl
+4373/udp	remctl
+4353/tcp	f5-iquery
+4353/udp	f5-iquery
+4500/udp	ipsec-nat-t
+4569/tcp	iax
+4569/udp	iax
+4691/tcp	mtn
+4691/udp	mtn
+4899/tcp	radmin-port
+4899/udp	radmin-port
+5002/udp	rfe
+5002/tcp	rfe
+5050/tcp	mmcc
+5050/udp	mmcc
+5060/tcp	sip
+5060/udp	sip
+5061/tcp	sip-tls
+5061/udp	sip-tls
+5190/tcp	aol
+5190/udp	aol
+5222/tcp	xmpp-client
+5222/udp	xmpp-client
+5269/tcp	xmpp-server
+5269/udp	xmpp-server
+5308/tcp	cfengine
+5308/udp	cfengine
+5353/tcp	mdns
+5353/udp	mdns
+5432/tcp	postgresql
+5432/udp	postgresql
+5556/tcp	freeciv
+5556/udp	freeciv
+5671/tcp	amqps
+5672/tcp	amqp
+5672/udp	amqp
+5672/sctp	amqp
+5688/tcp	ggz
+5688/udp	ggz
+6000/tcp	x11
+6000/udp	x11
+6001/tcp	x11-1
+6001/udp	x11-1
+6002/tcp	x11-2
+6002/udp	x11-2
+6003/tcp	x11-3
+6003/udp	x11-3
+6004/tcp	x11-4
+6004/udp	x11-4
+6005/tcp	x11-5
+6005/udp	x11-5
+6006/tcp	x11-6
+6006/udp	x11-6
+6007/tcp	x11-7
+6007/udp	x11-7
+6346/tcp	gnutella-svc
+6346/udp	gnutella-svc
+6347/tcp	gnutella-rtr
+6347/udp	gnutella-rtr
+6444/tcp	sge-qmaster
+6444/udp	sge-qmaster
+6445/tcp	sge-execd
+6445/udp	sge-execd
+6446/tcp	mysql-proxy
+6446/udp	mysql-proxy
+7000/tcp	afs3-fileserver
+7000/udp	afs3-fileserver
+7001/tcp	afs3-callback
+7001/udp	afs3-callback
+7002/tcp	afs3-prserver
+7002/udp	afs3-prserver
+7003/tcp	afs3-vlserver
+7003/udp	afs3-vlserver
+7004/tcp	afs3-kaserver
+7004/udp	afs3-kaserver
+7005/tcp	afs3-volser
+7005/udp	afs3-volser
+7006/tcp	afs3-errors
+7006/udp	afs3-errors
+7007/tcp	afs3-bos
+7007/udp	afs3-bos
+7008/tcp	afs3-update
+7008/udp	afs3-update
+7009/tcp	afs3-rmtsys
+7009/udp	afs3-rmtsys
+7100/tcp	font-service
+7100/udp	font-service
+8080/tcp	http-alt
+8080/udp	http-alt
+9101/tcp	bacula-dir
+9101/udp	bacula-dir
+9102/tcp	bacula-fd
+9102/udp	bacula-fd
+9103/tcp	bacula-sd
+9103/udp	bacula-sd
+9667/tcp	xmms2
+9667/udp	xmms2
+10809/tcp	nbd
+10050/tcp	zabbix-agent
+10050/udp	zabbix-agent
+10051/tcp	zabbix-trapper
+10051/udp	zabbix-trapper
+10080/tcp	amanda
+10080/udp	amanda
+11112/tcp	dicom
+11371/tcp	hkp
+11371/udp	hkp
+13720/tcp	bprd
+13720/udp	bprd
+13721/tcp	bpdbm
+13721/udp	bpdbm
+13722/tcp	bpjava-msvc
+13722/udp	bpjava-msvc
+13724/tcp	vnetd
+13724/udp	vnetd
+13782/tcp	bpcd
+13782/udp	bpcd
+13783/tcp	vopied
+13783/udp	vopied
+17500/tcp	db-lsp
+22125/tcp	dcap
+22128/tcp	gsidcap
+22273/tcp	wnn6
+22273/udp	wnn6
+1/ddp	rtmp
+2/ddp	nbp
+4/ddp	echo
+6/ddp	zip
+750/udp	kerberos4
+750/tcp	kerberos4
+751/udp	kerberos-master
+751/tcp	kerberos-master
+752/udp	passwd-server
+754/tcp	krb-prop
+760/tcp	krbupdate
+901/tcp	swat
+1109/tcp	kpop
+2053/tcp	knetd
+2102/udp	zephyr-srv
+2103/udp	zephyr-clt
+2104/udp	zephyr-hm
+2105/tcp	eklogin
+2111/tcp	kx
+2121/tcp	iprop
+871/tcp	supfilesrv
+1127/tcp	supfiledbg
+98/tcp	linuxconf
+106/tcp	poppassd
+106/udp	poppassd
+775/tcp	moira-db
+777/tcp	moira-update
+779/udp	moira-ureg
+783/tcp	spamd
+808/tcp	omirr
+808/udp	omirr
+1001/tcp	customs
+1001/udp	customs
+1178/tcp	skkserv
+1210/udp	predict
+1236/tcp	rmtcfg
+1300/tcp	wipld
+1313/tcp	xtel
+1314/tcp	xtelw
+1529/tcp	support
+2003/tcp	cfinger
+2121/tcp	frox
+2150/tcp	ninstall
+2150/udp	ninstall
+2600/tcp	zebrasrv
+2601/tcp	zebra
+2602/tcp	ripd
+2603/tcp	ripngd
+2604/tcp	ospfd
+2605/tcp	bgpd
+2606/tcp	ospf6d
+2607/tcp	ospfapi
+2608/tcp	isisd
+2988/tcp	afbackup
+2988/udp	afbackup
+2989/tcp	afmbackup
+2989/udp	afmbackup
+4224/tcp	xtell
+4557/tcp	fax
+4559/tcp	hylafax
+4600/tcp	distmp3
+4949/tcp	munin
+5051/tcp	enbd-cstatd
+5052/tcp	enbd-sstatd
+5151/tcp	pcrd
+5354/tcp	noclog
+5354/udp	noclog
+5355/tcp	hostmon
+5355/udp	hostmon
+5555/udp	rplay
+5666/tcp	nrpe
+5667/tcp	nsca
+5674/tcp	mrtd
+5675/tcp	bgpsim
+5680/tcp	canna
+6514/tcp	syslog-tls
+6566/tcp	sane-port
+6667/tcp	ircd
+8021/tcp	zope-ftp
+8081/tcp	tproxy
+8088/tcp	omniorb
+8088/udp	omniorb
+8990/tcp	clc-build-daemon
+9098/tcp	xinetd
+9359/udp	mandelspawn
+9418/tcp	git
+9673/tcp	zope
+10000/tcp	webmin
+10081/tcp	kamanda
+10081/udp	kamanda
+10082/tcp	amandaidx
+10083/tcp	amidxtape
+11201/tcp	smsqp
+11201/udp	smsqp
+15345/tcp	xpilot
+15345/udp	xpilot
+17001/udp	sgi-cmsd
+17002/udp	sgi-crsd
+17003/udp	sgi-gcd
+17004/tcp	sgi-cad
+20011/tcp	isdnlog
+20011/udp	isdnlog
+20012/tcp	vboxd
+20012/udp	vboxd
+24554/tcp	binkp
+27374/tcp	asp
+27374/udp	asp
+30865/tcp	csync2
+57000/tcp	dircproxy
+60177/tcp	tfido
+60179/tcp	fido
+1027/udp	Native IPv6 behind IPv4-to-IPv4 NAT Customer Premises Equipment (6a44)
+1058/tcp	nim, IBM AIX Network Installation Manager (NIM)
+1058/udp	nim, IBM AIX Network Installation Manager (NIM)
+1059/tcp	nimreg, IBM AIX Network Installation Manager (NIM)
+1059/udp	nimreg, IBM AIX Network Installation Manager (NIM)
+1080/tcp	SOCKS proxy
+1080/udp	SOCKS proxy
+1085/tcp	WebObjects
+1085/udp	WebObjects
+1098/tcp	rmiactivation, Java remote method invocation (RMI) activation
+1098/udp	rmiactivation, Java remote method invocation (RMI) activation
+1099/tcp	rmiregistry, Java remote method invocation (RMI) registry
+1099/assigned	rmiregistry, Java remote method invocation (RMI) registry
+1119/tcp	Battle.net chat/game protocol, used by Blizzard's games
+1119/udp	Battle.net chat/game protocol, used by Blizzard's games
+1167/udp	Cisco IP SLA (Service Assurance Agent)
+1167/tcp	Cisco IP SLA (Service Assurance Agent)
+1194/udp	OpenVPN
+1194/tcp	OpenVPN
+1198/udp	The cajo project Free dynamic transparent distributed computing in Java
+1198/tcp	The cajo project Free dynamic transparent distributed computing in Java
+1214/udp	Kazaa
+1214/tcp	Kazaa
+1234/udp	Infoseek search agent
+1234/tcp	Infoseek search agent
+1241/udp	Nessus Security Scanner
+1241/tcp	Nessus Security Scanner
+1270/udp	Microsoft System Center Operations Manager (SCOM) (formerly Microsoft Operations Manager (MOM)) agent
+1270/tcp	Microsoft System Center Operations Manager (SCOM) (formerly Microsoft Operations Manager (MOM)) agent
+1293/udp	Internet Protocol Security (IPSec)
+1293/tcp	Internet Protocol Security (IPSec)
+1311/udp	Windows RxMon.exe
+1311/tcp	Windows RxMon.exe
+1341/udp	Qubes (Manufacturing Execution System)
+1341/tcp	Qubes (Manufacturing Execution System)
+1344/udp	Internet Content Adaptation Protocol
+1344/tcp	Internet Content Adaptation Protocol
+1352/udp	IBM Lotus Notes/Domino (RPC) protocol
+1352/tcp	IBM Lotus Notes/Domino (RPC) protocol
+1360/udp	Mimer SQL
+1360/tcp	Mimer SQL
+1414/udp	IBM WebSphere MQ (formerly known as MQSeries)
+1414/tcp	IBM WebSphere MQ (formerly known as MQSeries)
+1417/udp	Timbuktu Service 1 Port
+1417/tcp	Timbuktu Service 1 Port
+1418/udp	Timbuktu Service 2 Port
+1418/tcp	Timbuktu Service 2 Port
+1419/udp	Timbuktu Service 3 Port
+1419/tcp	Timbuktu Service 3 Port
+1420/udp	Timbuktu Service 4 Port
+1420/tcp	Timbuktu Service 4 Port
+1433/udp	Microsoft SQL Server database management system (MSSQL) server
+1433/tcp	Microsoft SQL Server database management system (MSSQL) server
+1434/udp	Microsoft SQL Server database management system (MSSQL) monitor
+1434/tcp	Microsoft SQL Server database management system (MSSQL) monitor
+1512/udp	Microsoft's Windows Internet Name Service (WINS)
+1512/tcp	Microsoft's Windows Internet Name Service (WINS)
+1521/udp	nCUBE License Manager
+1521/tcp	nCUBE License Manager
+1524/udp	ingreslock, ingres
+1524/tcp	ingreslock, ingres
+1527/udp	Oracle Net Services, formerly known as SQL*Net
+1527/tcp	Oracle Net Services, formerly known as SQL*Net
+1533/udp	IBM Sametime Virtual Places Chat
+1533/tcp 	IBM Sametime Virtual Places Chat
+1547/udp 	Laplink
+1547/tcp 	Laplink
+1581/udp 	MIL STD 2045-47001 VMF
+1581/tcp 	MIL STD 2045-47001 VMF
+1589/udp 	Cisco VLAN Query Protocol (VQP)
+1589/tcp 	Cisco VLAN Query Protocol (VQP)
+1628/udp 	LonTalk normal
+1628/tcp 	LonTalk normal
+1629/udp 	LonTalk urgent
+1629/tcp 	LonTalk urgent
+1677/udp 	Novell GroupWise clients in client/server access mode
+1677/tcp 	Novell GroupWise clients in client/server access mode
+1701/udp 	Layer 2 Forwarding Protocol (L2F)
+1701/tcp 	Layer 2 Forwarding Protocol (L2F)
+1701/udp 	Layer 2 Tunneling Protocol (L2TP)
+1701/assigned	Layer 2 Tunneling Protocol (L2TP)
+1707/udp	Windward Studios games (vdmplay)
+1707/tcp	Windward Studios games (vdmplay)
+1719/udp	H.323 registration and alternate communication
+1719/tcp	H.323 registration and alternate communication
+1720/udp	H.323 call signaling
+1720/tcp	H.323 call signaling
+1755/udp	Microsoft Media Services (MMS, ms-streaming)
+1755/tcp	Microsoft Media Services (MMS, ms-streaming)
+1801/udp	Microsoft Message Queuing
+1801/tcp	Microsoft Message Queuing
+1812/udp	RADIUS authentication protocol, radius
+1812/tcp	RADIUS authentication protocol, radius
+1813/udp	RADIUS accounting protocol, radius-acct
+1813/tcp	RADIUS accounting protocol, radius-acct
+1863/udp	Microsoft Notification Protocol (MSNP), used by the Microsoft Messenger service and a number of instant messaging Messenger clients
+1863/tcp	Microsoft Notification Protocol (MSNP), used by the Microsoft Messenger service and a number of instant messaging Messenger clients
+1883/udp	MQTT (formerly MQ Telemetry Transport)
+1883/tcp	MQTT (formerly MQ Telemetry Transport)
+1900/udp	Simple Service Discovery Protocol (SSDP), discovery of UPnP devices
+1900/assigned	Simple Service Discovery Protocol (SSDP), discovery of UPnP devices
+1935/udp	Macromedia Flash Communications Server MX, the precursor to Adobe Flash Media Server before Macromedia's acquisition by Adobe on December 3, 2005
+1935/tcp	Macromedia Flash Communications Server MX, the precursor to Adobe Flash Media Server before Macromedia's acquisition by Adobe on December 3, 2005
+1970/udp	Netop Remote Control
+1970/tcp	Netop Remote Control
+1972/udp	InterSystems Caché
+1972/tcp	InterSystems Caché
+1984/udp	Big Brother
+1984/tcp	Big Brother
+1985/udp 	Cisco Hot Standby Router Protocol (HSRP)
+1985/assigned	Cisco Hot Standby Router Protocol (HSRP)
+1998/udp	Cisco X.25 over TCP (XOT) service
+1998/tcp	Cisco X.25 over TCP (XOT) service
+2000/udp	Cisco Skinny Client Control Protocol (SCCP)
+2000/tcp	Cisco Skinny Client Control Protocol (SCCP)
+2080/udp	Autodesk NLM (FLEXlm)
+2080/tcp	Autodesk NLM (FLEXlm)
+2083/udp	Secure RADIUS Service (radsec)
+2083/tcp	Secure RADIUS Service (radsec)
+2086/udp	GNUnet
+2086/tcp	GNUnet
+2102/udp	Zephyr Notification Service server
+2102/tcp	Zephyr Notification Service server
+2103/udp	Zephyr Notification Service serv-hm connection
+2103/tcp	Zephyr Notification Service serv-hm connection
+2104/udp	Zephyr Notification Service hostmanager
+2104/tcp	Zephyr Notification Service hostmanager
+2123/udp	GTP control messages (GTP-C)
+2123/tcp	GTP control messages (GTP-C)
+2142/udp	TDMoIP (TDM over IP)
+2142/tcp	TDMoIP (TDM over IP)
+2152/udp	GTP user data messages (GTP-U)
+2152/tcp	GTP user data messages (GTP-U)
+2159/udp	GDB remote debug port
+2159/tcp	GDB remote debug port
+2181/udp	EForward-document transport system
+2181/tcp	EForward-document transport system
+2210/udp	NOAAPORT Broadcast Network
+2210/tcp	NOAAPORT Broadcast Network
+2211/udp	EMWIN
+2211/tcp	EMWIN
+2222/udp	EtherNet/IP implicit messaging for IO data
+2222/tcp	EtherNet/IP implicit messaging for IO data
+2261/udp	CoMotion master
+2261/tcp	CoMotion master
+2262/udp	CoMotion backup
+2262/tcp	CoMotion backup
+2266/udp	M-Files
+2266/tcp	M-Files
+2399/udp	FileMaker Data Access Layer (ODBC/JDBC)
+2399/tcp	FileMaker Data Access Layer (ODBC/JDBC)
+2401/udp	CVS version control system password-based server
+2401/tcp	CVS version control system password-based server
+2404/udp	IEC 60870-5-104, used to send electric power telecontrol messages between two systems via directly connected data circuits
+2404/tcp	IEC 60870-5-104, used to send electric power telecontrol messages between two systems via directly connected data circuits
+2427/udp	Media Gateway Control Protocol (MGCP) media gateway
+2427/tcp	Media Gateway Control Protocol (MGCP) media gateway
+2447/udp	ovwdb—OpenView Network Node Manager (NNM) daemon
+2447/tcp	ovwdb—OpenView Network Node Manager (NNM) daemon
+2483/udp	Oracle database listening for insecure client connections to the listener, replaces port 1521
+2483/tcp	Oracle database listening for insecure client connections to the listener, replaces port 1521
+2484/udp	Oracle database listening for SSL client connections to the listener
+2484/tcp	Oracle database listening for SSL client connections to the listener
+2535/udp	Multicast Address Dynamic Client Allocation Protocol (MADCAP). All standard messages are UDP datagrams.
+2535/tcp	Multicast Address Dynamic Client Allocation Protocol (MADCAP). All standard messages are UDP datagrams.
+2541/udp	LonTalk/IP
+2541/tcp	LonTalk/IP
+2546/udp	EVault data protection services
+2546/tcp	EVault data protection services
+2547/udp	EVault data protection services
+2547/tcp	EVault data protection services
+2548/udp	EVault data protection services
+2548/tcp	EVault data protection services
+2638/udp	SQL Anywhere database server
+2638/tcp	SQL Anywhere database server
+2727/udp	Media Gateway Control Protocol (MGCP) media gateway controller (call agent)
+2727/tcp	Media Gateway Control Protocol (MGCP) media gateway controller (call agent)
+2809/udp	corbaloc:iiop URL, per the CORBA 3.0.3 specification
+2809/tcp	corbaloc:iiop URL, per the CORBA 3.0.3 specification
+2811/udp	gsi ftp, per the GridFTP specification
+2811/tcp	gsi ftp, per the GridFTP specification
+2944/udp	Megaco text H.248
+2944/tcp	Megaco text H.248
+2945/udp	Megaco binary (ASN.1) H.248
+2945/tcp	Megaco binary (ASN.1) H.248
+2947/udp	gpsd, GPS daemon
+2947/tcp	gpsd, GPS daemon
+2948/udp	WAP push Multimedia Messaging Service (MMS)
+2948/tcp	WAP push Multimedia Messaging Service (MMS)
+2949/udp	WAP push secure (MMS)
+2949/tcp	WAP push secure (MMS)
+2967/udp	Symantec System Center agent (SSC-AGENT)
+2967/tcp	Symantec System Center agent (SSC-AGENT)
+3020/udp	Common Internet File System (CIFS). See also port 445 for Server Message Block (SMB), a dialect of CIFS.
+3020/tcp	Common Internet File System (CIFS). See also port 445 for Server Message Block (SMB), a dialect of CIFS.
+3050/udp	gds-db (Interbase/Firebird databases)
+3050/tcp	gds-db (Interbase/Firebird databases)
+3052/udp	APC PowerChute Network
+3052/tcp	APC PowerChute Network
+3074/udp	Xbox LIVE and Games for Windows – Live
+3074/tcp	Xbox LIVE and Games for Windows – Live
+3225/udp	Fibre Channel over IP (FCIP)
+3225/tcp	Fibre Channel over IP (FCIP)
+3233/udp	WhiskerControl research control protocol
+3233/tcp	WhiskerControl research control protocol
+3260/udp	iSCSI
+3260/tcp	iSCSI
+3268/udp	msft-gc, Microsoft Global Catalog (LDAP service which contains data from Active Directory forests)
+3268/tcp	msft-gc, Microsoft Global Catalog (LDAP service which contains data from Active Directory forests)
+3269/udp	msft-gc-ssl, Microsoft Global Catalog over SSL (similar to port 3268, LDAP over SSL)
+3269/tcp	msft-gc-ssl, Microsoft Global Catalog over SSL (similar to port 3268, LDAP over SSL)
+3283/udp	Net Assistant, a predecessor to Apple Remote Desktop
+3283/tcp	Net Assistant, a predecessor to Apple Remote Desktop
+3305/udp	Odette File Transfer Protocol (OFTP)
+3305/tcp	Odette File Transfer Protocol (OFTP)
+3386/udp	GTP' 3GPP GSM/UMTS CDR logging protocol
+3386/tcp	GTP' 3GPP GSM/UMTS CDR logging protocol
+3389/udp	Microsoft Terminal Server (RDP) officially registered as Windows Based Terminal (WBT)
+3389/tcp	Microsoft Terminal Server (RDP) officially registered as Windows Based Terminal (WBT)
+3396/udp	Novell NDPS Printer Agent
+3396/tcp	Novell NDPS Printer Agent
+3412/udp	xmlBlaster
+3412/tcp	xmlBlaster
+3455/udp	Resource Reservation Protocol (RSVP)
+3455/tcp	Resource Reservation Protocol (RSVP)
+3478/udp	STUN, a protocol for NAT traversal
+3478/tcp	STUN, a protocol for NAT traversal
+3478/udp	TURN, a protocol for NAT traversal (extension to STUN)
+3478/tcp	TURN, a protocol for NAT traversal (extension to STUN)
+3478/udp	STUN Behavior Discovery. See also port 5349.
+3478/tcp	STUN Behavior Discovery. See also port 5349.
+3493/udp	Network UPS Tools (NUT)
+3493/tcp	Network UPS Tools (NUT)
+3516/udp	Smartcard Port
+3516/tcp	Smartcard Port
+3645/udp	Cyc
+3645/tcp	Cyc
+3659/udp	Apple SASL, used by Mac OS X Server Password Server
+3659/tcp	Apple SASL, used by Mac OS X Server Password Server
+3667/udp	Information Exchange
+3667/tcp	Information Exchange
+3690/udp	Subversion (SVN) version control system
+3690/tcp	Subversion (SVN) version control system
+3702/udp	Web Services Dynamic Discovery (WS-Discovery), used by various components of Windows Vista and later
+3702/tcp	Web Services Dynamic Discovery (WS-Discovery), used by various components of Windows Vista and later
+3724/udp	Some Blizzard games
+3724/tcp	Some Blizzard games
+3725/udp	Netia NA-ER Port
+3725/tcp	Netia NA-ER Port
+3768/udp	RBLcheckd server daemon
+3768/tcp	RBLcheckd server daemon
+3804/udp	Harman Professional HiQnet protocol
+3804/tcp	Harman Professional HiQnet protocol
+3826/udp	WarMUX game server
+3826/tcp	WarMUX game server
+3830/udp	System Management Agent, developed and used by Cerner to monitor and manage solutions
+3830/tcp	System Management Agent, developed and used by Cerner to monitor and manage solutions
+3880/udp	IGRS
+3880/tcp	IGRS
+3999/udp	Norman distributed scanning service
+3999/tcp	Norman distributed scanning service
+4018/udp	Protocol information and warnings
+4018/tcp	Protocol information and warnings
+4089/udp	OpenCORE Remote Control Service
+4089/tcp	OpenCORE Remote Control Service
+4090/udp	Kerio
+4090/tcp	Kerio
+4093/udp	PxPlus Client server interface ProvideX
+4093/tcp	PxPlus Client server interface ProvideX
+4096/udp	Ascom Timeplex Bridge Relay Element (BRE)
+4096/tcp	Ascom Timeplex Bridge Relay Element (BRE)
+4105/udp	Shofar (ShofarNexus)
+4105/tcp	Shofar (ShofarNexus)
+4116/udp	Smartcard-TLS
+4116/tcp	Smartcard-TLS
+4172/udp	Teradici PCoIP
+4172/tcp	Teradici PCoIP
+4303/udp	Simple Railroad Command Protocol (SRCP)
+4303/tcp	Simple Railroad Command Protocol (SRCP)
+4486/udp	Integrated Client Message Service (ICMS)
+4486/tcp	Integrated Client Message Service (ICMS)
+4500/udp	IPSec NAT Traversal (RFC 3947, RFC 4306)
+4500/assigned	IPSec NAT Traversal (RFC 3947, RFC 4306)
+4662/udp	OrbitNet Message Service
+4662/tcp	OrbitNet Message Service
+4730/udp	Gearman's job server
+4730/tcp	Gearman's job server
+4739/udp	IP Flow Information Export
+4739/tcp	IP Flow Information Export
+4753/udp	SIMON (service and discovery)
+4753/tcp	SIMON (service and discovery)
+4840/udp	OPC UA Connection Protocol (TCP) and OPC UA Multicast Datagram Protocol (UDP) for OPC Unified Architecture from OPC Foundation
+4840/tcp	OPC UA Connection Protocol (TCP) and OPC UA Multicast Datagram Protocol (UDP) for OPC Unified Architecture from OPC Foundation
+4843/udp	OPC UA TCP Protocol over TLS/SSL for OPC Unified Architecture from OPC Foundation
+4843/tcp	OPC UA TCP Protocol over TLS/SSL for OPC Unified Architecture from OPC Foundation
+4847/udp	Web Fresh Communication, Quadrion Software & Odorless Entertainment
+4847/tcp	Web Fresh Communication, Quadrion Software & Odorless Entertainment
+4894/udp	LysKOM Protocol A
+4894/tcp	LysKOM Protocol A
+4950/udp	Cylon Controls UC32 Communications Port
+4950/tcp	Cylon Controls UC32 Communications Port
+5010/udp	Registered to: TelePath (the IBM FlowMark workflow-management system messaging platform). The TCP port is now used for: IBM WebSphere MQ Workflow
+5010/tcp	Registered to: TelePath (the IBM FlowMark workflow-management system messaging platform). The TCP port is now used for: IBM WebSphere MQ Workflow
+5011/udp	TelePath (the IBM FlowMark workflow-management system messaging platform)
+5011/tcp	TelePath (the IBM FlowMark workflow-management system messaging platform)
+5025/udp	scpi-raw Standard Commands for Programmable Instruments
+5025/tcp	scpi-raw Standard Commands for Programmable Instruments
+5060/udp	Session Initiation Protocol (SIP)
+5060/tcp	Session Initiation Protocol (SIP)
+5062/udp	Localisation access
+5062/tcp	Localisation access
+5064/udp	EPICS Channel Access server
+5064/tcp	EPICS Channel Access server
+5065/udp	EPICS Channel Access repeater beacon
+5065/tcp	EPICS Channel Access repeater beacon
+5084/udp	EPCglobal Low Level Reader Protocol (LLRP)
+5084/tcp	EPCglobal Low Level Reader Protocol (LLRP)
+5085/udp	EPCglobal Low Level Reader Protocol (LLRP) over TLS
+5085/tcp	EPCglobal Low Level Reader Protocol (LLRP) over TLS
+5099/udp	SafeNet, Inc Sentinel LM, Sentinel RMS, License Manager, server-to-server
+5099/tcp	SafeNet, Inc Sentinel LM, Sentinel RMS, License Manager, server-to-server
+5150/udp	ATMP Ascend Tunnel Management Protocol
+5150/tcp	ATMP Ascend Tunnel Management Protocol
+5154/udp	BZFlag
+5154/tcp	BZFlag
+5190/udp	AOL Instant Messenger protocol. The chat app is defunct as of 15 December 2017.
+5190/tcp	AOL Instant Messenger protocol. The chat app is defunct as of 15 December 2017.
+5298/udp	Extensible Messaging and Presence Protocol (XMPP)
+5298/tcp	Extensible Messaging and Presence Protocol (XMPP)
+5310/udp	Outlaws (1997 video game). Both UDP and TCP are reserved, but only UDP is used
+5310/tcp	Outlaws (1997 video game). Both UDP and TCP are reserved, but only UDP is used
+5353/udp	Multicast DNS (mDNS)
+5353/assigned	Multicast DNS (mDNS)
+5355/udp	Link-Local Multicast Name Resolution (LLMNR), allows hosts to perform name resolution for hosts on the same local link (only provided by Windows Vista and Server 2008)
+5355/tcp	Link-Local Multicast Name Resolution (LLMNR), allows hosts to perform name resolution for hosts on the same local link (only provided by Windows Vista and Server 2008)
+5402/udp	Multicast File Transfer Protocol (MFTP)
+5402/tcp	Multicast File Transfer Protocol (MFTP)
+5405/udp	NetSupport Manager
+5405/tcp	NetSupport Manager
+5412/udp	IBM Rational Synergy (Telelogic Synergy) (Continuus CM) Message Router
+5412/tcp	IBM Rational Synergy (Telelogic Synergy) (Continuus CM) Message Router
+5413/udp	Wonderware SuiteLink service
+5413/tcp	Wonderware SuiteLink service
+5417/udp	SNS Agent
+5417/tcp	SNS Agent
+5421/udp	NetSupport Manager
+5421/tcp	NetSupport Manager
+5556/udp	Freeciv, Oracle WebLogic Server Node Manager
+5556/tcp	Freeciv, Oracle WebLogic Server Node Manager
+5568/udp	Session Data Transport (SDT), a part of Architecture for Control Networks (ACN)
+5568/tcp	Session Data Transport (SDT), a part of Architecture for Control Networks (ACN)
+5722/udp	Microsoft RPC, DFSR (SYSVOL) Replication Service
+5722/tcp	Microsoft RPC, DFSR (SYSVOL) Replication Service
+5741/udp	IDA Discover Port 1
+5741/tcp	IDA Discover Port 1
+5742/udp	IDA Discover Port 2
+5742/tcp	IDA Discover Port 2
+5900/udp	Remote Frame Buffer protocol (RFB)
+5900/tcp	Remote Frame Buffer protocol (RFB)
+5931/udp	AMMYY admin Remote Control
+5931/tcp	AMMYY admin Remote Control
+5984/udp	CouchDB database server
+5984/tcp	CouchDB database server
+6000/udp	X11-used between an X client and server over the network
+6000/tcp	X11-used between an X client and server over the network
+6001/udp	X11-used between an X client and server over the network
+6001/tcp	X11-used between an X client and server over the network
+6002/udp	X11-used between an X client and server over the network
+6002/tcp	X11-used between an X client and server over the network
+6003/udp	X11-used between an X client and server over the network
+6003/tcp	X11-used between an X client and server over the network
+6004/udp	X11-used between an X client and server over the network
+6004/tcp	X11-used between an X client and server over the network
+6005/udp	X11-used between an X client and server over the network
+6005/tcp	X11-used between an X client and server over the network
+6006/udp	X11-used between an X client and server over the network
+6006/tcp	X11-used between an X client and server over the network
+6007/udp	X11-used between an X client and server over the network
+6007/tcp	X11-used between an X client and server over the network
+6008/udp	X11-used between an X client and server over the network
+6008/tcp	X11-used between an X client and server over the network
+6009/udp	X11-used between an X client and server over the network
+6009/tcp	X11-used between an X client and server over the network
+6010/udp	X11-used between an X client and server over the network
+6010/tcp	X11-used between an X client and server over the network
+6011/udp	X11-used between an X client and server over the network
+6011/tcp	X11-used between an X client and server over the network
+6012/udp	X11-used between an X client and server over the network
+6012/tcp	X11-used between an X client and server over the network
+6013/udp	X11-used between an X client and server over the network
+6013/tcp	X11-used between an X client and server over the network
+6014/udp	X11-used between an X client and server over the network
+6014/tcp	X11-used between an X client and server over the network
+6015/udp	X11-used between an X client and server over the network
+6015/tcp	X11-used between an X client and server over the network
+6016/udp	X11-used between an X client and server over the network
+6016/tcp	X11-used between an X client and server over the network
+6017/udp	X11-used between an X client and server over the network
+6017/tcp	X11-used between an X client and server over the network
+6018/udp	X11-used between an X client and server over the network
+6018/tcp	X11-used between an X client and server over the network
+6019/udp	X11-used between an X client and server over the network
+6019/tcp	X11-used between an X client and server over the network
+6020/udp	X11-used between an X client and server over the network
+6020/tcp	X11-used between an X client and server over the network
+6021/udp	X11-used between an X client and server over the network
+6021/tcp	X11-used between an X client and server over the network
+6022/udp	X11-used between an X client and server over the network
+6022/tcp	X11-used between an X client and server over the network
+6023/udp	X11-used between an X client and server over the network
+6023/tcp	X11-used between an X client and server over the network
+6024/udp	X11-used between an X client and server over the network
+6024/tcp	X11-used between an X client and server over the network
+6025/udp	X11-used between an X client and server over the network
+6025/tcp	X11-used between an X client and server over the network
+6026/udp	X11-used between an X client and server over the network
+6026/tcp	X11-used between an X client and server over the network
+6027/udp	X11-used between an X client and server over the network
+6027/tcp	X11-used between an X client and server over the network
+6028/udp	X11-used between an X client and server over the network
+6028/tcp	X11-used between an X client and server over the network
+6029/udp	X11-used between an X client and server over the network
+6029/tcp	X11-used between an X client and server over the network
+6030/udp	X11-used between an X client and server over the network
+6030/tcp	X11-used between an X client and server over the network
+6031/udp	X11-used between an X client and server over the network
+6031/tcp	X11-used between an X client and server over the network
+6032/udp	X11-used between an X client and server over the network
+6032/tcp	X11-used between an X client and server over the network
+6033/udp	X11-used between an X client and server over the network
+6033/tcp	X11-used between an X client and server over the network
+6034/udp	X11-used between an X client and server over the network
+6034/tcp	X11-used between an X client and server over the network
+6035/udp	X11-used between an X client and server over the network
+6035/tcp	X11-used between an X client and server over the network
+6036/udp	X11-used between an X client and server over the network
+6036/tcp	X11-used between an X client and server over the network
+6037/udp	X11-used between an X client and server over the network
+6037/tcp	X11-used between an X client and server over the network
+6038/udp	X11-used between an X client and server over the network
+6038/tcp	X11-used between an X client and server over the network
+6039/udp	X11-used between an X client and server over the network
+6039/tcp	X11-used between an X client and server over the network
+6040/udp	X11-used between an X client and server over the network
+6040/tcp	X11-used between an X client and server over the network
+6041/udp	X11-used between an X client and server over the network
+6041/tcp	X11-used between an X client and server over the network
+6042/udp	X11-used between an X client and server over the network
+6042/tcp	X11-used between an X client and server over the network
+6043/udp	X11-used between an X client and server over the network
+6043/tcp	X11-used between an X client and server over the network
+6044/udp	X11-used between an X client and server over the network
+6044/tcp	X11-used between an X client and server over the network
+6045/udp	X11-used between an X client and server over the network
+6045/tcp	X11-used between an X client and server over the network
+6046/udp	X11-used between an X client and server over the network
+6046/tcp	X11-used between an X client and server over the network
+6047/udp	X11-used between an X client and server over the network
+6047/tcp	X11-used between an X client and server over the network
+6048/udp	X11-used between an X client and server over the network
+6048/tcp	X11-used between an X client and server over the network
+6049/udp	X11-used between an X client and server over the network
+6049/tcp	X11-used between an X client and server over the network
+6050/udp	X11-used between an X client and server over the network
+6050/tcp	X11-used between an X client and server over the network
+6051/udp	X11-used between an X client and server over the network
+6051/tcp	X11-used between an X client and server over the network
+6052/udp	X11-used between an X client and server over the network
+6052/tcp	X11-used between an X client and server over the network
+6053/udp	X11-used between an X client and server over the network
+6053/tcp	X11-used between an X client and server over the network
+6054/udp	X11-used between an X client and server over the network
+6054/tcp	X11-used between an X client and server over the network
+6055/udp	X11-used between an X client and server over the network
+6055/tcp	X11-used between an X client and server over the network
+6056/udp	X11-used between an X client and server over the network
+6056/tcp	X11-used between an X client and server over the network
+6057/udp	X11-used between an X client and server over the network
+6057/tcp	X11-used between an X client and server over the network
+6058/udp	X11-used between an X client and server over the network
+6058/tcp	X11-used between an X client and server over the network
+6059/udp	X11-used between an X client and server over the network
+6059/tcp	X11-used between an X client and server over the network
+6060/udp	X11-used between an X client and server over the network
+6060/tcp	X11-used between an X client and server over the network
+6061/udp	X11-used between an X client and server over the network
+6061/tcp	X11-used between an X client and server over the network
+6062/udp	X11-used between an X client and server over the network
+6062/tcp	X11-used between an X client and server over the network
+6063/udp	X11-used between an X client and server over the network
+6063/tcp	X11-used between an X client and server over the network
+6110/udp	softcm, HP Softbench CM
+6110/tcp	softcm, HP Softbench CM
+6111/udp	spc, HP Softbench Sub-Process Control
+6111/tcp	spc, HP Softbench Sub-Process Control
+6112/udp	dtspcd, execute commands and launch applications remotely
+6112/tcp	dtspcd, execute commands and launch applications remotely
+6346/udp	gnutella-svc, gnutella (FrostWire, Limewire, Shareaza, etc.)
+6346/tcp	gnutella-svc, gnutella (FrostWire, Limewire, Shareaza, etc.)
+6347/udp	gnutella-rtr, Gnutella alternate
+6347/tcp	gnutella-rtr, Gnutella alternate
+6350/udp	App Discovery and Access Protocol
+6350/tcp	App Discovery and Access Protocol
+6444/udp	Sun Grid Engine Qmaster Service
+6444/tcp	Sun Grid Engine Qmaster Service
+6445/udp	Sun Grid Engine Execution Service
+6445/tcp	Sun Grid Engine Execution Service
+6464/udp	Port assignment for medical device communication in accordance to IEEE 11073-20701
+6464/tcp	Port assignment for medical device communication in accordance to IEEE 11073-20701
+6515/udp	Elipse RPC Protocol (REC)
+6515/tcp	Elipse RPC Protocol (REC)
+6619/udp	odette-ftps, Odette File Transfer Protocol (OFTP) over TLS/SSL
+6619/tcp	odette-ftps, Odette File Transfer Protocol (OFTP) over TLS/SSL
+6622/udp	Multicast FTP
+6622/tcp	Multicast FTP
+6679/udp	Osorno Automation Protocol (OSAUT)
+6679/tcp	Osorno Automation Protocol (OSAUT)
+6888/udp	MUSE
+6888/tcp	MUSE
+6969/udp	acmsoda
+6969/tcp	acmsoda
+7262/udp	CNAP (Calypso Network Access Protocol)
+7262/tcp	CNAP (Calypso Network Access Protocol)
+7272/udp	WatchMe - WatchMe Monitoring
+7272/tcp	WatchMe - WatchMe Monitoring
+7400/udp	RTPS (Real Time Publish Subscribe) DDS Discovery
+7400/tcp	RTPS (Real Time Publish Subscribe) DDS Discovery
+7401/udp	RTPS (Real Time Publish Subscribe) DDS User-Traffic
+7401/tcp	RTPS (Real Time Publish Subscribe) DDS User-Traffic
+7402/udp	RTPS (Real Time Publish Subscribe) DDS Meta-Traffic
+7402/tcp	RTPS (Real Time Publish Subscribe) DDS Meta-Traffic
+7542/udp	Saratoga file transfer protocol
+7542/tcp	Saratoga file transfer protocol
+7547/udp	CPE WAN Management Protocol (CWMP) Technical Report 069
+7547/tcp	CPE WAN Management Protocol (CWMP) Technical Report 069
+7624/udp	Instrument Neutral Distributed Interface
+7624/tcp	Instrument Neutral Distributed Interface
+8008/udp	Alternative port for HTTP. See also ports 80 and 8080.
+8008/tcp	Alternative port for HTTP. See also ports 80 and 8080.
+8074/udp	Gadu-Gadu
+8074/tcp	Gadu-Gadu
+8080/udp	Alternative port for HTTP. See also ports 80 and 8008.
+8080/tcp	Alternative port for HTTP. See also ports 80 and 8008.
+8243/udp	HTTPS listener for Apache Synapse
+8243/tcp	HTTPS listener for Apache Synapse
+8280/udp	HTTP listener for Apache Synapse
+8280/tcp	HTTP listener for Apache Synapse
+8883/udp	Secure MQTT (MQTT over TLS)
+8883/tcp	Secure MQTT (MQTT over TLS)
+9001/udp	ETL Service Manager
+9001/tcp	ETL Service Manager
+9080/udp	glrpc, Groove Collaboration software GLRPC
+9080/tcp	glrpc, Groove Collaboration software GLRPC
+9101/udp	Bacula Director
+9101/tcp	Bacula Director
+9102/udp	Bacula File Daemon
+9102/tcp	Bacula File Daemon
+9103/udp	Bacula Storage Daemon
+9103/tcp	Bacula Storage Daemon
+9119/udp	MXit Instant Messenger
+9119/tcp	MXit Instant Messenger
+9389/udp	adws, Microsoft AD DS Web Services, Powershell uses this port
+9389/tcp	adws, Microsoft AD DS Web Services, Powershell uses this port
+9418/udp	git, Git pack transfer service
+9418/tcp	git, Git pack transfer service
+9535/udp	mngsuite, LANDesk Management Suite Remote Control
+9535/tcp	mngsuite, LANDesk Management Suite Remote Control
+9536/udp	laes-bf, IP Fabrics Surveillance buffering function
+9536/tcp	laes-bf, IP Fabrics Surveillance buffering function
+9800/udp	WebDAV Source
+9800/tcp	WebDAV Source
+10000/udp	Network Data Management Protocol
+10000/tcp	Network Data Management Protocol
+10050/udp	Zabbix agent
+10050/tcp	Zabbix agent
+10051/udp	Zabbix trapper
+10051/tcp	Zabbix trapper
+10110/udp	NMEA 0183 Navigational Data. Transport of NMEA 0183 sentences over TCP or UDP
+10110/tcp	NMEA 0183 Navigational Data. Transport of NMEA 0183 sentences over TCP or UDP
+11001/udp	metasys ( Johnson Controls Metasys java AC control environment )
+11001/tcp	metasys ( Johnson Controls Metasys java AC control environment )
+11112/udp	ACR/NEMA Digital Imaging and Communications in Medicine (DICOM)
+11112/tcp	ACR/NEMA Digital Imaging and Communications in Medicine (DICOM)
+11371/udp	OpenPGP HTTP key server
+11371/tcp	OpenPGP HTTP key server
+13720/udp	Symantec NetBackup—bprd (formerly VERITAS)
+13720/tcp	Symantec NetBackup—bprd (formerly VERITAS)
+13721/udp	Symantec NetBackup—bpdbm (formerly VERITAS)
+13721/tcp	Symantec NetBackup—bpdbm (formerly VERITAS)
+13724/udp	Symantec Network Utility—vnetd (formerly VERITAS)
+13724/tcp	Symantec Network Utility—vnetd (formerly VERITAS)
+13782/udp	Symantec NetBackup—bpcd (formerly VERITAS)
+13782/tcp	Symantec NetBackup—bpcd (formerly VERITAS)
+13783/udp	Symantec VOPIED protocol (formerly VERITAS)
+13783/tcp	Symantec VOPIED protocol (formerly VERITAS)
+13785/udp	Symantec NetBackup Database—nbdb (formerly VERITAS)
+13785/tcp	Symantec NetBackup Database—nbdb (formerly VERITAS)
+13786/udp	Symantec nomdb (formerly VERITAS)
+13786/tcp	Symantec nomdb (formerly VERITAS)
+15345/udp	XPilot Contact
+15345/tcp	XPilot Contact
+17500/udp	Dropbox LanSync Protocol (db-lsp); used to synchronize file catalogs between Dropbox clients on a local network.
+17500/tcp	Dropbox LanSync Protocol (db-lsp); used to synchronize file catalogs between Dropbox clients on a local network.
+19813/udp	4D database Client Server Communication
+19813/tcp	4D database Client Server Communication
+24465/udp	Tonido Directory Server for Tonido which is a Personal Web App and P2P platform
+24465/tcp	Tonido Directory Server for Tonido which is a Personal Web App and P2P platform
+24554/udp	BINKP, Fidonet mail transfers over TCP/IP
+24554/tcp	BINKP, Fidonet mail transfers over TCP/IP
+26000/udp	id Software's Quake server
+26000/tcp	id Software's Quake server
+27000/udp	FlexNet Publisher's License server (from the range of default ports)
+27000/tcp	FlexNet Publisher's License server (from the range of default ports)
+27001/udp	FlexNet Publisher's License server (from the range of default ports)
+27001/tcp	FlexNet Publisher's License server (from the range of default ports)
+27002/udp	FlexNet Publisher's License server (from the range of default ports)
+27002/tcp	FlexNet Publisher's License server (from the range of default ports)
+27003/udp	FlexNet Publisher's License server (from the range of default ports)
+27003/tcp	FlexNet Publisher's License server (from the range of default ports)
+27004/udp	FlexNet Publisher's License server (from the range of default ports)
+27004/tcp	FlexNet Publisher's License server (from the range of default ports)
+27005/udp	FlexNet Publisher's License server (from the range of default ports)
+27005/tcp	FlexNet Publisher's License server (from the range of default ports)
+27006/udp	FlexNet Publisher's License server (from the range of default ports)
+27006/tcp	FlexNet Publisher's License server (from the range of default ports)
+27007/udp	FlexNet Publisher's License server (from the range of default ports)
+27007/tcp	FlexNet Publisher's License server (from the range of default ports)
+27008/udp	FlexNet Publisher's License server (from the range of default ports)
+27008/tcp	FlexNet Publisher's License server (from the range of default ports)
+27009/udp	FlexNet Publisher's License server (from the range of default ports)
+27009/tcp	FlexNet Publisher's License server (from the range of default ports)
+33434/udp	traceroute
+33434/tcp	traceroute
+40000/udp	SafetyNET p – a real-time Industrial Ethernet protocol
+40000/tcp	SafetyNET p – a real-time Industrial Ethernet protocol
+44818/udp	EtherNet/IP explicit messaging
+44818/tcp	EtherNet/IP explicit messaging
+47808/udp	BACnet Building Automation and Control Networks (4780810 = BAC016)
+47808/tcp	BACnet Building Automation and Control Networks (4780810 = BAC016)
+49151/udp	Reserved
+49151/tcp	Reserved

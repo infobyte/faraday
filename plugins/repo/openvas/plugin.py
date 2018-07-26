@@ -9,6 +9,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 from __future__ import with_statement
 from plugins import core
+from faraday import FARADAY_BASE
 import re
 import os
 import sys
@@ -80,10 +81,11 @@ class OpenvasXmlParser(object):
         @return items A list of Host instances
         """
         try:
+            report = tree.findall('report')[0]
             node = tree.findall('report')[0]
             node2 = node.findall('results')[0]
             for node in node2.findall('result'):
-                yield Item(node)
+                yield Item(node,report)
 
         except Exception:
 
@@ -133,7 +135,7 @@ class Item(object):
     @param item_node A item_node taken from an openvas xml tree
     """
 
-    def __init__(self, item_node):
+    def __init__(self, item_node, report):
         self.node = item_node
 
         self.host = self.get_text_from_subnode('host')
@@ -149,22 +151,19 @@ class Item(object):
         self.protocol = ""
         port = self.get_text_from_subnode('port')
 
-        if re.search("^general", port) is None:
-
-            mregex = re.search("([\w]+) \(([\d]+)\/([\w]+)\)", port)
-            
-            if mregex is not None:
-                self.service = mregex.group(1)
-                self.port = mregex.group(2)
-                self.protocol = mregex.group(2)
-            else:
-                info = port.split("/")
-                self.port = info[0]
-                self.protocol = info[1]
-        else:
+        if "general" not in port:
+            # service vuln
             info = port.split("/")
-            self.service = info[0]
+            self.port = info[0]
             self.protocol = info[1]
+            self.service = self.get_service(port, report, self.host)
+        else:
+            # general was found in port data
+            # this is a host vuln
+            # this case will have item.port = 'None'
+            info = port.split("/")
+            self.protocol = info[1]
+            self.service = info[0] # this value is general
 
         self.nvt = self.node.findall('nvt')[0]
         self.node = self.nvt
@@ -176,6 +175,7 @@ class Item(object):
             'bid') if self.get_text_from_subnode('bid') != "NOBID" else ""
         self.xref = self.get_text_from_subnode(
             'xref') if self.get_text_from_subnode('xref') != "NOXREF" else ""
+
 
     def do_clean(self, value):
         myreturn = ""
@@ -194,6 +194,97 @@ class Item(object):
             return sub_node.text
 
         return ''
+
+
+    def get_service(self, port, report, host_ip):
+        detail = self.get_detail_from_host(report,host_ip)
+
+        # dict detail:
+        # key is the host ip
+        # value_dict is a dictionary with every detail in the host
+        for key,value_dict in detail.items():
+            service_detail = self.get_service_from_details(value_dict,port)
+            
+            if service_detail:
+                return service_detail
+        
+        # if the service is not in detail, we will search it in
+        # the file port_mapper.txt
+        srv = self.filter_services()
+        for service in srv:
+            if service[0] == port:
+                return service[1]
+
+        return "Unknown"
+
+    def filter_services(self):
+        open_file = open(os.path.join(FARADAY_BASE,'plugins/repo/openvas/port_mapper.txt'),"r")
+        mapper = open_file.read()    
+        filtering = mapper.split('\n')
+
+        services = []
+
+        for item in filtering:
+            tup = ()
+            filt = filter(len,item.split('\t'))
+            tup = (filt[0],filt[1])
+            services.append(tup)
+
+        return services
+
+    def get_detail_from_host(self, report, host_ip):
+        hosts = report.findall('host')
+        host_dict = {}
+        for host in hosts:
+            if host[0].text == host_ip.strip():
+                details = self.get_details(host)
+                host_dict[host.find('ip').text] = details
+
+        return host_dict
+
+    def get_details(self, host):
+        details_list = host.findall('detail')
+        details_dict = {}
+
+        for item in details_list:
+            name = item.find('name').text
+            if not 'EXIT' in name:
+                details_dict[item.find('value').text] = name
+
+        return details_dict
+
+    def get_service_from_details(self, value_dict, port):
+        # dict value: 
+        # key is port or protocol of the service 
+        # value is service description
+        for key, value in value_dict.items():
+            if value == 'Services':
+                aux_port = port.split('/')[0]
+
+                key_splited = key.split(',')
+
+                if key_splited[0] == aux_port:
+                    return key_splited[2]
+        
+        for k,v in value_dict.items():
+            if '/' in k:
+                auxiliar_key = k.split('/')[0]
+
+                if auxiliar_key == port.split('/')[0]:
+                    return v
+
+            elif k.isdigit():
+                if k == port.split('/')[0]:
+                    return v
+            elif '::' in k:
+                aux_key = k.split('::')[0]
+                auxiliar_port = port.split('/')[0]
+
+                if aux_key == auxiliar_port:
+                    return v
+
+
+        return None
 
 
 class OpenvasPlugin(core.PluginBase):
@@ -352,7 +443,8 @@ def createPlugin():
     return OpenvasPlugin()
 
 if __name__ == '__main__':
-    parser = OpenvasXmlParser(sys.argv[1])
-    for item in parser.items:
-        if item.status == 'up':
-            print item
+    with open("/home/javier/report_openvas.xml","r") as report:
+        parser = OpenvasXmlParser(report.read())
+        #for item in parser.items:
+            #if item.status == 'up':
+                #print item

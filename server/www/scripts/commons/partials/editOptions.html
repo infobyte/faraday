@@ -19,5 +19,5 @@
 </div>
 <div class="modal-footer">
     <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
-    <button class="btn btn-success" ng-click="ok()">OK</button>
+    <button class="btn btn-success" ng-disabled="!data.property" ng-click="ok()">OK</button>
 </div>

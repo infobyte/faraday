@@ -30,14 +30,6 @@ angular.module('faradayApp')
 
             Vuln.prototype.set.call(self, ws, data);
 
-            // new vuln
-            if(data._id === undefined) {
-                var id = CryptoJS.SHA1(data.name + "." + data.website + "." + data.path + "." + data.desc).toString();
-
-                self._id = data.parent + "." + id;
-                self.obj_id = id;
-            }
-
             self.type = "VulnerabilityWeb";
 
             public_properties.forEach(function(property) {

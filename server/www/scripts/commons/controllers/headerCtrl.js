@@ -19,8 +19,10 @@ angular.module('faradayApp')
 
             // Ugly, ugly, ugly hack
             $scope.vulnsNum = vulnsManager.getVulnsNum($routeParams.wsId);
+            $scope.totalVulns = vulnsManager.getTotalVulns($routeParams.wsId);
             setInterval(function(){
                 $scope.vulnsNum = vulnsManager.getVulnsNum($routeParams.wsId);
+                $scope.totalVulns = vulnsManager.getTotalVulns($routeParams.wsId);
                 $scope.$apply();
             }, 500)
 

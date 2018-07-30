@@ -50,7 +50,43 @@ def check_postgres():
             return result 
         except sqlalchemy.exc.OperationalError:
             return None
-            
+ 
+def check_locks_postgresql():
+    with app.app_context():
+        psql_status = check_postgres()
+        if psql_status:
+            result = db.engine.execute("""SELECT blocked_locks.pid     AS blocked_pid, 
+                                            blocked_activity.usename  AS blocked_user, 
+                                            blocking_locks.pid     AS blocking_pid, 
+                                            blocking_activity.usename AS blocking_user, 
+                                            blocked_activity.query    AS blocked_statement, 
+                                            blocking_activity.query   AS current_statement_in_blocking_process 
+                                        FROM  pg_catalog.pg_locks         blocked_locks 
+                                            JOIN pg_catalog.pg_stat_activity blocked_activity  ON blocked_activity.pid = blocked_locks.pid 
+                                        JOIN pg_catalog.pg_locks         blocking_locks 
+                                            ON blocking_locks.locktype = blocked_locks.locktype 
+                                            AND blocking_locks.DATABASE IS NOT DISTINCT FROM blocked_locks.DATABASE 
+                                            AND blocking_locks.relation IS NOT DISTINCT FROM blocked_locks.relation 
+                                            AND blocking_locks.page IS NOT DISTINCT FROM blocked_locks.page 
+                                            AND blocking_locks.tuple IS NOT DISTINCT FROM blocked_locks.tuple 
+                                            AND blocking_locks.virtualxid IS NOT DISTINCT FROM blocked_locks.virtualxid 
+                                            AND blocking_locks.transactionid IS NOT DISTINCT FROM blocked_locks.transactionid 
+                                            AND blocking_locks.classid IS NOT DISTINCT FROM blocked_locks.classid 
+                                            AND blocking_locks.objid IS NOT DISTINCT FROM blocked_locks.objid 
+                                            AND blocking_locks.objsubid IS NOT DISTINCT FROM blocked_locks.objsubid 
+                                            AND blocking_locks.pid != blocked_locks.pid 
+                                        JOIN pg_catalog.pg_stat_activity blocking_activity ON blocking_activity.pid = blocking_locks.pid 
+                                            WHERE NOT blocked_locks.GRANTED;""")
+            fetch = result.fetchall()
+            if fetch:
+                return True 
+            else:
+                return False
+        
+        else:
+            return None
+        
+
 
 def check_client():
 
@@ -150,6 +186,18 @@ def print_postgresql_status():
         exit_code = 1
         return exit_code
 
+def print_postgresql_locks_status():
+    """Prints the status of locks in Postgresql using check_locks_postgresql()"""
+    lock_status = check_locks_postgresql()
+    if lock_status:
+        print('[{yellow}-{white}] Warning: PostgreSQL lock detected.' \
+            .format(yellow=Fore.YELLOW, white=Fore.WHITE))
+    elif lock_status == False:
+        print('[{green}+{white}] PostgreSQL lock not detected. '.\
+            format(green=Fore.GREEN, white=Fore.WHITE))
+    elif lock_status == None:
+        pass
+
 
 def print_faraday_status():
     """Prints Status of farday using check_server_running() and check_client"""
@@ -235,6 +283,7 @@ def print_config_status():
 def full_status_check():
     print('\n{white}Checking if postgreSQL is running...'.format(white=Fore.WHITE))  
     print_postgresql_status()
+    print_postgresql_locks_status()
 
     print('\n{white}Checking if Faraday is running...'.format(white=Fore.WHITE))
     print_faraday_status()
@@ -244,4 +293,3 @@ def full_status_check():
 
     print('\n{white}Checking Faraday config...{white}'.format(white=Fore.WHITE))
     print_config_status()
-    

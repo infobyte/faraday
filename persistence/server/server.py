@@ -191,7 +191,7 @@ def _add_session_cookies(func):
 
 
 @_add_session_cookies
-def _unsafe_io_with_server(server_io_function, server_expected_response,
+def _unsafe_io_with_server(server_io_function, server_expected_responses,
                            server_url, **payload):
     """A wrapper for functions which deals with I/O to or from the server.
     It calls the server_io_function with url server_url and the payload,
@@ -210,7 +210,7 @@ def _unsafe_io_with_server(server_io_function, server_expected_response,
             raise ResourceDoesNotExist(server_url)
         if answer.status_code == 403 or answer.status_code == 401:
             raise Unauthorized(answer)
-        if answer.status_code != server_expected_response:
+        if answer.status_code not in server_expected_responses:
             raise requests.exceptions.RequestException(response=answer)
     except requests.exceptions.RequestException as ex:
         logger.debug(ex)
@@ -240,7 +240,7 @@ def _get(request_url, **params):
     Return a dictionary with the information in the json.
     """
     return _parse_json(_unsafe_io_with_server(requests.get,
-                                              200,
+                                              [200],
                                               request_url,
                                               params=params))
 
@@ -258,14 +258,14 @@ def _put(post_url, expected_response=201, **params):
     {u'id': u'61', u'ok': True, u'rev': u'1-967a00dff5e02add41819138abb3284d'}
     """
     return _parse_json(_unsafe_io_with_server(requests.put,
-                                              expected_response,
+                                              [expected_response],
                                               post_url,
                                               json=params))
 
 
 def _post(post_url, update=False, expected_response=201, **params):
     return _parse_json(_unsafe_io_with_server(requests.post,
-                                              expected_response,
+                                              [expected_response],
                                               post_url,
                                               json=params))
 
@@ -278,7 +278,7 @@ def _delete(delete_url, database=False):
         last_rev = _get(delete_url)['_rev']
         params = {'rev': last_rev}
     return _parse_json(_unsafe_io_with_server(requests.delete,
-                                              200,
+                                              [200,204],
                                               delete_url,
                                               params=params))
 
@@ -594,7 +594,7 @@ def get_object_before_last_revision(workspace_name, object_id):
         A dictionary with the object's information.
     """
     get_url = _create_couch_get_url(workspace_name, object_id)
-    response = _unsafe_io_with_server(requests.get, 200, get_url,
+    response = _unsafe_io_with_server(requests.get, [200], get_url,
                                       params={'revs': 'true', 'open_revs': 'all'})
     try:
         valid_json_response = _clean_up_stupid_couch_response(response.text)

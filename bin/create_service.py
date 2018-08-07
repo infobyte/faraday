@@ -18,7 +18,7 @@ def main(workspace='', args=None, parser=None):
     parser.add_argument('name', help='Service Name')
     parser.add_argument('ports', help='Service ports, as a comma separated list')
     parser.add_argument('--protocol', help='Service protocol', default='tcp')
-    parser.add_argument('--status', help='Service status', default='running')
+    parser.add_argument('--status', help='Service status', default='open')
     parser.add_argument('--version', help='Service version', default='unknown')
     parser.add_argument('--description', help='Service description', default='')
 

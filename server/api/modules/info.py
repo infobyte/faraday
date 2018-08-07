@@ -28,3 +28,5 @@ def show_info():
 @info_api.route('/config')
 def get_config():
     return flask.jsonify(gen_web_config())
+
+get_config.is_public = True

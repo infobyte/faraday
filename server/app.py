@@ -165,36 +165,40 @@ def create_app(db_connection_string=None, testing=None):
 
     login_failed_message = ("Invalid username or password", 'error')
 
-    app.config['SECURITY_PASSWORD_SINGLE_HASH'] = True
-    app.config['WTF_CSRF_ENABLED'] = False
-    app.config['SECURITY_USER_IDENTITY_ATTRIBUTES'] = ['username']
-    app.config['SECURITY_POST_LOGIN_VIEW'] = '/_api/session'
-    app.config['SECURITY_POST_LOGOUT_VIEW'] = '/_api/login'
-    app.config['SECURITY_POST_CHANGE_VIEW'] = '/_api/change'
-    app.config['SECURITY_CHANGEABLE'] = True
-    app.config['SECURITY_SEND_PASSWORD_CHANGE_EMAIL'] = False
-    app.config['SECURITY_MSG_USER_DOES_NOT_EXIST'] = login_failed_message
-    # The line bellow should not be necessary because of the CustomLoginForm,
-    # but i'll include it anyway.
-    app.config['SECURITY_MSG_INVALID_PASSWORD'] = login_failed_message
+    app.config.update({
+        'SECURITY_PASSWORD_SINGLE_HASH': True,
+        'WTF_CSRF_ENABLED': False,
+        'SECURITY_USER_IDENTITY_ATTRIBUTES': ['username'],
+        'SECURITY_POST_LOGIN_VIEW': '/_api/session',
+        'SECURITY_POST_LOGOUT_VIEW': '/_api/login',
+        'SECURITY_POST_CHANGE_VIEW': '/_api/change',
+        'SECURITY_CHANGEABLE': True,
+        'SECURITY_SEND_PASSWORD_CHANGE_EMAIL': False,
+        'SECURITY_MSG_USER_DOES_NOT_EXIST': login_failed_message,
 
-    app.config['SESSION_TYPE'] = 'filesystem'
-    app.config['SESSION_FILE_DIR'] = server.config.FARADAY_SERVER_SESSIONS_DIR
+        # The line bellow should not be necessary because of the
+        # CustomLoginForm, but i'll include it anyway.
+        'SECURITY_MSG_INVALID_PASSWORD': login_failed_message,
 
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SQLALCHEMY_RECORD_QUERIES'] = True
-    # app.config['SQLALCHEMY_ECHO'] = True
-    app.config['SECURITY_PASSWORD_SCHEMES'] = [
-        'bcrypt',  # This should be the default value
-        # 'des_crypt',
-        'pbkdf2_sha1',  # Used by CouchDB passwords
-        # 'pbkdf2_sha256',
-        # 'pbkdf2_sha512',
-        # 'sha256_crypt',
-        # 'sha512_crypt',
-        'plaintext',  # TODO: remove it
-    ]
-    app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=12)
+        'SESSION_TYPE': 'filesystem',
+        'SESSION_FILE_DIR': server.config.FARADAY_SERVER_SESSIONS_DIR,
+
+        'SQLALCHEMY_TRACK_MODIFICATIONS': False,
+        'SQLALCHEMY_RECORD_QUERIES': True,
+        # app.config['SQLALCHEMY_ECHO'] = True
+        'SECURITY_PASSWORD_SCHEMES': [
+            'bcrypt',  # This should be the default value
+            # 'des_crypt',
+            'pbkdf2_sha1',  # Used by CouchDB passwords
+            # 'pbkdf2_sha256',
+            # 'pbkdf2_sha512',
+            # 'sha256_crypt',
+            # 'sha512_crypt',
+            'plaintext',  # TODO: remove it
+        ],
+        'PERMANENT_SESSION_LIFETIME': datetime.timedelta(hours=12),
+    })
+
     try:
         storage_path = server.config.storage.path
     except AttributeError:

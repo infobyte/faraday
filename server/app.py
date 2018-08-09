@@ -27,6 +27,12 @@ from flask_security import (
     Security,
     SQLAlchemyUserDatastore,
 )
+from flask_security.forms import LoginForm
+from flask_security.utils import (
+    _datastore,
+    get_message,
+    verify_and_update_password
+)
 from flask_session import Session
 from nplusone.ext.flask_sqlalchemy import NPlusOne
 from depot.manager import DepotManager
@@ -157,6 +163,8 @@ def create_app(db_connection_string=None, testing=None):
     except Exception:
         save_new_secret_key(app)
 
+    login_failed_message = ("Invalid username or password", 'error')
+
     app.config['SECURITY_PASSWORD_SINGLE_HASH'] = True
     app.config['WTF_CSRF_ENABLED'] = False
     app.config['SECURITY_USER_IDENTITY_ATTRIBUTES'] = ['username']
@@ -165,6 +173,10 @@ def create_app(db_connection_string=None, testing=None):
     app.config['SECURITY_POST_CHANGE_VIEW'] = '/_api/change'
     app.config['SECURITY_CHANGEABLE'] = True
     app.config['SECURITY_SEND_PASSWORD_CHANGE_EMAIL'] = False
+    app.config['SECURITY_MSG_USER_DOES_NOT_EXIST'] = login_failed_message
+    # The line bellow should not be necessary because of the CustomLoginForm,
+    # but i'll include it anyway.
+    app.config['SECURITY_MSG_INVALID_PASSWORD'] = login_failed_message
 
     app.config['SESSION_TYPE'] = 'filesystem'
     app.config['SESSION_FILE_DIR'] = server.config.FARADAY_SERVER_SESSIONS_DIR
@@ -216,7 +228,7 @@ def create_app(db_connection_string=None, testing=None):
         db,
         user_model=server.models.User,
         role_model=None)  # We won't use flask security roles feature
-    Security(app, app.user_datastore)
+    Security(app, app.user_datastore, login_form=CustomLoginForm)
     # Make API endpoints require a login user by default. Based on
     # https://stackoverflow.com/questions/13428708/best-way-to-make-flask-logins-login-required-the-default
     app.view_functions['security.login'].is_public = True
@@ -241,3 +253,37 @@ def minify_json_output(app):
 
     app.json_encoder = MiniJSONEncoder
     app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+
+
+class CustomLoginForm(LoginForm):
+    """A login form that does shows the same error when the username
+    or the password is invalid.
+
+    The builtin form of flask_security generates different messages
+    so it is possible for an attacker to enumerate usernames
+    """
+
+    def validate(self):
+
+        # Use super of LoginForm, not super of CustomLoginForm, since I
+        # want to skip the LoginForm validate logic
+        if not super(LoginForm, self).validate():
+            return False
+        self.user = _datastore.get_user(self.email.data)
+
+        if self.user is None:
+            self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
+            return False
+        if not self.user.password:
+            self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
+            return False
+        if not verify_and_update_password(self.password.data, self.user):
+            self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
+            return False
+        # if requires_confirmation(self.user):
+        #     self.email.errors.append(get_message('CONFIRMATION_REQUIRED')[0])
+        #     return False
+        if not self.user.is_active:
+            self.email.errors.append(get_message('DISABLED_ACCOUNT')[0])
+            return False
+        return True

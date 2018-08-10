@@ -40,7 +40,7 @@ def reset_db():
 
 
 @click.command()
-@click.option('--confirm/--no-confirme', prompt='Confirm databa reset?')
+@click.option('--confirm/--no-confirme', prompt='Confirm database reset?')
 def main(confirm):
     if confirm:
         reset_db()

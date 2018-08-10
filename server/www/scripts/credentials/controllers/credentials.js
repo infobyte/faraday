@@ -114,7 +114,9 @@ angular.module('faradayApp')
                 });
 
                 // Make the workspace vuln counter work
-                vulnsManager.loadVulnsCounter($scope.workspace);
+                if(typeof $scope.workspace !== 'undefined'){
+                    vulnsManager.loadVulnsCounter($scope.workspace);
+                }
             };
 
             var removeFromView = function(credential){

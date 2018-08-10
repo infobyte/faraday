@@ -93,7 +93,7 @@ def getParserArgs():
                                    dest="port_xmlrpc",
                                    default=None,
                                    type=int,
-                                   help="Sets the port where the api XMLRPCServer will listen. Default = 9876")
+                                   help="Sets the port where the API XMLRPC Server will listen. Default = 9876")
 
     parser_connection.add_argument('-pr',
                                    '--port-rest',
@@ -101,7 +101,7 @@ def getParserArgs():
                                    dest="port_rest",
                                    default=None,
                                    type=int,
-                                   help="Sets the port where the api RESTful server will listen. Default = 9977")
+                                   help="Sets the port where the API RESTful Server will listen. Default = 9977")
 
     parser.add_argument('--disable-excepthook',
                         action="store_true",
@@ -131,13 +131,13 @@ def getParserArgs():
                         action="store",
                         dest="gui",
                         default="gtk",
-                        help="Select interface to start faraday. Supported values are gtk and 'no' (no GUI at all). Defaults to GTK")
+                        help="Select interface to start Faraday. Supported values are 'gtk' and 'no' (no GUI at all). Defaults to GTK")
 
     parser.add_argument('--cli',
                         action="store_true",
                         dest="cli",
                         default=False,
-                        help="Set this flag to avoid gui and use faraday as a cli.")
+                        help="Set this flag to avoid GUI and use Faraday as a CLI.")
 
     parser.add_argument('-w',
                         '--workspace',
@@ -151,7 +151,7 @@ def getParserArgs():
                         action="store",
                         dest="filename",
                         default=None,
-                        help="Report to be parsed by the cli")
+                        help="Report to be parsed by the CLI")
 
     parser.add_argument('-d',
                         '--debug',
@@ -163,13 +163,13 @@ def getParserArgs():
                         action="store",
                         dest="creds_file",
                         default=None,
-                        help="File containing user's credentials to be used in cli mode")
+                        help="File containing user's credentials to be used in CLI mode")
 
     parser.add_argument('--nodeps',
                         action="store_true",
                         help='Skip dependency check')
-    parser.add_argument('--keep-old', action='store_true', help='Keep old object in CLI mode if faraday find a conflict')
-    parser.add_argument('--keep-new', action='store_true', help='Keep new object in CLI mode if faraday find a conflict (DEFAULT ACTION)')
+    parser.add_argument('--keep-old', action='store_true', help='Keep old object in CLI mode if Faraday find a conflict')
+    parser.add_argument('--keep-new', action='store_true', help='Keep new object in CLI mode if Faraday find a conflict (DEFAULT ACTION)')
 
     f = open(FARADAY_VERSION_FILE)
     f_version = f.read().strip()
@@ -447,7 +447,7 @@ def try_login_user(server_uri, api_username, api_password):
         print("SSL certificate validation failed.\nYou can use the --cert option in Faraday to set the path of the cert")
         sys.exit(-1)
     except requests.exceptions.MissingSchema:
-        print("The Faraday server URL is incorrect, please try again.")
+        print("The Faraday Server URL is incorrect, please try again.")
         sys.exit(-2)
 
 
@@ -468,10 +468,10 @@ def doLoginLoop(force_login=False):
 
         if old_server_url is None:
             new_server_url = raw_input(
-            "\nPlease enter the Faraday server URL (Press enter for http://localhost:5985): ") or "http://localhost:5985"
+            "\nPlease enter the Faraday Server URL (Press enter for http://localhost:5985): ") or "http://localhost:5985"
         else:
             new_server_url = raw_input(
-                "\nPlease enter the Faraday server URL (Press enter for last used: {}): ".format(old_server_url)) or old_server_url
+                "\nPlease enter the Faraday Server URL (Press enter for last used: {}): ".format(old_server_url)) or old_server_url
         
         CONF.setAPIUrl(new_server_url)
 

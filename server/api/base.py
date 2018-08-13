@@ -115,8 +115,13 @@ class GenericView(FlaskView):
     #: lookup field.
     #:
     #: .. note::
-    #:     You have to use a unique field here instead of one allowing
+    #:     You must use a unique field here instead of one allowing
     #:     duplicate values
+    #:
+    #: .. note::
+    #:     By default the lookup field value must be a valid integer. If you
+    #:     want to allow any string, like with the slug field, make sure that
+    #:     you set lookup_field_type to `string`
     lookup_field = 'id'
 
     #: A function that converts the string paremeter passed in the URL to the
@@ -126,7 +131,20 @@ class GenericView(FlaskView):
     lookup_field_type = int
 
     # Attributes to improve the performance of list and retrieve views
+
+    #: List of relationships to eagerload in list and retrieve views.
+    #:
+    #: This is useful when you when you want to retrieve all childrens
+    #: of an object in an API response, like for example if you want
+    #: to have all hostnames of each host in the hosts endpoint.
     get_joinedloads = []  # List of relationships to eagerload
+
+    #: List of columns that will be loaded directly when performing an
+    #: eagerloaded query.
+    #:
+    #: This is useful when you have a column that is typically deferred because
+    #: typically is isn't used, like the vuln creator. If you know you will use
+    #: it, indicate it here to prevent doing an extra SQL query.
     get_undefer = []  # List of columns to undefer
 
     def _get_schema_class(self):
@@ -179,10 +197,30 @@ class GenericView(FlaskView):
             flask.abort(404, 'Invalid format of lookup field')
 
     def _get_base_query(self):
+        """Return the initial query all views should use
+
+        .. warning::
+            When you are creating views, avoid making SQL queries that
+            don't inherit from this base query. You could easily forget
+            to add workspace permission checks and similar stuff.
+        """
         query = self.model_class.query
         return query
 
     def _get_eagerloaded_query(self, *args, **kwargs):
+        """Load objects relationed to the current model in a single query.
+
+        This is useful to prevent n+1 SQL problems, where a request to an
+        object with many childs makes many SQL requests that tends to be
+        slow.
+
+        You tipically won't need to overwrite this method, but to set
+        get_joinedloads and get_undefer attributes that are used by
+        this method.
+
+        In really complex cases where good performance is required,
+        like in the vulns API endpoint, you will have to overwrite this.
+        """
         options = []
         try:
             has_creator = 'owner' in self._get_schema_class().opts.fields

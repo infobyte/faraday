@@ -14,6 +14,8 @@ Generic views
     :private-members:
 
 .. autoclass:: server.api.base.ListMixin
+    :members: _envelope_list,_get_order_field,_paginate
+
 .. autoclass:: server.api.base.RetrieveMixin
 .. autoclass:: server.api.base.CreateMixin
 .. autoclass:: server.api.base.UpdateMixin

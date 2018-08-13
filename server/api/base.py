@@ -243,7 +243,19 @@ class GenericView(FlaskView):
 
         By default it doesn't do anything. It is overriden by
         :class:`FilterAlchemyMixin` to give support to Filteralchemy
-        filters"""
+        filters.
+
+        .. warning::
+            This is only used by the list endpoints. Don't use this
+            to restrict the user the access for certain elements (like
+            for example to restrict the items to one workspace). For
+            this you must override _get_base_query instead.
+
+            Always think that this filtering is optional, just a
+            feature for the user to only see items he/she is interested
+            in, so it is the user who will filter the data, not you
+
+        """
         return query
 
     def _get_object(self, object_id, eagerload=False, **kwargs):
@@ -366,14 +378,31 @@ class ListMixin(object):
 
     def _envelope_list(self, objects, pagination_metadata=None):
         """Override this method to define how a list of objects is
-        rendered"""
+        rendered.
+
+        See the example of :ref:`envelope-list-example` to learn
+        when and how it should be used.
+        """
         return objects
 
     def _paginate(self, query):
+        """Overwrite this to implement pagination in the list endpoint.
+
+        This is typically overwritten by SortableMixin.
+
+        The method takes a query as argument and should return a tuple
+        containing a new filtered query and a "pagination metadata"
+        object that will be used by _envelope_list. If you don't need
+        the latter just set is as None.
+        """
         return query, None
 
     def _get_order_field(self, **kwargs):
-        """Override this to enable custom sorting"""
+        """Return the field used to sort the query.
+
+        By default it returns the value of self.order_field, but it
+        can be overwritten to something else, as SortableMixin does.
+        """
         return self.order_field
 
     def index(self, **kwargs):

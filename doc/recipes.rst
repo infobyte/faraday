@@ -37,6 +37,8 @@ If you want to enable pagination you should explicitly inherit from
 By default it won't show the pagination metadata (like the total number of
 pages or elements), so you will have to follow the steps below to do it.
 
+.. _envelope-list-example:
+
 Changing returned JSON format
 =============================
 

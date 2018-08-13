@@ -125,10 +125,6 @@ class GenericView(FlaskView):
     #: (id)
     lookup_field_type = int
 
-    # List of field names that the _validate_uniqueness method will use
-    # to detect duplicate object creation/update
-    unique_fields = []  # Fields unique
-
     # Attributes to improve the performance of list and retrieve views
     get_joinedloads = []  # List of relationships to eagerload
     get_undefer = []  # List of columns to undefer
@@ -247,22 +243,6 @@ class GenericView(FlaskView):
         """
         return FlaskParser().parse(schema, request, locations=('json',),
                                    *args, **kwargs)
-
-    def _validate_uniqueness(self, obj, object_id=None):
-        """
-        Validate if an `obj` already exists in the database.
-        It it does, it should rollback the transaction and response with
-        a 400 or similar error code.
-
-        If the used is updating the object, `object_id` will be the ID
-        of the object being updated. If creating, it will be None
-
-        .. warning ::
-            This isn't implemented yet on this class. It is on
-            GenericWorkspacedView with the proper workspace support
-        """
-        # TODO: Implement this
-        return True
 
     @classmethod
     def register(cls, app, *args, **kwargs):

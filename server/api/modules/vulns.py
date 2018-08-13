@@ -287,7 +287,8 @@ class TypeFilter(Filter):
 
 class CreatorFilter(Filter):
     def filter(self, query, model, attr, value):
-        return query.filter(model.creator_command_tool == value)
+        return query.filter(model.creator_command_tool.ilike(
+            '%' + value + '%'))
 
 
 class ServiceFilter(Filter):
@@ -425,8 +426,8 @@ class VulnerabilityView(PaginatedMixin,
         # popped object has the expected type.
         # This will be set after setting the workspace
         attachments = data.pop('_attachments', {})
-        references = data.pop('references')
-        policyviolations = data.pop('policy_violations')
+        references = data.pop('references', [])
+        policyviolations = data.pop('policy_violations', [])
 
         obj = super(VulnerabilityView, self)._perform_create(data, **kwargs)
         obj.references = references
@@ -575,6 +576,9 @@ class VulnerabilityView(PaginatedMixin,
                     as_attachment=True,
                     mimetype=depot_file.content_type
                 )
-
+            else:
+                flask.abort(404, "File not found")
+        else:
+            flask.abort(404, "Vulnerability not found")
 
 VulnerabilityView.register(vulns_api)

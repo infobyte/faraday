@@ -258,6 +258,91 @@ class Host(Metadata):
         UniqueConstraint(ip, workspace_id, name='uix_host_ip_workspace'),
     )
 
+    vulnerability_info_count = query_expression()
+    vulnerability_med_count = query_expression()
+    vulnerability_high_count = query_expression()
+    vulnerability_critical_count = query_expression()
+    vulnerability_low_count = query_expression()
+    vulnerability_unclassified_count = query_expression()
+    vulnerability_total_count = query_expression()
+
+    @classmethod
+    def query_with_count(cls, only_confirmed, host_ids, workspace_name):
+        query = cls.query.join(Workspace).filter(Workspace.name == workspace_name)
+        if host_ids:
+            query = query.filter(cls.id.in_(host_ids))
+        return query.options(
+            with_expression(
+                cls.vulnerability_info_count,
+                _make_vuln_count_property(
+                    type_=None,
+                    only_confirmed = only_confirmed,
+                    use_column_property = False,
+                    extra_query = "vulnerability.severity='informational'",
+                    get_hosts_vulns = True
+                )
+            ),
+            with_expression(
+                cls.vulnerability_med_count,
+                _make_vuln_count_property(
+                    type_ = None,
+                    only_confirmed = only_confirmed,
+                    use_column_property = False,
+                    extra_query = "vulnerability.severity='medium'",
+                    get_hosts_vulns = True
+                )
+            ),
+            with_expression(
+                cls.vulnerability_high_count,
+                _make_vuln_count_property(
+                    type_ = None,
+                    only_confirmed = only_confirmed,
+                    use_column_property = False,
+                    extra_query = "vulnerability.severity='high'",
+                    get_hosts_vulns = True
+                )
+            ),
+            with_expression(
+                cls.vulnerability_critical_count,
+                _make_vuln_count_property(
+                    type_ = None,
+                    only_confirmed = only_confirmed,
+                    use_column_property = False,
+                    extra_query = "vulnerability.severity='critical'",
+                    get_hosts_vulns = True
+                )
+            ),
+            with_expression(
+                cls.vulnerability_low_count,
+                _make_vuln_count_property(
+                    type_ = None,
+                    only_confirmed = only_confirmed,
+                    use_column_property = False,
+                    extra_query = "vulnerability.severity='low'",
+                    get_hosts_vulns = True
+                )
+            ),
+            with_expression(
+                cls.vulnerability_unclassified_count,
+                _make_vuln_count_property(
+                    type_ = None,
+                    only_confirmed = only_confirmed,
+                    use_column_property = False,
+                    extra_query = "vulnerability.severity='unclassified'",
+                    get_hosts_vulns = True
+                )
+            ),
+            with_expression(
+                cls.vulnerability_total_count,
+                _make_vuln_count_property(
+                    type_ = None,
+                    only_confirmed = only_confirmed,
+                    use_column_property = False,
+                    get_hosts_vulns = True
+                )
+            ),
+        )
+
     @property
     def parent(self):
         return
@@ -479,7 +564,10 @@ class CustomAssociationSet(_AssociationSet):
             # we need to fetch already created objs.
             session.rollback()
             for conflict_obj in conflict_objs:
-                if hasattr(conflict_obj, 'name') and conflict_obj.name == value:
+                if not hasattr(conflict_obj, 'name'):
+                    # The session can hold elements without a name (altough it shouldn't)
+                    continue
+                if conflict_obj.name == value:
                     continue
                 persisted_conclict_obj = session.query(conflict_obj.__class__).filter_by(name=conflict_obj.name).first()
                 if persisted_conclict_obj:
@@ -1129,11 +1217,23 @@ class Credential(Metadata):
 
 
 def _make_vuln_count_property(type_=None, only_confirmed=False,
-                              use_column_property=True, extra_query=None):
-    query = (select([func.count(text('vulnerability.id'))]).
-             select_from(table('vulnerability')).
-             where(text('vulnerability.workspace_id = workspace.id'))
+                              use_column_property=True, extra_query=None, get_hosts_vulns=False):
+    from_clause = table('vulnerability')
+
+    if get_hosts_vulns:
+        from_clause = from_clause.join(
+            Service, Vulnerability.service_id == Service.id,
+            isouter=True
+        )
+
+    query = (select([func.count(text('distinct(vulnerability.id)'))]).
+             select_from(from_clause)
              )
+    if get_hosts_vulns:
+        query = query.where(text('(vulnerability.host_id = host.id OR host.id = service.host_id)'))
+    else:
+        query = query.where(text('vulnerability.workspace_id = workspace.id'))
+
     if type_:
         # Don't do queries using this style!
         # This can cause SQL injection vulnerabilities

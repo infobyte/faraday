@@ -111,6 +111,7 @@
 
 .workspace-switcher-title .title{
     width: 90%;
+    overflow: hidden;
 }
 
 .workspace-switcher-title .caret-container{

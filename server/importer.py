@@ -12,7 +12,6 @@ import sys
 import json
 import logging
 import datetime
-import threading
 import multiprocessing
 
 
@@ -28,6 +27,10 @@ from collections import (
 from slugify import slugify
 from sqlalchemy import Text, String
 from binascii import unhexlify
+try:
+    from urllib import quote
+except ImportError:
+    from urllib.parse import quote
 
 from IPy import IP
 from passlib.utils.binary import ab64_encode
@@ -599,20 +602,18 @@ class ServiceImporter(object):
                 yield service
 
 
-user_lock = threading.Lock()
 def get_or_create_user(session, username):
-    with user_lock:
-        rng = SystemRandom()
-        password =  "".join(
-            [rng.choice(string.ascii_letters + string.digits) for _ in
-                xrange(12)])
-        creator, created = get_or_create(session, User, username=username)
-        if created:
-            creator.active = False
-            creator.password = password
-        session.add(creator) # remove me
-        session.commit() # remove me
-        return creator
+    rng = SystemRandom()
+    password =  "".join(
+        [rng.choice(string.ascii_letters + string.digits) for _ in
+            xrange(12)])
+    creator, created = get_or_create(session, User, username=username)
+    if created:
+        creator.active = False
+        creator.password = password
+    session.add(creator) # remove me
+    session.commit() # remove me
+    return creator
 
 
 class VulnerabilityImporter(object):
@@ -655,10 +656,10 @@ class VulnerabilityImporter(object):
                     name=document.get('name'),
                     description=document.get('desc').strip().strip('\n'),
                     service_id=parent.id,
-                    method=method,
-                    parameter_name=pname,
-                    path=path,
-                    website=website,
+                    method=method or '',
+                    parameter_name=pname or '',
+                    path=path or '',
+                    website=website or '',
                     workspace=workspace,
                 )
 
@@ -742,9 +743,23 @@ class VulnerabilityImporter(object):
                 password=server.config.couchdb.password,
                 hostname=server.config.couchdb.host,
                 port=server.config.couchdb.port,
-                path='{0}/{1}/{2}'.format(workspace.name, document.get('_id'), attachment_name)
+                path='{0}/{1}/{2}'.format(
+                    workspace.name,
+                    document.get('_id'),
+                    quote(attachment_name))
             )
-            response = requests.get(attachment_url)
+            try:
+                response = requests.get(attachment_url)
+                response.raise_for_status()
+            except HTTPError:
+                logger.warn(
+                    'Unable to fetch attachment {} from workspace '
+                    '{}'.format(
+                        attachment_name, workspace.name
+                    )
+                )
+                logger.debug('Attachment URL: {}'.format(attachment_url))
+                continue
             response.raw.decode_content = True
             attachment_file = NamedTemporaryFile()
             attachment_file.write(response.content)
@@ -1331,14 +1346,14 @@ class ImportCouchDB():
             workspaces_list = couchdb_server_conn.list_workspaces()
 
         except RequestError:
-            logger.error(u"CouchDB is not running at {}. Check faraday-server's"\
+            print(u"CouchDB is not running at {}. Check faraday-server's"\
                 " configuration and make sure CouchDB is running".format(
                 server.couchdb.get_couchdb_url()))
             logger.error(u'Please start CouchDB and re-execute the importer with: \n\n --> python manage.py import_from_couchdb <--')
             sys.exit(1)
 
         except Unauthorized:
-            logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
+            print(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
                 " configuration file has CouchDB admin's credentials set")
             sys.exit(1)
 
@@ -1357,31 +1372,14 @@ class ImportCouchDB():
         users_import.run()
 
         logger.info('Importing workspaces. Using {0} threads'.format(multiprocessing.cpu_count() * 2))
-        workspace_threads = []
-        with tqdm(total=len(workspaces_list) * 18,
-                  unit='B', unit_scale=True, unit_divisor=1024) as pbar:
-            for workspace_name in workspaces_list:
-                logger.debug(u'Setting up workspace {}'.format(workspace_name))
+        for workspace_name in workspaces_list:
+            logger.debug(u'Setting up workspace {}'.format(workspace_name))
 
-                if not server.couchdb.server_has_access_to(workspace_name):
-                    logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
-                                 " configuration file has CouchDB admin's credentials set")
-                    sys.exit(1)
-                thread = threading.Thread(target=self.import_workspace_into_database, args=(workspace_name, pbar))
-                thread.daemon = True
-                thread.start()
-                workspace_threads.append(thread)
-                if len(workspace_threads) > multiprocessing.cpu_count() * 2:
-                    for thread in workspace_threads:
-                        thread.join()
-                        pbar.update(1)
-                        workspace_threads.remove(thread)
-
-            logger.info('Waiting for treads to finish.')
-            for thread in workspace_threads:
-                thread.join()
-                pbar.update(1)
-                #self.import_workspace_into_database(workspace_name)
+            if not server.couchdb.server_has_access_to(workspace_name):
+                logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
+                             " configuration file has CouchDB admin's credentials set")
+                sys.exit(1)
+            self.import_workspace_into_database(workspace_name)
 
     def get_objs(self, host, obj_type, level, workspace):
         if obj_type == 'Credential':
@@ -1395,7 +1393,8 @@ class ImportCouchDB():
 
     def verify_host_vulns_count_is_correct(self, couchdb_relational_map, couchdb_relational_map_by_type, workspace):
         hosts = session.query(Host).filter_by(workspace=workspace)
-        for host in hosts:
+        logger.info('Verifying data migration')
+        for host in tqdm(hosts, total=hosts.count()):
             parent_couchdb_id = None
             for couchdb_id, relational_ids in couchdb_relational_map_by_type.items():
                 for obj_data in relational_ids:
@@ -1405,14 +1404,22 @@ class ImportCouchDB():
                 if parent_couchdb_id:
                     break
             if not parent_couchdb_id:
-                raise Exception('Could not found couchdb id!')
+                logger.warn('Could not found couchdb id! This is fine if you created hosts after migration')
+                continue
             vulns = get_children_from_couch(workspace, parent_couchdb_id, 'Vulnerability')
             interfaces = get_children_from_couch(workspace, parent_couchdb_id, 'Interface')
             for interface in interfaces:
                 interface = interface['value']
                 vulns += get_children_from_couch(workspace, interface.get('_id'), 'Vulnerability')
 
-            assert len(set(map(lambda vuln: vuln['value'].get('name'), vulns))) == len(set(map(lambda vuln: vuln.name, host.vulnerabilities)))
+            old_host_count = len(set(map(lambda vuln: vuln['value'].get('name'), vulns)))
+            new_host_count = len(set(map(lambda vuln: vuln.name, host.vulnerabilities)))
+            if old_host_count != new_host_count:
+                logger.info("Host count didn't match")
+                if old_host_count < new_host_count:
+                    logger.warn('More host were found in postgreSQL. This is normal if you used the workspace {0}'.format(workspace.id))
+                if new_host_count < old_host_count:
+                    logger.error('Some hosts were not imported!!')
 
     def verify_import_data(self, couchdb_relational_map, couchdb_relational_map_by_type, workspace):
         self.verify_host_vulns_count_is_correct(couchdb_relational_map, couchdb_relational_map_by_type, workspace)
@@ -1450,7 +1457,8 @@ class ImportCouchDB():
     def import_level_objects(self, couch_url, faraday_importer, couchdb_relational_map_by_type, couchdb_relational_map, command_tool_map, level, obj_type, workspace):
         obj_importer = faraday_importer.get_importer_from_document(obj_type)()
         objs_dict = self.get_objs(couch_url, obj_type, level, workspace)
-        for raw_obj in (objs_dict.get('rows', [])):
+        print('Importing {0} from workspace {1}'.format(obj_type, workspace.name))
+        for raw_obj in tqdm(objs_dict.get('rows', [])):
             # we use no_autoflush since some queries triggers flush and some relationship are missing in the middle
             with session.no_autoflush:
                 raw_obj = raw_obj['value']
@@ -1469,7 +1477,7 @@ class ImportCouchDB():
                     couchdb_relational_map_by_type[couchdb_id].append({'type': obj_type, 'id': new_obj.id})
                     couchdb_relational_map[couchdb_id].append(new_obj.id)
 
-    def import_workspace_into_database(self, workspace_name, pbar):
+    def import_workspace_into_database(self, workspace_name):
         with app.app_context():
 
             faraday_importer = FaradayEntityImporter(workspace_name)
@@ -1504,8 +1512,7 @@ class ImportCouchDB():
                     )
                 except Exception as ex:
                     logger.exception(ex)
-                    raise
-                pbar.update(1)
+                    continue
             update_command_tools(workspace, command_tool_map,
                                  couchdb_relational_map_by_type)
             session.commit()

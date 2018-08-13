@@ -114,7 +114,9 @@ angular.module('faradayApp')
                 });
 
                 // Make the workspace vuln counter work
-                vulnsManager.loadVulnsCounter($scope.workspace);
+                if(typeof $scope.workspace !== 'undefined'){
+                    vulnsManager.loadVulnsCounter($scope.workspace);
+                }
             };
 
             var removeFromView = function(credential){
@@ -265,6 +267,10 @@ angular.module('faradayApp')
                     credential.selected = $scope.selectall_credentials;
                 });
             };
+
+            $scope.clearSearch = function() {
+                $scope.search = '';
+            }
 
             // toggles sort field and order
             $scope.toggleSort = function(field) {

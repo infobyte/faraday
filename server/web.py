@@ -53,8 +53,8 @@ class FileWithoutDirectoryListing(File, CleanHttpHeadersResource):
         ret = super(FileWithoutDirectoryListing, self).render(request)
         if self.type == 'text/html':
             request.responseHeaders.addRawHeader('Content-Security-Policy',
-                                                 'frame-ancestors \'none\'')
-            request.responseHeaders.addRawHeader('X-Frame-Options', 'DENY')
+                                                 'frame-ancestors \'self\'')
+            request.responseHeaders.addRawHeader('X-Frame-Options', 'SAMEORIGIN')
         return ret
 
 

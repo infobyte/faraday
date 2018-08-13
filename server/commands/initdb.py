@@ -18,9 +18,12 @@ from subprocess import Popen, PIPE
 import sqlalchemy
 from sqlalchemy import create_engine
 
-from config.configuration import getInstanceConfiguration
-from faraday import FARADAY_USER_CONFIG_XML, FARADAY_BASE_CONFIG_XML, \
+from config.configuration import Configuration
+from faraday import (
+    FARADAY_USER_CONFIG_XML,
+    FARADAY_BASE_CONFIG_XML,
     FARADAY_BASE
+)
 
 try:
     # py2.7
@@ -123,13 +126,22 @@ class InitDB():
         if not already_created:
             if not os.path.isfile(FARADAY_USER_CONFIG_XML):
                 shutil.copy(FARADAY_BASE_CONFIG_XML, FARADAY_USER_CONFIG_XML)
-
+            self._save_user_xml(random_password)
             print("Admin user created with \n\n{red}username: {white}faraday \n"
                   "{red}password:{white} {"
                   "random_password} \n".format(random_password=random_password,
                                             white=Fore.WHITE, red=Fore.RED))
             print("{yellow}WARNING{white}: If you are going to execute couchdb importer you must use the couchdb password for faraday user.".format(white=Fore.WHITE, yellow=Fore.YELLOW))
 
+    def _save_user_xml(self, random_password):
+        user_xml = os.path.expanduser("~/.faraday/config/user.xml")
+        if not os.path.exists(user_xml):
+            shutil.copy(FARADAY_BASE_CONFIG_XML, user_xml)
+        conf = Configuration(user_xml)
+        conf.setAPIUrl('http://localhost:5985')
+        conf.setAPIUsername('faraday')
+        conf.setAPIPassword(random_password)
+        conf.saveConfig()
 
     def _configure_existing_postgres_user(self):
         username = raw_input('Please enter the postgresql username: ')
@@ -163,11 +175,12 @@ class InitDB():
         """
         print('This script will {blue} create a new postgres user {white} and {blue} save faraday-server settings {white}(server.ini). '.format(blue=Fore.BLUE, white=Fore.WHITE))
         username = 'faraday_postgresql'
-        postgres_command = ['sudo', '-u', 'postgres']
+        postgres_command = ['sudo', '-u', 'postgres', 'psql']
         if sys.platform == 'darwin':
-            postgres_command = []
+            print('{blue}MAC OS detected{white}'.format(blue=Fore.BLUE, white=Fore.WHITE))
+            postgres_command = ['psql', 'postgres']
         password = self.generate_random_pw(25)
-        command = postgres_command + ['psql', '-c', 'CREATE ROLE {0} WITH LOGIN PASSWORD \'{1}\';'.format(username, password)]
+        command = postgres_command + [ '-c', 'CREATE ROLE {0} WITH LOGIN PASSWORD \'{1}\';'.format(username, password)]
         p = Popen(command, stderr=psql_log_file, stdout=psql_log_file)
         p.wait()
         psql_log_file.seek(0)
@@ -178,6 +191,10 @@ class InitDB():
             print("{yellow}WARNING{white}: Role {username} already exists, skipping creation ".format(yellow=Fore.YELLOW, white=Fore.WHITE, username=username))
 
             try:
+                if not getattr(server.config, 'database', None):
+                    print('Manual configuration? \n faraday_postgresql was found in PostgreSQL, but no connection string was found in server.ini. ')
+                    print('Please configure [database] section with correct postgresql string. Ex. postgresql+psycopg2://faraday_postgresql:PASSWORD@localhost/faraday')
+                    sys.exit(1)
                 password = server.config.database.connection_string.split(':')[2].split('@')[0]
                 connection = psycopg2.connect(dbname='postgres',
                                               user=username,

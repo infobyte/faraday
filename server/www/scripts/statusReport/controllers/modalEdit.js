@@ -163,7 +163,7 @@ angular.module('faradayApp')
         vm.openEvidence = function(name) {
             var currentEvidence = vm.data._attachments[name];
             if (!currentEvidence.newfile)
-                window.open(vm.baseurl + $routeParams.wsId + '/' + vm.data._id + '/' + encodeURIComponent(name), '_blank');
+                window.open(vm.baseurl + '_api/v2/ws/' + $routeParams.wsId + '/vulns/' + vm.data._id + '/attachment/' + encodeURIComponent(name), '_blank');
         };
 
         vm.newPolicyViolation = function() {

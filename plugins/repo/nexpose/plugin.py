@@ -8,13 +8,11 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 from __future__ import with_statement
-from plugins import core
-from model import api
 import re
 import os
-import pprint
-import sys
 
+from plugins import core
+from model import api
 try:
     import xml.etree.cElementTree as ET
     import xml.etree.ElementTree as ET_ORIG
@@ -51,7 +49,9 @@ class NexposeXmlParser(object):
     def __init__(self, xml_output):
         tree = self.parse_xml(xml_output)
         if tree:
-            self.items = [data for data in self.get_items(tree)]
+            vulns = self.get_vulns_list(tree)
+            self.items = [data for data in self.get_items(tree, vulns)]
+
         else:
             self.items = []
 
@@ -72,12 +72,22 @@ class NexposeXmlParser(object):
 
         return tree
 
-    def get_items(self, tree):
+    def get_items(self, tree, vulnerabilities):
         """
         @return items A list of Host instances
         """
-        for node in tree.findall("devices/device"):
-            yield Item(node)
+        for node in tree.findall("nodes/node"):
+            yield Item(node, vulnerabilities)
+
+    def get_vulns_list(self, tree):
+        """
+        :param tree:
+        """
+        vulns_list = []
+        for self.issues in tree.findall("VulnerabilityDefinitions/vulnerability"):
+            vulns_list.append(self.issues)
+
+        return vulns_list
 
 
 class Item(object):
@@ -88,83 +98,184 @@ class Item(object):
     @param item_node A item_node taken from an nexpose xml tree
     """
 
-    def __init__(self, item_node):
+    def __init__(self, item_node, vulnerability):
         self.node = item_node
         self.ip = item_node.get('address')
-        self.os = self.get_text_from_subnode("fingerprint/description")
+        self.os = self.get_version('fingerprints/os')
+        # Checking node's vulns
+        node_tests_list = self.get_tests('tests')
+        self.vulns_list = vulnerability
+        self.node_vulns = self.check_vulns(node_tests_list, self.vulns_list)
+        # Checking service's vulns
+        self.service = self.get_service('endpoints/endpoint', item_node)
 
-        self.vulns = self.getResults(item_node)
 
+    def get_service(self, path, item_node):
+        """
+        Gets a service.
+
+        @return service
+        """
         self.srv = []
-
-        for srv in item_node.findall("services/service"):
-            item = {}
+        for srv in item_node.findall(path):
             self.node = srv
-            item['name'] = srv.get('name')
+            item = {}
+            tests_list = self.get_tests('services/service/tests')
+            item['name'] = self.get_name_from_service('services/service')
             item['port'] = srv.get('port')
             item['protocol'] = srv.get('protocol')
-            item['version'] = self.get_text_from_subnode(
-                "fingerprint/description")
-            item['vulns'] = self.getResults(srv)
+            item['status'] = srv.get('status')
+            item['version'] = self.get_version('services/service/fingerprints/fingerprint')
+            item['vulns'] = self.check_vulns(tests_list, self.vulns_list)
             self.srv.append(item)
 
-    def getResults(self, tree):
-        """
-        :param tree:
-        """
-        for self.issues in tree.findall("vulnerabilities/vulnerability"):
-            yield Results(self.issues)
+        return self.srv
 
-    def get_text_from_subnode(self, subnode_xpath_expr):
-        """
-        Finds a subnode in the host node and the retrieves a value from it.
 
-        @return An attribute value
+    def get_name_from_service(self, service_path):
         """
-        sub_node = self.node.find(subnode_xpath_expr)
+        Gets the name of a service.
+
+        @return service's attribute 'name'
+        """
+        sub_node = self.node.find(service_path)
+        if sub_node is not None:
+            return sub_node.get('name')
+
+        return None
+
+    def get_version(self, path):
+        """
+        Gets version of a host or a service.
+
+        @return attribute 'product' from a host or a service
+        """
+        sub_node = self.node.find(path)
+        if sub_node is not None:
+            return sub_node.attrib['product']
+
+        return None
+
+    def get_tests(self, test_path):
+        """
+        Gets every test in a service.
+
+        @return a list of every test
+        """
+        sub_node = self.node.find(test_path)
+        tests_list = []
+        for test in sub_node:
+            tests_list.append(test)
+        return tests_list
+
+    #Check which test of a node or service is a vuln
+    def check_vulns(self, list_of_tests, list_of_vulns):
+        """
+        Checks if a test of a host or a service is in the vulns list
+
+        @return a list of vulns of a host or a service
+        """
+        checked_vulns = []
+        vuln_attributes = {}
+        for test in list_of_tests:
+            for vuln in list_of_vulns:
+                if test.attrib['id'] == vuln.attrib['id']:
+                    vuln_attributes['id'] = vuln.attrib['id']
+                    vuln_attributes['ref'] = self.get_vulns_ref(vuln)
+                    vuln_attributes['severity'] = self.severity_format(vuln.attrib['severity'])
+                    vuln_attributes['description'] = self.convert_to_flat_text(vuln, 'description')
+                    vuln_attributes['resolution'] = self.convert_to_flat_text(vuln, 'solution')
+                    checked_vulns.append(vuln_attributes)
+
+        return checked_vulns
+
+    def severity_format(self, severity):
+        """
+        Convert Nexpose severity format into Faraday API severity format
+
+        @return a severity
+        """
+        if severity == '1' or severity == '2':
+            return 'low'
+        elif severity == '3' or severity == '4':
+            return 'medium'
+        elif severity >= '5' or severity <= '7':
+            return 'high'
+        elif severity >= '8':
+            return 'critical'
+
+    def get_vulns_ref(self, vuln):
+        """
+        Gets the references of a vuln
+
+        @return a list of sources of every reference
+        """
+        # PCISeverity: Policy violations can't be added to plugins
+        source = []
+        source.append("cvssScore-" + vuln.attrib['cvssScore'])
+        source.append("cvssVector-" + vuln.attrib['cvssVector'])
+
+        data = self.get_text_from_reference(vuln, "references/reference/[@source='CVE']")
+        if data:
+            source.append(data)
+
+        data = self.get_text_from_reference(vuln, "references/reference/[@source='BID']")
+        if data:
+            source.append("bid-" + data)
+
+        data = self.get_text_from_reference(vuln, "references/reference/[@source='OVAL']")
+        if data:
+            source.append("osvdb-" + data)
+
+        data = self.get_text_from_reference(vuln, "references/reference/[@source='SUSE']")
+        if data:
+            source.append("suse-" + data)
+
+        for sources in vuln.findall("references/reference/[@source='XF']"):
+            source.append("xf-" + sources.text)
+
+        for sources in vuln.findall("references/reference/[@source='REDHAT']"):
+            source.append("secunia-" + sources.text)
+
+        for sources in vuln.findall("references/reference/[@source='URL']"):
+            source.append("url-" + sources.text)
+
+        return source
+
+    def get_text_from_reference(self, vulnerability, reference_path):
+        """
+        Gets text from the references of a vulnerability.
+
+        @return A attribute value
+        """
+        sub_node = vulnerability.find(reference_path)
         if sub_node is not None:
             return sub_node.text
 
         return None
 
-
-class Results():
-
-    def __init__(self, issue_node):
-        self.node = issue_node
-        self.name = issue_node.get('id')
-        self.ref = []
-        data = self.get_text_from_subnode("id/[@type='cve']")
-        if data:
-            self.ref.append(data)
-
-        data = self.get_text_from_subnode("id/[@type='bid']")
-        if data:
-            self.ref.append("bid-" + data)
-
-        data = self.get_text_from_subnode("id/[@type='osvdb']")
-        if data:
-            self.ref.append("osvdb-" + data)
-
-        for v in issue_node.findall("id/[@type='secunia']"):
-            self.ref.append("secunia-" + v.text)
-
-        for v in issue_node.findall("id/[@type='url']"):
-            self.ref.append("url-" + v.text)
-
-        self.url = self.get_text_from_subnode("key")
-
-    def get_text_from_subnode(self, subnode_xpath_expr):
+    def convert_to_flat_text(self, vuln, tag):
         """
-        Finds a subnode in the host node and the retrieves a value from it.
+        Converts texts from multiples elements into one flat text
 
-        @return An attribute value
+        @return returns new text
         """
-        sub_node = self.node.find(subnode_xpath_expr)
-        if sub_node is not None:
-            return sub_node.text
+        self.description = vuln.find(tag)
+        xml_str = self.description.itertext()
+        aux_string  = []
+        strings_list = [data for data in xml_str]
+        # Iterating each item of the list that contains the strings
+        for item in strings_list:
+            # Taking away '\n', '\t'
+            aux_item = item.rstrip()
+            if aux_item is not '':
+                string_text = aux_item.replace('\n','')
+                aux_string.append(string_text)
 
-        return None
+        flatten_text = ' '.join(aux_string)
+        flat_text = ' '.join(flatten_text.split())
+
+        return flat_text
 
 
 class NexposePlugin(core.PluginBase):
@@ -188,37 +299,36 @@ class NexposePlugin(core.PluginBase):
                                               "nexpose_output-%s.xml" % self._rid)
 
     def parseOutputString(self, output, debug=False):
-
         parser = NexposeXmlParser(output)
         for item in parser.items:
-            h_id = self.createAndAddHost(item.ip, item.os)
-            i_id = self.createAndAddInterface(
-                h_id, item.ip, ipv4_address=item.ip, hostname_resolution=item.ip)
+            host_id = self.createAndAddHost(item.ip, item.os)
 
-            for v in item.vulns:
-                v_id = self.createAndAddVulnToHost(h_id, v.name, ref=v.ref)
+            for vuln in item.node_vulns:
+                vuln_id = self.createAndAddVulnToHost(
+                    host_id, vuln['id'],
+                    ref=vuln['ref'],
+                    severity=vuln['severity'],
+                    desc=vuln['description'],
+                    resolution=vuln['resolution']
+                )
 
-            for s in item.srv:
-                web = False
-                s_id = self.createAndAddServiceToInterface(h_id, i_id, s['name'],
-                                                           s['protocol'],
+            for srv in item.service:
+                service_id = self.createAndAddServiceToHost(host_id, srv['name'],
+                                                           srv['protocol'],
                                                            ports=[
-                                                               str(s['port'])],
-                                                           status="open",
-                                                           version=s['version'])
-                for v in s['vulns']:
-                    if v.url:
-                        v_id = self.createAndAddVulnWebToService(
-                            h_id, s_id, v.name, ref=v.ref, website=item.ip, path=v.url)
-                        if not web:
-                            n_id = self.createAndAddNoteToService(
-                                h_id, s_id, "website", "")
-                            n2_id = self.createAndAddNoteToNote(
-                                h_id, s_id, n_id, item.ip, "")
-                            web = True
-                    else:
-                        v_id = self.createAndAddVulnToService(
-                            h_id, s_id, v.name, ref=v.ref)
+                                                               str(srv['port'])],
+                                                           status=srv['status'],
+                                                           version=srv['version'])
+                for vuln in srv['vulns']:
+                    vuln_id = self.createAndAddVulnToService(
+                            host_id,
+                            service_id,
+                            vuln['id'],
+                            ref=vuln['ref'],
+                            severity=vuln['severity'],
+                            desc=vuln['description'],
+                            resolution=vuln['resolution']
+                    )
         del parser
 
     def processCommandString(self, username, current_path, command_string):
@@ -232,7 +342,9 @@ def createPlugin():
     return NexposePlugin()
 
 if __name__ == '__main__':
-    parser = NexposeXmlParser(sys.argv[1])
-    for item in parser.items:
-        if item.status == 'up':
-            print item
+    parser = NexposePlugin()
+    with open('/home/javier/report-xml1.0.xml', 'r') as report:
+        parser.parseOutputString(report.read())
+        for item in parser.items:
+            if item.status == 'up':
+                print item

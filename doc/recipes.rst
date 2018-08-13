@@ -69,9 +69,10 @@ For example, lets see the code of the vulns API::
                         if pagination_metadata is not None else len(vulns))
         }
 
-Ensure that you correctly handle the case of ``pagination_metadata`` being
-None. This happens when the user doesn't specify the page number or size, so
-all the objects will be shown.
+.. warning::
+    Ensure that you correctly handle the case of ``pagination_metadata`` being
+    None. This happens when the user doesn't specify the page number or size, so
+    all the objects will be shown.
 
 
 .. _`flask_sqlalchemy.Pagination`: http://flask-sqlalchemy.pocoo.org/2.3/api/#utilities
@@ -80,7 +81,7 @@ Adding filters
 ==============
 
 If you want to enable the API clients to filter by a specific field, you should
-inherit from the ``PaginatedMixin`` (this isn't done by default like with
+inherit from the ``FilterAlchemyMixin`` (this isn't done by default like with
 ``SortableMixin``). Then you define a ``filterset_class`` attribute in your
 class indicating the `filteralchemy filterset`_ to use::
 

@@ -10,7 +10,7 @@ them based on your needs.
 .. _`Django REST Framework`: http://django-rest-framework.org/
 
 The first thing you will need is a working SQLAlchemy model. Based on wether
-that model will be available on only one workspace (like the majority of out
+that model will be available on only one workspace (like the majority of our
 models) or in all the workspaces (like vuln templates or licenses) the things
 are a bit different.
 
@@ -62,7 +62,7 @@ app in the ``server/app.py`` file::
 That is the code of the view. It will have list, detail, create, update, remove
 and count endpoints, and all of them will be functional. If you want to only
 enable some of them you should inherit from ``GenericWorkspacedView`` and from
-some mixins that define each endpoint's behavior.
+some mixins that implement each method's behavior.
 
 If you look at the view's code, the only thing it does is to define three
 atrributes: ``route_base``, to define what is going on the URL, the class of

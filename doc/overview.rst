@@ -19,8 +19,9 @@ ecosystem.
 `SQLAlchemy`_
 ^^^^^^^^^^^^^
 
-A really powerful Object Relational Mapper for Python that allows us to map
-results of SQL queries to instances of Python objects
+A really powerful but complex Object Relational Mapper for Python that allows
+us to map results of SQL queries to instances of Python objects. Sometimes it
+looks made by Java developers rather than Python devs.
 
 `Flask-Classful`_
 ^^^^^^^^^^^^^^^^^
@@ -85,6 +86,10 @@ Other libraries we use
 
 * `Filteralchemy`_ to make query filters in a declarative way, inspired on
   `django-filter`_
+
+  .. note::
+    This library is unmantained, so we have our own fork of it hosted on
+    https://github.com/infobyte/filteralchemy
 
 .. _`django-filter`: https://github.com/carltongibson/django-filter
 .. _`Filteralchemy`: http://filteralchemy.readthedocs.io/

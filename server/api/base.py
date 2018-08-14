@@ -333,7 +333,14 @@ class GenericView(FlaskView):
 
 class GenericWorkspacedView(GenericView):
     """Abstract class for a view that depends on the workspace, that is
-    passed in the URL"""
+    passed in the URL
+
+    .. note::
+        This view inherits from GenericView, so make sure you understand
+        that first by checking the docs above, or just by looking at the
+        source code of server/api/base.py.
+
+    """
 
     # Default attributes
     route_prefix = '/v2/ws/<workspace_name>/'
@@ -420,6 +427,8 @@ class SortableMixin(object):
 
     See the example of :ref:`pagination-and-sorting-recipe` to learn
     how is it used.
+
+    Works for both workspaced and non-workspaced views.
     """
     sort_field_paremeter_name = "sort"
     sort_direction_paremeter_name = "sort_dir"
@@ -537,7 +546,7 @@ class FilterAlchemyMixin(object):
 
 
 class ListWorkspacedMixin(ListMixin):
-    """Add GET /<workspace_name>/ route"""
+    """Add GET /<workspace_name>/<route_base>/ route"""
     # There are no differences with the non-workspaced implementations. The code
     # inside the view generic methods is enough
     pass
@@ -552,7 +561,7 @@ class RetrieveMixin(object):
 
 
 class RetrieveWorkspacedMixin(RetrieveMixin):
-    """Add GET /<workspace_name>/<id>/ route"""
+    """Add GET /<workspace_name>/<route_base>/<id>/ route"""
     # There are no differences with the non-workspaced implementations. The code
     # inside the view generic methods is enough
     pass
@@ -574,7 +583,10 @@ class ReadOnlyWorkspacedView(SortableMixin,
                              ListWorkspacedMixin,
                              RetrieveWorkspacedMixin,
                              GenericWorkspacedView):
-    """A workspaced generic view with list and retrieve endpoints"""
+    """A workspaced generic view with list and retrieve endpoints
+
+    It is just a GenericWorkspacedView inheriting also from
+    ListWorkspacedMixin, RetrieveWorkspacedMixin and SortableMixin"""
     pass
 
 
@@ -593,6 +605,11 @@ class CreateMixin(object):
         return self._dump(created, kwargs), 201
 
     def _perform_create(self, data, **kwargs):
+        """Check for conflicts and create a new object
+
+        Is is passed the data parsed by the marshmallow schema (it
+        transform from raw post data to a JSON)
+        """
         obj = self.model_class(**data)
         # assert not db.session.new
         try:
@@ -660,7 +677,12 @@ class CommandMixin():
 
 
 class CreateWorkspacedMixin(CreateMixin, CommandMixin):
-    """Add POST /<workspace_name>/ route"""
+    """Add POST /<workspace_name>/<route_base>/ route
+
+    If a GET parameter command_id is passed, it will create a new
+    CommandObject associated to that command to register the change in
+    the database.
+    """
 
     def _perform_create(self, data, workspace_name):
         assert not db.session.new
@@ -693,7 +715,7 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
 
 
 class UpdateMixin(object):
-    """Add PUT /<workspace_name>/<id>/ route"""
+    """Add PUT /<id>/ route"""
 
     def put(self, object_id, **kwargs):
         obj = self._get_object(object_id, **kwargs)
@@ -747,7 +769,12 @@ class UpdateMixin(object):
 
 
 class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
-    """Add PUT /<id>/ route"""
+    """Add PUT /<workspace_name>/<route_base>/<id>/ route
+
+    If a GET parameter command_id is passed, it will create a new
+    CommandObject associated to that command to register the change in
+    the database.
+    """
 
     def _perform_update(self, object_id, obj, data, workspace_name):
         # # Make sure that if I created new objects, I had properly commited them
@@ -774,11 +801,21 @@ class DeleteMixin(object):
 
 
 class DeleteWorkspacedMixin(DeleteMixin):
-    """Add DELETE /<workspace_name>/<id>/ route"""
+    """Add DELETE /<workspace_name>/<route_base>/<id>/ route"""
     pass
 
 
 class CountWorkspacedMixin(object):
+    """Add GET /<workspace_name>/<route_base>/count/ route
+
+    Group objects by the field set in the group_by GET parameter. If it
+    isn't specified, the view will return a 404 error. For each group,
+    show the count of elements and its value.
+
+    This view is often used by some parts of the web UI. It was designed
+    to keep backwards compatibility with the count endpoint of Faraday
+    v2.
+    """
 
     #: List of SQLAlchemy query filters to apply when counting
     count_extra_filters = []
@@ -825,7 +862,12 @@ class ReadWriteView(CreateMixin,
                     UpdateMixin,
                     DeleteMixin,
                     ReadOnlyView):
-    """A generic view with list, retrieve and create endpoints"""
+    """A generic view with list, retrieve and create endpoints
+
+    It is just a GenericView inheriting also from ListMixin,
+    RetrieveMixin, SortableMixin, CreateMixin, UpdateMixin and
+    DeleteMixin.
+    """
     pass
 
 
@@ -835,7 +877,13 @@ class ReadWriteWorkspacedView(CreateWorkspacedMixin,
                               CountWorkspacedMixin,
                               ReadOnlyWorkspacedView):
     """A generic workspaced view with list, retrieve and create
-    endpoints"""
+    endpoints
+
+    It is just a GenericWorkspacedView inheriting also from
+    ListWorkspacedMixin, RetrieveWorkspacedMixin, SortableMixin,
+    CreateWorkspacedMixin, DeleteWorkspacedMixin and
+    CountWorkspacedMixin.
+    """
     pass
 
 

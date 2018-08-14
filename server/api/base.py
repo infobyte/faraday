@@ -208,7 +208,7 @@ class GenericView(FlaskView):
         return query
 
     def _get_eagerloaded_query(self, *args, **kwargs):
-        """Load objects relationed to the current model in a single query.
+        """Load objects related to the current model in a single query.
 
         This is useful to prevent n+1 SQL problems, where a request to an
         object with many childs makes many SQL requests that tends to be
@@ -416,7 +416,11 @@ class ListMixin(object):
 
 
 class SortableMixin(object):
-    """Enables custom sorting by a field specified by te user"""
+    """Enables custom sorting by a field specified by the user
+
+    See the example of :ref:`pagination-and-sorting-recipe` to learn
+    how is it used.
+    """
     sort_field_paremeter_name = "sort"
     sort_direction_paremeter_name = "sort_dir"
     sort_pass_silently = False
@@ -558,7 +562,11 @@ class ReadOnlyView(SortableMixin,
                    ListMixin,
                    RetrieveMixin,
                    GenericView):
-    """A generic view with list and retrieve endpoints"""
+    """A generic view with list and retrieve endpoints
+
+    It is just a GenericView inheriting also from ListMixin,
+    RetrieveMixin and SortableMixin.
+    """
     pass
 
 
@@ -700,10 +708,20 @@ class UpdateMixin(object):
         return self._dump(obj, kwargs), 200
 
     def _update_object(self, obj, data):
+        """Perform changes in the selected object
+
+        It modifies the attributes of the SQLAlchemy model to match
+        the data passed by the Marshmallow schema.
+
+        It is common to overwrite this method to do something strange
+        with some specific field. Typically the new method should call
+        this one to handle the update of the rest of the fields.
+        """
         for (key, value) in data.items():
             setattr(obj, key, value)
 
     def _perform_update(self, object_id, obj, data, workspace_name=None):
+        """Commit the SQLAlchemy session, check for updating conflicts"""
         try:
             db.session.add(obj)
             db.session.commit()

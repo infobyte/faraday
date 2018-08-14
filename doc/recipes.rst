@@ -8,6 +8,8 @@ This will cover common recipes used to make more advanced views.
 Customizing the list endpoint
 *****************************
 
+.. _pagination-and-sorting-recipe:
+
 Enabling pagination and sorting
 ===============================
 

@@ -17,10 +17,13 @@ Generic views
     :members: _envelope_list,_get_order_field,_paginate
 
 .. autoclass:: server.api.base.RetrieveMixin
+.. autoclass:: server.api.base.SortableMixin
+.. autoclass:: server.api.base.ReadOnlyView
 .. autoclass:: server.api.base.CreateMixin
 .. autoclass:: server.api.base.UpdateMixin
+    :members: _update_object, _perform_update
+
 .. autoclass:: server.api.base.DeleteMixin
-.. autoclass:: server.api.base.ReadOnlyView
 .. autoclass:: server.api.base.ReadWriteView
 
 

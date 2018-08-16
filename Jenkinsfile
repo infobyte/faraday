@@ -98,6 +98,7 @@ node (label: "master"){
             rm -rf ~/docs/jenkins_build
             cd $WORKSPACE/doc && make html && cp -r _build/html ~/docs/jenkins_build
         """
+    }
 
     stage ("Run Closure Compiler") {
         try {

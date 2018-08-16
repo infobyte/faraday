@@ -582,7 +582,7 @@ class CustomAssociationSet(_AssociationSet):
 def _build_associationproxy_creator(model_class_name):
     def creator(name, vulnerability):
         """Get or create a reference/policyviolation with the
-        corresponding name. This must be worspace aware"""
+        corresponding name. This must be workspace aware"""
 
         # Ugly hack to avoid the fact that Reference is defined after
         # Vulnerability
@@ -605,7 +605,7 @@ def _build_associationproxy_creator(model_class_name):
 def _build_associationproxy_creator_non_workspaced(model_class_name):
     def creator(name, vulnerability):
         """Get or create a reference/policyviolation with the
-        corresponding name. This must be worspace aware"""
+        corresponding name. This must be workspace aware"""
 
         # Ugly hack to avoid the fact that Reference is defined after
         # Vulnerability

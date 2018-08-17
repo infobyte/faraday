@@ -8,10 +8,10 @@ import socket
 import argparse
 import subprocess
 
-import sqlalchemy
-from colorama import init, Fore
 
 try:
+    from colorama import init, Fore
+    import sqlalchemy
     import server.config
     import server.couchdb
     import server.utils.logger

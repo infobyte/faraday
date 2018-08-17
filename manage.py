@@ -102,12 +102,11 @@ def sql_shell():
     pgcli.run_cli()
 
 
-@click.command()
+@click.command(help='Checks configuration and faraday status.')
 @click.option('--check_postgresql', default=False, is_flag=True)
 @click.option('--check_faraday', default=False, is_flag=True)
 @click.option('--check_dependencies', default=False, is_flag=True)
 @click.option('--check_config', default=False, is_flag=True)
-
 def status_check(check_postgresql, check_faraday, check_dependencies, check_config):
 
     selected = False

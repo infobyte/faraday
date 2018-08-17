@@ -624,7 +624,7 @@ class SqlmapPlugin(PluginTerminalOutput):
                 self.path = urlComponents.path
                 self.params = urlComponents.query
 
-            self.url = self.protocol + "://" + self.hostname + ":" + self.port + self.path
+            self.url = self.protocol + "://" + self.hostname + ":" + int(self.port) + self.path
             self.fullpath = self.url + "?" + self.params
 
             self._output_path = "%s%s" % (

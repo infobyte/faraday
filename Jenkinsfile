@@ -90,6 +90,16 @@ node (label: "master"){
         }
     }
 
+    stage ("Build docs") {
+        sh """
+            source ${ENV_PATH}/bin/activate
+            pip install sphinx
+            mkdir -p ~/docs
+            rm -rf ~/docs/jenkins_build
+            cd $WORKSPACE/doc && make html && cp -r _build/html ~/docs/jenkins_build
+        """
+    }
+
     stage ("Run Closure Compiler") {
         try {
             sh """

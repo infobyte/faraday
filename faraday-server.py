@@ -8,10 +8,10 @@ import socket
 import argparse
 import subprocess
 
-import sqlalchemy
-from colorama import init, Fore
 
 try:
+    from colorama import init, Fore
+    import sqlalchemy
     import server.config
     import server.couchdb
     import server.utils.logger
@@ -93,15 +93,15 @@ def check_postgresql():
     with app.app_context():
         try:
             if not db.session.query(Workspace).count():
-                logger.warn('No workspaces found. Remeber to execute couchdb importer')
+                logger.warn('No workspaces found. Remember to execute CouchDB importer')
         except sqlalchemy.exc.ArgumentError:
             logger.error(
-                '\n\b{RED}Please check you postgresql connection string in server.ini at .faraday on your ohme directory.{WHITE} \n'.format(RED=Fore.RED, WHITE=Fore.WHITE)
+                '\n\b{RED}Please check your PostgreSQL connection string in the file ~/.faraday/config/server.ini on your home directory.{WHITE} \n'.format(RED=Fore.RED, WHITE=Fore.WHITE)
             )
             sys.exit(1)
         except sqlalchemy.exc.OperationalError:
             logger.error(
-                    '\n\n{RED}Could not connect to postgresql.\n{WHITE}Please check: \n{YELLOW}  * if database is running \n  * configuration settings are correct. \n\n{WHITE}For first time installations execute{WHITE}: \n\n {GREEN} python manage.py initdb\n\n'.format(GREEN=Fore.GREEN, YELLOW=Fore.YELLOW, WHITE=Fore.WHITE, RED=Fore.RED))
+                    '\n\n{RED}Could not connect to PostgreSQL.\n{WHITE}Please check: \n{YELLOW}  * if database is running \n  * configuration settings are correct. \n\n{WHITE}For first time installations execute{WHITE}: \n\n {GREEN} python manage.py initdb\n\n'.format(GREEN=Fore.GREEN, YELLOW=Fore.YELLOW, WHITE=Fore.WHITE, RED=Fore.RED))
             sys.exit(1)
 
 
@@ -140,7 +140,7 @@ def main():
         sys.exit(1)
 
     if result == 0:
-        logger.error("Faraday server port in use. Check your processes and run the server again...")
+        logger.error("Faraday Server port in use. Check your processes and run the server again...")
         sys.exit(1)
 
     # Overwrites config option if SSL is set by argument

@@ -67,7 +67,6 @@ def stop_server(port):
         # Exists with an error if it couldn't close the server
         return False
     else:
-        logger.info("Faraday Server stopped successfully")
         return True
 
 
@@ -158,10 +157,12 @@ def main():
         # and without --start nor --stop
         devnull = open('/dev/null', 'w')
         params = ['/usr/bin/env', 'python2.7', os.path.join(server.config.FARADAY_BASE, __file__), '--no-setup']
-        if args.ssl:
-            params.append('--ssl')
-        if args.debug:
-            params.append('--debug')
+        arg_dict = vars(args)
+        for arg in arg_dict:
+            if arg not in ["start", "stop"] and arg_dict[arg]:
+                params.append('--'+arg)
+                if arg_dict[arg] != True:
+                    params.append(arg_dict[arg])
         logger.info('Faraday Server is running as a daemon')
         subprocess.Popen(params, stdout=devnull, stderr=devnull)
     else:

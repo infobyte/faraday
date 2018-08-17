@@ -148,6 +148,7 @@ def stop_server(port):
     try:
         logger.info('Sending SIGTERM to pid {0}'.format(pid))
         os.kill(pid, signal.SIGTERM)
+        logger.info("Faraday Server stopped successfully")
     except OSError, err:
         if err.errno == errno.EPERM:
             logger.error("Couldn't stop Faraday Server. User doesn't"\
@@ -196,7 +197,7 @@ def get_server_pid(port):
             logger.warning('PID file was found but is corrupted. '\
                 'Assuming server is not running. Please check manually'\
                 'if Faraday Server is effectively running')
-            remove_pid_file()
+            remove_pid_file(port)
             return None
 
     return pid

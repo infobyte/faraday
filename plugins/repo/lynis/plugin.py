@@ -11,6 +11,7 @@ from __future__ import with_statement
 import re
 import os
 import random
+import socket
 from collections import defaultdict
 
 from plugins import core
@@ -163,8 +164,9 @@ class LynisPlugin(core.PluginBase):
         elif '# Lynis Report' in output:
             lde = LynisLogDataExtracter(output=output)
 
-        h_id = self.createAndAddHost(name=lde.hostname(),
-                                     os=lde.osfullname())
+        hostname = lde.hostname()
+        ip = socket.gethostbyname(hostname)
+        h_id = self.createAndAddHost(name=ip, os=lde.osfullname(), hostnames=[hostname])
 
         self.createAndAddVulnToHost(
             host_id=h_id,
@@ -172,6 +174,7 @@ class LynisPlugin(core.PluginBase):
             severity='info',
             desc=lde.kernelVersion()
         )
+        
         
         interfaces = lde.interfaces()
         macs = lde.macs()

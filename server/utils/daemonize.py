@@ -7,6 +7,8 @@
 # http://code.activestate.com/recipes/278731-creating-a-daemon-the-python-way/
 
 import os
+import re
+import random
 import sys
 import errno
 import atexit
@@ -146,7 +148,7 @@ def stop_server(port):
         return False
 
     try:
-        logger.info('Sending SIGTERM to pid {0}'.format(pid))
+        logger.info('Sending SIGTERM to pid {0}, in port {1}'.format(pid, port))
         os.kill(pid, signal.SIGTERM)
         logger.info("Faraday Server stopped successfully")
     except OSError, err:
@@ -209,3 +211,17 @@ def create_pid_file(port):
 
 def remove_pid_file(port):
     os.remove(server.config.FARADAY_SERVER_PID_FILE.format(port))
+
+def get_ports_running():
+    ports = []
+    re_string = re.escape(server.config.FARADAY_SERVER_PID_FILE)
+    re_string = re_string.replace("\{0\}","[0-9]+")
+    home_dir = os.listdir(server.config.CONSTANTS.CONST_FARADAY_HOME_PATH)
+
+    for path in home_dir:
+        path = server.config.CONSTANTS.CONST_FARADAY_HOME_PATH + "/" + path
+        if re.match(re_string,path):
+            port = path.split("-")[-1].split(".")[0]
+            ports.append(int(port))
+
+    return ports

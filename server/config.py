@@ -25,7 +25,7 @@ if not os.path.exists(FARADAY_SERVER_SESSIONS_DIR):
     # Temporary hack, remove me
     os.mkdir(FARADAY_SERVER_SESSIONS_DIR)
 FARADAY_SERVER_PID_FILE = os.path.join(
-    CONSTANTS.CONST_FARADAY_HOME_PATH, 'faraday-server.pid')
+    CONSTANTS.CONST_FARADAY_HOME_PATH, 'faraday-server-port-{0}.pid')
 REQUIREMENTS_FILE = os.path.join(FARADAY_BASE, 'requirements_server.txt')
 DEFAULT_CONFIG_FILE = os.path.join(FARADAY_BASE, 'server/default.ini')
 VERSION_FILE = os.path.join(FARADAY_BASE, CONSTANTS.CONST_VERSION_FILE)

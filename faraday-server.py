@@ -62,17 +62,16 @@ def setup_environment(check_deps=False):
     server.config.gen_web_config()
 
 
-def stop_server():
-    if not daemonize.stop_server():
+def stop_server(port):
+    if not daemonize.stop_server(port):
         # Exists with an error if it couldn't close the server
         return False
     else:
-        logger.info("Faraday Server stopped successfully")
         return True
 
 
-def is_server_running():
-    pid = daemonize.is_server_running()
+def is_server_running(port):
+    pid = daemonize.is_server_running(port)
     if pid is not None:
         logger.warn("Faraday Server is already running. PID: {}".format(pid))
         return True
@@ -84,8 +83,7 @@ def run_server(args):
     import server.web
 
     web_server = server.web.WebServer(enable_ssl=args.ssl)
-
-    daemonize.create_pid_file()
+    daemonize.create_pid_file(args.port)
     web_server.run()
 
 
@@ -131,12 +129,23 @@ def main():
         server.utils.logger.set_logging_level(server.config.DEBUG)
 
     if args.stop:
-        sys.exit(0 if stop_server() else 1)
+        if args.port:
+            sys.exit(0 if stop_server(args.port) else 1)
+        else:
+            ports = daemonize.get_ports_running()
+            exit_code = 0
+            for port in ports:
+                exit_code += 0 if stop_server(port) else 1
+            sys.exit(exit_code)
+
+    else:
+        if not args.port:
+            args.port = 5985
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     result = sock.connect_ex((args.bind_address or server.config.faraday_server.bind_address, int(args.port or server.config.faraday_server.port)))
 
-    if is_server_running() and result == 0:
+    if is_server_running(args.port) and result == 0:
         sys.exit(1)
 
     if result == 0:
@@ -164,10 +173,12 @@ def main():
         # and without --start nor --stop
         devnull = open('/dev/null', 'w')
         params = ['/usr/bin/env', 'python2.7', os.path.join(server.config.FARADAY_BASE, __file__), '--no-setup']
-        if args.ssl:
-            params.append('--ssl')
-        if args.debug:
-            params.append('--debug')
+        arg_dict = vars(args)
+        for arg in arg_dict:
+            if arg not in ["start", "stop"] and arg_dict[arg]:
+                params.append('--'+arg)
+                if arg_dict[arg] != True:
+                    params.append(arg_dict[arg])
         logger.info('Faraday Server is running as a daemon')
         subprocess.Popen(params, stdout=devnull, stderr=devnull)
     else:

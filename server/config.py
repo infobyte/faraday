@@ -101,6 +101,8 @@ def __get_osint():
 
 
 def gen_web_config():
+    # Warning: This is publicly accesible via the API, it doesn't even need an
+    # authenticated user. Don't add sensitive information here.
     doc = {
         'ver': __get_version(),
         'lic_db': CONSTANTS.CONST_LICENSES_DB,

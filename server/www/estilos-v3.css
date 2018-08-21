@@ -217,3 +217,7 @@
 .jumbotron {
   background-color: #f4f3f4;
 }
+
+.btn {
+  border-radius: 0px;
+}

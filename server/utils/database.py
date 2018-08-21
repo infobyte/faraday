@@ -235,6 +235,7 @@ def get_unique_fields(session, instance):
             'column_names': [
                 'name',
                 'description',
+                'type',
                 'host_id',
                 'service_id',
                 'method',

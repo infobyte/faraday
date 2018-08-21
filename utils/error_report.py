@@ -62,7 +62,7 @@ def exception_handler(type, value, tb):
         import pip
         modules_info = ",".join([ "%s=%s" % (x.key, x.version)
                             for x in pip.get_installed_distributions()])
-    except ImportError:
+    except (ImportError, AttributeError):
         pass
 
 

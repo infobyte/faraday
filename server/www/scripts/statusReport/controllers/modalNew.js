@@ -139,7 +139,7 @@ angular.module('faradayApp')
                 $modalInstance.close(vm.data);
             }, function(response){
                 if (response.status == 409) {
-                    commonsFact.showMessage("Error while creating a new Vulnerability " + vm.data.name + " Conflicting Vulnarability with id: " + response.data.object._id + ". " + response.data.message);
+                    commonsFact.showMessage("Error while creating a new Vulnerability " + vm.data.name + " Conflicting Vulnerability with id: " + response.data.object._id + ". " + response.data.message);
                 } else {
                     commonsFact.showMessage("Error from backend: " + response.status);
                 }

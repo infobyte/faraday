@@ -33,7 +33,8 @@ from server.models import (
     Vulnerability,
     VulnerabilityWeb,
     VulnerabilityGeneric,
-    Workspace
+    Workspace,
+    Hostname
 )
 from server.utils.database import get_or_create
 
@@ -286,7 +287,8 @@ class TypeFilter(Filter):
 
 class CreatorFilter(Filter):
     def filter(self, query, model, attr, value):
-        return query.filter(model.creator_command_tool == value)
+        return query.filter(model.creator_command_tool.ilike(
+            '%' + value + '%'))
 
 
 class ServiceFilter(Filter):
@@ -298,6 +300,23 @@ class ServiceFilter(Filter):
                 alias.name == value
         )
 
+class HostnamesFilter(Filter):
+    def filter(self, query, model, attr, value):
+        alias = aliased(Hostname, name='hostname_filter')
+
+        value_list = value.split(",")
+
+        service_hostnames_query = query.join(Service, Service.id == Vulnerability.service_id).\
+           join(Host).\
+           join(alias).\
+           filter(alias.name.in_(value_list))
+
+        host_hostnames_query = query.join(Host, Host.id == Vulnerability.host_id).\
+            join(alias).\
+            filter(alias.name.in_(value_list))
+
+        query = service_hostnames_query.union(host_hostnames_query)
+        return query
 
 class CustomILike(operators.Operator):
     """A filter operator that puts a % in the beggining and in the
@@ -353,6 +372,7 @@ class VulnerabilityFilterSet(FilterSet):
         deserialize=lambda val: 'open' if val == 'opened' else val,
         validate=OneOf(Vulnerability.STATUSES + ['opened'])
     ))
+    hostnames = HostnamesFilter(fields.Str())
 
     def filter(self):
         """Generate a filtered query from request parameters.
@@ -406,8 +426,8 @@ class VulnerabilityView(PaginatedMixin,
         # popped object has the expected type.
         # This will be set after setting the workspace
         attachments = data.pop('_attachments', {})
-        references = data.pop('references')
-        policyviolations = data.pop('policy_violations')
+        references = data.pop('references', [])
+        policyviolations = data.pop('policy_violations', [])
 
         obj = super(VulnerabilityView, self)._perform_create(data, **kwargs)
         obj.references = references
@@ -556,6 +576,9 @@ class VulnerabilityView(PaginatedMixin,
                     as_attachment=True,
                     mimetype=depot_file.content_type
                 )
-
+            else:
+                flask.abort(404, "File not found")
+        else:
+            flask.abort(404, "Vulnerability not found")
 
 VulnerabilityView.register(vulns_api)

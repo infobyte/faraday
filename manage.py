@@ -18,7 +18,7 @@ from server.commands.initdb import InitDB
 from server.commands.faraday_schema_display import DatabaseSchema
 from server.commands.app_urls import show_all_urls
 from server.commands.reports import import_external_reports
-from server.commands.status_check import full_status_check
+from server.commands import status_check as status_check_functions
 from server.models import db, User
 from server.importer import ImportCouchDB
 
@@ -102,10 +102,37 @@ def sql_shell():
     pgcli.run_cli()
 
 
-@click.command(help="Check critical modules in Faraday server application")
-def status_check():
-    full_status_check()
+@click.command(help='Checks configuration and faraday status.')
+@click.option('--check_postgresql', default=False, is_flag=True)
+@click.option('--check_faraday', default=False, is_flag=True)
+@click.option('--check_dependencies', default=False, is_flag=True)
+@click.option('--check_config', default=False, is_flag=True)
+def status_check(check_postgresql, check_faraday, check_dependencies, check_config):
 
+    selected = False
+    exit_code = 0
+    if check_postgresql:
+        # exit_code is created for Faraday automation-testing purposes
+        exit_code = status_check_functions.print_postgresql_status()
+        status_check_functions.print_postgresql_locks_status()
+        selected = True    
+
+    if check_faraday:
+        status_check_functions.print_faraday_status()
+        selected = True
+
+    if check_dependencies:
+        status_check_functions.print_depencencies_status()
+        selected = True
+
+    if check_config:
+        status_check_functions.print_config_status()
+        selected = True
+
+    if not selected:
+        status_check_functions.full_status_check()
+
+    sys.exit(exit_code)
 
 def validate_user_unique_field(ctx, param, value):
     with app.app_context():

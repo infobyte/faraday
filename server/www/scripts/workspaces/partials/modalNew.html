@@ -4,7 +4,7 @@
 
 <form name="form" novalidate>
     <div class="modal-header">
-        <div class="modal-button">
+        <div class="modal-button btn-toolbar">
             <button class="btn btn-success" ng-disabled="form.$invalid || date.$invalid" ng-click="okNew()">Save</button>
             <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
         </div>
@@ -14,7 +14,7 @@
         <div class="form-horizontal">
                 <div class="form-group" ng-class="{'has-error': form.name.$invalid }">
                     <div class="col-md-12">
-                        <ng-form name="form" novalidate> 
+                        <ng-form name="form" novalidate>
                             <label class="sr-only" for="wsp-name">Workspace Name</label>
                             <input type="text" class="form-control"
                                                ng-pattern=/^[a-z][a-z0-9\_\$\(\)\+\-\/]*$/ id="vuln-name" name="name" placeholder="Workspace Name"

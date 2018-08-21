@@ -10,6 +10,7 @@ import csv
 from time import mktime
 from datetime import datetime
 from persistence.server import models
+from persistence.server.server_io_exceptions import ConflictInDatabase, CantCommunicateWithServerError
 
 WORKSPACE = ""
 __description__ = "Import Faraday objects from CSV file"
@@ -91,6 +92,10 @@ def transform_dict_to_object(columns, register):
                     value[val] = register[key]
 
             elif key == "vulnerability_severity" or key == "vulnerability_web_severity":
+                if register[key].lower() == 'informational':
+                    register[key] = 'info'
+                if register[key].lower() == 'medium':
+                    register[key] = 'med'
                 if register[key].lower() in VULN_SEVERITIES:
                     value[val] = register[key]
             else:
@@ -242,78 +247,84 @@ def main(workspace="", args=None, parser=None):
     counter = 0
     csv_reader = csv.DictReader(file_csv, delimiter=",", quotechar='"')
     for register in csv_reader:
+        try:
+            host, service, vulnerability, vulnerability_web = parse_register(register)
 
-        host, service, vulnerability, vulnerability_web = parse_register(register)
+            # Set all IDs and create objects
+            if host is not None:
+                old_host = models.get_host(WORKSPACE, ip=host.getName())
+                if not old_host:
 
-        # Set all IDs and create objects
-        if host is not None:
-            old_host = models.get_host(WORKSPACE, ip=host.getName())
-            if not old_host:
+                    counter += 1
 
-                counter += 1
-                print "New host: " + host.getName()
-                models.create_host(WORKSPACE, host)
-            host = models.get_host(WORKSPACE, ip=host.getName())
+                    print "New host: " + host.getName()
+                    try:
+                        models.create_host(WORKSPACE, host)
+                    except Exception as ex:
+                        import ipdb; ipdb.set_trace()
+                host = models.get_host(WORKSPACE, ip=host.getName())
 
-        if service is not None:
-            service.setParent(host.getID())
-            service_params = {
-                'name': service.getName(),
-                'port': service.getPorts()[0],
-                'protocol': service.getProtocol(),
-                'host_id': service.getParent()
-            }
-            old_service = models.get_service(WORKSPACE, **service_params)
-            if not old_service:
+            if service is not None:
+                service.setParent(host.getID())
+                service_params = {
+                    'name': service.getName(),
+                    'port': service.getPorts()[0],
+                    'protocol': service.getProtocol(),
+                    'host_id': service.getParent()
+                }
+                old_service = models.get_service(WORKSPACE, **service_params)
+                if not old_service:
 
-                counter += 1
-                print "New service: " + service.getName()
-                models.create_service(WORKSPACE, service)
-            service = models.get_service(WORKSPACE, **service_params)
+                    counter += 1
+                    print "New service: " + service.getName()
+                    models.create_service(WORKSPACE, service)
+                service = models.get_service(WORKSPACE, **service_params)
 
-        # Check if Service exist, then create the vuln with parent Service.
-        # If not exist the Service, create the vuln with parent Host.
-        if vulnerability is not None:
-            if host and not service:
-                parent_type = 'Host'
-                parent_id = host.getID()
-            if host and service:
-                parent_type = 'Service'
-                parent_id = service.getID()
-            vulnerability.setParent(parent_id)
-            vulnerability.setParentType(parent_type)
+            # Check if Service exist, then create the vuln with parent Service.
+            # If not exist the Service, create the vuln with parent Host.
+            if vulnerability is not None:
+                if host and not service:
+                    parent_type = 'Host'
+                    parent_id = host.getID()
+                if host and service:
+                    parent_type = 'Service'
+                    parent_id = service.getID()
+                vulnerability.setParent(parent_id)
+                vulnerability.setParentType(parent_type)
 
-            vuln_params = {
-                'name': vulnerability.getName(),
-                'description': vulnerability.getDescription(),
-                'parent_type': parent_type,
-                'parent': parent_id,
-            }
-            if not models.get_vuln(WORKSPACE, **vuln_params):
-
+                vuln_params = {
+                    'name': vulnerability.getName(),
+                    'description': vulnerability.getDescription(),
+                    'parent_type': parent_type,
+                    'parent': parent_id,
+                }
                 counter += 1
                 print "New vulnerability: " + vulnerability.getName()
                 models.create_vuln(WORKSPACE, vulnerability)
 
-        elif vulnerability_web is not None:
+            elif vulnerability_web is not None:
 
-            vuln_web_params = {
-                'name': vulnerability_web.getName(),
-                'description': vulnerability_web.getDescription(),
-                'parent': service.getID(),
-                'parent_type': 'Service',
-                'method': vulnerability_web.getMethod(),
-                'parameter_name': vulnerability_web.getParams(),
-                'path': vulnerability_web.getPath(),
-                'website': vulnerability_web.getWebsite(),
-            }
-            vulnerability_web.setParent(service.getID())
-            if not models.get_web_vuln(WORKSPACE, **vuln_web_params):
+                vuln_web_params = {
+                    'name': vulnerability_web.getName(),
+                    'description': vulnerability_web.getDescription(),
+                    'parent': service.getID(),
+                    'parent_type': 'Service',
+                    'method': vulnerability_web.getMethod(),
+                    'parameter_name': vulnerability_web.getParams(),
+                    'path': vulnerability_web.getPath(),
+                    'website': vulnerability_web.getWebsite(),
+                }
+                vulnerability_web.setParent(service.getID())
+                if not models.get_web_vuln(WORKSPACE, **vuln_web_params):
 
-                counter += 1
-                print "New web vulnerability: " + vulnerability_web.getName()
-                models.create_vuln_web(WORKSPACE, vulnerability_web)
-
+                    counter += 1
+                    print "New web vulnerability: " + vulnerability_web.getName()
+                    models.create_vuln_web(WORKSPACE, vulnerability_web)
+        except ConflictInDatabase:
+            print('Conflict in Database, skiping csv row')
+        except CantCommunicateWithServerError as ex:
+            print(register)
+            print('Error', ex)
     print "[*]", counter, "new Faraday objects created."
     file_csv.close()
     return 0, None

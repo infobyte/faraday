@@ -10,14 +10,24 @@ New features in the latest update
 
 TBA:
 ---
+* Interface removed from model and from persistence server lib (fplugin)
+* Performance iprovements on the backend
+* Add quick change workspace name (from all views)
+* Changed the scope field of a workspace from a free text input to a list of targets
+* New faraday styles in all webui views
+* Add search by id for vulnerabilities
 * Add new plugin sslyze
 * Add new plugin wfuzz
 * Add xsssniper plugin
-* Fix W3af, Zap
+* Fix W3af, Zap plugins
 * Add brutexss plugin
 * Allow to upload report file from external tools from the web
 * Fix sshcheck import file from GTK
-* Add reconng, sublist3r, HP Webinspect, dirsearch and ip360 plugins
+* Add reconng plugin
+* Add sublist3r plugin
+* Add HP Webinspect plugin
+* Add dirsearch plugin
+* Add ip360 plugin
 * CouchDB was replaced by PostgreSQL :)
 * Host object changed, now the name property is called ip
 * Interface object was removed
@@ -29,17 +39,15 @@ TBA:
 * Allow the user to specify the desired fields of the host list table
 * Add optional hostnames, services, MAC and description fields to the host list
 * Workspace names can be changed from the Web UI
-* Changed the scope field of a workspace from a free text input to a list of targets
 * Exploitation and severity fields only allow certain values. CWE CVEs were fixed to be valid. A script to convert custom CSVs was added.
 * Web UI path changed from /_ui/ to / (_ui has now a redirection to / for keeping backwards compatibility)
-* dirb plugin should creates a vulnerability type information instead of a note.
+* dirb plugin creates an informational vulnerability instead of a note.
 * Add confirmed column to exported csv from webui
 * Fixes in Arachni plugin
 * Add new parameters --keep-old and --keep-new for faraday CLI
 * Add new screenshot fplugin which takes a screenshot of the ip:ports of a given protocol
 * Add fix for net sparker regular and cloud fix on severity
 * Removed Chat feature (data is kept inside notes)
-* Plugin reports now can be imported in the server, from the Web UI
 * Add CVSS score to reference field in Nessus plugin.
 * Fix unicode characters bug in Netsparker plugin.
 * Fix qualys plugin.

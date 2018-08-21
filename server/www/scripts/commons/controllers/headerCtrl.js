@@ -19,8 +19,10 @@ angular.module('faradayApp')
 
             // Ugly, ugly, ugly hack
             $scope.vulnsNum = vulnsManager.getVulnsNum($routeParams.wsId);
+            $scope.totalVulns = vulnsManager.getTotalVulns($routeParams.wsId);
             setInterval(function(){
                 $scope.vulnsNum = vulnsManager.getVulnsNum($routeParams.wsId);
+                $scope.totalVulns = vulnsManager.getTotalVulns($routeParams.wsId);
                 $scope.$apply();
             }, 500)
 
@@ -87,7 +89,9 @@ angular.module('faradayApp')
                     // copy pasted from server/www/scripts/workspaces/controllers/workspaces.js
                     // it makes scope work properly (i think)
                     workspace.scope = workspace.scope.map(function(scope){
-                        return {key: scope}
+                        if(scope.key === undefined)
+                            return {key: scope};
+                        return scope;
                     });
                     if (workspace.scope.length == 0) workspace.scope.push({key: ''});
 

@@ -8,7 +8,7 @@ node (label: "master"){
     }
 
     stage("Install Python Virtual Enviroment") {
-        sh "/usr/local/bin/virtualenv --no-site-packages ${ENV_PATH}"
+        sh "/usr/local/bin/virtualenv --no-site-packages ${ENV_PATH} --python=/usr/local/bin/python"
     }
 
     // Get the latest version of our application code.
@@ -20,11 +20,10 @@ node (label: "master"){
         sh """
             source ${ENV_PATH}/bin/activate
             pip install virtualenv responses
-            pip install 'Tornado<5.0.0'
-            pip install -r $WORKSPACE/requirements.txt
-            pip install -r $WORKSPACE/requirements_server.txt
-            pip install -r $WORKSPACE/requirements_extras.txt
-            pip install -r $WORKSPACE/requirements_dev.txt
+            pip install -U -r $WORKSPACE/requirements.txt
+            pip install -U -r $WORKSPACE/requirements_server.txt
+            pip install -U -r $WORKSPACE/requirements_extras.txt
+            pip install -U -r $WORKSPACE/requirements_dev.txt
             deactivate
            """
     }
@@ -88,6 +87,30 @@ node (label: "master"){
                 throw testsError
             }
 
+        }
+    }
+
+    stage ("Build docs") {
+        sh """
+            source ${ENV_PATH}/bin/activate
+            pip install sphinx
+            mkdir -p ~/docs
+            rm -rf ~/docs/jenkins_build
+            cd $WORKSPACE/doc && make html && cp -r _build/html ~/docs/jenkins_build
+        """
+    }
+
+    stage ("Run Closure Compiler") {
+        try {
+            sh """
+                java -jar /home/faraday/closure-compiler-v20180610.jar $WORKSPACE/server/www/scripts
+            """
+        }
+        catch (err) {
+            currentBuild.result = 'FAILURE'
+        }
+        finally {
+            notifyBuild(currentBuild.result, "Closure compiler")
         }
     }
 }

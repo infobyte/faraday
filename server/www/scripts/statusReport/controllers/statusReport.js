@@ -38,7 +38,7 @@ angular.module("faradayApp")
         var searchFilter = {};
         var paginationOptions = {
             page: 1,
-            pageSize: 10,
+            pageSize: 100,
             defaultPageSizes: [10, 50, 75, 100],
             sortColumn: null,
             sortDirection: null
@@ -46,7 +46,6 @@ angular.module("faradayApp")
 
         var init = function() {
             $scope.baseurl = BASEURL;
-            console.log($scope.baseurl);
             $scope.severities = SEVERITIES;
             $scope.easeofresolution = EASEOFRESOLUTION;
             $scope.propertyGroupBy = $routeParams.groupbyId;
@@ -211,7 +210,7 @@ angular.module("faradayApp")
                     "service":          "110",
                     "hostnames":        "130",
                     "target":           "100",
-                    "desc":             "200",
+                    "desc":             "600",
                     "resolution":       "170",
                     "data":             "170",
                     "easeofresolution": "140",
@@ -332,7 +331,9 @@ angular.module("faradayApp")
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/desccolumn.html',
                 headerCellTemplate: header,
                 sort: getColumnSort('desc'),
-                visible: $scope.columns["desc"]
+                visible: $scope.columns["desc"],
+                minWidth: '300',
+                maxWidth: '600',
             });
             $scope.gridOptions.columnDefs.push({ name : 'resolution',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/resolutioncolumn.html',
@@ -486,6 +487,12 @@ angular.module("faradayApp")
                     column.grouping = { groupPriority: 0 };
                     paginationOptions.sortColumn = colname;
                     paginationOptions.sortDirection = 'asc';
+                }else if (colname === 'sev' && $scope.propertyGroupBy === 'severity'){
+                    // Ugly ugly hack so I don't have to change the displayName of
+                    // severity from "sev" to "severity"
+                    column.grouping = { groupPriority: 0 };
+                    paginationOptions.sortColumn = 'severity';
+                    paginationOptions.sortDirection = 'asc'
                 }
             }
         };
@@ -593,6 +600,7 @@ angular.module("faradayApp")
                     vuln.exploitation = vuln.severity;
                     vuln.description = vuln.desc;
                     vuln.desc_summary = vuln.desc;
+                    vuln.references = vuln.refs;
                     promises.push(self.vulnModelsManager.create(vuln, true));
                 });
                 $q.all(promises).then(function(success) {
@@ -966,14 +974,6 @@ angular.module("faradayApp")
             });
             modal.result.then(function(data) {
                 $scope.getCurrentSelection().forEach(function(vuln) {
-                    var references = vuln.refs.concat([]);
-                    data.refs.forEach(function(ref) {
-                        if(vuln.refs.indexOf(ref) == -1){
-                            references.push(ref);
-                        }
-                    });
-                    data.refs = references;
-
                     vulnsManager.updateVuln(vuln, data).then(function(vulns){
                     }, function(errorMsg){
                         // TODO: show errors somehow
@@ -1122,15 +1122,12 @@ angular.module("faradayApp")
                 withCredentials: false,
                 headers: {'Content-Type': undefined},
                 responseType: "arraybuffer",
-                params: {
-                  fd
-                }
             }).then(
                 function(d) {
                     $location.path("/dashboard/ws/" + $routeParams.wsId);
                 },
                 function(d){
-                    commonsFact.showMessage("Error uploading report");
+                        commonsFact.showMessage("Error uploading report");
                 }
             );
         };

@@ -38,7 +38,14 @@ class DatabaseSchema():
             rankdir='LR',  # From left to right (instead of top to bottom)
             concentrate=False  # Don't try to join the relation lines together
         )
-        graph.write_png('entity_dbschema.png')  # write out the file
+        try:
+            graph.write_png('entity_dbschema.png')  # write out the file
+        except OSError as ex:
+            if 'dot' in ex.strerror:
+                print('Rendering entity scheam requires dot. Please install it with: sudo apt install xdot')
+                sys.exit(1)
+            raise
+
 
     def _draw_uml_class_diagram(self):
         # lets find all the mappers in our model

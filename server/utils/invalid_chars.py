@@ -46,26 +46,33 @@ def clean_string(s):
 
 
 def clean_char(char):
-    #Get rid of the ctrl characters first.
-    #http://stackoverflow.com/questions/1833873/python-regex-escape-characters
-    char = re.sub('\x1b[^m]*m', '', char)
-    #Clean up invalid xml
-    char = remove_invalid_chars(char)
-    replacements = [
-        (u'\u201c', '\"'),
-        (u'\u201d', '\"'),
-        (u"\u001B", ' '), #http://www.fileformat.info/info/unicode/char/1b/index.htm
-        (u"\u0019", ' '), #http://www.fileformat.info/info/unicode/char/19/index.htm
-        (u"\u0016", ' '), #http://www.fileformat.info/info/unicode/char/16/index.htm
-        (u"\u001C", ' '), #http://www.fileformat.info/info/unicode/char/1c/index.htm
-        (u"\u0003", ' '), #http://www.utf8-chartable.de/unicode-utf8-table.pl?utf8=0x
-        (u"\u000C", ' ')
-    ]
-    for rep, new_char in replacements:
-        if char == rep:
-            #print ord(char), char.encode('ascii', 'ignore')
-            return new_char
-    return char
+    try:
+        #Get rid of the ctrl characters first.
+        #http://stackoverflow.com/questions/1833873/python-regex-escape-characters
+        char = re.sub('\x1b[^m]*m', '', char)
+        #Clean up invalid xml
+        char = remove_invalid_chars(char)
+        replacements = [
+            (u'\u201c', '\"'),
+            (u'\u201d', '\"'),
+            (u"\u001B", ' '), #http://www.fileformat.info/info/unicode/char/1b/index.htm
+            (u"\u0019", ' '), #http://www.fileformat.info/info/unicode/char/19/index.htm
+            (u"\u0016", ' '), #http://www.fileformat.info/info/unicode/char/16/index.htm
+            (u"\u001C", ' '), #http://www.fileformat.info/info/unicode/char/1c/index.htm
+            (u"\u0003", ' '), #http://www.utf8-chartable.de/unicode-utf8-table.pl?utf8=0x
+            (u"\u000C", ' ')
+        ]
+        for rep, new_char in replacements:
+            if char == rep:
+                #print ord(char), char.encode('ascii', 'ignore')
+                return new_char
+        #get here if pass all controls, so try to encode or throw UnicodeEncodeError
+        char.encode()
+
+        return char
+    except UnicodeEncodeError:
+        # Ugly hack triggered when importing some strange objects
+        return ''
 
 
 def remove_invalid_chars(c):

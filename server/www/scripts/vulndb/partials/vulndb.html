@@ -15,12 +15,12 @@
                     </button>
                 </div>
                 <div class="control-wrapper control-edit">
-                    <button type="button" class="btn edit" title="Edit selected vulns" ng-click="disabledClick || edit()">
+                    <button type="button" class="btn btn-default edit" title="Edit selected vulns" ng-click="disabledClick || edit()">
                         <img src="images/icon-toolbar-edit.svg" class="edit-icon" />
                     </button>
                 </div>
                 <div class="control-wrapper">
-                    <button  id="delete" type="button" class="btn" title="Delete selected items" ng-click="disabledClick || delete()">
+                    <button  id="delete" type="button" class="btn btn-default" title="Delete selected items" ng-click="disabledClick || delete()">
                         <img src="images/icon-toolbar-delete.svg" class="delete-icon" />
                     </button>
                 </div>
@@ -48,7 +48,7 @@
             <table class="table-v3 licenses-list table table-responsive">
                 <thead>
                     <tr class="ui-grid-header">
-                        <th class="ui-grid-cell-contents ui-grid-header-cell hosts-list-checkall">
+                        <th class="ui-grid-cell-contents checkbox-select ui-grid-header-cell">
                           <input type="checkbox" ng-model="selectall" ng-click="disabledClick || checkAll()"/>
                         </th>
                         <th class="ui-grid-cell-contents ui-grid-header-cell">

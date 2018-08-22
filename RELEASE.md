@@ -8,6 +8,36 @@ Make sure you run ```./faraday.py --update``` the first time after an update!
 New features in the latest update
 =====================================
 
+August 17, 2018:
+---
+* Updated code to use Flask 1.0
+* Add threadfix integration (corp only)
+* Fix create_service fplugin
+* Executive report bug fix on tags
+* Persistence server bug fix on impact and ease of resolution
+* Fix unicode error bug on executive reports
+* Updated code to support latest Twisted version
+* Updated all requirements to use >=
+* Fix dry run on create_host fplugin
+* Fixed del_all_vulns_with and del_all_hosts
+* Improved executive reports status update refresh
+* Websocket port is configurable now
+* Change minimum font size in tag cloud
+* Fixed a problem with shodan icon on dashboard
+* Updated license check on deleted users
+* Users with role client was not able to change password, bug fixed
+* Updated code to support pip 10
+* Added ldap to status check
+* Credentials icon aligned
+* Deamon now allows to execute faraday sever in more than one port and more than one process for multiplexation
+* All views now check for permissions on workspace
+* Pull requests #229, #231, #239 and #240 are merged
+* Avoid polling deleted executive reports
+* Added documentation to project
+* Fix self xss on webshell
+* Add postgres locks check on status_check
+* Vuln counter fix when confirmed is on
+
 July 26, 2018:
 ---
 * Interface removed from model and from persistence server lib (fplugin)

@@ -3,11 +3,17 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('modalEditCtrl', ['$modalInstance', 'EASEOFRESOLUTION', 'STATUSES', 'commonsFact', 'severities', 'vuln', 'cweFact', 
-        function($modalInstance, EASEOFRESOLUTION, STATUSES, commons, severities, vuln, cweFact) {
-        
+    .controller('modalEditCtrl',
+                    ['$modalInstance', '$routeParams','EASEOFRESOLUTION', 'STATUSES', 'commonsFact',
+                     'BASEURL', 'severities', 'vuln', 'vulnModelsManager', 'vulnsManager', 'referenceFact',
+                     'encodeURIComponentFilter',
+                function($modalInstance, $routeParams,EASEOFRESOLUTION, STATUSES, commonsFact,
+                    BASEURL, severities, vuln, vulnModelsManager, vulnsManager, referenceFact,
+                    encodeURIComponent) {
+
         var vm = this;
 
+        vm.baseurl;
         vm.saveAsModelDisabled = false;
         vm.easeofresolution;
         vm.new_ref;
@@ -30,17 +36,19 @@ angular.module('faradayApp')
             vm.new_ref = "";
             vm.new_policyviolation = "";
             vm.icons = {};
+            vm.baseurl = BASEURL;
 
             vm.cweList = [];
-            cweFact.get().then(function(data) {
+            vulnModelsManager.get().then(function(data) {
                 vm.cweList = data;
             });
             vm.cweLimit = 5;
             vm.cwe_filter = "";
 
             vm.file_name_error = false;
- 
+
             vm.data = {
+                _id: undefined,
                 _attachments: {},
                 confirmed: false,
                 data: "",
@@ -56,11 +64,11 @@ angular.module('faradayApp')
                 refs: {},
                 resolution: "",
                 severity: undefined,
-                method: "", 
-                path: "", 
-                pname: "", 
+                method: "",
+                path: "",
+                pname: "",
                 params: "",
-                query: "", 
+                query: "",
                 request: "",
                 response: "",
                 website: "",
@@ -72,10 +80,10 @@ angular.module('faradayApp')
 
             vm.populate(vm.vuln);
 
-            // TODO: EVIDENCE SHOUD BE LOADED ALREADY?    
+            // TODO: EVIDENCE SHOUD BE LOADED ALREADY?
             if(vm.vuln._attachments !== undefined) {
                 vm.data._attachments = vm.vuln._attachments;
-                vm.icons = commons.loadIcons(vm.data._attachments); 
+                vm.icons = commonsFact.loadIcons(vm.data._attachments);
             }
         };
 
@@ -83,23 +91,24 @@ angular.module('faradayApp')
             vm.modelMessage = "Done."
             vm.vulnModelsManager.create(vm.data);
             vm.saveAsModelDisabled = true;
-        }
-        
+        };
+
         vm.selectedFiles = function(files, e) {
             files.forEach(function(file) {
+                file.newfile = true;
                 if(file.name.charAt(0) != "_") {
                     if(!vm.data._attachments.hasOwnProperty(file)) vm.data._attachments[file.name] = file;
                 } else {
                     vm.file_name_error = true;
                 }
             });
-            vm.icons = commons.loadIcons(vm._attachments);
+            vm.icons = commonsFact.loadIcons(vm._attachments);
         }
 
         vm.removeEvidence = function(name) {
             delete vm.data._attachments[name];
             delete vm.icons[name];
-        }
+        };
 
         vm.toggleImpact = function(key) {
             vm.data.impact[key] = !vm.data.impact[key];
@@ -123,7 +132,14 @@ angular.module('faradayApp')
                 policyviolations.push(policyviolation.value);
             });
             vm.data.policyviolations = policyviolations;
-            $modalInstance.close(vm.data);
+
+            vulnsManager.updateVuln(vm.vuln, vm.data).then(function(){
+                $modalInstance.close(vm.data);
+            }, function(data){
+                commonsFact.showMessage("Error updating vuln " + vm.vuln.name + " (" + vm.vuln._id + "): " + (data.message || JSON.stringify(data.messages)));
+            });
+
+
         };
 
         vm.cancel = function() {
@@ -138,7 +154,17 @@ angular.module('faradayApp')
                     vm.new_ref = "";
                 }
             }
-        }
+        };
+
+        vm.openReference = function(text) {
+            window.open(referenceFact.processReference(text), '_blank');
+        };
+
+        vm.openEvidence = function(name) {
+            var currentEvidence = vm.data._attachments[name];
+            if (!currentEvidence.newfile)
+                window.open(vm.baseurl + '_api/v2/ws/' + $routeParams.wsId + '/vulns/' + vm.data._id + '/attachment/' + encodeURIComponent(name), '_blank');
+        };
 
         vm.newPolicyViolation = function() {
             if (vm.new_policyviolation != "") {
@@ -148,7 +174,7 @@ angular.module('faradayApp')
                     vm.new_policyviolation = "";
                 }
             }
-        }
+        };
 
         vm.populate = function(item) {
             for (var key in vm.data) {
@@ -169,7 +195,7 @@ angular.module('faradayApp')
                 policyviolations.push({value: policyviolation});
             });
             vm.data.policyviolations = policyviolations;
-        }
+        };
 
         init();
     }]);

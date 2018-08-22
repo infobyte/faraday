@@ -29,8 +29,8 @@ SERVICES = {
 
 # FIXME Update when persistence API changes
 COLUMNS = {
-    'host': lambda service, workspace: models.get_host(workspace, service.id.split('.')[0]).name,
-    'host_os': lambda service, workspace: models.get_host(workspace, service.id.split('.')[0]).os,
+    'host': lambda service, workspace: models.get_host(workspace, service.getParent()).name,
+    'host_os': lambda service, workspace: models.get_host(workspace, service.getParent()).os,
     'service': lambda service, workspace: service.name,
     'ports': lambda service, workspace: str(service.ports[0]),
     'protocol': lambda service, workspace: service.protocol,

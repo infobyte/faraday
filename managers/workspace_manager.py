@@ -54,7 +54,6 @@ class WorkspaceManager(object):
                  "<couch_uri>http://john:password@127.0.0.1:5984</couch_uri>"))
         except Exception as e:
             raise WorkspaceException(str(e))
-        self.closeWorkspace()
         self.mappersManager.createMappers(name)
         self.setActiveWorkspace(workspace)
         notification_center.workspaceChanged(workspace)
@@ -67,7 +66,7 @@ class WorkspaceManager(object):
         if name not in get_workspaces_names():
             raise WorkspaceException(
                 "Workspace %s wasn't found" % name)
-        self.closeWorkspace()
+
         try:
             workspace = get_workspace(name)
         except Unauthorized:
@@ -78,16 +77,12 @@ class WorkspaceManager(object):
                  "For example: "
                  "<couch_uri>http://john:password@127.0.0.1:5984</couch_uri>"))
         except Exception as e:
-            notification_center.CouchDBConnectionProblem(e)
+            notification_center.DBConnectionProblem(e)
             raise WorkspaceException(str(e))
         self.mappersManager.createMappers(name)
         self.setActiveWorkspace(workspace)
         notification_center.workspaceChanged(workspace)
         return workspace
-
-    def closeWorkspace(self):
-        # TODO: DELETE
-        pass
 
     def removeWorkspace(self, name):
         if name in self.getWorkspacesNames():

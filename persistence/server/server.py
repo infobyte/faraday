@@ -22,43 +22,96 @@ Warning:
     be used with care, specially regarding the ID of objects, which must
     be always unique.
 """
+import urllib
 
 import os
-import requests
 import json
+import logging
+
+try:
+    import urlparse
+    from urllib import urlencode
+except: # For Python 3
+    import urllib.parse as urlparse
+    from urllib.parse import urlencode
+
+
+import requests
+
 from persistence.server.utils import force_unique
 from persistence.server.server_io_exceptions import (WrongObjectSignature,
                                                      CantCommunicateWithServerError,
                                                      ConflictInDatabase,
                                                      ResourceDoesNotExist,
-                                                     Unauthorized,
-                                                     MoreThanOneObjectFoundByID)
+                                                     Unauthorized)
 
-from persistence.server.changes_stream import CouchChangesStream
+from persistence.server.changes_stream import (
+    CouchChangesStream,
+    WebsocketsChangesStream
+)
 
 # NOTE: Change is you want to use this module by itself.
 # If FARADAY_UP is False, SERVER_URL must be a valid faraday server url
+logger = logging.getLogger(__name__)
+
 FARADAY_UP = True
-SERVER_URL = "http://127.0.0.1:5984"
+FARADAY_UPLOAD_REPORTS_WEB_COOKIE = None
+FARADAY_UPLOAD_REPORTS_OVERWRITE_SERVER_URL = None
+
+SERVER_URL = "http://127.0.0.1:5985"
+AUTH_USER = ""
+AUTH_PASS = ""
+OBJECT_TYPE_END_POINT_MAPPER = {
+    'CommandRunInformation': 'commands',
+    'Host': 'hosts',
+    'Vulnerability': 'vulns',
+    'VulnerabilityWeb': 'vulns',
+    'Service': 'services',
+    'Note': 'comment',
+    'Cred': 'credential',
+}
+
+from config import globals as CONSTANTS
+LOCAL_CONFIG_FILE = os.path.expanduser(
+    os.path.join(CONSTANTS.CONST_FARADAY_HOME_PATH, 'config/server.ini'))
+
 
 def _conf():
     from config.configuration import getInstanceConfiguration
     CONF = getInstanceConfiguration()
+
+    # If you are running this libs outside of Faraday, cookies are not setted.
+    # you need get a valid cookie auth and set that.
+    # Fplugin run in other instance, so this dont generate any trouble.
+    if not CONF.getDBSessionCookies() and not FARADAY_UPLOAD_REPORTS_WEB_COOKIE:
+        server_url = CONF.getServerURI() if FARADAY_UP else SERVER_URL
+        cookie = login_user(server_url, CONF.getAPIUsername(), CONF.getAPIPassword())
+        CONF.setDBSessionCookies(cookie)
+
     return CONF
 
+
 def _get_base_server_url():
-    if FARADAY_UP:
-        server_url = _conf().getCouchURI()
+
+    # Faraday server is running, and this module is used by upload_reports...
+    if FARADAY_UPLOAD_REPORTS_OVERWRITE_SERVER_URL:
+        server_url = FARADAY_UPLOAD_REPORTS_OVERWRITE_SERVER_URL
+        logger.info('Detected upload cookie Using server_url as {0}'.format(server_url))
+    elif FARADAY_UP:
+        server_url = _conf().getAPIUrl()
+        logger.info('Detected faraday client running. Using server_url as {0}'.format(server_url))
     else:
         server_url = SERVER_URL
-    return server_url[:-1] if server_url[-1] == "/" else server_url
+        logger.info('Could not detect upload or client running. Using default server_url as {0}'.format(server_url))
+
+    return server_url.rstrip('/')
 
 
 def _create_server_api_url():
     """Return the server's api url."""
-    return "{0}/_api".format(_get_base_server_url())
+    return "{0}/_api/v2".format(_get_base_server_url())
 
-def _create_server_get_url(workspace_name, object_name=None):
+def _create_server_get_url(workspace_name, object_name=None, object_id=None, **params):
     """Creates a url to get from the server. Takes the workspace name
     as a string, an object_name paramter which is the object you want to
     query as a string ('hosts', 'interfaces', etc) .
@@ -67,21 +120,39 @@ def _create_server_get_url(workspace_name, object_name=None):
 
     Return the get_url as a string.
     """
-    object_name = "/{0}".format(object_name) if object_name else ""
+    get_url = "/{0}".format(object_name) if object_name else ""
+    get_url += "/{0}/".format(object_id) if object_id else ""
     get_url = '{0}/ws/{1}{2}'.format(_create_server_api_url(),
                                      workspace_name,
-                                     object_name)
+                                     get_url)
+
     return get_url
 
 
-def _create_server_post_url(workspace_name, object_id):
+def _create_server_post_url(workspace_name, obj_type, command_id):
     server_api_url = _create_server_api_url()
-    post_url = '{0}/ws/{1}/doc/{2}'.format(server_api_url, workspace_name, object_id)
+    object_end_point_name = OBJECT_TYPE_END_POINT_MAPPER[obj_type]
+    if obj_type == 'comment':
+        object_end_point_name = object_end_point_name.strip('/') + '_unique/'
+    post_url = '{0}/ws/{1}/{2}/'.format(server_api_url, workspace_name, object_end_point_name)
+    if command_id:
+        get_params = {'command_id': command_id}
+        post_url += '?' + urlencode(get_params)
     return post_url
 
 
-def _create_server_delete_url(workspace_name, object_id):
-    return _create_server_post_url(workspace_name, object_id)
+def _create_server_put_url(workspace_name, obj_type, obj_id, command_id):
+    server_api_url = _create_server_api_url()
+    object_end_point_name = OBJECT_TYPE_END_POINT_MAPPER[obj_type]
+    put_url = '{0}/ws/{1}/{2}/{3}/'.format(server_api_url, workspace_name, object_end_point_name, obj_id)
+    if command_id:
+        get_params = {'command_id': command_id}
+        put_url += '?' + urlencode(get_params)
+    return put_url
+
+
+def _create_server_delete_url(workspace_name, obj_type, object_id, command_id=None):
+    return _create_server_put_url(workspace_name, obj_type, object_id, command_id)
 
 # XXX: COUCH IT!
 def _create_couch_get_url(workspace_name, object_id):
@@ -102,10 +173,25 @@ def _create_couch_db_url(workspace_name):
 
 def _create_server_db_url(workspace_name):
     server_api_url = _create_server_api_url()
-    db_url = '{0}/ws/{1}'.format(server_api_url, workspace_name)
+    db_url = '{0}/ws/'.format(server_api_url)
     return db_url
 
-def _unsafe_io_with_server(server_io_function, server_expected_response,
+def _add_session_cookies(func):
+    """A decorator which wrapps a function dealing with I/O with the server and
+    adds authentication to the parameters.
+    """
+    def wrapper(*args, **kwargs):
+        if FARADAY_UPLOAD_REPORTS_WEB_COOKIE:
+            kwargs['cookies'] = FARADAY_UPLOAD_REPORTS_WEB_COOKIE
+        else:
+            kwargs['cookies'] = _conf().getDBSessionCookies()
+        response = func(*args, **kwargs)
+        return response
+    return wrapper if FARADAY_UP else func
+
+
+@_add_session_cookies
+def _unsafe_io_with_server(server_io_function, server_expected_responses,
                            server_url, **payload):
     """A wrapper for functions which deals with I/O to or from the server.
     It calls the server_io_function with url server_url and the payload,
@@ -114,6 +200,8 @@ def _unsafe_io_with_server(server_io_function, server_expected_response,
 
     Return the response from the server.
     """
+    answer = None
+    logger.debug('Sending request to api endpoint {0}'.format(server_url))
     try:
         answer = server_io_function(server_url, **payload)
         if answer.status_code == 409:
@@ -122,12 +210,17 @@ def _unsafe_io_with_server(server_io_function, server_expected_response,
             raise ResourceDoesNotExist(server_url)
         if answer.status_code == 403 or answer.status_code == 401:
             raise Unauthorized(answer)
-        if answer.status_code != server_expected_response:
+        if answer.status_code not in server_expected_responses:
             raise requests.exceptions.RequestException(response=answer)
-    except requests.exceptions.RequestException:
-        raise CantCommunicateWithServerError(server_io_function, server_url, payload)
+    except requests.exceptions.RequestException as ex:
+        logger.debug(ex)
+        try:
+            if answer and 'messages' in answer.json():
+                logger.info('Faraday server error message: {0}'.format(answer.json()['messages']))
+        except ValueError:
+            logger.debug('Could not decode json from server')
+        raise CantCommunicateWithServerError(server_io_function, server_url, payload, answer)
     return answer
-
 
 def _parse_json(response_object):
     """Takes a response object and return its response as a dictionary."""
@@ -147,11 +240,11 @@ def _get(request_url, **params):
     Return a dictionary with the information in the json.
     """
     return _parse_json(_unsafe_io_with_server(requests.get,
-                                              200,
+                                              [200],
                                               request_url,
                                               params=params))
 
-def _put(post_url, update=False, expected_response=201, **params):
+def _put(post_url, expected_response=201, **params):
     """Put to the post_url. If update is True, try to get the object
     revision first so as to update the object in Couch. You can
     customize the expected response (it should be 201, but Couchdbkit returns
@@ -164,11 +257,15 @@ def _put(post_url, update=False, expected_response=201, **params):
     Return a dictionary with the response from couchdb, which looks like this:
     {u'id': u'61', u'ok': True, u'rev': u'1-967a00dff5e02add41819138abb3284d'}
     """
-    if update:
-        last_rev = _get(post_url)['_rev']
-        params['_rev'] = last_rev
     return _parse_json(_unsafe_io_with_server(requests.put,
-                                              expected_response,
+                                              [expected_response],
+                                              post_url,
+                                              json=params))
+
+
+def _post(post_url, update=False, expected_response=201, **params):
+    return _parse_json(_unsafe_io_with_server(requests.post,
+                                              [expected_response],
                                               post_url,
                                               json=params))
 
@@ -181,7 +278,7 @@ def _delete(delete_url, database=False):
         last_rev = _get(delete_url)['_rev']
         params = {'rev': last_rev}
     return _parse_json(_unsafe_io_with_server(requests.delete,
-                                              200,
+                                              [200,204],
                                               delete_url,
                                               params=params))
 
@@ -189,82 +286,75 @@ def _delete(delete_url, database=False):
 def _get_raw_hosts(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
     a dictionary with the hosts table."""
-    request_url = _create_server_get_url(workspace_name, 'hosts')
+    request_url = _create_server_get_url(workspace_name, 'hosts', **params)
     return _get(request_url, **params)
 
 
 def _get_raw_vulns(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
     a dictionary with the vulns table."""
-    request_url = _create_server_get_url(workspace_name, 'vulns')
-    return _get(request_url, **params)
-
-
-def _get_raw_interfaces(workspace_name, **params):
-    """Take a workspace_name and an arbitrary number of params and return
-    a dictionary with the interfaces table."""
-    request_url = _create_server_get_url(workspace_name, 'interfaces')
+    params = {key: value for key, value in params.items() if value}
+    request_url = _create_server_get_url(workspace_name, 'vulns', **params)
     return _get(request_url, **params)
 
 
 def _get_raw_services(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
-    a dictionary with the services table."""
-    request_url = _create_server_get_url(workspace_name, 'services')
+    a dictionary with the services table.
+    If you provide a host_id and services_of_host=True, it returns all services of that specified host"""
+
+    request_url = _create_server_get_url(workspace_name, 'services', **params)
     return _get(request_url, **params)
 
 
 def _get_raw_notes(workspace_name, **params):
     """Take a workspace name and an arbitrary number of params and
     return a dictionary with the notes table."""
-    request_url = _create_server_get_url(workspace_name, 'notes')
+    request_url = _create_server_get_url(workspace_name, 'comment', params.get('id', None))
     return _get(request_url, **params)
 
 
 def _get_raw_credentials(workspace_name, **params):
     """Take a workspace name and an arbitrary number of params and
     return a dictionary with the credentials table."""
-    request_url = _create_server_get_url(workspace_name, 'credentials')
+    request_url = _create_server_get_url(workspace_name, 'credential', params.pop('id', None), **params)
     return _get(request_url, **params)
 
 
 def _get_raw_commands(workspace_name, **params):
-    request_url = _create_server_get_url(workspace_name, 'commands')
+    request_url = _create_server_get_url(workspace_name, 'commands', params.get('id', None))
     return _get(request_url, **params)
 
 
 def _get_raw_workspace_summary(workspace_name):
-    request_url = _create_server_get_url(workspace_name, 'summary')
+    request_url = _create_server_get_url(workspace_name)
     return _get(request_url)
 
-# XXX: COUCH IT!
-def _save_to_couch(workspace_name, faraday_object_id, **params):
-    post_url = _create_couch_post_url(workspace_name, faraday_object_id)
-    return _put(post_url, update=False, **params)
+def _save_to_server(workspace_name, **params):
+    """
 
-# XXX: COUCH IT!
-def _update_in_couch(workspace_name, faraday_object_id, **params):
-    post_url = _create_server_post_url(workspace_name, faraday_object_id)
-    return _put(post_url, update=True, **params)
-
-def _save_to_server(workspace_name, faraday_object_id, **params):
-    post_url = _create_server_post_url(workspace_name, faraday_object_id)
-    return _put(post_url, update=False, expected_response=200, **params)
+    :param workspace_name:
+    :param params:
+    :return:
+    """
+    post_url = _create_server_post_url(workspace_name, params['type'], params.get('command_id', None))
+    return _post(post_url, update=False, expected_response=201, **params)
 
 def _update_in_server(workspace_name, faraday_object_id, **params):
-    post_url = _create_server_post_url(workspace_name, faraday_object_id)
-    return _put(post_url, update=True, expected_response=200, **params)
+    put_url = _create_server_put_url(workspace_name, params['type'], faraday_object_id, params.get('command_id', None))
+    return _put(put_url, expected_response=200, **params)
 
 def _save_db_to_server(db_name, **params):
     post_url = _create_server_db_url(db_name)
-    return _put(post_url, expected_response=200, **params)
+    return _post(post_url, expected_response=201, **params)
 
-# XXX: SEMI COUCH IT!
-def _delete_from_couch(workspace_name, faraday_object_id):
-    delete_url = _create_server_delete_url(workspace_name, faraday_object_id)
+
+def _delete_from_server(workspace_name, faraday_object_type, faraday_object_id):
+    delete_url = _create_server_delete_url(workspace_name, faraday_object_type, faraday_object_id)
     return _delete(delete_url)
 
-# XXX: COUCH IT!
+
+@_add_session_cookies
 def _couch_changes(workspace_name, **params):
     return CouchChangesStream(workspace_name,
                               _create_couch_db_url(workspace_name),
@@ -292,7 +382,6 @@ def _get_faraday_ready_dictionaries(workspace_name, faraday_object_name,
     """
     object_to_func = {'hosts': _get_raw_hosts,
                       'vulns': _get_raw_vulns,
-                      'interfaces': _get_raw_interfaces,
                       'services': _get_raw_services,
                       'notes': _get_raw_notes,
                       'credentials': _get_raw_credentials,
@@ -300,8 +389,9 @@ def _get_faraday_ready_dictionaries(workspace_name, faraday_object_name,
 
     appropiate_function = object_to_func[faraday_object_name]
     appropiate_dictionary = appropiate_function(workspace_name, **params)
-    faraday_ready_dictionaries = []
-    if appropiate_dictionary:
+    faraday_ready_dictionaries = [appropiate_dictionary]
+    if faraday_object_row_name in appropiate_dictionary:
+        faraday_ready_dictionaries = []
         for raw_dictionary in appropiate_dictionary[faraday_object_row_name]:
             if not full_table:
                 faraday_ready_dictionaries.append(raw_dictionary['value'])
@@ -459,9 +549,17 @@ def get_objects(workspace_name, object_signature, **params):
 
     return appropiate_function(workspace_name, **params)
 
+
+def _websockets_changes(workspace_name, **extra_params):
+    return WebsocketsChangesStream(workspace_name, 'localhost', **extra_params)
+
+
 # cha cha cha chaaaanges!
-def get_changes_stream(workspace_name, since=0, heartbeat='1000', **extra_params):
-    return _couch_changes(workspace_name, since=since, feed='continuous',
+def get_changes_stream(workspace_name, heartbeat='1000', stream_provider=_websockets_changes, **extra_params):
+    """
+      stream_provider: A function that returns an instance of a Stream provider
+    """
+    return stream_provider(workspace_name, feed='continuous',
                           heartbeat=heartbeat, **extra_params)
 
 def get_workspaces_names():
@@ -496,7 +594,7 @@ def get_object_before_last_revision(workspace_name, object_id):
         A dictionary with the object's information.
     """
     get_url = _create_couch_get_url(workspace_name, object_id)
-    response = _unsafe_io_with_server(requests.get, 200, get_url,
+    response = _unsafe_io_with_server(requests.get, [200], get_url,
                                       params={'revs': 'true', 'open_revs': 'all'})
     try:
         valid_json_response = _clean_up_stupid_couch_response(response.text)
@@ -708,7 +806,7 @@ def get_workspace_numbers(workspace_name):
         A tuple of 4 elements with the amounts of hosts, interfaces, services and vulns.
     """
     stats = _get_raw_workspace_summary(workspace_name)['stats']
-    return stats['hosts'], stats['interfaces'], stats['services'], stats['total_vulns']
+    return stats['hosts'], stats['services'], stats['total_vulns']
 
 def get_hosts_number(workspace_name, **params):
     """
@@ -730,7 +828,7 @@ def get_services_number(workspace_name, **params):
     Returns:
         The amount of services in the workspace as an integer.
     """
-    return int(get_workspace_summary(workspace_name)['interfaces'])
+    return int(get_workspace_summary(workspace_name)['services'])
 
 def get_interfaces_number(workspace_name, **params):
     """
@@ -787,9 +885,9 @@ def get_commands_number(workspace_name, **params):
     """
     return int(_get_raw_commands(workspace_name, **params))
 
-def create_host(workspace_name, id, name, os, default_gateway,
+def create_host(workspace_name, command_id, ip, os, default_gateway=None,
                 description="", metadata=None, owned=False, owner="",
-                parent=None):
+                parent=None, hostnames=None):
     """Create a host.
 
     Args:
@@ -810,19 +908,20 @@ def create_host(workspace_name, id, name, os, default_gateway,
         A dictionary with the server's response.
     """
     return _save_to_server(workspace_name,
-                           id,
-                           name=name, os=os,
+                           command_id=command_id,
+                           ip=ip, os=os,
                            default_gateway=default_gateway,
                            owned=owned,
                            metadata=metadata,
                            owner=owner,
                            parent=parent,
                            description=description,
+                           hostnames=hostnames,
                            type="Host")
 
-def update_host(workspace_name, id, name, os, default_gateway,
+def update_host(workspace_name, command_id, id, ip, os, default_gateway="",
                 description="", metadata=None, owned=False, owner="",
-                parent=None):
+                parent=None, hostnames=None):
     """Updates a host.
 
     Args:
@@ -844,104 +943,19 @@ def update_host(workspace_name, id, name, os, default_gateway,
     """
     return _update_in_server(workspace_name,
                              id,
-                             name=name, os=os,
+                             command_id=command_id,
+                             ip=ip, os=os,
                              default_gateway=default_gateway,
                              owned=owned,
                              metadata=metadata,
                              owner=owner,
                              parent=parent,
                              description=description,
+                             hostnames=hostnames,
                              type="Host")
 
 
-# TODO: FIX. If you actually pass ipv4 or ipv6 as None, which are the defaults
-# values here, the server will complain. Review if this should be fixed on
-# the client or on the server.
-def create_interface(workspace_name, id, name, description, mac,
-                     owned=False, owner="", hostnames=None, network_segment=None,
-                     ipv4=None, ipv6=None, metadata=None):
-    """Creates an interface.
-
-    Warning:
-        DO NOT leave ipv4 and ipv6 values on None, as the default indicated.
-        This is a known bug and we're working to fix it. ipv4 and ipv6 need to
-        be valid IP addresses, or, in case one of them is irrelevant, empty strings.
-
-    Args:
-        workspace_name (str): the name of the workspace where the interface will be saved.
-        id (str): the id of the interface. Must be unique.
-        name (str): the interface's name
-        description (str): a description.
-        mac (str) the mac address of the interface
-        owned (bool): is the host owned or not?
-        owner (str): an owner for the host
-        hostnames ([str]): a list of hostnames
-        network_segment (str): the network segment
-        ipv4 (str): the ipv4 direction of the interface.
-        ipv6 (str): the ipv6 direction of the interface.
-        metadata: a collection of metadata. If you don't know the metada. leave
-            on None, it will be created automatically.
-
-    Returns:
-        A dictionary with the server's response.
-    """
-    return _save_to_server(workspace_name,
-                           id,
-                           name=name,
-                           description=description,
-                           mac=mac,
-                           owned=owned,
-                           owner=owner,
-                           hostnames=hostnames,
-                           network_segment=network_segment,
-                           ipv4=ipv4,
-                           ipv6=ipv6,
-                           type="Interface",
-                           metadata=metadata)
-
-def update_interface(workspace_name, id, name, description, mac,
-                     owned=False, owner="", hostnames=None, network_segment=None,
-                     ipv4=None, ipv6=None, metadata=None):
-    """Creates an interface.
-
-    Warning:
-        DO NOT leave ipv4 and ipv6 values on None, as the default indicated.
-        This is a known bug and we're working to fix it. ipv4 and ipv6 need to
-        be valid IP addresses, or, in case one of them is irrelevant, empty strings.
-
-    Args:
-        workspace_name (str): the name of the workspace where the interface will be saved.
-        id (str): the id of the interface. Must be unique.
-        name (str): the interface's name
-        description (str): a description.
-        mac (str) the mac address of the interface
-        owned (bool): is the host owned or not?
-        owner (str): an owner for the host
-        hostnames ([str]): a list of hostnames
-        network_segment (str): the network segment
-        ipv4 (str): the ipv4 direction of the interface.
-        ipv6 (str): the ipv6 direction of the interface.
-        metadata: a collection of metadata. If you don't know the metada. leave
-            on None, it will be created automatically.
-
-    Returns:
-        A dictionary with the server's response.
-    """
-    return _update_in_server(workspace_name,
-                             id,
-                             name=name,
-                             description=description,
-                             mac=mac,
-                             owned=owned,
-                             owner=owner,
-                             hostnames=hostnames,
-                             network_segment=network_segment,
-                             ipv4=ipv4,
-                             ipv6=ipv6,
-                             type="Interface",
-                             metadata=metadata)
-
-def create_service(workspace_name, id, name, description, ports,
+def create_service(workspace_name, command_id, name, description, ports, parent,
                    owned=False, owner="", protocol="", status="", version="",
                    metadata=None):
     """Creates a service.
@@ -964,8 +978,9 @@ def create_service(workspace_name, id, name, description, ports,
         A dictionary with the server's response.
     """
     return _save_to_server(workspace_name,
-                           id,
+                           command_id=command_id,
                            name=name,
+                           parent=parent,
                            description=description,
                            ports=ports,
                            owned=owned,
@@ -976,9 +991,9 @@ def create_service(workspace_name, id, name, description, ports,
                            type="Service",
                            metadata=metadata)
 
-def update_service(workspace_name, id, name, description, ports,
-                   owned=False, owner="", protocol="", status="", version="",
-                   metadata=None):
+def update_service(workspace_name, command_id, id, name, description, ports,
+                   parent, owned=False, owner="", protocol="", status="",
+                   version="", metadata=None):
     """Creates a service.
 
     Args:
@@ -1000,6 +1015,8 @@ def update_service(workspace_name, id, name, description, ports,
     """
     return _update_in_server(workspace_name,
                              id,
+                             parent=parent,
+                             command_id=command_id,
                              name=name,
                              description=description,
                              ports=ports,
@@ -1012,8 +1029,9 @@ def update_service(workspace_name, id, name, description, ports,
                              metadata=metadata)
 
 
-def create_vuln(workspace_name, id, name, description, owned=None, owner="",
-                confirmed=False, data="", refs=None, severity="info", resolution="",
+def create_vuln(workspace_name, command_id, name, description, parent, parent_type,
+                owned=None, owner="", confirmed=False,
+                resolution="", data="", refs=None, severity="info",
                 desc="", metadata=None, status=None, policyviolations=[]):
     """Creates a vuln.
 
@@ -1040,9 +1058,11 @@ def create_vuln(workspace_name, id, name, description, owned=None, owner="",
         A dictionary with the server's response.
     """
     return _save_to_server(workspace_name,
-                           id,
+                           command_id=command_id,
                            name=name,
                            description=description,
+                           parent=parent,
+                           parent_type=parent_type,
                            owned=owned,
                            owner=owner,
                            confirmed=confirmed,
@@ -1056,9 +1076,10 @@ def create_vuln(workspace_name, id, name, description, owned=None, owner="",
                            metadata=metadata,
                            policyviolations=policyviolations)
 
-def update_vuln(workspace_name, id, name, description, owned=None, owner="",
-                confirmed=False, data="", refs=None, severity="info", resolution="",
-                desc="", metadata=None, status=None, policyviolations=[]):
+def update_vuln(workspace_name, command_id, id, name, description, parent,
+                parent_type, owned=None, owner="", confirmed=False, data="",
+                refs=None, severity="info", resolution="", desc="",
+                metadata=None, status=None, policyviolations=[]):
     """Updates a vuln.
 
     Args:
@@ -1085,6 +1106,9 @@ def update_vuln(workspace_name, id, name, description, owned=None, owner="",
     """
     return _update_in_server(workspace_name,
                              id,
+                             parent=parent,
+                             parent_type=parent_type,
+                             command_id=command_id,
                              name=name,
                              description=description,
                              owned=owned,
@@ -1100,10 +1124,13 @@ def update_vuln(workspace_name, id, name, description, owned=None, owner="",
                              metadata=metadata,
                              policyviolations=policyviolations)
 
-def create_vuln_web(workspace_name, id, name, description, owned=None, owner="",
-                    confirmed=False, data="", refs=None, severity="info", resolution="",
-                    desc="", metadata=None, method=None, params="", path=None, pname=None,
-                    query=None, request=None, response=None, category="", website=None,
+
+def create_vuln_web(workspace_name, command_id, name, description, parent,
+                    parent_type, owned=None, owner="", confirmed=False,
+                    data="", refs=None, severity="info", resolution="",
+                    desc="", metadata=None, method=None, params="",
+                    path=None, pname=None, query=None, request=None,
+                    response=None, category="", website=None,
                     status=None, policyviolations=[]):
     """Creates a vuln web.
 
@@ -1137,7 +1164,9 @@ def create_vuln_web(workspace_name, id, name, description, owned=None, owner="",
         A dictionary with the server's response.
     """
     return _save_to_server(workspace_name,
-                           id,
+                           parent=parent,
+                           parent_type=parent_type,
+                           command_id=command_id,
                            name=name,
                            description=description,
                            owned=owned,
@@ -1162,7 +1191,8 @@ def create_vuln_web(workspace_name, id, name, description, owned=None, owner="",
                            type='VulnerabilityWeb',
                            policyviolations=policyviolations)
 
-def update_vuln_web(workspace_name, id, name, description, owned=None, owner="",
+def update_vuln_web(workspace_name, command_id, id, name, description,
+                    parent, parent_type, owned=None, owner="",
                     confirmed=False, data="", refs=None, severity="info", resolution="",
                     desc="", metadata=None, method=None, params="", path=None, pname=None,
                     query=None, request=None, response=None, category="", website=None,
@@ -1200,6 +1230,9 @@ def update_vuln_web(workspace_name, id, name, description, owned=None, owner="",
     """
     return _update_in_server(workspace_name,
                              id,
+                             parent=parent,
+                             parent_type=parent_type,
+                             command_id=command_id,
                              name=name,
                              description=description,
                              owned=owned,
@@ -1224,7 +1257,7 @@ def update_vuln_web(workspace_name, id, name, description, owned=None, owner="",
                              type='VulnerabilityWeb',
                              policyviolations=policyviolations)
 
-def create_note(workspace_name, id, name, text, owned=None, owner="",
+def create_note(workspace_name, command_id, object_type, object_id, name, text, owned=None, owner="",
                 description="", metadata=None):
     """Creates a note.
 
@@ -1243,7 +1276,9 @@ def create_note(workspace_name, id, name, text, owned=None, owner="",
         A dictionary with the server's response.
     """
     return _save_to_server(workspace_name,
-                           id,
+                           command_id=command_id,
+                           object_id=object_id,
+                           object_type=object_type,
                            name=name,
                            description=description,
                            owned=owned,
@@ -1252,8 +1287,9 @@ def create_note(workspace_name, id, name, text, owned=None, owner="",
                            type="Note",
                            metadata=metadata)
 
-def update_note(workspace_name, id, name, text, owned=None, owner="",
-                description="", metadata=None):
+def update_note(workspace_name, command_id, id, name, text,
+                object_type, object_id, owned=None,
+                owner="", description="", metadata=None):
     """Updates a note.
 
     Args:
@@ -1272,6 +1308,9 @@ def update_note(workspace_name, id, name, text, owned=None, owner="",
     """
     return _update_in_server(workspace_name,
                              id,
+                             object_id=object_id,
+                             object_type=object_type,
+                             command_id=command_id,
                              name=name,
                              description=description,
                              owned=owned,
@@ -1281,8 +1320,9 @@ def update_note(workspace_name, id, name, text, owned=None, owner="",
                              metadata=metadata)
 
 
-def create_credential(workspace_name, id, name, username, password,
-                      owned=None, owner="", description="", metadata=None):
+def create_credential(workspace_name, command_id, name, username, password,
+                      parent, parent_type, owned=None, owner="",
+                      description="", metadata=None):
     """Creates a credential.
 
     Args:
@@ -1301,7 +1341,9 @@ def create_credential(workspace_name, id, name, username, password,
         A dictionary with the server's response.
     """
     return _save_to_server(workspace_name,
-                           id,
+                           command_id=command_id,
+                           parent=parent,
+                           parent_type=parent_type,
                            name=name,
                            description=description,
                            owned=owned,
@@ -1311,8 +1353,9 @@ def create_credential(workspace_name, id, name, username, password,
                            password=password,
                            type="Cred")
 
-def update_credential(workspace_name, id, name, username, password,
-                      owned=None, owner="", description="", metadata=None):
+def update_credential(workspace_name, command_id, id, name, username, password,
+                      parent, parent_type, owned=None, owner="",
+                      description="", metadata=None):
     """Updates a credential.
 
     Args:
@@ -1332,6 +1375,9 @@ def update_credential(workspace_name, id, name, username, password,
     """
     return _update_in_server(workspace_name,
                              id,
+                             parent=parent,
+                             parent_type=parent_type,
+                             command_id=command_id,
                              name=name,
                              description=description,
                              owned=owned,
@@ -1341,13 +1387,12 @@ def update_credential(workspace_name, id, name, username, password,
                              password=password,
                              type="Cred")
 
-def create_command(workspace_name, id, command, duration=None, hostname=None,
+def create_command(workspace_name, command, tool, import_source, duration=None, hostname=None,
                    ip=None, itime=None, params=None, user=None):
     """Creates a command.
 
     Args:
         workspace_name (str): the name of the workspace where the vuln web will be saved.
-        id (str): the id of the vuln web. Must be unique.
         command (str): the command to be created
         duration (str). the command's duration
         hostname (str): the hostname where the command was executed
@@ -1360,8 +1405,9 @@ def create_command(workspace_name, id, command, duration=None, hostname=None,
         A dictionary with the server's response.
     """
     return _save_to_server(workspace_name,
-                           id,
                            command=command,
+                           tool=tool,
+                           import_source=import_source,
                            duration=duration,
                            hostname=hostname,
                            ip=ip,
@@ -1371,7 +1417,8 @@ def create_command(workspace_name, id, command, duration=None, hostname=None,
                            workspace=workspace_name,
                            type="CommandRunInformation")
 
-def update_command(workspace_name, id, command, duration=None, hostname=None,
+def update_command(workspace_name, command_id, command, tool, import_source
+,duration=None, hostname=None,
                    ip=None, itime=None, params=None, user=None):
     """Updates a command.
 
@@ -1390,8 +1437,10 @@ def update_command(workspace_name, id, command, duration=None, hostname=None,
         A dictionary with the server's response.
     """
     return _update_in_server(workspace_name,
-                             id,
+                             command_id,
                              command=command,
+                             tool=tool,
+                             import_source=import_source,
                              duration=duration,
                              hostname=hostname,
                              ip=ip,
@@ -1422,38 +1471,39 @@ def create_workspace(workspace_name, description, start_date, finish_date,
                               name=workspace_name,
                               description=description,
                               customer=customer,
-                              sdate=start_date,
-                              fdate=finish_date,
                               duration=duration,
                               type="Workspace")
 
+
 def delete_host(workspace_name, host_id):
     """Delete host of id host_id from the database."""
-    return _delete_from_couch(workspace_name, host_id)
+    return _delete_from_server(workspace_name, 'Host', host_id)
 
-def delete_interface(workspace_name, interface_id):
-    """Delete interface of id interface_id from the database."""
-    return _delete_from_couch(workspace_name, interface_id)
 
 def delete_service(workspace_name, service_id):
     """Delete service of id service_id from the database."""
-    return _delete_from_couch(workspace_name, service_id)
+    return _delete_from_server(workspace_name, 'Service', service_id)
+
 
 def delete_vuln(workspace_name, vuln_id):
     """Delete vuln of id vuln_id from the database."""
-    return _delete_from_couch(workspace_name, vuln_id)
+    return _delete_from_server(workspace_name, 'Vulnerability', vuln_id)
+
 
 def delete_note(workspace_name, note_id):
     """Delete note of id note_id from the database."""
-    return _delete_from_couch(workspace_name, note_id)
+    return _delete_from_server(workspace_name, note_id)
+
 
 def delete_credential(workspace_name, credential_id):
     """Delete credential of id credential_id from the database."""
-    return _delete_from_couch(workspace_name, credential_id)
+    return _delete_from_server(workspace_name, 'Credential', credential_id)
+
 
 def delete_command(workspace_name, command_id):
     """Delete command of id command_id from the database."""
-    return _delete_from_couch(workspace_name, command_id)
+    return _delete_from_server(workspace_name, 'Command', command_id)
+
 
 def delete_workspace(workspace_name):
     """Delete the couch database of id workspace_name"""
@@ -1469,10 +1519,36 @@ def server_info():
     except:
         return None
 
+def login_user(uri, uname, upass):
+    auth = {"email": uname, "password": upass}
+    try:
+        resp = requests.post(urlparse.urljoin(uri, "/_api/login"), json=auth)
+        if resp.status_code == 401:
+            return None
+        else:
+            return resp.cookies
+    except requests.adapters.ConnectionError:
+        return None
+    except requests.adapters.ReadTimeout:
+        return None
+
+
+def is_authenticated(uri, cookies):
+    try:
+        resp = requests.get(urlparse.urljoin(uri, "/_api/session"), cookies=cookies, timeout=1)
+        if resp.status_code != 403:
+            user_info = resp.json()
+            return bool(user_info.get('username', {}))
+        else:
+            return False
+    except requests.adapters.ConnectionError:
+        return False
+    except requests.adapters.ReadTimeout:
+        return False
+
 def check_faraday_version():
     """Raise RuntimeError if client and server aren't running the same version"""
     info = server_info()
-    #print "INFO", infok
 
     faraday_directory = os.path.dirname(os.path.realpath('faraday.py'))
 
@@ -1484,13 +1560,26 @@ def check_faraday_version():
     if info is not None and version != info['Version']:
         raise RuntimeError('Client and server versions do not match')
 
-def test_server_url(url_to_test):
+def check_server_url(url_to_test):
     """Return True if the url_to_test is indeed a valid Faraday Server URL.
     False otherwise.
     """
     try:
-        _get("{0}/_api/info".format(url_to_test))
-        test_okey = True
-    except:
+        resp = _get("{0}/_api/v2/info".format(url_to_test))
+        return 'Faraday Server' in resp
+    except Exception as ex:
+        logger.exception(ex)
         test_okey = False
     return test_okey
+
+def get_user_info():
+    try:
+        resp = requests.get(urlparse.urljoin(_get_base_server_url(), "/_api/session"), cookies=_conf().getDBSessionCookies(), timeout=1)
+        if (resp.status_code != 401) and (resp.status_code != 403):
+            return resp.json()
+        else:
+            return False
+    except requests.adapters.ConnectionError:
+        return False
+    except requests.adapters.ReadTimeout:
+        return False

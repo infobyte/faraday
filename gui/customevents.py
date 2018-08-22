@@ -144,23 +144,22 @@ class DeleteHostCustomEvent(CustomEvent):
 
 
 class ChangeFromInstanceCustomEvent(CustomEvent):
-    def __init__(self, object_id, object_type, object_name,
-                 deleted=False, update=False):
+    def __init__(self, action, object_id, object_type, object_name):
         CustomEvent.__init__(self, CHANGEFROMINSTANCE)
         self.object_id = object_id
         self.object_type = object_type
         self.object_name = object_name
-        self.deleted = deleted
-        self.updated_or_created = "updated" if update else "created"
+        self.action = action
 
     def __str__(self):
-        if not self.object_type or not self.object_name and self.deleted:
-            return "An object was deleted"
-        if self.deleted:
-            return "The {0} {1} was deleted".format(self.object_type, self.object_name)
+        action_msg = {
+            'UPDATE': 'updated',
+            'CREATE': 'created',
+            'DELETE': 'deleted',
+        }
         return "The {0} {1} was {2}".format(self.object_type,
                                             self.object_name,
-                                            self.updated_or_created)
+                                            action_msg[self.action])
 
 class AddObjectCustomEvent(CustomEvent):
     def __init__(self, new_obj):
@@ -168,9 +167,10 @@ class AddObjectCustomEvent(CustomEvent):
         self.new_obj = new_obj
 
 class DeleteObjectCustomEvent(CustomEvent):
-    def __init__(self, obj_id):
+    def __init__(self, obj_id, obj_type):
         CustomEvent.__init__(self, DELETEOBJECT)
         self.obj_id = obj_id
+        self.obj_type = obj_type
 
 class UpdateObjectCustomEvent(CustomEvent):
     def __init__(self, obj):

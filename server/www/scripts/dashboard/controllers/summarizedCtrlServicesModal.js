@@ -11,6 +11,7 @@ angular.module('faradayApp')
             $scope.sortField = 'port';
             $scope.sortReverse = false;
             $scope.osint = osint;
+            $scope.workspace = workspace
 
             // toggles sort field and order
             $scope.toggleSort = function(field) {
@@ -29,10 +30,8 @@ angular.module('faradayApp')
             }
 
             ServerAPI.getServicesByHost(workspace, host._id).then(function(response){
-                dashboardSrv.getName(workspace, host._id).then(function(name){
-                    $scope.name = name;
-                    $scope.services = response.data.services;
-                })
+                $scope.name = host.name;
+                $scope.services = response.data;
             });
 
             $scope.ok = function(){

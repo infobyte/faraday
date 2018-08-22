@@ -18,7 +18,6 @@ describe('workspacesCtrl', function() {
             "end": 1410832741.48194
         },
         "name": "ws1",
-        "sdate": 1410832741.48194,
         "scope": "",
         "selected": true,
         "type": "Workspace"
@@ -34,7 +33,6 @@ describe('workspacesCtrl', function() {
             "endDate": 141083274148194
         },
         "name": "ws2",
-        "sdate": 1410832741.48194,
         "scope": "",
         "selected": true,
         "type": "Workspace",
@@ -50,7 +48,6 @@ describe('workspacesCtrl', function() {
             "end": 1410832741.48194
         },
         "name": "ws3",
-        "sdate": 1410832741.48194,
         "scope": "",
         "selected": true,
         "type": "Workspace"
@@ -99,7 +96,6 @@ describe('workspacesCtrl', function() {
                             "end": 141083274148194
                         },
                         "name": "ws2",
-                        "sdate": 1410832741.48194,
                         "scope": "Nuevo Scope",
                         "selected": true,
                         "type": "Workspace",
@@ -187,7 +183,6 @@ describe('workspacesCtrl', function() {
             expect(workspace.duration.start).toBeDefined();
             expect(workspace.duration.end).toBeDefined();
             expect(workspace.name).toBeDefined();
-            expect(workspace.sdate).toBeDefined();
             expect(workspace.scope).toBeDefined();
             expect(workspace.selected).not.toBeDefined();
             expect(workspace.type).toBeDefined();
@@ -204,7 +199,6 @@ describe('workspacesCtrl', function() {
                     "end": 141083274148194
                 },
                 "name": "ws2",
-                "sdate": 1410832741.48194,
                 "scope": "Nuevo Scope",
                 "selected": true,
                 "type": "Workspace",
@@ -258,11 +252,7 @@ describe('workspacesCtrl', function() {
             expect(workspace._id).toBeDefined();
             expect(workspace._rev).not.toBeDefined();
             expect(workspace.customer).toBeDefined();
-            expect(workspace.sdate).toBeDefined();
             expect(workspace.name).toBeDefined();
-            // find out if this variable is being used
-            // is defined as undefined
-            expect(workspace.fdate).toBeUndefined();
 
             expect(workspace.type).toBeDefined();
             expect(workspace.children).toBeDefined();

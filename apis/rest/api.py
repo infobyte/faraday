@@ -110,6 +110,11 @@ class ModelControllerAPI(RESTApi):
 
     def getRoutes(self):
         routes = []
+
+        routes.append(Route(path='/model/interface',
+                              view_func=self.createInterface,
+                              methods=['PUT']))
+
         routes.append(Route(path='/model/edit/vulns',
                               view_func=self.postEditVulns,
                               methods=['POST']))
@@ -125,10 +130,6 @@ class ModelControllerAPI(RESTApi):
         routes.append(Route(path='/model/webvulns',
                             view_func=self.listWebVulns,
                             methods=['GET']))
-
-        routes.append(Route(path='/model/interface',
-                            view_func=self.createInterface,
-                            methods=['PUT']))
 
         routes.append(Route(path='/model/service',
                             view_func=self.createService,
@@ -246,12 +247,9 @@ class ModelControllerAPI(RESTApi):
             ['name', 'os'])
 
     def createInterface(self):
-        return self._create(
-            self.controller.newInterface,
-            ['name', 'mac', 'ipv6_address', 'ipv4_mask', 'ipv4_gateway',
-             'ipv4_dns', 'ipv6_address', 'ipv6_prefix', 'ipv6_gateway',
-             'ipv6_dns', 'network_segment', 'hostname_resolution',
-             'parent_id'])
+        return jsonify(
+            code=200,
+            id=request.get_json().get("parent_id"))
 
     def createService(self):
         return self._create(
@@ -272,9 +270,7 @@ class ModelControllerAPI(RESTApi):
              'params', 'query', 'category', 'parent_id'])
 
     def createNote(self):
-        return self._create(
-            self.controller.newNote,
-            ['name', 'text', 'parent_id'])
+        return jsonify(code=200)
 
     def createCred(self):
         return self._create(

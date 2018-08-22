@@ -44,6 +44,16 @@ def main(workspace='', args=None, parser=None):
 
     parsed_args = parser.parse_args(args)
 
+    params = {
+        'name': parsed_args.name,
+        'description': parsed_args.description,
+        'service_id': parsed_args.service,
+        'method': parsed_args.method,
+        'parameter_name': parsed_args.params,
+        'path': parsed_args.path,
+        'website': parsed_args.website,
+    }
+
     obj = factory.createModelObject(models.VulnWeb.class_signature, parsed_args.name, workspace,
                                     desc=parsed_args.description,
                                     ref=parsed_args.reference,
@@ -61,16 +71,18 @@ def main(workspace='', args=None, parser=None):
                                     category=parsed_args.category,
 
                                     confirmed=(parsed_args.confirmed == 'true'),
-                                    parent_id=parsed_args.service
+                                    parent_id=parsed_args.service,
+                                    parent_type='Service'
                                     )
 
-    old = models.get_web_vuln(workspace, obj.getID())
+    old = models.get_web_vuln(workspace, **params)
 
     if old is None:
         if not parsed_args.dry_run:
             models.create_vuln_web(workspace, obj)
+            old = models.get_web_vuln(workspace, **params)
     else:
-        print "A web vulnerability with ID %s already exists!" % obj.getID()
+        print "A web vulnerability with ID %s already exists!" % old.getID()
         return 2, None
 
-    return 0, obj.getID()
+    return 0, old.getID()

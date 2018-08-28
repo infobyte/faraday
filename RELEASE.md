@@ -8,6 +8,10 @@ Make sure you run ```./faraday.py --update``` the first time after an update!
 New features in the latest update
 =====================================
 
+TBA
+---
+* Added host_os column to status report
+
 August 17, 2018:
 ---
 * Updated code to use Flask 1.0

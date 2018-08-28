@@ -178,6 +178,7 @@ angular.module("faradayApp")
                 "severity":         true,
                 "service":          true,
                 "target":           true,
+                "host_os":          false,
                 "desc":             true,
                 "resolution":       false,
                 "data":             false,
@@ -210,6 +211,7 @@ angular.module("faradayApp")
                     "service":          "110",
                     "hostnames":        "130",
                     "target":           "100",
+                    "host_os":          "300",
                     "desc":             "600",
                     "resolution":       "170",
                     "data":             "170",
@@ -326,6 +328,13 @@ angular.module("faradayApp")
                 headerCellTemplate: header,
                 sort: getColumnSort('target'),
                 visible: $scope.columns["target"]
+            });
+            $scope.gridOptions.columnDefs.push({ name : 'host_os',
+                displayName: "host_os", // Don't touch this! It will break everything. Seriously
+                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/hostoscolumn.html',
+                headerCellTemplate: header,
+                sort: getColumnSort('host_os'),
+                visible: $scope.columns["host_os"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'desc',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/desccolumn.html',

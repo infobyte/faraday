@@ -42,6 +42,7 @@ angular.module('faradayApp')
             this.service = "";
             this.severity = "";
             this.target = "";
+            this.host_os = "";
             this.type = "Vulnerability";
             this.ws = "";
             this.status = "opened";
@@ -73,6 +74,7 @@ angular.module('faradayApp')
                 if(data._id !== undefined) self._id = data._id;
                 if(data.metadata !== undefined) self.metadata = data.metadata;
                 if(data.target !== undefined) self.target = data.target;
+                if(data.host_os !== undefined) self.host_os = data.host_os;
                 if(data.hostnames !== undefined) self.hostnames = data.hostnames;
                 if(data.service !== undefined) self.service = data.service;
                 if(data.owner !== undefined) self.owner = data.owner;

@@ -881,11 +881,11 @@ class VulnerabilityGeneric(VulnerabilityABC):
         deferred=True
     )
 
-    _host_vuln_query = (
+    _host_ip_query = (
         select([Host.ip])
         .where(text('vulnerability.host_id = host.id'))
     )
-    _service_vuln_query = (
+    _service_ip_query = (
         select([text('host_inner.ip')])
         .select_from(text('host as host_inner, service'))
         .where(text('vulnerability.service_id = service.id and '
@@ -894,9 +894,29 @@ class VulnerabilityGeneric(VulnerabilityABC):
     target_host_ip = column_property(
         case([
             (text('vulnerability.host_id IS NOT null'),
-                _host_vuln_query.as_scalar()),
+                _host_ip_query.as_scalar()),
             (text('vulnerability.service_id IS NOT null'),
-                _service_vuln_query.as_scalar())
+                _service_ip_query.as_scalar())
+        ]),
+        deferred=True
+    )
+
+    _host_os_query = (
+        select([Host.os])
+        .where(text('vulnerability.host_id = host.id'))
+    )
+    _service_os_query = (
+        select([text('host_inner.os')])
+        .select_from(text('host as host_inner, service'))
+        .where(text('vulnerability.service_id = service.id and '
+                    'host_inner.id = service.host_id'))
+    )
+    target_host_os = column_property(
+        case([
+            (text('vulnerability.host_id IS NOT null'),
+                _host_os_query.as_scalar()),
+            (text('vulnerability.service_id IS NOT null'),
+                _service_os_query.as_scalar())
         ]),
         deferred=True
     )

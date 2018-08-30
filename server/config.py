@@ -70,17 +70,6 @@ def parse_and_bind_configuration():
 
     __parser = ConfigParser.SafeConfigParser()
     __parser.read(CONFIG_FILES)
-    #
-    # class ConfigSection(object):
-    #     def __init__(self, name, parser):
-    #         self.__name = name
-    #         self.__parser = parser
-    #
-    #     def __getattr__(self, option_name):
-    #         return self.__parser.get(self.__name, option_name)
-
-    #for section in __parser.sections():
-    #    globals()[section] = ConfigSection(section, __parser)
 
     for section_name in __parser.sections():
         ConfigSection.parse_section(section_name, __parser._sections[section_name])

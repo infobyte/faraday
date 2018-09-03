@@ -1236,7 +1236,7 @@ class Credential(Metadata):
         return self.host or self.service
 
 
-def _make_vuln_count_property(type_=None, confirmed=False,
+def _make_vuln_count_property(type_=None, confirmed=None,
                               use_column_property=True, extra_query=None, get_hosts_vulns=False):
     from_clause = table('vulnerability')
 
@@ -1317,7 +1317,7 @@ class Workspace(Metadata):
         """
         Add count fields to the query.
 
-        If confirmed is True, it will only show the count for confirmed
+        If confirmed is True/False, it will only show the count for confirmed / not confirmed
         vulnerabilities. Otherwise, it will show the count of all of them
         """
         return cls.query.options(

@@ -130,7 +130,7 @@ class HostsView(PaginatedMixin,
         res_dict = {'hosts':{}}
 
         host_count_schema = HostCountSchema()
-        host_count = Host.query_with_count(False, host_id_list, workspace_name)
+        host_count = Host.query_with_count(None, host_id_list, workspace_name)
 
         for host in host_count.all():
             res_dict["hosts"][host.id] = host_count_schema.dump(host).data

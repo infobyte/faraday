@@ -27,24 +27,18 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert res.status_code == 200
         assert res.json['stats']['hosts'] == 1
 
-    @pytest.mark.parametrize('querystring', [
-        '',
-        '?confirmed=0',
-        '?confirmed=false'
-    ])
 
     def test_vuln_count(self,
                         vulnerability_factory,
                         test_client,
-                        session,
-                        querystring):
+                        session):
         vulns = vulnerability_factory.create_batch(8, workspace=self.first_object,
                                            confirmed=False)
         vulns += vulnerability_factory.create_batch(5, workspace=self.first_object,
                                            confirmed=True)
         session.add_all(vulns)
         session.commit()
-        res = test_client.get(self.url(self.first_object) + querystring)
+        res = test_client.get(self.url(self.first_object))
         assert res.status_code == 200
         assert res.json['stats']['total_vulns'] == 13
 
@@ -67,6 +61,26 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         res = test_client.get(self.url(self.first_object) + querystring)
         assert res.status_code == 200
         assert res.json['stats']['total_vulns'] == 5
+
+    @pytest.mark.parametrize('querystring', [
+        '?confirmed=0',
+        '?confirmed=false'
+    ])
+
+    def test_vuln_count_confirmed(self,
+                                  vulnerability_factory,
+                                  test_client,
+                                  session,
+                                  querystring):
+        vulns = vulnerability_factory.create_batch(8, workspace=self.first_object,
+                                           confirmed=False)
+        vulns += vulnerability_factory.create_batch(5, workspace=self.first_object,
+                                           confirmed=True)
+        session.add_all(vulns)
+        session.commit()
+        res = test_client.get(self.url(self.first_object) + querystring)
+        assert res.status_code == 200
+        assert res.json['stats']['total_vulns'] == 8
 
     def test_create_fails_with_valid_duration(self, session, test_client):
         workspace_count_previous = session.query(Workspace).count()

@@ -38,40 +38,14 @@ class FaradayUploadedFile(UploadedFile):
     max_size = 1024
     thumbnail_format = 'PNG'
     thumbnail_size = (128, 128)
-    forbidden_content_types = [
-        'text/html',
-        'application/javascript',
-    ]
 
     def process_content(self, content, filename=None, content_type=None):
-        """Standard implementation of :meth:`.DepotFileInfo.process_content`
-
-        This is the standard depot implementation of files upload, it will
-        store the file on the default depot and will provide the standard
-        attributes.
-
-        Subclasses will need to call this method to ensure the standard
-        set of attributes is provided.
-        """
-
-        file_path, file_id = self.store_content(content, filename, content_type)
-
-        self['file_id'] = file_id
-
-        saved_file = self.file
-        self['content_type'] = saved_file.content_type
-        if any(map(lambda forbidden_content_type: self['content_type'] in forbidden_content_type, self.forbidden_content_types)):
-            raise UserWarning('Content not allowed')
-        self['filename'] = saved_file.filename
-
-        self['path'] = file_path
-        self['uploaded_at'] = saved_file.last_modified.strftime('%Y-%m-%d %H:%M:%S')
-        self['_public_url'] = saved_file.public_url
-
         image_format = imghdr.what(None, h=content[:32])
         if image_format:
-            self['content_type'] = 'image/{0}'.format(image_format)
+            content_type = 'image/{0}'.format(image_format)
             self.generate_thumbnail(content)
+        return super(FaradayUploadedFile, self).process_content(
+                content, filename, content_type)
 
     def generate_thumbnail(self, content):
         content = file_from_content(content)

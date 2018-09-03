@@ -570,10 +570,16 @@ class VulnerabilityView(PaginatedMixin,
             if file_obj:
                 depot = DepotManager.get()
                 depot_file = depot.get(file_obj.content.get('file_id'))
+                if depot_file.content_type.startswith('image/'):
+                    # Image content types are safe (they can't be executed like
+                    # html) so we don't have to force the download of the file
+                    as_attachment = False
+                else:
+                    as_attachment = True
                 return flask.send_file(
                     io.BytesIO(depot_file.read()),
                     attachment_filename=file_obj.filename,
-                    as_attachment=True,
+                    as_attachment=as_attachment,
                     mimetype=depot_file.content_type
                 )
             else:

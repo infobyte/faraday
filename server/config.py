@@ -46,9 +46,7 @@ if not os.path.exists(LOCAL_REPORTS_FOLDER):
             raise
 
 
-
 def copy_default_config_to_local():
-
     if os.path.exists(LOCAL_CONFIG_FILE):
         return
 
@@ -73,17 +71,8 @@ def parse_and_bind_configuration():
     __parser = ConfigParser.SafeConfigParser()
     __parser.read(CONFIG_FILES)
 
-    class ConfigSection(object):
-        def __init__(self, name, parser):
-            self.__name = name
-            self.__parser = parser
-
-        def __getattr__(self, option_name):
-            return self.__parser.get(self.__name, option_name)
-
-    for section in __parser.sections():
-        globals()[section] = ConfigSection(section, __parser)
-
+    for section_name in __parser.sections():
+        ConfigSection.parse_section(section_name, __parser._sections[section_name])
 
 def __get_version():
     try:
@@ -115,5 +104,85 @@ def gen_web_config():
 def is_debug_mode():
     return LOGGING_LEVEL is DEBUG
 
+
+class ConfigSection(object):
+    def parse(self, __parser):
+        for att in self.__dict__:
+            self.__setattr__(att,__parser.get(att))
+
+    @staticmethod
+    def parse_section(section_name, __parser):
+        section = None
+        if section_name == 'couchdb':
+            section = couchdb
+        elif section_name == 'database':
+            section = database
+        elif section_name == 'faraday_server':
+            section = faraday_server
+        elif section_name == 'ldap':
+            section = ldap
+        elif section_name == 'ssl':
+            section = ssl
+        elif section_name == 'storage':
+            section = storage
+        section.parse(__parser)
+
+
+class CouchDBConfigObject(ConfigSection):
+    def __init__(self):
+        self.host = None
+        self.password = None
+        self.port = None
+        self.protocol = None
+        self.ssl_port = None
+        self.user = None
+
+
+class DatabaseConfigObject(ConfigSection):
+    def __init__(self):
+        self.connection_string = None
+
+
+class FaradayServerConfigObject(ConfigSection):
+    def __init__(self):
+        self.bind_address = None
+        self.port = None
+        self.secret_key = None
+        self.websocket_port = None
+
+
+class LDAPConfigObject(ConfigSection):
+    def __init__(self):
+        self.admin_group = None
+        self.client_group = None
+        self.disconnect_timeout = None
+        self.domain_dn = None
+        self.enabled = None
+        self.pentester_group = None
+        self.port = None
+        self.server = None
+        self.use_ldaps = None
+        self.use_start_tls = None
+
+
+class SSLConfigObject(ConfigSection):
+    def __init__(self):
+        self.certificate = None
+        self.keyfile = None
+        self.port = None
+
+
+class StorageConfigObject(ConfigSection):
+    def __init__(self):
+        self.path = None
+
+
+
+couchdb = CouchDBConfigObject()
+database = DatabaseConfigObject()
+faraday_server = FaradayServerConfigObject()
+ldap = LDAPConfigObject()
+ssl = SSLConfigObject()
+storage = StorageConfigObject()
 
 parse_and_bind_configuration()

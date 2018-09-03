@@ -140,7 +140,7 @@ def main():
 
     else:
         if not args.port:
-            args.port = 5985
+            args.port = '5985'
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     result = sock.connect_ex((args.bind_address or server.config.faraday_server.bind_address, int(args.port or server.config.faraday_server.port)))

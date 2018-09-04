@@ -2,10 +2,11 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 import json
+import re
 
 import flask
 from flask import Blueprint
-from marshmallow import Schema, fields, post_load
+from marshmallow import Schema, fields, post_load, validate
 from sqlalchemy.orm import undefer
 
 from server.models import db, Workspace
@@ -55,6 +56,9 @@ class WorkspaceDurationSchema(Schema):
 
 
 class WorkspaceSchema(AutoSchema):
+
+    name = fields.String(required=True,
+                         validate=validate.Regexp(r"^[a-z0-9][a-z0-9\_\$\(\)\+\-\/]*$",0,"ERORROROR"))
     stats = SelfNestedField(WorkspaceSummarySchema())
     duration = SelfNestedField(WorkspaceDurationSchema())
     _id = fields.Integer(dump_only=True, attribute='id')

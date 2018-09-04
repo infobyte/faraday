@@ -5,6 +5,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 import random
+import string
 import factory
 import datetime
 import unicodedata
@@ -83,7 +84,7 @@ class UserFactory(FaradayFactory):
 
 class WorkspaceFactory(FaradayFactory):
 
-    name = FuzzyText()
+    name = FuzzyText(chars=string.lowercase+string.digits)
     creator = factory.SubFactory(UserFactory)
 
     class Meta:

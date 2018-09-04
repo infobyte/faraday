@@ -121,6 +121,7 @@ angular.module('faradayApp')
             $scope.new = function() {
                 var modal = $uibModal.open({
                     templateUrl: 'scripts/licenses/partials/modalNew.html',
+                    backdrop : 'static',
                     controller: 'licensesModalNew',
                     size: 'lg',
                     resolve: {}
@@ -144,6 +145,7 @@ angular.module('faradayApp')
                     var license = $scope.selectedLicenses()[0];
                     var modal = $uibModal.open({
                         templateUrl: 'scripts/licenses/partials/modalEdit.html',
+                        backdrop : 'static',
                         controller: 'licensesModalEdit',
                         size: 'lg',
                         resolve: {

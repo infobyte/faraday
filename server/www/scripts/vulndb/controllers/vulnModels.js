@@ -236,6 +236,7 @@ angular.module('faradayApp')
                 $scope.new = function() {
                     var modal = $uibModal.open({
                         templateUrl: 'scripts/vulndb/partials/modalNew.html',
+                        backdrop : 'static',
                         controller: 'vulnModelModalNew',
                         size: 'lg',
                         resolve: {}
@@ -265,6 +266,7 @@ angular.module('faradayApp')
                         var model = $scope.selectedModels()[0];
                         var modal = $uibModal.open({
                             templateUrl: 'scripts/vulndb/partials/modalEdit.html',
+                            backdrop : 'static',
                             controller: 'vulndDbModalEdit',
                             size: 'lg',
                             resolve: {

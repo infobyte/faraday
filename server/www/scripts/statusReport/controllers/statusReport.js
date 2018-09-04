@@ -768,6 +768,7 @@ angular.module("faradayApp")
            if (vulns.length == 1) {
                 var modal = $uibModal.open({
                     templateUrl: 'scripts/statusReport/partials/modalEdit.html',
+                    backdrop : 'static',
                     controller: 'modalEditCtrl as modal',
                     size: 'lg',
                     resolve: {
@@ -1030,6 +1031,7 @@ angular.module("faradayApp")
         $scope.new = function() {
             var modal = $uibModal.open({
                 templateUrl: 'scripts/statusReport/partials/modalNew.html',
+                backdrop : 'static',
                 controller: 'modalNewVulnCtrl as modal',
                 size: 'lg',
                 resolve: {

@@ -190,6 +190,7 @@ angular.module('faradayApp')
         $scope.new = function(){
             $scope.modal = $uibModal.open({
                 templateUrl: 'scripts/workspaces/partials/modalNew.html',
+                backdrop : 'static',
                 controller: 'workspacesModalNew',
                 size: 'lg'
             });
@@ -218,6 +219,7 @@ angular.module('faradayApp')
                 var oldName = workspace.name;
                 var modal = $uibModal.open({
                     templateUrl: 'scripts/workspaces/partials/modalEdit.html',
+                    backdrop : 'static',
                     controller: 'workspacesModalEdit',
                     size: 'lg',
                     resolve: {

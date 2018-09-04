@@ -33,9 +33,9 @@ class TestWorkspaceAPI(ReadWriteAPITests):
                         test_client,
                         session):
         vulns = vulnerability_factory.create_batch(8, workspace=self.first_object,
-                                           confirmed=False)
+                                                   confirmed=False)
         vulns += vulnerability_factory.create_batch(5, workspace=self.first_object,
-                                           confirmed=True)
+                                                    confirmed=True)
         session.add_all(vulns)
         session.commit()
         res = test_client.get(self.url(self.first_object))
@@ -53,9 +53,9 @@ class TestWorkspaceAPI(ReadWriteAPITests):
                                   session,
                                   querystring):
         vulns = vulnerability_factory.create_batch(8, workspace=self.first_object,
-                                           confirmed=False)
+                                                   confirmed=False)
         vulns += vulnerability_factory.create_batch(5, workspace=self.first_object,
-                                           confirmed=True)
+                                                    confirmed=True)
         session.add_all(vulns)
         session.commit()
         res = test_client.get(self.url(self.first_object) + querystring)
@@ -73,9 +73,9 @@ class TestWorkspaceAPI(ReadWriteAPITests):
                                   session,
                                   querystring):
         vulns = vulnerability_factory.create_batch(8, workspace=self.first_object,
-                                           confirmed=False)
+                                                   confirmed=False)
         vulns += vulnerability_factory.create_batch(5, workspace=self.first_object,
-                                           confirmed=True)
+                                                    confirmed=True)
         session.add_all(vulns)
         session.commit()
         res = test_client.get(self.url(self.first_object) + querystring)
@@ -93,6 +93,27 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert workspace_count_previous + 1 == session.query(Workspace).count()
         assert res.json['duration']['start_date'] == start_date
         assert res.json['duration']['end_date'] == end_date
+
+    def test_create_fails_with_mayus(self, session, test_client):
+        workspace_count_previous = session.query(Workspace).count()
+        raw_data = {'name': 'sWtr'}
+        res = test_client.post('/v2/ws/', data=raw_data)
+        assert res.status_code == 400
+        assert workspace_count_previous == session.query(Workspace).count()
+
+    def test_create_fails_with_special_character(self, session, test_client):
+        workspace_count_previous = session.query(Workspace).count()
+        raw_data = {'name': '$wtr'}
+        res = test_client.post('/v2/ws/', data=raw_data)
+        assert res.status_code == 400
+        assert workspace_count_previous == session.query(Workspace).count()
+
+    def test_create_with_initial_number(self, session, test_client):
+        workspace_count_previous = session.query(Workspace).count()
+        raw_data = {'name': '2$wtr'}
+        res = test_client.post('/v2/ws/', data=raw_data)
+        assert res.status_code == 201
+        assert workspace_count_previous + 1 == session.query(Workspace).count()
 
     def test_create_fails_with_invalid_duration_start_type(self,
                                                            session,

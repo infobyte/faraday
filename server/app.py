@@ -62,6 +62,7 @@ def setup_storage_path():
 def register_blueprints(app):
     from server.api.modules.info import info_api
     from server.api.modules.commandsrun import commandsrun_api
+    from server.api.modules.activity_feed import activityfeed_api
     from server.api.modules.credentials import credentials_api
     from server.api.modules.hosts import host_api
     from server.api.modules.licenses import license_api
@@ -75,6 +76,7 @@ def register_blueprints(app):
     from server.api.modules.upload_reports import upload_api
     from server.api.modules.websocket_auth import websocket_auth_api
     app.register_blueprint(commandsrun_api)
+    app.register_blueprint(activityfeed_api)
     app.register_blueprint(credentials_api)
     app.register_blueprint(host_api)
     app.register_blueprint(info_api)

@@ -51,24 +51,29 @@ def startAPIs(plugin_controller, model_controller, hostname, port):
 
     ioloop_instance = IOLoop.current()
     _http_server = HTTPServer(WSGIContainer(app))
-    while True:
+    hostnames = [hostname]
+    
+    #Fixed hostname bug
+    if hostname == "localhost":
+    
+        hostnames.append("127.0.0.1")
+    print hostname
+    
+    listening = False
+    for hostname in hostnames:
         try:
             _http_server.listen(port, address=hostname)
             logger.getLogger().info(
                     "REST API server configured on %s" % str(
                         CONF.getApiRestfulConInfo()))
+            listening = True
+            CONF.setApiConInfoHost(hostname)
+            CONF.saveConfig()
             break
         except socket.error as exception:
-            if exception.errno == 98:
-                # Port already in use
-                # Let's try the next one
-                port += 1
-                if port > 65535:
-                    raise Exception("No ports available!")
-                CONF.setApiRestfulConInfoPort(port)
-                CONF.saveConfig()
-            else:
-                raise exception
+            continue
+    if not listening:
+        raise RuntimeError("Port already in use")
 
     routes = [r for c in _rest_controllers for r in c.getRoutes()]
 

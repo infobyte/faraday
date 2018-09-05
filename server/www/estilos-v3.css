@@ -221,3 +221,9 @@
 .btn {
   border-radius: 0px;
 }
+
+.feed-icon{
+  width: 20px;
+  padding-bottom: 5px;
+  margin-right: 5px;
+}

@@ -12,14 +12,14 @@ angular.module('faradayApp')
             var vm = this;
             vm.commands = [];
 
-            // Get last 5 commands
+            // Get last 15 commands
             var init = function() {
                 if($routeParams.wsId != undefined) {
                     $scope.workspace = $routeParams.wsId;
 
                     dashboardSrv.getActivityFeed($scope.workspace)
-                        .then(function(commands) {
-                            vm.commands = commands;
+                        .then(function(response) {
+                            vm.commands = response.activities;
                         });
                 }
             };

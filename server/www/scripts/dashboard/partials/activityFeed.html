@@ -1,16 +1,16 @@
-<article class='panel left-big-box' ng-controller="activityFeedCtrl as activityFeed" ng-class="{'slide-up': cmdLimit == 15}">
+<article class='panel left-big-box' ng-controller="activityFeedCtrl as activityFeed" ng-class="{'slide-up': isExpanded}">
     <header ng-init="cmdLimit = 5">
         <h2>Activity Feed
             <span class="glyphicon glyphicon-info-sign" uib-tooltip="Faraday feed"></span>
 
-            <span class="pull-right" ng-show="cmdLimit != 15">
+            <span class="pull-right" ng-show="!isExpanded && activityFeed.commands.length > 5">
                 <img src="images/icon_viewmore.svg" class="feed-icon"/>
-                <a href="javascript:;" ng-click="cmdLimit = 15" >View more</a>
+                <a href="javascript:;" ng-click="toggleExpanded()" >View more</a>
             </span>
 
-            <span class="pull-right" ng-show="cmdLimit != 5">
+            <span class="pull-right" ng-show="isExpanded">
                 <img src="images/icon_viewless.svg" class="feed-icon"/>
-                <a href="javascript:;" ng-click="cmdLimit = 5" >View less</a>
+                <a href="javascript:;" ng-click="toggleExpanded()" >View less</a>
             </span>
         </h2>
 

@@ -223,7 +223,6 @@ class ReportParser(object):
         add the file signature here
         and add the code in self.getRootTag() for get the root tag.
         """
-
         f = result = None
 
         signatures = {
@@ -239,7 +238,6 @@ class ReportParser(object):
 
             f = open(file_path, 'rb')
             file_signature = f.read(10)
-            f.seek(0)
 
             for key in signatures:
                 if file_signature.find(key) == 0:
@@ -250,8 +248,8 @@ class ReportParser(object):
             if not result:
                 # try json loads to detect a json file.
                 try:
-                    json.loads(f.read())
                     f.seek(0)
+                    json.loads(f.read())
                     result = 'json'
                 except ValueError:
                     pass
@@ -262,6 +260,7 @@ class ReportParser(object):
                 "Error while opening file.\n%s. %s" % (err, file_path))
 
         getLogger(self).debug("Report type detected: %s" % result)
+        f.seek(0)
         return f, result
 
     def getRootTag(self, file_path):

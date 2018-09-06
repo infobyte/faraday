@@ -23,7 +23,7 @@
         <table id="commands" ng-if="activityFeed.commands.length > 0" class="tablesorter table table-striped">
             <tbody>
             <tr ng-repeat="cmd in activityFeed.commands | orderBy : '-date' | limitTo:cmdLimit">
-                <td align="left">
+                <td align="left" ng-class="{'hide-border-top':$index==0}">
                     <span ng-if="cmd.import_source == 'report'">
                         <img src="images/icon_terminal.svg" class="feed-icon"/>
                     </span>

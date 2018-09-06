@@ -237,3 +237,7 @@
   position: relative;
   bottom: 205px;
 }
+
+.hide-border-top{
+  border-top: none!important;
+}

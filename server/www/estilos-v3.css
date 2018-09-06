@@ -223,7 +223,17 @@
 }
 
 .feed-icon{
-  width: 20px;
+  width: 18px;
   padding-bottom: 5px;
-  margin-right: 5px;
+  margin-right: 3px;
+}
+
+
+.little-gray{
+  color: #a2a1a1;
+}
+
+.slide-up{
+  position: relative;
+  bottom: 205px;
 }

@@ -1,11 +1,11 @@
-<article class='panel left-big-box' ng-controller="activityFeedCtrl as activityFeed">
+<article class='panel left-big-box' ng-controller="activityFeedCtrl as activityFeed" ng-class="{'slide-up': cmdLimit == 15}">
     <header ng-init="cmdLimit = 5">
         <h2>Activity Feed
             <span class="glyphicon glyphicon-info-sign" uib-tooltip="Faraday feed"></span>
 
             <span class="pull-right" ng-show="cmdLimit != 15">
                 <img src="images/icon_viewmore.svg" class="feed-icon"/>
-                <a href="javascript:;" ng-click="cmdLimit = 15" >View all</a>
+                <a href="javascript:;" ng-click="cmdLimit = 15" >View more</a>
             </span>
 
             <span class="pull-right" ng-show="cmdLimit != 5">
@@ -33,10 +33,10 @@
 
                     <b class="capitalize fg-blue">{{cmd.user || Anonymous}}</b>
                     <span ng-if="cmd.import_source == 'shell'"
-                          uib-tooltip="{{ cmd.command + ' ' + cmd.params}}">ran <strong>{{cmd.command}}</strong></span>
+                          uib-tooltip="{{ cmd.command + ' ' + cmd.params}}"><span class="little-gray">ran</span> <strong>{{cmd.command}}</strong></span>
                     <span ng-if="cmd.import_source == 'report'"
                           uib-tooltip="Import {{ cmd.command + ': ' + cmd.params}}">imported <strong>{{cmd.tool == 'unknown' ? cmd.command : cmd.tool}}</strong> report</span>
-                    <span> and found</span>
+                    <span class="little-gray"> and found</span>
                     <span ng-if="cmd.hosts_count == 0 && cmd.services_count == 0 && cmd.vulnerabilities_count == 0 "> <strong>nothing</strong></span>
                     <span ng-if="cmd.hosts_count != 0 || cmd.services_count != 0 || cmd.vulnerabilities_count != 0 ">: </span>
                     <span ng-if="cmd.hosts_count > 0">{{cmd.hosts_count}} {{cmd.hosts_count == 1 ? 'host' : 'hosts'}}</span>

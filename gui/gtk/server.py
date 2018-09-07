@@ -77,7 +77,7 @@ class ServerIO(object):
     def get_host(self, host_id):
         return models.get_host(self.active_workspace, host_id)
 
-    @safe_io_with_server((0, 0, 0, 0))
+    @safe_io_with_server((0, 0, 0))
     def get_workspace_numbers(self):
         return models.get_workspace_numbers(self.active_workspace)
 

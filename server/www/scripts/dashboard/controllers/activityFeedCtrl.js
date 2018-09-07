@@ -14,7 +14,7 @@ angular.module('faradayApp')
 
                 // Get last 15 commands
                 var init = function () {
-                    if ($routeParams.wsId != undefined) {
+                    if ($routeParams.wsId !== undefined) {
                         $scope.workspace = $routeParams.wsId;
 
                         $scope.isExpanded = false;
@@ -40,15 +40,16 @@ angular.module('faradayApp')
                 var collapse = function () {
                     $scope.cmdLimit = 5;
                     $scope.isExpanded = false;
-                    angular.element('#last-vuln-panel').removeClass('slide-up');
-                    angular.element('#vulns-by-price').removeClass('slide-up');
+                    $scope.hideEmpty = false;
+                    angular.element('#first-row-panel').css('display', 'inherit');
+                    angular.element('#activities-container-row').addClass('mt-md');
                 };
 
                 var expand = function () {
                     $scope.cmdLimit = 15; // Should be a constant
                     $scope.isExpanded = true;
-                    angular.element('#last-vuln-panel').addClass('slide-up');
-                    angular.element('#vulns-by-price').addClass('slide-up');
+                    angular.element('#first-row-panel').css('display', 'none');
+                    angular.element('#activities-container-row').removeClass('mt-md');
                 };
 
                 $scope.isEmpty = function (cmd) {

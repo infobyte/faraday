@@ -12,6 +12,19 @@
                 <img src="images/icon_viewless.svg" class="feed-icon"/>
                 <a href="javascript:;" ng-click="toggleExpanded()" >View less</a>
             </span>
+
+            <!--TODO: Change icon-->
+            <span class="pull-right margin-right-15px" ng-show="isExpanded && !hideEmpty">
+                <img src="images/icon_viewless.svg" class="feed-icon"/>
+                <a href="javascript:;" ng-click="hideEmpty = true" >Hide empty</a>
+            </span>
+            <!--TODO: Change icon-->
+            <span class="pull-right margin-right-15px" ng-show="isExpanded && hideEmpty">
+                <img src="images/icon_viewless.svg" class="feed-icon"/>
+                <a href="javascript:;" ng-click="hideEmpty = false" >Show empty</a>
+            </span>
+
+
         </h2>
 
 
@@ -22,7 +35,8 @@
     <div class="ph-xl">
         <table id="commands" ng-if="activityFeed.commands.length > 0" class="tablesorter table table-striped">
             <tbody>
-            <tr ng-repeat="cmd in activityFeed.commands | orderBy : '-date' | limitTo:cmdLimit">
+            <tr ng-repeat="cmd in activityFeed.commands | orderBy : '-date' | limitTo:cmdLimit"
+                ng-show="!isEmpty(cmd) || !hideEmpty">
                 <td align="left" ng-class="{'hide-border-top':$index==0}">
                     <span ng-if="cmd.import_source == 'report'">
                         <img src="images/icon_terminal.svg" class="feed-icon"/>

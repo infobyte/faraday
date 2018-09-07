@@ -18,6 +18,7 @@ angular.module('faradayApp')
                         $scope.workspace = $routeParams.wsId;
                         $scope.cmdLimit = 5;
                         $scope.isExpanded = false;
+                        $scope.hideEmpty = false;
 
                         dashboardSrv.getActivityFeed($scope.workspace)
                             .then(function (response) {
@@ -39,7 +40,12 @@ angular.module('faradayApp')
                         $scope.isExpanded = true;
                         lastVulnPanel.addClass('slide-up');
                         vulnsByPrice.addClass('slide-up');
+                        $scope.hideEmpty = false;
                     }
+                };
+
+                $scope.isEmpty = function (cmd) {
+                  return cmd.hosts_count === 0 && cmd.services_count === 0 && cmd.vulnerabilities_count === 0;
                 };
 
                 dashboardSrv.registerCallback(init);

@@ -16,9 +16,11 @@ angular.module('faradayApp')
                 var init = function () {
                     if ($routeParams.wsId != undefined) {
                         $scope.workspace = $routeParams.wsId;
-                        $scope.cmdLimit = 5;
+
                         $scope.isExpanded = false;
                         $scope.hideEmpty = false;
+
+                        collapse();
 
                         dashboardSrv.getActivityFeed($scope.workspace)
                             .then(function (response) {
@@ -28,24 +30,29 @@ angular.module('faradayApp')
                 };
 
                 $scope.toggleExpanded = function () {
-                    var lastVulnPanel = angular.element('#last-vuln-panel');
-                    var vulnsByPrice = angular.element('#vulns-by-price');
                     if ($scope.isExpanded) {
-                        $scope.cmdLimit = 5;
-                        $scope.isExpanded = false;
-                        lastVulnPanel.removeClass('slide-up');
-                        vulnsByPrice.removeClass('slide-up');
-                    }else{
-                        $scope.cmdLimit = 15; // Should be a constant
-                        $scope.isExpanded = true;
-                        lastVulnPanel.addClass('slide-up');
-                        vulnsByPrice.addClass('slide-up');
-                        $scope.hideEmpty = false;
+                        collapse();
+                    } else {
+                        expand();
                     }
                 };
 
+                var collapse = function () {
+                    $scope.cmdLimit = 5;
+                    $scope.isExpanded = false;
+                    angular.element('#last-vuln-panel').removeClass('slide-up');
+                    angular.element('#vulns-by-price').removeClass('slide-up');
+                };
+
+                var expand = function () {
+                    $scope.cmdLimit = 15; // Should be a constant
+                    $scope.isExpanded = true;
+                    angular.element('#last-vuln-panel').addClass('slide-up');
+                    angular.element('#vulns-by-price').addClass('slide-up');
+                };
+
                 $scope.isEmpty = function (cmd) {
-                  return cmd.hosts_count === 0 && cmd.services_count === 0 && cmd.vulnerabilities_count === 0;
+                    return cmd.hosts_count === 0 && cmd.services_count === 0 && cmd.vulnerabilities_count === 0;
                 };
 
                 dashboardSrv.registerCallback(init);

@@ -19,6 +19,7 @@ from server.commands.faraday_schema_display import DatabaseSchema
 from server.commands.app_urls import show_all_urls
 from server.commands.reports import import_external_reports
 from server.commands import status_check as status_check_functions
+from server.commands import change_password as change_pass
 from server.models import db, User
 from server.importer import ImportCouchDB
 
@@ -117,10 +118,10 @@ def status_check(check_postgresql, check_faraday, check_dependencies, check_conf
     selected = False
     exit_code = 0
     if check_postgresql:
-        # exit_code is created for Faraday automation-testing purposes
+        # exit_code was created for Faraday automation-testing purposes
         exit_code = status_check_functions.print_postgresql_status()
         status_check_functions.print_postgresql_locks_status()
-        selected = True    
+        selected = True
 
     if check_faraday:
         status_check_functions.print_faraday_status()
@@ -138,6 +139,15 @@ def status_check(check_postgresql, check_faraday, check_dependencies, check_conf
         status_check_functions.full_status_check()
 
     sys.exit(exit_code)
+
+@click.command(help="Changes the password of a user")
+def change_password():
+    username = raw_input("Enter the Name of the User: ")
+    password = raw_input("Enter the new password: ")
+    if password is None or password == "":
+        print "Invalid password"
+        exit
+    change_pass.changes_password(username, password)
 
 def validate_user_unique_field(ctx, param, value):
     with app.app_context():
@@ -162,8 +172,9 @@ def validate_email(ctx, param, value):
 def createsuperuser(username, email, password):
     with app.app_context():
         if db.session.query(User).filter_by(active=True).count() > 0:
-            print("Can't create more users. Please contact support")
+            print("Can't create more users. The comumunity edition only allows one user. Please contact support for further information.")
             sys.exit(1)
+
         app.user_datastore.create_user(username=username,
                                        email=email,
                                        password=password,
@@ -198,6 +209,7 @@ cli.add_command(createsuperuser)
 cli.add_command(sql_shell)
 cli.add_command(status_check)
 cli.add_command(create_tables)
+cli.add_command(change_password)
 
 
 if __name__ == '__main__':

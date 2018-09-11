@@ -204,10 +204,10 @@ class Item(object):
         # value_dict is a dictionary with every detail in the host
         for key,value_dict in detail.items():
             service_detail = self.get_service_from_details(value_dict,port)
-            
+
             if service_detail:
                 return service_detail
-        
+
         # if the service is not in detail, we will search it in
         # the file port_mapper.txt
         srv = self.filter_services()
@@ -257,34 +257,34 @@ class Item(object):
         # dict value: 
         # key is port or protocol of the service 
         # value is service description
+        res = None
+        priority = 0
         for key, value in value_dict.items():
             if value == 'Services':
                 aux_port = port.split('/')[0]
-
                 key_splited = key.split(',')
-
                 if key_splited[0] == aux_port:
-                    return key_splited[2]
+                    res = key_splited[2]
+                    priority = 3
         
-        for k,v in value_dict.items():
-            if '/' in k:
-                auxiliar_key = k.split('/')[0]
-
+            elif '/' in key and priority != 3:
+                auxiliar_key = key.split('/')[0]
                 if auxiliar_key == port.split('/')[0]:
-                    return v
+                    res = value
+                    priority = 2
 
-            elif k.isdigit():
-                if k == port.split('/')[0]:
-                    return v
-            elif '::' in k:
-                aux_key = k.split('::')[0]
+            elif key.isdigit() and priority == 0:
+                if key == port.split('/')[0]:
+                    res = value
+                    priority = 1
+
+            elif '::' in key and priority == 0:
+                aux_key = key.split('::')[0]
                 auxiliar_port = port.split('/')[0]
-
                 if aux_key == auxiliar_port:
-                    return v
+                    res = value
 
-
-        return None
+        return res
 
 
 class OpenvasPlugin(core.PluginBase):

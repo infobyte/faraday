@@ -282,6 +282,11 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             templateUrl: 'scripts/auth/partials/forbidden.html',
             title: ' Forbidden |'
         }).
+        when('/workspace-worth/ws/:wsId', {
+            templateUrl: 'scripts/dashboard/partials/vulns-by-price.html',
+            controller: 'vulnsByPriceCtrl',
+            title: ' Workspace worth |'
+        }).
         otherwise({
             templateUrl: 'scripts/commons/partials/home.html',
             controller: 'homeCtrl'

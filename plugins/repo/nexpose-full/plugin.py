@@ -275,37 +275,62 @@ class NexposeFullPlugin(core.PluginBase):
                                               "nexpose_full_output-%s.xml" % self._rid)
 
     def parseOutputString(self, output, debug=False):
+
         parser = NexposeFullXmlParser(output)
 
         for item in parser.items:
+
             h_id = self.createAndAddHost(item['name'], item['os'])
-            i_id = self.createAndAddInterface(h_id, item['name'], ipv4_address=item[
-                                              'name'], hostname_resolution= ' '.join( list( item['hostnames'] )))
+
+            i_id = self.createAndAddInterface(
+                h_id,
+                item['name'],
+                ipv4_address=item['name'],
+                hostname_resolution=' '.join(list(item['hostnames'])))
 
             for v in item['vulns']:
-                v_id = self.createAndAddVulnToHost(h_id, v['name'], v['desc'], v[
-                                                   'refs'], v['severity'], v['resolution'])
+
+                v_id = self.createAndAddVulnToHost(
+                    h_id,
+                    v['name'],
+                    v['desc'],
+                    v['refs'],
+                    v['severity'],
+                    v['resolution'])
 
             for s in item['services']:
                 web = False
                 version = s.get("version", "")
 
-                s_id = self.createAndAddServiceToInterface(h_id, i_id, s['name'],
-                                                           s['protocol'],
-                                                           ports=[
-                                                               str(s['port'])],
-                                                           status=s['status'],
-                                                           version=version)
+                s_id = self.createAndAddServiceToInterface(
+                    h_id,
+                    i_id,
+                    s['name'],
+                    s['protocol'],
+                    ports=[str(s['port'])],
+                    status=s['status'],
+                    version=version)
+
                 for v in s['vulns']:
                     if v['is_web']:
                         v_id = self.createAndAddVulnWebToService(
-                            h_id, s_id, v['name'], v['desc'], v['refs'],
-                            v['severity'], v['resolution'],
+                            h_id,
+                            s_id,
+                            v['name'],
+                            v['desc'],
+                            v['refs'],
+                            v['severity'],
+                            v['resolution'],
                             path=v.get('path',''))
                     else:
                         v_id = self.createAndAddVulnToService(
-                            h_id, s_id, v['name'], v['desc'], v['refs'],
-                            v['severity'], v['resolution'])
+                            h_id,
+                            s_id,
+                            v['name'],
+                            v['desc'],
+                            v['refs'],
+                            v['severity'],
+                            v['resolution'])
         del parser
 
     def processCommandString(self, username, current_path, command_string):

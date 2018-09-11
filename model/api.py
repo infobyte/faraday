@@ -69,7 +69,7 @@ def _setUpAPIServer(hostname=None, port=None):
     if _xmlrpc_api_server is None:
         #TODO: some way to get defaults.. from config?
         if str(hostname) == "None":
-            hostname = "localhost"
+            hostname = "127.0.0.1"
         if str(port) == "None":
             port = 9876
 
@@ -77,10 +77,15 @@ def _setUpAPIServer(hostname=None, port=None):
             CONF.setApiConInfo(hostname, port)
         devlog("starting XMLRPCServer with api_conn_info = %s" % str(CONF.getApiConInfo()))
 
-        while True:
+        hostnames = [hostname]
+        if hostname == "localhost":
+            hostnames.append("127.0.0.1")
+                
+        listening = False
+        for hostname in hostnames:
 
             try:
-                _xmlrpc_api_server = model.common.XMLRPCServer(CONF.getApiConInfo())
+                _xmlrpc_api_server = model.common.XMLRPCServer((hostname,CONF.getApiConInfoPort()))
                 # Registers the XML-RPC introspection functions system.listMethods, system.methodHelp and system.methodSignature.
                 _xmlrpc_api_server.register_introspection_functions()
 
@@ -104,31 +109,22 @@ def _setUpAPIServer(hostname=None, port=None):
                 _xmlrpc_api_server.register_function(devlog)
 
                 #TODO: check if all necessary APIs are registered here!!
+                listening = True
+                CONF.setApiConInfo(hostname, port)
+                CONF.saveConfig()
 
                 getLogger().info(
                     "XMLRPC API server configured on %s" % str(
                         CONF.getApiConInfo()))
                 break
-            except socket.error as exception:
-                if exception.errno == 98:
-                    # Port already in use
-                    # Let's try the next one
-                    port += 1
-                    if port > 65535:
-                        raise Exception("No ports available!")
-                    CONF.setApiConInfo(hostname, port)
-                    CONF.saveConfig()
-                elif exception.errno == 48:
-                    # Address already open
-                    # Another instance of faraday.py already running
-                    raise Exception("Another instance of faraday.py already running!")
-                else:
-                    raise exception
-            except Exception as e:
-                msg = "There was an error creating the XMLRPC API Server:\n%s" % str(e)
+            
+            except socket.error as e:
+                msg = "There was an error creating the XMLRPC API Server (Host:{}): {}".format(hostname,e)
                 log(msg)
-                devlog("[ERROR] - %s" % msg)
+                devlog("[WARNING] - %s" % msg)
 
+        if not listening:
+               raise RuntimeError("Port already in use")
 
 #-------------------------------------------------------------------------------
 # APIs to create and add elements to model

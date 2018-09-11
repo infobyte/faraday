@@ -98,6 +98,7 @@ angular.module('faradayApp')
                     var oldName = $scope.workspace;
                     var modal = $uibModal.open({
                         templateUrl: 'scripts/workspaces/partials/modalEdit.html',
+                        backdrop : 'static',
                         controller: 'workspacesModalEdit',
                         size: 'lg',
                         resolve: {

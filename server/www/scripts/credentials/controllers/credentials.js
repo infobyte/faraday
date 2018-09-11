@@ -64,7 +64,7 @@ angular.module('faradayApp')
 
             var loadCredentials = function (credentials){
                 credentials.forEach(function(cred){
-                    
+
                     var object = new credential(cred.value, cred.value.parent, cred.value.parent_type);
                     object.getParentName($scope.workspace).then(function(response){
                         object.target = response;
@@ -75,7 +75,7 @@ angular.module('faradayApp')
             };
 
             var getAndLoadCredentials = function() {
- 
+
                 // Load all credentials, we dont have a parent.
                 if($scope.parentObject.parent_type === undefined){
                     ServerAPI.getCredentials($scope.workspace).then(function(response){
@@ -122,7 +122,7 @@ angular.module('faradayApp')
             var removeFromView = function(credential){
                 $scope.credentials.forEach(function(item, index){
                     if (item._id === credential._id)
-                        $scope.credentials.splice(index, 1);     
+                        $scope.credentials.splice(index, 1);
                 });
             };
 
@@ -153,7 +153,7 @@ angular.module('faradayApp')
                 // Add parent id, create credential and save to server.
                 try {
                     var credentialObj = new credential(credentialData, parent_id, parent_type);
-                    
+
                     credentialObj.create($scope.workspace).then(function(){
                          $scope.credentials.push(credentialObj);
                     }, function(){
@@ -180,6 +180,7 @@ angular.module('faradayApp')
             $scope.new = function() {
                 var modal = $uibModal.open({
                     templateUrl: 'scripts/credentials/partials/modalNewEdit.html',
+                    backdrop : 'static',
                     controller: 'modalNewEditCredentialCtrl',
                     size: 'lg',
                     resolve: {
@@ -201,9 +202,10 @@ angular.module('faradayApp')
             $scope.edit = function() {
 
                 var credentialToEdit = $scope.selectedCredentials()[0];
-                
+
                 var modal = $uibModal.open({
                     templateUrl: 'scripts/credentials/partials/modalNewEdit.html',
+                    backdrop : 'static',
                     controller: 'modalNewEditCredentialCtrl',
                     size: 'lg',
                     resolve: {

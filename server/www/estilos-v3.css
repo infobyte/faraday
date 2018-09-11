@@ -221,3 +221,22 @@
 .btn {
   border-radius: 0px;
 }
+
+.feed-icon{
+  width: 18px;
+  padding-bottom: 5px;
+  margin-right: 3px;
+}
+
+
+.little-gray{
+  color: #a2a1a1;
+}
+
+.hide-border-top{
+  border-top: none!important;
+}
+
+.margin-right-15px{
+  margin-right: 15px;
+}

@@ -178,7 +178,7 @@ def main():
             if arg not in ["start", "stop"] and arg_dict[arg]:
                 params.append('--'+arg)
                 if arg_dict[arg] != True:
-                    params.append(arg_dict[arg])
+                    params.append(str(arg_dict[arg]))
         logger.info('Faraday Server is running as a daemon')
         subprocess.Popen(params, stdout=devnull, stderr=devnull)
     else:

@@ -8,9 +8,38 @@ Make sure you run ```./faraday.py --update``` the first time after an update!
 New features in the latest update
 =====================================
 
-TBA
+September 17, 2018:
 ---
+* New searcher feature
 * Added host_os column to status report
+* Fix and error while trying to execute server with --start
+* Added option --choose-password to initdb
+* Continous scan updated for Nessus 7
+* Refactor on server.config to remove globals
+* Added a directory for custom templates for executive reports (pro and corp)
+* Activity feed shows more results and allows to filter empty results
+* Allow ot create workspace that start with numbers
+* Added more variables to executive reports (pro and corp)
+* Fixed some value checking on tasks api (date field)
+* OpenVas plugin updated
+* Appscan plugin update
+* Added no confirmed vulns to report api
+* Fixed a bug on workspace API when the workspace already exists on database
+* Fix owner filter on status report
+* Fixes on import_csv fplugin when the api returned 409
+* Fixes on status_check
+* Fixed a bug on webui when workspace permission was changed (pro and corp)
+* Update nexpose plugin
+* uigrid library updated to latest version
+* Bug fix on plugin automatic detection
+* Fixed a bug on executive reports when multiple reports were scheduled
+* Avoid closing the executive report and new vuln modal when the form has data
+* Status report open new tab for evidence
+* added change_password to manage.py
+* Update wapiti plugin
+* Fixed vuln count on executive report (pro and corp)
+* Fixed css align in some tables
+* Fixed No ports available error on the client
 
 August 17, 2018:
 ---

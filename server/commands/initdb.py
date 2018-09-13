@@ -10,6 +10,7 @@ import string
 
 import os
 import sys
+import click
 import psycopg2
 from random import SystemRandom
 from tempfile import TemporaryFile
@@ -62,7 +63,7 @@ class InitDB():
 
         return True
 
-    def run(self):
+    def run(self, choose_password):
         """
              Main entry point that executes these steps:
                  * creates role in database.
@@ -101,7 +102,7 @@ class InitDB():
             self._create_tables(conn_string)
             couchdb_config_present = server.config.couchdb
             if not (couchdb_config_present and couchdb_config_present.user and couchdb_config_present.password):
-                self._create_admin_user(conn_string)
+                self._create_admin_user(conn_string, choose_password)
             else:
                 print('Skipping new admin creation since couchdb configuration was found.')
         except KeyboardInterrupt:
@@ -109,9 +110,18 @@ class InitDB():
             print('User cancelled.')
             sys.exit(1)
 
-    def _create_admin_user(self, conn_string):
+    def _create_admin_user(self, conn_string, choose_password):
         engine = create_engine(conn_string)
-        random_password = self.generate_random_pw(12)
+        # TODO change the random_password variable name, it is not always
+        # random anymore
+        if choose_password:
+            random_password = click.prompt(
+                'Enter the desired password for the "faraday" user',
+                confirmation_prompt=True,
+                hide_input=True
+            )
+        else:
+            random_password = self.generate_random_pw(12)
         already_created = False
         try:
             engine.execute("INSERT INTO \"faraday_user\" (username, name, password, "

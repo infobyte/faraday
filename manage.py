@@ -71,9 +71,14 @@ def show_urls():
     show_all_urls()
 
 @click.command(help="Create Faraday DB in Postgresql, also tables and indexes")
-def initdb():
+@click.option(
+        '--choose-password', is_flag=True, default=False,
+        help=('Instead of using a random password for the user "faraday", '
+              'ask for the desired one')
+        )
+def initdb(choose_password):
     with app.app_context():
-        InitDB().run()
+        InitDB().run(choose_password=choose_password)
         couchdb_config_present = server.config.couchdb
         if couchdb_config_present and couchdb_config_present.user and couchdb_config_present.password:
             print('Importing data from CouchDB, please wait...')

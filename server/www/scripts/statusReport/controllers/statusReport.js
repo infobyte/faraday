@@ -546,7 +546,9 @@ angular.module("faradayApp")
                     return obj.data;
                 });
 
-                return response.filter(function(x){!angular.equals(x, {})});
+                return response.filter(function(x){
+                  return !angular.equals(x, {})
+                });
 
             }, function(failed) {
                 commonsFact.showMessage("Something failed searching vulnerability exploits.");

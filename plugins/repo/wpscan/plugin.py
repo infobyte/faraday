@@ -12,6 +12,7 @@ from plugins import core
 import re
 import socket
 import json
+import os
 
 __author__ = "Joaquin L. Pereyra | Federico Fernandez"
 __copyright__ = "Copyright (c) 2016, Infobyte LLC"
@@ -40,7 +41,7 @@ class WPScanPlugin(core.PluginBase):
         self.version = "2.9.1"
         self._command_regex = re.compile(
                 r"^((sudo )?(ruby )?(\.\/)?(wpscan)(.rb)?)")
-        self.addSetting("WPscan path", str, "~/wpscan")
+        self.addSetting("WPscan path", str, os.getenv('HOME') + "/wpscan")
         self.wpPath         = self.getSetting("WPscan path")
         self.themes         = {}
         self.plugins        = {}

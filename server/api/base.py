@@ -349,6 +349,10 @@ class GenericWorkspacedView(GenericView):
     def _get_workspace(self, workspace_name):
         try:
             ws = Workspace.query.filter_by(name=workspace_name).one()
+            if not (ws.active
+                    ):
+                # Don't raise a 403 to prevent workspace name enumeration
+                flask.abort(404, "No such workspace: %s" % workspace_name)
         except NoResultFound:
             flask.abort(404, "No such workspace: %s" % workspace_name)
         return ws

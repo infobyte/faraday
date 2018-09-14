@@ -102,7 +102,16 @@ class WorkspaceView(ReadWriteView):
             confirmed = bool(json.loads(flask.request.args['confirmed']))
         except (KeyError, ValueError):
             confirmed = None
-        return Workspace.query_with_count(confirmed)
+        query = Workspace.query_with_count(confirmed).filter(self.model_class.active == True)
+        return query
+
+    def _get_base_query_deactivated(self):
+        try:
+            confirmed = bool(json.loads(flask.request.args['confirmed']))
+        except (KeyError, ValueError):
+            confirmed = None
+        query = Workspace.query_with_count(confirmed).filter(self.model_class.active == False)
+        return query
 
     def _perform_create(self, data, **kwargs):
         scope = data.pop('scope', [])

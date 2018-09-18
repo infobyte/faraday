@@ -168,7 +168,6 @@ class WPScanPlugin(core.PluginBase):
         the vulnerability's name and severity if the regex found something
         and (None, None) if the regex found nothing.
         """
-        print("POTENCIAL VULN : " + potential_vuln)
 
         critical_search = re.search(r"Website is not fully configured|"
                                     "Debug log file found|"
@@ -209,7 +208,7 @@ class WPScanPlugin(core.PluginBase):
                             title = vuln['title']  # title
                             risk = self.risks[vuln['vuln_type']]  # vuln type (xss,rce,lfi,etc) - risk
                             location = wp_url + 'wp-content/' + name + '/' + p + '/'
-                            if vuln['references'].has_key('url') == True:  # if references
+                            if vuln['references'].has_key('url'):  # if references
                                 refs = vuln['references']['url']  # references[]
                             else:
                                 refs = []  # references null
@@ -222,20 +221,11 @@ class WPScanPlugin(core.PluginBase):
             for vuln in j[version]['vulnerabilities']:  # iter vulnerabilities
                 title = vuln['title']  # title
                 risk = self.risks[vuln['vuln_type']]  # vuln type (xss,rce,lfi,etc) - risk
-                if vuln['references'].has_key('url') == True:  # if references
+                if vuln['references'].has_key('url'):  # if references
                     refs = vuln['references']['url']  # references[]
                 else:
                     refs = []  # references null
                 self.createAndAddVulnWebToService(host_id, serv_id, title, severity=risk, website=domain, ref=refs)
-
-    # def __get_service_and_url_from_output(self, output):
-    #     """ Return the service (http or https) and the base URL (URL without
-    #     protocol) from a given string. In case more than one URL is found,
-    #     return the service and base_url of the first one, ignore others.
-    #     """
-    #     search_url = re.search(r"URL: ((http[s]?)\:\/\/([\w\.]+)[.\S]+)", output)
-    #     service, base_url = search_url.group(2), search_url.group(3)
-    #     return service, base_url
 
 
 def createPlugin():

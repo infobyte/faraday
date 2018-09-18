@@ -10,6 +10,7 @@ New features in the latest update
 
 September 17, 2018:
 ---
+* Fix get exploits API
 * New searcher feature
 * Added host_os column to status report
 * Fix and error while trying to execute server with --start

@@ -161,9 +161,18 @@ def create_app(db_connection_string=None, testing=None):
     app = Flask(__name__)
 
     try:
-        app.config['SECRET_KEY'] = server.config.faraday_server.secret_key
+        secret_key = server.config.faraday_server.secret_key
     except Exception:
+        # Now when the config file does not exist it doesn't enter in this
+        # condition, but it could happen in the future. TODO check
         save_new_secret_key(app)
+    else:
+        if secret_key is None:
+            # This is what happens now when the config file doesn't exist.
+            # TODO check
+            save_new_secret_key(app)
+        else:
+            app.config['SECRET_KEY'] = secret_key
 
     login_failed_message = ("Invalid username or password", 'error')
 

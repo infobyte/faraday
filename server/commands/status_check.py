@@ -28,8 +28,9 @@ init()
 
 
 def check_server_running():
-    pid = is_server_running()
-    return pid
+   port = int(server.config.faraday_server.port)
+   pid = is_server_running(port)
+   return pid
     
 
 def check_open_ports():

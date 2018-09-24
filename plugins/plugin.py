@@ -256,8 +256,8 @@ class PluginBase(object):
         self.__addPendingAction(Modelactions.ADDSERVICEHOST, serv_obj)
         return serv_obj.getID()
 
-    def createAndAddVulnToHost(self, host_id, name, data="", desc="", ref=[],
-                               severity="", resolution=""):
+    def createAndAddVulnToHost(self, host_id, name, desc="", ref=[],
+                               severity="", resolution="", data=""):
 
         vuln_obj = model.common.factory.createModelObject(
             Vuln.class_signature,
@@ -273,9 +273,9 @@ class PluginBase(object):
     @deprecation.deprecated(deprecated_in="3.0", removed_in="3.5",
                             current_version=VERSION,
                             details="Interface object removed. Use host or service instead. Vuln will be added to Host")
-    def createAndAddVulnToInterface(self, host_id, interface_id, name, data="",
+    def createAndAddVulnToInterface(self, host_id, interface_id, name,
                                     desc="", ref=[], severity="",
-                                    resolution=""):
+                                    resolution="", data=""):
 
         vuln_obj = model.common.factory.createModelObject(
             Vuln.class_signature,
@@ -288,8 +288,8 @@ class PluginBase(object):
         self.__addPendingAction(Modelactions.ADDVULNHOST, vuln_obj)
         return vuln_obj.getID()
 
-    def createAndAddVulnToService(self, host_id, service_id, name, desc="", data="",
-                                  ref=[], severity="", resolution=""):
+    def createAndAddVulnToService(self, host_id, service_id, name, desc="",
+                                  ref=[], severity="", resolution="", data=""):
 
         vuln_obj = model.common.factory.createModelObject(
             Vuln.class_signature,
@@ -302,11 +302,11 @@ class PluginBase(object):
         self.__addPendingAction(Modelactions.ADDVULNSRV, vuln_obj)
         return vuln_obj.getID()
 
-    def createAndAddVulnWebToService(self, host_id, service_id, name, data="", desc="",
+    def createAndAddVulnWebToService(self, host_id, service_id, name, desc="",
                                      ref=[], severity="", resolution="",
                                      website="", path="", request="",
                                      response="", method="", pname="",
-                                     params="", query="", category=""):
+                                     params="", query="", category="", data=""):
         vulnweb_obj = model.common.factory.createModelObject(
             VulnWeb.class_signature,
             name, data=data, desc=desc, refs=ref, severity=severity,

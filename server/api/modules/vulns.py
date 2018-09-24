@@ -126,6 +126,7 @@ class VulnerabilitySchema(AutoSchema):
                          required=True)
     obj_id = fields.String(dump_only=True, attribute='id')
     target = fields.String(dump_only=True, attribute='target_host_ip')
+    host_os = fields.String(dump_only=True, attribute='target_host_os')
     metadata = SelfNestedField(CustomMetadataSchema())
     date = fields.DateTime(attribute='create_date',
                            dump_only=True)  # This is only used for sorting
@@ -141,7 +142,7 @@ class VulnerabilitySchema(AutoSchema):
             'desc', 'impact', 'confirmed', 'name',
             'service', 'obj_id', 'type', 'policyviolations',
             '_attachments',
-            'target', 'resolution', 'metadata')
+            'target', 'host_os', 'resolution', 'metadata')
 
     def get_type(self, obj):
         return obj.__class__.__name__
@@ -257,7 +258,8 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'desc', 'impact', 'confirmed', 'name',
             'service', 'obj_id', 'type', 'policyviolations',
             'request', '_attachments', 'params',
-            'target', 'resolution', 'method', 'metadata', 'status_code')
+            'target', 'host_os', 'resolution', 'method', 'metadata',
+            'status_code')
 
 
 # Use this override for filterset fields that filter by en exact match by
@@ -487,6 +489,7 @@ class VulnerabilityView(PaginatedMixin,
             undefer(VulnerabilityGeneric.creator_command_id),
             undefer(VulnerabilityGeneric.creator_command_tool),
             undefer(VulnerabilityGeneric.target_host_ip),
+            undefer(VulnerabilityGeneric.target_host_os),
             joinedload(VulnerabilityGeneric.evidence),
             joinedload(VulnerabilityGeneric.tags),
         ]
@@ -570,10 +573,16 @@ class VulnerabilityView(PaginatedMixin,
             if file_obj:
                 depot = DepotManager.get()
                 depot_file = depot.get(file_obj.content.get('file_id'))
+                if depot_file.content_type.startswith('image/'):
+                    # Image content types are safe (they can't be executed like
+                    # html) so we don't have to force the download of the file
+                    as_attachment = False
+                else:
+                    as_attachment = True
                 return flask.send_file(
                     io.BytesIO(depot_file.read()),
                     attachment_filename=file_obj.filename,
-                    as_attachment=True,
+                    as_attachment=as_attachment,
                     mimetype=depot_file.content_type
                 )
             else:

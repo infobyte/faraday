@@ -39,7 +39,7 @@
     opacity: 0.5;
 }
 
-.status-report-grid .grid_id .ui-grid-cell-contents{ 
+.status-report-grid .grid_id .ui-grid-cell-contents{
     position: relative;
     top: 3px;
 }
@@ -79,7 +79,6 @@
 
 .hosts-list .ui-grid-header .hosts-list-checkall{
     position: relative;
-    top: 3px;
     text-align: center;
 }
 
@@ -228,11 +227,11 @@
 }
 
 .control-wrapper button{
-    border-radius: 0px; 
+    border-radius: 0px;
 }
 
 .control-wrapper > button{
-    border: none; 
+    border: none;
     background: none;
     width: 47px;
     height: 33px;

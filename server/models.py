@@ -267,7 +267,7 @@ class Host(Metadata):
     vulnerability_total_count = query_expression()
 
     @classmethod
-    def query_with_count(cls, only_confirmed, host_ids, workspace_name):
+    def query_with_count(cls, confirmed, host_ids, workspace_name):
         query = cls.query.join(Workspace).filter(Workspace.name == workspace_name)
         if host_ids:
             query = query.filter(cls.id.in_(host_ids))
@@ -276,7 +276,7 @@ class Host(Metadata):
                 cls.vulnerability_info_count,
                 _make_vuln_count_property(
                     type_=None,
-                    only_confirmed = only_confirmed,
+                    confirmed = confirmed,
                     use_column_property = False,
                     extra_query = "vulnerability.severity='informational'",
                     get_hosts_vulns = True
@@ -286,7 +286,7 @@ class Host(Metadata):
                 cls.vulnerability_med_count,
                 _make_vuln_count_property(
                     type_ = None,
-                    only_confirmed = only_confirmed,
+                    confirmed = confirmed,
                     use_column_property = False,
                     extra_query = "vulnerability.severity='medium'",
                     get_hosts_vulns = True
@@ -296,7 +296,7 @@ class Host(Metadata):
                 cls.vulnerability_high_count,
                 _make_vuln_count_property(
                     type_ = None,
-                    only_confirmed = only_confirmed,
+                    confirmed = confirmed,
                     use_column_property = False,
                     extra_query = "vulnerability.severity='high'",
                     get_hosts_vulns = True
@@ -306,7 +306,7 @@ class Host(Metadata):
                 cls.vulnerability_critical_count,
                 _make_vuln_count_property(
                     type_ = None,
-                    only_confirmed = only_confirmed,
+                    confirmed = confirmed,
                     use_column_property = False,
                     extra_query = "vulnerability.severity='critical'",
                     get_hosts_vulns = True
@@ -316,7 +316,7 @@ class Host(Metadata):
                 cls.vulnerability_low_count,
                 _make_vuln_count_property(
                     type_ = None,
-                    only_confirmed = only_confirmed,
+                    confirmed = confirmed,
                     use_column_property = False,
                     extra_query = "vulnerability.severity='low'",
                     get_hosts_vulns = True
@@ -326,7 +326,7 @@ class Host(Metadata):
                 cls.vulnerability_unclassified_count,
                 _make_vuln_count_property(
                     type_ = None,
-                    only_confirmed = only_confirmed,
+                    confirmed = confirmed,
                     use_column_property = False,
                     extra_query = "vulnerability.severity='unclassified'",
                     get_hosts_vulns = True
@@ -336,7 +336,7 @@ class Host(Metadata):
                 cls.vulnerability_total_count,
                 _make_vuln_count_property(
                     type_ = None,
-                    only_confirmed = only_confirmed,
+                    confirmed = confirmed,
                     use_column_property = False,
                     get_hosts_vulns = True
                 )
@@ -881,11 +881,11 @@ class VulnerabilityGeneric(VulnerabilityABC):
         deferred=True
     )
 
-    _host_vuln_query = (
+    _host_ip_query = (
         select([Host.ip])
         .where(text('vulnerability.host_id = host.id'))
     )
-    _service_vuln_query = (
+    _service_ip_query = (
         select([text('host_inner.ip')])
         .select_from(text('host as host_inner, service'))
         .where(text('vulnerability.service_id = service.id and '
@@ -894,9 +894,29 @@ class VulnerabilityGeneric(VulnerabilityABC):
     target_host_ip = column_property(
         case([
             (text('vulnerability.host_id IS NOT null'),
-                _host_vuln_query.as_scalar()),
+                _host_ip_query.as_scalar()),
             (text('vulnerability.service_id IS NOT null'),
-                _service_vuln_query.as_scalar())
+                _service_ip_query.as_scalar())
+        ]),
+        deferred=True
+    )
+
+    _host_os_query = (
+        select([Host.os])
+        .where(text('vulnerability.host_id = host.id'))
+    )
+    _service_os_query = (
+        select([text('host_inner.os')])
+        .select_from(text('host as host_inner, service'))
+        .where(text('vulnerability.service_id = service.id and '
+                    'host_inner.id = service.host_id'))
+    )
+    target_host_os = column_property(
+        case([
+            (text('vulnerability.host_id IS NOT null'),
+                _host_os_query.as_scalar()),
+            (text('vulnerability.service_id IS NOT null'),
+                _service_os_query.as_scalar())
         ]),
         deferred=True
     )
@@ -1216,7 +1236,7 @@ class Credential(Metadata):
         return self.host or self.service
 
 
-def _make_vuln_count_property(type_=None, only_confirmed=False,
+def _make_vuln_count_property(type_=None, confirmed=None,
                               use_column_property=True, extra_query=None, get_hosts_vulns=False):
     from_clause = table('vulnerability')
 
@@ -1239,7 +1259,7 @@ def _make_vuln_count_property(type_=None, only_confirmed=False,
         # This can cause SQL injection vulnerabilities
         # In this case type_ is supplied from a whitelist so this is safe
         query = query.where(text("vulnerability.type = '%s'" % type_))
-    if only_confirmed:
+    if confirmed:
         if db.session.bind.dialect.name == 'sqlite':
             # SQLite has no "true" expression, we have to use the integer 1
             # instead
@@ -1248,6 +1268,15 @@ def _make_vuln_count_property(type_=None, only_confirmed=False,
             # I suppose that we're using PostgreSQL, that can't compare
             # booleans with integers
             query = query.where(text("vulnerability.confirmed = true"))
+    elif confirmed == False:
+        if db.session.bind.dialect.name == 'sqlite':
+            # SQLite has no "true" expression, we have to use the integer 1
+            # instead
+            query = query.where(text("vulnerability.confirmed = 0"))
+        elif db.session.bind.dialect.name == 'postgresql':
+            # I suppose that we're using PostgreSQL, that can't compare
+            # booleans with integers
+            query = query.where(text("vulnerability.confirmed = false"))
 
     if extra_query:
         query = query.where(text(extra_query))
@@ -1284,11 +1313,11 @@ class Workspace(Metadata):
         cascade="all, delete-orphan")
 
     @classmethod
-    def query_with_count(cls, only_confirmed):
+    def query_with_count(cls, confirmed):
         """
         Add count fields to the query.
 
-        If only_confirmed is True, it will only show the count for confirmed
+        If confirmed is True/False, it will only show the count for confirmed / not confirmed
         vulnerabilities. Otherwise, it will show the count of all of them
         """
         return cls.query.options(
@@ -1299,25 +1328,25 @@ class Workspace(Metadata):
             with_expression(
                 cls.vulnerability_web_count,
                 _make_vuln_count_property('vulnerability_web',
-                                          only_confirmed=only_confirmed,
+                                          confirmed=confirmed,
                                           use_column_property=False)
             ),
             with_expression(
                 cls.vulnerability_code_count,
                 _make_vuln_count_property('vulnerability_code',
-                                          only_confirmed=only_confirmed,
+                                          confirmed=confirmed,
                                           use_column_property=False)
             ),
             with_expression(
                 cls.vulnerability_standard_count,
                 _make_vuln_count_property('vulnerability',
-                                          only_confirmed=only_confirmed,
+                                          confirmed=confirmed,
                                           use_column_property=False)
             ),
             with_expression(
                 cls.vulnerability_total_count,
                 _make_vuln_count_property(type_=None,
-                                          only_confirmed=only_confirmed,
+                                          confirmed=confirmed,
                                           use_column_property=False)
             ),
         )

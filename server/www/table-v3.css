@@ -132,6 +132,5 @@
 
 .table-v3 .ui-grid-header .hosts-list-checkall{
     position: relative;
-    top: 3px;
-    left: 7px;
+    text-align: center;
 }

@@ -298,9 +298,11 @@ def main(workspace="", args=None, parser=None):
                     'parent_type': parent_type,
                     'parent': parent_id,
                 }
-                counter += 1
-                print "New vulnerability: " + vulnerability.getName()
-                models.create_vuln(WORKSPACE, vulnerability)
+
+                if not models.get_vuln(WORKSPACE, **vuln_params):
+                    counter += 1
+                    print "New vulnerability: " + vulnerability.getName()
+                    models.create_vuln(WORKSPACE, vulnerability)
 
             elif vulnerability_web is not None:
 

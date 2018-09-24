@@ -14,6 +14,9 @@ import re
 import os
 import pprint
 import sys
+import socket
+from urlparse import urlparse
+
 
 try:
     import xml.etree.cElementTree as ET
@@ -78,28 +81,9 @@ class WapitiXmlParser(object):
         """
         @return items A list of Host instances
         """
-        bugtype = ""
 
-        bug_typelist = tree.findall('bugTypeList')[0]
-        for bug_type in bug_typelist.findall('bugType'):
+        yield Item(tree)
 
-            bugtype = bug_type.get('name')
-
-            bug_list = bug_type.findall('bugList')[0]
-            for item_bug in bug_list.findall('bug'):
-                yield Item(item_bug, bugtype)
-
-
-"""
-<bugTypeList>
-<bugType name="File Handling"><bugList><bug level="1"><url>
-                        http://www.saludactiva.org.ar/index.php?id=http%3A%2F%2Fwww.google.fr%2F
-                    </url><parameter>
-                        id=http%3A%2F%2Fwww.google.fr%2F
-                    </parameter><info>
-                        Warning include() (id)
-                    </info>
-"""
 
 
 def get_attrib_from_subnode(xml_node, subnode_xpath_expr, attrib_name):
@@ -146,14 +130,14 @@ class Item(object):
     @param item_node A item_node taken from an wapiti xml tree
     """
 
-    def __init__(self, item_node, bugtype):
+    def __init__(self, item_node):
         self.node = item_node
-
-        self.bugtype = bugtype
-        self.buglevel = self.node.get('level')
-        self.url = self.do_clean(self.get_text_from_subnode('url'))
-        self.parameter = self.do_clean(self.get_text_from_subnode('parameter'))
-        self.info = self.do_clean(self.get_text_from_subnode('info'))
+        self.url = self.get_url(item_node)
+        self.ip = socket.gethostbyname(self.url.hostname)
+        self.hostname  = self.url.hostname
+        self.port = self.get_port(self.url)
+        self.scheme = self.url.scheme
+        self.vulns = self.get_vulns(item_node)
 
     def do_clean(self, value):
         myreturn = ""
@@ -161,17 +145,91 @@ class Item(object):
             myreturn = re.sub("\n", "", value)
         return myreturn
 
-    def get_text_from_subnode(self, subnode_xpath_expr):
+    def get_text_from_subnode(self, node, subnode_xpath_expr):
         """
         Finds a subnode in the host node and the retrieves a value from it.
 
         @return An attribute value
         """
-        sub_node = self.node.find(subnode_xpath_expr)
+        sub_node = node.find(subnode_xpath_expr)
         if sub_node is not None:
-            return sub_node.text
+            return sub_node.text.strip()
 
         return None
+
+    def get_url(self, item_node):
+        target = self.get_info(item_node,'target')
+        return urlparse(target)
+
+    def get_info(self, item_node,name):
+        path = item_node.findall('report_infos/info')
+
+        for item in path:
+            if item.attrib['name'] == name:
+                return item.text
+
+    def get_port(self, url):
+        if url.port:
+            return url.port
+        else:
+            if url.scheme == "http":
+                return "80"
+            elif url.scheme == "https":
+                return "443"
+
+    def get_vulns(self, item_node):
+        vulns_node = item_node.findall('vulnerabilities/vulnerability')
+        vulns_list = []
+
+        for vuln in vulns_node:
+            vulns_dict = {}
+            vulns_dict['id'] = vuln.attrib['name']
+            vulns_dict['description'] = self.get_text_from_subnode(vuln,'description')
+            vulns_dict['solution'] = self.get_text_from_subnode(vuln,'solution')
+            vulns_dict['references'] = self.get_references(vuln)
+            vulns_dict['entries'] = self.get_entries(vuln)
+            vulns_list.append(vulns_dict)
+
+        return vulns_list
+
+    def get_references(self, node):
+        refs = node.findall('references/reference')
+        references_list = []
+        for ref in refs:
+            references_list.append('Title: ' + self.get_text_from_subnode(ref,'title'))
+            references_list.append('URL: ' + self.get_text_from_subnode(ref,'url'))
+
+        return references_list
+
+    def get_entries(self,node):
+        entries = node.findall('entries/entry')
+        entries_list = []
+        for entry in entries:
+            entries_dict = {}
+            entries_dict['method'] = self.get_text_from_subnode(entry,'method')
+            entries_dict['path'] = self.get_text_from_subnode(entry,'path')
+            entries_dict['level'] = self.severity_format(entry)
+            entries_dict['parameter'] = self.get_text_from_subnode(entry,'parameter')
+            entries_dict['http_request'] = self.get_text_from_subnode(entry,'http_request')
+            entries_dict['curl_command'] = self.get_text_from_subnode(entry,'curl_command')
+            entries_list.append(entries_dict)
+
+        return entries_list
+
+    def severity_format(self, node):
+        """
+        Convert Nexpose severity format into Faraday API severity format
+
+        @return a severity
+        """
+        severity = self.get_text_from_subnode(node, 'level')
+
+        if severity == '1':
+            return 'high'
+        elif severity == '2':
+            return 'medium'
+        elif severity == '3':
+            return 'low'
 
 
 class WapitiPlugin(core.PluginBase):
@@ -234,53 +292,36 @@ class WapitiPlugin(core.PluginBase):
         self._output_file_path = os.path.join(self.data_path,
                                               "wapiti_output-%s.xml" % self._rid)
 
-    def parseOutputString(self, output, debug=False):
+    def parseOutputString(self, output):
         """
         This method will discard the output the shell sends, it will read it from
         the xml where it expects it to be present.
-
-        NOTE: if 'debug' is true then it is being run from a test case and the
-        output being sent is valid.
         """
-
-        self._output_file_path = "/root/dev/faraday/trunk/src/report/wapiti2.3.0_abaco.xml"
-        #TODO FOR mig_white_4896... if NOT debug
-        # OR replace all if/else with
-        # parser = WapitiXmlParser(output)
-        if debug:
-            parser = WapitiXmlParser(output)
-        else:
-            if not os.path.exists(self._output_file_path):
-                return False
-
-            parser = WapitiXmlParser(self._output_file_path)
-
-        """
-                self.bugtype=bugtype
-        self.buglevel=self.node.get('level')
-        self.url = self.get_text_from_subnode('url')
-        self.parameter = self.get_text_from_subnode('parameter')
-        self.info = self.get_text_from_subnode('info')
-        """
-
-        h_id = self.createAndAddHost(self.host)
-        i_id = self.createAndAddInterface(
-            h_id, self.host, ipv4_address=self.host)
-        i = 1
+    
+        parser = WapitiXmlParser(output)
         for item in parser.items:
-            mport = "%s%i" % (self.port, i)
-            s_id = self.createAndAddServiceToInterface(h_id, i_id, mport,
-                                                       "tcp",
-                                                       [mport],
-                                                       status="(%s) (%s)" % (
-                                                           item.bugtype, item.url),
-                                                       version=item.parameter,
-                                                       description=item.info)
-            i = i + 1
+            host_id = self.createAndAddHost(item.ip, hostnames=[item.hostname])
+            service_id = self.createAndAddServiceToHost(host_id, item.scheme, protocol='tcp', ports=[item.port])
+            for vuln in item.vulns:
+                for entry in vuln['entries']:
+                    vuln_id = self.createAndAddVulnWebToService(host_id,
+                        service_id,
+                        vuln['id'],
+                        desc=vuln['description'], 
+                        ref=vuln['references'],
+                        resolution=vuln['solution'],
+                        severity=entry['level'], 
+                        website=entry['curl_command'], 
+                        path=entry['path'], 
+                        request=entry['http_request'],
+                        method=entry['method'], 
+                        params=entry['parameter'])
+           
 
-        del parser
-
+            
     xml_arg_re = re.compile(r"^.*(-oX\s*[^\s]+).*$")
+ 
+
 
     def processCommandString(self, username, current_path, command_string):
         """
@@ -311,7 +352,6 @@ def createPlugin():
     return WapitiPlugin()
 
 if __name__ == '__main__':
-    parser = WapitiXmlParser(sys.argv[1])
-    for item in parser.items:
-        if item.status == 'up':
-            print item
+        parser = WapitiPlugin()
+        with open('/home/javier/Reports_Testing/wapiti3.0.1.xml') as report:
+            parser.parseOutputString(report.read())

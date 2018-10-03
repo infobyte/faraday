@@ -158,13 +158,13 @@ def stop_server(port):
             return False
         else:
             raise err
-
+    
+    remove_pid_file(port)
     return True
 
 def is_server_running(port):
     """Returns server PID if it is running. Otherwise returns None"""
     logger = get_logger(__name__)
-
     pid = get_server_pid(port)
     if pid is None:
         return None

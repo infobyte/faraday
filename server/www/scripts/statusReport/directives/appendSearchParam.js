@@ -14,6 +14,10 @@ angular.module('faradayApp').directive('appendSearchParam', ['$routeParams', '$l
                     scope.newParam = attr.appendSearchParam;
                     var hash = window.location.hash;
                     var basePath = hash.slice(1, hash.indexOf("search") + 7);
+                    if (scope.newParam.indexOf('%2520') !== -1){
+                        scope.newParam = decodeURIComponent(scope.newParam);
+                    }
+
                     scope.fullPath = basePath + scope.currentParams + '&' + scope.newParam;
                     if (paramAlreadyExists(scope.currentParams, scope.newParam)) {
                         scope.fullPath = basePath + scope.currentParams;
@@ -25,8 +29,8 @@ angular.module('faradayApp').directive('appendSearchParam', ['$routeParams', '$l
             });
 
             var paramAlreadyExists = function (currentParam, newParam) {
-                var currentParamStr = currentParam.replace(/%20|%2520/g, ' ');
-                var newParamStr = newParam.replace(/%20|%2520/g, ' ');
+                var currentParamStr = decodeURIComponent(decodeURIComponent(currentParam));
+                var newParamStr = decodeURIComponent(decodeURIComponent(newParam));
                 return currentParamStr === newParamStr || currentParamStr.indexOf(newParamStr) !== -1;
             }
         }

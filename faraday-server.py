@@ -13,9 +13,8 @@ try:
     from colorama import init, Fore
     import sqlalchemy
     import server.config
-    import server.couchdb
     import server.utils.logger
-    from server.models import db, Workspace, User
+    from server.models import db, Workspace
     from server.utils import daemonize
     from server.web import app
     from utils import dependencies

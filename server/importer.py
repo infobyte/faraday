@@ -2,7 +2,6 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-from base64 import b64decode
 import string
 from random import SystemRandom
 
@@ -41,7 +40,6 @@ import server.config
 import server.couchdb
 import server.models
 import server.utils.logger
-from server.fields import FaradayUploadedFile
 from server.models import (
     db,
     Command,
@@ -69,7 +67,6 @@ from server.models import (
     Workspace,
     WorkspacePermission,
     File,
-    SQLAlchemy,
 )
 from server.utils import invalid_chars
 from server.utils.database import get_or_create

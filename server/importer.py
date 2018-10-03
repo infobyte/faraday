@@ -33,11 +33,9 @@ except ImportError:
 
 from IPy import IP
 from passlib.utils.binary import ab64_encode
-from restkit.errors import RequestError, Unauthorized
 from tqdm import tqdm
 import server.config
 
-import server.couchdb
 import server.models
 import server.utils.logger
 from server.models import (

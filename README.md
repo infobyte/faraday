@@ -22,7 +22,7 @@ Check out our documentacion for datailed information on how to install Faraday i
 
 ![Supported Os](https://raw.github.com/wiki/infobyte/faraday/images/platform/supported.png)
 
-To begin the instalation process check our out [First Step](https://raw.github.com/wiki/infobyte/faraday/First-steps) Wiki.
+To begin the instalation process check our out [First Steps](https://github.com/infobyte/faraday/wiki/First-Steps) Wiki.
 
 ## New Features!
 All of Faraday's latest features and updates are always available on our [blog](http://blog.infobytesec.com/search/label/english).

@@ -1336,29 +1336,33 @@ class ImportLicense():
 
 class ImportCouchDB():
     def _open_couchdb_conn(self):
+
+        self.couch_url = "http://{username}:{password}@{hostname}:{port}".format(
+                username=server.config.couchdb.user,
+                password=server.config.couchdb.password,
+                hostname=server.config.couchdb.host,
+                port=server.config.couchdb.port,
+        )
+
         try:
-            couchdb_server_conn = server.couchdb.CouchDBServer()
-            workspaces_list = couchdb_server_conn.list_workspaces()
-
-        except RequestError:
-            print(u"CouchDB is not running at {}. Check faraday-server's"\
-                " configuration and make sure CouchDB is running".format(
-                server.couchdb.get_couchdb_url()))
-            logger.error(u'Please start CouchDB and re-execute the importer with: \n\n --> python manage.py import_from_couchdb <--')
+            workspaces_list = requests.get('{0}/_all_dbs'.format(self.couch_url)).json()
+        except Exception as ex:
+            print(ex)
             sys.exit(1)
 
-        except Unauthorized:
-            print(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
-                " configuration file has CouchDB admin's credentials set")
-            sys.exit(1)
+        return workspaces_list
 
-        return couchdb_server_conn, workspaces_list
+    def has_access_to(self, workspace_name):
+        response = requests.get('{0}/{1}/_security'.format(self.couch_url, workspace_name))
+        if response.status_code == 401:
+            return False
+        return True
 
     def run(self):
         """
             Main entry point for couchdb import
         """
-        couchdb_server_conn, workspaces_list = self._open_couchdb_conn()
+        workspaces_list = self._open_couchdb_conn()
         license_import = ImportLicense()
         license_import.run()
         vuln_templates_import = ImportVulnerabilityTemplates()
@@ -1370,7 +1374,7 @@ class ImportCouchDB():
         for workspace_name in workspaces_list:
             logger.debug(u'Setting up workspace {}'.format(workspace_name))
 
-            if not server.couchdb.server_has_access_to(workspace_name):
+            if not self.has_access_to(workspace_name):
                 logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
                              " configuration file has CouchDB admin's credentials set")
                 sys.exit(1)

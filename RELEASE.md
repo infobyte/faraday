@@ -8,6 +8,10 @@ Make sure you run ```./faraday.py --update``` the first time after an update!
 New features in the latest update
 =====================================
 
+September 21, 2018:
+* Fix bug: manage.py status_check
+* Fix bug: manage.py initdb
+
 September 17, 2018:
 ---
 * Fix get exploits API

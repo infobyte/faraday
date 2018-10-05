@@ -28,9 +28,10 @@ init()
 
 
 def check_server_running():
-    pid = is_server_running()
+    port = int(server.config.faraday_server.port)
+    pid = is_server_running(port)
     return pid
-    
+
 
 def check_open_ports():
    address =  server.config.faraday_server.bind_address
@@ -41,7 +42,7 @@ def check_open_ports():
        return True
    else:
        return False
-       
+
 
 def check_postgres():
     with app.app_context():
@@ -52,7 +53,8 @@ def check_postgres():
             return False
         except sqlalchemy.exc.ArgumentError:
             return None
- 
+
+
 def check_locks_postgresql():
     with app.app_context():
         psql_status = check_postgres()
@@ -87,7 +89,7 @@ def check_locks_postgresql():
         
         else:
             return None
-        
+
 
 def check_client():
 
@@ -192,6 +194,7 @@ def print_postgresql_status():
         exit_code = 1
         return exit_code
 
+
 def print_postgresql_locks_status():
     """Prints the status of locks in Postgresql using check_locks_postgresql()"""
     lock_status = check_locks_postgresql()
@@ -254,11 +257,11 @@ def print_depencencies_status():
     else:
         print('[{green}+{white}] Client dependencies met'\
             .format(green=Fore.GREEN, white=Fore.WHITE))
-        
+
 
 def print_config_status():
     """Prints Status of the configuration using check_credentials(), check_storage_permission() and check_open_ports()"""
-    
+
     pid = check_server_running()
     result = check_postgres()
     if pid and result:    

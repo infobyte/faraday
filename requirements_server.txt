@@ -32,3 +32,4 @@ nplusone>=0.8.1
 deprecation>=1.0.1
 pgcli>=1.8.2
 websocket-client>=0.46.0
+attrs>=17.4.0

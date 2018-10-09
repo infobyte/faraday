@@ -9,9 +9,18 @@ import subprocess
 import os
 import argparse
 import time
+import shutil
 from pprint import pprint
 from config import config
 
+def init_config():
+    
+    if not os.path.exists("~/.faraday/config/cscan_conf.ini"):
+        path = os.path.dirname(os.path.abspath(__file__))
+        path = os.path.join(path,"cscan_conf.ini")
+        shutil.copy(path,"~/.faraday/config/cscan_conf.ini")
+
+    
 def lockFile(lockfile):
     if os.path.isfile(lockfile):
         return False

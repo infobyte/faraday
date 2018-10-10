@@ -95,7 +95,7 @@ def main():
     for d in [logdir, output]:
         if not os.path.isdir(d):
             os.makedirs(d)
-    pprint(env)
+    
     if args.script:
         scripts = [args.script]
     elif args.scripts:

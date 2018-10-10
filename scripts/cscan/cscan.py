@@ -11,16 +11,38 @@ import argparse
 import time
 import shutil
 from pprint import pprint
-from config import config
+try:
+    # py2.7
+    from configparser import ConfigParser, NoSectionError, NoOptionError
+except ImportError:
+    # py3
+    from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+#from config import config
+
+def setup_config_path():
+    path = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.expanduser("~/.faraday/config/cscan_conf.ini")
+
+    if os.path.exists(file_path):
+        return file_path
+
+    else:
+        #TODO check if folderS exist and if not creat them
+        path = os.path.join(path,"cscan_conf.ini")
+        shutil.copy(path, file_path)
+        return file_path
 
 def init_config():
-    
-    if not os.path.exists("~/.faraday/config/cscan_conf.ini"):
-        path = os.path.dirname(os.path.abspath(__file__))
-        path = os.path.join(path,"cscan_conf.ini")
-        shutil.copy(path,"~/.faraday/config/cscan_conf.ini")
+    file_path = setup_config_path()
+    conf_parser = ConfigParser()
+    conf_parser.read(file_path)
+    config = {}
 
-    
+    for section in conf_parser.sections():
+        for option in conf_parser.options(section):
+            config[option.upper()] = (conf_parser.get(section, option))
+    return config
+
 def lockFile(lockfile):
     if os.path.isfile(lockfile):
         return False
@@ -47,9 +69,11 @@ def main():
         print "You can run only one instance of cscan (%s)" % lockf
         exit(0)
 
+    config = init_config()
     my_env = os.environ
     env = config.copy()
     env.update(my_env)
+    
 
     parser = argparse.ArgumentParser(description='continues scanning on Faraday')
     parser.add_argument('-s','--script', help='Scan only the following script ej: ./cscan.py -p nmap.sh', required=False)
@@ -71,7 +95,7 @@ def main():
     for d in [logdir, output]:
         if not os.path.isdir(d):
             os.makedirs(d)
-
+    pprint(env)
     if args.script:
         scripts = [args.script]
     elif args.scripts:

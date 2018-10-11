@@ -263,8 +263,8 @@ angular.module("faradayApp")
                 return get(getUrl, data);
             }
 
-            ServerAPI.getActivityFeed = function(wsName, data) {
-                var getUrl = createGetUrl(wsName, 'commands') + 'activity_feed/';
+            ServerAPI.getActivityFeed = function(wsName, data, onlyLastActivities) {
+                var getUrl = createGetUrl(wsName, 'activities') + (onlyLastActivities ? '?page_size=15&page=1' : '');
                 return get(getUrl, data);
             }
 

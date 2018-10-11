@@ -244,7 +244,7 @@ angular.module('faradayApp')
         dashboardSrv.getActivityFeed = function(ws) {
             var deferred = $q.defer();
 
-            ServerAPI.getActivityFeed(ws).then(function(res) {
+            ServerAPI.getActivityFeed(ws, undefined, true).then(function(res) {
                 deferred.resolve(res.data);
             }, function() {
                 deferred.reject();

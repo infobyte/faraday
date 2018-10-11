@@ -62,6 +62,7 @@ def setup_storage_path():
 def register_blueprints(app):
     from server.api.modules.info import info_api
     from server.api.modules.commandsrun import commandsrun_api
+    from server.api.modules.activity_feed import activityfeed_api
     from server.api.modules.credentials import credentials_api
     from server.api.modules.hosts import host_api
     from server.api.modules.licenses import license_api
@@ -74,7 +75,9 @@ def register_blueprints(app):
     from server.api.modules.comments import comment_api
     from server.api.modules.upload_reports import upload_api
     from server.api.modules.websocket_auth import websocket_auth_api
+    from server.api.modules.get_exploits import exploits_api
     app.register_blueprint(commandsrun_api)
+    app.register_blueprint(activityfeed_api)
     app.register_blueprint(credentials_api)
     app.register_blueprint(host_api)
     app.register_blueprint(info_api)
@@ -88,6 +91,7 @@ def register_blueprints(app):
     app.register_blueprint(comment_api)
     app.register_blueprint(upload_api)
     app.register_blueprint(websocket_auth_api)
+    app.register_blueprint(exploits_api)
 
 
 def check_testing_configuration(testing, app):
@@ -159,9 +163,18 @@ def create_app(db_connection_string=None, testing=None):
     app = Flask(__name__)
 
     try:
-        app.config['SECRET_KEY'] = server.config.faraday_server.secret_key
+        secret_key = server.config.faraday_server.secret_key
     except Exception:
+        # Now when the config file does not exist it doesn't enter in this
+        # condition, but it could happen in the future. TODO check
         save_new_secret_key(app)
+    else:
+        if secret_key is None:
+            # This is what happens now when the config file doesn't exist.
+            # TODO check
+            save_new_secret_key(app)
+        else:
+            app.config['SECRET_KEY'] = secret_key
 
     login_failed_message = ("Invalid username or password", 'error')
 

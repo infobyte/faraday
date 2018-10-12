@@ -85,6 +85,27 @@ def run_server(args):
     daemonize.create_pid_file(args.port)
     web_server.run()
 
+def restart_server(args_port):
+    devnull = open('/dev/null', 'w')
+
+    if args_port:
+        ports = [args_port]
+    else:
+        ports = daemonize.get_ports_running()
+
+    if not ports:
+        logger.error('Faraday Server is not running')
+        sys.exit(1)
+
+    for port in ports:
+        stop_server(port)
+        params = ['/usr/bin/env', 'python2.7',\
+            os.path.join(server.config.FARADAY_BASE, __file__), '--no-setup', '--port', str(port)]
+
+        logger.info('Restarting Faraday Server...')
+        subprocess.Popen(params, stdout=devnull, stderr=devnull)
+        logger.info('Faraday Server is running as a daemon in port {}'.format(port))
+
 
 def check_postgresql():
     with app.app_context():
@@ -110,6 +131,7 @@ def main():
     parser.add_argument('--debug', action='store_true', help='run Faraday Server in debug mode')
     parser.add_argument('--start', action='store_true', help='run Faraday Server in background')
     parser.add_argument('--stop', action='store_true', help='stop Faraday Server')
+    parser.add_argument('--restart', action='store_true', help='Restart Faraday Server')
     parser.add_argument('--nodeps', action='store_true', help='Skip dependency check')
     parser.add_argument('--no-setup', action='store_true', help=argparse.SUPPRESS)
     parser.add_argument('--port', help='Overides server.ini port configuration')
@@ -127,11 +149,17 @@ def main():
     if args.debug:
         server.utils.logger.set_logging_level(server.config.DEBUG)
 
+    if args.restart:
+        restart_server(args.port)
+        sys.exit()
+
     if args.stop:
         if args.port:
             sys.exit(0 if stop_server(args.port) else 1)
         else:
             ports = daemonize.get_ports_running()
+            if not ports:
+                logger.info('Faraday Server is not running')
             exit_code = 0
             for port in ports:
                 exit_code += 0 if stop_server(port) else 1
@@ -140,6 +168,7 @@ def main():
     else:
         if not args.port:
             args.port = '5985'
+
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     result = sock.connect_ex((args.bind_address or server.config.faraday_server.bind_address, int(args.port or server.config.faraday_server.port)))
@@ -180,7 +209,8 @@ def main():
                     params.append(arg_dict[arg])
         logger.info('Faraday Server is running as a daemon')
         subprocess.Popen(params, stdout=devnull, stderr=devnull)
-    else:
+
+    elif not args.start:
         run_server(args)
 
 

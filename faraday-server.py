@@ -88,11 +88,12 @@ def run_server(args):
 
 def restart_server(args_port):
     devnull = open('/dev/null', 'w')
-    ports = daemonize.get_ports_running()
-    
+
     if args_port:
         ports = [args_port]
-    
+    else:
+        ports = daemonize.get_ports_running()
+
     if not ports:
         logger.error('Faraday Server is not running')
         sys.exit(1)
@@ -101,7 +102,7 @@ def restart_server(args_port):
         stop_server(port)
         params = ['/usr/bin/env', 'python2.7',\
             os.path.join(server.config.FARADAY_BASE, __file__), '--no-setup', '--port', str(port)]
-        
+
         logger.info('Restarting Faraday Server...')
         subprocess.Popen(params, stdout=devnull, stderr=devnull)
         logger.info('Faraday Server is running as a daemon in port {}'.format(port))
@@ -151,6 +152,7 @@ def main():
 
     if args.restart:
         restart_server(args.port)
+        sys.exit()
 
     if args.stop:
         if args.port:
@@ -172,10 +174,10 @@ def main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     result = sock.connect_ex((args.bind_address or server.config.faraday_server.bind_address, int(args.port or server.config.faraday_server.port)))
 
-    if not args.restart and is_server_running(args.port) and result == 0:
+    if is_server_running(args.port) and result == 0:
         sys.exit(1)
 
-    if result == 0 and not args.restart:
+    if result == 0:
         logger.error("Faraday Server port in use. Check your processes and run the server again...")
         sys.exit(1)
 
@@ -183,7 +185,7 @@ def main():
     if args.ssl:
         server.config.ssl.enabled = 'true'
 
-    if not args.no_setup and not args.restart:
+    if not args.no_setup:
         setup_environment(not args.nodeps)
 
     if args.port:
@@ -209,7 +211,7 @@ def main():
         logger.info('Faraday Server is running as a daemon')
         subprocess.Popen(params, stdout=devnull, stderr=devnull)
 
-    elif not args.start and not args.restart:
+    elif not args.start:
         run_server(args)
 
 

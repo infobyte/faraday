@@ -10,7 +10,6 @@ from cStringIO import StringIO as IO
 from flask import after_this_request, request, abort, jsonify
 
 from server.models import db, Workspace
-import server.couchdb
 from server import config
 
 
@@ -88,20 +87,6 @@ def build_bad_request_response(msg):
     response = jsonify({'error': msg})
     response.status_code = 400
     return response
-
-
-def validate_workspace(workspace_name, timeout_sync=0.1):
-    if not db.session.query(Workspace).filter_by(name=workspace_name).first():
-        abort(404)
-
-    if not server.couchdb.has_permissions_for(workspace_name, request.cookies, get_basic_auth()):
-        abort(401)
-
-
-def validate_database(workspace_name):
-    if server.database.is_valid_workspace(workspace_name):
-        # 412: Precondition failed, since database already exists
-        abort(412)
 
 
 def validate_admin_perm():

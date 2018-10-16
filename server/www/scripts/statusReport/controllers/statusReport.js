@@ -30,7 +30,6 @@ angular.module("faradayApp")
         $scope.vulnModelsManager;
 
         $scope.vulnWebSelected;
-        $scope.confirmed = false;
 
         $scope.gridHeight;
         var allVulns;
@@ -78,8 +77,10 @@ angular.module("faradayApp")
                 $scope.gridOptions.paginationPageSize = storedPageSize;
             }
 
-            if($cookies.get("confirmed") === "true") {
-                $scope.confirmed = true;
+            if($cookies.get("filterConfirmed") !== undefined) {
+                $scope.propertyFilterConfirmed = $cookies.get("filterConfirmed");
+            }else{
+                $scope.propertyFilterConfirmed = "All";
             }
 
             $scope.gridOptions.onRegisterApi = function(gridApi){
@@ -153,13 +154,22 @@ angular.module("faradayApp")
             // current search
             $scope.search = $routeParams.search;
             $scope.searchParams = "";
-            if($scope.confirmed === true) {
+            if($scope.propertyFilterConfirmed === "Confirmed") {
                 if($scope.search !== undefined) {
                     $scope.search = $scope.search.concat("&confirmed=true");
                 } else {
                     $scope.search = "confirmed=true";
                 }
             }
+
+            if($scope.propertyFilterConfirmed === "Unconfirmed") {
+                if($scope.search !== undefined) {
+                    $scope.search = $scope.search.concat("&confirmed=false");
+                } else {
+                    $scope.search = "confirmed=false";
+                }
+            }
+
 
             $scope.hash = window.location.hash;
             if(window.location.hash.substring(1).indexOf("search") !== -1) {
@@ -669,8 +679,10 @@ angular.module("faradayApp")
         $scope.csv = function() {
             deferred = $q.defer();
             delete searchFilter.confirmed;
-            if ($scope.confirmed)
+            if ($scope.propertyFilterConfirmed === "Confirmed")
                 searchFilter.confirmed = true;
+            if ($scope.propertyFilterConfirmed === "Unconfirmed")
+                searchFilter.confirmed = false;
             vulnsManager.getVulns($scope.workspace,
                                   null,
                                   null,
@@ -683,9 +695,9 @@ angular.module("faradayApp")
             return deferred.promise;
         };
 
-        $scope.toggleFilter = function() {
-            $scope.confirmed = !$scope.confirmed;
-            $cookies.put('confirmed', $scope.confirmed);
+        $scope.filterConfirmed = function (filter) {
+            $scope.propertyFilterConfirmed = filter;
+            $cookies.put('filterConfirmed', $scope.propertyFilterConfirmed);
             loadVulns();
         };
 
@@ -998,8 +1010,11 @@ angular.module("faradayApp")
         var loadVulns = function() {
             delete searchFilter.confirmed;
             $scope.loading = true;
-            if ($scope.confirmed)
+            if ($scope.propertyFilterConfirmed === 'Confirmed')
                 searchFilter.confirmed = true;
+            if ($scope.propertyFilterConfirmed === 'Unconfirmed'){
+                searchFilter.confirmed = false;
+            }
             // load all vulnerabilities
             vulnsManager.getVulns($scope.workspace,
                                   paginationOptions.page,

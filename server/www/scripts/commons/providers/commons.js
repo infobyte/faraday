@@ -308,6 +308,7 @@ angular.module('faradayApp')
             var searchFilter = {};
             var lastFilterField = "search";
             var expressionTerms = searchExpression.split(" ");
+            var excludedConnectorsList = ["and"];
 
             expressionTerms.forEach(function(term) {
                 i = term.indexOf(":");
@@ -320,7 +321,9 @@ angular.module('faradayApp')
                     if (!searchFilter.hasOwnProperty(lastFilterField)) {
                         searchFilter[lastFilterField] = term;
                     } else {
-                        searchFilter[lastFilterField] += ' ' + term;
+                        if(excludedConnectorsList.indexOf(term.toLowerCase()) === -1){
+                            searchFilter[lastFilterField] += ' ' + term;
+                        }
                     }
                 }
             });

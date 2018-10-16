@@ -1,24 +1,3 @@
-IMPORTANT
-===========
-
-Please be kind to remove all your pyc files before running faraday if you are updating this piece of software.
-Make sure you run ```./faraday.py --update``` the first time after an update!
-
-
-New features in the latest update
-=====================================
-
-
-3.2 [October 17th, 2018]:
----
- * Added logical operator AND to status report search
- * Restkit dependency removed.
- * Improvement on manage.py change-password
- * Add feature to show only unconfirmed vulns.
- * Add ssl information to manage.py status-check
- * Update wpscan plugin to support latest version.
- * Allow workspace names starting with numbers.
-
 September 21, 2018:
 ---
 * Fix bug: manage.py status_check

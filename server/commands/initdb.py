@@ -205,7 +205,12 @@ class InitDB():
                     print('Manual configuration? \n faraday_postgresql was found in PostgreSQL, but no connection string was found in server.ini. ')
                     print('Please configure [database] section with correct postgresql string. Ex. postgresql+psycopg2://faraday_postgresql:PASSWORD@localhost/faraday')
                     sys.exit(1)
-                password = server.config.database.connection_string.split(':')[2].split('@')[0]
+                try:
+                    password = server.config.database.connection_string.split(':')[2].split('@')[0]
+                except AttributeError:
+                    print('Could not find connection string.')
+                    print('Please configure [database] section with correct postgresql string. Ex. postgresql+psycopg2://faraday_postgresql:PASSWORD@localhost/faraday')
+                    sys.exit(1)
                 connection = psycopg2.connect(dbname='postgres',
                                               user=username,
                                               password=password)

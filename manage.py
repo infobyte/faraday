@@ -141,12 +141,9 @@ def status_check(check_postgresql, check_faraday, check_dependencies, check_conf
     sys.exit(exit_code)
 
 @click.command(help="Changes the password of a user")
-def change_password():
-    username = raw_input("Enter the Name of the User: ")
-    password = raw_input("Enter the new password: ")
-    if password is None or password == "":
-        print "Invalid password"
-        exit
+@click.option('--username', required=True, prompt=True)
+@click.option('--password', required=True, prompt=True, confirmation_prompt=True, hide_input=True)
+def change_password(username, password):
     change_pass.changes_password(username, password)
 
 def validate_user_unique_field(ctx, param, value):

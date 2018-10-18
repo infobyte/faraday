@@ -1,6 +1,6 @@
 <div ng-if="row.entity._id != undefined">
     <div ng-if="!col.grouping || col.grouping.groupPriority === undefined || col.grouping.groupPriority === null || ( row.groupHeader && col.grouping.groupPriority === row.treeLevel )" class="ui-grid-cell-contents ui-grid-text-center">
-        <a href="#/status/ws/{{grid.appScope.workspace}}/search/severity={{COL_FIELD}}\">
+        <a href="#/status/ws/{{grid.appScope.workspace}}/search/severity={{COL_FIELD}}\" append-search-param="severity={{COL_FIELD}}">
             <span class="label vuln fondo-{{COL_FIELD}}">{{COL_FIELD | uppercase | limitTo:4}}
             </span>
         </a>

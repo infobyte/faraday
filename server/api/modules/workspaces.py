@@ -2,34 +2,18 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 import json
-import re
 
 import flask
 from flask import Blueprint
 from flask_classful import route
 from marshmallow import Schema, fields, post_load, validate
-from sqlalchemy.orm import undefer
 
 from server.models import db, Workspace
-from server.utils.logger import get_logger
 from server.schemas import (
     JSTimestampField,
     MutableField,
     PrimaryKeyRelatedField,
     SelfNestedField,
-)
-from server.utils.web import (
-    build_bad_request_response,
-    filter_request_args,
-    get_basic_auth,
-    get_integer_parameter,
-    gzipped,
-    validate_admin_perm,
-    validate_workspace
-)
-from server.couchdb import (
-    list_workspaces_as_user,
-    get_workspace
 )
 from server.api.base import ReadWriteView, AutoSchema
 

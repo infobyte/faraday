@@ -13,7 +13,6 @@ import sys
 import threading
 import webbrowser
 
-import restkit
 
 try:
     import gi
@@ -174,12 +173,7 @@ class GuiApp(Gtk.Application, FaradayUi):
             self.getWorkspaceManager().removeWorkspace(ws_name)
             self.ws_sidebar.clear_sidebar()
             self.ws_sidebar.refresh_sidebar()
-        except restkit.errors.Unauthorized:
-            model.notification_center.showDialog(
-                "You're not authorized to delete this workspace.\n"
-                "Make sure you're an admin and that you're logged in.",
-                "ERROR")
-        except Exception:
+        except Exception as ex:
             traceback_str = traceback.format_exc()
             model.api.log("An exception was captured while deleting "
                           "workspace %s\n%s" % (ws_name, traceback_str),

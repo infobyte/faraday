@@ -133,7 +133,7 @@ def file_upload(workspace=None):
     if not (ws.active
             ):
         # Don't raise a 403 to prevent workspace name enumeration
-        abort(404, "No such workspace: %s" % workspace)
+        abort(404, "Workspace disabled: %s" % workspace)
 
     if 'file' not in request.files:
         abort(400)

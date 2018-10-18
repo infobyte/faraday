@@ -349,10 +349,6 @@ class GenericWorkspacedView(GenericView):
     def _get_workspace(self, workspace_name):
         try:
             ws = Workspace.query.filter_by(name=workspace_name).one()
-            if not (ws.active
-                    ):
-                # Don't raise a 403 to prevent workspace name enumeration
-                flask.abort(404, "No such workspace: %s" % workspace_name)
         except NoResultFound:
             flask.abort(404, "No such workspace: %s" % workspace_name)
         return ws
@@ -691,6 +687,8 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
     def _perform_create(self, data, workspace_name):
         assert not db.session.new
         workspace = self._get_workspace(workspace_name)
+        if not workspace.active:
+            abort(403, "Disabled workspace: %s" % workspace_name)
         obj = self.model_class(**data)
         obj.workspace = workspace
         # assert not db.session.new
@@ -780,11 +778,14 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
     the database.
     """
 
-    def _perform_update(self, object_id, obj, data, workspace_name):
+    def _perform_update(self, object_id, obj, data, workspace_name=None):
         # # Make sure that if I created new objects, I had properly commited them
         # assert not db.session.new
 
         with db.session.no_autoflush:
+            workspace = self._get_workspace(workspace_name)
+            if not workspace.active:
+                abort(403, "Disabled workspace: %s" % workspace_name)
             obj.workspace = self._get_workspace(workspace_name)
 
         self._set_command_id(obj, False)
@@ -796,17 +797,26 @@ class DeleteMixin(object):
     """Add DELETE /<id>/ route"""
     def delete(self, object_id, **kwargs):
         obj = self._get_object(object_id, **kwargs)
-        self._perform_delete(obj)
+        self._perform_delete(object_id,obj, **kwargs)
         return None, 204
 
-    def _perform_delete(self, obj):
+    def _perform_delete(self, object_id, obj, workspace_name=None):
         db.session.delete(obj)
         db.session.commit()
 
 
 class DeleteWorkspacedMixin(DeleteMixin):
     """Add DELETE /<workspace_name>/<route_base>/<id>/ route"""
-    pass
+
+    def _perform_delete(self, object_id, obj, workspace_name=None):
+        with db.session.no_autoflush:
+            workspace = self._get_workspace(workspace_name)
+            if not workspace.active:
+                abort(403, "No such workspace: %s" % workspace_name)
+            obj.workspace = self._get_workspace(workspace_name)
+
+        return super(DeleteWorkspacedMixin, self)._perform_delete(
+            object_id, obj, workspace_name)
 
 
 class CountWorkspacedMixin(object):

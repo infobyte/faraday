@@ -1357,16 +1357,21 @@ class Workspace(Metadata):
                                     child_field='name',
                                     workspaced=False)
 
-    def _activate(self):
+    def activate(self):
         # if Checks active count
-        if True:
+        if not self.active:
             self.active = True
-        else:
-            # raise Cannot exceed or return false
-            pass
+            return True
+        return False
+        # else:
+        # raise Cannot exceed or return false
 
-    def _deactivate(self):
-        self.active = False
+
+    def deactivate(self):
+        if self.active is not False:
+            self.active = False
+            return True
+        return False
 
 
 class Scope(Metadata):

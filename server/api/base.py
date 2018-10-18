@@ -346,9 +346,11 @@ class GenericWorkspacedView(GenericView):
     route_prefix = '/v2/ws/<workspace_name>/'
     base_args = ['workspace_name']  # Required to prevent double usage of <workspace_name>
 
-    def _get_workspace(self, workspace_name):
+    def _get_workspace(self, workspace_name, to_edit=True):
         try:
             ws = Workspace.query.filter_by(name=workspace_name).one()
+            if to_edit and not ws.active:
+                abort(403, "Disabled workspace: %s" % workspace_name)
         except NoResultFound:
             flask.abort(404, "No such workspace: %s" % workspace_name)
         return ws
@@ -356,7 +358,7 @@ class GenericWorkspacedView(GenericView):
     def _get_base_query(self, workspace_name):
         base = super(GenericWorkspacedView, self)._get_base_query()
         return base.join(Workspace).filter(
-            Workspace.id == self._get_workspace(workspace_name).id)
+            Workspace.id == self._get_workspace(workspace_name, to_edit=False).id)
 
     def _get_object(self, object_id, workspace_name, eagerload=False):
         self._validate_object_id(object_id)
@@ -687,8 +689,6 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
     def _perform_create(self, data, workspace_name):
         assert not db.session.new
         workspace = self._get_workspace(workspace_name)
-        if not workspace.active:
-            abort(403, "Disabled workspace: %s" % workspace_name)
         obj = self.model_class(**data)
         obj.workspace = workspace
         # assert not db.session.new
@@ -783,9 +783,6 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
         # assert not db.session.new
 
         with db.session.no_autoflush:
-            workspace = self._get_workspace(workspace_name)
-            if not workspace.active:
-                abort(403, "Disabled workspace: %s" % workspace_name)
             obj.workspace = self._get_workspace(workspace_name)
 
         self._set_command_id(obj, False)
@@ -810,9 +807,6 @@ class DeleteWorkspacedMixin(DeleteMixin):
 
     def _perform_delete(self, object_id, obj, workspace_name=None):
         with db.session.no_autoflush:
-            workspace = self._get_workspace(workspace_name)
-            if not workspace.active:
-                abort(403, "No such workspace: %s" % workspace_name)
             obj.workspace = self._get_workspace(workspace_name)
 
         return super(DeleteWorkspacedMixin, self)._perform_delete(

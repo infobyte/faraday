@@ -1330,9 +1330,9 @@ class ImportLicense():
                                                    product=document.get('product'),
                                                    start_date=datetime.datetime.strptime(document['start'], "%Y-%m-%dT%H:%M:%S.%fZ"),
                                                    end_date=datetime.datetime.strptime(document['end'], "%Y-%m-%dT%H:%M:%S.%fZ"),
-                                                   notes=document.get('notes'),
-                                                   type=document.get('lictype')
-                                                   )
+            )
+            license_obj.notes=document.get('notes')
+            license_obj.type=document.get('lictype')
 
 class ImportCouchDB():
     def _open_couchdb_conn(self):

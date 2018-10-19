@@ -794,10 +794,10 @@ class DeleteMixin(object):
     """Add DELETE /<id>/ route"""
     def delete(self, object_id, **kwargs):
         obj = self._get_object(object_id, **kwargs)
-        self._perform_delete(object_id,obj, **kwargs)
+        self._perform_delete(obj, **kwargs)
         return None, 204
 
-    def _perform_delete(self, object_id, obj, workspace_name=None):
+    def _perform_delete(self, obj, workspace_name=None):
         db.session.delete(obj)
         db.session.commit()
 
@@ -805,12 +805,12 @@ class DeleteMixin(object):
 class DeleteWorkspacedMixin(DeleteMixin):
     """Add DELETE /<workspace_name>/<route_base>/<id>/ route"""
 
-    def _perform_delete(self, object_id, obj, workspace_name=None):
+    def _perform_delete(self, obj, workspace_name=None):
         with db.session.no_autoflush:
             obj.workspace = self._get_workspace(workspace_name)
 
         return super(DeleteWorkspacedMixin, self)._perform_delete(
-            object_id, obj, workspace_name)
+            obj, workspace_name)
 
 
 class CountWorkspacedMixin(object):

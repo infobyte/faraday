@@ -114,7 +114,7 @@ class NessusPlugin(core.PluginBase):
             if t.get('host-ip'):
                 ip = t.get('host-ip')
 
-            h_id = self.createAndAddHost(ip, t.get('operating-system'))
+            h_id = self.createAndAddHost(ip, t.get('operating-system'), hostnames=[host])
 
             if self._isIPV4(ip):
                 i_id = self.createAndAddInterface(
@@ -202,7 +202,9 @@ def createPlugin():
     return NessusPlugin()
 
 if __name__ == '__main__':
-    parser = NessusParser(sys.argv[1])
-    for item in parser.items:
-        if item.status == 'up':
-            print item
+    parser = NessusPlugin()
+    with open('/home/javier/DNS_publicos_hlnn77.nessus', 'r') as report:
+        parser.parseOutputString(report.read())
+        for item in parser.items:
+            if item.status == 'up':
+                print item

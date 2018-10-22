@@ -10,7 +10,7 @@ import time
 import sys
 import argparse
 import os
-from config.globals import CONST_FARADAY_HOME_PATH
+from config.constant import CONST_FARADAY_HOME_PATH
 from server.config import FARADAY_BASE
 
 my_env = os.environ

@@ -12,7 +12,7 @@ from logging import (
     DEBUG,
     INFO,
 )
-from config import globals as CONSTANTS
+from config import constant as CONSTANTS
 from config.configuration import getInstanceConfiguration
 
 LOGGING_LEVEL = INFO

@@ -22,7 +22,10 @@ def get_private_ip():
     TODO: The problem is what happens when the machine
     has more than one private ip
     """
-    ip = socket.gethostbyname(socket.gethostname())
+    try:
+        ip = socket.gethostbyname(socket.gethostname())
+    except socket.gaierror:
+        return ''
     if ip:
         if not ip.startswith('127'):
             return ip

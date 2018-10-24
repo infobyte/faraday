@@ -59,7 +59,7 @@
                             selection-model selection-model-selected-class="multi-selected">
 
                             <td class="ui-grid-cell-contents active-toggle">
-                                <span class="active-toggle-container" ng-class="{ disabled:ws.active === false }" uib-tooltip="{{(ws.active === true) ? 'Disable workspace' : 'Active workspace'}}" tooltip-placement="right">
+                                <span ng-click="activeToggle(ws)" class="active-toggle-container" ng-class="{ disabled:ws.active === false }" uib-tooltip="{{(ws.active === true) ? 'Disable workspace' : 'Active workspace'}}" tooltip-placement="right">
                                     <img ng-src="{{ (ws.active) ? 'images/icon-list-confirmed.svg' : 'images/icon-list-notconfirmed.svg'}}" class="confirm-icon" ng-style="{ 'opacity': (ws.active === true) ? '1' : '0.7' }" />
                                 </span>
                             </td>

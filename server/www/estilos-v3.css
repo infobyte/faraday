@@ -240,3 +240,12 @@
 .margin-right-15px{
   margin-right: 15px;
 }
+
+.active-toggle{
+  width: 3%;
+  text-align: center!important;
+}
+
+.active-toggle-container{
+  cursor: pointer;
+}

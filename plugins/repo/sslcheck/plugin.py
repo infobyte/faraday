@@ -88,7 +88,7 @@ class SslcheckPlugin(core.PluginBase):
         self._current_output = None
         self.current_path = None
         self._command_regex = re.compile(
-            r'^(sudo sslcheck|sslcheck|\.\/sslcheck).*?')
+            r'^(sudo sslcheck|sslcheck|\.\/sslcheck|python sslcheck).*?')
 
         global current_path
         self._output_file_path = os.path.join(self.data_path, "%s_%s_output-%s.xml" % (self.get_ws(),

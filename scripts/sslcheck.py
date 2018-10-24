@@ -1,4 +1,4 @@
-#!/usr/bin/python2  
+#!/usr/bin/env python
 '''
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
@@ -28,8 +28,8 @@ openssl_cyphers = subprocess.check_output("openssl ciphers 'ALL:eNULL'",shell=Tr
 
 parser = argparse.ArgumentParser(prog='SensorProbeClient', epilog="Scan availables: | KeySize: key | Signature Cipher: sign |Renegotiation: ren | Services available: serv | Cypher availables: cyph | Forward Secrecy: forw | Heartbleed test: heart | Crime test: crime")
 parser.add_argument('-r', action="store", type=str, choices=program_options, dest='choice', default="all", nargs='+', help='store the scan(s) requested by the users')
-parser.add_argument('-port', '--port', action="store", type=int, dest='port', default="443", help='store the port to scan')
-parser.add_argument('--xml', action='store', type=str, dest='xmloutput', help='enabled the XML output in a specified file')
+parser.add_argument('--port', '-port', action="store", type=int, dest='port', default="443", help='store the port to scan')
+parser.add_argument('--xml', '-xml', action='store', type=str, dest='xmloutput', help='enabled the XML output in a specified file')
 parser.add_argument('host', nargs='+', type=str, help='store the target\'s host address (domain name or ipv4) separated by a space')
 parser.add_argument('--version', "-v", action='version', version='%(prog)s v1.0 by Morgan Lemarechal')
 

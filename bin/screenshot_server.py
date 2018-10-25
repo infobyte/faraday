@@ -31,7 +31,7 @@ def screenshot(path, protocol, ip, port):
     except Exception:
         print("Coudn't connect")
     finally:
-        driver.quit
+        driver.quit()
 
     return 0
 
@@ -42,7 +42,6 @@ def main(workspace='', args=None, parser=None):
     parsed_args = parser.parse_args(args)
 
     protocols = parsed_args.protocol.split(",")
-    print(protocols)
     path = parsed_args.path
 
     for protocol in protocols:

@@ -10,12 +10,18 @@ angular.module('faradayApp')
         $scope.workspaces;
         $scope.wss;
         $scope.search;
+        $scope.sortField;
+        $scope.sortDirection;
+        $scope.reverse;
 
         $scope.init = function() {
             $scope.objects = [];
             $scope.workspaces = [];
             $scope.wss = [];
             // $scope.newworkspace = {};
+            $scope.sortField = "ws.name";
+            $scope.sortDirection = "desc";
+            $scope.reverse = true;
 
             var hash_tmp = window.location.hash.split("/")[1];
             switch (hash_tmp){
@@ -325,6 +331,23 @@ angular.module('faradayApp')
         $scope.dashboardRedirect = function(path){
             $location.path("/dashboard/ws/"+path);
         };
+
+        // toggles sort field and order
+        $scope.toggleSort = function(field) {
+           $scope.toggleSortField(field);
+           $scope.toggleReverse();
+        };
+
+ 				// toggles column sort field
+        $scope.toggleSortField = function(field) {
+            $scope.sortField = field;
+        };
+
+        // toggle column sort order
+        $scope.toggleReverse = function() {
+            $scope.reverse = !$scope.reverse;
+        }
+
 
         $scope.clearSearch = function() {
           $scope.search = '';

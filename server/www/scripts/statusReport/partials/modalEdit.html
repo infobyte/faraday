@@ -17,8 +17,21 @@
     <div class="modal-body">
 
         <div class="mt-3">
-            <div class="modal-data-name">
-                <span class="data-name">{{modal.data.name}}</span>
+            <div class="modal-data-name" ng-init="modal.isNameEditable = false">
+                <div ng-if="modal.isNameEditable == false">
+                    <span class="data-name">{{modal.data.name}}</span>
+                    <span class="edit-name-icon pull-right" ng-click="modal.isNameEditable = true"><i
+                            class="fa fa-pencil fa-lg" aria-hidden="true"></i></span>
+                </div>
+
+                <div ng-if="modal.isNameEditable == true">
+                    <div class="form-group">
+                        <label class="sr-only" for="inp-edit-name">Vuln name</label>
+                        <input type="text" class="form-control" id="inp-edit-name" ng-model="modal.data.name"
+                               ng-blur="modal.isNameEditable = false" autofocus>
+                    </div>
+                </div>
+
             </div>
 
             <div class="edit-vulns-dropdowns row" ng-init="modal.updateBtnSeverityColor(modal.data.severity)">
@@ -118,7 +131,7 @@
                             id="btn-chg-confirmed"
                             title="{{modal.data.confirmed}}">
                         <span ng-if="modal.data.confirmed == true">Confirmed</span>
-                        <span ng-if="modal.data.confirmed == false" >Unconfirmed</span>
+                        <span ng-if="modal.data.confirmed == false">Unconfirmed</span>
                     </button>
                     <button type="button" class="dropdown-toggle secondary-btn btn-change-property btn-secondary-white"
                             data-toggle="dropdown"

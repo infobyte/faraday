@@ -237,4 +237,5 @@ angular.module('faradayApp')
                 };
 
                 init();
-            }]);
+            }])
+;

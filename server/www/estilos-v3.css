@@ -319,3 +319,18 @@
     border-left: none;
     color: #5e6667;
 }
+
+.edit-name-icon {
+    color: #999;
+    cursor: pointer;
+    display: none;
+}
+
+.modal-data-name:hover .edit-name-icon {
+    display: inline-flex;
+}
+
+#inp-edit-name{
+    font-weight: bold;
+    color: #5e6667;
+}

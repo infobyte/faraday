@@ -300,6 +300,22 @@
     margin-bottom: 15px;
 }
 
-.tab-pane-container{
+.tab-pane-container {
     width: 100%;
+}
+
+.btn-primary-white {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-right: none;
+    color: #5e6667;
+    text-transform: capitalize;
+    font-weight: normal;
+}
+
+.btn-secondary-white{
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-left: none;
+    color: #5e6667;
 }

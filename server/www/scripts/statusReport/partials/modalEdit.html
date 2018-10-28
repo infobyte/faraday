@@ -176,10 +176,15 @@
 
             <!-- Tab panes -->
             <div class="tab-content">
-                <div id="general" class="container tab-pane active"><br>
-                    <h3>HOME</h3>
-                    <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut
-                        labore et dolore magna aliqua.</p>
+                <div id="general" class="container tab-pane-container tab-pane active"><br>
+                    <div class="col-md-12">
+                        <div class="tab-pane-header">Description</div>
+                        <div class="form-group">
+                            <label class="sr-only" for="vuln-data">Vuln description</label>
+                            <textarea class="form-control" id="vuln-desc" rows="5"
+                                      ng-model="modal.data.desc"></textarea>
+                        </div><!-- .form-group -->
+                    </div>
                 </div>
                 <div id="technical_details" class="container tab-pane-container tab-pane fade"><br>
                     <div class="col-md-12">

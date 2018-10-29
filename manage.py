@@ -7,10 +7,11 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 import re
+import sys
 
 import click
 import requests
-import sys
+from alembic.config import CommandLine
 
 import server.config
 from persistence.server.server import _conf, FARADAY_UP, SERVER_URL
@@ -197,6 +198,12 @@ def create_tables():
             fg='green', bold=True))
 
 
+@click.command(help='Migrates database schema')
+@click.option('--upgrade', default=None)
+def migrate(upgrade):
+    alembic_params = map(lambda param: param.replace('--', ''), sys.argv[2:])
+    CommandLine(prog=None).main(argv=alembic_params)
+
 cli.add_command(process_reports)
 cli.add_command(show_urls)
 cli.add_command(initdb)
@@ -207,7 +214,7 @@ cli.add_command(sql_shell)
 cli.add_command(status_check)
 cli.add_command(create_tables)
 cli.add_command(change_password)
-
+cli.add_command(migrate)
 
 if __name__ == '__main__':
     cli()

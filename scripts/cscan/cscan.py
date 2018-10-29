@@ -27,7 +27,7 @@ def setup_config_path():
         return file_path
 
     else:
-        #TODO check if folderS exist and if not creat them
+        # TODO check if folders exist and if not create them
         path = os.path.join(path,"cscan_conf.ini")
         shutil.copy(path, file_path)
         return file_path

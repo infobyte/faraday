@@ -21,7 +21,7 @@ def upgrade():
     conn.execute('ALTER TABLE vulnerability ADD COLUMN custom_fields JSONB')
     conn.execute('CREATE TABLE custom_fields_schema ( '\
                     'id SERIAL PRIMARY KEY,' \
-                    'tablename TEXT,' \
+                    'table_name TEXT,' \
                     'field_name TEXT,' \
                     'field_type TEXT,' \
                     'field_display_name TEXT)'
@@ -30,3 +30,4 @@ def upgrade():
 def downgrade():
     conn = op.get_bind()
     conn.execute('ALTER TABLE vulnerability DROP COLUMN custom_fields')
+    conn.execute('DROP TABLE custom_fields_schema')

@@ -489,6 +489,7 @@ class CustomFieldsSchema(db.Model):
     field_name = Column(Text)
     field_type = Column(Text)
     field_display_name = Column(Text)
+    table_name = Column(Text)
 
 
 class VulnerabilityABC(Metadata):

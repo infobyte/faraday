@@ -372,7 +372,7 @@ class QualysguardPlugin(core.PluginBase):
                         h_id,
                         v.title if v.title else v.name,
                         ref=v.ref,
-                        severity=v.severity,
+                        severity=str(int(v.severity) - 1),
                         resolution=v.solution if v.solution else '',
                         desc=v.desc)
 
@@ -399,7 +399,7 @@ class QualysguardPlugin(core.PluginBase):
                             v.title if v.title else v.name,
                             ref=v.ref,
                             website=item.ip,
-                            severity=v.severity,
+                            severity=str(int(v.severity) - 1),
                             desc=v.desc,
                             resolution=v.solution if v.solution else '')
 
@@ -422,7 +422,7 @@ class QualysguardPlugin(core.PluginBase):
                             s_id,
                             v.title if v.title else v.name,
                             ref=v.ref,
-                            severity=v.severity,
+                            severity=str(int(v.severity) - 1),
                             desc=v.desc,
                             resolution=v.solution if v.solution else '')
 

@@ -90,6 +90,10 @@
                                         <a href="" ng-click="toggleSort('mac')">MAC</a>
                                         <a ng-click="toggleShow('mac')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
                                     </th>
+                                    <th ng-if="columns['vendor']">
+                                        <a href="" ng-click="toggleSort('vendor')">Vendor</a>
+                                        <a ng-click="toggleShow('vendor')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
+                                    </th>
                                     <th ng-show="columns['service_count']">
                                         <a href="" ng-click="toggleSort('services')">Open Services</a>
                                         <a ng-click="toggleShow('service_count')"><span style="color:#000;" class="glyphicon glyphicon-remove"></span></a>
@@ -151,7 +155,10 @@
                                         </span>
                                     </td>
                                     <td ng-show="columns['mac']">
-                                        {{host.mac}}
+                                            {{host.mac}}
+                                    </td>
+                                    <td ng-show="columns['vendor']">
+                                       <span>{{host.mac_vendor | limitTo:20}}</span>
                                     </td>
                                     <td ng-show="columns['service_count']"><a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-bind="host.services || '-'"></a></td>
                                     <td ng-show="columns['vuln_count']"><a ng-href="#/status/ws/{{workspace}}/search/target={{host.name}}" ng-bind="host.vulns"></a></td>
@@ -160,7 +167,7 @@
                                     </td>
                                     <td ng-show="columns['owned']">
                                         <span class="fa fa-exclamation-triangle" aria-hidden="true" ng-if="host.owned"></span>
-                                        <span ng-if="host.owned"> owned</span>
+                                        <span ng-if="host.owned">owned</span>
                                         <span ng-if="!host.owned">not yet</span>
                                     </td>
                                     <td ng-show="columns['description']">

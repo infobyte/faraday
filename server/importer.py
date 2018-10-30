@@ -1440,7 +1440,7 @@ class ImportCouchDB():
             for missing_id in (missing_ids):
                 not_imported_obj = get_object_from_couchdb(missing_id, workspace)
 
-                if not_imported_obj['type'] == 'Interface':
+                if not_imported_obj.get('type', None) == 'Interface':
                     # we know that interface obj was not imported
                     continue
                 filter_keys = ['views', 'validate_doc_update']

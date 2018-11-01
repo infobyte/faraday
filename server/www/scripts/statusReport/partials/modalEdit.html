@@ -181,10 +181,79 @@
                         <div class="tab-pane-header">Description</div>
                         <div class="form-group">
                             <label class="sr-only" for="vuln-data">Vuln description</label>
-                            <textarea class="form-control" id="vuln-desc" rows="5"
-                                      ng-model="modal.data.desc"></textarea>
+                            <textarea class="form-control" id="vuln-desc" rows="4"
+                                      ng-model="modal.data.desc" placeholder="Description"></textarea>
                         </div><!-- .form-group -->
                     </div>
+
+
+                    <div class="form-group margin-top-22px">
+                        <div class="col-md-12">
+                            <div class="tab-pane-header">References</div>
+                            <div class="input-group margin-bottom-sm">
+                                <label class="sr-only" for="vuln-refs">References</label>
+                                <input type="text" class="form-control" id="vuln-refs" placeholder="Reference"
+                                       ng-model="modal.new_ref"/>
+                                <span class="input-group-addon cursor" ng-click="modal.newReference()"><i
+                                        class="fa fa-plus-circle"></i></span>
+                            </div>
+                        </div>
+                        <div class="col-md-12 reference" ng-repeat="reference in modal.data.refs">
+                            <div class="input-group margin-bottom-sm">
+                                <label class="sr-only" for="vuln-refs-create">References</label>
+                                <input type="text" class="form-control" id="vuln-refs-create" placeholder="Reference"
+                                       ng-model="reference.value" ng-click="modal.openReference(reference.value)"
+                                       role="button"
+                                       readonly/>
+                                <span class="input-group-addon cursor" ng-click="modal.data.refs.splice($index, 1)"><i
+                                        class="fa fa-minus-circle"></i></span>
+                            </div>
+                        </div>
+                    </div><!-- .form-group -->
+
+
+                    <div class="col-md-12 margin-top-22px">
+                        <div class="tab-pane-header">Resolution</div>
+                        <div class="form-group">
+                            <label class="sr-only" for="vuln-data">Vuln resolution</label>
+                            <textarea class="form-control" id="vuln-resolution" rows="4"
+                                      ng-model="modal.data.resolution" placeholder="Resolution"></textarea>
+                        </div><!-- .form-group -->
+                    </div>
+
+
+                    <div class="form-group margin-top-22px">
+                        <div class="col-md-12">
+                            <div class="tab-pane-header">Policy Violations</div>
+                            <div class="input-group margin-bottom-sm">
+                                <label class="sr-only" for="vuln-policyviolations">Policy Violations</label>
+                                <input type="text" class="form-control" id="vuln-policyviolations"
+                                       placeholder="Policy Violations" ng-model="modal.new_policyviolation"/>
+                                <span class="input-group-addon cursor" ng-click="modal.newPolicyViolation()"><i
+                                        class="fa fa-plus-circle"></i></span>
+                            </div>
+                        </div>
+                        <div class="col-md-12 reference" ng-repeat="policyviolation in modal.data.policyviolations">
+                            <div class="input-group margin-bottom-sm">
+                                <label class="sr-only" for="vuln-policyviolations-value">Policy Violation</label>
+                                <input type="text" class="form-control" id="vuln-policyviolations-value"
+                                       placeholder="Policy Violation" ng-model="policyviolation.value" disabled/>
+                                <span class="input-group-addon cursor"
+                                      ng-click="modal.data.policyviolations.splice($index, 1)"><i
+                                        class="fa fa-minus-circle"></i></span>
+                            </div>
+                        </div>
+                    </div><!-- .form-group -->
+
+                    <div class="col-md-12 margin-bottom-15px margin-top-22px">
+                        <div class="tab-pane-header">Impact</div>
+                        <h4><span ng-repeat="(key, value) in modal.data.impact" class="normal-size"
+                                  style="cursor: pointer;">
+                        <span ng-class="{'label-impact label-default-impact': !value, 'label-impact label-success-impact': value}"
+                              ng-click="modal.toggleImpact(key)">{{key}}</span>
+                        </span></h4><!-- .normal-size -->
+                    </div>
+
                 </div>
                 <div id="technical_details" class="container tab-pane-container tab-pane fade"><br>
                     <div class="col-md-12">
@@ -192,7 +261,7 @@
                         <div class="form-group">
                             <label class="sr-only" for="vuln-data">Vuln data</label>
                             <textarea class="form-control" id="vuln-data" rows="5"
-                                      ng-model="modal.data.data"></textarea>
+                                      ng-model="modal.data.data" placeholder="Data"></textarea>
                         </div><!-- .form-group -->
                     </div>
 
@@ -201,7 +270,7 @@
                         <div class="form-group">
                             <label class="sr-only" for="vuln-request">Vuln request</label>
                             <textarea class="form-control" id="vuln-request" rows="8"
-                                      ng-model="modal.data.request"></textarea>
+                                      ng-model="modal.data.request" placeholder="Request"></textarea>
                         </div><!-- .form-group -->
                     </div>
 
@@ -210,7 +279,7 @@
                         <div class="form-group">
                             <label class="sr-only" for="vuln-response">Vuln response</label>
                             <textarea class="form-control" id="vuln-response" rows="8"
-                                      ng-model="modal.data.response"></textarea>
+                                      ng-model="modal.data.response" placeholder="Response"></textarea>
                         </div><!-- .form-group -->
                     </div>
 
@@ -237,205 +306,6 @@
         </div>
 
 
-        <!--<div class="form-horizontal">-->
-        <!--&lt;!&ndash;<div class="form-group">&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="col-md-12">&ndash;&gt;-->
-        <!--&lt;!&ndash;<h5>Vulnerability template</h5>&ndash;&gt;-->
-        <!--&lt;!&ndash;<input type="text" ng-model="modal.cwe_selected" class="form-control input-sm"&ndash;&gt;-->
-        <!--&lt;!&ndash;placeholder="Search for vulnerability template"&ndash;&gt;-->
-        <!--&lt;!&ndash;uib-typeahead="cwe as cwe.name for cwe in modal.cweList | filter:{name: $viewValue} | limitTo:10"&ndash;&gt;-->
-        <!--&lt;!&ndash;typeahead-on-select="modal.populate($item, $model, $label)">&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="form-group">&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="col-md-3 severities">&ndash;&gt;-->
-        <!--&lt;!&ndash;<h5>Severity</h5>&ndash;&gt;-->
-        <!--&lt;!&ndash;<button type="button" class="btn btn-default dropdown-toggle color-{{modal.data.severity}}"&ndash;&gt;-->
-        <!--&lt;!&ndash;name="severity" data-toggle="dropdown" title="Change severity"&ndash;&gt;-->
-        <!--&lt;!&ndash;ng-class="{'button-error': modal.data.severity === undefined}">&ndash;&gt;-->
-        <!--&lt;!&ndash;{{modal.data.severity || 'Edit severity'}} <span class="caret" style="color:#000"></span>&ndash;&gt;-->
-        <!--&lt;!&ndash;</button>&ndash;&gt;-->
-        <!--&lt;!&ndash;<ul id="nav" class="dropdown-menu dropdown-menu-left" role="menu">&ndash;&gt;-->
-        <!--&lt;!&ndash;<li ng-repeat="s in modal.severities"><a href="" class="ws color-{{s}}"&ndash;&gt;-->
-        <!--&lt;!&ndash;ng-click="modal.data.severity=s">{{s}}</a></li>&ndash;&gt;-->
-        <!--&lt;!&ndash;</ul>&lt;!&ndash; WS navigation &ndash;&gt;&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="col-md-3">&ndash;&gt;-->
-        <!--&lt;!&ndash;<h5>Ease of Resolution</h5>&ndash;&gt;-->
-        <!--&lt;!&ndash;<select class="form-control" ng-model="modal.data.easeofresolution"&ndash;&gt;-->
-        <!--&lt;!&ndash;ng-options="e as e for e in modal.easeofresolution" style="padding:0px 12px;">&ndash;&gt;-->
-        <!--&lt;!&ndash;<option value=""></option>&ndash;&gt;-->
-        <!--&lt;!&ndash;</select>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="col-md-3">&ndash;&gt;-->
-        <!--&lt;!&ndash;<h5>Status</h5>&ndash;&gt;-->
-        <!--&lt;!&ndash;<select class="form-control" ng-model="modal.data.status"&ndash;&gt;-->
-        <!--&lt;!&ndash;ng-options="e as e for e in modal.statuses" style="padding:0px 12px;">&ndash;&gt;-->
-        <!--&lt;!&ndash;</select>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="col-md-3">&ndash;&gt;-->
-        <!--&lt;!&ndash;<h5>Confirmed</h5>&ndash;&gt;-->
-        <!--&lt;!&ndash;<input type="checkbox" id="confirmed" ng-model="modal.data.confirmed"/>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&lt;!&ndash; .form-group &ndash;&gt;&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="form-group" ng-class="{'has-error': formEdit.name.$invalid }">&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="col-md-12">&ndash;&gt;-->
-        <!--&lt;!&ndash;<label class="sr-only" for="vuln-name">Vuln name</label>&ndash;&gt;-->
-        <!--&lt;!&ndash;<input type="text" class="form-control" id="vuln-name" name="name" placeholder="Name"&ndash;&gt;-->
-        <!--&lt;!&ndash;ng-model="modal.data.name" required/>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&lt;!&ndash; .form-group &ndash;&gt;&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="form-group" ng-class="{'has-error': formEdit.desc.$invalid }">&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="col-md-12">&ndash;&gt;-->
-        <!--&lt;!&ndash;<label class="sr-only" for="vuln-desc">Vuln description</label>&ndash;&gt;-->
-        <!--&lt;!&ndash;<textarea class="form-control" id="vuln-desc" name="desc" placeholder="Description"&ndash;&gt;-->
-        <!--&lt;!&ndash;ng-model="modal.data.desc" required=""&ndash;&gt;-->
-        <!--&lt;!&ndash;style="margin: 0px 2px 0px 0px; height: 239px; width: 867px;"></textarea></textarea>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&lt;!&ndash; .form-group &ndash;&gt;&ndash;&gt;-->
-        <!--<div class="form-group">-->
-        <!--<div class="col-md-12">-->
-        <!--<label class="sr-only" for="vuln-data">Vuln data</label>-->
-        <!--<textarea class="form-control" id="vuln-data" placeholder="Data"-->
-        <!--ng-model="modal.data.data"></textarea>-->
-        <!--</div>-->
-        <!--</div>&lt;!&ndash; .form-group &ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="form-group">&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="col-md-12">&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="input-group margin-bottom-sm">&ndash;&gt;-->
-        <!--&lt;!&ndash;<label class="sr-only" for="vuln-refs">References</label>&ndash;&gt;-->
-        <!--&lt;!&ndash;<input type="text" class="form-control" id="vuln-refs" placeholder="Reference"&ndash;&gt;-->
-        <!--&lt;!&ndash;ng-model="modal.new_ref"/>&ndash;&gt;-->
-        <!--&lt;!&ndash;<span class="input-group-addon cursor" ng-click="modal.newReference()"><i&ndash;&gt;-->
-        <!--&lt;!&ndash;class="fa fa-plus-circle"></i></span>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="col-md-12 reference" ng-repeat="reference in modal.data.refs">&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="input-group margin-bottom-sm">&ndash;&gt;-->
-        <!--&lt;!&ndash;<label class="sr-only" for="vuln-refs">References</label>&ndash;&gt;-->
-        <!--&lt;!&ndash;<input type="text" class="form-control" id="vuln-refs" placeholder="Reference"&ndash;&gt;-->
-        <!--&lt;!&ndash;ng-model="reference.value" ng-click="modal.openReference(reference.value)" role="button"&ndash;&gt;-->
-        <!--&lt;!&ndash;readonly/>&ndash;&gt;-->
-        <!--&lt;!&ndash;<span class="input-group-addon cursor" ng-click="modal.data.refs.splice($index, 1)"><i&ndash;&gt;-->
-        <!--&lt;!&ndash;class="fa fa-minus-circle"></i></span>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&lt;!&ndash; .form-group &ndash;&gt;&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="form-group">&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="col-md-12">&ndash;&gt;-->
-        <!--&lt;!&ndash;<label class="sr-only" for="vuln-resolution">Vuln Resolution</label>&ndash;&gt;-->
-        <!--&lt;!&ndash;<textarea class="form-control" id="vuln-resolution" placeholder="Resolution"&ndash;&gt;-->
-        <!--&lt;!&ndash;ng-model="modal.data.resolution"></textarea>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&lt;!&ndash; .form-group &ndash;&gt;&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="form-group">&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="col-md-12">&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="input-group margin-bottom-sm">&ndash;&gt;-->
-        <!--&lt;!&ndash;<label class="sr-only" for="vuln-policyviolations">Policy Violations</label>&ndash;&gt;-->
-        <!--&lt;!&ndash;<input type="text" class="form-control" id="vuln-policyviolations"&ndash;&gt;-->
-        <!--&lt;!&ndash;placeholder="Policy Violations" ng-model="modal.new_policyviolation"/>&ndash;&gt;-->
-        <!--&lt;!&ndash;<span class="input-group-addon cursor" ng-click="modal.newPolicyViolation()"><i&ndash;&gt;-->
-        <!--&lt;!&ndash;class="fa fa-plus-circle"></i></span>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="col-md-12 reference" ng-repeat="policyviolation in modal.data.policyviolations">&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="input-group margin-bottom-sm">&ndash;&gt;-->
-        <!--&lt;!&ndash;<label class="sr-only" for="vuln-policyviolations">Policy Violation</label>&ndash;&gt;-->
-        <!--&lt;!&ndash;<input type="text" class="form-control" id="vuln-policyviolations"&ndash;&gt;-->
-        <!--&lt;!&ndash;placeholder="Policy Violation" ng-model="policyviolation.value" disabled/>&ndash;&gt;-->
-        <!--&lt;!&ndash;<span class="input-group-addon cursor" ng-click="modal.data.policyviolations.splice($index, 1)"><i&ndash;&gt;-->
-        <!--&lt;!&ndash;class="fa fa-minus-circle"></i></span>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&lt;!&ndash; .form-group &ndash;&gt;&ndash;&gt;-->
-        <!--&lt;!&ndash;<div ng-if="modal.vuln.type === 'VulnerabilityWeb'">&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="form-group">&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="col-md-4">&ndash;&gt;-->
-        <!--&lt;!&ndash;<label class="sr-only control-label" for="vuln-method">Method</label>&ndash;&gt;-->
-        <!--&lt;!&ndash;<input type="text" class="form-control input-error" id="vuln-method" placeholder="Method"&ndash;&gt;-->
-        <!--&lt;!&ndash;ng-model="modal.data.method"/>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="col-md-3">&ndash;&gt;-->
-        <!--&lt;!&ndash;<label class="sr-only control-label" for="vuln-pname">Param Name</label>&ndash;&gt;-->
-        <!--&lt;!&ndash;<input type="text" class="form-control input-error" id="vuln-pname" placeholder="Param name"&ndash;&gt;-->
-        <!--&lt;!&ndash;ng-model="modal.data.pname"/>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="col-md-5">&ndash;&gt;-->
-        <!--&lt;!&ndash;<label class="sr-only control-label" for="vuln-params">Params</label>&ndash;&gt;-->
-        <!--&lt;!&ndash;<input type="text" class="form-control input-error" id="vuln-params" placeholder="Params"&ndash;&gt;-->
-        <!--&lt;!&ndash;ng-model="modal.data.params"/>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&lt;!&ndash; .form-group &ndash;&gt;&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="form-group">&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="col-md-4">&ndash;&gt;-->
-        <!--&lt;!&ndash;<label class="sr-only control-label" for="vuln-path">Path</label>&ndash;&gt;-->
-        <!--&lt;!&ndash;<input type="text" class="form-control input-error" id="vuln-path" placeholder="Path"&ndash;&gt;-->
-        <!--&lt;!&ndash;ng-model="modal.data.path"/>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="col-md-4">&ndash;&gt;-->
-        <!--&lt;!&ndash;<label class="sr-only control-label" for="vuln-query">Query</label>&ndash;&gt;-->
-        <!--&lt;!&ndash;<input type="text" class="form-control input-error" id="vuln-query" placeholder="Query"&ndash;&gt;-->
-        <!--&lt;!&ndash;ng-model="modal.data.query"/>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="col-md-4">&ndash;&gt;-->
-        <!--&lt;!&ndash;<label class="sr-only control-label" for="vuln-website">Website</label>&ndash;&gt;-->
-        <!--&lt;!&ndash;<input type="text" class="form-control input-error" id="vuln-website" placeholder="Website"&ndash;&gt;-->
-        <!--&lt;!&ndash;ng-model="modal.data.website"/>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&lt;!&ndash; .form-group &ndash;&gt;&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="form-group">&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="col-md-12">&ndash;&gt;-->
-        <!--&lt;!&ndash;<label class="sr-only control-label" for="vuln-request">Request</label>&ndash;&gt;-->
-        <!--&lt;!&ndash;<textarea class="form-control input-error" id="vuln-request" placeholder="Request"&ndash;&gt;-->
-        <!--&lt;!&ndash;ng-model="modal.data.request"></textarea>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&lt;!&ndash; .form-group &ndash;&gt;&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="form-group">&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="col-md-12">&ndash;&gt;-->
-        <!--&lt;!&ndash;<label class="sr-only control-label" for="vuln-response">Response</label>&ndash;&gt;-->
-        <!--&lt;!&ndash;<textarea class="form-control input-error" id="vuln-response" placeholder="Response"&ndash;&gt;-->
-        <!--&lt;!&ndash;ng-model="modal.data.response"></textarea>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&lt;!&ndash; .form-group &ndash;&gt;&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&lt;!&ndash; ng-if &ndash;&gt;&ndash;&gt;-->
-        <!--</div>&lt;!&ndash; .form-horizontal &ndash;&gt;-->
-
-        <!--<h4>Impact</h4>-->
-        <!--<h4><span ng-repeat="(key, value) in modal.data.impact" class="normal-size" style="cursor: pointer;">-->
-        <!--<span ng-class="{'label-impact label-default-impact': !value, 'label-impact label-success-impact': value}"-->
-        <!--ng-click="modal.toggleImpact(key)">{{key}}</span>-->
-        <!--</span></h4>&lt;!&ndash; .normal-size &ndash;&gt;-->
-        <!--<div>-->
-
-        <!--<div>-->
-        <!--<h4>Evidence</h4>-->
-        <!--<div class="alert alert-danger normal-size" role="alert" ng-if="modal.file_name_error">-->
-        <!--<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>-->
-        <!--<span class="sr-only">Error:</span>-->
-        <!--Cannot upload evidence starting with underscore, please choose a different name for the file.-->
-        <!--</div>-->
-        <!--<div class="form-group normal-size">-->
-        <!--<input type="file" id="evidence" ng-file-select ng-multiple="true" resetOnClick="false"-->
-        <!--ng-file-change="modal.selectedFiles($files, $event)"/>-->
-        <!--<p class="help-block">Multiple files are allowed.</p>-->
-        <!--</div>&lt;!&ndash; .form-group &ndash;&gt;-->
-        <!--<div id="evidenceFiles" class="normal-size" ng-if="modal.data._attachments">-->
-        <!--<ul>-->
-        <!--<li ng-repeat="(name, file) in modal.data._attachments">-->
-        <!--<div class="btn-group">-->
-        <!--<button type="button" class="btn btn-default" ng-click="modal.openEvidence(name)">-->
-        <!--<span class="fa {{icons[name]}}"-->
-        <!--title="Evidence {{name | decodeURIComponent}}"></span> {{name |-->
-        <!--decodeURIComponent}}-->
-        <!--</button>&lt;!&ndash; ng-repeat &ndash;&gt;-->
-        <!--<button type="button" class="btn btn-danger" ng-click="modal.removeEvidence(name)">-->
-        <!--<span class="glyphicon glyphicon-trash"></span>-->
-        <!--</button>-->
-        <!--</div>-->
-        <!--</li>-->
-        <!--</ul>-->
-        <!--</div>&lt;!&ndash; #evidenceFiles &ndash;&gt;-->
-        <!--</div>&lt;!&ndash; ng-if &ndash;&gt;-->
         <div class="modal-footer">
             <div class="modal-button">
                 <button class="btn btn-success" ng-click="modal.ok()" ng-disabled="formEdit.$invalid">OK</button>

@@ -165,13 +165,6 @@
                 <li class="nav-item">
                     <a class="nav-link" data-toggle="tab" data-target="#tab-evidence" href="javascript:;">Evidence</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" data-toggle="tab" data-target="#hosts" href="javascript:;">Hosts</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" data-toggle="tab" data-target="#custom_fields" href="javascript:;">Custom
-                        Fields</a>
-                </li>
             </ul>
 
             <!-- Tab panes -->
@@ -285,22 +278,39 @@
 
                 </div>
                 <div id="tab-evidence" class="container tab-pane fade"><br>
-                    <h3>Menu 2</h3>
-                    <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque
-                        laudantium,
-                        totam rem aperiam.</p>
-                </div>
-                <div id="hosts" class="container tab-pane fade"><br>
-                    <h3>hosts</h3>
-                    <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque
-                        laudantium,
-                        totam rem aperiam.</p>
-                </div>
-                <div id="custom_fields" class="container tab-pane fade"><br>
-                    <h3>custom_fields</h3>
-                    <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque
-                        laudantium,
-                        totam rem aperiam.</p>
+                    <div class="col-md-12 margin-bottom-15px margin-top-18px">
+                        <div class="tab-pane-header">Evidence</div>
+                        <div class="alert alert-danger normal-size" role="alert" ng-if="modal.file_name_error">
+                            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                            <span class="sr-only">Error:</span>
+                            Cannot upload evidence starting with underscore, please choose a different name for the
+                            file.
+                        </div>
+                        <div class="form-group normal-size">
+                            <input type="file" id="evidence" ng-file-select ng-multiple="true" resetOnClick="false"
+                                   ng-file-change="modal.selectedFiles($files, $event)"/>
+                            <p class="help-block">Multiple files are allowed.</p>
+                        </div><!-- .form-group -->
+                        <div id="evidenceFiles" class="normal-size" ng-if="modal.data._attachments">
+                            <ul>
+                                <li ng-repeat="(name, file) in modal.data._attachments">
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-default"
+                                                ng-click="modal.openEvidence(name)">
+                                            <span class="fa {{icons[name]}}"
+                                                  title="Evidence {{name | decodeURIComponent}}"></span> {{name |
+                                            decodeURIComponent}}
+                                        </button><!-- ng-repeat -->
+                                        <button type="button" class="btn btn-danger"
+                                                ng-click="modal.removeEvidence(name)">
+                                            <span class="glyphicon glyphicon-trash"></span>
+                                        </button>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div><!-- #evidenceFiles -->
+                    </div>
+
                 </div>
             </div>
         </div>

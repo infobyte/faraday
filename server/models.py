@@ -36,12 +36,11 @@ from flask_sqlalchemy import (
     SQLAlchemy as OriginalSQLAlchemy,
     _EngineConnector
 )
-from sqlalchemy.dialects.postgresql.json import JSONB
 
 from depot.fields.sqlalchemy import UploadedFileField
 
 import server.config
-from server.fields import FaradayUploadedFile
+from server.fields import FaradayUploadedFile, JSONType
 from flask_security import (
     RoleMixin,
     UserMixin,
@@ -531,7 +530,7 @@ class VulnerabilityABC(Metadata):
                         name='check_vulnerability_risk'),
     )
 
-    custom_fields = Column(JSONB)
+    custom_fields = Column(JSONType)
 
     @property
     def parent(self):

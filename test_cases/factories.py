@@ -37,7 +37,11 @@ from server.models import (
     VulnerabilityTemplate,
     VulnerabilityWeb,
     Workspace,
-    ReferenceTemplate, CommandObject, Comment)
+    ReferenceTemplate,
+    CommandObject,
+    Comment,
+    CustomFieldsSchema
+)
 
 # Make partials for start and end date. End date must be after start date
 FuzzyStartTime = lambda: (
@@ -166,7 +170,7 @@ class SourceCodeFactory(WorkspaceObjectFactory):
         sqlalchemy_session = db.session
 
 
-class CustomFieldsSchemaFactory((factory.alchemy.SQLAlchemyModelFactory):
+class CustomFieldsSchemaFactory(factory.alchemy.SQLAlchemyModelFactory):
 
     class Meta:
         model = CustomFieldsSchema

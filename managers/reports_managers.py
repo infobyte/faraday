@@ -346,8 +346,6 @@ class ReportParser(object):
             return "X1"
         elif "entities" == tag:
             return "Core Impact"
-        elif "NeXposeSimpleXML" == tag:
-            return "Nexpose"
         elif "NexposeReport" == tag:
             return "NexposeFull"
         elif "ASSET_DATA_REPORT" == tag or "SCAN" == tag:

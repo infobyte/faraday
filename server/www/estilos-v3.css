@@ -65,6 +65,10 @@
     margin-bottom: 0px;
 }
 
+.margin-bottom-15px {
+    margin-bottom: 15px;
+}
+
 .btn-frd {
     display: inline-block;
     padding: 10px 12px;

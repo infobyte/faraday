@@ -51,17 +51,17 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-right" role="menu">
                         <li>
-                            <a class="ws" ng-if="modal.data.severity !== 'unclassified'"
+                            <a class="ws"
                                ng-click="modal.changeSeverity('unclassified')">UNCLASSIFIED</a>
-                            <a class="ws" ng-if="modal.data.severity !== 'info'"
+                            <a class="ws"
                                ng-click="modal.changeSeverity('info')">INFO</a>
-                            <a class="ws" ng-if="modal.data.severity !== 'low'"
+                            <a class="ws"
                                ng-click="modal.changeSeverity('low')">LOW</a>
-                            <a class="ws" ng-if="modal.data.severity !== 'med'"
+                            <a class="ws"
                                ng-click="modal.changeSeverity('med')">MEDIUM</a>
-                            <a class="ws" ng-if="modal.data.severity !== 'high'"
+                            <a class="ws"
                                ng-click="modal.changeSeverity('high')">HIGH</a>
-                            <a class="ws" ng-if="modal.data.severity !== 'critical'"
+                            <a class="ws"
                                ng-click="modal.changeSeverity('critical')">CRITICAL</a>
                         </li>
                     </ul>
@@ -83,15 +83,15 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-right" role="menu">
                         <li>
-                            <a class="ws" ng-if="modal.data.easeofresolution !== 'trivial'"
+                            <a class="ws"
                                ng-click="modal.data.easeofresolution = 'trivial'">Trivial</a>
-                            <a class="ws" ng-if="modal.data.easeofresolution !== 'simple'"
+                            <a class="ws"
                                ng-click="modal.data.easeofresolution = 'simple'">Simple</a>
-                            <a class="ws" ng-if="modal.data.easeofresolution !== 'moderate'"
+                            <a class="ws"
                                ng-click="modal.data.easeofresolution = 'moderate'">Moderate</a>
-                            <a class="ws" ng-if="modal.data.easeofresolution !== 'difficult'"
+                            <a class="ws"
                                ng-click="modal.data.easeofresolution = 'difficult'">Difficult</a>
-                            <a class="ws" ng-if="modal.data.easeofresolution !== 'infeasible'"
+                            <a class="ws"
                                ng-click="modal.data.easeofresolution = 'infeasible'">Infeasible</a>
                         </li>
                     </ul>
@@ -113,13 +113,13 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-right" role="menu">
                         <li>
-                            <a class="ws" ng-if="modal.data.status !== 'opened'"
+                            <a class="ws"
                                ng-click="modal.data.status = 'opened'">Opened</a>
-                            <a class="ws" ng-if="modal.data.status !== 'closed'"
+                            <a class="ws"
                                ng-click="modal.data.status = 'closed'">Closed</a>
-                            <a class="ws" ng-if="modal.data.status !== 're-opened'"
+                            <a class="ws"
                                ng-click="modal.data.status = 're-opened'">Re-opened</a>
-                            <a class="ws" ng-if="modal.data.status !== 'risk-accepted'"
+                            <a class="ws"
                                ng-click="modal.data.status = 'risk-accepted'">Risk-accepted</a>
                         </li>
                     </ul>

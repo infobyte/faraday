@@ -198,7 +198,7 @@
                           <strong ng-if="!editing">MAC</strong>
                           <h5 ng-if="editing">MAC</h5>
                           <input type="text" class="form-control" id="ipv4" placeholder="MAC" ng-model="host.mac" ng-if="editing"/>
-                          <p ng-if="!editing">{{host.mac}}</p>
+                          <p ng-if="!editing">{{host.mac}} ({{host.mac_vendor}})</p>
                       </div>
                       <div class="col-md-12">
                           <strong ng-if="!editing">Description</strong>

@@ -84,6 +84,10 @@
                                 <span ng-click="toggleSort('mac')">MAC</span>
                                 <a ng-click="toggleShow('mac')"><span class="glyphicon glyphicon-remove"></span></a>
                             </th>
+                            <th ng-if="columns['vendor']">
+                                <span ng-click="toggleSort('vendor')">Vendor</a>
+                                <a ng-click="toggleShow('vendor')"><span style="glyphicon glyphicon-remove" class="glyphicon glyphicon-remove"></span></a>
+                            </th>
                             <th class="ui-grid-cell-contents ui-grid-header-cell" ng-show="columns['service_count']">
                                 <span ng-click="toggleSort('services')">OPEN SERVICES</span>
                                 <a ng-click="toggleShow('service_count')"><span class="glyphicon glyphicon-remove"></span></a>
@@ -167,6 +171,9 @@
                                 <div class="">
                                     {{host.mac}}
                                 </div>
+                            </td>
+                            <td class="ui-grid-cell-contents" ng-show="columns['vendor']">
+                                <div>{{host.mac_vendor | limitTo:20}}</div>
                             </td>
                             <td class="ui-grid-cell-contents"
                                 ng-show="columns['service_count']">

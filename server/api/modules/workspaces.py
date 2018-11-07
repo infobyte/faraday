@@ -5,29 +5,15 @@ import json
 
 import flask
 from flask import Blueprint
-from marshmallow import Schema, fields, post_load
-from sqlalchemy.orm import undefer
+from flask_classful import route
+from marshmallow import Schema, fields, post_load, validate
 
 from server.models import db, Workspace
-from server.utils.logger import get_logger
 from server.schemas import (
     JSTimestampField,
     MutableField,
     PrimaryKeyRelatedField,
     SelfNestedField,
-)
-from server.utils.web import (
-    build_bad_request_response,
-    filter_request_args,
-    get_basic_auth,
-    get_integer_parameter,
-    gzipped,
-    validate_admin_perm,
-    validate_workspace
-)
-from server.couchdb import (
-    list_workspaces_as_user,
-    get_workspace
 )
 from server.api.base import ReadWriteView, AutoSchema
 
@@ -55,6 +41,9 @@ class WorkspaceDurationSchema(Schema):
 
 
 class WorkspaceSchema(AutoSchema):
+
+    name = fields.String(required=True,
+                         validate=validate.Regexp(r"^[a-z0-9][a-z0-9\_\$\(\)\+\-\/]*$",0,"ERORROROR"))
     stats = SelfNestedField(WorkspaceSummarySchema())
     duration = SelfNestedField(WorkspaceDurationSchema())
     _id = fields.Integer(dump_only=True, attribute='id')
@@ -63,10 +52,18 @@ class WorkspaceSchema(AutoSchema):
         fields.List(fields.String)
     )
 
+    create_date = fields.DateTime(attribute='create_date',
+                           dump_only=True)
+
+    update_date = fields.DateTime(attribute='update_date',
+                           dump_only=True)
+
+
     class Meta:
         model = Workspace
         fields = ('_id', 'id', 'customer', 'description', 'active',
-                  'duration', 'name', 'public', 'scope', 'stats')
+                  'duration', 'name', 'public', 'scope', 'stats',
+                  'create_date', 'update_date')
 
     @post_load
     def post_load_duration(self, data):
@@ -87,10 +84,23 @@ class WorkspaceView(ReadWriteView):
 
     def _get_base_query(self):
         try:
-            only_confirmed = bool(json.loads(flask.request.args['confirmed']))
+            confirmed = bool(json.loads(flask.request.args['confirmed']))
         except (KeyError, ValueError):
-            only_confirmed = False
-        return Workspace.query_with_count(only_confirmed)
+            confirmed = None
+        try:
+            active = bool(json.loads(flask.request.args['active']))
+            query = Workspace.query_with_count(confirmed).filter(self.model_class.active == active)
+        except (KeyError, ValueError):
+            query = Workspace.query_with_count(confirmed)
+        return query
+
+    def _get_base_query_deactivated(self):
+        try:
+            confirmed = bool(json.loads(flask.request.args['confirmed']))
+        except (KeyError, ValueError):
+            confirmed = None
+        query = Workspace.query_with_count(confirmed).filter(self.model_class.active == False)
+        return query
 
     def _perform_create(self, data, **kwargs):
         scope = data.pop('scope', [])
@@ -110,6 +120,18 @@ class WorkspaceView(ReadWriteView):
         if not kwargs.get('many') and obj.vulnerability_total_count is None:
             obj = self._get_object(obj.name)
         return super(WorkspaceView, self)._dump(obj, route_kwargs, **kwargs)
+
+    @route('/<workspace_id>/activate/', methods=["PUT"])
+    def activate(self, workspace_id):
+        changed = self._get_object(workspace_id).activate()
+        db.session.commit()
+        return changed
+
+    @route('/<workspace_id>/deactivate/', methods=["PUT"])
+    def deactivate(self, workspace_id):
+        changed = self._get_object(workspace_id).deactivate()
+        db.session.commit()
+        return changed
 
 
 WorkspaceView.register(workspace_api)

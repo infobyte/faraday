@@ -1,15 +1,112 @@
 IMPORTANT
 ===========
 
-Please be kind to remove all your pyc files before running faraday if you are updating this piece of software.
-Make sure you run ```./faraday.py --update``` the first time after an update!
+Please be kind to remove all your pyc files before running faraday if you are updating the software.
 
 
 New features in the latest update
 =====================================
 
-TBA:
+
+3.2 [October 17th, 2018]:
 ---
+ * Added logical operator AND to status report search
+ * Restkit dependency removed.
+ * Improvement on manage.py change-password
+ * Add feature to show only unconfirmed vulns.
+ * Add ssl information to manage.py status-check
+ * Update wpscan plugin to support latest version.
+ * Allow workspace names starting with numbers.
+
+September 21, 2018:
+---
+* Fix bug: manage.py status_check
+* Fix bug: manage.py initdb
+
+September 17, 2018:
+---
+* Fix get exploits API
+* New searcher feature
+* Added host_os column to status report
+* Fix and error while trying to execute server with --start
+* Added option --choose-password to initdb
+* Continous scan updated for Nessus 7
+* Refactor on server.config to remove globals
+* Added a directory for custom templates for executive reports (pro and corp)
+* Activity feed shows more results and allows to filter empty results
+* Allow ot create workspace that start with numbers
+* Added more variables to executive reports (pro and corp)
+* Fixed some value checking on tasks api (date field)
+* OpenVas plugin updated
+* Appscan plugin update
+* Added no confirmed vulns to report api
+* Fixed a bug on workspace API when the workspace already exists on database
+* Fix owner filter on status report
+* Fixes on import_csv fplugin when the api returned 409
+* Fixes on status_check
+* Fixed a bug on webui when workspace permission was changed (pro and corp)
+* Update nexpose plugin
+* uigrid library updated to latest version
+* Bug fix on plugin automatic detection
+* Fixed a bug on executive reports when multiple reports were scheduled
+* Avoid closing the executive report and new vuln modal when the form has data
+* Status report open new tab for evidence
+* added change_password to manage.py
+* Update wapiti plugin
+* Fixed vuln count on executive report (pro and corp)
+* Fixed css align in some tables
+* Fixed No ports available error on the client
+
+August 17, 2018:
+---
+* Updated code to use Flask 1.0
+* Add threadfix integration (corp only)
+* Fix create_service fplugin
+* Executive report bug fix on tags
+* Persistence server bug fix on impact and ease of resolution
+* Fix unicode error bug on executive reports
+* Updated code to support latest Twisted version
+* Updated all requirements to use >=
+* Fix dry run on create_host fplugin
+* Fixed del_all_vulns_with and del_all_hosts
+* Improved executive reports status update refresh
+* Websocket port is configurable now
+* Change minimum font size in tag cloud
+* Fixed a problem with shodan icon on dashboard
+* Updated license check on deleted users
+* Users with role client was not able to change password, bug fixed
+* Updated code to support pip 10
+* Added ldap to status check
+* Credentials icon aligned
+* Deamon now allows to execute faraday sever in more than one port and more than one process for multiplexation
+* All views now check for permissions on workspace
+* Pull requests #229, #231, #239 and #240 are merged
+* Avoid polling deleted executive reports
+* Added documentation to project
+* Fix self xss on webshell
+* Add postgres locks check on status_check
+* Vuln counter fix when confirmed is on
+
+July 26, 2018:
+---
+* Interface removed from model and from persistence server lib (fplugin)
+* Performance iprovements on the backend
+* Add quick change workspace name (from all views)
+* Changed the scope field of a workspace from a free text input to a list of targets
+* New faraday styles in all webui views
+* Add search by id for vulnerabilities
+* Add new plugin sslyze
+* Add new plugin wfuzz
+* Add xsssniper plugin
+* Fix W3af, Zap plugins
+* Add brutexss plugin
+* Allow to upload report file from external tools from the web
+* Fix sshcheck import file from GTK
+* Add reconng plugin
+* Add sublist3r plugin
+* Add HP Webinspect plugin
+* Add dirsearch plugin
+* Add ip360 plugin
 * CouchDB was replaced by PostgreSQL :)
 * Host object changed, now the name property is called ip
 * Interface object was removed
@@ -21,17 +118,23 @@ TBA:
 * Allow the user to specify the desired fields of the host list table
 * Add optional hostnames, services, MAC and description fields to the host list
 * Workspace names can be changed from the Web UI
-* Changed the scope field of a workspace from a free text input to a list of targets
 * Exploitation and severity fields only allow certain values. CWE CVEs were fixed to be valid. A script to convert custom CSVs was added.
 * Web UI path changed from /_ui/ to / (_ui has now a redirection to / for keeping backwards compatibility)
-* dirb plugin should creates a vulnerability type information instead of a note.
-* Add new plugin ip360
+* dirb plugin creates an informational vulnerability instead of a note.
 * Add confirmed column to exported csv from webui
 * Fixes in Arachni plugin
 * Add new parameters --keep-old and --keep-new for faraday CLI
 * Add new screenshot fplugin which takes a screenshot of the ip:ports of a given protocol
 * Add fix for net sparker regular and cloud fix on severity
 * Removed Chat feature (data is kept inside notes)
+* Add CVSS score to reference field in Nessus plugin.
+* Fix unicode characters bug in Netsparker plugin.
+* Fix qualys plugin.
+* Fix bugs with MACOS and GTK.
+
+April 10, 2018:
+---
+* Fix bug with tornado version 5.0 and GTK client.
 
 November 17, 2017:
 ---

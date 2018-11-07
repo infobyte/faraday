@@ -10,11 +10,28 @@ if [ $EUID -ne 0 ]; then
  exit 1
 fi
 
-apt-get update
+case `uname` in
+  Linux )
+     LINUX=1
+     type apt-get >/dev/null 2>&1 && { package_manager='apt-get'; }
+     type apt >/dev/null 2>&1 && { package_manager='apt'; }
+     ;;
+  Darwin )
+     DARWIN=1
+     type brew >/dev/null 2>&1 && { package_manager='brew'; }
+     ;;
+esac
 
-for pkg in build-essential python-setuptools python-pip python-dev libpq-dev libffi-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 python-gobject zsh curl; do
-    apt-get install -y $pkg
-done
+
+if [ "$package_manager" == "apt-get" ]
+then
+    apt-get update
+
+    #Install community dependencies
+    for pkg in build-essential python-setuptools python-pip python-dev libpq-dev libffi-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 python-gobject zsh curl python-psycopg2 postgresql; do
+        apt-get install -y $pkg
+    done
+fi
 
 pip2 install -r requirements_server.txt
 pip2 install -r requirements.txt

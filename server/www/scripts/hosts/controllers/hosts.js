@@ -86,7 +86,7 @@ angular.module('faradayApp')
         };
 
         var createCredential = function(credentialData, parent_id){
-            
+
             // Add parent id, create credential and save to server.
             try {
                 var credentialObj = new credential(credentialData, parent_id);
@@ -240,18 +240,7 @@ angular.module('faradayApp')
         }
 
         $scope.new = function() {
-            var modal = $uibModal.open({
-                templateUrl: 'scripts/hosts/partials/modalNew.html',
-                controller: 'hostsModalNew',
-                size: 'lg',
-                resolve: {}
-             });
-
-            modal.result.then(function(data) {
-                var hostdata = data[0];
-                var credentialData = data[1];
-                $scope.insert(hostdata, credentialData);
-            });
+            $location.path('/host/ws/' + $scope.workspace + '/new');
         };
 
         $scope.update = function(host, hostdata) {

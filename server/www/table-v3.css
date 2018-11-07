@@ -1,0 +1,136 @@
+.table-v3 .ui-grid-header {
+    border-top: solid #E5E5E5 2px;
+    border-bottom: 2px solid #d8d8d8;
+    background: none;
+    color: #E9E9E9;
+    padding: 0px;
+    height: 45px;
+}
+
+.table-v3 .ui-grid-header .ui-grid-cell-contents,
+.table-v3 .ui-grid-header .ui-grid-cell-contents span {
+    color: #7c7c7c;
+    padding: 9px 3px 9px 5px !important;
+    text-align: left;
+}
+
+.table-v3 .ui-grid-cell-contents {
+    text-align: left;
+    border: none;
+}
+
+.table-v3 .ui-grid-cell-contents.confirm-toggle{
+    text-align: center;
+}
+
+.table-v3 .ui-grid-header-cell{
+    border-right: solid #E9E9E9 1px;
+    text-align: center;
+}
+
+.table-v3 .ui-grid-header-cell i, .table-v3 .grid_id{
+    padding: 11px 9px 9px 5px !important
+}
+
+.table-v3 .ui-grid-row {
+    height: 45px;
+}
+
+.table-v3 .date-cell {
+    opacity: 0.5;
+}
+
+.table-v3 .grid_id .ui-grid-cell-contents{
+    position: relative;
+    top: 3px;
+}
+
+.table-v3 .ui-grid-row-selected .ui-grid-cell{
+    background-color: #8DA2B7 !important;
+    color: #FFFFFF;
+}
+
+.table-v3 .ui-grid-row-selected a{
+    color: #FFFFFF;
+}
+
+.table-v3 .no-background{
+    background: none;
+}
+
+.table-v3 .ui-grid-row:last-child .ui-grid-cell{
+    border:none;
+}
+
+.table-v3 .ui-grid-pager-panel {
+    background-color: #f1f1f1;
+}
+
+.table-v3 .status.opened {
+    background-color: rgba(223, 57, 54, .6) !important;
+    text-align: center;
+}
+
+.table-v3 .status-wrapper {
+    height: 100%;
+}
+
+.table-v3 .status.opened span {
+    color: #DF3936;
+}
+
+.table-v3 .status.risk-accepted {
+    background-color: rgba(46, 151, 189, 0.6) !important;
+    text-align: center;
+}
+
+.table-v3 .status.re-opened span {
+    color: rgba(223, 191, 53, 1);
+}
+
+.table-v3 .status.re-opened {
+    background-color: rgba(223, 191, 53, 0.6) !important;
+    text-align: center;
+}
+
+.table-v3 .status.risk-accepted span {
+    color: rgba(46, 151, 189, 1);
+}
+
+.table-v3 .status.closed {
+    background-color: rgba(161, 206, 49, 0.6) !important;
+    text-align: center;
+}
+
+.table-v3 .status.closed span {
+    color: rgba(161, 206, 49, 1);
+}
+
+.table-v3 .confirm-icon {
+    width: 40%;
+}
+
+.table-v3 .ui-grid-header-cell{
+    text-align: center;
+}
+
+.table-v3 .ui-grid-header-cell .glyphicon-remove{
+    color: #ccc;
+    font-size: 8px;
+    font-weight: lighter;
+    top: 0px;
+    left: 4px;
+}
+
+.table-v3 .ui-grid-contents-wrapper{
+    clear: both;
+}
+
+.table-v3 .ui-grid-cell {
+    border: none ;
+}
+
+.table-v3 .ui-grid-header .hosts-list-checkall{
+    position: relative;
+    text-align: center;
+}

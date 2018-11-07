@@ -20,20 +20,21 @@ import server.config
 import model.api
 import model.common
 from model.common import factory
+from persistence.server.models import get_host , update_host
 from persistence.server.models import (
     Host,
     Service,
     Vuln,
     VulnWeb,
     Credential,
-    Note,
+    Note
 )
 from model import Modelactions
 #from plugins.modelactions import modelactions
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
-VERSION = server.config.__get_version()
+VERSION = server.config.__get_version().split('-')[0].split('rc')[0]
 logger = logging.getLogger(__name__)
 
 
@@ -171,14 +172,15 @@ class PluginBase(object):
         logger.debug('AddPendingAction', args)
         self._pending_actions.put(args)
 
-    def createAndAddHost(self, name, os="unknown"):
+    def createAndAddHost(self, name, os="unknown", hostnames=None):
 
         host_obj = factory.createModelObject(
             Host.class_signature,
             name,
             os=os,
             parent_id=None,
-            workspace_name=self.workspace)
+            workspace_name=self.workspace,
+            hostnames=hostnames)
 
         host_obj._metadata.creatoserverr = self.id
         self.__addPendingAction(Modelactions.ADDHOST, host_obj)
@@ -197,6 +199,14 @@ class PluginBase(object):
 
         # We don't use interface anymore, so return a host id to maintain
         # backwards compatibility
+        # Little hack because we dont want change all the plugins for add hostnames in Host object.
+        # SHRUG
+        try:
+            host = get_host(self.workspace, host_id=host_id)
+            host.hostnames = hostname_resolution
+            update_host(self.workspace, host, command_id=self.command_id)
+        except:
+            logger.info("Error updating Host with right hostname resolution...")
         return host_id
 
     @deprecation.deprecated(deprecated_in="3.0", removed_in="3.5",
@@ -247,11 +257,11 @@ class PluginBase(object):
         return serv_obj.getID()
 
     def createAndAddVulnToHost(self, host_id, name, desc="", ref=[],
-                               severity="", resolution=""):
+                               severity="", resolution="", data=""):
 
         vuln_obj = model.common.factory.createModelObject(
             Vuln.class_signature,
-            name, desc=desc, refs=ref, severity=severity,
+            name, data=data, desc=desc, refs=ref, severity=severity,
             resolution=resolution, confirmed=False,
             parent_id=host_id, parent_type='Host',
             workspace_name=self.workspace)
@@ -265,11 +275,11 @@ class PluginBase(object):
                             details="Interface object removed. Use host or service instead. Vuln will be added to Host")
     def createAndAddVulnToInterface(self, host_id, interface_id, name,
                                     desc="", ref=[], severity="",
-                                    resolution=""):
+                                    resolution="", data=""):
 
         vuln_obj = model.common.factory.createModelObject(
             Vuln.class_signature,
-            name, desc=desc, refs=ref, severity=severity,
+            name, data=data, desc=desc, refs=ref, severity=severity,
             resolution=resolution, confirmed=False,
             parent_type='Host', parent_id=host_id,
             workspace_name=self.workspace)
@@ -279,11 +289,11 @@ class PluginBase(object):
         return vuln_obj.getID()
 
     def createAndAddVulnToService(self, host_id, service_id, name, desc="",
-                                  ref=[], severity="", resolution=""):
+                                  ref=[], severity="", resolution="", data=""):
 
         vuln_obj = model.common.factory.createModelObject(
             Vuln.class_signature,
-            name, desc=desc, refs=ref, severity=severity,
+            name, data=data, desc=desc, refs=ref, severity=severity,
             resolution=resolution, confirmed=False,
             parent_type='Service', parent_id=service_id,
             workspace_name=self.workspace)
@@ -296,10 +306,10 @@ class PluginBase(object):
                                      ref=[], severity="", resolution="",
                                      website="", path="", request="",
                                      response="", method="", pname="",
-                                     params="", query="", category=""):
+                                     params="", query="", category="", data=""):
         vulnweb_obj = model.common.factory.createModelObject(
             VulnWeb.class_signature,
-            name, desc=desc, refs=ref, severity=severity,
+            name, data=data, desc=desc, refs=ref, severity=severity,
             resolution=resolution, website=website, path=path,
             request=request, response=response, method=method,
             pname=pname, params=params, query=query,
@@ -312,52 +322,16 @@ class PluginBase(object):
         return vulnweb_obj.getID()
 
     def createAndAddNoteToHost(self, host_id, name, text):
+        return None
 
-        note_obj = model.common.factory.createModelObject(
-            Note.class_signature,
-            name, text=text, object_id=host_id, object_type='host',
-            workspace_name=self.workspace)
-
-        note_obj._metadata.creator = self.id
-        self.__addPendingAction(Modelactions.ADDNOTEHOST, note_obj)
-        return note_obj.getID()
-
-    @deprecation.deprecated(deprecated_in="3.0", removed_in="3.5",
-                            current_version=VERSION,
-                            details="Interface object removed. Use host or service instead. Note will be added to Host")
     def createAndAddNoteToInterface(self, host_id, interface_id, name, text):
-
-        note_obj = model.common.factory.createModelObject(
-            Note.class_signature,
-            name, text=text, object_id=host_id, object_type='host',
-            workspace_name=self.workspace)
-
-        note_obj._metadata.creator = self.id
-        self.__addPendingAction(Modelactions.ADDNOTEHOST, note_obj)
-        return note_obj.getID()
+        return None
 
     def createAndAddNoteToService(self, host_id, service_id, name, text):
-
-        note_obj = model.common.factory.createModelObject(
-            Note.class_signature,
-            name, text=text, object_id=service_id, object_type='service',
-            workspace_name=self.workspace)
-
-        note_obj._metadata.creator = self.id
-        self.__addPendingAction(Modelactions.ADDNOTESRV, note_obj)
-        return note_obj.getID()
+        return None
 
     def createAndAddNoteToNote(self, host_id, service_id, note_id, name, text):
-
-        note_obj = model.common.factory.createModelObject(
-            Note.class_signature,
-            name, text=text, object_id=note_id, object_type='comment',
-            workspace_name=self.workspace)
-
-        note_obj._metadata.creator = self.id
-
-        self.__addPendingAction(Modelactions.ADDNOTENOTE, note_obj)
-        return note_obj.getID()
+        return None
 
     def createAndAddCredToService(self, host_id, service_id, username,
                                   password):

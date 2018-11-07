@@ -1,0 +1,242 @@
+#login-main {
+  background-image: url(images/fondofaraday4k.jpg) !important;
+  width: 100%;
+  height: 100%;
+  display: inline-block;
+  position: absolute;
+}
+
+#login-container {
+  width: 410px;
+  margin-top: 160px;
+  background-color: #FFF;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#form-signin {
+  padding: 60px 36px 40px 36px;
+  height: 378px;
+}
+
+#form-signin > h3 {
+  font-weight: 600;
+  font-size: 21px;
+}
+
+.height-39px {
+  height: 39px;
+}
+
+.border-red {
+  border-top-color: #de4456;
+}
+
+.border-strong {
+  border-top-style: solid;
+  border-top-width: 5px;
+}
+
+.mt-sm {
+  margin-top: 10px;
+}
+
+.margin-top-18px {
+  margin-top: 18px;
+}
+
+.margin-top-22px {
+  margin-top: 22px;
+}
+
+.margin-top-30px {
+  margin-top: 30px;
+}
+
+.margin-top-37px {
+  margin-top: 37px;
+}
+
+.clear-margin {
+  margin: 0px;
+}
+
+.clear-margin-bottom {
+  margin-bottom: 0px;
+}
+
+.btn-frd {
+  display: inline-block;
+  padding: 10px 12px;
+  margin-bottom: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.42857143;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  -ms-touch-action: manipulation;
+  touch-action: manipulation;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  background-image: none;
+  border: 1px solid transparent;
+  border-radius: 0px;
+  color: #FFF;
+}
+
+.btn-frd.disabled, .btn-frd[disabled], fieldset[disabled] .btn-frd {
+  cursor: not-allowed;
+  filter: alpha(opacity=65);
+  -webkit-box-shadow: none;
+  box-shadow: none;
+  opacity: .65;
+}
+
+.btn-xl {
+  height: 54px;
+}
+
+.bg-blue {
+  background-color: #2c8dee;
+}
+
+.fg-blue {
+  color: #2c8dee
+}
+
+.fg-red {
+  color: #de4456
+}
+
+.font-bold {
+  font-weight: bold;
+}
+
+.font-xs {
+  font-size: 11px;
+}
+
+.frd-icon {
+  background-repeat: no-repeat;
+}
+
+.frd-icon-lock {
+  background-image: url("images/icon-login-password-lock.svg");
+  width: 20px;
+  height: 20px;
+}
+
+#form-signin .placeholder .frd-icon-lock {
+  position: relative;
+  bottom: 5px;
+}
+
+#footer-login {
+  position: fixed;
+  bottom: 0px;
+  right: 15px;
+}
+
+.justify-flex-start {
+    justify-content: flex-start !important;
+}
+
+.max-sized-table {
+  max-width: 1200px;
+}
+
+.loading-spinner {
+  position: absolute;
+  top: 180px;
+  left: 50%;
+  z-index: 1000;
+  font-size: 30px;
+}
+
+.no-info-overlay {
+  background-color: #EEE;
+  width: 100%;
+  height: 38px;
+  position: relative;
+  z-index: 999;
+  text-align: center;
+}
+
+.no-info-text {
+  margin-top: 8px;
+  font-size: 11px;
+  padding-top: 10px;
+}
+
+.height-auto {
+  height: auto !important;
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
+.file-name {
+  display: inline-block;
+  font-size: smaller;
+  padding-left: 10px;
+}
+
+.file-container {
+  overflow: hidden;
+  position: relative;
+}
+
+.file-container button {
+  border-radius: 0px;
+}
+
+.no-border-radius {
+  border-radius: 0px;
+}
+
+.file-container [type=file] {
+  cursor: inherit;
+  display: block;
+  filter: alpha(opacity=0);
+  opacity: 0;
+  position: absolute;
+  right: 0;
+  top: -6px;
+  width: 105px;
+  height: 34px;
+}
+
+.file-selected {
+  z-index: -999;
+}
+.jumbotron {
+  background-color: #f4f3f4;
+}
+
+.btn {
+  border-radius: 0px;
+}
+
+.feed-icon{
+  width: 18px;
+  padding-bottom: 5px;
+  margin-right: 3px;
+}
+
+
+.little-gray{
+  color: #a2a1a1;
+}
+
+.hide-border-top{
+  border-top: none!important;
+}
+
+.margin-right-15px{
+  margin-right: 15px;
+}

@@ -5,6 +5,7 @@
 import os
 import sys
 import functools
+from signal import SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM, SIG_DFL, signal
 
 import twisted.web
 from twisted.web.resource import Resource, ForbiddenResource
@@ -32,6 +33,7 @@ from server.websocket_factories import (
     WorkspaceServerFactory,
     BroadcastServerProtocol
 )
+from server.api.modules.upload_reports import RawReportProcessor
 
 app = create_app()  # creates a Flask(__name__) app
 logger = server.utils.logger.get_logger(__name__)
@@ -51,8 +53,8 @@ class FileWithoutDirectoryListing(File, CleanHttpHeadersResource):
         ret = super(FileWithoutDirectoryListing, self).render(request)
         if self.type == 'text/html':
             request.responseHeaders.addRawHeader('Content-Security-Policy',
-                                                 'frame-ancestors \'none\'')
-            request.responseHeaders.addRawHeader('X-Frame-Options', 'DENY')
+                                                 'frame-ancestors \'self\'')
+            request.responseHeaders.addRawHeader('X-Frame-Options', 'SAMEORIGIN')
         return ret
 
 
@@ -74,10 +76,10 @@ class WebServer(object):
     WEB_UI_LOCAL_PATH = os.path.join(server.config.FARADAY_BASE, 'server/www')
 
     def __init__(self, enable_ssl=False):
-        logger.info('Starting web server at port {0} with bind address {1}. SSL {2}'.format(
-            server.config.faraday_server.port,
+        logger.info('Starting web server at {}://{}:{}/'.format(
+            'https' if enable_ssl else 'http',
             server.config.faraday_server.bind_address,
-            enable_ssl))
+            server.config.faraday_server.port))
         self.__ssl_enabled = enable_ssl
         self.__config_server()
         self.__build_server_tree()
@@ -118,13 +120,31 @@ class WebServer(object):
             url = 'wss://' + url
         else:
             url = 'ws://' + url
-        logger.info(u"Websocket listening at {url}".format(url=url))
+        # logger.info(u"Websocket listening at {url}".format(url=url))
+        logger.info('Starting websocket server at port {0} with bind address {1}. '
+                    'SSL {2}'.format(
+            websocket_port,
+            self.__bind_address,
+            self.__ssl_enabled
+        ))
 
         factory = WorkspaceServerFactory(url=url)
         factory.protocol = BroadcastServerProtocol
         return factory
 
+    def install_signal(self):
+        for sig in (SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM):
+            signal(sig, SIG_DFL)
+
+
+
     def run(self):
+        def signal_handler(*args):
+            logger.info("Stopping threads, please wait...")
+            # teardown()
+            self.raw_report_processor.stop()
+            reactor.stop()
+
         site = twisted.web.server.Site(self.__root_resource)
         if self.__ssl_enabled:
             ssl_context = self.__load_ssl_certs()
@@ -135,17 +155,27 @@ class WebServer(object):
             self.__listen_func = reactor.listenTCP
 
         try:
+            self.install_signal()
+            # start threads and processes
+            self.raw_report_processor = RawReportProcessor()
+            self.raw_report_processor.start()
             # web and static content
             self.__listen_func(
                 self.__listen_port, site,
                 interface=self.__bind_address)
             # websockets
-            listenWS(self.__build_websockets_resource(), interface=self.__bind_address)
+            try:
+                listenWS(self.__build_websockets_resource(), interface=self.__bind_address)
+            except :
+                logger.warn('Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
+            logger.info('Faraday Server is ready')
+            reactor.addSystemEventTrigger('before', 'shutdown', signal_handler)
             reactor.run()
+
         except error.CannotListenError as e:
             logger.error(str(e))
             sys.exit(1)
         except Exception as e:
-            logger.debug(e)
             logger.error('Something went wrong when trying to setup the Web UI')
+            logger.exception(e)
             sys.exit(1)

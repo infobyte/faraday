@@ -1,3 +1,9 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 import pytest
 
 from server.utils.database import get_unique_fields
@@ -17,6 +23,7 @@ UNIQUE_FIELDS = {
     Vulnerability: [
         'name',
         'description',
+        'type',
         'host_id',
         'service_id',
         'method',
@@ -47,7 +54,7 @@ def test_vulnerability_ddl_invariant(session):
         for statement_clean in statements_clean:
             statement_clean = statement_clean
             if statement_clean not in unique_constraint:
-                raise Exception('Please check server.data.utils.get_unique_fields. Vulnerability DDL changed?')
+                raise Exception('Please check server.utils.database.get_unique_fields. Vulnerability DDL changed?')
 
 
 @pytest.mark.parametrize("obj_class, expected_unique_fields", UNIQUE_FIELDS.items())

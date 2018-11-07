@@ -69,7 +69,7 @@ def _setUpAPIServer(hostname=None, port=None):
     if _xmlrpc_api_server is None:
         #TODO: some way to get defaults.. from config?
         if str(hostname) == "None":
-            hostname = "localhost"
+            hostname = "127.0.0.1"
         if str(port) == "None":
             port = 9876
 
@@ -77,10 +77,15 @@ def _setUpAPIServer(hostname=None, port=None):
             CONF.setApiConInfo(hostname, port)
         devlog("starting XMLRPCServer with api_conn_info = %s" % str(CONF.getApiConInfo()))
 
-        while True:
+        hostnames = [hostname]
+        if hostname == "localhost":
+            hostnames.append("127.0.0.1")
+                
+        listening = False
+        for hostname in hostnames:
 
             try:
-                _xmlrpc_api_server = model.common.XMLRPCServer(CONF.getApiConInfo())
+                _xmlrpc_api_server = model.common.XMLRPCServer((hostname,CONF.getApiConInfoPort()))
                 # Registers the XML-RPC introspection functions system.listMethods, system.methodHelp and system.methodSignature.
                 _xmlrpc_api_server.register_introspection_functions()
 
@@ -104,27 +109,22 @@ def _setUpAPIServer(hostname=None, port=None):
                 _xmlrpc_api_server.register_function(devlog)
 
                 #TODO: check if all necessary APIs are registered here!!
+                listening = True
+                CONF.setApiConInfo(hostname, port)
+                CONF.saveConfig()
 
                 getLogger().info(
                     "XMLRPC API server configured on %s" % str(
                         CONF.getApiConInfo()))
                 break
-            except socket.error as exception:
-                if exception.errno == 98:
-                    # Port already in use
-                    # Let's try the next one
-                    port += 1
-                    if port > 65535:
-                        raise Exception("No ports available!")
-                    CONF.setApiConInfo(hostname, port)
-                    CONF.saveConfig()
-                else:
-                    raise exception
-            except Exception as e:
-                msg = "There was an error creating the XMLRPC API Server:\n%s" % str(e)
+            
+            except socket.error as e:
+                msg = "There was an error creating the XMLRPC API Server (Host:{}): {}".format(hostname,e)
                 log(msg)
-                devlog("[ERROR] - %s" % msg)
+                devlog("[WARNING] - %s" % msg)
 
+        if not listening:
+               raise RuntimeError("Port already in use")
 
 #-------------------------------------------------------------------------------
 # APIs to create and add elements to model
@@ -134,8 +134,8 @@ def _setUpAPIServer(hostname=None, port=None):
 # plugin created the object
 
 
-def createAndAddHost(ip, os="Unknown"):
-    host = newHost(ip, os)
+def createAndAddHost(ip, os="Unknown", hostnames=None):
+    host = newHost(ip, os, hostnames=hostnames)
     if addHost(host):
         return host.getID()
     return None
@@ -195,22 +195,12 @@ def createAndAddVulnWebToService(host_id, service_id, name, desc, ref, severity,
 # Note
 
 def createAndAddNoteToHost(host_id, name, text):
-    note = newNote(name, text, parent_id=host_id, parent_type='host')
-    if addNoteToHost(host_id, note):
-        return note.getID()
     return None
 
-
 def createAndAddNoteToService(host_id, service_id, name, text):
-    note = newNote(name, text, parent_id=service_id, parent_type='service')
-    if addNoteToService(host_id, service_id, note):
-        return note.getID()
     return None
 
 def createAndAddNoteToNote(host_id, service_id, note_id, name, text):
-    note = newNote(name, text, parent_id=note_id, parent_type='comment')
-    if addNoteToNote(host_id, service_id, note_id, note):
-        return note.getID()
     return None
 
 def createAndAddCredToService(host_id, service_id, username, password):
@@ -334,12 +324,12 @@ def delCredFromService(cred, hostname, srvname):
 # CREATION APIS
 #-------------------------------------------------------------------------------
 
-def newHost(ip, os = "Unknown"):
+def newHost(ip, os = "Unknown", hostnames=None):
     """
     It creates and returns a Host object.
     The object created is not added to the model.
     """
-    return __model_controller.newHost(ip, os)
+    return __model_controller.newHost(ip, os, hostnames=hostnames)
 
 
 def newService(name, protocol = "tcp?", ports = [], status = "running",

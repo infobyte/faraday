@@ -1,4 +1,11 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 import random
+import string
 import factory
 import datetime
 import unicodedata
@@ -77,7 +84,7 @@ class UserFactory(FaradayFactory):
 
 class WorkspaceFactory(FaradayFactory):
 
-    name = FuzzyText()
+    name = FuzzyText(chars=string.lowercase+string.digits)
     creator = factory.SubFactory(UserFactory)
 
     class Meta:
@@ -97,7 +104,7 @@ class WorkspaceObjectFactory(FaradayFactory):
 
 
 class HostFactory(WorkspaceObjectFactory):
-    ip = factory.Faker('ipv4')
+    ip = FuzzyText()
     description = FuzzyText()
     os = FuzzyChoice(['Linux', 'Windows', 'OSX', 'Android', 'iOS'])
     creator = factory.SubFactory(UserFactory)

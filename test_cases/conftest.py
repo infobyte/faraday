@@ -1,3 +1,9 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 from tempfile import NamedTemporaryFile
 
 import os
@@ -53,11 +59,12 @@ class CustomClient(FlaskClient):
         _app_ctx_stack.top.sqlalchemy_queries = []
 
         ret = super(CustomClient, self).open(*args, **kwargs)
-        if ret.headers.get('content-type') == 'application/json':
-            try:
-                ret.json = json.loads(ret.data)
-            except ValueError:
-                ret.json = None
+        #Now set in flask 1.0
+        #if ret.headers.get('content-type') == 'application/json':
+        #    try:
+        #        ret.json = json.loads(ret.data)
+        #    except ValueError:
+        #        ret.json = None
         return ret
 
 

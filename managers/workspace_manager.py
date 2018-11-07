@@ -6,7 +6,6 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-import restkit
 import re
 import time
 
@@ -16,7 +15,7 @@ from persistence.server.server_io_exceptions import Unauthorized
 from model.guiapi import notification_center
 
 from config.configuration import getInstanceConfiguration
-from config.globals import CONST_BLACKDBS
+from config.constant import CONST_BLACKDBS
 CONF = getInstanceConfiguration()
 
 
@@ -106,7 +105,7 @@ class WorkspaceManager(object):
 
     def isWorkspaceNameValid(self, ws_name):
         """Returns True if the ws_name is valid, else if it's not"""
-        letters_or_numbers = r"^[a-z][a-z0-9\_\$()\+\-\/]*$"
+        letters_or_numbers = r"^[a-z0-9][a-z0-9\_\$()\+\-\/]*$"
         regex_name = re.match(letters_or_numbers, ws_name)
         if regex_name and regex_name.string not in CONST_BLACKDBS:
             return True

@@ -10,22 +10,21 @@ angular.module('faradayApp')
                 $scope.search = '';
                 $scope.currentPage;
                 $scope.pageSize = 20;
+                $scope.loading = false;
 
                 var init = function() {
                     // table stuff
                     $scope.selectall_models = false;
-                    $scope.sort_field = "end";
+                    $scope.sort_field = "name";
                     $scope.reverse = true;
                     $scope.currentPage = 1;
-
+                    $scope.loading = true;
                     vulnModelsManager.get()
                         .then(function() {
+                            $scope.loading = false;
+                            $scope.totalModels = vulnModelsManager.totalNumberOfModels;
                             $scope.models = vulnModelsManager.models;
                             $scope.loaded_models = true;
-                        });
-                    vulnModelsManager.getSize()
-                        .then(function() {
-                            $scope.totalModels = vulnModelsManager.totalNumberOfModels;
                         });
 
                     $scope.$watch(function() {
@@ -88,14 +87,14 @@ angular.module('faradayApp')
                     ids.forEach(function(id) {
                         var deferred = $q.defer();
 
-                        vulnModelsManager.delete(id)
+                        var promise = vulnModelsManager.delete(id)
                             .then(function(resp) {
                                 deferred.resolve(resp);
                             }, function(message) {
                                 deferred.reject(message);
                             });
 
-                        confirmations.push(deferred);
+                        confirmations.push(promise);
                     });
 
                     return $q.all(confirmations);
@@ -126,10 +125,18 @@ angular.module('faradayApp')
                                 // not completed doing whatever is defined on step
                                 var length = datas.length;
                                 var counter = 0;
+                                $scope.loading = true;
                                 datas.forEach(function(data) {
                                     $scope.insert(data).then(function() {
                                         counter = counter + 1;
                                         if (length == counter) {
+
+                                            vulnModelsManager.get().then(function() {
+                                                $scope.totalModels = vulnModelsManager.totalNumberOfModels;
+                                                $scope.models = vulnModelsManager.models;
+                                            });
+
+                                            $scope.loading = false;
                                             document.body.style.cursor = "default";
                                             $scope.disabledClick = false;
                                         }
@@ -170,36 +177,6 @@ angular.module('faradayApp')
                     });
                 };
 
-                $scope.importFromWorkspace = function() {
-                    var modal = $uibModal.open({
-                        templateUrl: 'scripts/vulndb/partials/importFromWs.html',
-                        controller: 'vulnModelModalImportFromWs',
-                        size: 'sm',
-                        resolve: { }
-                    });
-
-                    modal.result.then(function(data) {
-                        document.body.style.cursor='wait';
-                        ServerAPI.getVulns(data).then(
-                            function(vulns_data) {
-                                $scope.disabledClick = true;
-                                var vulns = vulns_data.data.vulnerabilities;
-                                vulns.forEach(function(vuln) {
-                                    var relevant_vuln = {};
-                                    relevant_vuln.name = vuln.value.name;
-                                    relevant_vuln.description = vuln.value.desc;
-                                    relevant_vuln.resolution = vuln.value.resolution;
-                                    relevant_vuln.exploitation = vuln.value.severity;
-                                    relevant_vuln.references = vuln.value.refs;
-                                    $scope.insert(relevant_vuln);
-                                });
-                            }).then(function() {
-                                document.body.style.cursor = "default";
-                                $scope.disabledClick = false;
-                            });
-                        });
-                };
-
                 $scope.delete = function() {
                     var selected = $scope.selectedModels();
 
@@ -231,7 +208,13 @@ angular.module('faradayApp')
                                 }
                             }
                         }).result.then(function() {
-                            $scope.remove(selected);
+                            $scope.remove(selected).then(function(){
+
+                                vulnModelsManager.get().then(function() {
+                                    $scope.totalModels = vulnModelsManager.totalNumberOfModels;
+                                    $scope.models = vulnModelsManager.models;
+                                });
+                            });
                         }, function() {
                             //dismised, do nothing
                         });
@@ -239,8 +222,13 @@ angular.module('faradayApp')
                 };
 
                 $scope.insert = function(data) {
+                    $scope.loading = false;
                     return vulnModelsManager.create(data)
+                        .then(function(data) {
+                            $scope.loading = false;
+                        })
                         .catch(function(message) {
+                            $scope.loading = false;
                             commonsFact.errorDialog(message);
                         });
                 };
@@ -248,6 +236,7 @@ angular.module('faradayApp')
                 $scope.new = function() {
                     var modal = $uibModal.open({
                         templateUrl: 'scripts/vulndb/partials/modalNew.html',
+                        backdrop : 'static',
                         controller: 'vulnModelModalNew',
                         size: 'lg',
                         resolve: {}
@@ -255,12 +244,18 @@ angular.module('faradayApp')
 
                     modal.result
                         .then(function(data) {
-                            $scope.insert(data);
+                            $scope.insert(data).then(function() {
+
+                                vulnModelsManager.get().then(function() {
+                                    $scope.totalModels = vulnModelsManager.totalNumberOfModels;
+                                    $scope.models = vulnModelsManager.models;
+                                });
+                            });
                         });
                 };
 
                 $scope.update = function(model, data) {
-                    vulnModelsManager.update(model, data)
+                    return vulnModelsManager.update(model, data)
                         .catch(function(message) {
                             commonsFact.errorDialog(message);
                         });
@@ -271,6 +266,7 @@ angular.module('faradayApp')
                         var model = $scope.selectedModels()[0];
                         var modal = $uibModal.open({
                             templateUrl: 'scripts/vulndb/partials/modalEdit.html',
+                            backdrop : 'static',
                             controller: 'vulndDbModalEdit',
                             size: 'lg',
                             resolve: {
@@ -281,7 +277,14 @@ angular.module('faradayApp')
                         });
 
                         modal.result.then(function(data) {
-                            $scope.update(model, data);
+                            $scope.update(model, data).then(function() {
+
+                                vulnModelsManager.get().then(function() {
+                                    $scope.totalModels = vulnModelsManager.totalNumberOfModels;
+                                    $scope.models = vulnModelsManager.models;
+                                });
+
+                            });
                         });
                     } else {
                         commonsFact.errorDialog("No Vulnerability Models were selected to edit.");
@@ -316,6 +319,7 @@ angular.module('faradayApp')
                     $scope.selectall_models = !$scope.selectall_models;
 
                     tmp_models = $filter('filter')($scope.models, $scope.search);
+                    tmp_models = $filter('orderBy')(tmp_models, $scope.sort_field, $scope.reverse);
                     tmp_models = tmp_models.slice(this.currentPage * this.pageSize-20, this.currentPage * this.pageSize);
                     tmp_models.forEach(function(model) {
                         model.selected = $scope.selectall_models;
@@ -340,6 +344,7 @@ angular.module('faradayApp')
                 $scope.toggleSort = function(field) {
                     $scope.toggleSortField(field);
                     $scope.toggleReverse();
+                    $scope.sort();
                 };
 
                 // toggles column sort field
@@ -350,6 +355,10 @@ angular.module('faradayApp')
                 // toggle column sort order
                 $scope.toggleReverse = function() {
                     $scope.reverse = !$scope.reverse;
+                };
+
+                $scope.clearSearch = function() {
+                  $scope.search = '';
                 };
 
                 var equalAsSets = function(a, b) {

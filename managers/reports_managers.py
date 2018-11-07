@@ -5,6 +5,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+import json
 
 
 import os
@@ -50,12 +51,13 @@ class ReportProcessor():
         """Sends a report to the appropiate plugin specified by plugin_id"""
         getLogger(self).info(
             'The file is %s, %s' % (filename, plugin_id))
-        if not self.plugin_controller.processReport(plugin_id, filename, self.ws_name):
+        command_id = self.plugin_controller.processReport(plugin_id, filename, ws_name=self.ws_name)
+        if not command_id:
             getLogger(self).error(
                 "Faraday doesn't have a plugin for this tool..."
                 " Processing: ABORT")
             return False
-        return True
+        return command_id
 
     def onlinePlugin(self, cmd):
         _, new_cmd = self.plugin_controller.processCommandInput('0', cmd, './')
@@ -221,7 +223,6 @@ class ReportParser(object):
         add the file signature here
         and add the code in self.getRootTag() for get the root tag.
         """
-
         f = result = None
 
         signatures = {
@@ -237,20 +238,29 @@ class ReportParser(object):
 
             f = open(file_path, 'rb')
             file_signature = f.read(10)
-            f.seek(0)
 
             for key in signatures:
                 if file_signature.find(key) == 0:
 
                     result = signatures[key]
-                    getLogger(self).debug("Report type detected: %s" % result)
                     break
+
+            if not result:
+                # try json loads to detect a json file.
+                try:
+                    f.seek(0)
+                    json.loads(f.read())
+                    result = 'json'
+                except ValueError:
+                    pass
 
         except IOError, err:
             self.report_type = None
             getLogger(self).error(
                 "Error while opening file.\n%s. %s" % (err, file_path))
 
+        getLogger(self).debug("Report type detected: %s" % result)
+        f.seek(0)
         return f, result
 
     def getRootTag(self, file_path):
@@ -269,6 +279,10 @@ class ReportParser(object):
             result = "maltego"
         elif report_type == "dat":
             result = 'lynis'
+        elif report_type == 'json':
+            # this will work since recon-ng is the first plugin to use json.
+            # we need to add json detection here!
+            result = 'reconng'
         else:
 
             try:
@@ -332,8 +346,6 @@ class ReportParser(object):
             return "X1"
         elif "entities" == tag:
             return "Core Impact"
-        elif "NeXposeSimpleXML" == tag:
-            return "Nexpose"
         elif "NexposeReport" == tag:
             return "NexposeFull"
         elif "ASSET_DATA_REPORT" == tag or "SCAN" == tag:
@@ -343,10 +355,12 @@ class ReportParser(object):
         elif "netsparker" == tag:
             return "Netsparker"
         elif "netsparker-cloud" == tag:
-            return "NetsparkerCloud"            
+            return "NetsparkerCloud"
         elif "maltego" == tag:
             return "Maltego"
         elif "lynis" == tag:
             return "Lynis"
+        elif "reconng" == tag:
+            return "Reconng"
         else:
             return None

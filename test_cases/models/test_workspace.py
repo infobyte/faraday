@@ -1,3 +1,9 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 from server.models import db, Workspace
 from test_cases.factories import (
     HostFactory,
@@ -71,7 +77,7 @@ def populate_workspace(workspace):
 def test_vuln_count(workspace, second_workspace):
     populate_workspace(workspace)
     populate_workspace(second_workspace)
-    workspace = Workspace.query_with_count(False).filter(
+    workspace = Workspace.query_with_count(None).filter(
         Workspace.id == workspace.id).first()
     assert workspace.vulnerability_web_count == WEB_VULN_COUNT
     assert workspace.vulnerability_code_count == SOURCE_CODE_VULN_COUNT

@@ -12,6 +12,7 @@ import subprocess
 import getpass
 
 from threading import Event
+from sys import platform as _platform
 
 
 def get_private_ip():
@@ -21,8 +22,10 @@ def get_private_ip():
     TODO: The problem is what happens when the machine
     has more than one private ip
     """
-    # What's the best way to do this?
-    ip = socket.gethostbyname(socket.gethostname())
+    try:
+        ip = socket.gethostbyname(socket.gethostname())
+    except socket.gaierror:
+        return ''
     if ip:
         if not ip.startswith('127'):
             return ip
@@ -30,7 +33,11 @@ def get_private_ip():
     if ip:
         if not ip.startswith('127'):
             return ip
-    ip = subprocess.check_output(["ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1 -d'/'"], shell=True)
+    if _platform == "linux" or _platform == "linux2": # linux
+        ip = subprocess.check_output(["ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1 -d'/'"], shell=True)
+    elif _platform == "darwin": # MAC OS X
+        ip = subprocess.check_output(["ifconfig | grep 'inet ' | grep -Fv 127.0.0.1 | awk '{print $2}' "], shell=True)
+        ip = ip.rstrip() # removes '\n'
     return ip
 
 

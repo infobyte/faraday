@@ -258,6 +258,91 @@ class Host(Metadata):
         UniqueConstraint(ip, workspace_id, name='uix_host_ip_workspace'),
     )
 
+    vulnerability_info_count = query_expression()
+    vulnerability_med_count = query_expression()
+    vulnerability_high_count = query_expression()
+    vulnerability_critical_count = query_expression()
+    vulnerability_low_count = query_expression()
+    vulnerability_unclassified_count = query_expression()
+    vulnerability_total_count = query_expression()
+
+    @classmethod
+    def query_with_count(cls, confirmed, host_ids, workspace_name):
+        query = cls.query.join(Workspace).filter(Workspace.name == workspace_name)
+        if host_ids:
+            query = query.filter(cls.id.in_(host_ids))
+        return query.options(
+            with_expression(
+                cls.vulnerability_info_count,
+                _make_vuln_count_property(
+                    type_=None,
+                    confirmed = confirmed,
+                    use_column_property = False,
+                    extra_query = "vulnerability.severity='informational'",
+                    get_hosts_vulns = True
+                )
+            ),
+            with_expression(
+                cls.vulnerability_med_count,
+                _make_vuln_count_property(
+                    type_ = None,
+                    confirmed = confirmed,
+                    use_column_property = False,
+                    extra_query = "vulnerability.severity='medium'",
+                    get_hosts_vulns = True
+                )
+            ),
+            with_expression(
+                cls.vulnerability_high_count,
+                _make_vuln_count_property(
+                    type_ = None,
+                    confirmed = confirmed,
+                    use_column_property = False,
+                    extra_query = "vulnerability.severity='high'",
+                    get_hosts_vulns = True
+                )
+            ),
+            with_expression(
+                cls.vulnerability_critical_count,
+                _make_vuln_count_property(
+                    type_ = None,
+                    confirmed = confirmed,
+                    use_column_property = False,
+                    extra_query = "vulnerability.severity='critical'",
+                    get_hosts_vulns = True
+                )
+            ),
+            with_expression(
+                cls.vulnerability_low_count,
+                _make_vuln_count_property(
+                    type_ = None,
+                    confirmed = confirmed,
+                    use_column_property = False,
+                    extra_query = "vulnerability.severity='low'",
+                    get_hosts_vulns = True
+                )
+            ),
+            with_expression(
+                cls.vulnerability_unclassified_count,
+                _make_vuln_count_property(
+                    type_ = None,
+                    confirmed = confirmed,
+                    use_column_property = False,
+                    extra_query = "vulnerability.severity='unclassified'",
+                    get_hosts_vulns = True
+                )
+            ),
+            with_expression(
+                cls.vulnerability_total_count,
+                _make_vuln_count_property(
+                    type_ = None,
+                    confirmed = confirmed,
+                    use_column_property = False,
+                    get_hosts_vulns = True
+                )
+            ),
+        )
+
     @property
     def parent(self):
         return
@@ -479,6 +564,9 @@ class CustomAssociationSet(_AssociationSet):
             # we need to fetch already created objs.
             session.rollback()
             for conflict_obj in conflict_objs:
+                if not hasattr(conflict_obj, 'name'):
+                    # The session can hold elements without a name (altough it shouldn't)
+                    continue
                 if conflict_obj.name == value:
                     continue
                 persisted_conclict_obj = session.query(conflict_obj.__class__).filter_by(name=conflict_obj.name).first()
@@ -494,7 +582,7 @@ class CustomAssociationSet(_AssociationSet):
 def _build_associationproxy_creator(model_class_name):
     def creator(name, vulnerability):
         """Get or create a reference/policyviolation with the
-        corresponding name. This must be worspace aware"""
+        corresponding name. This must be workspace aware"""
 
         # Ugly hack to avoid the fact that Reference is defined after
         # Vulnerability
@@ -517,7 +605,7 @@ def _build_associationproxy_creator(model_class_name):
 def _build_associationproxy_creator_non_workspaced(model_class_name):
     def creator(name, vulnerability):
         """Get or create a reference/policyviolation with the
-        corresponding name. This must be worspace aware"""
+        corresponding name. This must be workspace aware"""
 
         # Ugly hack to avoid the fact that Reference is defined after
         # Vulnerability
@@ -602,7 +690,7 @@ class CommandObject(db.Model):
 
     __table_args__ = (
         UniqueConstraint('object_id', 'object_type', 'command_id', 'workspace_id',
-                         name='uix_command_object_object_id_object_type_command_id_workspace_id'),
+                         name='uix_command_object_objid_objtype_command_id_ws'),
     )
 
     @property
@@ -793,11 +881,11 @@ class VulnerabilityGeneric(VulnerabilityABC):
         deferred=True
     )
 
-    _host_vuln_query = (
+    _host_ip_query = (
         select([Host.ip])
         .where(text('vulnerability.host_id = host.id'))
     )
-    _service_vuln_query = (
+    _service_ip_query = (
         select([text('host_inner.ip')])
         .select_from(text('host as host_inner, service'))
         .where(text('vulnerability.service_id = service.id and '
@@ -806,9 +894,29 @@ class VulnerabilityGeneric(VulnerabilityABC):
     target_host_ip = column_property(
         case([
             (text('vulnerability.host_id IS NOT null'),
-                _host_vuln_query.as_scalar()),
+                _host_ip_query.as_scalar()),
             (text('vulnerability.service_id IS NOT null'),
-                _service_vuln_query.as_scalar())
+                _service_ip_query.as_scalar())
+        ]),
+        deferred=True
+    )
+
+    _host_os_query = (
+        select([Host.os])
+        .where(text('vulnerability.host_id = host.id'))
+    )
+    _service_os_query = (
+        select([text('host_inner.os')])
+        .select_from(text('host as host_inner, service'))
+        .where(text('vulnerability.service_id = service.id and '
+                    'host_inner.id = service.host_id'))
+    )
+    target_host_os = column_property(
+        case([
+            (text('vulnerability.host_id IS NOT null'),
+                _host_os_query.as_scalar()),
+            (text('vulnerability.service_id IS NOT null'),
+                _service_os_query.as_scalar())
         ]),
         deferred=True
     )
@@ -836,7 +944,8 @@ class Vulnerability(VulnerabilityGeneric):
 
     @declared_attr
     def service_id(cls):
-        return VulnerabilityGeneric.__table__.c.get('service_id', Column(Integer, db.ForeignKey('service.id')))
+        return VulnerabilityGeneric.__table__.c.get('service_id', Column(Integer, db.ForeignKey('service.id'),
+                                                                         index=True))
 
     @declared_attr
     def service(cls):
@@ -1127,18 +1236,30 @@ class Credential(Metadata):
         return self.host or self.service
 
 
-def _make_vuln_count_property(type_=None, only_confirmed=False,
-                              use_column_property=True, extra_query=None):
-    query = (select([func.count(text('vulnerability.id'))]).
-             select_from(table('vulnerability')).
-             where(text('vulnerability.workspace_id = workspace.id'))
+def _make_vuln_count_property(type_=None, confirmed=None,
+                              use_column_property=True, extra_query=None, get_hosts_vulns=False):
+    from_clause = table('vulnerability')
+
+    if get_hosts_vulns:
+        from_clause = from_clause.join(
+            Service, Vulnerability.service_id == Service.id,
+            isouter=True
+        )
+
+    query = (select([func.count(text('distinct(vulnerability.id)'))]).
+             select_from(from_clause)
              )
+    if get_hosts_vulns:
+        query = query.where(text('(vulnerability.host_id = host.id OR host.id = service.host_id)'))
+    else:
+        query = query.where(text('vulnerability.workspace_id = workspace.id'))
+
     if type_:
         # Don't do queries using this style!
         # This can cause SQL injection vulnerabilities
         # In this case type_ is supplied from a whitelist so this is safe
         query = query.where(text("vulnerability.type = '%s'" % type_))
-    if only_confirmed:
+    if confirmed:
         if db.session.bind.dialect.name == 'sqlite':
             # SQLite has no "true" expression, we have to use the integer 1
             # instead
@@ -1147,6 +1268,15 @@ def _make_vuln_count_property(type_=None, only_confirmed=False,
             # I suppose that we're using PostgreSQL, that can't compare
             # booleans with integers
             query = query.where(text("vulnerability.confirmed = true"))
+    elif confirmed == False:
+        if db.session.bind.dialect.name == 'sqlite':
+            # SQLite has no "true" expression, we have to use the integer 1
+            # instead
+            query = query.where(text("vulnerability.confirmed = 0"))
+        elif db.session.bind.dialect.name == 'postgresql':
+            # I suppose that we're using PostgreSQL, that can't compare
+            # booleans with integers
+            query = query.where(text("vulnerability.confirmed = false"))
 
     if extra_query:
         query = query.where(text(extra_query))
@@ -1163,7 +1293,7 @@ class Workspace(Metadata):
     description = BlankColumn(Text)
     active = Column(Boolean(), nullable=False, default=True)  # TBI
     end_date = Column(DateTime(), nullable=True)
-    name = Column(String(250), nullable=False, unique=True)
+    name = NonBlankColumn(String(250), unique=True, nullable=False)
     public = Column(Boolean(), nullable=False, default=False)  # TBI
     start_date = Column(DateTime(), nullable=True)
 
@@ -1183,11 +1313,11 @@ class Workspace(Metadata):
         cascade="all, delete-orphan")
 
     @classmethod
-    def query_with_count(cls, only_confirmed):
+    def query_with_count(cls, confirmed):
         """
         Add count fields to the query.
 
-        If only_confirmed is True, it will only show the count for confirmed
+        If confirmed is True/False, it will only show the count for confirmed / not confirmed
         vulnerabilities. Otherwise, it will show the count of all of them
         """
         return cls.query.options(
@@ -1198,25 +1328,25 @@ class Workspace(Metadata):
             with_expression(
                 cls.vulnerability_web_count,
                 _make_vuln_count_property('vulnerability_web',
-                                          only_confirmed=only_confirmed,
+                                          confirmed=confirmed,
                                           use_column_property=False)
             ),
             with_expression(
                 cls.vulnerability_code_count,
                 _make_vuln_count_property('vulnerability_code',
-                                          only_confirmed=only_confirmed,
+                                          confirmed=confirmed,
                                           use_column_property=False)
             ),
             with_expression(
                 cls.vulnerability_standard_count,
                 _make_vuln_count_property('vulnerability',
-                                          only_confirmed=only_confirmed,
+                                          confirmed=confirmed,
                                           use_column_property=False)
             ),
             with_expression(
                 cls.vulnerability_total_count,
                 _make_vuln_count_property(type_=None,
-                                          only_confirmed=only_confirmed,
+                                          confirmed=confirmed,
                                           use_column_property=False)
             ),
         )
@@ -1226,6 +1356,22 @@ class Workspace(Metadata):
                                     parent_field='scope',
                                     child_field='name',
                                     workspaced=False)
+
+    def activate(self):
+        # if Checks active count
+        if not self.active:
+            self.active = True
+            return True
+        return False
+        # else:
+        # raise Cannot exceed or return false
+
+
+    def deactivate(self):
+        if self.active is not False:
+            self.active = False
+            return True
+        return False
 
 
 class Scope(Metadata):
@@ -1239,9 +1385,10 @@ class Scope(Metadata):
                         index=True,
                         nullable=False
                         )
+
     workspace = relationship(
         'Workspace',
-         backref=backref('scope', lazy="joined", cascade="all, delete-orphan"),
+         backref=backref('scope', cascade="all, delete-orphan"),
          foreign_keys=[workspace_id],
          )
 
@@ -1608,14 +1755,14 @@ CheckConstraint('((Vulnerability.host_id IS NOT NULL)::int+'
 
 vulnerability_uniqueness = DDL(
     "CREATE UNIQUE INDEX uix_vulnerability ON %(fullname)s "
-    "(md5(name), md5(description), COALESCE(host_id, -1), COALESCE(service_id, -1), "
+    "(md5(name), md5(description), type, COALESCE(host_id, -1), COALESCE(service_id, -1), "
     "COALESCE(md5(method), ''), COALESCE(md5(parameter_name), ''), COALESCE(md5(path), ''), "
     "COALESCE(md5(website), ''), workspace_id, COALESCE(source_code_id, -1));"
 )
 
 vulnerability_uniqueness_sqlite = DDL(
     "CREATE UNIQUE INDEX uix_vulnerability ON %(fullname)s "
-    "(name, description, COALESCE(host_id, -1), COALESCE(service_id, -1), "
+    "(name, description, type, COALESCE(host_id, -1), COALESCE(service_id, -1), "
     "COALESCE(method, ''), COALESCE(parameter_name, ''), COALESCE(path, ''), "
     "COALESCE(website, ''), workspace_id, COALESCE(source_code_id, -1));"
 )

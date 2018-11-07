@@ -83,7 +83,6 @@ class NexposeFullXmlParser(object):
         """
         ret = ""
         tag = node.tag.lower()
-
         if tag == 'containerblockelement':
             if len(list(node)) > 0:
                 for child in list(node):
@@ -147,7 +146,6 @@ class NexposeFullXmlParser(object):
                     for desc in list(test):
                         vuln['desc'] += self.parse_html_type(desc)
                     vulns.append(vuln)
-
         return vulns
 
     def get_vuln_definitions(self, tree):
@@ -200,7 +198,6 @@ class NexposeFullXmlParser(object):
                             vuln['tags'].append(tag.text.lower())
                     """
                 vulns[vid] = vuln
-
         return vulns
 
     def get_items(self, tree, vulns):
@@ -214,14 +211,14 @@ class NexposeFullXmlParser(object):
             for node in nodes.iter('node'):
                 host = dict()
                 host['name'] = node.get('address')
-                host['hostnames'] = set()
+                host['hostnames'] = list()
                 host['os'] = ""
                 host['services'] = list()
                 host['vulns'] = self.parse_tests_type(node, vulns)
 
                 for names in node.iter('names'):
                     for name in list(names):
-                        host['hostnames'].add(name.text)
+                        host['hostnames'].append(name.text)
 
                 for fingerprints in node.iter('fingerprints'):
                     os = fingerprints.find('os')
@@ -275,37 +272,64 @@ class NexposeFullPlugin(core.PluginBase):
                                               "nexpose_full_output-%s.xml" % self._rid)
 
     def parseOutputString(self, output, debug=False):
+
         parser = NexposeFullXmlParser(output)
 
         for item in parser.items:
-            h_id = self.createAndAddHost(item['name'], item['os'])
-            i_id = self.createAndAddInterface(h_id, item['name'], ipv4_address=item[
-                                              'name'], hostname_resolution= ' '.join( list( item['hostnames'] )))
+
+            h_id = self.createAndAddHost(item['name'], item['os'], hostnames=item['hostnames'])
+
+            i_id = self.createAndAddInterface(
+                h_id,
+                item['name'],
+                ipv4_address=item['name'],
+                hostname_resolution=' '.join(item['hostnames']))
 
             for v in item['vulns']:
-                v_id = self.createAndAddVulnToHost(h_id, v['name'], v['desc'], v[
-                                                   'refs'], v['severity'], v['resolution'])
+
+                v_id = self.createAndAddVulnToHost(
+                    h_id,
+                    v['name'],
+                    v['desc'],
+                    v['refs'],
+                    v['severity'],
+                    v['resolution'])
+
 
             for s in item['services']:
                 web = False
                 version = s.get("version", "")
 
-                s_id = self.createAndAddServiceToInterface(h_id, i_id, s['name'],
-                                                           s['protocol'],
-                                                           ports=[
-                                                               str(s['port'])],
-                                                           status=s['status'],
-                                                           version=version)
+                s_id = self.createAndAddServiceToInterface(
+                    h_id,
+                    i_id,
+                    s['name'],
+                    s['protocol'],
+                    ports=[str(s['port'])],
+                    status=s['status'],
+                    version=version)
+
                 for v in s['vulns']:
                     if v['is_web']:
                         v_id = self.createAndAddVulnWebToService(
-                            h_id, s_id, v['name'], v['desc'], v['refs'],
-                            v['severity'], v['resolution'],
+                            h_id,
+                            s_id,
+                            v['name'],
+                            v['desc'],
+                            v['refs'],
+                            v['severity'],
+                            v['resolution'],
                             path=v.get('path',''))
                     else:
                         v_id = self.createAndAddVulnToService(
-                            h_id, s_id, v['name'], v['desc'], v['refs'],
-                            v['severity'], v['resolution'])
+                            h_id,
+                            s_id,
+                            v['name'],
+                            v['desc'],
+                            v['refs'],
+                            v['severity'],
+                            v['resolution'])
+
         del parser
 
     def processCommandString(self, username, current_path, command_string):

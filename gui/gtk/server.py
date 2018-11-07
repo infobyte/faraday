@@ -77,7 +77,7 @@ class ServerIO(object):
     def get_host(self, host_id):
         return models.get_host(self.active_workspace, host_id)
 
-    @safe_io_with_server((0, 0, 0, 0))
+    @safe_io_with_server((0, 0, 0))
     def get_workspace_numbers(self):
         return models.get_workspace_numbers(self.active_workspace)
 
@@ -86,8 +86,8 @@ class ServerIO(object):
         return models.server_info()
 
     @safe_io_with_server(False)
-    def test_server_url(self, url):
-        return models.test_server_url(url)
+    def check_server_url(self, url):
+        return models.check_server_url(url)
 
     @safe_io_with_server(None)
     def get_changes_stream(self):
@@ -113,10 +113,11 @@ class ServerIO(object):
                         obj_id = obj_information.get('id')
                         obj_type = obj_information.get('type')
                         obj_name = obj_information.get('name')
-                        obj = self.get_object(obj_type, obj_id)
                         if action == 'CREATE':
+                            obj = self.get_object(obj_type, obj_id)
                             notification_center.addObject(obj)
                         elif action == 'UPDATE':
+                            obj = self.get_object(obj_type, obj_id)
                             notification_center.editObject(obj)
                         elif action == 'DELETE':
                             notification_center.deleteObject(obj_id, obj_type)

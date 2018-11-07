@@ -1,9 +1,16 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 import getpass
 import shutil
 import string
 
 import os
 import sys
+import click
 import psycopg2
 from random import SystemRandom
 from tempfile import TemporaryFile
@@ -12,8 +19,12 @@ from subprocess import Popen, PIPE
 import sqlalchemy
 from sqlalchemy import create_engine
 
-from config.configuration import getInstanceConfiguration
-from faraday import FARADAY_USER_CONFIG_XML, FARADAY_BASE_CONFIG_XML
+from config.configuration import Configuration
+from faraday import (
+    FARADAY_USER_CONFIG_XML,
+    FARADAY_BASE_CONFIG_XML,
+    FARADAY_BASE
+)
 
 try:
     # py2.7
@@ -25,9 +36,10 @@ except ImportError:
 from flask import current_app
 from colorama import init
 from colorama import Fore
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import OperationalError, ProgrammingError
 
-from config.globals import CONST_FARADAY_HOME_PATH
+import server.config
+from config.constant import CONST_FARADAY_HOME_PATH
 from server.config import LOCAL_CONFIG_FILE
 init()
 
@@ -51,7 +63,7 @@ class InitDB():
 
         return True
 
-    def run(self):
+    def run(self, choose_password):
         """
              Main entry point that executes these steps:
                  * creates role in database.
@@ -88,15 +100,28 @@ class InitDB():
             current_psql_output.close()
             conn_string = self._save_config(config, username, password, database_name, hostname)
             self._create_tables(conn_string)
-            self._create_admin_user(conn_string)
+            couchdb_config_present = server.config.couchdb
+            if not (couchdb_config_present and couchdb_config_present.user and couchdb_config_present.password):
+                self._create_admin_user(conn_string, choose_password)
+            else:
+                print('Skipping new admin creation since couchdb configuration was found.')
         except KeyboardInterrupt:
             current_psql_output.close()
             print('User cancelled.')
             sys.exit(1)
 
-    def _create_admin_user(self, conn_string):
+    def _create_admin_user(self, conn_string, choose_password):
         engine = create_engine(conn_string)
-        random_password = self.generate_random_pw(12)
+        # TODO change the random_password variable name, it is not always
+        # random anymore
+        if choose_password:
+            random_password = click.prompt(
+                'Enter the desired password for the "faraday" user',
+                confirmation_prompt=True,
+                hide_input=True
+            )
+        else:
+            random_password = self.generate_random_pw(12)
         already_created = False
         try:
             engine.execute("INSERT INTO \"faraday_user\" (username, name, password, "
@@ -111,13 +136,22 @@ class InitDB():
         if not already_created:
             if not os.path.isfile(FARADAY_USER_CONFIG_XML):
                 shutil.copy(FARADAY_BASE_CONFIG_XML, FARADAY_USER_CONFIG_XML)
-
-            print("Admin user created with {red}username: {white}faraday and "
-                  " {red}password{white}: {"
-                  "random_password}".format(random_password=random_password,
+            self._save_user_xml(random_password)
+            print("Admin user created with \n\n{red}username: {white}faraday \n"
+                  "{red}password:{white} {"
+                  "random_password} \n".format(random_password=random_password,
                                             white=Fore.WHITE, red=Fore.RED))
             print("{yellow}WARNING{white}: If you are going to execute couchdb importer you must use the couchdb password for faraday user.".format(white=Fore.WHITE, yellow=Fore.YELLOW))
 
+    def _save_user_xml(self, random_password):
+        user_xml = os.path.expanduser("~/.faraday/config/user.xml")
+        if not os.path.exists(user_xml):
+            shutil.copy(FARADAY_BASE_CONFIG_XML, user_xml)
+        conf = Configuration(user_xml)
+        conf.setAPIUrl('http://localhost:5985')
+        conf.setAPIUsername('faraday')
+        conf.setAPIPassword(random_password)
+        conf.saveConfig()
 
     def _configure_existing_postgres_user(self):
         username = raw_input('Please enter the postgresql username: ')
@@ -126,6 +160,7 @@ class InitDB():
         return username, password
 
     def _check_psql_output(self, current_psql_output_file, process_status):
+        current_psql_output_file.seek(0)
         psql_output = current_psql_output_file.read()
         if 'unknown user: postgres' in psql_output:
             print('ERROR: Postgres user not found. Did you install package {blue}postgresql{white}?'.format(blue=Fore.BLUE, white=Fore.WHITE))
@@ -133,7 +168,7 @@ class InitDB():
             print('ERROR: {red}PostgreSQL service{white} is not running. Please verify that it is running in port 5432 before executing setup script.'.format(red=Fore.RED, white=Fore.WHITE))
         elif process_status > 0:
             current_psql_output_file.seek(0)
-            print('ERROR: ' + current_psql_output_file.read())
+            print('ERROR: ' + psql_output)
 
         if process_status is not 0:
             current_psql_output_file.close() # delete temp file
@@ -149,12 +184,13 @@ class InitDB():
             we return username and password and those values will be saved in the config file.
         """
         print('This script will {blue} create a new postgres user {white} and {blue} save faraday-server settings {white}(server.ini). '.format(blue=Fore.BLUE, white=Fore.WHITE))
-        username = 'faraday'
-        postgres_command = ['sudo', '-u', 'postgres']
+        username = 'faraday_postgresql'
+        postgres_command = ['sudo', '-u', 'postgres', 'psql']
         if sys.platform == 'darwin':
-            postgres_command = []
+            print('{blue}MAC OS detected{white}'.format(blue=Fore.BLUE, white=Fore.WHITE))
+            postgres_command = ['psql', 'postgres']
         password = self.generate_random_pw(25)
-        command = postgres_command + ['psql', '-c', 'CREATE ROLE {0} WITH LOGIN PASSWORD \'{1}\';'.format(username, password)]
+        command = postgres_command + [ '-c', 'CREATE ROLE {0} WITH LOGIN PASSWORD \'{1}\';'.format(username, password)]
         p = Popen(command, stderr=psql_log_file, stdout=psql_log_file)
         p.wait()
         psql_log_file.seek(0)
@@ -165,6 +201,16 @@ class InitDB():
             print("{yellow}WARNING{white}: Role {username} already exists, skipping creation ".format(yellow=Fore.YELLOW, white=Fore.WHITE, username=username))
 
             try:
+                if not getattr(server.config, 'database', None):
+                    print('Manual configuration? \n faraday_postgresql was found in PostgreSQL, but no connection string was found in server.ini. ')
+                    print('Please configure [database] section with correct postgresql string. Ex. postgresql+psycopg2://faraday_postgresql:PASSWORD@localhost/faraday')
+                    sys.exit(1)
+                try:
+                    password = server.config.database.connection_string.split(':')[2].split('@')[0]
+                except AttributeError:
+                    print('Could not find connection string.')
+                    print('Please configure [database] section with correct postgresql string. Ex. postgresql+psycopg2://faraday_postgresql:PASSWORD@localhost/faraday')
+                    sys.exit(1)
                 connection = psycopg2.connect(dbname='postgres',
                                               user=username,
                                               password=password)
@@ -235,8 +281,13 @@ class InitDB():
                 sys.exit(1)
             elif 'password authentication failed' in ex.message:
                 print('ERROR: ')
+                sys.exit(1)
             else:
                 raise
+        except ProgrammingError as ex:
+            print(ex)
+            print('Please check postgres user permissions.')
+            sys.exit(1)
         except ImportError as ex:
             if 'psycopg2' in ex:
                 print(
@@ -244,3 +295,8 @@ class InitDB():
                 sys.exit(1)
             else:
                 raise
+        else:
+            from alembic.config import Config
+            from alembic import command
+            alembic_cfg = Config(os.path.join(os.getcwd(), 'alembic.ini'))
+            command.stamp(alembic_cfg, "head")

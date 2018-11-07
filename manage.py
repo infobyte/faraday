@@ -1,29 +1,34 @@
 #!/usr/bin/env python
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 
 import re
 
 import click
 import requests
 import sys
-from requests import ConnectionError
-from sqlalchemy.exc import OperationalError
-from pgcli.main import PGCli
 
 import server.config
 from persistence.server.server import _conf, FARADAY_UP, SERVER_URL
 from server.commands.initdb import InitDB
 from server.commands.faraday_schema_display import DatabaseSchema
 from server.commands.app_urls import show_all_urls
-from server.commands.reset_db import reset_db_all
 from server.commands.reports import import_external_reports
+from server.commands import status_check as status_check_functions
+from server.commands import change_password as change_pass
 from server.models import db, User
 from server.importer import ImportCouchDB
 
 from server.web import app
 from utils.logs import setUpLogger
 
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
-@click.group()
+@click.group(context_settings=CONTEXT_SETTINGS)
 def cli():
     pass
 
@@ -32,11 +37,21 @@ def check_faraday_server(url):
     return requests.get(url)
 
 
-@click.command()
+@click.command(help="Enable importation of plugins reports in ~/.faraday folder")
 @click.option('--debug/--no-debug', default=False)
 @click.option('--workspace', default=None)
 @click.option('--polling/--no-polling', default=True)
 def process_reports(debug, workspace, polling):
+    try:
+        from requests import ConnectionError
+    except ImportError:
+        print('Python requests was not found. Please install it with: pip install requests')
+        sys.exit(1)
+    try:
+        from sqlalchemy.exc import OperationalError
+    except ImportError:
+        print('SQLAlchemy was not found please install it with: pip install sqlalchemy')
+        sys.exit(1)
     setUpLogger(debug)
     configuration = _conf()
     url = '{0}/_api/v2/info'.format(configuration.getServerURI() if FARADAY_UP else SERVER_URL)
@@ -51,41 +66,85 @@ def process_reports(debug, workspace, polling):
             print('Can\'t connect to {0}. Please check if the server is running.'.format(url))
 
 
-@click.command()
-def reset_db():
-    with app.app_context():
-        reset_db_all()
-
-@click.command()
+@click.command(help="Show all URLs in Faraday Server API")
 def show_urls():
     show_all_urls()
 
-@click.command()
-def faraday_schema_display():
-    DatabaseSchema().run()
-
-@click.command()
-def initdb():
+@click.command(help="Create Faraday DB in Postgresql, also tables and indexes")
+@click.option(
+        '--choose-password', is_flag=True, default=False,
+        help=('Instead of using a random password for the user "faraday", '
+              'ask for the desired one')
+        )
+def initdb(choose_password):
     with app.app_context():
-        InitDB().run()
+        InitDB().run(choose_password=choose_password)
+        couchdb_config_present = server.config.couchdb
+        if couchdb_config_present and couchdb_config_present.user and couchdb_config_present.password:
+            print('Importing data from CouchDB, please wait...')
+            ImportCouchDB().run()
+            print('All users from CouchDB were imported. You can login with your old username/password to faraday now.')
 
-@click.command()
+@click.command(help="Import all your data from Couchdb Faraday databases")
 def import_from_couchdb():
     with app.app_context():
         ImportCouchDB().run()
 
-@click.command()
+@click.command(help="Create a PNG image with Faraday model object")
 def database_schema():
     DatabaseSchema().run()
 
-@click.command()
+@click.command(help="Open a SQL Shell connected to postgresql 'Faraday DB'")
 def sql_shell():
+    try:
+        from pgcli.main import PGCli
+    except ImportError:
+        print('PGCli was not found, please install it with: pip install pgcli')
+        sys.exit(1)
     conn_string = server.config.database.connection_string.strip("'")
 
     pgcli = PGCli()
     pgcli.connect_uri(conn_string)
     pgcli.run_cli()
 
+
+@click.command(help='Checks configuration and faraday status.')
+@click.option('--check_postgresql', default=False, is_flag=True)
+@click.option('--check_faraday', default=False, is_flag=True)
+@click.option('--check_dependencies', default=False, is_flag=True)
+@click.option('--check_config', default=False, is_flag=True)
+def status_check(check_postgresql, check_faraday, check_dependencies, check_config):
+
+    selected = False
+    exit_code = 0
+    if check_postgresql:
+        # exit_code was created for Faraday automation-testing purposes
+        exit_code = status_check_functions.print_postgresql_status()
+        status_check_functions.print_postgresql_locks_status()
+        selected = True
+
+    if check_faraday:
+        status_check_functions.print_faraday_status()
+        selected = True
+
+    if check_dependencies:
+        status_check_functions.print_depencencies_status()
+        selected = True
+
+    if check_config:
+        status_check_functions.print_config_status()
+        selected = True
+
+    if not selected:
+        status_check_functions.full_status_check()
+
+    sys.exit(exit_code)
+
+@click.command(help="Changes the password of a user")
+@click.option('--username', required=True, prompt=True)
+@click.option('--password', required=True, prompt=True, confirmation_prompt=True, hide_input=True)
+def change_password(username, password):
+    change_pass.changes_password(username, password)
 
 def validate_user_unique_field(ctx, param, value):
     with app.app_context():
@@ -102,7 +161,7 @@ def validate_email(ctx, param, value):
     return validate_user_unique_field(ctx, param, value)
 
 
-@click.command()
+@click.command(help="Create ADMIN user for Faraday application")
 @click.option('--username', prompt=True, callback=validate_user_unique_field)
 @click.option('--email', prompt=True, callback=validate_email)
 @click.option('--password', prompt=True, hide_input=True,
@@ -110,8 +169,9 @@ def validate_email(ctx, param, value):
 def createsuperuser(username, email, password):
     with app.app_context():
         if db.session.query(User).filter_by(active=True).count() > 0:
-            print("Can't create more users. Please contact support")
+            print("Can't create more users. The comumunity edition only allows one user. Please contact support for further information.")
             sys.exit(1)
+
         app.user_datastore.create_user(username=username,
                                        email=email,
                                        password=password,
@@ -123,17 +183,31 @@ def createsuperuser(username, email, password):
             fg='green', bold=True))
 
 
+@click.command(help="Create database tables. Requires a functional "
+               "PostgreSQL database configured in the server.ini")
+def create_tables():
+    with app.app_context():
+        # Ugly hack to create tables and also setting alembic revision
+        import server.config
+        conn_string = server.config.database.connection_string
+        from server.commands.initdb import InitDB
+        InitDB()._create_tables(conn_string)
+        click.echo(click.style(
+            'Tables created successfully!',
+            fg='green', bold=True))
+
+
 cli.add_command(process_reports)
-cli.add_command(reset_db)
 cli.add_command(show_urls)
-cli.add_command(faraday_schema_display)
 cli.add_command(initdb)
 cli.add_command(import_from_couchdb)
 cli.add_command(database_schema)
 cli.add_command(createsuperuser)
 cli.add_command(sql_shell)
+cli.add_command(status_check)
+cli.add_command(create_tables)
+cli.add_command(change_password)
 
 
 if __name__ == '__main__':
     cli()
-

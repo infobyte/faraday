@@ -5,6 +5,7 @@ import logging
 
 import os
 import string
+import datetime
 from os.path import join, expanduser
 from random import SystemRandom
 
@@ -26,6 +27,13 @@ from flask_security import (
     Security,
     SQLAlchemyUserDatastore,
 )
+from flask_security.forms import LoginForm
+from flask_security.utils import (
+    _datastore,
+    get_message,
+    verify_and_update_password
+)
+from flask_session import Session
 from nplusone.ext.flask_sqlalchemy import NPlusOne
 from depot.manager import DepotManager
 
@@ -54,6 +62,7 @@ def setup_storage_path():
 def register_blueprints(app):
     from server.api.modules.info import info_api
     from server.api.modules.commandsrun import commandsrun_api
+    from server.api.modules.activity_feed import activityfeed_api
     from server.api.modules.credentials import credentials_api
     from server.api.modules.hosts import host_api
     from server.api.modules.licenses import license_api
@@ -64,7 +73,11 @@ def register_blueprints(app):
     from server.api.modules.workspaces import workspace_api
     from server.api.modules.handlers import handlers_api
     from server.api.modules.comments import comment_api
+    from server.api.modules.upload_reports import upload_api
+    from server.api.modules.websocket_auth import websocket_auth_api
+    from server.api.modules.get_exploits import exploits_api
     app.register_blueprint(commandsrun_api)
+    app.register_blueprint(activityfeed_api)
     app.register_blueprint(credentials_api)
     app.register_blueprint(host_api)
     app.register_blueprint(info_api)
@@ -76,6 +89,9 @@ def register_blueprints(app):
     app.register_blueprint(workspace_api)
     app.register_blueprint(handlers_api)
     app.register_blueprint(comment_api)
+    app.register_blueprint(upload_api)
+    app.register_blueprint(websocket_auth_api)
+    app.register_blueprint(exploits_api)
 
 
 def check_testing_configuration(testing, app):
@@ -114,6 +130,10 @@ def register_handlers(app):
 
     @app.after_request
     def log_queries_count(response):
+        if flask.request.method not in ['GET', 'HEAD']:
+            # We did most optimizations for read only endpoints
+            # TODO migrations: improve optimization and remove this if
+            return response
         queries = get_debug_queries()
         max_query_time = max([q.duration for q in queries] or [0])
         if len(queries) > 15:
@@ -143,37 +163,60 @@ def create_app(db_connection_string=None, testing=None):
     app = Flask(__name__)
 
     try:
-        app.config['SECRET_KEY'] = server.config.faraday_server.secret_key
+        secret_key = server.config.faraday_server.secret_key
     except Exception:
+        # Now when the config file does not exist it doesn't enter in this
+        # condition, but it could happen in the future. TODO check
         save_new_secret_key(app)
+    else:
+        if secret_key is None:
+            # This is what happens now when the config file doesn't exist.
+            # TODO check
+            save_new_secret_key(app)
+        else:
+            app.config['SECRET_KEY'] = secret_key
 
-    app.config['SECURITY_PASSWORD_SINGLE_HASH'] = True
-    app.config['WTF_CSRF_ENABLED'] = False
-    app.config['SECURITY_USER_IDENTITY_ATTRIBUTES'] = ['username']
-    app.config['SECURITY_POST_LOGIN_VIEW'] = '/_api/session'
-    app.config['SECURITY_POST_LOGOUT_VIEW'] = '/_api/login'
-    app.config['SECURITY_POST_CHANGE_VIEW'] = '/_api/change'
-    app.config['SECURITY_CHANGEABLE'] = True
-    app.config['SECURITY_SEND_PASSWORD_CHANGE_EMAIL'] = False
+    login_failed_message = ("Invalid username or password", 'error')
 
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SQLALCHEMY_RECORD_QUERIES'] = True
-    # app.config['SQLALCHEMY_ECHO'] = True
-    app.config['SECURITY_PASSWORD_SCHEMES'] = [
-        'bcrypt',  # This should be the default value
-        # 'des_crypt',
-        'pbkdf2_sha1',  # Used by CouchDB passwords
-        # 'pbkdf2_sha256',
-        # 'pbkdf2_sha512',
-        # 'sha256_crypt',
-        # 'sha512_crypt',
-        'plaintext',  # TODO: remove it
-    ]
-    try:
-        storage_path = server.config.storage.path
-    except AttributeError:
+    app.config.update({
+        'SECURITY_PASSWORD_SINGLE_HASH': True,
+        'WTF_CSRF_ENABLED': False,
+        'SECURITY_USER_IDENTITY_ATTRIBUTES': ['username'],
+        'SECURITY_POST_LOGIN_VIEW': '/_api/session',
+        'SECURITY_POST_LOGOUT_VIEW': '/_api/login',
+        'SECURITY_POST_CHANGE_VIEW': '/_api/change',
+        'SECURITY_CHANGEABLE': True,
+        'SECURITY_SEND_PASSWORD_CHANGE_EMAIL': False,
+        'SECURITY_MSG_USER_DOES_NOT_EXIST': login_failed_message,
+
+        # The line bellow should not be necessary because of the
+        # CustomLoginForm, but i'll include it anyway.
+        'SECURITY_MSG_INVALID_PASSWORD': login_failed_message,
+
+        'SESSION_TYPE': 'filesystem',
+        'SESSION_FILE_DIR': server.config.FARADAY_SERVER_SESSIONS_DIR,
+
+        'SQLALCHEMY_TRACK_MODIFICATIONS': False,
+        'SQLALCHEMY_RECORD_QUERIES': True,
+        # app.config['SQLALCHEMY_ECHO'] = True
+        'SECURITY_PASSWORD_SCHEMES': [
+            'bcrypt',  # This should be the default value
+            # 'des_crypt',
+            'pbkdf2_sha1',  # Used by CouchDB passwords
+            # 'pbkdf2_sha256',
+            # 'pbkdf2_sha512',
+            # 'sha256_crypt',
+            # 'sha512_crypt',
+            'plaintext',  # TODO: remove it
+        ],
+        'PERMANENT_SESSION_LIFETIME': datetime.timedelta(hours=12),
+    })
+
+    storage_path = server.config.storage.path
+    if not storage_path:
         logger.warn('No storage section or path in the .faraday/server.ini. Setting the default value to .faraday/storage')
         storage_path = setup_storage_path()
+
     if not DepotManager.get('default'):
         if testing:
             DepotManager.configure('default', {
@@ -195,13 +238,14 @@ def create_app(db_connection_string=None, testing=None):
 
     from server.models import db
     db.init_app(app)
+    #Session(app)
 
     # Setup Flask-Security
     app.user_datastore = SQLAlchemyUserDatastore(
         db,
         user_model=server.models.User,
         role_model=None)  # We won't use flask security roles feature
-    Security(app, app.user_datastore)
+    Security(app, app.user_datastore, login_form=CustomLoginForm)
     # Make API endpoints require a login user by default. Based on
     # https://stackoverflow.com/questions/13428708/best-way-to-make-flask-logins-login-required-the-default
     app.view_functions['security.login'].is_public = True
@@ -226,3 +270,37 @@ def minify_json_output(app):
 
     app.json_encoder = MiniJSONEncoder
     app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+
+
+class CustomLoginForm(LoginForm):
+    """A login form that does shows the same error when the username
+    or the password is invalid.
+
+    The builtin form of flask_security generates different messages
+    so it is possible for an attacker to enumerate usernames
+    """
+
+    def validate(self):
+
+        # Use super of LoginForm, not super of CustomLoginForm, since I
+        # want to skip the LoginForm validate logic
+        if not super(LoginForm, self).validate():
+            return False
+        self.user = _datastore.get_user(self.email.data)
+
+        if self.user is None:
+            self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
+            return False
+        if not self.user.password:
+            self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
+            return False
+        if not verify_and_update_password(self.password.data, self.user):
+            self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
+            return False
+        # if requires_confirmation(self.user):
+        #     self.email.errors.append(get_message('CONFIRMATION_REQUIRED')[0])
+        #     return False
+        if not self.user.is_active:
+            self.email.errors.append(get_message('DISABLED_ACCOUNT')[0])
+            return False
+        return True

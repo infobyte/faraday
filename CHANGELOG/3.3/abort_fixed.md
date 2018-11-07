@@ -1,0 +1,1 @@
+`abort()` calls were checked and changed to `flask.abort()`

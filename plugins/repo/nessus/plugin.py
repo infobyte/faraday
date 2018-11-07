@@ -114,7 +114,7 @@ class NessusPlugin(core.PluginBase):
             if t.get('host-ip'):
                 ip = t.get('host-ip')
 
-            h_id = self.createAndAddHost(ip, t.get('operating-system'))
+            h_id = self.createAndAddHost(ip, t.get('operating-system'), hostnames=[host])
 
             if self._isIPV4(ip):
                 i_id = self.createAndAddInterface(
@@ -133,18 +133,22 @@ class NessusPlugin(core.PluginBase):
                 resolution = ""
                 resolution = v.get('solution').encode(
                     "ascii", errors="backslashreplace") if v.get('solution') else ""
-                desc += "\nOutput: " + v.get('plugin_output').encode(
+
+                data = "\nOutput: " + v.get('plugin_output').encode(
                     "ascii", errors="backslashreplace") if v.get('plugin_output') else ""
+
                 ref = []
                 if v.get('cve'):
                     ref.append(", ".join(v.get('cve')))
+                if v.get('cvss_base_score'):
+                    ref.append("CVSS: " + ", ".join(v.get('cvss_base_score')))
                 if v.get('bid'):
                     ref.append(", ".join(v.get('bid')))
                 if v.get('xref'):
                     ref.append(", ".join(v.get('xref')))
                 if v.get('svc_name') == "general":
                     v_id = self.createAndAddVulnToHost(h_id, v.get('plugin_name'),
-                                                       desc, ref, severity=v.get('severity'), resolution=resolution)
+                                                       desc=desc, ref=ref, data=data, severity=v.get('severity'), resolution=resolution)
                 else:
 
                     s_id = self.createAndAddServiceToInterface(h_id, i_id, v.get('svc_name'),
@@ -166,12 +170,12 @@ class NessusPlugin(core.PluginBase):
 
                     if web:
                         v_id = self.createAndAddVulnWebToService(h_id, s_id, v.get('plugin_name'),
-                                                                 desc, website=host, severity=v.get(
+                                                                 desc=desc, data=data, website=host, severity=v.get(
                                                                      'severity'),
                                                                  resolution=resolution, ref=ref)
                     else:
                         v_id = self.createAndAddVulnToService(h_id, s_id, v.get('plugin_name'),
-                                                              desc, severity=v.get('severity'), resolution=resolution,
+                                                              desc=desc, data=data, severity=v.get('severity'), resolution=resolution,
                                                               ref=ref)
 
     def _isIPV4(self, ip):
@@ -198,7 +202,9 @@ def createPlugin():
     return NessusPlugin()
 
 if __name__ == '__main__':
-    parser = NessusParser(sys.argv[1])
-    for item in parser.items:
-        if item.status == 'up':
-            print item
+    parser = NessusPlugin()
+    with open('/home/javier/DNS_publicos_hlnn77.nessus', 'r') as report:
+        parser.parseOutputString(report.read())
+        for item in parser.items:
+            if item.status == 'up':
+                print item

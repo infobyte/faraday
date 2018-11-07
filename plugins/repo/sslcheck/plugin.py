@@ -12,6 +12,8 @@ import re
 import os
 import sys
 import random
+import tempfile
+
 
 try:
     import xml.etree.cElementTree as ET
@@ -86,7 +88,7 @@ class SslcheckPlugin(core.PluginBase):
         self._current_output = None
         self.current_path = None
         self._command_regex = re.compile(
-            r'^(sudo sslcheck|sslcheck|\.\/sslcheck).*?')
+            r'^(sudo sslcheck|sslcheck|\.\/sslcheck|sudo \.\/sslcheck|python( *|2|3) sslcheck|sudo python( *|2|3) sslcheck).*?')
 
         global current_path
         self._output_file_path = os.path.join(self.data_path, "%s_%s_output-%s.xml" % (self.get_ws(),
@@ -111,7 +113,13 @@ class SslcheckPlugin(core.PluginBase):
         else:
 
             if not os.path.exists(self._output_file_path):
-                return False
+                if output:
+                    temp_file = tempfile.NamedTemporaryFile()
+                    temp_file.write(output)
+                    temp_file.flush()
+                    self._output_file_path = temp_file.name
+                else:
+                    return False
             parser = SslcheckParser(self._output_file_path)
             # print parser.result
             # print parser.hostinfo

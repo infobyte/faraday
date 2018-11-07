@@ -236,6 +236,7 @@ angular.module('faradayApp')
         $scope.new = function() {
             var modal = $uibModal.open({
                 templateUrl: 'scripts/services/partials/modalNew.html',
+                backdrop : 'static',
                 controller: 'serviceModalNew',
                 size: 'lg',
                 resolve: {
@@ -259,6 +260,7 @@ angular.module('faradayApp')
             if($scope.selectedServices().length > 0) {
                 var modal = $uibModal.open({
                     templateUrl: 'scripts/services/partials/modalEdit.html',
+                    backdrop : 'static',
                     controller: 'serviceModalEdit',
                     size: 'lg',
                     resolve: {

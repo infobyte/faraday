@@ -1292,7 +1292,7 @@ class ImportVulnerabilityTemplates():
         mapped_exploitation = MAPPED_VULN_SEVERITY
 
         for key in mapped_exploitation.keys():
-            if key in document.get('exploitation').lower():
+            if key in document.get('exploitation','').lower():
                 return mapped_exploitation[key]
 
         logger.warn(

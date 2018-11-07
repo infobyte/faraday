@@ -338,3 +338,8 @@
     font-weight: bold;
     color: #5e6667;
 }
+
+.fields-of-vulnWeb {
+    position: relative;
+    top: 22px;
+}

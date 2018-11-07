@@ -71,6 +71,7 @@ angular.module('faradayApp')
                         query: "",
                         request: "",
                         response: "",
+                        type: "Vulnerability",
                         website: "",
                         status: "opened",
                         policyviolations: []

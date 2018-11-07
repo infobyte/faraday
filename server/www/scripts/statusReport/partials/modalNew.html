@@ -216,6 +216,62 @@
                         </div>
                     </div><!-- .form-group -->
 
+                    <div class="fields-of-vulnWeb margin-top-22px" ng-show="modal.data.type === 'VulnerabilityWeb'">
+                        <div class="col-md-4">
+                            <div class="tab-pane-header">Method</div>
+                            <div class="form-group">
+                                <label class="sr-only control-label" for="vuln-method">Method</label>
+                                <input type="text" class="form-control" id="vuln-method" placeholder="Method"
+                                       ng-model="modal.data.method"/>
+                            </div><!-- .form-group -->
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="tab-pane-header">Param Name</div>
+                            <div class="form-group">
+                                <label class="sr-only control-label" for="vuln-pname">Param Name</label>
+                                <input type="text" class="form-control" id="vuln-pname" placeholder="Param name"
+                                       ng-model="modal.data.pname"/>
+                            </div><!-- .form-group -->
+                        </div>
+
+                        <div class="col-md-5">
+                            <div class="tab-pane-header">Params</div>
+                            <div class="form-group">
+                                <label class="sr-only control-label" for="vuln-params">Params</label>
+                                <input type="text" class="form-control" id="vuln-params" placeholder="Params"
+                                       ng-model="modal.data.params"/>
+                            </div><!-- .form-group -->
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="tab-pane-header">Path</div>
+                            <div class="form-group">
+                                <label class="sr-only control-label" for="vuln-path">Path</label>
+                                <input type="text" class="form-control" id="vuln-path" placeholder="Path"
+                                       ng-model="modal.data.path"/>
+                            </div><!-- .form-group -->
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="tab-pane-header">Query</div>
+                            <div class="form-group">
+                                <label class="sr-only control-label" for="vuln-query">Query</label>
+                                <input type="text" class="form-control" id="vuln-query" placeholder="Query"
+                                       ng-model="modal.data.query"/>
+                            </div><!-- .form-group -->
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="tab-pane-header">Website</div>
+                            <div class="form-group">
+                                <label class="sr-only control-label" for="vuln-website">Website</label>
+                                <input type="text" class="form-control" id="vuln-website" placeholder="Website"
+                                       ng-model="modal.data.website"/>
+                            </div><!-- .form-group -->
+                        </div>
+                    </div>
+
                     <div class="col-md-12 margin-bottom-15px margin-top-22px">
                         <div class="tab-pane-header">Impact</div>
                         <h4><span ng-repeat="(key, value) in modal.data.impact" class="normal-size"
@@ -226,6 +282,7 @@
                     </div>
 
                 </div>
+
                 <div id="technical_details" class="container tab-pane-container tab-pane fade"><br>
                     <div class="col-md-12">
                         <div class="tab-pane-header">Data</div>
@@ -236,7 +293,7 @@
                         </div><!-- .form-group -->
                     </div>
 
-                    <div class="col-md-6 col-sm-12 col-xs-12">
+                    <div class="col-md-6 col-sm-12 col-xs-12" ng-show="modal.data.type === 'VulnerabilityWeb'">
                         <div class="tab-pane-header">Request</div>
                         <div class="form-group">
                             <label class="sr-only" for="vuln-request">Vuln request</label>
@@ -245,7 +302,7 @@
                         </div><!-- .form-group -->
                     </div>
 
-                    <div class="col-md-6 col-sm-12 col-xs-12">
+                    <div class="col-md-6 col-sm-12 col-xs-12" ng-show="modal.data.type === 'VulnerabilityWeb'">
                         <div class="tab-pane-header">Response</div>
                         <div class="form-group">
                             <label class="sr-only" for="vuln-response">Vuln response</label>
@@ -304,10 +361,12 @@
                                 <div class="col-md-2">
                                     <div class="btn-group btn-small-margin">
                                         <button type="button" class="btn btn-default btn-xs" title="Select page"
-                                                ng-click="modal.setTargets(true, modal.currentPage*modal.pageSize, modal.pageSize)" style="height: 30px!important;">
+                                                ng-click="modal.setTargets(true, modal.currentPage*modal.pageSize, modal.pageSize)"
+                                                style="height: 30px!important;">
                                             Select page
                                         </button>
-                                        <button type="button" class="btn btn-default btn-xs dropdown-toggle" style="height: 30px!important;"
+                                        <button type="button" class="btn btn-default btn-xs dropdown-toggle"
+                                                style="height: 30px!important;"
                                                 data-toggle="dropdown"
                                                 title="Select options">
                                             <span class="caret"></span>

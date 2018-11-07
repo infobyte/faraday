@@ -76,28 +76,21 @@
                     </ul>
                 </div>
 
-
-                <div class="btn-group col-md-3 col-sm-6 col-xs-6" ng-init="modal.data.type = 'Vulnerability'">
-                    <button type="button" class="dropdown-toggle btn-change-property primary-btn btn-primary-white"
-                            data-toggle="dropdown"
-                            id="btn-chg-status"
-                            title="{{modal.data.type}}">
-                        {{modal.data.type }}
-                    </button>
-                    <button type="button" class="dropdown-toggle secondary-btn btn-change-property btn-secondary-white"
-                            data-toggle="dropdown"
-                            id="caret-status"
-                            title="Change Type">
-                        <span> <i class="fa fa-angle-down fa-lg" aria-hidden="true"></i> </span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
-                        <li>
-                            <a class="ws" ng-if="modal.data.type !== 'Vulnerability'"
-                               ng-click="modal.data.type = 'Vulnerability'">Vulnerability</a>
-                            <a class="ws" ng-if="modal.data.type !== 'VulnerabilityWeb'"
-                               ng-click="modal.data.type = 'VulnerabilityWeb'">Vulnerability Web</a>
-                        </li>
-                    </ul>
+                <div class="customs-radio-inline">
+                    <label class="radio-container"
+                           ng-click="modal.data.type = 'Vulnerability'"
+                           title="Change type to Vulnerability">
+                        <h5>Vulnerability</h5>
+                        <input type="radio" checked="checked" name="radio" ng-checked="modal.data.type === 'Vulnerability'">
+                        <span class="checkmark"></span>
+                    </label>
+                    <label class="radio-container"
+                           ng-click="modal.data.type = 'VulnerabilityWeb'"
+                           title="Change type to Vulnerability Web">
+                        <h5>Vulnerability Web</h5>
+                        <input type="radio" name="radio" ng-checked="modal.data.type === 'VulnerabilityWeb'">
+                        <span class="checkmark"></span>
+                    </label>
                 </div>
 
             </div>

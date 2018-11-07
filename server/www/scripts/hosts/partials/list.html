@@ -84,7 +84,7 @@
                                 <span ng-click="toggleSort('mac')">MAC</span>
                                 <a ng-click="toggleShow('mac')"><span class="glyphicon glyphicon-remove"></span></a>
                             </th>
-                            <th ng-if="columns['vendor']">
+                            <th class="ui-grid-cell-contents ui-grid-header-cell" ng-if="columns['vendor']">
                                 <span ng-click="toggleSort('vendor')">Vendor</a>
                                 <a ng-click="toggleShow('vendor')"><span style="glyphicon glyphicon-remove" class="glyphicon glyphicon-remove"></span></a>
                             </th>
@@ -195,7 +195,7 @@
                                 ng-show="columns['owned']">
                                 <div class="">
                                     <span class="fa fa-exclamation-triangle" aria-hidden="true" ng-if="host.owned"></span>
-                                    <span ng-if="host.owned"> owned</span>
+                                    <span ng-if="host.owned">owned</span>
                                     <span ng-if="!host.owned">not yet</span>
                                 </div>
                             </td>

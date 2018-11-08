@@ -460,7 +460,7 @@ class SqlmapPlugin(PluginTerminalOutput):
             self.hostname,
             '')
 
-        db_port = 0
+        db_port = 80
         for item in self.db_port.keys():
             if dbms_version.find(item) >= 0:
                 db_port = self.db_port[item]

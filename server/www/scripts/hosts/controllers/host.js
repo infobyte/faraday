@@ -18,6 +18,11 @@ angular.module('faradayApp')
                     });
                     $scope.hostName = host.ip; // User can edit $scope.host.name but not $scope.hostName
                     $scope.loadIcons();
+
+                    workspacesFact.get($scope.workspace).then(function(response) {
+                        $scope.workspaceData = response;
+                    });
+
                 });
         };
 

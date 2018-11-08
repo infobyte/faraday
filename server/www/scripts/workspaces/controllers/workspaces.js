@@ -351,6 +351,26 @@ angular.module('faradayApp')
                     });
                 }
             };
+        // toggles sort field and order
+        $scope.toggleSort = function(field) {
+           $scope.toggleSortField(field);
+           $scope.toggleReverse();
+        };
+
+ 				// toggles column sort field
+        $scope.toggleSortField = function(field) {
+            $scope.sortField = field;
+        };
+
+        // toggle column sort order
+        $scope.toggleReverse = function() {
+            $scope.reverse = !$scope.reverse;
+        }
+
+
+        $scope.clearSearch = function() {
+          $scope.search = '';
+        };
 
             $scope.init();
         }]);

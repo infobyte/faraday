@@ -6,6 +6,8 @@ See the file 'doc/LICENSE' for the license information
 '''
 import os
 import json
+import shutil
+
 
 try:
     import xml.etree.cElementTree as ET
@@ -13,6 +15,7 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ET
     from xml.etree.ElementTree import Element, ElementTree
+
 
 the_config = None
 
@@ -645,6 +648,12 @@ class Configuration:
 def getInstanceConfiguration():
     global the_config
     if the_config is None:
+        config_dir = os.path.expanduser("~/.faraday/config")
+        if not os.path.exists(config_dir):
+            os.mkdir(config_dir)
+        faraday_user_config = os.path.expanduser("~/.faraday/config/user.xml")
+        if not os.path.isfile(faraday_user_config):
+            shutil.copy(DEFAULT_XML, faraday_user_config)
         if os.path.exists(os.path.expanduser("~/.faraday/config/user.xml")):
             the_config = Configuration(os.path.expanduser("~/.faraday/config/user.xml"))
         else:

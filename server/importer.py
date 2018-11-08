@@ -1292,7 +1292,7 @@ class ImportVulnerabilityTemplates():
         mapped_exploitation = MAPPED_VULN_SEVERITY
 
         for key in mapped_exploitation.keys():
-            if key in document.get('exploitation').lower():
+            if key in document.get('exploitation','').lower():
                 return mapped_exploitation[key]
 
         logger.warn(
@@ -1440,7 +1440,7 @@ class ImportCouchDB():
             for missing_id in (missing_ids):
                 not_imported_obj = get_object_from_couchdb(missing_id, workspace)
 
-                if not_imported_obj['type'] == 'Interface':
+                if not_imported_obj.get('type', None) == 'Interface':
                     # we know that interface obj was not imported
                     continue
                 filter_keys = ['views', 'validate_doc_update']

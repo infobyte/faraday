@@ -327,12 +327,12 @@
 .edit-name-icon {
     color: #999;
     cursor: pointer;
-    display: none;
+    margin-left: 10px;
 }
 
-.modal-data-name:hover .edit-name-icon {
-    display: inline-flex;
-}
+/*.modal-data-name:hover .edit-name-icon {*/
+    /*display: inline-flex;*/
+/*}*/
 
 #inp-edit-name{
     font-weight: bold;

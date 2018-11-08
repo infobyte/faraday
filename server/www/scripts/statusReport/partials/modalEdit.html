@@ -34,7 +34,7 @@
 
             </div>
 
-            <div class="edit-vulns-dropdowns row" ng-init="modal.updateBtnSeverityColor(modal.data.severity)">
+            <div class="edit-vulns-dropdowns row" ng-init="modal.updateBtnSeverityColor(modal.data.severity);modal.updateBtnStatusColor(modal.data.status)">
 
                 <div class="btn-group col-md-3 col-sm-6 col-xs-6">
                     <button type="button" class="dropdown-toggle btn-change-property primary-btn"
@@ -99,28 +99,28 @@
 
 
                 <div class="btn-group col-md-3 col-sm-6 col-xs-6">
-                    <button type="button" class="dropdown-toggle btn-change-property primary-btn btn-primary-white"
+                    <button type="button" class="dropdown-toggle btn-change-property primary-btn text-capitalize"
                             data-toggle="dropdown"
                             id="btn-chg-status"
                             title="{{modal.data.status}}">
-                        {{modal.data.status || "Status"}}
+                        {{modal.data.status  || "Status"}}
                     </button>
-                    <button type="button" class="dropdown-toggle secondary-btn btn-change-property btn-secondary-white"
+                    <button type="button" class="dropdown-toggle secondary-btn btn-change-property"
                             data-toggle="dropdown"
-                            id="caret-status"
+                            id="caret-chg-status"
                             title="Change Status">
                         <span> <i class="fa fa-angle-down fa-lg" aria-hidden="true"></i> </span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-right" role="menu">
                         <li>
                             <a class="ws"
-                               ng-click="modal.data.status = 'opened'">Opened</a>
+                               ng-click="modal.changeStatus('opened')">Opened</a>
                             <a class="ws"
-                               ng-click="modal.data.status = 'closed'">Closed</a>
+                               ng-click="modal.changeStatus('closed')">Closed</a>
                             <a class="ws"
-                               ng-click="modal.data.status = 're-opened'">Re-opened</a>
+                               ng-click="modal.changeStatus('re-opened')">Re-opened</a>
                             <a class="ws"
-                               ng-click="modal.data.status = 'risk-accepted'">Risk-accepted</a>
+                               ng-click="modal.changeStatus('risk-accepted')">Risk-accepted</a>
                         </li>
                     </ul>
                 </div>

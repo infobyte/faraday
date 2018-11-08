@@ -110,7 +110,7 @@
                 <li class="nav-item">
                     <a class="nav-link" data-toggle="tab" data-target="#tab-evidence" href="javascript:;">Evidence</a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item" ng-class="{'has-error': modal.data.type == 'Vulnerability' && modal.data.parents.length == 0}">
                     <a class="nav-link" data-toggle="tab" data-target="#hosts" href="javascript:;">Hosts</a>
                 </li>
             </ul>
@@ -147,10 +147,10 @@
 
                     <div class="col-md-12">
                         <div class="tab-pane-header">Description</div>
-                        <div class="form-group">
+                        <div class="form-group" ng-class="{'has-error': form.desc.$invalid }">
                             <label class="sr-only" for="vuln-data">Vuln description</label>
-                            <textarea class="form-control" id="vuln-desc"
-                                      ng-model="modal.data.desc" placeholder="Description"
+                            <textarea class="form-control" id="vuln-desc" name="desc"
+                                      ng-model="modal.data.desc" required placeholder="Description"
                             style="margin: 0 2px 0 0; height: 239px; width: 810px;"></textarea>
                         </div><!-- .form-group -->
                     </div>

@@ -482,3 +482,11 @@
     border-top: 1px solid #ddd;
     margin: 10px 0 15px 0;
 }
+
+li.nav-item.has-error:not(.active) {
+    border-bottom: 1px dashed #a94442;
+}
+
+li.nav-item.has-error:not(.active) a {
+    color: #a94442;
+}

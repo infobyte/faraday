@@ -18,17 +18,19 @@
 
         <div class="mt-3">
             <div class="modal-data-name" ng-init="modal.isNameEditable = false">
-                <div ng-if="modal.isNameEditable == false">
+                <div ng-if="modal.isNameEditable == false && modal.data.name !== undefined">
                     <span class="data-name">{{modal.data.name}}</span>
                     <span class="edit-name-icon pull-right" ng-click="modal.isNameEditable = true"><i
                             class="fa fa-pencil fa-lg" aria-hidden="true"></i></span>
                 </div>
 
-                <div ng-if="modal.isNameEditable == true">
-                    <div class="form-group">
+                <div ng-if="modal.isNameEditable == true || modal.data.name == undefined">
+                    <div class="form-group" ng-class="{'has-error': formEdit.name.$invalid }">
                         <label class="sr-only" for="inp-edit-name">Vuln name</label>
-                        <input type="text" class="form-control" id="inp-edit-name" ng-model="modal.data.name"
-                               ng-blur="modal.isNameEditable = false" autofocus>
+                        <input type="text" class="form-control" id="inp-edit-name"
+                               ng-model="modal.data.name" name="name" placeholder="Vuln name"
+                               ng-blur="modal.isNameEditable = modal.data.name == undefined "
+                               autofocus required>
                     </div>
                 </div>
 
@@ -158,11 +160,11 @@
                 <div id="general" class="container tab-pane-container tab-pane active"><br>
                     <div class="col-md-12">
                         <div class="tab-pane-header">Description</div>
-                        <div class="form-group">
+                        <div class="form-group" ng-class="{'has-error': formEdit.desc.$invalid }">
                             <label class="sr-only" for="vuln-data">Vuln description</label>
-                            <textarea class="form-control" id="vuln-desc"
+                            <textarea class="form-control" id="vuln-desc" name="desc"
                                       ng-model="modal.data.desc" placeholder="Description"
-                            style="margin: 0 2px 0 0; height: 239px; width: 810px;"></textarea>
+                            style="margin: 0 2px 0 0; height: 239px; width: 810px;" required></textarea>
                         </div><!-- .form-group -->
                     </div>
 

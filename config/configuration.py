@@ -17,7 +17,6 @@ except ImportError:
     from xml.etree.ElementTree import Element, ElementTree
 
 
-
 the_config = None
 
 CONST_API_CON_INFO = "api_con_info"
@@ -83,7 +82,7 @@ class Configuration:
         to faraday's configuration syntax"""
 
         root = f = None
-        
+
         try:
             f = open(self.filepath, 'rb')
             try:

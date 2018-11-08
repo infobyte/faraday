@@ -477,3 +477,8 @@
 .chbox-container .checkmark{
     top: 0;
 }
+
+.custom-divider {
+    border-top: 1px solid #ddd;
+    margin: 10px 0 15px 0;
+}

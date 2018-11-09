@@ -158,6 +158,25 @@
             <!-- Tab panes -->
             <div class="tab-content">
                 <div id="general" class="container tab-pane-container tab-pane active"><br>
+
+                    <div class="col-md-12">
+                        <div class="tab-pane-header">Search vulnerability database templates
+                            <a
+                                    href="https://github.com/infobyte/faraday/wiki/vulnerabilities-database"
+                                    target="_blank"><span class="glyphicon glyphicon-question-sign"
+                                                          title="Read more about vulnerability templates in the official Faraday Documentation"></span></a>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" ng-model="modal.cwe_selected" class="form-control input-sm"
+                                   placeholder="Search for vulnerability templates"
+                                   uib-typeahead="cwe as cwe.name for cwe in modal.cweList | filter:{name: $viewValue} | limitTo:10"
+                                   typeahead-on-select="modal.populate($item, $model, $label)">
+                        </div>
+                    </div>
+
+                    <div class="col-md-12 custom-divider"></div>
+
+
                     <div class="col-md-12">
                         <div class="tab-pane-header">Description</div>
                         <div class="form-group" ng-class="{'has-error': formEdit.desc.$invalid }">

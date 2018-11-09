@@ -1253,16 +1253,16 @@ class ImportVulnerabilityTemplates():
             vuln_template.resolution = document.get('resolution')
             vuln_template.severity = new_severity
 
-            if isinstance(document['references'], list):
-                references = document['references']
-            elif isinstance(document['references'], (str, unicode)):
+            if isinstance(document.get('references'), list):
+                references = document.get('references')
+            elif isinstance(document.get('references'), (str, unicode)):
                 references = [x.strip()
-                              for x in document['references'].split(',')
+                              for x in document.get('references').split(',')
                               if x.strip()]
             else:
                 logger.warn("Unknown type of vuln template references: {}. "
                             "Reference data: {}".format(
-                                type(document['references']),
+                                type(document.get('references')),
                                 document))
                 continue
             cwe_field = document.get('cwe')

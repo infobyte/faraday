@@ -19,6 +19,7 @@ angular.module('faradayApp')
                 "hostnames": false,
                 "services": false,
                 "mac": false,
+                "vendor": false,
                 "service_count": true,
                 "vuln_count": true,
                 "credential_count": true,
@@ -82,6 +83,7 @@ angular.module('faradayApp')
                     $scope.totalHosts = batch.total;
                     $scope.loadedVulns = true;
                     $scope.loadIcons();
+                    $scope.loadMac();
                 })
                 .catch(function(e) {
                     console.log(e);
@@ -118,6 +120,19 @@ angular.module('faradayApp')
             });
         };
 
+       $scope.loadMac = function() {
+           $scope.hosts.forEach(function(host) {
+               var mac_vendor = [""];
+               mac_vendor.forEach(function(mac){
+                if(host.mac == "00:00:00:00:00:00" || host.mac == ""){
+                    host.mac = "-";
+                    host.mac_vendor = "-";
+                } else {
+                    host.mac_vendor = oui(host.mac);
+                }
+               });
+           });
+       };
         // changes the URL according to search params
         $scope.searchFor = function(search, params) {
             // TODO: It would be nice to find a way for changing
@@ -213,6 +228,7 @@ angular.module('faradayApp')
                 }
                 $scope.hosts.push(host);
                 $scope.loadIcons();
+                $scope.loadMac();
 
             }, function(message) {
                 $uibModal.open({
@@ -236,6 +252,7 @@ angular.module('faradayApp')
             hostsManager.updateHost(host, hostdata, $scope.workspace).then(function() {
                 // load icons in case an operating system changed
                 $scope.loadIcons();
+                $scope.loadMac();
                 loadHosts();
             }, function(message){
                 console.log(message);

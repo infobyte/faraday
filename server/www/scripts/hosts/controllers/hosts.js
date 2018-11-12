@@ -35,6 +35,11 @@ angular.module('faradayApp')
             // current workspace
             $scope.workspace = $routeParams.wsId;
 
+            // load current workspace data
+            workspacesFact.get($scope.workspace).then(function(response) {
+                $scope.workspaceData = response;
+            });
+
             $scope.sortField = "vulns";
             $scope.sortDirection = "desc";
             $scope.reverse = true;

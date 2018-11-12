@@ -9,17 +9,17 @@
         <div id="reports-main" class="fila clearfix">
             <div class="button-control col-md-12 col-sm-12 col-xs-12">
                 <div class="control-wrapper control-new">
-                    <button type="button" class="btn btn-success btn-new" title="New hosts" ng-click="new()">
+                    <button type="button" class="btn btn-success btn-new" title="{{workspaceData.active == false ? 'Read-only. Workspace disabled': 'New hosts'}}" ng-click="new()" ng-disabled="workspaceData.active === false">
                         New
                     </button>
                 </div>
                 <div class="control-wrapper control-edit">
-                    <button type="button" class="btn btn-default edit" title="Edit selected hosts" ng-disabled="selectedHosts().length > 1" ng-click="edit()">
+                    <button type="button" class="btn btn-default edit" title="{{workspaceData.active == false ? 'Read-only. Workspace disabled': 'Edit selected hosts'}}" ng-disabled="selectedHosts().length > 1 || workspaceData.active === false" ng-click="edit()">
                         <img src="images/icon-toolbar-edit.svg" class="edit-icon" />
                     </button>
                 </div>
                 <div class="control-wrapper">
-                    <button type="button" class="btn btn-default" title="Delete selected items" ng-click="delete()">
+                    <button type="button" class="btn btn-default" title="{{workspaceData.active == false ? 'Read-only. Workspace disabled': 'Delete selected items'}}" ng-click="delete()" ng-disabled="workspaceData.active === false">
                         <img src="images/icon-toolbar-delete.svg" class="delete-icon" />
                     </button>
                 </div>

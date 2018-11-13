@@ -131,7 +131,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         active_workspace = self.get_active_workspace()
 
         if active_workspace:
-            return self.active_workspace.name
+            return active_workspace.name
         return ""
 
     def get_active_workspace(self):

@@ -1253,16 +1253,16 @@ class ImportVulnerabilityTemplates():
             vuln_template.resolution = document.get('resolution')
             vuln_template.severity = new_severity
 
-            if isinstance(document['references'], list):
-                references = document['references']
-            elif isinstance(document['references'], (str, unicode)):
+            if isinstance(document.get('references'), list):
+                references = document.get('references')
+            elif isinstance(document.get('references'), (str, unicode)):
                 references = [x.strip()
-                              for x in document['references'].split(',')
+                              for x in document.get('references').split(',')
                               if x.strip()]
             else:
                 logger.warn("Unknown type of vuln template references: {}. "
                             "Reference data: {}".format(
-                                type(document['references']),
+                                type(document.get('references')),
                                 document))
                 continue
             cwe_field = document.get('cwe')
@@ -1292,7 +1292,7 @@ class ImportVulnerabilityTemplates():
         mapped_exploitation = MAPPED_VULN_SEVERITY
 
         for key in mapped_exploitation.keys():
-            if key in document.get('exploitation').lower():
+            if key in document.get('exploitation','').lower():
                 return mapped_exploitation[key]
 
         logger.warn(
@@ -1440,7 +1440,7 @@ class ImportCouchDB():
             for missing_id in (missing_ids):
                 not_imported_obj = get_object_from_couchdb(missing_id, workspace)
 
-                if not_imported_obj['type'] == 'Interface':
+                if not_imported_obj.get('type', None) == 'Interface':
                     # we know that interface obj was not imported
                     continue
                 filter_keys = ['views', 'validate_doc_update']

@@ -104,7 +104,7 @@ class WorkspaceObjectFactory(FaradayFactory):
 
 
 class HostFactory(WorkspaceObjectFactory):
-    ip = factory.Faker('ipv4')
+    ip = FuzzyText()
     description = FuzzyText()
     os = FuzzyChoice(['Linux', 'Windows', 'OSX', 'Android', 'iOS'])
     creator = factory.SubFactory(UserFactory)

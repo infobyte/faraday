@@ -18,6 +18,11 @@ angular.module('faradayApp')
                     });
                     $scope.hostName = host.ip; // User can edit $scope.host.name but not $scope.hostName
                     $scope.loadIcons();
+                    workspacesFact.get($scope.workspace).then(function(response) {
+                        $scope.workspaceData = response;
+                    });
+
+                    $scope.loadMac();
                 });
         };
 
@@ -441,6 +446,19 @@ angular.module('faradayApp')
                 }
             });
         };
+
+        $scope.loadMac = function() {
+            var host = $scope.host;
+            var mac_vendor = [""];
+            mac_vendor.forEach(function(mac){
+                if(host.mac == "00:00:00:00:00:00" || host.mac == ""){
+                    host.mac = "-";
+                    host.mac_vendor = "-";
+                } else {
+                    host.mac_vendor = oui(host.mac);
+                }
+               });
+           };
 
 	    init();
     }]);

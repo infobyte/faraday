@@ -36,6 +36,7 @@ from plugins.manager import PluginManager
 from managers.mapper_manager import MapperManager
 from managers.reports_managers import ReportProcessor
 
+from server.models import Workspace
 from persistence.server import server
 
 from config.configuration import getInstanceConfiguration
@@ -126,6 +127,13 @@ def file_upload(workspace=None):
     Upload a report file to Server and process that report with Faraday client plugins.
     """
     get_logger(__name__).debug("Importing new plugin report in server...")
+
+    # Authorization code copy-pasted from server/api/base.py
+    ws = Workspace.query.filter_by(name=workspace).one()
+    if not (ws.active
+            ):
+        # Don't raise a 403 to prevent workspace name enumeration
+        abort(404, "Workspace disabled: %s" % workspace)
 
     if 'file' not in request.files:
         abort(400)

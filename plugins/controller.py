@@ -21,7 +21,7 @@ from model.commands_history import CommandRunInformation
 from model import Modelactions
 from utils.logs import getLogger
 
-from config.globals import (
+from config.constant import (
     CONST_FARADAY_HOME_PATH,
     CONST_FARADAY_ZSH_OUTPUT_PATH)
 CONF = getInstanceConfiguration()

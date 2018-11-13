@@ -671,7 +671,8 @@ def delete_workspace(workspace_name):
 
 def get_workspaces_names():
     """Return a list with all the workspace names available."""
-    return map(lambda ws: ws['name'], server.get_workspaces_names())
+    active_workspaces = filter(lambda ws: ws['active'], server.get_workspaces_names())
+    return map(lambda ws: ws['name'], active_workspaces)
 
 
 def server_info():

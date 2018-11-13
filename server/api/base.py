@@ -8,7 +8,7 @@ import json
 
 import flask
 import sqlalchemy
-from flask import abort, g
+from flask import g
 from flask_classful import FlaskView
 from sqlalchemy.orm import joinedload, undefer
 from sqlalchemy.orm.exc import NoResultFound, ObjectDeletedError
@@ -19,7 +19,7 @@ from marshmallow.compat import with_metaclass
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
-from webargs.flaskparser import FlaskParser, parser, abort
+from webargs.flaskparser import FlaskParser, parser
 from webargs.core import ValidationError
 from server.models import Workspace, db, Command, CommandObject
 from server.schemas import NullToBlankString
@@ -346,9 +346,11 @@ class GenericWorkspacedView(GenericView):
     route_prefix = '/v2/ws/<workspace_name>/'
     base_args = ['workspace_name']  # Required to prevent double usage of <workspace_name>
 
-    def _get_workspace(self, workspace_name):
+    def _get_workspace(self, workspace_name, to_edit=True):
         try:
             ws = Workspace.query.filter_by(name=workspace_name).one()
+            if to_edit and not ws.active:
+                flask.abort(403, "Disabled workspace: %s" % workspace_name)
         except NoResultFound:
             flask.abort(404, "No such workspace: %s" % workspace_name)
         return ws
@@ -356,7 +358,7 @@ class GenericWorkspacedView(GenericView):
     def _get_base_query(self, workspace_name):
         base = super(GenericWorkspacedView, self)._get_base_query()
         return base.join(Workspace).filter(
-            Workspace.id == self._get_workspace(workspace_name).id)
+            Workspace.id == self._get_workspace(workspace_name, to_edit=False).id)
 
     def _get_object(self, object_id, workspace_name, eagerload=False):
         self._validate_object_id(object_id)
@@ -621,7 +623,7 @@ class CreateMixin(object):
             db.session.rollback()
             conflict_obj = get_conflict_object(db.session, obj, data)
             if conflict_obj:
-                abort(409, ValidationError(
+                flask.abort(409, ValidationError(
                     {
                         'message': 'Existing value',
                         'object': self._get_schema_class()().dump(
@@ -700,7 +702,7 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
             workspace = self._get_workspace(workspace_name)
             conflict_obj = get_conflict_object(db.session, obj, data, workspace)
             if conflict_obj:
-                abort(409, ValidationError(
+                flask.abort(409, ValidationError(
                     {
                         'message': 'Existing value',
                         'object': self._get_schema_class()().dump(
@@ -756,7 +758,7 @@ class UpdateMixin(object):
                 workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
             conflict_obj = get_conflict_object(db.session, obj, data, workspace)
             if conflict_obj:
-                abort(409, ValidationError(
+                flask.abort(409, ValidationError(
                     {
                         'message': 'Existing value',
                         'object': self._get_schema_class()().dump(
@@ -776,7 +778,7 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
     the database.
     """
 
-    def _perform_update(self, object_id, obj, data, workspace_name):
+    def _perform_update(self, object_id, obj, data, workspace_name=None):
         # # Make sure that if I created new objects, I had properly commited them
         # assert not db.session.new
 
@@ -792,17 +794,23 @@ class DeleteMixin(object):
     """Add DELETE /<id>/ route"""
     def delete(self, object_id, **kwargs):
         obj = self._get_object(object_id, **kwargs)
-        self._perform_delete(obj)
+        self._perform_delete(obj, **kwargs)
         return None, 204
 
-    def _perform_delete(self, obj):
+    def _perform_delete(self, obj, workspace_name=None):
         db.session.delete(obj)
         db.session.commit()
 
 
 class DeleteWorkspacedMixin(DeleteMixin):
     """Add DELETE /<workspace_name>/<route_base>/<id>/ route"""
-    pass
+
+    def _perform_delete(self, obj, workspace_name=None):
+        with db.session.no_autoflush:
+            obj.workspace = self._get_workspace(workspace_name)
+
+        return super(DeleteWorkspacedMixin, self)._perform_delete(
+            obj, workspace_name)
 
 
 class CountWorkspacedMixin(object):
@@ -832,7 +840,7 @@ class CountWorkspacedMixin(object):
         # Also we should check that the field exists in the db and isn't, for
         # example, a relationship
         if not group_by or group_by not in inspect(self.model_class).attrs:
-            abort(404)
+            flask.abort(404)
 
         workspace_name = kwargs.pop('workspace_name')
         # using format is not a great practice.

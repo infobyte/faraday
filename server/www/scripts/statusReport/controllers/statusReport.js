@@ -150,6 +150,12 @@ angular.module("faradayApp")
 
             // current workspace
             $scope.workspace = $routeParams.wsId;
+
+            // load current workspace data
+            workspacesFact.get($scope.workspace).then(function(response) {
+                $scope.workspaceData = response;
+            });
+
             $scope.interfaces = [];
             // current search
             $scope.search = $routeParams.search;
@@ -524,13 +530,15 @@ angular.module("faradayApp")
         }
 
         $scope.confirmedTooltip = function(isConfirmed) {
-            var res = "";
-            if(isConfirmed === true) {
-                res = "Change to false positive";
-            } else {
-                res = "Confirm";
+            if(!$scope.workspaceData.active){
+                return 'Read-only. Workspace disabled';
             }
-            return res;
+
+            if(isConfirmed === true) {
+                return "Change to false positive";
+            } else {
+                return "Confirm";
+            }
         };
 
         $scope.searchExploits = function(){
@@ -754,7 +762,9 @@ angular.module("faradayApp")
         };
 
         $scope.toggleConfirmVuln = function(vuln, confirm) {
-            _toggleConfirm([vuln], confirm);
+            if($scope.workspaceData.active){
+                _toggleConfirm([vuln], confirm);
+            }
         };
 
         var _toggleConfirm = function(vulns, confirm) {

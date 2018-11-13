@@ -15,7 +15,7 @@ from persistence.server.server_io_exceptions import Unauthorized
 from model.guiapi import notification_center
 
 from config.configuration import getInstanceConfiguration
-from config.globals import CONST_BLACKDBS
+from config.constant import CONST_BLACKDBS
 CONF = getInstanceConfiguration()
 
 

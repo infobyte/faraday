@@ -150,7 +150,7 @@ class ReferenceTemplateFactory(FaradayFactory):
 class ServiceFactory(WorkspaceObjectFactory):
     name = FuzzyText()
     description = FuzzyText()
-    port = FuzzyInteger(1, 2**32)  # Using 2**16 it generates many collisions
+    port = FuzzyInteger(1, 2**31)  # Using 2**16 it generates many collisions
     protocol = FuzzyChoice(['TCP', 'UDP'])
     host = factory.SubFactory(HostFactory, workspace=factory.SelfAttribute('..workspace'))
     status = FuzzyChoice(Service.STATUSES)

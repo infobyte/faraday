@@ -94,7 +94,7 @@ class WebServer(object):
         certs = (server.config.ssl.keyfile, server.config.ssl.certificate)
         if not all(certs):
             logger.critical("HTTPS request but SSL certificates are not configured")
-            exit(1) # Abort web-server startup
+            exit(1)  # Abort web-server startup
         return ssl.DefaultOpenSSLContextFactory(*certs)
 
     def __build_server_tree(self):
@@ -136,8 +136,6 @@ class WebServer(object):
         for sig in (SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM):
             signal(sig, SIG_DFL)
 
-
-
     def run(self):
         def signal_handler(*args):
             logger.info("Stopping threads, please wait...")
@@ -166,7 +164,7 @@ class WebServer(object):
             # websockets
             try:
                 listenWS(self.__build_websockets_resource(), interface=self.__bind_address)
-            except :
+            except:
                 logger.warn('Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
             logger.info('Faraday Server is ready')
             reactor.addSystemEventTrigger('before', 'shutdown', signal_handler)

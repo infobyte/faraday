@@ -8,7 +8,6 @@ import socket
 import argparse
 import subprocess
 
-
 try:
     from colorama import init, Fore
     import sqlalchemy
@@ -85,6 +84,7 @@ def run_server(args):
     daemonize.create_pid_file(args.port)
     web_server.run()
 
+
 def restart_server(args_port):
     devnull = open('/dev/null', 'w')
 
@@ -99,8 +99,7 @@ def restart_server(args_port):
 
     for port in ports:
         stop_server(port)
-        params = ['/usr/bin/env', 'python2.7',\
-            os.path.join(server.config.FARADAY_BASE, __file__), '--no-setup', '--port', str(port)]
+        params = ['/usr/bin/env', 'python2.7', os.path.join(server.config.FARADAY_BASE, __file__), '--no-setup', '--port', str(port)]
 
         logger.info('Restarting Faraday Server...')
         subprocess.Popen(params, stdout=devnull, stderr=devnull)
@@ -119,7 +118,7 @@ def check_postgresql():
             sys.exit(1)
         except sqlalchemy.exc.OperationalError:
             logger.error(
-                    '\n\n{RED}Could not connect to PostgreSQL.\n{WHITE}Please check: \n{YELLOW}  * if database is running \n  * configuration settings are correct. \n\n{WHITE}For first time installations execute{WHITE}: \n\n {GREEN} python manage.py initdb\n\n'.format(GREEN=Fore.GREEN, YELLOW=Fore.YELLOW, WHITE=Fore.WHITE, RED=Fore.RED))
+                '\n\n{RED}Could not connect to PostgreSQL.\n{WHITE}Please check: \n{YELLOW}  * if database is running \n  * configuration settings are correct. \n\n{WHITE}For first time installations execute{WHITE}: \n\n {GREEN} python manage.py initdb\n\n'.format(GREEN=Fore.GREEN, YELLOW=Fore.YELLOW, WHITE=Fore.WHITE, RED=Fore.RED))
             sys.exit(1)
 
 
@@ -169,7 +168,6 @@ def main():
         if not args.port:
             args.port = '5985'
 
-
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     result = sock.connect_ex((args.bind_address or server.config.faraday_server.bind_address, int(args.port or server.config.faraday_server.port)))
 
@@ -204,8 +202,8 @@ def main():
         arg_dict = vars(args)
         for arg in arg_dict:
             if arg not in ["start", "stop"] and arg_dict[arg]:
-                params.append('--'+arg)
-                if arg_dict[arg] != True:
+                params.append('--' + arg)
+                if not arg_dict[arg]:
                     params.append(arg_dict[arg])
         logger.info('Faraday Server is running as a daemon')
         subprocess.Popen(params, stdout=devnull, stderr=devnull)

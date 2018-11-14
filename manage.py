@@ -1,11 +1,10 @@
 #!/usr/bin/env python
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-
+"""
 import re
 
 import click
@@ -27,6 +26,7 @@ from server.web import app
 from utils.logs import setUpLogger
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 def cli():
@@ -70,12 +70,13 @@ def process_reports(debug, workspace, polling):
 def show_urls():
     show_all_urls()
 
+
 @click.command(help="Create Faraday DB in Postgresql, also tables and indexes")
 @click.option(
-        '--choose-password', is_flag=True, default=False,
-        help=('Instead of using a random password for the user "faraday", '
-              'ask for the desired one')
-        )
+    '--choose-password', is_flag=True, default=False,
+    help=('Instead of using a random password for the user "faraday", '
+          'ask for the desired one')
+)
 def initdb(choose_password):
     with app.app_context():
         InitDB().run(choose_password=choose_password)
@@ -85,14 +86,17 @@ def initdb(choose_password):
             ImportCouchDB().run()
             print('All users from CouchDB were imported. You can login with your old username/password to faraday now.')
 
+
 @click.command(help="Import all your data from Couchdb Faraday databases")
 def import_from_couchdb():
     with app.app_context():
         ImportCouchDB().run()
 
+
 @click.command(help="Create a PNG image with Faraday model object")
 def database_schema():
     DatabaseSchema().run()
+
 
 @click.command(help="Open a SQL Shell connected to postgresql 'Faraday DB'")
 def sql_shell():
@@ -114,7 +118,6 @@ def sql_shell():
 @click.option('--check_dependencies', default=False, is_flag=True)
 @click.option('--check_config', default=False, is_flag=True)
 def status_check(check_postgresql, check_faraday, check_dependencies, check_config):
-
     selected = False
     exit_code = 0
     if check_postgresql:
@@ -140,11 +143,13 @@ def status_check(check_postgresql, check_faraday, check_dependencies, check_conf
 
     sys.exit(exit_code)
 
+
 @click.command(help="Changes the password of a user")
 @click.option('--username', required=True, prompt=True)
 @click.option('--password', required=True, prompt=True, confirmation_prompt=True, hide_input=True)
 def change_password(username, password):
     change_pass.changes_password(username, password)
+
 
 def validate_user_unique_field(ctx, param, value):
     with app.app_context():
@@ -184,7 +189,7 @@ def createsuperuser(username, email, password):
 
 
 @click.command(help="Create database tables. Requires a functional "
-               "PostgreSQL database configured in the server.ini")
+                    "PostgreSQL database configured in the server.ini")
 def create_tables():
     with app.app_context():
         # Ugly hack to create tables and also setting alembic revision
@@ -207,7 +212,6 @@ cli.add_command(sql_shell)
 cli.add_command(status_check)
 cli.add_command(create_tables)
 cli.add_command(change_password)
-
 
 if __name__ == '__main__':
     cli()

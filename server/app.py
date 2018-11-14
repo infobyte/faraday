@@ -231,6 +231,7 @@ def create_app(db_connection_string=None, testing=None):
 
     try:
         app.config['SQLALCHEMY_DATABASE_URI'] = db_connection_string or server.config.database.connection_string.strip("'")
+        app.config['SQLALCHEMY_POOL_RECYCLE'] = 1
     except AttributeError:
         logger.info('Missing [database] section on server.ini. Please configure the database before running the server.')
     except NoOptionError:

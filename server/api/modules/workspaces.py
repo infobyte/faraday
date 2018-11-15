@@ -8,6 +8,7 @@ from flask import Blueprint
 from flask_classful import route
 from marshmallow import Schema, fields, post_load, validate
 
+from server.utils.cache import cached
 from server.models import db, Workspace
 from server.schemas import (
     JSTimestampField,
@@ -82,25 +83,53 @@ class WorkspaceView(ReadWriteView):
     schema_class = WorkspaceSchema
     order_field = Workspace.name.asc()
 
-    def _get_base_query(self):
+    @cached()
+    def index(self, **kwargs):
+        query = self._get_base_query()
+        res = []
+        objects = []
+	for workspace_stat in query:
+	    workspace_stat = dict(workspace_stat)
+	    for key, value in workspace_stat.items():
+	        if key.startswith('workspace_'):
+		    new_key = key.replace('workspace_', '')
+		    workspace_stat[new_key] = workspace_stat[key]
+	    objects.append(workspace_stat)
+        return self._envelope_list(self._dump(objects, kwargs, many=True))
+
+    def _get_eagerloaded_query(self, *args, **kwargs):
+        return self._get_base_query(*args, **kwargs)
+
+    def _get_base_query(self, object_id=None):
         try:
             confirmed = bool(json.loads(flask.request.args['confirmed']))
         except (KeyError, ValueError):
             confirmed = None
         try:
             active = bool(json.loads(flask.request.args['active']))
-            query = Workspace.query_with_count(confirmed).filter(self.model_class.active == active)
+            query = Workspace.query_with_count(confirmed, active=active, workspace_name=object_id)
         except (KeyError, ValueError):
-            query = Workspace.query_with_count(confirmed)
+            query = Workspace.query_with_count(confirmed, workspace_name=object_id)
         return query
+
+    def _get_object(self, object_id, eagerload=False, **kwargs):
+        """
+        Given the object_id and extra route params, get an instance of
+        ``self.model_class``
+        """
+        self._validate_object_id(object_id)
+        obj = self._get_base_query(object_id).fetchone()
+        if not obj:
+            flask.abort(404, 'Object with id "%s" not found' % object_id)
+        return obj
 
     def _get_base_query_deactivated(self):
         try:
             confirmed = bool(json.loads(flask.request.args['confirmed']))
         except (KeyError, ValueError):
             confirmed = None
-        query = Workspace.query_with_count(confirmed).filter(self.model_class.active == False)
-        return query
+        query = Workspace.query_with_count(confirmed, active=False)
+        return query.fetchone()
 
     def _perform_create(self, data, **kwargs):
         scope = data.pop('scope', [])

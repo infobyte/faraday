@@ -17,7 +17,9 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
-    event)
+    event,
+    text
+)
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship, undefer
 from sqlalchemy.sql import select, text, table
@@ -1313,43 +1315,74 @@ class Workspace(Metadata):
         cascade="all, delete-orphan")
 
     @classmethod
-    def query_with_count(cls, confirmed):
+    def query_with_count(cls, confirmed, active=None, workspace_name=None):
         """
         Add count fields to the query.
 
         If confirmed is True/False, it will only show the count for confirmed / not confirmed
         vulnerabilities. Otherwise, it will show the count of all of them
         """
-        return cls.query.options(
-            undefer(cls.host_count),
-            undefer(cls.credential_count),
-            undefer(cls.open_service_count),
-            undefer(cls.total_service_count),
-            with_expression(
-                cls.vulnerability_web_count,
-                _make_vuln_count_property('vulnerability_web',
-                                          confirmed=confirmed,
-                                          use_column_property=False)
-            ),
-            with_expression(
-                cls.vulnerability_code_count,
-                _make_vuln_count_property('vulnerability_code',
-                                          confirmed=confirmed,
-                                          use_column_property=False)
-            ),
-            with_expression(
-                cls.vulnerability_standard_count,
-                _make_vuln_count_property('vulnerability',
-                                          confirmed=confirmed,
-                                          use_column_property=False)
-            ),
-            with_expression(
-                cls.vulnerability_total_count,
-                _make_vuln_count_property(type_=None,
-                                          confirmed=confirmed,
-                                          use_column_property=False)
-            ),
-        )
+        query = """
+		SELECT
+		      (SELECT COUNT(credential.id) AS count_1
+		      FROM credential
+		      WHERE credential.workspace_id = workspace.id
+		      ) AS credential_count,
+		      (SELECT COUNT(host.id) AS count_2
+			    FROM host
+			    WHERE host.workspace_id = workspace.id
+		      ) AS host_count,
+		      (SELECT COUNT(service.id) AS count_3
+			    FROM service
+			    WHERE service.workspace_id = workspace.id AND service.status = 'open'
+		      ) AS service_count,
+		      (SELECT COUNT(service.id) AS count_4
+			    FROM service
+			    WHERE service.workspace_id = workspace.id
+		      ) AS total_service_count,
+		      (SELECT COUNT(DISTINCT(vulnerability.id)) AS count_5
+			    FROM vulnerability
+			    WHERE vulnerability.workspace_id = workspace.id AND vulnerability.type = 'vulnerability_web'
+		      ) AS vulnerability_web_count,
+		      (SELECT COUNT(DISTINCT(vulnerability.id)) AS count_6
+			    FROM vulnerability
+			    WHERE vulnerability.workspace_id = workspace.id AND vulnerability.type = 'vulnerability_code'
+		      ) AS vulnerability_code_count,
+		      (SELECT COUNT(DISTINCT(vulnerability.id)) AS count_7
+			    FROM vulnerability
+			    WHERE vulnerability.workspace_id = workspace.id AND vulnerability.type = 'vulnerability'
+		      ) AS vulnerability_standard_count,
+		      (SELECT COUNT(DISTINCT(vulnerability.id)) AS count_8
+			    FROM vulnerability
+			    WHERE vulnerability.workspace_id = workspace.id
+		      ) AS vulnerability_total_count,
+		      workspace.create_date AS workspace_create_date,
+		      workspace.update_date AS workspace_update_date,
+		      workspace.id AS workspace_id,
+		      workspace.customer AS workspace_customer,
+		      workspace.description AS workspace_description,
+		      workspace.active AS workspace_active,
+		      workspace.end_date AS workspace_end_date,
+		      workspace.name AS workspace_name,
+		      workspace.public AS workspace_public,
+		      workspace.start_date AS workspace_start_date,
+		      workspace.update_user_id AS workspace_update_user_id,
+		      workspace.creator_id AS workspace_creator_id
+		      FROM workspace
+        """
+        params = {}
+        if active and not workspace_name:
+            query += " WHERE workspace.active = :active "
+            params['active'] = active
+        if workspace_name and not active:
+            query += " WHERE workspace.name = :workspace_name "
+            params['workspace_name'] = workspace_name
+        if active and workspace_name:
+            query += " WHERE workspace.active = :active AND workspace.name = :workspace_name"
+            params['active'] = active
+            params['workspace_name'] = workspace_name
+	query += "ORDER BY workspace.name ASC"
+        return db.engine.execute(text(query), params)
 
     def set_scope(self, new_scope):
         return set_children_objects(self, new_scope,

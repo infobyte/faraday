@@ -13,7 +13,7 @@
     <div class="modal-body">
         <div class="mt-3">
 
-            <div class="edit-vulns-dropdowns row" ng-init="modal.updateBtnSeverityColor(modal.data.severity)">
+            <div class="edit-vulns-dropdowns row" ng-init="modal.changeSeverity('unclassified')">
 
                 <div class="btn-group col-md-3 col-sm-6 col-xs-6">
                     <button type="button" class="dropdown-toggle btn-change-property primary-btn"
@@ -30,17 +30,17 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-right" role="menu">
                         <li>
-                            <a class="ws" ng-if="modal.data.severity !== 'unclassified'"
+                            <a class="ws"
                                ng-click="modal.changeSeverity('unclassified')">UNCLASSIFIED</a>
-                            <a class="ws" ng-if="modal.data.severity !== 'info'"
+                            <a class="ws"
                                ng-click="modal.changeSeverity('info')">INFO</a>
-                            <a class="ws" ng-if="modal.data.severity !== 'low'"
+                            <a class="ws"
                                ng-click="modal.changeSeverity('low')">LOW</a>
-                            <a class="ws" ng-if="modal.data.severity !== 'med'"
+                            <a class="ws"
                                ng-click="modal.changeSeverity('med')">MEDIUM</a>
-                            <a class="ws" ng-if="modal.data.severity !== 'high'"
+                            <a class="ws"
                                ng-click="modal.changeSeverity('high')">HIGH</a>
-                            <a class="ws" ng-if="modal.data.severity !== 'critical'"
+                            <a class="ws"
                                ng-click="modal.changeSeverity('critical')">CRITICAL</a>
                         </li>
                     </ul>
@@ -62,42 +62,37 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-right" role="menu">
                         <li>
-                            <a class="ws" ng-if="modal.data.easeofresolution !== 'trivial'"
+                            <a class="ws"
+                               ng-click="modal.data.easeofresolution = null">Undetermined</a>
+                            <a class="ws"
                                ng-click="modal.data.easeofresolution = 'trivial'">Trivial</a>
-                            <a class="ws" ng-if="modal.data.easeofresolution !== 'simple'"
+                            <a class="ws"
                                ng-click="modal.data.easeofresolution = 'simple'">Simple</a>
-                            <a class="ws" ng-if="modal.data.easeofresolution !== 'moderate'"
+                            <a class="ws"
                                ng-click="modal.data.easeofresolution = 'moderate'">Moderate</a>
-                            <a class="ws" ng-if="modal.data.easeofresolution !== 'difficult'"
+                            <a class="ws"
                                ng-click="modal.data.easeofresolution = 'difficult'">Difficult</a>
-                            <a class="ws" ng-if="modal.data.easeofresolution !== 'infeasible'"
+                            <a class="ws"
                                ng-click="modal.data.easeofresolution = 'infeasible'">Infeasible</a>
                         </li>
                     </ul>
                 </div>
 
-
-                <div class="btn-group col-md-3 col-sm-6 col-xs-6" ng-init="modal.data.type = 'Vulnerability'">
-                    <button type="button" class="dropdown-toggle btn-change-property primary-btn btn-primary-white"
-                            data-toggle="dropdown"
-                            id="btn-chg-status"
-                            title="{{modal.data.type}}">
-                        {{modal.data.type }}
-                    </button>
-                    <button type="button" class="dropdown-toggle secondary-btn btn-change-property btn-secondary-white"
-                            data-toggle="dropdown"
-                            id="caret-status"
-                            title="Change Type">
-                        <span> <i class="fa fa-angle-down fa-lg" aria-hidden="true"></i> </span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
-                        <li>
-                            <a class="ws" ng-if="modal.data.type !== 'Vulnerability'"
-                               ng-click="modal.data.type = 'Vulnerability'">Vulnerability</a>
-                            <a class="ws" ng-if="modal.data.type !== 'VulnerabilityWeb'"
-                               ng-click="modal.data.type = 'VulnerabilityWeb'">Vulnerability Web</a>
-                        </li>
-                    </ul>
+                <div class="customs-radio-inline">
+                    <label class="radio-container"
+                           ng-click="modal.data.type = 'Vulnerability'"
+                           title="Change type to Vulnerability">
+                        <h5>Vulnerability</h5>
+                        <input type="radio" checked="checked" name="radio" ng-checked="modal.data.type === 'Vulnerability'">
+                        <span class="checkmark"></span>
+                    </label>
+                    <label class="radio-container"
+                           ng-click="modal.data.type = 'VulnerabilityWeb'"
+                           title="Change type to Vulnerability Web">
+                        <h5>Vulnerability Web</h5>
+                        <input type="radio" name="radio" ng-checked="modal.data.type === 'VulnerabilityWeb'">
+                        <span class="checkmark"></span>
+                    </label>
                 </div>
 
             </div>
@@ -115,7 +110,7 @@
                 <li class="nav-item">
                     <a class="nav-link" data-toggle="tab" data-target="#tab-evidence" href="javascript:;">Evidence</a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item" ng-class="{'has-error': modal.data.type == 'Vulnerability' && modal.data.parents.length == 0}">
                     <a class="nav-link" data-toggle="tab" data-target="#hosts" href="javascript:;">Hosts</a>
                 </li>
             </ul>
@@ -138,6 +133,8 @@
                         </div>
                     </div>
 
+                    <div class="col-md-12 custom-divider"></div>
+
                     <div class="col-md-12">
                         <div class="tab-pane-header">Name</div>
                         <div class="form-group" ng-class="{'has-error': form.name.$invalid }">
@@ -150,10 +147,11 @@
 
                     <div class="col-md-12">
                         <div class="tab-pane-header">Description</div>
-                        <div class="form-group">
+                        <div class="form-group" ng-class="{'has-error': form.desc.$invalid }">
                             <label class="sr-only" for="vuln-data">Vuln description</label>
-                            <textarea class="form-control" id="vuln-desc" rows="4"
-                                      ng-model="modal.data.desc" placeholder="Description"></textarea>
+                            <textarea class="form-control" id="vuln-desc" name="desc"
+                                      ng-model="modal.data.desc" required placeholder="Description"
+                            style="margin: 0 2px 0 0; height: 239px; width: 810px;"></textarea>
                         </div><!-- .form-group -->
                     </div>
 
@@ -216,6 +214,62 @@
                         </div>
                     </div><!-- .form-group -->
 
+                    <div class="fields-of-vulnWeb margin-top-22px" ng-show="modal.data.type === 'VulnerabilityWeb'">
+                        <div class="col-md-4">
+                            <div class="tab-pane-header">Method</div>
+                            <div class="form-group">
+                                <label class="sr-only control-label" for="vuln-method">Method</label>
+                                <input type="text" class="form-control" id="vuln-method" placeholder="Method"
+                                       ng-model="modal.data.method"/>
+                            </div><!-- .form-group -->
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="tab-pane-header">Param Name</div>
+                            <div class="form-group">
+                                <label class="sr-only control-label" for="vuln-pname">Param Name</label>
+                                <input type="text" class="form-control" id="vuln-pname" placeholder="Param name"
+                                       ng-model="modal.data.pname"/>
+                            </div><!-- .form-group -->
+                        </div>
+
+                        <div class="col-md-5">
+                            <div class="tab-pane-header">Params</div>
+                            <div class="form-group">
+                                <label class="sr-only control-label" for="vuln-params">Params</label>
+                                <input type="text" class="form-control" id="vuln-params" placeholder="Params"
+                                       ng-model="modal.data.params"/>
+                            </div><!-- .form-group -->
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="tab-pane-header">Path</div>
+                            <div class="form-group">
+                                <label class="sr-only control-label" for="vuln-path">Path</label>
+                                <input type="text" class="form-control" id="vuln-path" placeholder="Path"
+                                       ng-model="modal.data.path"/>
+                            </div><!-- .form-group -->
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="tab-pane-header">Query</div>
+                            <div class="form-group">
+                                <label class="sr-only control-label" for="vuln-query">Query</label>
+                                <input type="text" class="form-control" id="vuln-query" placeholder="Query"
+                                       ng-model="modal.data.query"/>
+                            </div><!-- .form-group -->
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="tab-pane-header">Website</div>
+                            <div class="form-group">
+                                <label class="sr-only control-label" for="vuln-website">Website</label>
+                                <input type="text" class="form-control" id="vuln-website" placeholder="Website"
+                                       ng-model="modal.data.website"/>
+                            </div><!-- .form-group -->
+                        </div>
+                    </div>
+
                     <div class="col-md-12 margin-bottom-15px margin-top-22px">
                         <div class="tab-pane-header">Impact</div>
                         <h4><span ng-repeat="(key, value) in modal.data.impact" class="normal-size"
@@ -226,6 +280,7 @@
                     </div>
 
                 </div>
+
                 <div id="technical_details" class="container tab-pane-container tab-pane fade"><br>
                     <div class="col-md-12">
                         <div class="tab-pane-header">Data</div>
@@ -236,7 +291,7 @@
                         </div><!-- .form-group -->
                     </div>
 
-                    <div class="col-md-6 col-sm-12 col-xs-12">
+                    <div class="col-md-6 col-sm-12 col-xs-12" ng-show="modal.data.type === 'VulnerabilityWeb'">
                         <div class="tab-pane-header">Request</div>
                         <div class="form-group">
                             <label class="sr-only" for="vuln-request">Vuln request</label>
@@ -245,7 +300,7 @@
                         </div><!-- .form-group -->
                     </div>
 
-                    <div class="col-md-6 col-sm-12 col-xs-12">
+                    <div class="col-md-6 col-sm-12 col-xs-12" ng-show="modal.data.type === 'VulnerabilityWeb'">
                         <div class="tab-pane-header">Response</div>
                         <div class="form-group">
                             <label class="sr-only" for="vuln-response">Vuln response</label>
@@ -256,7 +311,7 @@
 
                 </div>
                 <div id="tab-evidence" class="container tab-pane fade"><br>
-                    <div class="col-md-12 margin-bottom-15px margin-top-18px">
+                    <div class="col-md-12 margin-bottom-15px">
                         <div class="tab-pane-header">Evidence</div>
                         <div class="alert alert-danger normal-size" role="alert" ng-if="modal.file_name_error">
                             <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
@@ -291,7 +346,7 @@
 
                 </div>
                 <div id="hosts" class="container tab-pane-container tab-pane fade"><br>
-                    <div class="col-md-12 margin-bottom-15px margin-top-18px">
+                    <div class="col-md-12 margin-bottom-15px">
                         <div class="form-horizontal">
                             <div class="tab-pane-header">Target</div>
                             <div class="form-group">
@@ -304,10 +359,12 @@
                                 <div class="col-md-2">
                                     <div class="btn-group btn-small-margin">
                                         <button type="button" class="btn btn-default btn-xs" title="Select page"
-                                                ng-click="modal.setTargets(true, modal.currentPage*modal.pageSize, modal.pageSize)" style="height: 30px!important;">
+                                                ng-click="modal.setTargets(true, modal.currentPage*modal.pageSize, modal.pageSize)"
+                                                style="height: 30px!important;">
                                             Select page
                                         </button>
-                                        <button type="button" class="btn btn-default btn-xs dropdown-toggle" style="height: 30px!important;"
+                                        <button type="button" class="btn btn-default btn-xs dropdown-toggle"
+                                                style="height: 30px!important;"
                                                 data-toggle="dropdown"
                                                 title="Select options">
                                             <span class="caret"></span>

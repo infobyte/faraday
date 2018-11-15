@@ -255,6 +255,9 @@ angular.module('faradayApp')
                 case "critical":
                     color = '#932ebe';
                     break;
+                default:
+                    color = '#AAAAAA';
+                    break;
             }
 
             angular.element('#btn-chg-severity').css('background-color', color);

@@ -582,6 +582,8 @@ class VulnerabilityView(PaginatedMixin,
                 filename=filename,
                 content=faraday_file
             )
+            db.session.commit()
+            return flask.jsonify({'message': 'Evidence upload was successful'})
         else:
             flask.abort(404, "Vulnerability not found")
 

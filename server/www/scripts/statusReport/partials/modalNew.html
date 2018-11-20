@@ -99,7 +99,10 @@
 
             <!-- Nav tabs -->
             <ul class="nav nav-tabs" id="nav-tabs-container">
-                <li class="nav-item active">
+                <li class="nav-item active" ng-class="{'has-error': modal.data.type == 'Vulnerability' && modal.data.parents.length == 0}">
+                    <a class="nav-link" data-toggle="tab" data-target="#hosts" href="javascript:;">Hosts</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link active" data-toggle="tab" data-target="#general"
                        href="javascript:;">General</a>
                 </li>
@@ -110,14 +113,122 @@
                 <li class="nav-item">
                     <a class="nav-link" data-toggle="tab" data-target="#tab-evidence" href="javascript:;">Evidence</a>
                 </li>
-                <li class="nav-item" ng-class="{'has-error': modal.data.type == 'Vulnerability' && modal.data.parents.length == 0}">
-                    <a class="nav-link" data-toggle="tab" data-target="#hosts" href="javascript:;">Hosts</a>
-                </li>
             </ul>
 
 
             <div class="tab-content">
-                <div id="general" class="container tab-pane-container tab-pane active"><br>
+                <div id="hosts" class="container tab-pane-container tab-pane active"><br>
+                    <div class="col-md-12 margin-bottom-15px">
+                        <div class="form-horizontal">
+                            <div class="tab-pane-header">Target</div>
+                            <div class="form-group">
+                                <div class="col-md-10">
+                                    <div class="form-group input-accordion">
+                                        <input type="text" ng-model="modal.target_filter" class="form-control input-sm"
+                                               placeholder="Search targets" ng-change="modal.currentPage = 0">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="btn-group btn-small-margin">
+                                        <button type="button" class="btn btn-default btn-xs" title="Select page"
+                                                ng-click="modal.setTargets(true, modal.currentPage*modal.pageSize, modal.pageSize)"
+                                                style="height: 30px!important;">
+                                            Select page
+                                        </button>
+                                        <button type="button" class="btn btn-default btn-xs dropdown-toggle"
+                                                style="height: 30px!important;"
+                                                data-toggle="dropdown"
+                                                title="Select options">
+                                            <span class="caret"></span>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                                            <li ng-show="modal.target_filter && modal.targets_filtered.length > 0">
+                                                <a class="ws"
+                                                   ng-click="modal.setTargets(true, 0, modal.targets_filtered.length)">Select
+                                                    all hosts in search</a>
+                                            </li>
+                                            <li>
+                                                <a class="ws"
+                                                   ng-click="modal.setTargets(false, 0, modal.targets.length)">Select
+                                                    all
+                                                    hosts</a>
+                                            </li>
+                                            <li>
+                                                <a class="ws" ng-click="modal.setTargets(false, 0, 0)">Clear
+                                                    selection</a>
+                                            </li>
+                                        </ul>
+                                    </div><!-- .btn-group -->
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-md-12">
+                                    <uib-accordion close-others="true">
+                                        <uib-accordion-group is-open="isopen"
+                                                             ng-repeat="host in modal.targets_filtered = (modal.targets | filter:modal.target_filter) | startFrom:modal.currentPage*modal.pageSize | limitTo:modal.pageSize"
+                                                             template-url="scripts/statusReport/partials/accordion-group.html"
+                                                             is-disabled="host.services.length < 1">
+                                            <uib-accordion-heading>
+                                                <a ng-click="modal.setTarget(host)"
+                                                   ng-class="{'multi-selected': modal.data.parents.indexOf(host) >= 0}">{{host.name}}
+                                                    ({{host.hostnames[0]}})</a>
+                                            </uib-accordion-heading>
+                                            <div class="panel-body" ng-repeat="service in host.services">
+                                                <a ng-model="service" ng-click="modal.setTarget(service)"
+                                                   ng-class="{'multi-selected': modal.data.parents.indexOf(service) >= 0}">{{service.name}}
+                                                    {{service.ports}}</a>
+                                            </div>
+                                        </uib-accordion-group>
+                                    </uib-accordion>
+                                    <div class="showPagination"
+                                         ng-show="modal.targets_filtered.length > modal.pageSize">
+                                        <div class="form-group">
+                                            <ul class="pagination">
+                                                <li><a ng-hide="modal.currentPage <= 0"
+                                                       ng-click="modal.currentPage = modal.currentPage - 1"><span
+                                                        aria-hidden="true">&laquo;</span><span
+                                                        class="sr-only">Previous</span></a></li>
+                                                <li><a>{{modal.currentPage+1}}/{{ ((modal.targets_filtered.length /
+                                                    modal.pageSize) |
+                                                    integer) + 1}}</a></li>
+                                                <li>
+                                                    <a ng-hide="modal.currentPage >= ((modal.targets_filtered.length / modal.pageSize) | integer)"
+                                                       ng-click="modal.currentPage = modal.currentPage + 1"><span
+                                                            aria-hidden="true">&raquo;</span><span
+                                                            class="sr-only">Next</span></a></li>
+                                            </ul>
+                                            <ng-form name="goToPage">
+                                                <div class="col-md-2">
+                                                    <input type="number" class="form-control"
+                                                           ng-model="modal.newCurrentPage"
+                                                           placeholder="Go to page"/>
+                                                </div>
+                                                <button class="btn btn-danger" ng-click="modal.go()">GO</button>
+                                            </ng-form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="alert alert-danger target_not_selected" role="alert"
+                                 ng-hide="modal.data.parents.length > 0">
+                                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                                <span class="sr-only">Error:</span>
+                                There is no target selected
+                            </div>
+                            <div class="alert alert-danger target_not_selected" role="alert"
+                                 ng-show="modal.data.type === 'VulnerabilityWeb' && modal.host_parents">
+                                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                                <span class="sr-only">Error:</span>
+                                Trying to create a Web Vulnerability with one or more Host parents. Please deselect the
+                                Host targets or
+                                <a href="" ng-click="modal.resetTarget()">click here to deselect all targets</a>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div id="general" class="container tab-pane-container tab-pane"><br>
                     <div class="col-md-12">
                         <div class="tab-pane-header">Search vulnerability database templates
                             <a
@@ -281,7 +392,7 @@
 
                 </div>
 
-                <div id="technical_details" class="container tab-pane-container tab-pane fade"><br>
+                <div id="technical_details" class="container tab-pane-container tab-pane"><br>
                     <div class="col-md-12">
                         <div class="tab-pane-header">Data</div>
                         <div class="form-group">
@@ -310,6 +421,7 @@
                     </div>
 
                 </div>
+
                 <div id="tab-evidence" class="container tab-pane fade"><br>
                     <div class="col-md-12 margin-bottom-15px">
                         <div class="tab-pane-header">Evidence</div>
@@ -344,116 +456,6 @@
                         </div><!-- #evidenceFiles -->
                     </div>
 
-                </div>
-                <div id="hosts" class="container tab-pane-container tab-pane fade"><br>
-                    <div class="col-md-12 margin-bottom-15px">
-                        <div class="form-horizontal">
-                            <div class="tab-pane-header">Target</div>
-                            <div class="form-group">
-                                <div class="col-md-10">
-                                    <div class="form-group input-accordion">
-                                        <input type="text" ng-model="modal.target_filter" class="form-control input-sm"
-                                               placeholder="Search targets" ng-change="modal.currentPage = 0">
-                                    </div>
-                                </div>
-                                <div class="col-md-2">
-                                    <div class="btn-group btn-small-margin">
-                                        <button type="button" class="btn btn-default btn-xs" title="Select page"
-                                                ng-click="modal.setTargets(true, modal.currentPage*modal.pageSize, modal.pageSize)"
-                                                style="height: 30px!important;">
-                                            Select page
-                                        </button>
-                                        <button type="button" class="btn btn-default btn-xs dropdown-toggle"
-                                                style="height: 30px!important;"
-                                                data-toggle="dropdown"
-                                                title="Select options">
-                                            <span class="caret"></span>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-right" role="menu">
-                                            <li ng-show="modal.target_filter && modal.targets_filtered.length > 0">
-                                                <a class="ws"
-                                                   ng-click="modal.setTargets(true, 0, modal.targets_filtered.length)">Select
-                                                    all hosts in search</a>
-                                            </li>
-                                            <li>
-                                                <a class="ws"
-                                                   ng-click="modal.setTargets(false, 0, modal.targets.length)">Select
-                                                    all
-                                                    hosts</a>
-                                            </li>
-                                            <li>
-                                                <a class="ws" ng-click="modal.setTargets(false, 0, 0)">Clear
-                                                    selection</a>
-                                            </li>
-                                        </ul>
-                                    </div><!-- .btn-group -->
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <div class="col-md-12">
-                                    <uib-accordion close-others="true">
-                                        <uib-accordion-group is-open="isopen"
-                                                             ng-repeat="host in modal.targets_filtered = (modal.targets | filter:modal.target_filter) | startFrom:modal.currentPage*modal.pageSize | limitTo:modal.pageSize"
-                                                             template-url="scripts/statusReport/partials/accordion-group.html"
-                                                             is-disabled="host.services.length < 1">
-                                            <uib-accordion-heading>
-                                                <a ng-click="modal.setTarget(host)"
-                                                   ng-class="{'multi-selected': modal.data.parents.indexOf(host) >= 0}">{{host.name}}
-                                                    ({{host.hostnames[0]}})</a>
-                                            </uib-accordion-heading>
-                                            <div class="panel-body" ng-repeat="service in host.services">
-                                                <a ng-model="service" ng-click="modal.setTarget(service)"
-                                                   ng-class="{'multi-selected': modal.data.parents.indexOf(service) >= 0}">{{service.name}}
-                                                    {{service.ports}}</a>
-                                            </div>
-                                        </uib-accordion-group>
-                                    </uib-accordion>
-                                    <div class="showPagination"
-                                         ng-show="modal.targets_filtered.length > modal.pageSize">
-                                        <div class="form-group">
-                                            <ul class="pagination">
-                                                <li><a ng-hide="modal.currentPage <= 0"
-                                                       ng-click="modal.currentPage = modal.currentPage - 1"><span
-                                                        aria-hidden="true">&laquo;</span><span
-                                                        class="sr-only">Previous</span></a></li>
-                                                <li><a>{{modal.currentPage+1}}/{{ ((modal.targets_filtered.length /
-                                                    modal.pageSize) |
-                                                    integer) + 1}}</a></li>
-                                                <li>
-                                                    <a ng-hide="modal.currentPage >= ((modal.targets_filtered.length / modal.pageSize) | integer)"
-                                                       ng-click="modal.currentPage = modal.currentPage + 1"><span
-                                                            aria-hidden="true">&raquo;</span><span
-                                                            class="sr-only">Next</span></a></li>
-                                            </ul>
-                                            <ng-form name="goToPage">
-                                                <div class="col-md-2">
-                                                    <input type="number" class="form-control"
-                                                           ng-model="modal.newCurrentPage"
-                                                           placeholder="Go to page"/>
-                                                </div>
-                                                <button class="btn btn-danger" ng-click="modal.go()">GO</button>
-                                            </ng-form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="alert alert-danger target_not_selected" role="alert"
-                                 ng-hide="modal.data.parents.length > 0">
-                                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-                                <span class="sr-only">Error:</span>
-                                There is no target selected
-                            </div>
-                            <div class="alert alert-danger target_not_selected" role="alert"
-                                 ng-show="modal.data.type === 'VulnerabilityWeb' && modal.host_parents">
-                                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-                                <span class="sr-only">Error:</span>
-                                Trying to create a Web Vulnerability with one or more Host parents. Please deselect the
-                                Host targets or
-                                <a href="" ng-click="modal.resetTarget()">click here to deselect all targets</a>
-                            </div>
-                        </div>
-
-                    </div>
                 </div>
             </div>
         </div>

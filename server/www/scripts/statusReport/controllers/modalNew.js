@@ -234,5 +234,40 @@ angular.module('faradayApp')
             vm.data.policyviolations = policyviolations;
         }
 
+        vm.updateBtnSeverityColor = function (severity) {
+            var color = undefined;
+            switch (severity) {
+                case "unclassified":
+                    color = '#999999';
+                    break;
+                case "info":
+                    color = '#2e97bd';
+                    break;
+                case "low":
+                    color = '#a1ce31';
+                    break;
+                case "med":
+                    color = '#dfbf35';
+                    break;
+                case "high":
+                    color = '#df3936';
+                    break;
+                case "critical":
+                    color = '#932ebe';
+                    break;
+                default:
+                    color = '#AAAAAA';
+                    break;
+            }
+
+            angular.element('#btn-chg-severity').css('background-color', color);
+            angular.element('#caret-chg-severity').css('background-color', color);
+        };
+
+        vm.changeSeverity = function (severity) {
+            vm.data.severity = severity;
+            vm.updateBtnSeverityColor(severity);
+        };
+
         init();
     }]);

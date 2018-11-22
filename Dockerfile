@@ -1,13 +1,6 @@
 FROM debian:stretch
 
 RUN apt-get -y update && apt-get -y upgrade
-RUN apt-get -y install curl gnupg apt-transport-https
-
-RUN echo "deb https://apache.bintray.com/couchdb-deb stretch main" >> \
-  /etc/apt/sources.list
-RUN curl -L https://couchdb.apache.org/repo/bintray-pubkey.asc | apt-key add -
-
-RUN apt-get -y update
 RUN apt-get -y install \
   git \
   python-virtualenv \
@@ -30,12 +23,12 @@ RUN apt-get -y install \
   libpng-dev \
   postgresql
 
-EXPOSE 5985
 WORKDIR /root
 RUN git clone https://github.com/infobyte/faraday.git faraday-dev
 WORKDIR ./faraday-dev
-#RUN echo "psycopg2-binary" >> requirements.txt
 RUN ./install.sh
 COPY entrypoint.sh /root/entrypoint.sh
+
+EXPOSE 5985
 
 ENTRYPOINT ["/root/entrypoint.sh"]

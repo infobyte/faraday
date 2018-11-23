@@ -1342,19 +1342,19 @@ class Workspace(Metadata):
 		      ) AS total_service_count,
 		      (SELECT COUNT(DISTINCT(vulnerability.id)) AS count_5
 			    FROM vulnerability
-			    WHERE vulnerability.workspace_id = workspace.id AND vulnerability.type = 'vulnerability_web'
+			    WHERE vulnerability.workspace_id = workspace.id AND vulnerability.type = 'vulnerability_web' {0}
 		      ) AS vulnerability_web_count,
 		      (SELECT COUNT(DISTINCT(vulnerability.id)) AS count_6
 			    FROM vulnerability
-			    WHERE vulnerability.workspace_id = workspace.id AND vulnerability.type = 'vulnerability_code'
+			    WHERE vulnerability.workspace_id = workspace.id AND vulnerability.type = 'vulnerability_code' {0}
 		      ) AS vulnerability_code_count,
 		      (SELECT COUNT(DISTINCT(vulnerability.id)) AS count_7
 			    FROM vulnerability
-			    WHERE vulnerability.workspace_id = workspace.id AND vulnerability.type = 'vulnerability'
+			    WHERE vulnerability.workspace_id = workspace.id AND vulnerability.type = 'vulnerability' {0}
 		      ) AS vulnerability_standard_count,
 		      (SELECT COUNT(DISTINCT(vulnerability.id)) AS count_8
 			    FROM vulnerability
-			    WHERE vulnerability.workspace_id = workspace.id
+			    WHERE vulnerability.workspace_id = workspace.id {0}
 		      ) AS vulnerability_total_count,
 		      workspace.create_date AS workspace_create_date,
 		      workspace.update_date AS workspace_update_date,
@@ -1375,22 +1375,32 @@ class Workspace(Metadata):
         concat_func = 'string_agg'
         if db.engine.dialect.name == 'sqlite':
             concat_func = 'group_concat'
-        query = query.format(concat_func=concat_func)
+        statements = []
         params = {}
         if confirmed or active or workspace_name:
             query += " WHERE "
+        confirmed_vuln_filter = ''
         if confirmed is not None:
-            query += " vulneraiblity.confirmed = :confirmed"
+            if db.engine.dialect.name == 'sqlite':
+                if confirmed:
+                    confirmed_vuln_filter = " AND vulnerability.confirmed"
+                else:
+                    confirmed_vuln_filter = " AND not vulnerability.confirmed"
+            if db.engine.dialect.name == 'postgres':
+                confirmed_vuln_filter = " AND vulnerability.confirmed = :confirmed "
+
+        query = query.format(confirmed_vuln_filter, concat_func=concat_func)
         if active and not workspace_name:
-            query += " workspace.active = :active "
+            statements.append(" workspace.active = :active ")
             params['active'] = active
         if workspace_name and not active:
-            query += " workspace.name = :workspace_name "
+            statements.append(" workspace.name = :workspace_name ")
             params['workspace_name'] = workspace_name
         if active and workspace_name:
-            query += " workspace.active = :active AND workspace.name = :workspace_name"
+            statements.append(" workspace.active = :active AND workspace.name = :workspace_name")
             params['active'] = active
             params['workspace_name'] = workspace_name
+        query += ' AND '.join(statements)
         query += " GROUP BY workspace.id "
 	query += " ORDER BY workspace.name ASC"
         return db.engine.execute(text(query), params)

@@ -7,9 +7,14 @@ import flask
 from flask import Blueprint
 from flask_classful import route
 from marshmallow import Schema, fields, post_load, validate
+from sqlalchemy.orm import (
+    query_expression,
+    with_expression
+)
+
 
 from server.utils.cache import cached
-from server.models import db, Workspace
+from server.models import db, Workspace, _make_vuln_count_property
 from server.schemas import (
     JSTimestampField,
     MutableField,
@@ -83,7 +88,7 @@ class WorkspaceView(ReadWriteView):
     schema_class = WorkspaceSchema
     order_field = Workspace.name.asc()
 
-    @cached()
+    @cached
     def index(self, **kwargs):
         query = self._get_base_query()
         res = []
@@ -91,10 +96,15 @@ class WorkspaceView(ReadWriteView):
 	for workspace_stat in query:
 	    workspace_stat = dict(workspace_stat)
 	    for key, value in workspace_stat.items():
-	        if key.startswith('workspace_'):
+		if key.startswith('workspace_'):
 		    new_key = key.replace('workspace_', '')
 		    workspace_stat[new_key] = workspace_stat[key]
-	    objects.append(workspace_stat)
+            workspace_stat['scope'] = []
+            if workspace_stat['scope_raw']:
+                workspace_stat['scope_raw'] = workspace_stat['scope_raw'].split(',')
+                for scope in workspace_stat['scope_raw']:
+                    workspace_stat['scope'].append({'name': scope})
+            objects.append(workspace_stat)
         return self._envelope_list(self._dump(objects, kwargs, many=True))
 
     def _get_eagerloaded_query(self, *args, **kwargs):
@@ -117,8 +127,46 @@ class WorkspaceView(ReadWriteView):
         Given the object_id and extra route params, get an instance of
         ``self.model_class``
         """
+        confirmed = flask.request.values.get('confirmed', None)
+        if confirmed:
+            try:
+                 confirmed = bool(int(confirmed))
+            except ValueError:
+                 if confirmed.lower() == 'false':
+                      confirmed = False
+                 elif confirmed.lower() == 'true':
+                      confirmed = True
         self._validate_object_id(object_id)
-        obj = self._get_base_query(object_id).fetchone()
+        query = db.session.query(Workspace).filter_by(name=object_id)
+        query = query.options(
+                 with_expression(
+                     Workspace.vulnerability_web_count,
+                         _make_vuln_count_property('vulnerability_web',
+                                          confirmed=confirmed,
+                                          use_column_property=False),
+                 ),
+                 with_expression(
+                     Workspace.vulnerability_standard_count,
+                         _make_vuln_count_property('vulnerability',
+                                          confirmed=confirmed,
+                                          use_column_property=False)
+                ),
+                with_expression(
+                     Workspace.vulnerability_total_count,
+                         _make_vuln_count_property(type_=None,
+                                          confirmed=confirmed,
+                                          use_column_property=False)
+               ),
+               with_expression(
+                     Workspace.vulnerability_code_count,
+                    _make_vuln_count_property('vulnerability_code',
+                                          use_column_property=False)
+            ),
+
+
+        )
+
+        obj = query.first()
         if not obj:
             flask.abort(404, 'Object with id "%s" not found' % object_id)
         return obj

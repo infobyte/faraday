@@ -1367,21 +1367,32 @@ class Workspace(Metadata):
 		      workspace.public AS workspace_public,
 		      workspace.start_date AS workspace_start_date,
 		      workspace.update_user_id AS workspace_update_user_id,
-		      workspace.creator_id AS workspace_creator_id
-		      FROM workspace
+		      workspace.creator_id AS workspace_creator_id,
+                      {concat_func}(scope.name, ',') as scope_raw
+                      FROM workspace
+                      LEFT JOIN scope ON workspace.id = scope.workspace_id
         """
+        concat_func = 'string_agg'
+        if db.engine.dialect.name == 'sqlite':
+            concat_func = 'group_concat'
+        query = query.format(concat_func=concat_func)
         params = {}
+        if confirmed or active or workspace_name:
+            query += " WHERE "
+        if confirmed is not None:
+            query += " vulneraiblity.confirmed = :confirmed"
         if active and not workspace_name:
-            query += " WHERE workspace.active = :active "
+            query += " workspace.active = :active "
             params['active'] = active
         if workspace_name and not active:
-            query += " WHERE workspace.name = :workspace_name "
+            query += " workspace.name = :workspace_name "
             params['workspace_name'] = workspace_name
         if active and workspace_name:
-            query += " WHERE workspace.active = :active AND workspace.name = :workspace_name"
+            query += " workspace.active = :active AND workspace.name = :workspace_name"
             params['active'] = active
             params['workspace_name'] = workspace_name
-	query += "ORDER BY workspace.name ASC"
+        query += " GROUP BY workspace.id "
+	query += " ORDER BY workspace.name ASC"
         return db.engine.execute(text(query), params)
 
     def set_scope(self, new_scope):

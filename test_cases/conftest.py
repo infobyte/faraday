@@ -23,7 +23,6 @@ from server.models import db
 from test_cases import factories
 
 
-TEMPORATY_SQLITE = NamedTemporaryFile()
 # Discover factories to automatically register them to pytest-factoryboy and to
 # override its session
 enabled_factories = []
@@ -71,8 +70,7 @@ class CustomClient(FlaskClient):
 def pytest_addoption(parser):
     # currently for tests using sqlite and memory have problem while using transactions
     # we need to review sqlite configuraitons for persistence using PRAGMA.
-    print(TEMPORATY_SQLITE.name)
-    parser.addoption('--connection-string', default='sqlite:////{0}'.format(TEMPORATY_SQLITE.name),
+    parser.addoption('--connection-string',
                      help="Database connection string. Defaults to in-memory "
                      "sqlite if not specified:")
     parser.addoption('--ignore-nplusone', action='store_true',
@@ -87,10 +85,14 @@ def pytest_configure(config):
         config.option.markexpr = 'not hypothesis'
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='function')
 def app(request):
-    app = create_app(db_connection_string=request.config.getoption(
-        '--connection-string'), testing=True)
+    temp_file = NamedTemporaryFile()
+    connection_string = request.config.getoption(
+                    '--connection-string')
+    if not connection_string:
+        connection_string = 'sqlite:///{0}'.format(temp_file.name)
+    app = create_app(db_connection_string=connection_string, testing=True)
     app.test_client_class = CustomClient
 
     # Establish an application context before running the tests.
@@ -98,7 +100,7 @@ def app(request):
     ctx.push()
 
     def teardown():
-        TEMPORATY_SQLITE.close()
+        temp_file.close()
         ctx.pop()
 
     request.addfinalizer(teardown)
@@ -107,7 +109,7 @@ def app(request):
     return app
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='function')
 def database(app, request):
     """Session-wide test database."""
 
@@ -125,11 +127,13 @@ def database(app, request):
     # Disable check_vulnerability_host_service_source_code constraint because
     # it doesn't work in sqlite
     vuln_constraints = db.metadata.tables['vulnerability'].constraints
-    vuln_constraints.remove(next(
-        constraint for constraint in vuln_constraints
-        if constraint.name == 'check_vulnerability_host_service_source_code'))
-
-    db.app = app
+    try:
+        vuln_constraints.remove(next(
+            constraint for constraint in vuln_constraints
+            if constraint.name == 'check_vulnerability_host_service_source_code'))
+    except StopIteration:
+        pass
+    db.init_app(app)
     db.create_all()
 
     request.addfinalizer(teardown)
@@ -172,25 +176,12 @@ def session(database, request):
     for further information
     """
     connection = database.engine.connect()
-    transaction = connection.begin()
 
     options = {"bind": connection, 'binds': {}}
     session = db.create_scoped_session(options=options)
 
     # start the session in a SAVEPOINT...
-    session.begin_nested()
-
-    # then each time that SAVEPOINT ends, reopen it
-    @event.listens_for(session, "after_transaction_end")
-    def restart_savepoint(session, transaction):
-        if transaction.nested and not transaction._parent.nested:
-
-            # ensure that state is expired the way
-            # session.commit() at the top level normally does
-            # (optional step)
-            session.expire_all()
-
-            session.begin_nested()
+    #session.begin_nested()
 
     database.session = session
     db.session = session
@@ -203,7 +194,6 @@ def session(database, request):
         # Session above (including calls to commit())
         # is rolled back.
         # be careful with this!!!!!
-        transaction.rollback()
         connection.close()
         session.remove()
 

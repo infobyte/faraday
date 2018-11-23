@@ -194,8 +194,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         ]
         raw_data = {'name': 'something', 'description': 'test',
                     'scope': desired_scope}
-        res = test_client.put('/v2/ws/{}/'.format(workspace.name),
-                              data=raw_data)
+        res = test_client.put('/v2/ws/{}/'.format(workspace.name), data=raw_data)
         assert res.status_code == 200
         assert set(res.json['scope']) == set(desired_scope)
         assert set(s.name for s in workspace.scope) == set(desired_scope)

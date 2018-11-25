@@ -114,6 +114,15 @@ class CreateTestsMixin:
         obj = self.model.query.get(object_id)
         assert obj.workspace == self.workspace
 
+    def test_create_inactive_fails(self, test_client):
+        self.workspace.deactivate()
+        db.session.commit()
+        data = self.factory.build_dict(workspace=self.workspace)
+        res = test_client.post(self.url(),
+                               data=data)
+        assert res.status_code == 403, (res.status_code, res.data)
+        assert self.model.query.count() == OBJECT_COUNT
+
     def test_create_fails_with_empty_dict(self, test_client):
         res = test_client.post(self.url(), data={})
         assert res.status_code == 400
@@ -155,6 +164,15 @@ class UpdateTestsMixin:
             assert res.json[updated_field] == getattr(self.first_object,
                                                       updated_field)
 
+    def test_update_inactive_fails(self, test_client):
+        self.workspace.deactivate()
+        db.session.commit()
+        data = self.factory.build_dict(workspace=self.workspace)
+        res = test_client.put(self.url(self.first_object),
+                               data=data)
+        assert res.status_code == 403
+        assert self.model.query.count() == OBJECT_COUNT
+
     def test_update_fails_with_existing(self, test_client, session):
         for unique_field in self.unique_fields:
             data = self.factory.build_dict()
@@ -189,6 +207,14 @@ class DeleteTestsMixin:
         assert res.status_code == 204  # No content
         assert was_deleted(self.first_object)
         assert self.model.query.count() == OBJECT_COUNT - 1
+
+    def test_delete_inactive_fails(self, test_client):
+        self.workspace.deactivate()
+        db.session.commit()
+        res = test_client.delete(self.url(self.first_object))
+        assert res.status_code == 403
+        assert not was_deleted(self.first_object)
+        assert self.model.query.count() == OBJECT_COUNT
 
     def test_delete_from_other_workspace_fails(self, test_client,
                                                     second_workspace):

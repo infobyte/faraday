@@ -24,7 +24,7 @@ from config.configuration import Configuration
 from faraday import (
     FARADAY_USER_CONFIG_XML,
     FARADAY_BASE_CONFIG_XML,
-    FARADAY_BASE
+    FARADAY_BASE,
 )
 
 try:
@@ -40,7 +40,7 @@ from colorama import Fore
 from sqlalchemy.exc import OperationalError, ProgrammingError
 
 import server.config
-from config.globals import CONST_FARADAY_HOME_PATH
+from config.constant import CONST_FARADAY_HOME_PATH
 from server.config import LOCAL_CONFIG_FILE
 from paramiko import SSHClient, AutoAddPolicy
 
@@ -134,8 +134,7 @@ class InitDB:
             already_created = True
             print("{yellow}WARNING{white}: Faraday administrator user already exists.".format(yellow=Fore.YELLOW, white=Fore.WHITE))
         if not already_created:
-            if not os.path.isfile(FARADAY_USER_CONFIG_XML):
-                shutil.copy(FARADAY_BASE_CONFIG_XML, FARADAY_USER_CONFIG_XML)
+
             self._save_user_xml(random_password)
             print("Admin user created with \n\n{red}username: {white}faraday \n{red}password:{white} {random_password}\n".format(random_password=random_password, white=Fore.WHITE, red=Fore.RED))
             print("{yellow}WARNING{white}: If you are going to execute couchdb importer you must use the couchdb password for faraday user.".format(white=Fore.WHITE, yellow=Fore.YELLOW))

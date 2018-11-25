@@ -5,6 +5,7 @@ import json
 
 import flask
 from flask import Blueprint
+from flask_classful import route
 from marshmallow import Schema, fields, post_load, validate
 
 from server.models import db, Workspace
@@ -86,7 +87,20 @@ class WorkspaceView(ReadWriteView):
             confirmed = bool(json.loads(flask.request.args['confirmed']))
         except (KeyError, ValueError):
             confirmed = None
-        return Workspace.query_with_count(confirmed)
+        try:
+            active = bool(json.loads(flask.request.args['active']))
+            query = Workspace.query_with_count(confirmed).filter(self.model_class.active == active)
+        except (KeyError, ValueError):
+            query = Workspace.query_with_count(confirmed)
+        return query
+
+    def _get_base_query_deactivated(self):
+        try:
+            confirmed = bool(json.loads(flask.request.args['confirmed']))
+        except (KeyError, ValueError):
+            confirmed = None
+        query = Workspace.query_with_count(confirmed).filter(self.model_class.active == False)
+        return query
 
     def _perform_create(self, data, **kwargs):
         scope = data.pop('scope', [])
@@ -106,6 +120,18 @@ class WorkspaceView(ReadWriteView):
         if not kwargs.get('many') and obj.vulnerability_total_count is None:
             obj = self._get_object(obj.name)
         return super(WorkspaceView, self)._dump(obj, route_kwargs, **kwargs)
+
+    @route('/<workspace_id>/activate/', methods=["PUT"])
+    def activate(self, workspace_id):
+        changed = self._get_object(workspace_id).activate()
+        db.session.commit()
+        return changed
+
+    @route('/<workspace_id>/deactivate/', methods=["PUT"])
+    def deactivate(self, workspace_id):
+        changed = self._get_object(workspace_id).deactivate()
+        db.session.commit()
+        return changed
 
 
 WorkspaceView.register(workspace_api)

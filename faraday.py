@@ -13,7 +13,7 @@ import argparse
 import requests.exceptions
 
 from config.configuration import getInstanceConfiguration
-from config.globals import (
+from config.constant import (
     CONST_USER_HOME,
     CONST_FARADAY_HOME_PATH,
     CONST_FARADAY_PLUGINS_PATH,

@@ -19,7 +19,7 @@ from requests.exceptions import InvalidURL, ConnectionError
 from colorama import Fore, Back, Style
 from server.utils.daemonize import is_server_running
 from config.configuration import getInstanceConfiguration
-from config import globals as CONSTANTS
+from config import constant as CONSTANTS
 
 
 CONF = getInstanceConfiguration()

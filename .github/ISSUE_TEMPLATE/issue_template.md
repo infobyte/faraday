@@ -1,3 +1,9 @@
+---
+name: Bug report
+about: Create a report an issue
+
+---
+
 Please search the [Wiki](https://github.com/infobyte/faraday/wiki) for a solution before posting a ticket. Use the <strong>“New Support Request”</strong> button to the right of the screen to submit a ticket for technical support.
 
 ## Issue Type

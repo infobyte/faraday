@@ -112,6 +112,9 @@ def database(app, request):
     """Session-wide test database."""
 
     def teardown():
+        if db.engine.dialect.name == 'sqlite':
+            # since sqlite was created in a temp file we skip the drops.
+            return
         try:
             db.engine.execute('DROP TABLE vulnerability CASCADE')
         except Exception:

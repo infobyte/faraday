@@ -11,6 +11,7 @@ from sqlalchemy.orm import (
     query_expression,
     with_expression
 )
+from sqlalchemy.orm.exc import NoResultFound
 
 
 from server.utils.cache import cached

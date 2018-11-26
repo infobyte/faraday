@@ -1381,16 +1381,10 @@ class Workspace(Metadata):
             query += " WHERE "
         confirmed_vuln_filter = ''
         if confirmed is not None:
-            if db.engine.dialect.name == 'sqlite':
-                if confirmed:
-                    confirmed_vuln_filter = " AND vulnerability.confirmed "
-                else:
-                    confirmed_vuln_filter = " AND not vulnerability.confirmed "
-            if db.engine.dialect.name == 'postgresql':
-                if confirmed:
-                    confirmed_vuln_filter = " AND vulnerability.confirmed "
-                else:
-                    confirmed_vuln_filter = " AND not vulnerability.confirmed "
+            if confirmed:
+                confirmed_vuln_filter = " AND vulnerability.confirmed "
+            else:
+                confirmed_vuln_filter = " AND not vulnerability.confirmed "
 
         query = query.format(confirmed_vuln_filter, concat_func=concat_func)
         if active and not workspace_name:

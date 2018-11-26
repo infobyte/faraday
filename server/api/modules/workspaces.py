@@ -107,9 +107,6 @@ class WorkspaceView(ReadWriteView):
             objects.append(workspace_stat)
         return self._envelope_list(self._dump(objects, kwargs, many=True))
 
-    def _get_eagerloaded_query(self, *args, **kwargs):
-        return self._get_base_query(*args, **kwargs)
-
     def _get_base_query(self, object_id=None):
         try:
             confirmed = bool(json.loads(flask.request.args['confirmed']))
@@ -166,8 +163,9 @@ class WorkspaceView(ReadWriteView):
 
         )
 
-        obj = query.first()
-        if not obj:
+        try:
+            obj = query.one()
+        except NoResultFound:
             flask.abort(404, 'Object with id "%s" not found' % object_id)
         return obj
 

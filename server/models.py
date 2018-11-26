@@ -1323,54 +1323,54 @@ class Workspace(Metadata):
         vulnerabilities. Otherwise, it will show the count of all of them
         """
         query = """
-		SELECT
-		      (SELECT COUNT(credential.id) AS count_1
-		      FROM credential
-		      WHERE credential.workspace_id = workspace.id
-		      ) AS credential_count,
-		      (SELECT COUNT(host.id) AS count_2
-			    FROM host
-			    WHERE host.workspace_id = workspace.id
-		      ) AS host_count,
-		      (SELECT COUNT(service.id) AS count_3
-			    FROM service
-			    WHERE service.workspace_id = workspace.id AND service.status = 'open'
-		      ) AS service_count,
-		      (SELECT COUNT(service.id) AS count_4
-			    FROM service
-			    WHERE service.workspace_id = workspace.id
-		      ) AS total_service_count,
-		      (SELECT COUNT(DISTINCT(vulnerability.id)) AS count_5
-			    FROM vulnerability
-			    WHERE vulnerability.workspace_id = workspace.id AND vulnerability.type = 'vulnerability_web' {0}
-		      ) AS vulnerability_web_count,
-		      (SELECT COUNT(DISTINCT(vulnerability.id)) AS count_6
-			    FROM vulnerability
-			    WHERE vulnerability.workspace_id = workspace.id AND vulnerability.type = 'vulnerability_code' {0}
-		      ) AS vulnerability_code_count,
-		      (SELECT COUNT(DISTINCT(vulnerability.id)) AS count_7
-			    FROM vulnerability
-			    WHERE vulnerability.workspace_id = workspace.id AND vulnerability.type = 'vulnerability' {0}
-		      ) AS vulnerability_standard_count,
-		      (SELECT COUNT(DISTINCT(vulnerability.id)) AS count_8
-			    FROM vulnerability
-			    WHERE vulnerability.workspace_id = workspace.id {0}
-		      ) AS vulnerability_total_count,
-		      workspace.create_date AS workspace_create_date,
-		      workspace.update_date AS workspace_update_date,
-		      workspace.id AS workspace_id,
-		      workspace.customer AS workspace_customer,
-		      workspace.description AS workspace_description,
-		      workspace.active AS workspace_active,
-		      workspace.end_date AS workspace_end_date,
-		      workspace.name AS workspace_name,
-		      workspace.public AS workspace_public,
-		      workspace.start_date AS workspace_start_date,
-		      workspace.update_user_id AS workspace_update_user_id,
-		      workspace.creator_id AS workspace_creator_id,
-                      {concat_func}(scope.name, ',') as scope_raw
-                      FROM workspace
-                      LEFT JOIN scope ON workspace.id = scope.workspace_id
+            SELECT
+                  (SELECT COUNT(credential.id) AS count_1
+                  FROM credential
+                  WHERE credential.workspace_id = workspace.id
+                  ) AS credential_count,
+                  (SELECT COUNT(host.id) AS count_2
+                        FROM host
+                        WHERE host.workspace_id = workspace.id
+                  ) AS host_count,
+                  (SELECT COUNT(service.id) AS count_3
+                        FROM service
+                        WHERE service.workspace_id = workspace.id AND service.status = 'open'
+                  ) AS service_count,
+                  (SELECT COUNT(service.id) AS count_4
+                        FROM service
+                        WHERE service.workspace_id = workspace.id
+                  ) AS total_service_count,
+                  (SELECT COUNT(DISTINCT(vulnerability.id)) AS count_5
+                        FROM vulnerability
+                        WHERE vulnerability.workspace_id = workspace.id AND vulnerability.type = 'vulnerability_web' {0}
+                  ) AS vulnerability_web_count,
+                  (SELECT COUNT(DISTINCT(vulnerability.id)) AS count_6
+                        FROM vulnerability
+                        WHERE vulnerability.workspace_id = workspace.id AND vulnerability.type = 'vulnerability_code' {0}
+                  ) AS vulnerability_code_count,
+                  (SELECT COUNT(DISTINCT(vulnerability.id)) AS count_7
+                        FROM vulnerability
+                        WHERE vulnerability.workspace_id = workspace.id AND vulnerability.type = 'vulnerability' {0}
+                  ) AS vulnerability_standard_count,
+                  (SELECT COUNT(DISTINCT(vulnerability.id)) AS count_8
+                        FROM vulnerability
+                        WHERE vulnerability.workspace_id = workspace.id {0}
+                  ) AS vulnerability_total_count,
+                  workspace.create_date AS workspace_create_date,
+                  workspace.update_date AS workspace_update_date,
+                  workspace.id AS workspace_id,
+                  workspace.customer AS workspace_customer,
+                  workspace.description AS workspace_description,
+                  workspace.active AS workspace_active,
+                  workspace.end_date AS workspace_end_date,
+                  workspace.name AS workspace_name,
+                  workspace.public AS workspace_public,
+                  workspace.start_date AS workspace_start_date,
+                  workspace.update_user_id AS workspace_update_user_id,
+                  workspace.creator_id AS workspace_creator_id,
+                  {concat_func}(scope.name, ',') as scope_raw
+                  FROM workspace
+                  LEFT JOIN scope ON workspace.id = scope.workspace_id
         """
         concat_func = 'string_agg'
         if db.engine.dialect.name == 'sqlite':

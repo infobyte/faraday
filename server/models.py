@@ -1375,31 +1375,27 @@ class Workspace(Metadata):
         concat_func = 'string_agg'
         if db.engine.dialect.name == 'sqlite':
             concat_func = 'group_concat'
-        statements = []
+        filters = []
         params = {}
-        if confirmed or active or workspace_name:
-            query += " WHERE "
+
         confirmed_vuln_filter = ''
         if confirmed is not None:
             if confirmed:
                 confirmed_vuln_filter = " AND vulnerability.confirmed "
             else:
                 confirmed_vuln_filter = " AND not vulnerability.confirmed "
-
         query = query.format(confirmed_vuln_filter, concat_func=concat_func)
-        if active and not workspace_name:
-            statements.append(" workspace.active = :active ")
+
+        if active is not None:
+            filters.append(" workspace.active = :active ")
             params['active'] = active
-        if workspace_name and not active:
-            statements.append(" workspace.name = :workspace_name ")
+        if workspace_name:
+            filters.append(" workspace.name = :workspace_name ")
             params['workspace_name'] = workspace_name
-        if active and workspace_name:
-            statements.append(" workspace.active = :active AND workspace.name = :workspace_name")
-            params['active'] = active
-            params['workspace_name'] = workspace_name
-        query += ' AND '.join(statements)
+        if filters:
+            query += ' WHERE ' + ' AND '.join(filters)
         query += " GROUP BY workspace.id "
-	query += " ORDER BY workspace.name ASC"
+        query += " ORDER BY workspace.name ASC"
         return db.engine.execute(text(query), params)
 
     def set_scope(self, new_scope):

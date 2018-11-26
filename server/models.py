@@ -551,7 +551,11 @@ class CustomAssociationSet(_AssociationSet):
             lazy_collection, creator, getter, setter, parent)
 
     def _create(self, value):
-        parent_instance = self.lazy_collection.parent
+        if getattr(self.lazy_collection, 'ref', False):
+            # for sqlalchemy previous to 1.3.0b1
+            parent_instance = self.lazy_collection.ref()
+        else:
+            parent_instance = self.lazy_collection.parent
         session = db.session
         conflict_objs = session.new
         try:

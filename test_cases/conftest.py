@@ -87,11 +87,10 @@ def pytest_configure(config):
 
 @pytest.fixture(scope='function')
 def app(request):
-    temp_file = NamedTemporaryFile()
     connection_string = request.config.getoption(
                     '--connection-string')
     if not connection_string:
-        connection_string = 'sqlite:///{0}'.format(temp_file.name)
+        connection_string = 'sqlite:///'
     app = create_app(db_connection_string=connection_string, testing=True)
     app.test_client_class = CustomClient
 
@@ -100,7 +99,6 @@ def app(request):
     ctx.push()
 
     def teardown():
-        temp_file.close()
         ctx.pop()
 
     request.addfinalizer(teardown)
@@ -114,9 +112,6 @@ def database(app, request):
     """Session-wide test database."""
 
     def teardown():
-        if db.engine.dialect.name == 'sqlite':
-            # since sqlite was created in a temp file we skip the drops.
-            return
         try:
             db.engine.execute('DROP TABLE vulnerability CASCADE')
         except Exception:

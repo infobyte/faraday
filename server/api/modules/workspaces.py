@@ -170,14 +170,6 @@ class WorkspaceView(ReadWriteView):
             flask.abort(404, 'Object with id "%s" not found' % object_id)
         return obj
 
-    def _get_base_query_deactivated(self):
-        try:
-            confirmed = bool(json.loads(flask.request.args['confirmed']))
-        except (KeyError, ValueError):
-            confirmed = None
-        query = Workspace.query_with_count(confirmed, active=False)
-        return query.fetchone()
-
     def _perform_create(self, data, **kwargs):
         scope = data.pop('scope', [])
         workspace = super(WorkspaceView, self)._perform_create(data, **kwargs)

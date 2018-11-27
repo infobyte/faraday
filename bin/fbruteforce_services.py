@@ -87,7 +87,6 @@ def get_credentials(workspace, key):
 
 def show_table_services(workspace):
 
-    global services
     services = []
     table = ""
 
@@ -104,7 +103,7 @@ def show_table_services(workspace):
                 services.append(l["name"])
                 table += "[" + str(services.index(l["name"])) + "]\t"
                 table += l["name"] + "\t" + str(l["count"]) + "\n"
-        return table
+        return table, services
 
     else:
         sys.exit("No services availables")
@@ -139,7 +138,8 @@ def show_options(workspace):
     passwd_faraday = None
 
     # Muestro los servicios en el workspace soportados por hydra, en formato tabla
-    print show_table_services(workspace)
+    table_services, services = show_table_services(workspace)
+    print table_services
 
     service = int(input_index("What service do you want to bruteforce?", len(services)))
 
@@ -173,7 +173,7 @@ def show_options(workspace):
             print  "%s\t\t%s" % (user.strip(), passw.strip())
 
 
-    return service, user_define_dictionary, user_faraday, passwd_faraday, usernames_dic_path, passwords_dic_path
+    return service, services, user_define_dictionary, user_faraday, passwd_faraday, usernames_dic_path, passwords_dic_path
 
 
 def save_targets(output):
@@ -192,7 +192,7 @@ def main(workspace='', args=None, parser=None):
     print "\nThis script need to be run inside from Faraday GTK.\n"
     if check_hydra():
 
-        service, user_define_dictionary, user_faraday, passwd_faraday, usernames_dic_path, passwords_dic_path = show_options(workspace)
+        service, services, user_define_dictionary, user_faraday, passwd_faraday, usernames_dic_path, passwords_dic_path = show_options(workspace)
 
         b_service = services[service]
         output = search_hosts_by_service(workspace, b_service)

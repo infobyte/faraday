@@ -8,6 +8,10 @@ See the file 'doc/LICENSE' for the license information
 
 from model.common import factory
 from persistence.server import models
+from persistence.server.server_io_exceptions import (
+    CantCommunicateWithServerError,
+    ConflictInDatabase
+)
 
 __description__ = 'Creates a new vulnerability'
 __prettyname__ = 'Create Vulnerability'
@@ -31,8 +35,6 @@ def main(workspace='', args=None, parser=None):
                         default='false')
     parser.add_argument('--description', help='Vulnerability description', default='')
 
-    parser.add_argument('--dry-run', action='store_true', help='Do not touch the database. Only print the object ID')
-
     parsed_args = parser.parse_args(args)
 
     obj = factory.createModelObject(models.Vuln.class_signature,
@@ -53,20 +55,28 @@ def main(workspace='', args=None, parser=None):
         'parent': parsed_args.parent,
     }
 
-    old = models.get_vulns(
+    try:
+        models.create_vuln(workspace, obj)
+    except ConflictInDatabase as ex:
+        if ex.answer.status_code == 409:
+            try:
+                old_id = ex.answer.json()['object']['_id']
+            except KeyError:
+                print "Vulnerability already exists. Couldn't fetch ID"
+                return 2, None
+            else:
+                print "A vulnerability with ID %s already exists!" % old_id
+                return 2, None
+        else:
+            print "Unknown error while creating the vulnerability"
+            return 2, None
+    except CantCommunicateWithServerError as ex:
+        print "Error while creating vulnerability:", ex.response.text
+        return 2, None
+
+    new = models.get_vulns(
         workspace,
         **params
     )
 
-    if not old:
-        if not parsed_args.dry_run:
-            models.create_vuln(workspace, obj)
-        old = models.get_vulns(
-            workspace,
-            **params
-        )
-    else:
-        print "A vulnerability with ID %s already exists!" % old[0].getID()
-        return 2, None
-
-    return 0, old[0].getID()
+    return 0, new[0].getID()

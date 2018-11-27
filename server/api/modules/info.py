@@ -30,3 +30,4 @@ def get_config():
     return flask.jsonify(gen_web_config())
 
 get_config.is_public = True
+show_info.is_public = True

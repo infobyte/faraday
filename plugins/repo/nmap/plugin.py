@@ -513,7 +513,6 @@ class NmapPlugin(core.PluginBase):
                     severity = 0
                     desc = v.desc
                     refs = v.refs
-                    desc += "\nOutput: " + v.response if v.response else ""
 
                     if re.search(r"VULNERABLE", desc):
                         severity = "high"
@@ -542,6 +541,7 @@ class NmapPlugin(core.PluginBase):
                             s_id,
                             v.name,
                             desc=desc,
+                            response = v.response if v.response else "",
                             ref=refs,
                             severity=severity,
                             website=minterfase)

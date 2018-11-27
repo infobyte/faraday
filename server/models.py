@@ -1363,10 +1363,10 @@ class Workspace(Metadata):
                 ) AS p_4 ON p_4.wid = workspace.id
             LEFT JOIN (SELECT w.id as w_id, COUNT(case when vulnerability.type = 'vulnerability_web' then 1 else null end) as count_5, COUNT(case when vulnerability.type = 'vulnerability_code' then 1 else null end) AS count_6, COUNT(case when vulnerability.type = 'vulnerability' then 1 else null end) as count_7, COUNT(case when vulnerability.id IS NOT NULL then 1 else null end) AS count_8
                     FROM vulnerability
-                    RIGHT JOIN workspace w ON vulnerability.workspace_id = w.id {0}
+                    RIGHT JOIN workspace w ON vulnerability.workspace_id = w.id
+                    WHERE 1=1 {0}
                     GROUP BY w.id
                 ) AS p_5 ON p_5.w_id = workspace.id
-            ORDER BY workspace.name ASC;
         """
         concat_func = 'string_agg'
         if db.engine.dialect.name == 'sqlite':
@@ -1379,7 +1379,7 @@ class Workspace(Metadata):
             if confirmed:
                 confirmed_vuln_filter = " AND vulnerability.confirmed "
             else:
-                confirmed_vuln_filter = " AND not vulnerability.confirmed "
+                confirmed_vuln_filter = " AND NOT vulnerability.confirmed "
         query = query.format(confirmed_vuln_filter, concat_func=concat_func)
 
         if active is not None:

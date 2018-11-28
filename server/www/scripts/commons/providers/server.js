@@ -10,6 +10,7 @@ angular.module("faradayApp")
         function (BASEURL, $http, $q) {
             var ServerAPI = {};
             var APIURL = BASEURL + "_api/v2/";
+            var FILTER_URL = BASEURL + "_api/filter/";
 
             var createGetRelatedUrl = function (wsName, objectType, objectId, relatedObjectType) {
                 var objectName = ((objectName) ? "/" + objectType : "");
@@ -344,6 +345,11 @@ angular.module("faradayApp")
             ServerAPI.getVulns = function (wsName, data) {
                 var getUrl = createGetUrl(wsName, 'vulns');
                 return get(getUrl, data);
+            }
+
+            ServerAPI.getFilteredVulns = function (jsonOptions) {
+                var getFilterUrl = FILTER_URL + "vulns?q=" + jsonOptions;
+                return get(getFilterUrl);
             }
 
             ServerAPI.getVulnerabilityTemplate = function (objId) {

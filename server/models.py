@@ -1338,10 +1338,10 @@ class Workspace(Metadata):
                 ) AS anon_2,
                 p_4.count_3 as anon_3,
                 p_4.count_4 as anon_4,
-                p_5.count_5 as anon_5,
-                p_5.count_6 as anon_6,
-                p_5.count_7 as anon_7,
-                p_5.count_8 as anon_8,
+                p_5.count_5 as vulnerability_web_count,
+                p_5.count_6 as vulnerability_code_count,
+                p_5.count_7 as vulnerability_standard_count,
+                p_5.count_8 as vulnerability_total_count,
                 workspace.create_date AS workspace_create_date,
                 workspace.update_date AS workspace_update_date,
                 workspace.id AS workspace_id,
@@ -1354,7 +1354,7 @@ class Workspace(Metadata):
                 workspace.start_date AS workspace_start_date,
                 workspace.update_user_id AS workspace_update_user_id,
                 workspace.creator_id AS workspace_creator_id,
-                {concat_func}(scope.name, ',') as scope_raw
+                (SELECT {concat_func}(scope.name, ',') FROM scope where scope.workspace_id=workspace.id) as scope_raw
             FROM workspace
             LEFT JOIN (SELECT w.id as wid, COUNT(case when service.id IS NOT NULL and service.status = 'open' then 1 else null end) as count_3, COUNT(case when service.id IS NOT NULL then 1 else null end) AS count_4
                     FROM service
@@ -1390,7 +1390,7 @@ class Workspace(Metadata):
             params['workspace_name'] = workspace_name
         if filters:
             query += ' WHERE ' + ' AND '.join(filters)
-        query += " GROUP BY workspace.id "
+        #query += " GROUP BY workspace.id "
         query += " ORDER BY workspace.name ASC"
         return db.engine.execute(text(query), params)
 

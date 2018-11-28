@@ -259,3 +259,11 @@ def ignore_nplusone(app):
     app.config['NPLUSONE_RAISE'] = False
     yield
     app.config['NPLUSONE_RAISE'] = old
+
+
+@pytest.fixture
+def skip_for_sqlite(database):
+    import ipdb; ipdb.set_trace()
+    raise Exception(app())
+    if app.db.engine.dialect.name == 'sqlite':
+        pytest.skip()

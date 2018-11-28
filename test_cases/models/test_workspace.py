@@ -13,6 +13,8 @@ from test_cases.factories import (
     VulnerabilityCodeFactory,
     VulnerabilityWebFactory,
 )
+from test_cases.conftest import skip_for_sqlite
+
 
 C_SOURCE_CODE_VULN_COUNT = 3
 C_STANDARD_VULN_COUNT = [6, 2]  # With host parent and with service parent
@@ -88,6 +90,7 @@ def test_vuln_count(workspace, second_workspace):
     )
 
 
+@skip_for_sqlite
 def test_vuln_count_confirmed(workspace, second_workspace):
     populate_workspace(workspace)
     populate_workspace(second_workspace)
@@ -103,6 +106,7 @@ def test_vuln_count_confirmed(workspace, second_workspace):
     )
 
 
+@skip_for_sqlite
 def test_vuln_no_count(workspace, second_workspace):
     populate_workspace(workspace)
     populate_workspace(second_workspace)

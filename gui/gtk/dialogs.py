@@ -215,12 +215,6 @@ class LoginDialog(Gtk.Dialog):
 
                     user_info = get_user_info()
 
-                    if user_info is None or 'userCtx' not in user_info or 'roles' not in user_info['userCtx'] or 'client' in user_info['userCtx']['roles']:
-                        errorDialog(self, ("You can't login as a client. You have " +
-                                           str(attempts - 1 - attempt) +
-                                           " attempt(s) left."))
-                        continue
-
                     self.destroy()
 
                     return True

@@ -53,8 +53,10 @@ def send_output(output):
 
 def search_hosts_by_service(workspace, b_service):
     output = ""
-    for host in models.get_hosts(workspace):
-        for service in models.get_services(workspace):
+    all_hosts = list(models.get_hosts(workspace))
+    all_services = list(models.get_services(workspace))
+    for host in all_hosts:
+        for service in all_services:
             id_service_host = service.parent_id
             if host.id == id_service_host and service.name == b_service:
                 output += host.name + "\n"
@@ -189,7 +191,7 @@ def save_targets(output):
 
 def main(workspace='', args=None, parser=None):
 
-    print "\nThis script need to be run inside from Faraday GTK.\n"
+    print "\nThis script needs to be run inside from Faraday GTK.\n"
     if check_hydra():
 
         service, services, user_define_dictionary, user_faraday, passwd_faraday, usernames_dic_path, passwords_dic_path = show_options(workspace)

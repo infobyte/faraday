@@ -593,9 +593,7 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('/filter')
     def filter(self, workspace_name):
-        filters = {
-            'filters': []
-        }
+        filters = json.loads(request.args.get('q'))
         workspace = self._get_workspace(workspace_name)
         normal_vulns = search(db.session,
                               Vulnerability,

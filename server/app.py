@@ -42,8 +42,6 @@ import server.config
 # Load SQLAlchemy Events
 import server.events
 from server.utils.logger import LOGGING_HANDLERS
-from flask_restless import APIManager, url_for
-import flask_restless
 logger = logging.getLogger(__name__)
 
 
@@ -262,13 +260,6 @@ def create_app(db_connection_string=None, testing=None):
 
     register_blueprints(app)
     register_handlers(app)
-
-    manager = APIManager(flask_sqlalchemy_db=db)
-    manager.init_app(app)
-    manager.create_api(VulnerabilityGeneric, collection_name='vulns', app=app, methods=['GET'], url_prefix='/filter')
-    # manager.create_api(Workspace, collection_name='ws', app=app,  methods=['GET'], url_prefix='/filter')
-    # manager.create_api(Vulnerability, collection_name='vulns', app=app,  methods=['GET'], url_prefix='/filter')
-    # manager.create_api(VulnerabilityWeb, collection_name='vulnsw', app=app,  methods=['GET'], url_prefix='/filter')
 
     return app
 

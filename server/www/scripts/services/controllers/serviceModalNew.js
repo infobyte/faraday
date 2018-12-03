@@ -41,9 +41,13 @@ angular.module('faradayApp')
             servicesManager.createService($scope.data, $routeParams.wsId).then(function() {
                 $modalInstance.close($scope.data);
             }, function(response) {
-                if (response.status == 409) {
+                if (response.status === 409) {
                     commonsFact.showMessage("Error while creating a new Service " + response.data.name + " Conflicting Vulnarability with id: " + response.data.object._id + ". " + response.data.message);
-                } else {
+                } if (response.status === 400) {
+                    var field = Object.keys(response.data.messages)[0];
+                    var error = response.data.messages[field][0];
+                    commonsFact.showMessage("Your input data is wrong,    " + field.toUpperCase() +":      " + error);
+                }else {
                     commonsFact.showMessage("Error from backend: " + response.status);
                 }
             });

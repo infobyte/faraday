@@ -3,6 +3,7 @@
 # See the file 'doc/LICENSE' for the license information
 import os
 import io
+import json
 import logging
 from base64 import b64encode, b64decode
 
@@ -11,6 +12,7 @@ from filteralchemy import Filter, FilterSet, operators
 from flask import request
 from flask import Blueprint
 from flask_classful import route
+from flask_restless.search import search
 from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf, Length
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
@@ -19,22 +21,23 @@ from sqlalchemy.orm.exc import NoResultFound
 from depot.manager import DepotManager
 from server.api.base import (
     AutoSchema,
-    FilterAlchemyMixin,
+    InvalidUsage,
     FilterSetMeta,
     PaginatedMixin,
+    FilterAlchemyMixin,
     ReadWriteWorkspacedView,
-    InvalidUsage)
+)
 from server.fields import FaradayUploadedFile
 from server.models import (
     db,
     File,
     Host,
     Service,
+    Hostname,
+    Workspace,
     Vulnerability,
     VulnerabilityWeb,
     VulnerabilityGeneric,
-    Workspace,
-    Hostname
 )
 from server.utils.database import get_or_create
 
@@ -44,7 +47,8 @@ from server.schemas import (
     PrimaryKeyRelatedField,
     SelfNestedField,
     SeverityField,
-    MetadataSchema)
+    MetadataSchema,
+)
 
 vulns_api = Blueprint('vulns_api', __name__)
 logger = logging.getLogger(__name__)
@@ -587,6 +591,21 @@ class VulnerabilityView(PaginatedMixin,
         else:
             flask.abort(404, "Vulnerability not found")
 
+    @route('/filter')
+    def filter(self, workspace_name):
+        filters = json.loads(request.args.get('q'))
+        workspace = self._get_workspace(workspace_name)
+        normal_vulns = search(db.session,
+                              Vulnerability,
+                              filters)
+        normal_vulns = normal_vulns.filter_by(workspace_id=workspace.id)
+        web_vulns = search(db.session,
+                           VulnerabilityWeb,
+                           filters)
+        web_vulns = web_vulns.filter_by(workspace_id=workspace.id)
+        normal_vulns = self.schema_class_dict['VulnerabilityWeb'](**{'many': True, 'context': {}, 'strict': True}).dumps(normal_vulns.all())
+        web_vulns = self.schema_class_dict['VulnerabilityWeb'](**{'many': True, 'context': {}, 'strict': True}).dumps(web_vulns.all())
+        return self._envelope_list(json.loads(normal_vulns.data) + json.loads(web_vulns.data))
 
     @route('/<vuln_id>/attachment/<attachment_filename>/', methods=['GET'])
     def get_attachment(self, workspace_name, vuln_id, attachment_filename):
@@ -616,5 +635,6 @@ class VulnerabilityView(PaginatedMixin,
                 flask.abort(404, "File not found")
         else:
             flask.abort(404, "Vulnerability not found")
+
 
 VulnerabilityView.register(vulns_api)

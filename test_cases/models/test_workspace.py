@@ -13,7 +13,6 @@ from test_cases.factories import (
     VulnerabilityCodeFactory,
     VulnerabilityWebFactory,
 )
-from test_cases.conftest import skip_for_sqlite
 
 
 C_SOURCE_CODE_VULN_COUNT = 3
@@ -76,7 +75,9 @@ def populate_workspace(workspace):
     db.session.commit()
 
 
-def test_vuln_count(workspace, second_workspace):
+def test_vuln_count(workspace, second_workspace, database):
+    if database.engine.dialect.name == 'sqlite':
+        return
     populate_workspace(workspace)
     populate_workspace(second_workspace)
     workspace = Workspace.query_with_count(None, workspace_name=workspace.name).fetchone()
@@ -90,8 +91,9 @@ def test_vuln_count(workspace, second_workspace):
     )
 
 
-@skip_for_sqlite
-def test_vuln_count_confirmed(workspace, second_workspace):
+def test_vuln_count_confirmed(workspace, second_workspace, database):
+    if database.engine.dialect.name == 'sqlite':
+        return
     populate_workspace(workspace)
     populate_workspace(second_workspace)
     workspace = Workspace.query_with_count(True, workspace_name=workspace.name).fetchone()
@@ -106,8 +108,10 @@ def test_vuln_count_confirmed(workspace, second_workspace):
     )
 
 
-@skip_for_sqlite
-def test_vuln_no_count(workspace, second_workspace):
+def test_vuln_no_count(workspace, second_workspace, database):
+    if database.engine.dialect.name == 'sqlite':
+        return
+
     populate_workspace(workspace)
     populate_workspace(second_workspace)
     workspace = Workspace.query.get(workspace.id)

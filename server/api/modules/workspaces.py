@@ -94,12 +94,12 @@ class WorkspaceView(ReadWriteView):
         query = self._get_base_query()
         res = []
         objects = []
-	for workspace_stat in query:
-	    workspace_stat = dict(workspace_stat)
-	    for key, value in workspace_stat.items():
-		if key.startswith('workspace_'):
-		    new_key = key.replace('workspace_', '')
-		    workspace_stat[new_key] = workspace_stat[key]
+        for workspace_stat in query:
+            workspace_stat = dict(workspace_stat)
+            for key, value in workspace_stat.items():
+                if key.startswith('workspace_'):
+                    new_key = key.replace('workspace_', '')
+                    workspace_stat[new_key] = workspace_stat[key]
             workspace_stat['scope'] = []
             if workspace_stat['scope_raw']:
                 workspace_stat['scope_raw'] = workspace_stat['scope_raw'].split(',')

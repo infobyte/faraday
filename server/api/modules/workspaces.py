@@ -14,7 +14,6 @@ from sqlalchemy.orm import (
 from sqlalchemy.orm.exc import NoResultFound
 
 
-from server.utils.cache import cached
 from server.models import db, Workspace, _make_vuln_count_property
 from server.schemas import (
     JSTimestampField,
@@ -89,10 +88,8 @@ class WorkspaceView(ReadWriteView):
     schema_class = WorkspaceSchema
     order_field = Workspace.name.asc()
 
-    @cached
     def index(self, **kwargs):
         query = self._get_base_query()
-        res = []
         objects = []
         for workspace_stat in query:
             workspace_stat = dict(workspace_stat)
@@ -115,9 +112,14 @@ class WorkspaceView(ReadWriteView):
             confirmed = None
         try:
             active = bool(json.loads(flask.request.args['active']))
-            query = Workspace.query_with_count(confirmed, active=active, workspace_name=object_id)
+            query = Workspace.query_with_count(
+                    confirmed,
+                    active=active,
+                    workspace_name=object_id)
         except (KeyError, ValueError):
-            query = Workspace.query_with_count(confirmed, workspace_name=object_id)
+            query = Workspace.query_with_count(
+                    confirmed,
+                    workspace_name=object_id)
         return query
 
     def _get_object(self, object_id, eagerload=False, **kwargs):

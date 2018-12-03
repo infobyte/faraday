@@ -1076,11 +1076,11 @@ angular.module("faradayApp")
             });
         };
 
-        var loadFilteredVulns = function(jsonOptions) {
+        var loadFilteredVulns = function(wsName, jsonOptions) {
             delete searchFilter.confirmed;
             $scope.loading = true;
 
-            vulnsManager.getFilteredVulns(jsonOptions)
+            vulnsManager.getFilteredVulns(wsName, jsonOptions)
             .then(function(response) {
                 $scope.loading = false;
                 $scope.gridOptions.data = response.vulnerabilities;
@@ -1108,8 +1108,8 @@ angular.module("faradayApp")
             // the url without reloading the controller
             $scope.searchParams = params;
             if(window.location.hash.substring(1).indexOf('groupby') === -1) {
-                var jsonOptions = parserFact.evaluateExpression($routeParams.wsId, params);
-                loadFilteredVulns(jsonOptions);
+                var jsonOptions = parserFact.evaluateExpression(params);
+                loadFilteredVulns($routeParams.wsId, jsonOptions);
             } else {
                 var url = "/status/ws/" + $routeParams.wsId + "/groupby/" + $routeParams.groupbyId;
                 $location.path(url);

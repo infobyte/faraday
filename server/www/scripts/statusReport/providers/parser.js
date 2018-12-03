@@ -6,11 +6,9 @@ angular.module('faradayApp')
     .factory('parserFact', [function () {
         var parserFact = {};
 
-        parserFact.evaluateExpression = function (ws, expression) {
+        parserFact.evaluateExpression = function (expression) {
             var outputJson = {
-                "filters": [
-                    {"name":"workspace","op":"has","val":{"name":"name","op":"like","val":"%"+ws+"%"}}
-                ]
+                "filters": []
             };
 
             if (expression !== '') {

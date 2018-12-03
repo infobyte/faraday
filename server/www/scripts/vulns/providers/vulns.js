@@ -72,9 +72,9 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
-        vulnsManager.getFilteredVulns = function(jsonOptions) {
+        vulnsManager.getFilteredVulns = function(wsName, jsonOptions) {
             var deferred = $q.defer();
-            ServerAPI.getFilteredVulns(jsonOptions)
+            ServerAPI.getFilteredVulns(wsName, jsonOptions)
                 .then(function(response) {
                     var result = {
                         vulnerabilities: [],

@@ -204,3 +204,34 @@ class TestWorkspaceAPI(ReadWriteAPITests):
     def test_list_retrieves_all_items_from(self, test_client):
         super(TestWorkspaceAPI, self).test_list_retrieves_all_items_from(test_client)
 
+    def test_workspace_activation(self, test_client, workspace, session):
+        workspace.active = False
+        session.add(workspace)
+        session.commit()
+        res = test_client.put('{url}{id}/activate/'
+                    .format(url=self.url(),
+                    id=workspace.name))
+        assert res.status_code == 200
+
+        res = test_client.get('{url}{id}/'.format(url=self.url(),id=workspace.name))
+        active = res.json.get('active')
+        assert active == True
+
+        active_query = session.query(Workspace).filter_by(id=workspace.id).first().active
+        assert active_query == True
+
+    def test_workspace_deactivation(self, test_client, workspace, session):
+        workspace.active = True
+        session.add(workspace)
+        session.commit()
+        res = test_client.put('{url}{id}/deactivate/'
+                    .format(url=self.url(),
+                    id=workspace.name))
+        assert res.status_code == 200
+
+        res = test_client.get('{url}{id}/'.format(url=self.url(),id=workspace.name))
+        active = res.json.get('active')
+        assert active == False
+
+        active_query = session.query(Workspace).filter_by(id=workspace.id).first().active
+        assert active_query == False

@@ -59,7 +59,7 @@ class Unauthorized(ServerRequestException):
 
     def __str__(self):
         return ("You're not authorized to make this request. "
-                "The answer from the server was {0}. Plase check that your domain is the correct one.".format(self.answer))
+                "The answer from the server was {0}. Please check that your domain is the correct one and run Faraday GTK with option --login".format(self.answer))
 
 class CouchDBException(Exception):
     def __init__(self):

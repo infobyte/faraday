@@ -328,6 +328,9 @@ class ReportParser(object):
             else:
                 return "Zap"
 
+        elif "xml-report" == tag:
+            if re.search("Appscan",output) is not None:
+                return "Appscan"
         elif "niktoscan" == tag:
             return "Nikto"
         elif "MetasploitV4" == tag:
@@ -346,8 +349,6 @@ class ReportParser(object):
             return "X1"
         elif "entities" == tag:
             return "Core Impact"
-        elif "NeXposeSimpleXML" == tag:
-            return "Nexpose"
         elif "NexposeReport" == tag:
             return "NexposeFull"
         elif "ASSET_DATA_REPORT" == tag or "SCAN" == tag:

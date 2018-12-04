@@ -8,7 +8,7 @@ import json
 
 import flask
 import sqlalchemy
-from flask import abort, g
+from flask import g
 from flask_classful import FlaskView
 from sqlalchemy.orm import joinedload, undefer
 from sqlalchemy.orm.exc import NoResultFound, ObjectDeletedError
@@ -19,7 +19,7 @@ from marshmallow.compat import with_metaclass
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
-from webargs.flaskparser import FlaskParser, parser, abort
+from webargs.flaskparser import FlaskParser, parser
 from webargs.core import ValidationError
 from server.models import Workspace, db, Command, CommandObject
 from server.schemas import NullToBlankString
@@ -350,7 +350,7 @@ class GenericWorkspacedView(GenericView):
         try:
             ws = Workspace.query.filter_by(name=workspace_name).one()
             if to_edit and not ws.active:
-                abort(403, "Disabled workspace: %s" % workspace_name)
+                flask.abort(403, "Disabled workspace: %s" % workspace_name)
         except NoResultFound:
             flask.abort(404, "No such workspace: %s" % workspace_name)
         return ws
@@ -623,7 +623,7 @@ class CreateMixin(object):
             db.session.rollback()
             conflict_obj = get_conflict_object(db.session, obj, data)
             if conflict_obj:
-                abort(409, ValidationError(
+                flask.abort(409, ValidationError(
                     {
                         'message': 'Existing value',
                         'object': self._get_schema_class()().dump(
@@ -702,7 +702,7 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
             workspace = self._get_workspace(workspace_name)
             conflict_obj = get_conflict_object(db.session, obj, data, workspace)
             if conflict_obj:
-                abort(409, ValidationError(
+                flask.abort(409, ValidationError(
                     {
                         'message': 'Existing value',
                         'object': self._get_schema_class()().dump(
@@ -758,7 +758,7 @@ class UpdateMixin(object):
                 workspace = db.session.query(Workspace).filter_by(name=workspace_name).first()
             conflict_obj = get_conflict_object(db.session, obj, data, workspace)
             if conflict_obj:
-                abort(409, ValidationError(
+                flask.abort(409, ValidationError(
                     {
                         'message': 'Existing value',
                         'object': self._get_schema_class()().dump(
@@ -840,7 +840,7 @@ class CountWorkspacedMixin(object):
         # Also we should check that the field exists in the db and isn't, for
         # example, a relationship
         if not group_by or group_by not in inspect(self.model_class).attrs:
-            abort(404)
+            flask.abort(404)
 
         workspace_name = kwargs.pop('workspace_name')
         # using format is not a great practice.

@@ -460,6 +460,7 @@ class SqlmapPlugin(PluginTerminalOutput):
             self.hostname,
             '')
 
+        db_port = 80
         for item in self.db_port.keys():
             if dbms_version.find(item) >= 0:
                 db_port = self.db_port[item]
@@ -624,7 +625,7 @@ class SqlmapPlugin(PluginTerminalOutput):
                 self.path = urlComponents.path
                 self.params = urlComponents.query
 
-            self.url = self.protocol + "://" + self.hostname + ":" + int(self.port) + self.path
+            self.url = self.protocol + "://" + self.hostname + ":" + str(self.port) + self.path
             self.fullpath = self.url + "?" + self.params
 
             self._output_path = "%s%s" % (

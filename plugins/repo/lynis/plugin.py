@@ -80,7 +80,7 @@ class LynisLogDataExtracter():
         return(m.group(1).strip())
 
     def listeningservices(self):
-        
+
         line = re.findall('^network_listen_port\[\]=(.+)$',
                        self.rawcontents, re.MULTILINE)
 
@@ -95,7 +95,7 @@ class LynisLogDataExtracter():
 
                 if name == '-':
                     name = 'Unknown'
-            
+
             else:
                 items_service = combo
                 count = items_service.count(':')
@@ -116,7 +116,7 @@ class LynisLogDataExtracter():
             elif count == 5:
                 port = elements_ip_port[5]
                 ip = items_service[0].replace(':{}'.format(port), '')
- 
+
             self._svcHelper(ip, port, protocol, name)
 
         return self.services
@@ -165,7 +165,10 @@ class LynisPlugin(core.PluginBase):
             lde = LynisLogDataExtracter(output=output)
 
         hostname = lde.hostname()
-        ip = socket.gethostbyname(hostname)
+        try:
+            ip = socket.gethostbyname(hostname)
+        except socket.gaierror:
+            ip = hostname
         h_id = self.createAndAddHost(name=ip, os=lde.osfullname(), hostnames=[hostname])
 
         self.createAndAddVulnToHost(
@@ -174,8 +177,7 @@ class LynisPlugin(core.PluginBase):
             severity='info',
             desc=lde.kernelVersion()
         )
-        
-        
+
         interfaces = lde.interfaces()
         macs = lde.macs()
         ipv4s = lde.ipv4()

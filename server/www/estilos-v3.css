@@ -240,3 +240,20 @@
 .margin-right-15px{
   margin-right: 15px;
 }
+
+.active-toggle{
+  width: 3%;
+  text-align: center!important;
+}
+
+.active-toggle-container{
+  cursor: pointer;
+}
+
+.forbidden-error {
+    text-align: center;
+    overflow-wrap: break-word;
+    position: relative;
+    top: 220px;
+    color: #aeaeb1;
+}

@@ -568,8 +568,35 @@ class VulnerabilityView(PaginatedMixin,
             res['groups'] = [convert_group(group) for group in res['groups']]
         return res
 
-    @route('/<vuln_id>/attachment/<attachment_filename>/')
-    def attachment(self, workspace_name, vuln_id, attachment_filename):
+    @route('/<vuln_id>/attachment/', methods=['POST'])
+    def post_attachment(self, workspace_name, vuln_id):
+        vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
+            Workspace).filter(VulnerabilityGeneric.id == vuln_id, Workspace.name == workspace_name)
+
+        if vuln_workspace_check:
+            if 'file' not in request.files:
+                flask.abort(400)
+
+            faraday_file = FaradayUploadedFile(request.files['file'].read())
+            filename = request.files['file'].filename
+
+            get_or_create(
+                db.session,
+                File,
+                object_id=vuln_id,
+                object_type='vulnerability',
+                name=filename,
+                filename=filename,
+                content=faraday_file
+            )
+            db.session.commit()
+            return flask.jsonify({'message': 'Evidence upload was successful'})
+        else:
+            flask.abort(404, "Vulnerability not found")
+
+
+    @route('/<vuln_id>/attachment/<attachment_filename>/', methods=['GET'])
+    def get_attachment(self, workspace_name, vuln_id, attachment_filename):
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(VulnerabilityGeneric.id == vuln_id,
                               Workspace.name == workspace_name).first()

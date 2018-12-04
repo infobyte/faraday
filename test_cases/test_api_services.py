@@ -282,3 +282,39 @@ class TestListServiceView(ReadOnlyAPITests):
         res = test_client.post(self.url(), data=data)
         assert res.status_code == 400
         assert res.json['messages']['_schema'] == res.json['messages']['_schema']
+
+    def test_load_ports_without_list(self, test_client):
+        data = {
+            "name": "ports",
+            "description": "testing ports load",
+            "owned": False,
+            "ports": 21,
+            "protocol": "tcp",
+            "status": "open",
+        }
+        res = test_client.post(self.url(), data=data)
+        assert res.status_code == 400
+
+    def test_load_ports_with_empty_list(self, test_client):
+        data = {
+            "name": "ports",
+            "description": "testing ports load",
+            "owned": False,
+            "ports": [],
+            "protocol": "tcp",
+            "status": "open",
+        }
+        res = test_client.post(self.url(), data=data)
+        assert res.status_code == 400
+
+    def test_load_ports_with_negative_value(self, test_client):
+        data = {
+            "name": "ports",
+            "description": "testing ports load",
+            "owned": False,
+            "ports": [-1],
+            "protocol": "tcp",
+            "status": "open",
+        }
+        res = test_client.post(self.url(), data=data)
+        assert res.status_code == 400

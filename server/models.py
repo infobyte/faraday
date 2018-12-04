@@ -1331,13 +1331,13 @@ class Workspace(Metadata):
                 (SELECT COUNT(credential.id) AS count_1
                     FROM credential
                     WHERE credential.workspace_id = workspace.id
-                ) AS anon_1,
+                ) AS credentials_count,
                 (SELECT COUNT(host.id) AS count_2
                     FROM host
                     WHERE host.workspace_id = workspace.id
-                ) AS anon_2,
-                p_4.count_3 as anon_3,
-                p_4.count_4 as anon_4,
+                ) AS host_count,
+                p_4.count_3 as open_services,
+                p_4.count_4 as total_service_count,
                 p_5.count_5 as vulnerability_web_count,
                 p_5.count_6 as vulnerability_code_count,
                 p_5.count_7 as vulnerability_standard_count,

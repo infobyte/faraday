@@ -51,8 +51,9 @@ def setup_storage_path():
         os.mkdir(default_path)
     config = ConfigParser()
     config.read(server.config.LOCAL_CONFIG_FILE)
-    config.add_section('storage')
-    config.set('storage', 'path', default_path)
+    if not config.has_section('storage'):
+        config.add_section('storage')
+        config.set('storage', 'path', default_path)
     with open(server.config.LOCAL_CONFIG_FILE, 'w') as configfile:
         config.write(configfile)
 

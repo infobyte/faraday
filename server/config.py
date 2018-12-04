@@ -257,7 +257,7 @@ class FaradayServerConfigObject(ConfigSection):
 
     def set_secret_key(self, value):
         self._secret_key = value
-        self._secret_key = True
+        self._secret_key_set = True
 
     def get_websocket_port(self):
         if self._websocket_port is None:
@@ -446,19 +446,14 @@ class SSLConfigObject(ConfigSection):
 class StorageConfigObject(ConfigSection):
     def __init__(self):
         self._path = None
-        self._path_set = False
 
     def get_path(self):
         if self._path is None:
-            if self._path_set:
-                self.raise_att_info("Path set as None and requested")
-            else:
-                self.raise_att_error("Unset path requested")
+            self.raise_att_info("Path set as None and requested")
         return self._path
 
     def set_path(self, value):
         self._path = value
-        self._path_set = True
 
     path = property(get_path, set_path)
 

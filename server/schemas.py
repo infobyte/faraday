@@ -41,7 +41,7 @@ class FaradayCustomField(fields.Field):
         custom_fields = db.session.query(CustomFieldsSchema).filter_by(
             table_name=self.table_name)
         for custom_field in custom_fields:
-            serialized_value = value.get(custom_field.field_name)
+            serialized_value = value.get(custom_field.field_display_name)
             res[custom_field.field_display_name] = serialized_value
 
         return res
@@ -52,7 +52,7 @@ class FaradayCustomField(fields.Field):
             for key, raw_data in value.iteritems():
                 field_schema = db.session.query(CustomFieldsSchema).filter_by(
                     table_name=self.table_name,
-                    field_name=key,
+                    field_display_name=key,
                 ).first()
                 if not field_schema:
                     raise ValidationError("Invalid custom field, not found in schema. Did you add it first?")
@@ -63,6 +63,8 @@ class FaradayCustomField(fields.Field):
                         serialized[key] = int(raw_data)
                     except ValueError:
                         raise ValidationError("Can not convert custom type to int")
+                elif field_schema.field_type == 'list':
+                    serialized[key] = raw_data
                 else:
                     raise ValidationError("Custom Field datatype not supported yet")
 

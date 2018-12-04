@@ -18,7 +18,7 @@ def add_custom_field_wizard():
     print('This wizard will guide you to add custom field to the vulneraiblity model.')
     field_name = click.prompt('Field name')
     field_display_name = click.prompt('Display name')
-    field_type = click.prompt('Field type (int, str)', type=click.Choice(['int', 'str']))
+    field_type = click.prompt('Field type (int, str, list)', type=click.Choice(['int', 'str', 'list']))
     confirmation = click.prompt('New CustomField will be added to vulnerability -> ({0},{1},{2}) <-, confirm to continue (yes/no)'.format(field_name, field_display_name, field_type))
     if not confirmation:
         sys.exit(1)

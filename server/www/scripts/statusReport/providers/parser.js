@@ -114,6 +114,7 @@ angular.module('faradayApp')
                 if (tokens[i] !== "") {
                     if (tokens[i].indexOf('(') === 0) {
                         cleanedTokens.push('(');
+                        tokens[i] = spliceSlice(tokens[i], 0, 1);
                         if (tokens[i].indexOf(':"') !== -1) {
                             while (tokens[i] !== undefined && tokens[i].indexOf('"') !== tokens[i].length - 1) {
                                 signsStack.push(tokens[i]);
@@ -123,7 +124,7 @@ angular.module('faradayApp')
                             cleanedTokens.push(signsStack.join(" "));
                             signsStack = [];
                         } else {
-                            cleanedTokens.push(spliceSlice(tokens[i], 0, 1));
+                            cleanedTokens.push(tokens[i]);
                         }
                     } else if (tokens[i].indexOf(')') === tokens[i].length - 1 && (tokens[i].substr(0, 3) !== "not")) {
                         cleanedTokens.push(spliceSlice(tokens[i], tokens[i].length - 1, 1));
@@ -134,13 +135,20 @@ angular.module('faradayApp')
                         var tempTkn = tokens[i].substr(4, tokens[i].length - 4);
 
                         if (tempTkn.indexOf(':"') !== -1) {
+                            if (tempTkn.indexOf(')') === tempTkn.length -1 ){
+                                tempTkn = spliceSlice(tempTkn, tempTkn.length - 1, 1)
+                            }
                             signsStack.push(tempTkn);
                             i++;
                             while (tokens[i] !== undefined && tokens[i].indexOf('")') !== tokens[i].length - 2) {
                                 signsStack.push(tokens[i]);
                                 i++;
                             }
-                            signsStack.push(spliceSlice(tokens[i], tokens[i].length - 1, 1));
+
+                            if(tokens[i] !== undefined){
+                                 signsStack.push(spliceSlice(tokens[i], tokens[i].length - 1, 1));
+                            }
+
                             cleanedTokens.push(signsStack.join(" "));
                             cleanedTokens.push(')');
                             signsStack = [];
@@ -218,9 +226,14 @@ angular.module('faradayApp')
                     var op = 'like';
                     if (operator !== 'not') {
                         if (name === 'confirmed' || name === 'accountability' || name === 'availability' || name === 'confidentiality' || name === 'integrity') {
-                            op = '==';
                             if (name !== 'confirmed')
                                 name = 'impact_' + name;
+
+                            op = '==';
+                        }
+
+                        if (name === 'severity'){
+                            op = 'eq'
                         }
                     } else {
                         if (name === 'accountability' || name === 'availability' || name === 'confidentiality' || name === 'integrity') {
@@ -228,6 +241,10 @@ angular.module('faradayApp')
                         }
                         op = '!='
                     }
+
+
+                    if (val === 'info') val = 'informational';
+                    if (val === 'med') val = 'medium';
 
                     res.name = name;
                     res.op = op;

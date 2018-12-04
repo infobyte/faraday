@@ -44,6 +44,7 @@ from server.schemas import (
     SeverityField,
     MetadataSchema,
     SelfNestedField,
+    FaradayCustomField,
     PrimaryKeyRelatedField,
 )
 
@@ -131,7 +132,7 @@ class VulnerabilitySchema(AutoSchema):
     metadata = SelfNestedField(CustomMetadataSchema())
     date = fields.DateTime(attribute='create_date',
                            dump_only=True)  # This is only used for sorting
-    custom_fields = FaradayCustomField(attribute='cusotm_fields')
+    custom_fields = FaradayCustomField(table_name='vulnerability', attribute='custom_fields')
 
     class Meta:
         model = Vulnerability
@@ -144,7 +145,8 @@ class VulnerabilitySchema(AutoSchema):
             'desc', 'impact', 'confirmed', 'name',
             'service', 'obj_id', 'type', 'policyviolations',
             '_attachments',
-            'target', 'host_os', 'resolution', 'metadata')
+            'target', 'host_os', 'resolution', 'metadata',
+            'custom_fields')
 
     def get_type(self, obj):
         return obj.__class__.__name__
@@ -261,7 +263,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'service', 'obj_id', 'type', 'policyviolations',
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
-            'status_code'
+            'status_code', 'custom_fields'
         )
 
 

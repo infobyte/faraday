@@ -12,7 +12,7 @@ from flask import request
 from flask import Blueprint
 from flask_classful import route
 from marshmallow import Schema, fields, post_load, ValidationError
-from marshmallow.validate import OneOf, Length
+from marshmallow.validate import OneOf
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -131,6 +131,7 @@ class VulnerabilitySchema(AutoSchema):
     metadata = SelfNestedField(CustomMetadataSchema())
     date = fields.DateTime(attribute='create_date',
                            dump_only=True)  # This is only used for sorting
+    custom_fields = FaradayCustomField(attribute='cusotm_fields')
 
     class Meta:
         model = Vulnerability

@@ -26,6 +26,15 @@ class JSTimestampField(fields.Integer):
             return datetime.datetime.fromtimestamp(self._validated(value)/1e3)
 
 
+class FaradayCustomField(fields.Field):
+
+    def _serialize(self, value, attr, obj):
+        raise NotImplementedError
+
+    def _deserialize(self, value, attr, data):
+        raise NotImplementedError
+
+
 class PrimaryKeyRelatedField(fields.Field):
     def __init__(self, field_name='id', *args, **kwargs):
         self.field_name = field_name

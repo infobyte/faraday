@@ -30,21 +30,22 @@ from server.models import (
     File,
     Host,
     Service,
+    Hostname,
+    Workspace,
     Vulnerability,
     VulnerabilityWeb,
     VulnerabilityGeneric,
-    Workspace,
-    Hostname
 )
 from server.utils.database import get_or_create
 
 from server.api.modules.services import ServiceSchema
 from server.schemas import (
     MutableField,
-    PrimaryKeyRelatedField,
-    SelfNestedField,
     SeverityField,
-    MetadataSchema)
+    MetadataSchema,
+    SelfNestedField,
+    PrimaryKeyRelatedField,
+)
 
 vulns_api = Blueprint('vulns_api', __name__)
 logger = logging.getLogger(__name__)
@@ -259,7 +260,8 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'service', 'obj_id', 'type', 'policyviolations',
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
-            'status_code')
+            'status_code'
+        )
 
 
 # Use this override for filterset fields that filter by en exact match by
@@ -302,6 +304,7 @@ class ServiceFilter(Filter):
                 alias.name == value
         )
 
+
 class HostnamesFilter(Filter):
     def filter(self, query, model, attr, value):
         alias = aliased(Hostname, name='hostname_filter')
@@ -319,6 +322,7 @@ class HostnamesFilter(Filter):
 
         query = service_hostnames_query.union(host_hostnames_query)
         return query
+
 
 class CustomILike(operators.Operator):
     """A filter operator that puts a % in the beggining and in the
@@ -589,5 +593,6 @@ class VulnerabilityView(PaginatedMixin,
                 flask.abort(404, "File not found")
         else:
             flask.abort(404, "Vulnerability not found")
+
 
 VulnerabilityView.register(vulns_api)

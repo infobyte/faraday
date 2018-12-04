@@ -206,14 +206,19 @@ class CouchDBConfigObject(ConfigSection):
 class DatabaseConfigObject(ConfigSection):
     def __init__(self):
         self._connection_string = None
+        self._set = False
 
     def get_connection_string(self):
         if self._connection_string is None:
-            self.raise_att_error("Unset connection_string requested")
+            if self._set:
+                self.raise_att_info("connection_string set as None and requested")
+            else:
+                self.raise_att_error("Unset connection_string requested")
         return self._connection_string
 
     def set_connection_string(self, value):
         self._connection_string = value
+        self._set = True
 
     connection_string = property(get_connection_string, set_connection_string)
 
@@ -223,6 +228,7 @@ class FaradayServerConfigObject(ConfigSection):
         self._bind_address = '0.0.0.0'
         self._port = '5985'
         self._secret_key = None
+        self._secret_key_set = False
         self._websocket_port = '9000'
 
     def get_bind_address(self):
@@ -243,11 +249,15 @@ class FaradayServerConfigObject(ConfigSection):
 
     def get_secret_key(self):
         if self._secret_key is None:
-            self.raise_att_error("Unset secret_key requested")
+            if self._secret_key_set:
+                self.raise_att_info("secret_key set as None and requested")
+            else:
+                self.raise_att_error("Unset secret_key requested")
         return self._secret_key
 
     def set_secret_key(self, value):
         self._secret_key = value
+        self._secret_key = True
 
     def get_websocket_port(self):
         if self._websocket_port is None:
@@ -435,15 +445,20 @@ class SSLConfigObject(ConfigSection):
 
 class StorageConfigObject(ConfigSection):
     def __init__(self):
-        self.path = None
+        self._path = None
+        self._path_set = False
 
     def get_path(self):
         if self._path is None:
-            self.raise_att_error("Unset path requested")
+            if self._path_set:
+                self.raise_att_info("Path set as None and requested")
+            else:
+                self.raise_att_error("Unset path requested")
         return self._path
 
     def set_path(self, value):
         self._path = value
+        self._path_set = True
 
     path = property(get_path, set_path)
 

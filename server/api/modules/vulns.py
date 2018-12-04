@@ -606,8 +606,9 @@ class VulnerabilityView(PaginatedMixin,
                            VulnerabilityWeb,
                            filters)
         web_vulns = web_vulns.filter_by(workspace_id=workspace.id)
-        normal_vulns = self.schema_class_dict['VulnerabilityWeb'](**{'many': True, 'context': {}, 'strict': True}).dumps(normal_vulns.all())
-        web_vulns = self.schema_class_dict['VulnerabilityWeb'](**{'many': True, 'context': {}, 'strict': True}).dumps(web_vulns.all())
+        marshmallow_params = {'many': True, 'context': {}, 'strict': True}
+        normal_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(normal_vulns.all())
+        web_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(web_vulns.all())
         return self._envelope_list(json.loads(normal_vulns.data) + json.loads(web_vulns.data))
 
     @route('/<vuln_id>/attachment/<attachment_filename>/', methods=['GET'])

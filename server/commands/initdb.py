@@ -23,7 +23,7 @@ from config.configuration import Configuration
 from faraday import (
     FARADAY_USER_CONFIG_XML,
     FARADAY_BASE_CONFIG_XML,
-    FARADAY_BASE
+    FARADAY_BASE,
 )
 
 try:
@@ -134,8 +134,7 @@ class InitDB():
             "{yellow}WARNING{white}: Faraday administrator user already exists.".format(
                 yellow=Fore.YELLOW, white=Fore.WHITE))
         if not already_created:
-            if not os.path.isfile(FARADAY_USER_CONFIG_XML):
-                shutil.copy(FARADAY_BASE_CONFIG_XML, FARADAY_USER_CONFIG_XML)
+
             self._save_user_xml(random_password)
             print("Admin user created with \n\n{red}username: {white}faraday \n"
                   "{red}password:{white} {"

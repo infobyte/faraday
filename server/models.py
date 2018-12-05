@@ -36,10 +36,11 @@ from flask_sqlalchemy import (
     SQLAlchemy as OriginalSQLAlchemy,
     _EngineConnector
 )
+
 from depot.fields.sqlalchemy import UploadedFileField
 
 import server.config
-from server.fields import FaradayUploadedFile
+from server.fields import FaradayUploadedFile, JSONType
 from flask_security import (
     RoleMixin,
     UserMixin,
@@ -480,6 +481,17 @@ class Service(Metadata):
                                  version or "")
 
 
+class CustomFieldsSchema(db.Model):
+    __tablename__ = 'custom_fields_schema'
+
+    id = Column(Integer, primary_key=True)
+    field_name = Column(Text)
+    field_type = Column(Text)
+    field_display_name = Column(Text)
+    field_order = Column(Integer)
+    table_name = Column(Text)
+
+
 class VulnerabilityABC(Metadata):
     # revisar plugin nexpose, netspark para terminar de definir uniques. asegurar que se carguen bien
     EASE_OF_RESOLUTIONS = [
@@ -519,6 +531,8 @@ class VulnerabilityABC(Metadata):
                         name='check_vulnerability_risk'),
     )
 
+    custom_fields = Column(JSONType)
+
     @property
     def parent(self):
         raise NotImplementedError('ABC property called')
@@ -541,7 +555,7 @@ class CustomAssociationSet(_AssociationSet):
         The value_attr argument isn't relevant to this implementation
         """
 
-        if parent.getset_factory:
+        if getattr(parent, 'getset_factory', False):
             getter, setter = parent.getset_factory(
                 parent.collection_class, parent)
         else:
@@ -551,7 +565,11 @@ class CustomAssociationSet(_AssociationSet):
             lazy_collection, creator, getter, setter, parent)
 
     def _create(self, value):
-        parent_instance = self.lazy_collection.ref()
+        if getattr(self.lazy_collection, 'ref', False):
+            # for sqlalchemy previous to 1.3.0b1
+            parent_instance = self.lazy_collection.ref()
+        else:
+            parent_instance = self.lazy_collection.parent
         session = db.session
         conflict_objs = session.new
         try:

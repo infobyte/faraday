@@ -12,7 +12,7 @@ from flask import request
 from flask import Blueprint
 from flask_classful import route
 from marshmallow import Schema, fields, post_load, ValidationError
-from marshmallow.validate import OneOf, Length
+from marshmallow.validate import OneOf
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -30,21 +30,23 @@ from server.models import (
     File,
     Host,
     Service,
+    Hostname,
+    Workspace,
     Vulnerability,
     VulnerabilityWeb,
     VulnerabilityGeneric,
-    Workspace,
-    Hostname
 )
 from server.utils.database import get_or_create
 
 from server.api.modules.services import ServiceSchema
 from server.schemas import (
     MutableField,
-    PrimaryKeyRelatedField,
-    SelfNestedField,
     SeverityField,
-    MetadataSchema)
+    MetadataSchema,
+    SelfNestedField,
+    FaradayCustomField,
+    PrimaryKeyRelatedField,
+)
 
 vulns_api = Blueprint('vulns_api', __name__)
 logger = logging.getLogger(__name__)
@@ -130,6 +132,7 @@ class VulnerabilitySchema(AutoSchema):
     metadata = SelfNestedField(CustomMetadataSchema())
     date = fields.DateTime(attribute='create_date',
                            dump_only=True)  # This is only used for sorting
+    custom_fields = FaradayCustomField(table_name='vulnerability', attribute='custom_fields')
 
     class Meta:
         model = Vulnerability
@@ -142,7 +145,8 @@ class VulnerabilitySchema(AutoSchema):
             'desc', 'impact', 'confirmed', 'name',
             'service', 'obj_id', 'type', 'policyviolations',
             '_attachments',
-            'target', 'host_os', 'resolution', 'metadata')
+            'target', 'host_os', 'resolution', 'metadata',
+            'custom_fields')
 
     def get_type(self, obj):
         return obj.__class__.__name__
@@ -259,7 +263,8 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'service', 'obj_id', 'type', 'policyviolations',
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
-            'status_code')
+            'status_code', 'custom_fields'
+        )
 
 
 # Use this override for filterset fields that filter by en exact match by
@@ -302,6 +307,7 @@ class ServiceFilter(Filter):
                 alias.name == value
         )
 
+
 class HostnamesFilter(Filter):
     def filter(self, query, model, attr, value):
         alias = aliased(Hostname, name='hostname_filter')
@@ -319,6 +325,7 @@ class HostnamesFilter(Filter):
 
         query = service_hostnames_query.union(host_hostnames_query)
         return query
+
 
 class CustomILike(operators.Operator):
     """A filter operator that puts a % in the beggining and in the
@@ -561,8 +568,35 @@ class VulnerabilityView(PaginatedMixin,
             res['groups'] = [convert_group(group) for group in res['groups']]
         return res
 
-    @route('/<vuln_id>/attachment/<attachment_filename>/')
-    def attachment(self, workspace_name, vuln_id, attachment_filename):
+    @route('/<vuln_id>/attachment/', methods=['POST'])
+    def post_attachment(self, workspace_name, vuln_id):
+        vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
+            Workspace).filter(VulnerabilityGeneric.id == vuln_id, Workspace.name == workspace_name)
+
+        if vuln_workspace_check:
+            if 'file' not in request.files:
+                flask.abort(400)
+
+            faraday_file = FaradayUploadedFile(request.files['file'].read())
+            filename = request.files['file'].filename
+
+            get_or_create(
+                db.session,
+                File,
+                object_id=vuln_id,
+                object_type='vulnerability',
+                name=filename,
+                filename=filename,
+                content=faraday_file
+            )
+            db.session.commit()
+            return flask.jsonify({'message': 'Evidence upload was successful'})
+        else:
+            flask.abort(404, "Vulnerability not found")
+
+
+    @route('/<vuln_id>/attachment/<attachment_filename>/', methods=['GET'])
+    def get_attachment(self, workspace_name, vuln_id, attachment_filename):
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(VulnerabilityGeneric.id == vuln_id,
                               Workspace.name == workspace_name).first()
@@ -589,5 +623,6 @@ class VulnerabilityView(PaginatedMixin,
                 flask.abort(404, "File not found")
         else:
             flask.abort(404, "Vulnerability not found")
+
 
 VulnerabilityView.register(vulns_api)

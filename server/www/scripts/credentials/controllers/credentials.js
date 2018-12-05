@@ -109,6 +109,11 @@ angular.module('faradayApp')
 
                 $scope.workspace = $routeParams.wsId;
 
+                // load current workspace data
+                workspacesFact.get($scope.workspace).then(function(response) {
+                    $scope.workspaceData = response;
+                });
+
                 getParent().then(function(){
                     getAndLoadCredentials();
                 });

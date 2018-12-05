@@ -12,8 +12,7 @@ angular.module('faradayApp')
             };
 
             if (expression !== '') {
-                var tokens = expression.split(" ");
-                tokens = clearTokens(tokens);
+                var tokens = clearTokens(expression);
                 console.log("Tokens: " + tokens);
 
                 var operatorStack = [];
@@ -107,72 +106,69 @@ angular.module('faradayApp')
             return testParenthesisPairs(expression) && expression.match(reQuotes) !== null && expression.match(reDoubleSpaces) === null;
         };
 
-        var clearTokens = function (tokens) {
-            var signsStack = [];
-            var cleanedTokens = [];
-            for (var i = 0; i < tokens.length; i++) {
-                if (tokens[i] !== "") {
-                    if (tokens[i].indexOf('(') === 0) {
-                        cleanedTokens.push('(');
-                        tokens[i] = spliceSlice(tokens[i], 0, 1);
-                        if (tokens[i].indexOf(':"') !== -1) {
-                            while (tokens[i] !== undefined && tokens[i].indexOf('"') !== tokens[i].length - 1) {
-                                signsStack.push(tokens[i]);
-                                i++;
-                            }
-                            if (tokens[i] !== undefined) signsStack.push(tokens[i]);
-                            cleanedTokens.push(signsStack.join(" "));
-                            signsStack = [];
-                        } else {
-                            cleanedTokens.push(tokens[i]);
-                        }
-                    } else if (tokens[i].indexOf(')') === tokens[i].length - 1 && (tokens[i].substr(0, 3) !== "not")) {
-                        cleanedTokens.push(spliceSlice(tokens[i], tokens[i].length - 1, 1));
-                        cleanedTokens.push(')');
-                    } else if (tokens[i].substr(0, 3) === "not") {
-                        cleanedTokens.push("not");
-                        cleanedTokens.push(tokens[i].substr(3, 1));
-                        var tempTkn = tokens[i].substr(4, tokens[i].length - 4);
+        var clearTokens = function (expression) {
+            var tokens = [];
+            var isOpenQuotes = false;
+            var isOpenParenthesis = false;
+            var canAddToken = false;
+            var withSpace = false;
 
-                        if (tempTkn.indexOf(':"') !== -1) {
-                            if (tempTkn.indexOf(')') === tempTkn.length -1 ){
-                                tempTkn = spliceSlice(tempTkn, tempTkn.length - 1, 1)
-                            }
-                            signsStack.push(tempTkn);
-                            i++;
-                            while (tokens[i] !== undefined && tokens[i].indexOf('")') !== tokens[i].length - 2) {
-                                signsStack.push(tokens[i]);
-                                i++;
-                            }
+            for (var i = 0; i < expression.length; i++){
+                switch (expression[i]){
+                    case ' ':
+                        withSpace = true;
+                        if (isOpenQuotes === true)
+                            tokens[tokens.length - 1] += expression[i];
+                        break;
 
-                            if(tokens[i] !== undefined){
-                                 signsStack.push(spliceSlice(tokens[i], tokens[i].length - 1, 1));
-                            }
+                    case '(':
+                        withSpace = false;
+                        tokens.push(expression[i]);
+                        isOpenParenthesis = true;
+                        canAddToken = true;
+                        break;
 
-                            cleanedTokens.push(signsStack.join(" "));
-                            cleanedTokens.push(')');
-                            signsStack = [];
-                        } else if (tempTkn.indexOf(')') === tempTkn.length - 1) {
-                            cleanedTokens.push(spliceSlice(tempTkn, tempTkn.length - 1, 1));
-                            cleanedTokens.push(')');
-                        } else {
-                            cleanedTokens.push(tempTkn);
+                    case ')':
+                        withSpace = false;
+                        tokens.push(expression[i]);
+                        isOpenParenthesis = false;
+                        canAddToken = true;
+                        break;
+                    case '"':
+                        withSpace = false;
+                        isOpenQuotes = !isOpenQuotes;
+                        break;
+
+                    default:
+                        if(expression.substr(i, 3) === 'not' && !isOpenQuotes){
+                           tokens.push('not');
+                           i = i + 2;
+                           canAddToken = true;
                         }
-                    } else if (tokens[i].indexOf(':"') !== -1) {
-                        while (tokens[i] !== undefined && tokens[i].indexOf('"') !== tokens[i].length - 1) {
-                            signsStack.push(tokens[i]);
-                            i++;
+
+                        else if(expression.substr(i, 3) === 'and' && !isOpenQuotes){
+                           tokens.push('and');
+                           canAddToken = true;
+                           i = i + 2;
                         }
-                        if (tokens[i] !== undefined) signsStack.push(tokens[i]);
-                        cleanedTokens.push(signsStack.join(" "));
-                        signsStack = [];
-                    }
-                    else {
-                        cleanedTokens.push(tokens[i]);
-                    }
+
+                        else if(expression.substr(i, 2) === 'or' && !isOpenQuotes){
+                           tokens.push('or');
+                           canAddToken = true;
+                           i++;
+                        }else{
+                            if((!isOpenQuotes && (withSpace || tokens.length === 0)) || canAddToken){
+                                tokens.push(expression[i]);
+                                canAddToken = false;
+                            }
+                            else tokens[tokens.length - 1] += expression[i];
+                        }
+                        withSpace = false;
+                        break;
                 }
             }
-            return cleanedTokens;
+
+            return tokens;
         };
 
         var hasPrecedence = function (op1, op2) {

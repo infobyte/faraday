@@ -22,6 +22,7 @@ class TestVulnerabilityCustomFields(ReadOnlyAPITests):
             table_name='vulnerability',
             field_name='cvss',
             field_type='text',
+            field_order=1,
             field_display_name='CVSS',
         )
         session.add(add_text_field)
@@ -29,4 +30,4 @@ class TestVulnerabilityCustomFields(ReadOnlyAPITests):
 
         res = test_client.get(self.url()) # '/v2/custom_fields_schema/')
         assert res.status_code == 200
-        assert {u'field_type': u'text', u'field_name': u'cvss', u'field_display_name': u'CVSS'} in res.json
+        assert {u'field_type': u'text', u'field_name': u'cvss', u'field_display_name': u'CVSS', u'field_order': 1} in res.json

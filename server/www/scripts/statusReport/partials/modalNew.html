@@ -113,6 +113,9 @@
                 <li class="nav-item">
                     <a class="nav-link" data-toggle="tab" data-target="#tab-evidence" href="javascript:;">Evidence</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" data-target="#tab-custom-fields" href="javascript:;">Custom Fields</a>
+                </li>
             </ul>
 
 
@@ -454,6 +457,17 @@
                                 </li>
                             </ul>
                         </div><!-- #evidenceFiles -->
+                    </div>
+
+                </div>
+
+                 <div id="tab-custom-fields" class="container tab-pane fade"><br>
+                    <div class="col-md-12 margin-bottom-15px">
+                        <span ng-repeat="customField in modal.customFields">
+                            {{customField.field_type}}
+                            {{customField.field_name}}
+                            {{customField.field_display_name}}
+                        </span>
                     </div>
 
                 </div>

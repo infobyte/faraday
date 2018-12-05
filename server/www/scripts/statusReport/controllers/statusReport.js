@@ -32,6 +32,7 @@ angular.module("faradayApp")
         $scope.vulnWebSelected;
 
         $scope.gridHeight;
+        $scope.customFields;
         var allVulns;
 
         var searchFilter = {};
@@ -273,9 +274,23 @@ angular.module("faradayApp")
 
             loadVulns();
 
+            loadCustomFields();
+
             angular.element($window).bind("resize", function () {
                 resizeGrid();
             });
+        };
+
+
+        var loadCustomFields = function () {
+            var deferred = $q.defer();
+            ServerAPI.getCustomFields().then(
+                function(response){
+                    $scope.customFields = response.data;
+                    deferred.resolve($scope.customFields);
+                }, function(){
+                    deferred.reject();
+                });
         };
 
         var defineColumns = function() {
@@ -1067,6 +1082,9 @@ angular.module("faradayApp")
                     },
                     workspace: function() {
                         return $scope.workspace;
+                    },
+                    customFields: function () {
+                        return $scope.customFields;
                     }
                 }
              });

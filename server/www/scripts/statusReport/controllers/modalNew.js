@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('modalNewVulnCtrl',
-        ['$modalInstance', '$filter', '$upload', 'EASEOFRESOLUTION', 'commonsFact', 'severities', 'workspace', 'targetFact', 'vulnModelsManager', 'vulnsManager',
-        function($modalInstance, $filter, $upload, EASEOFRESOLUTION, commonsFact, severities, workspace, targetFact, vulnModelsManager, vulnsManager) {
+        ['$modalInstance', '$filter', '$upload', 'EASEOFRESOLUTION', 'commonsFact', 'severities', 'workspace', 'targetFact', 'vulnModelsManager', 'vulnsManager', 'customFields',
+        function($modalInstance, $filter, $upload, EASEOFRESOLUTION, commonsFact, severities, workspace, targetFact, vulnModelsManager, vulnsManager, customFields) {
 
         var vm = this;
 
@@ -46,6 +46,8 @@ angular.module('faradayApp')
             vm.icons = {};
 
             vm.host_parents = false;
+
+            vm.customFields = customFields;
 
             vm.cweList = [];
             vulnModelsManager.get().then(function(data) {

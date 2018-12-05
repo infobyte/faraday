@@ -20,7 +20,10 @@ class CustomFieldsSchemaSchema(AutoSchema):
     class Meta:
         model = CustomFieldsSchema
         fields = ('field_name',
-                    'field_type', 'field_display_name')
+                  'field_type',
+                  'field_display_name',
+                  'field_order',
+                  )
 
 
 class CustomFieldsSchemaView(ReadWriteView):

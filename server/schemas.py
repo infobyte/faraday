@@ -37,6 +37,8 @@ class FaradayCustomField(fields.Field):
         super(FaradayCustomField, self).__init__(*args, **kwargs)
 
     def _serialize(self, value, attr, obj, **kwargs):
+        if not value:
+            value = {}
         res = {}
         custom_fields = db.session.query(CustomFieldsSchema).filter_by(
             table_name=self.table_name)

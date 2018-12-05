@@ -593,7 +593,10 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('/filter')
     def filter(self, workspace_name):
-        filters = json.loads(request.args.get('q'))
+        try:
+            filters = json.loads(request.args.get('q'))
+        except ValueError as ex:
+            flask.abort(400, "Invalid Json filters {0}".format(ex))
         workspace = self._get_workspace(workspace_name)
         normal_vulns = search(db.session,
                               Vulnerability,

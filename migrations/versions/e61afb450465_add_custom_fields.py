@@ -24,6 +24,7 @@ def upgrade():
                     'table_name TEXT,' \
                     'field_name TEXT,' \
                     'field_type TEXT,' \
+                    'field_order INTEGER,' \
                     'field_display_name TEXT)'
                 )
 

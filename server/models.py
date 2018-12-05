@@ -488,6 +488,7 @@ class CustomFieldsSchema(db.Model):
     field_name = Column(Text)
     field_type = Column(Text)
     field_display_name = Column(Text)
+    field_order = Column(Integer)
     table_name = Column(Text)
 
 

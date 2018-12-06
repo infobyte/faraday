@@ -469,7 +469,8 @@
                                 <label class="sr-only" for="{{cf.field_name}}">{{cf.field_display_name}}</label>
                                 <input type="text" class="form-control input-sm" id="{{cf.field_name}}" name="{{cf.field_name}}"
                                        placeholder="{{cf.field_display_name}}"
-                                       ng-model="modal.data.custom_fields[cf.field_display_name]"/>
+                                       ng-model="modal.data.custom_fields[cf.field_display_name]" check-custom-type="{{cf.field_type}}"
+                                       uib-tooltip="{{(cf.field_type === 'int') ? 'Type only numbers' : 'Input type text'}}"/>
                             </div><!-- .form-group -->
                         </div>
                     </div>

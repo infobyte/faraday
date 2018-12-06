@@ -47,6 +47,7 @@ angular.module('faradayApp')
             this.ws = "";
             this.status = "opened";
             this.policyviolations = "";
+            this.custom_fields = {};
 
             if(data) {
                 if(data.name === undefined || data.name === "") {
@@ -59,7 +60,7 @@ angular.module('faradayApp')
         var public_properties = [
             '_attachments', 'confirmed', 'data', 'desc', 'easeofresolution',
             'impact', 'name', 'owned', 'policyviolations', 'refs', 'resolution',
-            'severity', 'status',
+            'severity', 'status', 'custom_fields'
         ];
 
         var saved_properties = public_properties.concat(
@@ -81,6 +82,7 @@ angular.module('faradayApp')
                 self.ws = ws;
                 if(data.parent !== undefined) self.parent = data.parent;
                 if(data.parent_type !== undefined) self.parent_type = data.parent_type;
+                if(data.custom_fields !== undefined) self.custom_fields = data.custom_fields;
 
                 self.public_properties.forEach(function(property) {
                     if(data[property] !== undefined) self[property] = data[property];

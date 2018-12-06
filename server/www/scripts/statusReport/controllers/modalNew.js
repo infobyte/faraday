@@ -87,8 +87,13 @@ angular.module('faradayApp')
                 response: "",
                 severity: undefined,
                 type: "Vulnerability",
-                website: ""
+                website: "",
+                custom_fields:{}
             };
+
+            customFields.forEach(function(cf) {
+                vm.data.custom_fields[cf.field_display_name] = null;
+            });
 
             vm.targets = [];
             vm.target_filter = "";

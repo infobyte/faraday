@@ -130,22 +130,23 @@ class ConfigSection(object):
             section = storage
         section.parse(__parser)
 
-    def raise_att_error(self, msg):
+    @staticmethod
+    def raise_att_error(msg):
         logger.error(msg)
         raise AttributeError(msg)
 
-    def raise_att_info(self, msg):
+    @staticmethod
+    def raise_att_info(msg):
         logger.info(msg)
 
 
 class CouchDBConfigObject(ConfigSection):
-    def __init__(self):
-        self._host = 'localhost'
-        self._password = 'changeme'
-        self._port = '5984'
-        self._protocol = None
-        self._ssl_port = None
-        self._user = 'faraday'
+    _host = 'localhost'
+    _password = 'changeme'
+    _port = '5984'
+    _protocol = None
+    _ssl_port = None
+    _user = 'faraday'
 
     def get_host(self):
         if self._host is None:
@@ -204,9 +205,8 @@ class CouchDBConfigObject(ConfigSection):
 
 
 class DatabaseConfigObject(ConfigSection):
-    def __init__(self):
-        self._connection_string = None
-        self._set = False
+    _connection_string = None
+    _set = False
 
     def get_connection_string(self):
         if self._connection_string is None:
@@ -224,12 +224,11 @@ class DatabaseConfigObject(ConfigSection):
 
 
 class FaradayServerConfigObject(ConfigSection):
-    def __init__(self):
-        self._bind_address = '0.0.0.0'
-        self._port = '5985'
-        self._secret_key = None
-        self._secret_key_set = False
-        self._websocket_port = '9000'
+    _bind_address = '0.0.0.0'
+    _port = '5985'
+    _secret_key = None
+    _secret_key_set = False
+    _websocket_port = '9000'
 
     def get_bind_address(self):
         if self._bind_address is None:
@@ -274,20 +273,19 @@ class FaradayServerConfigObject(ConfigSection):
 
 
 class LDAPConfigObject(ConfigSection):
-    def __init__(self):
-        self._admin_group = 'fadmin'
-        self._client_group = 'fclient'
-        self._disconnect_timeout = 2.0
-        self._domain = 'example.com'
-        self._domain_dn = 'DC=example,DC=com'
-        self._enabled = False
-        self._pentester_group = 'fpentester'
-        self._port = 389
-        self._server = '127.0.0.1'
-        self._use_ldaps = False
-        self._use_start_tls = False
-        self._use_local_roles = False
-        self._default_local_role = None
+    _admin_group = 'fadmin'
+    _client_group = 'fclient'
+    _disconnect_timeout = 2.0
+    _domain = 'example.com'
+    _domain_dn = 'DC=example,DC=com'
+    _enabled = False
+    _pentester_group = 'fpentester'
+    _port = 389
+    _server = '127.0.0.1'
+    _use_ldaps = False
+    _use_start_tls = False
+    _use_local_roles = False
+    _default_local_role = None
 
     def get_admin_group(self):
         if self._admin_group is None:
@@ -364,7 +362,7 @@ class LDAPConfigObject(ConfigSection):
     def get_use_ldaps(self):
         if self._use_ldaps is None:
             self.raise_att_error("Unset use_ldaps requested")
-        return self.use_ldaps
+        return self._use_ldaps
 
     def set_use_ldaps(self, value):
         self._use_ldaps = value
@@ -409,10 +407,9 @@ class LDAPConfigObject(ConfigSection):
 
 
 class SSLConfigObject(ConfigSection):
-    def __init__(self):
-        self._certificate = None
-        self._keyfile = None
-        self._port = None
+    _certificate = None
+    _keyfile = None
+    _port = None
 
     def get_certificate(self):
         if self._certificate is None:
@@ -444,8 +441,7 @@ class SSLConfigObject(ConfigSection):
 
 
 class StorageConfigObject(ConfigSection):
-    def __init__(self):
-        self._path = None
+    _path = None
 
     def get_path(self):
         if self._path is None:

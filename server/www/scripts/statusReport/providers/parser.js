@@ -228,7 +228,7 @@ angular.module('faradayApp')
                             op = '==';
                         }
 
-                        if (name === 'severity'){
+                        if (name === 'severity' || name === 'target'){
                             op = 'eq'
                         }
                     } else {

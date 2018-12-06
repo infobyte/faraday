@@ -17,7 +17,7 @@ from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf, Length
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
 from sqlalchemy.orm.exc import NoResultFound
-
+from psycopg2 import DataError
 from depot.manager import DepotManager
 from server.api.base import (
     AutoSchema,
@@ -596,20 +596,29 @@ class VulnerabilityView(PaginatedMixin,
         try:
             filters = json.loads(request.args.get('q'))
         except ValueError as ex:
-            flask.abort(400, "Invalid Json filters {0}".format(ex))
+            flask.abort(400, "Invalid filters")
+
         workspace = self._get_workspace(workspace_name)
-        normal_vulns = search(db.session,
-                              Vulnerability,
-                              filters)
-        normal_vulns = normal_vulns.filter_by(workspace_id=workspace.id)
-        web_vulns = search(db.session,
+        marshmallow_params = {'many': True, 'context': {}, 'strict': True}
+        try:
+            normal_vulns = search(db.session,
+                                  Vulnerability,
+                                  filters)
+            normal_vulns = normal_vulns.filter_by(workspace_id=workspace.id)
+            normal_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(normal_vulns.all())
+            normal_vulns_data = json.loads(normal_vulns.data)
+        except Exception:
+            normal_vulns_data = []
+        try:
+            web_vulns = search(db.session,
                            VulnerabilityWeb,
                            filters)
-        web_vulns = web_vulns.filter_by(workspace_id=workspace.id)
-        marshmallow_params = {'many': True, 'context': {}, 'strict': True}
-        normal_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(normal_vulns.all())
-        web_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(web_vulns.all())
-        return self._envelope_list(json.loads(normal_vulns.data) + json.loads(web_vulns.data))
+            web_vulns = web_vulns.filter_by(workspace_id=workspace.id)
+            web_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(web_vulns.all())
+            web_vulns_data = json.loads(web_vulns.data)
+        except Exception:
+            web_vulns_data = []
+        return self._envelope_list(normal_vulns_data + web_vulns_data)
 
     @route('/<vuln_id>/attachment/<attachment_filename>/', methods=['GET'])
     def get_attachment(self, workspace_name, vuln_id, attachment_filename):

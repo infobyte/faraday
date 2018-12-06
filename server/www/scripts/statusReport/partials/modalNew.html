@@ -463,7 +463,7 @@
 
                  <div id="tab-custom-fields" class="container tab-pane-container tab-pane fade"><br>
                     <div class="col-md-12 margin-bottom-15px">
-                        <div class="col-md-12" ng-repeat="cf in modal.customFields">
+                        <div class="col-md-12" ng-repeat="cf in modal.customFields | orderBy : 'field_order'">
                         <div class="tab-pane-header">{{cf.field_display_name}}</div>
                             <div class="form-group">
                                 <label class="sr-only" for="{{cf.field_name}}">{{cf.field_display_name}}</label>

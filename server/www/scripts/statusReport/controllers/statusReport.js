@@ -816,6 +816,9 @@ angular.module("faradayApp")
                         },
                         vuln: function() {
                             return vulns[0];
+                        },
+                        customFields: function () {
+                            return $scope.customFields;
                         }
                     }
                 });

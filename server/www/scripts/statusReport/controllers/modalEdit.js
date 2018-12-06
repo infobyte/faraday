@@ -6,10 +6,10 @@ angular.module('faradayApp')
     .controller('modalEditCtrl',
         ['$modalInstance', '$routeParams', 'EASEOFRESOLUTION', 'STATUSES', 'commonsFact',
             'BASEURL', 'severities', 'vuln', 'vulnModelsManager', 'vulnsManager', 'referenceFact',
-            'encodeURIComponentFilter',
+            'encodeURIComponentFilter', 'customFields',
             function ($modalInstance, $routeParams, EASEOFRESOLUTION, STATUSES, commonsFact,
                       BASEURL, severities, vuln, vulnModelsManager, vulnsManager, referenceFact,
-                      encodeURIComponent) {
+                      encodeURIComponent, customFields) {
 
                 var vm = this;
 
@@ -47,6 +47,8 @@ angular.module('faradayApp')
 
                     vm.file_name_error = false;
 
+                    vm.customFields = customFields;
+
                     vm.data = {
                         _id: undefined,
                         _attachments: {},
@@ -74,7 +76,8 @@ angular.module('faradayApp')
                         type: "Vulnerability",
                         website: "",
                         status: "opened",
-                        policyviolations: []
+                        policyviolations: [],
+                        custom_fields:{}
                     };
 
                     vm.vuln = angular.copy(vuln);

@@ -24,6 +24,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship, undefer
 from sqlalchemy.sql import select, text, table
 from sqlalchemy.sql.expression import asc, case, join
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy import func
 from sqlalchemy.orm import (
     backref,
@@ -937,6 +938,10 @@ class VulnerabilityGeneric(VulnerabilityABC):
             object_id=self.id,
             object_type='vulnerability'
         )
+
+    @hybrid_property
+    def target(self):
+        return self.target_host_ip
 
 
 class Vulnerability(VulnerabilityGeneric):

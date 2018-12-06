@@ -31,3 +31,4 @@ deprecation>=1.0.1
 pgcli>=1.8.2
 websocket-client>=0.46.0
 attrs>=17.4.0
+Flask-Restless==0.17.0

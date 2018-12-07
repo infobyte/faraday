@@ -9,8 +9,14 @@ from tempfile import NamedTemporaryFile
 import os
 import sys
 import json
+import random
+import string
 import inspect
+
 import pytest
+import psycopg2
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+
 from factory import Factory
 from flask.testing import FlaskClient
 from flask_principal import Identity, identity_changed
@@ -89,8 +95,29 @@ def pytest_configure(config):
 def app(request):
     connection_string = request.config.getoption(
                     '--connection-string')
-    if not connection_string:
+
+    if connection_string:
+        postgres_user, postgres_password = connection_string.split('://')[1].split('@')[0].split(':')
+        host = connection_string.split('://')[1].split('@')[1].split('/')[0]
+        con = psycopg2.connect(dbname='postgres',
+                               user=postgres_user,
+                               host=host,
+                               password=postgres_password)
+
+        con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        cur = con.cursor()
+        db_name = ''.join(random.SystemRandom().choice(string.ascii_uppercase) for _ in range(20))
+        cur.execute("CREATE DATABASE \"%s\"  ;" % db_name)
+        connection_string = 'postgresql+psycopg2://{postgres_user}:{postgres_password}@{host}/{db_name}'.format(
+            postgres_user=postgres_user,
+            postgres_password=postgres_password,
+            host=host,
+            db_name=db_name,
+        )
+        con.close()
+    else:
         connection_string = 'sqlite:///'
+
     app = create_app(db_connection_string=connection_string, testing=True)
     app.test_client_class = CustomClient
 
@@ -111,20 +138,6 @@ def app(request):
 def database(app, request):
     """Session-wide test database."""
 
-    def teardown():
-        if db.engine.dialect.name == 'sqlite':
-            # since sqlite was created in a temp file we skip the drops.
-            return
-        try:
-            db.engine.execute('DROP TABLE vulnerability CASCADE')
-        except Exception:
-            pass
-        try:
-            db.engine.execute('DROP TABLE vulnerability_template CASCADE')
-        except Exception:
-            pass
-        db.drop_all()
-
     # Disable check_vulnerability_host_service_source_code constraint because
     # it doesn't work in sqlite
     vuln_constraints = db.metadata.tables['vulnerability'].constraints
@@ -137,7 +150,6 @@ def database(app, request):
     db.init_app(app)
     db.create_all()
 
-    request.addfinalizer(teardown)
     return db
 
 

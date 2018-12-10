@@ -126,7 +126,21 @@ def app(request):
     ctx.push()
 
     def teardown():
+        with ctx:
+            db.session.close()
+            db.engine.dispose()
         ctx.pop()
+        if connection_string:
+            postgres_user, postgres_password = connection_string.split('://')[1].split('@')[0].split(':')
+            host = connection_string.split('://')[1].split('@')[1].split('/')[0]
+            con = psycopg2.connect(dbname='postgres',
+                                   user=postgres_user,
+                                   host=host,
+                                   password=postgres_password)
+
+            con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+            cur = con.cursor()
+            cur.execute("DROP DATABASE \"%s\"  ;" % db_name)
 
     request.addfinalizer(teardown)
     app.config['NPLUSONE_RAISE'] = not request.config.getoption(

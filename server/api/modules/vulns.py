@@ -632,7 +632,7 @@ class VulnerabilityView(PaginatedMixin,
                 db.session.commit()
                 depot = DepotManager.get()
                 depot.delete(file_obj.content.get('file_id'))
-                return flask.jsonify({'message': 'Evidence was successfully deleted'})
+                return flask.jsonify({'message': 'Attachment was successfully deleted'})
             else:
                 flask.abort(404, "File not found")
         else:

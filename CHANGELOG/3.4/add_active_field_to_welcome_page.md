@@ -1,1 +1,0 @@
-Workspaces can be set as active/disable in welcome page.

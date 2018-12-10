@@ -1,1 +1,0 @@
-Info API now is public

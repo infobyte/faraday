@@ -72,6 +72,37 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
+        vulnsManager.getFilteredVulns = function(wsName, jsonOptions) {
+            var deferred = $q.defer();
+            ServerAPI.getFilteredVulns(wsName, jsonOptions)
+                .then(function(response) {
+                    var result = {
+                        vulnerabilities: [],
+                        count: 0
+                    };
+
+                    for(var i = 0; i < response.data.vulnerabilities.length; i++) {
+                        var vulnData = response.data.vulnerabilities[i].value;
+                        try {
+                            if(vulnData.type === "vulnerability") {
+                                var vuln = new Vuln(wsName, vulnData);
+                            } else {
+                                var vuln = new WebVuln(wsName, vulnData);
+                            }
+                            result.vulnerabilities.push(vuln);
+                        } catch(e) {
+                            console.log(e.stack);
+                        }
+                    }
+                    vulnsCounter = response.data.count;
+                    result.count = response.data.count;
+                    deferred.resolve(result);
+                }, function(response) {
+                    deferred.reject("Unable to retrieve vulnerabilities from server");
+                });
+            return deferred.promise;
+        };
+
         vulnsManager.loadVulnsCounter = function(ws){
             // Ugly hack to populate the vulnsCounter global variable
             workspacesFact.get(ws).then(function(data){

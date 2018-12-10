@@ -328,7 +328,47 @@
                         </div>
                     </div><!-- .form-group -->
 
-                    <div class="fields-of-vulnWeb margin-top-22px" ng-show="modal.data.type === 'VulnerabilityWeb'">
+
+                    <div class="col-md-12 margin-bottom-15px margin-top-22px">
+                        <div class="tab-pane-header">Impact</div>
+                        <h4><span ng-repeat="(key, value) in modal.data.impact" class="normal-size"
+                                  style="cursor: pointer;">
+                        <span ng-class="{'label-impact label-default-impact': !value, 'label-impact label-success-impact': value}"
+                              ng-click="modal.toggleImpact(key)">{{key}}</span>
+                        </span></h4><!-- .normal-size -->
+                    </div>
+
+                </div>
+
+                <div id="technical_details" class="container tab-pane-container tab-pane"><br>
+                    <div class="col-md-12">
+                        <div class="tab-pane-header">Data</div>
+                        <div class="form-group">
+                            <label class="sr-only" for="vuln-data">Vuln data</label>
+                            <textarea class="form-control" id="vuln-data" rows="5"
+                                      ng-model="modal.data.data" placeholder="Data"></textarea>
+                        </div><!-- .form-group -->
+                    </div>
+
+                    <div class="col-md-6 col-sm-12 col-xs-12" ng-show="modal.data.type === 'VulnerabilityWeb'">
+                        <div class="tab-pane-header">Request</div>
+                        <div class="form-group">
+                            <label class="sr-only" for="vuln-request">Vuln request</label>
+                            <textarea class="form-control" id="vuln-request" rows="8"
+                                      ng-model="modal.data.request" placeholder="Request"></textarea>
+                        </div><!-- .form-group -->
+                    </div>
+
+                    <div class="col-md-6 col-sm-12 col-xs-12" ng-show="modal.data.type === 'VulnerabilityWeb'">
+                        <div class="tab-pane-header">Response</div>
+                        <div class="form-group">
+                            <label class="sr-only" for="vuln-response">Vuln response</label>
+                            <textarea class="form-control" id="vuln-response" rows="8"
+                                      ng-model="modal.data.response" placeholder="Response"></textarea>
+                        </div><!-- .form-group -->
+                    </div>
+
+                    <div class="margin-top-22px" ng-show="modal.data.type === 'VulnerabilityWeb'">
                         <div class="col-md-4">
                             <div class="tab-pane-header">Method</div>
                             <div class="form-group">
@@ -383,46 +423,6 @@
                             </div><!-- .form-group -->
                         </div>
                     </div>
-
-                    <div class="col-md-12 margin-bottom-15px margin-top-22px">
-                        <div class="tab-pane-header">Impact</div>
-                        <h4><span ng-repeat="(key, value) in modal.data.impact" class="normal-size"
-                                  style="cursor: pointer;">
-                        <span ng-class="{'label-impact label-default-impact': !value, 'label-impact label-success-impact': value}"
-                              ng-click="modal.toggleImpact(key)">{{key}}</span>
-                        </span></h4><!-- .normal-size -->
-                    </div>
-
-                </div>
-
-                <div id="technical_details" class="container tab-pane-container tab-pane"><br>
-                    <div class="col-md-12">
-                        <div class="tab-pane-header">Data</div>
-                        <div class="form-group">
-                            <label class="sr-only" for="vuln-data">Vuln data</label>
-                            <textarea class="form-control" id="vuln-data" rows="5"
-                                      ng-model="modal.data.data" placeholder="Data"></textarea>
-                        </div><!-- .form-group -->
-                    </div>
-
-                    <div class="col-md-6 col-sm-12 col-xs-12" ng-show="modal.data.type === 'VulnerabilityWeb'">
-                        <div class="tab-pane-header">Request</div>
-                        <div class="form-group">
-                            <label class="sr-only" for="vuln-request">Vuln request</label>
-                            <textarea class="form-control" id="vuln-request" rows="8"
-                                      ng-model="modal.data.request" placeholder="Request"></textarea>
-                        </div><!-- .form-group -->
-                    </div>
-
-                    <div class="col-md-6 col-sm-12 col-xs-12" ng-show="modal.data.type === 'VulnerabilityWeb'">
-                        <div class="tab-pane-header">Response</div>
-                        <div class="form-group">
-                            <label class="sr-only" for="vuln-response">Vuln response</label>
-                            <textarea class="form-control" id="vuln-response" rows="8"
-                                      ng-model="modal.data.response" placeholder="Response"></textarea>
-                        </div><!-- .form-group -->
-                    </div>
-
                 </div>
 
                 <div id="tab-evidence" class="container tab-pane fade"><br>

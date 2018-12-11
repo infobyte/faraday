@@ -22,6 +22,7 @@ from server.commands.reports import import_external_reports
 from server.commands import status_check as status_check_functions
 from server.commands import change_password as change_pass
 from server.commands.custom_fields import add_custom_field_main, delete_custom_field_main
+from server.commands import support as support_zip
 from server.models import db, User
 from server.importer import ImportCouchDB
 
@@ -198,6 +199,10 @@ def create_tables():
             'Tables created successfully!',
             fg='green', bold=True))
 
+@click.command(help="Generates a .zip file with technical information")
+def support():
+    support_zip.all_for_support()
+
 
 @click.command(help='Migrates database schema')
 @click.option('--upgrade', default=None)
@@ -229,6 +234,7 @@ cli.add_command(change_password)
 cli.add_command(migrate)
 cli.add_command(add_custom_field)
 cli.add_command(delete_custom_field)
+cli.add_command(support)
 
 if __name__ == '__main__':
     cli()

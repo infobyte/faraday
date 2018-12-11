@@ -27,7 +27,7 @@ sys.path.append(os.path.abspath(os.getcwd()))
 from server.app import create_app
 from server.models import db
 from test_cases import factories
-
+from server import config
 
 # Discover factories to automatically register them to pytest-factoryboy and to
 # override its session
@@ -76,6 +76,9 @@ class CustomClient(FlaskClient):
 def pytest_addoption(parser):
     # currently for tests using sqlite and memory have problem while using transactions
     # we need to review sqlite configuraitons for persistence using PRAGMA.
+    parser.addoption('--use-postgresql', action='store_true',
+                     help="Forces the tests to be executed in postgresql "
+                     "using server.ini credentials")
     parser.addoption('--connection-string',
                      help="Database connection string. Defaults to in-memory "
                      "sqlite if not specified:")
@@ -95,9 +98,17 @@ def pytest_configure(config):
 def app(request):
     connection_string = request.config.getoption(
                     '--connection-string')
+    use_postgresql = request.config.getoption(
+            '--use-postgresql')
+    sqlite = False
+    postgres_user, postgres_password = None, None
 
+    if use_postgresql and not connection_string:
+        connection_string = config.database.connection_string
     if connection_string:
         postgres_user, postgres_password = connection_string.split('://')[1].split('@')[0].split(':')
+
+    if postgres_user and postgres_password:
         host = connection_string.split('://')[1].split('@')[1].split('/')[0]
         con = psycopg2.connect(dbname='postgres',
                                user=postgres_user,
@@ -116,6 +127,7 @@ def app(request):
         )
         con.close()
     else:
+        sqlite = True
         connection_string = 'sqlite:///'
 
     app = create_app(db_connection_string=connection_string, testing=True)
@@ -130,7 +142,7 @@ def app(request):
             db.session.close()
             db.engine.dispose()
         ctx.pop()
-        if connection_string:
+        if not sqlite:
             postgres_user, postgres_password = connection_string.split('://')[1].split('@')[0].split(':')
             host = connection_string.split('://')[1].split('@')[1].split('/')[0]
             con = psycopg2.connect(dbname='postgres',

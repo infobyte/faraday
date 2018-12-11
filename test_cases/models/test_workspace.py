@@ -14,6 +14,7 @@ from test_cases.factories import (
     VulnerabilityWebFactory,
 )
 
+
 C_SOURCE_CODE_VULN_COUNT = 3
 C_STANDARD_VULN_COUNT = [6, 2]  # With host parent and with service parent
 C_WEB_VULN_COUNT = 5
@@ -74,37 +75,43 @@ def populate_workspace(workspace):
     db.session.commit()
 
 
-def test_vuln_count(workspace, second_workspace):
+def test_vuln_count(workspace, second_workspace, database):
+    if database.engine.dialect.name == 'sqlite':
+        return
     populate_workspace(workspace)
     populate_workspace(second_workspace)
-    workspace = Workspace.query_with_count(None).filter(
-        Workspace.id == workspace.id).first()
-    assert workspace.vulnerability_web_count == WEB_VULN_COUNT
-    assert workspace.vulnerability_code_count == SOURCE_CODE_VULN_COUNT
-    assert workspace.vulnerability_standard_count == sum(
+    workspace = Workspace.query_with_count(None, workspace_name=workspace.name).fetchone()
+    assert workspace['vulnerability_web_count'] == WEB_VULN_COUNT
+    assert workspace['vulnerability_code_count'] == SOURCE_CODE_VULN_COUNT
+    assert workspace['vulnerability_standard_count'] == sum(
         STANDARD_VULN_COUNT)
-    assert workspace.vulnerability_total_count == (
+    assert workspace['vulnerability_total_count'] == (
         sum(STANDARD_VULN_COUNT) + WEB_VULN_COUNT +
         SOURCE_CODE_VULN_COUNT
     )
 
 
-def test_vuln_count_confirmed(workspace, second_workspace):
+def test_vuln_count_confirmed(workspace, second_workspace, database):
+    if database.engine.dialect.name == 'sqlite':
+        return
     populate_workspace(workspace)
     populate_workspace(second_workspace)
-    workspace = Workspace.query_with_count(True).filter(
-        Workspace.id == workspace.id).first()
-    assert workspace.vulnerability_web_count == C_WEB_VULN_COUNT
-    assert workspace.vulnerability_code_count == C_SOURCE_CODE_VULN_COUNT
-    assert workspace.vulnerability_standard_count == sum(
+    workspace = Workspace.query_with_count(True, workspace_name=workspace.name).fetchone()
+    workspace = dict(workspace)
+    assert workspace['vulnerability_web_count'] == C_WEB_VULN_COUNT
+    assert workspace['vulnerability_code_count'] == C_SOURCE_CODE_VULN_COUNT
+    assert workspace['vulnerability_standard_count'] == sum(
         C_STANDARD_VULN_COUNT)
-    assert workspace.vulnerability_total_count == (
+    assert workspace['vulnerability_total_count'] == (
         sum(C_STANDARD_VULN_COUNT) + C_WEB_VULN_COUNT +
         C_SOURCE_CODE_VULN_COUNT
     )
 
 
-def test_vuln_no_count(workspace, second_workspace):
+def test_vuln_no_count(workspace, second_workspace, database):
+    if database.engine.dialect.name == 'sqlite':
+        return
+
     populate_workspace(workspace)
     populate_workspace(second_workspace)
     workspace = Workspace.query.get(workspace.id)

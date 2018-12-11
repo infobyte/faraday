@@ -21,7 +21,7 @@ from server.commands.app_urls import show_all_urls
 from server.commands.reports import import_external_reports
 from server.commands import status_check as status_check_functions
 from server.commands import change_password as change_pass
-from server.commands.custom_fields import add_custom_field_main
+from server.commands.custom_fields import add_custom_field_main, delete_custom_field_main
 from server.models import db, User
 from server.importer import ImportCouchDB
 
@@ -211,6 +211,11 @@ def add_custom_field():
     add_custom_field_main()
 
 
+@click.command(help='Custom field delete wizard')
+def delete_custom_field():
+    delete_custom_field_main()
+
+
 cli.add_command(process_reports)
 cli.add_command(show_urls)
 cli.add_command(initdb)
@@ -223,6 +228,7 @@ cli.add_command(create_tables)
 cli.add_command(change_password)
 cli.add_command(migrate)
 cli.add_command(add_custom_field)
+cli.add_command(delete_custom_field)
 
 if __name__ == '__main__':
     cli()

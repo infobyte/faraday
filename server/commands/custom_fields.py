@@ -13,9 +13,27 @@ def add_custom_field_main():
     with app.app_context():
         add_custom_field_wizard()
 
+def delete_custom_field_main():
+    with app.app_context():
+        delete_custom_field_wizard()
+
+
+def delete_custom_field_wizard():
+    print('This wizard will guide you to DELETE custom field to the vulneraiblity model.')
+    print('All available custom fields are:')
+    for custom_field in db.session.query(CustomFieldsSchema):
+        print('* {0}'.format(custom_field.field_name))
+    print('End of custom fields')
+    field_name = click.prompt('Field name')
+    custom_field = db.session.query(CustomFieldsSchema).filter_by(field_name=field_name).first()
+    if custom_field:
+        db.session.delete(cusotm_field)
+        db.session.commit()
+    else:
+        print('Custom field not found')
 
 def add_custom_field_wizard():
-    print('This wizard will guide you to add custom field to the vulneraiblity model.')
+    print('This wizard will guide you to ADD custom field to the vulneraiblity model.')
     field_name = click.prompt('Field name')
     field_display_name = click.prompt('Display name')
     field_type = click.prompt('Field type (int, str, list)', type=click.Choice(['int', 'str', 'list']))

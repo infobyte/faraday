@@ -72,10 +72,10 @@ angular.module('faradayApp')
             set: function(ws, data) {
                 var self = this;
 
-                if(data._id !== undefined) self._id = data._id;
+                if(data._id !== undefined || data.id !== undefined) self._id = data._id | data.id;
                 if(data.metadata !== undefined) self.metadata = data.metadata;
-                if(data.target !== undefined) self.target = data.target;
-                if(data.host_os !== undefined) self.host_os = data.host_os;
+                if(data.target !== undefined || data.target_host_ip !== undefined) self.target = data.target || data.target_host_ip;
+                if(data.host_os !== undefined || data.target_host_os !== undefined) self.host_os = data.host_os || data.target_host_os;
                 if(data.hostnames !== undefined) self.hostnames = data.hostnames;
                 if(data.service !== undefined) self.service = data.service;
                 if(data.owner !== undefined) self.owner = data.owner;

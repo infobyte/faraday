@@ -83,7 +83,10 @@ class PrimaryKeyRelatedField(fields.Field):
         if self.many:
             ret = []
             for item in value:
-                ret.append(getattr(item, self.field_name))
+                try:
+                    ret.append(getattr(item, self.field_name))
+                except AttributeError:
+                    ret.append(item[self.field_name])
             return ret
         else:
             if value is None:

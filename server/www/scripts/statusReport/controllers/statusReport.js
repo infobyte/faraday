@@ -6,12 +6,12 @@ angular.module("faradayApp")
     .controller("statusReportCtrl",
                     ["$scope", "$filter", "$routeParams",
                      "$location", "$uibModal", "$cookies", "$q", "$window", "BASEURL",
-                     "SEVERITIES", "EASEOFRESOLUTION", "STATUSES", "hostsManager", "commonsFact",
+                     "SEVERITIES", "EASEOFRESOLUTION", "STATUSES", "hostsManager", "commonsFact", 'parserFact',
                      "vulnsManager", "workspacesFact", "csvService", "uiGridConstants", "vulnModelsManager",
                      "referenceFact", "ServerAPI", '$http',
                     function($scope, $filter, $routeParams,
                         $location, $uibModal, $cookies, $q, $window, BASEURL,
-                        SEVERITIES, EASEOFRESOLUTION, STATUSES, hostsManager, commonsFact,
+                        SEVERITIES, EASEOFRESOLUTION, STATUSES, hostsManager, commonsFact,parserFact,
                         vulnsManager, workspacesFact, csvService, uiGridConstants, vulnModelsManager, referenceFact, ServerAPI, $http) {
         $scope.baseurl;
         $scope.columns;
@@ -1097,23 +1097,44 @@ angular.module("faradayApp")
             });
         };
 
-        // changes the URL according to search params
+        var loadFilteredVulns = function(wsName, jsonOptions) {
+            delete searchFilter.confirmed;
+            $scope.loading = true;
+
+            vulnsManager.getFilteredVulns(wsName, jsonOptions)
+            .then(function(response) {
+                $scope.loading = false;
+                $scope.gridOptions.data = response.vulnerabilities;
+                $scope.gridOptions.totalItems = response.count;
+
+                // Add the total amount of vulnerabilities as an option for pagination
+                // if it is larger than our biggest page size
+                if ($scope.gridOptions.totalItems > paginationOptions.defaultPageSizes[paginationOptions.defaultPageSizes.length - 1]) {
+
+                    $scope.gridOptions.paginationPageSizes = paginationOptions.defaultPageSizes.concat([$scope.gridOptions.totalItems]);
+
+                    // sadly, this will load the vuln list again because it fires a paginationChanged event
+                    if ($scope.gridOptions.paginationPageSize > $scope.gridOptions.totalItems)
+                        $scope.gridOptions.paginationPageSize = $scope.gridOptions.totalItems;
+
+                    // New vuln and MAX items per page setted => reload page size.
+                    if ($scope.gridOptions.paginationPageSize === $scope.gridOptions.totalItems - 1)
+                        $scope.gridOptions.paginationPageSize = $scope.gridOptions.totalItems;
+
+                }
+            });
+        };
+
         $scope.searchFor = function(search, params) {
-            // TODO: It would be nice to find a way for changing
             // the url without reloading the controller
+            $scope.searchParams = params;
             if(window.location.hash.substring(1).indexOf('groupby') === -1) {
-                var url = "/status/ws/" + $routeParams.wsId;
+                var jsonOptions = parserFact.evaluateExpression(params);
+                loadFilteredVulns($routeParams.wsId, jsonOptions);
             } else {
                 var url = "/status/ws/" + $routeParams.wsId + "/groupby/" + $routeParams.groupbyId;
+                $location.path(url);
             }
-
-            if(search && params != "" && params != undefined) {
-                var filter = commonsFact.parseSearchExpression(params);
-                var URLParams = commonsFact.searchFilterToURLParams(filter);
-                url += "/search/" + URLParams;
-            }
-
-            $location.path(url);
         };
 
         // toggles column show property
@@ -1128,6 +1149,10 @@ angular.module("faradayApp")
             }
             $cookies.put('SRcolumns', JSON.stringify($scope.columns));
             recalculateLastVisibleColSize();
+        };
+
+        $scope.isValidExpression = function (expression) {
+            return parserFact.isValid(expression);
         };
 
         var compareSeverities = function(a, b) {

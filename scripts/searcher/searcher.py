@@ -470,10 +470,14 @@ def execute_action(ws, objects, rule, _server):
     for obj in objects:
         for action in actions:
             action = action.strip('--')
-            command, expression = action.split(':')
+            array = action.split(':')
+            command = array[0]
+            expression = str(':').join(array[1:])
 
             if command == 'UPDATE':
-                key, value = expression.split('=')
+                array_exp = expression.split('=')
+                key = array_exp[0]
+                value = str('=').join(array_exp[1:])
                 if obj.class_signature == 'VulnerabilityWeb' or obj.class_signature == 'Vulnerability':
                     if update_vulnerability(ws, obj, key, value, _server):
                         insert_rule(rule['id'], command, obj, _objs_value, fields=None, key=key, value=value)
@@ -709,10 +713,10 @@ def main():
         os.remove(lockf)
         exit(0)
 
-    except Exception as errorMsg:
-        logger.error(errorMsg)
-        os.remove(lockf)
-        exit(0)
+    # except Exception as errorMsg:
+    #     logger.error(errorMsg)
+    #     os.remove(lockf)
+    #     exit(0)
 
 
 if __name__ == "__main__":

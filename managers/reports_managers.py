@@ -1,46 +1,41 @@
-#!/usr/bin/env python
-'''
+"""
 Faraday Penetration Test IDE
-Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
+"""
 
-'''
 import json
-
-
 import os
 import re
 import time
 import traceback
+
 from threading import Thread
-
 from utils.logs import getLogger
-
-try:
-    import xml.etree.cElementTree as ET
-
-except ImportError:
-    print "cElementTree could not be imported. Using ElementTree instead"
-    import xml.etree.ElementTree as ET
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
+try:
+    import xml.etree.cElementTree as ET
+except ImportError:
+    import xml.etree.ElementTree as ET
 
-class ReportProcessor():
+
+class ReportProcessor:
+
     def __init__(self, plugin_controller, ws_name=None):
         self.plugin_controller = plugin_controller
         self.ws_name = ws_name
 
     def processReport(self, filename):
-        """
-        Process one Report
-        """
+        """ Process one Report """
         getLogger(self).debug("Report file is %s" % filename)
 
         parser = ReportParser(filename)
 
         if parser.report_type is None:
+
             getLogger(self).error(
                 'Plugin not found: automatic and manual try!')
             return False
@@ -48,33 +43,44 @@ class ReportProcessor():
         return self.sendReport(parser.report_type, filename)
 
     def sendReport(self, plugin_id, filename):
+
         """Sends a report to the appropiate plugin specified by plugin_id"""
+
         getLogger(self).info(
             'The file is %s, %s' % (filename, plugin_id))
-        command_id = self.plugin_controller.processReport(plugin_id, filename, ws_name=self.ws_name)
+
+        command_id = self.plugin_controller.processReport(
+            plugin_id, filename, ws_name=self.ws_name)
+
         if not command_id:
+
             getLogger(self).error(
-                "Faraday doesn't have a plugin for this tool..."
-                " Processing: ABORT")
+                "Faraday doesn't have a plugin for this tool... Processing: ABORT")
             return False
+
         return command_id
 
     def onlinePlugin(self, cmd):
-        _, new_cmd = self.plugin_controller.processCommandInput('0', cmd, './')
+        self.plugin_controller.processCommandInput('0', cmd, './')
         self.plugin_controller.onCommandFinished('0', 0, cmd)
 
 
 class ReportManager(Thread):
+
     def __init__(self, timer, ws_name, plugin_controller, polling=True):
+
         Thread.__init__(self)
         self.setDaemon(True)
+
         self.polling = polling
         self.ws_name = ws_name
         self.timer = timer
         self._stop = False
+
         self._report_path = os.path.join(CONF.getReportPath(), ws_name)
         self._report_ppath = os.path.join(self._report_path, "process")
         self._report_upath = os.path.join(self._report_path, "unprocessed")
+
         self.processor = ReportProcessor(plugin_controller, ws_name)
 
         if not os.path.exists(self._report_path):
@@ -87,8 +93,10 @@ class ReportManager(Thread):
             os.mkdir(self._report_upath)
 
     def run(self):
+
         tmp_timer = .0
         tmp_timer_sentinel = 0
+
         while not self._stop:
 
             time.sleep(.1)
@@ -100,14 +108,18 @@ class ReportManager(Thread):
                 self.launchSentinel()
 
             if tmp_timer >= self.timer:
+
                 try:
                     self.syncReports()
                     if not self.polling:
                         break
+
                 except Exception:
+
                     getLogger(self).error(
                         "An exception was captured while saving reports\n%s"
                         % traceback.format_exc())
+
                 finally:
                     tmp_timer = 0
 
@@ -130,22 +142,30 @@ class ReportManager(Thread):
         We first make sure that all shared reports were added to the repo
         """
         for root, dirs, files in os.walk(self._report_path, False):
+
             # skip processed and unprocessed directories
             if root == self._report_path:
                 for name in files:
+
                     filename = os.path.join(root, name)
                     name = os.path.basename(filename)
+
                     # If plugin not is detected... move to unprocessed
                     # PluginCommiter will rename the file to processed or unprocessed
                     # when the plugin finishes
                     if self.processor.processReport(filename) is False:
-                        getLogger(self).info('Plugin not detected. Moving {0} to unprocessed'.format(filename))
+
+                        getLogger(self).info(
+                            'Plugin not detected. Moving {0} to unprocessed'.format(filename))
+
                         os.rename(
                             filename,
                             os.path.join(self._report_upath, name))
                     else:
+
                         getLogger(self).info(
                             'Detected valid report {0}'.format(filename))
+
                         os.rename(
                             filename,
                             os.path.join(self._report_ppath, name))
@@ -153,9 +173,7 @@ class ReportManager(Thread):
         self.onlinePlugins()
 
     def onlinePlugins(self):
-        """
-        Process online plugins
-        """
+        """ Process online plugins """
         pluginsOn = {"MetasploitOn": "./metasploiton online"}
         pluginsOn.update({"Beef": "./beef online"})
         psettings = CONF.getPluginSettings()
@@ -171,12 +189,9 @@ class ReportManager(Thread):
 
 
 class ReportParser(object):
-
     """
     Class that handles reports files.
-
     :param filepath: report file.
-
     :class:`.LoadReport`
     """
 
@@ -216,9 +231,7 @@ class ReportParser(object):
         This method uses file signatures to recognize file types
 
         :param file_path: report file.
-        """
 
-        """
         If you need add support to a new report type
         add the file signature here
         and add the code in self.getRootTag() for get the root tag.
@@ -226,9 +239,9 @@ class ReportParser(object):
         f = result = None
 
         signatures = {
-         "\x50\x4B": "zip",
-         "\x3C\x3F\x78\x6D\x6C": "xml",
-         "# Lynis Re": "dat",
+            "\x50\x4B": "zip",
+            "\x3C\x3F\x78\x6D\x6C": "xml",
+            "# Lynis Re": "dat",
         }
 
         try:
@@ -302,68 +315,61 @@ class ReportParser(object):
         return result, output
 
     def rType(self, tag, output):
-        """Compares report root tag with known root tags.
-
-        :param root_tag
-        :rtype
-        """
-        if "nmaprun" == tag:
+        """ Compares report root tag with known root tags """
+        if tag == "nmaprun":
             return "Nmap"
-        elif "w3af-run" == tag:
+        elif tag == "w3af-run":
             return "W3af"
-        elif "NessusClientData_v2" == tag:
+        elif tag == "NessusClientData_v2":
             return "Nessus"
-        elif "report" == tag:
+        elif tag == "report":
 
             if re.search(
-                "https://raw.githubusercontent.com/Arachni/arachni/",
-                output) is not None:
+                    "https://raw.githubusercontent.com/Arachni/arachni/", output) is not None:
                 return "Arachni"
 
-            elif re.search("OpenVAS", output) is not None or re.search(
-                '<omp><version>',
-                output) is not None:
+            elif re.search("OpenVAS", output) is not None or re.search('<omp><version>', output) is not None:
                 return "Openvas"
 
             else:
                 return "Zap"
 
-        elif "xml-report" == tag:
-            if re.search("Appscan",output) is not None:
+        elif tag == "xml-report":
+            if re.search("Appscan", output) is not None:
                 return "Appscan"
-        elif "niktoscan" == tag:
+        elif tag == "niktoscan":
             return "Nikto"
-        elif "MetasploitV4" == tag:
+        elif tag == "MetasploitV4":
             return "Metasploit"
-        elif "MetasploitV5" == tag:
+        elif tag == "MetasploitV5":
             return "Metasploit"
-        elif "issues" == tag:
+        elif tag == "issues":
             return "Burp"
-        elif "OWASPZAPReport" == tag:
+        elif tag == "OWASPZAPReport":
             return "Zap"
-        elif "ScanGroup" == tag:
+        elif tag == "ScanGroup":
             return "Acunetix"
-        elif "session" == tag:
+        elif tag == "session":
             return "X1"
-        elif "landscapePolicy" == tag:
+        elif tag == "landscapePolicy":
             return "X1"
-        elif "entities" == tag:
+        elif tag == "entities":
             return "Core Impact"
-        elif "NexposeReport" == tag:
+        elif tag == "NexposeReport":
             return "NexposeFull"
-        elif "ASSET_DATA_REPORT" == tag or "SCAN" == tag:
+        elif tag == "ASSET_DATA_REPORT"  or "SCAN":
             return "Qualysguard"
-        elif "scanJob" == tag:
+        elif tag == "scanJob":
             return "Retina"
-        elif "netsparker" == tag:
+        elif tag == "netsparker":
             return "Netsparker"
-        elif "netsparker-cloud" == tag:
+        elif tag == "netsparker-cloud":
             return "NetsparkerCloud"
-        elif "maltego" == tag:
+        elif tag == "maltego":
             return "Maltego"
-        elif "lynis" == tag:
+        elif tag == "lynis":
             return "Lynis"
-        elif "reconng" == tag:
+        elif tag == "reconng":
             return "Reconng"
         else:
             return None

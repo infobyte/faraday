@@ -91,6 +91,16 @@ def check_locks_postgresql():
             return None
 
 
+def check_postgresql_encoding():
+    with app.app_context():
+        psql_status = check_postgres()
+        if psql_status:
+            encoding = db.engine.execute("SHOW SERVER_ENCODING").first()[0]
+            return encoding
+        else:
+            return None
+
+
 def check_client():
 
     port_rest = CONF.getApiRestfulConInfoPort()
@@ -195,8 +205,10 @@ def print_postgresql_status():
         return exit_code
 
 
-def print_postgresql_locks_status():
-    """Prints the status of locks in Postgresql using check_locks_postgresql()"""
+def print_postgresql_other_status():
+    """Prints the status of locks in Postgresql using check_locks_postgresql() and
+    prints Postgresql encoding using check_postgresql_encoding()"""
+
     lock_status = check_locks_postgresql()
     if lock_status:
         print('[{yellow}-{white}] Warning: PostgreSQL lock detected.' \
@@ -205,6 +217,13 @@ def print_postgresql_locks_status():
         print('[{green}+{white}] PostgreSQL lock not detected. '.\
             format(green=Fore.GREEN, white=Fore.WHITE))
     elif lock_status == None:
+        pass
+
+    encoding = check_postgresql_encoding()
+    if encoding:
+        print('[{green}+{white}] PostgreSQL encoding: {db_encoding}'.\
+                format(green=Fore.GREEN, white=Fore.WHITE, db_encoding=encoding))
+    elif encoding == None:
         pass
 
 
@@ -292,7 +311,7 @@ def print_config_status():
 def full_status_check():
     print('\n{white}Checking if postgreSQL is running...'.format(white=Fore.WHITE))  
     print_postgresql_status()
-    print_postgresql_locks_status()
+    print_postgresql_other_status()
 
     print('\n{white}Checking if Faraday is running...'.format(white=Fore.WHITE))
     print_faraday_status()

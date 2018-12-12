@@ -121,7 +121,7 @@ def status_check(check_postgresql, check_faraday, check_dependencies, check_conf
     if check_postgresql:
         # exit_code was created for Faraday automation-testing purposes
         exit_code = status_check_functions.print_postgresql_status()
-        status_check_functions.print_postgresql_locks_status()
+        status_check_functions.print_postgresql_other_status()
         selected = True
 
     if check_faraday:

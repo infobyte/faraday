@@ -1,6 +1,7 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+import os
 import json
 
 import flask
@@ -22,6 +23,7 @@ from server.schemas import (
     SelfNestedField,
 )
 from server.api.base import ReadWriteView, AutoSchema
+from config.configuration import getInstanceConfiguration
 
 workspace_api = Blueprint('workspace_api', __name__)
 
@@ -176,8 +178,24 @@ class WorkspaceView(ReadWriteView):
         scope = data.pop('scope', [])
         workspace = super(WorkspaceView, self)._perform_create(data, **kwargs)
         workspace.set_scope(scope)
+        self._createWorkspaceFolder(workspace.name)
         db.session.commit()
         return workspace
+
+    def _createWorkspaceFolder(self, name):
+        CONF = getInstanceConfiguration()
+        self._report_path = os.path.join(CONF.getReportPath(), name)
+        self._report_ppath = os.path.join(self._report_path, "process")
+        self._report_upath = os.path.join(self._report_path, "unprocessed")
+
+        if not os.path.exists(self._report_path):
+            os.mkdir(self._report_path)
+
+        if not os.path.exists(self._report_ppath):
+            os.mkdir(self._report_ppath)
+
+        if not os.path.exists(self._report_upath):
+            os.mkdir(self._report_upath)
 
     def _update_object(self, obj, data):
         scope = data.pop('scope', [])

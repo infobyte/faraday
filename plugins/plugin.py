@@ -11,6 +11,7 @@ See the file 'doc/LICENSE' for the license information
 
 import os
 import re
+import time
 import logging
 import traceback
 import deprecation
@@ -384,6 +385,7 @@ class PluginProcess(Thread):
         self.plugin = plugin_instance
         self.isReport = isReport
         self.setDaemon(True)
+        self.stop = False
 
     def run(self):
         proc_name = self.name
@@ -394,7 +396,7 @@ class PluginProcess(Thread):
         model.api.devlog('process id: %s' % os.getpid())
         model.api.devlog("-" * 40)
         done = False
-        while not done:
+        while not done and not self.stop:
             output, command_id = self.output_queue.get()
             self.plugin.setCommandID(command_id)
             if output is not None:
@@ -409,5 +411,9 @@ class PluginProcess(Thread):
                 model.api.devlog('%s: Exiting' % proc_name)
 
             self.output_queue.task_done()
+            time.sleep(0.1)
 
         return
+
+    def stop(self):
+        self.stop = True

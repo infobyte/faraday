@@ -333,8 +333,8 @@ class OpenvasPlugin(core.PluginBase):
         core.PluginBase.__init__(self)
         self.id = "Openvas"
         self.name = "Openvas XML Output Plugin"
-        self.plugin_version = "0.0.2"
-        self.version = "2.0"
+        self.plugin_version = "0.3"
+        self.version = "9.0.3"
         self.framework_version = "1.0.0"
         self.options = None
         self._current_output = None

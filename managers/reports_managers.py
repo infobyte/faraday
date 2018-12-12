@@ -10,7 +10,7 @@ import re
 import time
 import traceback
 
-from threading import Thread
+from threading import Thread, Timer
 from utils.logs import getLogger
 
 from config.configuration import getInstanceConfiguration
@@ -20,6 +20,37 @@ try:
     import xml.etree.cElementTree as ET
 except ImportError:
     import xml.etree.ElementTree as ET
+
+
+class OnlinePlugins(Thread):
+
+    def __init__(self):
+
+        Thread.__init__(self)
+        self.setDaemon(True)
+
+        self.online_plugins = {
+            "MetasploitOn": [10, "./metasploiton online"],
+            "Beef": [30, "./beef online"],
+            "Sentinel": [30, "sentinel"]
+        }
+
+        self.plugins_settings = CONF.getPluginSettings()
+
+    def runPluginThread(self):
+        #self.plugin_controller.processCommandInput('0', cmd, './')
+        #self.plugin_controller.onCommandFinished('0', 0, cmd)
+        pass
+
+    def run(self):
+
+        for name, cmd_time in self.plugins_settings.iteritems():
+            if name in self.plugins_settings:
+                if self.plugins_settings[name]['settings']['Enable'] == "1":
+                    t = Timer(cmd_time[0], self.runPluginThread)
+                    t.start()
+
+        time.sleep(60)
 
 
 class ReportProcessor:
@@ -43,7 +74,6 @@ class ReportProcessor:
         return self.sendReport(parser.report_type, filename)
 
     def sendReport(self, plugin_id, filename):
-
         """Sends a report to the appropiate plugin specified by plugin_id"""
 
         getLogger(self).info(
@@ -59,10 +89,6 @@ class ReportProcessor:
             return False
 
         return command_id
-
-    def onlinePlugin(self, cmd):
-        self.plugin_controller.processCommandInput('0', cmd, './')
-        self.plugin_controller.onCommandFinished('0', 0, cmd)
 
 
 class ReportManager(Thread):
@@ -95,17 +121,11 @@ class ReportManager(Thread):
     def run(self):
 
         tmp_timer = .0
-        tmp_timer_sentinel = 0
 
         while not self._stop:
 
             time.sleep(.1)
             tmp_timer += .1
-            tmp_timer_sentinel += 1
-
-            if tmp_timer_sentinel == 1800:
-                tmp_timer_sentinel = 0
-                self.launchSentinel()
 
             if tmp_timer >= self.timer:
 
@@ -125,16 +145,6 @@ class ReportManager(Thread):
 
     def stop(self):
         self._stop = True
-
-    def launchSentinel(self):
-        psettings = CONF.getPluginSettings()
-
-        name, cmd = "Sentinel", "sentinel"
-        if name in psettings:
-            if psettings[name]['settings']['Enable'] == "1":
-                getLogger(self).info("Plugin Started: Sentinel")
-                self.processor.onlinePlugin(cmd)
-                getLogger(self).info("Plugin Ended: Sentinel")
 
     def syncReports(self):
         """
@@ -169,19 +179,6 @@ class ReportManager(Thread):
                         os.rename(
                             filename,
                             os.path.join(self._report_ppath, name))
-
-        self.onlinePlugins()
-
-    def onlinePlugins(self):
-        """ Process online plugins """
-        pluginsOn = {"MetasploitOn": "./metasploiton online"}
-        pluginsOn.update({"Beef": "./beef online"})
-        psettings = CONF.getPluginSettings()
-
-        for name, cmd in pluginsOn.iteritems():
-            if name in psettings:
-                if psettings[name]['settings']['Enable'] == "1":
-                    self.processor.onlinePlugin(cmd)
 
     def sendReportToPluginById(self, plugin_id, filename):
         """Sends a report to be processed by the specified plugin_id"""

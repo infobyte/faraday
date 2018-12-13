@@ -27,7 +27,7 @@ def delete_custom_field_wizard():
     field_name = click.prompt('Field name')
     custom_field = db.session.query(CustomFieldsSchema).filter_by(field_name=field_name).first()
     if custom_field:
-        db.session.delete(cusotm_field)
+        db.session.delete(custom_field)
         db.session.commit()
     else:
         print('Custom field not found')

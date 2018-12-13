@@ -649,5 +649,26 @@ class VulnerabilityView(PaginatedMixin,
         else:
             flask.abort(404, "Vulnerability not found")
 
+    @route('/<vuln_id>/attachment/<attachment_filename>', methods=['DELETE'])
+    def delete_attachment(self, workspace_name, vuln_id, attachment_filename):
+        vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
+            Workspace).filter(
+            VulnerabilityGeneric.id == vuln_id, Workspace.name == workspace_name).first()
+
+        if vuln_workspace_check:
+            file_obj = db.session.query(File).filter_by(object_type='vulnerability',
+                                                        object_id=vuln_id,
+                                                        filename=attachment_filename).first()
+            if file_obj:
+                db.session.delete(file_obj)
+                db.session.commit()
+                depot = DepotManager.get()
+                depot.delete(file_obj.content.get('file_id'))
+                return flask.jsonify({'message': 'Attachment was successfully deleted'})
+            else:
+                flask.abort(404, "File not found")
+        else:
+            flask.abort(404, "Vulnerability not found")
+
 
 VulnerabilityView.register(vulns_api)

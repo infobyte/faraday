@@ -30,25 +30,39 @@ class OnlinePlugins(Thread):
         self.setDaemon(True)
 
         self.online_plugins = {
-            "MetasploitOn": [10, "./metasploiton online"],
-            "Beef": [30, "./beef online"],
-            "Sentinel": [30, "sentinel"]
+            "MetasploitOn": {
+                "time": 10,
+                "command": "./metasploiton online",
+                "thread_running": False},
+            "Beef": {
+                "time": 30,
+                "command": "./beef online",
+                "thread_running": False},
+            "Sentinel": {
+                "time": 30,
+                "command": "sentinel",
+                "thread_running": False}
         }
 
         self.plugins_settings = CONF.getPluginSettings()
 
-    def runPluginThread(self):
+    def runPluginThread(self, cmd):
         #self.plugin_controller.processCommandInput('0', cmd, './')
         #self.plugin_controller.onCommandFinished('0', 0, cmd)
         pass
 
     def run(self):
 
-        for name, cmd_time in self.plugins_settings.iteritems():
+        for name, config_dict in self.online_plugins.iteritems():
             if name in self.plugins_settings:
                 if self.plugins_settings[name]['settings']['Enable'] == "1":
-                    t = Timer(cmd_time[0], self.runPluginThread)
-                    t.start()
+                    if self.online_plugins[name]["thread_running"] == False:
+
+                        t = Timer(config_dict["time"], self.runPluginThread(
+                            config_dict["command"]))
+
+                        self.online_plugins[name]["thread_running"] = True
+                        t.start()
 
         time.sleep(60)
 

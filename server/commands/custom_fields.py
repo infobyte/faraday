@@ -45,9 +45,21 @@ def add_custom_field_wizard():
         current_used_orders.add(custom_field.field_order)
         print('Field {0}, order {1}'.format(custom_field.field_display_name, custom_field.field_order))
     field_order = click.prompt('Field order index')
-    while int(field_order) in current_used_orders:
-        print('Field order already used, please choose another value')
+    invalid_field_order = False
+    try:
+        int(field_order)
+    except ValueError:
+        invalid_field_order = True
+
+    while invalid_field_order or int(field_order) in current_used_orders:
+        print('Field order already used or invalid value, please choose another value')
         field_order = click.prompt('Field order index')
+        try:
+            int(field_order)
+        except ValueError:
+            invalid_field_order = True
+            continue
+        invalid_field_order = False
     confirmation = click.prompt('New CustomField will be added to vulnerability -> Order {order} ({0},{1},{2}) <-, confirm to continue (yes/no)'.format(field_name, field_display_name, field_type, order=field_order))
     if not confirmation:
         sys.exit(1)

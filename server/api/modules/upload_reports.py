@@ -145,9 +145,6 @@ def file_upload(workspace=None):
 
     report_file = request.files['file']
 
-    if report_file.filename == '':
-        abort(400)
-
     if report_file:
 
         chars = string.ascii_uppercase + string.digits

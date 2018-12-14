@@ -13,8 +13,9 @@ import sys
 import errno
 import atexit
 import signal
-import server.config
+from functools import partial
 
+import server.config
 from server.utils.logger import get_logger
 
 
@@ -158,7 +159,7 @@ def stop_server(port):
             return False
         else:
             raise err
-    
+
     remove_pid_file(port)
     return True
 
@@ -207,7 +208,7 @@ def get_server_pid(port):
 def create_pid_file(port):
     with open(server.config.FARADAY_SERVER_PID_FILE.format(port), 'w') as pid_file:
         pid_file.write('{}'.format(os.getpid()))
-    atexit.register(remove_pid_file)
+    atexit.register(partial(remove_pid_file, port))
 
 def remove_pid_file(port):
     os.remove(server.config.FARADAY_SERVER_PID_FILE.format(port))

@@ -31,7 +31,7 @@ class CmdArpScanPlugin(core.PluginBase):
         core.PluginBase.__init__(self)
         self.id = "arp-scan"
         self.name = "arp-scan network scanner"
-        self.plugin_version = "0.0.1"
+        self.plugin_version = "0.0.2"
         self.version = "1.8.1"
         self.framework_version = "1.0.0"
         self.options = None
@@ -39,7 +39,6 @@ class CmdArpScanPlugin(core.PluginBase):
         self._command_regex = re.compile(
             r'^(sudo arp-scan|\.\/arp-scan|arp-scan).*?')
         self._host_ip = None
-        self._port = "23"
 
     def parseOutputString(self, output, debug=False):
 
@@ -47,7 +46,7 @@ class CmdArpScanPlugin(core.PluginBase):
             r"(\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b)",
             output)
 
-        host_mac_addr = re.search(r"([\dA-F]{2}(?:[-:][\dA-F]{2}){5})", output)
+        host_mac_addr = re.search(r"([\dA-F]{2}(?:[-:][\dA-F]{2}){5})", output, re.IGNORECASE)
 
         if host_info is None:
             api.devlog("No hosts detected")

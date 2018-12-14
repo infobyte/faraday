@@ -3,6 +3,7 @@ import time
 import signal
 import subprocess
 from datetime import datetime
+from server.utils import daemonize
 
 
 def test_start_and_kill_faraday_server():
@@ -14,10 +15,16 @@ def test_start_and_kill_faraday_server():
         if the server didn't stop we fail the test also.
     """
     current_path = os.path.dirname(os.path.abspath(__file__))
-    server_script = os.path.join(current_path, '..', 'faraday-server.py')
-    command = ['/usr/bin/env', 'python2.7', server_script]
-    subproc = subprocess.Popen(command)
+    server_port = 5988
+    while daemonize.is_server_running(server_port) and server_port < 6500:
+        server_port += 1
 
+    if server_port > 6500:
+        raise Exception('No free ports could be found')
+
+    server_script = os.path.join(current_path, '..', 'faraday-server.py')
+    command = ['/usr/bin/env', 'python2.7', server_script, '--port', '{0}'.format(server_port)]
+    subproc = subprocess.Popen(command)
     start = datetime.now()
     while subproc.returncode is None:
         now = datetime.now()

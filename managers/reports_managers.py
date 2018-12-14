@@ -24,47 +24,54 @@ except ImportError:
 
 class OnlinePlugins(Thread):
 
-    def __init__(self):
+    def __init__(self, plugin_controller):
 
         Thread.__init__(self)
         self.setDaemon(True)
+        self._stop = False
 
         self.online_plugins = {
             "MetasploitOn": {
-                "time": 10,
-                "command": "./metasploiton online",
-                "thread_running": False},
+                "time": 30,
+                "command": "./metasploiton online"},
             "Beef": {
                 "time": 30,
-                "command": "./beef online",
-                "thread_running": False},
+                "command": "./beef online"},
             "Sentinel": {
-                "time": 30,
-                "command": "sentinel",
-                "thread_running": False}
+                "time": 60,
+                "command": "sentinel"}
         }
 
         self.plugins_settings = CONF.getPluginSettings()
+        self.plugin_controller = plugin_controller
 
     def runPluginThread(self, cmd):
-        #self.plugin_controller.processCommandInput('0', cmd, './')
-        #self.plugin_controller.onCommandFinished('0', 0, cmd)
-        pass
+        self.plugin_controller.processCommandInput('0', cmd, './')
+        self.plugin_controller.onCommandFinished('0', 0, cmd)
+        getLogger(self).debug("Running online plugin...")
+
+    def stop(self):
+        self._stop = True
 
     def run(self):
 
-        for name, config_dict in self.online_plugins.iteritems():
-            if name in self.plugins_settings:
-                if self.plugins_settings[name]['settings']['Enable'] == "1":
-                    if self.online_plugins[name]["thread_running"] == False:
+        while not self._stop:
 
-                        t = Timer(config_dict["time"], self.runPluginThread(
-                            config_dict["command"]))
+            for name, config_dict in self.online_plugins.iteritems():
+                if name in self.plugins_settings:
+                    if self.plugins_settings[name]['settings']['Enable'] == "1":
+
+                        t = Timer(
+                            config_dict["time"],
+                            self.runPluginThread, args=(config_dict["command"],))
+
+                        getLogger(self).debug(
+                            "Starting Thread for online plugin: %s" % name)
 
                         self.online_plugins[name]["thread_running"] = True
                         t.start()
 
-        time.sleep(60)
+            time.sleep(60)
 
 
 class ReportProcessor:
@@ -122,6 +129,8 @@ class ReportManager(Thread):
         self._report_upath = os.path.join(self._report_path, "unprocessed")
 
         self.processor = ReportProcessor(plugin_controller, ws_name)
+        self.online_plugins = OnlinePlugins(plugin_controller)
+
 
         if not os.path.exists(self._report_path):
             os.mkdir(self._report_path)
@@ -134,6 +143,7 @@ class ReportManager(Thread):
 
     def run(self):
 
+        self.online_plugins.start()
         tmp_timer = .0
 
         while not self._stop:
@@ -159,6 +169,7 @@ class ReportManager(Thread):
 
     def stop(self):
         self._stop = True
+        self.online_plugins.stop()
 
     def syncReports(self):
         """

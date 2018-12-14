@@ -172,7 +172,7 @@ class PluginBase(object):
         logger.debug('AddPendingAction', args)
         self._pending_actions.put(args)
 
-    def createAndAddHost(self, name, os="unknown", hostnames=None):
+    def createAndAddHost(self, name, os="unknown", hostnames=None, mac=None):
 
         host_obj = factory.createModelObject(
             Host.class_signature,
@@ -180,7 +180,8 @@ class PluginBase(object):
             os=os,
             parent_id=None,
             workspace_name=self.workspace,
-            hostnames=hostnames)
+            hostnames=hostnames,
+            mac=mac)
 
         host_obj._metadata.creatoserverr = self.id
         self.__addPendingAction(Modelactions.ADDHOST, host_obj)
@@ -204,6 +205,7 @@ class PluginBase(object):
         try:
             host = get_host(self.workspace, host_id=host_id)
             host.hostnames = hostname_resolution
+            host.mac = mac
             update_host(self.workspace, host, command_id=self.command_id)
         except:
             logger.info("Error updating Host with right hostname resolution...")

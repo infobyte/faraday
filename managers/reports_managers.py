@@ -10,6 +10,7 @@ import re
 import time
 import traceback
 
+from random import random
 from threading import Thread, Timer
 from utils.logs import getLogger
 
@@ -46,8 +47,9 @@ class OnlinePlugins(Thread):
         self.plugin_controller = plugin_controller
 
     def runPluginThread(self, cmd):
-        self.plugin_controller.processCommandInput('0', cmd, './')
-        self.plugin_controller.onCommandFinished('0', 0, cmd)
+        random_id = random()
+        self.plugin_controller.processCommandInput(random_id, cmd, './')
+        self.plugin_controller.onCommandFinished(random_id, 0, cmd)
         getLogger(self).debug("Running online plugin...")
 
     def stop(self):

@@ -379,6 +379,7 @@ class VulnerabilityFilterSet(FilterSet):
         validate=OneOf(Vulnerability.STATUSES + ['opened'])
     ))
     hostnames = HostnamesFilter(fields.Str())
+    confirmed = Filter(fields.Boolean())
 
     def filter(self):
         """Generate a filtered query from request parameters.

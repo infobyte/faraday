@@ -145,6 +145,7 @@ class PluginController(Thread):
         return self._plugins
 
     def stop(self):
+        self.plugin_process.stop()
         self.stop = True
 
     def processOutput(self, plugin, output, command, isReport=False):
@@ -162,12 +163,12 @@ class PluginController(Thread):
         output_queue = JoinableQueue()
         plugin.set_actions_queue(self.pending_actions)
 
-        plugin_process = PluginProcess(
+        self.plugin_process = PluginProcess(
             plugin, output_queue, isReport)
 
         getLogger(self).debug(
             "Created plugin_process (%d) for plugin instance (%d)" %
-            (id(plugin_process), id(plugin)))
+            (id(self.plugin_process), id(plugin)))
 
         self.pending_actions.put((Modelactions.PLUGINSTART, plugin.id, command.getID()))
         output_queue.put((output, command.getID()))
@@ -182,7 +183,7 @@ class PluginController(Thread):
         )
         plugin_commiter.start()
         # This process is stopped when plugin commiter joins output queue
-        plugin_process.start()
+        self.plugin_process.start()
 
     def _processAction(self, action, parameters):
         """

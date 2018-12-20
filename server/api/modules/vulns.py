@@ -568,7 +568,8 @@ class VulnerabilityView(PaginatedMixin,
     @route('/<vuln_id>/attachment/', methods=['POST'])
     def post_attachment(self, workspace_name, vuln_id):
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
-            Workspace).filter(VulnerabilityGeneric.id == vuln_id, Workspace.name == workspace_name)
+            Workspace).filter(VulnerabilityGeneric.id == vuln_id,
+                                Workspace.name == workspace_name).first()
 
         if vuln_workspace_check:
             if 'file' not in request.files:

@@ -257,7 +257,6 @@ class PluginController(Thread):
         return None, None
 
     def onCommandFinished(self, pid, exit_code, term_output):
-
         if pid not in self._active_plugins.keys():
             return False
         if exit_code != 0:
@@ -274,24 +273,32 @@ class PluginController(Thread):
         return True
 
     def processReport(self, plugin, filepath, ws_name=None):
+
         if not ws_name:
             ws_name = model.api.getActiveWorkspace().name
+
         cmd_info = CommandRunInformation(
             **{'workspace': ws_name,
-                'itime': time.time(),
-                'import_source': 'report',
-                'command': plugin,
-                'params': filepath,
+               'itime': time.time(),
+               'import_source': 'report',
+               'command': plugin,
+               'params': filepath,
             })
+
         self._mapper_manager.createMappers(ws_name)
         command_id = self._mapper_manager.save(cmd_info)
         cmd_info.setID(command_id)
+
         if plugin in self._plugins:
             logger.info('Processing report with plugin {0}'.format(plugin))
             self._plugins[plugin].workspace = ws_name
             with open(filepath, 'rb') as output:
                 self.processOutput(self._plugins[plugin], output.read(), cmd_info, True)
             return command_id
+
+        # Plugin to process this report not found, update duration of plugin process
+        cmd_info.duration = time.time() - cmd_info.itime
+        self._mapper_manager.update(cmd_info)
         return False
 
     def clearActivePlugins(self):

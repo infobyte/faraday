@@ -1,0 +1,1 @@
+Fix a bug when fail importation of reports, command duration say "In Progress" forever.

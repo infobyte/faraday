@@ -205,7 +205,7 @@ class PluginBase(object):
         # SHRUG
         try:
             host = get_host(self.workspace, host_id=host_id)
-            host.hostnames = hostname_resolution
+            host.hostnames += hostname_resolution
             host.mac = mac
             update_host(self.workspace, host, command_id=self.command_id)
         except:

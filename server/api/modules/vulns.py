@@ -3,7 +3,6 @@
 # See the file 'doc/LICENSE' for the license information
 import os
 import io
-import json
 import logging
 from base64 import b64encode, b64decode
 
@@ -12,21 +11,19 @@ from filteralchemy import Filter, FilterSet, operators
 from flask import request
 from flask import Blueprint
 from flask_classful import route
-from flask_restless.search import search
 from marshmallow import Schema, fields, post_load, ValidationError
-from marshmallow.validate import OneOf, Length
+from marshmallow.validate import OneOf
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
 from sqlalchemy.orm.exc import NoResultFound
-from psycopg2 import DataError
+
 from depot.manager import DepotManager
 from server.api.base import (
     AutoSchema,
-    InvalidUsage,
+    FilterAlchemyMixin,
     FilterSetMeta,
     PaginatedMixin,
-    FilterAlchemyMixin,
     ReadWriteWorkspacedView,
-)
+    InvalidUsage)
 from server.fields import FaradayUploadedFile
 from server.models import (
     db,
@@ -44,10 +41,11 @@ from server.utils.database import get_or_create
 from server.api.modules.services import ServiceSchema
 from server.schemas import (
     MutableField,
-    PrimaryKeyRelatedField,
-    SelfNestedField,
     SeverityField,
     MetadataSchema,
+    SelfNestedField,
+    FaradayCustomField,
+    PrimaryKeyRelatedField,
 )
 
 vulns_api = Blueprint('vulns_api', __name__)
@@ -134,6 +132,7 @@ class VulnerabilitySchema(AutoSchema):
     metadata = SelfNestedField(CustomMetadataSchema())
     date = fields.DateTime(attribute='create_date',
                            dump_only=True)  # This is only used for sorting
+    custom_fields = FaradayCustomField(table_name='vulnerability', attribute='custom_fields')
 
     class Meta:
         model = Vulnerability
@@ -146,7 +145,8 @@ class VulnerabilitySchema(AutoSchema):
             'desc', 'impact', 'confirmed', 'name',
             'service', 'obj_id', 'type', 'policyviolations',
             '_attachments',
-            'target', 'host_os', 'resolution', 'metadata')
+            'target', 'host_os', 'resolution', 'metadata',
+            'custom_fields')
 
     def get_type(self, obj):
         return obj.__class__.__name__
@@ -263,7 +263,8 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'service', 'obj_id', 'type', 'policyviolations',
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
-            'status_code')
+            'status_code', 'custom_fields'
+        )
 
 
 # Use this override for filterset fields that filter by en exact match by
@@ -306,6 +307,7 @@ class ServiceFilter(Filter):
                 alias.name == value
         )
 
+
 class HostnamesFilter(Filter):
     def filter(self, query, model, attr, value):
         alias = aliased(Hostname, name='hostname_filter')
@@ -323,6 +325,7 @@ class HostnamesFilter(Filter):
 
         query = service_hostnames_query.union(host_hostnames_query)
         return query
+
 
 class CustomILike(operators.Operator):
     """A filter operator that puts a % in the beggining and in the
@@ -591,34 +594,6 @@ class VulnerabilityView(PaginatedMixin,
         else:
             flask.abort(404, "Vulnerability not found")
 
-    @route('/filter')
-    def filter(self, workspace_name):
-        try:
-            filters = json.loads(request.args.get('q'))
-        except ValueError as ex:
-            flask.abort(400, "Invalid filters")
-
-        workspace = self._get_workspace(workspace_name)
-        marshmallow_params = {'many': True, 'context': {}, 'strict': True}
-        try:
-            normal_vulns = search(db.session,
-                                  Vulnerability,
-                                  filters)
-            normal_vulns = normal_vulns.filter_by(workspace_id=workspace.id)
-            normal_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(normal_vulns.all())
-            normal_vulns_data = json.loads(normal_vulns.data)
-        except Exception:
-            normal_vulns_data = []
-        try:
-            web_vulns = search(db.session,
-                           VulnerabilityWeb,
-                           filters)
-            web_vulns = web_vulns.filter_by(workspace_id=workspace.id)
-            web_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(web_vulns.all())
-            web_vulns_data = json.loads(web_vulns.data)
-        except Exception:
-            web_vulns_data = []
-        return self._envelope_list(normal_vulns_data + web_vulns_data)
 
     @route('/<vuln_id>/attachment/<attachment_filename>/', methods=['GET'])
     def get_attachment(self, workspace_name, vuln_id, attachment_filename):

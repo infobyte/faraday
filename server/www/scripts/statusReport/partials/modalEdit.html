@@ -142,7 +142,7 @@
 
             <!-- Nav tabs -->
             <ul class="nav nav-tabs" id="nav-tabs-container">
-                <li class="nav-item active">
+                <li class="nav-item active" ng-class="{'has-error': formEdit.desc.$invalid}">
                     <a class="nav-link active" data-toggle="tab" data-target="#general"
                        href="javascript:;">General</a>
                 </li>

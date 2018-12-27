@@ -102,7 +102,7 @@
                 <li class="nav-item active" ng-class="{'has-error': modal.data.type == 'Vulnerability' && modal.data.parents.length == 0}">
                     <a class="nav-link" data-toggle="tab" data-target="#hosts" href="javascript:;">Hosts</a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item" ng-class="{'has-error': form.name.$invalid || form.desc.$invalid}">
                     <a class="nav-link active" data-toggle="tab" data-target="#general"
                        href="javascript:;">General</a>
                 </li>

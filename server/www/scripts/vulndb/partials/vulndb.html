@@ -61,7 +61,16 @@
                             <span ng-click="toggleSort('resolution')">Resolution</span>
                         </th>
                         <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('impact')">Impact</span>
+                        </th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">
                             <span ng-click="toggleSort('exploitation')">Severity</span>
+                        </th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('easeofresolution')">Ease of Resolution</span>
+                        </th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('policyviolations')">Policy Violations</span>
                         </th>
                     </tr>
                 </thead>
@@ -75,7 +84,10 @@
                         <td>{{model.name}}</td>
                         <td>{{model.description}}</td>
                         <td>{{model.resolution}}</td>
+                        <td><div ng-repeat="(key, value) in model.impact" ng-if="value == true">{{key}}</div></td>
                         <td>{{model.exploitation}}</td>
+                        <td>{{model.easeofresolution}}</td>
+                        <td><div ng-repeat="policy in model.policyviolations">{{policy}}</div></td>
                     </tr>
                 </tbody>
             </table>

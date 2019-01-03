@@ -28,7 +28,7 @@ angular.module('faradayApp').
             VulnModel.prototype = {
 
                 public_properties: ['exploitation', 'references', 'name', 'resolution', 'cwe', 'description',
-                                    'desc', 'id', 'refs'],
+                                    'desc', 'id', 'refs', 'impact', 'easeofresolution', 'policyviolations'],
 
                 set: function(data) {
                     var self = this;

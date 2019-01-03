@@ -15,6 +15,7 @@ import socket
 from collections import defaultdict
 
 from plugins import core
+from plugins.plugins_utils import filter_services
 
 
 current_path = os.path.abspath(os.getcwd())
@@ -110,7 +111,7 @@ class LynisLogDataExtracter():
         local_services = ['*', 'localhost']
 
         for combo in line:
-            elements = self.filter_services(combo, local_services)
+            elements = self.clean_services(combo, local_services)
             if elements is not None:
                 self._svcHelper(elements['ip'],
                                 elements['port'],
@@ -118,7 +119,7 @@ class LynisLogDataExtracter():
                                 elements['name'])
         return self.services
 
-    def filter_services(self, combo, local_services):
+    def clean_services(self, combo, local_services):
         add = False
         #if "localhost" in combo:
         if combo.count("|") > 1:
@@ -131,21 +132,24 @@ class LynisLogDataExtracter():
                 add = True
 
                 if name == '-':
-                    name = 'Unknown'
+                    details = self.search_service(elements_ip_port[1])
+                    name = details['name']
         elif combo.count('|') == 1:
             items_service = combo.split('|')
             if not items_service[0] in local_services and not items_service[0].startswith(':'):
                 count = items_service[0].count(':')
                 elements_ip_port = items_service[0].split(':')
-                protocol = "Unknown"
-                name = "Unknown"
+                details = self.search_service(elements_ip_port[1])
+                protocol = details['protocol']
+                name = details['name']
                 add = True
         else:
             items_service = combo
             count = items_service.count(':')
             elements_ip_port = items_service.split(':')
-            protocol = "Unknown"
-            name = "Unknown"
+            details = self.search_service(elements_ip_port[1])
+            protocol = details['protocol']
+            name = details['name']
             add = True
 
         if add == True:
@@ -159,6 +163,21 @@ class LynisLogDataExtracter():
             return elements_dict
         else:
             return None
+
+    def search_service(self, port):
+        srv = filter_services()
+        details_dict = {
+            'name' : 'Unknown',
+            'protocol' : 'Unknown'
+        }
+        for item in srv:
+            service_tuple = item[0].split('/')
+            parsed_port = service_tuple[0]
+            if parsed_port == port:
+                details_dict['name'] = item[1]
+                details_dict['protocol'] = service_tuple[1]
+                return details_dict
+        return details_dict
 
     def colon_count(self, count, elements_ip_port, items_service):
         #Ipv4

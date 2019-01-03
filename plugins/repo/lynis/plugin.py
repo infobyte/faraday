@@ -201,8 +201,8 @@ class LynisPlugin(core.PluginBase):
         core.PluginBase.__init__(self)
         self.id = "Lynis"
         self.name = "Lynis DAT Output Plugin"
-        self.plugin_version = "0.0.3"
-        self.version = "2.5.5"
+        self.plugin_version = "0.4"
+        self.version = "2.7.1"
         self.options = None
         self._current_output = None
         rr = r'^(lynis|sudo lynis|\.\/lynis|sudo \.\/lynis).*?'

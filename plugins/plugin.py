@@ -11,6 +11,7 @@ See the file 'doc/LICENSE' for the license information
 
 import os
 import re
+import time
 import logging
 import traceback
 import deprecation
@@ -172,7 +173,7 @@ class PluginBase(object):
         logger.debug('AddPendingAction', args)
         self._pending_actions.put(args)
 
-    def createAndAddHost(self, name, os="unknown", hostnames=None):
+    def createAndAddHost(self, name, os="unknown", hostnames=None, mac=None):
 
         host_obj = factory.createModelObject(
             Host.class_signature,
@@ -180,7 +181,8 @@ class PluginBase(object):
             os=os,
             parent_id=None,
             workspace_name=self.workspace,
-            hostnames=hostnames)
+            hostnames=hostnames,
+            mac=mac)
 
         host_obj._metadata.creatoserverr = self.id
         self.__addPendingAction(Modelactions.ADDHOST, host_obj)
@@ -203,7 +205,8 @@ class PluginBase(object):
         # SHRUG
         try:
             host = get_host(self.workspace, host_id=host_id)
-            host.hostnames = hostname_resolution
+            host.hostnames += hostname_resolution
+            host.mac = mac
             update_host(self.workspace, host, command_id=self.command_id)
         except:
             logger.info("Error updating Host with right hostname resolution...")
@@ -384,6 +387,7 @@ class PluginProcess(Thread):
         self.plugin = plugin_instance
         self.isReport = isReport
         self.setDaemon(True)
+        self.stop = False
 
     def run(self):
         proc_name = self.name
@@ -394,7 +398,7 @@ class PluginProcess(Thread):
         model.api.devlog('process id: %s' % os.getpid())
         model.api.devlog("-" * 40)
         done = False
-        while not done:
+        while not done and not self.stop:
             output, command_id = self.output_queue.get()
             self.plugin.setCommandID(command_id)
             if output is not None:
@@ -409,5 +413,9 @@ class PluginProcess(Thread):
                 model.api.devlog('%s: Exiting' % proc_name)
 
             self.output_queue.task_done()
+            time.sleep(0.1)
 
         return
+
+    def stop(self):
+        self.stop = True

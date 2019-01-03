@@ -170,6 +170,7 @@ class SSLConfigObject(ConfigSection):
         self.certificate = None
         self.keyfile = None
         self.port = None
+        self.enabled = False
 
 
 class StorageConfigObject(ConfigSection):

@@ -51,7 +51,6 @@ class OpenvasXmlParser(object):
         self.target = None
         self.port = "80"
         self.host = None
-
         tree = self.parse_xml(xml_output)
 
         if tree:
@@ -82,15 +81,14 @@ class OpenvasXmlParser(object):
         """
         try:
             report = tree.findall('report')[0]
-            node = tree.findall('report')[0]
-            node2 = node.findall('results')[0]
-            for node in node2.findall('result'):
+            results = report.findall('results')[0]
+            for node in results.findall('result'):
                 yield Item(node,report)
 
         except Exception:
 
-            node2 = tree.findall('result')
-            for node in node2:
+            result = tree.findall('result')
+            for node in result:
                 yield Item(node)
 
 
@@ -137,14 +135,12 @@ class Item(object):
 
     def __init__(self, item_node, report):
         self.node = item_node
-
         self.host = self.get_text_from_subnode('host')
         self.subnet = self.get_text_from_subnode('subnet')
 
         if self.subnet is '':
             self.subnet = self.host
 
-        self.description = self.get_text_from_subnode('description')
         self.port = "None"
         self.severity = self.get_text_from_subnode('threat')
         self.service = "Unknown"
@@ -176,12 +172,16 @@ class Item(object):
         self.xref = self.get_text_from_subnode(
             'xref') if self.get_text_from_subnode('xref') != "NOXREF" else ""
 
+        self.description = ''
+        self.resolution = ''
+        self.cvss_vector = ''
+        self.tags = self.get_text_from_subnode('tags')
+        if self.tags:
+            tags_data = self.get_data_from_tags(self.tags)
+            self.description = tags_data['description']
+            self.resolution = tags_data['solution']
+            self.cvss_vector = tags_data['cvss_base_vector']
 
-    def do_clean(self, value):
-        myreturn = ""
-        if value is not None:
-            myreturn = re.sub("\n", "", value)
-        return myreturn
 
     def get_text_from_subnode(self, subnode_xpath_expr):
         """
@@ -191,13 +191,13 @@ class Item(object):
         """
         sub_node = self.node.find(subnode_xpath_expr)
         if sub_node is not None and sub_node.text is not None:
-            return sub_node.text
+            return sub_node.text.strip()
 
         return ''
 
 
-    def get_service(self, port, report, host_ip):
-        detail = self.get_detail_from_host(report,host_ip)
+    def get_service(self, port, report, result_host_ip):
+        detail = self.get_detail_from_host(report,result_host_ip)
 
         # dict detail:
         # key is the host ip
@@ -217,41 +217,39 @@ class Item(object):
 
         return "Unknown"
 
-    def filter_services(self):
-        open_file = open(os.path.join(FARADAY_BASE,'plugins/repo/openvas/port_mapper.txt'),"r")
-        mapper = open_file.read()    
-        filtering = mapper.split('\n')
 
-        services = []
-
-        for item in filtering:
-            tup = ()
-            filt = filter(len,item.split('\t'))
-            tup = (filt[0],filt[1])
-            services.append(tup)
-
-        return services
-
-    def get_detail_from_host(self, report, host_ip):
-        hosts = report.findall('host')
+    def get_detail_from_host(self, report, result_host_ip):
+        report_hosts = report.findall('host')
         host_dict = {}
-        for host in hosts:
-            if host[0].text == host_ip.strip():
+        for host in report_hosts:
+            report_host_ip = host.find('ip').text.strip()
+            if report_host_ip == result_host_ip:
                 details = self.get_details(host)
-                host_dict[host.find('ip').text] = details
+                host_dict[report_host_ip] = details
 
         return host_dict
+
 
     def get_details(self, host):
         details_list = host.findall('detail')
         details_dict = {}
 
-        for item in details_list:
-            name = item.find('name').text
+        for detail in details_list:
+            name = detail.find('name').text.strip()
             if not 'EXIT' in name:
-                details_dict[item.find('value').text] = name
+                value = self.do_clean(detail.find('value').text)
+                details_dict[value] = name
 
         return details_dict
+
+
+    def do_clean(self, value):
+        myreturn = ""
+        if value is not None:
+            myreturn = re.sub("\s+", " ", value)
+
+        return myreturn.strip()
+
 
     def get_service_from_details(self, value_dict, port):
         # dict value: 
@@ -287,6 +285,45 @@ class Item(object):
         return res
 
 
+    def filter_services(self):
+        open_file = open(os.path.join(FARADAY_BASE,'plugins/repo/openvas/port_mapper.txt'),"r")
+        mapper = open_file.read()
+        filtering = mapper.split('\n')
+        services = []
+
+        for item in filtering:
+            tup = ()
+            filt = filter(len,item.split('\t'))
+            tup = (filt[0],filt[1])
+            services.append(tup)
+
+        return services
+
+
+    def get_data_from_tags(self,tags_text):
+        clean_text = self.do_clean(tags_text)
+        tags = clean_text.split('|')
+        summary = ''
+        insight = ''
+        data = {
+            'solution': '',
+            'cvss_base_vector': '',
+            'description':''
+        }
+        for tag in tags:
+            splited_tag = tag.split('=',1)
+            if splited_tag[0] in data.keys():
+                data[splited_tag[0]] = splited_tag[1]
+            elif splited_tag[0] == 'summary':
+                summary = splited_tag[1]
+            elif splited_tag[0] == 'insight':
+                insight = splited_tag[1]
+
+        data['description'] = ' '.join([summary,insight]).strip()
+
+        return data
+
+
 class OpenvasPlugin(core.PluginBase):
     """
     Example plugin to parse openvas output.
@@ -296,8 +333,8 @@ class OpenvasPlugin(core.PluginBase):
         core.PluginBase.__init__(self)
         self.id = "Openvas"
         self.name = "Openvas XML Output Plugin"
-        self.plugin_version = "0.0.2"
-        self.version = "2.0"
+        self.plugin_version = "0.3"
+        self.version = "9.0.3"
         self.framework_version = "1.0.0"
         self.options = None
         self._current_output = None
@@ -322,10 +359,10 @@ class OpenvasPlugin(core.PluginBase):
 
         web = False
         ids = {}
+
         for item in parser.items:
             
             if item.name is not None:
-            
                 ref = []
                 if item.cve:
                     ref.append(item.cve.encode("utf-8"))
@@ -333,6 +370,8 @@ class OpenvasPlugin(core.PluginBase):
                     ref.append(item.bid.encode("utf-8"))
                 if item.xref:
                     ref.append(item.xref.encode("utf-8"))
+                if item.tags and item.cvss_vector:
+                    ref.append(item.cvss_vector.encode("utf-8"))
 
                 if ids.has_key(item.subnet):
                     h_id = ids[item.host]
@@ -346,9 +385,9 @@ class OpenvasPlugin(core.PluginBase):
                         item.name.encode("utf-8"),
                         desc=item.description.encode("utf-8"),
                         severity=item.severity.encode("utf-8"),
+                        resolution=item.resolution.encode("utf-8"),
                         ref=ref)
                 else:
-
                     if item.service:
                         web = True if re.search(
                             r'^(www|http)',
@@ -379,7 +418,6 @@ class OpenvasPlugin(core.PluginBase):
                     if ids.has_key(item.subnet + "_" + item.port):
                         s_id = ids[item.subnet + "_" + item.port]
                     else:
-
                         s_id = self.createAndAddServiceToInterface(
                             h_id,
                             i_id,
@@ -414,7 +452,8 @@ class OpenvasPlugin(core.PluginBase):
                                 desc=item.description.encode("utf-8"),
                                 website=item.host,
                                 severity=item.severity.encode("utf-8"),
-                                ref=ref)
+                                ref=ref,
+                                resolution=item.resolution.encode("utf-8"))
                         else:
                             self.createAndAddVulnToService(
                                 h_id,
@@ -422,7 +461,8 @@ class OpenvasPlugin(core.PluginBase):
                                 item.name.encode("utf-8"),
                                 desc=item.description.encode("utf-8"),
                                 severity=item.severity.encode("utf-8"),
-                                ref=ref)
+                                ref=ref,
+                                resolution=item.resolution.encode("utf-8"))
 
         del parser
 
@@ -443,7 +483,7 @@ def createPlugin():
     return OpenvasPlugin()
 
 if __name__ == '__main__':
-    with open("/home/javier/report_openvas.xml","r") as report:
+    with open("/home/javier/openvas-report.xml","r") as report:
         parser = OpenvasXmlParser(report.read())
         #for item in parser.items:
             #if item.status == 'up':

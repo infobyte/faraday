@@ -4,11 +4,13 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+import json
 import imghdr
 from tempfile import SpooledTemporaryFile
 
 from PIL import Image
-
+import sqlalchemy as sa
+from sqlalchemy.dialects.postgresql.json import JSONB
 from depot.fields.upload import UploadedFile
 from depot.io.utils import file_from_content
 from depot.io.utils import INMEMORY_FILESIZE
@@ -85,3 +87,27 @@ class FaradayUploadedFile(UploadedFile):
         if public_url:
             return public_url
         return DepotManager.get_middleware().url_for(self['thumb_path'])
+
+
+class JSONType(sa.types.TypeDecorator):
+    impl = sa.UnicodeText
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(JSONB())
+        else:
+            return dialect.type_descriptor(self.impl)
+
+    def process_bind_param(self, value, dialect):
+        if dialect.name == 'postgresql':
+            return value
+        if value is not None:
+            value = json.dumps(value)
+        return value
+
+    def process_result_value(self, value, dialect):
+        if dialect.name == 'postgresql':
+            return value
+        if value is not None:
+            value = json.loads(value)
+        return value

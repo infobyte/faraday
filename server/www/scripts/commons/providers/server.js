@@ -405,6 +405,10 @@ angular.module("faradayApp")
                 return get(getUrl);
             }
 
+             ServerAPI.getCustomFields = function () {
+                return get(APIURL + "custom_fields_schema/");
+            }
+
             ServerAPI.activateWorkspace = function (wsName) {
                 var putUrl = APIURL + "ws/" + wsName + "/activate/";
                 return send_data(putUrl, undefined, false, "PUT");

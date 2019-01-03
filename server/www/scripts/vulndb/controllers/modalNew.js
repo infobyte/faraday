@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('vulnModelModalNew',
-                ['$scope', '$modalInstance', 'VulnModel', 'vulnModelsManager', 'EXPLOITATIONS',
-                 function($scope, $modalInstance, VulnModel, vulnModelsManager, EXPLOITATIONS) {
+                ['$scope', '$modalInstance', 'VulnModel', 'vulnModelsManager', 'EXPLOITATIONS', 'EASEOFRESOLUTION',
+                 function($scope, $modalInstance, VulnModel, vulnModelsManager, EXPLOITATIONS, EASEOFRESOLUTION) {
 
         $scope.data;
         $scope.exploitations;
@@ -13,6 +13,7 @@ angular.module('faradayApp')
 
         var init = function() {
             $scope.exploitations = EXPLOITATIONS;
+            $scope.easeofresolution = EASEOFRESOLUTION;
             $scope.data = new VulnModel;
             $scope.models = vulnModelsManager.models;
             // $scope.exploitations = ['a'];
@@ -46,6 +47,20 @@ angular.module('faradayApp')
         $scope.cancel = function() {
             $modalInstance.dismiss('cancel');
         };
+
+        $scope.toggleImpact = function(key) {
+            $scope.data.impact[key] = !$scope.data.impact[key];
+        };
+
+        $scope.newPolicyViolation = function() {
+            if ($scope.new_policyviolation != "") {
+                // we need to check if the policy violation already exists
+                if ($scope.data.policyviolations.filter(function(policyviolation) {return policyviolation === $scope.new_policyviolation}).length == 0) {
+                    $scope.data.policyviolations.push($scope.new_policyviolation);
+                    $scope.new_policyviolation = "";
+                }
+            }
+        }
 
         init();
     }]);

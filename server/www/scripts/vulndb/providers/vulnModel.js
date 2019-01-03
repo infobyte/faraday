@@ -17,6 +17,14 @@ angular.module('faradayApp').
                 this.references = [];
                 this.refs = [];
                 this.resolution = "";
+                this.impact =  {
+                    accountability: false,
+                    availability: false,
+                    confidentiality: false,
+                    integrity: false
+                };
+                this.policyviolations = [];
+                this.easeofresolution = "";
                 if (data) {
                     if(data.name === undefined || data.name === "") {
                         throw new Error("Unable to create a Vulnerability Model whithout a name");

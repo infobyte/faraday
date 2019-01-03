@@ -51,14 +51,6 @@ class LynisLogDataExtracter():
         version = version_match.group(1).strip()
         return " ".join([name, version])
 
-    def macs(self):
-        macs = []
-        m = re.findall('^network_mac_address\[\]=(.+)$',
-                       self.rawcontents, re.MULTILINE)
-        for mac in m:
-            macs.append(mac)
-        return(macs)
-
     def ipv4(self):
         ipv4addrs = []
         ipv4s = re.findall('^network_ipv4_address\[\]=(.+)$',
@@ -241,7 +233,6 @@ class LynisPlugin(core.PluginBase):
         ipv4s = lde.ipv4()
         ipv6s = lde.ipv6()
         kernel_versions = lde.kernelVersion()
-        macs = lde.macs()
         services = lde.listeningservices()
         suggestions = lde.parse_suggestions()
         warnings = lde.parse_warnings()

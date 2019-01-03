@@ -47,7 +47,8 @@ def get_object_properties(obj):
 def get_host_properties(host):
     host_dict = {
         'os': host.getOS(),
-        'hostnames': host.getHostnames()
+        'hostnames': host.getHostnames(),
+        'mac': host.getMac()
     }
     if host.getDefaultGateway():
         host_dict['default_gateway'] = host.getDefaultGateway()

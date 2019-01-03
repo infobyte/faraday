@@ -72,7 +72,8 @@ OBJ_DATA = [
                 'owned': False,
                 'owner': 'leo',
                 'parent': None,
-                'type': 'Host'
+                'type': 'Host',
+                'mac': ''
         },
     },
     {
@@ -500,7 +501,8 @@ GET_OBJ_DATA = [
                 'os': 'Linux 2.6.9',
                 'hostnames': [],
                 'owned': False,
-                'owner': 'leonardo'}
+                'owner': 'leonardo',
+                'mac': ''}
 
         },
         {

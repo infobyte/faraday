@@ -20,7 +20,7 @@ try:
     import xml.etree.cElementTree as ET
 
 except ImportError:
-    print "cElementTree could not be imported. Using ElementTree instead"
+    print("cElementTree could not be imported. Using ElementTree instead")
     import xml.etree.ElementTree as ET
 
 from config.configuration import getInstanceConfiguration
@@ -254,7 +254,7 @@ class ReportParser(object):
                 except ValueError:
                     pass
 
-        except IOError, err:
+        except IOError as err:
             self.report_type = None
             getLogger(self).error(
                 "Error while opening file.\n%s. %s" % (err, file_path))
@@ -290,7 +290,7 @@ class ReportParser(object):
                     result = elem.tag
                     break
 
-            except SyntaxError, err:
+            except SyntaxError as err:
                 self.report_type = None
                 getLogger(self).error("Not an xml file.\n %s" % (err))
 

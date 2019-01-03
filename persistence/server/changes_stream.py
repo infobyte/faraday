@@ -8,8 +8,10 @@ See the file 'doc/LICENSE' for the license information
 '''
 import json
 import threading
-from Queue import Queue, Empty
-
+try:
+    from Queue import Queue, Empty
+except ImportError:
+    from queue import Queue, Empty
 import requests
 import websocket
 
@@ -108,7 +110,7 @@ class WebsocketsChangesStream(ChangesStream):
         self.changes_queue.put(message)
 
     def on_error(self, ws, error):
-        print error
+        print(error)
 
     def on_close(selg, ws):
         pass

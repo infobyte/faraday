@@ -80,7 +80,7 @@ def _setUpAPIServer(hostname=None, port=None):
         hostnames = [hostname]
         if hostname == "localhost":
             hostnames.append("127.0.0.1")
-                
+
         listening = False
         for hostname in hostnames:
 
@@ -117,7 +117,7 @@ def _setUpAPIServer(hostname=None, port=None):
                     "XMLRPC API server configured on %s" % str(
                         CONF.getApiConInfo()))
                 break
-            
+
             except socket.error as e:
                 msg = "There was an error creating the XMLRPC API Server (Host:{}): {}".format(hostname,e)
                 log(msg)

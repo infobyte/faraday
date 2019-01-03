@@ -14,7 +14,7 @@ from flask import Blueprint
 from flask_classful import route
 from flask_restless.search import search
 from marshmallow import Schema, fields, post_load, ValidationError
-from marshmallow.validate import OneOf, Length
+from marshmallow.validate import OneOf
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
 from sqlalchemy.orm.exc import NoResultFound
 from psycopg2 import DataError
@@ -44,10 +44,11 @@ from server.utils.database import get_or_create
 from server.api.modules.services import ServiceSchema
 from server.schemas import (
     MutableField,
-    PrimaryKeyRelatedField,
-    SelfNestedField,
     SeverityField,
     MetadataSchema,
+    SelfNestedField,
+    FaradayCustomField,
+    PrimaryKeyRelatedField,
 )
 
 vulns_api = Blueprint('vulns_api', __name__)
@@ -134,6 +135,7 @@ class VulnerabilitySchema(AutoSchema):
     metadata = SelfNestedField(CustomMetadataSchema())
     date = fields.DateTime(attribute='create_date',
                            dump_only=True)  # This is only used for sorting
+    custom_fields = FaradayCustomField(table_name='vulnerability', attribute='custom_fields')
 
     class Meta:
         model = Vulnerability
@@ -146,7 +148,8 @@ class VulnerabilitySchema(AutoSchema):
             'desc', 'impact', 'confirmed', 'name',
             'service', 'obj_id', 'type', 'policyviolations',
             '_attachments',
-            'target', 'host_os', 'resolution', 'metadata')
+            'target', 'host_os', 'resolution', 'metadata',
+            'custom_fields')
 
     def get_type(self, obj):
         return obj.__class__.__name__
@@ -263,7 +266,8 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'service', 'obj_id', 'type', 'policyviolations',
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
-            'status_code')
+            'status_code', 'custom_fields'
+        )
 
 
 # Use this override for filterset fields that filter by en exact match by
@@ -306,6 +310,7 @@ class ServiceFilter(Filter):
                 alias.name == value
         )
 
+
 class HostnamesFilter(Filter):
     def filter(self, query, model, attr, value):
         alias = aliased(Hostname, name='hostname_filter')
@@ -323,6 +328,7 @@ class HostnamesFilter(Filter):
 
         query = service_hostnames_query.union(host_hostnames_query)
         return query
+
 
 class CustomILike(operators.Operator):
     """A filter operator that puts a % in the beggining and in the

@@ -7,6 +7,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 import json
+import logging
 import threading
 from Queue import Queue, Empty
 
@@ -16,6 +17,7 @@ import websocket
 from persistence.server.server_io_exceptions import (
     ChangesStreamStoppedAbruptly
 )
+logger = logging.getLogger(__name__)
 
 
 class ChangesStream(object):
@@ -91,26 +93,27 @@ class WebsocketsChangesStream(ChangesStream):
         self.ws.close()
         super(WebsocketsChangesStream, self).stop()
 
-    def on_open(self, ws):
+    def on_open(self):
         from persistence.server.server import _create_server_api_url, _post
-        r = _post(
+        response = _post(
             _create_server_api_url() +
             '/ws/{}/websocket_token/'.format(self.workspace_name),
             expected_response=200)
-        token = r['token']
+        token = response['token']
         self.ws.send(json.dumps({
             'action': 'JOIN_WORKSPACE',
             'workspace': self.workspace_name,
             'token': token,
         }))
 
-    def on_message(self, ws, message):
+    def on_message(self, message):
+        logger.debug('New message {0}'.format(message))
         self.changes_queue.put(message)
 
     def on_error(self, ws, error):
-        print error
+        print(error)
 
-    def on_close(selg, ws):
+    def on_close(self):
         pass
 
     def __enter__(self):

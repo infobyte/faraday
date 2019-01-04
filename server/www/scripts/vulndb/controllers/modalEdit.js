@@ -4,20 +4,25 @@
 
 angular.module('faradayApp')
     .controller('vulndDbModalEdit',
-                ['$scope', '$modalInstance', 'VulnModel', 'model', 'EXPLOITATIONS',
-                 function($scope, $modalInstance, VulnModel, model, EXPLOITATIONS) {
+                ['$scope', '$modalInstance', 'VulnModel', 'model', 'EXPLOITATIONS', 'EASEOFRESOLUTION',
+                 function($scope, $modalInstance, VulnModel, model, EXPLOITATIONS, EASEOFRESOLUTION) {
 
         $scope.data;
         $scope.openedStart;
         $scope.openedEnd;
 
         var init = function() {
-            $scope.exploitations = EXPLOITATIONS
+            $scope.exploitations = EXPLOITATIONS;
+            $scope.easeofresolution = EASEOFRESOLUTION;
             $scope.data = new VulnModel;
+            $scope.impact = angular.copy($scope.data.impact);
+            $scope.policyviolations = angular.copy($scope.data.policyviolations);
             $scope.data.set(model);
         };
 
         $scope.ok = function() {
+            $scope.data.impact = angular.copy($scope.impact);
+            $scope.data.policyviolations = angular.copy($scope.policyviolations);
             $modalInstance.close($scope.data);
         };
 
@@ -30,6 +35,20 @@ angular.module('faradayApp')
 
         $scope.cancel = function() {
             $modalInstance.dismiss('cancel');
+        };
+
+        $scope.toggleImpact = function(key) {
+            $scope.impact[key] = !$scope.impact[key];
+        };
+
+        $scope.newPolicyViolation = function() {
+            if ($scope.new_policyviolation != "") {
+                // we need to check if the policy violation already exists
+                if ($scope.policyviolations.filter(function(policyviolation) {return policyviolation === $scope.new_policyviolation}).length == 0) {
+                    $scope.policyviolations.push($scope.new_policyviolation);
+                    $scope.new_policyviolation = "";
+                }
+            }
         };
 
         init();

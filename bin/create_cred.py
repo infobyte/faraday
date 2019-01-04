@@ -54,7 +54,7 @@ def main(workspace='', args=None, parser=None):
             models.create_credential(workspace, obj)
             old = models.get_credential(workspace, **params)
     else:
-        print "A credential with ID %s already exists!" % old.getID()
+        print("A credential with ID %s already exists!" % old.getID())
         return 2, None
 
     return 0, old.getID()

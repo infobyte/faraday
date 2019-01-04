@@ -50,7 +50,7 @@ def main(workspace='', args=None, parser=None):
         else:
             return 0, None
     else:
-        print "A host with ID %s already exists!" % old_host.getID()
+        print("A host with ID %s already exists!" % old_host.getID())
         return 2, None
 
     return 0, old_host.getID()

@@ -62,16 +62,16 @@ def main(workspace='', args=None, parser=None):
             try:
                 old_id = ex.answer.json()['object']['_id']
             except KeyError:
-                print "Vulnerability already exists. Couldn't fetch ID"
+                print("Vulnerability already exists. Couldn't fetch ID")
                 return 2, None
             else:
-                print "A vulnerability with ID %s already exists!" % old_id
+                print("A vulnerability with ID %s already exists!" % old_id)
                 return 2, None
         else:
-            print "Unknown error while creating the vulnerability"
+            print("Unknown error while creating the vulnerability")
             return 2, None
     except CantCommunicateWithServerError as ex:
-        print "Error while creating vulnerability:", ex.response.text
+        print("Error while creating vulnerability:", ex.response.text)
         return 2, None
 
     new = models.get_vulns(

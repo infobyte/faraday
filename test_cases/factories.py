@@ -37,7 +37,11 @@ from server.models import (
     VulnerabilityTemplate,
     VulnerabilityWeb,
     Workspace,
-    ReferenceTemplate, CommandObject, Comment)
+    ReferenceTemplate,
+    CommandObject,
+    Comment,
+    CustomFieldsSchema
+)
 
 # Make partials for start and end date. End date must be after start date
 FuzzyStartTime = lambda: (
@@ -58,9 +62,6 @@ UNICODE_LETTERS = ''.join(c for c in all_unicode if unicodedata.category(c) == '
 
 
 class FaradayFactory(factory.alchemy.SQLAlchemyModelFactory):
-
-    # id = factory.Sequence(lambda n: n)
-    pass
 
     @classmethod
     def build_dict(cls, **kwargs):
@@ -166,6 +167,13 @@ class SourceCodeFactory(WorkspaceObjectFactory):
 
     class Meta:
         model = SourceCode
+        sqlalchemy_session = db.session
+
+
+class CustomFieldsSchemaFactory(factory.alchemy.SQLAlchemyModelFactory):
+
+    class Meta:
+        model = CustomFieldsSchema
         sqlalchemy_session = db.session
 
 

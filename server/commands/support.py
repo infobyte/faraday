@@ -68,5 +68,5 @@ def all_for_support():
         end_config(path)
         pbar.update(1)
 
-    print('[{green}+{white}] Done. You can find the folder {bright}faraday_support.zip{normal} inside the Faraday folder'
+    print('[{green}+{white}] Process Completed. You will find a {bright}faraday_support.zip{normal} file inside Faraday\'s root directory.'
             .format(green=Fore.GREEN, white=Fore.WHITE, bright=Style.BRIGHT, normal=Style.NORMAL))

@@ -140,19 +140,22 @@ angular.module('faradayApp')
                         break;
 
                     default:
-                        if(expression.substr(i, 3) === 'not' && !isOpenQuotes){
+                        if(expression.substr(i, 3) === 'not' && expression.charAt(i-1) === ' '
+                            && expression.charAt(i+3) === ' ' && !isOpenQuotes){
                            tokens.push('not');
                            i = i + 2;
                            canAddToken = true;
                         }
 
-                        else if(expression.substr(i, 3) === 'and' && !isOpenQuotes){
+                        else if(expression.substr(i, 3) === 'and' && expression.charAt(i-1) === ' '
+                            && expression.charAt(i+3) === ' ' && !isOpenQuotes){
                            tokens.push('and');
                            canAddToken = true;
                            i = i + 2;
                         }
 
-                        else if(expression.substr(i, 2) === 'or' && !isOpenQuotes){
+                        else if(expression.substr(i, 2) === 'or' && expression.charAt(i-1) === ' '
+                            && expression.charAt(i+2) === ' ' && !isOpenQuotes){
                            tokens.push('or');
                            canAddToken = true;
                            i++;

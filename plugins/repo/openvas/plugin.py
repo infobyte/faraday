@@ -8,8 +8,6 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 from __future__ import with_statement
-from plugins import core
-from faraday import FARADAY_BASE
 import re
 import os
 import sys
@@ -21,6 +19,10 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ET
     ETREE_VERSION = ET.VERSION
+
+from plugins import core
+from faraday import FARADAY_BASE
+from plugins.plugins_utils import filter_services
 
 ETREE_VERSION = [int(i) for i in ETREE_VERSION.split(".")]
 
@@ -210,7 +212,7 @@ class Item(object):
 
         # if the service is not in detail, we will search it in
         # the file port_mapper.txt
-        srv = self.filter_services()
+        srv = filter_services()
         for service in srv:
             if service[0] == port:
                 return service[1]
@@ -283,22 +285,6 @@ class Item(object):
                     res = value
 
         return res
-
-
-    def filter_services(self):
-        open_file = open(os.path.join(FARADAY_BASE,'plugins/repo/openvas/port_mapper.txt'),"r")
-        mapper = open_file.read()
-        filtering = mapper.split('\n')
-        services = []
-
-        for item in filtering:
-            tup = ()
-            filt = filter(len,item.split('\t'))
-            tup = (filt[0],filt[1])
-            services.append(tup)
-
-        return services
-
 
     def get_data_from_tags(self,tags_text):
         clean_text = self.do_clean(tags_text)

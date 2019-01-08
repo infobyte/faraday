@@ -419,14 +419,16 @@ class ModelController(Thread):
     def _pluginStart(self, name, command_id):
         self.active_plugins_count_lock.acquire()
         self.processing = True
-        getLogger(self).info("Plugin Started: {0}. ".format(name, command_id))
+        if name not in ["MetasploitOn", "Beef", "Sentinel"]:
+            getLogger(self).info("Plugin Started: {0}. ".format(name, command_id))
         self.active_plugins_count += 1
         self.active_plugins_count_lock.release()
         return True
 
     def _pluginEnd(self, name, command_id):
         self.active_plugins_count_lock.acquire()
-        getLogger(self).info("Plugin Ended: {0}".format(name))
+        if name not in ["MetasploitOn", "Beef", "Sentinel"]:
+            getLogger(self).info("Plugin Ended: {0}".format(name))
         if self.active_plugins_count == 0:
             self.active_plugins_count_lock.release()
             getLogger(self).warn("All plugins ended, but a plugin end action was received.")

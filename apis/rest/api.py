@@ -52,13 +52,11 @@ def startAPIs(plugin_controller, model_controller, hostname, port):
     ioloop_instance = IOLoop.current()
     _http_server = HTTPServer(WSGIContainer(app))
     hostnames = [hostname]
-    
+
     #Fixed hostname bug
     if hostname == "localhost":
-    
         hostnames.append("127.0.0.1")
-    print hostname
-    
+
     listening = False
     for hostname in hostnames:
         try:

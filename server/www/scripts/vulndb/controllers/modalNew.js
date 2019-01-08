@@ -57,14 +57,24 @@ angular.module('faradayApp')
         };
 
         $scope.newPolicyViolation = function() {
-            if ($scope.new_policyviolation != "") {
+            if ($scope.new_policyviolation !== "") {
                 // we need to check if the policy violation already exists
-                if ($scope.data.policyviolations.filter(function(policyviolation) {return policyviolation === $scope.new_policyviolation}).length == 0) {
+                if ($scope.data.policyviolations.filter(function(policyviolation) {return policyviolation === $scope.new_policyviolation}).length === 0) {
                     $scope.data.policyviolations.push($scope.new_policyviolation);
                     $scope.new_policyviolation = "";
                 }
             }
-        }
+        };
+
+        $scope.newReference = function() {
+            if ($scope.new_reference !== "") {
+                // we need to check if the reference already exists
+                if ($scope.data.references.filter(function(reference) {return reference === $scope.new_reference}).length === 0) {
+                    $scope.data.references.push($scope.new_reference);
+                    $scope.new_reference = "";
+                }
+            }
+        };
 
         init();
     }]);

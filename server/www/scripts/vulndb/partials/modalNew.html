@@ -35,12 +35,26 @@
                     <textarea class="form-control" name="resolution" placeholder="Resolution" ng-model="data.resolution"></textarea>
                 </div>
             </div><!-- .form-group -->
+
             <div class="form-group">
                 <div class="col-md-12">
-                    <label for="References">References</label>
-                    <textarea class="form-control" name="References" placeholder="References" ng-model="data.references"></textarea>
+                    <label for="references">References</label>
+                    <div class="input-group margin-bottom-sm">
+                        <label class="sr-only" for="references">References</label>
+                        <input type="text" class="form-control" id="references" placeholder="References" ng-model="new_reference"/>
+                        <span class="input-group-addon cursor" ng-click="newReference()"><i class="fa fa-plus-circle"></i></span>
+                    </div>
+                </div>
+                <div class="col-md-12 reference" ng-repeat="reference in data.references">
+                    <div class="input-group margin-bottom-sm">
+                        <label class="sr-only" for="ireferences">References</label>
+                        <input type="text" class="form-control" id="ireferences" placeholder="References" ng-model="reference" disabled/>
+                        <span class="input-group-addon cursor" ng-click="data.references.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
+                    </div>
                 </div>
             </div><!-- .form-group -->
+
+
             <div class="form-group">
                 <div class="col-md-12">
                     <label for="vuln-policyviolations">Policy Violations</label>

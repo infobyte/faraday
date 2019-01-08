@@ -204,11 +204,23 @@ def support():
     support_zip.all_for_support()
 
 
-@click.command(help='Migrates database schema')
-@click.option('--upgrade', default=None)
-def migrate(upgrade):
-    alembic_params = map(lambda param: param.replace('--', ''), sys.argv[2:])
-    CommandLine(prog=None).main(argv=alembic_params)
+@click.command(
+        context_settings={"ignore_unknown_options": True},
+        help='Migrates database schema. If the target revision '
+        'is not specified, use "head" when upgrading and "-1" when '
+        'downgrading')
+@click.option(
+        '--downgrade',
+        help="Perform a downgrade migration instead of an upgrade one",
+        is_flag=True)
+@click.argument(
+        'revision',
+        required=False,
+        )
+def migrate(downgrade, revision):
+    revision = revision or ("-1" if downgrade else "head")
+    action = "downgrade" if downgrade else "upgrade"
+    CommandLine(prog=None).main(argv=[action, revision])
 
 
 @click.command(help='Custom field wizard')

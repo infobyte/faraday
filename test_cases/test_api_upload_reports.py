@@ -102,37 +102,3 @@ class TestFileUpload():
                 use_json_data=False)
 
         assert res.status_code == 404
-
-
-    @pytest.mark.skip(reason="no way of currently testing this")
-    @patch('server.api.modules.upload_reports.getInstanceConfiguration')
-    def test_without_userxml(self, getInstanceConfiguration, test_client, session):
-        
-        ws = WorkspaceFactory.create(name="abc")
-        session.add(ws)
-        session.commit()
-        path = os.path.join(
-                os.path.dirname(os.path.realpath(__file__)),
-                'data',
-                'nmap_plugin_with_api.xml')
-
-        with open(path,'r') as report:
-            file_contents = report.read()
-
-        session_response = test_client.get('/session')
-        csrf_token = session_response.json.get('csrf_token')
-        data = {
-            'file' : (BytesIO(file_contents), 'nmap_report.xml'),
-            'csrf_token' : csrf_token
-        }
-
-        conf_mock = Mock()
-        getInstanceConfiguration.return_value = conf_mock
-        conf_mock.getConfigPath.return_value = None
-        
-        res = test_client.post(
-                '/v2/ws/{ws_name}/upload_report'.format(ws_name=ws.name),
-                data=data,
-                use_json_data=False)
-
-        assert res.status_code == 400

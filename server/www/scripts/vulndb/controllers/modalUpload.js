@@ -11,8 +11,6 @@ angular.module('faradayApp')
             $scope._import = function() {
                 var csv = document.getElementById('file').files[0];
                 $scope.data = csv;
-                if (!$scope.data.easeofresolution || $scope.data.easeofresolution === "")
-                    $scope.data.easeofresolution = null;
                 $scope.ok();
             };
 

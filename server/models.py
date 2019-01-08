@@ -39,10 +39,11 @@ from flask_sqlalchemy import (
     SQLAlchemy as OriginalSQLAlchemy,
     _EngineConnector
 )
+
 from depot.fields.sqlalchemy import UploadedFileField
 
 import server.config
-from server.fields import FaradayUploadedFile
+from server.fields import FaradayUploadedFile, JSONType
 from flask_security import (
     RoleMixin,
     UserMixin,
@@ -483,6 +484,17 @@ class Service(Metadata):
                                  version or "")
 
 
+class CustomFieldsSchema(db.Model):
+    __tablename__ = 'custom_fields_schema'
+
+    id = Column(Integer, primary_key=True)
+    field_name = Column(Text)
+    field_type = Column(Text)
+    field_display_name = Column(Text)
+    field_order = Column(Integer)
+    table_name = Column(Text)
+
+
 class VulnerabilityABC(Metadata):
     # revisar plugin nexpose, netspark para terminar de definir uniques. asegurar que se carguen bien
     EASE_OF_RESOLUTIONS = [
@@ -521,6 +533,8 @@ class VulnerabilityABC(Metadata):
         CheckConstraint('1.0 <= risk AND risk <= 10.0',
                         name='check_vulnerability_risk'),
     )
+
+    custom_fields = Column(JSONType)
 
     @property
     def parent(self):
@@ -664,6 +678,7 @@ class VulnerabilityTemplate(VulnerabilityABC):
         proxy_factory=CustomAssociationSet,
         creator=_build_associationproxy_creator_non_workspaced('PolicyViolationTemplate')
     )
+    custom_fields = Column(JSONType)
 
 
 class CommandObject(db.Model):

@@ -859,6 +859,7 @@ class Host(ModelBase):
         self.vuln_amount = int(host.get('vulns', 0))
         self.ip = host.get('ip', self.name)
         self.hostnames = host.get('hostnames', []) if host.get('hostnames') else []
+        self.mac = host.get('mac', '') if host.get('mac') else ''
 
     def getName(self):
         return self.ip
@@ -895,8 +896,14 @@ class Host(ModelBase):
     def getHostnames(self):
         return self.hostnames
 
+    def getMac(self):
+        return self.mac
+
     def setHostnames(self, hostnames):
         self.hostnames = hostnames
+
+    def setMac(self, mac):
+        self.mac = mac
 
     def getVulns(self):
         """

@@ -16,7 +16,7 @@ OBJECT_COUNT = 5
 
 
 @pytest.mark.usefixtures('logged_user')
-class GenericAPITest:
+class GenericAPITest(object):
 
     model = None
     factory = None

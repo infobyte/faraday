@@ -887,7 +887,7 @@ def get_commands_number(workspace_name, **params):
 
 def create_host(workspace_name, command_id, ip, os, default_gateway=None,
                 description="", metadata=None, owned=False, owner="",
-                parent=None, hostnames=None):
+                parent=None, hostnames=None, mac=None):
     """Create a host.
 
     Args:
@@ -917,11 +917,12 @@ def create_host(workspace_name, command_id, ip, os, default_gateway=None,
                            parent=parent,
                            description=description,
                            hostnames=hostnames,
+                           mac=mac,
                            type="Host")
 
 def update_host(workspace_name, command_id, id, ip, os, default_gateway="",
                 description="", metadata=None, owned=False, owner="",
-                parent=None, hostnames=None):
+                parent=None, hostnames=None, mac=None):
     """Updates a host.
 
     Args:
@@ -952,6 +953,7 @@ def update_host(workspace_name, command_id, id, ip, os, default_gateway="",
                              parent=parent,
                              description=description,
                              hostnames=hostnames,
+                             mac=mac,
                              type="Host")
 
 

@@ -15,9 +15,9 @@ angular.module('faradayApp')
             $scope.exploitations = EXPLOITATIONS;
             $scope.easeofresolution = EASEOFRESOLUTION;
             $scope.data = new VulnModel;
+            $scope.data.set(model);
             $scope.impact = angular.copy($scope.data.impact);
             $scope.policyviolations = angular.copy($scope.data.policyviolations);
-            $scope.data.set(model);
         };
 
         $scope.ok = function() {

@@ -41,6 +41,10 @@ angular.module('faradayApp')
                 $scope.data.model = $scope.other_model;
             }
 
+            if ($scope.data.easeofresolution === ""){
+                $scope.data.easeofresolution = null;
+            }
+
             $modalInstance.close($scope.data);
         };
 

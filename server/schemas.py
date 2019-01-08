@@ -63,6 +63,8 @@ class FaradayCustomField(fields.Field):
                 elif field_schema.field_type == 'int':
                     try:
                         serialized[key] = int(raw_data)
+                    except TypeError:
+                        return None
                     except ValueError:
                         raise ValidationError("Can not convert custom type to int")
                 elif field_schema.field_type == 'list':

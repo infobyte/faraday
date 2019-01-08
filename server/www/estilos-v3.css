@@ -518,3 +518,7 @@ li.nav-item.has-error:not(.active) a {
     top: 220px;
     color: #aeaeb1;
 }
+
+.last-item-field {
+    margin-bottom: 25px;
+}

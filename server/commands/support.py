@@ -2,12 +2,19 @@ import os
 import sys
 import shutil
 import tempfile
-import config.constant as constants 
-from server.commands import status_check 
+from tqdm import tqdm
+from colorama import init
+from colorama import Fore, Style
+
 try:
     from pip._internal.operations import freeze
 except ImportError:  # pip < 10.0
     from pip.operations import freeze
+
+import config.constant as constants
+from server.commands import status_check
+
+init()
 
 def init_config():
     #Creates the directory where all the info will go to
@@ -28,10 +35,11 @@ def get_status_check(path):
 
 def get_pip_freeze(path):
     #Executes pip freeze internally and saves the info a pip_freeze.txt file
-    x = freeze.freeze()
+    pip_freeze = freeze.freeze()
     pip_file = open(path + '/pip_freeze.txt', 'a')
-    for p in x:
-        pip_file.write(p)
+    for line in pip_freeze:
+        pip_file.write(line)
+        pip_file.write('\n')
     pip_file.close()
 
 def get_logs(path):
@@ -47,9 +55,18 @@ def end_config(path):
     shutil.rmtree(path)
 
 def all_for_support():
-    path = init_config()
-    get_status_check(path)
-    get_logs(path)
-    get_pip_freeze(path)
-    make_zip(path)
-    end_config(path)
+    with tqdm(total=5) as pbar:
+        path = init_config()
+        get_status_check(path)
+        pbar.update(1)
+        get_logs(path)
+        pbar.update(1)
+        get_pip_freeze(path)
+        pbar.update(1)
+        make_zip(path)
+        pbar.update(1)
+        end_config(path)
+        pbar.update(1)
+
+    print('[{green}+{white}] Process Completed. You will find a {bright}faraday_support.zip{normal} file inside Faraday\'s root directory.'
+            .format(green=Fore.GREEN, white=Fore.WHITE, bright=Style.BRIGHT, normal=Style.NORMAL))

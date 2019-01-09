@@ -57,6 +57,9 @@
                         <th class="ui-grid-cell-contents ui-grid-header-cell">
                             <span ng-click="toggleSort('description')">Description</span>
                         </th>
+                         <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('references')">References</span>
+                        </th>
                         <th class="ui-grid-cell-contents ui-grid-header-cell">
                             <span ng-click="toggleSort('resolution')">Resolution</span>
                         </th>
@@ -83,6 +86,7 @@
                         <td class="checkbox-select"><input type="checkbox" name="{{model._id}}"/></td>
                         <td>{{model.name}}</td>
                         <td>{{model.description}}</td>
+                        <td uib-tooltip="{{model.references}}"><div ng-repeat="ref in model.refs" >{{ref}}</div></td>
                         <td>{{model.resolution}}</td>
                         <td><div ng-repeat="(key, value) in model.impact" ng-if="value == true">{{key}}</div></td>
                         <td>{{model.exploitation}}</td>

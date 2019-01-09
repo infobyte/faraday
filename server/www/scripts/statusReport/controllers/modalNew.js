@@ -78,6 +78,7 @@ angular.module('faradayApp')
                 path: "",
                 pname: "",
                 policyviolations: [],
+                easeofresolution: "",
                 query: "",
                 refs: [],
                 request: "",

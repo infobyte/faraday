@@ -10,6 +10,7 @@ angular.module('faradayApp')
         $scope.data;
         $scope.openedStart;
         $scope.openedEnd;
+        var EXCLUDED_TOKENS = [""];
 
         var init = function() {
             $scope.exploitations = EXPLOITATIONS;
@@ -17,8 +18,10 @@ angular.module('faradayApp')
             $scope.data = new VulnModel;
             $scope.data.set(model);
             $scope.impact = angular.copy($scope.data.impact);
-            $scope.policyviolations = angular.copy($scope.data.policyviolations);
-            $scope.references = angular.copy($scope.data.refs);
+            $scope.policyviolations = clearList(angular.copy($scope.data.policyviolations), EXCLUDED_TOKENS);
+            $scope.references = clearList(angular.copy($scope.data.refs), EXCLUDED_TOKENS);
+            $scope.new_policyviolation = "";
+            $scope.new_reference = "";
         };
 
         $scope.ok = function() {
@@ -63,6 +66,15 @@ angular.module('faradayApp')
                 }
             }
         };
+
+         var clearList = function (list, excludedTokens) {
+           for (var i = 0; i< list.length ; i++){
+               if (excludedTokens.indexOf(list[i]) > -1){
+                   list.splice(i, 1);
+               }
+           }
+           return list;
+         };
 
         init();
     }]);

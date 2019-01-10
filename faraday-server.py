@@ -20,6 +20,9 @@ try:
     from utils import dependencies
     from utils.user_input import query_yes_no
     from faraday import FARADAY_BASE
+    from alembic.script import ScriptDirectory
+    from alembic.config import Config
+    from alembic.migration import MigrationContext
 except ImportError as ex:
     print(ex)
     print('Missing dependencies.\nPlease execute: pip install -r requirements_server.txt')
@@ -123,8 +126,25 @@ def check_postgresql():
             sys.exit(1)
 
 
+def check_alembic_version():
+    config = Config()
+    config.set_main_option("script_location", "migrations")
+    script = ScriptDirectory.from_config(config)
+
+    head_revision = script.get_current_head()
+    with app.app_context():
+        conn = db.session.connection()
+        context = MigrationContext.configure(conn)
+
+        if head_revision != context.get_current_revision():
+            print('--' * 20)
+            print('Missing migrations, please execute: \n\n')
+            print('python manage.py migrate --upgrade head')
+            sys.exit(1)
+
 def main():
     check_postgresql()
+    check_alembic_version()
     os.chdir(FARADAY_BASE)
     parser = argparse.ArgumentParser()
     parser.add_argument('--ssl', action='store_true', help='enable HTTPS')

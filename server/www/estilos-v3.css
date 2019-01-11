@@ -522,3 +522,36 @@ li.nav-item.has-error:not(.active) a {
 .last-item-field {
     margin-bottom: 25px;
 }
+
+
+/* ANGULAR SIMPLE PAGINATION */
+
+.simple-pagination p {
+  display: inline-block;
+  line-height: 24px;
+  margin: 0 10px 0 0;
+}
+
+.simple-pagination__button {
+  background: #fff;
+  border: none;
+  padding: 0px 6px;
+}
+
+button[disabled], html input[disabled] {
+    cursor: default!important;
+    color: #ddd;
+}
+
+.simple-pagination__page-limit__option:after {
+  content: ' | ';
+}
+
+.simple-pagination__page-limit .active {
+  font-weight: bold;
+}
+
+.simple-pagination {
+    text-align: center;
+    margin-bottom: 15px;
+}

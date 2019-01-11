@@ -121,7 +121,7 @@ def dispatch(args, unknown, user_help, username, password):
         ret, obj_id = call_main(workspace=args.workspace, args=unknown, parser=new_parser)
 
         if obj_id is not None:
-            print obj_id
+            print(obj_id)
     else:
         # Use old API to call plugin
         sys.stderr.write(Fore.YELLOW +
@@ -133,7 +133,7 @@ def dispatch(args, unknown, user_help, username, password):
         ret = 0
 
     if args.interactive:
-        # print 'code = %d' % ret
+        # print ('code = %d' % ret)
         return obj_id
     else:
         sys.exit(ret)
@@ -192,7 +192,7 @@ if __name__ == '__main__':
         dispatch(args, unknown, parser.format_help(), args.username, args.password)
     else:
 
-        # print "Loading command history..."
+        # print ("Loading command history...")
         histfile = os.path.join(CONF.getDataPath(), ".faraday_hist")
         readline.parse_and_bind('tab: complete')
         atexit.register(readline.write_history_file, histfile)
@@ -204,8 +204,8 @@ if __name__ == '__main__':
         except IOError:
             pass
 
-        print "Welcome to interactive Faraday!"
-        print "Press CTRL-D or run 'exit' to quit interactive mode."
+        print("Welcome to interactive Faraday!")
+        print("Press CTRL-D or run 'exit' to quit interactive mode.")
         last_id = None
 
         while True:

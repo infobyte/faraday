@@ -133,7 +133,7 @@ def parse_host(register):
             datetime_object = datetime.strptime(date, "%m/%d/%Y")
             host._metadata.create_time = mktime(datetime_object.timetuple())
     except Exception:
-        print "Invalid date", host.name
+        print("Invalid date", host.name)
 
     return host
 
@@ -184,7 +184,7 @@ def parse_vulnerability(register):
             datetime_object = datetime.strptime(date, "%m/%d/%Y")
             vulnerability._metadata.create_time = mktime(datetime_object.timetuple())
     except Exception:
-        print "Invalid date", vulnerability.name
+        print("Invalid date", vulnerability.name)
 
     return vulnerability
 
@@ -222,7 +222,7 @@ def parse_vulnerability_web(register):
             datetime_object = datetime.strptime(date, "%m/%d/%Y")
             vulnerability_web._metadata.create_time = mktime(datetime_object.timetuple())
     except Exception:
-        print "Invalid date", vulnerability_web.name
+        print("Invalid date", vulnerability_web.name)
 
     return vulnerability_web
 
@@ -235,13 +235,13 @@ def main(workspace="", args=None, parser=None):
     parsed_args = parser.parse_args(args)
 
     if not parsed_args.csv:
-        print "Error: Give a CSV file to import with --csv"
+        print("Error: Give a CSV file to import with --csv")
         return 2, None
 
     try:
         file_csv = open(parsed_args.csv, "r")
     except:
-        print "Error: Unreadeable CSV file, check the path"
+        print("Error: Unreadeable CSV file, check the path")
         raise
 
     counter = 0
@@ -257,7 +257,7 @@ def main(workspace="", args=None, parser=None):
 
                     counter += 1
 
-                    print "New host: " + host.getName()
+                    print("New host: " + host.getName())
                     try:
                         models.create_host(WORKSPACE, host)
                     except Exception as ex:
@@ -276,7 +276,7 @@ def main(workspace="", args=None, parser=None):
                 if not old_service:
 
                     counter += 1
-                    print "New service: " + service.getName()
+                    print("New service: " + service.getName())
                     models.create_service(WORKSPACE, service)
                 service = models.get_service(WORKSPACE, **service_params)
 
@@ -301,7 +301,7 @@ def main(workspace="", args=None, parser=None):
 
                 if not models.get_vuln(WORKSPACE, **vuln_params):
                     counter += 1
-                    print "New vulnerability: " + vulnerability.getName()
+                    print("New vulnerability: " + vulnerability.getName())
                     models.create_vuln(WORKSPACE, vulnerability)
 
             elif vulnerability_web is not None:
@@ -320,13 +320,13 @@ def main(workspace="", args=None, parser=None):
                 if not models.get_web_vuln(WORKSPACE, **vuln_web_params):
 
                     counter += 1
-                    print "New web vulnerability: " + vulnerability_web.getName()
+                    print("New web vulnerability: " + vulnerability_web.getName())
                     models.create_vuln_web(WORKSPACE, vulnerability_web)
         except ConflictInDatabase:
             print('Conflict in Database, skiping csv row')
         except CantCommunicateWithServerError as ex:
             print(register)
             print('Error', ex)
-    print "[*]", counter, "new Faraday objects created."
+    print("[*]", counter, "new Faraday objects created.")
     file_csv.close()
     return 0, None

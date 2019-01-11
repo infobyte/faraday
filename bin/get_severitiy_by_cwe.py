@@ -51,13 +51,13 @@ def getCweData(couch_url):
         if dict == {}:
             return None
         else:
-            print 'Get CWE data: OK\n'
+            print('Get CWE data: OK\n')
             return dict
 
     elif response_code == 401:
-        print 'Autorization required, make sure to add user:pwd to Couch URI'
+        print('Autorization required, make sure to add user:pwd to Couch URI')
     else:
-        print 'Error couchDB: ' + str(response_code) + str(r.text)
+        print('Error couchDB: ' + str(response_code) + str(r.text))
 
 
 def checkSeverity(vuln, cwe_dict, severity_choose, workspace, couch_url):
@@ -73,7 +73,7 @@ def checkSeverity(vuln, cwe_dict, severity_choose, workspace, couch_url):
 
     if vuln._name in cwe_dict and severity_dict[vuln.severity] <= severity_dict[severity_choose]:
 
-        print 'Change: ' + vuln._name + ' to ' + cwe_dict[vuln._name]
+        print('Change: ' + vuln._name + ' to ' + cwe_dict[vuln._name])
 
         # Get object Vuln
         response = requests.get(
@@ -93,10 +93,10 @@ def checkSeverity(vuln, cwe_dict, severity_choose, workspace, couch_url):
         )
 
         if update.status_code == 200 or update.status_code == 201:
-            print 'Change OK\n'
+            print('Change OK\n')
         else:
-            print 'Error in update Vulnerability, status code: ' + str(update.status_code)
-            print update.text
+            print('Error in update Vulnerability, status code: ' + str(update.status_code))
+            print(update.text)
 
 
 def main(workspace='', args=None, parser=None):
@@ -108,7 +108,7 @@ def main(workspace='', args=None, parser=None):
     cwe = getCweData(parsed_args.couchdb)
 
     if cwe is None:
-        print 'CWE DB not downloaded....EXIT'
+        print('CWE DB not downloaded....EXIT')
         return 2, None
 
     for host in models.get_hosts(workspace):

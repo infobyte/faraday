@@ -2,38 +2,50 @@ IMPORTANT
 ===========
 
 Please be kind to remove all your pyc files before running faraday if you are updating this piece of software.
-Make sure you run ```./faraday.py --update``` the first time after an update!
+Make sure you run ```./manage.py migrate``` the first time after an update!
 
 
 New features in the latest update
 =====================================
 
 
-3.4:
+3.5 [Jan 16th, 2019]:
+---
+ * Redesgin of new/edit vulnerability forms
+ * Add new custom fields feature to vulnerabilities
+ * Add ./manage.py migrate to perform alembic migrations
+ * Faraday will use webargs==4.4.1 because webargs==5.0.0 fails with Python2
+ * New system for online plugins using Threads, a few fixes for metasploit plugin online also.
+ * Fix Command "python manage.py process-reports" now stops once all reports have been processed
+ * Fix bug in query when it checks if a vulnerability or a workspace exists
+ * Fix Once a workspace is created through the web UI, a folder with its name is created inside ~/.faraday/report/
+ * The manage.py now has a new support funtionality that creates a .zip file with all the information faraday's support team will need to throubleshoot your issue
+ * Status-check checks PostgreSQL encoding
+ * Fix a bug when fail importation of reports, command duration say "In Progress" forever.
+ * Fix confirmed bug in vulns API
+ * Update websockets code to use latest lib version
+ * bootstrap updated to v3.4.0
+ * Manage.py support now throws a message once it finishes the process.
+ * Update Lynis to its version 2.7.1
+ * Updated arp-scan plugin, added support in the Host class for mac address which was deprecated before v3.0
+ * OpenVAS Plugin now supports OpenVAS v-9.0.3
+
+3.4 [December 6th, 2018]:
 ---
  * In GTK, check active_workspace its not null
-
  * Add fbruteforce services fplugin
-
-
  * Attachments can be added to a vulnerability through the API.
-
  * Catch gaierror error on lynis plugin
-
  * Add OR and NOT with parenthesis support on status report search
-
  * Info API now is public
  * Web UI now detects Appscan plugin
-
  * Improve performance on the workspace using cusotm query
-
  * Workspaces can be set as active/disable in welcome page.
  * Change Nmap plugin, response field in VulnWeb now goes to Data field.
-
  * Update code to support latest SQLAlchemy version
-
  * Fix `create_vuln` fplugin bug that incorrectly reported duplicated vulns
-
+ * Attachments on a vulnerability can be deleted through the API.
+ * Improvement in the coverage of the tests.
 
 3.3 [Novemeber 14th, 2018]:
 ---

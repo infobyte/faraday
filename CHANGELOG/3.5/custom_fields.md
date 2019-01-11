@@ -1,1 +1,0 @@
-Add custom fields to vulnerabilities management forms

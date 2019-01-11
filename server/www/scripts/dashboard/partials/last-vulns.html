@@ -19,7 +19,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr ng-repeat="vuln in vulns">
+                <tr ng-repeat="vuln in vulns | limitTo:settings.pageLimit:settings.offset">
                     <td><a href="" ng-click="navigate('/status/ws/'+workspace+'/search/severity='+vuln.severity)"><span class="label vuln fondo-{{vuln.severity}}">{{vuln.severity | uppercase}}</span></a></td>
                     <td>
                         <a href="" ng-click="navigate('/status/ws/'+workspace+'/search/target='+vuln.target)">{{vuln.target}}</a>
@@ -31,5 +31,14 @@
                 </tr>
             </tbody>
         </table>
+
+        <simple-pagination
+            current-page="settings.currentPage"
+            offset="settings.offset"
+            page-limit="settings.pageLimit"
+            page-limits="settings.pageLimits"
+            total="vulns.length">
+        </simple-pagination>
+
     </div>
 </article>

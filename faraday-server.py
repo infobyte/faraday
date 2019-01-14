@@ -143,9 +143,9 @@ def check_alembic_version():
             sys.exit(1)
 
 def main():
+    os.chdir(FARADAY_BASE)
     check_postgresql()
     check_alembic_version()
-    os.chdir(FARADAY_BASE)
     parser = argparse.ArgumentParser()
     parser.add_argument('--ssl', action='store_true', help='enable HTTPS')
     parser.add_argument('--debug', action='store_true', help='run Faraday Server in debug mode')

@@ -8,8 +8,12 @@ import sys
 import traceback
 import threading
 import logging
-import xmlrpclib
-import SimpleXMLRPCServer
+try:
+    import xmlrpclib
+    import SimpleXMLRPCServer
+except ImportError:
+    from xmlrpc import client as xmlrpclib
+    from xmlrpc.server import SimpleXMLRPCServer
 
 try:
     import model.api as api
@@ -169,7 +173,7 @@ class CustomXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             response = self.server._marshaled_dispatch(
                     data, getattr(self, '_dispatch', None)
                 )
-        except Exception, e:  # This should only happen if the module is buggy
+        except Exception as e:  # This should only happen if the module is buggy
             # internal error, report as HTTP server error
             self.send_response(500)
 

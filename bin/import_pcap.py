@@ -32,12 +32,12 @@ def main(workspace='', args=None, parser=None):
         from pcapfile import savefile
         import pcapfile
     except ImportError:
-        print 'capfile not found, please install it to use this plugin.' \
-              ' You can do it executing pip2 install pcapfile in a shell.'
+        print('capfile not found, please install it to use this plugin.' \
+              ' You can do it executing pip2 install pcapfile in a shell.')
         return 1, None
 
     if not os.path.isfile(parsed_args.pcap):
-        print "pcap file not found: " % parsed_args.pcap
+        print("pcap file not found: " % parsed_args.pcap)
         return 2, None
 
     testcap = open(parsed_args.pcap, 'rb')
@@ -45,10 +45,10 @@ def main(workspace='', args=None, parser=None):
     try:
         capfile = savefile.load_savefile(testcap, layers=2, verbose=parsed_args.verbose)
     except pcapfile.Error:
-        print "Invalid pcap file"
+        print("Invalid pcap file")
         return 3, None
 
-    print 'pcap file loaded. Parsing packets...'
+    print('pcap file loaded. Parsing packets...')
 
     # Set() to store already added hosts. This will save an enormous amount of time by not querying the database
     # for hosts we already know are in Faraday
@@ -82,7 +82,7 @@ def main(workspace='', args=None, parser=None):
             if old is None:
                 if not parsed_args.dry_run:
                     models.create_host(workspace, obj)
-                print '%s\t%s' % (src, obj.getID())
+                print('%s\t%s' % (src, obj.getID()))
 
         if dst not in added:
 
@@ -98,6 +98,6 @@ def main(workspace='', args=None, parser=None):
             if old is None:
                 if not parsed_args.dry_run:
                     models.create_host(workspace, obj)
-                print '%s\t%s' % (dst, obj.getID())
+                print('%s\t%s' % (dst, obj.getID()))
 
     return 0, None

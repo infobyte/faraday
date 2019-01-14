@@ -1,7 +1,6 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-import datetime
 import time
 from datetime import datetime
 
@@ -26,7 +25,7 @@ class ActivityFeedSchema(AutoSchema):
     workspace = PrimaryKeyRelatedField('name', dump_only=True)
 
     def load_itime(self, value):
-        return datetime.datetime.fromtimestamp(value)
+        return datetime.fromtimestamp(value)
 
     def get_itime(self, obj):
         return time.mktime(obj.start_date.utctimetuple()) * 1000

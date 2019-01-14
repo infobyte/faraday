@@ -1,1 +1,0 @@
-Fix confirmed bug in vulns API

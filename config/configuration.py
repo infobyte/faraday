@@ -89,12 +89,12 @@ class Configuration:
                 for event, elem in ET.iterparse(f, ('start', )):
                     root = elem.tag
                     break
-            except SyntaxError, err:
-                print "Not an xml file.\n %s" % (err)
+            except SyntaxError as err:
+                print("Not an xml file.\n %s" % (err))
                 return False
 
-        except IOError, err:
-            print "Error while opening file.\n%s. %s" % (err, self.filepath)
+        except IOError as err:
+            print("Error while opening file.\n%s. %s" % (err, self.filepath))
             return False
 
         finally:
@@ -109,8 +109,8 @@ class Configuration:
         f = open(self.filepath)
         try:
             tree = ET.fromstring(f.read())
-        except SyntaxError, err:
-            print "SyntaxError: %s. %s" % (err, self.filepath)
+        except SyntaxError as err:
+            print("SyntaxError: %s. %s" % (err, self.filepath))
             return None
         return tree
 

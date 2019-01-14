@@ -141,14 +141,14 @@ def show_options(workspace):
 
     # Muestro los servicios en el workspace soportados por hydra, en formato tabla
     table_services, services = show_table_services(workspace)
-    print table_services
+    print(table_services)
 
     service = int(input_index("What service do you want to bruteforce?", len(services)))
 
     # Verifico si el usuario quiere armar un diccionario con las credenciales
     # guardadas en faraday o si quiere utilizar uno propio
-    print "\n[0] Choose a dictionary"
-    print "[1] Create dictionary from Faraday (based in credentials stored in Faraday)\n"
+    print("\n[0] Choose a dictionary")
+    print("[1] Create dictionary from Faraday (based in credentials stored in Faraday)\n")
 
     dictionary = int(input_index("Options ", 2))
 
@@ -160,19 +160,19 @@ def show_options(workspace):
 
     else:
 
-        print "\n[*] Obtaining credentials from the workspace %s" % workspace
+        print("\n[*] Obtaining credentials from the workspace %s" % workspace)
 
         user_faraday = save_targets(get_credentials(workspace, "username"))
         passwd_faraday = save_targets(get_credentials(workspace, "password"))
 
-        print "[*] Credentials found: %s" % total_credentials(workspace)
-        print "\nUsername\t\tPassword"
-        print "--------\t\t--------"
+        print("[*] Credentials found: %s" % total_credentials(workspace))
+        print("\nUsername\t\tPassword")
+        print("--------\t\t--------")
 
         for user, passw in zip(
                 open(user_faraday, "r"), open(passwd_faraday, "r")):
 
-            print  "%s\t\t%s" % (user.strip(), passw.strip())
+            print("%s\t\t%s" % (user.strip(), passw.strip()))
 
 
     return service, services, user_define_dictionary, user_faraday, passwd_faraday, usernames_dic_path, passwords_dic_path
@@ -191,7 +191,7 @@ def save_targets(output):
 
 def main(workspace='', args=None, parser=None):
 
-    print "\nThis script needs to be run inside from Faraday GTK.\n"
+    print("\nThis script needs to be run inside from Faraday GTK.\n")
     if check_hydra():
 
         service, services, user_define_dictionary, user_faraday, passwd_faraday, usernames_dic_path, passwords_dic_path = show_options(workspace)
@@ -202,7 +202,7 @@ def main(workspace='', args=None, parser=None):
 
         hydra_output = "/tmp/hydra_output-%s.txt" % time.time()
 
-        print "Running Hydra, please wait to finish the bruteforce...\n"
+        print("Running Hydra, please wait to finish the bruteforce...\n")
 
         if user_define_dictionary:
 
@@ -227,7 +227,7 @@ def main(workspace='', args=None, parser=None):
             add_output(hydra_command2)
             call(shlex.split(hydra_command2))
 
-        print "Processing information found in Faraday...\n"
+        print("Processing information found in Faraday...\n")
         send_output(hydra_output)
 
         return None, None

@@ -17,16 +17,15 @@ from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
 from sqlalchemy.orm.exc import NoResultFound
-from psycopg2 import DataError
+
 from depot.manager import DepotManager
 from server.api.base import (
     AutoSchema,
-    InvalidUsage,
+    FilterAlchemyMixin,
     FilterSetMeta,
     PaginatedMixin,
-    FilterAlchemyMixin,
     ReadWriteWorkspacedView,
-)
+    InvalidUsage)
 from server.fields import FaradayUploadedFile
 from server.models import (
     db,
@@ -657,7 +656,7 @@ class VulnerabilityView(PaginatedMixin,
         else:
             flask.abort(404, "Vulnerability not found")
 
-    @route('/<vuln_id>/attachment/<attachment_filename>', methods=['DELETE'])
+    @route('/<vuln_id>/attachment/<attachment_filename>/', methods=['DELETE'])
     def delete_attachment(self, workspace_name, vuln_id, attachment_filename):
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(

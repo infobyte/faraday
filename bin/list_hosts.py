@@ -20,6 +20,6 @@ def main(workspace='', args=None, parser=None):
     for host in models.get_hosts(workspace):
 
         if not parsed_args.os_filter or (parsed_args.os_filter and host.os in parsed_args.os_filter):
-            print '%s\t%s' % (host.name, host.os)
+            print('%s\t%s' % (host.name, host.os))
 
     return 0, None

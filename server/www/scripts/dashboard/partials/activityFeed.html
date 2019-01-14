@@ -30,7 +30,7 @@
 
 
     </header>
-    <div ng-if="activityFeed.commands.length === 0" class="no-info-overlay">
+    <div ng-if="activityFeed.commands.length === 0 || (getValidCount() === 0 && hideEmpty == true)" class="no-info-overlay">
         <p class="no-info-text">No activities found yet.</p>
     </div>
     <div class="ph-xl">
@@ -68,7 +68,7 @@
             </tbody>
         </table>
 
-        <simple-pagination ng-if="isExpanded == true"
+        <simple-pagination ng-if="isExpanded == true && hideEmpty == false"
             current-page="settings.currentPage"
             offset="settings.offset"
             page-limit="settings.pageLimit"

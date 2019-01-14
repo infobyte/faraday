@@ -25,9 +25,6 @@ angular.module('faradayApp')
                     if ($routeParams.wsId !== undefined) {
                         $scope.workspace = $routeParams.wsId;
 
-                        $scope.isExpanded = false;
-                        $scope.hideEmpty = false;
-
                         collapse();
 
                         dashboardSrv.getActivityFeed($scope.workspace)
@@ -56,12 +53,21 @@ angular.module('faradayApp')
                 var expand = function () {
                     $scope.settings.pageLimit =  15;
                     $scope.isExpanded = true;
+                    $scope.hideEmpty = true;
                     angular.element('#first-row-panel').css('display', 'none');
                     angular.element('#activities-container-row').removeClass('mt-md');
                 };
 
                 $scope.isEmpty = function (cmd) {
                     return cmd.hosts_count === 0 && cmd.services_count === 0 && cmd.vulnerabilities_count === 0;
+                };
+
+                $scope.getValidCount = function () {
+                    var count = 0;
+                    for(var i = 0; i < vm.commands.length; i++){
+                        if (!$scope.isEmpty(vm.commands[i])) count ++
+                    }
+                    return count;
                 };
 
                 dashboardSrv.registerCallback(init);

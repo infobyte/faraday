@@ -1,5 +1,5 @@
 <article class='panel left-big-box' ng-controller="activityFeedCtrl as activityFeed">
-    <header ng-init="cmdLimit = 5">
+    <header>
         <h2>Activity Feed
             <span class="glyphicon glyphicon-info-sign" uib-tooltip="Faraday feed"></span>
 
@@ -36,7 +36,7 @@
     <div class="ph-xl">
         <table id="commands" ng-if="activityFeed.commands.length > 0" class="tablesorter table table-striped">
             <tbody>
-            <tr ng-repeat="cmd in activityFeed.commands | orderBy : '-date' | limitTo:cmdLimit"
+            <tr ng-repeat="cmd in activityFeed.commands | orderBy : '-date' | limitTo:settings.pageLimit:settings.offset"
                 ng-show="!isEmpty(cmd) || !hideEmpty">
                 <td align="left" ng-class="{'hide-border-top':$first}">
                     <span ng-if="cmd.import_source == 'report'">
@@ -67,5 +67,14 @@
             </tr>
             </tbody>
         </table>
+
+        <simple-pagination ng-if="isExpanded == true"
+            current-page="settings.currentPage"
+            offset="settings.offset"
+            page-limit="settings.pageLimit"
+            page-limits="settings.pageLimits"
+            total="activityFeed.commands.length">
+        </simple-pagination>
+
     </div>
 </article>

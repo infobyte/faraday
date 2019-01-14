@@ -14,6 +14,14 @@ angular.module('faradayApp')
 
                 // Get last 15 commands
                 var init = function () {
+
+                    $scope.settings = {
+                        currentPage: 0,
+                        offset: 0,
+                        pageLimit: 5,
+                        pageLimits: ['3', '5', '10', '20', '30', '50', '80', '100']
+                    };
+
                     if ($routeParams.wsId !== undefined) {
                         $scope.workspace = $routeParams.wsId;
 
@@ -38,7 +46,7 @@ angular.module('faradayApp')
                 };
 
                 var collapse = function () {
-                    $scope.cmdLimit = 5;
+                    $scope.settings.pageLimit = 5;
                     $scope.isExpanded = false;
                     $scope.hideEmpty = false;
                     angular.element('#first-row-panel').css('display', 'inherit');
@@ -46,7 +54,7 @@ angular.module('faradayApp')
                 };
 
                 var expand = function () {
-                    $scope.cmdLimit = 15; // Should be a constant
+                    $scope.settings.pageLimit =  15;
                     $scope.isExpanded = true;
                     angular.element('#first-row-panel').css('display', 'none');
                     angular.element('#activities-container-row').removeClass('mt-md');

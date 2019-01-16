@@ -105,7 +105,7 @@ class VulnerabilitySchema(AutoSchema):
     policyviolations = fields.List(fields.String,
                                    attribute='policy_violations')
     refs = fields.List(fields.String(), attribute='references')
-    issuetracker = fields.Method(serialize='get_issuetracker')
+    issuetracker = fields.Method(serialize='get_issuetracker', dump_only=True)
     parent = fields.Method(serialize='get_parent', deserialize='load_parent', required=True)
     parent_type = MutableField(fields.Method('get_parent_type'),
                                fields.String(),

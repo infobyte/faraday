@@ -24,6 +24,7 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
 
     def test_get_list_backwards_compatibility(self, test_client, session, second_workspace):
         cred = self.factory.create(workspace=second_workspace)
+        session.add(cred)
         session.commit()
         res = test_client.get(self.url())
         assert res.status_code == 200

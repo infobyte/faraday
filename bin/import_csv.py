@@ -261,7 +261,7 @@ def main(workspace="", args=None, parser=None):
                     try:
                         models.create_host(WORKSPACE, host)
                     except Exception as ex:
-                        import ipdb; ipdb.set_trace()
+                        print(ex)
                 host = models.get_host(WORKSPACE, ip=host.getName())
 
             if service is not None:

@@ -25,5 +25,16 @@ rules = [
         'object': "regex=^MS17-010",
         'conditions': ["creator=Nessus"],
         'actions': ["--UPDATE:refs=https://docs.microsoft.com/en-us/security-updates/securitybulletins/2017/ms17-010"]
+    },
+
+    {
+        'id': 'APPLY_MS_DYNAMIC_REFS',
+        'model': 'Vulnerability',
+        'object': "regex=^{{tag}}",
+        'conditions': ["creator=Nessus"],
+        'actions': ["--UPDATE:refs=https://docs.microsoft.com/en-us/security-updates/securitybulletins/{{year}}/{{tag}}"],
+        'values': [{'tag': 'ms17-010', 'year': '2017'}, {'tag': 'ms18-010', 'year': '2018'}]
     }
+
+
 ]

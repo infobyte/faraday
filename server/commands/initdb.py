@@ -12,7 +12,6 @@ import os
 import sys
 import click
 import psycopg2
-from __future__ import input
 from future.builtins import range # __future__
 from random import SystemRandom
 from tempfile import TemporaryFile

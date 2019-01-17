@@ -16,7 +16,7 @@ angular.module('faradayApp')
 
         var public_properties = [ 
             'method', 'params', 'path', 'pname', 'query',
-            'request', 'response', 'website'
+            'request', 'response', 'website', 'status_code'
         ];
 
         WebVuln.prototype = Object.create(Vuln.prototype);

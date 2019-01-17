@@ -315,7 +315,7 @@
                             </div><!-- .form-group -->
                         </div>
 
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="tab-pane-header">Path</div>
                             <div class="form-group">
                                 <label class="sr-only control-label" for="vuln-path">Path</label>
@@ -324,7 +324,16 @@
                             </div><!-- .form-group -->
                         </div>
 
-                        <div class="col-md-4">
+                        <div class="col-md-2">
+                            <div class="tab-pane-header">Status code</div>
+                            <div class="form-group">
+                                <label class="sr-only control-label" for="vuln-path">Status code</label>
+                                <input type="text" class="form-control" id="vuln-status-code" placeholder="Status code"
+                                       ng-model="modal.data.status_code"/>
+                            </div><!-- .form-group -->
+                        </div>
+
+                        <div class="col-md-3">
                             <div class="tab-pane-header">Query</div>
                             <div class="form-group">
                                 <label class="sr-only control-label" for="vuln-query">Query</label>

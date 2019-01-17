@@ -12,10 +12,12 @@ angular.module('faradayApp').
                 this.cwe = "";
                 this.description = "";
                 this.desc = "";
+                this.data = "";
                 this.exploitation = "";
                 this.name = "";
                 this.references = [];
                 this.refs = [];
+                this.data = "";
                 this.resolution = "";
                 this.impact =  {
                     accountability: false,
@@ -36,7 +38,7 @@ angular.module('faradayApp').
             VulnModel.prototype = {
 
                 public_properties: ['exploitation', 'references', 'name', 'resolution', 'cwe', 'description',
-                                    'desc', 'id', 'refs', 'impact', 'easeofresolution', 'policyviolations'],
+                                    'desc', 'data', 'id', 'refs', 'impact', 'easeofresolution', 'policyviolations'],
 
                 set: function(data) {
                     var self = this;

@@ -462,11 +462,14 @@
                 </div>
 
                  <div id="tab-custom-fields" class="container tab-pane-container tab-pane fade"><br>
-                    <div class="col-md-12 margin-bottom-15px">
+                     <div ng-if="modal.customFields.length === 0" class="no-info-overlay" style="margin-bottom: 15px;">
+                            <p class="no-info-text">No custom fields found yet.</p>
+                     </div>
+                     <div class="col-md-12 margin-bottom-15px">
                         <div class="col-md-12" ng-repeat="cf in modal.customFields | orderBy : 'field_order'">
                             <custom-field field="{{cf}}"></custom-field>
                         </div>
-                </div>
+                     </div>
             </div>
         </div>
 

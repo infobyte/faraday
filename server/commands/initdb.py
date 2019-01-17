@@ -240,7 +240,7 @@ class InitDB():
             postgres_command = []
 
         print('Creating database {0}'.format(database_name))
-        command = postgres_command + ['createdb', '-O', username, database_name]
+        command = postgres_command + ['createdb', '-E', 'utf8', '-O', username, database_name]
         p = Popen(command, stderr=psql_log_file, stdout=psql_log_file, cwd='/tmp')
         p.wait()
         return_code = p.returncode

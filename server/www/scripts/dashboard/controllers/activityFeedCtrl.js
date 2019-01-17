@@ -45,7 +45,7 @@ angular.module('faradayApp')
                 var collapse = function () {
                     $scope.settings.pageLimit = 5;
                     $scope.isExpanded = false;
-                    $scope.hideEmpty = false;
+                    $scope.hideEmpty = true;
                     angular.element('#first-row-panel').css('display', 'inherit');
                     angular.element('#activities-container-row').addClass('mt-md');
                 };

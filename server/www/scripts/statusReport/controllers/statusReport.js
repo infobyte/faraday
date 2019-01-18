@@ -129,6 +129,7 @@ angular.module("faradayApp")
                 $scope.gridApi.core.on.rowsRendered($scope, function() {
                     resizeGrid();
                     recalculateLastVisibleColSize();
+                    selectRowsByCookie();
                 });
 
                 $scope.gridApi.colResizable.on.columnSizeChanged($scope, function (colDef, deltaChange) {
@@ -279,8 +280,23 @@ angular.module("faradayApp")
             angular.element($window).bind("resize", function () {
                 resizeGrid();
             });
+
+            $cookies.remove("selectedVulns");
         };
 
+
+        var selectRowsByCookie = function () {
+            var selectedVulns = $cookies.getObject("selectedVulns");
+            if (selectedVulns !== undefined) {
+               for (var i = 0; i < selectedVulns.length; i++){
+                   for (var j = 0; j < $scope.gridOptions.data.length;j++){
+                       if (selectedVulns[i] === $scope.gridOptions.data[j]._id){
+                           $scope.gridApi.selection.selectRow($scope.gridOptions.data[j]);
+                       }
+                   }
+                }
+            }
+        };
 
         var loadCustomFields = function () {
             var deferred = $q.defer();
@@ -851,10 +867,11 @@ angular.module("faradayApp")
                 resolve: resolve
             });
             modal.result.then(function(data) {
+                var selectedVulns = [];
                 $scope.getCurrentSelection().forEach(function(vuln) {
                     obj = {};
                     obj[property] = data;
-
+                    selectedVulns.push(vuln._id);
                     if (opts.callback != undefined){
                         obj = opts.callback(vuln, data);
                     }
@@ -866,6 +883,9 @@ angular.module("faradayApp")
                         console.log("Error updating vuln " + vuln._id + ": " + errorMsg);
                     });
                 });
+
+                // Storage in cookies
+                $cookies.putObject("selectedVulns", selectedVulns);
             });
         }
 

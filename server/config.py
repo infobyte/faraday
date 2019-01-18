@@ -6,7 +6,10 @@ from __future__ import absolute_import
 import os
 import shutil
 import errno
-import ConfigParser
+try:
+    import ConfigParser
+except ImportError:
+    import configparser as ConfigParser
 
 from logging import (
     DEBUG,
@@ -170,6 +173,7 @@ class SSLConfigObject(ConfigSection):
         self.certificate = None
         self.keyfile = None
         self.port = None
+        self.enabled = False
 
 
 class StorageConfigObject(ConfigSection):

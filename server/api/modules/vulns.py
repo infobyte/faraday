@@ -14,19 +14,18 @@ from flask import Blueprint
 from flask_classful import route
 from flask_restless.search import search
 from marshmallow import Schema, fields, post_load, ValidationError
-from marshmallow.validate import OneOf, Length
+from marshmallow.validate import OneOf
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
 from sqlalchemy.orm.exc import NoResultFound
-from psycopg2 import DataError
+
 from depot.manager import DepotManager
 from server.api.base import (
     AutoSchema,
-    InvalidUsage,
+    FilterAlchemyMixin,
     FilterSetMeta,
     PaginatedMixin,
-    FilterAlchemyMixin,
     ReadWriteWorkspacedView,
-)
+    InvalidUsage)
 from server.fields import FaradayUploadedFile
 from server.models import (
     db,
@@ -44,10 +43,11 @@ from server.utils.database import get_or_create
 from server.api.modules.services import ServiceSchema
 from server.schemas import (
     MutableField,
-    PrimaryKeyRelatedField,
-    SelfNestedField,
     SeverityField,
     MetadataSchema,
+    SelfNestedField,
+    FaradayCustomField,
+    PrimaryKeyRelatedField,
 )
 
 vulns_api = Blueprint('vulns_api', __name__)
@@ -134,6 +134,7 @@ class VulnerabilitySchema(AutoSchema):
     metadata = SelfNestedField(CustomMetadataSchema())
     date = fields.DateTime(attribute='create_date',
                            dump_only=True)  # This is only used for sorting
+    custom_fields = FaradayCustomField(table_name='vulnerability', attribute='custom_fields')
 
     class Meta:
         model = Vulnerability
@@ -146,7 +147,8 @@ class VulnerabilitySchema(AutoSchema):
             'desc', 'impact', 'confirmed', 'name',
             'service', 'obj_id', 'type', 'policyviolations',
             '_attachments',
-            'target', 'host_os', 'resolution', 'metadata')
+            'target', 'host_os', 'resolution', 'metadata',
+            'custom_fields')
 
     def get_type(self, obj):
         return obj.__class__.__name__
@@ -263,7 +265,8 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'service', 'obj_id', 'type', 'policyviolations',
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
-            'status_code')
+            'status_code', 'custom_fields'
+        )
 
 
 # Use this override for filterset fields that filter by en exact match by
@@ -306,6 +309,7 @@ class ServiceFilter(Filter):
                 alias.name == value
         )
 
+
 class HostnamesFilter(Filter):
     def filter(self, query, model, attr, value):
         alias = aliased(Hostname, name='hostname_filter')
@@ -323,6 +327,7 @@ class HostnamesFilter(Filter):
 
         query = service_hostnames_query.union(host_hostnames_query)
         return query
+
 
 class CustomILike(operators.Operator):
     """A filter operator that puts a % in the beggining and in the
@@ -379,6 +384,7 @@ class VulnerabilityFilterSet(FilterSet):
         validate=OneOf(Vulnerability.STATUSES + ['opened'])
     ))
     hostnames = HostnamesFilter(fields.Str())
+    confirmed = Filter(fields.Boolean())
 
     def filter(self):
         """Generate a filtered query from request parameters.
@@ -568,7 +574,8 @@ class VulnerabilityView(PaginatedMixin,
     @route('/<vuln_id>/attachment/', methods=['POST'])
     def post_attachment(self, workspace_name, vuln_id):
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
-            Workspace).filter(VulnerabilityGeneric.id == vuln_id, Workspace.name == workspace_name)
+            Workspace).filter(VulnerabilityGeneric.id == vuln_id,
+                                Workspace.name == workspace_name).first()
 
         if vuln_workspace_check:
             if 'file' not in request.files:
@@ -644,6 +651,27 @@ class VulnerabilityView(PaginatedMixin,
                     as_attachment=as_attachment,
                     mimetype=depot_file.content_type
                 )
+            else:
+                flask.abort(404, "File not found")
+        else:
+            flask.abort(404, "Vulnerability not found")
+
+    @route('/<vuln_id>/attachment/<attachment_filename>/', methods=['DELETE'])
+    def delete_attachment(self, workspace_name, vuln_id, attachment_filename):
+        vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
+            Workspace).filter(
+            VulnerabilityGeneric.id == vuln_id, Workspace.name == workspace_name).first()
+
+        if vuln_workspace_check:
+            file_obj = db.session.query(File).filter_by(object_type='vulnerability',
+                                                        object_id=vuln_id,
+                                                        filename=attachment_filename).first()
+            if file_obj:
+                db.session.delete(file_obj)
+                db.session.commit()
+                depot = DepotManager.get()
+                depot.delete(file_obj.content.get('file_id'))
+                return flask.jsonify({'message': 'Attachment was successfully deleted'})
             else:
                 flask.abort(404, "File not found")
         else:

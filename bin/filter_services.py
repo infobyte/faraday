@@ -67,11 +67,11 @@ def main(workspace='', args=None, parser=None):
                              Fore.RESET)
 
     if not port_list and not parsed_args.no_filter:
-        print "Empty filter set."
+        print("Empty filter set.")
         return 1, None
 
     if parsed_args.additional_info and not parsed_args.no_filter:
-        print 'Filtering services for ports: ' + ', '.join(map(str, sorted(port_list)))
+        print('Filtering services for ports: ' + ', '.join(map(str, sorted(port_list))))
 
     columns = filter(None, parsed_args.columns.split(','))
 
@@ -97,21 +97,21 @@ def main(workspace='', args=None, parser=None):
                 lines += [column_data]
 
     if not lines:
-        print "No services running on that port found."
+        print("No services running on that port found.")
         return 0, None
 
     col_width = max(len(word) for row in lines for word in row) + 2
 
     if parsed_args.additional_info:
-        print ''.join(col.ljust(col_width) for col in columns)
-        print '-' * (col_width * len(columns))
+        print(''.join(col.ljust(col_width) for col in columns))
+        print('-' * (col_width * len(columns)))
 
     if parsed_args.sorted:
         # Compare lines using the first column (IP)
         for row in sorted(lines, cmp=lambda l1, l2: cmp(l1[0], l2[0])):
-            print  "".join(word.ljust(col_width) for word in row)
+            print("".join(word.ljust(col_width) for word in row))
     else:
         for row in lines:
-            print "".join(word.ljust(col_width) for word in row)
+            print("".join(word.ljust(col_width) for word in row))
 
     return 0, None

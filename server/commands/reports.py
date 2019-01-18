@@ -63,8 +63,8 @@ def process_workspaces(mappers_manager, plugin_manager, query, disable_polling):
         report_managers.append(report_manager)
         report_manager.start()
 
-    #for report_manager in report_managers:
-    #    report_manager.join()
+    for report_manager in report_managers:
+        report_manager.stop()
 
-    #for controller in controllers:
-    #    controller.join()
+    for controller in controllers:
+        controller.stop()

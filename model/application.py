@@ -12,8 +12,10 @@ import json
 import threading
 from json import loads
 from time import sleep
-from Queue import Queue
-
+try:
+    from Queue import Queue
+except ImportError:
+    from queue import Queue
 import requests
 
 from model.controller import ModelController
@@ -181,10 +183,10 @@ class MainApplication(object):
             exit_code = self.app.run(self.args)
 
         except Exception as exception:
-            print "There was an error while starting Faraday:"
-            print "*" * 3,
-            print exception, # instead of traceback.print_exc()
-            print "*" * 3
+            print("There was an error while starting Faraday:")
+            print("*" * 3)
+            print(exception) # instead of traceback.print_exc()
+            print("*" * 3)
             exit_code = -1
 
         finally:

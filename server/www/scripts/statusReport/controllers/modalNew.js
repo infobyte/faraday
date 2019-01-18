@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('modalNewVulnCtrl',
-        ['$modalInstance', '$filter', '$upload', 'EASEOFRESOLUTION', 'commonsFact', 'severities', 'workspace', 'targetFact', 'vulnModelsManager', 'vulnsManager',
-        function($modalInstance, $filter, $upload, EASEOFRESOLUTION, commonsFact, severities, workspace, targetFact, vulnModelsManager, vulnsManager) {
+        ['$modalInstance', '$filter', '$upload', 'EASEOFRESOLUTION', 'commonsFact', 'severities', 'workspace', 'targetFact', 'vulnModelsManager', 'vulnsManager', 'customFields',
+        function($modalInstance, $filter, $upload, EASEOFRESOLUTION, commonsFact, severities, workspace, targetFact, vulnModelsManager, vulnsManager, customFields) {
 
         var vm = this;
 
@@ -47,6 +47,8 @@ angular.module('faradayApp')
 
             vm.host_parents = false;
 
+            vm.customFields = customFields;
+
             vm.cweList = [];
             vulnModelsManager.get().then(function(data) {
                 vm.cweList = data;
@@ -85,8 +87,13 @@ angular.module('faradayApp')
                 response: "",
                 severity: undefined,
                 type: "Vulnerability",
-                website: ""
+                website: "",
+                custom_fields:{}
             };
+
+            customFields.forEach(function(cf) {
+                vm.data.custom_fields[cf.field_display_name] = null;
+            });
 
             vm.targets = [];
             vm.target_filter = "";
@@ -238,6 +245,41 @@ angular.module('faradayApp')
             });
             vm.data.policyviolations = policyviolations;
         }
+
+        vm.updateBtnSeverityColor = function (severity) {
+            var color = undefined;
+            switch (severity) {
+                case "unclassified":
+                    color = '#999999';
+                    break;
+                case "info":
+                    color = '#2e97bd';
+                    break;
+                case "low":
+                    color = '#a1ce31';
+                    break;
+                case "med":
+                    color = '#dfbf35';
+                    break;
+                case "high":
+                    color = '#df3936';
+                    break;
+                case "critical":
+                    color = '#932ebe';
+                    break;
+                default:
+                    color = '#AAAAAA';
+                    break;
+            }
+
+            angular.element('#btn-chg-severity').css('background-color', color);
+            angular.element('#caret-chg-severity').css('background-color', color);
+        };
+
+        vm.changeSeverity = function (severity) {
+            vm.data.severity = severity;
+            vm.updateBtnSeverityColor(severity);
+        };
 
         init();
     }]);

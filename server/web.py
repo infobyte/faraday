@@ -9,7 +9,6 @@ from signal import SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM, SIG_DFL, signal
 
 import twisted.web
 from twisted.web.resource import Resource, ForbiddenResource
-
 # Ugly hack to make "flask shell" work. It works because when running via flask
 # shell, __file__ will be server/web.py instead of faraday-server.py
 if os.path.split(os.path.dirname(__file__))[-1] == 'server':
@@ -140,10 +139,10 @@ class WebServer(object):
 
     def run(self):
         def signal_handler(*args):
+            logger.info('Received SIGTERM, shutting down.')
             logger.info("Stopping threads, please wait...")
             # teardown()
             self.raw_report_processor.stop()
-            reactor.stop()
 
         site = twisted.web.server.Site(self.__root_resource)
         if self.__ssl_enabled:

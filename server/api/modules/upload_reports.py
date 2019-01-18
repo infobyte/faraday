@@ -86,6 +86,7 @@ class RawReportProcessor(Thread):
         self._stop = True
 
     def run(self):
+        logger.info('Tool report processor started')
         while not self._stop:
             try:
 
@@ -144,9 +145,6 @@ def file_upload(workspace=None):
         abort(403)
 
     report_file = request.files['file']
-
-    if report_file.filename == '':
-        abort(400)
 
     if report_file:
 

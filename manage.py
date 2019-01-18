@@ -7,10 +7,11 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 import re
+import sys
 
 import click
 import requests
-import sys
+from alembic.config import CommandLine
 
 import server.config
 from persistence.server.server import _conf, FARADAY_UP, SERVER_URL
@@ -20,6 +21,8 @@ from server.commands.app_urls import show_all_urls
 from server.commands.reports import import_external_reports
 from server.commands import status_check as status_check_functions
 from server.commands import change_password as change_pass
+from server.commands.custom_fields import add_custom_field_main, delete_custom_field_main
+from server.commands import support as support_zip
 from server.models import db, User
 from server.importer import ImportCouchDB
 
@@ -120,7 +123,7 @@ def status_check(check_postgresql, check_faraday, check_dependencies, check_conf
     if check_postgresql:
         # exit_code was created for Faraday automation-testing purposes
         exit_code = status_check_functions.print_postgresql_status()
-        status_check_functions.print_postgresql_locks_status()
+        status_check_functions.print_postgresql_other_status()
         selected = True
 
     if check_faraday:
@@ -196,6 +199,39 @@ def create_tables():
             'Tables created successfully!',
             fg='green', bold=True))
 
+@click.command(help="Generates a .zip file with technical information")
+def support():
+    support_zip.all_for_support()
+
+
+@click.command(
+        context_settings={"ignore_unknown_options": True},
+        help='Migrates database schema. If the target revision '
+        'is not specified, use "head" when upgrading and "-1" when '
+        'downgrading')
+@click.option(
+        '--downgrade',
+        help="Perform a downgrade migration instead of an upgrade one",
+        is_flag=True)
+@click.argument(
+        'revision',
+        required=False,
+        )
+def migrate(downgrade, revision):
+    revision = revision or ("-1" if downgrade else "head")
+    action = "downgrade" if downgrade else "upgrade"
+    CommandLine(prog=None).main(argv=[action, revision])
+
+
+@click.command(help='Custom field wizard')
+def add_custom_field():
+    add_custom_field_main()
+
+
+@click.command(help='Custom field delete wizard')
+def delete_custom_field():
+    delete_custom_field_main()
+
 
 cli.add_command(process_reports)
 cli.add_command(show_urls)
@@ -207,7 +243,10 @@ cli.add_command(sql_shell)
 cli.add_command(status_check)
 cli.add_command(create_tables)
 cli.add_command(change_password)
-
+cli.add_command(migrate)
+cli.add_command(add_custom_field)
+cli.add_command(delete_custom_field)
+cli.add_command(support)
 
 if __name__ == '__main__':
     cli()

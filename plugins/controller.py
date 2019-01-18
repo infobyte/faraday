@@ -145,6 +145,7 @@ class PluginController(Thread):
         return self._plugins
 
     def stop(self):
+        self.plugin_process.stop()
         self.stop = True
 
     def processOutput(self, plugin, output, command, isReport=False):
@@ -162,12 +163,12 @@ class PluginController(Thread):
         output_queue = JoinableQueue()
         plugin.set_actions_queue(self.pending_actions)
 
-        plugin_process = PluginProcess(
+        self.plugin_process = PluginProcess(
             plugin, output_queue, isReport)
 
         getLogger(self).debug(
             "Created plugin_process (%d) for plugin instance (%d)" %
-            (id(plugin_process), id(plugin)))
+            (id(self.plugin_process), id(plugin)))
 
         self.pending_actions.put((Modelactions.PLUGINSTART, plugin.id, command.getID()))
         output_queue.put((output, command.getID()))
@@ -182,7 +183,7 @@ class PluginController(Thread):
         )
         plugin_commiter.start()
         # This process is stopped when plugin commiter joins output queue
-        plugin_process.start()
+        self.plugin_process.start()
 
     def _processAction(self, action, parameters):
         """
@@ -256,7 +257,6 @@ class PluginController(Thread):
         return None, None
 
     def onCommandFinished(self, pid, exit_code, term_output):
-
         if pid not in self._active_plugins.keys():
             return False
         if exit_code != 0:
@@ -273,24 +273,32 @@ class PluginController(Thread):
         return True
 
     def processReport(self, plugin, filepath, ws_name=None):
+
         if not ws_name:
             ws_name = model.api.getActiveWorkspace().name
+
         cmd_info = CommandRunInformation(
             **{'workspace': ws_name,
-                'itime': time.time(),
-                'import_source': 'report',
-                'command': plugin,
-                'params': filepath,
+               'itime': time.time(),
+               'import_source': 'report',
+               'command': plugin,
+               'params': filepath,
             })
+
         self._mapper_manager.createMappers(ws_name)
         command_id = self._mapper_manager.save(cmd_info)
         cmd_info.setID(command_id)
+
         if plugin in self._plugins:
             logger.info('Processing report with plugin {0}'.format(plugin))
             self._plugins[plugin].workspace = ws_name
             with open(filepath, 'rb') as output:
                 self.processOutput(self._plugins[plugin], output.read(), cmd_info, True)
             return command_id
+
+        # Plugin to process this report not found, update duration of plugin process
+        cmd_info.duration = time.time() - cmd_info.itime
+        self._mapper_manager.update(cmd_info)
         return False
 
     def clearActivePlugins(self):

@@ -52,7 +52,7 @@ class InitDB():
             config.get('database', 'connection_string')
             reconfigure = None
             while not reconfigure:
-                reconfigure = input('Database section {yellow} already found{white}. Do you want to reconfigure database? (yes/no) '.format(yellow=Fore.YELLOW, white=Fore.WHITE))
+                reconfigure = raw_input('Database section {yellow} already found{white}. Do you want to reconfigure database? (yes/no) '.format(yellow=Fore.YELLOW, white=Fore.WHITE))
                 if reconfigure.lower() == 'no':
                     return False
                 elif reconfigure.lower() == 'yes':
@@ -154,7 +154,7 @@ class InitDB():
         conf.saveConfig()
 
     def _configure_existing_postgres_user(self):
-        username = input('Please enter the postgresql username: ')
+        username = raw_input('Please enter the postgresql username: ')
         password = getpass.getpass('Please enter the postgresql password: ')
 
         return username, password

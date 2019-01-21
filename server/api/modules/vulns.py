@@ -12,6 +12,7 @@ from filteralchemy import Filter, FilterSet, operators
 from flask import request
 from flask import Blueprint
 from flask_classful import route
+from flask_restless.search import search
 from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer

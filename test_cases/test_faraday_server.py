@@ -24,7 +24,7 @@ def test_start_and_kill_faraday_server():
 
     server_script = os.path.join(current_path, '..', 'faraday-server.py')
     command = ['/usr/bin/env', 'python2.7', server_script, '--port', '{0}'.format(server_port)]
-    subproc = subprocess.Popen(command)
+    subproc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     start = datetime.now()
     while subproc.returncode is None:
         now = datetime.now()
@@ -38,5 +38,5 @@ def test_start_and_kill_faraday_server():
         delta = now - start
         subproc.poll()
         time.sleep(0.1)
-
-    assert subproc.returncode == 0
+    out, err = subproc.communicate()
+    assert subproc.returncode == 0, err

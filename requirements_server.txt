@@ -22,8 +22,7 @@ SQLAlchemy>=1.2.0b2
 sqlalchemy_schemadisplay>=1.3
 tqdm>=4.15.0
 twisted>=18.7.0
-#webargs==5.0.0 fails with Python 2
-webargs==4.4.1
+webargs>=5.1.0
 marshmallow-sqlalchemy
 git+https://github.com/infobyte/filteralchemy@dev#egg=filteralchemy
 filedepot>=0.5.0

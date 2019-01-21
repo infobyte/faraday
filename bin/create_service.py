@@ -54,7 +54,7 @@ def main(workspace='', args=None, parser=None):
                 models.create_service(workspace, obj)
                 old = models.get_service(workspace, **params)
         else:
-            print "A service with ID %s already exists!" % old.getID()
+            print("A service with ID %s already exists!" % old.getID())
 
         res_ids.append(old.getID())
 

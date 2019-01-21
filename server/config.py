@@ -6,7 +6,10 @@ from __future__ import absolute_import
 import os
 import shutil
 import errno
-import ConfigParser
+try:
+    import ConfigParser
+except ImportError:
+    import configparser as ConfigParser
 
 from logging import (
     DEBUG,

@@ -9,8 +9,10 @@ See the file 'doc/LICENSE' for the license information
 import json
 import logging
 import threading
-from Queue import Queue, Empty
-
+try:
+    from Queue import Queue, Empty
+except ImportError:
+    from queue import Queue, Empty
 import requests
 import websocket
 

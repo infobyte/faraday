@@ -12,6 +12,7 @@ import os
 import sys
 import click
 import psycopg2
+from future.builtins import range # __future__
 from random import SystemRandom
 from tempfile import TemporaryFile
 from subprocess import Popen, PIPE
@@ -175,7 +176,7 @@ class InitDB():
 
     def generate_random_pw(self, pwlen):
         rng = SystemRandom()
-        return "".join([rng.choice(string.ascii_letters + string.digits) for _ in xrange(pwlen)])
+        return "".join([rng.choice(string.ascii_letters + string.digits) for _ in range(pwlen)])
 
     def _configure_new_postgres_user(self, psql_log_file):
         """

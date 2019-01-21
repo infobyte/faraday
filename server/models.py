@@ -1493,6 +1493,7 @@ class User(db.Model, UserMixin):
 
     __tablename__ = 'faraday_user'
     ROLES = ['admin', 'pentester', 'client']
+    OTP_STATES = ["disabled", "requested", "confirmed"]
 
     id = Column(Integer, primary_key=True)
     username = NonBlankColumn(String(255), unique=True)
@@ -1509,6 +1510,11 @@ class User(db.Model, UserMixin):
     confirmed_at = Column(DateTime())
     role = Column(Enum(*ROLES, name='user_roles'),
                   nullable=False, default='client')
+    _otp_secret = Column(
+            String(16),
+            name="otp_secret", nullable=True)
+    state_otp = Column(Enum(*OTP_STATES, name='user_otp_states'), nullable=False, default="disabled")
+
     # TODO: add  many to many relationship to add permission to workspace
 
     workspace_permission_instances = relationship(

@@ -103,6 +103,10 @@ angular.module("faradayApp")
                     }
                 });
 
+                $scope.gridApi.selection.on.rowFocusChanged( $scope, function ( rowChanged ) {
+                    $cookies.remove("selectedVulns");
+                });
+
                 $scope.gridApi.pagination.on.paginationChanged($scope, function (pageNumber, pageSize) {
                     // Save new page size in cookie
                     $cookies.put("pageSize", pageSize);

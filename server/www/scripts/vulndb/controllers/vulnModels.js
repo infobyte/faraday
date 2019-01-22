@@ -127,6 +127,8 @@ angular.module('faradayApp')
                                 var counter = 0;
                                 $scope.loading = true;
                                 datas.forEach(function(data) {
+                                    if (!data.easeofresolution || data.easeofresolution === "")
+                                         data.easeofresolution = null;
                                     $scope.insert(data).then(function() {
                                         counter = counter + 1;
                                         if (length == counter) {

@@ -1160,7 +1160,7 @@ class PolicyViolationTemplateVulnerabilityAssociation(db.Model):
     policy_violation_id = Column(Integer, ForeignKey('policy_violation_template.id'), primary_key=True)
 
     policy_violation = relationship("PolicyViolationTemplate", backref="policy_violation_template_associations", foreign_keys=[policy_violation_id])
-    vulnerability = relationship("VulnerabilityTemplate", backref="policy_violation_template_vulnerability_associations",
+    vulnerability = relationship("VulnerabilityTemplate", backref=backref("policy_violation_template_vulnerability_associations", cascade="all, delete-orphan"),
                                  foreign_keys=[vulnerability_id])
 
 

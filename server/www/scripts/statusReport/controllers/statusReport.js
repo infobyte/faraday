@@ -208,6 +208,7 @@ angular.module("faradayApp")
                 "status":           true,
                 "website":          false,
                 "path":             false,
+                "status_code":      false,
                 "request":          false,
                 "refs":             false,
                 "evidence":         false,
@@ -241,6 +242,7 @@ angular.module("faradayApp")
                     "status":           "100",
                     "website":          "90",
                     "path":             "90",
+                    "status_code":      "90",
                     "request":          "90",
                     "refs":             "20",
                     "_attachments":     "100",
@@ -425,6 +427,12 @@ angular.module("faradayApp")
                 headerCellTemplate: header,
                 sort: getColumnSort('path'),
                 visible: $scope.columns["path"],
+            });
+            $scope.gridOptions.columnDefs.push({ name : 'status_code',
+                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/defaultcolumn.html',
+                headerCellTemplate: header,
+                sort: getColumnSort('status_code'),
+                visible: $scope.columns["status_code"],
             });
             $scope.gridOptions.columnDefs.push({ name : 'request',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/resolutioncolumn.html',

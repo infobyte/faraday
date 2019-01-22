@@ -1,0 +1,1 @@
+Added status_code field to web vulnerability

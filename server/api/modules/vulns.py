@@ -279,6 +279,11 @@ class IDFilter(Filter):
         return query.filter(model.id == value)
 
 
+class StatusCodeFilter(Filter):
+    def filter(self, query, model, attr, value):
+        return query.filter(model.status_code == value)
+
+
 class TargetFilter(Filter):
     def filter(self, query, model, attr, value):
         return query.filter(model.target_host_ip.ilike("%" + value + "%"))
@@ -378,6 +383,7 @@ class VulnerabilityFilterSet(FilterSet):
         allow_none=True))
     pname = Filter(fields.String(attribute='parameter_name'))
     query = Filter(fields.String(attribute='query_string'))
+    status_code = StatusCodeFilter(fields.Int())
     params = Filter(fields.String(attribute='parameters'))
     status = Filter(fields.Function(
         deserialize=lambda val: 'open' if val == 'opened' else val,

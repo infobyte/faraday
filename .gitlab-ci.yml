@@ -12,10 +12,10 @@ install:
     image: ubuntu
     stage: install
     script:
-        - sudo apt-get update -qy
-        - sudo apt-get -y install build-essential ipython python-setuptools python-pip python-dev pkg-config libssl-dev libffi-dev libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev postgresql sudo libsasl2-dev libldap2-dev
-        - sudo apt-get install -y python-dev python-pip
-        - sudo pip install virtualenv
+        - apt-get update -qy
+        - apt-get -y install build-essential ipython python-setuptools python-pip python-dev pkg-config libssl-dev libffi-dev libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev postgresql sudo libsasl2-dev libldap2-dev
+        - apt-get install -y python-dev python-pip
+        - pip install virtualenv
 
 test:
     image: ubuntu

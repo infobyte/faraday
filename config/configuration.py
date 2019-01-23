@@ -658,7 +658,7 @@ def getInstanceConfiguration():
 
         faraday_server_config = os.path.expanduser("~/.faraday/config/server.ini")
         if not os.path.isfile(faraday_server_config):
-            shutil.copy(DEFAULT_SERVER_INI, faraday_faraday_config)
+            shutil.copy(DEFAULT_SERVER_INI, faraday_server_config)
 
         faraday_user_config = os.path.expanduser("~/.faraday/config/user.xml")
         if not os.path.isfile(faraday_user_config):

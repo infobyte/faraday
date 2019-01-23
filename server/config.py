@@ -128,6 +128,8 @@ class ConfigSection(object):
             section = ssl
         elif section_name == 'storage':
             section = storage
+        else:
+            return
         section.parse(__parser)
 
 

@@ -169,7 +169,7 @@ def validate_email(ctx, param, value):
 @click.option('--email', prompt=True, callback=validate_email)
 @click.option('--password', prompt=True, hide_input=True,
               confirmation_prompt=True)
-def createsuperuser(username, email, password):
+def create_superuser(username, email, password):
     with app.app_context():
         if db.session.query(User).filter_by(active=True).count() > 0:
             print("Can't create more users. The comumunity edition only allows one user. Please contact support for further information.")
@@ -238,7 +238,7 @@ cli.add_command(show_urls)
 cli.add_command(initdb)
 cli.add_command(import_from_couchdb)
 cli.add_command(database_schema)
-cli.add_command(createsuperuser)
+cli.add_command(create_superuser)
 cli.add_command(sql_shell)
 cli.add_command(status_check)
 cli.add_command(create_tables)

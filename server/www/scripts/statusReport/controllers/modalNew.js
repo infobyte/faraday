@@ -78,8 +78,10 @@ angular.module('faradayApp')
                 params: "",
                 parents: [],  // a tuple with (parent_id, parent_type)
                 path: "",
+                status_code: undefined,
                 pname: "",
                 policyviolations: [],
+                easeofresolution: "",
                 query: "",
                 refs: [],
                 request: "",

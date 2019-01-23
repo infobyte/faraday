@@ -3,12 +3,12 @@ stages:
     - install
     - test
 
-.init:
+init:
     stage: init
     script:
         - rm -rf faraday_venv
 
-.install:
+install:
     image: ubuntu
     stage: install
     script:
@@ -17,7 +17,7 @@ stages:
         - sudo apt-get install -y python-dev python-pip
         - sudo pip install virtualenv
 
-.test:
+test:
     image: ubuntu
     stage: test
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'

@@ -27,4 +27,4 @@ test:
         - pip install -r requirements_server.txt
         - pip install responses pytest-xdist pytest-cov
         - pip install -r requirements_dev.txt
-        - pytest test_cases -v --cov=server -n 15
+        - pytest test_cases -v --cov=server

@@ -389,6 +389,12 @@
                 </div>
 
                 <div id="tab-custom-fields" class="container tab-pane-container tab-pane fade"><br>
+                    <div ng-if="modal.customFields.length === 0" class="no-info-overlay" style="margin-bottom: 15px;">
+                            <p class="no-info-text">
+                                No custom fields were found. To create one refer to our
+                                <a href="https://github.com/infobyte/faraday/wiki/Custom-Fields" target="_blank">wiki page</a>.
+                            </p>
+                    </div>
                     <div class="col-md-12 margin-bottom-15px">
                         <div class="col-md-12" ng-repeat="cf in modal.customFields | orderBy : 'field_order'">
                         <custom-field field="{{cf}}"></custom-field>

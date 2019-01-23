@@ -20,13 +20,13 @@ install:
         - apt-get update -qy
         - apt-get -y install build-essential ipython python-setuptools python-pip python-dev pkg-config libssl-dev libffi-dev libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev postgresql sudo libsasl2-dev libldap2-dev
         - apt-get install -y python-dev python-pip
-        - pip install virtualenv
 
 test:
     image: ubuntu
     stage: test
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
+        - pip install virtualenv
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate
         - pip install -r requirements_server.txt

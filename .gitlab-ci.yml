@@ -1,0 +1,24 @@
+stages:
+    - install
+    - test
+
+.install:
+    image: ubuntu
+    stage: install
+    script:
+        - sudo apt-get update -qy
+        - sudo apt-get -y install build-essential ipython python-setuptools python-pip python-dev pkg-config libssl-dev libffi-dev libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev postgresql sudo libsasl2-dev libldap2-dev
+        - sudo apt-get install -y python-dev python-pip
+        - sudo pip install virtualenv
+
+.test:
+    image: ubuntu
+    stage: test
+    coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
+    script:
+        - virtualenv -p python2 faraday_venv
+        - source faraday_venv/bin/activate
+        - pip install -r requirements_server.txt
+        - pip install responses pytest-xdist pytest-cov
+        - pip install -r requirements_dev.txt
+        - pytest test_cases -v --cov=server -n 15

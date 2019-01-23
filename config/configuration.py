@@ -648,6 +648,9 @@ class Configuration:
 def getInstanceConfiguration():
     global the_config
     if the_config is None:
+        faraday_dir = os.path.expanduser("~/.faraday")
+        if not os.path.exists(faraday_dir):
+            os.mkdir(faraday_dir)
         config_dir = os.path.expanduser("~/.faraday/config")
         if not os.path.exists(config_dir):
             os.mkdir(config_dir)

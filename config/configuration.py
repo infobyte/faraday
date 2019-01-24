@@ -64,7 +64,7 @@ CONST_PLUGIN_SETTINGS = "plugin_settings"
 
 
 DEFAULT_XML = os.path.dirname(__file__) + "/default.xml"
-DEFAULT_SERVER_INI = os.path.join(os.path.dirname(__file__), "..", "/default.xml")
+DEFAULT_SERVER_INI = os.path.join(os.path.dirname(__file__), "..", "server", "default.ini")
 
 
 class Configuration:

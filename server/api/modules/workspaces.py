@@ -188,6 +188,9 @@ class WorkspaceView(ReadWriteView):
         self._report_ppath = os.path.join(self._report_path, "process")
         self._report_upath = os.path.join(self._report_path, "unprocessed")
 
+        if not os.path.exists(CONF.getReportPath()):
+            os.mkdir(CONF.getReportPath())
+
         if not os.path.exists(self._report_path):
             os.mkdir(self._report_path)
 

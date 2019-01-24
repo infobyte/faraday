@@ -6,14 +6,9 @@ variables:
     POSTGRES_PASSWORD: custom_pass
 
 stages:
-    - init
+    - linter
     - install
     - test
-
-init:
-    stage: init
-    script:
-        - rm -rf faraday_venv
 
 services:
     - postgres:latest

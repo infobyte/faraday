@@ -4,6 +4,12 @@ import signal
 import subprocess
 from datetime import datetime
 from server.utils import daemonize
+import server.config
+
+try:
+    import ConfigParser
+except ImportError:
+    import configparser as ConfigParser
 
 
 def test_start_and_kill_faraday_server():
@@ -21,6 +27,22 @@ def test_start_and_kill_faraday_server():
 
     if server_port > 6500:
         raise Exception('No free ports could be found')
+
+    if 'POSTGRES_DB' in os.environ:
+        # I'm on gitlab ci runner
+        # I will overwrite server.ini
+        connection_string = 'postgresql+psycopg2://{username}:{password}@localhost/{database}'.format(
+            username=os.environ['POSTGRES_USER'],
+            password=os.environ['POSTGRES_PASSWORD'],
+            database=os.environ['POSTGRES_DB'],
+        )
+        faraday_config = ConfigParser.SafeConfigParser()
+        config_path = os.path.expanduser('~/.faraday/config/server.ini')
+        faraday_config.read(config_path)
+        faraday_config.add_section('database')
+        faraday_config.set('database', 'connection_string', connection_string)
+        with open(config_path, 'w') as faraday_config_file:
+            faraday_config.write(faraday_config_file)
 
     server_script = os.path.join(current_path, '..', 'faraday-server.py')
     command = ['/usr/bin/env', 'python2.7', server_script, '--port', '{0}'.format(server_port)]

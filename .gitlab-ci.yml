@@ -32,8 +32,10 @@ test:
         - pytest test_cases -v --cov=server
 
 pylint:
+  image: ubuntu
   stage: linter
   script:
+    - apt-get update -qy
     - apt-get install -y python-dev python-pip
     - pip install pylint anybadge
     - pylint server |tee pylint.txt || true

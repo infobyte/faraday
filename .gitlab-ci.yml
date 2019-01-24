@@ -34,8 +34,9 @@ test:
 pylint:
   stage: linter
   script:
+    - apt-get install -y python-dev python-pip
     - pip install pylint anybadge
-    - pylint src |tee pylint.txt || true
+    - pylint server |tee pylint.txt || true
     - score=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' pylint.txt)
     - anybadge --label pylint --value=$score --file pylint.svg 4=red 6=orange 8=yellow 10=green
   artifacts:

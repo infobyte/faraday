@@ -6,8 +6,6 @@ variables:
     POSTGRES_PASSWORD: custom_pass
 
 stages:
-    - linter
-    - install
     - test
 
 services:
@@ -33,7 +31,7 @@ test:
 
 pylint:
   image: ubuntu
-  stage: linter
+  stage: test
   script:
     - apt-get update -qy
     - apt-get install -y python-dev python-pip

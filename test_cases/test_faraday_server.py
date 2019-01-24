@@ -39,10 +39,18 @@ def test_start_and_kill_faraday_server():
         faraday_config = ConfigParser.SafeConfigParser()
         config_path = os.path.expanduser('~/.faraday/config/server.ini')
         faraday_config.read(config_path)
-        faraday_config.add_section('database')
+        try:
+            faraday_config.add_section('database')
+        except ConfigParser.DuplicateSectionError:
+            pass
         faraday_config.set('database', 'connection_string', connection_string)
         with open(config_path, 'w') as faraday_config_file:
             faraday_config.write(faraday_config_file)
+        manage_script = os.path.join(current_path, '..', 'manage.py')
+        command = ['/usr/bin/env', 'python2.7', manage_script, 'create-tables']
+        subproc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subproc.wait()
+        assert subproc.returncode == 0, 'Create tables failed!'
 
     server_script = os.path.join(current_path, '..', 'faraday-server.py')
     command = ['/usr/bin/env', 'python2.7', server_script, '--port', '{0}'.format(server_port)]

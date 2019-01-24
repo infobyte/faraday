@@ -31,7 +31,7 @@ def test_start_and_kill_faraday_server():
     if 'POSTGRES_DB' in os.environ:
         # I'm on gitlab ci runner
         # I will overwrite server.ini
-        connection_string = 'postgresql+psycopg2://{username}:{password}@localhost/{database}'.format(
+        connection_string = 'postgresql+psycopg2://{username}:{password}@postgres/{database}'.format(
             username=os.environ['POSTGRES_USER'],
             password=os.environ['POSTGRES_PASSWORD'],
             database=os.environ['POSTGRES_DB'],
@@ -50,7 +50,8 @@ def test_start_and_kill_faraday_server():
         command = ['/usr/bin/env', 'python2.7', manage_script, 'create-tables']
         subproc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         subproc.wait()
-        assert subproc.returncode == 0, 'Create tables failed!'
+        std, err = subproc.communicate()
+        assert subproc.returncode == 0, ('Create tables failed!', std, err)
 
     server_script = os.path.join(current_path, '..', 'faraday-server.py')
     command = ['/usr/bin/env', 'python2.7', server_script, '--port', '{0}'.format(server_port)]

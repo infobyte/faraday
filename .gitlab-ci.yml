@@ -11,6 +11,15 @@ init:
     script:
         - rm -rf faraday_venv
 
+services:
+    - postgres:latest
+
+variables:
+    # Configure postgres service (https://hub.docker.com/_/postgres/)
+    POSTGRES_DB: custom_db
+    POSTGRES_USER: custom_user
+    POSTGRES_PASSWORD: custom_pass
+
 test:
     image: ubuntu
     stage: test

@@ -48,7 +48,7 @@ def test_start_and_kill_faraday_server():
             faraday_config.write(faraday_config_file)
         manage_script = os.path.join(current_path, '..', 'manage.py')
         command = ['/usr/bin/env', 'python2.7', manage_script, 'create-tables']
-        subproc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subproc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd= os.path.join(current_path, '..'))
         subproc.wait()
         std, err = subproc.communicate()
         assert subproc.returncode == 0, ('Create tables failed!', std, err)

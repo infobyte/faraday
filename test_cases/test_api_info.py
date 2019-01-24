@@ -12,7 +12,7 @@ import pytest
 class TestAPIInfoEndpoint:
 
     def test_api_info(self, test_client):
-        current_dir = os.path.dirname(os.path.realpath(__file__))
+        current_dir = os.getcwd()
         # this is a bug on the info api!
         # we require faraday to be a package since we can't import
         # from base path when our current working dir is test_cases.

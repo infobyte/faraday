@@ -14,7 +14,7 @@
                     </button>
                 </div>
                 <div class="control-wrapper control-edit">
-                    <button type="button" class="btn btn-default edit" title="{{workspaceData.readonly == true ? 'Read-only. Workspace disabled': 'Edit selected hosts'}}" ng-disabled="selectedHosts().length > 1 || workspaceData.readonly === true" ng-click="edit()">
+                    <button type="button" class="btn btn-default edit" title="{{workspaceData.readonly == true ? 'Read-only. Workspace disabled': 'Edit selected hosts'}}" ng-disabled="selectedHosts().length > 1" ng-click="edit()">
                         <img src="images/icon-toolbar-edit.svg" class="edit-icon" />
                     </button>
                 </div>

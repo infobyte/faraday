@@ -132,7 +132,7 @@
               <h3>
                   Host details
                   <span style="float:right">
-                      <a class="btn btn-sm btn-default" href="#/host/ws/{{workspace}}/hid/{{host.id}}/edit" ng-if="!editing" ng-disabled="workspaceData.readonly === true">
+                      <a class="btn btn-sm btn-default" href="#/host/ws/{{workspace}}/hid/{{host.id}}/edit" ng-if="!editing">
                           <span class="glyphicon glyphicon-pencil"></span>
                           Edit
                       </a>
@@ -141,7 +141,7 @@
                           Delete
                       </button>
                       <a class="btn btn-danger" href="#/host/ws/{{workspace}}/hid/{{host.id}}" ng-click="loadHosts()" ng-if="editing && !creating">Cancel</a>
-                      <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()" ng-if="editing">OK</button>
+                      <button class="btn btn-success" ng-disabled="form.$invalid || workspaceData.readonly == true" ng-click="ok()" ng-if="editing">OK</button>
                   </span>
               </h3>
               <div class="form-horizontal">
@@ -220,7 +220,7 @@
               <div style="float: right">
                   <a class="btn btn-danger" href="#/host/ws/{{workspace}}/hid/{{host.id}}" ng-click="loadHosts()" ng-if="editing && !creating">Cancel</a>
                   <a class="btn btn-danger" href="#/hosts/ws/{{workspace}}" ng-if="editing && creating">Cancel</a>
-                  <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()" ng-if="editing">OK</button>
+                  <button class="btn btn-success" ng-disabled="form.$invalid || workspaceData.readonly == true" ng-click="ok()" ng-if="editing">OK</button>
               </div>
           </form>
       </div>

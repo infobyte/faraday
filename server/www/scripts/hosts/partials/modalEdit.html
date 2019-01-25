@@ -80,7 +80,7 @@
     <div class="modal-footer">
         <div class="modal-button">
             <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
-            <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()">OK</button>
+            <button class="btn btn-success" ng-disabled="form.$invalid || workspace.readonly == true" ng-click="ok()">OK</button>
         </div>
     </div>
 </form>

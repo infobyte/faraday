@@ -64,6 +64,7 @@ CONST_PLUGIN_SETTINGS = "plugin_settings"
 
 
 DEFAULT_XML = os.path.dirname(__file__) + "/default.xml"
+DEFAULT_SERVER_INI = os.path.join(os.path.dirname(__file__), "..", "server", "default.ini")
 
 
 class Configuration:
@@ -648,12 +649,21 @@ class Configuration:
 def getInstanceConfiguration():
     global the_config
     if the_config is None:
+        faraday_dir = os.path.expanduser("~/.faraday")
+        if not os.path.exists(faraday_dir):
+            os.mkdir(faraday_dir)
         config_dir = os.path.expanduser("~/.faraday/config")
         if not os.path.exists(config_dir):
             os.mkdir(config_dir)
+
+        faraday_server_config = os.path.expanduser("~/.faraday/config/server.ini")
+        if not os.path.isfile(faraday_server_config):
+            shutil.copy(DEFAULT_SERVER_INI, faraday_server_config)
+
         faraday_user_config = os.path.expanduser("~/.faraday/config/user.xml")
         if not os.path.isfile(faraday_user_config):
             shutil.copy(DEFAULT_XML, faraday_user_config)
+
         if os.path.exists(os.path.expanduser("~/.faraday/config/user.xml")):
             the_config = Configuration(os.path.expanduser("~/.faraday/config/user.xml"))
         else:

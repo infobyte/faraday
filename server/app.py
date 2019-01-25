@@ -16,10 +16,10 @@ from server.models import User, Vulnerability, VulnerabilityWeb, Workspace, Vuln
 
 try:
     # py2.7
-    from configparser import ConfigParser, NoSectionError, NoOptionError
+    from configparser import ConfigParser, NoSectionError, NoOptionError, DuplicateSectionError
 except ImportError:
     # py3
-    from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+    from ConfigParser import ConfigParser, NoSectionError, NoOptionError, DuplicateSectionError
 
 import flask
 from flask import Flask, session, g
@@ -53,8 +53,11 @@ def setup_storage_path():
         os.mkdir(default_path)
     config = ConfigParser()
     config.read(server.config.LOCAL_CONFIG_FILE)
-    config.add_section('storage')
-    config.set('storage', 'path', default_path)
+    try:
+        config.add_section('storage')
+        config.set('storage', 'path', default_path)
+    except DuplicateSectionError:
+        logger.info('Duplicate section storage. skipping.')
     with open(server.config.LOCAL_CONFIG_FILE, 'w') as configfile:
         config.write(configfile)
 

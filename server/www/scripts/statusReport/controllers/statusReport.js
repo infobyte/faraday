@@ -847,6 +847,9 @@ angular.module("faradayApp")
                         },
                         customFields: function () {
                             return $scope.customFields;
+                        },
+                        workspace: function () {
+                            return $scope.workspaceData;
                         }
                     }
                 });

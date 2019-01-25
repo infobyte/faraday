@@ -6,10 +6,10 @@ angular.module('faradayApp')
     .controller('modalEditCtrl',
         ['$modalInstance', '$routeParams', 'EASEOFRESOLUTION', 'STATUSES', 'commonsFact',
             'BASEURL', 'severities', 'vuln', 'vulnModelsManager', 'vulnsManager', 'referenceFact',
-            'encodeURIComponentFilter', 'customFields',
+            'encodeURIComponentFilter', 'customFields', 'workspace',
             function ($modalInstance, $routeParams, EASEOFRESOLUTION, STATUSES, commonsFact,
                       BASEURL, severities, vuln, vulnModelsManager, vulnsManager, referenceFact,
-                      encodeURIComponent, customFields) {
+                      encodeURIComponent, customFields, workspace) {
 
                 var vm = this;
 
@@ -48,6 +48,7 @@ angular.module('faradayApp')
                     vm.file_name_error = false;
 
                     vm.customFields = customFields;
+                    vm.workspace = workspace;
 
                     vm.data = {
                         _id: undefined,

@@ -555,3 +555,7 @@ button[disabled], html input[disabled] {
     text-align: center;
     margin-bottom: 15px;
 }
+
+.toogle-img-container {
+    width: 46px;
+}

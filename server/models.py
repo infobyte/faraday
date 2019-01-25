@@ -1318,6 +1318,7 @@ class Workspace(Metadata):
     customer = BlankColumn(String(250))  # TBI
     description = BlankColumn(Text)
     active = Column(Boolean(), nullable=False, default=True)  # TBI
+    readonly = Column(Boolean(), nullable=False, default=False)  # TBI
     end_date = Column(DateTime(), nullable=True)
     name = NonBlankColumn(String(250), unique=True, nullable=False)
     public = Column(Boolean(), nullable=False, default=False)  # TBI
@@ -1339,7 +1340,7 @@ class Workspace(Metadata):
         cascade="all, delete-orphan")
 
     @classmethod
-    def query_with_count(cls, confirmed, active=None, workspace_name=None):
+    def query_with_count(cls, confirmed, active=True, readonly=None, workspace_name=None):
         """
         Add count fields to the query.
 
@@ -1368,6 +1369,7 @@ class Workspace(Metadata):
                 workspace.customer AS workspace_customer,
                 workspace.description AS workspace_description,
                 workspace.active AS workspace_active,
+                workspace.readonly AS workspace_readonly,
                 workspace.end_date AS workspace_end_date,
                 workspace.name AS workspace_name,
                 workspace.public AS workspace_public,
@@ -1429,12 +1431,14 @@ class Workspace(Metadata):
         # else:
         # raise Cannot exceed or return false
 
-
     def deactivate(self):
         if self.active is not False:
             self.active = False
             return True
         return False
+
+    def change_readonly(self):
+        self.readonly = not self.readonly
 
 
 class Scope(Metadata):

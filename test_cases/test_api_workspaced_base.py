@@ -79,6 +79,11 @@ class ListTestsMixin:
         assert res.status_code == 200
         assert len(res.json['data']) == OBJECT_COUNT
 
+    def test_can_list_readonly(self, test_client, session):
+        self.workspace.readonly = True
+        session.commit()
+        res = test_client.get(self.url())
+        assert res.status_code == 200
 
 class RetrieveTestsMixin:
 
@@ -113,6 +118,17 @@ class CreateTestsMixin:
         object_id = res.json['id']
         obj = self.model.query.get(object_id)
         assert obj.workspace == self.workspace
+
+    def test_create_fails_readonly(self, test_client):
+        self.workspace.readonly = True
+        db.session.commit()
+        data = self.factory.build_dict(workspace=self.workspace)
+        res = test_client.post(self.url(),
+                               data=data)
+        db.session.commit()
+        assert res.status_code == 403
+        assert self.model.query.count() == OBJECT_COUNT
+
 
     def test_create_inactive_fails(self, test_client):
         self.workspace.deactivate()
@@ -164,6 +180,19 @@ class UpdateTestsMixin:
             assert res.json[updated_field] == getattr(self.first_object,
                                                       updated_field)
 
+    def test_update_an_object_readonly_fails(self, test_client):
+        self.workspace.readonly = True
+        db.session.commit()
+        for unique_field in self.unique_fields:
+            data = self.factory.build_dict()
+            old_field = getattr(self.objects[0], unique_field)
+            old_id = getattr(self.objects[0], 'id')
+            res = test_client.put(self.url(self.first_object), data=data)
+            db.session.commit()
+            assert res.status_code == 403
+            assert self.model.query.count() == OBJECT_COUNT
+            assert old_field == getattr(self.model.query.filter("id = " + str(old_id)).one(), unique_field)
+
     def test_update_inactive_fails(self, test_client):
         self.workspace.deactivate()
         db.session.commit()
@@ -207,6 +236,14 @@ class DeleteTestsMixin:
         assert res.status_code == 204  # No content
         assert was_deleted(self.first_object)
         assert self.model.query.count() == OBJECT_COUNT - 1
+
+    def test_delete_readonly_fails(self, test_client, session):
+        self.workspace.readonly = True
+        session.commit()
+        res = test_client.delete(self.url(self.first_object))
+        assert res.status_code == 403  # No content
+        assert not was_deleted(self.first_object)
+        assert self.model.query.count() == OBJECT_COUNT
 
     def test_delete_inactive_fails(self, test_client):
         self.workspace.deactivate()

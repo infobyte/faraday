@@ -71,7 +71,7 @@ class WorkspaceSchema(AutoSchema):
         model = Workspace
         fields = ('_id', 'id', 'customer', 'description', 'active',
                   'duration', 'name', 'public', 'scope', 'stats',
-                  'create_date', 'update_date')
+                  'create_date', 'update_date', 'readonly')
 
     @post_load
     def post_load_duration(self, data):
@@ -114,13 +114,22 @@ class WorkspaceView(ReadWriteView):
             confirmed = None
         try:
             active = bool(json.loads(flask.request.args['active']))
+        except (KeyError, ValueError):
+            active = None
+        if active is None and flask.g.user.role != 'admin':
+            active = True
+        try:
+            readonly = bool(json.loads(flask.request.args['readonly']))
+
             query = Workspace.query_with_count(
                     confirmed,
                     active=active,
+                    readonly=readonly,
                     workspace_name=object_id)
         except (KeyError, ValueError):
             query = Workspace.query_with_count(
                     confirmed,
+                    active=active,
                     workspace_name=object_id)
         return query
 
@@ -138,8 +147,19 @@ class WorkspaceView(ReadWriteView):
                       confirmed = False
                  elif confirmed.lower() == 'true':
                       confirmed = True
+        active = flask.request.values.get('active', None)
+        if active:
+            try:
+                active = bool(int(active))
+            except ValueError:
+                if active.lower() == 'false':
+                    active = False
+                elif active.lower() == 'true':
+                    active = True
         self._validate_object_id(object_id)
         query = db.session.query(Workspace).filter_by(name=object_id)
+        if active is not None:
+            query = query.filter_by(active=active)
         query = query.options(
                  with_expression(
                      Workspace.vulnerability_web_count,
@@ -200,6 +220,14 @@ class WorkspaceView(ReadWriteView):
     def _update_object(self, obj, data):
         scope = data.pop('scope', [])
         obj.set_scope(scope)
+        #You can not update active field
+        try:
+            data.pop('active')
+        except KeyError:
+            pass
+        else:
+            flask.abort(403)
+
         return super(WorkspaceView, self)._update_object(obj, data)
 
     def _dump(self, obj, route_kwargs, **kwargs):
@@ -220,6 +248,16 @@ class WorkspaceView(ReadWriteView):
         changed = self._get_object(workspace_id).deactivate()
         db.session.commit()
         return changed
+
+    @route('/<workspace_id>/change_readonly/', methods=["PUT"])
+    def change_readonly(self, workspace_id):
+
+        if flask.g.user.role != 'admin':
+            flask.abort(403, "Admin only action")
+
+        self._get_object(workspace_id).change_readonly()
+        db.session.commit()
+        return self._get_object(workspace_id).readonly
 
 
 WorkspaceView.register(workspace_api)

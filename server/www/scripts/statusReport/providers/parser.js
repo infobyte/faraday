@@ -113,8 +113,8 @@ angular.module('faradayApp')
             var canAddToken = false;
             var withSpace = false;
 
-            for (var i = 0; i < expression.length; i++){
-                switch (expression[i]){
+            for (var i = 0; i < expression.length; i++) {
+                switch (expression[i]) {
                     case ' ':
                         withSpace = true;
                         if (isOpenQuotes === true)
@@ -140,27 +140,27 @@ angular.module('faradayApp')
                         break;
 
                     default:
-                        if(expression.substr(i, 3) === 'not' && expression.charAt(i-1) === ' '
-                            && expression.charAt(i+3) === ' ' && !isOpenQuotes){
-                           tokens.push('not');
-                           i = i + 2;
-                           canAddToken = true;
+                        if (expression.substr(i, 3) === 'not' && expression.charAt(i - 1) === ' '
+                            && expression.charAt(i + 3) === ' ' && !isOpenQuotes) {
+                            tokens.push('not');
+                            i = i + 2;
+                            canAddToken = true;
                         }
 
-                        else if(expression.substr(i, 3) === 'and' && expression.charAt(i-1) === ' '
-                            && expression.charAt(i+3) === ' ' && !isOpenQuotes){
-                           tokens.push('and');
-                           canAddToken = true;
-                           i = i + 2;
+                        else if (expression.substr(i, 3) === 'and' && expression.charAt(i - 1) === ' '
+                            && expression.charAt(i + 3) === ' ' && !isOpenQuotes) {
+                            tokens.push('and');
+                            canAddToken = true;
+                            i = i + 2;
                         }
 
-                        else if(expression.substr(i, 2) === 'or' && expression.charAt(i-1) === ' '
-                            && expression.charAt(i+2) === ' ' && !isOpenQuotes){
-                           tokens.push('or');
-                           canAddToken = true;
-                           i++;
-                        }else{
-                            if((!isOpenQuotes && (withSpace || tokens.length === 0)) || canAddToken){
+                        else if (expression.substr(i, 2) === 'or' && expression.charAt(i - 1) === ' '
+                            && expression.charAt(i + 2) === ' ' && !isOpenQuotes) {
+                            tokens.push('or');
+                            canAddToken = true;
+                            i++;
+                        } else {
+                            if ((!isOpenQuotes && (withSpace || tokens.length === 0)) || canAddToken) {
                                 tokens.push(expression[i]);
                                 canAddToken = false;
                             }
@@ -210,6 +210,102 @@ angular.module('faradayApp')
             return item;
         };
 
+
+        var processName = function (name) {
+            var processedName = "";
+            switch (name) {
+                case 'accountability':
+                case 'availability':
+                case 'confidentiality':
+                case 'integrity':
+                    processedName = 'impact_' + name;
+                    break;
+                case 'service':
+                    processedName = 'service__name';
+                    break;
+                case 'easeofresolution':
+                case 'ease_of_resolution':
+                    processedName = 'ease_of_resolution';
+                    break;
+                case 'web':
+                    processedName = 'type';
+                    break;
+                case 'creator':
+                    processedName = 'creator_command_tool';
+                    break;
+                case 'policy_violations':
+                case 'policyviolations':
+                    processedName = 'policy_violations__name';
+                    break;
+                case 'host_os':
+                    processedName = 'host__os';
+                    break;
+                case 'refs':
+                case 'ref':
+                    processedName = 'references__name';
+                    break;
+                case 'evidence':
+                    processedName = 'evidence__filename';
+                    break;
+                case 'params':
+                case 'parameters':
+                    processedName = 'parameters';
+                    break;
+                case 'pname':
+                case 'parameter_name':
+                    processedName = 'parameter_name';
+                    break;
+                case 'query':
+                case 'query_string':
+                    processedName = 'query_string';
+                    break;
+                case 'tags':
+                case 'tag':
+                    processedName = 'tags__name';
+                    break;
+                default:
+                    processedName = name;
+                    break;
+            }
+
+            return processedName;
+        };
+
+        var processOperator = function (name, operator) {
+            var processedOperator = "";
+            switch (name) {
+                case 'confirmed':
+                case 'impact_accountability':
+                case 'impact_availability':
+                case 'impact_confidentiality':
+                case 'impact_integrity':
+                case 'ease_of_resolution':
+                case 'type':
+                case 'id':
+                    processedOperator = operator !== 'not' ? '==' : '!=';
+                    break;
+                case 'severity':
+                case 'target':
+                    processedOperator = operator !== 'not' ? 'eq' : '!=';
+                    break;
+                case 'service__name':
+                case 'host__os':
+                    processedOperator = operator !== 'not' ? 'has' : '!=';
+                    break;
+                case 'policy_violations__name':
+                case 'references__name':
+                case 'evidence__filename':
+                case 'tags__name':
+                    processedOperator = operator !== 'not' ? 'any' : '!=';
+                    break;
+                default:
+                    processedOperator = operator !== 'not' ? 'ilike' : '!=';
+                    break;
+            }
+
+            return processedOperator;
+        };
+
         var processTerm = function (term, operator) {
             var res = {
                 'name': '',
@@ -222,25 +318,10 @@ angular.module('faradayApp')
                 if (array.length === 2) {
                     var name = array[0];
                     var val = array[1].replace(/"/g, '');
-                    var op = 'like';
-                    if (operator !== 'not') {
-                        if (name === 'confirmed' || name === 'accountability' || name === 'availability' || name === 'confidentiality' || name === 'integrity') {
-                            if (name !== 'confirmed')
-                                name = 'impact_' + name;
+                    var op;
 
-                            op = '==';
-                        }
-
-                        if (name === 'severity' || name === 'target'){
-                            op = 'eq'
-                        }
-                    } else {
-                        if (name === 'accountability' || name === 'availability' || name === 'confidentiality' || name === 'integrity') {
-                            name = 'impact_' + name;
-                        }
-                        op = '!='
-                    }
-
+                    name = processName(name);
+                    op = processOperator(name, operator);
 
                     if (val === 'info') val = 'informational';
                     if (val === 'med') val = 'medium';
@@ -248,7 +329,7 @@ angular.module('faradayApp')
                     res.name = name;
                     res.op = op;
                     res.val = val;
-                    if (op === 'like') {
+                    if (op === 'ilike') {
                         res.val = '%' + val + '%';
                     }
                     return res

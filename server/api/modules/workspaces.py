@@ -59,6 +59,7 @@ class WorkspaceSchema(AutoSchema):
         PrimaryKeyRelatedField('name', many=True, dump_only=True),
         fields.List(fields.String)
     )
+    active = fields.Boolean(dump_only=True)
 
     create_date = fields.DateTime(attribute='create_date',
                            dump_only=True)
@@ -223,14 +224,6 @@ class WorkspaceView(ReadWriteView):
     def _update_object(self, obj, data):
         scope = data.pop('scope', [])
         obj.set_scope(scope)
-        #You can not update active field
-        try:
-            data.pop('active')
-        except KeyError:
-            pass
-        else:
-            flask.abort(403)
-
         return super(WorkspaceView, self)._update_object(obj, data)
 
     def _dump(self, obj, route_kwargs, **kwargs):

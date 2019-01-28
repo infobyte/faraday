@@ -31,16 +31,70 @@
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-12">
-                    <label for="resolution">Resolution</label>
-                    <textarea class="form-control" name="resolution" placeholder="Resolution" ng-model="data.resolution"></textarea>
+                    <label for="data">Data</label>
+                    <textarea class="form-control" id="data" placeholder="Data" ng-model="data.data"></textarea>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-12">
-                    <label for="References">References</label>
-                    <textarea class="form-control" name="References" placeholder="References" ng-model="data.references"></textarea>
+                    <label for="resolution">Resolution</label>
+                    <textarea class="form-control" name="resolution" placeholder="Resolution" ng-model="data.resolution"></textarea>
                 </div>
             </div><!-- .form-group -->
+
+            <div class="form-group">
+                <div class="col-md-12">
+                    <label for="references">References</label>
+                    <div class="input-group margin-bottom-sm">
+                        <label class="sr-only" for="references">References</label>
+                        <input type="text" class="form-control" id="references" placeholder="References" ng-model="new_reference"/>
+                        <span class="input-group-addon cursor" ng-click="newReference()"><i class="fa fa-plus-circle"></i></span>
+                    </div>
+                </div>
+                <div class="col-md-12 reference" ng-repeat="reference in data.references">
+                    <div class="input-group margin-bottom-sm">
+                        <label class="sr-only" for="ireferences">References</label>
+                        <input type="text" class="form-control" id="ireferences" placeholder="References" ng-model="reference" disabled/>
+                        <span class="input-group-addon cursor" ng-click="data.references.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
+                    </div>
+                </div>
+            </div><!-- .form-group -->
+
+
+            <div class="form-group">
+                <div class="col-md-12">
+                    <label for="vuln-policyviolations">Policy Violations</label>
+                    <div class="input-group margin-bottom-sm">
+                        <label class="sr-only" for="vuln-policyviolations">Policy Violations</label>
+                        <input type="text" class="form-control" id="vuln-policyviolations" placeholder="Policy Violations" ng-model="new_policyviolation"/>
+                        <span class="input-group-addon cursor" ng-click="newPolicyViolation()"><i class="fa fa-plus-circle"></i></span>
+                    </div>
+                </div>
+                <div class="col-md-12 reference" ng-repeat="policyviolation in data.policyviolations">
+                    <div class="input-group margin-bottom-sm">
+                        <label class="sr-only" for="vuln-policyviolations">Policy Violation</label>
+                        <input type="text" class="form-control" id="vuln-policyviolations" placeholder="Policy Violation" ng-model="policyviolation" disabled/>
+                        <span class="input-group-addon cursor" ng-click="data.policyviolations.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
+                    </div>
+                </div>
+            </div><!-- .form-group -->
+
+            <div class="form-group">
+                <div class="col-md-6">
+                    <label>Impact</label>
+                    <h4><span ng-repeat="(key, value) in data.impact" class="normal-size" style="cursor: pointer;">
+                    <span ng-class="{'label-impact label-default-impact': !value, 'label-impact label-success-impact': value}" ng-click="toggleImpact(key)">{{key}}</span>
+                    </span></h4><!-- .normal-size -->
+                </div>
+                <div class="col-md-2"></div>
+                <div class="col-md-4">
+                    <label>Ease of Resolution</label>
+                    <select class="form-control" ng-model="data.easeofresolution" ng-options="e for e in easeofresolution"  style="padding:0px 12px;">
+                        <option value=""></option>
+                    </select>
+                </div>
+            </div><!-- .form-group -->
+
             <div class="form-group">
                 <div class="col-md-12">
                     <label for="Explotation">Severity *</label>

@@ -6,6 +6,7 @@ import logging
 import os
 import string
 import datetime
+from future.builtins import range # __future__
 from os.path import join, expanduser
 from random import SystemRandom
 
@@ -155,7 +156,7 @@ def save_new_secret_key(app):
     config = ConfigParser()
     config.read(LOCAL_CONFIG_FILE)
     rng = SystemRandom()
-    secret_key = "".join([rng.choice(string.ascii_letters + string.digits) for _ in xrange(25)])
+    secret_key = "".join([rng.choice(string.ascii_letters + string.digits) for _ in range(25)])
     app.config['SECRET_KEY'] = secret_key
     config.set('faraday_server', 'secret_key', secret_key)
     with open(LOCAL_CONFIG_FILE, 'w') as configfile:

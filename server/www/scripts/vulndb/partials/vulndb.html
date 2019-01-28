@@ -10,7 +10,7 @@
           <div class="reports col-md-12 col-sm-12 col-xs-12">
             <div class="button-control justify-flex-start  col-md-12 col-sm-12 col-xs-12">
                 <div class="control-wrapper control-new">
-                    <button id="import" type="button" class="btn btn-success btn-new" title="New host" ng-click="disabledClick || new()">
+                    <button id="import" type="button" class="btn btn-success btn-new" title="New vuln template" ng-click="disabledClick || new()">
                         New
                     </button>
                 </div>
@@ -57,11 +57,26 @@
                         <th class="ui-grid-cell-contents ui-grid-header-cell">
                             <span ng-click="toggleSort('description')">Description</span>
                         </th>
+                         <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('references')">References</span>
+                        </th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('data')">Data</span>
+                        </th>
                         <th class="ui-grid-cell-contents ui-grid-header-cell">
                             <span ng-click="toggleSort('resolution')">Resolution</span>
                         </th>
                         <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('impact')">Impact</span>
+                        </th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">
                             <span ng-click="toggleSort('exploitation')">Severity</span>
+                        </th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('easeofresolution')">Ease of Resolution</span>
+                        </th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('policyviolations')">Policy Violations</span>
                         </th>
                     </tr>
                 </thead>
@@ -74,8 +89,13 @@
                         <td class="checkbox-select"><input type="checkbox" name="{{model._id}}"/></td>
                         <td>{{model.name}}</td>
                         <td>{{model.description}}</td>
+                        <td><div ng-repeat="ref in model.refs">{{ref}}</div></td>
+                        <td>{{model.data}}</td>
                         <td>{{model.resolution}}</td>
+                        <td><div ng-repeat="(key, value) in model.impact" ng-if="value == true">{{key}}</div></td>
                         <td>{{model.exploitation}}</td>
+                        <td>{{model.easeofresolution}}</td>
+                        <td><div ng-repeat="policy in model.policyviolations">{{policy}}</div></td>
                     </tr>
                 </tbody>
             </table>

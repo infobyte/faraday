@@ -43,6 +43,7 @@ class ServiceSchema(AutoSchema):
     credentials = fields.Integer(attribute='credentials_count', dump_only=True)
     metadata = SelfNestedField(MetadataSchema())
     type = fields.Function(lambda obj: 'Service', dump_only=True)
+    summary = fields.String(dump_only=True)
 
     def load_ports(self, value):
         if not isinstance(value, list):

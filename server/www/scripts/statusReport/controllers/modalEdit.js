@@ -68,6 +68,7 @@ angular.module('faradayApp')
                         severity: undefined,
                         method: "",
                         path: "",
+                        status_code: undefined,
                         pname: "",
                         params: "",
                         query: "",

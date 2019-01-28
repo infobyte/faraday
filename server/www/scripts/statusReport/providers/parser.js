@@ -228,6 +228,7 @@ angular.module('faradayApp')
                     processedName = 'ease_of_resolution';
                     break;
                 case 'web':
+                case 'type':
                     processedName = 'type';
                     break;
                 case 'creator':
@@ -329,7 +330,7 @@ angular.module('faradayApp')
                     res.name = name;
                     res.op = op;
                     res.val = val;
-                    if (op === 'ilike') {
+                    if (op === 'ilike' && name !== 'creator_command_tool') {
                         res.val = '%' + val + '%';
                     }
                     return res

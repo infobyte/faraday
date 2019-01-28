@@ -76,7 +76,7 @@ def isPEP440(arg):
 
 
 def test_exists_and_content():
-    f = open(os.path.join(os.getcwd(),"..","VERSION"),"r")
+    f = open("VERSION", "r")
     line1 = f.readline().rstrip()
     assert f.read() == ''
     assert isPEP440(line1)

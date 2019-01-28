@@ -1,0 +1,1 @@
+Added ability to 'Searcher' to execute rules in loop with dynamic variables

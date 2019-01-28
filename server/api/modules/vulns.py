@@ -577,7 +577,7 @@ class VulnerabilityView(PaginatedMixin,
             res['groups'] = [convert_group(group) for group in res['groups']]
         return res
 
-    @route('/<vuln_id>/attachment/', methods=['POST'])
+    @route('/<int:vuln_id>/attachment/', methods=['POST'])
     def post_attachment(self, workspace_name, vuln_id):
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(VulnerabilityGeneric.id == vuln_id,
@@ -633,7 +633,7 @@ class VulnerabilityView(PaginatedMixin,
             web_vulns_data = []
         return self._envelope_list(normal_vulns_data + web_vulns_data)
 
-    @route('/<vuln_id>/attachment/<attachment_filename>/', methods=['GET'])
+    @route('/<int:vuln_id>/attachment/<attachment_filename>/', methods=['GET'])
     def get_attachment(self, workspace_name, vuln_id, attachment_filename):
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(VulnerabilityGeneric.id == vuln_id,
@@ -662,7 +662,7 @@ class VulnerabilityView(PaginatedMixin,
         else:
             flask.abort(404, "Vulnerability not found")
 
-    @route('/<vuln_id>/attachment/<attachment_filename>/', methods=['DELETE'])
+    @route('/<int:vuln_id>/attachment/<attachment_filename>/', methods=['DELETE'])
     def delete_attachment(self, workspace_name, vuln_id, attachment_filename):
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(

@@ -1407,6 +1407,9 @@ class Workspace(Metadata):
         if active is not None:
             filters.append(" workspace.active = :active ")
             params['active'] = active
+        if readonly is not None:
+            filters.append(" workspace.readonly = :readonly ")
+            params['readonly'] = readonly
         if workspace_name:
             filters.append(" workspace.name = :workspace_name ")
             params['workspace_name'] = workspace_name

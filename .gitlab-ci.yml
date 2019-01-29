@@ -66,6 +66,7 @@ closure_compiler:
     image: ubuntu
     stage: test
     script:
+        - apt-get update -qy
         - apt-get -y install wget default-jre
         - wget https://dl.google.com/closure-compiler/compiler-latest.zip
         - unzip compiler-latest.zip

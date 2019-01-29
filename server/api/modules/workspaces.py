@@ -118,10 +118,6 @@ class WorkspaceView(ReadWriteView):
     def _get_base_query(self, object_id=None):
         confirmed = self._get_querystring_boolean_field('confirmed')
         active = self._get_querystring_boolean_field('active')
-        if active is None and flask.g.user.role != 'admin':
-            # TODO move this to pink
-            # Only admins can see non-active workspaces
-            active = True
         readonly = self._get_querystring_boolean_field('readonly')
         query = Workspace.query_with_count(
                 confirmed,
@@ -227,10 +223,6 @@ class WorkspaceView(ReadWriteView):
 
     @route('/<workspace_id>/change_readonly/', methods=["PUT"])
     def change_readonly(self, workspace_id):
-
-        if flask.g.user.role != 'admin':
-            flask.abort(403, "Admin only action")
-
         self._get_object(workspace_id).change_readonly()
         db.session.commit()
         return self._get_object(workspace_id).readonly

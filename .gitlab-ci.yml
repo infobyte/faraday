@@ -6,14 +6,14 @@ variables:
     POSTGRES_PASSWORD: custom_pass
 
 stages:
-    - test
+    - doeverything
 
 services:
     - postgres:latest
 
 test:
     image: ubuntu
-    stage: test
+    stage: doeverything
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
         - ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
@@ -31,7 +31,7 @@ test:
 
 pylint:
   image: ubuntu
-  stage: test
+  stage: doeverything
   script:
     - apt-get update -qy
     - apt-get install -y python-dev python-pip
@@ -45,7 +45,7 @@ pylint:
 
 test_postgresql:
     image: ubuntu
-    stage: test
+    stage: doeverything
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
         - ln -snf /usr/share/zoneinfo/$TZ /etc/localtime

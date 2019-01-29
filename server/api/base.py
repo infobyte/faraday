@@ -377,6 +377,14 @@ class GenericWorkspacedView(GenericView):
         context.update(kwargs)
         return context
 
+    def before_request(self, name, *args, **kwargs):
+        sup = super(GenericWorkspacedView, self)
+        if hasattr(sup, 'before_request'):
+            sup.before_request(name, *args, **kwargs)
+        if (self._get_workspace(kwargs['workspace_name']).readonly and
+                flask.request.method not in ['GET', 'HEAD', 'OPTIONS']):
+            flask.abort(403)
+
 
 class ListMixin(object):
     """Add GET / route"""

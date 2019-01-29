@@ -59,6 +59,7 @@ class WorkspaceSchema(AutoSchema):
         PrimaryKeyRelatedField('name', many=True, dump_only=True),
         fields.List(fields.String)
     )
+    active = fields.Boolean(dump_only=True)
 
     create_date = fields.DateTime(attribute='create_date',
                            dump_only=True)
@@ -107,30 +108,26 @@ class WorkspaceView(ReadWriteView):
             objects.append(workspace_stat)
         return self._envelope_list(self._dump(objects, kwargs, many=True))
 
-    def _get_base_query(self, object_id=None):
+    def _get_querystring_boolean_field(self, field_name, default=None):
         try:
-            confirmed = bool(json.loads(flask.request.args['confirmed']))
+            val = bool(json.loads(flask.request.args[field_name]))
         except (KeyError, ValueError):
-            confirmed = None
-        try:
-            active = bool(json.loads(flask.request.args['active']))
-        except (KeyError, ValueError):
-            active = None
-        if active is None and flask.g.user.role != 'admin':
-            active = True
-        try:
-            readonly = bool(json.loads(flask.request.args['readonly']))
+            val = default
+        return val
 
-            query = Workspace.query_with_count(
-                    confirmed,
-                    active=active,
-                    readonly=readonly,
-                    workspace_name=object_id)
-        except (KeyError, ValueError):
-            query = Workspace.query_with_count(
-                    confirmed,
-                    active=active,
-                    workspace_name=object_id)
+    def _get_base_query(self, object_id=None):
+        confirmed = self._get_querystring_boolean_field('confirmed')
+        active = self._get_querystring_boolean_field('active')
+        if active is None and flask.g.user.role != 'admin':
+            # TODO move this to pink
+            # Only admins can see non-active workspaces
+            active = True
+        readonly = self._get_querystring_boolean_field('readonly')
+        query = Workspace.query_with_count(
+                confirmed,
+                active=active,
+                readonly=readonly,
+                workspace_name=object_id)
         return query
 
     def _get_object(self, object_id, eagerload=False, **kwargs):
@@ -138,24 +135,8 @@ class WorkspaceView(ReadWriteView):
         Given the object_id and extra route params, get an instance of
         ``self.model_class``
         """
-        confirmed = flask.request.values.get('confirmed', None)
-        if confirmed:
-            try:
-                 confirmed = bool(int(confirmed))
-            except ValueError:
-                 if confirmed.lower() == 'false':
-                      confirmed = False
-                 elif confirmed.lower() == 'true':
-                      confirmed = True
-        active = flask.request.values.get('active', None)
-        if active:
-            try:
-                active = bool(int(active))
-            except ValueError:
-                if active.lower() == 'false':
-                    active = False
-                elif active.lower() == 'true':
-                    active = True
+        confirmed = self._get_querystring_boolean_field('confirmed')
+        active = self._get_querystring_boolean_field('active')
         self._validate_object_id(object_id)
         query = db.session.query(Workspace).filter_by(name=object_id)
         if active is not None:
@@ -223,14 +204,6 @@ class WorkspaceView(ReadWriteView):
     def _update_object(self, obj, data):
         scope = data.pop('scope', [])
         obj.set_scope(scope)
-        #You can not update active field
-        try:
-            data.pop('active')
-        except KeyError:
-            pass
-        else:
-            flask.abort(403)
-
         return super(WorkspaceView, self)._update_object(obj, data)
 
     def _dump(self, obj, route_kwargs, **kwargs):

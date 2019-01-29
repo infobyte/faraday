@@ -383,7 +383,7 @@ class GenericWorkspacedView(GenericView):
             sup.before_request(name, *args, **kwargs)
         if (self._get_workspace(kwargs['workspace_name']).readonly and
                 flask.request.method not in ['GET', 'HEAD', 'OPTIONS']):
-            flask.abort(403)
+            flask.abort(403, "Altering a readonly workspace is not allowed")
 
 
 class ListMixin(object):

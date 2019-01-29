@@ -69,6 +69,6 @@ closure_compiler:
         - apt-get update -qy
         - apt-get -y install wget default-jre unzip
         - wget https://dl.google.com/closure-compiler/compiler-latest.zip
-        - unzip compiler-latest.zip
+        - unzip -n compiler-latest.zip
         - mv "$(unzip -Z1 compiler-latest.zip | grep jar)" compiler-latest.jar
         - java -jar compiler-latest.jar server/www/scripts

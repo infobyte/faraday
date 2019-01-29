@@ -43,7 +43,7 @@ pylint:
     paths:
       - pylint.svg
 
-test_postgreslq:
+test_postgresql:
     image: ubuntu
     stage: test
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'

@@ -63,7 +63,7 @@ test_postgreslq:
 
 
 closure_compiler:
-    imaage: ubuntu
+    image: ubuntu
     stage: test
     script:
         - apt-get -y install wget default-jre

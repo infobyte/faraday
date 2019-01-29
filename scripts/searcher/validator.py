@@ -8,6 +8,7 @@
 ###
 
 import re
+import json
 import logging
 from rules import *
 
@@ -83,6 +84,24 @@ def validate_conditions(conditions):
     return True
 
 
+def validate_values(values, rule, rule_id):
+    r = re.findall("\{\{(.*?)\}\}", json.dumps(rule))
+    _vars = list(set(r))
+    keys = []
+    for index, item in enumerate(values):
+        if index != 0:
+            if len(values[index - 1]) != len(values[index]):
+                logger.error("Each value item must be equal in rule: %s" % rule_id)
+                return False
+        keys = item.keys()
+
+    for var in _vars:
+        if var not in keys:
+            logger.error("Variable '%s' should has a value in rule: %s" % (var, rule_id))
+            return False
+    return True
+
+
 def validate_action(actions):
     if len(actions) == 0:
         return False
@@ -134,6 +153,9 @@ def validate(key, dictionary, validate_function=None, rule_id=None, mandatory=Tr
                     return False
                 return True
 
+            if key == 'values':
+                return validate_function(dictionary[key], dictionary, rule_id)
+
             if not validate_function(dictionary[key]):
                 logger.error("ERROR: Key %s has an invalid value in rule: %s" % (key, rule_id))
                 return False
@@ -167,6 +189,9 @@ def validate_rules():
             return False
 
         if not validate('actions', rule, validate_action, rule_id):
+            return False
+
+        if not validate('values', rule, validate_values, rule_id, mandatory=False):
             return False
 
     logger.info('<-- Rules OK')

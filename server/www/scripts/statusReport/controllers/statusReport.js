@@ -608,7 +608,7 @@ angular.module("faradayApp")
                 });
 
                 return response.filter(function(x){
-                  return !angular.equals(x["exploitdb"], []) && !angular.equals(x["metasploit"], [])
+                  return !angular.equals(x["exploitdb"], []) || !angular.equals(x["metasploit"], [])
                 });
 
             }, function(failed) {

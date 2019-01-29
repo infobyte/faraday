@@ -20,6 +20,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import requests
 import json
+import ast
 from config.configuration import getInstanceConfiguration
 from persistence.server import models
 from persistence.server import server
@@ -523,24 +524,46 @@ def execute_action(ws, objects, rule, _server):
     return True
 
 
+def replace_rule(rule, value_item):
+    if value_item is None:
+        return rule
+
+    rule_str = json.dumps(rule)
+    r = re.findall("\{\{(.*?)\}\}", rule_str)
+    _vars = list(set(r))
+    for var in _vars:
+        value = value_item[var]
+        rule_str = rule_str.replace('{{'+var+'}}', value)
+
+    return ast.literal_eval(rule_str)
+
+
 def process_vulnerabilities(ws, vulns, _server):
     logger.debug("--> Start Process vulnerabilities")
-    for rule in rules:
-        if rule['model'] == 'Vulnerability':
-            vulnerabilities = get_models(ws, vulns, rule)
-            if 'fields' in rule:
-                process_models_by_similarity(ws, vulnerabilities, rule, _server)
-            else:
-                _objs_value = None
-                if 'object' in rule:
-                    _objs_value = rule['object']
-                objects = get_object(vulnerabilities, _objs_value)
-                if objects is not None and len(objects) != 0:
-                    if 'conditions' in rule:
-                        if can_execute_action(vulnerabilities, rule['conditions']):
+    for rule_item in rules:
+        if rule_item['model'] == 'Vulnerability':
+            count_values = 1
+            values = [None]
+            if 'values' in rule_item and len(rule_item['values']) > 0:
+                values = rule_item['values']
+                count_values = len(values)
+
+            for index in range(count_values):
+                rule = replace_rule(rule_item, values[index])
+                vulnerabilities = get_models(ws, vulns, rule)
+                if 'fields' in rule:
+                    process_models_by_similarity(ws, vulnerabilities, rule, _server)
+                else:
+                    _objs_value = None
+                    if 'object' in rule:
+                        _objs_value = rule['object']
+                    objects = get_object(vulnerabilities, _objs_value)
+                    if objects is not None and len(objects) != 0:
+                        if 'conditions' in rule:
+                            if can_execute_action(vulnerabilities, rule['conditions']):
+                                execute_action(ws, objects, rule, _server)
+                        else:
                             execute_action(ws, objects, rule, _server)
-                    else:
-                        execute_action(ws, objects, rule, _server)
     logger.debug("<-- Finish Process vulnerabilities")
 
 
@@ -713,10 +736,10 @@ def main():
         os.remove(lockf)
         exit(0)
 
-    # except Exception as errorMsg:
-    #     logger.error(errorMsg)
-    #     os.remove(lockf)
-    #     exit(0)
+    except Exception as errorMsg:
+        logger.error(errorMsg)
+        os.remove(lockf)
+        exit(0)
 
 
 if __name__ == "__main__":

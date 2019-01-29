@@ -70,4 +70,4 @@ def test_start_and_kill_faraday_server():
         subproc.poll()
         time.sleep(0.1)
     out, err = subproc.communicate()
-    assert subproc.returncode == 0, err
+    assert subproc.returncode == 0, (out, err)

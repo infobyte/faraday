@@ -700,9 +700,6 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
         obj = self.model_class(**data)
         obj.workspace = workspace
         # assert not db.session.new
-        if workspace.readonly:
-            db.session.expunge(obj)
-            flask.abort(403)
         try:
             db.session.add(obj)
             db.session.commit()
@@ -796,10 +793,6 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
         with db.session.no_autoflush:
             obj.workspace = self._get_workspace(workspace_name)
 
-        if obj.workspace.readonly:
-            db.session.expunge(obj)
-            flask.abort(403)
-
         self._set_command_id(obj, False)
         return super(UpdateWorkspacedMixin, self)._perform_update(
             object_id, obj, data, workspace_name)
@@ -823,10 +816,6 @@ class DeleteWorkspacedMixin(DeleteMixin):
     def _perform_delete(self, obj, workspace_name=None):
         with db.session.no_autoflush:
             obj.workspace = self._get_workspace(workspace_name)
-
-        if obj.workspace.readonly:
-            db.session.expunge(obj)
-            flask.abort(403)
 
         return super(DeleteWorkspacedMixin, self)._perform_delete(
             obj, workspace_name)

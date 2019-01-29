@@ -61,3 +61,13 @@ test_postgreslq:
         - pip install -r requirements_dev.txt
         - pytest test_cases -v --cov=server --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_db
 
+
+closure_compiler:
+    imaage: ubuntu
+    stage: test
+    script:
+        - apt-get -y install wget default-jre
+        - wget https://dl.google.com/closure-compiler/compiler-latest.zip
+        - unzip compiler-latest.zip
+        - mv "$(unzip -Z1 compiler-latest.zip | grep jar)" compiler-latest.jar
+        - java -jar compiler-latest.jar server/www/scripts

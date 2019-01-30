@@ -161,7 +161,11 @@ def save_new_secret_key(app):
     rng = SystemRandom()
     secret_key = "".join([rng.choice(string.ascii_letters + string.digits) for _ in range(25)])
     app.config['SECRET_KEY'] = secret_key
-    config.set('faraday_server', 'secret_key', secret_key)
+    try:
+        config.set('faraday_server', 'secret_key', secret_key)
+    except NoSectionError:
+        config.add_section('faraday_server')
+        config.set('faraday_server', 'secret_key', secret_key)
     with open(LOCAL_CONFIG_FILE, 'w') as configfile:
         config.write(configfile)
 

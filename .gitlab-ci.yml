@@ -64,7 +64,7 @@ test_postgresql:
 
 closure_compiler:
     image: ubuntu
-    stage: test
+    stage: doeverything
     script:
         - apt-get update -qy
         - apt-get -y install wget default-jre unzip

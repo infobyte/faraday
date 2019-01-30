@@ -124,6 +124,12 @@ def check_postgresql():
             logger.error(
                     '\n\n{RED}Could not connect to PostgreSQL.\n{WHITE}Please check: \n{YELLOW}  * if database is running \n  * configuration settings are correct. \n\n{WHITE}For first time installations execute{WHITE}: \n\n {GREEN} python manage.py initdb\n\n'.format(GREEN=Fore.GREEN, YELLOW=Fore.YELLOW, WHITE=Fore.WHITE, RED=Fore.RED))
             sys.exit(1)
+        except sqlalchemy.exc.ProgrammingError as ex:
+            if ex.orig.pgcode == '42703':
+                db.session.rollback()
+                check_alembic_version()
+            else:
+                raise
 
 
 def check_alembic_version():
@@ -139,7 +145,7 @@ def check_alembic_version():
         if head_revision != context.get_current_revision():
             print('--' * 20)
             print('Missing migrations, please execute: \n\n')
-            print('python manage.py migrate --upgrade head')
+            print('python manage.py migrate')
             sys.exit(1)
 
 def main():

@@ -124,6 +124,12 @@ def check_postgresql():
             logger.error(
                     '\n\n{RED}Could not connect to PostgreSQL.\n{WHITE}Please check: \n{YELLOW}  * if database is running \n  * configuration settings are correct. \n\n{WHITE}For first time installations execute{WHITE}: \n\n {GREEN} python manage.py initdb\n\n'.format(GREEN=Fore.GREEN, YELLOW=Fore.YELLOW, WHITE=Fore.WHITE, RED=Fore.RED))
             sys.exit(1)
+        except sqlalchemy.exc.ProgrammingError as ex:
+            if ex.orig.pgcode == '42703':
+                db.session.rollback()
+                check_alembic_version()
+            else:
+                raise
 
 
 def check_alembic_version():

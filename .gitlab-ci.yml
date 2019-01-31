@@ -6,6 +6,7 @@ variables:
     POSTGRES_PASSWORD: custom_pass
 
 stages:
+    - merge_conflict_check
     - fast_test
     - doeverything
 
@@ -79,9 +80,9 @@ closure_compiler:
 
 merge_conflict_check:
     image: python:3
-    stage: doeverything
+    stage: merge_conflict_check
+    allow_failure: true
     script:
         - git config --global user.email "you@example.com"
         - git config --global user.name "Mergerbot"
         - python3 merge-conflict-detector.py
-    allow_failure: true

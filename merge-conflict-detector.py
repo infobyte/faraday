@@ -22,7 +22,6 @@ from shutil import rmtree
 
 VERSIONS = ['white', 'pink', 'black']
 BRANCH_FORMAT = 'origin/{}/dev'
-branch_regexp = re.compile(r'^(origin/)?..._(?P<version>[^_]+)_(?P<tkt>\d+)_')
 
 @contextmanager
 def chdir(directory):
@@ -85,13 +84,19 @@ def branch_exists(branch_name):
 
 
 def version_of_branch(branch_name):
-    match = branch_regexp.match(branch_name)
-    if match is None:
+    """
+    >>> version_of_branch('tkt_white_this_is_not_a_pink_branch')
+    'white'
+    """
+    positions = {version: branch_name.find(version)
+                 for version in VERSIONS}
+    if all((pos < 0) for pos in positions.values()):
+        # The branch name doesn't contain white, pink or black
         return
-    version = match.group('version')
-    if version not in VERSIONS:
-        return
-    return version
+    positions = {version: pos
+                 for (version, pos) in positions.items()
+                 if pos >= 0}
+    return min(positions.keys(), key=positions.get)
 
 
 def main(branch):

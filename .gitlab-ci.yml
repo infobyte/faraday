@@ -6,6 +6,7 @@ variables:
     POSTGRES_PASSWORD: custom_pass
 
 stages:
+    - fast_test
     - doeverything
 
 services:
@@ -13,7 +14,7 @@ services:
 
 test:
     image: ubuntu
-    stage: doeverything
+    stage: fast_test
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
         - ln -snf /usr/share/zoneinfo/$TZ /etc/localtime

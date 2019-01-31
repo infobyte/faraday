@@ -64,7 +64,10 @@ test_postgresql:
         - mkdir -p ~/.faraday/config
         - cp test_cases/data/server.ini ~/.faraday/config
         - pytest test_cases -v --cov=server --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_db -n 10
-
+    artifacts:
+        when: on_failure
+        paths:
+          - ~/.faraday/logs/faraday-server.log
 
 closure_compiler:
     image: ubuntu
@@ -86,3 +89,4 @@ merge_conflict_check:
         - git config --global user.email "you@example.com"
         - git config --global user.name "Mergerbot"
         - python3 merge-conflict-detector.py
+

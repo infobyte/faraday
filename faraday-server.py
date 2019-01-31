@@ -139,7 +139,7 @@ def check_alembic_version():
         if head_revision != context.get_current_revision():
             print('--' * 20)
             print('Missing migrations, please execute: \n\n')
-            print('python manage.py migrate --upgrade head')
+            print('python manage.py migrate')
             sys.exit(1)
 
 def main():

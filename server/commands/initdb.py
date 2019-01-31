@@ -126,8 +126,8 @@ class InitDB():
         already_created = False
         try:
             engine.execute("INSERT INTO \"faraday_user\" (username, name, password, "
-                       "is_ldap, active, last_login_ip, current_login_ip, role) VALUES ('faraday', 'Administrator', "
-                       "'{0}', false, true, '127.0.0.1', '127.0.0.1', 'admin');".format(random_password))
+                       "is_ldap, active, last_login_ip, current_login_ip, role, state_otp) VALUES ('faraday', 'Administrator', "
+                       "'{0}', false, true, '127.0.0.1', '127.0.0.1', 'admin', 'disabled');".format(random_password))
         except sqlalchemy.exc.IntegrityError:
             # when re using database user could be created previusly
             already_created = True

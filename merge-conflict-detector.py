@@ -84,18 +84,23 @@ def branch_exists(branch_name):
         raise ValueError('Error when checking for branch existence')
 
 
+def version_of_branch(branch_name):
+    match = branch_regexp.match(branch_name)
+    if match is None:
+        return
+    version = match.group('version')
+    if version not in VERSIONS:
+        return
+    return version
+
+
 def main(branch):
     logging.getLogger().setLevel(getattr(logging, args.log_level.upper()))
     logger = logging  # TODO FIXME
     logger.info('Checking merge conflicts for branch %s', branch)
-    match = branch_regexp.match(branch)
-    if match is None:
-        logger.error('Unknown branch name: %s. Exiting', branch)
-        sys.exit(-1)
-
-    version = match.group('version')
-    if version not in VERSIONS:
-        logger.error('Unknown version name: %s. Exiting', version)
+    version = version_of_branch(branch)
+    if version is None:
+        logger.error('Unknown version name. Exiting')
         sys.exit(-1)
 
     versions_to_test = VERSIONS[VERSIONS.index(version):]

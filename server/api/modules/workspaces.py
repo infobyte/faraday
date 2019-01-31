@@ -189,7 +189,7 @@ class WorkspaceView(ReadWriteView):
         self._report_upath = os.path.join(self._report_path, "unprocessed")
 
         if not os.path.exists(self._report_path):
-            os.mkdir(self._report_path)
+            os.makedirs(self._report_path)
 
         if not os.path.exists(self._report_ppath):
             os.mkdir(self._report_ppath)

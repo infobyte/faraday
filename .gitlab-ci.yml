@@ -74,3 +74,13 @@ closure_compiler:
         - unzip -n compiler-latest.zip
         - mv "$(unzip -Z1 compiler-latest.zip | grep jar)" compiler-latest.jar
         - java -jar compiler-latest.jar server/www/scripts
+
+
+merge_conflict_check:
+    image: python:3
+    stage: doeverything
+    script:
+        - git config --global user.email "you@example.com"
+        - git config --global user.name "Mergerbot"
+        - python3 merge-conflict-detector.py
+    allow_failure: true

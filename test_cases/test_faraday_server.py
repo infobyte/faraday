@@ -74,4 +74,4 @@ def test_start_and_kill_faraday_server():
         log_path = os.path.expanduser('~/.faraday/logs/faraday-server.log')
         with open(log_path, 'r') as log_file:
             print(log_file.read())
-    assert subproc.returncode == 0, (out, err)
+    assert subproc.returncode == 0, (out, err, command, server_script)

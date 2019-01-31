@@ -38,8 +38,15 @@ sys.setdefaultencoding("utf-8")
 CONF = getInstanceConfiguration()
 
 
+mail_from = 'faraday.searcher@gmail.com'
+mail_password = "faradaySearcher.2018"
+mail_protocol = 'smtp.gmail.com'
+mail_port = 587
+
+
 def send_mail(to_addr, subject, body):
-    from_addr = 'faraday.searcher@gmail.com'
+    global mail_from, mail_password, mail_protocol, mail_port
+    from_addr = mail_from
     msg = MIMEMultipart()
     msg['From'] = from_addr
     msg['To'] = to_addr
@@ -47,9 +54,9 @@ def send_mail(to_addr, subject, body):
 
     msg.attach(MIMEText(body, 'plain'))
     try:
-        server_mail = smtplib.SMTP('smtp.gmail.com', 587)
+        server_mail = smtplib.SMTP(mail_protocol, mail_port)
         server_mail.starttls()
-        server_mail.login(from_addr, "faradaySearcher.2018")
+        server_mail.login(from_addr, mail_password)
         text = msg.as_string()
         server_mail.sendmail(from_addr, to_addr, text)
         server_mail.quit()
@@ -635,6 +642,10 @@ def main():
     parser.add_argument('-u', '--user', help='Faraday user', required=False, default="")
     parser.add_argument('-p', '--password', help='Faraday password', required=False, default="")
     parser.add_argument('-o', '--output', help='Choose a custom output directory', required=False)
+    parser.add_argument('-e', '--email', help='Custom email', required=False, default="faraday.searcher@gmail.com")
+    parser.add_argument('-ep', '--email_pass', help='Email password', required=False)
+    parser.add_argument('-mp', '--mail_protocol', help='Email protocol', required=False, default="smtp.gmail.com")
+    parser.add_argument('-pp', '--port_protocol', help='Port protocol', required=False, default=587)
     parser.add_argument('-l', '--log', help='Choose a custom log level', required=False)
     args = parser.parse_args()
 
@@ -670,6 +681,20 @@ def main():
     loglevel = 'debug'
     if args.log:
         loglevel = args.log
+
+    global mail_from, mail_password, mail_protocol, mail_port
+
+    if args.email:
+        mail_from = args.email
+
+    if args.email_pass:
+        mail_password = args.email_pass
+
+    if args.mail_protocol:
+        mail_protocol = args.mail_protocol
+
+    if args.port_protocol:
+        mail_port = args.port_protocol
 
     for d in [output, 'log/']:
         if not os.path.isdir(d):

@@ -60,9 +60,9 @@ def test_start_and_kill_faraday_server():
     while subproc.returncode is None:
         now = datetime.now()
         delta = now - start
-        if delta.seconds > 40:
+        if delta.seconds > 140:
             raise UserWarning('Faraday server test timeout!')
-        if delta.seconds > 4:
+        if delta.seconds > 30:
             subproc.send_signal(signal.SIGTERM)
             subproc.wait()
         subproc.poll()

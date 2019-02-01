@@ -38,8 +38,8 @@ sys.setdefaultencoding("utf-8")
 CONF = getInstanceConfiguration()
 
 
-mail_from = 'faraday.searcher@gmail.com'
-mail_password = "faradaySearcher.2018"
+mail_from = ''
+mail_password = ''
 mail_protocol = 'smtp.gmail.com'
 mail_port = 587
 

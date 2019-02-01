@@ -1,0 +1,1 @@
+Send searcher alert with custom mail

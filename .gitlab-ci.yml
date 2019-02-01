@@ -6,6 +6,8 @@ variables:
     POSTGRES_PASSWORD: custom_pass
 
 stages:
+    - merge_conflict_check
+    - fast_test
     - doeverything
 
 services:
@@ -13,7 +15,7 @@ services:
 
 test:
     image: ubuntu
-    stage: doeverything
+    stage: fast_test
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
         - ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
@@ -59,5 +61,28 @@ test_postgresql:
         - pip install -r requirements_server.txt
         - pip install responses pytest-xdist pytest-cov
         - pip install -r requirements_dev.txt
-        - pytest test_cases -v --cov=server --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_db
+        - mkdir -p ~/.faraday/config
+        - cp test_cases/data/server.ini ~/.faraday/config
+        - pytest test_cases -v --cov=server --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_db -n 10
 
+
+closure_compiler:
+    image: ubuntu
+    stage: doeverything
+    script:
+        - apt-get update -qy
+        - apt-get -y install wget default-jre unzip
+        - wget https://dl.google.com/closure-compiler/compiler-latest.zip
+        - unzip -n compiler-latest.zip
+        - mv "$(unzip -Z1 compiler-latest.zip | grep jar)" compiler-latest.jar
+        - java -jar compiler-latest.jar server/www/scripts
+
+
+merge_conflict_check:
+    image: python:3
+    stage: merge_conflict_check
+    allow_failure: true
+    script:
+        - git config --global user.email "you@example.com"
+        - git config --global user.name "Mergerbot"
+        - python3 merge-conflict-detector.py

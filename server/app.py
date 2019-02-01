@@ -6,6 +6,7 @@ import logging
 import os
 import string
 import datetime
+from future.builtins import range # __future__
 from os.path import join, expanduser
 from random import SystemRandom
 
@@ -15,10 +16,10 @@ from server.models import User, Vulnerability, VulnerabilityWeb, Workspace, Vuln
 
 try:
     # py2.7
-    from configparser import ConfigParser, NoSectionError, NoOptionError
+    from configparser import ConfigParser, NoSectionError, NoOptionError, DuplicateSectionError
 except ImportError:
     # py3
-    from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+    from ConfigParser import ConfigParser, NoSectionError, NoOptionError, DuplicateSectionError
 
 import flask
 from flask import Flask, session, g
@@ -52,8 +53,11 @@ def setup_storage_path():
         os.mkdir(default_path)
     config = ConfigParser()
     config.read(server.config.LOCAL_CONFIG_FILE)
-    config.add_section('storage')
-    config.set('storage', 'path', default_path)
+    try:
+        config.add_section('storage')
+        config.set('storage', 'path', default_path)
+    except DuplicateSectionError:
+        logger.info('Duplicate section storage. skipping.')
     with open(server.config.LOCAL_CONFIG_FILE, 'w') as configfile:
         config.write(configfile)
 
@@ -155,9 +159,13 @@ def save_new_secret_key(app):
     config = ConfigParser()
     config.read(LOCAL_CONFIG_FILE)
     rng = SystemRandom()
-    secret_key = "".join([rng.choice(string.ascii_letters + string.digits) for _ in xrange(25)])
+    secret_key = "".join([rng.choice(string.ascii_letters + string.digits) for _ in range(25)])
     app.config['SECRET_KEY'] = secret_key
-    config.set('faraday_server', 'secret_key', secret_key)
+    try:
+        config.set('faraday_server', 'secret_key', secret_key)
+    except NoSectionError:
+        config.add_section('faraday_server')
+        config.set('faraday_server', 'secret_key', secret_key)
     with open(LOCAL_CONFIG_FILE, 'w') as configfile:
         config.write(configfile)
 

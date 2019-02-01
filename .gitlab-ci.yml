@@ -1,0 +1,92 @@
+variables:
+    TZ: "America/New_York"
+    # Configure postgres service (https://hub.docker.com/_/postgres/)
+    POSTGRES_DB: custom_db
+    POSTGRES_USER: custom_user
+    POSTGRES_PASSWORD: custom_pass
+
+stages:
+    - merge_conflict_check
+    - fast_test
+    - doeverything
+
+services:
+    - postgres:latest
+
+test:
+    image: ubuntu
+    stage: fast_test
+    coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
+    script:
+        - ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
+        - echo $TZ > /etc/timezone
+        - apt-get update -qy
+        - apt-get -y install build-essential ipython python-setuptools python-pip python-dev pkg-config libssl-dev libffi-dev libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev postgresql sudo libsasl2-dev libldap2-dev git
+        - apt-get install -y python-dev python-pip
+        - pip install virtualenv
+        - virtualenv -p python2 faraday_venv
+        - source faraday_venv/bin/activate
+        - pip install -r requirements_server.txt
+        - pip install responses pytest-xdist pytest-cov
+        - pip install -r requirements_dev.txt
+        - pytest test_cases -v --cov=server
+
+pylint:
+  image: ubuntu
+  stage: doeverything
+  script:
+    - apt-get update -qy
+    - apt-get install -y python-dev python-pip
+    - pip install pylint anybadge
+    - pylint server |tee pylint.txt || true
+    - score=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' pylint.txt)
+    - anybadge --label pylint --value=$score --file pylint.svg 4=red 6=orange 8=yellow 10=green
+  artifacts:
+    paths:
+      - pylint.svg
+
+test_postgresql:
+    image: ubuntu
+    stage: doeverything
+    coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
+    script:
+        - ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
+        - echo $TZ > /etc/timezone
+        - apt-get update -qy
+        - apt-get -y install build-essential ipython python-setuptools python-pip python-dev pkg-config libssl-dev libffi-dev libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev postgresql sudo libsasl2-dev libldap2-dev git python-lxml
+        - apt-get install -y python-dev python-pip
+        - pip install virtualenv
+        - virtualenv -p python2 faraday_venv
+        - source faraday_venv/bin/activate
+        - pip install -r requirements_server.txt
+        - pip install responses pytest-xdist pytest-cov
+        - pip install -r requirements_dev.txt
+        - mkdir -p ~/.faraday/config
+        - cp test_cases/data/server.ini ~/.faraday/config
+        - pytest test_cases -v --cov=server --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_db -n 10
+    artifacts:
+        when: on_failure
+        paths:
+          - ~/.faraday/logs/faraday-server.log
+
+closure_compiler:
+    image: ubuntu
+    stage: doeverything
+    script:
+        - apt-get update -qy
+        - apt-get -y install wget default-jre unzip
+        - wget https://dl.google.com/closure-compiler/compiler-latest.zip
+        - unzip -n compiler-latest.zip
+        - mv "$(unzip -Z1 compiler-latest.zip | grep jar)" compiler-latest.jar
+        - java -jar compiler-latest.jar server/www/scripts
+
+
+merge_conflict_check:
+    image: python:3
+    stage: merge_conflict_check
+    allow_failure: true
+    script:
+        - git config --global user.email "you@example.com"
+        - git config --global user.name "Mergerbot"
+        - python3 merge-conflict-detector.py
+

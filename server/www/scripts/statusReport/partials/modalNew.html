@@ -88,8 +88,8 @@
                     </label>
                     <label class="radio-container"
                            ng-click="modal.data.type = 'VulnerabilityWeb'"
-                           title="Change type to Vulnerability Web">
-                        <h5>Vulnerability Web</h5>
+                           title="Change type to Web Vulnerability">
+                        <h5>Web Vulnerability</h5>
                         <input type="radio" name="radio" ng-checked="modal.data.type === 'VulnerabilityWeb'">
                         <span class="checkmark"></span>
                     </label>
@@ -396,7 +396,7 @@
                             </div><!-- .form-group -->
                         </div>
 
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="tab-pane-header">Path</div>
                             <div class="form-group">
                                 <label class="sr-only control-label" for="vuln-path">Path</label>
@@ -405,7 +405,16 @@
                             </div><!-- .form-group -->
                         </div>
 
-                        <div class="col-md-4">
+                        <div class="col-md-2">
+                            <div class="tab-pane-header">Status code</div>
+                            <div class="form-group">
+                                <label class="sr-only control-label" for="vuln-path">Status code</label>
+                                <input type="text" class="form-control" id="vuln-status-code" placeholder="Status code"
+                                       ng-model="modal.data.status_code"/>
+                            </div><!-- .form-group -->
+                        </div>
+
+                        <div class="col-md-3">
                             <div class="tab-pane-header">Query</div>
                             <div class="form-group">
                                 <label class="sr-only control-label" for="vuln-query">Query</label>
@@ -462,11 +471,17 @@
                 </div>
 
                  <div id="tab-custom-fields" class="container tab-pane-container tab-pane fade"><br>
-                    <div class="col-md-12 margin-bottom-15px">
+                     <div ng-if="modal.customFields.length === 0" class="no-info-overlay" style="margin-bottom: 15px;">
+                            <p class="no-info-text">
+                                No custom fields were found. To create one refer to our
+                                <a href="https://github.com/infobyte/faraday/wiki/Custom-Fields" target="_blank">wiki page</a>.
+                            </p>
+                     </div>
+                     <div class="col-md-12 margin-bottom-15px">
                         <div class="col-md-12" ng-repeat="cf in modal.customFields | orderBy : 'field_order'">
                             <custom-field field="{{cf}}"></custom-field>
                         </div>
-                </div>
+                     </div>
             </div>
         </div>
 

@@ -22,6 +22,13 @@ angular.module('faradayApp')
                             $scope.loadData();
                     }, true);
                 }
+
+                $scope.settings = {
+                    currentPage: 0,
+                    offset: 0,
+                    pageLimit: 5,
+                    pageLimits: ['3', '5', '10', '20', '30', '50', '80', '100']
+                };
             };
 
             $scope.loadData = function() {

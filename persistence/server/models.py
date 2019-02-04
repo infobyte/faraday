@@ -750,7 +750,7 @@ class ModelBase(object):
         # getId will wait until the id is not None
         timeout = 1
         retries = 1
-        max_retries = 6
+        max_retries = 4
         while retries <= max_retries and self.id is None:
             if timeout >= 8:
                 logger.info('Retrying getID timeout {0}'.format(timeout))

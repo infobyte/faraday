@@ -22,7 +22,6 @@ from shutil import rmtree
 
 VERSIONS = ['white', 'pink', 'black']
 BRANCH_FORMAT = 'origin/{}/dev'
-branch_regexp = re.compile(r'^(origin/)?..._(?P<version>[^_]+)_(?P<tkt>\d+)_')
 
 @contextmanager
 def chdir(directory):
@@ -84,18 +83,29 @@ def branch_exists(branch_name):
         raise ValueError('Error when checking for branch existence')
 
 
+def version_of_branch(branch_name):
+    """
+    >>> version_of_branch('tkt_white_this_is_not_a_pink_branch')
+    'white'
+    """
+    positions = {version: branch_name.find(version)
+                 for version in VERSIONS}
+    if all((pos < 0) for pos in positions.values()):
+        # The branch name doesn't contain white, pink or black
+        return
+    positions = {version: pos
+                 for (version, pos) in positions.items()
+                 if pos >= 0}
+    return min(positions.keys(), key=positions.get)
+
+
 def main(branch):
     logging.getLogger().setLevel(getattr(logging, args.log_level.upper()))
     logger = logging  # TODO FIXME
     logger.info('Checking merge conflicts for branch %s', branch)
-    match = branch_regexp.match(branch)
-    if match is None:
-        logger.error('Unknown branch name: %s. Exiting', branch)
-        sys.exit(-1)
-
-    version = match.group('version')
-    if version not in VERSIONS:
-        logger.error('Unknown version name: %s. Exiting', version)
+    version = version_of_branch(branch)
+    if version is None:
+        logger.error('Unknown version name. Exiting')
         sys.exit(-1)
 
     versions_to_test = VERSIONS[VERSIONS.index(version):]

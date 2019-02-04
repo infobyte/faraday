@@ -81,7 +81,7 @@ angular.module('faradayApp')
                 status_code: undefined,
                 pname: "",
                 policyviolations: [],
-                easeofresolution: "",
+                easeofresolution: null,
                 query: "",
                 refs: [],
                 request: "",

@@ -60,9 +60,9 @@ def test_start_and_kill_faraday_server():
     while subproc.returncode is None:
         now = datetime.now()
         delta = now - start
-        if delta.seconds > 40:
+        if delta.seconds > 140:
             raise UserWarning('Faraday server test timeout!')
-        if delta.seconds > 4:
+        if delta.seconds > 30:
             subproc.send_signal(signal.SIGTERM)
             subproc.wait()
         subproc.poll()
@@ -74,4 +74,4 @@ def test_start_and_kill_faraday_server():
         log_path = os.path.expanduser('~/.faraday/logs/faraday-server.log')
         with open(log_path, 'r') as log_file:
             print(log_file.read())
-    assert subproc.returncode == 0, (out, err)
+    assert subproc.returncode == 0, (out, err, command, server_script)

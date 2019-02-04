@@ -53,7 +53,7 @@ test_postgresql:
         - ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
         - echo $TZ > /etc/timezone
         - apt-get update -qy
-        - apt-get -y install build-essential ipython python-setuptools python-pip python-dev pkg-config libssl-dev libffi-dev libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev postgresql sudo libsasl2-dev libldap2-dev git
+        - apt-get -y install build-essential ipython python-setuptools python-pip python-dev pkg-config libssl-dev libffi-dev libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev postgresql sudo libsasl2-dev libldap2-dev git python-lxml
         - apt-get install -y python-dev python-pip
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
@@ -64,7 +64,10 @@ test_postgresql:
         - mkdir -p ~/.faraday/config
         - cp test_cases/data/server.ini ~/.faraday/config
         - pytest test_cases -v --cov=server --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_db -n 10
-
+    artifacts:
+        when: on_failure
+        paths:
+          - ~/.faraday/logs/faraday-server.log
 
 closure_compiler:
     image: ubuntu
@@ -86,3 +89,4 @@ merge_conflict_check:
         - git config --global user.email "you@example.com"
         - git config --global user.name "Mergerbot"
         - python3 merge-conflict-detector.py
+

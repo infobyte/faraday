@@ -63,7 +63,7 @@ test_postgresql:
         - pip install -r requirements_dev.txt
         - mkdir -p ~/.faraday/config
         - cp test_cases/data/server.ini ~/.faraday/config
-        - pytest test_cases -v --cov=server --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB -n 10
+        - pytest test_cases -v --cov=server --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB
     artifacts:
         when: on_failure
         paths:

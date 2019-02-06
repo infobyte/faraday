@@ -98,6 +98,7 @@ release_parser:
     script:
         - git config --global user.email "you@example.com"
         - git config --global user.name "Mergerbot"
+        - apt-get update -qy
         - apt-get install -y python-dev python-pip
         - pip install packaging
         - python3 CHANGELOG/changelog.py

@@ -9,6 +9,7 @@ stages:
     - merge_conflict_check
     - fast_test
     - doeverything
+    - documentation
 
 services:
     - postgres:latest
@@ -90,3 +91,16 @@ merge_conflict_check:
         - git config --global user.name "Mergerbot"
         - python3 merge-conflict-detector.py
 
+documentation:
+    image: ubuntu
+    stage: documentation
+    script:
+        - apt-get update -qy
+        - apt-get install python-pip python-dev
+        - pip install sphinx
+        - mkdir -p ~/docs
+        - cd doc && make html
+        - cp -r _build/html ~/docs/build
+    artifacts:
+        paths:
+            - ~/docs/build

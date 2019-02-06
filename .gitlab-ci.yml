@@ -96,7 +96,7 @@ documentation:
     stage: documentation
     script:
         - apt-get update -qy
-        - apt-get install python-pip python-dev
+        - apt-get install -y python-pip python-dev
         - pip install sphinx
         - mkdir -p ~/docs
         - cd doc && make html

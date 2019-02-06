@@ -373,5 +373,11 @@ angular.module('faradayApp')
           $scope.search = '';
         };
 
+         $scope.readonlyToggle = function (ws) {
+            workspacesFact.readOnlyToogle(ws.name).then(function (resp) {
+                ws.readonly = resp.data;
+            });
+        };
+
             $scope.init();
         }]);

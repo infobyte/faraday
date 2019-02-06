@@ -346,10 +346,10 @@ class GenericWorkspacedView(GenericView):
     route_prefix = '/v2/ws/<workspace_name>/'
     base_args = ['workspace_name']  # Required to prevent double usage of <workspace_name>
 
-    def _get_workspace(self, workspace_name, to_edit=True):
+    def _get_workspace(self, workspace_name):
         try:
             ws = Workspace.query.filter_by(name=workspace_name).one()
-            if to_edit and not ws.active:
+            if not ws.active:
                 flask.abort(403, "Disabled workspace: %s" % workspace_name)
         except NoResultFound:
             flask.abort(404, "No such workspace: %s" % workspace_name)
@@ -358,7 +358,7 @@ class GenericWorkspacedView(GenericView):
     def _get_base_query(self, workspace_name):
         base = super(GenericWorkspacedView, self)._get_base_query()
         return base.join(Workspace).filter(
-            Workspace.id == self._get_workspace(workspace_name, to_edit=False).id)
+            Workspace.id == self._get_workspace(workspace_name).id)
 
     def _get_object(self, object_id, workspace_name, eagerload=False):
         self._validate_object_id(object_id)
@@ -376,6 +376,14 @@ class GenericWorkspacedView(GenericView):
         """Overriden to pass the workspace name to the schema"""
         context.update(kwargs)
         return context
+
+    def before_request(self, name, *args, **kwargs):
+        sup = super(GenericWorkspacedView, self)
+        if hasattr(sup, 'before_request'):
+            sup.before_request(name, *args, **kwargs)
+        if (self._get_workspace(kwargs['workspace_name']).readonly and
+                flask.request.method not in ['GET', 'HEAD', 'OPTIONS']):
+            flask.abort(403, "Altering a readonly workspace is not allowed")
 
 
 class ListMixin(object):

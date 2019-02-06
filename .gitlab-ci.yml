@@ -101,7 +101,7 @@ release_parser:
         - apt-get update -qy
         - apt-get install -y python-dev python-pip
         - pip install packaging
-        - python3 CHANGELOG/changelog.py
+        - cd CHANGELOG && python3 changelog.py
     artifacts:
         paths:
           - CHANGELOG/RELEASE.md

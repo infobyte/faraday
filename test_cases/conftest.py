@@ -90,6 +90,8 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
+    if config.option.markexpr == 'hypothesis':
+        return
     if not config.option.use_hypothesis:
         config.option.markexpr = 'not hypothesis'
 

@@ -71,7 +71,6 @@ class CustomClient(FlaskClient):
 def pytest_addoption(parser):
     # currently for tests using sqlite and memory have problem while using transactions
     # we need to review sqlite configuraitons for persistence using PRAGMA.
-    print(TEMPORATY_SQLITE.name)
     parser.addoption('--connection-string', default='sqlite:////{0}'.format(TEMPORATY_SQLITE.name),
                      help="Database connection string. Defaults to in-memory "
                      "sqlite if not specified:")

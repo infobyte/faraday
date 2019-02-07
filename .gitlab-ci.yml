@@ -91,13 +91,11 @@ merge_conflict_check:
         - git config --global user.name "Mergerbot"
         - python3 merge-conflict-detector.py
 
-GenerateReleaseFile:
+generate_release_file:
     image: python:3
     stage: documentation
     allow_failure: true
     script:
-        - git config --global user.email "you@example.com"
-        - git config --global user.name "Mergerbot"
         - apt-get update -qy
         - apt-get install -y python-dev python-pip
         - pip install packaging

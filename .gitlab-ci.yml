@@ -19,15 +19,10 @@ services:
     - postgres:latest
 
 closure_compiler:
-    image: ubuntu
+    image: jborza/closure-compiler
     stage: pre_testing
     script:
-        - apt-get update -qy
-        - apt-get -y install wget default-jre unzip
-        - wget https://dl.google.com/closure-compiler/compiler-latest.zip
-        - unzip -n compiler-latest.zip
-        - mv "$(unzip -Z1 compiler-latest.zip | grep jar)" compiler-latest.jar
-        - java -jar compiler-latest.jar server/www/scripts
+        - /opt/cc.sh server/www/scripts
 
 merge_conflict_check:
     image: python:3

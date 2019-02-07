@@ -115,3 +115,15 @@ i_do_nothing:
     only:
         - $FULL_TEST
         - $I_DO_NOTH_TEST
+
+
+# This is a test of future test that will be scheduled
+i_do_nothingg:
+    image: python:3
+    stage: post_testing
+    allow_failure: true
+    script:
+        - apt-get update -qy
+        - apt-get install -y python-dev python-pip
+    only:
+        - $FULL_TEST

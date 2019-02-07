@@ -17,7 +17,6 @@ closure_compiler:
     image: ubuntu
     stage: pre_testing
     script:
-        - echo $FULL_TEST
         - apt-get update -qy
         - apt-get -y install wget default-jre unzip
         - wget https://dl.google.com/closure-compiler/compiler-latest.zip
@@ -114,8 +113,9 @@ i_do_nothing:
         - apt-get update -qy
         - apt-get install -y python-dev python-pip
     only:
-        - $FULL_TEST
-        - $I_DO_NOTH_TEST
+        variables:
+            - $FULL_TEST == "True"
+            - $I_DO_NOTH_TEST == "True"
 
 
 # This is a test of future test that will be scheduled
@@ -127,4 +127,5 @@ i_do_nothingg:
         - apt-get update -qy
         - apt-get install -y python-dev python-pip
     only:
-        - $FULL_TEST
+        variables:
+            - $FULL_TEST == "True"

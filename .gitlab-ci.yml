@@ -19,7 +19,10 @@ services:
     - postgres:latest
 
 closure_compiler:
-    image: jborza/closure-compiler
+    image:
+        name: jborza/closure-compiler
+        entrypoint: ["/bin/sh", "-c"]
+
     stage: pre_testing
     script:
         - /opt/cc.sh server/www/scripts

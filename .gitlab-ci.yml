@@ -101,4 +101,4 @@ documentation:
         - cd doc && make html
     artifacts:
         paths:
-            - doc/build
+            - doc/_build/html

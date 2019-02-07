@@ -104,7 +104,7 @@ generate_release_file:
     only:
         - /^.*\/(dev|master)$/
 
-# This is a test of future test that will be scheduled
+# This is a test of future test case that will be scheduled
 i_do_nothing:
     image: python:3
     stage: post_testing
@@ -118,8 +118,8 @@ i_do_nothing:
             - $I_DO_NOTH_TEST == "True"
 
 
-# This is a test of future test that will be scheduled
-i_do_nothingg:
+# This is a test of future test case that will be scheduled
+i_do_nothing2:
     image: python:3
     stage: post_testing
     allow_failure: true
@@ -129,3 +129,4 @@ i_do_nothingg:
     only:
         variables:
             - $FULL_TEST == "True"
+            - $I_DO_NOTH2_TEST == "True"

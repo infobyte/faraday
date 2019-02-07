@@ -98,9 +98,7 @@ documentation:
         - apt-get update -qy
         - apt-get install -y python-pip python-dev
         - pip install sphinx
-        - mkdir -p ~/docs
         - cd doc && make html
-        - cp -r _build/html ~/docs/build
     artifacts:
         paths:
-            - ~/docs/build
+            - doc/build

@@ -113,5 +113,5 @@ i_do_nothing:
         - apt-get update -qy
         - apt-get install -y python-dev python-pip
     only:
-        - $FULL_TEST == "True"
-        - $I_DO_NOTH_TEST == "True"
+        - $FULL_TEST
+        - $I_DO_NOTH_TEST

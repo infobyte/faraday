@@ -9,6 +9,7 @@ stages:
     - merge_conflict_check
     - fast_test
     - doeverything
+    - documentation
 
 services:
     - postgres:latest
@@ -90,3 +91,15 @@ merge_conflict_check:
         - git config --global user.name "Mergerbot"
         - python3 merge-conflict-detector.py
 
+generate_release_file:
+    image: python:3
+    stage: documentation
+    allow_failure: true
+    script:
+        - apt-get update -qy
+        - apt-get install -y python-dev python-pip
+        - pip install packaging
+        - cd CHANGELOG && python3 changelog.py
+    artifacts:
+        paths:
+          - CHANGELOG/RELEASE.md

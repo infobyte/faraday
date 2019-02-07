@@ -9,7 +9,7 @@ stages:
     - merge_conflict_check
     - fast_test
     - doeverything
-    - release_parser
+    - documentation
 
 services:
     - postgres:latest
@@ -91,9 +91,9 @@ merge_conflict_check:
         - git config --global user.name "Mergerbot"
         - python3 merge-conflict-detector.py
 
-release_parser:
+GenerateReleaseFile:
     image: python:3
-    stage: merge_conflict_check
+    stage: documentation
     allow_failure: true
     script:
         - git config --global user.email "you@example.com"

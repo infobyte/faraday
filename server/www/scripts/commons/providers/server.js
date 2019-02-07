@@ -419,6 +419,12 @@ angular.module("faradayApp")
                 return send_data(putUrl, undefined, false, "PUT");
             }
 
+            ServerAPI.readOnlyToogle = function (wsName) {
+                var putUrl = APIURL + "ws/" + wsName + "/change_readonly/";
+                return send_data(putUrl, undefined, false, "PUT");
+            }
+
+
             ServerAPI.getWorkspaceSummary = function (wsName, confirmed) {
 
                 var getUrl = createGetUrl(wsName);

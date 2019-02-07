@@ -59,6 +59,7 @@ class WorkspaceSchema(AutoSchema):
         PrimaryKeyRelatedField('name', many=True, dump_only=True),
         fields.List(fields.String)
     )
+    active = fields.Boolean(dump_only=True)
 
     create_date = fields.DateTime(attribute='create_date',
                            dump_only=True)
@@ -71,7 +72,7 @@ class WorkspaceSchema(AutoSchema):
         model = Workspace
         fields = ('_id', 'id', 'customer', 'description', 'active',
                   'duration', 'name', 'public', 'scope', 'stats',
-                  'create_date', 'update_date')
+                  'create_date', 'update_date', 'readonly')
 
     @post_load
     def post_load_duration(self, data):
@@ -107,21 +108,22 @@ class WorkspaceView(ReadWriteView):
             objects.append(workspace_stat)
         return self._envelope_list(self._dump(objects, kwargs, many=True))
 
+    def _get_querystring_boolean_field(self, field_name, default=None):
+        try:
+            val = bool(json.loads(flask.request.args[field_name]))
+        except (KeyError, ValueError):
+            val = default
+        return val
+
     def _get_base_query(self, object_id=None):
-        try:
-            confirmed = bool(json.loads(flask.request.args['confirmed']))
-        except (KeyError, ValueError):
-            confirmed = None
-        try:
-            active = bool(json.loads(flask.request.args['active']))
-            query = Workspace.query_with_count(
-                    confirmed,
-                    active=active,
-                    workspace_name=object_id)
-        except (KeyError, ValueError):
-            query = Workspace.query_with_count(
-                    confirmed,
-                    workspace_name=object_id)
+        confirmed = self._get_querystring_boolean_field('confirmed')
+        active = self._get_querystring_boolean_field('active')
+        readonly = self._get_querystring_boolean_field('readonly')
+        query = Workspace.query_with_count(
+                confirmed,
+                active=active,
+                readonly=readonly,
+                workspace_name=object_id)
         return query
 
     def _get_object(self, object_id, eagerload=False, **kwargs):
@@ -129,17 +131,12 @@ class WorkspaceView(ReadWriteView):
         Given the object_id and extra route params, get an instance of
         ``self.model_class``
         """
-        confirmed = flask.request.values.get('confirmed', None)
-        if confirmed:
-            try:
-                 confirmed = bool(int(confirmed))
-            except ValueError:
-                 if confirmed.lower() == 'false':
-                      confirmed = False
-                 elif confirmed.lower() == 'true':
-                      confirmed = True
+        confirmed = self._get_querystring_boolean_field('confirmed')
+        active = self._get_querystring_boolean_field('active')
         self._validate_object_id(object_id)
         query = db.session.query(Workspace).filter_by(name=object_id)
+        if active is not None:
+            query = query.filter_by(active=active)
         query = query.options(
                  with_expression(
                      Workspace.vulnerability_web_count,
@@ -223,6 +220,12 @@ class WorkspaceView(ReadWriteView):
         changed = self._get_object(workspace_id).deactivate()
         db.session.commit()
         return changed
+
+    @route('/<workspace_id>/change_readonly/', methods=["PUT"])
+    def change_readonly(self, workspace_id):
+        self._get_object(workspace_id).change_readonly()
+        db.session.commit()
+        return self._get_object(workspace_id).readonly
 
 
 WorkspaceView.register(workspace_api)

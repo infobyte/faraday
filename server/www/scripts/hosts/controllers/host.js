@@ -270,6 +270,9 @@ angular.module('faradayApp')
                     resolve: {
                         service: function() {
                             return $scope.selectedServices();
+                        },
+                        workspace: function () {
+                            return $scope.workspaceData;
                         }
                     }
                  });

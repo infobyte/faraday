@@ -128,5 +128,15 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
+        workspacesFact.readOnlyToogle = function(wsName) {
+            var deferred = $q.defer();
+            ServerAPI.readOnlyToogle(wsName).then(function(data){
+                deferred.resolve(data);
+            }, function(err){
+                deferred.reject(err);
+            });
+            return deferred.promise;
+        };
+
         return workspacesFact;
     }]);

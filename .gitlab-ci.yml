@@ -11,43 +11,50 @@ cache:
     - .cache/pip
 
 stages:
-    - merge_conflict_check
-    - fast_test
-    - doeverything
+    - pre_testing
+    - testing
+    - post_testing
 
 services:
     - postgres:latest
 
-test:
-    image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base
-    stage: fast_test
-    coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
+closure_compiler:
+    image: ubuntu
+    stage: pre_testing
     script:
-        - pip install virtualenv
-        - virtualenv -p python2 faraday_venv
-        - source faraday_venv/bin/activate
-        - pip install --upgrade -r requirements_server.txt
-        - pip install --upgrade responses pytest-xdist pytest-cov
-        - pip install --upgrade -r requirements_dev.txt
-        - pytest test_cases -v --cov=server --color=yes
+        - apt-get update -qy
+        - apt-get -y install wget default-jre unzip
+        - wget https://dl.google.com/closure-compiler/compiler-latest.zip
+        - unzip -n compiler-latest.zip
+        - mv "$(unzip -Z1 compiler-latest.zip | grep jar)" compiler-latest.jar
+        - java -jar compiler-latest.jar server/www/scripts
+
+merge_conflict_check:
+    image: python:3
+    stage: pre_testing
+    allow_failure: true
+    script:
+        - git config --global user.email "you@example.com"
+        - git config --global user.name "Mergerbot"
+        - python3 merge-conflict-detector.py
 
 pylint:
-  image: ubuntu
-  stage: doeverything
-  script:
-    - apt-get update -qy
-    - apt-get install -y python-dev python-pip
-    - pip install pylint anybadge
-    - pylint server |tee pylint.txt || true
-    - score=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' pylint.txt)
-    - anybadge --label pylint --value=$score --file pylint.svg 4=red 6=orange 8=yellow 10=green
-  artifacts:
-    paths:
-      - pylint.svg
+    image: ubuntu
+    stage: pre_testing
+    script:
+        - apt-get update -qy
+        - apt-get install -y python-dev python-pip
+        - pip install pylint anybadge
+        - pylint server |tee pylint.txt || true
+        - score=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' pylint.txt)
+        - anybadge --label pylint --value=$score --file pylint.svg 4=red 6=orange 8=yellow 10=green
+    artifacts:
+        paths:
+            - pylint.svg
 
-test_postgresql:
+postgresql_test:
     image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base
-    stage: doeverything
+    stage: testing
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
         - pip install virtualenv
@@ -62,26 +69,59 @@ test_postgresql:
     artifacts:
         when: on_failure
         paths:
-          - ~/.faraday/logs/faraday-server.log
+            - ~/.faraday/logs/faraday-server.log
 
-closure_compiler:
-    image: ubuntu
-    stage: doeverything
+sqlite_test:
+    image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base
+    stage: testing
+    coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
-        - apt-get update -qy
-        - apt-get -y install wget default-jre unzip
-        - wget https://dl.google.com/closure-compiler/compiler-latest.zip
-        - unzip -n compiler-latest.zip
-        - mv "$(unzip -Z1 compiler-latest.zip | grep jar)" compiler-latest.jar
-        - java -jar compiler-latest.jar server/www/scripts
+        - pip install virtualenv
+        - virtualenv -p python2 faraday_venv
+        - source faraday_venv/bin/activate
+        - pip install --upgrade -r requirements_server.txt
+        - pip install --upgrade responses pytest-xdist pytest-cov
+        - pip install --upgrade -r requirements_dev.txt
+        - pytest test_cases -v --cov=server --color=yes
 
-
-merge_conflict_check:
+generate_release_file:
     image: python:3
-    stage: merge_conflict_check
+    stage: post_testing
     allow_failure: true
     script:
-        - git config --global user.email "you@example.com"
-        - git config --global user.name "Mergerbot"
-        - python3 merge-conflict-detector.py
+        - apt-get update -qy
+        - apt-get install -y python-dev python-pip
+        - pip install packaging
+        - cd CHANGELOG && python3 changelog.py
+    artifacts:
+        paths:
+            - CHANGELOG/RELEASE.md
+    only:
+        - /^.*\/(dev|master)$/
 
+# This is a test of future test case that will be scheduled
+i_do_nothing:
+    image: python:3
+    stage: post_testing
+    allow_failure: true
+    script:
+        - apt-get update -qy
+        - apt-get install -y python-dev python-pip
+    only:
+        variables:
+            - $FULL_TEST == "True"
+            - $I_DO_NOTH_TEST == "True"
+
+
+# This is a test of future test case that will be scheduled
+i_do_nothing2:
+    image: python:3
+    stage: post_testing
+    allow_failure: true
+    script:
+        - apt-get update -qy
+        - apt-get install -y python-dev python-pip
+    only:
+        variables:
+            - $FULL_TEST == "True"
+            - $I_DO_NOTH2_TEST == "True"

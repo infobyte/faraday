@@ -21,5 +21,5 @@ class TestLogin():
             'password': 'pepito',
         }
         res = test_client.post('/login', data=login_payload)
-        assert 'authentication_token' in res.json['response']['user']
         assert res.status_code == 200
+        assert 'authentication_token' in res.json['response']['user']

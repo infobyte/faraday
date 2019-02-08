@@ -37,11 +37,9 @@ merge_conflict_check:
         - python3 merge-conflict-detector.py
 
 pylint:
-    image: ubuntu
+    image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base  # I just need an image with python-dev and python-pip
     stage: pre_testing
     script:
-        - apt-get update -qy
-        - apt-get install -y python-dev python-pip
         - pip install pylint anybadge
         - pylint server |tee pylint.txt || true
         - score=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' pylint.txt)

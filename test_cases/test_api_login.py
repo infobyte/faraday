@@ -17,7 +17,7 @@ class TestLogin():
         session.commit()
         # we use lower case username, but in db is Capitalized
         login_payload = {
-            'email': 'Susan',
+            'email': 'susan',
             'password': 'pepito',
         }
         res = test_client.post('/login', data=login_payload)

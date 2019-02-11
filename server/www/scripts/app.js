@@ -287,6 +287,11 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             controller: 'vulnsByPriceCtrl',
             title: ' Workspace worth |'
         }).
+        when('/admin', {
+            templateUrl: 'scripts/admin/admin.html',
+            controller: 'adminCtrl',
+            title: ' Admin | '
+        }).
         otherwise({
             templateUrl: 'scripts/commons/partials/home.html',
             controller: 'homeCtrl'

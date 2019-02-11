@@ -61,7 +61,8 @@ postgresql_test:
         - pip install --upgrade -r requirements_dev.txt
         - mkdir -p ~/.faraday/config
         - cp test_cases/data/server.ini ~/.faraday/config
-        - pytest test_cases -v --cov=server --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_db -n 10
+        - sed -i 's/mapped_table/persist_selectable/' faraday_venv/lib/python2.7/site-packages/flask_sqlalchemy/__init__.py  # TODO remove when flask_sqlalchemy fixes the issue
+        - pytest test_cases -v --cov=server --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB
     artifacts:
         when: on_failure
         paths:
@@ -78,6 +79,9 @@ sqlite_test:
         - pip install --upgrade -r requirements_server.txt
         - pip install --upgrade responses pytest-xdist pytest-cov
         - pip install --upgrade -r requirements_dev.txt
+        - mkdir -p ~/.faraday/config
+        - cp test_cases/data/server.ini ~/.faraday/config
+        - sed -i 's/mapped_table/persist_selectable/' faraday_venv/lib/python2.7/site-packages/flask_sqlalchemy/__init__.py  # TODO remove when flask_sqlalchemy fixes the issue
         - pytest test_cases -v --cov=server --color=yes
 
 generate_release_file:

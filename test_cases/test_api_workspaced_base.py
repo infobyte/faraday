@@ -191,7 +191,7 @@ class UpdateTestsMixin:
             db.session.commit()
             assert res.status_code == 403
             assert self.model.query.count() == OBJECT_COUNT
-            assert old_field == getattr(self.model.query.filter("id = " + str(old_id)).one(), unique_field)
+            assert old_field == getattr(self.model.query.filter(self.model.id == old_id).one(), unique_field)
 
     def test_update_inactive_fails(self, test_client):
         self.workspace.deactivate()

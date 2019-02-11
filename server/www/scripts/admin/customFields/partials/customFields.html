@@ -1,0 +1,18 @@
+<div class="row">
+    <div class="cf-container col-md-8">
+        <div class="row cf-item" ng-repeat="cf in customFields | orderBy: cf.field_order">
+            <div class="col-md-11">
+                <h3 class="cf-display-name"> {{cf.field_display_name}}</h3>
+                <div class="cf-name"> {{cf.field_name}}</div>
+                <div class="cf-type type-int" ng-if="cf.field_type == 'int'">INTEGER</div>
+                <div class="cf-type type-list" ng-if="cf.field_type == 'list'">LIST</div>
+                <div class="cf-type type-str" ng-if="cf.field_type == 'str'">STRING</div>
+            </div>
+            <div class="col-md-1">
+                <i class="fa fa-bars"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4"></div>
+</div>

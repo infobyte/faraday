@@ -609,3 +609,38 @@ button[disabled], html input[disabled] {
     color: #444;
     background-color: #eee;
 }
+
+.cf-container {
+    padding-top: 32px;
+    padding-left: 32px;
+}
+
+.cf-item {
+    padding: 16px 0px!important;
+    border-top: 1px solid #ddd;
+}
+
+.cf-type {
+    border: 1px solid #ddd;
+    max-width: 80px;
+    text-align: center;
+    border-radius: 3px;
+    margin-top: 10px;
+    color: #fff;
+    font-weight: bold;
+}
+
+.type-int{
+    border: 1px solid #932ebe;
+    background-color: #932ebe;
+}
+
+.type-str{
+    border: 1px solid #2e97bd;
+    background-color: #2e97bd;
+}
+
+.type-list{
+    border: 1px solid #a1ce31;
+    background-color: #a1ce31;
+}

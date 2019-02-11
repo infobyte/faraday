@@ -118,10 +118,10 @@ class NessusPlugin(core.PluginBase):
 
             if self._isIPV4(ip):
                 i_id = self.createAndAddInterface(
-                    h_id, ip, mac, ipv4_address=ip, hostname_resolution=host)
+                    h_id, ip, mac, ipv4_address=ip, hostname_resolution=[host])
             else:
                 i_id = self.createAndAddInterface(
-                    h_id, ip, mac, ipv6_address=ip, hostname_resolution=host)
+                    h_id, ip, mac, ipv6_address=ip, hostname_resolution=[host])
 
             srv = {}
             web = False

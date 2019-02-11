@@ -7,7 +7,7 @@ angular.module('faradayApp')
         ['$scope', function($scope) {
 
         var init  = function () {
-            // Not implemented yet
+            $scope.on = "custom_fields"
         };
 
 	    init();

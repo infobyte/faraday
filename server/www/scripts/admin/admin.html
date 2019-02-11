@@ -14,11 +14,32 @@
                 <div class="setting-body">
                     <div class="setting-sidebar col-sm-2">
                         <ul>
-                            <li class="active">Custom fields</li>
+                            <li href="javascript:;" ng-class="{'active':on=='custom_fields'}"
+                                ng-click="on='custom_fields'">Custom fields
+                            </li>
+                            <li href="javascript:;" ng-class="{'active':on=='general'}" ng-click="on='general'">
+                                General
+                            </li>
                         </ul>
                     </div>
 
-                    <div class="setting-container col-sm-10"></div>
+                    <div class="setting-container col-sm-10">
+                        <div ng-switch="on">
+                            <div ng-switch-when="custom_fields">
+                                <h1>Custom fields</h1>
+                                <p>Manage custom fields in Faraday</p>
+                            </div>
+                            <div ng-switch-when="general">
+                                <h1>Generals</h1>
+                                <p>This is awesome !</p>
+                            </div>
+
+                            <div ng-switch-default>
+                                <h1>Switch</h1>
+                                <p>Select topic from the dropdown, to switch the content of this DIV.</p>
+                            </div>
+                        </div>
+                    </div>
 
                 </div>
             </div>

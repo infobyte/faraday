@@ -11,17 +11,17 @@
           <h3>Services for host {{hostName}}</h3>
           <div class="button-control col-md-12 col-sm-12 col-xs-12">
             <div class="control-wrapper control-new">
-              <button type="button" class="btn btn-success btn-new" title="New service" ng-click="new()" style="padding:0px 0px" ng-disabled="workspaceData.active === false">
+              <button type="button" class="btn btn-success btn-new"  title="{{workspaceData.readonly == true ? 'Read-only. Workspace disabled': 'New service'}}"  ng-click="new()" style="padding:0px 0px" ng-disabled="workspaceData.readonly === true">
                   New service
               </button>
             </div>
             <div class="control-wrapper control-edit">
-              <button type="button" class="btn" title="Edit selected services" ng-click="edit()" ng-disabled="services.length == 0 || workspaceData.active === false">
+              <button type="button" class="btn"  title="{{workspaceData.readonly == true ? 'Read-only. Workspace disabled': 'Edit selected services'}}" ng-click="edit()" ng-disabled="services.length == 0">
                 <img src="images/icon-toolbar-edit.svg" class="edit-icon" />
               </button>
             </div>
             <div class="control-wrapper">
-              <button type="button" class="btn" title="Delete selected services" ng-click="delete()" ng-disabled="services.length == 0 || workspaceData.active === false">
+              <button type="button" class="btn"  title="{{workspaceData.readonly == true ? 'Read-only. Workspace disabled': 'Delete selected services'}}"  ng-click="delete()" ng-disabled="services.length == 0 || workspaceData.readonly === true">
                 <img src="images/icon-toolbar-delete.svg" class="delete-icon" />
               </button>
             </div>
@@ -132,16 +132,16 @@
               <h3>
                   Host details
                   <span style="float:right">
-                      <a class="btn btn-sm btn-default" href="#/host/ws/{{workspace}}/hid/{{host.id}}/edit" ng-if="!editing" ng-disabled="workspaceData.active === false">
+                      <a class="btn btn-sm btn-default" href="#/host/ws/{{workspace}}/hid/{{host.id}}/edit" ng-if="!editing">
                           <span class="glyphicon glyphicon-pencil"></span>
                           Edit
                       </a>
-                      <button type="button" class="btn btn-sm btn-default" title="Delete host" ng-click="deleteHost()" ng-if="!editing" ng-disabled="workspaceData.active === false">
+                      <button type="button" class="btn btn-sm btn-default"  title="{{workspaceData.readonly == true ? 'Read-only. Workspace disabled': 'Delete host'}}"  ng-click="deleteHost()" ng-if="!editing" ng-disabled="workspaceData.readonly === true">
                           <span class="glyphicon glyphicon-trash"></span>
                           Delete
                       </button>
                       <a class="btn btn-danger" href="#/host/ws/{{workspace}}/hid/{{host.id}}" ng-click="loadHosts()" ng-if="editing && !creating">Cancel</a>
-                      <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()" ng-if="editing">OK</button>
+                      <button class="btn btn-success" ng-disabled="form.$invalid || workspaceData.readonly == true" ng-click="ok()" ng-if="editing">OK</button>
                   </span>
               </h3>
               <div class="form-horizontal">
@@ -220,7 +220,7 @@
               <div style="float: right">
                   <a class="btn btn-danger" href="#/host/ws/{{workspace}}/hid/{{host.id}}" ng-click="loadHosts()" ng-if="editing && !creating">Cancel</a>
                   <a class="btn btn-danger" href="#/hosts/ws/{{workspace}}" ng-if="editing && creating">Cancel</a>
-                  <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()" ng-if="editing">OK</button>
+                  <button class="btn btn-success" ng-disabled="form.$invalid || workspaceData.readonly == true" ng-click="ok()" ng-if="editing">OK</button>
               </div>
           </form>
       </div>

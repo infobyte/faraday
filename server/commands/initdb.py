@@ -26,6 +26,7 @@ from faraday import (
     FARADAY_BASE_CONFIG_XML,
     FARADAY_BASE,
 )
+from server.utils.database import is_unique_constraint_violation
 
 try:
     # py2.7
@@ -126,14 +127,20 @@ class InitDB():
         already_created = False
         try:
             engine.execute("INSERT INTO \"faraday_user\" (username, name, password, "
-                       "is_ldap, active, last_login_ip, current_login_ip, role) VALUES ('faraday', 'Administrator', "
-                       "'{0}', false, true, '127.0.0.1', '127.0.0.1', 'admin');".format(random_password))
-        except sqlalchemy.exc.IntegrityError:
-            # when re using database user could be created previusly
-            already_created = True
-            print(
-            "{yellow}WARNING{white}: Faraday administrator user already exists.".format(
-                yellow=Fore.YELLOW, white=Fore.WHITE))
+                       "is_ldap, active, last_login_ip, current_login_ip, role, state_otp) VALUES ('faraday', 'Administrator', "
+                       "'{0}', false, true, '127.0.0.1', '127.0.0.1', 'admin', 'disabled');".format(random_password))
+        except sqlalchemy.exc.IntegrityError as ex:
+            if is_unique_constraint_violation(ex):
+                # when re using database user could be created previously
+                already_created = True
+                print(
+                "{yellow}WARNING{white}: Faraday administrator user already exists.".format(
+                    yellow=Fore.YELLOW, white=Fore.WHITE))
+            else:
+                print(
+                    "{yellow}WARNING{white}: Can't create administrator user.".format(
+                        yellow=Fore.YELLOW, white=Fore.WHITE))
+                raise 
         if not already_created:
 
             self._save_user_xml(random_password)

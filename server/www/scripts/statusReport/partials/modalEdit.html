@@ -407,7 +407,7 @@
 
         <div class="modal-footer">
             <div class="modal-button">
-                <button class="btn btn-success" ng-click="modal.ok()" ng-disabled="formEdit.$invalid">OK</button>
+                <button class="btn btn-success" ng-click="modal.ok()" ng-disabled="formEdit.$invalid || modal.workspace.readonly == true">OK</button>
                 <button class="btn btn-danger" ng-click="modal.cancel()">Cancel</button>
             </div>
         </div>

@@ -351,7 +351,10 @@ def create_host(workspace_name, host, command_id=None):
     Return the server's json response as a dictionary.
     """
     host_properties = get_host_properties(host)
-    return server.create_host(workspace_name, command_id, **host_properties)
+    ip = host_properties.pop('ip', None)
+    if not ip:
+        logger.error('Trying to create host without ip')
+    return server.create_host(workspace_name, command_id, ip, **host_properties)
 
 
 @_ignore_in_changes
@@ -747,7 +750,7 @@ class ModelBase(object):
         # getId will wait until the id is not None
         timeout = 1
         retries = 1
-        max_retries = 6
+        max_retries = 4
         while retries <= max_retries and self.id is None:
             if timeout >= 8:
                 logger.info('Retrying getID timeout {0}'.format(timeout))

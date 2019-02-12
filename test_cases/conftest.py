@@ -9,14 +9,8 @@ from tempfile import NamedTemporaryFile
 import os
 import sys
 import json
-import random
-import string
 import inspect
-
 import pytest
-import psycopg2
-from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
-
 from factory import Factory
 from flask.testing import FlaskClient
 from flask_principal import Identity, identity_changed
@@ -27,8 +21,9 @@ sys.path.append(os.path.abspath(os.getcwd()))
 from server.app import create_app
 from server.models import db
 from test_cases import factories
-from server import config
 
+
+TEMPORATY_SQLITE = NamedTemporaryFile()
 # Discover factories to automatically register them to pytest-factoryboy and to
 # override its session
 enabled_factories = []
@@ -76,10 +71,7 @@ class CustomClient(FlaskClient):
 def pytest_addoption(parser):
     # currently for tests using sqlite and memory have problem while using transactions
     # we need to review sqlite configuraitons for persistence using PRAGMA.
-    parser.addoption('--use-postgresql', action='store_true',
-                     help="Forces the tests to be executed in postgresql "
-                     "using server.ini credentials")
-    parser.addoption('--connection-string',
+    parser.addoption('--connection-string', default='sqlite:////{0}'.format(TEMPORATY_SQLITE.name),
                      help="Database connection string. Defaults to in-memory "
                      "sqlite if not specified:")
     parser.addoption('--ignore-nplusone', action='store_true',
@@ -96,43 +88,10 @@ def pytest_configure(config):
         config.option.markexpr = 'not hypothesis'
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope='session')
 def app(request):
-    connection_string = request.config.getoption(
-                    '--connection-string')
-    use_postgresql = request.config.getoption(
-            '--use-postgresql')
-    sqlite = False
-    postgres_user, postgres_password = None, None
-
-    if use_postgresql and not connection_string:
-        connection_string = config.database.connection_string
-    if connection_string:
-        postgres_user, postgres_password = connection_string.split('://')[1].split('@')[0].split(':')
-
-    if postgres_user and postgres_password:
-        host = connection_string.split('://')[1].split('@')[1].split('/')[0]
-        con = psycopg2.connect(dbname='postgres',
-                               user=postgres_user,
-                               host=host,
-                               password=postgres_password)
-
-        con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-        cur = con.cursor()
-        db_name = ''.join(random.SystemRandom().choice(string.ascii_uppercase) for _ in range(20))
-        cur.execute("CREATE DATABASE \"%s\"  ;" % db_name)
-        connection_string = 'postgresql+psycopg2://{postgres_user}:{postgres_password}@{host}/{db_name}'.format(
-            postgres_user=postgres_user,
-            postgres_password=postgres_password,
-            host=host,
-            db_name=db_name,
-        )
-        con.close()
-    else:
-        sqlite = True
-        connection_string = 'sqlite:///'
-
-    app = create_app(db_connection_string=connection_string, testing=True)
+    app = create_app(db_connection_string=request.config.getoption(
+        '--connection-string'), testing=True)
     app.test_client_class = CustomClient
 
     # Establish an application context before running the tests.
@@ -140,21 +99,8 @@ def app(request):
     ctx.push()
 
     def teardown():
-        with ctx:
-            db.session.close()
-            db.engine.dispose()
+        TEMPORATY_SQLITE.close()
         ctx.pop()
-        if not sqlite:
-            postgres_user, postgres_password = connection_string.split('://')[1].split('@')[0].split(':')
-            host = connection_string.split('://')[1].split('@')[1].split('/')[0]
-            con = psycopg2.connect(dbname='postgres',
-                                   user=postgres_user,
-                                   host=host,
-                                   password=postgres_password)
-
-            con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-            cur = con.cursor()
-            cur.execute("DROP DATABASE \"%s\"  ;" % db_name)
 
     request.addfinalizer(teardown)
     app.config['NPLUSONE_RAISE'] = not request.config.getoption(
@@ -162,22 +108,32 @@ def app(request):
     return app
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope='session')
 def database(app, request):
     """Session-wide test database."""
+
+    def teardown():
+        try:
+            db.engine.execute('DROP TABLE vulnerability CASCADE')
+        except Exception:
+            pass
+        try:
+            db.engine.execute('DROP TABLE vulnerability_template CASCADE')
+        except Exception:
+            pass
+        db.drop_all()
 
     # Disable check_vulnerability_host_service_source_code constraint because
     # it doesn't work in sqlite
     vuln_constraints = db.metadata.tables['vulnerability'].constraints
-    try:
-        vuln_constraints.remove(next(
-            constraint for constraint in vuln_constraints
-            if constraint.name == 'check_vulnerability_host_service_source_code'))
-    except StopIteration:
-        pass
-    db.init_app(app)
+    vuln_constraints.remove(next(
+        constraint for constraint in vuln_constraints
+        if constraint.name == 'check_vulnerability_host_service_source_code'))
+
+    db.app = app
     db.create_all()
 
+    request.addfinalizer(teardown)
     return db
 
 
@@ -217,12 +173,25 @@ def session(database, request):
     for further information
     """
     connection = database.engine.connect()
+    transaction = connection.begin()
 
     options = {"bind": connection, 'binds': {}}
     session = db.create_scoped_session(options=options)
 
     # start the session in a SAVEPOINT...
-    #session.begin_nested()
+    session.begin_nested()
+
+    # then each time that SAVEPOINT ends, reopen it
+    @event.listens_for(session, "after_transaction_end")
+    def restart_savepoint(session, transaction):
+        if transaction.nested and not transaction._parent.nested:
+
+            # ensure that state is expired the way
+            # session.commit() at the top level normally does
+            # (optional step)
+            session.expire_all()
+
+            session.begin_nested()
 
     database.session = session
     db.session = session
@@ -235,6 +204,7 @@ def session(database, request):
         # Session above (including calls to commit())
         # is rolled back.
         # be careful with this!!!!!
+        transaction.rollback()
         connection.close()
         session.remove()
 
@@ -244,6 +214,15 @@ def session(database, request):
 
 @pytest.fixture
 def test_client(app):
+
+    # flask.g is persisted in requests, and the werkzeug
+    # CSRF checker could fail if we don't do this
+    from flask import g
+    try:
+        del g.csrf_token
+    except:
+        pass
+
     return app.test_client()
 
 

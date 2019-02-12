@@ -4,108 +4,163 @@ variables:
     POSTGRES_DB: custom_db
     POSTGRES_USER: custom_user
     POSTGRES_PASSWORD: custom_pass
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  paths:
+    - .cache/pip
 
 stages:
-    - merge_conflict_check
-    - fast_test
-    - doeverything
+    - pre_testing
+    - testing
+    - post_testing
 
 services:
     - postgres:latest
 
-test:
-    image: ubuntu
-    stage: fast_test
-    coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
-    script:
-        - ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
-        - echo $TZ > /etc/timezone
-        - apt-get update -qy
-        - apt-get -y install build-essential ipython python-setuptools python-pip python-dev pkg-config libssl-dev libffi-dev libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev postgresql sudo libsasl2-dev libldap2-dev git
-        - apt-get install -y python-dev python-pip
-        - pip install virtualenv
-        - virtualenv -p python2 faraday_venv
-        - source faraday_venv/bin/activate
-        - pip install -r requirements_server.txt
-        - pip install responses pytest-xdist pytest-cov
-        - pip install -r requirements_dev.txt
-        - pytest test_cases -v --cov=server --color=yes
-
-pylint:
-  image: ubuntu
-  stage: doeverything
-  script:
-    - apt-get update -qy
-    - apt-get install -y python-dev python-pip
-    - pip install pylint anybadge
-    - pylint server |tee pylint.txt || true
-    - score=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' pylint.txt)
-    - anybadge --label pylint --value=$score --file pylint.svg 4=red 6=orange 8=yellow 10=green
-  artifacts:
-    paths:
-      - pylint.svg
-
-test_postgresql:
-    image: ubuntu
-    stage: doeverything
-    coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
-    script:
-        - ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
-        - echo $TZ > /etc/timezone
-        - apt-get update -qy
-        - apt-get -y install build-essential ipython python-setuptools python-pip python-dev pkg-config libssl-dev libffi-dev libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev postgresql sudo libsasl2-dev libldap2-dev git python-lxml
-        - apt-get install -y python-dev python-pip
-        - pip install virtualenv
-        - virtualenv -p python2 faraday_venv
-        - source faraday_venv/bin/activate
-        - pip install -r requirements_server.txt
-        - pip install responses pytest-xdist pytest-cov
-        - pip install -r requirements_dev.txt
-        - mkdir -p ~/.faraday/config
-        - cp test_cases/data/server.ini ~/.faraday/config
-        - pytest test_cases -v --cov=server --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_db -n 10
-    artifacts:
-        when: on_failure
-        paths:
-          - ~/.faraday/logs/faraday-server.log
-
 closure_compiler:
-    image: ubuntu
-    stage: doeverything
-    script:
-        - apt-get update -qy
-        - apt-get -y install wget default-jre unzip
-        - wget https://dl.google.com/closure-compiler/compiler-latest.zip
-        - unzip -n compiler-latest.zip
-        - mv "$(unzip -Z1 compiler-latest.zip | grep jar)" compiler-latest.jar
-        - java -jar compiler-latest.jar server/www/scripts
+    image:
+        name: jborza/closure-compiler
+        entrypoint: ["/bin/sh", "-c"]
 
+    stage: pre_testing
+    script:
+        - /opt/cc.sh server/www/scripts
 
 merge_conflict_check:
     image: python:3
-    stage: merge_conflict_check
+    stage: pre_testing
     allow_failure: true
     script:
         - git config --global user.email "you@example.com"
         - git config --global user.name "Mergerbot"
         - python3 merge-conflict-detector.py
 
-test_hypothesis:
-    image: ubuntu
-    stage: doeverything
-    allow_failure: true
+pylint:
+    image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base  # I just need an image with python-dev and python-pip
+    stage: pre_testing
     script:
-        - ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
-        - echo $TZ > /etc/timezone
-        - apt-get update -qy
-        - apt-get -y install build-essential ipython python-setuptools python-pip python-dev pkg-config libssl-dev libffi-dev libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev postgresql sudo libsasl2-dev libldap2-dev git python-lxml
-        - apt-get install -y python-dev python-pip
+        - pip install pylint anybadge
+        - pylint server |tee pylint.txt || true
+        - score=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' pylint.txt)
+        - anybadge --label pylint --value=$score --file pylint.svg 4=red 6=orange 8=yellow 10=green
+    artifacts:
+        paths:
+            - pylint.svg
+
+postgresql_test:
+    image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base
+    stage: testing
+    coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
+    script:
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate
-        - pip install -r requirements_server.txt
-        - pip install responses pytest-xdist pytest-cov hypothesis
-        - pip install -r requirements_dev.txt
+        - pip install --upgrade -r requirements_server.txt
+        - pip install --upgrade responses pytest-xdist pytest-cov
+        - pip install --upgrade -r requirements_dev.txt
         - mkdir -p ~/.faraday/config
         - cp test_cases/data/server.ini ~/.faraday/config
-        - pytest test_cases -v --cov=server --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_db -n 10 -m hypothesis
+        - sed -i 's/mapped_table/persist_selectable/' faraday_venv/lib/python2.7/site-packages/flask_sqlalchemy/__init__.py  # TODO remove when flask_sqlalchemy fixes the issue
+        - pytest test_cases -v --cov=server --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB
+    artifacts:
+        when: on_failure
+        paths:
+            - ~/.faraday/logs/faraday-server.log
+
+sqlite_test:
+    image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base
+    stage: testing
+    coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
+    script:
+        - pip install virtualenv
+        - virtualenv -p python2 faraday_venv
+        - source faraday_venv/bin/activate
+        - pip install --upgrade -r requirements_server.txt
+        - pip install --upgrade responses pytest-xdist pytest-cov
+        - pip install --upgrade -r requirements_dev.txt
+        - mkdir -p ~/.faraday/config
+        - cp test_cases/data/server.ini ~/.faraday/config
+        - sed -i 's/mapped_table/persist_selectable/' faraday_venv/lib/python2.7/site-packages/flask_sqlalchemy/__init__.py  # TODO remove when flask_sqlalchemy fixes the issue
+        - pytest test_cases -v --cov=server --color=yes
+
+generate_release_file:
+    image: python:3
+    stage: post_testing
+    allow_failure: true
+    script:
+        - apt-get update -qy
+        - apt-get install -y python-dev python-pip
+        - pip install packaging
+        - cd CHANGELOG && python3 changelog.py
+    artifacts:
+        paths:
+            - CHANGELOG/RELEASE.md
+    only:
+        variables:
+            - $FULL_DOC == "True"
+            - $RELEASE_FILE == "True"
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/
+
+# This is a test of future test case that will be scheduled
+i_do_nothing:
+    image: python:3
+    stage: post_testing
+    allow_failure: true
+    script:
+        - apt-get update -qy
+    only:
+        variables:
+            - $FULL_TEST == "True"
+            - $I_DO_NOTH_TEST == "True"
+
+
+# This is a test of future test case that will be scheduled
+i_do_nothing2:
+    image: python:3
+    stage: post_testing
+    allow_failure: true
+    script:
+        - apt-get update -qy
+    only:
+        variables:
+            - $FULL_TEST == "True"
+            - $I_DO_NOTH2_TEST == "True"
+
+
+documentation:
+    image: python:3
+    stage: post_testing
+    script:
+        - apt-get update -qy
+        - apt-get install -y python-pip python-dev
+        - pip install sphinx
+        - cd doc && make html
+    artifacts:
+        paths:
+            - doc/_build/html
+    only:
+        variables:
+            - $FULL_DOC == "True"
+            - $DOC == "True"
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/
+
+
+test_hypothesis:
+    image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base
+    stage: testing
+    allow_failure: true
+    script:
+        - pip install virtualenv #TO LEO, REMEMBER TO CHECK DIFFERENCES WITH PINK
+        - virtualenv -p python2 faraday_venv
+        - source faraday_venv/bin/activate
+        - pip install --upgrade -r requirements_server.txt
+        - pip install --upgrade responses pytest-xdist pytest-cov hypothesis
+        - pip install --upgrade -r requirements_dev.txt
+        - mkdir -p ~/.faraday/config
+        - cp test_cases/data/server.ini ~/.faraday/config
+        - pytest test_cases -v --cov=server --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB -m hypothesis
+    only:
+        variables:
+            - $FULL_TEST == "True"
+            - $HYPO_TEST == "True"

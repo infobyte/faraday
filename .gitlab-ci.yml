@@ -97,11 +97,10 @@ generate_release_file:
         paths:
             - CHANGELOG/RELEASE.md
     only:
-        refs:
-            - /^.*\/(dev|master)$/
         variables:
             - $FULL_DOC == "True"
             - $RELEASE_FILE == "True"
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/
 
 # This is a test of future test case that will be scheduled
 i_do_nothing:
@@ -110,7 +109,6 @@ i_do_nothing:
     allow_failure: true
     script:
         - apt-get update -qy
-        - apt-get install -y python-dev python-pip
     only:
         variables:
             - $FULL_TEST == "True"
@@ -124,7 +122,6 @@ i_do_nothing2:
     allow_failure: true
     script:
         - apt-get update -qy
-        - apt-get install -y python-dev python-pip
     only:
         variables:
             - $FULL_TEST == "True"
@@ -143,8 +140,7 @@ documentation:
         paths:
             - doc/_build/html
     only:
-        refs:
-            - /^.*\/(dev|master)$/
         variables:
             - $FULL_DOC == "True"
             - $DOC == "True"
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/

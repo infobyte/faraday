@@ -118,12 +118,16 @@ class Item(object):
         self.method = self.get_text_from_subnode("vulnerableparametertype")
         self.param = self.get_text_from_subnode("vulnerableparameter")
         self.paramval = self.get_text_from_subnode("vulnerableparametervalue")
+        self.reference = self.get_text_from_subnode("externalReferences")
         self.request = self.get_text_from_subnode("rawrequest")
         self.response = self.get_text_from_subnode("rawresponse")
         if self.response:
             self.response = self.response.encode("ascii",errors="backslashreplace") 
         if self.request:
             self.request = self.request.encode("ascii",errors="backslashreplace") 
+        if self.reference:
+            self.reference = self.reference.encode("ascii",errors="backslashreplace") 
+
 
         self.kvulns = []
         for v in self.node.findall("knownvulnerabilities/knownvulnerability"):
@@ -141,6 +145,7 @@ class Item(object):
         self.wasc = self.get_text_from_subnode("WASC")
         self.cwe = self.get_text_from_subnode("CWE")
         self.capec = self.get_text_from_subnode("CAPEC")
+        self.certainty = self.get_text_from_subnode("certainty")
         self.pci = self.get_text_from_subnode("PCI")
         self.pci2 = self.get_text_from_subnode("PCI2")
 
@@ -149,11 +154,16 @@ class Item(object):
             self.ref.append("CWE-" + self.cwe)
         if self.owasp:
             self.ref.append("OWASP-" + self.owasp)
+        if self.reference:
+            self.ref.extend(list(set(re.findall('https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', self.reference))))
+            
+            
 
         self.desc = ""
         self.desc += "\nKnowVulns: " + \
             "\n".join(self.kvulns) if self.kvulns else ""
         self.desc += "\nWASC: " + self.wasc if self.wasc else ""
+        self.desc += "\nCertainty: " + self.certainty if self.certainty else ""
         self.desc += "\nPCI: " + self.pci if self.pci else ""
         self.desc += "\nPCI2: " + self.pci2 if self.pci2 else ""
         self.desc += "\nCAPEC: " + self.capec if self.capec else ""
@@ -213,8 +223,7 @@ class NetsparkerPlugin(core.PluginBase):
                 ip = self.resolve(i.hostname)
                 h_id = self.createAndAddHost(ip)
                 i_id = self.createAndAddInterface(
-                    h_id, ip, ipv4_address=ip, hostname_resolution=i.hostname)
-
+                    h_id, ip, ipv4_address=ip, hostname_resolution=ip)
                 s_id = self.createAndAddServiceToInterface(h_id, i_id, str(i.port),
                                                            str(i.protocol),
                                                            ports=[str(i.port)],
@@ -226,7 +235,7 @@ class NetsparkerPlugin(core.PluginBase):
                     h_id, s_id, n_id, i.hostname, "")
                 first = False
 
-            v_id = self.createAndAddVulnWebToService(h_id, s_id, i.name, ref=i.ref, website=i.hostname,
+            v_id = self.createAndAddVulnWebToService(h_id, s_id, i.name, ref=i.ref, website=i.hostname, 
                                                      severity=i.severity, desc=i.desc, path=i.url, method=i.method,
                                                      request=i.request, response=i.response, pname=i.param)
 

@@ -97,7 +97,10 @@ generate_release_file:
         paths:
             - CHANGELOG/RELEASE.md
     only:
-        - /^.*\/(dev|master)$/
+        variables:
+            - $FULL_DOC == "True"
+            - $RELEASE_FILE == "True"
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/
 
 # This is a test of future test case that will be scheduled
 i_do_nothing:

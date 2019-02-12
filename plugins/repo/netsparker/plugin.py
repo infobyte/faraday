@@ -113,6 +113,7 @@ class Item(object):
             self.port = host.group(11)
 
         self.name = self.get_text_from_subnode("type")
+        self.desc = self.get_text_from_subnode("description")
         self.severity = self.re_map_severity(self.get_text_from_subnode("severity"))
         self.certainty = self.get_text_from_subnode("certainty")
         self.method = self.get_text_from_subnode("vulnerableparametertype")
@@ -158,8 +159,8 @@ class Item(object):
             self.ref.extend(list(set(re.findall('https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', self.reference))))
             
             
-
-        self.desc = ""
+        if not self.desc:
+            self.desc = ""
         self.desc += "\nKnowVulns: " + \
             "\n".join(self.kvulns) if self.kvulns else ""
         self.desc += "\nWASC: " + self.wasc if self.wasc else ""

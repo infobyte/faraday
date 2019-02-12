@@ -146,9 +146,11 @@ class Item(object):
         self.wasc = self.get_text_from_subnode("WASC")
         self.cwe = self.get_text_from_subnode("CWE")
         self.capec = self.get_text_from_subnode("CAPEC")
-        self.certainty = self.get_text_from_subnode("certainty")
         self.pci = self.get_text_from_subnode("PCI")
         self.pci2 = self.get_text_from_subnode("PCI2")
+        self.node = item_node.find("classification/CVSS")
+        self.cvss = self.get_text_from_subnode("vector")
+        print self.cvss
 
         self.ref = []
         if self.cwe:
@@ -158,20 +160,20 @@ class Item(object):
         if self.reference:
             self.ref.extend(list(set(re.findall('https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', self.reference))))
             
-            
-        if not self.desc:
-            self.desc = ""
-        self.desc += "\nKnowVulns: " + \
+    
+        self.data = ""
+        self.data += "\nKnowVulns: " + \
             "\n".join(self.kvulns) if self.kvulns else ""
-        self.desc += "\nWASC: " + self.wasc if self.wasc else ""
-        self.desc += "\nCertainty: " + self.certainty if self.certainty else ""
-        self.desc += "\nPCI: " + self.pci if self.pci else ""
-        self.desc += "\nPCI2: " + self.pci2 if self.pci2 else ""
-        self.desc += "\nCAPEC: " + self.capec if self.capec else ""
-        self.desc += "\nPARAM: " + self.param if self.param else ""
-        self.desc += "\nPARAM VAL: " + \
+        self.data += "\nWASC: " + self.wasc if self.wasc else ""
+        self.data += "\nCertainty: " + self.certainty if self.certainty else ""
+        self.data += "\n" + self.cvss if self.cvss else ""
+        self.data += "\nPCI: " + self.pci if self.pci else ""
+        self.data += "\nPCI2: " + self.pci2 if self.pci2 else ""
+        self.data += "\nCAPEC: " + self.capec if self.capec else ""
+        self.data += "\nPARAM: " + self.param if self.param else ""
+        self.data += "\nPARAM VAL: " + \
             repr(self.paramval) if self.paramval else ""
-        self.desc += "\nExtra: " + "\n".join(self.extra) if self.extra else ""
+        self.data += "\nExtra: " + "\n".join(self.extra) if self.extra else ""
 
     def get_text_from_subnode(self, subnode_xpath_expr):
         """
@@ -229,10 +231,10 @@ class NetsparkerPlugin(core.PluginBase):
                                                            ports=[str(i.port)],
                                                            status="open")
                 first = False
-
+            
             v_id = self.createAndAddVulnWebToService(h_id, s_id, i.name, ref=i.ref, website=i.hostname, 
                                                      severity=i.severity, desc=i.desc, path=i.url, method=i.method,
-                                                     request=i.request, response=i.response, pname=i.param)
+                                                     request=i.request, response=i.response, pname=i.param, data=i.data)
 
         del parser
 

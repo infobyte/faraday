@@ -15,6 +15,7 @@ import os
 import sys
 import socket
 import urllib
+from bs4 import BeautifulSoup
 
 try:
     import xml.etree.cElementTree as ET
@@ -120,6 +121,7 @@ class Item(object):
         self.param = self.get_text_from_subnode("vulnerableparameter")
         self.paramval = self.get_text_from_subnode("vulnerableparametervalue")
         self.reference = self.get_text_from_subnode("externalReferences")
+        self.resolution = self.get_text_from_subnode("actionsToTake")
         self.request = self.get_text_from_subnode("rawrequest")
         self.response = self.get_text_from_subnode("rawresponse")
         if self.response:
@@ -150,7 +152,6 @@ class Item(object):
         self.pci2 = self.get_text_from_subnode("PCI2")
         self.node = item_node.find("classification/CVSS")
         self.cvss = self.get_text_from_subnode("vector")
-        print self.cvss
 
         self.ref = []
         if self.cwe:
@@ -233,8 +234,9 @@ class NetsparkerPlugin(core.PluginBase):
                 first = False
             
             v_id = self.createAndAddVulnWebToService(h_id, s_id, i.name, ref=i.ref, website=i.hostname, 
-                                                     severity=i.severity, desc=i.desc, path=i.url, method=i.method,
-                                                     request=i.request, response=i.response, pname=i.param, data=i.data)
+                                                     severity=i.severity, desc=BeautifulSoup(i.desc, "lxml").text,
+                                                      path=i.url, method=i.method, request=i.request, response=i.response,
+                                                     resolution=BeautifulSoup(i.resolution, "lxml").text,pname=i.param, data=i.data)
 
         del parser
 

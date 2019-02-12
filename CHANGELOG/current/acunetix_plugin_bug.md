@@ -1,1 +1,1 @@
-Fixed bug in Acunetix Plugin
+Fix bug when parsing URLs in Acunetix reports

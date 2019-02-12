@@ -104,7 +104,11 @@ generate_release_file:
         paths:
             - CHANGELOG/RELEASE.md
     only:
-        - /^.*\/(dev|master)$/
+        refs:
+            - /^.*\/(dev|master)$/
+        variables:
+            - $FULL_DOC == "True"
+            - RELEASE_FILE == "True"
 
 # This is a test of future test case that will be scheduled
 i_do_nothing:
@@ -146,4 +150,8 @@ documentation:
         paths:
             - doc/_build/html
     only:
-        - /^.*\/(dev|master)$/
+        refs:
+            - /^.*\/(dev|master)$/
+        variables:
+            - $FULL_DOC == "True"
+            - $DOC == "True"

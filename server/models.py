@@ -1417,7 +1417,7 @@ class Workspace(Metadata):
             query += ' WHERE ' + ' AND '.join(filters)
         #query += " GROUP BY workspace.id "
         query += " ORDER BY workspace.name ASC"
-        return db.engine.execute(text(query), params)
+        return db.session.execute(text(query), params)
 
     def set_scope(self, new_scope):
         return set_children_objects(self, new_scope,

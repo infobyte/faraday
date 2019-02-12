@@ -222,18 +222,12 @@ class NetsparkerPlugin(core.PluginBase):
         for i in parser.items:
             if first:
                 ip = self.resolve(i.hostname)
-                h_id = self.createAndAddHost(ip)
-                i_id = self.createAndAddInterface(
-                    h_id, ip, ipv4_address=ip, hostname_resolution=ip)
-                s_id = self.createAndAddServiceToInterface(h_id, i_id, str(i.port),
-                                                           str(i.protocol),
+                h_id = self.createAndAddHost(ip, hostnames=[ip])
+                
+                s_id = self.createAndAddServiceToHost(h_id, str(i.port),
+                                                           protocol = str(i.protocol),
                                                            ports=[str(i.port)],
                                                            status="open")
-
-                n_id = self.createAndAddNoteToService(
-                    h_id, s_id, "website", "")
-                n2_id = self.createAndAddNoteToNote(
-                    h_id, s_id, n_id, i.hostname, "")
                 first = False
 
             v_id = self.createAndAddVulnWebToService(h_id, s_id, i.name, ref=i.ref, website=i.hostname, 

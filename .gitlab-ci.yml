@@ -101,7 +101,7 @@ generate_release_file:
             - /^.*\/(dev|master)$/
         variables:
             - $FULL_DOC == "True"
-            - RELEASE_FILE == "True"
+            - $RELEASE_FILE == "True"
 
 # This is a test of future test case that will be scheduled
 i_do_nothing:

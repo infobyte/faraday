@@ -611,8 +611,7 @@ button[disabled], html input[disabled] {
 }
 
 .cf-container {
-    padding-top: 32px;
-    padding-left: 32px;
+    padding: 32px;
 }
 
 .cf-item {
@@ -643,4 +642,36 @@ button[disabled], html input[disabled] {
 .type-list{
     border: 1px solid #a1ce31;
     background-color: #a1ce31;
+}
+
+h3.cf-display-name {
+    margin-top: 0;
+}
+
+.cf-detail {
+    border-left: 1px solid #ddd;
+    height: 678px;
+    padding: 8px 24px;
+}
+
+.cf-actions {
+    color: #aaa;
+    text-align: center;
+    padding-top: 32px;
+}
+
+
+span.cf-icon-action {
+    margin-right: 16px;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+span.cf-icon-action:hover {
+    color: #777;
+}
+
+.btn-tools {
+    margin-top: 45px;
+    float: right;
 }

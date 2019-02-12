@@ -11,16 +11,9 @@ cache:
     - .cache/pip
 
 stages:
-<<<<<<< HEAD
-    - merge_conflict_check
-    - fast_test
-    - doeverything
-    - documentation
-=======
     - pre_testing
     - testing
     - post_testing
->>>>>>> origin/white/dev
 
 services:
     - postgres:latest

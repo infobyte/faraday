@@ -42,8 +42,8 @@
     </div>
 
     <div class="col-md-4 cf-detail">
-        <h3><span ng-if="selected_cf.field_name != undefined">Edit</span>
-            <span ng-if="selected_cf.field_name == undefined">New</span>
+        <h3><span ng-if="isEditable == true">Edit</span>
+            <span ng-if="isEditable == false">New</span>
             custom field
         </h3><br>
         <form>
@@ -98,15 +98,15 @@
                     <div class="form-group">
                         <label class="sr-only control-label" for="cf_order">Order</label>
                         <input type="text" class="form-control" id="cf_order" placeholder="Order"
-                               ng-model="selected_cf.field_order" check-custom-type="int" title="type only numbers"/>
+                               ng-model="selected_cf.field_order" check-custom-type="int" title="Type only numbers"/>
                     </div><!-- .form-group -->
                 </div>
             </div>
 
             <div class="btn-tools">
                 <button class="btn btn-default" ng-click="clearSelection()">Cancel</button>
-                <button class="btn btn-success" ng-if="selected_cf.field_name != undefined">Edit</button>
-                <button class="btn btn-success" ng-if="selected_cf.field_name == undefined">Save</button>
+                <button class="btn btn-success" ng-if="isEditable == true">Edit</button>
+                <button class="btn btn-success" ng-if="isEditable == false">Save</button>
             </div>
         </form>
     </div>

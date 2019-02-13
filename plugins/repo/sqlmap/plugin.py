@@ -17,6 +17,7 @@ import shlex
 import socket
 import sqlite3
 import sys
+from urlparse import urlparse
 from BaseHTTPServer import BaseHTTPRequestHandler
 from StringIO import StringIO
 from urlparse import urlparse
@@ -52,7 +53,10 @@ __status__ = "Development"
 # If that value is changed in a newer version of SQLMap, it means that the
 # hashdb mechanism has backwards-incompatible changes that probably will
 # break our plugin, so the plugin will show an error and abort
-SUPPORTED_HASHDB_VERSIONS = {"dPHoJRQYvs"}
+SUPPORTED_HASHDB_VERSIONS = {
+    "dPHoJRQYvs",  # 1.0.11
+    "BZzRotigLX",  # 1.2.8
+}
 
 
 class Database(object):
@@ -92,7 +96,7 @@ class SqlmapPlugin(PluginTerminalOutput):
         self.id = "Sqlmap"
         self.name = "Sqlmap"
         self.plugin_version = "0.0.3"
-        self.version = "1.0.8.15#dev"
+        self.version = "1.2.8"
         self.framework_version = "1.0.0"
         self._current_output = None
         self.url = ""
@@ -150,10 +154,20 @@ class SqlmapPlugin(PluginTerminalOutput):
         Helper function for restoring session data from HashDB
         """
 
-        key = "%s%s%s" % (self.url or "%s%s" % (
-            self.hostname, self.port), key, self.HASHDB_MILESTONE_VALUE)
-        retVal = ''
+        if self.HASHDB_MILESTONE_VALUE == 'dPHoJRQYvs':
+            # Support for old SQLMap versions
+            key = "%s%s%s" % (self.url or "%s%s" % (
+                self.hostname, self.port), key, self.HASHDB_MILESTONE_VALUE)
+        else:
+            url = urlparse(self.url)
+            key = '|'.join([
+                url.hostname,
+                url.path.strip('/'),
+                key,
+                self.HASHDB_MILESTONE_VALUE
+            ])
 
+        retVal = ''
         hash_ = self.hashKey(key)
 
         if not retVal:

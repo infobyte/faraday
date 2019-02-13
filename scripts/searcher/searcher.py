@@ -404,8 +404,11 @@ def evaluate_condition(model, condition):
         return False
 
     if isinstance(temp_value, list):
-        if value not in temp_value and str(value) not in temp_value and int(value) not in temp_value:
-            return False
+        if value not in temp_value and str(value) not in temp_value:
+            if not isinstance(value, int):
+                return False
+            elif int(value) not in temp_value:
+                return False
         return True
 
     if isinstance(temp_value, bool):

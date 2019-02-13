@@ -47,6 +47,14 @@ __email__ = "famato@infobytesec.com"
 __status__ = "Development"
 
 
+# This is the value of the HASHDB_MILESTONE_VALUE constant
+# in the lib/core/settings.py file of sqlmap.
+# If that value is changed in a newer version of SQLMap, it means that the
+# hashdb mechanism has backwards-incompatible changes that probably will
+# break our plugin, so the plugin will show an error and abort
+SUPPORTED_HASHDB_VERSIONS = {"dPHoJRQYvs"}
+
+
 class Database(object):
 
     def __init__(self, database):
@@ -394,6 +402,15 @@ class SqlmapPlugin(PluginTerminalOutput):
             from lib.core.settings import UNICODE_ENCODING
         except:
             self.log('Remember set your Sqlmap Path Setting!... Abort plugin.', 'ERROR')
+            return
+
+        if HASHDB_MILESTONE_VALUE not in SUPPORTED_HASHDB_VERSIONS:
+            self.log(
+                "Your version of SQLMap is not supported with this plugin. "
+                "Please use an older version of SQLMap (the suggested one "
+                "is \"{}\"). Also, we suggest you to open issue in our GitHub "
+                "issue tracker: https://github.com/infobyte/faraday/issues/".format(self.version),
+                'ERROR')
             return
 
         self.HASHDB_MILESTONE_VALUE = HASHDB_MILESTONE_VALUE

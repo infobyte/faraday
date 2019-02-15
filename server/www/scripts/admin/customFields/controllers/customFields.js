@@ -4,7 +4,7 @@
 
 angular.module('faradayApp')
     .controller('customFieldsCtrl',
-        ['$scope', 'ServerAPI', function ($scope, ServerAPI) {
+        ['$scope', 'customFieldFact', function ($scope, customFieldFact) {
 
             $scope.customFields = [];
             $scope.selected_cf = {
@@ -26,7 +26,7 @@ angular.module('faradayApp')
 
 
             $scope.insertCallback = function () {
-                for (var i = 0; i < $scope.customFields.length; i++){
+                for (var i = 0; i < $scope.customFields.length; i++) {
                     $scope.customFields[i].field_order = i;
                 }
 
@@ -36,10 +36,29 @@ angular.module('faradayApp')
 
 
             var loadCustomFields = function () {
-                ServerAPI.getCustomFields().then(
+                customFieldFact.getCustomFields().then(
                     function (response) {
                         $scope.customFields = response.data;
-                          console.log($scope.customFields);
+                        console.log($scope.customFields);
+                    });
+            };
+
+            var getMaxOrder = function () {
+                var orders = [];
+                $scope.customFields.forEach(function (customField) {
+                    orders.push(customField.field_order);
+                });
+
+                return Math.max.apply(null, orders) || 0;
+            };
+
+            $scope.createCustomCustomField = function () {
+                if ($scope.selected_cf.field_order === undefined)
+                    $scope.selected_cf.field_order = getMaxOrder() + 1;
+
+                customFieldFact.createCustomField($scope.selected_cf).then(
+                    function (response) {
+                        $scope.customFields.push(response.data);
                     });
             };
 

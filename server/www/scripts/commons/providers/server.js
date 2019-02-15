@@ -276,6 +276,10 @@ angular.module("faradayApp")
                 return createOrUpdate(weName, note._id, note);
             }
 
+            var modCustomField = function (createOrUpdate, wsName, customField) {
+                return createOrUpdate(wsName, customField._id, customField);
+            }
+
             var modCredential = function (createOrUpdate, wsName, credential) {
                 if (typeof credential.owner === "undefined") {
                     credential.owner = ""
@@ -545,6 +549,15 @@ angular.module("faradayApp")
                 return modNote(updateObject, wsName, note);
             }
 
+            ServerAPI.createCustomField = function (customField) {
+                 var postUrl = createNonWorkspacedGetUrl('custom_fields_schema');
+                 return send_data(postUrl, customField, false, "POST");
+            }
+
+            ServerAPI.updateCustomField = function (wsName, customField) {
+                return modCustomField(updateObject, wsName, customField);
+            }
+
             ServerAPI.createCredential = function (wsName, credential) {
                 return modCredential(createObject, wsName, credential);
             }
@@ -608,6 +621,16 @@ angular.module("faradayApp")
 
             ServerAPI.deleteNote = function (wsName, noteId, rev) {
                 var deleteUrl = createDeleteUrl(wsName, noteId, rev);
+                if (typeof rev === "undefined") {
+                    return _delete(deleteUrl, false)
+                }
+                else {
+                    return _delete(deleteUrl, true);
+                }
+            }
+
+            ServerAPI.deleteCustomField = function (wsName, customFieldId, rev) {
+                var deleteUrl = createDeleteUrl(wsName, customFieldId, rev);
                 if (typeof rev === "undefined") {
                     return _delete(deleteUrl, false)
                 }

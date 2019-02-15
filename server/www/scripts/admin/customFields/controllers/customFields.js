@@ -26,11 +26,11 @@ angular.module('faradayApp')
 
 
             $scope.insertCallback = function () {
-                // $scope.customFields.splice($scope.customFields.length -1, 1);
                 for (var i = 0; i < $scope.customFields.length; i++){
                     $scope.customFields[i].field_order = i;
                 }
 
+                $scope.clearSelection();
                 console.log($scope.customFields);
             };
 

@@ -43,20 +43,20 @@ class GoohostParser(object):
         self.scantype = goohost_scantype
 
         with open(self.filepath, "r") as f:
-
             line = f.readline()
             self.items = []
             while line:
                 if self.scantype == 'ip':
                     minfo = line.split()
                     item = {'host': minfo[0], 'ip': minfo[1]}
+                    self.parse_ip(item['ip'], item['host'])
                 elif self.scantype == 'host':
                     line = line.strip()
                     item = {'host': line, 'ip': self.resolve(line)}
+                    self.parse_ip(item['ip'], item['host'])
                 else:
                     item = {'data': line}
 
-                self.items.append(item)
                 line = f.readline()
 
     def resolve(self, host):
@@ -65,6 +65,20 @@ class GoohostParser(object):
         except:
             pass
         return host
+
+    def parse_ip(self, ip_address, hostname):
+        data = {}
+        exists = False
+        for item in self.items:
+            if ip_address in item['ip']:
+                item['hosts'].append(hostname)
+                exists = True
+
+        if not exists:
+            data['ip'] = ip_address
+            data['hosts'] = [hostname]
+            self.items.append(data)
+
 
 
 class GoohostPlugin(core.PluginBase):
@@ -112,15 +126,11 @@ class GoohostPlugin(core.PluginBase):
                 return False
 
             parser = GoohostParser(self.output_path, self.scantype)
-
             if self.scantype == 'host' or self.scantype == 'ip':
                 for item in parser.items:
-                    h_id = self.createAndAddHost(item['ip'])
-                    i_id = self.createAndAddInterface(
-                        h_id,
+                    h_id = self.createAndAddHost(
                         item['ip'],
-                        ipv4_address=item['ip'],
-                        hostname_resolution=item['host'])
+                        hostnames=item['hosts'])
 
         del parser
 

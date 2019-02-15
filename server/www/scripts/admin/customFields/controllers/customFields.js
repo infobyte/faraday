@@ -15,8 +15,23 @@ angular.module('faradayApp')
             };
             $scope.isEditable = false;
 
+
+            $scope.models = {
+                selected: null
+            };
+
             var init = function () {
                 loadCustomFields();
+            };
+
+
+            $scope.insertCallback = function () {
+                // $scope.customFields.splice($scope.customFields.length -1, 1);
+                for (var i = 0; i < $scope.customFields.length; i++){
+                    $scope.customFields[i].field_order = i;
+                }
+
+                console.log($scope.customFields);
             };
 
 
@@ -24,6 +39,7 @@ angular.module('faradayApp')
                 ServerAPI.getCustomFields().then(
                     function (response) {
                         $scope.customFields = response.data;
+                          console.log($scope.customFields);
                     });
             };
 

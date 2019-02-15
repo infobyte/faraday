@@ -1,6 +1,12 @@
 <div class="row">
-    <div class="cf-container col-md-8">
-        <div class="row cf-item" ng-repeat="cf in customFields | orderBy: cf.field_order">
+    <div class="cf-container col-md-8" dnd-list="customFields"
+         dnd-effect-allowed="all"
+         dnd-inserted="insertCallback()">
+        <div class="row cf-item" ng-repeat="cf in customFields | orderBy: cf.field_order"
+             dnd-draggable="cf"
+             dnd-moved="customFields.splice($index, 1)"
+             dnd-selected="models.selected = item"
+             ng-class="{'selected': models.selected === item}">
             <div class="col-md-10">
                 <h3 class="cf-display-name"> {{cf.field_display_name}}</h3>
                 <div class="cf-name"> {{cf.field_name}}</div>
@@ -9,19 +15,24 @@
                 <div class="cf-type type-str" ng-if="cf.field_type == 'str'">STRING</div>
             </div>
             <div class="cf-actions col-md-2">
-                <span class="cf-icon-action" data-toggle="modal" data-target="#delete-custom-field-modal-{{cf.field_display_name}}"><i class="fa fa-trash-o fa-2x"></i></span>
+                <span class="cf-icon-action" data-toggle="modal"
+                      data-target="#delete-custom-field-modal-{{cf.field_display_name}}"><i
+                        class="fa fa-trash-o fa-2x"></i></span>
                 <span class="cf-icon-action" ng-click="setCustomField(cf)"><i class="fa fa-pencil fa-2x"></i></span>
-                <span class="cf-icon-action" style="cursor: move"><i class="fa fa-bars fa-2x"></i></span>
+                <span class="cf-icon-action handle-move" style="cursor: move"><i
+                        class="fa fa-arrows-alt fa-2x"></i></span>
             </div>
 
 
             <!-- Modal -->
-            <div class="modal fade" id="delete-custom-field-modal-{{cf.field_display_name}}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+            <div class="modal fade" id="delete-custom-field-modal-{{cf.field_display_name}}" tabindex="-1" role="dialog"
+                 aria-labelledby="exampleModalLabel"
                  aria-hidden="true">
                 <div class="modal-dialog  modal-sm" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="exampleModalLabel">Delete custom field {{cf.field_display_name}}</h5>
+                            <h5 class="modal-title" id="exampleModalLabel">Delete custom field
+                                {{cf.field_display_name}}</h5>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>
@@ -36,8 +47,6 @@
                     </div>
                 </div>
             </div>
-
-
         </div>
     </div>
 

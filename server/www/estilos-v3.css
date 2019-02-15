@@ -675,3 +675,34 @@ span.cf-icon-action:hover {
     margin-top: 45px;
     float: right;
 }
+
+
+/**
+ * The dndDraggingSource class will be applied to
+ * the source element of a drag operation. It makes
+ * sense to hide it to give the user the feeling
+ * that he's actually moving it.
+ */
+.dndDraggingSource {
+    display: none;
+}
+
+
+/**
+ * An element with .dndPlaceholder class will be
+ * added to the dnd-list while the user is dragging
+ * over it.
+ */
+.dndPlaceholder {
+    background-color: #ddd;
+    display: block;
+    min-height: 120px;
+    border:2px dashed #aaa;
+}
+
+div[dnd-list] > div{
+    border-top-right-radius: 4px;
+    border-top-left-radius: 4px;
+    padding: 10px 15px;
+    margin-bottom: -1px;
+}

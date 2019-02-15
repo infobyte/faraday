@@ -97,7 +97,6 @@ class GoohostPlugin(core.PluginBase):
         self._current_path = None
         self._command_regex = re.compile(
             r'^(sudo goohost\.sh|goohost\.sh|sh goohost\.sh|\.\/goohost\.sh).*?')
-        self.scantype = "host"
         self.host = None
 
         global current_path
@@ -111,6 +110,7 @@ class GoohostPlugin(core.PluginBase):
         NOTE: if 'debug' is true then it is being run from a test case and the
         output being sent is valid.
         """
+        self.scantype = self.define_scantype(self._command_string)
 
         if self.output_path is None:
             mypath = re.search("Results saved in file (\S+)", output)
@@ -124,7 +124,6 @@ class GoohostPlugin(core.PluginBase):
         else:
             if not os.path.exists(self.output_path):
                 return False
-
             parser = GoohostParser(self.output_path, self.scantype)
             if self.scantype == 'host' or self.scantype == 'ip':
                 for item in parser.items:
@@ -139,9 +138,18 @@ class GoohostPlugin(core.PluginBase):
         Set output path for parser...
         """
         self._current_path = current_path
+        self._command_string = command_string
 
     def setHost(self):
         pass
+
+    def define_scantype(self, command):
+        method_regex = re.compile(r'-m (mail|host|ip)')
+        method = method_regex.search(command)
+        if method:
+            return method.group(1)
+        return 'host'
+
 
 
 def createPlugin():

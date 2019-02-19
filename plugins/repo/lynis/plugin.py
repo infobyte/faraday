@@ -148,7 +148,7 @@ class LynisLogDataExtracter():
             name = details['name']
             add = True
 
-        if add == True:
+        if add:
             ip, port = self.colon_count(count, elements_ip_port, items_service)
             elements_dict = {
                 "ip":ip,
@@ -179,6 +179,11 @@ class LynisLogDataExtracter():
         return ip_port, count
 
     def get_protocol(self):
+        # network_listen_port variables are different in .log and .dat reports
+        # .log: tcp4|127.0.0.1:5985|zabbix_age|
+        # .dat: 127.0.0.1:5985|tcp4|zabbix_age|
+        # This method will check if the protocol (from the function get_all_protocols())
+        # matches with the protocol that network_listen_port contains
         protocols = get_all_protocols()
         for item in protocols:
             protocol = [p for p in self.aux_items if item in p.lower()]

@@ -93,7 +93,7 @@ class SslyzePlugin(core.PluginBase):
         self.id = "Sslyze"
         self.name = "Sslyze Plugin"
         self.plugin_version = "0.0.1"
-        self.version = "1.4.2"
+        self.version = "2.0.6"
         self.framework_version = "1.0.0"
         self.options = None
         self._current_output = None

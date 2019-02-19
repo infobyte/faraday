@@ -382,7 +382,7 @@ class ReportParser(object):
             return "Core Impact"
         elif tag == "NexposeReport":
             return "NexposeFull"
-        elif tag == "ASSET_DATA_REPORT"  or "SCAN":
+        elif tag in ("ASSET_DATA_REPORT", "SCAN"):
             return "Qualysguard"
         elif tag == "scanJob":
             return "Retina"
@@ -396,5 +396,8 @@ class ReportParser(object):
             return "Lynis"
         elif tag == "reconng":
             return "Reconng"
+        elif tag == "document":
+            if re.search("SSLyzeVersion", output) is not None:
+                return "Sslyze"
         else:
             return None

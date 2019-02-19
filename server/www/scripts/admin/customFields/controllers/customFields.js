@@ -26,8 +26,13 @@ angular.module('faradayApp')
 
 
             $scope.insertCallback = function () {
+                var ids = [];
                 for (var i = 0; i < $scope.customFields.length; i++) {
-                    $scope.customFields[i].field_order = i;
+                    if (ids.indexOf($scope.customFields[i].id) === -1) {
+                        $scope.customFields[i].field_order = i;
+                        customFieldFact.updateCustomField($scope.customFields[i]);
+                        ids.push($scope.customFields[i].id);
+                    }
                 }
 
                 $scope.clearSelection();
@@ -45,7 +50,7 @@ angular.module('faradayApp')
 
 
             var getMaxOrder = function () {
-                if ($scope.customFields.length === 0){
+                if ($scope.customFields.length === 0) {
                     return -1;
                 }
 

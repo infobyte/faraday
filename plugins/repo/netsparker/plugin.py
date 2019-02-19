@@ -160,7 +160,7 @@ class Item(object):
             self.ref.append("OWASP-" + self.owasp)
         if self.reference:
             self.ref.extend(list(set(re.findall('https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', self.reference))))
-        self.reference += "\n" + self.cvss if self.cvss else ""
+        self.ref += "\n" + self.cvss if self.cvss else ""
             
     
         self.data = ""

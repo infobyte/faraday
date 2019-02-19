@@ -1,0 +1,1 @@
+Fix bug when parsing URLs in Acunetix reports

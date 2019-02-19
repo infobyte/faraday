@@ -554,8 +554,9 @@ angular.module("faradayApp")
                  return send_data(postUrl, customField, false, "POST");
             }
 
-            ServerAPI.updateCustomField = function (wsName, customField) {
-                return modCustomField(updateObject, wsName, customField);
+            ServerAPI.updateCustomField = function (customField) {
+                 var postUrl = createNonWorkspacedGetUrl('custom_fields_schema', customField.id);
+                 return send_data(postUrl, customField, true, "PUT");
             }
 
             ServerAPI.createCredential = function (wsName, credential) {

@@ -5,7 +5,7 @@
 
         <div class="alert alert-info" style="text-align: center" ng-if="customFields.length === 0">There isn't any custom field created</div>
 
-        <div class="row cf-item" ng-repeat="cf in customFields | orderBy: cf.field_order"
+        <div class="row cf-item" ng-repeat="cf in customFields | orderBy:'field_order'"
              dnd-draggable="cf"
              dnd-moved="customFields.splice($index, 1)"
              ng-class="{'selected': models.selected === item}">
@@ -91,7 +91,9 @@
 
             <div class="btn-tools">
                 <button class="btn btn-default" ng-click="clearSelection()">Cancel</button>
-                <button class="btn btn-success" ng-if="isEditable == true">Edit</button>
+                <button class="btn btn-success" ng-if="isEditable == true"
+                        ng-click="updateCustomCustomField()"
+                        ng-disabled="form.$invalid || selected_cf.field_type == null">Edit</button>
                 <button class="btn btn-success" ng-if="isEditable == false"
                         ng-click="createCustomCustomField()"
                         ng-disabled="form.$invalid || selected_cf.field_type == null">Save

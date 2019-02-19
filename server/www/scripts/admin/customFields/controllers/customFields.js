@@ -45,6 +45,10 @@ angular.module('faradayApp')
 
 
             var getMaxOrder = function () {
+                if ($scope.customFields.length === 0){
+                    return -1;
+                }
+
                 var orders = [];
                 $scope.customFields.forEach(function (customField) {
                     orders.push(customField.field_order);
@@ -54,13 +58,24 @@ angular.module('faradayApp')
             };
 
             $scope.createCustomCustomField = function () {
-                if ($scope.selected_cf.field_order === undefined)
+                if ($scope.selected_cf.field_order === null)
                     $scope.selected_cf.field_order = getMaxOrder() + 1;
 
                 customFieldFact.createCustomField($scope.selected_cf).then(
                     function (response) {
                         $scope.customFields.push(response.data);
                         $scope.clearSelection();
+                    });
+            };
+
+
+            $scope.updateCustomCustomField = function () {
+                customFieldFact.updateCustomField($scope.selected_cf).then(
+                    function (response) {
+                        if (response) {
+                            $scope.clearSelection();
+                            loadCustomFields();
+                        }
                     });
             };
 

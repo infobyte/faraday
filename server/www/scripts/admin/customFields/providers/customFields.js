@@ -33,9 +33,9 @@ angular.module('faradayApp')
         };
 
 
-        customFieldFact.update = function (customField, wsName) {
+        customFieldFact.updateCustomField = function (customField) {
             var deferred = $q.defer();
-            ServerAPI.updateCustomField(customField, wsName).then(function (data) {
+            ServerAPI.updateCustomField(customField).then(function (data) {
                 customField._rev = data.rev;
                 deferred.resolve(customField);
             }, function (err) {

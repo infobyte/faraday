@@ -629,8 +629,8 @@ angular.module("faradayApp")
                 }
             }
 
-            ServerAPI.deleteCustomField = function (wsName, customFieldId, rev) {
-                var deleteUrl = createDeleteUrl(wsName, customFieldId, rev);
+            ServerAPI.deleteCustomField = function (customFieldId, rev) {
+               var deleteUrl = createNonWorkspacedDeleteUrl(customFieldId, 'custom_fields_schema');
                 if (typeof rev === "undefined") {
                     return _delete(deleteUrl, false)
                 }

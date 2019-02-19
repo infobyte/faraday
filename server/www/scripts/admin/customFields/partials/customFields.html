@@ -2,10 +2,12 @@
     <div class="cf-container col-md-8" dnd-list="customFields"
          dnd-effect-allowed="all"
          dnd-inserted="insertCallback()">
+
+        <div class="alert alert-info" style="text-align: center" ng-if="customFields.length === 0">There isn't any custom field created</div>
+
         <div class="row cf-item" ng-repeat="cf in customFields | orderBy: cf.field_order"
              dnd-draggable="cf"
              dnd-moved="customFields.splice($index, 1)"
-             dnd-selected="models.selected = item"
              ng-class="{'selected': models.selected === item}">
             <div class="col-md-10">
                 <h3 class="cf-display-name"> {{cf.field_display_name}}</h3>
@@ -15,37 +17,12 @@
                 <div class="cf-type type-str" ng-if="cf.field_type == 'str'">STRING</div>
             </div>
             <div class="cf-actions col-md-2">
-                <span class="cf-icon-action" data-toggle="modal"
-                      data-target="#delete-custom-field-modal-{{cf.field_display_name}}"><i
+                <span class="cf-icon-action" ng-click="_delete(cf)"><i
                         class="fa fa-trash-o fa-2x"></i></span>
                 <span class="cf-icon-action" ng-click="setCustomField(cf)"><i class="fa fa-pencil fa-2x"></i></span>
                 <span class="cf-icon-action handle-move" style="cursor: move"><i
-                        class="fa fa-arrows-alt fa-2x" title="You can drag and drop each custom field to reorder"></i></span>
-            </div>
-
-
-            <!-- Modal -->
-            <div class="modal fade" id="delete-custom-field-modal-{{cf.field_display_name}}" tabindex="-1" role="dialog"
-                 aria-labelledby="exampleModalLabel"
-                 aria-hidden="true">
-                <div class="modal-dialog  modal-sm" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="exampleModalLabel">Delete custom field
-                                {{cf.field_display_name}}</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            You are going to remove a custom field
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                            <button type="button" class="btn btn-danger">Delete</button>
-                        </div>
-                    </div>
-                </div>
+                        class="fa fa-arrows-alt fa-2x"
+                        title="You can drag and drop each custom field to reorder"></i></span>
             </div>
         </div>
     </div>
@@ -103,12 +80,12 @@
 
 
                 <!--<div class="col-md-6">-->
-                    <!--<div class="tab-pane-header">Order</div>-->
-                    <!--<div class="form-group">-->
-                        <!--<label class="sr-only control-label" for="cf_order">Order</label>-->
-                        <!--<input type="text" class="form-control" id="cf_order" placeholder="Order"-->
-                               <!--ng-model="selected_cf.field_order" check-custom-type="int" title="Type only numbers"/>-->
-                    <!--</div>&lt;!&ndash; .form-group &ndash;&gt;-->
+                <!--<div class="tab-pane-header">Order</div>-->
+                <!--<div class="form-group">-->
+                <!--<label class="sr-only control-label" for="cf_order">Order</label>-->
+                <!--<input type="text" class="form-control" id="cf_order" placeholder="Order"-->
+                <!--ng-model="selected_cf.field_order" check-custom-type="int" title="Type only numbers"/>-->
+                <!--</div>&lt;!&ndash; .form-group &ndash;&gt;-->
                 <!--</div>-->
             </div>
 
@@ -116,7 +93,9 @@
                 <button class="btn btn-default" ng-click="clearSelection()">Cancel</button>
                 <button class="btn btn-success" ng-if="isEditable == true">Edit</button>
                 <button class="btn btn-success" ng-if="isEditable == false"
-                        ng-click="createCustomCustomField()" ng-disabled="form.$invalid || selected_cf.field_type == null">Save</button>
+                        ng-click="createCustomCustomField()"
+                        ng-disabled="form.$invalid || selected_cf.field_type == null">Save
+                </button>
             </div>
         </form>
     </div>

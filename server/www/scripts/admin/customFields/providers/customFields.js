@@ -44,15 +44,15 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
-        // customFieldFact.delete = function(customField) {
-        //     var deferred = $q.defer();
-        //     ServerAPI.deleteCustomField(workspace_name).then(function(data) {
-        //         deferred.resolve(workspace_name);
-        //     }, function() {
-        //         deferred.reject();
-        //     });
-        //     return deferred.promise;
-        // };
+        customFieldFact.deleteCustomField = function(customFieldId) {
+            var deferred = $q.defer();
+            ServerAPI.deleteCustomField(customFieldId).then(function(response) {
+                deferred.resolve(response);
+            }, function() {
+                deferred.reject();
+            });
+            return deferred.promise;
+        };
 
 
         return customFieldFact;

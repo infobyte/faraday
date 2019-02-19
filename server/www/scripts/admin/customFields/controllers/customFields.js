@@ -4,7 +4,7 @@
 
 angular.module('faradayApp')
     .controller('customFieldsCtrl',
-        ['$scope', 'customFieldFact', function ($scope, customFieldFact) {
+        ['$scope', 'customFieldFact', '$uibModal', function ($scope, customFieldFact, $uibModal) {
 
             $scope.customFields = [];
             $scope.selected_cf = {
@@ -64,6 +64,41 @@ angular.module('faradayApp')
                     });
             };
 
+            $scope._delete = function (customField) {
+                var modal = $uibModal.open({
+                    templateUrl: 'scripts/commons/partials/modalDelete.html',
+                    controller: 'commonsModalDelete',
+                    size: 'lg',
+                    resolve: {
+                        msg: function () {
+                            var msg = "A custom field will be deleted.";
+                            msg += " This action cannot be undone. Are you sure you want to proceed?";
+                            return msg;
+                        }
+                    }
+                });
+
+                modal.result.then(function () {
+                    $scope.deleteCustomCustomField(customField.id);
+                });
+            };
+
+
+            $scope.deleteCustomCustomField = function (customFieldId) {
+                customFieldFact.deleteCustomField(customFieldId).then(
+                    function (response) {
+                        removeCustomField(customFieldId);
+                    });
+            };
+
+            var removeCustomField = function (customFieldId) {
+                for (var i = 0; i < $scope.customFields.length; i++) {
+                    if ($scope.customFields[i].id === customFieldId) {
+                        $scope.customFields.splice(i, 1);
+                        break;
+                    }
+                }
+            };
 
             $scope.setCustomField = function (cf) {
                 $scope.selected_cf = angular.copy(cf);

@@ -45,11 +45,11 @@ class GoohostParser(object):
             if goohost_scantype == 'ip':
                 data = line.split()
                 item = {'host': data[0], 'ip': data[1]}
-                self.parse_ip(item['ip'], item['host'])
+                self.add_host_info_to_items(item['ip'], item['host'])
             elif goohost_scantype == 'host':
                 data = line.strip()
                 item = {'host': data, 'ip': self.resolve(data)}
-                self.parse_ip(item['ip'], item['host'])
+                self.add_host_info_to_items(item['ip'], item['host'])
             else:
                 item = {'data': line}
 
@@ -60,7 +60,7 @@ class GoohostParser(object):
             pass
         return host
 
-    def parse_ip(self, ip_address, hostname):
+    def add_host_info_to_items(self, ip_address, hostname):
         data = {}
         exists = False
         for item in self.items:

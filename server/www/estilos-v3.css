@@ -612,6 +612,8 @@ button[disabled], html input[disabled] {
 
 .cf-container {
     padding: 32px;
+    height: 678px;
+    overflow-y: auto;
 }
 
 .cf-item {

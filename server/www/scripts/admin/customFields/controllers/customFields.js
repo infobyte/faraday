@@ -43,6 +43,7 @@ angular.module('faradayApp')
                     });
             };
 
+
             var getMaxOrder = function () {
                 var orders = [];
                 $scope.customFields.forEach(function (customField) {
@@ -59,6 +60,7 @@ angular.module('faradayApp')
                 customFieldFact.createCustomField($scope.selected_cf).then(
                     function (response) {
                         $scope.customFields.push(response.data);
+                        $scope.clearSelection();
                     });
             };
 

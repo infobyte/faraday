@@ -25,7 +25,11 @@ angular.module('faradayApp')
         };
 
         customFieldFact.createCustomField = function (customField) {
-            return ServerAPI.createCustomField(customField);
+            var deferred = $q.defer();
+            ServerAPI.createCustomField(customField).then(function (response) {
+                deferred.resolve(response)
+            }, errorHandler);
+            return deferred.promise;
         };
 
 

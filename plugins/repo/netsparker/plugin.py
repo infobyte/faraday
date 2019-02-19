@@ -160,6 +160,7 @@ class Item(object):
             self.ref.append("OWASP-" + self.owasp)
         if self.reference:
             self.ref.extend(list(set(re.findall('https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', self.reference))))
+        self.reference += "\n" + self.cvss if self.cvss else ""
             
     
         self.data = ""
@@ -167,7 +168,6 @@ class Item(object):
             "\n".join(self.kvulns) if self.kvulns else ""
         self.data += "\nWASC: " + self.wasc if self.wasc else ""
         self.data += "\nCertainty: " + self.certainty if self.certainty else ""
-        self.data += "\n" + self.cvss if self.cvss else ""
         self.data += "\nPCI: " + self.pci if self.pci else ""
         self.data += "\nPCI2: " + self.pci2 if self.pci2 else ""
         self.data += "\nCAPEC: " + self.capec if self.capec else ""
@@ -242,10 +242,6 @@ class NetsparkerPlugin(core.PluginBase):
 
     def processCommandString(self, username, current_path, command_string):
         return None
-
-    def setHost(self):
-        pass
-
 
 def createPlugin():
     return NetsparkerPlugin()

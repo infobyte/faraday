@@ -1,1 +1,0 @@
-Readonly and disabled workspaces

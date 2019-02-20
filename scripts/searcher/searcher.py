@@ -28,7 +28,7 @@ from persistence.server.server import login_user
 from persistence.server.server_io_exceptions import ResourceDoesNotExist, ConflictInDatabase
 from validator import *
 import urlparse
-
+from api import Api
 
 logger = logging.getLogger('Faraday searcher')
 
@@ -740,6 +740,8 @@ def main():
         logger.info('Started')
         logger.info('Searching objects into workspace %s ' % workspace)
 
+        api = Api(workspace, session_cookie)
+
         logger.debug("Getting hosts ...")
         hosts = models.get_hosts(workspace)
 
@@ -747,7 +749,7 @@ def main():
         services = models.get_services(workspace)
 
         logger.debug("Getting vulnerabilities ...")
-        vulns = models.get_all_vulns(workspace)
+        vulns = api.get_vulnerabilities()
 
         if validate_rules():
             process_vulnerabilities(workspace, vulns, _server)
@@ -764,10 +766,10 @@ def main():
         os.remove(lockf)
         exit(0)
 
-    except Exception as errorMsg:
-        logger.error(errorMsg)
-        os.remove(lockf)
-        exit(0)
+    # except Exception as errorMsg:
+    #     logger.error(errorMsg)
+    #     os.remove(lockf)
+    #     exit(0)
 
 
 if __name__ == "__main__":

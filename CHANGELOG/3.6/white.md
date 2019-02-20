@@ -19,7 +19,6 @@
  * Send searcher alert with custom mail
  * Add gitlab-ci.yml file to execute test and pylint on gitlab runner
  * Fix 500 error when updating services and vulns with specific read-only parameters set
-
  * Fix SQLMap plugin to support newer versions of the tool
  * Improve service's parser for Lynis plugin
  * Fix bug when parsing URLs in Acunetix reports

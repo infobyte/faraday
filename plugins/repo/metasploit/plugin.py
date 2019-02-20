@@ -368,13 +368,11 @@ class MetasploitPlugin(core.PluginBase):
         parser = MetasploitXmlParser(output)
 
         for item in parser.hosts:
-            h_id = self.createAndAddHost(item.ip, item.os)
-            if self._isIPV4(item.ip):
-                i_id = self.createAndAddInterface(
-                    h_id, item.ip, ipv4_address=item.ip, hostname_resolution=item.host)
-            else:
-                i_id = self.createAndAddInterface(
-                    h_id, item.ip, ipv6_address=item.ip, hostname_resolution=item.host)
+            self.hostnames = ""
+            if item.host:
+                self.hostnames = [item.host]
+            
+            h_id = self.createAndAddHost(item.ip, os=item.os, hostnames=self.hostnames)
 
             if item.id + "_" in item.notesByService:
                 for n in item.notesByService[item.id + "_"]:
@@ -385,8 +383,8 @@ class MetasploitPlugin(core.PluginBase):
                     h_id, v.name, v.desc, ref=v.refs)
 
             for s in item.services:
-                s_id = self.createAndAddServiceToInterface(h_id, i_id, s['name'],
-                                                           s['proto'],
+                s_id = self.createAndAddServiceToHost(h_id, s['name'],
+                                                           protocol=s['proto'],
                                                            ports=[s['port']],
                                                            status=s['state'],
                                                            description=s['info'])

@@ -276,7 +276,7 @@ class GenericView(FlaskView):
         TODO migration: document route_kwargs
         """
         try:
-            return self._get_schema_instance(route_kwargs, **kwargs).dump(obj).data
+            return self._get_schema_instance(route_kwargs, **kwargs).dump(obj)
         except ObjectDeletedError:
             return []
 
@@ -629,7 +629,7 @@ class CreateMixin(object):
                     {
                         'message': 'Existing value',
                         'object': self._get_schema_class()().dump(
-                            conflict_obj).data,
+                            conflict_obj),
                     }
                 ))
             else:
@@ -708,7 +708,7 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
                     {
                         'message': 'Existing value',
                         'object': self._get_schema_class()().dump(
-                            conflict_obj).data,
+                            conflict_obj),
                     }
                 ))
             else:
@@ -764,7 +764,7 @@ class UpdateMixin(object):
                     {
                         'message': 'Existing value',
                         'object': self._get_schema_class()().dump(
-                            conflict_obj).data,
+                            conflict_obj),
                     }
                 ))
             else:

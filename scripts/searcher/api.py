@@ -61,9 +61,9 @@ class Api:
 
     def _delete(self, url, object_name):
         response = requests.delete(url, cookies=self.cookies)
-        if response.status_code != 200:
+        if response.status_code != 204:
             raise ApiError('Unable to delete {}'.format(object_name))
-        return json.loads(response.content)
+        return response.ok
 
     def get_vulnerabilities(self):
         return [Structure(**item['value']) for item in self._get(self._url('ws/{}/vulns'.format(self.workspace)),
@@ -72,3 +72,6 @@ class Api:
     def update_vulnerability(self, vulnerability):
         return Structure(**self._put(self._url('ws/{}/vulns/{}/'.format(self.workspace, vulnerability.id)),
                                      vulnerability.__dict__, 'vulnerability'))
+
+    def delete_vulnerability(self, vulnerability_id):
+        return self._delete(self._url('ws/{}/vulns/{}/'.format(self.workspace, vulnerability_id)), 'vulnerability')

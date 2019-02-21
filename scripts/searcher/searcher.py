@@ -495,14 +495,10 @@ def execute_action(ws, objects, rule, _server):
                     update_host(ws, obj, key, value)
 
             elif command == 'DELETE':
-                if obj.class_signature == 'VulnerabilityWeb':
-                    models.delete_vuln_web(ws, obj.id)
-                    logger.info(" Deleting vulnerability web '%s' with id '%s':" % (obj.name, obj.id))
-                    insert_rule(rule['id'], command, obj, _objs_value)
-
-                elif obj.class_signature == 'Vulnerability':
-                    models.delete_vuln(ws, obj.id)
+                if obj.class_signature == 'VulnerabilityWeb' or obj.class_signature == 'Vulnerability':
+                    api.delete_vulnerability(obj.id)
                     logger.info("Deleting vulnerability '%s' with id '%s':" % (obj.name, obj.id))
+                    insert_rule(rule['id'], command, obj, _objs_value)
 
                 elif obj.class_signature == 'Service':
                     models.delete_service(ws, obj.id)
@@ -762,10 +758,10 @@ def main():
         os.remove(lockf)
         exit(0)
 
-    # except Exception as errorMsg:
-    #     logger.error(errorMsg)
-    #     os.remove(lockf)
-    #     exit(0)
+    except Exception as errorMsg:
+        logger.error(errorMsg)
+        os.remove(lockf)
+        exit(0)
 
 
 if __name__ == "__main__":

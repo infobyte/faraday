@@ -11,6 +11,7 @@ from collections import namedtuple
 from marshmallow import Schema, fields, ValidationError
 from server.schemas import (
     JSTimestampField,
+    NullToBlankString,
     MutableField,
     PrimaryKeyRelatedField,
     SelfNestedField,
@@ -189,3 +190,21 @@ class TestMutableField:
             "name": "test",
             "x": 5,
         }
+
+
+class TestNullToBlankString:
+
+    class NullToBlankSchema(Schema):
+        string = NullToBlankString(missing='test')
+
+    def test_load_simple_string(self):
+        data = self.NullToBlankSchema().load({'string': 'hello'})
+        assert data['string'] == 'hello'
+
+    def test_load_string_with_null_bytes(self):
+        data = self.NullToBlankSchema().load({'string': 'hello\0world'})
+        assert data['string'] == 'helloworld'
+
+    def test_load_default_string(self):
+        data = self.NullToBlankSchema().load({})
+        assert data['string'] == 'test'

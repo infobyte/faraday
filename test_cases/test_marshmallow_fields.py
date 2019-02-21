@@ -208,3 +208,7 @@ class TestNullToBlankString:
     def test_load_default_string(self):
         data = self.NullToBlankSchema().load({})
         assert data['string'] == 'test'
+
+    def test_translate_none_to_empty_string(self):
+        data = self.NullToBlankSchema().load({'string': None})
+        assert data['string'] == ''

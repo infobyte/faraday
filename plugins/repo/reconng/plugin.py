@@ -7,11 +7,12 @@ See the file 'doc/LICENSE' for the license information
 '''
 import re
 import json
+import socket
 import logging
 try:
-	from lxml import etree as ET
+    from lxml import etree as ET
 except ImportError:
-	import xml.etree.ElementTree as ET
+    import xml.etree.ElementTree as ET
 
 from plugins.core import PluginBase
 
@@ -26,13 +27,12 @@ __status__ = 'Development'
 
 logger = logging.getLogger(__name__)
 
-class ReconngParser(object):
 
+class ReconngParser(object):
     def __init__(self, output):
         self._format = self.report_format(output)
         self.hosts = []
         self.vulns = []
-        self.host_mapper = []
 
         if self._format == 'xml':
             self.parsable_tree = self.get_parseable_xml_output(output)
@@ -40,7 +40,6 @@ class ReconngParser(object):
 
         elif self._format == 'json':
             self.parse_json_report(output)
-
 
     def report_format(self, output):
         xml_format_regex = re.compile(r'^<(.*?)>')
@@ -98,34 +97,32 @@ class ReconngParser(object):
             info['host'] = element['host']
             info['ip'] = element['ip_address']
 
-        self.host_mapper.append(info['host'])
         return info
 
     def get_info_from_vuln_element(self, element):
         info = {}
         if self._format == 'xml':
             info['host'] = element.find('host').text
-            info['refs'] = element.find('reference').text
+            info['reference'] = element.find('reference').text
             info['module'] = element.find('module').text
             info['example'] = element.find('example').text
             info['category'] = element.find('category').text
-            if 'SSL' in info['category']:
-                info['severity'] = 'med'
-            else:
-                info['severity'] = 'info'
-
         elif self._format == 'json':
-            if 'SSL' in element['category']:
-                info['severity'] = 'med'
-            else:
-                info['severity'] = 'info'
             info['category'] = element['category']
             info['host'] = element['host']
             info['module'] = element['module']
-            info['refs'] = element['reference']
+            info['reference'] = element['reference']
             info['example'] = element['example']
 
+        if 'XSS' in info['category']:
+            info['severity'] = 'high'
+        elif 'SSL' in info['category']:
+            info['severity'] = 'med'
+        else:
+            info['severity'] = 'info'
+
         return info
+
 
 class ReconngPlugin(PluginBase):
     """
@@ -137,13 +134,15 @@ class ReconngPlugin(PluginBase):
         PluginBase.__init__(self)
         self.id = 'Reconng'
         self.name = 'Reconng XML Output Plugin'
-        self.plugin_version = '0.0.2'
+        self.plugin_version = '0.0.3'
         self.version = ''
         self.framework_version = ''
         self.options = None
         self._current_output = None
         self._command_regex = re.compile(
             r'records added to')
+
+        self.host_mapper = {}
 
     def parseOutputString(self, output):
         parser = ReconngParser(output)
@@ -153,23 +152,44 @@ class ReconngPlugin(PluginBase):
                 host['ip'],
                 hostnames=[host['host']]
             )
-        '''self.createAndAddVulnToHost(
-            name='Recon-ng found: ' + vulnerability['example'],
-            desc='Found by module: ' + vulnerability['module'],
-            severity=severity,
-            ref=[vulnerability['reference']],
-            host_id=hosts_id_mapper[vulnerability['host']]
-        )'''
+            self.host_mapper[host['host']] = h_id
+        for vuln in parser.vulns:
+            if vuln['host'] not in self.host_mapper.keys():
+                ip = self.resolve_host(vuln['host'])
+                h_id = self.createAndAddHost(
+                    ip,
+                    hostnames=[vuln['host']]
+                )
+                self.host_mapper[vuln['host']] = h_id
+            else:
+                h_id = self.host_mapper[vuln['host']]
+
+            self.createAndAddVulnToHost(
+                name='Recon-ng found: ' + vuln['category'] + ' vulnerability',
+                desc='Found by module: ' + vuln['module'],
+                severity=vuln['severity'],
+                ref=[vuln['reference']],
+                host_id=h_id,
+                data=vuln['example']
+            )
 
     def processCommandString(self, username, current_path, command_string):
         return
+
+    def resolve_host(self, host):
+        try:
+            return socket.gethostbyname(host)
+        except:
+            pass
+        return host
+
 
 def createPlugin():
     return ReconngPlugin()
 
 if __name__ == '__main__':
-    with open("/home/javier/results_hosts_vulns.xml","r") as report:
+    with open("~/results_hosts_vulns.xml", "r") as report:
         parser = ReconngParser(report.read())
-        #for item in parser.items:
-            #if item.status == 'up':
-                #print item
+        # for item in parser.items:
+        # if item.status == 'up':
+        # print item

@@ -276,12 +276,7 @@ def update_vulnerability(ws, vuln, key, value, _server):
                 logger.info(action)
 
     try:
-        if vuln.class_signature == "Vulnerability":
-            models.update_vuln(ws, vuln)
-
-        elif vuln.class_signature == "VulnerabilityWeb":
-            models.update_vuln_web(ws, vuln)
-
+        api.update_vulnerability(vuln)
     except ConflictInDatabase:
         logger.error("There was a conflict trying to save '%s' with ID: %s" % (vuln.name, vuln.id))
         return False
@@ -740,6 +735,7 @@ def main():
         logger.info('Started')
         logger.info('Searching objects into workspace %s ' % workspace)
 
+        global api
         api = Api(workspace, session_cookie)
 
         logger.debug("Getting hosts ...")

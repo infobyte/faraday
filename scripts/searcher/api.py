@@ -3,14 +3,16 @@ import json
 
 
 class ApiError(Exception):
-
     def __init__(self, message):
-        self.message = message
+        super(ApiError, self).__init__(message)
 
 
 class Structure:
     def __init__(self, **entries):
         self.__dict__.update(entries)
+
+    def to_json(self):
+        return json.dumps(self.__dict__)
 
     @property
     def id(self):
@@ -31,7 +33,6 @@ class Structure:
 
 
 class Api:
-
     def __init__(self, workspace, cookies, base='http://127.0.0.1:5985/_api/v2/'):
         self.base = base
         self.workspace = workspace
@@ -50,20 +51,24 @@ class Api:
         response = requests.post(url, json=data, cookies=self.cookies)
         if response.status_code != 201:
             raise ApiError('Unable to create {}'.format(object_name))
-        return response
+        return json.loads(response.content)
 
     def _put(self, url, data, object_name):
         response = requests.put(url, json=data, cookies=self.cookies)
         if response.status_code != 200:
             raise ApiError('Unable to update {}'.format(object_name))
-        return response
+        return json.loads(response.content)
 
     def _delete(self, url, object_name):
         response = requests.delete(url, cookies=self.cookies)
         if response.status_code != 200:
             raise ApiError('Unable to delete {}'.format(object_name))
-        return response
+        return json.loads(response.content)
 
     def get_vulnerabilities(self):
         return [Structure(**item['value']) for item in self._get(self._url('ws/{}/vulns'.format(self.workspace)),
-                                                    'vulnerabilities')['vulnerabilities']]
+                                                                 'vulnerabilities')['vulnerabilities']]
+
+    def update_vulnerability(self, vulnerability):
+        return Structure(**self._put(self._url('ws/{}/vulns/{}/'.format(self.workspace, vulnerability.id)),
+                                     vulnerability.__dict__, 'vulnerability'))

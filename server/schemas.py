@@ -155,6 +155,10 @@ class MutableField(fields.Field):
         return self.read_field._serialize(value, attr, obj)
 
     def _deserialize(self, value, attr, data):
+
+        # TODO: see root cause of the bug that required this line to be added
+        self.write_field.parent = self.parent
+
         return self.write_field._deserialize(value, attr, data)
 
     def _add_to_schema(self, field_name, schema):

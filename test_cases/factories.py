@@ -1,4 +1,11 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 import random
+import string
 import factory
 import datetime
 import unicodedata
@@ -30,7 +37,11 @@ from server.models import (
     VulnerabilityTemplate,
     VulnerabilityWeb,
     Workspace,
-    ReferenceTemplate, CommandObject, Comment)
+    ReferenceTemplate,
+    CommandObject,
+    Comment,
+    CustomFieldsSchema
+)
 
 # Make partials for start and end date. End date must be after start date
 FuzzyStartTime = lambda: (
@@ -51,9 +62,6 @@ UNICODE_LETTERS = ''.join(c for c in all_unicode if unicodedata.category(c) == '
 
 
 class FaradayFactory(factory.alchemy.SQLAlchemyModelFactory):
-
-    # id = factory.Sequence(lambda n: n)
-    pass
 
     @classmethod
     def build_dict(cls, **kwargs):
@@ -77,7 +85,7 @@ class UserFactory(FaradayFactory):
 
 class WorkspaceFactory(FaradayFactory):
 
-    name = FuzzyText()
+    name = FuzzyText(chars=string.lowercase+string.digits)
     creator = factory.SubFactory(UserFactory)
 
     class Meta:
@@ -97,7 +105,7 @@ class WorkspaceObjectFactory(FaradayFactory):
 
 
 class HostFactory(WorkspaceObjectFactory):
-    ip = factory.Faker('ipv4')
+    ip = FuzzyText()
     description = FuzzyText()
     os = FuzzyChoice(['Linux', 'Windows', 'OSX', 'Android', 'iOS'])
     creator = factory.SubFactory(UserFactory)
@@ -143,7 +151,7 @@ class ReferenceTemplateFactory(FaradayFactory):
 class ServiceFactory(WorkspaceObjectFactory):
     name = FuzzyText()
     description = FuzzyText()
-    port = FuzzyInteger(1, 65535)
+    port = FuzzyInteger(1, 2**31)  # Using 2**16 it generates many collisions
     protocol = FuzzyChoice(['TCP', 'UDP'])
     host = factory.SubFactory(HostFactory, workspace=factory.SelfAttribute('..workspace'))
     status = FuzzyChoice(Service.STATUSES)
@@ -159,6 +167,13 @@ class SourceCodeFactory(WorkspaceObjectFactory):
 
     class Meta:
         model = SourceCode
+        sqlalchemy_session = db.session
+
+
+class CustomFieldsSchemaFactory(factory.alchemy.SQLAlchemyModelFactory):
+
+    class Meta:
+        model = CustomFieldsSchema
         sqlalchemy_session = db.session
 
 
@@ -367,7 +382,7 @@ class CommentFactory(WorkspaceObjectFactory):
     """
     text = FuzzyText()
     object_id = FuzzyInteger(1)
-    object_type = FuzzyChoice(['Host', 'Service', 'Comment'])
+    object_type = FuzzyChoice(['host', 'service', 'comment'])
 
 
     class Meta:

@@ -16,7 +16,8 @@ angular.module('faradayApp')
                 var title = "SR-" + ws
             }
 
-
+            // Add confirmed to CSV fields
+            aProperties.push("confirmed");
             for(key in properties) {
                 if(properties.hasOwnProperty(key)) {
                     if(properties[key] === true) {
@@ -28,12 +29,15 @@ angular.module('faradayApp')
                 aProperties.forEach(function(prop) {
                     object = {};
                     if(typeof(v[prop]) === "object") v[prop] = parseObject(v[prop]);
-                    if(typeof(v[prop]) != "undefined" && v[prop] != null && typeof(v[prop]) != "number") {
+                    if(typeof(v[prop]) != "undefined" && v[prop] != null && typeof(v[prop]) != "number" && prop != "confirmed") {
                         object[prop] = cleanCSV(v[prop]);
-                    } else {
+                    }else{
                         object[prop] = "";
                     }
-                    if(prop === "date") object[prop] = parseDate(v["metadata"]["create_time"] * 1000);
+
+                    if(prop === "_id") object[prop] = v[prop].toString();
+                    if(prop === "confirmed") object[prop] = v[prop].toString();
+                    if(prop === "date") object[prop] = parseDate(new Date(v["metadata"]["create_time"]));
                     if(prop === "creator") object[prop] = excelEscape(v["metadata"]["creator"]);
                     if(prop === "web") {
                         if(v.type === "Vulnerability") {

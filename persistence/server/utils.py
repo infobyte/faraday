@@ -47,6 +47,8 @@ def get_object_properties(obj):
 def get_host_properties(host):
     host_dict = {
         'os': host.getOS(),
+        'hostnames': host.getHostnames(),
+        'mac': host.getMac()
     }
     if host.getDefaultGateway():
         host_dict['default_gateway'] = host.getDefaultGateway()
@@ -93,11 +95,11 @@ def get_vuln_web_properties(vuln_web):
     vuln_web_dict = {
         'method': vuln_web.getMethod(),
         'params': vuln_web.getParams(),
-        'request': vuln_web.getRequest(),
-        'response': vuln_web.getResponse(),
+        'request': vuln_web.getRequest() or '',
+        'response': vuln_web.getResponse() or '',
         'website': vuln_web.getWebsite(),
         'path': vuln_web.getPath(),
-        'pname': vuln_web.getPname(),
+        'pname': vuln_web.getPname() or '',
         'query': vuln_web.getQuery(),
         'status': vuln_web.getStatus(),
         'parent': vuln_web.getParent(),

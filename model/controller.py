@@ -13,6 +13,7 @@ from Queue import Empty
 from threading import Thread
 
 from config.configuration import getInstanceConfiguration
+from model import Modelactions
 from persistence.server.server_io_exceptions import ConflictInDatabase
 from utils.logs import getLogger
 import model.api as api
@@ -26,80 +27,6 @@ from persistence.server import models
 
 CONF = getInstanceConfiguration()
 logger = logging.getLogger(__name__)
-
-
-class modelactions:
-    ADDHOST = 2000
-    DELHOST = 2001
-    ADDSERVICEHOST = 2008
-    ADDSERVICEHOST = 20008
-    ADDCATEGORY = 2011
-    ADDVULNHOST = 2017
-    DELVULNHOST = 2018
-    ADDVULNSRV = 2019
-    DELVULNSRV = 2020
-    ADDNOTEHOST = 2025
-    DELNOTEHOST = 2026
-    ADDNOTESRV = 2027
-    DELNOTESRV = 2028
-    RENAMEROOT = 2029
-    ADDNOTEVULN = 2030
-    DELNOTEVULN = 2031
-    EDITHOST = 2032
-    EDITSERVICE = 2035
-    ADDCREDSRV = 2036
-    DELCREDSRV = 2037
-    ADDVULNWEBSRV = 2038
-    DELVULNWEBSRV = 2039
-    ADDNOTENOTE = 2040
-    DELNOTENOTE = 2041
-    EDITNOTE = 2042
-    EDITVULN = 2043
-    ADDNOTE = 2044
-    DELNOTE = 2045
-    ADDVULN = 2046
-    DELVULN = 2047
-    EDITCRED = 2048
-    ADDCRED = 2049
-    DELCRED = 2050
-    PLUGINSTART = 3000
-    PLUGINEND = 3001
-    LOG = 3002
-    DEVLOG = 3003
-
-    __descriptions = {
-        ADDHOST: "ADDHOST",
-        DELHOST: "DELHOST",
-        ADDCATEGORY: "ADDCATEGORY",
-        ADDVULNHOST: "ADDVULNHOST",
-        DELVULNHOST: "DELVULNHOST",
-        ADDVULNSRV: "ADDVULNSRV",
-        DELVULNSRV: "DELVULNSRV",
-        ADDNOTEVULN: "ADDNOTEVULN",
-        DELNOTEVULN: "DELNOTEVULN",
-        ADDNOTENOTE: "ADDNOTENOTE",
-        DELNOTENOTE: "DELNOTENOTE",
-        EDITHOST: "EDITHOST",
-        ADDCREDSRV: "ADDCREDSRV",
-        DELCREDSRV: "DELCREDSRV",
-        ADDVULNWEBSRV: "ADDVULNSWEBRV",
-        DELVULNWEBSRV: "DELVULNWEBSRV",
-        EDITNOTE: "EDITNOTE",
-        EDITVULN: "EDITVULN",
-        EDITCRED: "EDITCRED",
-        ADDNOTE: "ADDNOTE",
-        DELNOTE: "DELNOTE",
-        ADDVULN: "ADDVULN",
-        DELVULN: "DELVULN",
-        ADDCRED: "ADDCRED",
-        DELCRED: "DELCRED",
-        PLUGINSTART: "PLUGINSTART",
-        PLUGINEND: "PLUGINEND"
-    }
-
-    @staticmethod
-    def getDescription(action):
-        return modelactions.__descriptions.get(action, "")
 
 
 class ModelController(Thread):
@@ -145,7 +72,7 @@ class ModelController(Thread):
         self._setupActionDispatcher()
 
         self.objects_with_updates = []
-        self._stop = False
+        self.processing = False
 
     def __getattr__(self, name):
         getLogger(self).debug("ModelObject attribute to refactor: %s" % name)
@@ -196,39 +123,41 @@ class ModelController(Thread):
     def _setupActionDispatcher(self):
 
         self._actionDispatcher = {
-            modelactions.ADDHOST: self.__add,
-            modelactions.DELHOST: self.__del,
-            modelactions.EDITHOST: self.__edit,
-            modelactions.EDITSERVICE: self.__edit,
+            Modelactions.ADDHOST: self.__add,
+            Modelactions.DELHOST: self.__del,
+            Modelactions.EDITHOST: self.__edit,
+            Modelactions.EDITSERVICE: self.__edit,
             # Vulnerability
-            modelactions.ADDVULNHOST: self.__add,
-            modelactions.DELVULNHOST: self.__del,
-            modelactions.ADDVULNSRV: self.__add,
-            modelactions.DELVULNSRV: self.__del,
-            modelactions.ADDVULN: self.__add,
-            modelactions.DELVULN: self.__del,
-            modelactions.ADDVULNWEBSRV: self.__add,
-            modelactions.EDITVULN: self.__edit,
+            Modelactions.ADDVULNHOST: self.__add,
+            Modelactions.DELVULNHOST: self.__del,
+            Modelactions.ADDVULNSRV: self.__add,
+            Modelactions.DELVULNSRV: self.__del,
+            Modelactions.ADDVULN: self.__add,
+            Modelactions.DELVULN: self.__del,
+            Modelactions.ADDVULNWEBSRV: self.__add,
+            Modelactions.EDITVULN: self.__edit,
             #Service
-            modelactions.ADDSERVICEHOST: self.__add,
+            Modelactions.ADDSERVICEHOST: self.__add,
             # Note
-            modelactions.ADDNOTEHOST: self.__add,
-            modelactions.DELNOTEHOST: self.__del,
-            modelactions.ADDNOTESRV: self.__add,
-            modelactions.DELNOTESRV: self.__del,
-            modelactions.ADDNOTEVULN: self.__add,
-            modelactions.ADDNOTE: self.__add,
-            modelactions.DELNOTE: self.__del,
-            modelactions.ADDCREDSRV: self.__add,
-            modelactions.DELCREDSRV: self.__del,
-            modelactions.ADDNOTENOTE: self.__add,
-            modelactions.EDITNOTE: self.__edit,
-            modelactions.EDITCRED: self.__edit,
-            modelactions.ADDCRED: self.__add,
-            modelactions.DELCRED: self.__del,
+            Modelactions.ADDNOTEHOST: self.__add,
+            Modelactions.DELNOTEHOST: self.__del,
+            Modelactions.ADDNOTESRV: self.__add,
+            Modelactions.DELNOTESRV: self.__del,
+            Modelactions.ADDNOTEVULN: self.__add,
+            Modelactions.ADDNOTE: self.__add,
+            Modelactions.DELNOTE: self.__del,
+            Modelactions.ADDCREDSRV: self.__add,
+            Modelactions.DELCREDSRV: self.__del,
+            Modelactions.ADDNOTENOTE: self.__add,
+            Modelactions.EDITNOTE: self.__edit,
+            Modelactions.EDITCRED: self.__edit,
+            Modelactions.ADDCRED: self.__add,
+            Modelactions.DELCRED: self.__del,
             # Plugin states
-            modelactions.PLUGINSTART: self._pluginStart,
-            modelactions.PLUGINEND: self._pluginEnd
+            Modelactions.PLUGINSTART: self._pluginStart,
+            Modelactions.PLUGINEND: self._pluginEnd,
+            Modelactions.DEVLOG: self._devlog,
+            Modelactions.LOG: self._log,
         }
 
     def run(self):
@@ -316,9 +245,6 @@ class ModelController(Thread):
             except RuntimeError:
                 pass
 
-    def stop(self):
-        self._stop = True
-
     def _main(self):
         """
         The main method for the thread.
@@ -327,7 +253,8 @@ class ModelController(Thread):
         This will make host addition and removal "thread-safe" and will
         avoid locking components that need to interact with the model
         """
-        while not self._stop:
+
+        while not self._stop or self.processing:
             # check if thread must finish
             # no plugin should be active to stop the controller
             if self._stop and self.active_plugins_count == 0:
@@ -345,7 +272,8 @@ class ModelController(Thread):
                 time.sleep(0.01)
 
     def processAllPendingActions(self):
-        [self.processAction() for i in range(self._pending_actions.qsize())]
+        for _ in range(self._pending_actions.qsize()):
+            self.processAction()
 
     def processAction(self):
         # check the queue for new actions
@@ -379,6 +307,9 @@ class ModelController(Thread):
     # TODO: >>> APIs <<< we have to know which plugin called the apis to store
     # in the history
 
+    def add_action(self, action):
+        self._pending_actions.put(action)
+
     def __addPendingAction(self, *args):
         """
         Adds a new pending action to the queue
@@ -406,13 +337,15 @@ class ModelController(Thread):
         notifier.editHost(old_object)
         return True
 
-    # XXX: THIS DOESNT WORK
-    def find(self, obj_id):
-        return self.mappers_manager.find(obj_id)
+    def find(self, class_signature, obj_id):
+        return self.mappers_manager.find(class_signature, obj_id)
 
     def _save_new_object(self, new_object, command_id):
-        res = self.mappers_manager.save(new_object, command_id)
-        new_object.setID(res)
+        res = None
+        try:
+            res = self.mappers_manager.save(new_object, command_id)
+        finally:
+            new_object.setID(res)
         if res:
             notifier.addObject(new_object)
         return res
@@ -436,6 +369,10 @@ class ModelController(Thread):
             old_obj = new_obj.__class__(conflict.answer.json()['object'], new_obj._workspace_name)
             new_obj.setID(old_obj.getID())
             return self._handle_conflict(old_obj, new_obj, command_id)
+        except Exception as ex:
+            logger.exception(ex)
+            new_obj.setID(None)
+            raise
 
     def __edit(self, obj, command_id=None, *args, **kwargs):
         obj.updateAttributes(*args, **kwargs)
@@ -474,30 +411,48 @@ class ModelController(Thread):
         return res
 
     def addPluginStart(self, name):
-        self.__addPendingAction(modelactions.PLUGINSTART, name)
+        self.__addPendingAction(Modelactions.PLUGINSTART, name)
 
     def addPluginEnd(self, name):
-        self.__addPendingAction(modelactions.PLUGINEND, name)
+        self.__addPendingAction(Modelactions.PLUGINEND, name)
 
     def _pluginStart(self, name, command_id):
         self.active_plugins_count_lock.acquire()
-        getLogger(self).info("Plugin Started: {0}. ".format(name, command_id))
+        self.processing = True
+        if name not in ["MetasploitOn", "Beef", "Sentinel"]:
+            getLogger(self).info("Plugin Started: {0}. ".format(name, command_id))
         self.active_plugins_count += 1
         self.active_plugins_count_lock.release()
         return True
 
     def _pluginEnd(self, name, command_id):
         self.active_plugins_count_lock.acquire()
-        getLogger(self).info("Plugin Ended: {0}".format(name))
+        if name not in ["MetasploitOn", "Beef", "Sentinel"]:
+            getLogger(self).info("Plugin Ended: {0}".format(name))
+        if self.active_plugins_count == 0:
+            self.active_plugins_count_lock.release()
+            getLogger(self).warn("All plugins ended, but a plugin end action was received.")
+            return True
         self.active_plugins_count -= 1
+        if self.active_plugins_count == 0:
+            self.processing = False
         self.active_plugins_count_lock.release()
         return True
 
+    def _devlog(self, msg, *args, **kwargs):
+        # I have no idea what I am doing
+        api.devlog(msg)
+        return True
 
-    def newHost(self, ip, os="Unknown"):
+    def _log(self, msg, *args, **kwargs):
+        # I have no idea what I am doing
+        api.log(msg, *args[:-1])
+        return True
+
+    def newHost(self, ip, os="Unknown", hostnames=None):
         return model.common.factory.createModelObject(
             models.Host.class_signature, ip,
-            workspace_name=self.mappers_manager.workspace_name, os=os, parent_id=None)
+            workspace_name=self.mappers_manager.workspace_name, os=os, parent_id=None, hostnames=hostnames)
 
     def newService(self, name, protocol="tcp?", ports=[], status="running",
                    version="unknown", description="", parent_id=None):
@@ -524,10 +479,10 @@ class ModelController(Thread):
             method=method, pname=pname, params=params, query=query,
             category=category, confirmed=confirmed, parent_id=parent_id)
 
-    def newNote(self, name, text, parent_id=None):
+    def newNote(self, name, text, parent_id=None, parent_type=None):
         return model.common.factory.createModelObject(
             models.Note.class_signature, name,
-            workspace_name=self.mappers_manager.workspace_name, text=text, parent_id=parent_id)
+            workspace_name=self.mappers_manager.workspace_name, text=text, parent_id=parent_id, parent_type=parent_type)
 
     def newCred(self, username, password, parent_id=None):
         return model.common.factory.createModelObject(

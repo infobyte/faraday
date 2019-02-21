@@ -1,3 +1,11 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
+from tempfile import NamedTemporaryFile
+
 import os
 import sys
 import json
@@ -5,7 +13,7 @@ import inspect
 import pytest
 from factory import Factory
 from flask.testing import FlaskClient
-from nplusone.core import signals
+from flask_principal import Identity, identity_changed
 from sqlalchemy import event
 from pytest_factoryboy import register
 
@@ -15,7 +23,7 @@ from server.models import db
 from test_cases import factories
 
 
-
+TEMPORATY_SQLITE = NamedTemporaryFile()
 # Discover factories to automatically register them to pytest-factoryboy and to
 # override its session
 enabled_factories = []
@@ -51,20 +59,31 @@ class CustomClient(FlaskClient):
         _app_ctx_stack.top.sqlalchemy_queries = []
 
         ret = super(CustomClient, self).open(*args, **kwargs)
-        if ret.headers.get('content-type') == 'application/json':
-            try:
-                ret.json = json.loads(ret.data)
-            except ValueError:
-                ret.json = None
+        #Now set in flask 1.0
+        #if ret.headers.get('content-type') == 'application/json':
+        #    try:
+        #        ret.json = json.loads(ret.data)
+        #    except ValueError:
+        #        ret.json = None
         return ret
 
 
 def pytest_addoption(parser):
-    parser.addoption('--connection-string', default='sqlite://',
+    # currently for tests using sqlite and memory have problem while using transactions
+    # we need to review sqlite configuraitons for persistence using PRAGMA.
+    parser.addoption('--connection-string', default='sqlite:////{0}'.format(TEMPORATY_SQLITE.name),
                      help="Database connection string. Defaults to in-memory "
                      "sqlite if not specified:")
     parser.addoption('--ignore-nplusone', action='store_true',
                      help="Globally ignore nplusone errors")
+    parser.addoption("--with-hypothesis", action="store_true",
+                     dest="use_hypothesis", default=False,
+                     help="Run property based tests")
+
+
+def pytest_configure(config):
+    if not config.option.use_hypothesis:
+        config.option.markexpr = 'not hypothesis'
 
 
 @pytest.fixture(scope='session')
@@ -78,6 +97,7 @@ def app(request):
     ctx.push()
 
     def teardown():
+        TEMPORATY_SQLITE.close()
         ctx.pop()
 
     request.addfinalizer(teardown)
@@ -192,6 +212,15 @@ def session(database, request):
 
 @pytest.fixture
 def test_client(app):
+
+    # flask.g is persisted in requests, and the werkzeug
+    # CSRF checker could fail if we don't do this
+    from flask import g
+    try:
+        del g.csrf_token
+    except:
+        pass
+
     return app.test_client()
 
 
@@ -228,8 +257,11 @@ def login_as(test_client, user):
     with test_client.session_transaction() as sess:
         # Without this line the test breaks. Taken from
         # http://pythonhosted.org/Flask-Testing/#testing-with-sqlalchemy
+        assert user.id is not None
         db.session.add(user)
         sess['user_id'] = user.id
+        identity_changed.send(test_client.application,
+                              identity=Identity(user.id))
 
 
 @pytest.fixture
@@ -244,3 +276,9 @@ def ignore_nplusone(app):
     app.config['NPLUSONE_RAISE'] = False
     yield
     app.config['NPLUSONE_RAISE'] = old
+
+
+@pytest.fixture
+def csrf_token(logged_user, test_client):
+    session_response = test_client.get('/session')
+    return session_response.json.get('csrf_token')

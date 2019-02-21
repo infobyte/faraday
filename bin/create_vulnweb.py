@@ -82,7 +82,7 @@ def main(workspace='', args=None, parser=None):
             models.create_vuln_web(workspace, obj)
             old = models.get_web_vuln(workspace, **params)
     else:
-        print "A web vulnerability with ID %s already exists!" % old.getID()
+        print("A web vulnerability with ID %s already exists!" % old.getID())
         return 2, None
 
     return 0, old.getID()

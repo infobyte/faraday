@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 
 ###
 ## Faraday Penetration Test IDE
@@ -26,6 +26,6 @@ export FARADAY_ZSH_RPORT
 export FARADAY_ZSH_HOST
 FARADAYZDOTDIR="$HOME/.faraday/zsh/"
 OLDZDOTDIR=$ZDOTDIR
-ZDOTDIR=$FARADAYZDOTDIR /bin/zsh
+ZDOTDIR=$FARADAYZDOTDIR /usr/bin/env zsh
 
 #source ~/.faraday/zsh/.zshrc

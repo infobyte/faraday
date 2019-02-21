@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('dashboardCtrl',
-        ['$scope', '$filter', '$route', '$routeParams', '$location', 'dashboardSrv', 'workspacesFact',
-        function($scope, $filter, $route, $routeParams, $location, dashboardSrv, workspacesFact) {
+        ['$scope', '$filter', '$route', '$routeParams', '$location', 'dashboardSrv', 'workspacesFact', 'vulnsManager',
+        function($scope, $filter, $route, $routeParams, $location, dashboardSrv, workspacesFact, vulnsManager) {
             $scope.props = dashboardSrv.props;
 
             init = function() {
@@ -16,16 +16,13 @@ angular.module('faradayApp')
                 workspacesFact.list().then(function(wss) {
                     $scope.workspaces = wss;
                 });
+
                 dashboardSrv.setConfirmedFromCookie();
                 dashboardSrv.startTimer();
             };
 
             $scope.navigate = function(route) {
                 $location.path(route);
-            };
-
-            $scope.toggleConfirmed = function() {
-                dashboardSrv.setConfirmed();
             };
 
             $scope.$on('$destroy', function(){

@@ -92,6 +92,8 @@ angular.module('faradayApp')
             ServerAPI.updateWorkspace(workspace, wsName).then(function(data){
                 workspace._rev = data.rev;
                 deferred.resolve(workspace);
+            }, function(err){
+                deferred.reject(err);
             });
             return deferred.promise;
         };
@@ -105,5 +107,36 @@ angular.module('faradayApp')
             });
             return deferred.promise;
         };
+
+        workspacesFact.activate = function(wsName) {
+            var deferred = $q.defer();
+            ServerAPI.activateWorkspace(wsName).then(function(data){
+                deferred.resolve(data);
+            }, function(err){
+                deferred.reject(err);
+            });
+            return deferred.promise;
+        };
+
+        workspacesFact.deactivate = function(wsName) {
+            var deferred = $q.defer();
+            ServerAPI.deactivateWorkspace(wsName).then(function(data){
+                deferred.resolve(data);
+            }, function(err){
+                deferred.reject(err);
+            });
+            return deferred.promise;
+        };
+
+        workspacesFact.readOnlyToogle = function(wsName) {
+            var deferred = $q.defer();
+            ServerAPI.readOnlyToogle(wsName).then(function(data){
+                deferred.resolve(data);
+            }, function(err){
+                deferred.reject(err);
+            });
+            return deferred.promise;
+        };
+
         return workspacesFact;
     }]);

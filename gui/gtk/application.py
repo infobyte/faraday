@@ -13,7 +13,6 @@ import sys
 import threading
 import webbrowser
 
-import restkit
 
 try:
     import gi
@@ -129,7 +128,11 @@ class GuiApp(Gtk.Application, FaradayUi):
 
     @property
     def active_ws_name(self):
-        return self.get_active_workspace().name
+        active_workspace = self.get_active_workspace()
+
+        if active_workspace:
+            return active_workspace.name
+        return ""
 
     def get_active_workspace(self):
         """Return the currently active workspace"""
@@ -174,12 +177,7 @@ class GuiApp(Gtk.Application, FaradayUi):
             self.getWorkspaceManager().removeWorkspace(ws_name)
             self.ws_sidebar.clear_sidebar()
             self.ws_sidebar.refresh_sidebar()
-        except restkit.errors.Unauthorized:
-            model.notification_center.showDialog(
-                "You're not authorized to delete this workspace.\n"
-                "Make sure you're an admin and that you're logged in.",
-                "ERROR")
-        except Exception:
+        except Exception as ex:
             traceback_str = traceback.format_exc()
             model.api.log("An exception was captured while deleting "
                           "workspace %s\n%s" % (ws_name, traceback_str),
@@ -344,7 +342,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         if parent is None:
             parent = self.window
 
-        if not self.serverIO.test_server_url(server_url):
+        if not self.serverIO.check_server_url(server_url):
             errorDialog(parent, "Could not connect to Faraday Server.",
                         ("Are you sure it is running and that you can "
                          "connect to it? \n Make sure your username and "
@@ -397,7 +395,12 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         Return True if everything went OK, False if there was a problem
         looking for the host."""
-        current_ws_name = self.get_active_workspace().name
+        active_workspace = self.get_active_workspace()
+
+        if active_workspace:
+            current_ws_name = active_workspace.name
+        else:
+            current_ws_name = ""
 
         host = self.serverIO.get_host(host_id)
         if not host:
@@ -792,8 +795,16 @@ class GuiApp(Gtk.Application, FaradayUi):
 
     def on_faraday_plugin(self, action, param):
         """Defines what happens when you press "Faraday Plugin..." on the menu"""
+        active_workspace = self.get_active_workspace()
+
+        if active_workspace:
+            name = active_workspace.getName()
+        else:
+            name = ""
+
+
         pluginsOption_window = FaradayPluginsDialog(self.window.get_current_focused_terminal(),
-                                                    self.get_active_workspace().getName(),
+                                                    name,
                                                     self.window)
         pluginsOption_window.show_all()
 
@@ -952,7 +963,9 @@ class GuiApp(Gtk.Application, FaradayUi):
         plugin = "_".join(action.get_name().split('_')[1:])
         terminal = self.window.get_current_focused_terminal()
 
-        command = fplugin_utils.build_faraday_plugin_command(plugin, self.get_active_workspace().getName())
-        fd = terminal.get_pty().get_fd()
+        active_workspace = self.get_active_workspace()
 
-        os.write(fd, command)
+        if active_workspace:
+            command = fplugin_utils.build_faraday_plugin_command(plugin, active_workspace.getName())
+            fd = terminal.get_pty().get_fd()
+            os.write(fd, command)

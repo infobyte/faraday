@@ -6,6 +6,8 @@ See the file 'doc/LICENSE' for the license information
 '''
 import os
 import json
+import shutil
+
 
 try:
     import xml.etree.cElementTree as ET
@@ -13,6 +15,7 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ET
     from xml.etree.ElementTree import Element, ElementTree
+
 
 the_config = None
 
@@ -42,6 +45,9 @@ CONST_REPO_PASSWORD = "repo_password"
 CONST_API_URL = "api_url"
 CONST_API_USERNAME = "api_username"
 CONST_API_PASSWORD = "api_password"
+CONST_COUCH_URI = "couch_uri"
+CONST_COUCH_REPLICS = "couch_replics"
+CONST_COUCH_ISREPLICATED = "couch_is_replicated"
 CONST_REPO_URL = "repo_url"
 CONST_REPO_USER = "repo_user"
 CONST_REPORT_PATH = "report_path"
@@ -58,6 +64,7 @@ CONST_PLUGIN_SETTINGS = "plugin_settings"
 
 
 DEFAULT_XML = os.path.dirname(__file__) + "/default.xml"
+DEFAULT_SERVER_INI = os.path.join(os.path.dirname(__file__), "..", "server", "default.ini")
 
 
 class Configuration:
@@ -66,6 +73,7 @@ class Configuration:
         """ Initializer that handles a configuration automagically. """
 
         self.filepath = xml_file
+        self._api_con_info = ''
 
         if self._isConfig():
             self._getConfig()
@@ -82,12 +90,12 @@ class Configuration:
                 for event, elem in ET.iterparse(f, ('start', )):
                     root = elem.tag
                     break
-            except SyntaxError, err:
-                print "Not an xml file.\n %s" % (err)
+            except SyntaxError as err:
+                print("Not an xml file.\n %s" % (err))
                 return False
 
-        except IOError, err:
-            print "Error while opening file.\n%s. %s" % (err, self.filepath)
+        except IOError as err:
+            print("Error while opening file.\n%s. %s" % (err, self.filepath))
             return False
 
         finally:
@@ -102,8 +110,8 @@ class Configuration:
         f = open(self.filepath)
         try:
             tree = ET.fromstring(f.read())
-        except SyntaxError, err:
-            print "SyntaxError: %s. %s" % (err, self.filepath)
+        except SyntaxError as err:
+            print("SyntaxError: %s. %s" % (err, self.filepath))
             return None
         return tree
 
@@ -148,6 +156,9 @@ class Configuration:
             self._api_url = self._getValue(tree, CONST_API_URL)
             self._api_username = self._getValue(tree, CONST_API_USERNAME)
             self._api_password = self._getValue(tree, CONST_API_PASSWORD)
+            self._couch_uri = self._getValue(tree, CONST_COUCH_URI, default = "")
+            self._couch_replics = self._getValue(tree, CONST_COUCH_REPLICS, default = "")
+            self._couch_is_replicated = bool(self._getValue(tree, CONST_COUCH_ISREPLICATED, default = False))
             self._repo_url = self._getValue(tree, CONST_REPO_URL)
             self._repo_user = self._getValue(tree, CONST_REPO_USER)
             self._report_path = self._getValue(tree, CONST_REPORT_PATH)
@@ -304,6 +315,18 @@ class Configuration:
     def getAPIPassword(self):
         return self._api_password
 
+    def getCouchURI(self):
+        if self._couch_uri and self._couch_uri.endswith('/'):
+            return self._couch_uri[:-1]
+        else:
+            return self._couch_uri
+
+    def getCouchReplics(self):
+        return self._couch_replics
+
+    def getCouchIsReplicated(self):
+        return self._couch_is_replicated
+
     def setLastWorkspace(self, workspaceName):
         self._last_workspace = workspaceName
 
@@ -412,6 +435,15 @@ class Configuration:
 
     def setAPIPassword(self, password):
         self._api_password = password
+
+    def setCouchUri(self, uri):
+        self._couch_uri = uri
+
+    def setCouchIsReplicated(self, is_it):
+        self._couch_is_replicated = is_it
+
+    def setCouchReplics(self, urls):
+        self._couch_replics = urls
 
     def setPluginSettings(self, settings):
         self._plugin_settings = settings
@@ -569,6 +601,18 @@ class Configuration:
         SERVER_PASSWORD.text = self.getAPIPassword()
         ROOT.append(SERVER_PASSWORD)
 
+        COUCH_URI = Element(CONST_COUCH_URI)
+        COUCH_URI.text = self.getCouchURI()
+        ROOT.append(COUCH_URI)
+
+        COUCH_IS_REPLICATED = Element(CONST_COUCH_ISREPLICATED)
+        COUCH_IS_REPLICATED.text = str(self.getCouchIsReplicated())
+        ROOT.append(COUCH_IS_REPLICATED)
+
+        COUCH_REPLICS = Element(CONST_COUCH_REPLICS)
+        COUCH_REPLICS.text = self.getCouchReplics()
+        ROOT.append(COUCH_REPLICS)
+
         VERSION = Element(CONST_VERSION)
         VERSION.text = self.getVersion()
         ROOT.append(VERSION)
@@ -605,6 +649,21 @@ class Configuration:
 def getInstanceConfiguration():
     global the_config
     if the_config is None:
+        faraday_dir = os.path.expanduser("~/.faraday")
+        if not os.path.exists(faraday_dir):
+            os.mkdir(faraday_dir)
+        config_dir = os.path.expanduser("~/.faraday/config")
+        if not os.path.exists(config_dir):
+            os.mkdir(config_dir)
+
+        faraday_server_config = os.path.expanduser("~/.faraday/config/server.ini")
+        if not os.path.isfile(faraday_server_config):
+            shutil.copy(DEFAULT_SERVER_INI, faraday_server_config)
+
+        faraday_user_config = os.path.expanduser("~/.faraday/config/user.xml")
+        if not os.path.isfile(faraday_user_config):
+            shutil.copy(DEFAULT_XML, faraday_user_config)
+
         if os.path.exists(os.path.expanduser("~/.faraday/config/user.xml")):
             the_config = Configuration(os.path.expanduser("~/.faraday/config/user.xml"))
         else:

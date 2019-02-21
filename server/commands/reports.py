@@ -1,3 +1,9 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 import os
 import logging
 from Queue import Queue
@@ -57,8 +63,8 @@ def process_workspaces(mappers_manager, plugin_manager, query, disable_polling):
         report_managers.append(report_manager)
         report_manager.start()
 
-    #for report_manager in report_managers:
-    #    report_manager.join()
+    for report_manager in report_managers:
+        report_manager.stop()
 
-    #for controller in controllers:
-    #    controller.join()
+    for controller in controllers:
+        controller.stop()

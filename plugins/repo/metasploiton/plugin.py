@@ -60,7 +60,7 @@ class MetasploitOnPlugin(core.PluginBase):
         self.addSetting("Server", str, "localhost")
         self.addSetting("Port", str, "5432")
         ### NOTE: do _not_ correct the typo, it's used by the user.xml
-        self.addSetting("Wordspace", str, "a_workspace")
+        self.addSetting("Workspace", str, "default")
         self.addSetting("Enable", str, "0")
 
         self._sdate = ""
@@ -83,22 +83,16 @@ class MetasploitOnPlugin(core.PluginBase):
                                     host=self.getSetting("Server"),
                                     port=self.getSetting("Port"))
 
-            # conn = psycopg2.connect("dbname='" + self.getSetting("Database") +
-            #                         "' user='" + self.getSetting("User") +
-            #                         "' password='" + self.getSetting("Password") +
-            #                         "' host='" + self.getSetting("Server") +
-            #                         "' port='" + self.getSetting("Port") +
-            #                         "'")
-
             cur = conn.cursor()
         except Exception as e:
+            print "[Faraday - MetasplotiOn] Error Connecting to the database"
+            print "[Faraday - MetasplotiOn]Check your metasploit postgresql credentials and server IP/Port"
             print e
-            print "Error Connecting to the database\n"
             return
 
         cur = self._doSql(
             cur,
-            "select * from hosts inner join workspaces ON (hosts.workspace_id=workspaces.id) where workspaces.name like '" + self.getSetting("Wordspace") + "';")
+            "select * from hosts inner join workspaces ON (hosts.workspace_id=workspaces.id) where workspaces.name like '" + self.getSetting("Workspace") + "';")
         if cur is None:
             print "Error getting database data\n"
             return

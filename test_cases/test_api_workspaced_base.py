@@ -1,4 +1,10 @@
 #-*- coding: utf8 -*-
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 
 """Generic tests for APIs prefixed with a workspace_name"""
 
@@ -27,6 +33,7 @@ class GenericAPITest:
         self.objects = self.factory.create_batch(
             OBJECT_COUNT, workspace=workspace)
         self.first_object = self.objects[0]
+        session.add_all(self.objects)
         session.commit()
         assert workspace.id is not None
         self.workspace = workspace
@@ -65,12 +72,18 @@ class ListTestsMixin:
     def test_list_retrieves_all_items_from_workspace(self, test_client,
                                                      second_workspace,
                                                      session):
-        self.factory.create(workspace=second_workspace)
+        obj = self.factory.create(workspace=second_workspace)
+        session.add(obj)
         session.commit()
         res = test_client.get(self.url())
         assert res.status_code == 200
         assert len(res.json['data']) == OBJECT_COUNT
 
+    def test_can_list_readonly(self, test_client, session):
+        self.workspace.readonly = True
+        session.commit()
+        res = test_client.get(self.url())
+        assert res.status_code == 200
 
 class RetrieveTestsMixin:
 
@@ -86,7 +99,7 @@ class RetrieveTestsMixin:
         res = test_client.get(self.url(self.first_object, second_workspace))
         assert res.status_code == 404
 
-    @pytest.mark.parametrize('object_id', [123, -1, 'xxx', u'áá'])
+    @pytest.mark.parametrize('object_id', [12345, -1, 'xxx', u'áá'])
     def test_404_when_retrieving_unexistent_object(self, test_client,
                                                    object_id):
         url = self.url(object_id)
@@ -105,6 +118,26 @@ class CreateTestsMixin:
         object_id = res.json['id']
         obj = self.model.query.get(object_id)
         assert obj.workspace == self.workspace
+
+    def test_create_fails_readonly(self, test_client):
+        self.workspace.readonly = True
+        db.session.commit()
+        data = self.factory.build_dict(workspace=self.workspace)
+        res = test_client.post(self.url(),
+                               data=data)
+        db.session.commit()
+        assert res.status_code == 403
+        assert self.model.query.count() == OBJECT_COUNT
+
+
+    def test_create_inactive_fails(self, test_client):
+        self.workspace.deactivate()
+        db.session.commit()
+        data = self.factory.build_dict(workspace=self.workspace)
+        res = test_client.post(self.url(),
+                               data=data)
+        assert res.status_code == 403, (res.status_code, res.data)
+        assert self.model.query.count() == OBJECT_COUNT
 
     def test_create_fails_with_empty_dict(self, test_client):
         res = test_client.post(self.url(), data={})
@@ -147,6 +180,28 @@ class UpdateTestsMixin:
             assert res.json[updated_field] == getattr(self.first_object,
                                                       updated_field)
 
+    def test_update_an_object_readonly_fails(self, test_client):
+        self.workspace.readonly = True
+        db.session.commit()
+        for unique_field in self.unique_fields:
+            data = self.factory.build_dict()
+            old_field = getattr(self.objects[0], unique_field)
+            old_id = getattr(self.objects[0], 'id')
+            res = test_client.put(self.url(self.first_object), data=data)
+            db.session.commit()
+            assert res.status_code == 403
+            assert self.model.query.count() == OBJECT_COUNT
+            assert old_field == getattr(self.model.query.filter(self.model.id == old_id).one(), unique_field)
+
+    def test_update_inactive_fails(self, test_client):
+        self.workspace.deactivate()
+        db.session.commit()
+        data = self.factory.build_dict(workspace=self.workspace)
+        res = test_client.put(self.url(self.first_object),
+                               data=data)
+        assert res.status_code == 403
+        assert self.model.query.count() == OBJECT_COUNT
+
     def test_update_fails_with_existing(self, test_client, session):
         for unique_field in self.unique_fields:
             data = self.factory.build_dict()
@@ -170,6 +225,9 @@ class UpdateTestsMixin:
         assert res.json['id'] == expected_id
 
 
+class CountTestsMixin:
+    pass
+
 
 class DeleteTestsMixin:
 
@@ -178,6 +236,22 @@ class DeleteTestsMixin:
         assert res.status_code == 204  # No content
         assert was_deleted(self.first_object)
         assert self.model.query.count() == OBJECT_COUNT - 1
+
+    def test_delete_readonly_fails(self, test_client, session):
+        self.workspace.readonly = True
+        session.commit()
+        res = test_client.delete(self.url(self.first_object))
+        assert res.status_code == 403  # No content
+        assert not was_deleted(self.first_object)
+        assert self.model.query.count() == OBJECT_COUNT
+
+    def test_delete_inactive_fails(self, test_client):
+        self.workspace.deactivate()
+        db.session.commit()
+        res = test_client.delete(self.url(self.first_object))
+        assert res.status_code == 403
+        assert not was_deleted(self.first_object)
+        assert self.model.query.count() == OBJECT_COUNT
 
     def test_delete_from_other_workspace_fails(self, test_client,
                                                     second_workspace):
@@ -198,6 +272,7 @@ class PaginationTestsMixin(OriginalPaginationTestsMixin):
 class ReadWriteTestsMixin(ListTestsMixin,
                           RetrieveTestsMixin,
                           CreateTestsMixin,
+                          CountTestsMixin,
                           UpdateTestsMixin,
                           DeleteTestsMixin):
     pass

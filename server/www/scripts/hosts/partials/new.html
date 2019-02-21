@@ -4,25 +4,14 @@
 
             <section id="main" class="seccion clearfix">
 
-                <div class="right-main"><div id="reports-main" class="fila clearfix">
-                    <h2 class="ws-label">
-                        <span id="ws-name" title="Hosts" ng-if="editing && !host._id">Creating host</span><!-- WS name -->
-                        <div id="ws-control" class="btn-group">
-                            <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace" ng-click="location.reload()">
-                                <span class="glyphicon glyphicon-refresh"></span>
-                            </button>
-                            <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
-                                Change workspace <span class="caret"></span>
-                            </button>
-                            <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
-                                <li ng-repeat="ws in workspaces"><a href="#/hosts/ws/{{ws}}" class="ws" >{{ws}}</a></li>
-                            </ul><!-- WS navigation -->
-                        </div><!-- #ws-control -->
-                    </h2>
-                    <div class="reports col-md-8 col-sm-8 col-xs-8" style="border-right: 1px solid #CCC">
+                <div class="faraday-header-border-fix"></div>
+                <div class="right-main">
+                    <div ng-controller="headerCtrl" ng-include="'scripts/commons/partials/header.html'"></div>
+                    <div id="reports-main" class="fila clearfix">
+                    <div class="reports col-md-8 col-sm-8 col-xs-8 pr" style="border-right: 1px solid #CCC">
                         <form name="form">
                             <h3>
-                                Host details
+                                Create a host
                                 <span style="float:right">
                                     <a class="btn btn-sm btn-default" href="#/host/ws/{{workspace}}/hid/{{host._id}}/edit" ng-if="!editing">
                                         <span class="glyphicon glyphicon-pencil"></span>
@@ -85,7 +74,7 @@
                             </div>
                         </form>
                     </div>
-                    <div class="reports col-md-4 col-sm-4 col-xs-4">
+                    <div class="col-md-4 col-sm-4 col-xs-4 pl">
                         <h3>
                             Hostnames
                             <span style="float:right">
@@ -109,4 +98,3 @@
                     </div>
                 </div><!-- #reports-main --></div><!-- .right-main -->
             </section><!-- #main -->
-

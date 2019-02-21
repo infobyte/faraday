@@ -18,6 +18,11 @@ angular.module('faradayApp')
                     });
                     $scope.hostName = host.ip; // User can edit $scope.host.name but not $scope.hostName
                     $scope.loadIcons();
+                    workspacesFact.get($scope.workspace).then(function(response) {
+                        $scope.workspaceData = response;
+                    });
+
+                    $scope.loadMac();
                 });
         };
 
@@ -235,6 +240,7 @@ angular.module('faradayApp')
         $scope.new = function() {
             var modal = $uibModal.open({
                 templateUrl: 'scripts/services/partials/modalNew.html',
+                backdrop : 'static',
                 controller: 'serviceModalNew',
                 size: 'lg',
                 resolve: {
@@ -258,11 +264,15 @@ angular.module('faradayApp')
             if($scope.selectedServices().length > 0) {
                 var modal = $uibModal.open({
                     templateUrl: 'scripts/services/partials/modalEdit.html',
+                    backdrop : 'static',
                     controller: 'serviceModalEdit',
                     size: 'lg',
                     resolve: {
                         service: function() {
                             return $scope.selectedServices();
+                        },
+                        workspace: function () {
+                            return $scope.workspaceData;
                         }
                     }
                  });
@@ -439,6 +449,19 @@ angular.module('faradayApp')
                 }
             });
         };
+
+        $scope.loadMac = function() {
+            var host = $scope.host;
+            var mac_vendor = [""];
+            mac_vendor.forEach(function(mac){
+                if(host.mac == "00:00:00:00:00:00" || host.mac == ""){
+                    host.mac = "-";
+                    host.mac_vendor = "-";
+                } else {
+                    host.mac_vendor = oui(host.mac);
+                }
+               });
+           };
 
 	    init();
     }]);

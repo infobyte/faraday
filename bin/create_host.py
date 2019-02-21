@@ -47,8 +47,10 @@ def main(workspace='', args=None, parser=None):
         if not parsed_args.dry_run:
             models.create_host(workspace, obj_host)
             old_host = models.get_host(workspace, **params)
+        else:
+            return 0, None
     else:
-        print "A host with ID %s already exists!" % old_host.getID()
+        print("A host with ID %s already exists!" % old_host.getID())
         return 2, None
 
     return 0, old_host.getID()

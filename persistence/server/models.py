@@ -351,7 +351,10 @@ def create_host(workspace_name, host, command_id=None):
     Return the server's json response as a dictionary.
     """
     host_properties = get_host_properties(host)
-    return server.create_host(workspace_name, command_id, **host_properties)
+    ip = host_properties.pop('ip', None)
+    if not ip:
+        logger.error('Trying to create host without ip')
+    return server.create_host(workspace_name, command_id, ip, **host_properties)
 
 
 @_ignore_in_changes
@@ -414,7 +417,7 @@ def create_vuln_web(workspace_name, vuln_web, command_id=None):
 
 
 @_ignore_in_changes
-def update_vuln_web(workspace_name, vuln_web, command_id):
+def update_vuln_web(workspace_name, vuln_web, command_id=None):
     """Take a workspace_name and a VulnWeb object and update it in the sever.
 
     Return the server's json response as a dictionary.
@@ -671,7 +674,8 @@ def delete_workspace(workspace_name):
 
 def get_workspaces_names():
     """Return a list with all the workspace names available."""
-    return map(lambda ws: ws['name'], server.get_workspaces_names())
+    active_workspaces = filter(lambda ws: ws['active'], server.get_workspaces_names())
+    return map(lambda ws: ws['name'], active_workspaces)
 
 
 def server_info():
@@ -679,9 +683,9 @@ def server_info():
     return server.server_info()
 
 
-def test_server_url(url_to_test):
+def check_server_url(url_to_test):
     """Return True if url_to_test/_api/info is accessible, False otherwise"""
-    return server.test_server_url(url_to_test)
+    return server.check_server_url(url_to_test)
 
 
 # NOTE: the whole 'which arguments are mandatory and which type should they be"
@@ -738,17 +742,19 @@ class ModelBase(object):
         self.parent_type = parent_type
 
     def setID(self, id):
-        self.id = id
-        self.id_available.set()
+        if id:
+            self.id = id
+            self.id_available.set()
 
     def getID(self):
         # getId will wait until the id is not None
         timeout = 1
         retries = 1
-        max_retries = 6
+        max_retries = 4
         while retries <= max_retries and self.id is None:
+            if timeout >= 8:
+                logger.info('Retrying getID timeout {0}'.format(timeout))
             self.id_available.wait(timeout=timeout)
-            print('Retrying getID timeout {0}'.format(timeout))
             timeout = timeout << retries - 1
             retries += 1
         return self.id
@@ -792,19 +798,30 @@ class ModelBase(object):
     def addUpdate(self, newModelObject, command_id):
         conflict = False
         diff = ModelObjectDiff(self, newModelObject)
+
         for k, v in diff.getPropertiesDiff().items():
             attribute = self.publicattrsrefs().get(k)
             prop_update = self.propertyTieBreaker(attribute, *v)
+            option_choosen = prop_update
 
+            # if there's a strategy set by the user, apply it
             if not isinstance(prop_update, tuple) or _get_merge_strategy():
-                # if there's a strategy set by the user, apply it
-                if isinstance(prop_update, tuple):
-                    prop_update = MergeSolver(_get_merge_strategy())
-                    prop_update = prop_update.solve(prop_update[0], prop_update[1])
 
-                setattr(self, attribute, prop_update)
+                if isinstance(prop_update, tuple):
+                    #Choose the new attribute based in merge strategy: old or new
+                    merge_solver = MergeSolver(_get_merge_strategy())
+                    option_choosen = merge_solver.solve(prop_update[0], prop_update[1])
+
+                #Faraday have duplicated description field, so if we change
+                #description, we need change also, the desc field used in WEBUI
+                if attribute == "description" and (self.class_signature == "Vulnerability" or self.class_signature == "VulnerabilityWeb"):
+                    setattr(self, "desc", option_choosen)
+
+                #Set the new choosen attribute
+                setattr(self, attribute, option_choosen)
             else:
                 conflict = True
+
         if conflict:
             self.updates.append(ConflictUpdate(self, newModelObject))
         return conflict
@@ -844,6 +861,8 @@ class Host(ModelBase):
         self.os = host.get('os') if host.get('os') else 'unknown'
         self.vuln_amount = int(host.get('vulns', 0))
         self.ip = host.get('ip', self.name)
+        self.hostnames = host.get('hostnames', []) if host.get('hostnames') else []
+        self.mac = host.get('mac', '') if host.get('mac') else ''
 
     def getName(self):
         return self.ip
@@ -876,6 +895,18 @@ class Host(ModelBase):
 
     def getDefaultGateway(self):
         return self.default_gateway
+
+    def getHostnames(self):
+        return self.hostnames
+
+    def getMac(self):
+        return self.mac
+
+    def setHostnames(self, hostnames):
+        self.hostnames = hostnames
+
+    def setMac(self, mac):
+        self.mac = mac
 
     def getVulns(self):
         """
@@ -1015,6 +1046,8 @@ class Vuln(ModelBase):
             return True
         if key == "status":
             return True
+        if key == "refs":
+            return True
         return False
 
     def tieBreak(self, key, prop1, prop2):
@@ -1022,6 +1055,10 @@ class Vuln(ModelBase):
         Return the 'choosen one'
         Return a tuple with prop1, prop2 if we cant resolve conflict.
         """
+
+        if key == "refs":
+            prop1.extend([x for x in prop2 if x not in prop1])
+            return prop1
 
         if key == "confirmed":
             return True
@@ -1248,6 +1285,9 @@ class VulnWeb(Vuln):
             return True
         if key == "status":
             return True
+        if key == "refs":
+            return True
+
         return False
 
     def tieBreak(self, key, prop1, prop2):
@@ -1255,6 +1295,10 @@ class VulnWeb(Vuln):
         Return the 'choosen one'
         Return a tuple with prop1, prop2 if we cant resolve conflict.
         """
+
+        if key == "refs":
+            prop1.extend([x for x in prop2 if x not in prop1])
+            return prop1
 
         if key == "response":
             return self._resolve_response(prop1, prop2)
@@ -1295,8 +1339,8 @@ class Note(ModelBase):
     def __init__(self, note, workspace_name):
         ModelBase.__init__(self, note, workspace_name)
         self.text = note['text']
-        self.object_id = note['object_id']
-        self.object_type = note['object_type']
+        self.object_id = note.get('object_id') or note.get('parent')
+        self.object_type = note.get('object_type') or note.get('parent_type')
 
     def updateAttributes(self, name=None, text=None):
         if name is not None:

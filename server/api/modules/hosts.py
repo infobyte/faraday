@@ -5,7 +5,7 @@
 import flask
 from flask import Blueprint
 from flask_classful import route
-from marshmallow import fields
+from marshmallow import fields, Schema
 from filteralchemy import Filter, FilterSet, operators
 
 from server.utils.database import get_or_create
@@ -20,6 +20,7 @@ from server.api.base import (
 from server.schemas import (
     MetadataSchema,
     MutableField,
+    NullToBlankString,
     PrimaryKeyRelatedField,
     SelfNestedField
 )
@@ -35,8 +36,8 @@ class HostSchema(AutoSchema):
     _rev = fields.String(default='')
     ip = fields.String(default='')
     description = fields.String(required=True)  # Explicitly set required=True
-    default_gateway = fields.String(attribute="default_gateway_ip",
-                                    required=False, allow_none=True)
+    default_gateway = NullToBlankString(
+        attribute="default_gateway_ip", required=False)
     name = fields.String(dump_only=True, attribute='ip', default='')
     os = fields.String(default='')
     owned = fields.Boolean(default=False)
@@ -84,6 +85,22 @@ class HostFilterSet(FilterSet):
     service = ServiceFilter(fields.Str())
 
 
+class HostCountSchema(Schema):
+    host_id = fields.Integer(dump_only=True, allow_none=False,
+                                 attribute='id')
+    critical = fields.Integer(dump_only=True, allow_none=False,
+                                 attribute='vulnerability_critical_count')
+    high = fields.Integer(dump_only=True, allow_none=False,
+                              attribute='vulnerability_high_count')
+    med = fields.Integer(dump_only=True, allow_none=False,
+                              attribute='vulnerability_med_count')
+    info = fields.Integer(dump_only=True, allow_none=False,
+                              attribute='vulnerability_info_count')
+    unclassified = fields.Integer(dump_only=True, allow_none=False,
+                              attribute='vulnerability_unclassified_count')
+    total = fields.Integer(dump_only=True, allow_none=False,
+                                 attribute='vulnerability_total_count')
+
 class HostsView(PaginatedMixin,
                 FilterAlchemyMixin,
                 ReadWriteWorkspacedView):
@@ -91,17 +108,35 @@ class HostsView(PaginatedMixin,
     model_class = Host
     order_field = Host.ip.asc()
     schema_class = HostSchema
-    unique_fields = [('ip', )]
     filterset_class = HostFilterSet
     get_undefer = [Host.credentials_count,
                    Host.open_service_count,
                    Host.vulnerability_count]
-    get_joinedloads = [Host.hostnames, Host.services]
+    get_joinedloads = [Host.hostnames, Host.services, Host.update_user]
 
     @route('/<host_id>/services/')
     def service_list(self, workspace_name, host_id):
         services = self._get_object(host_id, workspace_name).services
         return ServiceSchema(many=True).dump(services)
+
+    @route('/countVulns/')
+    def count_vulns(self, workspace_name):
+        host_ids = flask.request.args.get('hosts', None)
+        if host_ids:
+            host_id_list = host_ids.split(',')
+        else:
+            host_id_list = None
+
+        res_dict = {'hosts':{}}
+
+        host_count_schema = HostCountSchema()
+        host_count = Host.query_with_count(None, host_id_list, workspace_name)
+
+        for host in host_count.all():
+            res_dict["hosts"][host.id] = host_count_schema.dump(host).data
+        # return counts.data
+
+        return res_dict
 
     def _perform_create(self, data, **kwargs):
         hostnames = data.pop('hostnames', [])

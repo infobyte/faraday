@@ -29,10 +29,10 @@ def main(workspace='', args=None, parser=None):
                 host_count[host.os] = 1
 
         else:
-            print host.os
+            print(host.os)
 
     if parsed_args.unique:
         for host, count in host_count.items():
-            print '%s\t(%d)' % (host, count)
+            print('%s\t(%d)' % (host, count))
 
     return 0, None

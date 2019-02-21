@@ -9,9 +9,10 @@ $.ajaxSetup({
 });
 
 var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.bootstrap', 'angularFileUpload',
-                                                'filter', 'ngClipboard', 'ngCookies', 'cfp.hotkeys', 'chart.js',
+                                                'filter', 'angular-clipboard', 'ngCookies', 'cfp.hotkeys', 'chart.js',
                                                 'ui.grid', 'ui.grid.selection', 'ui.grid.grouping', 'ngSanitize',
-                                                'ui.grid.pagination', 'ui.grid.pinning', 'angularMoment', 'ui-notification'])
+                                                'ui.grid.pagination', 'ui.grid.pinning', 'angularMoment', 'ui-notification',
+                                                'ui.grid.resizeColumns', 'angularSimplePagination'])
     .constant("BASEURL", (function() {
         var url = window.location.origin + "/";
         return url;
@@ -70,12 +71,11 @@ var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.
         return statuses;
     })());
 
-faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
-                   function($routeProvider, ngClipProvider, $uibTooltipProvider) {
+faradayApp.config(['$routeProvider', '$uibTooltipProvider',
+                   function($routeProvider, $uibTooltipProvider) {
     $uibTooltipProvider.options({
         appendToBody: true
     });
-    ngClipProvider.setPath("script/ZeroClipboard.swf");
     $routeProvider.
         when('/dashboard/ws/:wsId', {
             templateUrl: 'scripts/dashboard/partials/dashboard.html',
@@ -216,11 +216,6 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
             controller: 'workspacesCtrl',
             title: 'Workspaces | '
         }).
-        when('/communication', {
-            templateUrl: 'scripts/commons/partials/commercial.html',
-            controller: 'commercialCtrl',
-            title: 'Communication | '
-        }).
         when('/comparison', {
             templateUrl: 'scripts/commons/partials/commercial.html',
             controller: 'commercialCtrl'
@@ -286,6 +281,11 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
         when('/forbidden', {
             templateUrl: 'scripts/auth/partials/forbidden.html',
             title: ' Forbidden |'
+        }).
+        when('/workspace-worth/ws/:wsId', {
+            templateUrl: 'scripts/dashboard/partials/vulns-by-price.html',
+            controller: 'vulnsByPriceCtrl',
+            title: ' Workspace worth |'
         }).
         otherwise({
             templateUrl: 'scripts/commons/partials/home.html',

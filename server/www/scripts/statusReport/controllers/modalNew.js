@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('modalNewVulnCtrl',
-        ['$modalInstance', '$filter', '$upload', 'EASEOFRESOLUTION', 'commonsFact', 'severities', 'workspace', 'targetFact', 'vulnModelsManager', 'vulnsManager',
-        function($modalInstance, $filter, $upload, EASEOFRESOLUTION, commonsFact, severities, workspace, targetFact, vulnModelsManager, vulnsManager) {
+        ['$modalInstance', '$filter', '$upload', 'EASEOFRESOLUTION', 'commonsFact', 'severities', 'workspace', 'targetFact', 'vulnModelsManager', 'vulnsManager', 'customFields',
+        function($modalInstance, $filter, $upload, EASEOFRESOLUTION, commonsFact, severities, workspace, targetFact, vulnModelsManager, vulnsManager, customFields) {
 
         var vm = this;
 
@@ -47,6 +47,8 @@ angular.module('faradayApp')
 
             vm.host_parents = false;
 
+            vm.customFields = customFields;
+
             vm.cweList = [];
             vulnModelsManager.get().then(function(data) {
                 vm.cweList = data;
@@ -76,8 +78,10 @@ angular.module('faradayApp')
                 params: "",
                 parents: [],  // a tuple with (parent_id, parent_type)
                 path: "",
+                status_code: undefined,
                 pname: "",
                 policyviolations: [],
+                easeofresolution: null,
                 query: "",
                 refs: [],
                 request: "",
@@ -85,8 +89,13 @@ angular.module('faradayApp')
                 response: "",
                 severity: undefined,
                 type: "Vulnerability",
-                website: ""
+                website: "",
+                custom_fields:{}
             };
+
+            customFields.forEach(function(cf) {
+                vm.data.custom_fields[cf.field_display_name] = null;
+            });
 
             vm.targets = [];
             vm.target_filter = "";
@@ -139,7 +148,7 @@ angular.module('faradayApp')
                 $modalInstance.close(vm.data);
             }, function(response){
                 if (response.status == 409) {
-                    commonsFact.showMessage("Error while creating a new Vulnerability " + vm.data.name + " Conflicting Vulnarability with id: " + response.data.object._id + ". " + response.data.message);
+                    commonsFact.showMessage("Error while creating a new Vulnerability " + vm.data.name + " Conflicting Vulnerability with id: " + response.data.object._id + ". " + response.data.message);
                 } else {
                     commonsFact.showMessage("Error from backend: " + response.status);
                 }
@@ -164,6 +173,11 @@ angular.module('faradayApp')
                 return elem.type === 'Host';
             });
         };
+
+        vm.resetTarget = function() {
+            vm.data.parents = [];
+            vm.host_parents = false; 
+        }
 
         vm.setTarget = function(target) {
             var index = vm.data.parents.indexOf(target);
@@ -233,6 +247,41 @@ angular.module('faradayApp')
             });
             vm.data.policyviolations = policyviolations;
         }
+
+        vm.updateBtnSeverityColor = function (severity) {
+            var color = undefined;
+            switch (severity) {
+                case "unclassified":
+                    color = '#999999';
+                    break;
+                case "info":
+                    color = '#2e97bd';
+                    break;
+                case "low":
+                    color = '#a1ce31';
+                    break;
+                case "med":
+                    color = '#dfbf35';
+                    break;
+                case "high":
+                    color = '#df3936';
+                    break;
+                case "critical":
+                    color = '#932ebe';
+                    break;
+                default:
+                    color = '#AAAAAA';
+                    break;
+            }
+
+            angular.element('#btn-chg-severity').css('background-color', color);
+            angular.element('#caret-chg-severity').css('background-color', color);
+        };
+
+        vm.changeSeverity = function (severity) {
+            vm.data.severity = severity;
+            vm.updateBtnSeverityColor(severity);
+        };
 
         init();
     }]);

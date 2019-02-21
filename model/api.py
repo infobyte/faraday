@@ -7,16 +7,15 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 import os
-import socket
-import zipfile
 import logging
 
 import model.common
 from config.configuration import getInstanceConfiguration
 #from workspace import Workspace
 import model.log
+from model import Modelactions
 from utils.logs import getLogger
-from utils.common import *
+from utils.common import socket, gateway
 import shutil
 #from plugins.api import PluginControllerAPI
 
@@ -70,7 +69,7 @@ def _setUpAPIServer(hostname=None, port=None):
     if _xmlrpc_api_server is None:
         #TODO: some way to get defaults.. from config?
         if str(hostname) == "None":
-            hostname = "localhost"
+            hostname = "127.0.0.1"
         if str(port) == "None":
             port = 9876
 
@@ -78,10 +77,15 @@ def _setUpAPIServer(hostname=None, port=None):
             CONF.setApiConInfo(hostname, port)
         devlog("starting XMLRPCServer with api_conn_info = %s" % str(CONF.getApiConInfo()))
 
-        while True:
+        hostnames = [hostname]
+        if hostname == "localhost":
+            hostnames.append("127.0.0.1")
+
+        listening = False
+        for hostname in hostnames:
 
             try:
-                _xmlrpc_api_server = model.common.XMLRPCServer(CONF.getApiConInfo())
+                _xmlrpc_api_server = model.common.XMLRPCServer((hostname,CONF.getApiConInfoPort()))
                 # Registers the XML-RPC introspection functions system.listMethods, system.methodHelp and system.methodSignature.
                 _xmlrpc_api_server.register_introspection_functions()
 
@@ -90,6 +94,9 @@ def _setUpAPIServer(hostname=None, port=None):
 
                 # register all the api functions to be exposed by the server
                 _xmlrpc_api_server.register_function(createAndAddHost)
+                _xmlrpc_api_server.register_function(createAndAddInterface)
+                _xmlrpc_api_server.register_function(createAndAddServiceToInterface)
+                _xmlrpc_api_server.register_function(createAndAddServiceToHost)
                 _xmlrpc_api_server.register_function(createAndAddNoteToService)
                 _xmlrpc_api_server.register_function(createAndAddNoteToHost)
                 _xmlrpc_api_server.register_function(createAndAddNoteToNote)
@@ -102,27 +109,22 @@ def _setUpAPIServer(hostname=None, port=None):
                 _xmlrpc_api_server.register_function(devlog)
 
                 #TODO: check if all necessary APIs are registered here!!
+                listening = True
+                CONF.setApiConInfo(hostname, port)
+                CONF.saveConfig()
 
                 getLogger().info(
                     "XMLRPC API server configured on %s" % str(
                         CONF.getApiConInfo()))
                 break
-            except socket.error as exception:
-                if exception.errno == 98:
-                    # Port already in use
-                    # Let's try the next one
-                    port += 1
-                    if port > 65535:
-                        raise Exception("No ports available!")
-                    CONF.setApiConInfo(hostname, port)
-                    CONF.saveConfig()
-                else:
-                    raise exception
-            except Exception as e:
-                msg = "There was an error creating the XMLRPC API Server:\n%s" % str(e)
-                log(msg)
-                devlog("[ERROR] - %s" % msg)
 
+            except socket.error as e:
+                msg = "There was an error creating the XMLRPC API Server (Host:{}): {}".format(hostname,e)
+                log(msg)
+                devlog("[WARNING] - %s" % msg)
+
+        if not listening:
+               raise RuntimeError("Port already in use")
 
 #-------------------------------------------------------------------------------
 # APIs to create and add elements to model
@@ -132,10 +134,35 @@ def _setUpAPIServer(hostname=None, port=None):
 # plugin created the object
 
 
-def createAndAddHost(ip, os="Unknown"):
-    host = newHost(ip, os)
+def createAndAddHost(ip, os="Unknown", hostnames=None):
+    host = newHost(ip, os, hostnames=hostnames)
     if addHost(host):
         return host.getID()
+    return None
+
+def createAndAddInterface(host_id, name="", mac="00:00:00:00:00:00", ipv4_address="0.0.0.0", ipv4_mask="0.0.0.0",
+                 ipv4_gateway="0.0.0.0", ipv4_dns=[], ipv6_address="0000:0000:0000:0000:0000:0000:0000:0000",
+                 ipv6_prefix="00", ipv6_gateway="0000:0000:0000:0000:0000:0000:0000:0000", ipv6_dns=[],
+                 network_segment="", hostname_resolution=[]):
+    return host_id
+
+def createAndAddServiceToInterface(host_id, interface_id, name, protocol = "tcp?",
+                ports = [], status = "running", version = "unknown", description = ""):
+
+    # interface_id unused, now unique parent of service is host_id
+    service = newService(name, protocol, ports, status, version, description, parent_id=host_id)
+    if addServiceToHost(service):
+        return service.getID()
+    return None
+
+def createAndAddServiceToHost(host_id, name,
+                                       protocol="tcp?", ports=[],
+                                       status="open", version="unknown",
+                                       description=""):
+    service = newService(name, protocol, ports, status, version, description, host_id)
+
+    if addServiceToHost(service):
+        return service.getID()
     return None
 
 
@@ -168,22 +195,12 @@ def createAndAddVulnWebToService(host_id, service_id, name, desc, ref, severity,
 # Note
 
 def createAndAddNoteToHost(host_id, name, text):
-    note = newNote(name, text, parent_id=host_id)
-    if addNoteToHost(host_id, note):
-        return note.getID()
     return None
 
-
 def createAndAddNoteToService(host_id, service_id, name, text):
-    note = newNote(name, text, parent_id=service_id)
-    if addNoteToService(host_id, service_id, note):
-        return note.getID()
     return None
 
 def createAndAddNoteToNote(host_id, service_id, note_id, name, text):
-    note = newNote(name, text, parent_id=note_id)
-    if addNoteToNote(host_id, service_id, note_id, note):
-        return note.getID()
     return None
 
 def createAndAddCredToService(host_id, service_id, username, password):
@@ -200,33 +217,37 @@ def createAndAddCredToService(host_id, service_id, username, password):
 
 def addHost(host):
     if host is not None:
-        __model_controller.addHostASYNC(host)
+        __model_controller.add_action((Modelactions.ADDHOST, host))
+            #addHostASYNC(host)
         return True
     return False
 
 
-def addServiceToHost(host_id, service):
-    pass
+def addServiceToHost(service):
+    if service is not None:
+        __model_controller.add_action((Modelactions.ADDSERVICEHOST, service))
+        return True
+    return False
 
 # Vulnerability
 
 def addVulnToHost(host_id, vuln):
     if vuln is not None:
-        __model_controller.addVulnToHostASYNC(host_id, vuln)
+        __model_controller.add_action((Modelactions.ADDVULNHOST, vuln))
         return True
     return False
 
 
 def addVulnToService(host_id, service_id, vuln):
     if vuln is not None:
-        __model_controller.addVulnToServiceASYNC(host_id, service_id, vuln)
+        __model_controller.add_action((Modelactions.ADDVULNSRV, vuln))
         return True
     return False
 
 #VulnWeb
 def addVulnWebToService(host_id, service_id, vuln):
     if vuln is not None:
-        __model_controller.addVulnWebToServiceASYNC(host_id, service_id, vuln)
+        __model_controller.add_action((Modelactions.ADDVULNWEBSRV, vuln))
         return True
     return False
 
@@ -234,33 +255,35 @@ def addVulnWebToService(host_id, service_id, vuln):
 # Notes
 def addNoteToHost(host_id, note):
     if note is not None:
-        __model_controller.addNoteToHostASYNC(host_id, note)
+        __model_controller.add_action(
+            (Modelactions.ADDNOTEHOST, note))
         return True
     return False
 
 
 def addNoteToService(host_id, service_id, note):
     if note is not None:
-        __model_controller.addNoteToServiceASYNC(host_id, service_id, note)
+        __model_controller.add_action(
+            (Modelactions.ADDNOTESRV, note))
         return True
     return False
 
 def addNoteToNote(host_id, service_id, note_id, note):
     if note is not None:
-        __model_controller.addNoteToNoteASYNC(host_id, service_id, note_id, note)
+        __model_controller.add_action((Modelactions.ADDNOTENOTE, note))
         return True
     return False
 
 def addCredToService(host_id, service_id, cred):
     if cred is not None:
-        __model_controller.addCredToServiceASYNC(host_id, service_id, cred)
+        __model_controller.add_action((Modelactions.ADDCREDSRV, cred))
         return True
     return False
 
 #-------------------------------------------------------------------------------
 # APIs to delete elements to model
 #-------------------------------------------------------------------------------
-#TODO: delete funcitons are still missing
+#TODO: delete functions are still missing
 def delHost(hostname):
     __model_controller.delHostASYNC(hostname)
     return True
@@ -301,12 +324,12 @@ def delCredFromService(cred, hostname, srvname):
 # CREATION APIS
 #-------------------------------------------------------------------------------
 
-def newHost(ip, os = "Unknown"):
+def newHost(ip, os = "Unknown", hostnames=None):
     """
     It creates and returns a Host object.
     The object created is not added to the model.
     """
-    return __model_controller.newHost(ip, os)
+    return __model_controller.newHost(ip, os, hostnames=hostnames)
 
 
 def newService(name, protocol = "tcp?", ports = [], status = "running",
@@ -343,12 +366,12 @@ def newVulnWeb(name, desc="", ref=None, severity="", resolution="", website="",
         parent_id)
 
 
-def newNote(name, text, parent_id=None):
+def newNote(name, text, parent_id=None, parent_type=None):
     """
     It creates and returns a Note object.
     The created object is not added to the model.
     """
-    return __model_controller.newNote(name, text, parent_id)
+    return __model_controller.newNote(name, text, parent_id, parent_type)
 
 
 def newCred(username, password, parent_id=None):

@@ -1,3 +1,9 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 import os
 import sys
 import unittest
@@ -5,7 +11,7 @@ import pytest
 
 sys.path.append(os.path.abspath(os.getcwd()))
 
-from server.models import db, User, Role
+from server.models import db
 
 
 def endpoint():

@@ -1,4 +1,10 @@
 # -*- coding: utf8 -*-
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 """Tests for many API endpoints that do not depend on workspace_name"""
 try:
     from urllib import urlencode
@@ -22,8 +28,6 @@ class TestListServiceView(ReadOnlyAPITests):
     model = Service
     factory = factories.ServiceFactory
     api_endpoint = 'services'
-    #unique_fields = ['ip']
-    #update_fields = ['ip', 'description', 'os']
     view_class = ServiceView
 
     def test_service_list_backwards_compatibility(self, test_client,
@@ -85,6 +89,36 @@ class TestListServiceView(ReadOnlyAPITests):
         res = test_client.post(self.url(), data=data)
         assert res.status_code == 400
         assert 'Not a valid choice' in res.data
+
+    def test_create_fails_with_no_status(self, test_client,
+                                         host, session):
+        session.commit()
+        data = {
+            "name": "ftp",
+            "description": "test. test",
+            "owned": False,
+            "ports": [21],
+            "protocol": "tcp",
+            "parent": host.id
+        }
+        res = test_client.post(self.url(), data=data)
+        assert res.status_code == 400
+        assert 'Missing data' in res.data
+
+    def test_create_fails_with_no_host_id(self, test_client,
+                                          host, session):
+        session.commit()
+        data = {
+            "name": "ftp",
+            "description": "test. test",
+            "owned": False,
+            "ports": [21],
+            "protocol": "tcp",
+            "status": "open",
+        }
+        res = test_client.post(self.url(), data=data)
+        assert res.status_code == 400
+        assert 'Parent id is required' in res.data
 
     def test_create_fails_with_host_of_other_workspace(self, test_client,
                                                        host, session,
@@ -248,3 +282,39 @@ class TestListServiceView(ReadOnlyAPITests):
         res = test_client.post(self.url(), data=data)
         assert res.status_code == 400
         assert res.json['messages']['_schema'] == res.json['messages']['_schema']
+
+    def test_load_ports_without_list(self, test_client):
+        data = {
+            "name": "ports",
+            "description": "testing ports load",
+            "owned": False,
+            "ports": 21,
+            "protocol": "tcp",
+            "status": "open",
+        }
+        res = test_client.post(self.url(), data=data)
+        assert res.status_code == 400
+
+    def test_load_ports_with_empty_list(self, test_client):
+        data = {
+            "name": "ports",
+            "description": "testing ports load",
+            "owned": False,
+            "ports": [],
+            "protocol": "tcp",
+            "status": "open",
+        }
+        res = test_client.post(self.url(), data=data)
+        assert res.status_code == 400
+
+    def test_load_ports_with_negative_value(self, test_client):
+        data = {
+            "name": "ports",
+            "description": "testing ports load",
+            "owned": False,
+            "ports": [-1],
+            "protocol": "tcp",
+            "status": "open",
+        }
+        res = test_client.post(self.url(), data=data)
+        assert res.status_code == 400

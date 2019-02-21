@@ -1,4 +1,10 @@
 #-*- coding: utf8 -*-
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 
 """Generic tests for APIs NOT prefixed with a workspace_name"""
 
@@ -10,7 +16,7 @@ OBJECT_COUNT = 5
 
 
 @pytest.mark.usefixtures('logged_user')
-class GenericAPITest:
+class GenericAPITest(object):
 
     model = None
     factory = None

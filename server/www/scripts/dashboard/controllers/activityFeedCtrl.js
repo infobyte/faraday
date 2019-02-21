@@ -7,23 +7,69 @@
 angular.module('faradayApp')
     .controller('activityFeedCtrl',
         ['$scope', '$routeParams', 'dashboardSrv',
-        function($scope, $routeParams, dashboardSrv) {
-            
-            var vm = this;
-            vm.commands = [];
+            function ($scope, $routeParams, dashboardSrv) {
 
-            // Get last 5 commands
-            var init = function() {
-                if($routeParams.wsId != undefined) {
-                    $scope.workspace = $routeParams.wsId;
+                var vm = this;
+                vm.commands = [];
 
-                    dashboardSrv.getActivityFeed($scope.workspace)
-                        .then(function(commands) {
-                            vm.commands = commands;
-                        });
-                }
-            };
+                // Get last 15 commands
+                var init = function () {
 
-            dashboardSrv.registerCallback(init);
-            init();
-    }]);
+                    $scope.settings = {
+                        currentPage: 0,
+                        offset: 0,
+                        pageLimit: 5,
+                        pageLimits: ['3', '5', '10', '20', '30', '50', '80', '100']
+                    };
+
+                    if ($routeParams.wsId !== undefined) {
+                        $scope.workspace = $routeParams.wsId;
+
+                        collapse();
+
+                        dashboardSrv.getActivityFeed($scope.workspace)
+                            .then(function (response) {
+                                vm.commands = response.activities;
+                            });
+                    }
+                };
+
+                $scope.toggleExpanded = function () {
+                    if ($scope.isExpanded) {
+                        collapse();
+                    } else {
+                        expand();
+                    }
+                };
+
+                var collapse = function () {
+                    $scope.settings.pageLimit = 5;
+                    $scope.isExpanded = false;
+                    $scope.hideEmpty = true;
+                    angular.element('#first-row-panel').css('display', 'inherit');
+                    angular.element('#activities-container-row').addClass('mt-md');
+                };
+
+                var expand = function () {
+                    $scope.settings.pageLimit =  15;
+                    $scope.isExpanded = true;
+                    $scope.hideEmpty = true;
+                    angular.element('#first-row-panel').css('display', 'none');
+                    angular.element('#activities-container-row').removeClass('mt-md');
+                };
+
+                $scope.isEmpty = function (cmd) {
+                    return cmd.hosts_count === 0 && cmd.services_count === 0 && cmd.vulnerabilities_count === 0;
+                };
+
+                $scope.getValidCount = function () {
+                    var count = 0;
+                    for(var i = 0; i < vm.commands.length; i++){
+                        if (!$scope.isEmpty(vm.commands[i])) count ++
+                    }
+                    return count;
+                };
+
+                dashboardSrv.registerCallback(init);
+                init();
+            }]);

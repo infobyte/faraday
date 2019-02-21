@@ -12,8 +12,10 @@ import json
 import threading
 from json import loads
 from time import sleep
-from Queue import Queue
-
+try:
+    from Queue import Queue
+except ImportError:
+    from queue import Queue
 import requests
 
 from model.controller import ModelController
@@ -78,7 +80,6 @@ class TimerClass(threading.Thread):
 class MainApplication(object):
 
     def __init__(self, args):
-        setUpLogger()
         self._original_excepthook = sys.excepthook
 
         self.args = args
@@ -106,7 +107,9 @@ class MainApplication(object):
         self._model_controller = ModelController(self._mappers_manager, pending_actions)
 
         self._plugin_manager = PluginManager(
-            os.path.join(CONF.getConfigPath(), "plugins"))
+            os.path.join(CONF.getConfigPath(), "plugins"),
+            pending_actions=pending_actions,
+        )
 
         self._workspace_manager = WorkspaceManager(
             self._mappers_manager)
@@ -120,8 +123,14 @@ class MainApplication(object):
         )
 
         if self.args.cli:
+
             self.app = CliApp(self._workspace_manager, self._plugin_controller)
-            CONF.setMergeStrategy("new")
+
+            if self.args.keep_old:
+                CONF.setMergeStrategy("old")
+            else:
+                CONF.setMergeStrategy("new")
+
         else:
             self.app = UiFactory.create(self._model_controller,
                                         self._plugin_manager,
@@ -173,11 +182,11 @@ class MainApplication(object):
 
             exit_code = self.app.run(self.args)
 
-        except Exception:
-            print "There was an error while starting Faraday"
-            print "-" * 50
-            traceback.print_exc()
-            print "-" * 50
+        except Exception as exception:
+            print("There was an error while starting Faraday:")
+            print("*" * 3)
+            print(exception) # instead of traceback.print_exc()
+            print("*" * 3)
             exit_code = -1
 
         finally:
@@ -193,7 +202,9 @@ class MainApplication(object):
         model.api.stopAPIServer()
         restapi.stopServer()
         self._model_controller.stop()
-        self._model_controller.join()
+        if self._model_controller.isAlive():
+            # runs only if thread has started, i.e. self._model_controller.start() is run first
+            self._model_controller.join()
         self.timer.stop()
         model.api.devlog("Waiting for controller threads to end...")
         return exit_code

@@ -42,10 +42,12 @@ angular.module('faradayApp')
             this.service = "";
             this.severity = "";
             this.target = "";
+            this.host_os = "";
             this.type = "Vulnerability";
             this.ws = "";
             this.status = "opened";
             this.policyviolations = "";
+            this.custom_fields = {};
 
             if(data) {
                 if(data.name === undefined || data.name === "") {
@@ -58,7 +60,7 @@ angular.module('faradayApp')
         var public_properties = [
             '_attachments', 'confirmed', 'data', 'desc', 'easeofresolution',
             'impact', 'name', 'owned', 'policyviolations', 'refs', 'resolution',
-            'severity', 'status',
+            'severity', 'status', 'custom_fields'
         ];
 
         var saved_properties = public_properties.concat(
@@ -70,15 +72,17 @@ angular.module('faradayApp')
             set: function(ws, data) {
                 var self = this;
 
-                if(data._id !== undefined) self._id = data._id;
+                if(data._id !== undefined || data.id !== undefined) self._id = data._id | data.id;
                 if(data.metadata !== undefined) self.metadata = data.metadata;
-                if(data.target !== undefined) self.target = data.target;
+                if(data.target !== undefined || data.target_host_ip !== undefined) self.target = data.target || data.target_host_ip;
+                if(data.host_os !== undefined || data.target_host_os !== undefined) self.host_os = data.host_os || data.target_host_os;
                 if(data.hostnames !== undefined) self.hostnames = data.hostnames;
                 if(data.service !== undefined) self.service = data.service;
                 if(data.owner !== undefined) self.owner = data.owner;
                 self.ws = ws;
                 if(data.parent !== undefined) self.parent = data.parent;
                 if(data.parent_type !== undefined) self.parent_type = data.parent_type;
+                if(data.custom_fields !== undefined) self.custom_fields = data.custom_fields;
 
                 self.public_properties.forEach(function(property) {
                     if(data[property] !== undefined) self[property] = data[property];

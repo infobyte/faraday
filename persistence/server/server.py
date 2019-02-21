@@ -53,7 +53,11 @@ from persistence.server.changes_stream import (
 # NOTE: Change is you want to use this module by itself.
 # If FARADAY_UP is False, SERVER_URL must be a valid faraday server url
 logger = logging.getLogger(__name__)
+
 FARADAY_UP = True
+FARADAY_UPLOAD_REPORTS_WEB_COOKIE = None
+FARADAY_UPLOAD_REPORTS_OVERWRITE_SERVER_URL = None
+
 SERVER_URL = "http://127.0.0.1:5985"
 AUTH_USER = ""
 AUTH_PASS = ""
@@ -67,16 +71,19 @@ OBJECT_TYPE_END_POINT_MAPPER = {
     'Cred': 'credential',
 }
 
+from config import constant as CONSTANTS
+LOCAL_CONFIG_FILE = os.path.expanduser(
+    os.path.join(CONSTANTS.CONST_FARADAY_HOME_PATH, 'config/server.ini'))
+
 
 def _conf():
-
     from config.configuration import getInstanceConfiguration
     CONF = getInstanceConfiguration()
 
     # If you are running this libs outside of Faraday, cookies are not setted.
     # you need get a valid cookie auth and set that.
     # Fplugin run in other instance, so this dont generate any trouble.
-    if not CONF.getDBSessionCookies():
+    if not CONF.getDBSessionCookies() and not FARADAY_UPLOAD_REPORTS_WEB_COOKIE:
         server_url = CONF.getServerURI() if FARADAY_UP else SERVER_URL
         cookie = login_user(server_url, CONF.getAPIUsername(), CONF.getAPIPassword())
         CONF.setDBSessionCookies(cookie)
@@ -85,10 +92,17 @@ def _conf():
 
 
 def _get_base_server_url():
-    if FARADAY_UP:
+
+    # Faraday server is running, and this module is used by upload_reports...
+    if FARADAY_UPLOAD_REPORTS_OVERWRITE_SERVER_URL:
+        server_url = FARADAY_UPLOAD_REPORTS_OVERWRITE_SERVER_URL
+        logger.info('Detected upload cookie Using server_url as {0}'.format(server_url))
+    elif FARADAY_UP:
         server_url = _conf().getAPIUrl()
+        logger.info('Detected faraday client running. Using server_url as {0}'.format(server_url))
     else:
         server_url = SERVER_URL
+        logger.info('Could not detect upload or client running. Using default server_url as {0}'.format(server_url))
 
     return server_url.rstrip('/')
 
@@ -167,14 +181,17 @@ def _add_session_cookies(func):
     adds authentication to the parameters.
     """
     def wrapper(*args, **kwargs):
-        kwargs['cookies'] = _conf().getDBSessionCookies()
+        if FARADAY_UPLOAD_REPORTS_WEB_COOKIE:
+            kwargs['cookies'] = FARADAY_UPLOAD_REPORTS_WEB_COOKIE
+        else:
+            kwargs['cookies'] = _conf().getDBSessionCookies()
         response = func(*args, **kwargs)
         return response
     return wrapper if FARADAY_UP else func
 
 
 @_add_session_cookies
-def _unsafe_io_with_server(server_io_function, server_expected_response,
+def _unsafe_io_with_server(server_io_function, server_expected_responses,
                            server_url, **payload):
     """A wrapper for functions which deals with I/O to or from the server.
     It calls the server_io_function with url server_url and the payload,
@@ -193,7 +210,7 @@ def _unsafe_io_with_server(server_io_function, server_expected_response,
             raise ResourceDoesNotExist(server_url)
         if answer.status_code == 403 or answer.status_code == 401:
             raise Unauthorized(answer)
-        if answer.status_code != server_expected_response:
+        if answer.status_code not in server_expected_responses:
             raise requests.exceptions.RequestException(response=answer)
     except requests.exceptions.RequestException as ex:
         logger.debug(ex)
@@ -223,7 +240,7 @@ def _get(request_url, **params):
     Return a dictionary with the information in the json.
     """
     return _parse_json(_unsafe_io_with_server(requests.get,
-                                              200,
+                                              [200],
                                               request_url,
                                               params=params))
 
@@ -241,14 +258,14 @@ def _put(post_url, expected_response=201, **params):
     {u'id': u'61', u'ok': True, u'rev': u'1-967a00dff5e02add41819138abb3284d'}
     """
     return _parse_json(_unsafe_io_with_server(requests.put,
-                                              expected_response,
+                                              [expected_response],
                                               post_url,
                                               json=params))
 
 
 def _post(post_url, update=False, expected_response=201, **params):
     return _parse_json(_unsafe_io_with_server(requests.post,
-                                              expected_response,
+                                              [expected_response],
                                               post_url,
                                               json=params))
 
@@ -261,7 +278,7 @@ def _delete(delete_url, database=False):
         last_rev = _get(delete_url)['_rev']
         params = {'rev': last_rev}
     return _parse_json(_unsafe_io_with_server(requests.delete,
-                                              200,
+                                              [200,204],
                                               delete_url,
                                               params=params))
 
@@ -577,7 +594,7 @@ def get_object_before_last_revision(workspace_name, object_id):
         A dictionary with the object's information.
     """
     get_url = _create_couch_get_url(workspace_name, object_id)
-    response = _unsafe_io_with_server(requests.get, 200, get_url,
+    response = _unsafe_io_with_server(requests.get, [200], get_url,
                                       params={'revs': 'true', 'open_revs': 'all'})
     try:
         valid_json_response = _clean_up_stupid_couch_response(response.text)
@@ -811,7 +828,7 @@ def get_services_number(workspace_name, **params):
     Returns:
         The amount of services in the workspace as an integer.
     """
-    return int(get_workspace_summary(workspace_name)['interfaces'])
+    return int(get_workspace_summary(workspace_name)['services'])
 
 def get_interfaces_number(workspace_name, **params):
     """
@@ -870,7 +887,7 @@ def get_commands_number(workspace_name, **params):
 
 def create_host(workspace_name, command_id, ip, os, default_gateway=None,
                 description="", metadata=None, owned=False, owner="",
-                parent=None):
+                parent=None, hostnames=None, mac=None):
     """Create a host.
 
     Args:
@@ -899,11 +916,13 @@ def create_host(workspace_name, command_id, ip, os, default_gateway=None,
                            owner=owner,
                            parent=parent,
                            description=description,
+                           hostnames=hostnames,
+                           mac=mac,
                            type="Host")
 
 def update_host(workspace_name, command_id, id, ip, os, default_gateway="",
                 description="", metadata=None, owned=False, owner="",
-                parent=None):
+                parent=None, hostnames=None, mac=None):
     """Updates a host.
 
     Args:
@@ -933,6 +952,8 @@ def update_host(workspace_name, command_id, id, ip, os, default_gateway="",
                              owner=owner,
                              parent=parent,
                              description=description,
+                             hostnames=hostnames,
+                             mac=mac,
                              type="Host")
 
 
@@ -1503,7 +1524,7 @@ def server_info():
 def login_user(uri, uname, upass):
     auth = {"email": uname, "password": upass}
     try:
-        resp = requests.post(uri + "/_api/login", json=auth)
+        resp = requests.post(urlparse.urljoin(uri, "/_api/login"), json=auth)
         if resp.status_code == 401:
             return None
         else:
@@ -1516,7 +1537,7 @@ def login_user(uri, uname, upass):
 
 def is_authenticated(uri, cookies):
     try:
-        resp = requests.get(uri + "/_api/session", cookies=cookies, timeout=1)
+        resp = requests.get(urlparse.urljoin(uri, "/_api/session"), cookies=cookies, timeout=1)
         if resp.status_code != 403:
             user_info = resp.json()
             return bool(user_info.get('username', {}))
@@ -1541,7 +1562,7 @@ def check_faraday_version():
     if info is not None and version != info['Version']:
         raise RuntimeError('Client and server versions do not match')
 
-def test_server_url(url_to_test):
+def check_server_url(url_to_test):
     """Return True if the url_to_test is indeed a valid Faraday Server URL.
     False otherwise.
     """
@@ -1555,8 +1576,8 @@ def test_server_url(url_to_test):
 
 def get_user_info():
     try:
-        resp = requests.get(_get_base_server_url() + "/_api/session", cookies=_conf().getDBSessionCookies(), timeout=1)
-        if resp.status_code != 403:
+        resp = requests.get(urlparse.urljoin(_get_base_server_url(), "/_api/session"), cookies=_conf().getDBSessionCookies(), timeout=1)
+        if (resp.status_code != 401) and (resp.status_code != 403):
             return resp.json()
         else:
             return False

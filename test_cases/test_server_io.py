@@ -1,3 +1,9 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 import os
 import sys
 import unittest
@@ -10,7 +16,7 @@ from persistence.server import server_io_exceptions
 from mock import MagicMock, patch
 
 server.FARADAY_UP = False
-server.SERVER_URL = "http://localhost:5984"
+server.SERVER_URL = "http://localhost:5985"
 example_url = "http://just_some_url"
 
 
@@ -18,7 +24,7 @@ class ClientServerAPITests(unittest.TestCase):
 
     def setUp(self):
         self.ws_name = "a_ws"
-        self.server_api_url = "http://localhost:5984/_api"
+        self.server_api_url = "http://localhost:5985/_api"
 
     def test_get_base_server_url(self):
         s = server._get_base_server_url()
@@ -47,40 +53,40 @@ class ClientServerAPITests(unittest.TestCase):
         responses.add(responses.PUT, url, status=409,
                       content_type="application/json", json={'error': 'conflict'})
         with self.assertRaises(server_io_exceptions.ConflictInDatabase):
-            server._unsafe_io_with_server(requests.put, 200, url, json={"name": "betcha"})
+            server._unsafe_io_with_server(requests.put, [200], url, json={"name": "betcha"})
 
     @responses.activate
     def test_raise_resource_does_not_exist(self):
         url = "http://dont_exist.com"
         responses.add(responses.GET, url, body='{"name": "betcha"}', status=404)
         with self.assertRaises(server_io_exceptions.ResourceDoesNotExist):
-            server._unsafe_io_with_server(requests.get, 200, url, json={"name": "betcha"})
+            server._unsafe_io_with_server(requests.get, [200], url, json={"name": "betcha"})
 
     @responses.activate
     def test_raise_unauthorized(self):
         url = "http://nope.com"
         responses.add(responses.GET, url, body='{"name": "betcha"}', status=403)
         with self.assertRaises(server_io_exceptions.Unauthorized):
-            server._unsafe_io_with_server(requests.get, 200, url, json={"name": "betcha"})
+            server._unsafe_io_with_server(requests.get, [200], url, json={"name": "betcha"})
         url2 = "http://nope2.com"
         responses.add(responses.GET, url2, body='{"name": "betcha"}', status=401)
         with self.assertRaises(server_io_exceptions.Unauthorized):
-            server._unsafe_io_with_server(requests.get, 200, url, json={"name": "betcha"})
+            server._unsafe_io_with_server(requests.get, [200], url, json={"name": "betcha"})
 
     @responses.activate
     def test_raise_cant_comm_with_server_on_wrong_response_code(self):
         url = "http://yes.com"
         responses.add(responses.GET, url, status=204)
         with self.assertRaises(server_io_exceptions.CantCommunicateWithServerError):
-            server._unsafe_io_with_server(requests.get, 200, url)
+            server._unsafe_io_with_server(requests.get, [200], url)
 
     @responses.activate
     def test_server_with_okey_request(self):
         url = "http://this-is-ok.com"
         responses.add(responses.GET, url, body='{"name": "betcha"}', status=200)
         responses.add(responses.PUT, url, body='{"ok": "true"}', status=200)
-        response_get = server._unsafe_io_with_server(requests.get, 200, url)
-        response_put = server._unsafe_io_with_server(requests.put, 200, url)
+        response_get = server._unsafe_io_with_server(requests.get, [200], url)
+        response_put = server._unsafe_io_with_server(requests.put, [200], url)
         self.assertEqual(response_get.text, requests.get(url).text)
         self.assertEqual(response_put.text, requests.put(url).text)
 

@@ -10,16 +10,21 @@ import time
 import sys
 import argparse
 import os
+from config.constant import CONST_FARADAY_HOME_PATH
+from server.config import FARADAY_BASE
 
 my_env = os.environ
 
-url = my_env["CS_NESSUS_URL"] if 'CS_NESSUS_URL' in my_env else "https://127.0.0.1:8834"
-username = my_env["CS_NESSUS_USER"] if 'CS_NESSUS_USER' in my_env else "nessus"
-password = my_env["CS_NESSUS_PASS"] if 'CS_NESSUS_PASS' in my_env else "nessus"
-profile = my_env["CS_NESSUS_PROFILE"] if 'CS_NESSUS_PROFILE' in my_env else "'Basic Network Scan'"
+url = my_env["CS_NESSUS_URL"] if 'CS_NESSUS_URL' in my_env else "https://192.168.10.230:8834"
+username = my_env["CS_NESSUS_USER"] if 'CS_NESSUS_USER' in my_env else "cscan"
+password = my_env["CS_NESSUS_PASS"] if 'CS_NESSUS_PASS' in my_env else "XqjympHtrvVU22xtK5ZZ"
+profile = my_env["CS_NESSUS_PROFILE"] if 'CS_NESSUS_PROFILE' in my_env else "Basic Network Scan"
 
 verify = False
 token = ''
+
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 def build_url(resource):
@@ -68,7 +73,6 @@ def login(usr, pwd):
     """
     Login to nessus.
     """
-
     login = {'username': usr, 'password': pwd}
     data = connect('POST', '/session', data=login)
 
@@ -201,7 +205,7 @@ def export_status(sid, fid):
     return data['status'] == 'ready'
 
 
-def export(sid, hid):
+def export(sid):
     """
     Make an export request
 
@@ -211,8 +215,7 @@ def export(sid, hid):
     is made, we have to wait for the export to be ready.
     """
 
-    data = {'history_id': hid,
-            'format': 'nessus'}
+    data = {'format': 'nessus'}
 
     data = connect('POST', '/scans/{0}/export'.format(sid), data=data)
 
@@ -224,7 +227,7 @@ def export(sid, hid):
     return fid
 
 
-def download(sid, fid, output):
+def download(sid, fid, output=None):
     """
     Download the scan results
 
@@ -233,10 +236,19 @@ def download(sid, fid, output):
     """
 
     data = connect('GET', '/scans/{0}/export/{1}/download'.format(sid, fid))
+    # For version 7, use the nessus scan Id to avoid overwrite the output file
+    if not output:
+        print('Using Nessus 7. Ignore --output. This is normal.')
+        report_path = os.path.join(FARADAY_BASE,'scripts','cscan','output','nessus_{0}.xml'.format(sid))
+        if not os.path.exists(report_path):
+            with open(report_path,'w') as report:
+                print('Saving scan results to {0}.'.format(report_path))
+                report.write(data)
 
-    print('Saving scan results to {0}.'.format(output))
-    with open(output, 'w') as f:
-        f.write(data)
+    else:
+        print('Saving scan results to {0}.'.format(output))
+        with open(output, 'w') as report:
+            report.write(data)
 
 
 def delete(sid):
@@ -260,12 +272,49 @@ def history_delete(sid, hid):
 
     connect('DELETE', '/scans/{0}/history/{1}'.format(sid, hid))
 
+def get_scans():
+    scan_list = []
+    data = connect('GET','/scans')
+    for scans in data['scans']:
+        scans_info = {}
+        scans_info['id'] =  scans['id']
+        scans_info['creation_date'] =  scans['creation_date']
+        scan_list.append(scans_info)
+    
+    scan_list = sorted(scan_list,key=lambda scan:scan['creation_date'])
+    return scan_list
+
+def get_date():
+    with open(os.path.join(CONST_FARADAY_HOME_PATH,'cscan','date.txt'),'r') as date_file:
+        date = date_file.read()
+        try:
+            date = int(date)
+        except ValueError:
+            # Default date: September 3, 2018 20:45 (GMT)
+            return 1536007534
+
+        return date
+
+def set_date(date):
+    with open(os.path.join(CONST_FARADAY_HOME_PATH,'cscan','date.txt'),'w') as date_file:
+        date_file.write(str(date))
+
+def get_version():
+    data = connect('GET','/server/properties')
+    return int(data['nessus_ui_version'][0])
+
+
+def create_directory():
+    if not os.path.exists(os.path.join(CONST_FARADAY_HOME_PATH,'cscan')):
+        os.mkdir(os.path.join(CONST_FARADAY_HOME_PATH,'cscan'))
+    if not os.path.exists(os.path.join(CONST_FARADAY_HOME_PATH,'cscan','date.txt')):
+        open(os.path.join(CONST_FARADAY_HOME_PATH,'cscan','date.txt'),'w').close()
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='nessus_client is develop for automating security testing')
     parser.add_argument('-t', '--target', help='Network or Host for scan', required=False)
     parser.add_argument('-o', '--output', help='Output file', required=False)
     args = parser.parse_args()
-
     # Review de Command input
     if args.target is None or args.output is None:
         print "Argument errors check -h"
@@ -278,28 +327,45 @@ if __name__ == "__main__":
         print "Unexpected error:", sys.exc_info()[0]
         raise
 
-    print('Adding new scan.' + token)
-    print args.target
+    version = get_version()
+    if version < 7 :
+        #For Nessus <7
+        print('Adding new scan.' + token)
+        print args.target
 
-    policies = get_policies()
-    policy_id = policies[profile]
-    scan_data = add('CScan nessus', 'Create a new scan with API', args.target, policy_id)
-    scan_id = scan_data['id']
+        policies = get_policies()
+        policy_id = policies[profile]
+        scan_data = add('CScan nessus', 'Create a new scan with API', args.target, policy_id)
+        scan_id = scan_data['id']
 
-    print('Launching new scan.')
-    scan_uuid = launch(scan_id)
-    history_ids = get_history_ids(scan_id)
-    history_id = history_ids[scan_uuid]
-    while status(scan_id, history_id) not in ('completed', 'canceled'):
-        time.sleep(5)
+        print('Launching new scan.')
+        scan_uuid = launch(scan_id)
+        history_ids = get_history_ids(scan_id)
+        history_id = history_ids[scan_uuid]
+        while status(scan_id, history_id) not in ('completed', 'canceled'):
+            time.sleep(5)
 
-    print('Exporting the completed scan.')
-    file_id = export(scan_id, history_id)
-    download(scan_id, file_id, args.output)
+        print('Exporting the completed scan.')
+        file_id = export(scan_id)
+        download(scan_id, file_id, args.output)
 
-    print('Deleting the scan.')
-    history_delete(scan_id, history_id)
-    delete(scan_id)
+        print('Deleting the scan.')
+        history_delete(scan_id, history_id)
+        delete(scan_id)
+
+    else:
+        #For Nessus >7
+        create_directory()
+        scans = get_scans()
+        date = get_date()
+        for scan in scans:
+            if scan['creation_date'] > date:
+                set_date(scan['creation_date'])
+                print('Downloading scan. Id: {0}'.format(scan['id']))
+                file_id = export(scan['id']) 
+                download(scan['id'], file_id)
+            else:
+                print('Scan up to date. Id: {0}'.format(scan['id']))
 
     print('Logout')
     logout()

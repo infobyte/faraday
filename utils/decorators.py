@@ -5,7 +5,6 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-import restkit.errors
 import model
 
 

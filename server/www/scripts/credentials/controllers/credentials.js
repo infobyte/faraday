@@ -6,8 +6,8 @@
 
 angular.module('faradayApp')
     .controller('credentialsCtrl',
-        ['$scope', '$filter', '$q', '$uibModal', '$routeParams', '$window', 'commonsFact', 'credential', 'ServerAPI', 'workspacesFact',
-        function($scope, $filter, $q, $uibModal, $routeParams, $window, commonsFact, credential, ServerAPI, workspacesFact) {
+        ['$scope', '$filter', '$q', '$uibModal', '$routeParams', '$window', 'commonsFact', 'credential', 'ServerAPI', 'workspacesFact', 'vulnsManager',
+        function($scope, $filter, $q, $uibModal, $routeParams, $window, commonsFact, credential, ServerAPI, workspacesFact, vulnsManager) {
 
             $scope.workspace;
             $scope.workspaces;
@@ -64,7 +64,7 @@ angular.module('faradayApp')
 
             var loadCredentials = function (credentials){
                 credentials.forEach(function(cred){
-                    
+
                     var object = new credential(cred.value, cred.value.parent, cred.value.parent_type);
                     object.getParentName($scope.workspace).then(function(response){
                         object.target = response;
@@ -75,7 +75,7 @@ angular.module('faradayApp')
             };
 
             var getAndLoadCredentials = function() {
- 
+
                 // Load all credentials, we dont have a parent.
                 if($scope.parentObject.parent_type === undefined){
                     ServerAPI.getCredentials($scope.workspace).then(function(response){
@@ -109,15 +109,25 @@ angular.module('faradayApp')
 
                 $scope.workspace = $routeParams.wsId;
 
+                // load current workspace data
+                workspacesFact.get($scope.workspace).then(function(response) {
+                    $scope.workspaceData = response;
+                });
+
                 getParent().then(function(){
                     getAndLoadCredentials();
                 });
+
+                // Make the workspace vuln counter work
+                if(typeof $scope.workspace !== 'undefined'){
+                    vulnsManager.loadVulnsCounter($scope.workspace);
+                }
             };
 
             var removeFromView = function(credential){
                 $scope.credentials.forEach(function(item, index){
                     if (item._id === credential._id)
-                        $scope.credentials.splice(index, 1);     
+                        $scope.credentials.splice(index, 1);
                 });
             };
 
@@ -148,7 +158,7 @@ angular.module('faradayApp')
                 // Add parent id, create credential and save to server.
                 try {
                     var credentialObj = new credential(credentialData, parent_id, parent_type);
-                    
+
                     credentialObj.create($scope.workspace).then(function(){
                          $scope.credentials.push(credentialObj);
                     }, function(){
@@ -175,6 +185,7 @@ angular.module('faradayApp')
             $scope.new = function() {
                 var modal = $uibModal.open({
                     templateUrl: 'scripts/credentials/partials/modalNewEdit.html',
+                    backdrop : 'static',
                     controller: 'modalNewEditCredentialCtrl',
                     size: 'lg',
                     resolve: {
@@ -196,9 +207,10 @@ angular.module('faradayApp')
             $scope.edit = function() {
 
                 var credentialToEdit = $scope.selectedCredentials()[0];
-                
+
                 var modal = $uibModal.open({
                     templateUrl: 'scripts/credentials/partials/modalNewEdit.html',
+                    backdrop : 'static',
                     controller: 'modalNewEditCredentialCtrl',
                     size: 'lg',
                     resolve: {
@@ -262,6 +274,10 @@ angular.module('faradayApp')
                     credential.selected = $scope.selectall_credentials;
                 });
             };
+
+            $scope.clearSearch = function() {
+                $scope.search = '';
+            }
 
             // toggles sort field and order
             $scope.toggleSort = function(field) {

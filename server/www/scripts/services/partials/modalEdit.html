@@ -39,7 +39,7 @@
                     <h5>Port</h5>
                     <div class="input-margin">
                         <label class="sr-only" for="ports">Port</label>
-                        <input type="number" class="form-control" id="ports" placeholder="Port" ng-model="data.ports"/>
+                        <input type="number" min="0" class="form-control" id="ports" placeholder="Port" ng-model="data.ports"/>
                     </div>
                 </div>
                 <div class="col-md-3 protocol">
@@ -102,7 +102,7 @@
     </div><!-- .modal-body -->
     <div class="modal-footer">
         <div class="modal-button">
-            <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()">OK</button>
+            <button class="btn btn-success" ng-disabled="form.$invalid || workspace.readonly === true" ng-click="ok()">OK</button>
             <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
         </div>
     </div>

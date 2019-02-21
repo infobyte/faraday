@@ -1,3 +1,9 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 import pytest
 
 from test_cases import factories
@@ -129,6 +135,7 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
 
     def test_update_credentials_with_invalid_parent(self, test_client, session):
         credential = self.factory.create()
+        session.add(credential)
         session.commit()
 
         raw_data = self._generate_raw_update_data('Name1', 'Username2', 'Password3', parent_id=43)

@@ -1,12 +1,20 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 import imp
 import os
 import sys
 
 from colorama import Fore
+from utils.logs import getLogger
 
 from config.configuration import getInstanceConfiguration
 
 CONF = getInstanceConfiguration()
+logger = getLogger()
 
 
 def get_available_plugins():
@@ -63,7 +71,7 @@ def get_available_plugins():
             }
 
         except Exception:
-            sys.stderr.write("Unable to import module %s\n" % plugin_path)
+            logger.exception("Unable to import module %s\n" % plugin_path)
 
     return plugins_dic
 

@@ -1,5 +1,14 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 import time
 import operator
+
+import pytz
+
 try:
     import urlparse
     from urllib import urlencode
@@ -7,6 +16,7 @@ except: # For Python 3
     import urllib.parse as urlparse
     from urllib.parse import urlencode
 from sqlalchemy.orm.util import was_deleted
+from hypothesis import given, assume, settings, strategies as st
 
 import pytest
 
@@ -16,7 +26,7 @@ from test_api_workspaced_base import (
     ReadWriteAPITests,
     PaginationTestsMixin,
 )
-from server.models import db, Host
+from server.models import db, Host, Hostname
 from server.api.modules.hosts import HostsView
 from test_cases.factories import HostFactory, CommandFactory, \
     EmptyCommandFactory, WorkspaceFactory
@@ -108,7 +118,7 @@ class TestHostAPI:
         host = Host.query.get(host_id)
         assert host.ip == "127.0.0.1"
         assert host.description == "aaaaa"
-        assert host.os is None
+        assert host.os == ''
         assert host.workspace == self.workspace
 
     def test_create_a_host_fails_with_missing_desc(self, test_client):
@@ -121,6 +131,7 @@ class TestHostAPI:
                                                   test_client, host):
         session.add(host)
         session.commit()
+        assert Host.query.count() == HOSTS_COUNT + 1
 
         res = test_client.post(self.url(), data={
             "ip": host.ip,
@@ -447,24 +458,24 @@ class TestHostAPI:
         updated_host = Host.query.filter_by(id=host.id).first()
         assert res.json == {
             u'_id': host.id,
-            u'type': 'Host',
+            u'type': u'Host',
             u'_rev': u'',
             u'credentials': 0,
-            u'default_gateway': None,
+            u'default_gateway': '',
             u'description': u'',
             u'hostnames': [],
             u'id': host.id,
             u'ip': u'10.31.112.21',
-            u'mac': None,
+            u'mac': '',
             u'metadata': {
                 u'command_id': None,
-                u'create_time': int(time.mktime(updated_host.create_date.timetuple())) * 1000,
+                u'create_time': pytz.UTC.localize(updated_host.create_date).isoformat(),
                 u'creator': u'',
                 u'owner': host.creator.username,
                 u'update_action': 0,
                 u'update_controller_action': u'',
-                u'update_time': int(time.mktime(updated_host.update_date.timetuple())) * 1000,
-                u'update_user': u''},
+                u'update_time': pytz.UTC.localize(updated_host.update_date).isoformat(),
+                u'update_user': None},
             u'name': u'10.31.112.21',
             u'os': u'Microsoft Windows Server 2008 R2 Standard Service Pack 1',
             u'owned': False,
@@ -550,7 +561,7 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
         host = Host.query.get(host_id)
         assert host.ip == "127.0.0.1"
         assert host.description == "aaaaa"
-        assert host.os is None
+        assert host.os == ''
         assert host.workspace == self.workspace
         res = test_client.post(self.url(), data={
             "ip": "127.0.0.1",
@@ -627,3 +638,85 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
             '(53/udp) dns',
             '(5353/udp) dns',
         ]
+
+    def test_delete_host_with_blank_ip(self, session, test_client):
+        """
+            Bug found while deleting data from workspaces.
+            If we don't allow blank in name we should delete this test.
+        """
+        host = self.factory.create(ip='')
+        session.add(host)
+        session.commit()
+
+        res = test_client.delete(self.url(host, workspace=host.workspace))
+        assert res.status_code == 204
+
+    def test_update_hostname(self, session, test_client):
+        host = HostFactory.create()
+        session.add(host)
+        session.commit()
+        data = {
+            "description":"",
+            "default_gateway":"",
+            "ip":"127.0.0.1",
+            "owned":False,
+            "name":"127.0.0.1",
+            "mac":"",
+            "hostnames":["dasdas"],
+            "owner":"faraday",
+            "os":"Unknown",
+        }
+
+        res = test_client.put('v2/ws/{0}/hosts/{1}/'.format(host.workspace.name, host.id), data=data)
+        assert res.status_code == 200
+
+        assert session.query(Hostname).filter_by(host=host).count() == 1
+        assert session.query(Hostname).all()[0].name == 'dasdas'
+
+
+def host_json():
+    return st.fixed_dictionaries(
+        {
+            "metadata":
+                st.fixed_dictionaries({
+                    "update_time": st.floats(),
+                    "update_user": st.one_of(st.none(), st.text()),
+                    "update_action": st.integers(),
+                    "creator": st.text(),
+                    "create_time": st.integers(),
+                    "update_controller_action": st.text(),
+                    "owner": st.one_of(st.none(), st.text()),
+                    "command_id": st.one_of(st.none(), st.text(), st.integers()),}),
+            "name": st.one_of(st.none(), st.text()),
+            "ip": st.one_of(st.none(), st.text()),
+            "_rev": st.one_of(st.none(), st.text()),
+            "description": st.one_of(st.none(), st.text()),
+            "default_gateway": st.one_of(st.none(), st.text()),
+            "owned": st.booleans(),
+            "services": st.one_of(st.none(), st.integers()),
+            "hostnames": st.lists(st.text()),
+            "vulns": st.one_of(st.none(), st.integers()),
+            "owner": st.one_of(st.none(), st.text()),
+            "credentials": st.one_of(st.none(), st.integers()),
+            "_id": st.one_of(st.none(), st.integers()),
+            "os": st.one_of(st.none(), st.text()),
+            "id": st.one_of(st.none(), st.integers()),
+            "icon": st.one_of(st.none(), st.text())}
+    )
+
+
+@pytest.mark.usefixtures('logged_user')
+@pytest.mark.hypothesis
+def test_hypothesis(host_with_hostnames, test_client, session):
+    session.commit()
+    HostData = host_json()
+
+    @given(HostData)
+    def send_api_request(raw_data):
+
+        ws_name = host_with_hostnames.workspace.name
+        res = test_client.post('/v2/ws/{0}/vulns/'.format(ws_name),
+                               data=raw_data)
+        assert res.status_code in [201, 400, 409]
+
+    send_api_request()

@@ -18,10 +18,10 @@ from config.configuration import getInstanceConfiguration
 from plugins.plugin import PluginProcess
 import model.api
 from model.commands_history import CommandRunInformation
-from model.controller import modelactions
+from model import Modelactions
 from utils.logs import getLogger
 
-from config.globals import (
+from config.constant import (
     CONST_FARADAY_HOME_PATH,
     CONST_FARADAY_ZSH_OUTPUT_PATH)
 CONF = getInstanceConfiguration()
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 class PluginCommiter(Thread):
 
-    def __init__(self, output_queue, output, pending_actions, plugin, command, mapper_manager):
+    def __init__(self, output_queue, output, pending_actions, plugin, command, mapper_manager, end_event=None):
         super(PluginCommiter, self).__init__()
         self.output_queue = output_queue
         self.pending_actions = pending_actions
@@ -43,6 +43,7 @@ class PluginCommiter(Thread):
         self._report_path = os.path.join(CONF.getReportPath(), command.workspace)
         self._report_ppath = os.path.join(self._report_path, "process")
         self._report_upath = os.path.join(self._report_path, "unprocessed")
+        self.end_event = end_event
 
     def stop(self):
         self.stop = True
@@ -50,9 +51,11 @@ class PluginCommiter(Thread):
     def commit(self):
         logger.debug('Plugin end. Commiting to faraday server.')
         self.pending_actions.put(
-            (modelactions.PLUGINEND, self.plugin.id, self.command.getID()))
+            (Modelactions.PLUGINEND, self.plugin.id, self.command.getID()))
         self.command.duration = time.time() - self.command.itime
         self.mapper_manager.update(self.command)
+        if self.end_event:
+            self.end_event.set()
 
     def run(self):
         name = ''
@@ -76,7 +79,7 @@ class PluginController(Thread):
     """
     TODO: Doc string.
     """
-    def __init__(self, id, plugin_manager, mapper_manager, pending_actions):
+    def __init__(self, id, plugin_manager, mapper_manager, pending_actions, end_event=None):
         super(PluginController, self).__init__()
         self.plugin_manager = plugin_manager
         self._plugins = plugin_manager.getPlugins()
@@ -92,6 +95,7 @@ class PluginController(Thread):
         self.plugin_manager.addController(self, self.id)
         self.stop = False
         self.pending_actions = pending_actions
+        self.end_event = end_event
 
     def _find_plugin(self, plugin_id):
         return self._plugins.get(plugin_id, None)
@@ -141,6 +145,7 @@ class PluginController(Thread):
         return self._plugins
 
     def stop(self):
+        self.plugin_process.stop()
         self.stop = True
 
     def processOutput(self, plugin, output, command, isReport=False):
@@ -158,15 +163,14 @@ class PluginController(Thread):
         output_queue = JoinableQueue()
         plugin.set_actions_queue(self.pending_actions)
 
-        plugin_process = PluginProcess(
+        self.plugin_process = PluginProcess(
             plugin, output_queue, isReport)
 
         getLogger(self).debug(
             "Created plugin_process (%d) for plugin instance (%d)" %
-            (id(plugin_process), id(plugin)))
+            (id(self.plugin_process), id(plugin)))
 
-        self.pending_actions.put((modelactions.PLUGINSTART, plugin.id, command.getID()))
-
+        self.pending_actions.put((Modelactions.PLUGINSTART, plugin.id, command.getID()))
         output_queue.put((output, command.getID()))
         plugin_commiter = PluginCommiter(
             output_queue,
@@ -174,11 +178,12 @@ class PluginController(Thread):
             self.pending_actions,
             plugin,
             command,
-            self._mapper_manager
+            self._mapper_manager,
+            self.end_event,
         )
         plugin_commiter.start()
         # This process is stopped when plugin commiter joins output queue
-        plugin_process.start()
+        self.plugin_process.start()
 
     def _processAction(self, action, parameters):
         """
@@ -192,25 +197,25 @@ class PluginController(Thread):
 
     def _setupActionDispatcher(self):
         self._actionDispatcher = {
-            modelactions.ADDHOST: model.api.addHost,
-            modelactions.ADDSERVICEHOST: model.api.addServiceToHost,
+            Modelactions.ADDHOST: model.api.addHost,
+            Modelactions.ADDSERVICEHOST: model.api.addServiceToHost,
             #Vulnerability
-            modelactions.ADDVULNHOST: model.api.addVulnToHost,
-            modelactions.ADDVULNSRV: model.api.addVulnToService,
+            Modelactions.ADDVULNHOST: model.api.addVulnToHost,
+            Modelactions.ADDVULNSRV: model.api.addVulnToService,
             #VulnWeb
-            modelactions.ADDVULNWEBSRV: model.api.addVulnWebToService,
+            Modelactions.ADDVULNWEBSRV: model.api.addVulnWebToService,
             #Note
-            modelactions.ADDNOTEHOST: model.api.addNoteToHost,
-            modelactions.ADDNOTESRV: model.api.addNoteToService,
-            modelactions.ADDNOTENOTE: model.api.addNoteToNote,
+            Modelactions.ADDNOTEHOST: model.api.addNoteToHost,
+            Modelactions.ADDNOTESRV: model.api.addNoteToService,
+            Modelactions.ADDNOTENOTE: model.api.addNoteToNote,
             #Creds
-            modelactions.ADDCREDSRV:  model.api.addCredToService,
+            Modelactions.ADDCREDSRV:  model.api.addCredToService,
             #LOG
-            modelactions.LOG: model.api.log,
-            modelactions.DEVLOG: model.api.devlog,
+            Modelactions.LOG: model.api.log,
+            Modelactions.DEVLOG: model.api.devlog,
             # Plugin state
-            modelactions.PLUGINSTART: model.api.pluginStart,
-            modelactions.PLUGINEND: model.api.pluginEnd
+            Modelactions.PLUGINSTART: model.api.pluginStart,
+            Modelactions.PLUGINEND: model.api.pluginEnd
         }
 
     def updatePluginSettings(self, plugin_id, new_settings):
@@ -220,8 +225,8 @@ class PluginController(Thread):
         if plugin_id in self._plugins:
             self._plugins[plugin_id].updateSettings(new_settings)
 
-    def createPluginSet(self, id):
-        self.plugin_sets[id] = self.plugin_manager.getPlugins()
+    def createPluginSet(self, pid):
+        self.plugin_sets[pid] = self.plugin_manager.getPlugins()
 
     def processCommandInput(self, pid, cmd, pwd):
         """
@@ -252,7 +257,6 @@ class PluginController(Thread):
         return None, None
 
     def onCommandFinished(self, pid, exit_code, term_output):
-
         if pid not in self._active_plugins.keys():
             return False
         if exit_code != 0:
@@ -269,22 +273,32 @@ class PluginController(Thread):
         return True
 
     def processReport(self, plugin, filepath, ws_name=None):
+
         if not ws_name:
             ws_name = model.api.getActiveWorkspace().name
+
         cmd_info = CommandRunInformation(
             **{'workspace': ws_name,
-                'itime': time.time(),
-                'import_source': 'report',
-                'command': 'Import %s:' % plugin,
-                'params': filepath})
+               'itime': time.time(),
+               'import_source': 'report',
+               'command': plugin,
+               'params': filepath,
+            })
+
         self._mapper_manager.createMappers(ws_name)
-        cmd_info.setID(self._mapper_manager.save(cmd_info))
+        command_id = self._mapper_manager.save(cmd_info)
+        cmd_info.setID(command_id)
 
         if plugin in self._plugins:
             logger.info('Processing report with plugin {0}'.format(plugin))
+            self._plugins[plugin].workspace = ws_name
             with open(filepath, 'rb') as output:
                 self.processOutput(self._plugins[plugin], output.read(), cmd_info, True)
-            return True
+            return command_id
+
+        # Plugin to process this report not found, update duration of plugin process
+        cmd_info.duration = time.time() - cmd_info.itime
+        self._mapper_manager.update(cmd_info)
         return False
 
     def clearActivePlugins(self):

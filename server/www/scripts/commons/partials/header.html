@@ -1,0 +1,99 @@
+<div class="faraday-page-header" class="clearfix">
+    <div ng-if="showSwitcher() && workspace" class="workspace-selector-wrapper">
+        <div class="switcher-wrapper">
+            <div class="dropdown">
+                <button id="workspaceSwitcher" type="button" class="btn btn-default dropdown-toggle workspace-switcher" data-toggle="dropdown" title="Change current workspace">
+                    <div class="img-wrapper" ng-switch="location">
+                        <img ng-switch-when="dashboard" src="images/ico-dashboard-menu.svg" class="icon" alt="Dashboard"/>
+                        <img ng-switch-when="status" src="images/ico-status-menu.svg" class="icon" alt="Status Report"/>
+                        <img ng-switch-when="hosts" src="images/ico-hosts-menu.svg" class="icon" alt="Hosts"/>
+                        <img ng-switch-when="host" src="images/ico-hosts-menu.svg" class="icon" alt="Hosts"/>
+                        <img ng-switch-when="credentials" src="images/ico-credentials-menu.svg" class="icon" alt="Credentials"/>
+                        <img ng-switch-when="executive" src="images/ico-executive-menu.svg" class="icon" alt="Executive Report"/>
+                        <img ng-switch-when="taskgroup" src="images/ico-tasks-menu.svg" class="icon" alt="Tasks"/>
+                        <img ng-switch-when="comparison" src="images/ico-workspace-comparison-menu.svg" class="icon" alt="Workspaces Comparison"/>
+                        <img ng-switch-when="webshell" src="images/ico-web-shell-menu.svg" class="icon" alt="Webshell">
+                        <img ng-switch-when="vulndb" src="images/ico-vulnerability-templates-menu.svg" class="icon" alt="Vulns"/>
+                        <img ng-switch-when="data_analysis" src="images/ico-data-analysis-menu.svg" class="icon" alt="Data Analysis">
+                        <p ng-switch-when="workspaces" style="font-size: 20px;"> Workspaces </p>
+                        <p ng-switch-when="users" style="font-size: 20px;"> Users </p>
+                        <p ng-switch-when="licenses" style="font-size: 20px;"> Licenses </p>
+                        <p ng-switch-when="help" style="font-size: 20px;"> Help </p>
+                        
+                    </div>
+                    <div class="workspace-switcher-title-wrapper">
+                        <div class="workspace-switcher-title">
+                            <span class="title">
+                                {{ workspace }}
+                            </span>
+                            <span class="caret-container">
+                                <span class="caret"></span>
+                            </span>
+                        </div>
+                        <span class="subtitle">
+                            {{vulnsNum}}/{{totalVulns}} vulns
+                        </span>
+                    </div>
+                </button>
+                <ul class="dropdown-menu" role="menu" aria-labelledby="workspaceSwitcher">
+                    <li ng-repeat="ws in workspaces"><a href="#/{{location}}/ws/{{ws.name}}" class="ws" >{{ws.name}}</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div ng-if="!showSwitcher()" class="icon-wrapper">
+        <div class="" ng-switch="location">
+            <img ng-switch-when="dashboard" src="images/ico-dashboard-menu.svg" class="icon" alt="Dashboard"/>
+            <img ng-switch-when="status" src="images/ico-status-menu.svg" class="icon" alt="Status Report"/>
+            <img ng-switch-when="hosts" src="images/ico-hosts-menu.svg" class="icon" alt="Hosts"/>
+            <img ng-switch-when="credentials" src="images/ico-credentials-menu.svg" class="icon" alt="Credentials"/>
+            <img ng-switch-when="executive" src="images/ico-executive-menu.svg" class="icon" alt="Executive Report"/>
+            <img ng-switch-when="taskgroup" src="images/ico-tasks-menu.svg" class="icon" alt="Tasks"/>
+            <img ng-switch-when="comparison" src="images/ico-workspace-comparison-menu.svg" class="icon" alt="Workspaces Comparison"/>
+            <img ng-switch-when="webshell" src="images/ico-web-shell-menu.svg" class="icon" alt="Webshell">
+            <img ng-switch-when="vulndb" src="images/ico-vulnerability-templates-menu.svg" class="icon" alt="Vulns"/>
+            <img ng-switch-when="data_analysis" src="images/ico-data-analysis-menu.svg" class="icon" alt="Data Analysis">
+            <p ng-switch-when="workspaces" style="font-size: 20px;"> Workspaces </p>
+            <p ng-switch-when="users" style="font-size: 20px;"> Users </p>
+            <p ng-switch-when="licenses" style="font-size: 20px;"> Licenses </p>
+            <p ng-switch-when="help" style="font-size: 20px;"> Help </p>
+
+        </div>
+    </div>
+    <div class="controls-wrapper">
+        <button ng-if="workspace" id="refresh" type="button" class="btn" title="Refresh current workspace" onclick="location.reload()">
+            <span class="glyphicon glyphicon-refresh"></span>
+        </button>
+        <button ng-if="showSwitcher() && workspace" type="button" class="btn" title="Edit current workspace" ng-click="editWorkspace()">
+            <span class="glyphicon glyphicon-cog"></span>
+        </button>
+        <span ng-if="location === 'dashboard' && workspace" class="control-wrapper filter-wrapper">
+            <button type="button" class="btn confirm-button" title="{{ confirmed === true ? 'All vulns' : 'Confirmed vulns' }}" ng-click="toggleConfirmed()">
+                <img ng-src="{{ confirmed === true ? 'images/icon-toolbar-confirmed-on.svg' : 'images/icon-toolbar-confirmed-off.svg'}}" class="confirm-icon" ng-style="{ 'opacity': (confirmed === true) ? '1' : '0.7' }" />
+            </button>
+        </span>
+    </div>
+    <div class="flex-spacer"></div>
+    <div class="user-menu-wrapper">
+        <div ng-controller="loginBarCtrl">
+            <div class="btn-group dropdown" ng-if="auth" uib-dropdown="" is-open="status.isopen">
+                <button id="single-button" type="button" class="btn btn-default dropdown-toggle user-dropdown" uib-dropdown-toggle="" ng-disabled="disabled" aria-haspopup="true" aria-expanded="true">
+                    <span>{{user.name}} </span>
+                    <i class="glyphicon glyphicon-user"></i>
+                    <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-right" uib-dropdown-menu="" role="menu" aria-labelledby="single-button">
+                    <li role="menuitem"><a href="#/workspaces">Workspaces</a></li>
+                    <li role="menuitem"><a href="#/users">Users</a></li>
+                    <li role="menuitem"><a href="#/licenses">Licenses</a></li>
+                    <li class="divider"></li>
+                    <li role="menuitem"><a href="" ng-click="changePasswordModal()">Change password</a></li>
+                    <li role="menuitem"><a href="" ng-click="logout()">Logout</a></li>
+                    <li class="divider"></li>
+                    <li role="menuitem"><a href="#/help">Help</a></li>
+                    <li role="menuitem"><a href="" ng-click="about()">About</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

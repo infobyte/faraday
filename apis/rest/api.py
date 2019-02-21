@@ -25,47 +25,53 @@ CONF = getInstanceConfiguration()
 
 _plugin_controller_api = None
 _http_server = None
-
-
+ioloop_instance = None
 def startServer():
     global _http_server
+    global ioloop_instance
     if _http_server is not None:
-        IOLoop.instance().start()
+        ioloop_instance.start()
 
 
 def stopServer():
     global _http_server
+    global ioloop_instance
     if _http_server is not None:
-        IOLoop.instance().stop()
+        ioloop_instance.stop()
         _http_server.stop()
 
 
 def startAPIs(plugin_controller, model_controller, hostname, port):
     global _rest_controllers
     global _http_server
+    global ioloop_instance
     _rest_controllers = [PluginControllerAPI(plugin_controller), ModelControllerAPI(model_controller)]
 
     app = Flask('APISController')
 
+    ioloop_instance = IOLoop.current()
     _http_server = HTTPServer(WSGIContainer(app))
-    while True:
+    hostnames = [hostname]
+
+    #Fixed hostname bug
+    if hostname == "localhost":
+        hostnames.append("127.0.0.1")
+
+    listening = False
+    for hostname in hostnames:
         try:
             _http_server.listen(port, address=hostname)
             logger.getLogger().info(
                     "REST API server configured on %s" % str(
                         CONF.getApiRestfulConInfo()))
+            listening = True
+            CONF.setApiConInfoHost(hostname)
+            CONF.saveConfig()
             break
         except socket.error as exception:
-            if exception.errno == 98:
-                # Port already in use
-                # Let's try the next one
-                port += 1
-                if port > 65535:
-                    raise Exception("No ports available!")
-                CONF.setApiRestfulConInfoPort(port)
-                CONF.saveConfig()
-            else:
-                raise exception
+            continue
+    if not listening:
+        raise RuntimeError("Port already in use")
 
     routes = [r for c in _rest_controllers for r in c.getRoutes()]
 
@@ -75,9 +81,6 @@ def startAPIs(plugin_controller, model_controller, hostname, port):
     logging.getLogger("tornado.access").addHandler(logger.getLogger(app))
     logging.getLogger("tornado.access").propagate = False
     threading.Thread(target=startServer).start()
-
-def stopAPIs():
-    stopServer()
 
 
 class RESTApi(object):
@@ -110,6 +113,11 @@ class ModelControllerAPI(RESTApi):
 
     def getRoutes(self):
         routes = []
+
+        routes.append(Route(path='/model/interface',
+                              view_func=self.createInterface,
+                              methods=['PUT']))
+
         routes.append(Route(path='/model/edit/vulns',
                               view_func=self.postEditVulns,
                               methods=['POST']))
@@ -241,6 +249,11 @@ class ModelControllerAPI(RESTApi):
             self.controller.newHost,
             ['name', 'os'])
 
+    def createInterface(self):
+        return jsonify(
+            code=200,
+            id=request.get_json().get("parent_id"))
+
     def createService(self):
         return self._create(
             self.controller.newService,
@@ -260,9 +273,7 @@ class ModelControllerAPI(RESTApi):
              'params', 'query', 'category', 'parent_id'])
 
     def createNote(self):
-        return self._create(
-            self.controller.newNote,
-            ['name', 'text', 'parent_id'])
+        return jsonify(code=200)
 
     def createCred(self):
         return self._create(

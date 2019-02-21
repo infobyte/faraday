@@ -4,12 +4,13 @@
 
 angular.module('faradayApp')
     .controller('serviceModalEdit',
-        ['$q', '$scope', '$modalInstance', '$routeParams', 'SERVICE_STATUSES', 'service', 'servicesManager', 'commonsFact', 'servicesManager',
-        function($q, $scope, $modalInstance, $routeParams, SERVICE_STATUSES, service, servicesManager, commonsFact, servicesManager) {
+        ['$q', '$scope', '$modalInstance', '$routeParams', 'SERVICE_STATUSES', 'service', 'servicesManager', 'commonsFact', 'workspace',
+        function($q, $scope, $modalInstance, $routeParams, SERVICE_STATUSES, service, servicesManager, commonsFact, workspace) {
 
         init = function() {
             // current Workspace
             var ws = $routeParams.wsId;
+            $scope.workspace = workspace;
 
             if(service.length == 1) {
                 $scope.data = {
@@ -35,9 +36,7 @@ angular.module('faradayApp')
             timestamp = date.getTime()/1000.0;
 
             for (var i = 0; i < $scope.servicesSelected.length; i++) {
-                console.log($scope.servicesSelected[i]._id);
                 updateAll.push(servicesManager.getService($scope.servicesSelected[i]._id, ws, false).then(function(serviceObj){
-                    console.log(serviceObj._id);
                     $scope.data['_id'] = serviceObj._id;
                     return servicesManager.updateService(serviceObj, $scope.data, $routeParams.wsId);
                 }));
@@ -48,7 +47,11 @@ angular.module('faradayApp')
             }, function(response) {
                 if (response.status == 409) {
                     commonsFact.showMessage("Error while updating a new Vulnerability " + response.data.name + " Conflicting Vulnarability with id: " + response.data.object._id + ". " + response.data.message);
-                } else {
+                }if (response.status === 400) {
+                    var field = Object.keys(response.data.messages)[0];
+                    var error = response.data.messages[field][0];
+                    commonsFact.showMessage("Your input data is wrong,    " + field.toUpperCase() + ":      " + error);
+                }else {
                     commonsFact.showMessage("Error from backend: " + response.status);
                 }
 

@@ -1,7 +1,16 @@
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
 import json
 import logging
+import itsdangerous
 
 import Cookie
+import server.utils
+import server.utils.logger
 from collections import defaultdict
 from Queue import Queue, Empty
 
@@ -13,7 +22,9 @@ from autobahn.twisted.websocket import (
     WebSocketServerProtocol
 )
 
-logger =logging.getLogger(__name__)
+from server.models import Workspace
+
+logger = server.utils.logger.get_logger(__name__)
 changes_queue = Queue()
 
 
@@ -32,6 +43,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
         return (protocol, headers)
 
     def onMessage(self, payload, is_binary):
+        from server.web import app
         """
             We only support JOIN and LEAVE workspace messages.
             When authentication is implemented we need to verify
@@ -42,7 +54,33 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
         if not is_binary:
             message = json.loads(payload)
             if message['action'] == 'JOIN_WORKSPACE':
-                self.factory.join_workspace(self, message['workspace'])
+                if 'workspace' not in message or 'token' not in message:
+                    logger.warning('Invalid join workspace message: '
+                                   '{}'.format(message))
+                    self.sendClose()
+                    return
+                signer = itsdangerous.TimestampSigner(app.config['SECRET_KEY'],
+                                                      salt="websocket")
+                try:
+                    workspace_id = signer.unsign(message['token'], max_age=60)
+                except itsdangerous.BadData as e:
+                    self.sendClose()
+                    logger.warning('Invalid websocket token for workspace '
+                                   '{}'.format(message['workspace']))
+                    logger.exception(e)
+                else:
+                    with app.app_context():
+                        workspace = Workspace.query.get(int(workspace_id))
+                    if workspace.name != message['workspace']:
+                        logger.warning(
+                            'Trying to join workspace {} with token of '
+                            'workspace {}. Rejecting.'.format(
+                                message['workspace'], workspace.name
+                            ))
+                        self.sendClose()
+                    else:
+                        self.factory.join_workspace(
+                            self, message['workspace'])
             if message['action'] == 'LEAVE_WORKSPACE':
                 self.factory.leave_workspace(self, message['workspace'])
 

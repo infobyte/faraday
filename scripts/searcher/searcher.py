@@ -37,7 +37,6 @@ sys.setdefaultencoding("utf-8")
 
 CONF = getInstanceConfiguration()
 
-
 mail_from = ''
 mail_password = ''
 mail_protocol = 'smtp.gmail.com'
@@ -359,14 +358,8 @@ def update_host(ws, host, key, value):
 
 def get_parent(ws, parent_tag):
     logger.debug("Getting parent")
-    try:
-        parent = models.get_host(ws, parent_tag) or models.get_service(ws, parent_tag)
-    except ResourceDoesNotExist:
-        parent = models.get_hosts(ws, name=parent_tag) or models.get_services(ws, name=parent_tag)
-        if len(parent) == 0:
-            return None
-
-    return parent
+    return api.get_filtered_services(id=parent_tag, name=parent_tag) or \
+           api.get_filtered_hosts(id=parent_tag, name=parent_tag)
 
 
 def filter_objects_by_parent(_objects, parent):
@@ -537,7 +530,7 @@ def replace_rule(rule, value_item):
     _vars = list(set(r))
     for var in _vars:
         value = value_item[var]
-        rule_str = rule_str.replace('{{'+var+'}}', value)
+        rule_str = rule_str.replace('{{' + var + '}}', value)
 
     return ast.literal_eval(rule_str)
 
@@ -710,7 +703,8 @@ def main():
         ch = logging.StreamHandler()
         ch.setLevel(numeric_level)
         # create formatter and add it to the handlers
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s: %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s: %(message)s',
+                                      datefmt='%m/%d/%Y %I:%M:%S %p')
 
         fh.setFormatter(formatter)
         ch.setFormatter(formatter)
@@ -761,10 +755,10 @@ def main():
         os.remove(lockf)
         exit(0)
 
-    # except Exception as errorMsg:
-    #     logger.error(errorMsg)
-    #     os.remove(lockf)
-    #     exit(0)
+        # except Exception as errorMsg:
+        #     logger.error(errorMsg)
+        #     os.remove(lockf)
+        #     exit(0)
 
 
 if __name__ == "__main__":

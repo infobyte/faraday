@@ -19,28 +19,37 @@ min_weight = 0.3
 """
 
 rules = [
-    {
-        'id': 'APPLY_MS_REFS',
-        'model': 'Vulnerability',
-        'object': "regex=^MS17-010",
-        'conditions': ["creator=Nessus"],
-        'actions': ["--UPDATE:refs=https://docs.microsoft.com/en-us/security-updates/securitybulletins/2017/ms17-010"]
-    },
+    # {
+    #     'id': 'APPLY_MS_REFS',
+    #     'model': 'Vulnerability',
+    #     'object': "regex=^MS17-010",
+    #     'conditions': ["creator=Nessus"],
+    #     'actions': ["--UPDATE:refs=https://docs.microsoft.com/en-us/security-updates/securitybulletins/2017/ms17-010"]
+    # },
+    #
+    # {
+    #     'id': 'APPLY_MS_REFS_{{id}}',
+    #     'model': 'Vulnerability',
+    #     'object': "regex=^{{tag}}",
+    #     'conditions': ["creator=Nessus"],
+    #     'actions': ["--UPDATE:refs=https://docs.microsoft.com/en-us/security-updates/securitybulletins/{{year}}/{{tag}}"],
+    #     'values': [{'tag': 'ms17-010', 'year': '2017', 'id': 'DYNAMIC'}, {'tag': 'ms18-010', 'year': '2018', 'id': 'DYNAMIC'}]
+    # },
+    #
+    # {
+    #     'id': 'APPLY_REFS_ACCORDING_SEVERITY_{{sev}}',
+    #     'model': 'Vulnerability',
+    #     'object': "severity={{sev}}",
+    #     'actions': ["--UPDATE:refs=https://docs.microsoft.com/en-us/security-updates/securitybulletins/{{year}}/{{tag}}"],
+    #     'values': [{'tag': 'ms17-010', 'year': '2017', 'sev': 'low'}, {'tag': 'ms18-010', 'year': '2018', 'sev': 'med'}]
+    # },
 
     {
-        'id': 'APPLY_MS_REFS_{{id}}',
+        'id': 'TEST_RULE',
         'model': 'Vulnerability',
-        'object': "regex=^{{tag}}",
-        'conditions': ["creator=Nessus"],
-        'actions': ["--UPDATE:refs=https://docs.microsoft.com/en-us/security-updates/securitybulletins/{{year}}/{{tag}}"],
-        'values': [{'tag': 'ms17-010', 'year': '2017', 'id': 'DYNAMIC'}, {'tag': 'ms18-010', 'year': '2018', 'id': 'DYNAMIC'}]
-    },
+        'parent': '1',
+        'object': "regex=^Error",
+        'actions': ["--UPDATE:name=Error updated"]
 
-    {
-        'id': 'APPLY_REFS_ACCORDING_SEVERITY_{{sev}}',
-        'model': 'Vulnerability',
-        'object': "severity={{sev}}",
-        'actions': ["--UPDATE:refs=https://docs.microsoft.com/en-us/security-updates/securitybulletins/{{year}}/{{tag}}"],
-        'values': [{'tag': 'ms17-010', 'year': '2017', 'sev': 'low'}, {'tag': 'ms18-010', 'year': '2018', 'sev': 'med'}]
     }
 ]

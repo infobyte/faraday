@@ -26,6 +26,12 @@ class Structure:
             return self.type
         return None
 
+    @property
+    def parent_id(self):
+        if hasattr(self, 'parent'):
+            return self.parent
+        return None
+
     def getMetadata(self):
         if hasattr(self, 'metadata'):
             return self.metadata
@@ -80,6 +86,16 @@ class Api:
         return [Structure(**item['value']) for item in self._get(self._url('ws/{}/services'.format(self.workspace)),
                                                                  'services')['services']]
 
+    def get_filtered_services(self, **params):
+        services = self.get_services()
+        filtered_services = []
+        for key, value in params.items():
+            for service in services:
+                if hasattr(service, key) and \
+                        (getattr(service, key, None) == value or str(getattr(service, key, None)) == value):
+                    filtered_services.append(service)
+        return filtered_services
+
     def update_service(self, service):
         if isinstance(service.ports, int):
             service.ports = [service.ports]
@@ -94,6 +110,16 @@ class Api:
     def get_hosts(self):
         return [Structure(**item['value']) for item in self._get(self._url('ws/{}/hosts'.format(self.workspace)),
                                                                  'hosts')['rows']]
+
+    def get_filtered_hosts(self, **params):
+        hosts = self.get_hosts()
+        filtered_hosts = []
+        for key, value in params.items():
+            for host in hosts:
+                if hasattr(host, key) and \
+                        (getattr(host, key, None) == value or str(getattr(host, key, None)) == value):
+                    filtered_hosts.append(host)
+        return filtered_hosts
 
     def update_host(self, host):
         return Structure(**self._put(self._url('ws/{}/hosts/{}/'.format(self.workspace, host.id)),

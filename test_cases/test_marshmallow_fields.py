@@ -184,6 +184,7 @@ class TestMutableField:
 
             def get_x(self, obj):
                 return 5
+
         assert self.serialize(Place('test', 1, 1), PlaceSchema) == {
             "name": "test",
             "x": 5,

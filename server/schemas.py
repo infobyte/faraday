@@ -147,6 +147,10 @@ class MutableField(fields.Field):
         super(MutableField, self).__init__(**kwargs)
 
     def _serialize(self, value, attr, obj):
+
+        # TODO: see root cause of the bug that required this line to be added
+        self.read_field.parent = self.parent
+
         return self.read_field._serialize(value, attr, obj)
 
     def _deserialize(self, value, attr, data):

@@ -348,7 +348,7 @@ def update_host(ws, host, key, value):
 
                 logger.info(action)
     try:
-        models.update_host(ws, host, "")
+        api.update_host(host)
     except Exception as error:
         logger.error(error)
         return False
@@ -412,6 +412,9 @@ def evaluate_condition(model, condition):
         if value == 'False' and temp_value:
             return False
         return True
+
+    if isinstance(temp_value, int):
+        return value == str(temp_value)
 
     if value.encode("utf-8") != temp_value.encode("utf-8"):
         return False
@@ -505,7 +508,7 @@ def execute_action(ws, objects, rule, _server):
                     logger.info("Deleting service '%s' with id '%s':" % (obj.name, obj.id))
 
                 elif obj.class_signature == 'Host':
-                    models.delete_host(ws, obj.id)
+                    api.delete_host(obj.id)
                     logger.info("Deleting host '%s' with id '%s':" % (obj.name, obj.id))
 
             elif command == 'EXECUTE':
@@ -735,7 +738,7 @@ def main():
         api = Api(workspace, session_cookie)
 
         logger.debug("Getting hosts ...")
-        hosts = models.get_hosts(workspace)
+        hosts = api.get_hosts()
 
         logger.debug("Getting services ...")
         services = api.get_services()
@@ -758,10 +761,10 @@ def main():
         os.remove(lockf)
         exit(0)
 
-    except Exception as errorMsg:
-        logger.error(errorMsg)
-        os.remove(lockf)
-        exit(0)
+    # except Exception as errorMsg:
+    #     logger.error(errorMsg)
+    #     os.remove(lockf)
+    #     exit(0)
 
 
 if __name__ == "__main__":

@@ -90,3 +90,14 @@ class Api:
 
     def delete_service(self, service_id):
         return self._delete(self._url('ws/{}/services/{}/'.format(self.workspace, service_id)), 'service')
+
+    def get_hosts(self):
+        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/hosts'.format(self.workspace)),
+                                                                 'hosts')['rows']]
+
+    def update_host(self, host):
+        return Structure(**self._put(self._url('ws/{}/hosts/{}/'.format(self.workspace, host.id)),
+                                     host.__dict__, 'hosts'))
+
+    def delete_host(self, host_id):
+        return self._delete(self._url('ws/{}/hosts/{}/'.format(self.workspace, host_id)), 'host')

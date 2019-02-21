@@ -75,3 +75,18 @@ class Api:
 
     def delete_vulnerability(self, vulnerability_id):
         return self._delete(self._url('ws/{}/vulns/{}/'.format(self.workspace, vulnerability_id)), 'vulnerability')
+
+    def get_services(self):
+        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/services'.format(self.workspace)),
+                                                                 'services')['services']]
+
+    def update_service(self, service):
+        if isinstance(service.ports, int):
+            service.ports = [service.ports]
+        else:
+            service.ports = []
+        return Structure(**self._put(self._url('ws/{}/services/{}/'.format(self.workspace, service.id)),
+                                     service.__dict__, 'service'))
+
+    def delete_service(self, service_id):
+        return self._delete(self._url('ws/{}/services/{}/'.format(self.workspace, service_id)), 'service')

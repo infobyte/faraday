@@ -314,7 +314,7 @@ def update_service(ws, service, key, value):
 
                 logger.info(action)
     try:
-        models.update_service(ws, service, "")
+        api.update_service(service)
     except Exception as error:
         logger.error(error)
         return False
@@ -501,7 +501,7 @@ def execute_action(ws, objects, rule, _server):
                     insert_rule(rule['id'], command, obj, _objs_value)
 
                 elif obj.class_signature == 'Service':
-                    models.delete_service(ws, obj.id)
+                    api.delete_service(obj.id)
                     logger.info("Deleting service '%s' with id '%s':" % (obj.name, obj.id))
 
                 elif obj.class_signature == 'Host':
@@ -738,7 +738,7 @@ def main():
         hosts = models.get_hosts(workspace)
 
         logger.debug("Getting services ...")
-        services = models.get_services(workspace)
+        services = api.get_services()
 
         logger.debug("Getting vulnerabilities ...")
         vulns = api.get_vulnerabilities()

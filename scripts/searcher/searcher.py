@@ -68,40 +68,42 @@ def compare(a, b):
     return SequenceMatcher(None, a, b).ratio()
 
 
-def get_cwe(data, _server='http://127.0.0.1:5985/'):
-    logger.debug("Getting vulnerability templates from %s " % _server)
-    try:
-        url = urlparse.urljoin(_server, "_api/v2/vulnerability_template/")
-        session_cookie = CONF.getDBSessionCookies()
-        response = requests.request("GET", url, cookies=session_cookie)
-        if response.status_code == 200:
-            templates = json.loads(response.content)
-            cwe = None
-            for row in templates['rows']:
-                doc = row['doc']
-                _id = doc['_id']
-                name = doc['name']
-                description = doc['description']
-                resolution = doc['resolution']
-                if str(_id) == data or name == data:
-                    cwe = {
-                        'id': _id,
-                        'name': name,
-                        'description': description,
-                        'resolution': resolution
-                    }
-                    break
-            return cwe
-        elif response.status_code == 401:
-            logger.error('You are not authorized to get the vulnerability templates')
-            return None
-        else:
-            logger.error('We can\'t get the vulnerability templates')
-            return None
-
-    except Exception as error:
-        logger.error(error)
-        return None
+def get_cwe(data):
+    logger.debug("Getting vulnerability templates")
+    template = api.get_filtered_templates(id=data, name=data).pop()
+    return template
+    # try:
+    #     url = urlparse.urljoin(_server, "_api/v2/vulnerability_template/")
+    #     session_cookie = CONF.getDBSessionCookies()
+    #     response = requests.request("GET", url, cookies=session_cookie)
+    #     if response.status_code == 200:
+    #         templates = json.loads(response.content)
+    #         cwe = None
+    #         for row in templates['rows']:
+    #             doc = row['doc']
+    #             _id = doc['_id']
+    #             name = doc['name']
+    #             description = doc['description']
+    #             resolution = doc['resolution']
+    #             if str(_id) == data or name == data:
+    #                 cwe = {
+    #                     'id': _id,
+    #                     'name': name,
+    #                     'description': description,
+    #                     'resolution': resolution
+    #                 }
+    #                 break
+    #         return cwe
+    #     elif response.status_code == 401:
+    #         logger.error('You are not authorized to get the vulnerability templates')
+    #         return None
+    #     else:
+    #         logger.error('We can\'t get the vulnerability templates')
+    #         return None
+    #
+    # except Exception as error:
+    #     logger.error(error)
+    #     return None
 
 
 def is_same_level(model1, model2):

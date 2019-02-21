@@ -11,9 +11,6 @@ class Structure:
     def __init__(self, **entries):
         self.__dict__.update(entries)
 
-    def to_json(self):
-        return json.dumps(self.__dict__)
-
     @property
     def id(self):
         if hasattr(self, '_id'):
@@ -127,3 +124,16 @@ class Api:
 
     def delete_host(self, host_id):
         return self._delete(self._url('ws/{}/hosts/{}/'.format(self.workspace, host_id)), 'host')
+
+    def get_vulnerability_templates(self):
+        return [Structure(**item['doc']) for item in self._get(self._url('vulnerability_template'), 'templates')['rows']]
+
+    def get_filtered_templates(self, **params):
+        templates = self.get_vulnerability_templates()
+        filtered_templates = []
+        for key, value in params.items():
+            for template in templates:
+                if hasattr(template, key) and \
+                        (getattr(template, key, None) == value or str(getattr(template, key, None)) == value):
+                    filtered_templates.append(template)
+        return filtered_templates

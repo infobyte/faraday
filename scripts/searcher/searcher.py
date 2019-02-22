@@ -70,40 +70,10 @@ def compare(a, b):
 
 def get_cwe(data):
     logger.debug("Getting vulnerability templates")
-    template = api.get_filtered_templates(id=data, name=data).pop()
-    return template
-    # try:
-    #     url = urlparse.urljoin(_server, "_api/v2/vulnerability_template/")
-    #     session_cookie = CONF.getDBSessionCookies()
-    #     response = requests.request("GET", url, cookies=session_cookie)
-    #     if response.status_code == 200:
-    #         templates = json.loads(response.content)
-    #         cwe = None
-    #         for row in templates['rows']:
-    #             doc = row['doc']
-    #             _id = doc['_id']
-    #             name = doc['name']
-    #             description = doc['description']
-    #             resolution = doc['resolution']
-    #             if str(_id) == data or name == data:
-    #                 cwe = {
-    #                     'id': _id,
-    #                     'name': name,
-    #                     'description': description,
-    #                     'resolution': resolution
-    #                 }
-    #                 break
-    #         return cwe
-    #     elif response.status_code == 401:
-    #         logger.error('You are not authorized to get the vulnerability templates')
-    #         return None
-    #     else:
-    #         logger.error('We can\'t get the vulnerability templates')
-    #         return None
-    #
-    # except Exception as error:
-    #     logger.error(error)
-    #     return None
+    templates = api.get_filtered_templates(id=data, name=data)
+    if len(templates) > 0:
+        return templates.pop()
+    return None
 
 
 def is_same_level(model1, model2):
@@ -235,15 +205,15 @@ def set_array(field, value, add=True):
 
 def update_vulnerability(ws, vuln, key, value, _server):
     if key == 'template':
-        cwe = get_cwe(value, _server)
+        cwe = get_cwe(value)
         if cwe is None:
             logger.error("%s: cwe not found" % value)
             return False
 
-        vuln.name = cwe['name']
-        vuln.description = cwe['description']
-        vuln.desc = cwe['description']
-        vuln.resolution = cwe['resolution']
+        vuln.name = cwe.name
+        vuln.description = cwe.description
+        vuln.desc = cwe.description
+        vuln.resolution = cwe.resolution
 
         logger.info("Applying template '%s' to vulnerability '%s' with id '%s'" % (value, vuln.name, vuln.id))
 

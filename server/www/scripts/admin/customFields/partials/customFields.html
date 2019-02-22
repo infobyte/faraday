@@ -37,7 +37,7 @@
             <div class="form-group">
                 <label class="sr-only control-label" for="cf_display_name">Display Name</label>
                 <input type="text" class="form-control" id="cf_display_name" placeholder="Display Name"
-                       ng-model="selected_cf.field_display_name" required/>
+                       ng-model="selected_cf.field_display_name" ng-change="normalizeDisplayName()" required/>
             </div><!-- .form-group -->
 
             <div class="tab-pane-header">Name</div>

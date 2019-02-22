@@ -62,6 +62,12 @@ angular.module('faradayApp')
                 return Math.max.apply(null, orders) || 0;
             };
 
+            $scope.normalizeDisplayName = function () {
+                if ($scope.selected_cf.field_display_name !== null){
+                    $scope.selected_cf.field_display_name = $scope.selected_cf.field_display_name.toLowerCase().replace(' ', '_');
+                }
+            };
+
             $scope.createCustomCustomField = function () {
                 if ($scope.selected_cf.field_order === null)
                     $scope.selected_cf.field_order = getMaxOrder() + 1;

@@ -352,9 +352,9 @@ class VulnerabilityFilterSet(FilterSet):
         fields = (
             "id", "status", "website", "pname", "query", "path", "service",
             "data", "severity", "confirmed", "name", "request", "response",
-            "parameters", "params", "resolution", "ease_of_resolution",
+            "params", "resolution",
             "description", "command_id", "target", "creator", "method",
-            "easeofresolution", "query_string", "parameter_name", "service_id",
+            "easeofresolution", "service_id",
             "status_code"
         )
 

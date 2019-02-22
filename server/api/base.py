@@ -14,7 +14,7 @@ from sqlalchemy.orm import joinedload, undefer
 from sqlalchemy.orm.exc import NoResultFound, ObjectDeletedError
 from sqlalchemy.inspection import inspect
 from sqlalchemy import func
-from marshmallow import Schema
+from marshmallow import Schema, EXCLUDE
 from marshmallow.compat import with_metaclass
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import ModelConverter
@@ -164,6 +164,11 @@ class GenericView(FlaskView):
         """
         kwargs['context'] = self._set_schema_context(
             kwargs.get('context', {}), **route_kwargs)
+
+        # If the client send us fields that are not in the schema, ignore them
+        # This is the default in marshmallow 2, but not in marshmallow 3
+        kwargs['unknown'] = EXCLUDE
+
         return self._get_schema_class()(**kwargs)
 
     def _set_schema_context(self, context, **kwargs):

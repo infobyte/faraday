@@ -223,7 +223,7 @@ class TestListServiceView(ReadOnlyAPITests):
         session.commit()
         raw_data = self._raw_put_data(service.id, parent=service.host.id, status='closed')
         res = test_client.put(self.url(service, workspace=service.workspace), data=raw_data)
-        assert res.status_code == 200
+        assert res.status_code == 200, res.json
         updated_service = Service.query.filter_by(id=service.id).first()
         assert updated_service.status == 'closed'
 
@@ -232,7 +232,7 @@ class TestListServiceView(ReadOnlyAPITests):
         session.commit()
         raw_data = self._raw_put_data(service.id, parent=service.host.id, ports=[221])
         res = test_client.put(self.url(service, workspace=service.workspace), data=raw_data)
-        assert res.status_code == 200
+        assert res.status_code == 200, res.json
         updated_service = Service.query.filter_by(id=service.id).first()
         assert updated_service.port == 221
 
@@ -242,7 +242,7 @@ class TestListServiceView(ReadOnlyAPITests):
         session.commit()
         raw_data = self._raw_put_data(service.id)
         res = test_client.put(self.url(service, workspace=service.workspace), data=raw_data)
-        assert res.status_code == 200
+        assert res.status_code == 200, res.json
         assert res.json['id'] == service.id
 
     def test_create_service_from_command(self, test_client, session):

@@ -217,7 +217,7 @@ class VulnerabilitySchema(AutoSchema):
         parent_id = data.pop('parent', None)
         if not (parent_type and parent_id):
             # Probably a partial load, since they are required
-            return
+            return data
         if parent_type == 'Host':
             parent_class = Host
             parent_field = 'host_id'

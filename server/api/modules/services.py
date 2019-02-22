@@ -83,6 +83,8 @@ class ServiceSchema(AutoSchema):
             except NoResultFound:
                 raise ValidationError('Host with id {} not found'.format(host_id))
 
+        return data
+
     class Meta:
         model = Service
         fields = ('id', '_id', 'status', 'parent', 'type',

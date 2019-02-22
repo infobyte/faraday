@@ -45,6 +45,7 @@ class CommandSchema(AutoSchema):
         if duration:
             data['end_date'] = data['start_date'] + datetime.timedelta(
                 seconds=duration)
+        return data
 
     class Meta:
         model = Command

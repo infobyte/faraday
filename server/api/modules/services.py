@@ -66,7 +66,7 @@ class ServiceSchema(AutoSchema):
         if self.context['updating']:
             if host_id is None:
                 # Partial update?
-                return
+                return data
 
             if host_id != self.context['object'].parent.id:
                 raise ValidationError('Can\'t change service parent.')

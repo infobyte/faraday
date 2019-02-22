@@ -932,6 +932,16 @@ class AutoSchema(with_metaclass(ModelSchemaMeta, Schema)):
     TYPE_MAPPING = Schema.TYPE_MAPPING.copy()
     TYPE_MAPPING[str] = NullToBlankString
 
+    def __init__(self, *args, **kwargs):
+        # assert kwargs.get('unknown') == EXCLUDE, (
+        #     "This schema was initiatized without unknown=EXCLUDE. This means "
+        #     "that it will fail if you pass it fields that do not exist in the "
+        #     "schema, instead of ignoring them. I suppose this isn't what you "
+        #     "want. If you do want this behavior, consider removing this assert."
+        #     )
+        super(AutoSchema, self).__init__(*args, **kwargs)
+        self.unknown = EXCLUDE
+
 
 class FilterAlchemyModelConverter(ModelConverter):
     """Use this to make all fields of a model not required.

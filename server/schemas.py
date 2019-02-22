@@ -7,7 +7,7 @@ See the file 'doc/LICENSE' for the license information
 import time
 import json
 import datetime
-from marshmallow import fields, Schema
+from marshmallow import fields, Schema, EXCLUDE
 from marshmallow.utils import missing as missing_
 from marshmallow.exceptions import ValidationError
 from dateutil.tz import tzutc
@@ -236,6 +236,9 @@ class MetadataSchema(Schema):
     update_user = fields.String(default='', dump_only=True)
     update_action = fields.Integer(default=0, dump_only=True)
     update_controller_action = fields.String(default='', dump_only=True)
+
+    class Meta:
+        unknown = EXCLUDE
 
 
 class StrictDateTimeField(fields.DateTime):

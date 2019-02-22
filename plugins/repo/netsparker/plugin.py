@@ -15,6 +15,7 @@ import os
 import sys
 import socket
 import urllib
+from bs4 import BeautifulSoup
 
 try:
     import xml.etree.cElementTree as ET
@@ -113,17 +114,23 @@ class Item(object):
             self.port = host.group(11)
 
         self.name = self.get_text_from_subnode("type")
+        self.desc = self.get_text_from_subnode("description")
         self.severity = self.re_map_severity(self.get_text_from_subnode("severity"))
         self.certainty = self.get_text_from_subnode("certainty")
         self.method = self.get_text_from_subnode("vulnerableparametertype")
         self.param = self.get_text_from_subnode("vulnerableparameter")
         self.paramval = self.get_text_from_subnode("vulnerableparametervalue")
+        self.reference = self.get_text_from_subnode("externalReferences")
+        self.resolution = self.get_text_from_subnode("actionsToTake")
         self.request = self.get_text_from_subnode("rawrequest")
         self.response = self.get_text_from_subnode("rawresponse")
         if self.response:
             self.response = self.response.encode("ascii",errors="backslashreplace") 
         if self.request:
             self.request = self.request.encode("ascii",errors="backslashreplace") 
+        if self.reference:
+            self.reference = self.reference.encode("ascii",errors="backslashreplace") 
+
 
         self.kvulns = []
         for v in self.node.findall("knownvulnerabilities/knownvulnerability"):
@@ -143,24 +150,31 @@ class Item(object):
         self.capec = self.get_text_from_subnode("CAPEC")
         self.pci = self.get_text_from_subnode("PCI")
         self.pci2 = self.get_text_from_subnode("PCI2")
+        self.node = item_node.find("classification/CVSS")
+        self.cvss = self.get_text_from_subnode("vector")
 
         self.ref = []
         if self.cwe:
             self.ref.append("CWE-" + self.cwe)
         if self.owasp:
             self.ref.append("OWASP-" + self.owasp)
-
-        self.desc = ""
-        self.desc += "\nKnowVulns: " + \
+        if self.reference:
+            self.ref.extend(list(set(re.findall('https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', self.reference))))
+        if self.cvss:
+            self.ref.append(self.cvss)
+    
+        self.data = ""
+        self.data += "\nKnowVulns: " + \
             "\n".join(self.kvulns) if self.kvulns else ""
-        self.desc += "\nWASC: " + self.wasc if self.wasc else ""
-        self.desc += "\nPCI: " + self.pci if self.pci else ""
-        self.desc += "\nPCI2: " + self.pci2 if self.pci2 else ""
-        self.desc += "\nCAPEC: " + self.capec if self.capec else ""
-        self.desc += "\nPARAM: " + self.param if self.param else ""
-        self.desc += "\nPARAM VAL: " + \
+        self.data += "\nWASC: " + self.wasc if self.wasc else ""
+        self.data += "\nCertainty: " + self.certainty if self.certainty else ""
+        self.data += "\nPCI: " + self.pci if self.pci else ""
+        self.data += "\nPCI2: " + self.pci2 if self.pci2 else ""
+        self.data += "\nCAPEC: " + self.capec if self.capec else ""
+        self.data += "\nPARAM: " + self.param if self.param else ""
+        self.data += "\nPARAM VAL: " + \
             repr(self.paramval) if self.paramval else ""
-        self.desc += "\nExtra: " + "\n".join(self.extra) if self.extra else ""
+        self.data += "\nExtra: " + "\n".join(self.extra) if self.extra else ""
 
     def get_text_from_subnode(self, subnode_xpath_expr):
         """
@@ -211,33 +225,23 @@ class NetsparkerPlugin(core.PluginBase):
         for i in parser.items:
             if first:
                 ip = self.resolve(i.hostname)
-                h_id = self.createAndAddHost(ip)
-                i_id = self.createAndAddInterface(
-                    h_id, ip, ipv4_address=ip, hostname_resolution=i.hostname)
-
-                s_id = self.createAndAddServiceToInterface(h_id, i_id, str(i.port),
-                                                           str(i.protocol),
+                h_id = self.createAndAddHost(ip, hostnames=[ip])
+                
+                s_id = self.createAndAddServiceToHost(h_id, str(i.port),
+                                                           protocol = str(i.protocol),
                                                            ports=[str(i.port)],
                                                            status="open")
-
-                n_id = self.createAndAddNoteToService(
-                    h_id, s_id, "website", "")
-                n2_id = self.createAndAddNoteToNote(
-                    h_id, s_id, n_id, i.hostname, "")
                 first = False
-
-            v_id = self.createAndAddVulnWebToService(h_id, s_id, i.name, ref=i.ref, website=i.hostname,
-                                                     severity=i.severity, desc=i.desc, path=i.url, method=i.method,
-                                                     request=i.request, response=i.response, pname=i.param)
+            
+            v_id = self.createAndAddVulnWebToService(h_id, s_id, i.name, ref=i.ref, website=i.hostname, 
+                                                     severity=i.severity, desc=BeautifulSoup(i.desc, "lxml").text,
+                                                      path=i.url, method=i.method, request=i.request, response=i.response,
+                                                     resolution=BeautifulSoup(i.resolution, "lxml").text,pname=i.param, data=i.data)
 
         del parser
 
     def processCommandString(self, username, current_path, command_string):
         return None
-
-    def setHost(self):
-        pass
-
 
 def createPlugin():
     return NetsparkerPlugin()

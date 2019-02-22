@@ -278,3 +278,9 @@ def ignore_nplusone(app):
     app.config['NPLUSONE_RAISE'] = False
     yield
     app.config['NPLUSONE_RAISE'] = old
+
+
+@pytest.fixture
+def csrf_token(logged_user, test_client):
+    session_response = test_client.get('/session')
+    return session_response.json.get('csrf_token')

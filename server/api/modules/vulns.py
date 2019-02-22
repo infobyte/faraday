@@ -8,11 +8,13 @@ import logging
 from base64 import b64encode, b64decode
 
 import flask
+import wtforms
 from filteralchemy import Filter, FilterSet, operators
 from flask import request
 from flask import Blueprint
 from flask_classful import route
 from flask_restless.search import search
+from flask_wtf.csrf import validate_csrf
 from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
@@ -579,6 +581,10 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('/<int:vuln_id>/attachment/', methods=['POST'])
     def post_attachment(self, workspace_name, vuln_id):
+        try:
+            validate_csrf(request.form.get('csrf_token'))
+        except wtforms.ValidationError:
+            flask.abort(403)
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(VulnerabilityGeneric.id == vuln_id,
                                 Workspace.name == workspace_name).first()

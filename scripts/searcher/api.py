@@ -36,37 +36,60 @@ class Structure:
 
 
 class Api:
-    def __init__(self, workspace, cookies, base='http://127.0.0.1:5985/_api/v2/'):
+    def __init__(self, workspace, username, password, base='http://127.0.0.1:5985/_api/'):
         self.base = base
         self.workspace = workspace
-        self.cookies = cookies
+        self.cookies = self.login(username, password)
+        if self.cookies is None:
+            raise UserWarning('Invalid username or password')
 
     def _url(self, path):
-        return self.base + path
+        return self.base + 'v2/' + path
 
     def _get(self, url, object_name):
         response = requests.get(url, cookies=self.cookies)
+        if response.status_code == 401:
+            raise ApiError('Unauthorized operation trying to get {}'.format(object_name))
         if response.status_code != 200:
             raise ApiError('Cannot fetch {}'.format(object_name))
         return json.loads(response.content)
 
     def _post(self, url, data, object_name):
         response = requests.post(url, json=data, cookies=self.cookies)
+        if response.status_code == 401:
+            raise ApiError('Unauthorized operation trying to create {}'.format(object_name))
         if response.status_code != 201:
             raise ApiError('Unable to create {}'.format(object_name))
         return json.loads(response.content)
 
     def _put(self, url, data, object_name):
         response = requests.put(url, json=data, cookies=self.cookies)
+        if response.status_code == 401:
+            raise ApiError('Unauthorized operation trying to update {}'.format(object_name))
         if response.status_code != 200:
             raise ApiError('Unable to update {}'.format(object_name))
         return json.loads(response.content)
 
     def _delete(self, url, object_name):
         response = requests.delete(url, cookies=self.cookies)
+        if response.status_code == 401:
+            raise ApiError('Unauthorized operation trying to delete {}'.format(object_name))
         if response.status_code != 204:
             raise ApiError('Unable to delete {}'.format(object_name))
         return response.ok
+
+    def login(self,  username, password):
+        auth = {"email": username, "password": password}
+        try:
+            resp = requests.post(self.base + 'login', json=auth)
+            if resp.status_code == 401:
+                return None
+            else:
+                return resp.cookies
+        except requests.adapters.ConnectionError:
+            return None
+        except requests.adapters.ReadTimeout:
+            return None
 
     def get_vulnerabilities(self):
         return [Structure(**item['value']) for item in self._get(self._url('ws/{}/vulns'.format(self.workspace)),

@@ -18,24 +18,14 @@ from datetime import datetime
 from difflib import SequenceMatcher
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import requests
-import json
 import ast
-from config.configuration import getInstanceConfiguration
-from persistence.server import models
-from persistence.server import server
-from persistence.server.server import login_user
-from persistence.server.server_io_exceptions import ResourceDoesNotExist, ConflictInDatabase
 from validator import *
-import urlparse
 from api import Api
 
 logger = logging.getLogger('Faraday searcher')
 
 reload(sys)
 sys.setdefaultencoding("utf-8")
-
-CONF = getInstanceConfiguration()
 
 mail_from = ''
 mail_password = ''
@@ -248,9 +238,6 @@ def update_vulnerability(ws, vuln, key, value, _server):
 
     try:
         api.update_vulnerability(vuln)
-    except ConflictInDatabase:
-        logger.error("There was a conflict trying to save '%s' with ID: %s" % (vuln.name, vuln.id))
-        return False
     except Exception as error:
         logger.error(error)
         return False
@@ -685,23 +672,11 @@ def main():
         logger.addHandler(ch)
 
     try:
-        session_cookie = login_user(_server, _user, _password)
-        if not session_cookie:
-            raise UserWarning('Invalid credentials!')
-        else:
-            CONF.setDBUser(_user)
-            CONF.setDBSessionCookies(session_cookie)
-
-        server.AUTH_USER = _user
-        server.AUTH_PASS = _password
-        server.SERVER_URL = _server
-        server.FARADAY_UP = False
-
         logger.info('Started')
         logger.info('Searching objects into workspace %s ' % workspace)
 
         global api
-        api = Api(workspace, session_cookie)
+        api = Api(workspace, _user, _password)
 
         logger.debug("Getting hosts ...")
         hosts = api.get_hosts()
@@ -722,15 +697,10 @@ def main():
 
         logger.info('Finished')
 
-    except ResourceDoesNotExist:
-        logger.error("Resource not found")
+    except Exception as errorMsg:
+        logger.error(errorMsg)
         os.remove(lockf)
         exit(0)
-
-        # except Exception as errorMsg:
-        #     logger.error(errorMsg)
-        #     os.remove(lockf)
-        #     exit(0)
 
 
 if __name__ == "__main__":

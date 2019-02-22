@@ -53,15 +53,7 @@ postgresql_test:
     stage: testing
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
-        - pip install virtualenv
-        - virtualenv -p python2 faraday_venv
-        - source faraday_venv/bin/activate
-        - pip install --upgrade -r requirements_server.txt
-        - pip install --upgrade responses pytest-xdist pytest-cov
-        - pip install --upgrade -r requirements_dev.txt
-        - mkdir -p ~/.faraday/config
-        - cp test_cases/data/server.ini ~/.faraday/config
-        - sed -i 's/mapped_table/persist_selectable/' faraday_venv/lib/python2.7/site-packages/flask_sqlalchemy/__init__.py  # TODO remove when flask_sqlalchemy fixes the issue
+        - ./prepare_test_env.sh
         - pytest test_cases -v --cov=server --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB
     artifacts:
         when: on_failure
@@ -73,15 +65,7 @@ sqlite_test:
     stage: testing
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
-        - pip install virtualenv
-        - virtualenv -p python2 faraday_venv
-        - source faraday_venv/bin/activate
-        - pip install --upgrade -r requirements_server.txt
-        - pip install --upgrade responses pytest-xdist pytest-cov
-        - pip install --upgrade -r requirements_dev.txt
-        - mkdir -p ~/.faraday/config
-        - cp test_cases/data/server.ini ~/.faraday/config
-        - sed -i 's/mapped_table/persist_selectable/' faraday_venv/lib/python2.7/site-packages/flask_sqlalchemy/__init__.py  # TODO remove when flask_sqlalchemy fixes the issue
+        - ./prepare_test_env.sh
         - pytest test_cases -v --cov=server --color=yes
 
 generate_release_file:
@@ -151,14 +135,7 @@ test_hypothesis:
     stage: testing
     allow_failure: true
     script:
-        - pip install virtualenv #TO LEO, REMEMBER TO CHECK DIFFERENCES WITH PINK
-        - virtualenv -p python2 faraday_venv
-        - source faraday_venv/bin/activate
-        - pip install --upgrade -r requirements_server.txt
-        - pip install --upgrade responses pytest-xdist pytest-cov hypothesis
-        - pip install --upgrade -r requirements_dev.txt
-        - mkdir -p ~/.faraday/config
-        - cp test_cases/data/server.ini ~/.faraday/config
+        - ./prepare_test_env.sh
         - pytest test_cases -v --cov=server --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB -m hypothesis
     only:
         variables:

@@ -4,10 +4,20 @@
 
 angular.module('faradayApp')
     .controller('adminCtrl',
-        ['$scope', function($scope) {
+        ['$scope', '$location', '$routeParams', function($scope, $location, $routeParams) {
 
         var init  = function () {
-            $scope.on = "custom_fields"
+            if ($routeParams.item !== undefined){
+                 $scope.on = $routeParams.item;
+            }else{
+                $scope.on = "custom_fields";
+            }
+        };
+
+        $scope.setItemPanel = function (menuItem) {
+            $scope.on = menuItem;
+            var url = "/admin/" + menuItem;
+            $location.path(url);
         };
 
 	    init();

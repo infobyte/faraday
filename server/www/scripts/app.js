@@ -292,6 +292,11 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             controller: 'adminCtrl',
             title: ' Admin | '
         }).
+        when('/admin/:item', {
+            templateUrl: 'scripts/admin/admin.html',
+            controller: 'adminCtrl',
+            title: ' Admin | '
+        }).
         otherwise({
             templateUrl: 'scripts/commons/partials/home.html',
             controller: 'homeCtrl'

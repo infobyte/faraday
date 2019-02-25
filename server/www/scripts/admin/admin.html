@@ -14,11 +14,11 @@
                 <div class="setting-body">
                     <div class="setting-sidebar col-sm-2">
                         <ul>
-                            <li href="javascript:;" ng-class="{'active':on=='general'}" ng-click="on='general'">
+                            <li href="javascript:;" ng-class="{'active':on=='general'}" ng-click="setItemPanel('general')">
                                 General
                             </li>
                             <li href="javascript:;" ng-class="{'active':on=='custom_fields'}"
-                                ng-click="on='custom_fields'">Custom fields
+                                ng-click="setItemPanel('custom_fields')">Custom fields
                             </li>
                         </ul>
                     </div>
@@ -35,7 +35,7 @@
 
                             <div ng-switch-default>
                                 <h1>Switch</h1>
-                                <p>Select topic from the dropdown, to switch the content of this DIV.</p>
+                                <p>There's something wrong !</p>
                             </div>
                         </div>
                     </div>

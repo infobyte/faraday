@@ -9,21 +9,25 @@ in
     shellHook = ''
       unset SOURCE_DATE_EPOCH  # Required to make pip work
 
+      VENV_PATH=.venv-white
+      grep -q p- VERSION && VENV_PATH=.venv-pink
+      grep -q b- VERSION && VENV_PATH=.venv-black
+
       mkvirtualenv(){
         # Reset previous virtualenv
         type -t deactivate && deactivate
-        rm -rf venv
+        rm -rf $VENV_PATH
 
         # Build new virtualenv with system packages
-        virtualenv --system-site-packages venv
-        source venv/bin/activate
+        virtualenv --system-site-packages $VENV_PATH
+        source $VENV_PATH/bin/activate
         pip install -r requirements_server.txt
         pip install -r requirements.txt
         pip install -r requirements_dev.txt
       }
 
-      if [[ -d venv ]]; then
-        source venv/bin/activate
+      if [[ -d $VENV_PATH ]]; then
+        source $VENV_PATH/bin/activate
       else
         echo Creating new virtualenv
         mkvirtualenv

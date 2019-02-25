@@ -708,3 +708,34 @@ div[dnd-list] > div{
     padding: 10px 15px;
     margin-bottom: -1px;
 }
+
+.header-btns {
+    width: 100%;
+    padding: 20px 8px;
+}
+
+.right-main{
+    overflow-x: hidden;
+}
+
+#slide {
+    transition: 0.5s;
+    position: absolute;
+    right: -33.3%;
+}
+
+.show-slide{
+    transition: 0.5s!important;
+    width: 33.3%!important;
+    right: 0!important;
+}
+
+#main-panel{
+    width: 100%;
+    transition: 0.5s;
+}
+
+.slice-main-panel{
+    transition: 0.5s;
+    width: 66.6%!important;
+}

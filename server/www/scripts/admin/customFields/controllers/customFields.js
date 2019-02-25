@@ -63,7 +63,7 @@ angular.module('faradayApp')
             };
 
             $scope.normalizeDisplayName = function () {
-                if ($scope.selected_cf.field_display_name !== null){
+                if ($scope.selected_cf.field_display_name !== null) {
                     $scope.selected_cf.field_display_name = $scope.selected_cf.field_display_name.toLowerCase().replace(' ', '_');
                 }
             };
@@ -130,6 +130,8 @@ angular.module('faradayApp')
                 $scope.selected_cf = angular.copy(cf);
                 $scope.isEditable = true;
                 $scope.changeType(cf.field_type);
+
+                $scope.showSidePanel();
             };
 
             $scope.updateBtnTypeColor = function (type) {
@@ -167,7 +169,22 @@ angular.module('faradayApp')
                 };
                 $scope.updateBtnTypeColor(null);
                 $scope.isEditable = false;
+            };
 
+            $scope.showSidePanel = function () {
+                angular.element('#slide').addClass('show-slide');
+                angular.element('#main-panel').addClass('slice-main-panel');
+            };
+
+            $scope.hideSidePanel = function () {
+                angular.element('#slide').removeClass('show-slide');
+                angular.element('#main-panel').removeClass('slice-main-panel');
+                $scope.clearSelection();
+            };
+
+            $scope.new = function () {
+                $scope.clearSelection();
+                $scope.showSidePanel();
             };
 
             init();

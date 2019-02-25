@@ -1,9 +1,15 @@
-<div class="row">
-    <div class="cf-container col-md-8" dnd-list="customFields"
+<div class="header-btns row">
+    <button class="btn btn-success pull-right" ng-click="new()">New</button>
+</div>
+
+<div class="row" style="overflow-x: hidden">
+    <div id="main-panel" class="cf-container col-md-8" dnd-list="customFields"
          dnd-effect-allowed="all"
          dnd-inserted="insertCallback()">
 
-        <div class="alert alert-info" style="text-align: center" ng-if="customFields.length === 0">There isn't any custom field created</div>
+        <div class="alert alert-info" style="text-align: center" ng-if="customFields.length === 0">There isn't any
+            custom field created
+        </div>
 
         <div class="row cf-item" ng-repeat="cf in customFields | orderBy:'field_order'"
              dnd-draggable="cf"
@@ -27,9 +33,9 @@
         </div>
     </div>
 
-    <div class="col-md-4 cf-detail">
+    <div id="slide" class="col-md-4 cf-detail">
         <h3><span ng-if="isEditable == true">Edit</span>
-            <span ng-if="isEditable == false">New</span>
+            <span ng-if="isEditable == false">Create</span>
             custom field
         </h3><br>
         <form name="form" role="form">
@@ -90,10 +96,11 @@
             </div>
 
             <div class="btn-tools">
-                <button class="btn btn-default" ng-click="clearSelection()">Cancel</button>
+                <button type="reset" class="btn btn-default" ng-click="hideSidePanel()">Cancel</button>
                 <button class="btn btn-success" ng-if="isEditable == true"
                         ng-click="updateCustomCustomField()"
-                        ng-disabled="form.$invalid || selected_cf.field_type == null">Edit</button>
+                        ng-disabled="form.$invalid || selected_cf.field_type == null">Edit
+                </button>
                 <button class="btn btn-success" ng-if="isEditable == false"
                         ng-click="createCustomCustomField()"
                         ng-disabled="form.$invalid || selected_cf.field_type == null">Save

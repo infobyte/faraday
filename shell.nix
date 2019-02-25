@@ -4,7 +4,7 @@ in
   mkShell {
     buildInputs = with python27Packages;
       [virtualenv pyopenssl psycopg2 pillow pygobject3 pynacl matplotlib lxml ldap
-      gobjectIntrospection gtk3 gnome3.vte ipython
+      gobjectIntrospection gtk3 gnome3.vte ipython gssapi
       ];
     shellHook = ''
       unset SOURCE_DATE_EPOCH  # Required to make pip work

@@ -221,8 +221,14 @@ def update_vulnerability(ws, vuln, key, value, _server):
             key = key.strip('-')
             to_add = False
 
-        field = get_field(vuln, key)
-        if field is not None:
+        is_custom_field = False
+        if key in vuln.custom_fields:
+            field = vuln.custom_fields
+            is_custom_field = True
+        else:
+            field = get_field(vuln, key)
+
+        if field is not None and is_custom_field is False:
             if isinstance(field, str) or isinstance(field, unicode):
                 setattr(vuln, key, value)
                 logger.info(
@@ -235,6 +241,11 @@ def update_vulnerability(ws, vuln, key, value, _server):
                         value, key, vuln.name, vuln.id)
 
                 logger.info(action)
+
+        if field is not None and is_custom_field is True:
+            vuln.custom_fields[key] = value
+            logger.info(
+                "Changing custom field %s to %s in vulnerability '%s' with id %s" % (key, value, vuln.name, vuln.id))
 
     try:
         api.update_vulnerability(vuln)

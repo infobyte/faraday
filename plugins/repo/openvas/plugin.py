@@ -53,6 +53,8 @@ class OpenvasXmlParser(object):
         self.target = None
         self.port = "80"
         self.host = None
+        # The following threats values will not be taken as vulns
+        self.ignored_severities = ['Log', 'Debug']
         tree = self.parse_xml(xml_output)
 
         if tree:
@@ -85,13 +87,19 @@ class OpenvasXmlParser(object):
             report = tree.findall('report')[0]
             results = report.findall('results')[0]
             for node in results.findall('result'):
-                yield Item(node,report)
+                item = Item(node, report)
+                if item.severity in self.ignored_severities:
+                    continue
+                yield item
 
         except Exception:
 
             result = tree.findall('result')
             for node in result:
-                yield Item(node)
+                item = Item(node, report)
+                if item.severity in self.ignored_severities:
+                    continue
+                yield item
 
 
 def get_attrib_from_subnode(xml_node, subnode_xpath_expr, attrib_name):
@@ -144,7 +152,7 @@ class Item(object):
             self.subnet = self.host
 
         self.port = "None"
-        self.severity = self.get_text_from_subnode('threat')
+        self.severity = self.severity_mapper()
         self.service = "Unknown"
         self.protocol = ""
         port = self.get_text_from_subnode('port')
@@ -184,7 +192,6 @@ class Item(object):
             self.resolution = tags_data['solution']
             self.cvss_vector = tags_data['cvss_base_vector']
 
-
     def get_text_from_subnode(self, subnode_xpath_expr):
         """
         Finds a subnode in the host node and the retrieves a value from it.
@@ -197,6 +204,11 @@ class Item(object):
 
         return ''
 
+    def severity_mapper(self):
+        severity = self.get_text_from_subnode('threat')
+        if severity == 'Alarm':
+            severity = 'Critical'
+        return severity
 
     def get_service(self, port, report, result_host_ip):
         detail = self.get_detail_from_host(report,result_host_ip)
@@ -219,7 +231,6 @@ class Item(object):
 
         return "Unknown"
 
-
     def get_detail_from_host(self, report, result_host_ip):
         report_hosts = report.findall('host')
         host_dict = {}
@@ -230,7 +241,6 @@ class Item(object):
                 host_dict[report_host_ip] = details
 
         return host_dict
-
 
     def get_details(self, host):
         details_list = host.findall('detail')
@@ -244,14 +254,12 @@ class Item(object):
 
         return details_dict
 
-
     def do_clean(self, value):
         myreturn = ""
         if value is not None:
             myreturn = re.sub("\s+", " ", value)
 
         return myreturn.strip()
-
 
     def get_service_from_details(self, value_dict, port):
         # dict value: 
@@ -334,8 +342,8 @@ class OpenvasPlugin(core.PluginBase):
 
     def parseOutputString(self, output, debug=False):
         """
-        This method will discard the output the shell sends, it will read it from
-        the xml where it expects it to be present.
+        This method will discard the output the shell sends, it will read it
+        from the xml where it expects it to be present.
 
         NOTE: if 'debug' is true then it is being run from a test case and the
         output being sent is valid.
@@ -347,7 +355,6 @@ class OpenvasPlugin(core.PluginBase):
         ids = {}
 
         for item in parser.items:
-            
             if item.name is not None:
                 ref = []
                 if item.cve:
@@ -359,10 +366,12 @@ class OpenvasPlugin(core.PluginBase):
                 if item.tags and item.cvss_vector:
                     ref.append(item.cvss_vector.encode("utf-8"))
 
-                if ids.has_key(item.subnet):
+                if item.subnet in ids:
                     h_id = ids[item.host]
                 else:
-                    h_id = self.createAndAddHost(item.subnet)
+                    h_id = self.createAndAddHost(
+                        item.subnet,
+                        hostnames=[item.host])
                     ids[item.subnet] = h_id
 
                 if item.port == "None":
@@ -379,76 +388,38 @@ class OpenvasPlugin(core.PluginBase):
                             r'^(www|http)',
                             item.service) else False
                     else:
-                    
                         web = True if item.port in ('80', '443', '8080') else False
 
-                    if ids.has_key(item.subnet + "_" + item.subnet):
-                        i_id = ids[item.subnet + "_" + item.subnet]
-                    else:
-
-                        if self._isIPV4(item.subnet):
-                            i_id = self.createAndAddInterface(
-                                h_id,
-                                item.subnet,
-                                ipv4_address=item.subnet,
-                                hostname_resolution=item.host)
-                        else:
-                            i_id = self.createAndAddInterface(
-                                h_id,
-                                item.subnet,
-                                ipv6_address=item.subnet,
-                                hostname_resolution=item.host)
-
-                        ids[item.subnet + "_" + item.subnet] = i_id
-
-                    if ids.has_key(item.subnet + "_" + item.port):
+                    if item.subnet + "_" + item.port in ids:
                         s_id = ids[item.subnet + "_" + item.port]
                     else:
-                        s_id = self.createAndAddServiceToInterface(
+                        s_id = self.createAndAddServiceToHost(
                             h_id,
-                            i_id,
                             item.service,
                             item.protocol,
-                            ports=[str(item.port)],
-                            status="open")
-                        
+                            ports=[str(item.port)]
+                        )
                         ids[item.subnet + "_" + item.port] = s_id
-                        
-                        if web:
-                        
-                            n_id = self.createAndAddNoteToService(
-                                h_id,
-                                s_id,
-                                "website",
-                                "")
-                            
-                            self.createAndAddNoteToNote(
-                                h_id,
-                                s_id,
-                                n_id,
-                                item.host,
-                                "")
 
-                    if item.name:
-                        if web:
-                            v_id = self.createAndAddVulnWebToService(
-                                h_id,
-                                s_id,
-                                item.name.encode("utf-8"),
-                                desc=item.description.encode("utf-8"),
-                                website=item.host,
-                                severity=item.severity.encode("utf-8"),
-                                ref=ref,
-                                resolution=item.resolution.encode("utf-8"))
-                        else:
-                            self.createAndAddVulnToService(
-                                h_id,
-                                s_id,
-                                item.name.encode("utf-8"),
-                                desc=item.description.encode("utf-8"),
-                                severity=item.severity.encode("utf-8"),
-                                ref=ref,
-                                resolution=item.resolution.encode("utf-8"))
+                    if web:
+                        v_id = self.createAndAddVulnWebToService(
+                            h_id,
+                            s_id,
+                            item.name.encode("utf-8"),
+                            desc=item.description.encode("utf-8"),
+                            website=item.host,
+                            severity=item.severity.encode("utf-8"),
+                            ref=ref,
+                            resolution=item.resolution.encode("utf-8"))
+                    else:
+                        self.createAndAddVulnToService(
+                            h_id,
+                            s_id,
+                            item.name.encode("utf-8"),
+                            desc=item.description.encode("utf-8"),
+                            severity=item.severity.encode("utf-8"),
+                            ref=ref,
+                            resolution=item.resolution.encode("utf-8"))
 
         del parser
 
@@ -469,8 +440,9 @@ def createPlugin():
     return OpenvasPlugin()
 
 if __name__ == '__main__':
-    with open("/home/javier/openvas-report.xml","r") as report:
-        parser = OpenvasXmlParser(report.read())
+    parser = OpenvasPlugin()
+    with open("/home/javier/7_faraday_Openvas.xml","r") as report:
+        parser.parseOutputString(report.read())
         #for item in parser.items:
             #if item.status == 'up':
                 #print item

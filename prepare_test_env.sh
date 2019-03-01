@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 pip install virtualenv
 virtualenv -p python2 faraday_venv
 source faraday_venv/bin/activate

@@ -7,7 +7,7 @@
     <div class="right-main">
 		<div ng-controller="headerCtrl" ng-include="'scripts/commons/partials/header.html'"></div>
         <div id="reports-main" class="fila clearfix">
-            <div class="button-control col-md-12 col-sm-12 col-xs-12">
+            <div class="button-control col-md-12 col-sm-12 col-xs-12" id="btn_bar">
                 <div class="control-wrapper control-new">
                     <button type="button" class="btn btn-success btn-new" title="{{workspaceData.readonly == true ? 'Read-only. Workspace disabled': 'New Vulns'}}"  ng-click="new()" ng-disabled="workspaceData.readonly == true">
                         New
@@ -164,6 +164,11 @@
             <!-- .reports -->
         </div>
         <!-- #reports-main -->
+
+        <div id="vuln-preview">
+
+
+        </div>
     </div>
     <!-- .right-main -->
 </section>

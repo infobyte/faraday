@@ -33,6 +33,11 @@ angular.module("faradayApp")
 
         $scope.gridHeight;
         $scope.customFields;
+
+        $scope.isShowingPreview;
+
+
+
         var allVulns;
 
         var searchFilter = {};
@@ -288,6 +293,7 @@ angular.module("faradayApp")
             });
 
             $cookies.remove("selectedVulns");
+            $scope.isShowingPreview = false;
         };
 
 
@@ -1265,6 +1271,20 @@ angular.module("faradayApp")
             }
 
             return elements.join("\n" + (useDoubleLinebreak ? "\n" : ""));
+        };
+
+        $scope.showVulnPreview = function () {
+          $scope.isShowingPreview = true;
+          angular.element('#vuln-preview').addClass('show-preview');
+          angular.element('.faraday-page-header').addClass('show-preview');
+          angular.element('#btn_bar').addClass('show-preview');
+        };
+
+        $scope.hideVulnPreview = function () {
+          $scope.isShowingPreview = false;
+          angular.element('#vuln-preview').removeClass('show-preview');
+          angular.element('.faraday-page-header').removeClass('show-preview');
+          angular.element('#btn_bar').removeClass('show-preview');
         };
 
         init();

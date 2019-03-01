@@ -559,3 +559,39 @@ button[disabled], html input[disabled] {
 .toogle-img-container {
     width: 46px;
 }
+
+.right-main{
+    overflow-x: hidden;
+}
+
+#vuln-preview {
+    position: fixed;
+    z-index: 100000;
+    top: 3px;
+    height: 100%;
+    background-color: #f4f3f4;
+    border-left: 1px solid #ddd;
+    width: 0;
+    transition: 0.5s;
+    right: -30%;
+}
+
+#vuln-preview.show-preview{
+    transition: 0.5s!important;
+    width: 25.0%!important;
+    right: 0!important;
+}
+
+.faraday-page-header{
+    width: 100%;
+}
+
+.faraday-page-header.show-preview{
+    transition: 0.7s!important;
+    width: 74.5%!important;
+}
+
+#btn_bar.show-preview{
+    transition: 0.7s!important;
+    width: 75.0%!important;
+}

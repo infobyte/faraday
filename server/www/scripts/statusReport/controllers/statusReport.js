@@ -1287,5 +1287,18 @@ angular.module("faradayApp")
           angular.element('#btn_bar').removeClass('show-preview');
         };
 
+
+        $scope.toggleVulnPreview = function (e, vuln) {
+            e.stopPropagation();
+            if ($scope.lastClickedVuln !== undefined && $scope.lastClickedVuln._id === vuln._id){
+                $scope.hideVulnPreview();
+                $scope.lastClickedVuln = undefined;
+            }else{
+                $scope.showVulnPreview();
+                $scope.lastClickedVuln = vuln;
+            }
+        };
+
+
         init();
     }]);

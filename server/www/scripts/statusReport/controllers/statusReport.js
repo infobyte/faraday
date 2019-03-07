@@ -1296,6 +1296,7 @@ angular.module("faradayApp")
                 $scope.lastClickedVuln = undefined;
             }else{
                 $scope.showVulnPreview();
+                $scope.realVuln = vuln;
                 $scope.lastClickedVuln = angular.copy(vuln);
             }
         };
@@ -1306,12 +1307,24 @@ angular.module("faradayApp")
 
         $scope.processToEditPreview = function () {
             if ($scope.lastClickedVuln.hasOwnProperty($scope.fieldToEdit) &&
-                $scope.lastClickedVuln[ $scope.fieldToEdit] !== undefined &&
-                $scope.lastClickedVuln[ $scope.fieldToEdit] !== ''){
+                $scope.lastClickedVuln[$scope.fieldToEdit] !== undefined &&
+                $scope.lastClickedVuln[$scope.fieldToEdit] !== ''){
 
-                $scope.fieldToEdit = undefined;
+                $scope.isUpdatingVuln = true;
+                if ($scope.realVuln[$scope.fieldToEdit] !== $scope.lastClickedVuln[$scope.fieldToEdit]){
+                    vulnsManager.updateVuln($scope.realVuln, $scope.lastClickedVuln).then(function () {
+                        $scope.isUpdatingVuln = false;
+                        $scope.fieldToEdit = undefined;
+                        }, function (data) {
+                            commonsFact.showMessage("Error updating vuln " + $scope.realVuln.name + " (" + $scope.realVuln._id + "): " + (data.message || JSON.stringify(data.messages)));
+                            $scope.fieldToEdit = undefined;
+                            $scope.isUpdatingVuln = false;
+                    });
+                }else{
+                    $scope.fieldToEdit = undefined;
+                    $scope.isUpdatingVuln = false;
+                }
 
-                // UPDATE lastClickedVuln
             }
         };
 

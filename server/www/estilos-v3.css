@@ -577,7 +577,7 @@ button[disabled], html input[disabled] {
 }
 
 #vuln-preview.show-preview{
-    transition: 0.5s!important;
+    transition: width 0.3s!important;
     width: 25.0%!important;
     right: 0!important;
 }
@@ -587,11 +587,11 @@ button[disabled], html input[disabled] {
 }
 
 .faraday-page-header.show-preview{
-    transition: 0.7s!important;
+    transition: width 0.3s!important;
     width: 74.5%!important;
 }
 
 #btn_bar.show-preview{
-    transition: 0.7s!important;
+    transition: width 0.3s!important;
     width: 73.2%!important;
 }

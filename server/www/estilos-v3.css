@@ -605,6 +605,11 @@ button[disabled], html input[disabled] {
 .preview-section {
     border-top: 1px solid #ddd;
     padding: 24px 0;
+    margin-bottom: 22px;
+}
+
+.preview-section .form-group{
+    margin-bottom: 0;
 }
 
 .preview-icon {

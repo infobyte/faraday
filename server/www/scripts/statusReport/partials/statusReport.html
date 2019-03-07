@@ -180,7 +180,7 @@
                         <span class="preview-icon" ng-click="activeEditPreview('name')"><i class="fa fa-pencil fa-lg" aria-hidden="true"></i></span>
                     </div>
                 </div>
-                <div class="form-group" ng-class="{'has-error': formEdit.name.$invalid }" ng-if="fieldToEdit === 'name'">
+                <div class="form-group" ng-if="fieldToEdit === 'name'">
                     <label for="inp-edit-name"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true"></i>    Vulnerability name</label>
                     <input type="text" class="form-control" id="inp-edit-name"
                                ng-model="lastClickedVuln.name" name="name" placeholder="Vulnerability name"
@@ -188,6 +188,42 @@
                                autofocus required>
                 </div>
             </div>
+
+
+            <div class="preview-section">
+
+                <div class="btn-group col-md-6">
+                    <button type="button" class="dropdown-toggle btn-change-property primary-btn"
+                            data-toggle="dropdown"
+                            id="btn-chg-severity-prev"
+                            title="{{lastClickedVuln.severity}}">
+                        <i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'severity'"></i>  {{lastClickedVuln.severity | uppercase}}
+                    </button>
+                    <button type="button" class="dropdown-toggle secondary-btn btn-change-property"
+                            data-toggle="dropdown"
+                            id="caret-chg-severity-prev"
+                            title="Change severity">
+                        <span> <i class="fa fa-angle-down fa-lg" aria-hidden="true"></i> </span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                        <li>
+                            <a class="ws"
+                               ng-click="changeSeverity('unclassified')">UNCLASSIFIED</a>
+                            <a class="ws"
+                               ng-click="changeSeverity('info')">INFO</a>
+                            <a class="ws"
+                               ng-click="changeSeverity('low')">LOW</a>
+                            <a class="ws"
+                               ng-click="changeSeverity('med')">MEDIUM</a>
+                            <a class="ws"
+                               ng-click="changeSeverity('high')">HIGH</a>
+                            <a class="ws"
+                               ng-click="changeSeverity('critical')">CRITICAL</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
 
         </div>
     </div>

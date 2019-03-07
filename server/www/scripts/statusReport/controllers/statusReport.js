@@ -8,11 +8,11 @@ angular.module("faradayApp")
                      "$location", "$uibModal", "$cookies", "$q", "$window", "BASEURL",
                      "SEVERITIES", "EASEOFRESOLUTION", "STATUSES", "hostsManager", "commonsFact", 'parserFact',
                      "vulnsManager", "workspacesFact", "csvService", "uiGridConstants", "vulnModelsManager",
-                     "referenceFact", "ServerAPI", '$http',
+                     "referenceFact", "ServerAPI", '$http', 'uiCommonFact',
                     function($scope, $filter, $routeParams,
                         $location, $uibModal, $cookies, $q, $window, BASEURL,
                         SEVERITIES, EASEOFRESOLUTION, STATUSES, hostsManager, commonsFact,parserFact,
-                        vulnsManager, workspacesFact, csvService, uiGridConstants, vulnModelsManager, referenceFact, ServerAPI, $http) {
+                        vulnsManager, workspacesFact, csvService, uiGridConstants, vulnModelsManager, referenceFact, ServerAPI, $http, uiCommonFact) {
         $scope.baseurl;
         $scope.columns;
         $scope.columnsWidths;
@@ -1298,6 +1298,7 @@ angular.module("faradayApp")
                 $scope.showVulnPreview();
                 $scope.realVuln = vuln;
                 $scope.lastClickedVuln = angular.copy(vuln);
+                uiCommonFact.updateBtnSeverityColor($scope.lastClickedVuln.severity, '#btn-chg-severity-prev', '#caret-chg-severity-prev');
             }
         };
 
@@ -1328,8 +1329,12 @@ angular.module("faradayApp")
             }
         };
 
-
-
+         $scope.changeSeverity = function (severity) {
+                $scope.fieldToEdit = 'severity';
+                $scope.lastClickedVuln.severity = severity;
+                uiCommonFact.updateBtnSeverityColor(severity, '#btn-chg-severity-prev', '#caret-chg-severity-prev');
+                $scope.processToEditPreview();
+         };
 
         init();
     }]);

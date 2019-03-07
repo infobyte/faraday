@@ -41,20 +41,40 @@ class DnsmapParser(object):
 
     def __init__(self, output):
         self.items = []
-        lists = output.split("\n\n")
+        if "\n\n" in output:
+            self.parse_from_txt(output)
+        else:
+            self.parse_from_xml(output)
 
-        for item in lists:
-            sub_domain = item.split('\n')
-            if len(sub_domain) == 2:
-                ip = self.clean_ip(sub_domain[1])
-                host = sub_domain[0]
-                self.parse_ip(ip, host)
-            elif len(sub_domain) > 2:
-                host = sub_domain.pop(0)
-                for ip_address in sub_domain:
+    def parse_from_txt(self, output):
+        hosts = output.split("\n\n")
+
+        for host in hosts:
+            host_data = host.split('\n')
+            if len(host_data) == 2:
+                ip = self.clean_ip(host_data[1])
+                hostname = host_data[0]
+                self.parse_ip(ip, hostname)
+            elif len(host_data) > 2:
+                hostname = host_data.pop(0)
+                for ip_address in host_data:
                     ip = self.clean_ip(ip_address)
-                    self.parse_ip(ip, host)
+                    self.parse_ip(ip, hostname)
 
+    def parse_from_xml(self, output):
+        hosts = filter(None, output.split("\n"))
+
+        for host in hosts:
+            host_data = host.split(",", 1)
+            if host_data[1].count(',') == 0:
+                ip = host_data[1]
+                hostname = host_data[0]
+                self.parse_ip(ip, hostname)
+            else:
+                hostname = host_data.pop(0)
+                ips = host_data[0].split(",")
+                for ip_address in ips:
+                    self.parse_ip(ip_address, hostname)
 
     def clean_ip(self, item):
         ip = item.split(':', 1)

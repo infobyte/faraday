@@ -574,6 +574,7 @@ button[disabled], html input[disabled] {
     width: 0;
     transition: 0.5s;
     right: -30%;
+    padding: 16px;
 }
 
 #vuln-preview.show-preview{
@@ -594,4 +595,37 @@ button[disabled], html input[disabled] {
 #btn_bar.show-preview{
     transition: width 0.3s!important;
     width: 73.2%!important;
+}
+
+.preview-header {
+    width: 100%;
+    padding: 5px 10px 20px;
+}
+
+.preview-section {
+    border-top: 1px solid #ddd;
+    padding: 24px 0;
+}
+
+.preview-icon {
+    color: #aaa;
+    cursor: pointer;
+    text-align: center;
+    padding: 6px 8px;
+}
+
+.preview-icon:hover {
+    background-color: #ddd;
+    color: #777;
+    border-radius: 50px;
+    box-shadow: 2px 2px 10px 0px #aaa;
+}
+
+.preview-tag {
+    background-color: #ddd;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-weight: bold;
+    color: #555;
+    box-shadow: 2px 2px 10px 0px #aaa;
 }

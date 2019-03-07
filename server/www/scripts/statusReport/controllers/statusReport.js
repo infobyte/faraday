@@ -1281,10 +1281,11 @@ angular.module("faradayApp")
         };
 
         $scope.hideVulnPreview = function () {
-          $scope.isShowingPreview = false;
-          angular.element('#vuln-preview').removeClass('show-preview');
-          angular.element('.faraday-page-header').removeClass('show-preview');
-          angular.element('#btn_bar').removeClass('show-preview');
+            $scope.lastClickedVuln = undefined;
+            $scope.isShowingPreview = false;
+            angular.element('#vuln-preview').removeClass('show-preview');
+            angular.element('.faraday-page-header').removeClass('show-preview');
+            angular.element('#btn_bar').removeClass('show-preview');
         };
 
 
@@ -1295,9 +1296,26 @@ angular.module("faradayApp")
                 $scope.lastClickedVuln = undefined;
             }else{
                 $scope.showVulnPreview();
-                $scope.lastClickedVuln = vuln;
+                $scope.lastClickedVuln = angular.copy(vuln);
             }
         };
+
+        $scope.activeEditPreview = function (field) {
+            $scope.fieldToEdit = field;
+        };
+
+        $scope.processToEditPreview = function () {
+            if ($scope.lastClickedVuln.hasOwnProperty($scope.fieldToEdit) &&
+                $scope.lastClickedVuln[ $scope.fieldToEdit] !== undefined &&
+                $scope.lastClickedVuln[ $scope.fieldToEdit] !== ''){
+
+                $scope.fieldToEdit = undefined;
+
+                // UPDATE lastClickedVuln
+            }
+        };
+
+
 
 
         init();

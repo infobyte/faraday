@@ -1299,6 +1299,7 @@ angular.module("faradayApp")
                 $scope.realVuln = vuln;
                 $scope.lastClickedVuln = angular.copy(vuln);
                 uiCommonFact.updateBtnSeverityColor($scope.lastClickedVuln.severity, '#btn-chg-severity-prev', '#caret-chg-severity-prev');
+                uiCommonFact.updateBtnStatusColor($scope.lastClickedVuln.status, '#btn-chg-status-prev', '#caret-chg-status-prev');
             }
         };
 
@@ -1333,6 +1334,25 @@ angular.module("faradayApp")
                 $scope.fieldToEdit = 'severity';
                 $scope.lastClickedVuln.severity = severity;
                 uiCommonFact.updateBtnSeverityColor(severity, '#btn-chg-severity-prev', '#caret-chg-severity-prev');
+                $scope.processToEditPreview();
+         };
+
+          $scope.changeEaseOfResolution = function (easeofresolution) {
+                $scope.fieldToEdit = 'easeofresolution';
+                $scope.lastClickedVuln.easeofresolution = easeofresolution;
+                $scope.processToEditPreview();
+         };
+
+          $scope.changeStatus = function (status) {
+                $scope.fieldToEdit = 'status';
+                $scope.lastClickedVuln.status = status;
+                uiCommonFact.updateBtnStatusColor(status, '#btn-chg-status-prev', '#caret-chg-status-prev');
+                $scope.processToEditPreview();
+         };
+
+          $scope.changeConfirmed = function (confirmed) {
+                $scope.fieldToEdit = 'confirmed';
+                $scope.lastClickedVuln.confirmed = confirmed;
                 $scope.processToEditPreview();
          };
 

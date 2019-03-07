@@ -35,6 +35,31 @@ angular.module('faradayApp')
         };
 
 
+        uiCommonFact.updateBtnStatusColor = function (status, btnSelector, caretSelector) {
+            var color = undefined;
+            switch (status) {
+                case "opened":
+                    color = '#DB3130';
+                    break;
+                case "closed":
+                    color = '#97F72C';
+                    break;
+                case "re-opened":
+                    color = '#DBB72F';
+                    break;
+                case "risk-accepted":
+                    color = '#288DB4';
+                    break;
+                default:
+                    color = '#aaaaaa';
+                    break;
+            }
+
+            angular.element(btnSelector).css('background-color', color);
+            angular.element(caretSelector).css('background-color', color);
+        };
+
+
         return uiCommonFact;
 
     }]);

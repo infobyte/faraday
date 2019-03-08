@@ -640,4 +640,10 @@ button[disabled], html input[disabled] {
     margin-right: 0;
     margin-left: 0;
     margin-bottom: 0;
+    padding-bottom: 12px;
+}
+
+.preview-section .tab-pane-header {
+    font-size: 1.1em;
+    overflow-wrap: break-word;
 }

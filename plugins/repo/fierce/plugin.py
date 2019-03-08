@@ -62,8 +62,10 @@ class FierceParser(object):
             for i in hosts_list:
                 if i != "":
                     mstr = i.split("\t")
-                    item = {'host': mstr[1], 'type': "A", 'ip': mstr[0]}
-                    self.items.append(item)
+                    host = mstr[1]
+                    record = "A"
+                    ip = mstr[0]
+                    self.add_host_info_to_items(ip, host, record)
 
         self.isZoneVuln = False
         output = output.replace('\\$', '')
@@ -73,16 +75,30 @@ class FierceParser(object):
         if regex is not None:
 
             self.isZoneVuln = True
-            list = regex.group(1).split("\n")
-            for i in list:
+            lista = regex.group(1).split("\n")
+            for i in lista:
 
                 if i != "":
                     mstr = i.split()
                     if (mstr and mstr[0] != "" and len(mstr) > 3 and mstr[3] in valid_records):
-                        item = {'host': mstr[0],
-                                'type': mstr[3], 'ip': mstr[4]}
-                        self.items.append(item)
+                        host = mstr[0]
+                        record = mstr[3]
+                        ip = mstr[4]
+                        self.add_host_info_to_items(ip, host, record)
 
+    def add_host_info_to_items(self, ip_address, hostname, record):
+        data = {}
+        exists = False
+        for item in self.items:
+            if ip_address in item['ip']:
+                item['hosts'].append(hostname)
+                exists = True
+
+        if not exists:
+            data['ip'] = ip_address
+            data['hosts'] = [hostname]
+            data['record'] = record
+            self.items.append(data)
 
 class FiercePlugin(core.PluginBase):
     """
@@ -110,7 +126,7 @@ class FiercePlugin(core.PluginBase):
 
     def resolveCNAME(self, item, items):
         for i in items:
-            if (i['host'] == item['ip']):
+            if (item['ip'] in i['hosts']):
                 item['ip'] = i['ip']
                 return item
         try:
@@ -121,7 +137,7 @@ class FiercePlugin(core.PluginBase):
 
     def resolveNS(self, item, items):
         try:
-            item['host'] = item['ip']
+            item['hosts'][0] = item['ip']
             item['ip'] = socket.gethostbyname(item['ip'])
         except:
             pass
@@ -134,9 +150,9 @@ class FiercePlugin(core.PluginBase):
 
             item['isResolver'] = False
             item['isZoneVuln'] = False
-            if (item['type'] == "CNAME"):
+            if (item['record'] == "CNAME"):
                 self.resolveCNAME(item, parser.items)
-            if (item['type'] == "NS"):
+            if (item['record'] == "NS"):
                 self.resolveNS(item, parser.items)
                 item['isResolver'] = True
                 item['isZoneVuln'] = parser.isZoneVuln
@@ -148,15 +164,14 @@ class FiercePlugin(core.PluginBase):
                         item['ip'] = ''
 
         for item in parser.items:
-
             if item['ip'] == "127.0.0.1" or item['ip'] == '':
                 continue
             h_id = self.createAndAddHost(
                 item['ip'],
-                hostnames=[item['host']])
+                hostnames=item['hosts'])
 
             if item['isResolver']:
-                s_id = self.createAndAddServiceHost(
+                s_id = self.createAndAddServiceToHost(
                     h_id,
                     "domain",
                     "tcp",

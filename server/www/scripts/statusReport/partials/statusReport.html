@@ -295,7 +295,21 @@
             </div>
 
             <div class="preview-section">
-
+                <div ng-if="fieldToEdit !== 'desc'">
+                    <div class="col-md-10">
+                        <div class="tab-pane-header">{{lastClickedVuln.desc}}</div>
+                    </div>
+                    <div class="col-md-2">
+                        <span class="preview-icon" ng-click="activeEditPreview('desc')"><i class="fa fa-pencil fa-lg" aria-hidden="true"></i></span>
+                    </div>
+                </div>
+                <div class="form-group" ng-if="fieldToEdit === 'desc'">
+                    <label for="inp-edit-desc"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true"></i>    Vulnerability description</label>
+                    <textarea type="text" class="form-control" id="inp-edit-desc" rows="5"
+                               ng-model="lastClickedVuln.desc" name="desc" placeholder="Vulnerability description"
+                               ng-blur="processToEditPreview()"
+                              autofocus></textarea>
+                </div>
 
             </div>
         </div>

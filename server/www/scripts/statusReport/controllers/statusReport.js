@@ -1356,5 +1356,11 @@ angular.module("faradayApp")
                 $scope.processToEditPreview();
          };
 
+          $scope.toggleImpact = function (key) {
+              $scope.fieldToEdit = 'impact';
+              $scope.lastClickedVuln.impact[key] = !$scope.lastClickedVuln.impact[key];
+              $scope.processToEditPreview();
+          };
+
         init();
     }]);

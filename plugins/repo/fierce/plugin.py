@@ -41,40 +41,39 @@ class FierceParser(object):
     """
 
     def __init__(self, output):
-
         self.target = None
         self.items = []
 
-        r = re.search(
-            "DNS Servers for ([\w\.-]+):\r\n([^$]+)Trying zone transfer first...",
+        regex = re.search(
+            "DNS Servers for ([\w\.-]+):\n([^$]+)Trying zone transfer first...",
             output)
 
-        if r is not None:
-            self.target = r.group(1)
-            mstr = re.sub("\t", "", r.group(2))
+        if regex is not None:
+            self.target = regex.group(1)
+            mstr = re.sub("\t", "", regex.group(2))
             self.dns = mstr.split()
 
-        r = re.search(
-            "Now performing [\d]+ test\(s\)...\r\n([^$]+)\x0D\nSubnets found ",
+        regex = re.search(
+            "Now performing [\d]+ test\(s\)...\n([^$]+)\nSubnets found ",
             output)
 
-        if r is not None:
-            list = r.group(1).split("\r\n")
-            for i in list:
+        if regex is not None:
+            hosts_list = regex.group(1).split("\n")
+            for i in hosts_list:
                 if i != "":
                     mstr = i.split("\t")
                     item = {'host': mstr[1], 'type': "A", 'ip': mstr[0]}
                     self.items.append(item)
 
         self.isZoneVuln = False
-        output= output.replace('\\$', '')
-        r = re.search(
+        output = output.replace('\\$', '')
+        regex = re.search(
             "Whoah, it worked - misconfigured DNS server found:([^$]+)\There isn't much point continuing, you have  everything.", output)
 
-        if r is not None:
+        if regex is not None:
 
             self.isZoneVuln = True
-            list = r.group(1).split("\n")
+            list = regex.group(1).split("\n")
             for i in list:
 
                 if i != "":
@@ -152,17 +151,13 @@ class FiercePlugin(core.PluginBase):
 
             if item['ip'] == "127.0.0.1" or item['ip'] == '':
                 continue
-            h_id = self.createAndAddHost(item['ip'])
-            i_id = self.createAndAddInterface(
-                h_id,
+            h_id = self.createAndAddHost(
                 item['ip'],
-                ipv4_address=item['ip'],
-                hostname_resolution=[item['host']])
+                hostnames=[item['host']])
 
             if item['isResolver']:
-                s_id = self.createAndAddServiceToInterface(
+                s_id = self.createAndAddServiceHost(
                     h_id,
-                    i_id,
                     "domain",
                     "tcp",
                     ports=['53'])

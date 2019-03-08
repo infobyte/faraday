@@ -168,6 +168,7 @@
         <div id="vuln-preview">
             <div class="preview-header">
                 <span class="prev-header-id preview-tag">ID: {{lastClickedVuln._id}}</span>
+                <span class="prev-header-id preview-tag">{{lastClickedVuln.target}}</span>
                 <button type="button" class="close" ng-click="hideVulnPreview()" data-dismiss="alert"><span area-hidden="true">&times;</span><span class="sr-only">Close</span></button>
             </div>
 
@@ -315,7 +316,12 @@
 
 
             <div class="preview-section">
-
+                <div class="col-md-12">
+                        <div class="tab-pane-header">Hostnames:</div>
+                        <div class="tab-pane-header" ng-repeat="hostname in lastClickedVuln.hostnames">
+                            <i class="fa fa-desktop"></i>   &nbsp;  {{hostname}}
+                        </div>
+                </div>
 
             </div>
 

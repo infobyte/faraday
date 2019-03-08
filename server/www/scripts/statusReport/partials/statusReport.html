@@ -169,6 +169,8 @@
             <div class="preview-header">
                 <span class="prev-header-id preview-tag">ID: {{lastClickedVuln._id}}</span>
                 <span class="prev-header-id preview-tag">{{lastClickedVuln.target}}</span>
+                <span class="prev-header-id preview-tag" ng-if="lastClickedVuln.type !== 'VulnerabilityWeb'">Vulnerability</span>
+                <span class="prev-header-id preview-tag" ng-if="lastClickedVuln.type === 'VulnerabilityWeb'">Web vulnerability</span>
                 <button type="button" class="close" ng-click="hideVulnPreview()" data-dismiss="alert"><span area-hidden="true">&times;</span><span class="sr-only">Close</span></button>
             </div>
 

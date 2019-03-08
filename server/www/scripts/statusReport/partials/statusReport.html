@@ -294,10 +294,10 @@
                 </div>
             </div>
 
-            <div class="preview-section">
+            <div class="preview-section row">
                 <div ng-if="fieldToEdit !== 'desc'">
                     <div class="col-md-10">
-                        <div class="tab-pane-header">{{lastClickedVuln.desc}}</div>
+                        <div class="tab-pane-header" title="{{lastClickedVuln.desc.length > 500 ? lastClickedVuln.desc:''}}">{{lastClickedVuln.desc | limitTo:500 }} <span ng-if="lastClickedVuln.desc.length > 500">...</span></div>
                     </div>
                     <div class="col-md-2">
                         <span class="preview-icon" ng-click="activeEditPreview('desc')"><i class="fa fa-pencil fa-lg" aria-hidden="true"></i></span>
@@ -312,6 +312,13 @@
                 </div>
 
             </div>
+
+
+            <div class="preview-section">
+
+
+            </div>
+
         </div>
     </div>
     <!-- .right-main -->

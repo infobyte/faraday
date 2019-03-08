@@ -634,3 +634,9 @@ button[disabled], html input[disabled] {
     color: #555;
     box-shadow: 2px 2px 10px 0px #aaa;
 }
+
+.preview-section.row {
+    margin-right: 0;
+    margin-left: 0;
+    margin-bottom: 0;
+}

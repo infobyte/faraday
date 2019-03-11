@@ -10,6 +10,7 @@ See the file 'doc/LICENSE' for the license information
 
 from plugins import core
 import re
+import os
 import socket
 import json
 
@@ -36,33 +37,43 @@ class WPScanPlugin(core.PluginBase):
         core.PluginBase.__init__(self)
         self.id = "wpscan"
         self.name = "WPscan"
-        self.plugin_version = "0.0.1"
-        self.version = "2.9.1"
+        self.plugin_version = "0.2"
+        self.version = "3.4.5"
         self._command_regex = re.compile(
                 r"^((sudo )?(ruby )?(\.\/)?(wpscan)(.rb)?)")
-        self.addSetting("WPscan path", str, "~/wpscan")
-        self.wpPath         = self.getSetting("WPscan path")
-        self.themes         = {}
-        self.plugins        = {}
-        self.wpversion      = ''
-        self.risks          = {'AUTHBYPASS' : 'high',
-         		       'BYPASS'     : 'med',
-         		       'CSRF'       : 'med',
-                               'DOS'        : 'med',
-                               'FPD'        : 'info',
-                               'LFI'        : 'high',
-                               'MULTI'      : 'unclassified',
-                               'PRIVESC'    : 'high',
-                               'RCE'        : 'critical',
-                               'REDIRECT'   : 'low',
-                               'RFI'        : 'critical',
-                               'SQLI'       : 'high',
-                               'SSRF'       : 'med',
-                               'UNKNOWN'    : 'unclassified',
-                               'UPLOAD'     : 'critical',
-                               'XSS'        : 'high',
-                               'XXE'        : 'high'
-                               }
+        self.wpPath = self.check_wpscan_path()
+        self.addSetting("WPscan path", str, self.wpPath)
+        self.themes = {}
+        self.plugins = {}
+        self.wpversion = ''
+        self.risks = {'AUTHBYPASS': 'high',
+                        'BYPASS': 'med',
+                        'CSRF': 'med',
+                        'DOS': 'med',
+                        'FPD': 'info',
+                        'LFI': 'high',
+                        'MULTI': 'unclassified',
+                        'OBJECTINJECTION': 'med',
+                        'PRIVESC': 'high',
+                        'RCE': 'critical',
+                        'REDIRECT': 'low',
+                        'RFI': 'critical',
+                        'SQLI': 'high',
+                        'SSRF': 'med',
+                        'UNKNOWN': 'unclassified',
+                        'UPLOAD': 'critical',
+                        'XSS': 'high',
+                        'XXE': 'high'}
+
+    def check_wpscan_path(self):
+        home = os.path.expanduser("~")
+
+        if os.path.exists(home + '/wpscan'):
+            return home + '/wpscan'
+        elif os.path.exists(home + '/.wpscan'):
+            return home + '/.wpscan'
+        else:
+            return None
 
     def getPort(self, host, proto):
         p = re.search(r"\:([0-9]+)\/", host)
@@ -71,74 +82,85 @@ class WPScanPlugin(core.PluginBase):
         elif proto == 'https':
             return 443
         else:
-           return 80
-
+            return 80
 
     def parseOutputWpscan(self, output):
-	sp = output.split('0m Name:') #cut by name
-	for e in sp:
-    	    if 'Title:' in e:
+        sp = output.split('0m Name:')  # cut by name
+        for e in sp:
+            if 'Title:' in e:
                 if 'WordPress version' in e:
-                    r = re.search(r'WordPress version (\d.\w)', e) #get wordpress version
+                    r = re.search(r'WordPress version (\d.\w)', e)  # get wordpress version
                     self.wpversion = r.group(1)
 
                 elif 'wp-content/themes/' in e:
-                    name  = re.findall(r"Location: .+themes\/(.+)\/", e) # get theme name
-                    title = re.findall(r"Title: (.+)", e) # get vulnerabilities title
-                    self.themes[name[0]] = title #insert theme in dicc {'themeName' : ['titles', 'titles']}
+                    name = re.findall(r"Location: .+themes\/(.+)\/", e)  # get theme name
+                    title = re.findall(r"Title: (.+)", e)  # get vulnerabilities title
+                    self.themes[name[0]] = title  # insert theme in dicc {'themeName' : ['titles', 'titles']}
 
                 else:
-                    name = re.findall(r"Location: .+plugins\/(.+)\/", e) #get plugin name
-                    title     = re.findall(r"Title: (.+)", e) #get vulnerabilities title
-                    self.plugins[name[0]] = title #insert plugin in dicc {'plugin' : ['titles', 'titles']}
+                    name = re.findall(r"Location: .+plugins\/(.+)\/", e)  # get plugin name
+                    title = re.findall(r"Title: (.+)", e)  # get vulnerabilities title
+                    self.plugins[name[0]] = title  # insert plugin in dicc {'plugin' : ['titles', 'titles']}
 
     def addThemesOrPluginsVulns(self, db, dic, host_id, serv_id, domain, wp_url, name):
-        with open(self.wpPath+'/data/'+db, "r") as data:
+        with open(self.wpPath+'/db/'+db, "r") as data:
             j = json.load(data)
             for p in dic:
                 for title in dic[p]:
-                    for vuln in j[p]['vulnerabilities']: #iter vulnerabilities
-                        if vuln['title'] == title: # if output title is equal
-                            title     = vuln['title'] #title
-                            risk      = self.risks[vuln['vuln_type']] #vuln type (xss,rce,lfi,etc) - risk
-                            location  = wp_url+'wp-content/'+name+'/'+p+'/'
-                            if vuln['references'].has_key('url') == True: #if references
+                    for vuln in j[p]['vulnerabilities']:  # iter vulnerabilities
+                        if vuln['title'] == title:  # if output title is equal
+                            title = vuln['title']  # title
+                            risk = self.risks[vuln['vuln_type']]  # vuln type (xss,rce,lfi,etc) - risk
+                            location = wp_url+'wp-content/'+name+'/'+p+'/'
+                            if vuln['references'].has_key('url') == True:  # if references
                                 refs = vuln['references']['url'] #references[]
                             else:
-                                refs = [] #references null
-                            self.createAndAddVulnWebToService(host_id, serv_id, title, severity = risk, website = domain, ref = refs, path = location)
-
+                                refs = []  # references null
+                            self.createAndAddVulnWebToService(
+                                host_id,
+                                serv_id,
+                                title,
+                                severity=risk,
+                                website=domain,
+                                ref=refs,
+                                path=location)
 
     def addWPVulns(self, db, version, host_id, serv_id, domain):
-        with open(self.wpPath+'/data/'+db, "r") as data:
+        with open(self.wpPath+'/db/'+db, "r") as data:
             j = json.load(data)
-            for vuln in j[version]['vulnerabilities']: #iter vulnerabilities
-                title     = vuln['title'] #title
-                risk      = self.risks[vuln['vuln_type']] #vuln type (xss,rce,lfi,etc) - risk
-                if vuln['references'].has_key('url') == True: #if references
-                    refs = vuln['references']['url'] #references[]
+            for vuln in j[version]['vulnerabilities']: # iter vulnerabilities
+                title = vuln['title']  # title
+                risk = self.risks[vuln['vuln_type']]  # vuln type (xss,rce,lfi,etc) - risk
+                if vuln['references'].has_key('url') == True:  # if references
+                    refs = vuln['references']['url']  # references[]
                 else:
-                    refs = [] #references null
-                self.createAndAddVulnWebToService(host_id, serv_id, title, severity = risk, website = domain, ref = refs)
-
+                    refs = []  # references null
+                self.createAndAddVulnWebToService(
+                    host_id,
+                    serv_id,
+                    title,
+                    severity=risk,
+                    website=domain,
+                    ref=refs)
 
     def parseOutputString(self, output, debug=False):
         """Parses the output given as a string by the wpscan tool and creates
-        the appropiate hosts, interface, service and vulnerabilites. Return
+        the appropiate hosts, service and vulnerabilites. Return
         nothing.
         """
         self.parseOutputWpscan(output)
-        wp_url  = re.search(r"URL: ((http[s]?)\:\/\/([\w\.]+)[.\S]+)", output)
+        wp_url = re.search(r"URL: ((http[s]?)\:\/\/([\w\.]+)[.\S]+)", output)
         service, base_url = self.__get_service_and_url_from_output(output)
         port = self.getPort(wp_url.group(1), service)
         host_ip = socket.gethostbyname_ex(base_url)[2][0]
-        host_id = self.createAndAddHost(host_ip)
-        interface_id = self.createAndAddInterface(host_id, host_ip,
-                                                  ipv4_address=host_ip,
-                                                  hostname_resolution=base_url)
+        host_id = self.createAndAddHost(
+                                        host_ip,
+                                        hostnames=[base_url])
 
-        service_id = self.createAndAddServiceToInterface(host_id, interface_id,
-                                                         service, "tcp", ports = [port])
+        service_id = self.createAndAddServiceToHost(host_id,
+                                                    service,
+                                                    "tcp",
+                                                    ports=[port])
 
         potential_vulns = re.findall(r"(\[\!\].*)", output)
         for potential_vuln in potential_vulns:
@@ -150,15 +172,35 @@ class WPScanPlugin(core.PluginBase):
                                                   name=vuln_name,
                                                   website=base_url,
                                                   path=path, severity=severity)
-        
-        if len(self.plugins) > 0:
-            self.addThemesOrPluginsVulns('plugins.json', self.plugins, host_id, service_id, base_url, wp_url.group(1), 'plugins')
-        if len(self.wpversion) > 0:
-            self.addWPVulns('wordpresses.json', self.wpversion, host_id, service_id, base_url)
-        if len(self.themes) > 0:
-            self.addThemesOrPluginsVulns('themes.json', self.themes, host_id, service_id, base_url, wp_url.group(1), 'themes')
 
-    
+        if len(self.plugins) > 0:
+            self.addThemesOrPluginsVulns(
+                'plugins.json',
+                self.plugins,
+                host_id,
+                service_id,
+                base_url,
+                wp_url.group(1),
+                'plugins')
+
+        if len(self.wpversion) > 0:
+            self.addWPVulns(
+                'wordpresses.json',
+                self.wpversion,
+                host_id,
+                service_id,
+                base_url)
+
+        if len(self.themes) > 0:
+            self.addThemesOrPluginsVulns(
+                'themes.json',
+                self.themes,
+                host_id,
+                service_id,
+                base_url,
+                wp_url.group(1),
+                'themes')
+
     def __get_service_and_url_from_output(self, output):
         """ Return the service (http or https) and the base URL (URL without
         protocol) from a given string. In case more than one URL is found,

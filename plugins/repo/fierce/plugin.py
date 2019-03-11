@@ -12,6 +12,7 @@ import socket
 import re
 import os
 import sys
+import random
 
 current_path = os.path.abspath(os.getcwd())
 
@@ -100,6 +101,7 @@ class FierceParser(object):
             data['record'] = record
             self.items.append(data)
 
+
 class FiercePlugin(core.PluginBase):
     """
     Example plugin to parse fierce output.
@@ -117,6 +119,8 @@ class FiercePlugin(core.PluginBase):
         self._command_regex = re.compile(
             r'^(sudo fierce|fierce|sudo fierce\.pl|fierce\.pl|perl fierce\.pl|\.\/fierce\.pl).*?')
         global current_path
+
+        self.xml_arg_re = re.compile(r"^.*(>\s*[^\s]+).*$")
 
     def canParseCommandString(self, current_input):
         if self._command_regex.match(current_input.strip()):
@@ -186,7 +190,22 @@ class FiercePlugin(core.PluginBase):
                         ref=["CVE-1999-0532"])
 
     def processCommandString(self, username, current_path, command_string):
-        return None
+        self._output_file_path = os.path.join(
+            self.data_path,
+            "%s_%s_output-%s.txt" % (
+                self.get_ws(),
+                self.id,
+                random.uniform(1, 10))
+        )
+
+        arg_match = self.xml_arg_re.match(command_string)
+
+        if arg_match is None:
+            return "%s > %s" % (command_string, self._output_file_path)
+        else:
+            return re.sub(arg_match.group(1),
+                          r"> %s" % self._output_file_path,
+                          command_string)
 
 
 def createPlugin():

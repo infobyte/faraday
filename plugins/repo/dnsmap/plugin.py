@@ -42,11 +42,11 @@ class DnsmapParser(object):
     def __init__(self, output):
         self.items = []
         if "\n\n" in output:
-            self.parse_from_txt(output)
+            self.parse_txt(output)
         else:
-            self.parse_from_xml(output)
+            self.parse_csv(output)
 
-    def parse_from_txt(self, output):
+    def parse_txt(self, output):
         hosts = output.split("\n\n")
 
         for host in hosts:
@@ -54,14 +54,14 @@ class DnsmapParser(object):
             if len(host_data) == 2:
                 ip = self.clean_ip(host_data[1])
                 hostname = host_data[0]
-                self.parse_ip(ip, hostname)
+                self.add_host_info_to_items(ip, hostname)
             elif len(host_data) > 2:
                 hostname = host_data.pop(0)
                 for ip_address in host_data:
                     ip = self.clean_ip(ip_address)
-                    self.parse_ip(ip, hostname)
+                    self.add_host_info_to_items(ip, hostname)
 
-    def parse_from_xml(self, output):
+    def parse_csv(self, output):
         hosts = filter(None, output.split("\n"))
 
         for host in hosts:
@@ -69,18 +69,18 @@ class DnsmapParser(object):
             if host_data[1].count(',') == 0:
                 ip = host_data[1]
                 hostname = host_data[0]
-                self.parse_ip(ip, hostname)
+                self.add_host_info_to_items(ip, hostname)
             else:
                 hostname = host_data.pop(0)
                 ips = host_data[0].split(",")
                 for ip_address in ips:
-                    self.parse_ip(ip_address, hostname)
+                    self.add_host_info_to_items(ip_address, hostname)
 
     def clean_ip(self, item):
         ip = item.split(':', 1)
         return ip[1].strip()
 
-    def parse_ip(self, ip_address, hostname):
+    def add_host_info_to_items(self, ip_address, hostname):
         data = {}
         exists = False
         for item in self.items:
@@ -101,7 +101,7 @@ class DnsmapPlugin(core.PluginBase):
 
         core.PluginBase.__init__(self)
         self.id = "Dnsmap"
-        self.name = "Dnsmap XML Output Plugin"
+        self.name = "Dnsmap Output Plugin"
         self.plugin_version = "0.3"
         self.version = "0.30"
         self.options = None

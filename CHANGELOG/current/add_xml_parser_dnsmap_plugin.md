@@ -1,1 +1,1 @@
-Add XML parser to Dnsmap Plugin
+Add CSV parser to Dnsmap Plugin

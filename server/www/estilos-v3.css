@@ -567,19 +567,20 @@ button[disabled], html input[disabled] {
 #vuln-preview {
     position: fixed;
     z-index: 100000;
-    top: 3px;
-    height: 100%;
-    background-color: #f4f3f4;
+    top: 139px;
+    height: calc(100% - 139px);
+    background-color: #fff;
     border-left: 1px solid #ddd;
+    border-top: solid 4px #e5e5e5;
     width: 0;
     transition: 0.5s;
-    right: -30%;
+    right: -75%;
     padding: 16px;
 }
 
 #vuln-preview.show-preview{
     transition: width 0.3s!important;
-    width: 25.0%!important;
+    width: 70%!important;
     right: 0!important;
 }
 
@@ -646,4 +647,13 @@ button[disabled], html input[disabled] {
 .preview-section .tab-pane-header {
     font-size: 1.1em;
     overflow-wrap: break-word;
+}
+
+.prev-apply-template.active{
+    /*transition: 0.1s;*/
+    width: 75%!important;
+}
+
+.prev-apply-template {
+    padding-right: 0;
 }

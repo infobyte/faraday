@@ -60,6 +60,28 @@ angular.module('faradayApp')
         };
 
 
+        uiCommonFact.populate = function (template, vuln) {
+            for (var key in vuln) {
+                if (key != "refs" && key != "policyviolations" && template.hasOwnProperty(key) && vuln.hasOwnProperty(key)) {
+                    vuln[key] = template[key];
+                }
+            }
+            // convert refs to an array of objects
+            var refs = [];
+            template.refs.forEach(function (ref) {
+                refs.push({value: ref});
+            });
+            vuln.refs = refs;
+
+            // convert policyviolations to an array of objects
+            var policyviolations = [];
+            template.policyviolations.forEach(function (policyviolation) {
+                policyviolations.push({value: policyviolation});
+            });
+            vuln.policyviolations = policyviolations;
+        };
+
+
         return uiCommonFact;
 
     }]);

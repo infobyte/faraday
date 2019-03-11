@@ -36,6 +36,8 @@ angular.module("faradayApp")
 
         $scope.isShowingPreview;
 
+        $scope.cweList;
+        $scope.temTemplate;
 
 
         var allVulns;
@@ -294,6 +296,14 @@ angular.module("faradayApp")
 
             $cookies.remove("selectedVulns");
             $scope.isShowingPreview = false;
+
+            $scope.cweList = [];
+
+            vulnModelsManager.get().then(function (data) {
+                $scope.cweList = data;
+            });
+
+            $scope.temTemplate = undefined;
         };
 
 
@@ -1276,16 +1286,16 @@ angular.module("faradayApp")
         $scope.showVulnPreview = function () {
           $scope.isShowingPreview = true;
           angular.element('#vuln-preview').addClass('show-preview');
-          angular.element('.faraday-page-header').addClass('show-preview');
-          angular.element('#btn_bar').addClass('show-preview');
+          // angular.element('.faraday-page-header').addClass('show-preview');
+          // angular.element('#btn_bar').addClass('show-preview');
         };
 
         $scope.hideVulnPreview = function () {
             $scope.lastClickedVuln = undefined;
             $scope.isShowingPreview = false;
             angular.element('#vuln-preview').removeClass('show-preview');
-            angular.element('.faraday-page-header').removeClass('show-preview');
-            angular.element('#btn_bar').removeClass('show-preview');
+            // angular.element('.faraday-page-header').removeClass('show-preview');
+            // angular.element('#btn_bar').removeClass('show-preview');
         };
 
 
@@ -1301,6 +1311,7 @@ angular.module("faradayApp")
                 uiCommonFact.updateBtnSeverityColor($scope.lastClickedVuln.severity, '#btn-chg-severity-prev', '#caret-chg-severity-prev');
                 uiCommonFact.updateBtnStatusColor($scope.lastClickedVuln.status, '#btn-chg-status-prev', '#caret-chg-status-prev');
             }
+            $scope.cwe_selected = undefined
         };
 
         $scope.activeEditPreview = function (field) {
@@ -1318,9 +1329,11 @@ angular.module("faradayApp")
                         $scope.isUpdatingVuln = false;
                         $scope.fieldToEdit = undefined;
                         }, function (data) {
+                            $scope.hideVulnPreview();
                             commonsFact.showMessage("Error updating vuln " + $scope.realVuln.name + " (" + $scope.realVuln._id + "): " + (data.message || JSON.stringify(data.messages)));
                             $scope.fieldToEdit = undefined;
                             $scope.isUpdatingVuln = false;
+
                     });
                 }else{
                     $scope.fieldToEdit = undefined;
@@ -1361,6 +1374,37 @@ angular.module("faradayApp")
               $scope.lastClickedVuln.impact[key] = !$scope.lastClickedVuln.impact[key];
               $scope.processToEditPreview();
           };
+
+
+          $scope.populate = function () {
+              $scope.temTemplate = angular.copy($scope.lastClickedVuln);
+              uiCommonFact.populate($scope.cwe_selected, $scope.lastClickedVuln);
+          };
+
+          $scope.applyTemplate = function () {
+              $scope.fieldToEdit = 'template';
+              $scope.isUpdatingVuln = true;
+              vulnsManager.updateVuln($scope.realVuln, $scope.lastClickedVuln).then(function () {
+                  $scope.isUpdatingVuln = false;
+                  $scope.fieldToEdit = undefined;
+                  $scope.temTemplate = undefined;
+                  $scope.cwe_selected = undefined
+              }, function (data) {
+                  commonsFact.showMessage("Error updating vuln " + $scope.realVuln.name + " (" + $scope.realVuln._id + "): " + (data.message || JSON.stringify(data.messages)));
+                  $scope.fieldToEdit = undefined;
+                  $scope.isUpdatingVuln = false;
+                  $scope.temTemplate = undefined;
+                  $scope.cwe_selected = undefined;
+                  $scope.hideVulnPreview();
+              });
+          };
+
+           $scope.discardTemplate = function () {
+              uiCommonFact.populate($scope.temTemplate, $scope.lastClickedVuln);
+              $scope.temTemplate = undefined;
+              $scope.cwe_selected = undefined;
+          };
+
 
         init();
     }]);

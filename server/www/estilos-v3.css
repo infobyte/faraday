@@ -668,3 +668,7 @@ button[disabled], html input[disabled] {
     height: 230px;
     overflow-y: auto;
 }
+
+.margin-bottom-24{
+    margin-bottom: 24px;
+}

@@ -1320,10 +1320,10 @@ angular.module("faradayApp")
             $scope.fieldToEdit = field;
         };
 
-        $scope.processToEditPreview = function () {
-            if ($scope.lastClickedVuln.hasOwnProperty($scope.fieldToEdit) &&
+        $scope.processToEditPreview = function (isMandatory) {
+            if (($scope.lastClickedVuln.hasOwnProperty($scope.fieldToEdit) &&
                 $scope.lastClickedVuln[$scope.fieldToEdit] !== undefined &&
-                $scope.lastClickedVuln[$scope.fieldToEdit] !== ''){
+                $scope.lastClickedVuln[$scope.fieldToEdit] !== '') || isMandatory === false){
 
                 $scope.isUpdatingVuln = true;
                 if ($scope.realVuln[$scope.fieldToEdit] !== $scope.lastClickedVuln[$scope.fieldToEdit]){

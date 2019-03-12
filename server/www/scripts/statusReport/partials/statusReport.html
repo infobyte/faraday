@@ -527,16 +527,13 @@
                         <div class="col-md-12 custom-divider"></div>
 
                         <div class="col-md-12">
-                        <!--<div class="tab-pane-header">Description</div>-->
-                        <!--<div class="form-group" ng-class="{'has-error': formEdit.desc.$invalid }">-->
-                            <!--<label class="sr-only" for="vuln-data">Vuln description</label>-->
-                            <!--<textarea class="form-control" id="vuln-desc" name="desc" rows="5"-->
-                                      <!--ng-model="lastClickedVuln.desc" placeholder="Description"-->
-                            <!--style="margin: 0 2px 0 0;" required></textarea>-->
-                        <!--</div>&lt;!&ndash; .form-group &ndash;&gt;-->
-
                             <div ng-if="fieldToEdit !== 'desc'" class="pretty-text">
-                                <div class="col-md-10">
+                                <div class="col-md-10 margin-bottom-24">
+                                    <div ng-if="lastClickedVuln.desc === '' || lastClickedVuln.desc === undefined"  style="margin-bottom: 15px;color: #aaa;">
+                                        <p>
+                                            No Description was found.
+                                        </p>
+                                    </div>
                                     <div class="tab-pane-header" id="desc-prev" title="{{lastClickedVuln.desc.length > 450 ? lastClickedVuln.desc:''}}" >
                                         <span ng-bind-html="lastClickedVuln.desc | limitTo: 450"> </span>
                                         <span class="tab-pane-header" ng-if="lastClickedVuln.desc.length > 450">...</span>
@@ -555,7 +552,6 @@
                                           autofocus>
                                 </textarea>
                             </div>
-
                         </div>
 
                         <div class="form-group margin-top-22px">
@@ -587,14 +583,33 @@
 
 
                     <div class="col-md-6">
-                        <div class="col-md-12">
-                        <div class="tab-pane-header">Resolution</div>
-                        <div class="form-group">
-                            <label class="sr-only" for="vuln-data">Vuln resolution</label>
-                            <textarea class="form-control" id="vuln-resolution" rows="5"
-                                      ng-model="lastClickedVuln.resolution" placeholder="Resolution"></textarea>
-                        </div><!-- .form-group -->
-                    </div>
+                        <div class="row">
+                            <div ng-if="fieldToEdit !== 'resolution'" class="pretty-text">
+                                <div class="col-md-10 margin-bottom-24">
+                                    <div ng-if="lastClickedVuln.resolution === '' || lastClickedVuln.resolution === undefined"  style="margin-bottom: 15px;color: #aaa;">
+                                        <p>
+                                            No Resolution was found.
+                                        </p>
+                                    </div>
+                                    <div class="tab-pane-header" id="resolution-prev" title="{{lastClickedVuln.resolution.length > 450 ? lastClickedVuln.resolution:''}}" >
+                                        <span ng-bind-html="lastClickedVuln.resolution | limitTo: 450"> </span>
+                                        <span class="tab-pane-header" ng-if="lastClickedVuln.resolution.length > 450">...</span>
+                                    </div>
+
+                                </div>
+                                <div class="col-md-2">
+                                    <span class="preview-icon" title="Edit Resolution" ng-click="activeEditPreview('resolution')"><i class="fa fa-pencil fa-lg" aria-hidden="true"></i></span>
+                                </div>
+                            </div>
+                            <div class="form-group" ng-if="fieldToEdit === 'resolution'">
+                                <label for="inp-edit-desc"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true"></i>    Resolution</label>
+                                <textarea type="text" class="form-control" id="inp-edit-res" rows="5"
+                                          ng-model="lastClickedVuln.resolution" name="desc" placeholder="Resolution"
+                                          ng-blur="processToEditPreview(false)"
+                                          autofocus>
+                                </textarea>
+                            </div>
+                        </div>
 
                         <div class="form-group margin-top-22px">
                         <div class="col-md-12">

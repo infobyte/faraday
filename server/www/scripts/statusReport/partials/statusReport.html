@@ -612,26 +612,28 @@
                         </div>
 
                         <div class="form-group margin-top-22px">
-                        <div class="col-md-12">
-                            <div class="tab-pane-header">Policy Violations</div>
-                            <div class="input-group margin-bottom-sm">
-                                <label class="sr-only" for="vuln-policyviolations">Policy Violations</label>
-                                <input type="text" class="form-control" id="vuln-policyviolations"
-                                       placeholder="Policy Violations" ng-model="modal.new_policyviolation"/>
-                                <span class="input-group-addon cursor" ng-click="modal.newPolicyViolation()"><i
-                                        class="fa fa-plus-circle"></i></span>
+                            <div class="show-scroll row">
+                                <div class="col-md-12">
+                                    <div class="tab-pane-header">Policy Violations</div>
+                                    <div class="input-group margin-bottom-sm">
+                                        <label class="sr-only" for="vuln-policyviolations"> <i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'policyviolations'"></i>Policy Violations</label>
+                                        <input type="text" class="form-control" id="vuln-policyviolations"
+                                               placeholder="Policy Violations" ng-model="new_policyviolation"/>
+                                        <span class="input-group-addon cursor" ng-click="newPolicyviolation()"><i
+                                                class="fa fa-plus-circle"></i></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-12 reference" ng-repeat="policyviolation in lastClickedVuln.policyviolations">
+                                    <div class="input-group margin-bottom-sm">
+                                        <label class="sr-only" for="vuln-policyviolations-value">Policy Violation</label>
+                                        <input type="text" class="form-control" id="vuln-policyviolations-value"
+                                               placeholder="Policy Violation" ng-model="policyviolation" disabled/>
+                                        <span class="input-group-addon cursor"
+                                              ng-click="removePolicyviolation($index)"><i
+                                                class="fa fa-minus-circle"></i></span>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-12 reference" ng-repeat="policyviolation in lastClickedVuln.policyviolations">
-                            <div class="input-group margin-bottom-sm">
-                                <label class="sr-only" for="vuln-policyviolations-value">Policy Violation</label>
-                                <input type="text" class="form-control" id="vuln-policyviolations-value"
-                                       placeholder="Policy Violation" ng-model="policyviolation.value" disabled/>
-                                <span class="input-group-addon cursor"
-                                      ng-click="lastClickedVuln.policyviolations.splice($index, 1)"><i
-                                        class="fa fa-minus-circle"></i></span>
-                            </div>
-                        </div>
                     </div><!-- .form-group -->
 
                         <div class="col-md-12 margin-bottom-15px margin-top-22px">

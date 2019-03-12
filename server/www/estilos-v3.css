@@ -669,6 +669,10 @@ button[disabled], html input[disabled] {
     overflow-y: auto;
 }
 
+.show-scroll input {
+    color: #444!important;
+}
+
 .margin-bottom-24{
     margin-bottom: 24px;
 }

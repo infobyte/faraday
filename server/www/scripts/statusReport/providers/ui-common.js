@@ -76,7 +76,7 @@ angular.module('faradayApp')
             // convert policyviolations to an array of objects
             var policyviolations = [];
             template.policyviolations.forEach(function (policyviolation) {
-                policyviolations.push({value: policyviolation});
+                policyviolations.push(policyviolation);
             });
             vuln.policyviolations = policyviolations;
         };
@@ -90,6 +90,19 @@ angular.module('faradayApp')
                     }).length === 0) {
                     vuln.refs.push(newRef);
                     newRef = "";
+                }
+            }
+        };
+
+
+        uiCommonFact.newPolicyViolation = function (newPolicyViolation, vuln) {
+            if (newPolicyViolation !== "") {
+                // we need to check if the policy violation already exists
+                if (vuln.policyviolations.filter(function (policyviolation) {
+                        return policyviolation.value === newPolicyViolation
+                    }).length === 0) {
+                    vuln.policyviolations.push(newPolicyViolation);
+                    newPolicyViolation = "";
                 }
             }
         };

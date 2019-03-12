@@ -819,35 +819,123 @@
                 <div id="tab-evidence_prev" class="container tab-pane fade"><br>
                     <div class="col-md-12 margin-bottom-15px">
                         <div class="tab-pane-header">Evidence</div>
-                        <div class="alert alert-danger normal-size" role="alert" ng-if="modal.file_name_error">
-                            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-                            <span class="sr-only">Error:</span>
-                            Cannot upload evidence starting with underscore, please choose a different name for the
-                            file.
-                        </div>
-                        <div class="form-group normal-size">
-                            <input type="file" id="evidence" ng-file-select ng-multiple="true" resetOnClick="false"
-                                   ng-file-change="modal.selectedFiles($files, $event)"/>
-                            <p class="help-block">Multiple files are allowed.</p>
-                        </div><!-- .form-group -->
-                        <div id="evidenceFiles" class="normal-size" ng-if="lastClickedVuln._attachments">
-                            <ul>
-                                <li ng-repeat="(name, file) in lastClickedVuln._attachments">
-                                    <div class="btn-group">
-                                        <button type="button" class="btn btn-default"
-                                                ng-click="modal.openEvidence(name)">
-                                            <span class="fa {{icons[name]}}"
-                                                  title="Evidence {{name | decodeURIComponent}}"></span> {{name |
-                                            decodeURIComponent}}
-                                        </button><!-- ng-repeat -->
-                                        <button type="button" class="btn btn-danger"
-                                                ng-click="modal.removeEvidence(name)">
-                                            <span class="glyphicon glyphicon-trash"></span>
-                                        </button>
+                        <!--<div class="alert alert-danger normal-size" role="alert" ng-if="modal.file_name_error">-->
+                            <!--<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>-->
+                            <!--<span class="sr-only">Error:</span>-->
+                            <!--Cannot upload evidence starting with underscore, please choose a different name for the-->
+                            <!--file.-->
+                        <!--</div>-->
+                        <!--<div class="form-group normal-size">-->
+                            <!--<input type="file" id="evidence" ng-file-select ng-multiple="true" resetOnClick="false"-->
+                                   <!--ng-file-change="modal.selectedFiles($files, $event)"/>-->
+                            <!--<p class="help-block">Multiple files are allowed.</p>-->
+                        <!--</div>&lt;!&ndash; .form-group &ndash;&gt;-->
+                        <!--<div id="evidenceFiles" class="normal-size" ng-if="lastClickedVuln._attachments">-->
+                            <!--<ul>-->
+                                <!--<li ng-repeat="(name, file) in lastClickedVuln._attachments">-->
+                                    <!--<div class="btn-group">-->
+                                        <!--<button type="button" class="btn btn-default"-->
+                                                <!--ng-click="modal.openEvidence(name)">-->
+                                            <!--<span class="fa {{icons[name]}}"-->
+                                                  <!--title="Evidence {{name | decodeURIComponent}}"></span> {{name |-->
+                                            <!--decodeURIComponent}}-->
+                                        <!--</button>&lt;!&ndash; ng-repeat &ndash;&gt;-->
+                                        <!--<button type="button" class="btn btn-danger"-->
+                                                <!--ng-click="modal.removeEvidence(name)">-->
+                                            <!--<span class="glyphicon glyphicon-trash"></span>-->
+                                        <!--</button>-->
+                                    <!--</div>-->
+                                <!--</li>-->
+                            <!--</ul>-->
+                        <!--</div>&lt;!&ndash; #evidenceFiles &ndash;&gt;-->
+
+                        <div class="form-group">
+                                        <input type="file" nv-file-select="" uploader="uploader"  multiple/>
+                                        <!--<input type="file" class="form-control" id="attachment"-->
+                                               <!--aria-describedby="attachment" placeholder="Adjuntos"-->
+                                               <!--onchange="angular.element(this).scope().setAttachmentEvent(this)">-->
                                     </div>
-                                </li>
-                            </ul>
-                        </div><!-- #evidenceFiles -->
+
+
+                                    <div class="row">
+                                        <div class="col-md-9" style="margin-bottom: 40px">
+
+                                            <h4><p>Queue length: {{ uploader.queue.length }}</p></h4>
+
+
+                                            <table class="table">
+                                                <thead>
+                                                <tr>
+                                                    <th width="50%">Name</th>
+                                                    <th ng-show="uploader.isHTML5">Size</th>
+                                                    <th ng-show="uploader.isHTML5">Progress</th>
+                                                    <th>Status</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                <tr ng-repeat="item in uploader.queue">
+                                                    <td>
+                                                        <strong>{{ item.file.name }}</strong>
+                                                        <div ng-show="uploader.isHTML5" ng-thumb="{ file: item._file, height: 100 }"></div>
+                                                    </td>
+                                                    <td ng-show="uploader.isHTML5" nowrap>{{
+                                                        item.file.size/1024/1024|number:2 }} MB
+                                                    </td>
+                                                    <td ng-show="uploader.isHTML5">
+                                                        <div class="progress" style="margin-bottom: 0;">
+                                                            <div class="progress-bar" role="progressbar"
+                                                                 ng-style="{ 'width': item.progress + '%' }"></div>
+                                                        </div>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span ng-show="item.isSuccess"><i
+                                                                class="fa fa-check"></i></span>
+                                                        <span ng-show="item.isCancel"><i
+                                                                class="fa fa-minus"></i></span>
+                                                        <span ng-show="item.isError"><i
+                                                                class="fa fa-times"></i></span>
+                                                    </td>
+                                                    <td nowrap>
+                                                        <button type="button" class="btn btn-success btn-xs" ng-click="item.upload()" ng-disabled="item.isReady || item.isUploading || item.isSuccess">
+                                                            <span class="glyphicon glyphicon-upload"></span> Upload
+                                                        </button>
+                                                        <button type="button" class="btn btn-warning btn-xs" ng-click="item.cancel()" ng-disabled="!item.isUploading">
+                                                            <span class="glyphicon glyphicon-ban-circle"></span> Cancel
+                                                        </button>
+                                                        <button type="button" class="btn btn-danger btn-xs" ng-click="item.remove()">
+                                                            <span class="glyphicon glyphicon-trash"></span> Remove
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                </tbody>
+                                            </table>
+
+                                            <div>
+                                                <div>
+                                                    Queue progress:
+                                                    <div class="progress" style="">
+                                                        <div class="progress-bar" role="progressbar" ng-style="{ 'width': uploader.progress + '%' }"></div>
+                                                    </div>
+                                                </div>
+                                                <button type="button" class="btn btn-success btn-s" ng-click="uploader.uploadAll()" ng-disabled="!uploader.getNotUploadedItems().length">
+                                                    <span class="glyphicon glyphicon-upload"></span> Upload all
+                                                </button>
+                                                <button type="button" class="btn btn-warning btn-s" ng-click="uploader.cancelAll()" ng-disabled="!uploader.isUploading">
+                                                    <span class="glyphicon glyphicon-ban-circle"></span> Cancel all
+                                                </button>
+                                                <button type="button" class="btn btn-danger btn-s" ng-click="uploader.clearQueue()" ng-disabled="!uploader.queue.length">
+                                                    <span class="glyphicon glyphicon-trash"></span> Remove all
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+
+
+
+
                     </div>
 
                 </div>

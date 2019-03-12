@@ -8,11 +8,12 @@ angular.module("faradayApp")
                      "$location", "$uibModal", "$cookies", "$q", "$window", "BASEURL",
                      "SEVERITIES", "EASEOFRESOLUTION", "STATUSES", "hostsManager", "commonsFact", 'parserFact',
                      "vulnsManager", "workspacesFact", "csvService", "uiGridConstants", "vulnModelsManager",
-                     "referenceFact", "ServerAPI", '$http', 'uiCommonFact',
+                     "referenceFact", "ServerAPI", '$http', 'uiCommonFact', 'FileUploader',
                     function($scope, $filter, $routeParams,
                         $location, $uibModal, $cookies, $q, $window, BASEURL,
                         SEVERITIES, EASEOFRESOLUTION, STATUSES, hostsManager, commonsFact,parserFact,
-                        vulnsManager, workspacesFact, csvService, uiGridConstants, vulnModelsManager, referenceFact, ServerAPI, $http, uiCommonFact) {
+                        vulnsManager, workspacesFact, csvService, uiGridConstants, vulnModelsManager, referenceFact,
+                        ServerAPI, $http, uiCommonFact, FileUploader) {
         $scope.baseurl;
         $scope.columns;
         $scope.columnsWidths;
@@ -52,6 +53,27 @@ angular.module("faradayApp")
             sortColumn: null,
             sortDirection: null
         };
+
+        var uploader = $scope.uploader = new FileUploader({});
+
+        // FILTERS
+
+        // a sync filter
+        uploader.filters.push({
+            name: 'syncFilter',
+            fn: function(item /*{File|FileLikeObject}*/, options) {
+                return this.queue.length < 10;
+            }
+        });
+
+        // an async filter
+        uploader.filters.push({
+            name: 'asyncFilter',
+            fn: function(item /*{File|FileLikeObject}*/, options, deferred) {
+                setTimeout(deferred.resolve, 1e3);
+            }
+        });
+
 
         var init = function() {
             $scope.baseurl = BASEURL;
@@ -1464,6 +1486,18 @@ angular.module("faradayApp")
 
                 });
           };
+
+
+           uploader.onAfterAddingFile = function(fileItem) {
+               $scope.enableFileUpload();
+               fileItem.url = '_api/v2/ws/' + $routeParams.wsId + '/vulns/' + $scope.lastClickedVuln._id + '/attachment/';
+           };
+
+           uploader.onBeforeUploadItem = function(item) {
+               item.formData.push({'csrf_token': $scope.csrf_token});
+           };
+
+
 
 
 

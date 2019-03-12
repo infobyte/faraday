@@ -69,7 +69,7 @@ angular.module('faradayApp')
             // convert refs to an array of objects
             var refs = [];
             template.refs.forEach(function (ref) {
-                refs.push({value: ref});
+                refs.push(ref);
             });
             vuln.refs = refs;
 

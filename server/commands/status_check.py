@@ -47,7 +47,7 @@ def check_open_ports():
 def check_postgres():
     with app.app_context():
         try:
-            result = str(db.engine.execute("SELECT version()"))
+            result = str(db.engine.execute("SELECT current_setting('server_version_num')"))
             return result 
         except sqlalchemy.exc.OperationalError:
             return False
@@ -189,8 +189,10 @@ def print_postgresql_status():
     """Prints the status of PostgreSQL using check_postgres()"""
     exit_code = 0
     result = check_postgres()
-    if result:
-        print('[{green}+{white}] PostgreSQL is running'.\
+    if result< 90400:
+        print('[{red}-{white}] PostgresSQL is running, but needs to be 9.4 or newer, please update PostgresSQL')
+    elif result:
+        print('[{green}+{white}] PostgreSQL is running and up to date'.\
             format(green=Fore.GREEN, white=Fore.WHITE))
         return exit_code
     elif result == False:

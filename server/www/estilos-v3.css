@@ -618,6 +618,7 @@ button[disabled], html input[disabled] {
     cursor: pointer;
     text-align: center;
     padding: 6px 8px;
+    font-size: 0.8em;
 }
 
 .preview-icon:hover {
@@ -656,4 +657,9 @@ button[disabled], html input[disabled] {
 
 .prev-apply-template {
     padding-right: 0;
+}
+
+.pretty-text .tab-pane-header{
+    font-size: 1.01em;
+    font-weight: normal;
 }

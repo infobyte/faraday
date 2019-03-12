@@ -527,14 +527,36 @@
                         <div class="col-md-12 custom-divider"></div>
 
                         <div class="col-md-12">
-                        <div class="tab-pane-header">Description</div>
-                        <div class="form-group" ng-class="{'has-error': formEdit.desc.$invalid }">
-                            <label class="sr-only" for="vuln-data">Vuln description</label>
-                            <textarea class="form-control" id="vuln-desc" name="desc" rows="5"
-                                      ng-model="lastClickedVuln.desc" placeholder="Description"
-                            style="margin: 0 2px 0 0;" required></textarea>
-                        </div><!-- .form-group -->
-                    </div>
+                        <!--<div class="tab-pane-header">Description</div>-->
+                        <!--<div class="form-group" ng-class="{'has-error': formEdit.desc.$invalid }">-->
+                            <!--<label class="sr-only" for="vuln-data">Vuln description</label>-->
+                            <!--<textarea class="form-control" id="vuln-desc" name="desc" rows="5"-->
+                                      <!--ng-model="lastClickedVuln.desc" placeholder="Description"-->
+                            <!--style="margin: 0 2px 0 0;" required></textarea>-->
+                        <!--</div>&lt;!&ndash; .form-group &ndash;&gt;-->
+
+                            <div ng-if="fieldToEdit !== 'desc'" class="pretty-text">
+                                <div class="col-md-10">
+                                    <div class="tab-pane-header" id="desc-prev" title="{{lastClickedVuln.desc.length > 450 ? lastClickedVuln.desc:''}}" >
+                                        <span ng-bind-html="lastClickedVuln.desc | limitTo: 450"> </span>
+                                        <span class="tab-pane-header" ng-if="lastClickedVuln.desc.length > 450">...</span>
+                                    </div>
+
+                                </div>
+                                <div class="col-md-2">
+                                    <span class="preview-icon" title="Edit Description" ng-click="activeEditPreview('desc')"><i class="fa fa-pencil fa-lg" aria-hidden="true"></i></span>
+                                </div>
+                            </div>
+                            <div class="form-group" ng-if="fieldToEdit === 'desc'">
+                                <label for="inp-edit-desc"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true"></i>    Description</label>
+                                <textarea type="text" class="form-control" id="inp-edit-desc" rows="5"
+                                          ng-model="lastClickedVuln.desc" name="desc" placeholder="Description"
+                                          ng-blur="processToEditPreview()"
+                                          autofocus>
+                                </textarea>
+                            </div>
+
+                        </div>
 
                         <div class="form-group margin-top-22px">
                         <div class="col-md-12">

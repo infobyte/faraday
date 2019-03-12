@@ -651,7 +651,7 @@
                 <div id="technical_details" class="container tab-pane-container tab-pane fade"><br>
                     <div class="col-md-12">
                         <div class="col-md-12">
-                            <div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true"></i>    Data
+                            <div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'data'"></i>    Data
                                 <span class="preview-icon" title="Edit Data" ng-click="activeEditPreview('data')" ng-if="fieldToEdit !== 'data'" style="font-size: small">
                                     <i class="fa fa-pencil fa-lg" aria-hidden="true"></i>
                                 </span>
@@ -679,24 +679,75 @@
                             </div>
                         </div>
 
-                        <div class="col-md-6 col-sm-12 col-xs-12" ng-show="lastClickedVuln.type === 'VulnerabilityWeb'">
-                            <div class="tab-pane-header">Request</div>
-                            <div class="form-group">
-                                <label class="sr-only" for="vuln-request">Vuln request</label>
-                                <textarea class="form-control" id="vuln-request" rows="8"
-                                          ng-model="lastClickedVuln.request" placeholder="Request"></textarea>
-                            </div><!-- .form-group -->
+                        <div class="row" style="margin-left: 0; margin-right: 0">
+                            <div class="col-md-6 col-sm-12 col-xs-12" ng-show="lastClickedVuln.type === 'VulnerabilityWeb'">
+                            <div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'request'"></i>    Request
+                                <span class="preview-icon" title="Edit Request" ng-click="activeEditPreview('request')" ng-if="fieldToEdit !== 'request'" style="font-size: small">
+                                    <i class="fa fa-pencil fa-lg" aria-hidden="true"></i>
+                                </span>
+                            </div>
+                            <div ng-if="fieldToEdit !== 'request'" class="pretty-text">
+                                <div class="col-md-12 margin-bottom-24">
+                                    <div ng-if="lastClickedVuln.request === '' || lastClickedVuln.request === undefined"  style="margin-bottom: 15px;color: #aaa;">
+                                        <p>
+                                            No Request was found.
+                                        </p>
+                                    </div>
+                                    <div class="tab-pane-header" id="request-prev" title="{{lastClickedVuln.request.length > 450 ? lastClickedVuln.request:''}}" >
+                                        <!--<span ng-bind-html="lastClickedVuln.request | limitTo: 450"> </span>-->
+                                        <code><span>{{lastClickedVuln.request | limitTo: 450}}</span></code>
+                                        <span class="tab-pane-header" ng-if="lastClickedVuln.request.length > 450">...</span>
+                                    </div>
+
+                                </div>
+                            </div>
+                            <div class="form-group" ng-if="fieldToEdit === 'request'">
+                                <textarea type="text" class="form-control" id="inp-edit-request" rows="4"
+                                          ng-model="lastClickedVuln.request" name="desc" placeholder="Request"
+                                          ng-blur="processToEditPreview(false)"
+                                          autofocus>
+                                </textarea>
+                            </div>
+
                         </div>
 
-                        <div class="col-md-6 col-sm-12 col-xs-12" ng-show="lastClickedVuln.type === 'VulnerabilityWeb'">
-                            <div class="tab-pane-header">Response</div>
-                            <div class="form-group">
-                                <label class="sr-only" for="vuln-response">Vuln response</label>
-                                <textarea class="form-control" id="vuln-response" rows="8"
-                                          ng-model="lastClickedVuln.response" placeholder="Response"></textarea>
-                            </div><!-- .form-group -->
-                        </div>
+                            <div class="col-md-6 col-sm-12 col-xs-12" ng-show="lastClickedVuln.type === 'VulnerabilityWeb'">
+                            <!--<div class="tab-pane-header">Response</div>-->
+                            <!--<div class="form-group">-->
+                                <!--<label class="sr-only" for="vuln-response">Vuln response</label>-->
+                                <!--<textarea class="form-control" id="vuln-response" rows="8"-->
+                                          <!--ng-model="lastClickedVuln.response" placeholder="Response"></textarea>-->
+                            <!--</div>&lt;!&ndash; .form-group &ndash;&gt;-->
 
+                            <div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'response'"></i>    Response
+                                <span class="preview-icon" title="Edit Request" ng-click="activeEditPreview('response')" ng-if="fieldToEdit !== 'response'" style="font-size: small">
+                                    <i class="fa fa-pencil fa-lg" aria-hidden="true"></i>
+                                </span>
+                            </div>
+                            <div ng-if="fieldToEdit !== 'response'" class="pretty-text">
+                                <div class="col-md-12 margin-bottom-24">
+                                    <div ng-if="lastClickedVuln.response === '' || lastClickedVuln.response === undefined"  style="margin-bottom: 15px;color: #aaa;">
+                                        <p>
+                                            No Response was found.
+                                        </p>
+                                    </div>
+                                    <div class="tab-pane-header" id="response-prev" title="{{lastClickedVuln.response.length > 450 ? lastClickedVuln.response:''}}" >
+                                        <!--<span ng-bind-html="lastClickedVuln.response | limitTo: 450"> </span>-->
+                                        <code><span>{{lastClickedVuln.response | limitTo: 450}}</span></code>
+                                        <span class="tab-pane-header" ng-if="lastClickedVuln.response.length > 450">...</span>
+                                    </div>
+
+                                </div>
+                            </div>
+                            <div class="form-group" ng-if="fieldToEdit === 'response'">
+                                <textarea type="text" class="form-control" id="inp-edit-response" rows="4"
+                                          ng-model="lastClickedVuln.response" name="desc" placeholder="Response"
+                                          ng-blur="processToEditPreview(false)"
+                                          autofocus>
+                                </textarea>
+                            </div>
+                        </div>
+                        </div>
                         <div class="margin-top-22px" ng-show="lastClickedVuln.type === 'VulnerabilityWeb'">
                         <div class="col-md-4">
                             <div class="tab-pane-header">Method</div>

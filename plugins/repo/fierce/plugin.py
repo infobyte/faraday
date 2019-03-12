@@ -52,14 +52,13 @@ class FierceParser(object):
         if regex is not None:
             self.target = regex.group(1)
             mstr = re.sub("\t", "", regex.group(2))
-            self.dns = mstr.split()
+            self.dns = filter(None, mstr.splitlines())
 
         regex = re.search(
             "Now performing [\d]+ test\(s\)...\n([^$]+)\nSubnets found ",
             output)
-
         if regex is not None:
-            hosts_list = regex.group(1).split("\n")
+            hosts_list = regex.group(1).splitlines()
             for i in hosts_list:
                 if i != "":
                     mstr = i.split("\t")
@@ -74,11 +73,9 @@ class FierceParser(object):
             "Whoah, it worked - misconfigured DNS server found:([^$]+)\There isn't much point continuing, you have  everything.", output)
 
         if regex is not None:
-
             self.isZoneVuln = True
-            lista = regex.group(1).split("\n")
-            for i in lista:
-
+            dns_list = regex.group(1).splitlines()
+            for i in dns_list:
                 if i != "":
                     mstr = i.split()
                     if (mstr and mstr[0] != "" and len(mstr) > 3 and mstr[3] in valid_records):

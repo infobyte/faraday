@@ -634,17 +634,17 @@
                                     </div>
                                 </div>
                             </div>
-                    </div><!-- .form-group -->
+                        </div><!-- .form-group -->
 
-                        <div class="col-md-12 margin-bottom-15px margin-top-22px">
-                        <div class="tab-pane-header">Impact</div>
-                        <h4><span ng-repeat="(key, value) in lastClickedVuln.impact" class="normal-size"
-                                  style="cursor: pointer;">
-                        <span ng-class="{'label-impact label-default-impact': !value, 'label-impact label-success-impact': value}"
-                              ng-click="modal.toggleImpact(key)">{{key}}</span>
-                        </span></h4><!-- .normal-size -->
-                    </div>
-                    </div>
+                        <div class="col-md-12 margin-top-22px">
+                                <div class="tab-pane-header"><label for="inp-edit-desc"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'impact'"></i>  Impact</label></div>
+                                <h4><span ng-repeat="(key, value) in lastClickedVuln.impact" class="normal-size"
+                                          style="cursor: pointer;">
+                                <span ng-class="{'label-impact label-default-impact': !value, 'label-impact label-success-impact': value}"
+                                      ng-click="toggleImpact(key)">{{key}}</span>
+                                </span></h4><!-- .normal-size -->
+                            </div>
+                        </div>
 
                 </div>
                 <div id="technical_details" class="container tab-pane-container tab-pane fade"><br>

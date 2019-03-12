@@ -483,24 +483,24 @@
             <!-- Nav tabs -->
             <ul class="nav nav-tabs" id="nav-tabs-container">
                 <li class="nav-item active" ng-class="{'has-error': formEdit.desc.$invalid}">
-                    <a class="nav-link active" data-toggle="tab" data-target="#general"
+                    <a class="nav-link active" data-toggle="tab" data-target="#general_prev"
                        href="javascript:;">General</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" data-toggle="tab" data-target="#technical_details" href="javascript:;">Technical
+                    <a class="nav-link" data-toggle="tab" data-target="#technical_details_prev" href="javascript:;">Technical
                         Details</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" data-toggle="tab" data-target="#tab-evidence" href="javascript:;">Evidence</a>
+                    <a class="nav-link" data-toggle="tab" data-target="#tab-evidence_prev" href="javascript:;">Evidence</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" data-toggle="tab" data-target="#tab-custom-fields" href="javascript:;">Custom Fields</a>
+                    <a class="nav-link" data-toggle="tab" data-target="#tab-custom-fields_prev" href="javascript:;">Custom Fields</a>
                 </li>
             </ul>
 
             <!-- Tab panes -->
             <div class="tab-content">
-                <div id="general" class="container tab-pane-container tab-pane active"><br>
+                <div id="general_prev" class="container tab-pane-container tab-pane active"><br>
                     <div class="col-md-6">
                         <div class="col-md-12">
                             <div class="tab-pane-header">
@@ -648,7 +648,7 @@
 
                 </div>
 
-                <div id="technical_details" class="container tab-pane-container tab-pane fade"><br>
+                <div id="technical_details_prev" class="container tab-pane-container tab-pane fade"><br>
                     <div class="col-md-12">
                         <div class="col-md-12">
                             <div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'data'"></i>    Data
@@ -815,7 +815,8 @@
                     </div>
                     </div>
                 </div>
-                <div id="tab-evidence" class="container tab-pane fade"><br>
+
+                <div id="tab-evidence_prev" class="container tab-pane fade"><br>
                     <div class="col-md-12 margin-bottom-15px">
                         <div class="tab-pane-header">Evidence</div>
                         <div class="alert alert-danger normal-size" role="alert" ng-if="modal.file_name_error">
@@ -851,7 +852,7 @@
 
                 </div>
 
-                <div id="tab-custom-fields" class="container tab-pane-container tab-pane fade"><br>
+                <div id="tab-custom-fields_prev" class="container tab-pane-container tab-pane fade"><br>
                     <div ng-if="modal.customFields.length === 0" class="no-info-overlay" style="margin-bottom: 15px;">
                             <p class="no-info-text">
                                 No custom fields were found. To create one refer to our

@@ -663,3 +663,8 @@ button[disabled], html input[disabled] {
     font-size: 1.01em;
     font-weight: normal;
 }
+
+.show-scroll {
+    height: 230px;
+    overflow-y: auto;
+}

@@ -38,6 +38,7 @@ angular.module("faradayApp")
 
         $scope.cweList;
         $scope.temTemplate;
+        $scope.new_ref;
 
 
         var allVulns;
@@ -304,6 +305,7 @@ angular.module("faradayApp")
             });
 
             $scope.temTemplate = undefined;
+            $scope.new_ref = "";
         };
 
 
@@ -1404,6 +1406,38 @@ angular.module("faradayApp")
               $scope.temTemplate = undefined;
               $scope.cwe_selected = undefined;
           };
+
+
+           $scope.newReference = function () {
+               $scope.fieldToEdit = 'refs';
+               uiCommonFact.newReference($scope.new_ref, $scope.lastClickedVuln);
+               $scope.processToEditPreview();
+               $scope.new_ref = "";
+          };
+
+
+           $scope.removeReference = function (index) {
+                $scope.fieldToEdit = 'refs';
+                $scope.lastClickedVuln.refs.splice(index, 1);
+                $scope.isUpdatingVuln = true;
+
+                vulnsManager.updateVuln($scope.realVuln, $scope.lastClickedVuln).then(function () {
+                    $scope.isUpdatingVuln = false;
+                    $scope.fieldToEdit = undefined;
+                    }, function (data) {
+                        $scope.hideVulnPreview();
+                        commonsFact.showMessage("Error updating vuln " + $scope.realVuln.name + " (" + $scope.realVuln._id + "): " + (data.message || JSON.stringify(data.messages)));
+                        $scope.fieldToEdit = undefined;
+                        $scope.isUpdatingVuln = false;
+
+                });
+          };
+
+           $scope.openReference = function (text) {
+                window.open(referenceFact.processReference(text), '_blank');
+           };
+
+
 
 
         init();

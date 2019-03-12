@@ -62,7 +62,7 @@ angular.module('faradayApp')
 
         uiCommonFact.populate = function (template, vuln) {
             for (var key in vuln) {
-                if (key != "refs" && key != "policyviolations" && template.hasOwnProperty(key) && vuln.hasOwnProperty(key)) {
+                if (key !== "refs" && key !== "policyviolations" && template.hasOwnProperty(key) && vuln.hasOwnProperty(key)) {
                     vuln[key] = template[key];
                 }
             }
@@ -79,6 +79,19 @@ angular.module('faradayApp')
                 policyviolations.push({value: policyviolation});
             });
             vuln.policyviolations = policyviolations;
+        };
+
+
+        uiCommonFact.newReference = function (newRef, vuln) {
+            if (newRef !== "") {
+                // we need to check if the ref already exists
+                if (vuln.refs.filter(function (ref) {
+                        return ref === newRef
+                    }).length === 0) {
+                    vuln.refs.push(newRef);
+                    newRef = "";
+                }
+            }
         };
 
 

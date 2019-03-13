@@ -47,10 +47,9 @@ class DnsmapParser(object):
             self.parse_csv(output)
 
     def parse_txt(self, output):
-        hosts = output.split("\n\n")
+        hosts = self.split_output_lines(output)
 
-        for host in hosts:
-            host_data = host.split('\n')
+        for host_data in hosts:
             if len(host_data) == 2:
                 ip = self.clean_ip(host_data[1])
                 hostname = host_data[0]
@@ -62,7 +61,7 @@ class DnsmapParser(object):
                     self.add_host_info_to_items(ip, hostname)
 
     def parse_csv(self, output):
-        hosts = filter(None, output.split("\n"))
+        hosts = filter(None, output.splitlines())
 
         for host in hosts:
             host_data = host.split(",", 1)
@@ -75,6 +74,20 @@ class DnsmapParser(object):
                 ips = host_data[0].split(",")
                 for ip_address in ips:
                     self.add_host_info_to_items(ip_address, hostname)
+
+    def split_output_lines(self, output):
+        splitted = output.splitlines()
+        hosts_list = []
+        aux_list = []
+        for i in range(0, len(splitted)):
+            if not splitted[i]:
+                hosts_list.append(aux_list)
+                aux_list = []
+                continue
+            else:
+                aux_list.append(splitted[i])
+
+        return hosts_list
 
     def clean_ip(self, item):
         ip = item.split(':', 1)

@@ -1489,12 +1489,24 @@ angular.module("faradayApp")
 
 
            uploader.onAfterAddingFile = function(fileItem) {
-               $scope.enableFileUpload();
+               $http.get('/_api/session').then(
+                  function(d) {
+                    $scope.csrf_token = d.data.csrf_token;
+                  }
+                );
                fileItem.url = '_api/v2/ws/' + $routeParams.wsId + '/vulns/' + $scope.lastClickedVuln._id + '/attachment/';
            };
 
            uploader.onBeforeUploadItem = function(item) {
                item.formData.push({'csrf_token': $scope.csrf_token});
+           };
+
+           uploader.onSuccessItem = function(fileItem, response, status, headers) {
+               console.info('onSuccessItem', fileItem, response, status, headers);
+               if (fileItem.file.name.charAt(0) !== "_") {
+                     if (!$scope.lastClickedVuln._attachments.hasOwnProperty(fileItem.file)) $scope.lastClickedVuln._attachments[fileItem.file.name] = fileItem.file;
+               }
+
            };
 
 

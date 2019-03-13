@@ -1351,16 +1351,16 @@ angular.module("faradayApp")
                 $scope.lastClickedVuln[$scope.fieldToEdit] !== '') || isMandatory === false){
 
                 $scope.isUpdatingVuln = true;
-                if ($scope.realVuln[$scope.fieldToEdit] !== $scope.lastClickedVuln[$scope.fieldToEdit]){
-                    vulnsManager.updateVuln($scope.realVuln, $scope.lastClickedVuln).then(function () {
-                        $scope.isUpdatingVuln = false;
-                        $scope.fieldToEdit = undefined;
-                        }, function (data) {
-                            $scope.hideVulnPreview();
-                            commonsFact.showMessage("Error updating vuln " + $scope.realVuln.name + " (" + $scope.realVuln._id + "): " + (data.message || JSON.stringify(data.messages)));
-                            $scope.fieldToEdit = undefined;
+                if ($scope.realVuln[$scope.fieldToEdit] !== $scope.lastClickedVuln[$scope.fieldToEdit] ||
+                    ($scope.realVuln['custom_fields'].hasOwnProperty($scope.fieldToEdit))){
+                        vulnsManager.updateVuln($scope.realVuln, $scope.lastClickedVuln).then(function () {
                             $scope.isUpdatingVuln = false;
-
+                            $scope.fieldToEdit = undefined;
+                            }, function (data) {
+                                $scope.hideVulnPreview();
+                                commonsFact.showMessage("Error updating vuln " + $scope.realVuln.name + " (" + $scope.realVuln._id + "): " + (data.message || JSON.stringify(data.messages)));
+                                $scope.fieldToEdit = undefined;
+                                $scope.isUpdatingVuln = false;
                     });
                 }else{
                     $scope.fieldToEdit = undefined;

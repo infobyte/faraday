@@ -167,197 +167,9 @@
 
         <div id="vuln-preview">
             <div class="preview-header">
-                <!--<span class="prev-header-id preview-tag">ID: {{lastClickedVuln._id}}</span>-->
-                <!--<span class="prev-header-id preview-tag">{{lastClickedVuln.target}}</span>-->
-                <!--<span class="prev-header-id preview-tag" ng-if="lastClickedVuln.type !== 'VulnerabilityWeb'">Vulnerability</span>-->
-                <!--<span class="prev-header-id preview-tag" ng-if="lastClickedVuln.type === 'VulnerabilityWeb'">Web vulnerability</span>-->
                 <button type="button" class="close" ng-click="hideVulnPreview()" data-dismiss="alert"><span area-hidden="true">&times;</span><span class="sr-only">Close</span></button>
             </div>
-
-            <!--<div class="preview-section">-->
-                <!--<div ng-if="fieldToEdit !== 'name'">-->
-                    <!--<div class="col-md-10">-->
-                        <!--<div class="tab-pane-header">{{lastClickedVuln.name}}</div>-->
-                    <!--</div>-->
-                    <!--<div class="col-md-2">-->
-                        <!--<span class="preview-icon" ng-click="activeEditPreview('name')"><i class="fa fa-pencil fa-lg" aria-hidden="true"></i></span>-->
-                    <!--</div>-->
-                <!--</div>-->
-                <!--<div class="form-group" ng-if="fieldToEdit === 'name'">-->
-                    <!--<label for="inp-edit-name"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true"></i>    Vulnerability name</label>-->
-                    <!--<input type="text" class="form-control" id="inp-edit-name"-->
-                               <!--ng-model="lastClickedVuln.name" name="name" placeholder="Vulnerability name"-->
-                               <!--ng-blur="processToEditPreview()"-->
-                               <!--autofocus required>-->
-                <!--</div>-->
-            <!--</div>-->
-
-
-            <!--<div class="preview-section">-->
-                <!--<div style="margin-bottom: 50px">-->
-                    <!--<div class="btn-group col-md-6">-->
-                    <!--<button type="button" class="dropdown-toggle btn-change-property primary-btn"-->
-                            <!--data-toggle="dropdown"-->
-                            <!--id="btn-chg-severity-prev"-->
-                            <!--title="{{lastClickedVuln.severity}}">-->
-                        <!--<i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'severity'"></i>  {{lastClickedVuln.severity | uppercase}}-->
-                    <!--</button>-->
-                    <!--<button type="button" class="dropdown-toggle secondary-btn btn-change-property"-->
-                            <!--data-toggle="dropdown"-->
-                            <!--id="caret-chg-severity-prev"-->
-                            <!--title="Change severity">-->
-                        <!--<span> <i class="fa fa-angle-down fa-lg" aria-hidden="true"></i> </span>-->
-                    <!--</button>-->
-                    <!--<ul class="dropdown-menu dropdown-menu-right" role="menu">-->
-                        <!--<li>-->
-                            <!--<a class="ws"-->
-                               <!--ng-click="changeSeverity('unclassified')">UNCLASSIFIED</a>-->
-                            <!--<a class="ws"-->
-                               <!--ng-click="changeSeverity('info')">INFO</a>-->
-                            <!--<a class="ws"-->
-                               <!--ng-click="changeSeverity('low')">LOW</a>-->
-                            <!--<a class="ws"-->
-                               <!--ng-click="changeSeverity('med')">MEDIUM</a>-->
-                            <!--<a class="ws"-->
-                               <!--ng-click="changeSeverity('high')">HIGH</a>-->
-                            <!--<a class="ws"-->
-                               <!--ng-click="changeSeverity('critical')">CRITICAL</a>-->
-                        <!--</li>-->
-                    <!--</ul>-->
-                <!--</div>-->
-
-                    <!--<div class="btn-group col-md-6">-->
-                    <!--<button type="button" class="dropdown-toggle btn-change-property primary-btn btn-primary-white"-->
-                            <!--data-toggle="dropdown"-->
-                            <!--id="btn-chg-ease_resolution-prev"-->
-                            <!--title="{{lastClickedVuln.easeofresolution}}">-->
-                        <!--<i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'easeofresolution'"></i> {{lastClickedVuln.easeofresolution || "Ease of Resolution"}}-->
-                    <!--</button>-->
-                    <!--<button type="button" class="dropdown-toggle secondary-btn btn-change-property btn-secondary-white"-->
-                            <!--data-toggle="dropdown"-->
-                            <!--id="caret-ease_resolution-prev"-->
-                            <!--title="Change Ease of Resolution">-->
-                        <!--<span> <i class="fa fa-angle-down fa-lg" aria-hidden="true"></i> </span>-->
-                    <!--</button>-->
-                    <!--<ul class="dropdown-menu dropdown-menu-right" role="menu">-->
-                        <!--<li>-->
-                            <!--<a class="ws"-->
-                               <!--ng-click="changeEaseOfResolution(null)">Undetermined</a>-->
-                            <!--<a class="ws"-->
-                               <!--ng-click="changeEaseOfResolution('trivial')">Trivial</a>-->
-                            <!--<a class="ws"-->
-                               <!--ng-click="changeEaseOfResolution('simple')">Simple</a>-->
-                            <!--<a class="ws"-->
-                               <!--ng-click="changeEaseOfResolution('moderate')">Moderate</a>-->
-                            <!--<a class="ws"-->
-                               <!--ng-click="changeEaseOfResolution('difficult')">Difficult</a>-->
-                            <!--<a class="ws"-->
-                               <!--ng-click="changeEaseOfResolution('infeasible')">Infeasible</a>-->
-                        <!--</li>-->
-                    <!--</ul>-->
-                <!--</div>-->
-                <!--</div>-->
-
-                <!--<div>-->
-                    <!--<div class="btn-group col-md-6">-->
-                        <!--<button type="button" class="dropdown-toggle btn-change-property primary-btn text-capitalize"-->
-                            <!--data-toggle="dropdown"-->
-                            <!--id="btn-chg-status-prev"-->
-                            <!--title="{{lastClickedVuln.status}}">-->
-                        <!--<i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'status'"></i>{{lastClickedVuln.status  || "Status"}}-->
-                    <!--</button>-->
-                        <!--<button type="button" class="dropdown-toggle secondary-btn btn-change-property"-->
-                            <!--data-toggle="dropdown"-->
-                            <!--id="caret-chg-status-prev"-->
-                            <!--title="Change Status">-->
-                        <!--<span> <i class="fa fa-angle-down fa-lg" aria-hidden="true"></i> </span>-->
-                    <!--</button>-->
-                        <!--<ul class="dropdown-menu dropdown-menu-right" role="menu">-->
-                        <!--<li>-->
-                            <!--<a class="ws"-->
-                               <!--ng-click="changeStatus('opened')">Opened</a>-->
-                            <!--<a class="ws"-->
-                               <!--ng-click="changeStatus('closed')">Closed</a>-->
-                            <!--<a class="ws"-->
-                               <!--ng-click="changeStatus('re-opened')">Re-opened</a>-->
-                            <!--<a class="ws"-->
-                               <!--ng-click="changeStatus('risk-accepted')">Risk-accepted</a>-->
-                        <!--</li>-->
-                    <!--</ul>-->
-                    <!--</div>-->
-
-                    <!--<div class="col-md-6">-->
-                    <!--<label class="chbox-container">-->
-                        <!--<div class="tab-pane-header"><h4>Confirmed</h4></div>-->
-                        <!--<input type="checkbox" ng-checked="lastClickedVuln.confirmed === true"  ng-model="lastClickedVuln.confirmed" ng-change="changeConfirmed(lastClickedVuln.confirmed)">-->
-                        <!--<span class="checkmark"></span>-->
-                    <!--</label>-->
-                <!--</div>-->
-
-                <!--</div>-->
-            <!--</div>-->
-
-            <!--<div class="preview-section row">-->
-                <!--<div ng-if="fieldToEdit !== 'desc'">-->
-                    <!--<div class="col-md-10">-->
-                        <!--<div class="tab-pane-header" title="{{lastClickedVuln.desc.length > 450 ? lastClickedVuln.desc:''}}">{{lastClickedVuln.desc | limitTo:450 }} <span ng-if="lastClickedVuln.desc.length > 450">...</span></div>-->
-                    <!--</div>-->
-                    <!--<div class="col-md-2">-->
-                        <!--<span class="preview-icon" ng-click="activeEditPreview('desc')"><i class="fa fa-pencil fa-lg" aria-hidden="true"></i></span>-->
-                    <!--</div>-->
-                <!--</div>-->
-                <!--<div class="form-group" ng-if="fieldToEdit === 'desc'">-->
-                    <!--<label for="inp-edit-desc"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true"></i>    Vulnerability description</label>-->
-                    <!--<textarea type="text" class="form-control" id="inp-edit-desc" rows="5"-->
-                               <!--ng-model="lastClickedVuln.desc" name="desc" placeholder="Vulnerability description"-->
-                               <!--ng-blur="processToEditPreview()"-->
-                              <!--autofocus></textarea>-->
-                <!--</div>-->
-
-            <!--</div>-->
-
-
-            <!--<div class="preview-section row">-->
-                <!--<div class="col-md-12" title="{{lastClickedVuln.hostnames.length > 3 ? lastClickedVuln.hostnames.join('\n'):''}}">-->
-                        <!--<div class="tab-pane-header">Hostnames:</div>-->
-                        <!--<div class="tab-pane-header" ng-repeat="hostname in lastClickedVuln.hostnames | limitTo:3">-->
-                            <!--<i class="fa fa-desktop"></i>   &nbsp;  {{hostname}}-->
-                        <!--</div>-->
-                        <!--<div class="tab-pane-header" ng-if="lastClickedVuln.hostnames.length > 3"><i class="fa fa-desktop"></i>   &nbsp;    ...</div>-->
-                <!--</div>-->
-            <!--</div>-->
-
-            <!--<div class="preview-section">-->
-                <!--<div class="col-md-12 margin-bottom-15px">-->
-                        <!--<div class="tab-pane-header"><label for="inp-edit-desc"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'impact'"></i>  Impact</div>-->
-                        <!--<h4><span ng-repeat="(key, value) in lastClickedVuln.impact" class="normal-size"-->
-                                  <!--style="cursor: pointer;">-->
-                        <!--<span ng-class="{'label-impact label-default-impact': !value, 'label-impact label-success-impact': value}"-->
-                              <!--ng-click="toggleImpact(key)">{{key}}</span>-->
-                        <!--</span></h4>&lt;!&ndash; .normal-size &ndash;&gt;-->
-                <!--</div>-->
-            <!--</div>-->
-
-
-
             <div class="mt-3">
-            <!--<div class="modal-data-name" ng-init="isNameEditable = false">-->
-                <!--<div ng-if="isNameEditable == false && lastClickedVuln.name !== undefined">-->
-                    <!--<span class="data-name">{{lastClickedVuln.name}}</span>-->
-                    <!--<span class="edit-name-icon" ng-click="isNameEditable = true"><i-->
-                            <!--class="fa fa-pencil fa-lg" aria-hidden="true"></i></span>-->
-                <!--</div>-->
-
-                <!--<div ng-if="isNameEditable == true || lastClickedVuln.name == undefined">-->
-                    <!--<div class="form-group" ng-class="{'has-error': formEdit.name.$invalid }">-->
-                        <!--<label class="sr-only" for="inp-edit-name">Vuln name</label>-->
-                        <!--<input type="text" class="form-control" id="inp-edit-name"-->
-                               <!--ng-model="lastClickedVuln.name" name="name" placeholder="Vuln name"-->
-                               <!--ng-blur="isNameEditable = lastClickedVuln.name == undefined "-->
-                               <!--autofocus required>-->
-                    <!--</div>-->
-                <!--</div>-->
-            <!--</div>-->
             <div class="row">
                 <div ng-if="fieldToEdit !== 'name'">
                     <div class="col-md-6 " style="margin-bottom: 24px">
@@ -932,18 +744,17 @@
                 </div>
 
                 <div id="tab-custom-fields_prev" class="container tab-pane-container tab-pane fade"><br>
-                    <div ng-if="modal.customFields.length === 0" class="no-info-overlay" style="margin-bottom: 15px;">
+                    <div ng-if="customFields.length === 0" class="no-info-overlay" style="margin-bottom: 15px;">
                             <p class="no-info-text">
                                 No custom fields were found. To create one refer to our
                                 <a href="https://github.com/infobyte/faraday/wiki/Custom-Fields" target="_blank">wiki page</a>.
                             </p>
                     </div>
-                    <div class="col-md-12 margin-bottom-15px">
-                        <div class="col-md-12" ng-repeat="cf in modal.customFields | orderBy : 'field_order'">
-                        <custom-field field="{{cf}}"></custom-field>
+                    <div class="col-md-8 margin-bottom-15px">
+                        <div class="col-md-12" ng-repeat="cf in customFields | orderBy : 'field_order'">
+                            <custom-field-prev field="{{cf}}"></custom-field-prev>
+                        </div>
                     </div>
-
-                </div>
             </div>
         </div>
 

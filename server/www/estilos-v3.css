@@ -676,3 +676,17 @@ button[disabled], html input[disabled] {
 .margin-bottom-24{
     margin-bottom: 24px;
 }
+
+.input-evidence {
+    height: 40px;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: -15px;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.upload-options button {
+    margin-bottom: 5px;
+}

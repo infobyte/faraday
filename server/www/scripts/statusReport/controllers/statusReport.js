@@ -1338,6 +1338,7 @@ angular.module("faradayApp")
                 uiCommonFact.updateBtnStatusColor($scope.lastClickedVuln.status, '#btn-chg-status-prev', '#caret-chg-status-prev');
             }
             $scope.cwe_selected = undefined
+            $scope.uploader.clearQueue();
         };
 
         $scope.activeEditPreview = function (field) {
@@ -1489,6 +1490,12 @@ angular.module("faradayApp")
 
 
            uploader.onAfterAddingFile = function(fileItem) {
+               if ($scope.lastClickedVuln._attachments.hasOwnProperty(fileItem.file.name)){
+                   fileItem.isError = true;
+                   fileItem.isReady = true;
+                   return;
+               }
+
                $http.get('/_api/session').then(
                   function(d) {
                     $scope.csrf_token = d.data.csrf_token;
@@ -1502,7 +1509,6 @@ angular.module("faradayApp")
            };
 
            uploader.onSuccessItem = function(fileItem, response, status, headers) {
-               console.info('onSuccessItem', fileItem, response, status, headers);
                if (fileItem.file.name.charAt(0) !== "_") {
                      if (!$scope.lastClickedVuln._attachments.hasOwnProperty(fileItem.file)) $scope.lastClickedVuln._attachments[fileItem.file.name] = fileItem.file;
                }
@@ -1510,7 +1516,20 @@ angular.module("faradayApp")
            };
 
 
+            $scope.removeEvidence = function (name) {
+                var url = '/_api/v2/ws/'+ $routeParams.wsId +'/vulns/'+ $scope.lastClickedVuln._id +'/attachment/' + name + '/'
+                $http.delete(url).then(
+                      function(response) {
+                          if (response && response.status === 200){
+                              uiCommonFact.removeEvidence(name, $scope.lastClickedVuln);
+                          }
+                      }
+                );
+            };
 
+            $scope.openEvidence = function (name) {
+                uiCommonFact.openEvidence(name, $scope.lastClickedVuln, $routeParams.wsId);
+            };
 
 
 

@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('uiCommonFact', [function () {
+    .factory('uiCommonFact', ['BASEURL', function (BASEURL) {
 
         var uiCommonFact = {};
 
@@ -105,6 +105,17 @@ angular.module('faradayApp')
                     newPolicyViolation = "";
                 }
             }
+        };
+
+
+        uiCommonFact.removeEvidence = function (name, vuln) {
+             delete vuln._attachments[name];
+        };
+
+        uiCommonFact.openEvidence = function (name, vuln, ws) {
+            var currentEvidence = vuln._attachments[name];
+            if (!currentEvidence.newfile)
+                window.open(BASEURL + '_api/v2/ws/' + ws + '/vulns/' + vuln._id + '/attachment/' + encodeURIComponent(name), '_blank');
         };
 
 

@@ -819,7 +819,30 @@
                 <div id="tab-evidence_prev" class="container tab-pane-container tab-pane fade"><br>
                     <div class="col-md-12 margin-bottom-15px">
                         <div class="form-group col-md-2">
-                             <input type="file" nv-file-select="" uploader="uploader"  multiple/>
+                            <div class="upload-plus">
+                                <div class="icon-evidence">
+                                    <button type="button" class="btn btn-success col-md-12">
+                                    <i class="fa fa-plus"></i> New
+                                </button>
+
+                                </div>
+                                <input type="file" class="input-evidence" nv-file-select="" uploader="uploader"  multiple/>
+                            </div>
+
+                            <div class="col-md-12 custom-divider"></div>
+
+                            <div class="upload-options">
+                                <button type="button" class="btn btn-info col-md-12" ng-click="uploader.uploadAll()" ng-disabled="!uploader.getNotUploadedItems().length">
+                                    <span class="fa fa-upload"></span> Upload all
+                                </button>
+                                <button type="button" class="btn btn-warning col-md-12" ng-click="uploader.cancelAll()" ng-disabled="!uploader.isUploading">
+                                    <span class="fa fa-ban"></span> Cancel all
+                                </button>
+                                <button type="button" class="btn btn-danger col-md-12" ng-click="uploader.clearQueue()" ng-disabled="!uploader.queue.length">
+                                    <span class="fa fa-trash"></span> Remove all
+                                </button>
+                            </div>
+
                         </div>
 
                         <div class="col-md-6" style="margin-bottom: 40px">
@@ -849,48 +872,34 @@
                                         </div>
                                     </td>
                                     <td class="text-center">
-                                        <span ng-show="item.isSuccess"><i
-                                                class="fa fa-check"></i></span>
-                                        <span ng-show="item.isCancel"><i
-                                                class="fa fa-minus"></i></span>
-                                        <span ng-show="item.isError"><i
-                                                class="fa fa-times"></i></span>
+                                        <span ng-show="item.isSuccess" class="text-success"><i class="fa fa-check"></i></span>
+                                        <span ng-show="item.isCancel" class="text-warning"><i class="fa fa-minus"></i></span>
+                                        <span ng-show="item.isError" class="text-danger"><i class="fa fa-times"></i></span>
                                     </td>
                                     <td nowrap>
-                                        <button type="button" class="btn btn-success btn-xs" ng-click="item.upload()" ng-disabled="item.isReady || item.isUploading || item.isSuccess">
-                                            <span class="glyphicon glyphicon-upload"></span> Upload
+                                        <button type="button" class="btn btn-info btn-xs" ng-click="item.upload()" ng-disabled="item.isReady || item.isUploading || item.isSuccess">
+                                            <span class="fa fa-upload"></span> Upload
                                         </button>
                                         <button type="button" class="btn btn-warning btn-xs" ng-click="item.cancel()" ng-disabled="!item.isUploading">
-                                            <span class="glyphicon glyphicon-ban-circle"></span> Cancel
+                                            <span class="fa fa-ban"></span> Cancel
                                         </button>
                                         <button type="button" class="btn btn-danger btn-xs" ng-click="item.remove()">
-                                            <span class="glyphicon glyphicon-trash"></span> Remove
+                                            <span class="fa fa-trash"></span> Remove
                                         </button>
                                     </td>
                                 </tr>
                                 </tbody>
                             </table>
                             <div>
-                                <div>
-                                    Queue progress:
-                                    <div class="progress" style="">
-                                        <div class="progress-bar" role="progressbar" ng-style="{ 'width': uploader.progress + '%' }"></div>
-                                    </div>
+                                Queue progress:
+                                <div class="progress" style="">
+                                    <div class="progress-bar" role="progressbar" ng-style="{ 'width': uploader.progress + '%' }"></div>
                                 </div>
-                                <button type="button" class="btn btn-success btn-s" ng-click="uploader.uploadAll()" ng-disabled="!uploader.getNotUploadedItems().length">
-                                    <span class="glyphicon glyphicon-upload"></span> Upload all
-                                </button>
-                                <button type="button" class="btn btn-warning btn-s" ng-click="uploader.cancelAll()" ng-disabled="!uploader.isUploading">
-                                    <span class="glyphicon glyphicon-ban-circle"></span> Cancel all
-                                </button>
-                                <button type="button" class="btn btn-danger btn-s" ng-click="uploader.clearQueue()" ng-disabled="!uploader.queue.length">
-                                    <span class="glyphicon glyphicon-trash"></span> Remove all
-                                </button>
                             </div>
                         </div>
 
                         <div class="col-md-4">
-                            <div class="tab-pane-header">Attachments: {{ lastClickedVuln._attachments.items.length }}</div>
+                            <div class="tab-pane-header">Attachments</div>
                             <table class="table">
                                 <thead>
                                 <tr>

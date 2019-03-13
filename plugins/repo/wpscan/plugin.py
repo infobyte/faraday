@@ -151,55 +151,56 @@ class WPScanPlugin(core.PluginBase):
         self.parseOutputWpscan(output)
         wp_url = re.search(r"URL: ((http[s]?)\:\/\/([\w\.]+)[.\S]+)", output)
         service, base_url = self.__get_service_and_url_from_output(output)
-        port = self.getPort(wp_url.group(1), service)
-        host_ip = socket.gethostbyname_ex(base_url)[2][0]
-        host_id = self.createAndAddHost(
-                                        host_ip,
-                                        hostnames=[base_url])
+        if service and base_url:
+            port = self.getPort(wp_url.group(1), service)
+            host_ip = socket.gethostbyname_ex(base_url)[2][0]
+            host_id = self.createAndAddHost(
+                                            host_ip,
+                                            hostnames=[base_url])
 
-        service_id = self.createAndAddServiceToHost(host_id,
-                                                    service,
-                                                    "tcp",
-                                                    ports=[port])
+            service_id = self.createAndAddServiceToHost(host_id,
+                                                        service,
+                                                        "tcp",
+                                                        ports=[port])
 
-        potential_vulns = re.findall(r"(\[\!\].*)", output)
-        for potential_vuln in potential_vulns:
-            vuln_name, severity = self.__get_name_and_severity(potential_vuln)
-            if vuln_name is not None:
-                vuln = potential_vuln  # they grow up so fast
-                path = self.__get_path_from_vuln(vuln)
-                self.createAndAddVulnWebToService(host_id, service_id,
-                                                  name=vuln_name,
-                                                  website=base_url,
-                                                  path=path, severity=severity)
+            potential_vulns = re.findall(r"(\[\!\].*)", output)
+            for potential_vuln in potential_vulns:
+                vuln_name, severity = self.__get_name_and_severity(potential_vuln)
+                if vuln_name is not None:
+                    vuln = potential_vuln  # they grow up so fast
+                    path = self.__get_path_from_vuln(vuln)
+                    self.createAndAddVulnWebToService(host_id, service_id,
+                                                    name=vuln_name,
+                                                    website=base_url,
+                                                    path=path, severity=severity)
 
-        if len(self.plugins) > 0:
-            self.addThemesOrPluginsVulns(
-                'plugins.json',
-                self.plugins,
-                host_id,
-                service_id,
-                base_url,
-                wp_url.group(1),
-                'plugins')
+            if len(self.plugins) > 0:
+                self.addThemesOrPluginsVulns(
+                    'plugins.json',
+                    self.plugins,
+                    host_id,
+                    service_id,
+                    base_url,
+                    wp_url.group(1),
+                    'plugins')
 
-        if len(self.wpversion) > 0:
-            self.addWPVulns(
-                'wordpresses.json',
-                self.wpversion,
-                host_id,
-                service_id,
-                base_url)
+            if len(self.wpversion) > 0:
+                self.addWPVulns(
+                    'wordpresses.json',
+                    self.wpversion,
+                    host_id,
+                    service_id,
+                    base_url)
 
-        if len(self.themes) > 0:
-            self.addThemesOrPluginsVulns(
-                'themes.json',
-                self.themes,
-                host_id,
-                service_id,
-                base_url,
-                wp_url.group(1),
-                'themes')
+            if len(self.themes) > 0:
+                self.addThemesOrPluginsVulns(
+                    'themes.json',
+                    self.themes,
+                    host_id,
+                    service_id,
+                    base_url,
+                    wp_url.group(1),
+                    'themes')
 
     def __get_service_and_url_from_output(self, output):
         """ Return the service (http or https) and the base URL (URL without
@@ -207,8 +208,11 @@ class WPScanPlugin(core.PluginBase):
         return the service and base_url of the first one, ignore others.
         """
         search_url = re.search(r"URL: ((http[s]?)\:\/\/([\w\.]+)[.\S]+)", output)
-        service, base_url = search_url.group(2), search_url.group(3)
-        return service, base_url
+        if not search_url:
+            return None, None
+        else:
+            service, base_url = search_url.group(2), search_url.group(3)
+            return service, base_url
 
     def __get_name_and_severity(self, potential_vuln):
         """Regex the potential_vuln string against a regex with all

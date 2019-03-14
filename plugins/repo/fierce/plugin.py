@@ -12,6 +12,7 @@ import socket
 import re
 import os
 import sys
+import random
 
 current_path = os.path.abspath(os.getcwd())
 
@@ -41,48 +42,61 @@ class FierceParser(object):
     """
 
     def __init__(self, output):
-
         self.target = None
         self.items = []
 
-        r = re.search(
-            "DNS Servers for ([\w\.-]+):\r\n([^$]+)Trying zone transfer first...",
+        regex = re.search(
+            "DNS Servers for ([\w\.-]+):\n([^$]+)Trying zone transfer first...",
             output)
 
-        if r is not None:
-            self.target = r.group(1)
-            mstr = re.sub("\t", "", r.group(2))
-            self.dns = mstr.split()
+        if regex is not None:
+            self.target = regex.group(1)
+            mstr = re.sub("\t", "", regex.group(2))
+            self.dns = filter(None, mstr.splitlines())
 
-        r = re.search(
-            "Now performing [\d]+ test\(s\)...\r\n([^$]+)\x0D\nSubnets found ",
+        regex = re.search(
+            "Now performing [\d]+ test\(s\)...\n([^$]+)\nSubnets found ",
             output)
-
-        if r is not None:
-            list = r.group(1).split("\r\n")
-            for i in list:
+        if regex is not None:
+            hosts_list = regex.group(1).splitlines()
+            for i in hosts_list:
                 if i != "":
                     mstr = i.split("\t")
-                    item = {'host': mstr[1], 'type': "A", 'ip': mstr[0]}
-                    self.items.append(item)
+                    host = mstr[1]
+                    record = "A"
+                    ip = mstr[0]
+                    self.add_host_info_to_items(ip, host, record)
 
         self.isZoneVuln = False
-        output= output.replace('\\$', '')
-        r = re.search(
+        output = output.replace('\\$', '')
+        regex = re.search(
             "Whoah, it worked - misconfigured DNS server found:([^$]+)\There isn't much point continuing, you have  everything.", output)
 
-        if r is not None:
-
+        if regex is not None:
             self.isZoneVuln = True
-            list = r.group(1).split("\n")
-            for i in list:
-
+            dns_list = regex.group(1).splitlines()
+            for i in dns_list:
                 if i != "":
                     mstr = i.split()
                     if (mstr and mstr[0] != "" and len(mstr) > 3 and mstr[3] in valid_records):
-                        item = {'host': mstr[0],
-                                'type': mstr[3], 'ip': mstr[4]}
-                        self.items.append(item)
+                        host = mstr[0]
+                        record = mstr[3]
+                        ip = mstr[4]
+                        self.add_host_info_to_items(ip, host, record)
+
+    def add_host_info_to_items(self, ip_address, hostname, record):
+        data = {}
+        exists = False
+        for item in self.items:
+            if ip_address in item['ip']:
+                item['hosts'].append(hostname)
+                exists = True
+
+        if not exists:
+            data['ip'] = ip_address
+            data['hosts'] = [hostname]
+            data['record'] = record
+            self.items.append(data)
 
 
 class FiercePlugin(core.PluginBase):
@@ -103,6 +117,8 @@ class FiercePlugin(core.PluginBase):
             r'^(sudo fierce|fierce|sudo fierce\.pl|fierce\.pl|perl fierce\.pl|\.\/fierce\.pl).*?')
         global current_path
 
+        self.xml_arg_re = re.compile(r"^.*(>\s*[^\s]+).*$")
+
     def canParseCommandString(self, current_input):
         if self._command_regex.match(current_input.strip()):
             return True
@@ -111,7 +127,7 @@ class FiercePlugin(core.PluginBase):
 
     def resolveCNAME(self, item, items):
         for i in items:
-            if (i['host'] == item['ip']):
+            if (item['ip'] in i['hosts']):
                 item['ip'] = i['ip']
                 return item
         try:
@@ -122,7 +138,7 @@ class FiercePlugin(core.PluginBase):
 
     def resolveNS(self, item, items):
         try:
-            item['host'] = item['ip']
+            item['hosts'][0] = item['ip']
             item['ip'] = socket.gethostbyname(item['ip'])
         except:
             pass
@@ -135,9 +151,9 @@ class FiercePlugin(core.PluginBase):
 
             item['isResolver'] = False
             item['isZoneVuln'] = False
-            if (item['type'] == "CNAME"):
+            if (item['record'] == "CNAME"):
                 self.resolveCNAME(item, parser.items)
-            if (item['type'] == "NS"):
+            if (item['record'] == "NS"):
                 self.resolveNS(item, parser.items)
                 item['isResolver'] = True
                 item['isZoneVuln'] = parser.isZoneVuln
@@ -149,20 +165,15 @@ class FiercePlugin(core.PluginBase):
                         item['ip'] = ''
 
         for item in parser.items:
-
             if item['ip'] == "127.0.0.1" or item['ip'] == '':
                 continue
-            h_id = self.createAndAddHost(item['ip'])
-            i_id = self.createAndAddInterface(
-                h_id,
+            h_id = self.createAndAddHost(
                 item['ip'],
-                ipv4_address=item['ip'],
-                hostname_resolution=[item['host']])
+                hostnames=item['hosts'])
 
             if item['isResolver']:
-                s_id = self.createAndAddServiceToInterface(
+                s_id = self.createAndAddServiceToHost(
                     h_id,
-                    i_id,
                     "domain",
                     "tcp",
                     ports=['53'])
@@ -176,7 +187,22 @@ class FiercePlugin(core.PluginBase):
                         ref=["CVE-1999-0532"])
 
     def processCommandString(self, username, current_path, command_string):
-        return None
+        self._output_file_path = os.path.join(
+            self.data_path,
+            "%s_%s_output-%s.txt" % (
+                self.get_ws(),
+                self.id,
+                random.uniform(1, 10))
+        )
+
+        arg_match = self.xml_arg_re.match(command_string)
+
+        if arg_match is None:
+            return "%s > %s" % (command_string, self._output_file_path)
+        else:
+            return re.sub(arg_match.group(1),
+                          r"> %s" % self._output_file_path,
+                          command_string)
 
 
 def createPlugin():

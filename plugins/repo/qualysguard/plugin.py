@@ -337,7 +337,7 @@ class QualysguardPlugin(core.PluginBase):
         self.id = 'Qualysguard'
         self.name = 'Qualysguard XML Output Plugin'
         self.plugin_version = '0.0.2'
-        self.version = 'Qualysguard 2016 March '
+        self.version = 'Qualysguard 8.17.1.0.2'
         self.framework_version = '1.0.0'
         self.options = None
         self._current_output = None
@@ -357,13 +357,8 @@ class QualysguardPlugin(core.PluginBase):
 
             h_id = self.createAndAddHost(
                 item.ip,
-                item.os)
-
-            i_id = self.createAndAddInterface(
-                h_id,
-                item.ip,
-                ipv4_address=item.ip,
-                hostname_resolution=item.ip)
+                item.os,
+                hostnames=[item.ip])
 
             for v in item.vulns:
 
@@ -379,9 +374,8 @@ class QualysguardPlugin(core.PluginBase):
                 else:
 
                     web = False
-                    s_id = self.createAndAddServiceToInterface(
+                    s_id = self.createAndAddServiceToHost(
                         h_id,
-                        i_id,
                         v.port,
                         v.protocol,
                         ports=[str(v.port)],
@@ -402,19 +396,6 @@ class QualysguardPlugin(core.PluginBase):
                             severity=str(int(v.severity) - 1),
                             desc=v.desc,
                             resolution=v.solution if v.solution else '')
-
-                        n_id = self.createAndAddNoteToService(
-                            h_id,
-                            s_id,
-                            'website',
-                            '')
-
-                        self.createAndAddNoteToNote(
-                            h_id,
-                            s_id,
-                            n_id,
-                            item.ip,
-                            '')
 
                     else:
                         self.createAndAddVulnToService(

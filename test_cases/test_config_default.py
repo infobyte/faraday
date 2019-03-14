@@ -5,7 +5,10 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-from lxml import etree as ET
+try:
+    from lxml import etree as ET
+except ImportError:
+    import xml.etree.ElementTree as ET
 
 from server.config import FARADAY_BASE
 

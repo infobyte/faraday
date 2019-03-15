@@ -190,7 +190,7 @@ def print_postgresql_status():
     exit_code = 0
     result = check_postgres()
     print(result[0])
-    if result[1]< (u'90400',):
+    if result[1]<90400:
         print('[{red}-{white}] PostgreSQL is running, but needs to be 9.4 or newer, please update PostgreSQL'.\
             format(red=Fore.RED, white=Fore.WHITE))
     elif result:

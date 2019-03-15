@@ -72,7 +72,8 @@ class FaradayRedirectResource(Redirect, object):
 class WebServer(object):
     UI_URL_PATH = '_ui'
     API_URL_PATH = '_api'
-    WEB_UI_LOCAL_PATH = os.path.join(faraday.server.config.FARADAY_BASE, 'server/www')
+    # WEB_UI_LOCAL_PATH = os.path.join(faraday.server.config.FARADAY_BASE, 'server/www')
+    WEB_UI_LOCAL_PATH = '/home/matias/faraday/src/server/www/'
 
     def __init__(self, enable_ssl=False):
         logger.info('Starting web server at {}://{}:{}/'.format(

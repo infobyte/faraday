@@ -69,7 +69,6 @@ class QualysguardXmlParser():
     """
 
     def __init__(self, xml_output):
-
         tree, type_report = self.parse_xml(xml_output)
 
         if not tree or type_report is None:
@@ -254,7 +253,7 @@ class ItemScanReport():
         self.node = item_node
         self.ip = item_node.get('value')
         self.os = self.get_text_from_subnode('OS')
-
+        self.hostname = self.get_hostname(item_node)
         self.vulns = self.getResults(item_node)
 
     def getResults(self, tree):
@@ -266,6 +265,12 @@ class ItemScanReport():
                 yield ResultsScanReport(v, self.issues)
         for self.issues in tree.findall('INFOS/CAT'):
             for v in self.issues.findall('INFO'):
+                yield ResultsScanReport(v, self.issues)
+        for self.issues in tree.findall('SERVICES/CAT'):
+            for v in self.issues.findall('SERVICE'):
+                yield ResultsScanReport(v, self.issues)
+        for self.issues in tree.findall('PRACTICES/CAT'):
+            for v in self.issues.findall('PRACTICE'):
                 yield ResultsScanReport(v, self.issues)
 
     def get_text_from_subnode(self, subnode_xpath_expr):
@@ -279,6 +284,14 @@ class ItemScanReport():
             return sub_node.text
 
         return None
+
+    def get_hostname(self, node):
+        hostname = node.get('name')
+
+        if hostname == 'No registered hostname':
+            return ""
+
+        return hostname
 
 
 class ResultsScanReport():
@@ -294,14 +307,19 @@ class ResultsScanReport():
         self.severity = self.node.get('severity')
         self.title = self.get_text_from_subnode('TITLE')
         self.cvss = self.get_text_from_subnode('CVSS_BASE')
-        self.pci = self.get_text_from_subnode('PCI_FLAG')
         self.diagnosis = self.get_text_from_subnode('DIAGNOSIS')
         self.solution = self.get_text_from_subnode('SOLUTION')
         self.result = self.get_text_from_subnode('RESULT')
+        self.consequence = self.get_text_from_subnode('CONSEQUENCE')
 
         self.desc = cleaner_results(self.diagnosis)
         if self.result:
             self.desc += '\nResult: ' + cleaner_results(self.result)
+        else:
+            self.desc += ''
+
+        if self.consequence:
+            self.desc += '\nConsequence: ' + cleaner_results(self.consequence)
         else:
             self.desc += ''
 
@@ -312,6 +330,9 @@ class ResultsScanReport():
         for r in issue_node.findall('BUGTRAQ_ID_LIST/BUGTRAQ_ID'):
             self.node = r
             self.ref.append('bid-' + self.get_text_from_subnode('ID'))
+
+        if self.cvss:
+            self.ref.append('CVSS BASE: ' + self.cvss)
 
     def get_text_from_subnode(self, subnode_xpath_expr):
         """
@@ -354,14 +375,12 @@ class QualysguardPlugin(core.PluginBase):
         parser = QualysguardXmlParser(output)
 
         for item in parser.items:
-
             h_id = self.createAndAddHost(
                 item.ip,
                 item.os,
-                hostnames=[item.ip])
+                hostnames=[item.hostname])
 
             for v in item.vulns:
-
                 if v.port is None:
                     self.createAndAddVulnToHost(
                         h_id,

@@ -11,8 +11,8 @@ import os
 sys.path.append(os.getcwd())
 
 import click
-from server.models import db
-from server.web import app
+from faraday.server.models import db
+from faraday.server.web import app
 
 
 def reset_db_all():

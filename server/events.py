@@ -16,8 +16,8 @@ from models import (
 )
 
 from sqlalchemy import event
-from server.models import db
-from server.websocket_factories import changes_queue
+from faraday.server.models import db
+from faraday.server.websocket_factories import changes_queue
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +93,7 @@ def after_insert_check_child_has_same_workspace(mapper, connection, inserted_ins
 
 
 # register the workspace verification for all objs that has workspace_id
-for name, obj in inspect.getmembers(sys.modules['server.models']):
+for name, obj in inspect.getmembers(sys.modules['faraday.server.models']):
     if inspect.isclass(obj) and getattr(obj, 'workspace_id', None):
         event.listen(obj, 'after_insert', after_insert_check_child_has_same_workspace)
         event.listen(obj, 'after_update', after_insert_check_child_has_same_workspace)

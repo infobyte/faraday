@@ -15,8 +15,8 @@ from logging import (
     DEBUG,
     INFO,
 )
-from config import constant as CONSTANTS
-from config.configuration import getInstanceConfiguration
+from faraday.config import constant as CONSTANTS
+from faraday.config.configuration import getInstanceConfiguration
 
 LOGGING_LEVEL = INFO
 

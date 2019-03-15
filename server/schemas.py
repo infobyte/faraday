@@ -11,7 +11,7 @@ from marshmallow import fields, Schema
 from marshmallow.exceptions import ValidationError
 from dateutil.tz import tzutc
 
-from server.models import (
+from faraday.server.models import (
     db,
     VulnerabilityABC,
     CustomFieldsSchema,

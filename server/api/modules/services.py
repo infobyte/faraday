@@ -8,10 +8,10 @@ from marshmallow import fields, post_load, ValidationError
 from marshmallow.validate import OneOf, Range
 from sqlalchemy.orm.exc import NoResultFound
 
-from server.api.base import AutoSchema, ReadWriteWorkspacedView, FilterSetMeta, \
+from faraday.server.api.base import AutoSchema, ReadWriteWorkspacedView, FilterSetMeta, \
     FilterAlchemyMixin
-from server.models import Host, Service, Workspace
-from server.schemas import (
+from faraday.server.models import Host, Service, Workspace
+from faraday.server.schemas import (
     MetadataSchema,
     MutableField,
     PrimaryKeyRelatedField,

@@ -5,7 +5,7 @@
 from flask import Blueprint
 from flask import current_app as app
 from itsdangerous import TimestampSigner
-from server.api.base import GenericWorkspacedView
+from faraday.server.api.base import GenericWorkspacedView
 
 websocket_auth_api = Blueprint('websocket_auth_api', __name__)
 

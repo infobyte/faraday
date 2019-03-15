@@ -5,8 +5,8 @@
 from flask import Blueprint
 from marshmallow import fields
 
-from server.models import CustomFieldsSchema
-from server.api.base import (
+from faraday.server.models import CustomFieldsSchema
+from faraday.server.api.base import (
     AutoSchema,
     ReadWriteView,
 )

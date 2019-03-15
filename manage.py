@@ -13,21 +13,21 @@ import click
 import requests
 from alembic.config import CommandLine
 
-import server.config
+import faraday.server.config
 from persistence.server.server import _conf, FARADAY_UP, SERVER_URL
-from server.commands.initdb import InitDB
-from server.commands.faraday_schema_display import DatabaseSchema
-from server.commands.app_urls import show_all_urls
-from server.commands.reports import import_external_reports
-from server.commands import status_check as status_check_functions
-from server.commands import change_password as change_pass
-from server.commands.custom_fields import add_custom_field_main, delete_custom_field_main
-from server.commands import support as support_zip
-from server.models import db, User
-from server.importer import ImportCouchDB
+from faraday.server.commands.initdb import InitDB
+from faraday.server.commands.faraday_schema_display import DatabaseSchema
+from faraday.server.commands.app_urls import show_all_urls
+from faraday.server.commands.reports import import_external_reports
+from faraday.server.commands import status_check as status_check_functions
+from faraday.server.commands import change_password as change_pass
+from faraday.server.commands.custom_fields import add_custom_field_main, delete_custom_field_main
+from faraday.server.commands import support as support_zip
+from faraday.server.models import db, User
+from faraday.server.importer import ImportCouchDB
 
-from server.web import app
-from utils.logs import setUpLogger
+from faraday.server.web import app
+from faraday.utils.logs import setUpLogger
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -82,7 +82,7 @@ def show_urls():
 def initdb(choose_password):
     with app.app_context():
         InitDB().run(choose_password=choose_password)
-        couchdb_config_present = server.config.couchdb
+        couchdb_config_present = faraday.server.config.couchdb
         if couchdb_config_present and couchdb_config_present.user and couchdb_config_present.password:
             print('Importing data from CouchDB, please wait...')
             ImportCouchDB().run()
@@ -104,7 +104,7 @@ def sql_shell():
     except ImportError:
         print('PGCli was not found, please install it with: pip install pgcli')
         sys.exit(1)
-    conn_string = server.config.database.connection_string.strip("'")
+    conn_string = faraday.server.config.database.connection_string.strip("'")
 
     pgcli = PGCli()
     pgcli.connect_uri(conn_string)
@@ -191,8 +191,8 @@ def create_superuser(username, email, password):
 def create_tables():
     with app.app_context():
         # Ugly hack to create tables and also setting alembic revision
-        import server.config
-        conn_string = server.config.database.connection_string
+        import faraday.server.config
+        conn_string = faraday.server.config.database.connection_string
         from server.commands.initdb import InitDB
         InitDB()._create_tables(conn_string)
         click.echo(click.style(

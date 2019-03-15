@@ -17,7 +17,7 @@ import model.guiapi
 from cStringIO import StringIO
 from gui.customevents import ShowExceptionCustomEvent
 from gui.customevents import EXCEPTION_ID
-from config.configuration import getInstanceConfiguration
+from faraday.config.configuration import getInstanceConfiguration
 import json
 import time
 

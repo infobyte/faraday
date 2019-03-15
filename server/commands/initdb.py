@@ -20,13 +20,13 @@ from subprocess import Popen, PIPE
 import sqlalchemy
 from sqlalchemy import create_engine
 
-from config.configuration import Configuration
+from faraday.config.configuration import Configuration
 from faraday import (
     FARADAY_USER_CONFIG_XML,
     FARADAY_BASE_CONFIG_XML,
     FARADAY_BASE,
 )
-from server.utils.database import is_unique_constraint_violation
+from faraday.server.utils.database import is_unique_constraint_violation
 
 try:
     # py2.7
@@ -40,9 +40,9 @@ from colorama import init
 from colorama import Fore
 from sqlalchemy.exc import OperationalError, ProgrammingError
 
-import server.config
-from config.constant import CONST_FARADAY_HOME_PATH
-from server.config import LOCAL_CONFIG_FILE
+import faraday.server.config
+from faraday.config.constant import CONST_FARADAY_HOME_PATH
+from faraday.server.config import LOCAL_CONFIG_FILE
 init()
 
 
@@ -102,7 +102,7 @@ class InitDB():
             current_psql_output.close()
             conn_string = self._save_config(config, username, password, database_name, hostname)
             self._create_tables(conn_string)
-            couchdb_config_present = server.config.couchdb
+            couchdb_config_present = faraday.server.config.couchdb
             if not (couchdb_config_present and couchdb_config_present.user and couchdb_config_present.password):
                 self._create_admin_user(conn_string, choose_password)
             else:
@@ -208,12 +208,12 @@ class InitDB():
             print("{yellow}WARNING{white}: Role {username} already exists, skipping creation ".format(yellow=Fore.YELLOW, white=Fore.WHITE, username=username))
 
             try:
-                if not getattr(server.config, 'database', None):
+                if not getattr(faraday.server.config, 'database', None):
                     print('Manual configuration? \n faraday_postgresql was found in PostgreSQL, but no connection string was found in server.ini. ')
                     print('Please configure [database] section with correct postgresql string. Ex. postgresql+psycopg2://faraday_postgresql:PASSWORD@localhost/faraday')
                     sys.exit(1)
                 try:
-                    password = server.config.database.connection_string.split(':')[2].split('@')[0]
+                    password = faraday.server.config.database.connection_string.split(':')[2].split('@')[0]
                 except AttributeError:
                     print('Could not find connection string.')
                     print('Please configure [database] section with correct postgresql string. Ex. postgresql+psycopg2://faraday_postgresql:PASSWORD@localhost/faraday')

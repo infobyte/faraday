@@ -18,7 +18,7 @@ from model.controller import ModelController
 
 from plugins.controller import PluginController
 from plugins.manager import PluginManager
-from server.models import Workspace
+from faraday.server.models import Workspace
 
 logger = logging.getLogger(__name__)
 

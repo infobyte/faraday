@@ -11,8 +11,8 @@ from os.path import join, expanduser
 from random import SystemRandom
 
 from model.workspace import Workspace
-from server.config import LOCAL_CONFIG_FILE, copy_default_config_to_local
-from server.models import User, Vulnerability, VulnerabilityWeb, Workspace, VulnerabilityGeneric
+from faraday.server.config import LOCAL_CONFIG_FILE, copy_default_config_to_local
+from faraday.server.models import User, Vulnerability, VulnerabilityWeb, Workspace, VulnerabilityGeneric
 
 try:
     # py2.7
@@ -39,10 +39,10 @@ from flask_session import Session
 from nplusone.ext.flask_sqlalchemy import NPlusOne
 from depot.manager import DepotManager
 
-import server.config
+import faraday.server.config
 # Load SQLAlchemy Events
-import server.events
-from server.utils.logger import LOGGING_HANDLERS
+import faraday.server.events
+from faraday.server.utils.logger import LOGGING_HANDLERS
 logger = logging.getLogger(__name__)
 
 
@@ -52,13 +52,13 @@ def setup_storage_path():
         logger.info('Creating directory {0}'.format(default_path))
         os.mkdir(default_path)
     config = ConfigParser()
-    config.read(server.config.LOCAL_CONFIG_FILE)
+    config.read(faraday.server.config.LOCAL_CONFIG_FILE)
     try:
         config.add_section('storage')
         config.set('storage', 'path', default_path)
     except DuplicateSectionError:
         logger.info('Duplicate section storage. skipping.')
-    with open(server.config.LOCAL_CONFIG_FILE, 'w') as configfile:
+    with open(faraday.server.config.LOCAL_CONFIG_FILE, 'w') as configfile:
         config.write(configfile)
 
     return default_path
@@ -174,7 +174,7 @@ def create_app(db_connection_string=None, testing=None):
     app = Flask(__name__)
 
     try:
-        secret_key = server.config.faraday_server.secret_key
+        secret_key = faraday.server.config.faraday_server.secret_key
     except Exception:
         # Now when the config file does not exist it doesn't enter in this
         # condition, but it could happen in the future. TODO check
@@ -205,7 +205,7 @@ def create_app(db_connection_string=None, testing=None):
         'SECURITY_MSG_INVALID_PASSWORD': login_failed_message,
 
         'SESSION_TYPE': 'filesystem',
-        'SESSION_FILE_DIR': server.config.FARADAY_SERVER_SESSIONS_DIR,
+        'SESSION_FILE_DIR': faraday.server.config.FARADAY_SERVER_SESSIONS_DIR,
 
         'SQLALCHEMY_TRACK_MODIFICATIONS': False,
         'SQLALCHEMY_RECORD_QUERIES': True,
@@ -223,7 +223,7 @@ def create_app(db_connection_string=None, testing=None):
         'PERMANENT_SESSION_LIFETIME': datetime.timedelta(hours=12),
     })
 
-    storage_path = server.config.storage.path
+    storage_path = faraday.server.config.storage.path
     if not storage_path:
         logger.warn('No storage section or path in the .faraday/server.ini. Setting the default value to .faraday/storage')
         storage_path = setup_storage_path()
@@ -241,7 +241,7 @@ def create_app(db_connection_string=None, testing=None):
     check_testing_configuration(testing, app)
 
     try:
-        app.config['SQLALCHEMY_DATABASE_URI'] = db_connection_string or server.config.database.connection_string.strip("'")
+        app.config['SQLALCHEMY_DATABASE_URI'] = db_connection_string or faraday.server.config.database.connection_string.strip("'")
     except AttributeError:
         logger.info('Missing [database] section on server.ini. Please configure the database before running the server.')
     except NoOptionError:
@@ -254,7 +254,7 @@ def create_app(db_connection_string=None, testing=None):
     # Setup Flask-Security
     app.user_datastore = SQLAlchemyUserDatastore(
         db,
-        user_model=server.models.User,
+        user_model=User,
         role_model=None)  # We won't use flask security roles feature
     Security(app, app.user_datastore, login_form=CustomLoginForm)
     # Make API endpoints require a login user by default. Based on
@@ -262,7 +262,7 @@ def create_app(db_connection_string=None, testing=None):
     app.view_functions['security.login'].is_public = True
     app.view_functions['security.logout'].is_public = True
 
-    app.debug = server.config.is_debug_mode()
+    app.debug = faraday.server.config.is_debug_mode()
     minify_json_output(app)
 
     for handler in LOGGING_HANDLERS:

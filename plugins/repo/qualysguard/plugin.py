@@ -11,6 +11,7 @@ from plugins import core
 import re
 import os
 import sys
+import logging
 
 try:
 
@@ -22,6 +23,8 @@ except ImportError:
     ETREE_VERSION = ET.VERSION
 
 ETREE_VERSION = [int(i) for i in ETREE_VERSION.split('.')]
+
+logger = logging.getLogger(__name__)
 
 current_path = os.path.abspath(os.getcwd())
 
@@ -104,7 +107,7 @@ class QualysguardXmlParser():
                 type_report = None
 
         except SyntaxError, err:
-            self.devlog('SyntaxError: %s. %s' % (err, xml_output))
+            logger.error('SyntaxError: %s.' % (err))
             return None, None
 
         return tree, type_report

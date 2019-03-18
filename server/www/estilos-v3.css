@@ -487,6 +487,11 @@ li.nav-item.has-error:not(.active) {
 li.nav-item.has-error:not(.active) a {
     color: #a94442;
 }
+
+.nav-item{
+    margin-right: 10px;
+}
+
 .active-toggle{
   width: 3%;
   text-align: center!important;
@@ -696,3 +701,25 @@ button[disabled], html input[disabled] {
     width: 100%;
     height: inherit;
 }
+
+ul#nav-tabs-container {
+    margin-left: 50px;
+}
+
+.padding-left-0{
+    padding-left: 0;
+}
+
+.margin-left-0{
+    margin-left: 0;
+}
+
+.desc-container {
+    height: 65%;
+    overflow-y: auto;
+}
+
+.height-100{
+    height: 100%;
+}
+

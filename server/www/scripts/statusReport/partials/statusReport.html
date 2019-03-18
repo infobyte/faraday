@@ -169,10 +169,10 @@
             <div class="preview-header">
                 <button type="button" class="close" ng-click="hideVulnPreview()" data-dismiss="alert"><span area-hidden="true">&times;</span><span class="sr-only">Close</span></button>
             </div>
-            <div class="mt-3">
-                <div class="edit-vulns-dropdowns row" ng-init="updateBtnSeverityColor(lastClickedVuln.severity);updateBtnStatusColor(lastClickedVuln.status)">
+            <div class="mt-3 height-100 ">
+                <div class="margin-left-0 edit-vulns-dropdowns row" ng-init="updateBtnSeverityColor(lastClickedVuln.severity);updateBtnStatusColor(lastClickedVuln.status)">
 
-                <div class="btn-group col-md-2 col-sm-4 col-xs-4">
+                <div class="margin-left-0 btn-group col-md-2 col-sm-4 col-xs-4">
                     <button type="button" class="dropdown-toggle btn-change-property primary-btn"
                             data-toggle="dropdown"
                             id="btn-chg-severity-prev"
@@ -273,9 +273,9 @@
 
             </div>
 
-                <div class="row margin-top-30px">
+                <div class="margin-left-0 row margin-top-30px">
                     <div ng-if="fieldToEdit !== 'name'">
-                        <div class="col-md-12 " style="margin-bottom: 24px">
+                        <div class="margin-left-0 col-md-12 " style="margin-bottom: 24px">
                             <div class="tab-pane-header">
                                 {{lastClickedVuln.name}}
                                 <span class="preview-icon" ng-click="activeEditPreview('name')"><i class="fa fa-pencil fa-lg" aria-hidden="true"></i></span>
@@ -310,20 +310,22 @@
             </ul>
 
             <!-- Tab panes -->
-            <div class="tab-content">
-                <div id="general_prev" class="container tab-pane-container tab-pane active"><br>
-                    <div class="col-md-6">
-                        <div class="col-md-12">
-                            <div ng-if="fieldToEdit !== 'desc'" class="pretty-text">
-                                <div class="col-md-10 margin-bottom-24">
+            <div class="tab-content height-100 ">
+                <div id="general_prev" class="height-100 container tab-pane-container tab-pane active"><br>
+                    <div class="height-100 padding-left-0 col-md-6">
+                        <div class="height-100 padding-left-0 col-md-12">
+                            <div ng-if="fieldToEdit !== 'desc'" class="height-100 pretty-text">
+                                <div class="height-100 padding-left-0  col-md-10 margin-bottom-24">
                                     <div ng-if="lastClickedVuln.desc === '' || lastClickedVuln.desc === undefined"  style="margin-bottom: 15px;color: #aaa;">
                                         <p>
                                             No Description was found.
                                         </p>
                                     </div>
-                                    <div class="tab-pane-header" id="desc-prev" title="{{lastClickedVuln.desc.length > 450 ? lastClickedVuln.desc:''}}" >
-                                        <span ng-bind-html="lastClickedVuln.desc | limitTo: 450"> </span>
-                                        <span class="tab-pane-header" ng-if="lastClickedVuln.desc.length > 450">...</span>
+                                    <label>Description</label>
+                                    <div class="desc-container">
+                                        <div class="tab-pane-header" id="desc-prev">
+                                            <span ng-bind-html="lastClickedVuln.desc"> </span>
+                                        </div>
                                     </div>
 
                                 </div>
@@ -341,31 +343,31 @@
                             </div>
                         </div>
 
-                        <div class="form-group margin-top-22px">
-                        <div class="show-scroll col-md-12">
-                            <div class="col-md-12">
-                                <div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'refs'"></i>  References</div>
-                                <div class="input-group margin-bottom-sm">
-                                    <label class="sr-only" for="vuln-refs">References</label>
-                                    <input type="text" class="form-control" id="vuln-refs" placeholder="Reference"
-                                           ng-model="new_ref"/>
-                                    <span class="input-group-addon cursor" ng-click="newReference()"><i
-                                            class="fa fa-plus-circle"></i></span>
-                                </div>
-                            </div>
-                            <div class="col-md-12 reference" ng-repeat="reference in lastClickedVuln.refs">
-                                <div class="input-group margin-bottom-sm">
-                                    <label class="sr-only" for="vuln-refs-create">References</label>
-                                    <input type="text" class="form-control" id="vuln-refs-create" placeholder="Reference"
-                                           ng-model="reference" ng-click="openReference(reference)"
-                                           role="button"
-                                           readonly/>
-                                    <span class="input-group-addon cursor" ng-click="removeReference($index)"><i
-                                            class="fa fa-minus-circle"></i></span>
-                                </div>
-                            </div>
-                        </div><!-- .form-group -->
-                    </div>
+                        <!--<div class="form-group margin-top-22px">-->
+                        <!--<div class="show-scroll col-md-12">-->
+                            <!--<div class="col-md-12">-->
+                                <!--<div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'refs'"></i>  References</div>-->
+                                <!--<div class="input-group margin-bottom-sm">-->
+                                    <!--<label class="sr-only" for="vuln-refs">References</label>-->
+                                    <!--<input type="text" class="form-control" id="vuln-refs" placeholder="Reference"-->
+                                           <!--ng-model="new_ref"/>-->
+                                    <!--<span class="input-group-addon cursor" ng-click="newReference()"><i-->
+                                            <!--class="fa fa-plus-circle"></i></span>-->
+                                <!--</div>-->
+                            <!--</div>-->
+                            <!--<div class="col-md-12 reference" ng-repeat="reference in lastClickedVuln.refs">-->
+                                <!--<div class="input-group margin-bottom-sm">-->
+                                    <!--<label class="sr-only" for="vuln-refs-create">References</label>-->
+                                    <!--<input type="text" class="form-control" id="vuln-refs-create" placeholder="Reference"-->
+                                           <!--ng-model="reference" ng-click="openReference(reference)"-->
+                                           <!--role="button"-->
+                                           <!--readonly/>-->
+                                    <!--<span class="input-group-addon cursor" ng-click="removeReference($index)"><i-->
+                                            <!--class="fa fa-minus-circle"></i></span>-->
+                                <!--</div>-->
+                            <!--</div>-->
+                        <!--</div>&lt;!&ndash; .form-group &ndash;&gt;-->
+                    <!--</div>-->
                     </div>
 
 
@@ -373,6 +375,7 @@
                         <div class="row">
                             <div ng-if="fieldToEdit !== 'resolution'" class="pretty-text">
                                 <div class="col-md-10 margin-bottom-24">
+                                    <label>Resolution</label>
                                     <div ng-if="lastClickedVuln.resolution === '' || lastClickedVuln.resolution === undefined"  style="margin-bottom: 15px;color: #aaa;">
                                         <p>
                                             No Resolution was found.
@@ -398,53 +401,53 @@
                             </div>
                         </div>
 
-                        <div class="form-group margin-top-22px">
-                            <div class="show-scroll row">
-                                <div class="col-md-12">
-                                    <div class="tab-pane-header">Policy Violations</div>
-                                    <div class="input-group margin-bottom-sm">
-                                        <label class="sr-only" for="vuln-policyviolations"> <i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'policyviolations'"></i>Policy Violations</label>
-                                        <input type="text" class="form-control" id="vuln-policyviolations"
-                                               placeholder="Policy Violations" ng-model="new_policyviolation"/>
-                                        <span class="input-group-addon cursor" ng-click="newPolicyviolation()"><i
-                                                class="fa fa-plus-circle"></i></span>
-                                    </div>
-                                </div>
-                                <div class="col-md-12 reference" ng-repeat="policyviolation in lastClickedVuln.policyviolations">
-                                    <div class="input-group margin-bottom-sm">
-                                        <label class="sr-only" for="vuln-policyviolations-value">Policy Violation</label>
-                                        <input type="text" class="form-control" id="vuln-policyviolations-value"
-                                               placeholder="Policy Violation" ng-model="policyviolation" disabled/>
-                                        <span class="input-group-addon cursor"
-                                              ng-click="removePolicyviolation($index)"><i
-                                                class="fa fa-minus-circle"></i></span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div><!-- .form-group -->
+                        <!--<div class="form-group margin-top-22px">-->
+                            <!--<div class="show-scroll row">-->
+                                <!--<div class="col-md-12">-->
+                                    <!--<div class="tab-pane-header">Policy Violations</div>-->
+                                    <!--<div class="input-group margin-bottom-sm">-->
+                                        <!--<label class="sr-only" for="vuln-policyviolations"> <i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'policyviolations'"></i>Policy Violations</label>-->
+                                        <!--<input type="text" class="form-control" id="vuln-policyviolations"-->
+                                               <!--placeholder="Policy Violations" ng-model="new_policyviolation"/>-->
+                                        <!--<span class="input-group-addon cursor" ng-click="newPolicyviolation()"><i-->
+                                                <!--class="fa fa-plus-circle"></i></span>-->
+                                    <!--</div>-->
+                                <!--</div>-->
+                                <!--<div class="col-md-12 reference" ng-repeat="policyviolation in lastClickedVuln.policyviolations">-->
+                                    <!--<div class="input-group margin-bottom-sm">-->
+                                        <!--<label class="sr-only" for="vuln-policyviolations-value">Policy Violation</label>-->
+                                        <!--<input type="text" class="form-control" id="vuln-policyviolations-value"-->
+                                               <!--placeholder="Policy Violation" ng-model="policyviolation" disabled/>-->
+                                        <!--<span class="input-group-addon cursor"-->
+                                              <!--ng-click="removePolicyviolation($index)"><i-->
+                                                <!--class="fa fa-minus-circle"></i></span>-->
+                                    <!--</div>-->
+                                <!--</div>-->
+                            <!--</div>-->
+                        <!--</div>&lt;!&ndash; .form-group &ndash;&gt;-->
 
-                        <div class="col-md-12 margin-top-22px">
-                                <div class="tab-pane-header"><label for="inp-edit-desc"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'impact'"></i>  Impact</label></div>
-                                <h4><span ng-repeat="(key, value) in lastClickedVuln.impact" class="normal-size"
-                                          style="cursor: pointer;">
-                                <span ng-class="{'label-impact label-default-impact': !value, 'label-impact label-success-impact': value}"
-                                      ng-click="toggleImpact(key)">{{key}}</span>
-                                </span></h4><!-- .normal-size -->
-                            </div>
+                        <!--<div class="col-md-12 margin-top-22px">-->
+                                <!--<div class="tab-pane-header"><label for="inp-edit-desc"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'impact'"></i>  Impact</label></div>-->
+                                <!--<h4><span ng-repeat="(key, value) in lastClickedVuln.impact" class="normal-size"-->
+                                          <!--style="cursor: pointer;">-->
+                                <!--<span ng-class="{'label-impact label-default-impact': !value, 'label-impact label-success-impact': value}"-->
+                                      <!--ng-click="toggleImpact(key)">{{key}}</span>-->
+                                <!--</span></h4>&lt;!&ndash; .normal-size &ndash;&gt;-->
+                            <!--</div>-->
                         </div>
 
                 </div>
 
                 <div id="technical_details_prev" class="container tab-pane-container tab-pane fade"><br>
-                    <div class="col-md-12">
-                        <div class="col-md-12">
+                    <div class="padding-left-0 col-md-12">
+                        <div class="padding-left-0 col-md-12">
                             <div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'data'"></i>    Data
                                 <span class="preview-icon" title="Edit Data" ng-click="activeEditPreview('data')" ng-if="fieldToEdit !== 'data'" style="font-size: small">
                                     <i class="fa fa-pencil fa-lg" aria-hidden="true"></i>
                                 </span>
                             </div>
                             <div ng-if="fieldToEdit !== 'data'" class="pretty-text">
-                                <div class="col-md-12 margin-bottom-24">
+                                <div class="padding-left-0 col-md-12 margin-bottom-24">
                                     <div ng-if="lastClickedVuln.data === '' || lastClickedVuln.data === undefined"  style="margin-bottom: 15px;color: #aaa;">
                                         <p>
                                             No Data was found.
@@ -466,8 +469,8 @@
                             </div>
                         </div>
 
-                        <div class="row" style="margin-left: 0; margin-right: 0">
-                            <div class="col-md-6 col-sm-12 col-xs-12" ng-show="lastClickedVuln.type === 'VulnerabilityWeb'">
+                        <div class="padding-left-0 row" style="margin-left: 0; margin-right: 0">
+                            <div class="padding-left-0 col-md-6 col-sm-12 col-xs-12" ng-show="lastClickedVuln.type === 'VulnerabilityWeb'">
                             <div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'request'"></i>    Request
                                 <span class="preview-icon" title="Edit Request" ng-click="activeEditPreview('request')" ng-if="fieldToEdit !== 'request'" style="font-size: small">
                                     <i class="fa fa-pencil fa-lg" aria-hidden="true"></i>
@@ -536,7 +539,7 @@
                         </div>
                         </div>
                         <div ng-show="lastClickedVuln.type === 'VulnerabilityWeb'">
-                        <div class="col-md-4">
+                        <div class="padding-left-0 col-md-4">
                             <div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'method'"></i>    Method</div>
                             <div class="form-group">
                                 <label class="sr-only control-label" for="vuln-method">Method</label>
@@ -564,7 +567,7 @@
                             </div><!-- .form-group -->
                         </div>
 
-                        <div class="col-md-3">
+                        <div class="padding-left-0 col-md-3">
                             <div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'path'"></i>    Path</div>
                             <div class="form-group">
                                 <label class="sr-only control-label" for="vuln-path">Path</label>
@@ -604,8 +607,8 @@
                 </div>
 
                 <div id="tab-evidence_prev" class="container tab-pane-container tab-pane fade"><br>
-                    <div class="col-md-12 margin-bottom-15px">
-                        <div class="form-group col-md-2">
+                    <div class="padding-left-0 col-md-12 margin-bottom-15px">
+                        <div class="padding-left-0 form-group col-md-2">
                             <div class="upload-plus">
                                 <div class="icon-evidence">
                                     <button type="button" class="btn btn-success col-md-12">
@@ -619,7 +622,7 @@
                         </div>
 
                         <div class="col-md-6 attachment-prev">
-                            <div ng-if="selectedAtachment.url === ''" class="no-info-overlay" style="margin-bottom: 15px;">
+                            <div ng-if="selectedAtachment.url === ''" class="no-info-overlay" style="margin-bottom: 15px;top: -8px;">
                                 <p class="no-info-text">
                                     No attachment selected
                                 </p>
@@ -670,8 +673,8 @@
                                 <a href="https://github.com/infobyte/faraday/wiki/Custom-Fields" target="_blank">wiki page</a>.
                             </p>
                     </div>
-                    <div class="col-md-8 margin-bottom-15px">
-                        <div class="col-md-12" ng-repeat="cf in customFields | orderBy : 'field_order'">
+                    <div class="padding-left-0 col-md-5 margin-bottom-15px">
+                        <div class="padding-left-0 col-md-12" ng-repeat="cf in customFields | orderBy : 'field_order'">
                             <custom-field-prev field="{{cf}}"></custom-field-prev>
                         </div>
                     </div>

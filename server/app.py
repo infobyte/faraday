@@ -10,7 +10,6 @@ from future.builtins import range # __future__
 from os.path import join, expanduser
 from random import SystemRandom
 
-from model.workspace import Workspace
 from faraday.server.config import LOCAL_CONFIG_FILE, copy_default_config_to_local
 from faraday.server.models import User, Vulnerability, VulnerabilityWeb, Workspace, VulnerabilityGeneric
 

@@ -32,7 +32,7 @@ from faraday.server.websocket_factories import (
     WorkspaceServerFactory,
     BroadcastServerProtocol
 )
-from faraday.server.api.modules.upload_reports import RawReportProcessor
+# from faraday.server.api.modules.upload_reports import RawReportProcessor
 
 app = create_app()  # creates a Flask(__name__) app
 logger = faraday.server.utils.logger.get_logger(__name__)
@@ -157,8 +157,8 @@ class WebServer(object):
         try:
             self.install_signal()
             # start threads and processes
-            self.raw_report_processor = RawReportProcessor()
-            self.raw_report_processor.start()
+            # self.raw_report_processor = RawReportProcessor()
+            # self.raw_report_processor.start()
             # web and static content
             self.__listen_func(
                 self.__listen_port, site,

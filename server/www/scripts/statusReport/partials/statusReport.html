@@ -190,7 +190,7 @@
 
             <div class="edit-vulns-dropdowns row" ng-init="updateBtnSeverityColor(lastClickedVuln.severity);updateBtnStatusColor(lastClickedVuln.status)">
 
-                <div class="btn-group col-md-3 col-sm-6 col-xs-6">
+                <div class="btn-group col-md-2 col-sm-4 col-xs-4">
                     <button type="button" class="dropdown-toggle btn-change-property primary-btn"
                             data-toggle="dropdown"
                             id="btn-chg-severity-prev"
@@ -222,7 +222,7 @@
                 </div>
 
 
-                <div class="btn-group col-md-3 col-sm-6 col-xs-6">
+                <div class="btn-group col-md-2 col-sm-4 col-xs-4">
                     <button type="button" class="dropdown-toggle btn-change-property primary-btn btn-primary-white"
                             data-toggle="dropdown"
                             id="btn-chg-ease_resolution"
@@ -254,7 +254,7 @@
                 </div>
 
 
-                <div class="btn-group col-md-3 col-sm-6 col-xs-6">
+                <div class="btn-group col-md-2 col-sm-4 col-xs-4">
                     <button type="button" class="dropdown-toggle btn-change-property primary-btn text-capitalize"
                             data-toggle="dropdown"
                             id="btn-chg-status-prev"
@@ -281,7 +281,7 @@
                     </ul>
                 </div>
 
-                <div class="col-md-3 col-sm-6 col-xs-6">
+                <div class="col-md-2 col-sm-4 col-xs-4">
                     <label class="chbox-container">
                         <div class="tab-pane-header"><h4>Confirmed</h4></div>
                         <input type="checkbox"  ng-checked="lastClickedVuln.confirmed === true"  ng-model="lastClickedVuln.confirmed" ng-change="changeConfirmed(lastClickedVuln.confirmed)">

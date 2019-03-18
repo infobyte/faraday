@@ -424,6 +424,7 @@
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+    top: -5px;
 }
 
 /* Hide the browser's default checkbox */

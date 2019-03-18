@@ -315,30 +315,6 @@
                 <div id="general_prev" class="container tab-pane-container tab-pane active"><br>
                     <div class="col-md-6">
                         <div class="col-md-12">
-                            <div class="tab-pane-header">
-                                <i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'template'"></i>
-                                Search vulnerability database templates
-                                <a
-                                        href="https://github.com/infobyte/faraday/wiki/vulnerabilities-database"
-                                        target="_blank"><span class="glyphicon glyphicon-question-sign"
-                                                              title="Read more about vulnerability templates in the official Faraday Documentation"></span></a>
-                            </div>
-                            <div class="form-group col-md-12 prev-apply-template" ng-class="{'active': cweList.indexOf(cwe_selected) > -1}">
-                                <input type="text" ng-model="cwe_selected" class="form-control input-sm" style="margin-left:-15px"
-                                       placeholder="Search for vulnerability templates"
-                                       uib-typeahead="cwe as cwe.name for cwe in cweList | filter:{name: $viewValue} | limitTo:10"
-                                       typeahead-on-select="populate()">
-                            </div>
-
-                            <div class="col-md-3" ng-if="cweList.indexOf(cwe_selected) > -1">
-                                <span class="btn btn-success input-sm" style="margin-left: 35px" ng-click="applyTemplate()" title="Apply template"><i class="fa fa-check"></i></span>
-                                <span class="btn btn-default input-sm" title="Discard changes" ng-click="discardTemplate()"><i class="fa fa-reply"></i></span>
-                            </div>
-                        </div>
-
-                        <div class="col-md-12 custom-divider"></div>
-
-                        <div class="col-md-12">
                             <div ng-if="fieldToEdit !== 'desc'" class="pretty-text">
                                 <div class="col-md-10 margin-bottom-24">
                                     <div ng-if="lastClickedVuln.desc === '' || lastClickedVuln.desc === undefined"  style="margin-bottom: 15px;color: #aaa;">

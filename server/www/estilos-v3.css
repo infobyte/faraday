@@ -691,3 +691,8 @@ button[disabled], html input[disabled] {
 .upload-options button {
     margin-bottom: 5px;
 }
+
+#attachment-img{
+    width: 100%;
+    height: inherit;
+}

@@ -42,6 +42,8 @@ angular.module("faradayApp")
         $scope.new_ref;
         $scope.new_policyviolation;
 
+        $scope.selectedAtachment;
+
 
         var allVulns;
 
@@ -330,6 +332,11 @@ angular.module("faradayApp")
             $scope.temTemplate = undefined;
             $scope.new_ref = "";
             $scope.new_policyviolation = "";
+
+            $scope.selectedAtachment = {
+                url: '',
+                name: ''
+            };
         };
 
 
@@ -1499,14 +1506,15 @@ angular.module("faradayApp")
                $http.get('/_api/session').then(
                   function(d) {
                     $scope.csrf_token = d.data.csrf_token;
+                    fileItem.formData.push({'csrf_token': $scope.csrf_token});
+                    fileItem.url = '_api/v2/ws/' + $routeParams.wsId + '/vulns/' + $scope.lastClickedVuln._id + '/attachment/';
+                    $scope.uploader.uploadAll();
                   }
                 );
-               fileItem.url = '_api/v2/ws/' + $routeParams.wsId + '/vulns/' + $scope.lastClickedVuln._id + '/attachment/';
+
            };
 
-           uploader.onBeforeUploadItem = function(item) {
-               item.formData.push({'csrf_token': $scope.csrf_token});
-           };
+
 
            uploader.onSuccessItem = function(fileItem, response, status, headers) {
                if (fileItem.file.name.charAt(0) !== "_") {
@@ -1525,6 +1533,11 @@ angular.module("faradayApp")
                           }
                       }
                 );
+            };
+
+            $scope.selectItemToPrev = function (name) {
+                $scope.selectedAtachment.name = name;
+                $scope.selectedAtachment.url = BASEURL + '_api/v2/ws/' + $routeParams.wsId + /vulns/ + $scope.lastClickedVuln._id + /attachment/ + name
             };
 
             $scope.openEvidence = function (name) {

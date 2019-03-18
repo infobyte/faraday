@@ -877,6 +877,7 @@ angular.module("faradayApp")
 
         // action triggered from EDIT button
         $scope.edit = function() {
+            $scope.hideVulnPreview();
             _edit($scope.getCurrentSelection());
         };
 

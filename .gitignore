@@ -76,3 +76,6 @@ scripts/searcher/output/searcher.db
 .pytest_cache
 reports/executive/outputs/scope.docx
 .gitignore
+
+# Editable install hoook
+_install

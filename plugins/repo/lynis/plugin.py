@@ -15,7 +15,7 @@ import socket
 from collections import defaultdict
 
 from plugins import core
-from plugins.plugins_utils import filter_services
+from plugins.plugins_utils import filter_services, get_all_protocols
 
 
 current_path = os.path.abspath(os.getcwd())
@@ -115,22 +115,26 @@ class LynisLogDataExtracter():
         add = False
         #if "localhost" in combo:
         if combo.count("|") > 1:
+            # Service with url, protocol and perhaps name
             items_service = combo.split('|')
-            if not items_service[0] in local_services and not items_service[0].startswith(':'):
-                elements_ip_port = items_service[0].split(':')
-                count = items_service[0].count(':')
-                protocol = items_service[1]
-                name = items_service[2]
+            if not self.local_service(items_service, local_services):
+                # self.aux_items will be an auxiliar list. We will use it...
+                # ...for poping the url and the protocol so that the last element...
+                # ... of the list, will be the name of the service
+                self.aux_items = filter(None, items_service)
+                elements_ip_port, count = self.get_ip_and_port(self.aux_items, remove_from_list=True)
+                protocol = self.get_protocol()
+                name = self.aux_items[0]
                 add = True
 
                 if name == '-':
                     details = self.search_service(elements_ip_port[1])
                     name = details['name']
         elif combo.count('|') == 1:
+            # Service only with url
             items_service = combo.split('|')
-            if not items_service[0] in local_services and not items_service[0].startswith(':'):
-                count = items_service[0].count(':')
-                elements_ip_port = items_service[0].split(':')
+            if not self.local_service(items_service, local_services):
+                elements_ip_port, count = self.get_ip_and_port(items_service)
                 details = self.search_service(elements_ip_port[1])
                 protocol = details['protocol']
                 name = details['name']
@@ -144,7 +148,7 @@ class LynisLogDataExtracter():
             name = details['name']
             add = True
 
-        if add == True:
+        if add:
             ip, port = self.colon_count(count, elements_ip_port, items_service)
             elements_dict = {
                 "ip":ip,
@@ -155,6 +159,37 @@ class LynisLogDataExtracter():
             return elements_dict
         else:
             return None
+
+    def local_service(self, service_data, local_services):
+        ip = self.get_ip_and_port(service_data)[0][0]
+        local = True
+        if not ip in local_services and not ip.startswith(':'):
+            local = False
+
+        return local
+
+    def get_ip_and_port(self, service_data, remove_from_list=False):
+        url_data = [url for url in service_data if ':' in url][0]
+        count = url_data.count(':')
+        ip_port = url_data.split(':')
+
+        if remove_from_list:
+            self.aux_items.remove(url_data)
+
+        return ip_port, count
+
+    def get_protocol(self):
+        # network_listen_port variables are different in .log and .dat reports
+        # .log: tcp4|127.0.0.1:5985|zabbix_age|
+        # .dat: 127.0.0.1:5985|tcp4|zabbix_age|
+        # This method will check if the protocol (from the function get_all_protocols())
+        # matches with the protocol that network_listen_port contains
+        protocols = get_all_protocols()
+        for item in protocols:
+            protocol = [p for p in self.aux_items if item in p.lower()]
+            if protocol:
+                self.aux_items.remove(protocol[0])
+                return protocol[0]
 
     def search_service(self, port):
         srv = filter_services()

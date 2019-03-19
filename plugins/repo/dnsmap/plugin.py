@@ -40,15 +40,38 @@ class DnsmapParser(object):
     """
 
     def __init__(self, output):
-
         self.items = []
-        lists = output.split("\n")
+        lists = output.split("\n\n")
 
-        for line in lists:
-            mitem = line.split(',')
-            if len(mitem) > 1:
-                item = {'host': mitem[0], 'ip': mitem[1]}
-                self.items.append(item)
+        for item in lists:
+            sub_domain = item.split('\n')
+            if len(sub_domain) == 2:
+                ip = self.clean_ip(sub_domain[1])
+                host = sub_domain[0]
+                self.parse_ip(ip, host)
+            elif len(sub_domain) > 2:
+                host = sub_domain.pop(0)
+                for ip_address in sub_domain:
+                    ip = self.clean_ip(ip_address)
+                    self.parse_ip(ip, host)
+
+
+    def clean_ip(self, item):
+        ip = item.split(':', 1)
+        return ip[1].strip()
+
+    def parse_ip(self, ip_address, hostname):
+        data = {}
+        exists = False
+        for item in self.items:
+            if ip_address in item['ip']:
+                item['hosts'].append(hostname)
+                exists = True
+
+        if not exists:
+            data['ip'] = ip_address
+            data['hosts'] = [hostname]
+            self.items.append(data)
 
 
 class DnsmapPlugin(core.PluginBase):
@@ -59,7 +82,7 @@ class DnsmapPlugin(core.PluginBase):
         core.PluginBase.__init__(self)
         self.id = "Dnsmap"
         self.name = "Dnsmap XML Output Plugin"
-        self.plugin_version = "0.0.2"
+        self.plugin_version = "0.3"
         self.version = "0.30"
         self.options = None
         self._current_output = None
@@ -67,13 +90,13 @@ class DnsmapPlugin(core.PluginBase):
         self._command_regex = re.compile(
             r'^(sudo dnsmap|dnsmap|\.\/dnsmap).*?')
 
-        self.xml_arg_re = re.compile(r"^.*(-c\s*[^\s]+).*$")
+        self.xml_arg_re = re.compile(r"^.*(-r\s*[^\s]+).*$")
 
         global current_path
 
         self._output_file_path = os.path.join(
             self.data_path,
-            "%s_%s_output-%s.xml" % (
+            "%s_%s_output-%s.txt" % (
                 self.get_ws(),
                 self.id,
                 random.uniform(1, 10)
@@ -91,16 +114,11 @@ class DnsmapPlugin(core.PluginBase):
         This method will discard the output the shell sends, it will read it
         from the xml where it expects it to be present.
         """
-
         parser = DnsmapParser(output)
-
         for item in parser.items:
-            h_id = self.createAndAddHost(item['ip'])
-            self.createAndAddInterface(
-                h_id,
-                item['ip'],
-                ipv4_address=item['ip'],
-                hostname_resolution=item['host'])
+            h_id = self.createAndAddHost(
+                        item['ip'],
+                        hostnames=item['hosts'])
 
         return True
 
@@ -112,10 +130,10 @@ class DnsmapPlugin(core.PluginBase):
         arg_match = self.xml_arg_re.match(command_string)
 
         if arg_match is None:
-            return "%s -c %s \n" % (command_string, self._output_file_path)
+            return "%s -r %s \\n" % (command_string, self._output_file_path)
         else:
             return re.sub(arg_match.group(1),
-                          r"-c %s" % self._output_file_path,
+                          r"-r %s" % self._output_file_path,
                           command_string)
 
 

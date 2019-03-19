@@ -17,6 +17,7 @@ import shlex
 import socket
 import sqlite3
 import sys
+from urlparse import urlparse
 from BaseHTTPServer import BaseHTTPRequestHandler
 from StringIO import StringIO
 from urlparse import urlparse
@@ -45,6 +46,17 @@ __version__ = "1.0.0"
 __maintainer__ = "Francisco Amato"
 __email__ = "famato@infobytesec.com"
 __status__ = "Development"
+
+
+# This is the value of the HASHDB_MILESTONE_VALUE constant
+# in the lib/core/settings.py file of sqlmap.
+# If that value is changed in a newer version of SQLMap, it means that the
+# hashdb mechanism has backwards-incompatible changes that probably will
+# break our plugin, so the plugin will show an error and abort
+SUPPORTED_HASHDB_VERSIONS = {
+    "dPHoJRQYvs",  # 1.0.11
+    "BZzRotigLX",  # 1.2.8
+}
 
 
 class Database(object):
@@ -84,7 +96,7 @@ class SqlmapPlugin(PluginTerminalOutput):
         self.id = "Sqlmap"
         self.name = "Sqlmap"
         self.plugin_version = "0.0.3"
-        self.version = "1.0.8.15#dev"
+        self.version = "1.2.8"
         self.framework_version = "1.0.0"
         self._current_output = None
         self.url = ""
@@ -142,10 +154,20 @@ class SqlmapPlugin(PluginTerminalOutput):
         Helper function for restoring session data from HashDB
         """
 
-        key = "%s%s%s" % (self.url or "%s%s" % (
-            self.hostname, self.port), key, self.HASHDB_MILESTONE_VALUE)
-        retVal = ''
+        if self.HASHDB_MILESTONE_VALUE == 'dPHoJRQYvs':
+            # Support for old SQLMap versions
+            key = "%s%s%s" % (self.url or "%s%s" % (
+                self.hostname, self.port), key, self.HASHDB_MILESTONE_VALUE)
+        else:
+            url = urlparse(self.url)
+            key = '|'.join([
+                url.hostname,
+                url.path.strip('/'),
+                key,
+                self.HASHDB_MILESTONE_VALUE
+            ])
 
+        retVal = ''
         hash_ = self.hashKey(key)
 
         if not retVal:
@@ -396,6 +418,15 @@ class SqlmapPlugin(PluginTerminalOutput):
             self.log('Remember set your Sqlmap Path Setting!... Abort plugin.', 'ERROR')
             return
 
+        if HASHDB_MILESTONE_VALUE not in SUPPORTED_HASHDB_VERSIONS:
+            self.log(
+                "Your version of SQLMap is not supported with this plugin. "
+                "Please use an older version of SQLMap (the suggested one "
+                "is \"{}\"). Also, we suggest you to open issue in our GitHub "
+                "issue tracker: https://github.com/infobyte/faraday/issues/".format(self.version),
+                'ERROR')
+            return
+
         self.HASHDB_MILESTONE_VALUE = HASHDB_MILESTONE_VALUE
         self.HASHDB_KEYS = HASHDB_KEYS
         self.UNICODE_ENCODING = UNICODE_ENCODING
@@ -460,7 +491,7 @@ class SqlmapPlugin(PluginTerminalOutput):
             self.hostname,
             '')
 
-        db_port = 80
+        db_port = 0
         for item in self.db_port.keys():
             if dbms_version.find(item) >= 0:
                 db_port = self.db_port[item]

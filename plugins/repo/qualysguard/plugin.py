@@ -11,6 +11,7 @@ from plugins import core
 import re
 import os
 import sys
+import logging
 
 try:
 
@@ -22,6 +23,8 @@ except ImportError:
     ETREE_VERSION = ET.VERSION
 
 ETREE_VERSION = [int(i) for i in ETREE_VERSION.split('.')]
+
+logger = logging.getLogger(__name__)
 
 current_path = os.path.abspath(os.getcwd())
 
@@ -69,7 +72,6 @@ class QualysguardXmlParser():
     """
 
     def __init__(self, xml_output):
-
         tree, type_report = self.parse_xml(xml_output)
 
         if not tree or type_report is None:
@@ -105,7 +107,7 @@ class QualysguardXmlParser():
                 type_report = None
 
         except SyntaxError, err:
-            self.devlog('SyntaxError: %s. %s' % (err, xml_output))
+            logger.error('SyntaxError: %s.' % (err))
             return None, None
 
         return tree, type_report
@@ -254,7 +256,7 @@ class ItemScanReport():
         self.node = item_node
         self.ip = item_node.get('value')
         self.os = self.get_text_from_subnode('OS')
-
+        self.hostname = self.get_hostname(item_node)
         self.vulns = self.getResults(item_node)
 
     def getResults(self, tree):
@@ -266,6 +268,12 @@ class ItemScanReport():
                 yield ResultsScanReport(v, self.issues)
         for self.issues in tree.findall('INFOS/CAT'):
             for v in self.issues.findall('INFO'):
+                yield ResultsScanReport(v, self.issues)
+        for self.issues in tree.findall('SERVICES/CAT'):
+            for v in self.issues.findall('SERVICE'):
+                yield ResultsScanReport(v, self.issues)
+        for self.issues in tree.findall('PRACTICES/CAT'):
+            for v in self.issues.findall('PRACTICE'):
                 yield ResultsScanReport(v, self.issues)
 
     def get_text_from_subnode(self, subnode_xpath_expr):
@@ -279,6 +287,14 @@ class ItemScanReport():
             return sub_node.text
 
         return None
+
+    def get_hostname(self, node):
+        hostname = node.get('name')
+
+        if hostname == 'No registered hostname':
+            return ""
+
+        return hostname
 
 
 class ResultsScanReport():
@@ -294,14 +310,19 @@ class ResultsScanReport():
         self.severity = self.node.get('severity')
         self.title = self.get_text_from_subnode('TITLE')
         self.cvss = self.get_text_from_subnode('CVSS_BASE')
-        self.pci = self.get_text_from_subnode('PCI_FLAG')
         self.diagnosis = self.get_text_from_subnode('DIAGNOSIS')
         self.solution = self.get_text_from_subnode('SOLUTION')
         self.result = self.get_text_from_subnode('RESULT')
+        self.consequence = self.get_text_from_subnode('CONSEQUENCE')
 
         self.desc = cleaner_results(self.diagnosis)
         if self.result:
             self.desc += '\nResult: ' + cleaner_results(self.result)
+        else:
+            self.desc += ''
+
+        if self.consequence:
+            self.desc += '\nConsequence: ' + cleaner_results(self.consequence)
         else:
             self.desc += ''
 
@@ -312,6 +333,9 @@ class ResultsScanReport():
         for r in issue_node.findall('BUGTRAQ_ID_LIST/BUGTRAQ_ID'):
             self.node = r
             self.ref.append('bid-' + self.get_text_from_subnode('ID'))
+
+        if self.cvss:
+            self.ref.append('CVSS BASE: ' + self.cvss)
 
     def get_text_from_subnode(self, subnode_xpath_expr):
         """
@@ -337,7 +361,7 @@ class QualysguardPlugin(core.PluginBase):
         self.id = 'Qualysguard'
         self.name = 'Qualysguard XML Output Plugin'
         self.plugin_version = '0.0.2'
-        self.version = 'Qualysguard 2016 March '
+        self.version = 'Qualysguard 8.17.1.0.2'
         self.framework_version = '1.0.0'
         self.options = None
         self._current_output = None
@@ -354,19 +378,12 @@ class QualysguardPlugin(core.PluginBase):
         parser = QualysguardXmlParser(output)
 
         for item in parser.items:
-
             h_id = self.createAndAddHost(
                 item.ip,
-                item.os)
-
-            i_id = self.createAndAddInterface(
-                h_id,
-                item.ip,
-                ipv4_address=item.ip,
-                hostname_resolution=item.ip)
+                item.os,
+                hostnames=[item.hostname])
 
             for v in item.vulns:
-
                 if v.port is None:
                     self.createAndAddVulnToHost(
                         h_id,
@@ -379,9 +396,8 @@ class QualysguardPlugin(core.PluginBase):
                 else:
 
                     web = False
-                    s_id = self.createAndAddServiceToInterface(
+                    s_id = self.createAndAddServiceToHost(
                         h_id,
-                        i_id,
                         v.port,
                         v.protocol,
                         ports=[str(v.port)],
@@ -402,19 +418,6 @@ class QualysguardPlugin(core.PluginBase):
                             severity=str(int(v.severity) - 1),
                             desc=v.desc,
                             resolution=v.solution if v.solution else '')
-
-                        n_id = self.createAndAddNoteToService(
-                            h_id,
-                            s_id,
-                            'website',
-                            '')
-
-                        self.createAndAddNoteToNote(
-                            h_id,
-                            s_id,
-                            n_id,
-                            item.ip,
-                            '')
 
                     else:
                         self.createAndAddVulnToService(

@@ -1,1 +1,0 @@
-Add pagination in  'Command history', 'Last Vulnerabilities', 'Activity logs' into dashboard

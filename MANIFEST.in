@@ -1,0 +1,3 @@
+recursive-include ./server/www *
+include ./VERSION
+include ./requirements_server.txt

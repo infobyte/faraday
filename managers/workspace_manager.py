@@ -9,13 +9,13 @@ See the file 'doc/LICENSE' for the license information
 import re
 import time
 
-from model.workspace import Workspace
-from persistence.server.models import create_workspace, get_workspaces_names, get_workspace, delete_workspace
-from persistence.server.server_io_exceptions import Unauthorized
-from model.guiapi import notification_center
+from faraday.client.model.workspace import Workspace
+from faraday.client.persistence.server.models import create_workspace, get_workspaces_names, get_workspace, delete_workspace
+from faraday.client.persistence.server.server_io_exceptions import Unauthorized
+from faraday.client.model.guiapi import notification_center
 
-from config.configuration import getInstanceConfiguration
-from config.constant import CONST_BLACKDBS
+from faraday.client.config.configuration import getInstanceConfiguration
+from faraday.client.config.constant import CONST_BLACKDBS
 CONF = getInstanceConfiguration()
 
 

@@ -10,7 +10,7 @@ See the file 'doc/LICENSE' for the license information
 __description__ = 'Lists all scanned OSs'
 __prettyname__ = 'Get All OSs'
 
-from persistence.server import models
+from faraday.client.persistence.server import models
 
 
 def main(workspace='', args=None, parser=None):

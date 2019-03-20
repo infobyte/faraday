@@ -14,11 +14,11 @@ import traceback
 import threading
 import SimpleXMLRPCServer
 import xmlrpclib
-from utils.decorators import updateLocalMetadata
+from faraday.utils.decorators import updateLocalMetadata
 import json
 import model
 from conflict import ConflictUpdate
-from model.diff import ModelObjectDiff
+from faraday.client.model.diff import ModelObjectDiff
 
 
 class ModelObjectVisitor(object):

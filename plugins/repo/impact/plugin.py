@@ -13,7 +13,7 @@ import os
 import sys
 import logging
 
-from plugins import core
+from faraday.client.plugins import core
 
 logger = logging.getLogger(__name__)
 

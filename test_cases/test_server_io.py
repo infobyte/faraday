@@ -11,8 +11,8 @@ import unittest
 import responses
 import requests
 sys.path.append(os.path.abspath(os.getcwd()))
-from persistence.server import server
-from persistence.server import server_io_exceptions
+from faraday.client.persistence.server import server
+from faraday.client.persistence.server import server_io_exceptions
 from mock import MagicMock, patch
 
 server.FARADAY_UP = False

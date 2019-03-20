@@ -3,7 +3,7 @@ import sys
 import string
 from urlparse import urljoin, urlparse
 
-from plugins import core
+from faraday.client.plugins import core
 
 
 class WfuzzPlugin(core.PluginBase):

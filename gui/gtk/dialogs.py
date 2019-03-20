@@ -12,15 +12,15 @@ import os
 
 gi.require_version('Gtk', '3.0')
 
-from persistence.server.server import ResourceDoesNotExist
+from faraday.client.persistence.server.server import ResourceDoesNotExist
 from gi.repository import Gtk, GdkPixbuf, Gdk
-from config.configuration import getInstanceConfiguration
-from persistence.server.server import is_authenticated, login_user, get_user_info, check_server_url
-from model import guiapi
+from faraday.client.config.configuration import getInstanceConfiguration
+from faraday.client.persistence.server.server import is_authenticated, login_user, get_user_info, check_server_url
+from faraday.client.model import guiapi
 from decorators import scrollable
 
 from compatibility import CompatibleScrolledWindow as GtkScrolledWindow
-from plugins import fplugin_utils
+from faraday.client.plugins import fplugin_utils
 
 CONF = getInstanceConfiguration()
 

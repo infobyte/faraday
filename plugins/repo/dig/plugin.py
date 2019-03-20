@@ -9,7 +9,7 @@ See the file 'doc/LICENSE' for the license information
 import re
 import socket
 
-from plugins import core
+from faraday.client.plugins import core
 
 __author__ = u"Andres Tarantini"
 __copyright__ = u"Copyright (c) 2015 Andres Tarantini"

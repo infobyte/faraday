@@ -12,15 +12,15 @@ from multiprocessing import Lock
 from Queue import Empty
 from threading import Thread
 
-from config.configuration import getInstanceConfiguration
-from model import Modelactions
-from persistence.server.server_io_exceptions import ConflictInDatabase
-from utils.logs import getLogger
-import model.api as api
-from model.guiapi import notification_center as notifier
-from gui.customevents import *
+from faraday.client.config.configuration import getInstanceConfiguration
+from faraday.client.model import Modelactions
+from faraday.client.persistence.server.server_io_exceptions import ConflictInDatabase
+from faraday.utils.logs import getLogger
+import faraday.client.model.api as api
+from faraday.client.model.guiapi import notification_center as notifier
+from faraday.client.gui.customevents import *
 from functools import wraps
-from persistence.server import models
+from faraday.client.persistence.server import models
 
 # XXX: consider re-writing this module! There's alot of repeated code
 # and things are really messy

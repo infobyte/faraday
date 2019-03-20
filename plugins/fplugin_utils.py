@@ -9,9 +9,9 @@ import os
 import sys
 
 from colorama import Fore
-from utils.logs import getLogger
+from faraday.utils.logs import getLogger
 
-from config.configuration import getInstanceConfiguration
+from faraday.client.config.configuration import getInstanceConfiguration
 
 CONF = getInstanceConfiguration()
 logger = getLogger()

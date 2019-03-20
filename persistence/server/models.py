@@ -10,11 +10,11 @@ import logging
 from time import time
 import traceback
 from threading import Lock, Condition, RLock, Event
-from persistence.server import server
-from persistence.server.server_io_exceptions import (WrongObjectSignature,
+from faraday.client.persistence.server import server
+from faraday.client.persistence.server.server_io_exceptions import (WrongObjectSignature,
                                                      CantAccessConfigurationWithoutTheClient)
 
-from persistence.server.utils import (force_unique,
+from faraday.client.persistence.server.utils import (force_unique,
                                       get_host_properties,
                                       get_service_properties,
                                       get_vuln_properties,
@@ -23,8 +23,8 @@ from persistence.server.utils import (force_unique,
                                       get_credential_properties,
                                       get_command_properties)
 
-from model.diff import ModelObjectDiff, MergeSolver
-from model.conflict import ConflictUpdate
+from faraday.client.model.diff import ModelObjectDiff, MergeSolver
+from faraday.client.model.conflict import ConflictUpdate
 from functools import wraps
 from difflib import Differ
 
@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 def _conf():
     if FARADAY_UP:
-        from config.configuration import getInstanceConfiguration
+        from faraday.client.config.configuration import getInstanceConfiguration
         return getInstanceConfiguration()
     else:
         raise CantAccessConfigurationWithoutTheClient

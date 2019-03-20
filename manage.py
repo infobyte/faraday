@@ -14,7 +14,7 @@ import requests
 from alembic.config import CommandLine
 
 import faraday.server.config
-from persistence.server.server import _conf, FARADAY_UP, SERVER_URL
+from faraday.client.persistence.server.server import _conf, FARADAY_UP, SERVER_URL
 from faraday.server.commands.initdb import InitDB
 from faraday.server.commands.faraday_schema_display import DatabaseSchema
 from faraday.server.commands.app_urls import show_all_urls
@@ -193,7 +193,7 @@ def create_tables():
         # Ugly hack to create tables and also setting alembic revision
         import faraday.server.config
         conn_string = faraday.server.config.database.connection_string
-        from server.commands.initdb import InitDB
+        from faraday.server.commands.initdb import InitDB
         InitDB()._create_tables(conn_string)
         click.echo(click.style(
             'Tables created successfully!',

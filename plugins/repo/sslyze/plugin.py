@@ -2,7 +2,7 @@
 import re
 import os
 import random
-from plugins import core
+from faraday.client.plugins import core
 
 try:
 	from lxml import etree as ET

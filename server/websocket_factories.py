@@ -43,7 +43,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
         return (protocol, headers)
 
     def onMessage(self, payload, is_binary):
-        from server.web import app
+        from faraday.server.web import app
         """
             We only support JOIN and LEAVE workspace messages.
             When authentication is implemented we need to verify

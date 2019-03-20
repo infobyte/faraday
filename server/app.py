@@ -15,7 +15,7 @@ from faraday.server.models import User, Vulnerability, VulnerabilityWeb, Workspa
 
 try:
     # py2.7
-    from configparser import ConfigParser, NoSectionError, NoOptionError, DuplicateSectionError
+    from faraday.client.configparser import ConfigParser, NoSectionError, NoOptionError, DuplicateSectionError
 except ImportError:
     # py3
     from ConfigParser import ConfigParser, NoSectionError, NoOptionError, DuplicateSectionError
@@ -64,23 +64,23 @@ def setup_storage_path():
 
 
 def register_blueprints(app):
-    from server.api.modules.info import info_api
-    from server.api.modules.commandsrun import commandsrun_api
-    from server.api.modules.activity_feed import activityfeed_api
-    from server.api.modules.credentials import credentials_api
-    from server.api.modules.hosts import host_api
-    from server.api.modules.licenses import license_api
-    from server.api.modules.services import services_api
-    from server.api.modules.session import session_api
-    from server.api.modules.vulns import vulns_api
-    from server.api.modules.vulnerability_template import vulnerability_template_api
-    from server.api.modules.workspaces import workspace_api
-    from server.api.modules.handlers import handlers_api
-    from server.api.modules.comments import comment_api
+    from faraday.server.api.modules.info import info_api
+    from faraday.server.api.modules.commandsrun import commandsrun_api
+    from faraday.server.api.modules.activity_feed import activityfeed_api
+    from faraday.server.api.modules.credentials import credentials_api
+    from faraday.server.api.modules.hosts import host_api
+    from faraday.server.api.modules.licenses import license_api
+    from faraday.server.api.modules.services import services_api
+    from faraday.server.api.modules.session import session_api
+    from faraday.server.api.modules.vulns import vulns_api
+    from faraday.server.api.modules.vulnerability_template import vulnerability_template_api
+    from faraday.server.api.modules.workspaces import workspace_api
+    from faraday.server.api.modules.handlers import handlers_api
+    from faraday.server.api.modules.comments import comment_api
     # from server.api.modules.upload_reports import upload_api
-    from server.api.modules.websocket_auth import websocket_auth_api
-    from server.api.modules.get_exploits import exploits_api
-    from server.api.modules.custom_fields import custom_fields_schema_api
+    from faraday.server.api.modules.websocket_auth import websocket_auth_api
+    from faraday.server.api.modules.get_exploits import exploits_api
+    from faraday.server.api.modules.custom_fields import custom_fields_schema_api
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(activityfeed_api)
     app.register_blueprint(credentials_api)
@@ -246,7 +246,7 @@ def create_app(db_connection_string=None, testing=None):
     except NoOptionError:
         logger.info('Missing connection_string on [database] section on server.ini. Please configure the database before running the server.')
 
-    from server.models import db
+    from faraday.server.models import db
     db.init_app(app)
     #Session(app)
 

@@ -20,9 +20,9 @@ except ImportError:
     import xml.etree.ElementTree as ET
     ETREE_VERSION = ET.VERSION
 
-from plugins import core
+from faraday.client.plugins import core
 from faraday import FARADAY_BASE
-from plugins.plugins_utils import filter_services
+from faraday.client.plugins.plugins_utils import filter_services
 
 ETREE_VERSION = [int(i) for i in ETREE_VERSION.split(".")]
 

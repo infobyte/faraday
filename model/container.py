@@ -7,7 +7,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 
                                                          
-from model.hosts import Host
+from faraday.client.model.hosts import Host
 import model
 from mockito import mock
 import traceback

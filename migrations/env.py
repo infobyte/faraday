@@ -4,8 +4,8 @@ import sys
 import os
 sys.path.append(os.getcwd())
 import server.config
-from server.web import app
-from server.models import db
+from faraday.server.web import app
+from faraday.server.models import db
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool

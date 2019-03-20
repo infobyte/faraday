@@ -15,9 +15,9 @@ from collections import defaultdict
 
 import os
 sys.path.append(os.path.abspath(os.getcwd()))
-from plugins.repo.whois.plugin import CmdWhoisPlugin
-from model.common import factory
-from persistence.server.models import (
+from faraday.client.plugins.repo.whois.plugin import CmdWhoisPlugin
+from faraday.client.model.common import factory
+from faraday.client.persistence.server.models import (
     Vuln,
     Credential,
     VulnWeb,

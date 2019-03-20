@@ -20,9 +20,9 @@ from threading import Thread
 import server.config
 import model.api
 import model.common
-from model.common import factory
-from persistence.server.models import get_host , update_host
-from persistence.server.models import (
+from faraday.client.model.common import factory
+from faraday.client.persistence.server.models import get_host , update_host
+from faraday.client.persistence.server.models import (
     Host,
     Service,
     Vuln,
@@ -30,10 +30,10 @@ from persistence.server.models import (
     Credential,
     Note
 )
-from model import Modelactions
+from faraday.client.model import Modelactions
 #from plugins.modelactions import modelactions
 
-from config.configuration import getInstanceConfiguration
+from faraday.client.config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 VERSION = server.config.__get_version().split('-')[0].split('rc')[0]
 logger = logging.getLogger(__name__)

@@ -16,10 +16,10 @@ from tornado.wsgi import WSGIContainer
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 
-from model.visitor import VulnsLookupVisitor
+from faraday.client.model.visitor import VulnsLookupVisitor
 
-import utils.logs as logger
-from config.configuration import getInstanceConfiguration
+import faraday.utils.logs as logger
+from faraday.client.config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
 

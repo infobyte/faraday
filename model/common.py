@@ -16,11 +16,11 @@ except ImportError:
     from xmlrpc.server import SimpleXMLRPCServer
 
 try:
-    import model.api as api
+    import faraday.client.model.api as api
 except AttributeError:
     import api
 
-from config.configuration import getInstanceConfiguration
+from faraday.client.config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 logger = logging.getLogger(__name__)
 

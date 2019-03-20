@@ -9,7 +9,7 @@ See the file 'doc/LICENSE' for the license information
 
 import pprint
 import socket
-from plugins import core
+from faraday.client.plugins import core
 from lxml import objectify
 from urlparse import urlparse
 

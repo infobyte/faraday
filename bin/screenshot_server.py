@@ -8,8 +8,8 @@ See the file 'doc/LICENSE' for the license information
 from __future__ import print_function
 import os
 import sys
-from persistence.server.server_io_exceptions import ResourceDoesNotExist
-from persistence.server import models
+from faraday.client.persistence.server.server_io_exceptions import ResourceDoesNotExist
+from faraday.client.persistence.server import models
 
 __description__ = 'Takes a Screenshot of the ip:ports of a given protocol'
 __prettyname__ = 'Screenshot_server'

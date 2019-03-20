@@ -9,8 +9,8 @@ See the file 'doc/LICENSE' for the license information
 
 import os
 
-from model.common import factory
-from persistence.server import models
+from faraday.client.model.common import factory
+from faraday.client.persistence.server import models
 
 __description__ = 'Import every host found in a PCAP file for further scanning'
 __prettyname__ = 'Import PCAP'

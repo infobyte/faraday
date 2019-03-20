@@ -3,13 +3,13 @@ import time
 import signal
 import subprocess
 from datetime import datetime
-from server.utils import daemonize
+from faraday.server.utils import daemonize
 import server.config
 
 try:
     import ConfigParser
 except ImportError:
-    import configparser as ConfigParser
+    import faraday.client.configparser as ConfigParser
 
 
 def test_start_and_kill_faraday_server():

@@ -19,7 +19,7 @@ from factory.fuzzy import (
     FuzzyText,
     FuzzyDateTime,
 )
-from server.models import (
+from faraday.server.models import (
     db,
     Command,
     Credential,

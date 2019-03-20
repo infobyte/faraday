@@ -17,8 +17,8 @@ import requests
 
 
 from subprocess import Popen, PIPE, call
-from persistence.server import models, server
-from persistence.server.server import SERVER_URL
+from faraday.client.persistence.server import models, server
+from faraday.client.persistence.server.server import SERVER_URL
 
 __description__ = 'Script to perform a brute force attack on different services in a workspace'
 __prettyname__ = 'FBrute'

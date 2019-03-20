@@ -6,12 +6,12 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-from gui.customevents import (ShowPopupCustomEvent,
+from faraday.client.gui.customevents import (ShowPopupCustomEvent,
                               ShowDialogCustomEvent)
 import model.guiapi
-from utils.logs import getLogger
+from faraday.utils.logs import getLogger
 
-from config.configuration import getInstanceConfiguration
+from faraday.client.config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
 __notifier = None

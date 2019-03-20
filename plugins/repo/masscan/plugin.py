@@ -4,7 +4,7 @@ Copyright (C) 2015  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
 
-from plugins.repo.nmap.plugin import NmapPlugin
+from faraday.client.plugins.repo.nmap.plugin import NmapPlugin
 import os
 import re
 import random

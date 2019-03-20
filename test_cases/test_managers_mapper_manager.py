@@ -8,9 +8,9 @@ from functools import partial
 
 import pytest
 
-from managers.mapper_manager import MapperManager
-from persistence.server.server import _create_server_api_url
-from persistence.server.models import (
+from faraday.client.managers.mapper_manager import MapperManager
+from faraday.client.persistence.server.server import _create_server_api_url
+from faraday.client.persistence.server.models import (
     Host,
     Service,
     Vuln,
@@ -20,7 +20,7 @@ from persistence.server.models import (
     Command,
 )
 import persistence.server.server
-from persistence.server.utils import (
+from faraday.client.persistence.server.utils import (
     get_host_properties,
     get_service_properties,
     get_vuln_properties,

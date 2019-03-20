@@ -14,7 +14,7 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ET
 
-from plugins.core import PluginBase
+from faraday.client.plugins.core import PluginBase
 
 __author__ = 'Leonardo Lazzaro'
 __copyright__ = 'Copyright (c) 2017, Infobyte LLC'

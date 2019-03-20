@@ -6,8 +6,8 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 import threading
-from gui.gui_app import FaradayUi
-import gui.customevents as events
+from faraday.client.gui.gui_app import FaradayUi
+import faraday.client.gui.customevents as events
 
 
 class NotificationCenter():

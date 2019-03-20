@@ -11,7 +11,7 @@ import requests
 
 import pytest
 
-from persistence.server import server
+from faraday.client.persistence.server import server
 
 
 @pytest.mark.usefixtures('logged_user')

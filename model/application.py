@@ -18,27 +18,27 @@ except ImportError:
     from queue import Queue
 import requests
 
-from model.controller import ModelController
-from managers.workspace_manager import WorkspaceManager
-from plugins.controller import PluginController
-from persistence.server.server import login_user
+from faraday.client.model.controller import ModelController
+from faraday.client.managers.workspace_manager import WorkspaceManager
+from faraday.client.plugins.controller import PluginController
+from faraday.client.persistence.server.server import login_user
 
-from utils.logs import setUpLogger
+from faraday.utils.logs import setUpLogger
 import model.api
 import model.guiapi
-import apis.rest.api as restapi
+import faraday.client.apis.rest.api as restapi
 import model.log
-from utils.logs import getLogger
+from faraday.utils.logs import getLogger
 import traceback
-from plugins.manager import PluginManager
-from managers.mapper_manager import MapperManager
-from utils.error_report import exception_handler
-from utils.error_report import installThreadExcepthook
+from faraday.client.plugins.manager import PluginManager
+from faraday.client.managers.mapper_manager import MapperManager
+from faraday.utils.error_report import exception_handler
+from faraday.utils.error_report import installThreadExcepthook
 
-from gui.gui_app import UiFactory
-from model.cli_app import CliApp
+from faraday.client.gui.gui_app import UiFactory
+from faraday.client.model.cli_app import CliApp
 
-from config.configuration import getInstanceConfiguration
+from faraday.client.config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
 

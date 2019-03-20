@@ -8,7 +8,7 @@ See the file 'doc/LICENSE' for the license information
 import re
 import socket
 from os import path
-from plugins import core
+from faraday.client.plugins import core
 from urlparse import urlparse
 
 __author__ = "Andres Tarantini"

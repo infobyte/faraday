@@ -3,10 +3,10 @@
 # See the file 'doc/LICENSE' for the license information
 import requests
 from gi.repository import Gtk
-from utils.logs import getLogger
+from faraday.utils.logs import getLogger
 from functools import wraps
 from compatibility import CompatibleScrolledWindow as GtkScrolledWindow
-from persistence.server.server_io_exceptions import ServerRequestException
+from faraday.client.persistence.server.server_io_exceptions import ServerRequestException
 
 def safe_io_with_server(response_in_emergency):
     """A function that takes a response_in_emergency. It will return

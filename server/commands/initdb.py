@@ -30,7 +30,7 @@ from faraday.server.utils.database import is_unique_constraint_violation
 
 try:
     # py2.7
-    from configparser import ConfigParser, NoSectionError, NoOptionError
+    from faraday.client.configparser import ConfigParser, NoSectionError, NoOptionError
 except ImportError:
     # py3
     from ConfigParser import ConfigParser, NoSectionError, NoOptionError
@@ -278,7 +278,7 @@ class InitDB():
 
     def _create_tables(self, conn_string):
         print('Creating tables')
-        from server.models import db
+        from faraday.server.models import db
         current_app.config['SQLALCHEMY_DATABASE_URI'] = conn_string
         try:
             db.create_all()

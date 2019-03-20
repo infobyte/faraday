@@ -10,7 +10,7 @@ See the file 'doc/LICENSE' for the license information
 from colorama import Fore
 import sys
 
-from persistence.server import models
+from faraday.client.persistence.server import models
 
 __description__ = 'Filter services by port or service name'
 __prettyname__ = 'Filter services'

@@ -12,8 +12,8 @@ import getpass
 import argparse
 import requests.exceptions
 
-from config.configuration import getInstanceConfiguration
-from config.constant import (
+from faraday.client.config.configuration import getInstanceConfiguration
+from faraday.client.config.constant import (
     CONST_USER_HOME,
     CONST_FARADAY_HOME_PATH,
     CONST_FARADAY_PLUGINS_PATH,
@@ -29,12 +29,12 @@ from config.constant import (
     CONST_REQUIREMENTS_FILE,
     CONST_FARADAY_FOLDER_LIST,
 )
-from utils import dependencies
-from utils.logs import getLogger, setUpLogger
-from utils.user_input import query_yes_no
+from faraday.utils import dependencies
+from faraday.utils.logs import getLogger, setUpLogger
+from faraday.utils.user_input import query_yes_no
 
-from persistence.server import server
-from persistence.server.server import is_authenticated, login_user, get_user_info
+from faraday.client.persistence.server import server
+from faraday.client.persistence.server.server import is_authenticated, login_user, get_user_info
 
 USER_HOME = os.path.expanduser(CONST_USER_HOME)
 FARADAY_BASE = os.path.dirname(os.path.realpath(__file__))
@@ -243,7 +243,7 @@ def startFaraday():
     Returns application status.
 
     """
-    from model.application import MainApplication
+    from faraday.client.model.application import MainApplication
 
     logger.info("All done. Opening environment.")
     # TODO: Handle args in CONF and send only necessary ones.

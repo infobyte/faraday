@@ -5,7 +5,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 import logging
 
-from persistence.server.models import create_object, get_object, update_object, delete_object
+from faraday.client.persistence.server.models import create_object, get_object, update_object, delete_object
 
 # NOTE: This class is intended to be instantiated by the
 # service or controller that needs it.

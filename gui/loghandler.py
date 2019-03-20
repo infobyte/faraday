@@ -8,7 +8,7 @@ See the file 'doc/LICENSE' for the license information
 import logging
 import threading
 import model.guiapi
-from gui.customevents import LogCustomEvent
+from faraday.client.gui.customevents import LogCustomEvent
 
 class GUIHandler(logging.Handler):
     def __init__(self):

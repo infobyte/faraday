@@ -23,8 +23,8 @@ from StringIO import StringIO
 from urlparse import urlparse
 from collections import defaultdict
 
-from plugins.plugin import PluginTerminalOutput
-from plugins.plugin_utils import get_vulnweb_url_fields
+from faraday.client.plugins.plugin import PluginTerminalOutput
+from faraday.client.plugins.plugin_utils import get_vulnweb_url_fields
 
 try:
     import xml.etree.cElementTree as ET

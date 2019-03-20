@@ -11,7 +11,7 @@ import re
 import socket
 from urlparse import urlparse
 
-from plugins import core
+from faraday.client.plugins import core
 
 __author__ = "Roberto Focke"
 __copyright__ = "Copyright (c) 2017, Infobyte LLC"

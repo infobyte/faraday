@@ -10,7 +10,7 @@ import mock
 import os
 import re
 
-from server.config import (
+from faraday.server.config import (
     copy_default_config_to_local,
     gen_web_config
 )

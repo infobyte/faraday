@@ -10,12 +10,12 @@ import os
 import logging
 
 import model.common
-from config.configuration import getInstanceConfiguration
+from faraday.client.config.configuration import getInstanceConfiguration
 #from workspace import Workspace
 import model.log
-from model import Modelactions
-from utils.logs import getLogger
-from utils.common import socket, gateway
+from faraday.client.model import Modelactions
+from faraday.utils.logs import getLogger
+from faraday.utils.common import socket, gateway
 import shutil
 #from plugins.api import PluginControllerAPI
 

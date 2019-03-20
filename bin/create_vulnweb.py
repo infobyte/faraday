@@ -6,8 +6,8 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 """
 
-from model.common import factory
-from persistence.server import models
+from faraday.client.model.common import factory
+from faraday.client.persistence.server import models
 
 __description__ = 'Creates a new website vulnerability in a specified service'
 __prettyname__ = 'Create Website Vulnerability'

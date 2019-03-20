@@ -5,7 +5,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 """
 
-from plugins import core
+from faraday.client.plugins import core
 import re
 
 __author__ = "Andres Tarantini"

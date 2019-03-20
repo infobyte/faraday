@@ -10,14 +10,14 @@ from Queue import Queue
 
 from tqdm import tqdm
 
-from managers.mapper_manager import MapperManager
-from managers.reports_managers import ReportManager, CONF
-from managers.workspace_manager import WorkspaceManager
-from model.api import setUpAPIs
-from model.controller import ModelController
+from faraday.client.managers.mapper_manager import MapperManager
+from faraday.client.managers.reports_managers import ReportManager, CONF
+from faraday.client.managers.workspace_manager import WorkspaceManager
+from faraday.client.model.api import setUpAPIs
+from faraday.client.model.controller import ModelController
 
-from plugins.controller import PluginController
-from plugins.manager import PluginManager
+from faraday.client.plugins.controller import PluginController
+from faraday.client.plugins.manager import PluginManager
 from faraday.server.models import Workspace
 
 logger = logging.getLogger(__name__)

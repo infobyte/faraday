@@ -5,8 +5,8 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-from utils.logs import getLogger
-from gui.customevents import CHANGEFROMINSTANCE
+from faraday.utils.logs import getLogger
+from faraday.client.gui.customevents import CHANGEFROMINSTANCE
 
 
 class EventWatcher(object):

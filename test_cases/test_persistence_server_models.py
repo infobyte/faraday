@@ -4,7 +4,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-import persistence.server.models as models
+import faraday.client.persistence.server.models as models
 import pytest
 import responses
 import requests

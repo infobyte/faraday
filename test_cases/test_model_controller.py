@@ -11,9 +11,9 @@ import time
 import mock
 import pytest
 
-from managers.mapper_manager import MapperManager
-from model import Modelactions
-from model.controller import ModelController
+from faraday.client.managers.mapper_manager import MapperManager
+from faraday.client.model import Modelactions
+from faraday.client.model.controller import ModelController
 from test_cases.factories import (
     WorkspaceFactory,
     VulnerabilityFactory,

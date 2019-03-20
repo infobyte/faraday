@@ -5,8 +5,8 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-from utils.logs import getLogger
-from managers.reports_managers import ReportProcessor
+from faraday.utils.logs import getLogger
+from faraday.client.managers.reports_managers import ReportProcessor
 
 
 class CliApp():

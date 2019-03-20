@@ -38,14 +38,14 @@ except: # For Python 3
 
 import requests
 
-from persistence.server.utils import force_unique
-from persistence.server.server_io_exceptions import (WrongObjectSignature,
+from faraday.client.persistence.server.utils import force_unique
+from faraday.client.persistence.server.server_io_exceptions import (WrongObjectSignature,
                                                      CantCommunicateWithServerError,
                                                      ConflictInDatabase,
                                                      ResourceDoesNotExist,
                                                      Unauthorized)
 
-from persistence.server.changes_stream import (
+from faraday.client.persistence.server.changes_stream import (
     CouchChangesStream,
     WebsocketsChangesStream
 )
@@ -71,13 +71,13 @@ OBJECT_TYPE_END_POINT_MAPPER = {
     'Cred': 'credential',
 }
 
-from config import constant as CONSTANTS
+from faraday.client.config import constant as CONSTANTS
 LOCAL_CONFIG_FILE = os.path.expanduser(
     os.path.join(CONSTANTS.CONST_FARADAY_HOME_PATH, 'config/server.ini'))
 
 
 def _conf():
-    from config.configuration import getInstanceConfiguration
+    from faraday.client.config.configuration import getInstanceConfiguration
     CONF = getInstanceConfiguration()
 
     # If you are running this libs outside of Faraday, cookies are not setted.

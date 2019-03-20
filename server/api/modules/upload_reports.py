@@ -28,16 +28,16 @@ from wtforms import ValidationError
 from faraday.server.utils.logger import get_logger
 from faraday.server.utils.web import gzipped
 
-from model.controller import ModelController
+from faraday.client.model.controller import ModelController
 
-from plugins.controller import PluginController
-from plugins.manager import PluginManager
+from faraday.client.plugins.controller import PluginController
+from faraday.client.plugins.manager import PluginManager
 
-from managers.mapper_manager import MapperManager
-from managers.reports_managers import ReportProcessor
+from faraday.client.managers.mapper_manager import MapperManager
+from faraday.client.managers.reports_managers import ReportProcessor
 
 from faraday.server.models import Workspace
-from persistence.server import server
+from faraday.client.persistence.server import server
 
 from faraday.config.configuration import getInstanceConfiguration
 

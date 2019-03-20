@@ -13,10 +13,10 @@ from hypothesis import given, strategies as st
 
 from test_cases import factories
 from test_api_non_workspaced_base import ReadWriteAPITests, API_PREFIX
-from server.models import (
+from faraday.server.models import (
     License,
 )
-from server.api.modules.licenses import LicenseView
+from faraday.server.api.modules.licenses import LicenseView
 from test_cases.factories import LicenseFactory
 
 

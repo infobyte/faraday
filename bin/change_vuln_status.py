@@ -6,9 +6,9 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 """
 from __future__ import print_function
-from persistence.server.server_io_exceptions  import ResourceDoesNotExist
-from persistence.server import models
-from utils.user_input import query_yes_no
+from faraday.client.persistence.server.server_io_exceptions  import ResourceDoesNotExist
+from faraday.client.persistence.server import models
+from faraday.utils.user_input import query_yes_no
 
 __description__ = 'Changes Vulns Status (to closed)'
 __prettyname__ = 'Change Vulns Status (to closed)'

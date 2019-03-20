@@ -7,8 +7,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
 
-from plugins import core
-from config.configuration import getInstanceConfiguration
+from faraday.client.plugins import core
+from faraday.client.config.configuration import getInstanceConfiguration
 from urlparse import urlparse
 import requests
 import xmlrpclib

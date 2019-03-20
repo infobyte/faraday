@@ -12,9 +12,9 @@ sys.path.append('.')
 import model.controller
 import managers.mapper_manager
 from mockito import mock
-from persistence.mappers.abstract_mapper import NullPersistenceManager
-from model.hosts import Host, ModelObjectVuln
-from model.diff import ModelObjectDiff
+from faraday.client.persistence.mappers.abstract_mapper import NullPersistenceManager
+from faraday.client.model.hosts import Host, ModelObjectVuln
+from faraday.client.model.diff import ModelObjectDiff
 
 import test_cases.common as test_utils
 

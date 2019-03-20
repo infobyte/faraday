@@ -7,8 +7,8 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
 
-from persistence.server import models
-from utils.user_input import query_yes_no
+from faraday.client.persistence.server import models
+from faraday.utils.user_input import query_yes_no
 
 __description__ = 'Deletes all services with a non open port'
 __prettyname__ = 'Delete All Service Closed'

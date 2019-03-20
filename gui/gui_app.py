@@ -6,9 +6,9 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-from managers.reports_managers import ReportManager
+from faraday.client.managers.reports_managers import ReportManager
 
-from config.configuration import getInstanceConfiguration
+from faraday.client.config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
 
@@ -16,9 +16,9 @@ class UiFactory(object):
     @staticmethod
     def create(model_controller, plugin_manager, workspace_manager, plugin_controller, gui="gtk"):
         if gui == "gtk":
-            from gui.gtk.application import GuiApp
+            from faraday.client.gui.gtk.application import GuiApp
         else:
-            from gui.nogui.application import GuiApp
+            from faraday.client.gui.nogui.application import GuiApp
 
         return GuiApp(model_controller, plugin_manager, workspace_manager, plugin_controller)
 

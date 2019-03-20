@@ -10,7 +10,7 @@ See the file 'doc/LICENSE' for the license information
 
 import pytest
 from sqlalchemy.orm.util import was_deleted
-from server.models import db, Workspace, Credential
+from faraday.server.models import db, Workspace, Credential
 from test_api_pagination import PaginationTestsMixin as \
     OriginalPaginationTestsMixin
 

@@ -8,8 +8,8 @@ See the file 'doc/LICENSE' for the license information
 
 #from model.common import factory
 import model.common
-from gui.notifier import NotificationCenter
-from config.configuration import getInstanceConfiguration
+from faraday.client.gui.notifier import NotificationCenter
+from faraday.client.config.configuration import getInstanceConfiguration
 import model.api
 #from model.api import showDialog, showPopup
 

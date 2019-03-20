@@ -12,9 +12,9 @@ import traceback
 
 from random import random
 from threading import Thread, Timer
-from utils.logs import getLogger
+from faraday.utils.logs import getLogger
 
-from config.configuration import getInstanceConfiguration
+from faraday.client.config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
 try:

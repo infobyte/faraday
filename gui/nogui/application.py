@@ -8,12 +8,12 @@ See the file 'doc/LICENSE' for the license information
 
 import time
 
-from gui.gui_app import FaradayUi
-from gui.nogui.eventwatcher import EventWatcher
+from faraday.client.gui.gui_app import FaradayUi
+from faraday.client.gui.nogui.eventwatcher import EventWatcher
 import model.guiapi
-from utils.logs import getLogger
+from faraday.utils.logs import getLogger
 
-from config.configuration import getInstanceConfiguration
+from faraday.client.config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
 

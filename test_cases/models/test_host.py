@@ -7,9 +7,9 @@ See the file 'doc/LICENSE' for the license information
 import random
 import pytest
 from functools import partial
-from server.models import Hostname, Host
+from faraday.server.models import Hostname, Host
 
-from server.api.modules.hosts import HostsView
+from faraday.server.api.modules.hosts import HostsView
 
 from test_cases.test_api_workspaced_base import (
     ReadOnlyAPITests)

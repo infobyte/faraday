@@ -10,9 +10,9 @@ See the file 'doc/LICENSE' for the license information
 import time
 import threading
 
-from model.guiapi import notification_center
+from faraday.client.model.guiapi import notification_center
 from decorators import safe_io_with_server
-from persistence.server import models, server_io_exceptions
+from faraday.client.persistence.server import models, server_io_exceptions
 
 
 class ServerIO(object):

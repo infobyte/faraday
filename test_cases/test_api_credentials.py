@@ -10,8 +10,8 @@ from test_cases import factories
 from test_api_workspaced_base import (
     ReadWriteAPITests,
 )
-from server.api.modules.credentials import CredentialView
-from server.models import Credential
+from faraday.server.api.modules.credentials import CredentialView
+from faraday.server.models import Credential
 from test_cases.factories import HostFactory, ServiceFactory
 
 

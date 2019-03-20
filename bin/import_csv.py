@@ -9,8 +9,8 @@ See the file "doc/LICENSE" for the license information
 import csv
 from time import mktime
 from datetime import datetime
-from persistence.server import models
-from persistence.server.server_io_exceptions import ConflictInDatabase, CantCommunicateWithServerError
+from faraday.client.persistence.server import models
+from faraday.client.persistence.server.server_io_exceptions import ConflictInDatabase, CantCommunicateWithServerError
 
 WORKSPACE = ""
 __description__ = "Import Faraday objects from CSV file"

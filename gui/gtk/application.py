@@ -46,14 +46,14 @@ import model.guiapi
 import model.api
 import model.log
 
-from gui.gui_app import FaradayUi
-from config.configuration import getInstanceConfiguration
-from utils.logs import getLogger
+from faraday.client.gui.gui_app import FaradayUi
+from faraday.client.config.configuration import getInstanceConfiguration
+from faraday.utils.logs import getLogger
 from appwindow import AppWindow
 
-from persistence.server.server import is_authenticated, check_faraday_version, Unauthorized
+from faraday.client.persistence.server.server import is_authenticated, check_faraday_version, Unauthorized
 
-from server import ServerIO
+from faraday.server import ServerIO
 from dialogs import PreferenceWindowDialog
 from dialogs import NewWorkspaceDialog
 from dialogs import PluginOptionsDialog
@@ -76,11 +76,11 @@ from mainwidgets import ConsoleLog
 from mainwidgets import Terminal
 from mainwidgets import Statusbar
 
-from gui.loghandler import GUIHandler
-from utils.logs import addHandler
-from utils.common import checkSSL
+from faraday.client.gui.loghandler import GUIHandler
+from faraday.utils.logs import addHandler
+from faraday.utils.common import checkSSL
 
-from plugins import fplugin_utils
+from faraday.client.plugins import fplugin_utils
 
 CONF = getInstanceConfiguration()
 

@@ -6,7 +6,7 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
 
-from persistence.server import models
+from faraday.client.persistence.server import models
 
 __description__ = 'Get all stored credentials'
 __prettyname__ = 'List Credentials'

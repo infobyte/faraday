@@ -7,8 +7,8 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 from __future__ import with_statement
-from plugins import core
-from model import api
+from faraday.client.plugins import core
+from faraday.client.model import api
 import re
 import os
 import socket

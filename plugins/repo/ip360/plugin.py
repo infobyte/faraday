@@ -9,7 +9,7 @@ See the file 'doc/LICENSE' for the license information
 
 import csv
 import StringIO
-from plugins import core
+from faraday.client.plugins import core
 
 def calculate_severity(number):
 

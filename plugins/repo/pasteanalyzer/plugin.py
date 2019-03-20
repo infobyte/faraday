@@ -9,7 +9,7 @@ See the file 'doc/LICENSE' for the license information
 
 # Author: @EzequielTBH
 
-from plugins import core
+from faraday.client.plugins import core
 import json
 import re
 

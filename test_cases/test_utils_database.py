@@ -6,8 +6,8 @@ See the file 'doc/LICENSE' for the license information
 '''
 import pytest
 
-from server.utils.database import get_unique_fields
-from server.models import (
+from faraday.server.utils.database import get_unique_fields
+from faraday.server.models import (
     License,
     Service,
     Host,

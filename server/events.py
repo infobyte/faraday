@@ -7,7 +7,7 @@ See the file 'doc/LICENSE' for the license information
 import sys
 import logging
 import inspect
-from models import (
+from faraday.client.models import (
     Host,
     Service,
     TagObject,

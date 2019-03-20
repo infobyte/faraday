@@ -14,14 +14,14 @@ import logging
 from threading import Thread
 from multiprocessing import JoinableQueue, Process
 
-from config.configuration import getInstanceConfiguration
-from plugins.plugin import PluginProcess
+from faraday.client.config.configuration import getInstanceConfiguration
+from faraday.client.plugins.plugin import PluginProcess
 import model.api
-from model.commands_history import CommandRunInformation
-from model import Modelactions
-from utils.logs import getLogger
+from faraday.client.model.commands_history import CommandRunInformation
+from faraday.client.model import Modelactions
+from faraday.utils.logs import getLogger
 
-from config.constant import (
+from faraday.client.config.constant import (
     CONST_FARADAY_HOME_PATH,
     CONST_FARADAY_ZSH_OUTPUT_PATH)
 CONF = getInstanceConfiguration()

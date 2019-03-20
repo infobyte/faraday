@@ -6,7 +6,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 import pytest
 from passlib.hash import pbkdf2_sha1
-from server.importer import ImportCouchDBUsers
+from faraday.server.importer import ImportCouchDBUsers
 
 NON_ADMIN_DOC = {
     "_id": "org.couchdb.user:removeme2",

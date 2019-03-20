@@ -14,8 +14,8 @@ import random
 import socket
 from collections import defaultdict
 
-from plugins import core
-from plugins.plugins_utils import filter_services, get_all_protocols
+from faraday.client.plugins import core
+from faraday.client.plugins.plugins_utils import filter_services, get_all_protocols
 
 
 current_path = os.path.abspath(os.getcwd())

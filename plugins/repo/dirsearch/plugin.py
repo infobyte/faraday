@@ -15,8 +15,8 @@ import socket
 import argparse
 import tempfile
 import urlparse
-from plugins.plugin import PluginTerminalOutput
-from plugins.plugin_utils import get_vulnweb_url_fields
+from faraday.client.plugins.plugin import PluginTerminalOutput
+from faraday.client.plugins.plugin_utils import get_vulnweb_url_fields
 
 
 __author__ = "Matías Lang"

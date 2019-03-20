@@ -11,15 +11,15 @@ from unittest import TestCase
 import unittest
 import sys
 sys.path.append('.')
-import model.controller as controller
+import faraday.client.model.controller as controller
 from mockito import mock, when
-from model import api
-from plugins.core import PluginBase, PluginController
-from model.workspace import Workspace
-from model.container import ModelObjectContainer
-from managers.all import CommandManager
+from faraday.client.model import api
+from faraday.client.plugins.core import PluginBase, PluginController
+from faraday.client.model.workspace import Workspace
+from faraday.client.model.container import ModelObjectContainer
+from faraday.client.managers.all import CommandManager
 from time import time
-from model.commands_history import CommandRunInformation
+from faraday.client.model.commands_history import CommandRunInformation
 
 
 class TestPluginCreateModelObject(TestCase):

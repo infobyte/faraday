@@ -1334,6 +1334,15 @@ angular.module("faradayApp")
         };
 
 
+        var updateSelectedVulnAtachments = function () {
+            var url = '/_api/v2/ws/' + $routeParams.wsId + '/vulns/' + $scope.lastClickedVuln._id + '/attachments/';
+            $http.get(url).then(
+                function (response) {
+                    $scope.lastClickedVuln._attachments = response.data
+                }
+            );
+        };
+
         $scope.toggleVulnPreview = function (e, vuln) {
             e.stopPropagation();
             if ($scope.lastClickedVuln !== undefined && $scope.lastClickedVuln._id === vuln._id){
@@ -1343,6 +1352,7 @@ angular.module("faradayApp")
                 $scope.showVulnPreview();
                 $scope.realVuln = vuln;
                 $scope.lastClickedVuln = angular.copy(vuln);
+                updateSelectedVulnAtachments();
                 uiCommonFact.updateBtnSeverityColor($scope.lastClickedVuln.severity, '#btn-chg-severity-prev', '#caret-chg-severity-prev');
                 uiCommonFact.updateBtnStatusColor($scope.lastClickedVuln.status, '#btn-chg-status-prev', '#caret-chg-status-prev');
             }

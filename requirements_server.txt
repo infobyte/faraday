@@ -10,7 +10,7 @@ flask-session>=0.3.1
 flask>=1.0
 future>=0.17.1
 IPy>=0.83
-marshmallow>=2.15.3
+marshmallow<3.0.0
 Pillow>=4.2.1
 psycopg2>=2.7.1
 pyasn1-modules>=0.0.11

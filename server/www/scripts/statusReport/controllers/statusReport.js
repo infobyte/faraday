@@ -1549,6 +1549,20 @@ angular.module("faradayApp")
             };
 
 
+            $scope.copyToClipboard = function (name) {
+                var url = BASEURL + '_api/v2/ws/' + $routeParams.wsId + /vulns/ + $scope.lastClickedVuln._id + /attachment/ + name;
+                var copyElement = document.createElement("textarea");
+                copyElement.style.position = 'fixed';
+                copyElement.style.opacity = '0';
+                copyElement.textContent = decodeURI(url);
+                var body = document.getElementsByTagName('body')[0];
+                body.appendChild(copyElement);
+                copyElement.select();
+                document.execCommand('copy');
+                body.removeChild(copyElement);
+            }
+
+
 
             $scope.openEvidence = function (name) {
                 uiCommonFact.openEvidence(name, $scope.lastClickedVuln, $routeParams.wsId);

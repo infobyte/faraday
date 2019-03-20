@@ -629,7 +629,12 @@
                             </div>
 
                             <div class="tab-pane-header">{{selectedAtachment.name}}</div>
-                            <img ng-if="selectedAtachment.url !== ''" src="{{selectedAtachment.url}}" id="attachment-img">
+                            <img ng-if="selectedAtachment.url !== '' && selectedAtachment.imgPrevFail === false" src="{{selectedAtachment.url}}" id="attachment-img">
+                            <div  class="no-info-overlay" ng-if="selectedAtachment.imgPrevFail === true" style="margin-bottom: 15px;top: -8px;">
+                                <p class="no-info-text">
+                                    No available preview to this attachment
+                                </p>
+                            </div>
                         </div>
 
 

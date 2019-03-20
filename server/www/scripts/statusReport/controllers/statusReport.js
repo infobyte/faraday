@@ -335,7 +335,8 @@ angular.module("faradayApp")
 
             $scope.selectedAtachment = {
                 url: '',
-                name: ''
+                name: '',
+                imgPrevFail: false
             };
         };
 
@@ -1539,7 +1540,15 @@ angular.module("faradayApp")
             $scope.selectItemToPrev = function (name) {
                 $scope.selectedAtachment.name = name;
                 $scope.selectedAtachment.url = BASEURL + '_api/v2/ws/' + $routeParams.wsId + /vulns/ + $scope.lastClickedVuln._id + /attachment/ + name
+                $scope.selectedAtachment.imgPrevFail = false;
+                var format = $scope.selectedAtachment.name.split('.').pop();
+                var imagesFormat = ['png','jpg', 'jpeg', 'gif'];
+                if (imagesFormat.indexOf(format) === -1){
+                    $scope.selectedAtachment.imgPrevFail = true;
+                }
             };
+
+
 
             $scope.openEvidence = function (name) {
                 uiCommonFact.openEvidence(name, $scope.lastClickedVuln, $routeParams.wsId);

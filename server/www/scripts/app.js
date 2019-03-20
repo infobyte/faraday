@@ -12,7 +12,7 @@ var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.
                                                 'filter', 'angular-clipboard', 'ngCookies', 'cfp.hotkeys', 'chart.js',
                                                 'ui.grid', 'ui.grid.selection', 'ui.grid.grouping', 'ngSanitize',
                                                 'ui.grid.pagination', 'ui.grid.pinning', 'angularMoment', 'ui-notification',
-                                                'ui.grid.resizeColumns', 'angularSimplePagination', 'angularFileUpload'])
+                                                'ui.grid.resizeColumns', 'angularSimplePagination', 'angularFileUploadLib'])
     .constant("BASEURL", (function() {
         var url = window.location.origin + "/";
         return url;

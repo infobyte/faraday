@@ -3,7 +3,7 @@ from __future__ import with_statement
 import sys
 import os
 sys.path.append(os.getcwd())
-import server.config
+import faraday.server.config
 from faraday.server.web import app
 from faraday.server.models import db
 
@@ -43,7 +43,7 @@ def run_migrations_offline():
     script output.
 
     """
-    url = server.config.database.connection_string
+    url = faraday.server.config.database.connection_string
     context.configure(
         url=url, target_metadata=target_metadata, literal_binds=True)
 

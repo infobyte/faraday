@@ -28,8 +28,8 @@ def reset_db_all():
 
     # db.create_all()
     # Ugly hack to create tables and also setting alembic revision
-    import server.config
-    conn_string = server.config.database.connection_string
+    import faraday.server.config
+    conn_string = faraday.server.config.database.connection_string
     from faraday.server.commands.initdb import InitDB
     InitDB()._create_tables(conn_string)
 

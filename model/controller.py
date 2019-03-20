@@ -7,7 +7,7 @@ See the file 'doc/LICENSE' for the license information
 import time
 import logging
 import traceback
-import model.common  # this is to make sure the factory is created
+import faraday.client.model.common  # this is to make sure the factory is created
 from multiprocessing import Lock
 from Queue import Empty
 from threading import Thread
@@ -56,7 +56,7 @@ class ModelController(Thread):
         self._pending_actions = pending_actions
 
         # a reference to the ModelObjectFactory
-        self._object_factory = model.common.factory
+        self._object_factory = faraday.client.model.common.factory
         self._registerObjectTypes()
 
         # sync api request flag. This flag is used to let the model know
@@ -450,20 +450,20 @@ class ModelController(Thread):
         return True
 
     def newHost(self, ip, os="Unknown", hostnames=None):
-        return model.common.factory.createModelObject(
+        return faraday.client.model.common.factory.createModelObject(
             models.Host.class_signature, ip,
             workspace_name=self.mappers_manager.workspace_name, os=os, parent_id=None, hostnames=hostnames)
 
     def newService(self, name, protocol="tcp?", ports=[], status="running",
                    version="unknown", description="", parent_id=None):
-        return model.common.factory.createModelObject(
+        return faraday.client.model.common.factory.createModelObject(
             models.Service.class_signature, name,
             workspace_name=self.mappers_manager.workspace_name, protocol=protocol, ports=ports, status=status,
             version=version, description=description, parent_id=parent_id)
 
     def newVuln(self, name, desc="", ref=None, severity="", resolution="",
                 confirmed=False, parent_id=None):
-        return model.common.factory.createModelObject(
+        return faraday.client.model.common.factory.createModelObject(
             models.Vuln.class_signature, name,
             workspace_name=self.mappers_manager.workspace_name, desc=desc, ref=ref, severity=severity, resolution=resolution,
             confirmed=confirmed, parent_id=parent_id)
@@ -472,7 +472,7 @@ class ModelController(Thread):
                    website="", path="", request="", response="", method="",
                    pname="", params="", query="", category="", confirmed=False,
                    parent_id=None):
-        return model.common.factory.createModelObject(
+        return faraday.client.model.common.factory.createModelObject(
             models.VulnWeb.class_signature, name,
             workspace_name=self.mappers_manager.workspace_name, desc=desc, ref=ref, severity=severity, resolution=resolution,
             website=website, path=path, request=request, response=response,
@@ -480,12 +480,12 @@ class ModelController(Thread):
             category=category, confirmed=confirmed, parent_id=parent_id)
 
     def newNote(self, name, text, parent_id=None, parent_type=None):
-        return model.common.factory.createModelObject(
+        return faraday.client.model.common.factory.createModelObject(
             models.Note.class_signature, name,
             workspace_name=self.mappers_manager.workspace_name, text=text, parent_id=parent_id, parent_type=parent_type)
 
     def newCred(self, username, password, parent_id=None):
-        return model.common.factory.createModelObject(
+        return faraday.client.model.common.factory.createModelObject(
             models.Credential.class_signature, name,
             username, workspace_name=self.mappers_manager.workspace_name, password=password, parent_id=parent_id)
 

@@ -16,7 +16,7 @@ from multiprocessing import JoinableQueue, Process
 
 from faraday.client.config.configuration import getInstanceConfiguration
 from faraday.client.plugins.plugin import PluginProcess
-import model.api
+import faraday.client.model.api
 from faraday.client.model.commands_history import CommandRunInformation
 from faraday.client.model import Modelactions
 from faraday.utils.logs import getLogger
@@ -197,25 +197,25 @@ class PluginController(Thread):
 
     def _setupActionDispatcher(self):
         self._actionDispatcher = {
-            Modelactions.ADDHOST: model.api.addHost,
-            Modelactions.ADDSERVICEHOST: model.api.addServiceToHost,
+            Modelactions.ADDHOST: faraday.client.model.api.addHost,
+            Modelactions.ADDSERVICEHOST: faraday.client.model.api.addServiceToHost,
             #Vulnerability
-            Modelactions.ADDVULNHOST: model.api.addVulnToHost,
-            Modelactions.ADDVULNSRV: model.api.addVulnToService,
+            Modelactions.ADDVULNHOST: faraday.client.model.api.addVulnToHost,
+            Modelactions.ADDVULNSRV: faraday.client.model.api.addVulnToService,
             #VulnWeb
-            Modelactions.ADDVULNWEBSRV: model.api.addVulnWebToService,
+            Modelactions.ADDVULNWEBSRV: faraday.client.model.api.addVulnWebToService,
             #Note
-            Modelactions.ADDNOTEHOST: model.api.addNoteToHost,
-            Modelactions.ADDNOTESRV: model.api.addNoteToService,
-            Modelactions.ADDNOTENOTE: model.api.addNoteToNote,
+            Modelactions.ADDNOTEHOST: faraday.client.model.api.addNoteToHost,
+            Modelactions.ADDNOTESRV: faraday.client.model.api.addNoteToService,
+            Modelactions.ADDNOTENOTE: faraday.client.model.api.addNoteToNote,
             #Creds
-            Modelactions.ADDCREDSRV:  model.api.addCredToService,
+            Modelactions.ADDCREDSRV:  faraday.client.model.api.addCredToService,
             #LOG
-            Modelactions.LOG: model.api.log,
-            Modelactions.DEVLOG: model.api.devlog,
+            Modelactions.LOG: faraday.client.model.api.log,
+            Modelactions.DEVLOG: faraday.client.model.api.devlog,
             # Plugin state
-            Modelactions.PLUGINSTART: model.api.pluginStart,
-            Modelactions.PLUGINEND: model.api.pluginEnd
+            Modelactions.PLUGINSTART: faraday.client.model.api.pluginStart,
+            Modelactions.PLUGINEND: faraday.client.model.api.pluginEnd
         }
 
     def updatePluginSettings(self, plugin_id, new_settings):
@@ -243,7 +243,7 @@ class PluginController(Thread):
             if not self._is_command_malformed(cmd, modified_cmd_string):
 
                 cmd_info = CommandRunInformation(
-                    **{'workspace': model.api.getActiveWorkspace().name,
+                    **{'workspace': faraday.client.model.api.getActiveWorkspace().name,
                         'itime': time.time(),
                         'import_source': 'shell',
                         'command': cmd.split()[0],
@@ -275,7 +275,7 @@ class PluginController(Thread):
     def processReport(self, plugin, filepath, ws_name=None):
 
         if not ws_name:
-            ws_name = model.api.getActiveWorkspace().name
+            ws_name = faraday.client.model.api.getActiveWorkspace().name
 
         cmd_info = CommandRunInformation(
             **{'workspace': ws_name,

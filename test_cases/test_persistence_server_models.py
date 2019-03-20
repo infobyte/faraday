@@ -10,7 +10,7 @@ import responses
 import requests
 from mock import Mock, patch
 
-import server.config
+import faraday.server.config
 
 from test_api_workspaced_base import GenericAPITest
 

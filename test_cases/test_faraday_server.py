@@ -4,7 +4,7 @@ import signal
 import subprocess
 from datetime import datetime
 from faraday.server.utils import daemonize
-import server.config
+import faraday.server.config
 
 try:
     import ConfigParser

@@ -83,9 +83,9 @@ def is_server_running(port):
 
 
 def run_server(args):
-    import server.web
+    import faraday.server.web
 
-    web_server = server.web.WebServer(enable_ssl=args.ssl)
+    web_server = faraday.server.web.WebServer(enable_ssl=args.ssl)
     daemonize.create_pid_file(args.port)
     web_server.run()
 
@@ -216,7 +216,7 @@ def main():
         faraday.server.config.faraday_server.bind_address = args.bind_address
 
     if args.websocket_port:
-        faraday.server.config.faraday_server.websocket_port = args.websocket_port
+        faraday.server.config.faraday_faraday.server.websocket_port = args.websocket_port
 
     if args.start:
         # Starts a new process on background with --ignore-setup

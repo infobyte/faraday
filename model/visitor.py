@@ -16,7 +16,7 @@ import SimpleXMLRPCServer
 import xmlrpclib
 from faraday.utils.decorators import updateLocalMetadata
 import json
-import model
+import faraday.client.model
 from conflict import ConflictUpdate
 from faraday.client.model.diff import ModelObjectDiff
 

@@ -7,7 +7,7 @@ See the file 'doc/LICENSE' for the license information
 
 import logging
 import threading
-import model.guiapi
+import faraday.client.model.guiapi
 from faraday.client.gui.customevents import LogCustomEvent
 
 class GUIHandler(logging.Handler):
@@ -35,7 +35,7 @@ class GUIHandler(logging.Handler):
             self._widgets_lock.acquire()
             for widget in self._widgets:
                 event = LogCustomEvent(msg)
-                model.guiapi.postCustomEvent(event, widget)
+                faraday.client.model.guiapi.postCustomEvent(event, widget)
             self._widgets_lock.release()
         except:
             self.handleError(record)

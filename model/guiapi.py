@@ -6,12 +6,12 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-#from model.common import factory
-import model.common
+#from faraday.client.model.common import factory
+import faraday.client.model.common
 from faraday.client.gui.notifier import NotificationCenter
 from faraday.client.config.configuration import getInstanceConfiguration
-import model.api
-#from model.api import showDialog, showPopup
+import faraday.client.model.api
+#from faraday.client.model.api import showDialog, showPopup
 
 CONF = getInstanceConfiguration()
 
@@ -59,7 +59,7 @@ def deregisterWidget(widget):
 
 
 def createAndAddHost(name, os="Unknown"):
-    host = model.api.newHost(name, os)
+    host = faraday.client.model.api.newHost(name, os)
     if addHost(host):
         return host.getID()
     return None
@@ -77,7 +77,7 @@ def createAndAddInterface(host_id, name = "", mac = "00:00:00:00:00:00",
     If interface is successfuly created and the host exists, it returns the inteface id
     It returns None otherwise
     """
-    interface = model.api.newInterface(name, mac, ipv4_address, ipv4_mask, ipv4_gateway,
+    interface = faraday.client.model.api.newInterface(name, mac, ipv4_address, ipv4_mask, ipv4_gateway,
                              ipv4_dns, network_segment, hostname_resolution, parent_id=host_id)
     if addInterface(host_id, interface):
         return interface.getID()
@@ -86,7 +86,7 @@ def createAndAddInterface(host_id, name = "", mac = "00:00:00:00:00:00",
 
 def createAndAddServiceToInterface(host_id, interface_id, name, protocol = "tcp?",
                 ports = [], status = "running", version = "unknown", description = ""):
-    service = model.api.newService(name, protocol, ports, status, version, description, parent_id=interface_id)
+    service = faraday.client.model.api.newService(name, protocol, ports, status, version, description, parent_id=interface_id)
     if addServiceToInterface(host_id, interface_id, service):
         return service.getID()
     return None
@@ -94,7 +94,7 @@ def createAndAddServiceToInterface(host_id, interface_id, name, protocol = "tcp?
 
 def createAndAddVulnToHost(host_id, name, desc, ref, severity="0",
                            resolution="", confirmed=True):
-    vuln = model.api.newVuln(name, desc, ref, severity, resolution,
+    vuln = faraday.client.model.api.newVuln(name, desc, ref, severity, resolution,
                              confirmed=confirmed, parent_id=host_id)
     if addVulnToHost(host_id, vuln):
         return vuln.getID()
@@ -103,7 +103,7 @@ def createAndAddVulnToHost(host_id, name, desc, ref, severity="0",
 
 def createAndAddVulnToInterface(host_id, interface_id, name, desc, ref,
                                 severity="0", resolution="", confirmed=True):
-    vuln = model.api.newVuln(name, desc, ref, severity, resolution,
+    vuln = faraday.client.model.api.newVuln(name, desc, ref, severity, resolution,
                              confirmed=confirmed, parent_id=interface_id)
     if addVulnToInterface(host_id, interface_id, vuln):
         return vuln.getID()
@@ -112,7 +112,7 @@ def createAndAddVulnToInterface(host_id, interface_id, name, desc, ref,
 
 def createAndAddVulnToService(host_id, service_id, name, desc, ref,
                               severity="0", resolution="", confirmed=True):
-    vuln = model.api.newVuln(name, desc, ref, severity, resolution,
+    vuln = faraday.client.model.api.newVuln(name, desc, ref, severity, resolution,
                              confirmed=confirmed, parent_id=service_id)
     if addVulnToService(host_id, service_id, vuln):
         return vuln.getID()
@@ -124,7 +124,7 @@ def createAndAddVulnWebToService(host_id, service_id, name, desc, website,
                                  request=None, response=None, method=None,
                                  pname=None, params=None, query=None,
                                  category=None, confirmed=True):
-    vuln = model.api.newVulnWeb(name, desc, website, path, ref, severity,
+    vuln = faraday.client.model.api.newVulnWeb(name, desc, website, path, ref, severity,
                                 resolution, request, response, method, pname,
                                 params, query, category, confirmed=confirmed,
                                 parent_id=service_id)
@@ -135,7 +135,7 @@ def createAndAddVulnWebToService(host_id, service_id, name, desc, website,
 
 def createAndAddVuln(model_object, name, desc, ref=None, severity="0",
                      resolution="", confirmed=True):
-    vuln = model.api.newVuln(name, desc, ref, severity, resolution,
+    vuln = faraday.client.model.api.newVuln(name, desc, ref, severity, resolution,
                              confirmed=confirmed,
                              parent_id=model_object.getID())
     if addVuln(model_object.getID(), vuln):
@@ -147,7 +147,7 @@ def createAndAddVulnWeb(model_object, name, desc, website, path, ref=None,
                         severity="0", resolution="", request=None,
                         response=None, method=None, pname=None, params=None,
                         query=None, category=None, confirmed=True):
-    vuln = model.api.newVulnWeb(name, desc, ref, severity, resolution, website,
+    vuln = faraday.client.model.api.newVulnWeb(name, desc, ref, severity, resolution, website,
                                 path, request, response, method, pname, params,
                                 query, category, confirmed=confirmed,
                                 parent_id=model_object.getID())
@@ -174,21 +174,21 @@ def createAndAddNoteToService(host_id, service_id, name, text):
 def createAndAddNote(model_object, name, text):
     return None
 def createAndAddCred(model_object, username, password):
-    cred = model.api.newCred(username, password, parent_id=model_object.getID())
+    cred = faraday.client.model.api.newCred(username, password, parent_id=model_object.getID())
     if addCred(model_object.getID(), cred):
         return cred.getID()
     return None
 
 
 def createAndAddCredToHost(host_id, username, password):
-    cred = model.api.newCred(username, password, parent_id=host_id)
+    cred = faraday.client.model.api.newCred(username, password, parent_id=host_id)
     if addCredToHost(host_id, cred):
         return cred.getID()
     return None
 
 
 def createAndAddCredToService(host_id, service_id, username, password):
-    cred = model.api.newCred(username, password, parent_id=service_id)
+    cred = faraday.client.model.api.newCred(username, password, parent_id=service_id)
     if addCredToService(host_id, service_id, cred):
         return cred.getID()
     return None

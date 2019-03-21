@@ -15,7 +15,7 @@ import sys
 import traceback
 
 from faraday.client.plugins.controller import PluginController
-from faraday.client.config.configuration import getInstanceConfiguration
+from faraday.config.configuration import getInstanceConfiguration
 import faraday.server.utils.logger
 
 CONF = getInstanceConfiguration()

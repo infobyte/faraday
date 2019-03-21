@@ -11,7 +11,7 @@ from faraday.client.gui.customevents import (ShowPopupCustomEvent,
 import faraday.client.model.guiapi
 from faraday.utils.logs import getLogger
 
-from faraday.client.config.configuration import getInstanceConfiguration
+from faraday.config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
 __notifier = None

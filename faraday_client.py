@@ -12,8 +12,8 @@ import getpass
 import argparse
 import requests.exceptions
 
-from faraday.client.config.configuration import getInstanceConfiguration
-from faraday.client.config.constant import (
+from faraday.config.configuration import getInstanceConfiguration
+from faraday.config.constant import (
     CONST_USER_HOME,
     CONST_FARADAY_HOME_PATH,
     CONST_FARADAY_PLUGINS_PATH,

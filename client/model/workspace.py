@@ -8,7 +8,7 @@ See the file 'doc/LICENSE' for the license information
 
 import time
 
-from faraday.client.config.configuration import getInstanceConfiguration
+from faraday.config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
 

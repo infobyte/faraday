@@ -71,13 +71,13 @@ OBJECT_TYPE_END_POINT_MAPPER = {
     'Cred': 'credential',
 }
 
-from faraday.client.config import constant as CONSTANTS
+from faraday.config import constant as CONSTANTS
 LOCAL_CONFIG_FILE = os.path.expanduser(
     os.path.join(CONSTANTS.CONST_FARADAY_HOME_PATH, 'config/server.ini'))
 
 
 def _conf():
-    from faraday.client.config.configuration import getInstanceConfiguration
+    from faraday.config.configuration import getInstanceConfiguration
     CONF = getInstanceConfiguration()
 
     # If you are running this libs outside of Faraday, cookies are not setted.

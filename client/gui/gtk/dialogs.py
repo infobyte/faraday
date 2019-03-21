@@ -14,7 +14,7 @@ gi.require_version('Gtk', '3.0')
 
 from faraday.client.persistence.server.server import ResourceDoesNotExist
 from gi.repository import Gtk, GdkPixbuf, Gdk
-from faraday.client.config.configuration import getInstanceConfiguration
+from faraday.config.configuration import getInstanceConfiguration
 from faraday.client.persistence.server.server import is_authenticated, login_user, get_user_info, check_server_url
 from faraday.client.model import guiapi
 from decorators import scrollable

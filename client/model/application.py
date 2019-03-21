@@ -38,7 +38,7 @@ from faraday.utils.error_report import installThreadExcepthook
 from faraday.client.gui.gui_app import UiFactory
 from faraday.client.model.cli_app import CliApp
 
-from faraday.client.config.configuration import getInstanceConfiguration
+from faraday.config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
 

@@ -47,13 +47,13 @@ import faraday.client.model.api
 import faraday.client.model.log
 
 from faraday.client.gui.gui_app import FaradayUi
-from faraday.client.config.configuration import getInstanceConfiguration
+from faraday.config.configuration import getInstanceConfiguration
 from faraday.utils.logs import getLogger
 from appwindow import AppWindow
 
 from faraday.client.persistence.server.server import is_authenticated, check_faraday_version, Unauthorized
 
-from faraday.server import ServerIO
+from faraday.client.gui.gtk.server import ServerIO
 from dialogs import PreferenceWindowDialog
 from dialogs import NewWorkspaceDialog
 from dialogs import PluginOptionsDialog

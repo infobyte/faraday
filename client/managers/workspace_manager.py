@@ -14,8 +14,8 @@ from faraday.client.persistence.server.models import create_workspace, get_works
 from faraday.client.persistence.server.server_io_exceptions import Unauthorized
 from faraday.client.model.guiapi import notification_center
 
-from faraday.client.config.configuration import getInstanceConfiguration
-from faraday.client.config.constant import CONST_BLACKDBS
+from faraday.config.configuration import getInstanceConfiguration
+from faraday.config.constant import CONST_BLACKDBS
 CONF = getInstanceConfiguration()
 
 

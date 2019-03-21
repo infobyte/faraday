@@ -9,7 +9,7 @@ See the file 'doc/LICENSE' for the license information
 #from faraday.client.model.common import factory
 import faraday.client.model.common
 from faraday.client.gui.notifier import NotificationCenter
-from faraday.client.config.configuration import getInstanceConfiguration
+from faraday.config.configuration import getInstanceConfiguration
 import faraday.client.model.api
 #from faraday.client.model.api import showDialog, showPopup
 

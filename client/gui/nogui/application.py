@@ -13,7 +13,7 @@ from faraday.client.gui.nogui.eventwatcher import EventWatcher
 import faraday.client.model.guiapi
 from faraday.utils.logs import getLogger
 
-from faraday.client.config.configuration import getInstanceConfiguration
+from faraday.config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
 

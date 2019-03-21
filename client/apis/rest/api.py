@@ -19,7 +19,7 @@ from tornado.ioloop import IOLoop
 from faraday.client.model.visitor import VulnsLookupVisitor
 
 import faraday.utils.logs as logger
-from faraday.client.config.configuration import getInstanceConfiguration
+from faraday.config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
 

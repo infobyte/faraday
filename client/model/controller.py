@@ -12,7 +12,7 @@ from multiprocessing import Lock
 from Queue import Empty
 from threading import Thread
 
-from faraday.client.config.configuration import getInstanceConfiguration
+from faraday.config.configuration import getInstanceConfiguration
 from faraday.client.model import Modelactions
 from faraday.client.persistence.server.server_io_exceptions import ConflictInDatabase
 from faraday.utils.logs import getLogger

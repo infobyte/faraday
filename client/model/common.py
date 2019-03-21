@@ -20,7 +20,7 @@ try:
 except AttributeError:
     import api
 
-from faraday.client.config.configuration import getInstanceConfiguration
+from faraday.config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 logger = logging.getLogger(__name__)
 

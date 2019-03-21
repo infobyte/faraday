@@ -10,7 +10,7 @@ import os
 import logging
 
 import faraday.client.model.common
-from faraday.client.config.configuration import getInstanceConfiguration
+from faraday.config.configuration import getInstanceConfiguration
 #from workspace import Workspace
 import faraday.client.model.log
 from faraday.client.model import Modelactions

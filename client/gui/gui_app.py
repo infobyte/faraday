@@ -8,7 +8,7 @@ See the file 'doc/LICENSE' for the license information
 
 from faraday.client.managers.reports_managers import ReportManager
 
-from faraday.client.config.configuration import getInstanceConfiguration
+from faraday.config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
 

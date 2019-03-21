@@ -10,7 +10,7 @@ import time
 import sys
 import argparse
 import os
-from faraday.client.config.constant import CONST_FARADAY_HOME_PATH
+from faraday.config.constant import CONST_FARADAY_HOME_PATH
 from faraday.server.config import FARADAY_BASE
 
 my_env = os.environ

@@ -8,7 +8,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 from faraday.client.plugins import core
-from faraday.client.config.configuration import getInstanceConfiguration
+from faraday.config.configuration import getInstanceConfiguration
 from urlparse import urlparse
 import requests
 import xmlrpclib

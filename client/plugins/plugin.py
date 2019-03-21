@@ -33,7 +33,7 @@ from faraday.client.persistence.server.models import (
 from faraday.client.model import Modelactions
 #from plugins.modelactions import modelactions
 
-from faraday.client.config.configuration import getInstanceConfiguration
+from faraday.config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 VERSION = faraday.server.config.__get_version().split('-')[0].split('rc')[0]
 logger = logging.getLogger(__name__)

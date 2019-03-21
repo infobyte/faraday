@@ -14,7 +14,7 @@ from random import random
 from threading import Thread, Timer
 from faraday.utils.logs import getLogger
 
-from faraday.client.config.configuration import getInstanceConfiguration
+from faraday.config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
 try:

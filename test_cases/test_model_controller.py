@@ -160,7 +160,7 @@ def test_end_pluging_multiple_times():
 
 
 @pytest.mark.parametrize("url_endpoint, test_data", TEST_CASES.items())
-@mock.patch('persistence.server.server._get')
+@mock.patch('faraday.client.persistence.server.server._get')
 def test_find(get, url_endpoint, test_data, session):
     if 'api_result' in test_data:
         get.return_value = test_data['api_result']

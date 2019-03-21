@@ -116,21 +116,21 @@ class ClientServerAPITests(unittest.TestCase):
     def test_faraday_dictionary_dispatcher_result(self):
         mock_raw_hosts = MagicMock()
         mock_raw_hosts.return_value = {'rows': [{'a': 'host', 'value': {'stuff': 'other_stuff'}}], 'total_rows': 4}
-        with patch('persistence.server.server._get_raw_hosts', mock_raw_hosts):
+        with patch('faraday.client.persistence.server.server._get_raw_hosts', mock_raw_hosts):
             list_of_dicts = server._get_faraday_ready_dictionaries('some_workspace', 'hosts', 'rows', full_table=False)
-        with patch('persistence.server.server._get_raw_hosts', mock_raw_hosts):
+        with patch('faraday.client.persistence.server.server._get_raw_hosts', mock_raw_hosts):
             full_list_of_dicts = server._get_faraday_ready_dictionaries('some_workspace', 'hosts',
                                                                         'rows', full_table=True)
         self.assertTrue(len(list_of_dicts) == 1 == len(full_list_of_dicts))
         self.assertEqual(list_of_dicts, [mock_raw_hosts.return_value['rows'][0]['value']])
         self.assertEqual(full_list_of_dicts, mock_raw_hosts.return_value['rows'])
 
-    @patch('persistence.server.server._get_raw_hosts')
-    @patch('persistence.server.server._get_raw_vulns')
-    @patch('persistence.server.server._get_raw_services')
-    @patch('persistence.server.server._get_raw_notes')
-    @patch('persistence.server.server._get_raw_credentials')
-    @patch('persistence.server.server._get_raw_commands')
+    @patch('faraday.client.persistence.server.server._get_raw_hosts')
+    @patch('faraday.client.persistence.server.server._get_raw_vulns')
+    @patch('faraday.client.persistence.server.server._get_raw_services')
+    @patch('faraday.client.persistence.server.server._get_raw_notes')
+    @patch('faraday.client.persistence.server.server._get_raw_credentials')
+    @patch('faraday.client.persistence.server.server._get_raw_commands')
     def test_faraday_dictionary_dispatcher_calls(self, mock_hosts, mock_vulns,
                                                  mock_services, mock_notes,
                                                  mock_credentials, mock_commands):
@@ -149,12 +149,12 @@ class ClientServerAPITests(unittest.TestCase):
         mock_credentials.assert_called_once_with('a')
         mock_commands.assert_called_once_with('a')
 
-    @patch('persistence.server.server.get_hosts', return_value='hosts')
-    @patch('persistence.server.server.get_vulns', return_value='vulns')
-    @patch('persistence.server.server.get_services', return_value='services')
-    @patch('persistence.server.server.get_credentials', return_value='CREDENTIAL')
-    @patch('persistence.server.server.get_notes', return_value='NOTE')
-    @patch('persistence.server.server.get_commands', return_value='COMMAND')
+    @patch('faraday.persistence.server.server.get_hosts', return_value='hosts')
+    @patch('faraday.persistence.server.server.get_vulns', return_value='vulns')
+    @patch('faraday.persistence.server.server.get_services', return_value='services')
+    @patch('faraday.persistence.server.server.get_credentials', return_value='CREDENTIAL')
+    @patch('faraday.persistence.server.server.get_notes', return_value='NOTE')
+    @patch('faraday.persistence.server.server.get_commands', return_value='COMMAND')
     def test_get_objects(self, not_command, not_note,
                          not_credential, not_service, not_vuln, not_host):
         obj_sign_to_mock = {'hosts': not_host, 'vulns': not_vuln,

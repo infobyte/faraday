@@ -22,8 +22,8 @@ class TestVulnPersistanceModelsFuncions(GenericAPITest):
     factory = VulnerabilityFactory
 
     @responses.activate
-    @patch('config.configuration.getInstanceConfiguration')
-    @patch('persistence.server.server.SERVER_URL', 'http://localhost:5985')
+    @patch('faraday.config.configuration.getInstanceConfiguration')
+    @patch('faraday.client.persistence.server.server.SERVER_URL', 'http://localhost:5985')
     def test_persistence_server_update_vuln(self, getInstanceConfigurationMock):
         fo = self.first_object
         conf_mock = Mock()
@@ -97,8 +97,8 @@ class TestVulnWebPersistanceModelsFuncions(GenericAPITest):
     factory = VulnerabilityWebFactory
 
     @responses.activate
-    @patch('config.configuration.getInstanceConfiguration')
-    @patch('persistence.server.server.SERVER_URL', 'http://localhost:5985')
+    @patch('faraday.config.configuration.getInstanceConfiguration')
+    @patch('faraday.client.persistence.server.server.SERVER_URL', 'http://localhost:5985')
     def test_persistence_server_update_vuln_web(self, getInstanceConfigurationMock):
         fo = self.first_object
 

@@ -28,7 +28,7 @@ from server.importer import ImportCouchDB
 
 from server.web import app
 from utils.logs import setUpLogger
-
+import os
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.group(context_settings=CONTEXT_SETTINGS)
@@ -163,6 +163,10 @@ def validate_email(ctx, param, value):
     # Also validate that the email doesn't exist in the database
     return validate_user_unique_field(ctx, param, value)
 
+@click.command(help="List Available Plugins")
+def list_plugins():
+    print [name for name in os.listdir("plugins/repo")
+           if os.path.isdir(os.path.join("plugins/repo", name))]
 
 @click.command(help="Create ADMIN user for Faraday application")
 @click.option('--username', prompt=True, callback=validate_user_unique_field)
@@ -247,6 +251,7 @@ cli.add_command(migrate)
 cli.add_command(add_custom_field)
 cli.add_command(delete_custom_field)
 cli.add_command(support)
+cli.add_command(list_plugins)
 
 if __name__ == '__main__':
     cli()

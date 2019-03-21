@@ -25,7 +25,7 @@ from collections import (
 )
 from slugify import slugify
 from sqlalchemy import Text, String
-from faraday.client.binascii import unhexlify
+from binascii import unhexlify
 try:
     from urllib import quote
 except ImportError:

@@ -7,7 +7,7 @@ See the file 'doc/LICENSE' for the license information
 
 import os
 
-from faraday import FARADAY_BASE
+from faraday.client.start_client import FARADAY_BASE
 
 def filter_services():
     open_file = open(os.path.join(FARADAY_BASE,'plugins/port_mapper.txt'),"r")

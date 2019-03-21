@@ -52,8 +52,8 @@ class RawReportProcessor(Thread):
     def __init__(self):
 
         super(RawReportProcessor, self).__init__()
-        # from faraday import setupPlugins
-        # setupPlugins()
+        from faraday.client.start_client import setupPlugins
+        setupPlugins()
 
         self.pending_actions = Queue()
 

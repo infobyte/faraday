@@ -21,7 +21,7 @@ except ImportError:
     ETREE_VERSION = ET.VERSION
 
 from faraday.client.plugins import core
-from faraday import FARADAY_BASE
+from faraday.client.start_client import FARADAY_BASE
 from faraday.client.plugins.plugins_utils import filter_services
 
 ETREE_VERSION = [int(i) for i in ETREE_VERSION.split(".")]

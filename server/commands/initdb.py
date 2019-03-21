@@ -21,7 +21,7 @@ import sqlalchemy
 from sqlalchemy import create_engine
 
 from faraday.config.configuration import Configuration
-from faraday import (
+from faraday.client.start_client import (  # TODO load this from other place
     FARADAY_USER_CONFIG_XML,
     FARADAY_BASE_CONFIG_XML,
     FARADAY_BASE,

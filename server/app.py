@@ -77,7 +77,7 @@ def register_blueprints(app):
     from faraday.server.api.modules.workspaces import workspace_api
     from faraday.server.api.modules.handlers import handlers_api
     from faraday.server.api.modules.comments import comment_api
-    # from server.api.modules.upload_reports import upload_api
+    from faraday.server.api.modules.upload_reports import upload_api
     from faraday.server.api.modules.websocket_auth import websocket_auth_api
     from faraday.server.api.modules.get_exploits import exploits_api
     from faraday.server.api.modules.custom_fields import custom_fields_schema_api
@@ -94,7 +94,7 @@ def register_blueprints(app):
     app.register_blueprint(workspace_api)
     app.register_blueprint(handlers_api)
     app.register_blueprint(comment_api)
-    # app.register_blueprint(upload_api)
+    app.register_blueprint(upload_api)
     app.register_blueprint(websocket_auth_api)
     app.register_blueprint(exploits_api)
     app.register_blueprint(custom_fields_schema_api)

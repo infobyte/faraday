@@ -273,9 +273,9 @@
 
             </div>
 
-                <div class="margin-left-0 row margin-top-30px">
+                <div class="margin-left-0 row">
                     <div ng-if="fieldToEdit !== 'name'">
-                        <div class="margin-left-0 col-md-12 " style="margin-bottom: 24px">
+                        <div class="margin-left-0 col-md-12">
                             <div class="tab-pane-header">
                                 {{lastClickedVuln.name}}
                                 <span class="preview-icon" ng-click="activeEditPreview('name')"><i class="fa fa-pencil fa-lg" aria-hidden="true"></i></span>
@@ -312,30 +312,37 @@
             <!-- Tab panes -->
             <div class="tab-content height-100 ">
                 <div id="general_prev" class="height-100 container tab-pane-container tab-pane active"><br>
-                    <div class="height-100 padding-left-0 col-md-6">
+                    <div class="height-100 padding-left-0 col-md-7">
                         <div class="height-100 padding-left-0 col-md-12">
-                            <div ng-if="fieldToEdit !== 'desc'" class="height-100 pretty-text">
-                                <div class="height-100 padding-left-0  col-md-10 margin-bottom-24">
+                            <div ng-if="fieldToEdit !== 'desc'" class="height-100">
+                                <div class="height-100 padding-left-0  col-md-12 margin-bottom-24">
                                     <div ng-if="lastClickedVuln.desc === '' || lastClickedVuln.desc === undefined"  style="margin-bottom: 15px;color: #aaa;">
                                         <p>
                                             No Description was found.
                                         </p>
                                     </div>
-                                    <label>Description</label>
+
+                                    <div class="tab-pane-header">
+                                        <i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'desc'"></i>
+                                        Description
+                                        <span class="preview-icon" title="Edit Description"
+                                              ng-click="activeEditPreview('desc')" ng-if="fieldToEdit !== 'desc'"
+                                              style="font-size: small">
+                                            <i class="fa fa-pencil fa-lg" aria-hidden="true"></i>
+                                        </span>
+                                    </div>
+
                                     <div class="desc-container">
-                                        <div class="tab-pane-header" id="desc-prev">
+                                        <div class="tab-pane-header pretty-text" id="desc-prev">
                                             <span ng-bind-html="lastClickedVuln.desc"> </span>
                                         </div>
                                     </div>
 
                                 </div>
-                                <div class="col-md-2">
-                                    <span class="preview-icon" title="Edit Description" ng-click="activeEditPreview('desc')"><i class="fa fa-pencil fa-lg" aria-hidden="true"></i></span>
-                                </div>
                             </div>
                             <div class="form-group" ng-if="fieldToEdit === 'desc'">
                                 <label for="inp-edit-desc"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true"></i>    Description</label>
-                                <textarea type="text" class="form-control" id="inp-edit-desc" rows="5"
+                                <textarea type="text" class="form-control" id="inp-edit-desc" rows="18"
                                           ng-model="lastClickedVuln.desc" name="desc" placeholder="Description"
                                           ng-blur="processToEditPreview()"
                                           autofocus>
@@ -371,29 +378,34 @@
                     </div>
 
 
-                    <div class="col-md-6">
+                    <div class="col-md-5">
                         <div class="row">
-                            <div ng-if="fieldToEdit !== 'resolution'" class="pretty-text">
-                                <div class="col-md-10 margin-bottom-24">
-                                    <label>Resolution</label>
+                            <div ng-if="fieldToEdit !== 'resolution'">
+                                <div class="col-md-12 margin-bottom-24">
+                                    <div class="tab-pane-header">
+                                        <i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'resolution'"></i>
+                                        Resolution
+                                        <span class="preview-icon" title="Edit Resolution"
+                                              ng-click="activeEditPreview('resolution')" ng-if="fieldToEdit !== 'resolution'"
+                                              style="font-size: small">
+                                            <i class="fa fa-pencil fa-lg" aria-hidden="true"></i>
+                                        </span>
+                                    </div>
                                     <div ng-if="lastClickedVuln.resolution === '' || lastClickedVuln.resolution === undefined"  style="margin-bottom: 15px;color: #aaa;">
                                         <p>
                                             No Resolution was found.
                                         </p>
                                     </div>
-                                    <div class="tab-pane-header" id="resolution-prev" title="{{lastClickedVuln.resolution.length > 450 ? lastClickedVuln.resolution:''}}" >
+                                    <div class="tab-pane-header pretty-text" id="resolution-prev" title="{{lastClickedVuln.resolution.length > 450 ? lastClickedVuln.resolution:''}}" >
                                         <span ng-bind-html="lastClickedVuln.resolution | limitTo: 450"> </span>
                                         <span class="tab-pane-header" ng-if="lastClickedVuln.resolution.length > 450">...</span>
                                     </div>
 
                                 </div>
-                                <div class="col-md-2">
-                                    <span class="preview-icon" title="Edit Resolution" ng-click="activeEditPreview('resolution')"><i class="fa fa-pencil fa-lg" aria-hidden="true"></i></span>
-                                </div>
                             </div>
                             <div class="form-group" ng-if="fieldToEdit === 'resolution'">
                                 <label for="inp-edit-desc"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true"></i>    Resolution</label>
-                                <textarea type="text" class="form-control" id="inp-edit-res" rows="5"
+                                <textarea type="text" class="form-control" id="inp-edit-res" rows="18"
                                           ng-model="lastClickedVuln.resolution" name="desc" placeholder="Resolution"
                                           ng-blur="processToEditPreview(false)"
                                           autofocus>
@@ -446,14 +458,14 @@
                                     <i class="fa fa-pencil fa-lg" aria-hidden="true"></i>
                                 </span>
                             </div>
-                            <div ng-if="fieldToEdit !== 'data'" class="pretty-text">
+                            <div ng-if="fieldToEdit !== 'data'">
                                 <div class="padding-left-0 col-md-12 margin-bottom-24">
                                     <div ng-if="lastClickedVuln.data === '' || lastClickedVuln.data === undefined"  style="margin-bottom: 15px;color: #aaa;">
                                         <p>
                                             No Data was found.
                                         </p>
                                     </div>
-                                    <div class="tab-pane-header" id="data-prev" title="{{lastClickedVuln.data.length > 450 ? lastClickedVuln.data:''}}" >
+                                    <div class="tab-pane-header pretty-text" id="data-prev" title="{{lastClickedVuln.data.length > 450 ? lastClickedVuln.data:''}}" >
                                         <span ng-bind-html="lastClickedVuln.data | limitTo: 450"> </span>
                                         <span class="tab-pane-header" ng-if="lastClickedVuln.data.length > 450">...</span>
                                     </div>
@@ -476,16 +488,15 @@
                                     <i class="fa fa-pencil fa-lg" aria-hidden="true"></i>
                                 </span>
                             </div>
-                            <div ng-if="fieldToEdit !== 'request'" class="pretty-text">
+                            <div ng-if="fieldToEdit !== 'request'" >
                                 <div class="col-md-12 margin-bottom-24">
                                     <div ng-if="lastClickedVuln.request === '' || lastClickedVuln.request === undefined"  style="margin-bottom: 15px;color: #aaa;">
                                         <p>
                                             No Request was found.
                                         </p>
                                     </div>
-                                    <div class="tab-pane-header" id="request-prev" title="{{lastClickedVuln.request.length > 450 ? lastClickedVuln.request:''}}" >
-                                        <!--<span ng-bind-html="lastClickedVuln.request | limitTo: 450"> </span>-->
-                                        <code><span>{{lastClickedVuln.request | limitTo: 450}}</span></code>
+                                    <div class="tab-pane-header pretty-text text-code" id="request-prev" title="{{lastClickedVuln.request.length > 450 ? lastClickedVuln.request:''}}" >
+                                        <span ng-bind-html="lastClickedVuln.request | limitTo: 450"> </span>
                                         <span class="tab-pane-header" ng-if="lastClickedVuln.request.length > 450">...</span>
                                     </div>
 
@@ -514,17 +525,16 @@
                                     <i class="fa fa-pencil fa-lg" aria-hidden="true"></i>
                                 </span>
                             </div>
-                            <div ng-if="fieldToEdit !== 'response'" class="pretty-text">
+                            <div ng-if="fieldToEdit !== 'response'">
                                 <div class="col-md-12 margin-bottom-24">
                                     <div ng-if="lastClickedVuln.response === '' || lastClickedVuln.response === undefined"  style="margin-bottom: 15px;color: #aaa;">
                                         <p>
                                             No Response was found.
                                         </p>
                                     </div>
-                                    <div class="tab-pane-header" id="response-prev" title="{{lastClickedVuln.response.length > 450 ? lastClickedVuln.response:''}}" >
-                                        <!--<span ng-bind-html="lastClickedVuln.response | limitTo: 450"> </span>-->
-                                        <code><span>{{lastClickedVuln.response | limitTo: 450}}</span></code>
-                                        <span class="tab-pane-header" ng-if="lastClickedVuln.response.length > 450">...</span>
+                                    <div class="tab-pane-header pretty-text text-code" id="response-prev" title="{{lastClickedVuln.response.length > 450 ? lastClickedVuln.response:''}}" >
+                                        <span ng-bind-html="lastClickedVuln.response | limitTo: 450"> </span>
+                                        <span class="tab-pane-header pretty-text" ng-if="lastClickedVuln.response.length > 450">...</span>
                                     </div>
 
                                 </div>

@@ -665,9 +665,19 @@ button[disabled], html input[disabled] {
     padding-right: 0;
 }
 
-.pretty-text .tab-pane-header{
+.pretty-text.tab-pane-header {
     font-size: 1.01em;
+    /* font-weight: normal; */
+    color: #aaa;
+}
+
+.text-code {
+    background-color: #f9f9f9;
+    padding: 15px 10px;
     font-weight: normal;
+    color: #777!important;
+    min-height: 150px;
+    overflow-wrap: break-word;
 }
 
 .show-scroll {

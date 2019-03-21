@@ -75,6 +75,14 @@ class WPScanPlugin(core.PluginBase):
         else:
             return None
 
+    def search_file_in_wpscan_folder(self, wp_file):
+        db_path = os.path.join(self.wpPath, 'db', wp_file)
+        data_path = os.path.join(self.wpPath, 'data', wp_file)
+        if os.path.exists(db_path):
+            return db_path
+        elif os.path.exists(data_path):
+            return data_path
+
     def getPort(self, host, proto):
         p = re.search(r"\:([0-9]+)\/", host)
         if p is not None:
@@ -103,7 +111,8 @@ class WPScanPlugin(core.PluginBase):
                     self.plugins[name[0]] = title  # insert plugin in dicc {'plugin' : ['titles', 'titles']}
 
     def addThemesOrPluginsVulns(self, db, dic, host_id, serv_id, domain, wp_url, name):
-        with open(self.wpPath+'/db/'+db, "r") as data:
+        db_file_path = self.search_file_in_wpscan_folder(db)
+        with open(db_file_path, "r") as data:
             j = json.load(data)
             for p in dic:
                 for title in dic[p]:
@@ -126,7 +135,8 @@ class WPScanPlugin(core.PluginBase):
                                 path=location)
 
     def addWPVulns(self, db, version, host_id, serv_id, domain):
-        with open(self.wpPath+'/db/'+db, "r") as data:
+        db_file_path = self.search_file_in_wpscan_folder(db)
+        with open(db_file_path, "r") as data:
             j = json.load(data)
             for vuln in j[version]['vulnerabilities']: # iter vulnerabilities
                 title = vuln['title']  # title

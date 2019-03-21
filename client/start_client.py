@@ -37,7 +37,7 @@ from faraday.client.persistence.server import server
 from faraday.client.persistence.server.server import is_authenticated, login_user, get_user_info
 
 USER_HOME = os.path.expanduser(CONST_USER_HOME)
-FARADAY_BASE = os.path.dirname(os.path.realpath(__file__))
+FARADAY_BASE = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))  # Use double dirname to obtain parent directory
 FARADAY_CLIENT_BASE = os.path.join(FARADAY_BASE, 'client')
 
 FARADAY_USER_HOME = os.path.expanduser(CONST_FARADAY_HOME_PATH)

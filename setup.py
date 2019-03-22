@@ -160,6 +160,9 @@ setup(
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=required,  # Optional
+    dependency_links=[
+        "git+https://github.com/infobyte/filteralchemy#egg=filteralchemy"
+    ],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). Users will be able to install these using the "extras"

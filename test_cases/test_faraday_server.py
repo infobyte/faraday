@@ -53,8 +53,7 @@ def test_start_and_kill_faraday_server():
         std, err = subproc.communicate()
         assert subproc.returncode == 0, ('Create tables failed!', std, err)
 
-    server_script = os.path.join(current_path, '..', 'faraday-server.py')
-    command = ['/usr/bin/env', 'python2.7', server_script, '--port', '{0}'.format(server_port), '--debug']
+    command = ['faraday-server', '--port', '{0}'.format(server_port), '--debug']
     subproc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     start = datetime.now()
     while subproc.returncode is None:

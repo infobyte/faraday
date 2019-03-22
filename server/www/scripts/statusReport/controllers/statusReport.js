@@ -1366,6 +1366,30 @@ angular.module("faradayApp")
             $scope.uploader.clearQueue();
         };
 
+
+        $scope.changeVulnPrevByEventKey = function (event) {
+            if ($scope.lastClickedVuln !== undefined) {
+                var curRowindex = -1;
+                var targetIndex = -1;
+                for (var i = 0; i < $scope.gridApi.grid.rows.length; i++) {
+                    if ($scope.gridApi.grid.rows[i].entity._id === $scope.lastClickedVuln._id) {
+                        curRowindex = i;
+                        break;
+                    }
+                }
+
+                if (event.keyCode === uiGridConstants.keymap.DOWN)
+                    targetIndex = curRowindex + 1;
+                else if (event.keyCode === uiGridConstants.keymap.UP)
+                    targetIndex = curRowindex - 1;
+
+                if (targetIndex !== -1 && targetIndex < $scope.gridApi.grid.rows.length) {
+                    $scope.lastClickedVuln = $scope.gridApi.grid.rows[targetIndex].entity;
+                }
+            }
+
+        };
+
         $scope.activeEditPreview = function (field) {
             $scope.fieldToEdit = field;
         };

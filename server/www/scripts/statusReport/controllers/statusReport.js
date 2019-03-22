@@ -1356,7 +1356,13 @@ angular.module("faradayApp")
                 uiCommonFact.updateBtnSeverityColor($scope.lastClickedVuln.severity, '#btn-chg-severity-prev', '#caret-chg-severity-prev');
                 uiCommonFact.updateBtnStatusColor($scope.lastClickedVuln.status, '#btn-chg-status-prev', '#caret-chg-status-prev');
             }
-            $scope.cwe_selected = undefined
+            $scope.cwe_selected = undefined;
+            $scope.selectedAtachment = {
+                url: '',
+                name: '',
+                imgPrevFail: false
+            };
+
             $scope.uploader.clearQueue();
         };
 

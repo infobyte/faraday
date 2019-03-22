@@ -621,38 +621,24 @@
 
                 <div id="tab-evidence_prev" class="container tab-pane-container tab-pane fade"><br>
                     <div class="padding-left-0 col-md-12 margin-bottom-15px">
-                        <div class="padding-left-0 form-group col-md-2">
-                            <div class="upload-plus">
-                                <div class="icon-evidence">
-                                    <button type="button" class="btn btn-success col-md-12">
-                                    <i class="fa fa-plus"></i> New
-                                </button>
-
-                                </div>
-                                <input type="file" class="input-evidence" nv-file-select="" uploader="uploader"  multiple/>
-                            </div>
-
-                        </div>
-
-                        <div class="col-md-6 attachment-prev">
-                            <div ng-if="selectedAtachment.url === ''" class="no-info-overlay" style="margin-bottom: 15px;top: -8px;">
-                                <p class="no-info-text">
-                                    No attachment selected
-                                </p>
-                            </div>
-
-                            <div class="tab-pane-header">{{selectedAtachment.name}}</div>
-                            <img ng-if="selectedAtachment.url !== '' && selectedAtachment.imgPrevFail === false" src="{{selectedAtachment.url}}" id="attachment-img">
-                            <div  class="no-info-overlay" ng-if="selectedAtachment.imgPrevFail === true" style="margin-bottom: 15px;top: -8px;">
-                                <p class="no-info-text">
-                                    No available preview to this attachment
-                                </p>
-                            </div>
-                        </div>
-
 
                         <div class="col-md-4">
-                            <div class="tab-pane-header">Attachments</div>
+
+                            <div class="tab-pane-header padding-left-0 col-md-8">Attachments</div>
+                            <div class="padding-left-0 form-group col-md-4">
+                                <div class="upload-plus">
+                                    <div class="icon-evidence">
+                                        <button type="button" class="btn btn-success col-md-12">
+                                        <i class="fa fa-plus"></i> New
+                                    </button>
+
+                                    </div>
+                                    <input type="file" class="input-evidence" nv-file-select="" uploader="uploader"  multiple/>
+                                </div>
+                            </div>
+
+
+
                             <table class="table">
                                 <thead>
                                 <tr>
@@ -677,12 +663,27 @@
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+
+
+                        <div class="col-md-8 attachment-prev">
+                            <div ng-if="selectedAtachment.url === ''" class="no-info-overlay" style="margin-bottom: 15px;top: -8px;">
+                                <p class="no-info-text">
+                                    No attachment selected
+                                </p>
+                            </div>
+
+                            <div class="tab-pane-header">{{selectedAtachment.name}}</div>
+                            <img ng-if="selectedAtachment.url !== '' && selectedAtachment.imgPrevFail === false" src="{{selectedAtachment.url}}" id="attachment-img">
+                            <div  class="no-info-overlay" ng-if="selectedAtachment.imgPrevFail === true" style="margin-bottom: 15px;top: -8px;">
+                                <p class="no-info-text">
+                                    No available preview to this attachment
+                                </p>
+                            </div>
+                        </div>
 
 
 
-
-
-                                    </div>
                     </div>
 
                 </div>

@@ -165,9 +165,9 @@ def validate_email(ctx, param, value):
 
 @click.command(help="List Available Plugins")
 def list_plugins():
-    print [name for name in os.listdir("plugins/repo")
+    listPlugins= [name for name in os.listdir("plugins/repo")
            if os.path.isdir(os.path.join("plugins/repo", name))]
-
+    print '\n'.join(sorted(listPlugins))
 @click.command(help="Create ADMIN user for Faraday application")
 @click.option('--username', prompt=True, callback=validate_user_unique_field)
 @click.option('--email', prompt=True, callback=validate_email)

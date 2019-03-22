@@ -141,8 +141,8 @@ setup(
     # packages=['faraday', 'faraday.server', 'faraday.utils'],
     packages=['faraday.' + package
               for package in find_packages(
-                  '.', include=['server.*', 'config.*', 'utils.*',
-                                'server', 'config', 'utils'])
+                  '.', include=['server.*', 'config.*', 'utils.*', 'client.*',
+                                'server', 'config', 'utils', 'client'])
               ] + ['faraday'],
     package_dir={'faraday': '.'},
 

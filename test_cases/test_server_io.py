@@ -149,12 +149,12 @@ class ClientServerAPITests(unittest.TestCase):
         mock_credentials.assert_called_once_with('a')
         mock_commands.assert_called_once_with('a')
 
-    @patch('faraday.persistence.server.server.get_hosts', return_value='hosts')
-    @patch('faraday.persistence.server.server.get_vulns', return_value='vulns')
-    @patch('faraday.persistence.server.server.get_services', return_value='services')
-    @patch('faraday.persistence.server.server.get_credentials', return_value='CREDENTIAL')
-    @patch('faraday.persistence.server.server.get_notes', return_value='NOTE')
-    @patch('faraday.persistence.server.server.get_commands', return_value='COMMAND')
+    @patch('faraday.client.persistence.server.server.get_hosts', return_value='hosts')
+    @patch('faraday.client.persistence.server.server.get_vulns', return_value='vulns')
+    @patch('faraday.client.persistence.server.server.get_services', return_value='services')
+    @patch('faraday.client.persistence.server.server.get_credentials', return_value='CREDENTIAL')
+    @patch('faraday.client.persistence.server.server.get_notes', return_value='NOTE')
+    @patch('faraday.client.persistence.server.server.get_commands', return_value='COMMAND')
     def test_get_objects(self, not_command, not_note,
                          not_credential, not_service, not_vuln, not_host):
         obj_sign_to_mock = {'hosts': not_host, 'vulns': not_vuln,

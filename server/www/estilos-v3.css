@@ -302,6 +302,8 @@
 
 .tab-pane-container {
     width: 100%;
+    overflow-y: auto;
+    max-height: 77%;
 }
 
 .btn-primary-white {
@@ -709,7 +711,7 @@ button[disabled], html input[disabled] {
 
 #attachment-img{
     width: 100%;
-    height: inherit;
+    max-height: 500px;
 }
 
 ul#nav-tabs-container {

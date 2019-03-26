@@ -313,9 +313,10 @@
 
             <!-- Tab panes -->
             <div class="tab-content height-100 ">
-                <div id="general_prev" class="height-100 container tab-pane-container tab-pane active"><br>
+                <div id="general_prev" class="container tab-pane-container tab-pane active"><br>
 
-                    <div class="height-100 padding-left-0 col-md-7">
+                    <div class="row margin-left-0">
+                        <div class="height-100 padding-left-0 col-md-7">
                         <div class="height-100 padding-left-0 col-md-12">
                             <div ng-if="fieldToEdit !== 'desc'" class="height-100">
                                 <div class="height-100 padding-left-0  col-md-12 margin-bottom-24">
@@ -330,7 +331,7 @@
                                         Description
                                     </div>
 
-                                    <div class="desc-container">
+                                    <div>
                                         <div class="tab-pane-header pretty-text" id="desc-prev" >
                                             <span ng-bind-html="lastClickedVuln.desc"> </span>
                                         </div>
@@ -379,11 +380,12 @@
                             </div>
                         </div>
                         </div>
+                    </div>
 
-                    <div class="row">
-                        <div class="tab-pane-header col-md-4">Owner: {{lastClickedVuln.metadata['owner']}}</div>
-                        <div class="tab-pane-header col-md-4">Created time: {{lastClickedVuln.metadata['create_time'] | date:'fullDate'}}</div>
-                        <div class="tab-pane-header col-md-4">Updated time: {{lastClickedVuln.metadata['update_time']| date:'fullDate'}}</div>
+                    <div class="row margin-top-30px">
+                        <div class="tab-pane-header col-md-2">Owner: {{lastClickedVuln.metadata['owner']}}</div>
+                        <div class="tab-pane-header col-md-3">Created: {{lastClickedVuln.metadata['create_time'] | date:'fullDate'}}</div>
+                        <div class="tab-pane-header col-md-4">Updated: {{lastClickedVuln.metadata['update_time']| date:'fullDate'}}</div>
                     </div>
 
                 </div>
@@ -401,15 +403,14 @@
                                             No Data was found.
                                         </p>
                                     </div>
-                                    <div class="tab-pane-header pretty-text" id="data-prev" title="{{lastClickedVuln.data.length > 450 ? lastClickedVuln.data:''}}" >
-                                        <span ng-bind-html="lastClickedVuln.data | limitTo: 450"> </span>
-                                        <span class="tab-pane-header" ng-if="lastClickedVuln.data.length > 450">...</span>
+                                    <div class="tab-pane-header pretty-text" id="data-prev" >
+                                        <span ng-bind-html="lastClickedVuln.data"> </span>
                                     </div>
 
                                 </div>
                             </div>
                             <div class="form-group" ng-if="fieldToEdit === 'data'">
-                                <textarea type="text" class="form-control" id="inp-edit-data" rows="4"
+                                <textarea type="text" class="form-control" id="inp-edit-data" rows="18"
                                           ng-model="lastClickedVuln.data" name="desc" placeholder="Data"
                                           ng-blur="processToEditPreview(false)"
                                           autofocus>

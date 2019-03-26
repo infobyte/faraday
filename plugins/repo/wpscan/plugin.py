@@ -41,7 +41,7 @@ class WPScanPlugin(core.PluginBase):
         self.version = "3.4.5"
         self._command_regex = re.compile(
                 r"^((sudo )?(ruby )?(\.\/)?(wpscan)(.rb)?)")
-        self.wpPath = self.check_wpscan_path()
+        self.wpPath = self.get_wpscan_filepath()
         self.addSetting("WPscan path", str, self.wpPath)
         self.themes = {}
         self.plugins = {}
@@ -65,7 +65,7 @@ class WPScanPlugin(core.PluginBase):
                         'XSS': 'high',
                         'XXE': 'high'}
 
-    def check_wpscan_path(self):
+    def get_wpscan_filepath(self):
         home = os.path.expanduser("~")
 
         wpscan_path = os.path.join(home, '.wpscan')
@@ -109,8 +109,8 @@ class WPScanPlugin(core.PluginBase):
                     title = re.findall(r"Title: (.+)", e)  # get vulnerabilities title
                     self.plugins[name[0]] = title  # insert plugin in dicc {'plugin' : ['titles', 'titles']}
 
-    def addThemesOrPluginsVulns(self, db, dic, host_id, serv_id, domain, wp_url, name):
-        db_file_path = self.search_file_in_wpscan_folder(db)
+    def addThemesOrPluginsVulns(self, wpscan_db_filename, dic, host_id, serv_id, domain, wp_url, name):
+        db_file_path = self.search_file_in_wpscan_folder(wpscan_db_filename)
         with open(db_file_path, "r") as data:
             j = json.load(data)
             for p in dic:
@@ -133,8 +133,8 @@ class WPScanPlugin(core.PluginBase):
                                 ref=refs,
                                 path=location)
 
-    def addWPVulns(self, db, version, host_id, serv_id, domain):
-        db_file_path = self.search_file_in_wpscan_folder(db)
+    def addWPVulns(self, wpscan_db_filename, version, host_id, serv_id, domain):
+        db_file_path = self.search_file_in_wpscan_folder(wpscan_db_filename)
         with open(db_file_path, "r") as data:
             j = json.load(data)
             for vuln in j[version]['vulnerabilities']: # iter vulnerabilities

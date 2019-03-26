@@ -443,7 +443,7 @@
 
 /* When the checkbox is checked, add a blue background */
 .chbox-container input:checked ~ .checkmark {
-    background-color: #008000;
+    background-color: #488be6;
 }
 
 /* Create the checkmark/indicator (hidden when not checked) */

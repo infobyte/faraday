@@ -304,7 +304,7 @@
                     <a class="nav-link" data-toggle="tab" data-target="#tab-evidence_prev" href="javascript:;">Evidence</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" data-toggle="tab" data-target="#hosts_prev" href="javascript:;">Hosts</a>
+                    <a class="nav-link" data-toggle="tab" data-target="#hosts_prev" href="javascript:;">Host</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" data-toggle="tab" data-target="#tab-custom-fields_prev" href="javascript:;">Custom Fields</a>
@@ -502,39 +502,31 @@
                             </div>
 
                         </div>
-
                             <div class="col-md-6 col-sm-12 col-xs-12" ng-show="lastClickedVuln.type === 'VulnerabilityWeb'">
-                            <!--<div class="tab-pane-header">Response</div>-->
-                            <!--<div class="form-group">-->
-                                <!--<label class="sr-only" for="vuln-response">Vuln response</label>-->
-                                <!--<textarea class="form-control" id="vuln-response" rows="8"-->
-                                          <!--ng-model="lastClickedVuln.response" placeholder="Response"></textarea>-->
-                            <!--</div>&lt;!&ndash; .form-group &ndash;&gt;-->
-
-                            <div class="tab-pane-header" ng-dblclick="activeEditPreview('response')" title="Double click to edit"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'response'"></i>    Response
-                            </div>
-                            <div ng-if="fieldToEdit !== 'response'">
-                                <div class="col-md-12 margin-bottom-24">
-                                    <div class="tab-pane-header pretty-text text-code" id="response-prev" title="{{lastClickedVuln.response.length > 450 ? lastClickedVuln.response:''}}" >
-                                        <div ng-if="lastClickedVuln.response === '' || lastClickedVuln.response === undefined"  style="margin-bottom: 15px;color: #aaa;">
-                                        <p>
-                                            No Response was found.
-                                        </p>
-                                    </div>
-                                        <span ng-bind-html="lastClickedVuln.response | limitTo: 450"> </span>
-                                        <span class="tab-pane-header pretty-text" ng-if="lastClickedVuln.response.length > 450">...</span>
-                                    </div>
-
+                                <div class="tab-pane-header" ng-dblclick="activeEditPreview('response')" title="Double click to edit"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'response'"></i>    Response
                                 </div>
-                            </div>
-                            <div class="form-group" ng-if="fieldToEdit === 'response'">
+                                <div ng-if="fieldToEdit !== 'response'">
+                                    <div class="col-md-12 margin-bottom-24">
+                                        <div class="tab-pane-header pretty-text text-code" id="response-prev" title="{{lastClickedVuln.response.length > 450 ? lastClickedVuln.response:''}}" >
+                                            <div ng-if="lastClickedVuln.response === '' || lastClickedVuln.response === undefined"  style="margin-bottom: 15px;color: #aaa;">
+                                            <p>
+                                                No Response was found.
+                                            </p>
+                                        </div>
+                                            <span ng-bind-html="lastClickedVuln.response | limitTo: 450"> </span>
+                                            <span class="tab-pane-header pretty-text" ng-if="lastClickedVuln.response.length > 450">...</span>
+                                        </div>
+
+                                    </div>
+                                </div>
+                                <div class="form-group" ng-if="fieldToEdit === 'response'">
                                 <textarea type="text" class="form-control" id="inp-edit-response" rows="4"
                                           ng-model="lastClickedVuln.response" name="desc" placeholder="Response"
                                           ng-blur="processToEditPreview(false)"
                                           autofocus>
                                 </textarea>
                             </div>
-                        </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -611,25 +603,14 @@
                 <div id="hosts_prev" class="container tab-pane-container tab-pane fade"><br>
                      <div class="padding-left-0 col-md-12">
                             <div class="padding-left-0 col-md-3">
-                                <div class="tab-pane-header preview-tag">Host</div>
-                                <div class="tab-pane-header"><i class="fa fa-desktop"></i>&nbsp;&nbsp;{{lastClickedVuln.target}}</div>
+                                <div class="tab-pane-header">Host</div>
+                                <div class="tab-pane-header"><i class="fa fa-desktop"></i>&nbsp;&nbsp;{{lastClickedVuln.target}}:{{lastClickedVuln.service.ports}}</div>
                             </div>
 
                             <div class="padding-left-0 col-md-3">
-                                <div class="tab-pane-header preview-tag">Hostnames</div>
+                                <div class="tab-pane-header">Hostnames</div>
                                 <div class="tab-pane-header" ng-repeat="hostname in lastClickedVuln.hostnames"><i class="fa fa-desktop"></i>&nbsp;&nbsp;{{hostname}}</div>
                             </div>
-
-                            <div class="padding-left-0 col-md-3">
-                                <div class="tab-pane-header preview-tag">Service</div>
-                                <div class="tab-pane-header">Name:&nbsp;{{lastClickedVuln.service.name}}</div>
-                                <div class="tab-pane-header">Port:&nbsp;{{lastClickedVuln.service.ports}}</div>
-                                <div class="tab-pane-header">Protocol:&nbsp;{{lastClickedVuln.service.protocol}}</div>
-                                <div class="tab-pane-header">Status:&nbsp;{{lastClickedVuln.service.status}}</div>
-                                <div class="tab-pane-header">Summary:&nbsp;{{lastClickedVuln.service.summary}}</div>
-                                <div class="tab-pane-header">Version:&nbsp;{{lastClickedVuln.service.version}}</div>
-                            </div>
-
                      </div>
                 </div>
 

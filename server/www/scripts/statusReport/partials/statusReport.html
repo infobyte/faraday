@@ -477,16 +477,20 @@
                             </div>
                             <div ng-if="fieldToEdit !== 'request'" >
                                 <div class="col-md-12 margin-bottom-24">
-                                    <div ng-if="lastClickedVuln.request === '' || lastClickedVuln.request === undefined"  style="margin-bottom: 15px;color: #aaa;">
-                                        <p>
-                                            No Request was found.
-                                        </p>
-                                    </div>
-                                    <div class="tab-pane-header pretty-text text-code" id="request-prev" title="{{lastClickedVuln.request.length > 450 ? lastClickedVuln.request:''}}" >
-                                        <span ng-bind-html="lastClickedVuln.request | limitTo: 450"> </span>
-                                        <span class="tab-pane-header" ng-if="lastClickedVuln.request.length > 450">...</span>
-                                    </div>
+                                    <div class="tab-pane-header pretty-text text-code" id="request-prev"
+                                         title="{{lastClickedVuln.request.length > 450 ? lastClickedVuln.request:''}}">
+                                        <div ng-if="lastClickedVuln.request === '' || lastClickedVuln.request === undefined"
+                                             style="margin-bottom: 15px;color: #aaa;">
+                                            <p>
+                                                No Request was found.
+                                            </p>
+                                        </div>
 
+
+                                        <span ng-bind-html="lastClickedVuln.request | limitTo: 450"> </span>
+                                        <span class="tab-pane-header"
+                                              ng-if="lastClickedVuln.request.length > 450">...</span>
+                                    </div>
                                 </div>
                             </div>
                             <div class="form-group" ng-if="fieldToEdit === 'request'">
@@ -511,12 +515,12 @@
                             </div>
                             <div ng-if="fieldToEdit !== 'response'">
                                 <div class="col-md-12 margin-bottom-24">
-                                    <div ng-if="lastClickedVuln.response === '' || lastClickedVuln.response === undefined"  style="margin-bottom: 15px;color: #aaa;">
+                                    <div class="tab-pane-header pretty-text text-code" id="response-prev" title="{{lastClickedVuln.response.length > 450 ? lastClickedVuln.response:''}}" >
+                                        <div ng-if="lastClickedVuln.response === '' || lastClickedVuln.response === undefined"  style="margin-bottom: 15px;color: #aaa;">
                                         <p>
                                             No Response was found.
                                         </p>
                                     </div>
-                                    <div class="tab-pane-header pretty-text text-code" id="response-prev" title="{{lastClickedVuln.response.length > 450 ? lastClickedVuln.response:''}}" >
                                         <span ng-bind-html="lastClickedVuln.response | limitTo: 450"> </span>
                                         <span class="tab-pane-header pretty-text" ng-if="lastClickedVuln.response.length > 450">...</span>
                                     </div>

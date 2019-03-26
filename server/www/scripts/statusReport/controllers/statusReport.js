@@ -1609,7 +1609,11 @@ angular.module("faradayApp")
                 uiCommonFact.openEvidence(name, $scope.lastClickedVuln, $routeParams.wsId);
             };
 
-
+            $scope.processLinesToHtml = function (rawText) {
+                if (rawText !== undefined)
+                    return rawText.replace(/(?:\r\n|\r|\n)/g, '<br>');
+                return '';
+            };
 
         init();
     }]);

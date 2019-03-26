@@ -276,9 +276,8 @@
                 <div class="margin-left-0 row">
                     <div ng-if="fieldToEdit !== 'name'">
                         <div class="margin-left-0 col-md-12">
-                            <div class="tab-pane-header">
+                            <div class="tab-pane-header" ng-dblclick="activeEditPreview('name')" title="Double click to edit">
                                 {{lastClickedVuln.name}}
-                                <span class="preview-icon" ng-click="activeEditPreview('name')"><i class="fa fa-pencil fa-lg" aria-hidden="true"></i></span>
                             </div>
                         </div>
                     </div>
@@ -325,18 +324,13 @@
                                         </p>
                                     </div>
 
-                                    <div class="tab-pane-header">
+                                    <div class="tab-pane-header" ng-dblclick="activeEditPreview('desc')" title="Double click to edit">
                                         <i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'desc'"></i>
                                         Description
-                                        <span class="preview-icon" title="Edit Description"
-                                              ng-click="activeEditPreview('desc')" ng-if="fieldToEdit !== 'desc'"
-                                              style="font-size: small">
-                                            <i class="fa fa-pencil fa-lg" aria-hidden="true"></i>
-                                        </span>
                                     </div>
 
                                     <div class="desc-container">
-                                        <div class="tab-pane-header pretty-text" id="desc-prev">
+                                        <div class="tab-pane-header pretty-text" id="desc-prev" >
                                             <span ng-bind-html="lastClickedVuln.desc"> </span>
                                         </div>
                                     </div>
@@ -385,14 +379,9 @@
                         <div class="row">
                             <div ng-if="fieldToEdit !== 'resolution'">
                                 <div class="col-md-12 margin-bottom-24">
-                                    <div class="tab-pane-header">
+                                    <div class="tab-pane-header" ng-dblclick="activeEditPreview('resolution')" title="Double click to edit">
                                         <i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'resolution'"></i>
                                         Resolution
-                                        <span class="preview-icon" title="Edit Resolution"
-                                              ng-click="activeEditPreview('resolution')" ng-if="fieldToEdit !== 'resolution'"
-                                              style="font-size: small">
-                                            <i class="fa fa-pencil fa-lg" aria-hidden="true"></i>
-                                        </span>
                                     </div>
                                     <div ng-if="lastClickedVuln.resolution === '' || lastClickedVuln.resolution === undefined"  style="margin-bottom: 15px;color: #aaa;">
                                         <p>
@@ -456,10 +445,8 @@
                 <div id="technical_details_prev" class="container tab-pane-container tab-pane fade"><br>
                     <div class="padding-left-0 col-md-12">
                         <div class="padding-left-0 col-md-12">
-                            <div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'data'"></i>    Data
-                                <span class="preview-icon" title="Edit Data" ng-click="activeEditPreview('data')" ng-if="fieldToEdit !== 'data'" style="font-size: small">
-                                    <i class="fa fa-pencil fa-lg" aria-hidden="true"></i>
-                                </span>
+                            <div class="tab-pane-header" ng-dblclick="activeEditPreview('data')" title="Double click to edit">
+                                <i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'data'"></i>    Data
                             </div>
                             <div ng-if="fieldToEdit !== 'data'">
                                 <div class="padding-left-0 col-md-12 margin-bottom-24">
@@ -486,10 +473,7 @@
 
                         <div class="padding-left-0 row" style="margin-left: 0; margin-right: 0">
                             <div class="padding-left-0 col-md-6 col-sm-12 col-xs-12" ng-show="lastClickedVuln.type === 'VulnerabilityWeb'">
-                            <div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'request'"></i>    Request
-                                <span class="preview-icon" title="Edit Request" ng-click="activeEditPreview('request')" ng-if="fieldToEdit !== 'request'" style="font-size: small">
-                                    <i class="fa fa-pencil fa-lg" aria-hidden="true"></i>
-                                </span>
+                            <div class="tab-pane-header" ng-dblclick="activeEditPreview('request')" title="Double click to edit"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'request'"></i>    Request
                             </div>
                             <div ng-if="fieldToEdit !== 'request'" >
                                 <div class="col-md-12 margin-bottom-24">
@@ -523,10 +507,7 @@
                                           <!--ng-model="lastClickedVuln.response" placeholder="Response"></textarea>-->
                             <!--</div>&lt;!&ndash; .form-group &ndash;&gt;-->
 
-                            <div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'response'"></i>    Response
-                                <span class="preview-icon" title="Edit Request" ng-click="activeEditPreview('response')" ng-if="fieldToEdit !== 'response'" style="font-size: small">
-                                    <i class="fa fa-pencil fa-lg" aria-hidden="true"></i>
-                                </span>
+                            <div class="tab-pane-header" ng-dblclick="activeEditPreview('response')" title="Double click to edit"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'response'"></i>    Response
                             </div>
                             <div ng-if="fieldToEdit !== 'response'">
                                 <div class="col-md-12 margin-bottom-24">
@@ -551,71 +532,6 @@
                             </div>
                         </div>
                         </div>
-                        <div ng-show="lastClickedVuln.type === 'VulnerabilityWeb'">
-                        <div class="padding-left-0 col-md-4">
-                            <div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'method'"></i>    Method</div>
-                            <div class="form-group">
-                                <label class="sr-only control-label" for="vuln-method">Method</label>
-                                <input type="text" class="form-control" id="vuln-method" placeholder="Method"
-                                       ng-model="lastClickedVuln.method" ng-focus="activeEditPreview('method')"
-                                       ng-blur="processToEditPreview(false)"/>
-                            </div><!-- .form-group -->
-                        </div>
-
-                        <div class="col-md-3">
-                            <div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'pname'"></i>    Param Name</div>
-                            <div class="form-group">
-                                <label class="sr-only control-label" for="vuln-pname">Param Name</label>
-                                <input type="text" class="form-control" id="vuln-pname" placeholder="Param name"
-                                       ng-model="lastClickedVuln.pname" ng-focus="activeEditPreview('pname')" ng-blur="processToEditPreview(false)"/>
-                            </div><!-- .form-group -->
-                        </div>
-
-                        <div class="col-md-5">
-                            <div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'params'"></i>    Params</div>
-                            <div class="form-group">
-                                <label class="sr-only control-label" for="vuln-params">Params</label>
-                                <input type="text" class="form-control" id="vuln-params" placeholder="Params"
-                                       ng-model="lastClickedVuln.params" ng-focus="activeEditPreview('params')" ng-blur="processToEditPreview(false)"/>
-                            </div><!-- .form-group -->
-                        </div>
-
-                        <div class="padding-left-0 col-md-3">
-                            <div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'path'"></i>    Path</div>
-                            <div class="form-group">
-                                <label class="sr-only control-label" for="vuln-path">Path</label>
-                                <input type="text" class="form-control" id="vuln-path" placeholder="Path"
-                                       ng-model="lastClickedVuln.path" ng-focus="activeEditPreview('path')" ng-blur="processToEditPreview(false)"/>
-                            </div><!-- .form-group -->
-                        </div>
-
-                        <div class="col-md-2">
-                            <div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'status'"></i>    Status code</div>
-                            <div class="form-group">
-                                <label class="sr-only control-label" for="vuln-path">Status code</label>
-                                <input check-custom-type="int" title="Type only numbers" type="text" class="form-control" id="vuln-status-code" placeholder="Status code"
-                                       ng-model="lastClickedVuln.status_code" ng-focus="activeEditPreview('status')" ng-blur="processToEditPreview(false)"/>
-                            </div><!-- .form-group -->
-                        </div>
-
-                        <div class="col-md-3">
-                            <div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'query'"></i>    Query</div>
-                            <div class="form-group">
-                                <label class="sr-only control-label" for="vuln-query">Query</label>
-                                <input type="text" class="form-control" id="vuln-query" placeholder="Query"
-                                       ng-model="lastClickedVuln.query" ng-focus="activeEditPreview('query')" ng-blur="processToEditPreview(false)"/>
-                            </div><!-- .form-group -->
-                        </div>
-
-                        <div class="col-md-4">
-                            <div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'website'"></i>    Website</div>
-                            <div class="form-group">
-                                <label class="sr-only control-label" for="vuln-website">Website</label>
-                                <input type="text" class="form-control" id="vuln-website" placeholder="Website"
-                                       ng-model="lastClickedVuln.website" ng-focus="activeEditPreview('website')" ng-blur="processToEditPreview(false)"/>
-                            </div><!-- .form-group -->
-                        </div>
-                    </div>
                     </div>
                 </div>
 

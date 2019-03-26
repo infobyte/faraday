@@ -90,7 +90,6 @@ class dirbPlugin(core.PluginBase):
         self.note(output)
 
         if output.find('END_TIME') != -1 and url is not None:
-
             proto = url.group(2)
             domain = url.group(3)
             ip = self.getIP(domain)
@@ -102,7 +101,7 @@ class dirbPlugin(core.PluginBase):
             serv_id  = self.createAndAddServiceToInterface(host_id, iface_id, proto, protocol = proto, ports =[puerto], status = status)
 
             if len(self.text) > 0:
-                self.createAndAddVulnWebToService(host_id, serv_id, 'Url Fuzzing', severity=0, desc=self.text, ref=refs, website=domain)
+                self.createAndAddVulnWebToService(host_id, serv_id, 'Url Fuzzing', severity=0, desc=self.text, website=domain)
 
             if len(paths) > 0:
                 self.createAndAddVulnWebToService(host_id, serv_id, "Directory Listing", severity = "med", website = domain, request = paths, method = "GET")

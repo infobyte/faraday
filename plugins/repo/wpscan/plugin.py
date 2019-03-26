@@ -68,10 +68,9 @@ class WPScanPlugin(core.PluginBase):
     def check_wpscan_path(self):
         home = os.path.expanduser("~")
 
-        if os.path.exists(home + '/wpscan'):
-            return home + '/wpscan'
-        elif os.path.exists(home + '/.wpscan'):
-            return home + '/.wpscan'
+        wpscan_path = os.path.join(home, '.wpscan')
+        if os.path.exists(wpscan_path):
+            return wpscan_path
         else:
             return None
 

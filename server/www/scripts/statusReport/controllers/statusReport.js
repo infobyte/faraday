@@ -1160,6 +1160,7 @@ angular.module("faradayApp")
         };
 
         $scope.new = function() {
+            $scope.hideVulnPreview();
             var modal = $uibModal.open({
                 templateUrl: 'scripts/statusReport/partials/modalNew.html',
                 backdrop : 'static',

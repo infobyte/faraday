@@ -314,6 +314,7 @@
             <!-- Tab panes -->
             <div class="tab-content height-100 ">
                 <div id="general_prev" class="height-100 container tab-pane-container tab-pane active"><br>
+
                     <div class="height-100 padding-left-0 col-md-7">
                         <div class="height-100 padding-left-0 col-md-12">
                             <div ng-if="fieldToEdit !== 'desc'" class="height-100">
@@ -346,34 +347,7 @@
                                 </textarea>
                             </div>
                         </div>
-
-                        <!--<div class="form-group margin-top-22px">-->
-                        <!--<div class="show-scroll col-md-12">-->
-                            <!--<div class="col-md-12">-->
-                                <!--<div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'refs'"></i>  References</div>-->
-                                <!--<div class="input-group margin-bottom-sm">-->
-                                    <!--<label class="sr-only" for="vuln-refs">References</label>-->
-                                    <!--<input type="text" class="form-control" id="vuln-refs" placeholder="Reference"-->
-                                           <!--ng-model="new_ref"/>-->
-                                    <!--<span class="input-group-addon cursor" ng-click="newReference()"><i-->
-                                            <!--class="fa fa-plus-circle"></i></span>-->
-                                <!--</div>-->
-                            <!--</div>-->
-                            <!--<div class="col-md-12 reference" ng-repeat="reference in lastClickedVuln.refs">-->
-                                <!--<div class="input-group margin-bottom-sm">-->
-                                    <!--<label class="sr-only" for="vuln-refs-create">References</label>-->
-                                    <!--<input type="text" class="form-control" id="vuln-refs-create" placeholder="Reference"-->
-                                           <!--ng-model="reference" ng-click="openReference(reference)"-->
-                                           <!--role="button"-->
-                                           <!--readonly/>-->
-                                    <!--<span class="input-group-addon cursor" ng-click="removeReference($index)"><i-->
-                                            <!--class="fa fa-minus-circle"></i></span>-->
-                                <!--</div>-->
-                            <!--</div>-->
-                        <!--</div>&lt;!&ndash; .form-group &ndash;&gt;-->
-                    <!--</div>-->
                     </div>
-
 
                     <div class="col-md-5">
                         <div class="row">
@@ -404,41 +378,13 @@
                                 </textarea>
                             </div>
                         </div>
-
-                        <!--<div class="form-group margin-top-22px">-->
-                            <!--<div class="show-scroll row">-->
-                                <!--<div class="col-md-12">-->
-                                    <!--<div class="tab-pane-header">Policy Violations</div>-->
-                                    <!--<div class="input-group margin-bottom-sm">-->
-                                        <!--<label class="sr-only" for="vuln-policyviolations"> <i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'policyviolations'"></i>Policy Violations</label>-->
-                                        <!--<input type="text" class="form-control" id="vuln-policyviolations"-->
-                                               <!--placeholder="Policy Violations" ng-model="new_policyviolation"/>-->
-                                        <!--<span class="input-group-addon cursor" ng-click="newPolicyviolation()"><i-->
-                                                <!--class="fa fa-plus-circle"></i></span>-->
-                                    <!--</div>-->
-                                <!--</div>-->
-                                <!--<div class="col-md-12 reference" ng-repeat="policyviolation in lastClickedVuln.policyviolations">-->
-                                    <!--<div class="input-group margin-bottom-sm">-->
-                                        <!--<label class="sr-only" for="vuln-policyviolations-value">Policy Violation</label>-->
-                                        <!--<input type="text" class="form-control" id="vuln-policyviolations-value"-->
-                                               <!--placeholder="Policy Violation" ng-model="policyviolation" disabled/>-->
-                                        <!--<span class="input-group-addon cursor"-->
-                                              <!--ng-click="removePolicyviolation($index)"><i-->
-                                                <!--class="fa fa-minus-circle"></i></span>-->
-                                    <!--</div>-->
-                                <!--</div>-->
-                            <!--</div>-->
-                        <!--</div>&lt;!&ndash; .form-group &ndash;&gt;-->
-
-                        <!--<div class="col-md-12 margin-top-22px">-->
-                                <!--<div class="tab-pane-header"><label for="inp-edit-desc"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'impact'"></i>  Impact</label></div>-->
-                                <!--<h4><span ng-repeat="(key, value) in lastClickedVuln.impact" class="normal-size"-->
-                                          <!--style="cursor: pointer;">-->
-                                <!--<span ng-class="{'label-impact label-default-impact': !value, 'label-impact label-success-impact': value}"-->
-                                      <!--ng-click="toggleImpact(key)">{{key}}</span>-->
-                                <!--</span></h4>&lt;!&ndash; .normal-size &ndash;&gt;-->
-                            <!--</div>-->
                         </div>
+
+                    <div class="row">
+                        <div class="tab-pane-header col-md-4">Owner: {{lastClickedVuln.metadata['owner']}}</div>
+                        <div class="tab-pane-header col-md-4">Created time: {{lastClickedVuln.metadata['create_time'] | date:'fullDate'}}</div>
+                        <div class="tab-pane-header col-md-4">Updated time: {{lastClickedVuln.metadata['update_time']| date:'fullDate'}}</div>
+                    </div>
 
                 </div>
 

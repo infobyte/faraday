@@ -642,7 +642,7 @@ button[disabled], html input[disabled] {
     border-radius: 3px;
     font-weight: bold;
     color: #555;
-    box-shadow: 2px 2px 10px 0 #aaa;
+    box-shadow: 2px 2px 2px 0 #aaa;
     margin-right: 10px;
 }
 

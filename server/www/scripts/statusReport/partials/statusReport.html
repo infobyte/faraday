@@ -277,7 +277,7 @@
                     <div ng-if="fieldToEdit !== 'name'">
                         <div class="margin-left-0 col-md-12">
                             <div class="tab-pane-header" ng-dblclick="activeEditPreview('name')" title="Double click to edit">
-                                {{lastClickedVuln.name}}
+                                <span class="preview-tag">{{lastClickedVuln.target}}</span> {{lastClickedVuln.name}}
                             </div>
                         </div>
                     </div>

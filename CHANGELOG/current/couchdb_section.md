@@ -1,0 +1,1 @@
+Couchdb configuration section will not be added anymore

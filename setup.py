@@ -24,6 +24,9 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 with open('requirements_server.txt') as fp:
     required = fp.read().splitlines()
 
+with open('requirements_dev.txt') as fp:
+    dev_required = fp.read().splitlines()
+
 # Arguments marked as "Required" below must be included for upload to PyPI.
 # Fields marked as "Optional" may be commented out.
 
@@ -206,6 +209,7 @@ setup(
         'console_scripts': [
             'faraday-server=faraday.start_server:main',
             'faraday-client=faraday.client.start_client:main',
+            'faraday-manage=faraday.manage:main',
         ],
     },
 
@@ -224,4 +228,6 @@ setup(
         'Say Thanks!': 'http://saythanks.io/to/example',
         'Source': 'https://github.com/pypa/sampleproject/',
     },
+    setup_requires=['pytest-runner'],
+    tests_require=['pytest', 'flask'] + dev_required,
 )

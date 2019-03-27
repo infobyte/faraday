@@ -1560,12 +1560,8 @@ angular.module("faradayApp")
 
 
            uploader.onSuccessItem = function(fileItem, response, status, headers) {
-               if (fileItem.file.name.charAt(0) !== "_") {
-                     if (!$scope.lastClickedVuln._attachments.hasOwnProperty(fileItem.file)) $scope.lastClickedVuln._attachments[fileItem.file.name] = fileItem.file;
-               }
-
+               updateSelectedVulnAtachments();
            };
-
 
             $scope.removeEvidence = function (name) {
                 var url = '/_api/v2/ws/'+ $routeParams.wsId +'/vulns/'+ $scope.lastClickedVuln._id +'/attachment/' + name + '/'

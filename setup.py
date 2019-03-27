@@ -209,7 +209,7 @@ setup(
         'console_scripts': [
             'faraday-server=faraday.start_server:main',
             'faraday-client=faraday.client.start_client:main',
-            'faraday-manage=faraday.manage:main',
+            'faraday-manage=faraday.manage:cli',
         ],
     },
 

@@ -735,3 +735,7 @@ ul#nav-tabs-container {
     height: 100%;
 }
 
+.line-breaks{
+    white-space: pre-wrap;
+    line-height: 1.5;
+}

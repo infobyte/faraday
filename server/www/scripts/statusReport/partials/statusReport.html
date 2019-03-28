@@ -382,10 +382,19 @@
                         </div>
                     </div>
 
-                    <div class="row margin-top-30px">
-                        <div class="tab-pane-header col-md-2">Owner: {{lastClickedVuln.metadata['owner']}}</div>
-                        <div class="tab-pane-header col-md-3">Created: {{lastClickedVuln.metadata['create_time'] | date:'fullDate'}}</div>
-                        <div class="tab-pane-header col-md-4">Updated: {{lastClickedVuln.metadata['update_time']| date:'fullDate'}}</div>
+                    <div class="row margin-top-30px small-size">
+                        <div class="tab-pane-header col-md-2">
+                            Owner
+                            <div class="text-gray">{{lastClickedVuln.metadata['owner']}}</div>
+                        </div>
+                        <div class="tab-pane-header col-md-3">
+                            Created
+                            <div class="text-gray"><span am-time-ago="lastClickedVuln.metadata['create_time']"></span></div>
+                        </div>
+                        <div class="tab-pane-header col-md-4 ">
+                            Updated
+                            <div class="text-gray"><span am-time-ago="lastClickedVuln.metadata['update_time']"></span></div>
+                        </div>
                     </div>
 
                 </div>

@@ -332,7 +332,7 @@
                                     </div>
 
                                     <div>
-                                        <div class="tab-pane-header pretty-text" id="desc-prev" >
+                                        <div class="tab-pane-header pretty-text" id="desc-prev" ng-dblclick="activeEditPreview('desc')" title="Double click to edit">
                                             <span ng-bind-html="lastClickedVuln.desc"> </span>
                                         </div>
                                     </div>
@@ -363,9 +363,8 @@
                                             No Resolution was found.
                                         </p>
                                     </div>
-                                    <div class="tab-pane-header pretty-text" id="resolution-prev" title="{{lastClickedVuln.resolution.length > 450 ? lastClickedVuln.resolution:''}}" >
-                                        <span ng-bind-html="lastClickedVuln.resolution | limitTo: 450"> </span>
-                                        <span class="tab-pane-header" ng-if="lastClickedVuln.resolution.length > 450">...</span>
+                                    <div class="tab-pane-header pretty-text" id="resolution-prev"  ng-dblclick="activeEditPreview('resolution')" title="Double click to edit">
+                                        <span ng-bind-html="lastClickedVuln.resolution"></span>
                                     </div>
 
                                 </div>
@@ -412,7 +411,7 @@
                                             No Data was found.
                                         </p>
                                     </div>
-                                    <div class="tab-pane-header pretty-text" id="data-prev" >
+                                    <div class="tab-pane-header pretty-text" id="data-prev" ng-dblclick="activeEditPreview('data')" title="Double click to edit">
                                         <span ng-bind-html="lastClickedVuln.data"> </span>
                                     </div>
 
@@ -440,12 +439,12 @@
                                                 No Request was found.
                                             </p>
                                         </div>
-                                        <span ng-bind-html="processLinesToHtml(lastClickedVuln.request)"> </span>
+                                        <span ng-bind-html="processLinesToHtml(lastClickedVuln.request)" ng-dblclick="activeEditPreview('request')" title="Double click to edit"> </span>
                                     </div>
                                 </div>
                             </div>
                             <div class="form-group" ng-if="fieldToEdit === 'request'">
-                                <textarea type="text" class="form-control" id="inp-edit-request" rows="4"
+                                <textarea type="text" class="form-control" id="inp-edit-request" rows="18"
                                           ng-model="lastClickedVuln.request" name="desc" placeholder="Request"
                                           ng-blur="processToEditPreview(false)"
                                           autofocus>
@@ -464,14 +463,14 @@
                                                 No Response was found.
                                             </p>
                                         </div>
-                                            <span ng-bind-html="processLinesToHtml(lastClickedVuln.response)"> </span>
+                                            <span ng-bind-html="processLinesToHtml(lastClickedVuln.response)" ng-dblclick="activeEditPreview('response')" title="Double click to edit"> </span>
 
                                         </div>
 
                                     </div>
                                 </div>
                                 <div class="form-group" ng-if="fieldToEdit === 'response'">
-                                <textarea type="text" class="form-control" id="inp-edit-response" rows="4"
+                                <textarea type="text" class="form-control" id="inp-edit-response" rows="18"
                                           ng-model="lastClickedVuln.response" name="desc" placeholder="Response"
                                           ng-blur="processToEditPreview(false)"
                                           autofocus>

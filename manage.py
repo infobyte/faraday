@@ -29,6 +29,8 @@ from server.importer import ImportCouchDB
 from server.web import app
 from utils.logs import setUpLogger
 import os
+from faraday import FARADAY_PLUGINS_BASEPATH
+
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.group(context_settings=CONTEXT_SETTINGS)
@@ -165,9 +167,10 @@ def validate_email(ctx, param, value):
 
 @click.command(help="List Available Plugins")
 def list_plugins():
-    listPlugins= [name for name in os.listdir("plugins/repo")
-           if os.path.isdir(os.path.join("plugins/repo", name))]
-    print '\n'.join(sorted(listPlugins))
+    plugins_list = [name for name in os.listdir(FARADAY_PLUGINS_BASEPATH)
+           if os.path.isdir(os.path.join(FARADAY_PLUGINS_BASEPATH, name))]
+    print '\n'.join(sorted(plugins_list))
+
 @click.command(help="Create ADMIN user for Faraday application")
 @click.option('--username', prompt=True, callback=validate_user_unique_field)
 @click.option('--email', prompt=True, callback=validate_email)

@@ -670,9 +670,10 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('/<int:vuln_id>/attachments/', methods=['GET'])
     def get_attachments_by_vuln(self, workspace_name, vuln_id):
+        workspace = self._get_workspace(workspace_name)
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(VulnerabilityGeneric.id == vuln_id,
-                              Workspace.name == workspace_name).first()
+                              Workspace.name == workspace.name).first()
         if vuln_workspace_check:
             files = db.session.query(File).filter_by(object_type='vulnerability',
                                                         object_id=vuln_id).all()

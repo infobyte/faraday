@@ -302,6 +302,8 @@
 
 .tab-pane-container {
     width: 100%;
+    overflow-y: auto;
+    max-height: calc(100% - 180px);
 }
 
 .btn-primary-white {
@@ -424,6 +426,7 @@
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+    top: -5px;
 }
 
 /* Hide the browser's default checkbox */
@@ -442,7 +445,7 @@
 
 /* When the checkbox is checked, add a blue background */
 .chbox-container input:checked ~ .checkmark {
-    background-color: #008000;
+    background-color: #488be6;
 }
 
 /* Create the checkmark/indicator (hidden when not checked) */
@@ -486,6 +489,11 @@ li.nav-item.has-error:not(.active) {
 li.nav-item.has-error:not(.active) a {
     color: #a94442;
 }
+
+.nav-item{
+    margin-right: 10px;
+}
+
 .active-toggle{
   width: 3%;
   text-align: center!important;
@@ -738,4 +746,176 @@ div[dnd-list] > div{
 .slice-main-panel{
     transition: 0.5s;
     width: 66.6%!important;
+}
+
+.right-main{
+    overflow-x: hidden;
+}
+
+#vuln-preview {
+    position: fixed;
+    z-index: 100000;
+    top: 139px;
+    height: calc(100% - 139px);
+    background-color: #fff;
+    border-left: 1px solid #ddd;
+    border-top: solid 4px #e5e5e5;
+    width: 0;
+    transition: 0.5s;
+    right: -75%;
+    padding: 16px;
+}
+
+#vuln-preview.show-preview{
+    transition: width 0.3s!important;
+    width: 70%!important;
+    right: 0!important;
+}
+
+.faraday-page-header{
+    width: 100%;
+}
+
+.faraday-page-header.show-preview{
+    transition: width 0.3s!important;
+    width: 74.5%!important;
+}
+
+#btn_bar.show-preview{
+    transition: width 0.3s!important;
+    width: 73.2%!important;
+}
+
+.preview-header {
+    width: 100%;
+    padding: 5px 10px 20px;
+}
+
+.preview-section {
+    border-top: 1px solid #ddd;
+    padding: 24px 0;
+    margin-bottom: 22px;
+}
+
+.preview-section .form-group{
+    margin-bottom: 0;
+}
+
+.preview-icon {
+    color: #aaa;
+    cursor: pointer;
+    text-align: center;
+    padding: 6px 8px;
+    font-size: 0.8em;
+}
+
+.preview-icon:hover {
+    background-color: #ddd;
+    color: #777;
+    border-radius: 50px;
+    box-shadow: 2px 2px 10px 0px #aaa;
+}
+
+.preview-tag {
+    background-color: #ddd;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-weight: bold;
+    color: #555;
+    box-shadow: 2px 2px 2px 0 #aaa;
+    margin-right: 10px;
+}
+
+.preview-section.row {
+    margin-right: 0;
+    margin-left: 0;
+    margin-bottom: 0;
+    padding-bottom: 12px;
+}
+
+.preview-section .tab-pane-header {
+    font-size: 1.1em;
+    overflow-wrap: break-word;
+}
+
+.prev-apply-template.active{
+    /*transition: 0.1s;*/
+    width: 75%!important;
+}
+
+.prev-apply-template {
+    padding-right: 0;
+}
+
+.pretty-text.tab-pane-header {
+    font-size: 1.01em;
+    /* font-weight: normal; */
+    color: #aaa;
+}
+
+.text-code {
+    background-color: #f9f9f9;
+    padding: 15px 10px;
+    font-weight: normal;
+    color: #777!important;
+    min-height: 150px;
+    overflow-wrap: break-word;
+}
+
+.show-scroll {
+    height: 230px;
+    overflow-y: auto;
+}
+
+.show-scroll input {
+    color: #444!important;
+}
+
+.margin-bottom-24{
+    margin-bottom: 24px;
+}
+
+.input-evidence {
+    height: 40px;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: -15px;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.upload-options button {
+    margin-bottom: 5px;
+}
+
+#attachment-img{
+    width: 100%;
+    max-height: 500px;
+}
+
+ul#nav-tabs-container {
+    margin-left: 50px;
+}
+
+.padding-left-0{
+    padding-left: 0;
+}
+
+.margin-left-0{
+    margin-left: 0;
+}
+
+.desc-container {
+    height: 65%;
+    overflow-y: auto;
+}
+
+.height-100{
+    height: 100%;
+}
+
+.line-breaks{
+    white-space: pre-wrap;
+    line-height: 1.5;
 }

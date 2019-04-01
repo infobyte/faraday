@@ -1,0 +1,1 @@
+Add vulnerability preview to status report

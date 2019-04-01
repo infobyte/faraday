@@ -1,10 +1,6 @@
 with (import <nixpkgs> {});
-let
-  pandoc1pkgs = fetchTarball { url = https://github.com/NixOS/nixpkgs/archive/9aa82d70140e3914bc4dec8758b5ded2b1144990.tar.gz; sha256 = "1j7cnza4dz1nnnzrhwy9qlfm21vk95mqxcsspmwgkskwx0fp758y"; };
-  pandoc1 = (import pandoc1pkgs {}).pandoc;
-in
   mkShell {
-    buildInputs = [pandoc1] ++ (with python27Packages;
+    buildInputs = [pandoc] ++ (with python27Packages;
       [virtualenv pyopenssl psycopg2 pillow pygobject3 pynacl matplotlib lxml ldap
       gobjectIntrospection gtk3 gnome3.vte ipython gssapi
       ]);

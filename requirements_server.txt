@@ -26,7 +26,7 @@ tqdm>=4.15.0
 twisted>=18.7.0
 webargs>=5.1.0
 marshmallow-sqlalchemy
-filteralchemy
+filteralchemy-fork
 filedepot>=0.5.0
 nplusone>=0.8.1
 deprecation>=1.0.1

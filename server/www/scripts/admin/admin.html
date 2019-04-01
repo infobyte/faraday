@@ -14,9 +14,6 @@
                 <div class="setting-body">
                     <div class="setting-sidebar col-sm-2">
                         <ul>
-                            <li href="javascript:;" ng-class="{'active':on=='general'}" ng-click="setItemPanel('general')">
-                                General
-                            </li>
                             <li href="javascript:;" ng-class="{'active':on=='custom_fields'}"
                                 ng-click="setItemPanel('custom_fields')">Custom fields
                             </li>
@@ -27,10 +24,6 @@
                         <div ng-switch="on">
                             <div ng-switch-when="custom_fields">
                                 <div ng-controller="customFieldsCtrl" ng-include="'scripts/admin/customFields/partials/customFields.html'"></div>
-                            </div>
-                            <div ng-switch-when="general">
-                                <h1>Generals</h1>
-                                <p>This is awesome !</p>
                             </div>
 
                             <div ng-switch-default>

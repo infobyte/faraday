@@ -620,7 +620,7 @@ button[disabled], html input[disabled] {
 
 .cf-container {
     padding: 32px;
-    height: 678px;
+    height: 600px;
     overflow-y: auto;
 }
 
@@ -660,7 +660,7 @@ h3.cf-display-name {
 
 .cf-detail {
     border-left: 1px solid #ddd;
-    height: 678px;
+    height: 600px;
     padding: 8px 24px;
 }
 

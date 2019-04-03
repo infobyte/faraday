@@ -9,7 +9,7 @@ New features in the latest update
 =====================================
 
 
-3.7:
+3.7 [Apr 3rd, 2019]:
 ---
  * New feature vulnerability preview to view vulnerability data.
  * Update Fierce Plugin. Import can be done from GTK console.

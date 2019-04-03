@@ -13,7 +13,7 @@ angular.module('faradayApp')
                 $scope.workspace = $routeParams.wsId;
                 $scope.showVulnCost = configSrv.show_vulns_by_price;
                 $scope.workspaces = [];
-
+ 
                 workspacesFact.list().then(function(wss) {
                     $scope.workspaces = wss;
                 });

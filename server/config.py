@@ -99,7 +99,8 @@ def gen_web_config():
         'ver': __get_version(),
         'lic_db': CONSTANTS.CONST_LICENSES_DB,
         "osint": __get_osint(),
-        'vuln_model_db': CONSTANTS.CONST_VULN_MODEL_DB
+        'vuln_model_db': CONSTANTS.CONST_VULN_MODEL_DB,
+        'show_vulns_by_price': dashboard.show_vulns_by_price,
     }
     return doc
 

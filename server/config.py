@@ -128,6 +128,8 @@ class ConfigSection(object):
             section = couchdb
         elif section_name == 'database':
             section = database
+        elif section_name == 'dashboard':
+            section = dashboard
         elif section_name == 'faraday_server':
             section = faraday_server
         elif section_name == 'ldap':
@@ -154,6 +156,11 @@ class CouchDBConfigObject(ConfigSection):
 class DatabaseConfigObject(ConfigSection):
     def __init__(self):
         self.connection_string = None
+
+
+class DashboardConfigObject(ConfigSection):
+    def __init__(self):
+        self.show_vulns_by_price = False
 
 
 class FaradayServerConfigObject(ConfigSection):
@@ -194,6 +201,7 @@ class StorageConfigObject(ConfigSection):
 
 couchdb = CouchDBConfigObject()
 database = DatabaseConfigObject()
+dashboard = DashboardConfigObject()
 faraday_server = FaradayServerConfigObject()
 ldap = LDAPConfigObject()
 ssl = SSLConfigObject()

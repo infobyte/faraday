@@ -13,7 +13,7 @@ IPy>=0.83
 marshmallow<3.0.0
 Pillow>=4.2.1
 pgcli
-psycopg2==2.7.1
+psycopg2==2.7.4
 pyasn1-modules>=0.0.11
 pyopenssl>=17.2.0
 python-dateutil>=2.6.0

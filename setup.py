@@ -23,12 +23,15 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 # Taken from https://stackoverflow.com/questions/14399534/reference-requirements-txt-for-the-install-requires-kwarg-in-setuptools-setup-py/14399775#14399775
 with open('requirements_server.txt') as fp:
     required = fp.read().splitlines()
+    required.reverse()
 
 with open('requirements_dev.txt') as fp:
     dev_required = fp.read().splitlines()
 
+
 # Arguments marked as "Required" below must be included for upload to PyPI.
 # Fields marked as "Optional" may be commented out.
+
 
 setup(
     # This is the name of your project. The first time you publish this

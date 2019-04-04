@@ -292,11 +292,7 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             controller: 'vulnsByPriceCtrl',
             title: ' Workspace worth |'
         }).
-        otherwise({
-            templateUrl: 'scripts/commons/partials/home.html',
-            controller: 'homeCtrl',
-            title: ' Welcome | '
-        });
+        otherwise({redirectTo:'/'});
 }]);
 
 faradayApp.run(['$location', '$rootScope', 'loginSrv', function($location, $rootScope, loginSrv) {

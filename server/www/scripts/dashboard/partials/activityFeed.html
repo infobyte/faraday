@@ -46,7 +46,7 @@
                         <img src="images/icon_terminal.svg" class="feed-icon"/>
                     </span>
 
-                    <b class="capitalize fg-blue">{{cmd.user || Anonymous}}</b>
+                    <b class="capitalize fg-blue">{{cmd.creator || Anonymous}}</b>
                     <span ng-if="cmd.import_source == 'shell'"
                           uib-tooltip="{{ cmd.command + ' ' + cmd.params}}"><span class="little-gray">ran</span> <strong>{{cmd.command}}</strong></span>
                     <span ng-if="cmd.import_source == 'report'"

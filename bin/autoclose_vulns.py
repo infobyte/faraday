@@ -8,6 +8,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 import requests
+from tqdm import tqdm
 from dateutil import parser
 from datetime import datetime
 
@@ -27,25 +28,28 @@ def get_vulns_from_workspace(session, url, workspace):
 
 def close_vulns(session, url, workspace, vulns, duration_time):
     vuln_closed_count = 0
-    for vuln in vulns['vulnerabilities']:
-        create_time = vuln['value']['metadata']['create_time']
+    vulnerabilities = vulns['vulnerabilities']
+    with tqdm(total=len(vulnerabilities)) as progress_bar:
+        for vuln in vulnerabilities:
+            create_time = vuln['value']['metadata']['create_time']
 
-        # Convert date
-        # create_time[:-6] -> date without timezone
-        creation_date = parser.parse(create_time[:-6])
-        elapsed_time = datetime.now() - creation_date
+            # Convert date
+            # create_time[:-6] -> date without timezone
+            creation_date = parser.parse(create_time[:-6])
+            elapsed_time = datetime.now() - creation_date
 
-        # If elapsed time since creation is greater than duration time, the vuln will be closed
-        if elapsed_time.total_seconds() > duration_time and vuln['value']['status'] != 'closed':
-            vuln['value']['status'] = 'closed'
-            close = session.put('{url}/_api/v2/ws/{ws_name}/vulns/{vuln_id}/'\
-                                .format(url=url,
-                                        ws_name=workspace,
-                                        vuln_id=vuln['id']
-                                        ),
-                                json=vuln['value']
-                                )
-            vuln_closed_count += 1
+            # If elapsed time since creation is greater than duration time, the vuln will be closed
+            if elapsed_time.total_seconds() > duration_time and vuln['value']['status'] != 'closed':
+                vuln['value']['status'] = 'closed'
+                close = session.put('{url}/_api/v2/ws/{ws_name}/vulns/{vuln_id}/'\
+                                    .format(url=url,
+                                            ws_name=workspace,
+                                            vuln_id=vuln['id']
+                                            ),
+                                    json=vuln['value']
+                                    )
+                vuln_closed_count += 1
+                progress_bar.update(1)
 
     return vuln_closed_count
 

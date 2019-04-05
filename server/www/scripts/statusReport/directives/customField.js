@@ -12,7 +12,7 @@ angular.module('faradayApp')
                             <div class="form-group" ng-if="cf.field_type !== \'list\'"> \n\
                                 <label class="sr-only" for="{{cf.field_name}}">{{cf.field_display_name}}</label> \n\
                                 <input type="text" class="form-control input-sm" id="{{cf.field_name}}" name="{{cf.field_name}}" \n\
-                                       placeholder="{{cf.field_name}}" \n\
+                                       placeholder="{{cf.field_display_name}}" \n\
                                        ng-model="modal.data.custom_fields[cf.field_name]" check-custom-type="{{cf.field_type}}" \n\
                                        uib-tooltip="{{(cf.field_type === \'int\') ? \'Type only numbers\' : \'Input type text\'}}"/> \n\
                             </div> \n\
@@ -32,7 +32,7 @@ angular.module('faradayApp')
                                     <input type="text" class="form-control" id="vuln-refs-create" placeholder="{{cf.field_display_name}}" \n\
                                            ng-model="item.value" \n\
                                            role="button" readonly/> \n\
-                                    <span class="input-group-addon cursor" ng-click="modal.data.custom_fields[cf.field_display_name].splice($index, 1)"> \n\
+                                    <span class="input-group-addon cursor" ng-click="modal.data.custom_fields[cf.field_name].splice($index, 1)"> \n\
                                     <i class="fa fa-minus-circle"></i></span>                                \n\
                                     </div> \n\
                             </div> \n\

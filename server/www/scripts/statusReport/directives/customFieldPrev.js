@@ -12,7 +12,7 @@ angular.module('faradayApp')
                             <div class="form-group" ng-if="cf.field_type !== \'list\'"> \n\
                                 <label class="sr-only" for="{{cf.field_name}}">{{cf.field_display_name}}</label> \n\
                                 <input type="text" class="form-control input-sm" id="{{cf.field_name}}" name="{{cf.field_name}}" \n\
-                                       placeholder="{{cf.field_name}}" \n\
+                                       placeholder="{{cf.field_display_name}}" \n\
                                        ng-focus="activeEditPreview(cf.field_name)" \
                                        ng-blur="processToEditPreview(false)"\
                                        ng-model="lastClickedVuln.custom_fields[cf.field_name]" check-custom-type="{{cf.field_type}}" \n\
@@ -22,7 +22,7 @@ angular.module('faradayApp')
                                 <div class="input-group"> \n\
                                     <label class="sr-only" for="{{cf.field_name}}">{{cf.field_display_name}}</label> \n\
                                     <input type="text" class="form-control input-sm" id="{{cf.field_name}}" name="{{cf.field_name}}" \n\
-                                           placeholder="{{cf.field_name}}" \n\
+                                           placeholder="{{cf.field_display_name}}" \n\
                                            ng-focus="activeEditPreview(cf.field_name)" \
                                            ng-model="valueField" \n\
                                            uib-tooltip="Input type list"/> \n\

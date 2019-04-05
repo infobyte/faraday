@@ -64,8 +64,8 @@ def main(workspace='', args=None, parser=None):
 
     url = models.server.SERVER_URL
     data = {
-        "email": "{username}".format(username=models.server.AUTH_USER),
-        "password": "{password}".format(password=models.server.AUTH_PASS)
+        "email": models.server.AUTH_USER,
+        "password": models.server.AUTH_PASS
     }
     login_response = s.post('{url}/_api/login'.format(url=url), data=data)
 

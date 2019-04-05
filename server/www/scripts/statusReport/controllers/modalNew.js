@@ -94,7 +94,7 @@ angular.module('faradayApp')
             };
 
             customFields.forEach(function(cf) {
-                vm.data.custom_fields[cf.field_display_name] = null;
+                vm.data.custom_fields[cf.field_name] = null;
             });
 
             vm.targets = [];

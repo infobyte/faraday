@@ -63,8 +63,8 @@ angular.module('faradayApp')
             };
 
             $scope.normalizeDisplayName = function () {
-                if ($scope.selected_cf.field_display_name !== null) {
-                    $scope.selected_cf.field_display_name = $scope.selected_cf.field_display_name.toLowerCase().replace(' ', '_');
+                if ($scope.selected_cf.field_name !== null) {
+                    $scope.selected_cf.field_name = $scope.selected_cf.field_name.toLowerCase().replace(' ', '_');
                 }
             };
 

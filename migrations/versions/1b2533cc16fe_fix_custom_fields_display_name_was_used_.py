@@ -57,7 +57,7 @@ def downgrade():
             for vuln in vulnerabilities:
                 vuln_id = vuln[0]
                 if vuln[1]:
-                    new_data = {display_name: vuln[1][display_name]}
+                    new_data = {display_name: vuln[1][field_name]}
                     connection.execute("""
                         UPDATE vulnerability SET custom_fields='{0}' WHERE id={1}
                     """.format(json.dumps(new_data), vuln_id))

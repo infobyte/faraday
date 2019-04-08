@@ -96,13 +96,10 @@ def _get_base_server_url():
     # Faraday server is running, and this module is used by upload_reports...
     if FARADAY_UPLOAD_REPORTS_OVERWRITE_SERVER_URL:
         server_url = FARADAY_UPLOAD_REPORTS_OVERWRITE_SERVER_URL
-        logger.info('Detected upload cookie Using server_url as {0}'.format(server_url))
     elif FARADAY_UP:
         server_url = _conf().getAPIUrl()
-        logger.info('Detected faraday client running. Using server_url as {0}'.format(server_url))
     else:
         server_url = SERVER_URL
-        logger.info('Could not detect upload or client running. Using default server_url as {0}'.format(server_url))
 
     return server_url.rstrip('/')
 

@@ -449,7 +449,13 @@ class VulnerabilityView(PaginatedMixin,
         references = data.pop('references', [])
         policyviolations = data.pop('policy_violations', [])
 
-        obj = super(VulnerabilityView, self)._perform_create(data, **kwargs)
+        try:
+            obj = super(VulnerabilityView, self)._perform_create(data, **kwargs)
+        except TypeError:
+            # TypeError is raised when trying to instantiate an sqlalchemy model
+            # with invalid attributes, for example VulnerabilityWeb with host_id
+            flask.abort(400)
+
         obj.references = references
         obj.policy_violations = policyviolations
         db.session.commit()

@@ -28,6 +28,8 @@ from faraday.server.importer import ImportCouchDB
 
 from faraday.server.web import app
 from faraday.utils.logs import setUpLogger
+import os
+from faraday.client.start_client import FARADAY_PLUGINS_BASEPATH
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -163,6 +165,11 @@ def validate_email(ctx, param, value):
     # Also validate that the email doesn't exist in the database
     return validate_user_unique_field(ctx, param, value)
 
+@click.command(help="List Available Plugins")
+def list_plugins():
+    plugins_list = [name for name in os.listdir(FARADAY_PLUGINS_BASEPATH)
+           if os.path.isdir(os.path.join(FARADAY_PLUGINS_BASEPATH, name))]
+    print '\n'.join(sorted(plugins_list))
 
 @click.command(help="Create ADMIN user for Faraday application")
 @click.option('--username', prompt=True, callback=validate_user_unique_field)
@@ -247,6 +254,7 @@ cli.add_command(migrate)
 cli.add_command(add_custom_field)
 cli.add_command(delete_custom_field)
 cli.add_command(support)
+cli.add_command(list_plugins)
 
 if __name__ == '__main__':
     cli()

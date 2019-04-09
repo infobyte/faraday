@@ -41,26 +41,59 @@ class DnsmapParser(object):
 
     def __init__(self, output):
         self.items = []
-        lists = output.split("\n\n")
+        if "\n\n" in output:
+            self.parse_txt(output)
+        else:
+            self.parse_csv(output)
 
-        for item in lists:
-            sub_domain = item.split('\n')
-            if len(sub_domain) == 2:
-                ip = self.clean_ip(sub_domain[1])
-                host = sub_domain[0]
-                self.parse_ip(ip, host)
-            elif len(sub_domain) > 2:
-                host = sub_domain.pop(0)
-                for ip_address in sub_domain:
+    def parse_txt(self, output):
+        hosts = self.split_output_lines(output)
+
+        for host_data in hosts:
+            if len(host_data) == 2:
+                ip = self.clean_ip(host_data[1])
+                hostname = host_data[0]
+                self.add_host_info_to_items(ip, hostname)
+            elif len(host_data) > 2:
+                hostname = host_data.pop(0)
+                for ip_address in host_data:
                     ip = self.clean_ip(ip_address)
-                    self.parse_ip(ip, host)
+                    self.add_host_info_to_items(ip, hostname)
 
+    def parse_csv(self, output):
+        hosts = filter(None, output.splitlines())
+
+        for host in hosts:
+            host_data = host.split(",", 1)
+            if host_data[1].count(',') == 0:
+                ip = host_data[1]
+                hostname = host_data[0]
+                self.add_host_info_to_items(ip, hostname)
+            else:
+                hostname = host_data.pop(0)
+                ips = host_data[0].split(",")
+                for ip_address in ips:
+                    self.add_host_info_to_items(ip_address, hostname)
+
+    def split_output_lines(self, output):
+        splitted = output.splitlines()
+        hosts_list = []
+        aux_list = []
+        for i in range(0, len(splitted)):
+            if not splitted[i]:
+                hosts_list.append(aux_list)
+                aux_list = []
+                continue
+            else:
+                aux_list.append(splitted[i])
+
+        return hosts_list
 
     def clean_ip(self, item):
         ip = item.split(':', 1)
         return ip[1].strip()
 
-    def parse_ip(self, ip_address, hostname):
+    def add_host_info_to_items(self, ip_address, hostname):
         data = {}
         exists = False
         for item in self.items:
@@ -81,7 +114,7 @@ class DnsmapPlugin(core.PluginBase):
 
         core.PluginBase.__init__(self)
         self.id = "Dnsmap"
-        self.name = "Dnsmap XML Output Plugin"
+        self.name = "Dnsmap Output Plugin"
         self.plugin_version = "0.3"
         self.version = "0.30"
         self.options = None

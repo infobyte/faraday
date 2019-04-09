@@ -314,11 +314,7 @@ angular.module("faradayApp")
 
             loadVulns();
 
-            loadCustomFields();
-
-            angular.element($window).bind("resize", function () {
-                resizeGrid();
-            });
+            loadCustomFields();                
 
             $cookies.remove("selectedVulns");
             $scope.isShowingPreview = false;

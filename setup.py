@@ -151,6 +151,7 @@ setup(
                                 'server', 'config', 'utils', 'client'])
               ] + ['faraday'],
     package_dir={'faraday': '.'},
+    # packages=find_packages(include=['faraday']),
 
     # Specify which Python versions you support. In contrast to the
     # 'Programming Language' classifiers above, 'pip install' will check this

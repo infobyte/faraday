@@ -1246,8 +1246,14 @@ angular.module("faradayApp")
             // the url without reloading the controller
             $scope.searchParams = params;
             if(window.location.hash.substring(1).indexOf('groupby') === -1) {
-                var jsonOptions = parserFact.evaluateExpression(params);
-                loadFilteredVulns($routeParams.wsId, jsonOptions);
+                if (params !== undefined && params !== ''){
+                    params = params.replace(/^ +| +$/g, '');
+                    var jsonOptions = parserFact.evaluateExpression(params);
+                    loadFilteredVulns($routeParams.wsId, jsonOptions);
+                }else{
+                    loadVulns();
+                }
+
             } else {
                 var url = "/status/ws/" + $routeParams.wsId + "/groupby/" + $routeParams.groupbyId;
                 $location.path(url);

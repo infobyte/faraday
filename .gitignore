@@ -70,9 +70,7 @@ uml_schema.png
 # Documentation builds
 doc/_build/
 scripts/searcher/log/searcher.log
-=0.54.0
 stream.svg
 scripts/searcher/output/searcher.db
 .pytest_cache
 reports/executive/outputs/scope.docx
-.gitignore

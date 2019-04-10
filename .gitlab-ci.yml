@@ -25,7 +25,7 @@ closure_compiler:
 
     stage: pre_testing
     script:
-        - /opt/cc.sh server/www/scripts
+        - /opt/cc.sh faraday/server/www/scripts
 
 merge_conflict_check:
     image: python:3
@@ -41,7 +41,7 @@ pylint:
     stage: pre_testing
     script:
         - pip install pylint anybadge
-        - pylint server |tee pylint.txt || true
+        - pylint faraday/server |tee pylint.txt || true
         - score=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' pylint.txt)
         - anybadge --label pylint --value=$score --file pylint.svg 4=red 6=orange 8=yellow 10=green
     artifacts:

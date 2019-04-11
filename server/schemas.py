@@ -43,8 +43,8 @@ class FaradayCustomField(fields.Field):
         custom_fields = db.session.query(CustomFieldsSchema).filter_by(
             table_name=self.table_name)
         for custom_field in custom_fields:
-            serialized_value = value.get(custom_field.field_display_name)
-            res[custom_field.field_display_name] = serialized_value
+            serialized_value = value.get(custom_field.field_name)
+            res[custom_field.field_name] = serialized_value
 
         return res
 
@@ -54,7 +54,7 @@ class FaradayCustomField(fields.Field):
             for key, raw_data in value.iteritems():
                 field_schema = db.session.query(CustomFieldsSchema).filter_by(
                     table_name=self.table_name,
-                    field_display_name=key,
+                    field_name=key,
                 ).first()
                 if not field_schema:
                     raise ValidationError("Invalid custom field, not found in schema. Did you add it first?")

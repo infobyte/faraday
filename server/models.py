@@ -1793,6 +1793,7 @@ class ExecutiveReport(Metadata):
     title = BlankColumn(Text)
     confirmed = Column(Boolean, nullable=False, default=False)
     vuln_count = Column(Integer, default=0)  # saves the amount of vulns when the report was generated.
+    markdown = Column(Boolean, default=False, nullable=False)
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(

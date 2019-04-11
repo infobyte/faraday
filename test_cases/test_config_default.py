@@ -23,7 +23,7 @@ def test_matching_versions():
 
 
 def parse_element_from_xml(tag_name):
-    with open(FARADAY_BASE + '/config/default.xml', 'r') as output:
+    with open(FARADAY_BASE + '/faraday/config/default.xml', 'r') as output:
         default_data = output.read()
     tree = ET.fromstring(default_data)
     default_element = tree.find(tag_name).text

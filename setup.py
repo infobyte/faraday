@@ -145,13 +145,13 @@ setup(
     # packages=find_packages(exclude=['contrib', 'docs', 'tests']),  # Required
     # packages=[''],
     # packages=['faraday', 'faraday.server', 'faraday.utils'],
-    packages=['faraday.' + package
-              for package in find_packages(
-                  '.', include=['server.*', 'config.*', 'utils.*', 'client.*',
-                                'server', 'config', 'utils', 'client'])
-              ] + ['faraday'],
-    package_dir={'faraday': '.'},
-    # packages=find_packages(include=['faraday']),
+    #packages=['faraday.' + package
+    #          for package in find_packages(
+    #              '.', include=['server.*', 'config.*', 'utils.*', 'client.*',
+    #                            'server', 'config', 'utils', 'client'])
+    #          ] + ['faraday'],
+    #package_dir={'faraday': '.'},
+    packages=find_packages(include=['faraday']),
 
     # Specify which Python versions you support. In contrast to the
     # 'Programming Language' classifiers above, 'pip install' will check this

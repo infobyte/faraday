@@ -62,7 +62,7 @@ angular.module('faradayApp')
                 return Math.max.apply(null, orders) || 0;
             };
 
-            $scope.normalizeDisplayName = function () {
+            $scope.normalizeName = function () {
                 if ($scope.selected_cf.field_name !== null) {
                     $scope.selected_cf.field_name = $scope.selected_cf.field_name.toLowerCase().replace(' ', '_');
                 }

@@ -49,8 +49,8 @@
             <div class="tab-pane-header">Name</div>
             <div class="form-group">
                 <label class="sr-only control-label" for="cf_name">Name</label>
-                <input type="text" class="form-control" id="cf_name" placeholder="Name"
-                       ng-model="selected_cf.field_name" ng-change="normalizeDisplayName()" required/>
+                <input type="text" class="form-control" id="cf_name" placeholder="Name" ng-readonly="isEditable == true"
+                       ng-model="selected_cf.field_name" ng-change="normalizeName()" required/>
             </div><!-- .form-group -->
 
             <div class="row" style="margin-top: 32px;">

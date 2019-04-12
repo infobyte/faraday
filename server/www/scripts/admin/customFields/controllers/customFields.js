@@ -24,6 +24,10 @@ angular.module('faradayApp')
                 loadCustomFields();
             };
 
+            var compareFunction = function (cf1, cf2) {
+                return cf1.field_order - cf2.field_order;
+            };
+
 
             $scope.insertCallback = function () {
                 var ids = [];
@@ -43,7 +47,7 @@ angular.module('faradayApp')
             var loadCustomFields = function () {
                 customFieldFact.getCustomFields().then(
                     function (response) {
-                        $scope.customFields = response.data;
+                        $scope.customFields = response.data.sort(compareFunction);
                         console.log($scope.customFields);
                     });
             };

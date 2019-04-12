@@ -135,7 +135,13 @@ def check_alembic_version():
 
     head_revision = script.get_current_head()
     with app.app_context():
-        conn = db.session.connection()
+        try:
+            conn = db.session.connection()
+        except ImportError as ex:
+            if not server.config.database.connection_string:
+                print("\n\nNo database configuration found. Did you execute \"python manage.py initdb\"? \n\n")
+                sys.exit(1)
+
         context = MigrationContext.configure(conn)
 
         current_revision = context.get_current_revision()

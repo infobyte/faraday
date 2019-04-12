@@ -10,6 +10,7 @@ with (import <nixpkgs> {});
       VENV_PATH=.venv-white
       grep -q p- VERSION && VENV_PATH=.venv-pink
       grep -q b- VERSION && VENV_PATH=.venv-black
+      grep -q c- VERSION && VENV_PATH=.venv-black
 
       mkvirtualenv(){
         # Reset previous virtualenv

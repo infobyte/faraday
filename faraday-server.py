@@ -4,6 +4,7 @@
 # See the file 'doc/LICENSE' for the license information
 import os
 import sys
+import glob
 import socket
 import argparse
 import subprocess
@@ -143,11 +144,21 @@ def check_alembic_version():
 
         context = MigrationContext.configure(conn)
 
-        if head_revision != context.get_current_revision():
-            print('--' * 20)
-            print('Missing migrations, please execute: \n\n')
-            print('python manage.py migrate')
-            sys.exit(1)
+        current_revision = context.get_current_revision()
+        if head_revision != current_revision:
+            if glob.glob(os.path.join(FARADAY_BASE, 'migrations', 'versions',
+                         '{}_*.py'.format(current_revision))):
+                print('--' * 20)
+                print('Missing migrations, please execute: \n\n')
+                print('python manage.py migrate')
+                sys.exit(1)
+            else:
+                logger.warning(
+                    "You are using an unknown schema version. If you are a "
+                    "developer, this probably happened because you used branch "
+                    "with a schema migration not merged yet. If you are a "
+                    "normal user, consider reporting this bug back to us"
+                    )
 
 def main():
     os.chdir(FARADAY_BASE)

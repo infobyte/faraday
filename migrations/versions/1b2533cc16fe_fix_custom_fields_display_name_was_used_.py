@@ -20,16 +20,17 @@ depends_on = None
 def upgrade():
     connection = op.get_bind()
 
-    custom_field_schemas = connection.execute("""
-        SELECT table_name, field_name, field_type, field_order, field_display_name FROM custom_fields_schema
-    """)
     vulnerabilities = connection.execute("""
         SELECT id, custom_fields FROM vulnerability
     """)
 
     for vuln_id, custom_fields in vulnerabilities:
         if custom_fields:
+            custom_field_schemas = connection.execute("""
+                SELECT table_name, field_name, field_type, field_order, field_display_name FROM custom_fields_schema
+            """)
             for table_name, field_name, field_type, field_order, field_display_name in custom_field_schemas:
+
                 if table_name == 'vulnerability':
                     if field_display_name not in custom_fields:
                         continue
@@ -38,21 +39,22 @@ def upgrade():
                     del custom_fields[field_display_name]
                     connection.execute("""
                         UPDATE vulnerability SET custom_fields='{0}' WHERE id={1}
-                    """.format(json.dumps(new_data), vuln_id))
+                    """.format(json.dumps(custom_fields), vuln_id))
 
 
 def downgrade():
     connection = op.get_bind()
 
-    custom_field_schemas = connection.execute("""
-        SELECT table_name, field_name, field_type, field_order, field_display_name FROM custom_fields_schema
-    """)
     vulnerabilities = connection.execute("""
         SELECT id, custom_fields FROM vulnerability
     """)
 
     for vuln_id, custom_fields in vulnerabilities:
         if custom_fields:
+            custom_field_schemas = connection.execute("""
+                SELECT table_name, field_name, field_type, field_order, field_display_name FROM custom_fields_schema
+            """)
+
             for table_name, field_name, field_type, field_order, field_display_name in custom_field_schemas:
                 if table_name == 'vulnerability':
                     if field_name not in custom_fields:

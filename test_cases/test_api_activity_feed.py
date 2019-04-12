@@ -13,6 +13,8 @@ from test_cases.factories import WorkspaceFactory, VulnerabilityFactory, Command
 
 @pytest.mark.usefixtures('logged_user')
 class TestActivityFeed():
+
+    @pytest.mark.usefixtures('ignore_nplusone')
     def test_activity_feed(self, test_client, session):
         ws = WorkspaceFactory.create(name="abc")
         command = CommandFactory.create(workspace=ws, tool="nessus")

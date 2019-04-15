@@ -8,11 +8,13 @@ angular.module('faradayApp')
         var p = $http.get(BASEURL + '_api/config')
             .then(function(conf) {
                 configSrv.faraday_version = conf.data.ver;
+                configSrv.show_vulns_by_price = conf.data.show_vulns_by_price;
             });
 
         configSrv = {
             faraday_version: null,
-            promise: p
+            promise: p,
+            show_vulns_by_price: false
         }
 
         return configSrv;

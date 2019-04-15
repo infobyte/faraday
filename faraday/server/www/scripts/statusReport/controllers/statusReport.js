@@ -111,9 +111,14 @@ angular.module("faradayApp")
                 $scope.gridOptions.paginationPageSize = storedPageSize;
             }
 
-            if($cookies.get("filterConfirmed") !== undefined) {
+            $scope.searchParams = "";
+            if ($cookies.get("filterConfirmed") !== undefined) {
                 $scope.propertyFilterConfirmed = $cookies.get("filterConfirmed");
-            }else{
+                if ($scope.propertyFilterConfirmed === 'Confirmed')
+                    $scope.searchParams = "confirmed:true";
+                if ($scope.propertyFilterConfirmed === 'Unconfirmed')
+                    $scope.searchParams = "confirmed:false";
+            } else {
                 $scope.propertyFilterConfirmed = "All";
             }
 
@@ -198,7 +203,7 @@ angular.module("faradayApp")
             $scope.interfaces = [];
             // current search
             $scope.search = $routeParams.search;
-            $scope.searchParams = "";
+
             if($scope.propertyFilterConfirmed === "Confirmed") {
                 if($scope.search !== undefined) {
                     $scope.search = $scope.search.concat("&confirmed=true");
@@ -223,7 +228,8 @@ angular.module("faradayApp")
 
             if($scope.search !== "" && $scope.search !== undefined && $scope.search.indexOf("=") > -1) {
                 searchFilter = commonsFact.parseSearchURL($scope.search);
-                $scope.searchParams = commonsFact.searchFilterToExpression(searchFilter);
+                if ($scope.propertyFilterConfirmed === "All")
+                    $scope.searchParams = commonsFact.searchFilterToExpression(searchFilter);
             }
 
             $scope.columns = {
@@ -314,11 +320,7 @@ angular.module("faradayApp")
 
             loadVulns();
 
-            loadCustomFields();
-
-            angular.element($window).bind("resize", function () {
-                resizeGrid();
-            });
+            loadCustomFields();                
 
             $cookies.remove("selectedVulns");
             $scope.isShowingPreview = false;
@@ -799,7 +801,7 @@ angular.module("faradayApp")
         $scope.filterConfirmed = function (filter) {
             $scope.propertyFilterConfirmed = filter;
             $cookies.put('filterConfirmed', $scope.propertyFilterConfirmed);
-            loadVulns();
+            $scope.searchFor($scope.searchParams, false, false)
         };
 
         // deletes the vulns in the array
@@ -1212,12 +1214,42 @@ angular.module("faradayApp")
             });
         };
 
-        $scope.searchFor = function(search, params) {
+        $scope.searchFor = function(params, clear, search) {
+            if (clear === true){
+                $scope.searchParams = '';
+                $scope.propertyFilterConfirmed = "All";
+                $cookies.put('filterConfirmed', $scope.propertyFilterConfirmed);
+                $location.path("/status/ws/" + $routeParams.wsId);
+                loadVulns();
+                return;
+            }
+
+            if (search === false) {
+                params = params.replace(/\s?(and)?\s?confirmed:(true|false)\s?(and)?/g, '');
+                if ($scope.propertyFilterConfirmed !== "All") {
+                    if ($scope.propertyFilterConfirmed === 'Confirmed')
+                        params += params === '' ? "confirmed:true" : " and confirmed:true";
+                    if ($scope.propertyFilterConfirmed === 'Unconfirmed')
+                        params += params === '' ? "confirmed:false" : " and confirmed:false";
+                }
+            }else{
+                if (params.indexOf('confirmed:true') > -1)
+                    $scope.propertyFilterConfirmed = 'Confirmed';
+                if (params.indexOf('confirmed:false') > -1)
+                    $scope.propertyFilterConfirmed = 'Unconfirmed'
+            }
+
             // the url without reloading the controller
             $scope.searchParams = params;
             if(window.location.hash.substring(1).indexOf('groupby') === -1) {
-                var jsonOptions = parserFact.evaluateExpression(params);
-                loadFilteredVulns($routeParams.wsId, jsonOptions);
+                if (params !== undefined && params !== ''){
+                    params = params.replace(/^ +| +$/g, '');
+                    var jsonOptions = parserFact.evaluateExpression(params);
+                    loadFilteredVulns($routeParams.wsId, jsonOptions);
+                }else{
+                    loadVulns();
+                }
+
             } else {
                 var url = "/status/ws/" + $routeParams.wsId + "/groupby/" + $routeParams.groupbyId;
                 $location.path(url);

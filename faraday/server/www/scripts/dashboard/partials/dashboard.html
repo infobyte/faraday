@@ -19,6 +19,11 @@
                 <div ng-include="'scripts/dashboard/partials/vulns-by-status.html'"></div>
               </div>
             </div>
+            <div class="row mt-md" id="activities-container-row" ng-if="showVulnCost">
+              <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 pl0 pr-sm">
+                <div ng-include="'scripts/dashboard/partials/vulns-by-price.html'"></div>
+              </div>
+            </div>
             <div class="row mt-md" id="activities-container-row">
               <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 pl0 pr-sm">
                 <div ng-include="'scripts/dashboard/partials/activityFeed.html'"></div>

@@ -20,6 +20,7 @@ class CommandSchema(AutoSchema):
     itime = fields.Method(serialize='get_itime', deserialize='load_itime', required=True, attribute='start_date')
     duration = fields.Method(serialize='get_duration', allow_none=True)
     workspace = PrimaryKeyRelatedField('name', dump_only=True)
+    creator = PrimaryKeyRelatedField('username', dump_only=True)
 
     def load_itime(self, value):
         return datetime.datetime.fromtimestamp(value)
@@ -45,7 +46,7 @@ class CommandSchema(AutoSchema):
     class Meta:
         model = Command
         fields = ('_id', 'command', 'duration', 'itime', 'ip', 'hostname',
-                  'params', 'user', 'workspace', 'tool', 'import_source')
+                  'params', 'user', 'creator', 'workspace', 'tool', 'import_source')
 
 
 class CommandView(PaginatedMixin, ReadWriteWorkspacedView):

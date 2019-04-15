@@ -11,7 +11,8 @@ angular.module('faradayApp')
                 field_display_name: "",
                 field_name: "",
                 field_order: null,
-                field_type: null
+                field_type: null,
+                table_name: 'vulnerability'
             };
             $scope.isEditable = false;
 
@@ -73,6 +74,8 @@ angular.module('faradayApp')
             };
 
             $scope.createCustomCustomField = function () {
+                $scope.selected_cf.table_name = 'vulnerability';
+
                 if ($scope.selected_cf.field_order === null)
                     $scope.selected_cf.field_order = getMaxOrder() + 1;
 

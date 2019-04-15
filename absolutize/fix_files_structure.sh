@@ -10,12 +10,27 @@ set -eu -o pipefail
 
 CLIENT_DIRS=(apis bin gui helpers managers model persistence plugins zsh)
 
+DRY_RUN_PREFIX=""
+DRY_RUN_GIT_MV=""
+while getopts ":d" opt; do
+  case $opt in
+    d)
+        DRY_RUN_PREFIX="echo "
+        DRY_RUN_GIT_MV="-n"
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+  esac
+done
+
 for dir in "${CLIENT_DIRS[@]}"; do
     if [[ -d "${dir}" ]]; then
         for subfile in $(find "${dir}" -type f); do
-            mkdir -p "client/$(dirname "${subfile}")"
-            git mv "${subfile}" "client/${subfile}"
+            $DRY_RUN_PREFIX mkdir -p "client/$(dirname "${subfile}")"
+            git mv $DRY_RUN_GIT_MV -k "${subfile}" "client/${subfile}"
         done
-        rmdir --ignore-fail-on-non-empty "${dir}"
+        $DRY_RUN_PREFIX rmdir --ignore-fail-on-non-empty "${dir}"
     fi
 done

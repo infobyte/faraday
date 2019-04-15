@@ -24,6 +24,7 @@ class CustomFieldsSchemaSchema(AutoSchema):
                   'field_type',
                   'field_display_name',
                   'field_order',
+                  'table_name'
                   )
 
 

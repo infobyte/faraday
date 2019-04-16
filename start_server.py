@@ -138,7 +138,7 @@ def check_alembic_version():
         try:
             conn = db.session.connection()
         except ImportError as ex:
-            if not server.config.database.connection_string:
+            if not faraday.server.config.database.connection_string:
                 print("\n\nNo database configuration found. Did you execute \"python manage.py initdb\"? \n\n")
                 sys.exit(1)
 

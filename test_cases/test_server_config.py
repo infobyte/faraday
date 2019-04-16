@@ -10,6 +10,9 @@ import mock
 import os
 import re
 
+from faraday import __version__
+from faraday.server.config import FARADAY_BASE
+
 from faraday.server.config import (
     copy_default_config_to_local,
     gen_web_config
@@ -74,9 +77,5 @@ _regex = re.compile(
 def isPEP440(arg):
     return not _regex.match(arg) is None
 
-
 def test_exists_and_content():
-    f = open("VERSION", "r")
-    line1 = f.readline().rstrip()
-    assert f.read() == ''
-    assert isPEP440(line1)
+    assert isPEP440(__version__)

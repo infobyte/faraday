@@ -38,6 +38,7 @@ except: # For Python 3
 
 import requests
 
+from faraday import __version__ as f_version
 from faraday.client.persistence.server.utils import force_unique
 from faraday.client.persistence.server.server_io_exceptions import (WrongObjectSignature,
                                                      CantCommunicateWithServerError,
@@ -1551,12 +1552,7 @@ def check_faraday_version():
 
     faraday_directory = os.path.dirname(os.path.realpath('faraday.py'))
 
-    file_path = os.path.join(faraday_directory, 'VERSION')
-
-    with open(file_path, 'r') as version_file:
-        version = version_file.read().strip()
-
-    if info is not None and version != info['Version']:
+    if info is not None and f_version != info['Version']:
         raise RuntimeError('Client and server versions do not match')
 
 def check_server_url(url_to_test):

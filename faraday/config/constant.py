@@ -7,7 +7,6 @@ See the file 'doc/LICENSE' for the license information
 
 import os
 
-CONST_VERSION_FILE = 'VERSION'
 CONST_REQUIREMENTS_FILE = 'requirements.txt'
 CONST_FARADAY_HOME_PATH = os.path.expanduser('~/.faraday')
 CONST_FARADAY_PLUGINS_PATH = 'plugins'

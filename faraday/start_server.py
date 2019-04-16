@@ -177,8 +177,7 @@ def main():
     parser.add_argument('--websocket_port', help='Overides server.ini websocket port configuration')
     parser.add_argument('--bind_address', help='Overides server.ini bind_address configuration')
 
-    f = open(faraday.server.config.VERSION_FILE)
-    f_version = f.read().strip()
+    f_version = faraday.__version__
 
     parser.add_argument('-v', '--version', action='version',
                         version='Faraday v{version}'.format(version=f_version))

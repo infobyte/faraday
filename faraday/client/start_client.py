@@ -25,7 +25,6 @@ from faraday.config.constant import (
     CONST_FARADAY_ZSHRC,
     CONST_ZSH_PATH,
     CONST_FARADAY_ZSH_FARADAY,
-    CONST_VERSION_FILE,
     CONST_REQUIREMENTS_FILE,
     CONST_FARADAY_FOLDER_LIST,
 )
@@ -33,6 +32,7 @@ from faraday.utils import dependencies
 from faraday.utils.logs import getLogger, setUpLogger
 from faraday.utils.user_input import query_yes_no
 
+from faraday import __version__ as f_version
 from faraday.client.persistence.server import server
 from faraday.client.persistence.server.server import is_authenticated, login_user, get_user_info
 
@@ -60,7 +60,6 @@ FARADAY_USER_ZSHRC = os.path.join(FARADAY_USER_HOME, CONST_FARADAY_ZSHRC)
 FARADAY_USER_ZSH_PATH = os.path.join(FARADAY_USER_HOME, CONST_ZSH_PATH)
 FARADAY_BASE_ZSH = os.path.join(FARADAY_CLIENT_BASE, CONST_FARADAY_ZSH_FARADAY)
 
-FARADAY_VERSION_FILE = os.path.join(FARADAY_BASE, CONST_VERSION_FILE)
 FARADAY_REQUIREMENTS_FILE = os.path.join(FARADAY_BASE, CONST_REQUIREMENTS_FILE)
 
 REQUESTS_CA_BUNDLE_VAR = "REQUESTS_CA_BUNDLE"
@@ -171,9 +170,6 @@ def getParserArgs():
                         help='Skip dependency check')
     parser.add_argument('--keep-old', action='store_true', help='Keep old object in CLI mode if Faraday find a conflict')
     parser.add_argument('--keep-new', action='store_true', help='Keep new object in CLI mode if Faraday find a conflict (DEFAULT ACTION)')
-
-    f = open(FARADAY_VERSION_FILE)
-    f_version = f.read().strip()
 
     parser.add_argument('-v', '--version', action='version',
                         version='Faraday v{version}'.format(version=f_version))
@@ -410,13 +406,11 @@ def checkUpdates():
     uri = getInstanceConfiguration().getUpdatesUri()
     resp = u"OK"
     try:
-        f = open(FARADAY_VERSION_FILE)
 
-        getInstanceConfiguration().setVersion(f.read().strip())
+        getInstanceConfiguration().setVersion(f_version)
         getInstanceConfiguration().setAppname("Faraday - Penetration Test IDE Community")
         parameter = {"version": getInstanceConfiguration().getVersion()}
 
-        f.close()
         resp = requests.get(uri, params=parameter, timeout=1, verify=True)
         resp = resp.text.strip()
     except Exception as e:

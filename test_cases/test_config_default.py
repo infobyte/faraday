@@ -10,20 +10,20 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ET
 
+import os
+
+from faraday import __version__ as faraday_version
 from faraday.server.config import FARADAY_BASE
 
 
 def test_matching_versions():
-    with open(FARADAY_BASE + '/VERSION', 'r') as output:
-        version_file = output.read().strip()
-
     version_default = parse_element_from_xml('version')
 
-    assert version_file == version_default
+    assert faraday_version == version_default
 
 
 def parse_element_from_xml(tag_name):
-    with open(FARADAY_BASE + '/faraday/config/default.xml', 'r') as output:
+    with open(os.path.join(FARADAY_BASE, '/config/default.xml'), 'r') as output:
         default_data = output.read()
     tree = ET.fromstring(default_data)
     default_element = tree.find(tag_name).text

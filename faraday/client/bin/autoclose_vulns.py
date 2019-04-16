@@ -12,7 +12,7 @@ from tqdm import tqdm
 from dateutil import parser
 from datetime import datetime
 
-from persistence.server import models
+from faraday.client.persistence.server import models
 
 
 __description__ = 'Closes vulns from the current workspace if a certain time has passed'

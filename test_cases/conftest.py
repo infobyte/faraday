@@ -22,6 +22,8 @@ from faraday.server.app import create_app
 from faraday.server.models import db
 from test_cases import factories
 
+TEST_BASE = os.path.abspath(os.path.dirname(__file__))
+TEST_DATA = os.path.join(TEST_BASE, 'data')
 
 TEMPORATY_SQLITE = NamedTemporaryFile()
 # Discover factories to automatically register them to pytest-factoryboy and to

@@ -54,7 +54,7 @@
                 <div class="col-md-12 reference" ng-repeat="reference in data.references">
                     <div class="input-group margin-bottom-sm">
                         <label class="sr-only" for="ireferences">References</label>
-                        <input type="text" class="form-control" id="ireferences" placeholder="References" ng-model="reference" disabled/>
+                        <input type="text" class="form-control" id="ireferences" placeholder="References" ng-model="reference" readonly/>
                         <span class="input-group-addon cursor" ng-click="data.references.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
                     </div>
                 </div>
@@ -73,7 +73,7 @@
                 <div class="col-md-12 reference" ng-repeat="policyviolation in data.policyviolations">
                     <div class="input-group margin-bottom-sm">
                         <label class="sr-only" for="vuln-policyviolations">Policy Violation</label>
-                        <input type="text" class="form-control" id="vuln-policyviolations" placeholder="Policy Violation" ng-model="policyviolation" disabled/>
+                        <input type="text" class="form-control" id="vuln-policyviolations" placeholder="Policy Violation" ng-model="policyviolation" readonly/>
                         <span class="input-group-addon cursor" ng-click="data.policyviolations.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
                     </div>
                 </div>

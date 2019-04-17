@@ -4,13 +4,13 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-import persistence.server.models as models
+import faraday.client.persistence.server.models as models
 import pytest
 import responses
 import requests
 from mock import Mock, patch
 
-import server.config
+import faraday.server.config
 
 from test_api_workspaced_base import GenericAPITest
 
@@ -22,8 +22,8 @@ class TestVulnPersistanceModelsFuncions(GenericAPITest):
     factory = VulnerabilityFactory
 
     @responses.activate
-    @patch('config.configuration.getInstanceConfiguration')
-    @patch('persistence.server.server.SERVER_URL', 'http://localhost:5985')
+    @patch('faraday.config.configuration.getInstanceConfiguration')
+    @patch('faraday.client.persistence.server.server.SERVER_URL', 'http://localhost:5985')
     def test_persistence_server_update_vuln(self, getInstanceConfigurationMock):
         fo = self.first_object
         conf_mock = Mock()
@@ -97,8 +97,8 @@ class TestVulnWebPersistanceModelsFuncions(GenericAPITest):
     factory = VulnerabilityWebFactory
 
     @responses.activate
-    @patch('config.configuration.getInstanceConfiguration')
-    @patch('persistence.server.server.SERVER_URL', 'http://localhost:5985')
+    @patch('faraday.config.configuration.getInstanceConfiguration')
+    @patch('faraday.client.persistence.server.server.SERVER_URL', 'http://localhost:5985')
     def test_persistence_server_update_vuln_web(self, getInstanceConfigurationMock):
         fo = self.first_object
 

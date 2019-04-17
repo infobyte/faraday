@@ -9,12 +9,12 @@ See the file 'doc/LICENSE' for the license information
 import unittest
 import sys
 sys.path.append('.')
-import model.controller
-import managers.mapper_manager
+import faraday.client.model.controller
+import faraday.client.managers.mapper_manager
 from mockito import mock
-from persistence.mappers.abstract_mapper import NullPersistenceManager
-from model.hosts import Host, ModelObjectVuln
-from model.diff import ModelObjectDiff
+from faraday.client.persistence.mappers.abstract_mapper import NullPersistenceManager
+from faraday.client.model.hosts import Host, ModelObjectVuln
+from faraday.client.model.diff import ModelObjectDiff
 
 import test_cases.common as test_utils
 
@@ -68,10 +68,10 @@ class DiffTests(unittest.TestCase):
 class UpdatesTests(unittest.TestCase):
 
     def setUp(self):
-        self._mappers_manager = managers.mapper_manager.MapperManager()
+        self._mappers_manager = faraday.client.managers.mapper_manager.MapperManager()
         self._persistence_manager = NullPersistenceManager()
         self._mappers_manager.createMappers(self._persistence_manager)
-        self.model_controller = model.controller.ModelController(
+        self.faraday.client.model.controller = model.controller.ModelController(
             mock(), self._mappers_manager)
 
     def tearDown(self):
@@ -103,7 +103,7 @@ class UpdatesTests(unittest.TestCase):
             'Both hosts should have the same id')
 
         self.assertEquals(
-            len(self.model_controller.getConflicts()),
+            len(self.faraday.client.model.controller.getConflicts()),
             0,
             'Update was generated')
 
@@ -141,7 +141,7 @@ class UpdatesTests(unittest.TestCase):
             'Both hosts should have the same id')
 
         self.assertEquals(
-            len(self.model_controller.getConflicts()),
+            len(self.faraday.client.model.controller.getConflicts()),
             0,
             'Update was generated')
 
@@ -179,7 +179,7 @@ class UpdatesTests(unittest.TestCase):
             'Both hosts should have the same id')
 
         self.assertEquals(
-            len(self.model_controller.getConflicts()),
+            len(self.faraday.client.model.controller.getConflicts()),
             1,
             'Update was not generated')
 

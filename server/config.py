@@ -9,14 +9,14 @@ import errno
 try:
     import ConfigParser
 except ImportError:
-    import configparser as ConfigParser
+    import faraday.client.configparser as ConfigParser
 
 from logging import (
     DEBUG,
     INFO,
 )
-from config import constant as CONSTANTS
-from config.configuration import getInstanceConfiguration
+from faraday.config import constant as CONSTANTS
+from faraday.config.configuration import getInstanceConfiguration
 
 LOGGING_LEVEL = INFO
 
@@ -63,7 +63,7 @@ def copy_default_config_to_local():
     # Copy default config file into faraday local config
     shutil.copyfile(DEFAULT_CONFIG_FILE, LOCAL_CONFIG_FILE)
 
-    from server.utils.logger import get_logger
+    from faraday.server.utils.logger import get_logger
     get_logger(__name__).info(u"Local faraday-server configuration created at {}".format(LOCAL_CONFIG_FILE))
 
 

@@ -13,9 +13,9 @@ from Queue import Queue
 from collections import defaultdict
 
 sys.path.append(os.path.abspath(os.getcwd()))
-from plugins.repo.nmap.plugin import NmapPlugin
-from model.common import factory
-from persistence.server.models import (
+from faraday.client.plugins.repo.nmap.plugin import NmapPlugin
+from faraday.client.model.common import factory
+from faraday.client.persistence.server.models import (
     Vuln,
     Credential,
     VulnWeb,

@@ -18,8 +18,8 @@ from sqlalchemy import event
 from pytest_factoryboy import register
 
 sys.path.append(os.path.abspath(os.getcwd()))
-from server.app import create_app
-from server.models import db
+from faraday.server.app import create_app
+from faraday.server.models import db
 from test_cases import factories
 
 

@@ -7,8 +7,8 @@ See the file 'doc/LICENSE' for the license information
 import time
 import pytest
 
-from server.models import Workspace, Scope
-from server.api.modules.workspaces import WorkspaceView
+from faraday.server.models import Workspace, Scope
+from faraday.server.api.modules.workspaces import WorkspaceView
 from test_cases.test_api_non_workspaced_base import ReadWriteAPITests
 from test_cases import factories
 

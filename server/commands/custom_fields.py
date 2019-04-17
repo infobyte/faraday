@@ -1,12 +1,12 @@
 import sys
 import click
 
-from server.web import app
-from server.models import (
+from faraday.server.web import app
+from faraday.server.models import (
     db,
     CustomFieldsSchema
 )
-from server.utils.database import get_or_create
+from faraday.server.utils.database import get_or_create
 
 
 def add_custom_field_main():

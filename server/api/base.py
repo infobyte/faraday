@@ -21,15 +21,15 @@ from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
 from webargs.flaskparser import FlaskParser, parser
 from webargs.core import ValidationError
-from server.models import Workspace, db, Command, CommandObject
-from server.schemas import NullToBlankString
-import server.utils.logger
-from server.utils.database import (
+from faraday.server.models import Workspace, db, Command, CommandObject
+from faraday.server.schemas import NullToBlankString
+import faraday.server.utils.logger
+from faraday.server.utils.database import (
     get_conflict_object,
     is_unique_constraint_violation
     )
 
-logger = server.utils.logger.get_logger(__name__)
+logger = faraday.server.utils.logger.get_logger(__name__)
 
 
 def output_json(data, code, headers=None):

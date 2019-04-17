@@ -10,7 +10,7 @@ import mock
 import os
 import re
 
-from server.config import (
+from faraday.server.config import (
     copy_default_config_to_local,
     gen_web_config
 )
@@ -23,7 +23,7 @@ def test_copy_default_config_to_local_does_not_exist(copyfile, makedirs):
             range(25))
 
     new_file = '/tmp/{0}'.format(random_name)
-    with mock.patch('server.config.LOCAL_CONFIG_FILE', new_file):
+    with mock.patch('faraday.server.config.LOCAL_CONFIG_FILE', new_file):
         assert copy_default_config_to_local() is None
         assert makedirs.called
         assert copyfile.called

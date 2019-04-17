@@ -6,7 +6,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 import os
 
-from server.fields import FaradayUploadedFile
+from faraday.server.fields import FaradayUploadedFile
 
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
 

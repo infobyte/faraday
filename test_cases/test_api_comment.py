@@ -4,8 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from server.api.modules.comments import CommentView
-from server.models import Comment
+from faraday.server.api.modules.comments import CommentView
+from faraday.server.models import Comment
 from test_cases.factories import ServiceFactory
 from test_cases.test_api_workspaced_base import ReadOnlyAPITests
 from test_cases import factories

@@ -3,8 +3,8 @@ import pytest
 from test_cases.factories import CustomFieldsSchemaFactory
 from test_cases.test_api_non_workspaced_base import ReadOnlyAPITests
 
-from server.api.modules.custom_fields import CustomFieldsSchemaView
-from server.models import (
+from faraday.server.api.modules.custom_fields import CustomFieldsSchemaView
+from faraday.server.models import (
     CustomFieldsSchema
 )
 

@@ -6,8 +6,8 @@ See the file 'doc/LICENSE' for the license information
 '''
 import unittest
 import json
-from persistence.server import models
-from persistence.server import server_io_exceptions
+from faraday.client.persistence.server import models
+from faraday.client.persistence.server import server_io_exceptions
 from mock import MagicMock, patch, create_autospec
 
 HOST_JSON_STRING = '{"_id":1,"id":"08d3b6545ec70897daf05cd471f4166a8e605c00","key":"08d3b6545ec70897daf05cd471f4166a8e605c00","value":{"_id":"08d3b6545ec70897daf05cd471f4166a8e605c00","_rev":"1-a12368dc03d557c337e833f8090db568","default_gateway":["192.168.20.1","00:1d:aa:c9:83:e8"],"description":"","metadata":{"create_time":1475852074.455225,"creator":"","owner":"","update_action":0,"update_controller_action":"ModelControler._processAction ModelControler.newHost","update_time":1475852074.455226,"update_user":""},"name":"10.31.112.29","os":"Microsoft Windows Server 2008 R2 Standard Service Pack 1","owned":"false","owner":"","services":12,"vulns":43}}'

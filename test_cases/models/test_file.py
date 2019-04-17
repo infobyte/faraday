@@ -6,7 +6,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 import os
 import pytest
-from server.models import File
+from faraday.server.models import File
 from depot.manager import DepotManager
 
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))

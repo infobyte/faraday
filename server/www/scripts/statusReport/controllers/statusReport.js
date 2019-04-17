@@ -395,8 +395,20 @@ angular.module("faradayApp")
                     '       <div ui-grid-filter></div>'+
                     '   </div>';
 
+            var headerConfirm = '<div ng-class="{ \'sort$scope.columnsable\': sortable }">'+
+            '       <div class="ui-grid-cell-contents" col-index="renderIndex" title="TOOLTIP">{{ col.displayName CUSTOM_FILTERS }}'+
+            '           <a href="" ng-click="grid.appScope.toggleShow(col.displayName, true)">'+
+            '           </a>'+
+            '           <span ui-grid-visible="col.sort.direction" ng-class="{ \'ui-grid-icon-up-dir\': col.sort.direction == asc, \'ui-grid-icon-down-dir\': col.sort.direction == desc, \'ui-grid-icon-blank\': !col.sort.direction }">&nbsp;</span>'+
+            '       </div>'+
+            '       <div class="ui-grid-column-menu-button" ng-if="grid.options.enableColumnMenus && !col.isRowHeader  && col.colDef.enableColumnMenu !== false" ng-click="toggleMenu($event)" ng-class="{\'ui-grid-column-menu-button-last-col\': isLastCol}">'+
+            '           <i class="ui-grid-icon-angle-down">&nbsp;</i>'+
+            '       </div>'+
+            '       <div ui-grid-filter></div>'+
+            '   </div>';
 
-            $scope.gridOptions.columnDefs.push({displayName : "confirm", name: "confirmVuln", width: "80", enableColumnResizing: false, headerCellTemplate:  header, cellTemplate: "scripts/statusReport/partials/ui-grid/confirmbutton.html" });
+
+            $scope.gridOptions.columnDefs.push({displayName : "conf", name: "confirmVuln", width: "50", enableColumnResizing: false, headerCellTemplate:  headerConfirm, cellTemplate: "scripts/statusReport/partials/ui-grid/confirmbutton.html" });
 
             $templateCache.put('ui-grid/selectionRowHeaderButtons',
                 "<div class=\"ui-grid-selection-row-header-buttons \"  ng-class=\"{'ui-grid-row-selected': row.isSelected}\" ><input style=\"margin: 0; vertical-align: middle; background-position: -20px 0;\" type=\"checkbox\" ng-model=\"row.isSelected\" ng-click=\"row.isSelected=!row.isSelected;selectButtonClick(row, $event)\">&nbsp;</div>"

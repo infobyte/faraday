@@ -87,7 +87,7 @@ sqlite_test:
     artifacts:
         when: on_failure
         paths:
-            - faradaysec.egg-info/*
+            - dist/*
 
 generate_release_file:
     image: python:3

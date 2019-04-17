@@ -4,15 +4,16 @@
 
 angular.module('faradayApp')
     .controller('dashboardCtrl',
-        ['$scope', '$filter', '$route', '$routeParams', '$location', 'dashboardSrv', 'workspacesFact', 'vulnsManager',
-        function($scope, $filter, $route, $routeParams, $location, dashboardSrv, workspacesFact, vulnsManager) {
+        ['$scope', '$filter', '$route', '$routeParams', '$location', 'dashboardSrv', 'workspacesFact', 'vulnsManager','configSrv',
+        function($scope, $filter, $route, $routeParams, $location, dashboardSrv, workspacesFact, vulnsManager, configSrv) {
             $scope.props = dashboardSrv.props;
 
             init = function() {
                 //current workspace
                 $scope.workspace = $routeParams.wsId;
+                $scope.showVulnCost = configSrv.show_vulns_by_price;
                 $scope.workspaces = [];
-
+ 
                 workspacesFact.list().then(function(wss) {
                     $scope.workspaces = wss;
                 });

@@ -6,7 +6,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 import pytest
 from contextlib import contextmanager
-from server.models import (
+from faraday.server.models import (
     CommandObject,
     Comment,
     File,

@@ -11,8 +11,8 @@ try:
 except ImportError:  # pip < 10.0
     from pip.operations import freeze
 
-import config.constant as constants
-from server.commands import status_check
+import faraday.config.constant as constants
+from faraday.server.commands import status_check
 
 init()
 

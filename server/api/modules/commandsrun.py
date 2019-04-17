@@ -8,9 +8,9 @@ from flask import Blueprint
 from flask_classful import route
 from marshmallow import fields, post_load
 
-from server.api.base import AutoSchema, ReadWriteWorkspacedView, PaginatedMixin
-from server.models import Command, Workspace
-from server.schemas import PrimaryKeyRelatedField
+from faraday.server.api.base import AutoSchema, ReadWriteWorkspacedView, PaginatedMixin
+from faraday.server.models import Command, Workspace
+from faraday.server.schemas import PrimaryKeyRelatedField
 
 commandsrun_api = Blueprint('commandsrun_api', __name__)
 

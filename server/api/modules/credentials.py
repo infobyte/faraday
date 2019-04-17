@@ -6,13 +6,13 @@ from marshmallow import fields, post_load, ValidationError
 from filteralchemy import FilterSet, operators
 from sqlalchemy.orm.exc import NoResultFound
 
-from server.api.base import (
+from faraday.server.api.base import (
     AutoSchema,
     ReadWriteWorkspacedView,
     FilterSetMeta,
     FilterAlchemyMixin, InvalidUsage)
-from server.models import Credential, Host, Service, Workspace, db
-from server.schemas import MutableField, SelfNestedField, MetadataSchema
+from faraday.server.models import Credential, Host, Service, Workspace, db
+from faraday.server.schemas import MutableField, SelfNestedField, MetadataSchema
 
 credentials_api = Blueprint('credentials_api', __name__)
 

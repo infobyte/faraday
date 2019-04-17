@@ -11,7 +11,7 @@ import time
 import string
 import random
 import logging
-import server.config as FaradayServerConfig
+import faraday.server.config as FaradayServerConfig
 
 from flask import (
     request,
@@ -25,21 +25,21 @@ from flask_wtf.csrf import validate_csrf
 from werkzeug.utils import secure_filename
 from wtforms import ValidationError
 
-from server.utils.logger import get_logger
-from server.utils.web import gzipped
+from faraday.server.utils.logger import get_logger
+from faraday.server.utils.web import gzipped
 
-from model.controller import ModelController
+from faraday.client.model.controller import ModelController
 
-from plugins.controller import PluginController
-from plugins.manager import PluginManager
+from faraday.client.plugins.controller import PluginController
+from faraday.client.plugins.manager import PluginManager
 
-from managers.mapper_manager import MapperManager
-from managers.reports_managers import ReportProcessor
+from faraday.client.managers.mapper_manager import MapperManager
+from faraday.client.managers.reports_managers import ReportProcessor
 
-from server.models import Workspace
-from persistence.server import server
+from faraday.server.models import Workspace
+from faraday.client.persistence.server import server
 
-from config.configuration import getInstanceConfiguration
+from faraday.config.configuration import getInstanceConfiguration
 
 CONF = getInstanceConfiguration()
 logger = logging.getLogger(__name__)
@@ -52,7 +52,7 @@ class RawReportProcessor(Thread):
     def __init__(self):
 
         super(RawReportProcessor, self).__init__()
-        from faraday import setupPlugins
+        from faraday.client.start_client import setupPlugins
         setupPlugins()
 
         self.pending_actions = Queue()

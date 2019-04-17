@@ -10,7 +10,7 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ET
 
-from server.config import FARADAY_BASE
+from faraday.server.config import FARADAY_BASE
 
 
 def test_matching_versions():

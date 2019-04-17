@@ -5,7 +5,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 import pytest
-from server.models import TagObject
+from faraday.server.models import TagObject
 
 
 def test_vulnweb_tags(vulnerability_web_factory, tag_factory, session):

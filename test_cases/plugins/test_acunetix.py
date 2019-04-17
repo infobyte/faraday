@@ -17,9 +17,9 @@ import os
 import pytest
 
 sys.path.append(os.path.abspath(os.getcwd()))
-from plugins.repo.acunetix.plugin import AcunetixPlugin
-from model.common import factory
-from persistence.server.models import (
+from faraday.client.plugins.repo.acunetix.plugin import AcunetixPlugin
+from faraday.client.model.common import factory
+from faraday.client.persistence.server.models import (
     Vuln,
     Credential,
     VulnWeb,

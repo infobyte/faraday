@@ -8,10 +8,10 @@ See the file 'doc/LICENSE' for the license information
 import unittest
 import sys
 sys.path.append('.')
-import model.controller as controller
+import faraday.client.model.controller as controller
 from mockito import mock, verify, when, any
-from model.hosts import Host, Interface, Service
-from model.common import ModelObjectVuln, ModelObjectVulnWeb, ModelObjectNote, ModelObjectCred
+from faraday.client.model.hosts import Host, Interface, Service
+from faraday.client.model.common import ModelObjectVuln, ModelObjectVulnWeb, ModelObjectNote, ModelObjectCred
 
 
 class ModelObjectControllerUnitTest(unittest.TestCase):

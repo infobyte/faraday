@@ -8,9 +8,9 @@ from functools import partial
 
 import pytest
 
-from managers.mapper_manager import MapperManager
-from persistence.server.server import _create_server_api_url
-from persistence.server.models import (
+from faraday.client.managers.mapper_manager import MapperManager
+from faraday.client.persistence.server.server import _create_server_api_url
+from faraday.client.persistence.server.models import (
     Host,
     Service,
     Vuln,
@@ -19,8 +19,8 @@ from persistence.server.models import (
     Note,
     Command,
 )
-import persistence.server.server
-from persistence.server.utils import (
+import faraday.client.persistence.server.server
+from faraday.client.persistence.server.utils import (
     get_host_properties,
     get_service_properties,
     get_vuln_properties,
@@ -727,7 +727,7 @@ class TestMapperManager():
                 'rev': ''
             }
 
-        monkeypatch.setattr(persistence.server.server, '_post', partial(mock_server_post, test_data))
+        monkeypatch.setattr(faraday.client.persistence.server.server, '_post', partial(mock_server_post, test_data))
         obj = obj_class(raw_data, workspace.name)
         mapper_manager.save(obj)
 
@@ -768,7 +768,7 @@ class TestMapperManager():
                 'rev': ''
             }
 
-        monkeypatch.setattr(persistence.server.server, '_post', partial(mock_server_post, test_data))
+        monkeypatch.setattr(faraday.client.persistence.server.server, '_post', partial(mock_server_post, test_data))
         obj = obj_class(raw_data, workspace.name)
         mapper_manager.save(obj, command.id)
 
@@ -813,7 +813,7 @@ class TestMapperManager():
 
         raw_data['id'] = relational_model.id
         test_data['id'] = relational_model.id
-        monkeypatch.setattr(persistence.server.server, '_put', partial(mock_server_put, test_data))
+        monkeypatch.setattr(faraday.client.persistence.server.server, '_put', partial(mock_server_put, test_data))
 
         obj = obj_class(raw_data, workspace.name)
         mapper_manager.update(obj)
@@ -860,7 +860,7 @@ class TestMapperManager():
 
         raw_data['id'] = relational_model.id
         test_data['id'] = relational_model.id
-        monkeypatch.setattr(persistence.server.server, '_put', mock_server_put)
+        monkeypatch.setattr(faraday.client.persistence.server.server, '_put', mock_server_put)
         obj = obj_class(raw_data, workspace.name)
         mapper_manager.update(obj, command.id)
 
@@ -883,7 +883,7 @@ class TestMapperManager():
                 persisted_obj.id) == server_url
             return MockResponse(mocked_response, 200)
 
-        monkeypatch.setattr(persistence.server.server, '_unsafe_io_with_server', partial(mock_unsafe_io_with_server, persisted_obj, test_data))
+        monkeypatch.setattr(faraday.client.persistence.server.server, '_unsafe_io_with_server', partial(mock_unsafe_io_with_server, persisted_obj, test_data))
         found_obj = mapper_manager.find(obj_class.class_signature, persisted_obj.id)
         serialized_obj = test_data['get_properties_function'](found_obj)
         if obj_class not in [Command]:

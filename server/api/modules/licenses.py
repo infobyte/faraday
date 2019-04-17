@@ -6,12 +6,12 @@ import flask
 from flask import Blueprint
 from marshmallow import fields
 
-from server.models import License
-from server.api.base import (
+from faraday.server.models import License
+from faraday.server.api.base import (
     ReadWriteView,
     AutoSchema,
 )
-from server.schemas import (
+from faraday.server.schemas import (
     StrictDateTimeField,
     NullToBlankString
 )

@@ -11,7 +11,7 @@ import pytest
 
 sys.path.append(os.path.abspath(os.getcwd()))
 
-from server.models import db
+from faraday.server.models import db
 
 
 def endpoint():

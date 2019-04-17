@@ -5,7 +5,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-import model
+import faraday.client.model
 
 
 def simple_decorator(decorator):

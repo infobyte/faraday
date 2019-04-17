@@ -7,9 +7,9 @@ from datetime import datetime
 from flask import Blueprint
 from marshmallow import fields
 
-from server.api.base import AutoSchema, ReadWriteWorkspacedView, PaginatedMixin
-from server.models import Command
-from server.schemas import PrimaryKeyRelatedField
+from faraday.server.api.base import AutoSchema, ReadWriteWorkspacedView, PaginatedMixin
+from faraday.server.models import Command
+from faraday.server.schemas import PrimaryKeyRelatedField
 
 activityfeed_api = Blueprint('activityfeed_api', __name__)
 

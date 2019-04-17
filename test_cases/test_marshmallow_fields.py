@@ -9,7 +9,7 @@ import datetime
 import pytest
 from collections import namedtuple
 from marshmallow import Schema, fields, ValidationError
-from server.schemas import (
+from faraday.server.schemas import (
     JSTimestampField,
     MutableField,
     PrimaryKeyRelatedField,

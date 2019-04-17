@@ -138,6 +138,7 @@ class WebServer(object):
 
 
     def run(self):
+        print self.WEB_UI_LOCAL_PATH
         def signal_handler(*args):
             logger.info('Received SIGTERM, shutting down.')
             logger.info("Stopping threads, please wait...")

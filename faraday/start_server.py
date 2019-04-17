@@ -13,7 +13,6 @@ import subprocess
 try:
     from colorama import init, Fore
     import sqlalchemy
-    #import pdb; pdb.set_trace()
     import faraday.server.config
     import faraday.server.utils.logger
     from faraday.server.models import db, Workspace

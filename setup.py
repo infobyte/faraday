@@ -155,7 +155,7 @@ setup(
     #                            'server', 'config', 'utils', 'client'])
     #          ] + ['faraday'],
     #package_dir={'faraday': '.'},
-    packages=find_packages(include=['faraday']),
+    packages=find_packages(include=['faraday', 'faraday.*']),
 
     # Specify which Python versions you support. In contrast to the
     # 'Programming Language' classifiers above, 'pip install' will check this
@@ -190,10 +190,13 @@ setup(
     #
     # If using Python 2.6 or earlier, then these have to be included in
     # MANIFEST.in as well.
-    # package_data={  # Optional
-    #     'faraday': ['VERSION', 'requirements_server.txt'],
-    # },
     include_package_data=True,
+    package_data={  # Optional
+         'faraday': ['server/www/*',
+                     'config/default.xml'],
+         '': ['requirements.txt',
+              'requirements_server.txt'],
+    },
 
     # Although 'package_data' is the preferred approach, in some case you may
     # need to place data files outside of your packages. See:

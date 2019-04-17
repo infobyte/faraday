@@ -20,7 +20,7 @@ from faraday.config.configuration import getInstanceConfiguration
 
 LOGGING_LEVEL = INFO
 
-FARADAY_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+FARADAY_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 FARADAY_SERVER_SESSIONS_DIR = os.path.join(CONSTANTS.CONST_FARADAY_HOME_PATH, 'session')
 if not os.path.exists(CONSTANTS.CONST_FARADAY_HOME_PATH):
     os.mkdir(CONSTANTS.CONST_FARADAY_HOME_PATH)
@@ -31,7 +31,6 @@ FARADAY_SERVER_PID_FILE = os.path.join(
     CONSTANTS.CONST_FARADAY_HOME_PATH, 'faraday-server-port-{0}.pid')
 REQUIREMENTS_FILE = os.path.join(FARADAY_BASE, 'requirements_server.txt')
 DEFAULT_CONFIG_FILE = os.path.join(FARADAY_BASE, 'server/default.ini')
-VERSION_FILE = os.path.join(FARADAY_BASE, CONSTANTS.CONST_VERSION_FILE)
 REPORTS_VIEWS_DIR = os.path.join(FARADAY_BASE, 'views/reports')
 LOCAL_CONFIG_FILE = os.path.expanduser(
     os.path.join(CONSTANTS.CONST_FARADAY_HOME_PATH, 'config/server.ini'))

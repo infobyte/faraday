@@ -5,6 +5,8 @@ import os
 
 import flask
 from flask import Blueprint
+
+from faraday import __version__ as f_version
 from faraday.server.config import gen_web_config
 
 
@@ -12,14 +14,8 @@ info_api = Blueprint('info_api', __name__)
 
 @info_api.route('/v2/info', methods=['GET'])
 def show_info():
-    faraday_directory = os.path.dirname(os.path.realpath('faraday.py'))
 
-    file_path = os.path.join(faraday_directory, 'VERSION')
-
-    with open(file_path, 'r') as version_file:
-        version = version_file.read().strip()
-
-    response = flask.jsonify({'Faraday Server': 'Running', 'Version': version})
+    response = flask.jsonify({'Faraday Server': 'Running', 'Version': f_version})
     response.status_code = 200
 
     return response

@@ -254,7 +254,7 @@ class ImpactPlugin(core.PluginBase):
                 h_id,
                 item.ip,
                 ipv4_address=item.ip,
-                hostname_resolution=item.host)
+                hostname_resolution=[item.host])
 
             for service in item.services:
                 s_id = self.createAndAddServiceToInterface(

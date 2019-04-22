@@ -5,7 +5,7 @@ import os
 
 import flask
 from flask import Blueprint
-from server.config import gen_web_config
+from faraday.server.config import gen_web_config
 
 
 info_api = Blueprint('info_api', __name__)

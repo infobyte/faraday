@@ -11,12 +11,12 @@ from io import BytesIO
 from mock import Mock, patch
 
 from test_cases.factories import WorkspaceFactory
-from config.configuration import getInstanceConfiguration
+from faraday.config.configuration import getInstanceConfiguration
 
 @pytest.mark.usefixtures('logged_user')
 class TestFileUpload():
 
-    def test_file_upload(self, test_client, session):
+    def test_file_upload(self, test_client, session, csrf_token):
         ws = WorkspaceFactory.create(name="abc")
         session.add(ws)
         session.commit()
@@ -27,8 +27,6 @@ class TestFileUpload():
 
         with open(path,'r') as report:
             file_contents = report.read()
-        session_response = test_client.get('/session')
-        csrf_token = session_response.json.get('csrf_token')
         data = {
             'file' : (BytesIO(file_contents), 'nmap_report.xml'),
             'csrf_token' : csrf_token
@@ -77,7 +75,7 @@ class TestFileUpload():
         assert res.status_code == 403
     
 
-    def test_request_with_workspace_deactivate(self, test_client, session):
+    def test_request_with_workspace_deactivate(self, test_client, session, csrf_token):
         ws = WorkspaceFactory.create(name="abc")
         ws.active = False
         session.add(ws)
@@ -90,8 +88,6 @@ class TestFileUpload():
         with open(path,'r') as report:
             file_contents = report.read()
 
-        session_response = test_client.get('/session')
-        csrf_token = session_response.json.get('csrf_token')
         data = {
             'file' : (BytesIO(file_contents), 'nmap_report.xml'),
             'csrf_token' : csrf_token

@@ -15,9 +15,9 @@ import sys
 import unittest
 
 sys.path.append(os.path.abspath(os.getcwd()))
-from plugins.repo.telnet.plugin import TelnetRouterPlugin
-from model.common import factory
-from persistence.server.models import (
+from faraday.client.plugins.repo.telnet.plugin import TelnetRouterPlugin
+from faraday.client.model.common import factory
+from faraday.client.persistence.server.models import (
     Vuln,
     Credential,
     VulnWeb,

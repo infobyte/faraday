@@ -15,15 +15,15 @@ from sqlalchemy.orm import (
 from sqlalchemy.orm.exc import NoResultFound
 
 
-from server.models import db, Workspace, _make_vuln_count_property
-from server.schemas import (
+from faraday.server.models import db, Workspace, _make_vuln_count_property
+from faraday.server.schemas import (
     JSTimestampField,
     MutableField,
     PrimaryKeyRelatedField,
     SelfNestedField,
 )
-from server.api.base import ReadWriteView, AutoSchema
-from config.configuration import getInstanceConfiguration
+from faraday.server.api.base import ReadWriteView, AutoSchema
+from faraday.config.configuration import getInstanceConfiguration
 
 workspace_api = Blueprint('workspace_api', __name__)
 

@@ -5,8 +5,8 @@
 from flask import Blueprint
 from marshmallow import fields
 
-from server.models import CustomFieldsSchema
-from server.api.base import (
+from faraday.server.models import CustomFieldsSchema
+from faraday.server.api.base import (
     AutoSchema,
     ReadWriteView,
 )
@@ -19,10 +19,12 @@ class CustomFieldsSchemaSchema(AutoSchema):
 
     class Meta:
         model = CustomFieldsSchema
-        fields = ('field_name',
+        fields = ('id',
+                  'field_name',
                   'field_type',
                   'field_display_name',
                   'field_order',
+                  'table_name'
                   )
 
 

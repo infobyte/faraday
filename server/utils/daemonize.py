@@ -15,8 +15,8 @@ import atexit
 import signal
 from functools import partial
 
-import server.config
-from server.utils.logger import get_logger
+import faraday.server.config
+from faraday.server.utils.logger import get_logger
 
 
 # Default daemon parameters.
@@ -137,7 +137,7 @@ def createDaemon():
 
 def start_server():
     get_logger(__name__).info('Running as a daemon')
-    WORKDIR = server.config.FARADAY_BASE
+    WORKDIR = faraday.server.config.FARADAY_BASE
     createDaemon()
 
 def stop_server(port):
@@ -188,10 +188,10 @@ def is_server_running(port):
 def get_server_pid(port):
     logger = get_logger(__name__)
 
-    if not os.path.isfile(server.config.FARADAY_SERVER_PID_FILE.format(port)):
+    if not os.path.isfile(faraday.server.config.FARADAY_SERVER_PID_FILE.format(port)):
         return None
 
-    with open(server.config.FARADAY_SERVER_PID_FILE.format(port), 'r') as pid_file:
+    with open(faraday.server.config.FARADAY_SERVER_PID_FILE.format(port), 'r') as pid_file:
         # If PID file is badly written, delete it and
         # assume server is not running
         try:
@@ -206,21 +206,21 @@ def get_server_pid(port):
     return pid
 
 def create_pid_file(port):
-    with open(server.config.FARADAY_SERVER_PID_FILE.format(port), 'w') as pid_file:
+    with open(faraday.server.config.FARADAY_SERVER_PID_FILE.format(port), 'w') as pid_file:
         pid_file.write('{}'.format(os.getpid()))
     atexit.register(partial(remove_pid_file, port))
 
 def remove_pid_file(port):
-    os.remove(server.config.FARADAY_SERVER_PID_FILE.format(port))
+    os.remove(faraday.server.config.FARADAY_SERVER_PID_FILE.format(port))
 
 def get_ports_running():
     ports = []
-    re_string = re.escape(server.config.FARADAY_SERVER_PID_FILE)
+    re_string = re.escape(faraday.server.config.FARADAY_SERVER_PID_FILE)
     re_string = re_string.replace("\{0\}","[0-9]+")
-    home_dir = os.listdir(server.config.CONSTANTS.CONST_FARADAY_HOME_PATH)
+    home_dir = os.listdir(faraday.server.config.CONSTANTS.CONST_FARADAY_HOME_PATH)
 
     for path in home_dir:
-        path = server.config.CONSTANTS.CONST_FARADAY_HOME_PATH + "/" + path
+        path = faraday.server.config.CONSTANTS.CONST_FARADAY_HOME_PATH + "/" + path
         if re.match(re_string,path):
             port = path.split("-")[-1].split(".")[0]
             ports.append(int(port))

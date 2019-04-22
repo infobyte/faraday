@@ -3,13 +3,12 @@ import time
 import signal
 import subprocess
 from datetime import datetime
-from server.utils import daemonize
-import server.config
+from faraday.server.utils import daemonize
 
 try:
     import ConfigParser
 except ImportError:
-    import configparser as ConfigParser
+    import faraday.client.configparser as ConfigParser
 
 
 def test_start_and_kill_faraday_server():
@@ -46,15 +45,32 @@ def test_start_and_kill_faraday_server():
         faraday_config.set('database', 'connection_string', connection_string)
         with open(config_path, 'w') as faraday_config_file:
             faraday_config.write(faraday_config_file)
-        manage_script = os.path.join(current_path, '..', 'manage.py')
-        command = ['/usr/bin/env', 'python2.7', manage_script, 'create-tables']
-        subproc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd= os.path.join(current_path, '..'))
+
+        # setup_script = os.path.join(current_path, '..', 'setup.py')
+        # command = ['/usr/bin/env', 'python2.7', setup_script, 'install']
+        # subproc = subprocess.Popen(command, #stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        #                            cwd=os.path.join(current_path, '..'))
+        # start = datetime.now()
+        # while subproc.returncode is None:
+        #     now = datetime.now()
+        #     delta = now - start
+        #     if delta.seconds > 140:
+        #         captured = capsys.readouterr()
+        #         assert False, ("INSTALL TIMEOUT", captured.out, captured.out)
+        #     subproc.poll()
+        #     time.sleep(0.1)
+        # subproc.wait()
+        # std, err = subproc.communicate()
+        # assert subproc.returncode == 0, ('Can not install!', std, err)
+
+        command = ['faraday-manage', 'create-tables']
+        subproc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         subproc.wait()
         std, err = subproc.communicate()
         assert subproc.returncode == 0, ('Create tables failed!', std, err)
 
-    server_script = os.path.join(current_path, '..', 'faraday-server.py')
-    command = ['/usr/bin/env', 'python2.7', server_script, '--port', '{0}'.format(server_port), '--debug']
+
+    command = ['faraday-server', '--port', '{0}'.format(server_port), '--debug']
     subproc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     start = datetime.now()
     while subproc.returncode is None:
@@ -74,4 +90,4 @@ def test_start_and_kill_faraday_server():
         log_path = os.path.expanduser('~/.faraday/logs/faraday-server.log')
         with open(log_path, 'r') as log_file:
             print(log_file.read())
-    assert subproc.returncode == 0, (out, err, command, server_script)
+    assert subproc.returncode == 0, (out, err, command)

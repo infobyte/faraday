@@ -10,16 +10,16 @@ import socket
 import argparse
 import requests
 import sqlalchemy
-import server.config
+import faraday.server.config
 from colorama import init
-from server.web import app
-from server.models import db
-from utils import dependencies
+from faraday.server.web import app
+from faraday.server.models import db
+from faraday.utils import dependencies
 from requests.exceptions import InvalidURL, ConnectionError
 from colorama import Fore, Back, Style
-from server.utils.daemonize import is_server_running
-from config.configuration import getInstanceConfiguration
-from config import constant as CONSTANTS
+from faraday.server.utils.daemonize import is_server_running
+from faraday.config.configuration import getInstanceConfiguration
+from faraday.config import constant as CONSTANTS
 
 
 CONF = getInstanceConfiguration()
@@ -28,14 +28,14 @@ init()
 
 
 def check_server_running():
-    port = int(server.config.faraday_server.port)
+    port = int(faraday.server.config.faraday_server.port)
     pid = is_server_running(port)
     return pid
 
 
 def check_open_ports():
-   address =  server.config.faraday_server.bind_address
-   port = int(server.config.faraday_server.port)
+   address =  faraday.server.config.faraday_server.bind_address
+   port = int(faraday.server.config.faraday_server.port)
    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
    result = sock.connect_ex((address,port))
    if result == 0:
@@ -47,8 +47,8 @@ def check_open_ports():
 def check_postgres():
     with app.app_context():
         try:
-            result = str(db.engine.execute("SELECT version()"))
-            return result 
+            result = (str(db.session.query("version()").one()),db.session.query("current_setting('server_version_num')").one())
+            return result
         except sqlalchemy.exc.OperationalError:
             return False
         except sqlalchemy.exc.ArgumentError:
@@ -108,7 +108,7 @@ def check_client():
     if port_rest is None:
         port_rest = "9977"
     try:
-        response_rest = requests.get('http://{}:{}/status/check'.format(server.config.faraday_server.bind_address,port_rest))
+        response_rest = requests.get('http://{}:{}/status/check'.format(faraday.server.config.faraday_server.bind_address,port_rest))
         return True 
     except ConnectionError:
         return False
@@ -154,8 +154,8 @@ def check_credentials():
     api_username = CONF.getAPIUsername()
     api_password = CONF.getAPIPassword()
     
-    address =  server.config.faraday_server.bind_address
-    port = int(server.config.faraday_server.port)
+    address =  faraday.server.config.faraday_server.bind_address
+    port = int(faraday.server.config.faraday_server.port)
     
     values = {'email': api_username , 'password': api_password}
  
@@ -189,8 +189,12 @@ def print_postgresql_status():
     """Prints the status of PostgreSQL using check_postgres()"""
     exit_code = 0
     result = check_postgres()
-    if result:
-        print('[{green}+{white}] PostgreSQL is running'.\
+    print(result[0])
+    if result[1]<90400:
+        print('[{red}-{white}] PostgreSQL is running, but needs to be 9.4 or newer, please update PostgreSQL'.\
+            format(red=Fore.RED, white=Fore.WHITE))
+    elif result:
+        print('[{green}+{white}] PostgreSQL is running and up to date'.\
             format(green=Fore.GREEN, white=Fore.WHITE))
         return exit_code
     elif result == False:
@@ -302,10 +306,10 @@ def print_config_status():
 
     if check_open_ports():
         print "[{green}+{white}] Port {PORT} in {ad} is open"\
-            .format(PORT=server.config.faraday_server.port, green=Fore.GREEN,white=Fore.WHITE,ad=server.config.faraday_server.bind_address)
+            .format(PORT=faraday.server.config.faraday_server.port, green=Fore.GREEN,white=Fore.WHITE,ad=faraday.server.config.faraday_server.bind_address)
     else:
         print "[{red}-{white}] Port {PORT} in {ad} is not open"\
-            .format(PORT=server.config.faraday_server.port,red=Fore.RED,white=Fore.WHITE,ad =server.config.faraday_server.bind_address)
+            .format(PORT=faraday.server.config.faraday_server.port,red=Fore.RED,white=Fore.WHITE,ad =faraday.server.config.faraday_server.bind_address)
 
 
 def full_status_check():

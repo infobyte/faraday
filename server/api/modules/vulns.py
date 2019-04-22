@@ -8,26 +8,28 @@ import logging
 from base64 import b64encode, b64decode
 
 import flask
+import wtforms
 from filteralchemy import Filter, FilterSet, operators
 from flask import request
 from flask import Blueprint
 from flask_classful import route
 from flask_restless.search import search
+from flask_wtf.csrf import validate_csrf
 from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
 from sqlalchemy.orm.exc import NoResultFound
 
 from depot.manager import DepotManager
-from server.api.base import (
+from faraday.server.api.base import (
     AutoSchema,
     FilterAlchemyMixin,
     FilterSetMeta,
     PaginatedMixin,
     ReadWriteWorkspacedView,
     InvalidUsage)
-from server.fields import FaradayUploadedFile
-from server.models import (
+from faraday.server.fields import FaradayUploadedFile
+from faraday.server.models import (
     db,
     File,
     Host,
@@ -38,10 +40,10 @@ from server.models import (
     VulnerabilityWeb,
     VulnerabilityGeneric,
 )
-from server.utils.database import get_or_create
+from faraday.server.utils.database import get_or_create
 
-from server.api.modules.services import ServiceSchema
-from server.schemas import (
+from faraday.server.api.modules.services import ServiceSchema
+from faraday.server.schemas import (
     MutableField,
     SeverityField,
     MetadataSchema,
@@ -157,10 +159,13 @@ class VulnerabilitySchema(AutoSchema):
         res = {}
 
         for file_obj in obj.evidence:
-            ret, errors = EvidenceSchema().dump(file_obj)
-            if errors:
-                raise ValidationError(errors, data=ret)
-            res[file_obj.filename] = ret
+            try:
+                ret, errors = EvidenceSchema().dump(file_obj)
+                if errors:
+                    raise ValidationError(errors, data=ret)
+                res[file_obj.filename] = ret
+            except IOError:
+                logger.warning("File not found. Did you move your server?")
 
         return res
 
@@ -579,6 +584,10 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('/<int:vuln_id>/attachment/', methods=['POST'])
     def post_attachment(self, workspace_name, vuln_id):
+        try:
+            validate_csrf(request.form.get('csrf_token'))
+        except wtforms.ValidationError:
+            flask.abort(403)
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(VulnerabilityGeneric.id == vuln_id,
                                 Workspace.name == workspace_name).first()
@@ -661,6 +670,27 @@ class VulnerabilityView(PaginatedMixin,
                 flask.abort(404, "File not found")
         else:
             flask.abort(404, "Vulnerability not found")
+
+    @route('/<int:vuln_id>/attachments/', methods=['GET'])
+    def get_attachments_by_vuln(self, workspace_name, vuln_id):
+        workspace = self._get_workspace(workspace_name)
+        vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
+            Workspace).filter(VulnerabilityGeneric.id == vuln_id,
+                              Workspace.name == workspace.name).first()
+        if vuln_workspace_check:
+            files = db.session.query(File).filter_by(object_type='vulnerability',
+                                                        object_id=vuln_id).all()
+            res = {}
+            for file_obj in files:
+                ret, errors = EvidenceSchema().dump(file_obj)
+                if errors:
+                    raise ValidationError(errors, data=ret)
+                res[file_obj.filename] = ret
+
+            return flask.jsonify(res)
+        else:
+            flask.abort(404, "Vulnerability not found")
+
 
     @route('/<int:vuln_id>/attachment/<attachment_filename>/', methods=['DELETE'])
     def delete_attachment(self, workspace_name, vuln_id, attachment_filename):

@@ -13,11 +13,11 @@ a crash or bug
 import sys
 import traceback
 import threading
-import model.guiapi
+import faraday.client.model.guiapi
 from cStringIO import StringIO
-from gui.customevents import ShowExceptionCustomEvent
-from gui.customevents import EXCEPTION_ID
-from config.configuration import getInstanceConfiguration
+from faraday.client.gui.customevents import ShowExceptionCustomEvent
+from faraday.client.gui.customevents import EXCEPTION_ID
+from faraday.config.configuration import getInstanceConfiguration
 import json
 import time
 
@@ -79,7 +79,7 @@ def exception_handler(type, value, tb):
 
 
     event = ShowExceptionCustomEvent(description, reportToDevelopers, error_name)
-    model.guiapi.postCustomEvent(event)
+    faraday.client.model.guiapi.postCustomEvent(event)
     text.seek(0)
     text.truncate()
     del text

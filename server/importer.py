@@ -34,11 +34,11 @@ except ImportError:
 from IPy import IP
 from passlib.utils.binary import ab64_encode
 from tqdm import tqdm
-import server.config
+import faraday.server.config
 
-import server.models
-import server.utils.logger
-from server.models import (
+import faraday.server.models
+import faraday.server.utils.logger
+from faraday.server.models import (
     db,
     Command,
     CommandObject,
@@ -66,18 +66,18 @@ from server.models import (
     WorkspacePermission,
     File,
 )
-from server.utils import invalid_chars
-from server.utils.database import get_or_create
-from server.web import app
+from faraday.server.utils import invalid_chars
+from faraday.server.utils.database import get_or_create
+from faraday.server.web import app
 
 COUCHDB_USER_PREFIX = 'org.couchdb.user:'
 COUCHDB_PASSWORD_PREFIX = '-pbkdf2-'
 
-logger = server.utils.logger.get_logger(__name__)
+logger = faraday.server.utils.logger.get_logger(__name__)
 
 importer_logfile = os.path.expanduser(os.path.join(
-    server.config.CONSTANTS.CONST_FARADAY_HOME_PATH,
-    server.config.CONSTANTS.CONST_FARADAY_LOGS_PATH, 'couchdb-importer.log'))
+    faraday.server.config.CONSTANTS.CONST_FARADAY_HOME_PATH,
+    faraday.server.config.CONSTANTS.CONST_FARADAY_LOGS_PATH, 'couchdb-importer.log'))
 importer_file_handler = logging.FileHandler(importer_logfile)
 formatter = logging.Formatter(
         '%(asctime)s - %(name)s:%(lineno)d - %(levelname)s - %(message)s')
@@ -170,10 +170,10 @@ for model in (
 
 def get_object_from_couchdb(couchdb_id, workspace):
     doc_url = 'http://{username}:{password}@{hostname}:{port}/{workspace_name}/{doc_id}'.format(
-        username=server.config.couchdb.user,
-        password=server.config.couchdb.password,
-        hostname=server.config.couchdb.host,
-        port=server.config.couchdb.port,
+        username=faraday.server.config.couchdb.user,
+        password=faraday.server.config.couchdb.password,
+        hostname=faraday.server.config.couchdb.host,
+        port=faraday.server.config.couchdb.port,
         workspace_name=workspace.name,
         doc_id=couchdb_id
     )
@@ -191,10 +191,10 @@ def get_children_from_couch(workspace, parent_couchdb_id, child_type):
     """
 
     couch_url = "http://{username}:{password}@{hostname}:{port}/{workspace_name}/".format(
-        username=server.config.couchdb.user,
-        password=server.config.couchdb.password,
-        hostname=server.config.couchdb.host,
-        port=server.config.couchdb.port,
+        username=faraday.server.config.couchdb.user,
+        password=faraday.server.config.couchdb.password,
+        hostname=faraday.server.config.couchdb.host,
+        port=faraday.server.config.couchdb.port,
         workspace_name=workspace.name,
     )
 
@@ -734,10 +734,10 @@ class VulnerabilityImporter(object):
         for attachment_name, attachment_data in attachments_data.items():
             # http://localhost:5984/evidence/334389048b872a533002b34d73f8c29fd09efc50.c7b0f6cba2fae8e446b7ffedfdb18026bb9ba41d/forbidden.png
             attachment_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
-                username=server.config.couchdb.user,
-                password=server.config.couchdb.password,
-                hostname=server.config.couchdb.host,
-                port=server.config.couchdb.port,
+                username=faraday.server.config.couchdb.user,
+                password=faraday.server.config.couchdb.password,
+                hostname=faraday.server.config.couchdb.host,
+                port=faraday.server.config.couchdb.port,
                 path='{0}/{1}/{2}'.format(
                     workspace.name,
                     document.get('_id'),
@@ -1029,10 +1029,10 @@ class ReportsImporter(object):
             db.session.delete(old_attachment)
         for filename, attachment in document.get('_attachments', {}).items():
             attachment_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
-                username=server.config.couchdb.user,
-                password=server.config.couchdb.password,
-                hostname=server.config.couchdb.host,
-                port=server.config.couchdb.port,
+                username=faraday.server.config.couchdb.user,
+                password=faraday.server.config.couchdb.password,
+                hostname=faraday.server.config.couchdb.host,
+                port=faraday.server.config.couchdb.port,
                 path='{0}/{1}/{2}'.format(workspace.name, document.get('_id'),
                                           filename)
             )
@@ -1136,18 +1136,18 @@ class ImportCouchDBUsers():
 
     def get_users_and_admins(self):
         admins_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
-                    username=server.config.couchdb.user,
-                    password=server.config.couchdb.password,
-                    hostname=server.config.couchdb.host,
-                    port=server.config.couchdb.port,
+                    username=faraday.server.config.couchdb.user,
+                    password=faraday.server.config.couchdb.password,
+                    hostname=faraday.server.config.couchdb.host,
+                    port=faraday.server.config.couchdb.port,
                     path='_config/admins'
         )
 
         users_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
-                    username=server.config.couchdb.user,
-                    password=server.config.couchdb.password,
-                    hostname=server.config.couchdb.host,
-                    port=server.config.couchdb.port,
+                    username=faraday.server.config.couchdb.user,
+                    password=faraday.server.config.couchdb.password,
+                    hostname=faraday.server.config.couchdb.host,
+                    port=faraday.server.config.couchdb.port,
                     path='_users/_all_docs?include_docs=true'
         )
         admins = requests.get(admins_url).json()
@@ -1222,10 +1222,10 @@ class ImportVulnerabilityTemplates():
     def run(self):
         logger.debug("Importing vulnerability templates")
         cwe_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
-            username=server.config.couchdb.user,
-            password=server.config.couchdb.password,
-            hostname=server.config.couchdb.host,
-            port=server.config.couchdb.port,
+            username=faraday.server.config.couchdb.user,
+            password=faraday.server.config.couchdb.password,
+            hostname=faraday.server.config.couchdb.host,
+            port=faraday.server.config.couchdb.port,
             path='cwe/_all_docs?include_docs=true'
         )
 
@@ -1305,10 +1305,10 @@ class ImportLicense():
 
     def run(self):
         licenses_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
-            username=server.config.couchdb.user,
-            password=server.config.couchdb.password,
-            hostname=server.config.couchdb.host,
-            port=server.config.couchdb.port,
+            username=faraday.server.config.couchdb.user,
+            password=faraday.server.config.couchdb.password,
+            hostname=faraday.server.config.couchdb.host,
+            port=faraday.server.config.couchdb.port,
             path='faraday_licenses/_all_docs?include_docs=true'
         )
 
@@ -1338,10 +1338,10 @@ class ImportCouchDB():
     def _open_couchdb_conn(self):
 
         self.couch_url = "http://{username}:{password}@{hostname}:{port}".format(
-                username=server.config.couchdb.user,
-                password=server.config.couchdb.password,
-                hostname=server.config.couchdb.host,
-                port=server.config.couchdb.port,
+                username=faraday.server.config.couchdb.user,
+                password=faraday.server.config.couchdb.password,
+                hostname=faraday.server.config.couchdb.host,
+                port=faraday.server.config.couchdb.port,
         )
 
         try:
@@ -1423,10 +1423,10 @@ class ImportCouchDB():
     def verify_import_data(self, couchdb_relational_map, couchdb_relational_map_by_type, workspace):
         self.verify_host_vulns_count_is_correct(couchdb_relational_map, couchdb_relational_map_by_type, workspace)
         all_docs_url = "http://{username}:{password}@{hostname}:{port}/{workspace_name}/_all_docs?include_docs=true".format(
-                    username=server.config.couchdb.user,
-                    password=server.config.couchdb.password,
-                    hostname=server.config.couchdb.host,
-                    port=server.config.couchdb.port,
+                    username=faraday.server.config.couchdb.user,
+                    password=faraday.server.config.couchdb.password,
+                    hostname=faraday.server.config.couchdb.host,
+                    port=faraday.server.config.couchdb.port,
                     workspace_name=workspace.name
         )
         all_ids = map(lambda x: x['doc']['_id'], requests.get(all_docs_url).json()['rows'])
@@ -1484,10 +1484,10 @@ class ImportCouchDB():
             session.commit()
 
             couch_url = "http://{username}:{password}@{hostname}:{port}/{workspace_name}/_temp_view?include_docs=true".format(
-                username=server.config.couchdb.user,
-                password=server.config.couchdb.password,
-                hostname=server.config.couchdb.host,
-                port=server.config.couchdb.port,
+                username=faraday.server.config.couchdb.user,
+                password=faraday.server.config.couchdb.password,
+                hostname=faraday.server.config.couchdb.host,
+                port=faraday.server.config.couchdb.port,
                 workspace_name=workspace_name
             )
 

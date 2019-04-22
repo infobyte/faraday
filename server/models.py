@@ -42,13 +42,13 @@ from flask_sqlalchemy import (
 
 from depot.fields.sqlalchemy import UploadedFileField
 
-import server.config
-from server.fields import FaradayUploadedFile, JSONType
+import faraday.server.config
+from faraday.server.fields import FaradayUploadedFile, JSONType
 from flask_security import (
     RoleMixin,
     UserMixin,
 )
-from server.utils.database import (
+from faraday.server.utils.database import (
     BooleanToIntColumn,
     get_object_type_for,
     is_unique_constraint_violation)
@@ -1793,6 +1793,7 @@ class ExecutiveReport(Metadata):
     title = BlankColumn(Text)
     confirmed = Column(Boolean, nullable=False, default=False)
     vuln_count = Column(Integer, default=0)  # saves the amount of vulns when the report was generated.
+    markdown = Column(Boolean, default=False, nullable=False)
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
@@ -1857,4 +1858,4 @@ event.listen(
 )
 
 # We have to import this after all models are defined
-import server.events
+import faraday.server.events

@@ -1,5 +1,5 @@
-from server.web import app
-from server.models import User, db
+from faraday.server.web import app
+from faraday.server.models import User, db
 
 def changes_password(username, password):
     with app.app_context():

@@ -8,24 +8,24 @@ from flask_classful import route
 from marshmallow import fields, Schema
 from filteralchemy import Filter, FilterSet, operators
 
-from server.utils.database import get_or_create
+from faraday.server.utils.database import get_or_create
 
-from server.api.base import (
+from faraday.server.api.base import (
     ReadWriteWorkspacedView,
     PaginatedMixin,
     AutoSchema,
     FilterAlchemyMixin,
     FilterSetMeta,
 )
-from server.schemas import (
+from faraday.server.schemas import (
     MetadataSchema,
     MutableField,
     NullToBlankString,
     PrimaryKeyRelatedField,
     SelfNestedField
 )
-from server.models import Host, Service, db, Hostname
-from server.api.modules.services import ServiceSchema
+from faraday.server.models import Host, Service, db, Hostname
+from faraday.server.api.modules.services import ServiceSchema
 
 host_api = Blueprint('host_api', __name__)
 

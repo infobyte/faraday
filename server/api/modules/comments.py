@@ -6,12 +6,12 @@ from marshmallow import fields, ValidationError
 from marshmallow.validate import OneOf
 
 
-from server.models import db, Host, Service, CommandObject
-from server.api.base import (
+from faraday.server.models import db, Host, Service, CommandObject
+from faraday.server.api.base import (
     AutoSchema,
     ReadWriteWorkspacedView,
     InvalidUsage, CreateWorkspacedMixin, GenericWorkspacedView)
-from server.models import Comment
+from faraday.server.models import Comment
 comment_api = Blueprint('comment_api', __name__)
 
 

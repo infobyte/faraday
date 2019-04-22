@@ -18,8 +18,8 @@ from sqlalchemy import event
 from pytest_factoryboy import register
 
 sys.path.append(os.path.abspath(os.getcwd()))
-from server.app import create_app
-from server.models import db
+from faraday.server.app import create_app
+from faraday.server.models import db
 from test_cases import factories
 
 
@@ -276,3 +276,9 @@ def ignore_nplusone(app):
     app.config['NPLUSONE_RAISE'] = False
     yield
     app.config['NPLUSONE_RAISE'] = old
+
+
+@pytest.fixture
+def csrf_token(logged_user, test_client):
+    session_response = test_client.get('/session')
+    return session_response.json.get('csrf_token')

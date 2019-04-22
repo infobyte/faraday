@@ -8,9 +8,9 @@ from flask import Blueprint
 from flask_classful import route
 from marshmallow import fields, post_load
 
-from server.api.base import AutoSchema, ReadWriteWorkspacedView, PaginatedMixin
-from server.models import Command, Workspace
-from server.schemas import PrimaryKeyRelatedField
+from faraday.server.api.base import AutoSchema, ReadWriteWorkspacedView, PaginatedMixin
+from faraday.server.models import Command, Workspace
+from faraday.server.schemas import PrimaryKeyRelatedField
 
 commandsrun_api = Blueprint('commandsrun_api', __name__)
 
@@ -20,6 +20,7 @@ class CommandSchema(AutoSchema):
     itime = fields.Method(serialize='get_itime', deserialize='load_itime', required=True, attribute='start_date')
     duration = fields.Method(serialize='get_duration', allow_none=True)
     workspace = PrimaryKeyRelatedField('name', dump_only=True)
+    creator = PrimaryKeyRelatedField('username', dump_only=True)
 
     def load_itime(self, value):
         return datetime.datetime.fromtimestamp(value)
@@ -45,7 +46,7 @@ class CommandSchema(AutoSchema):
     class Meta:
         model = Command
         fields = ('_id', 'command', 'duration', 'itime', 'ip', 'hostname',
-                  'params', 'user', 'workspace', 'tool', 'import_source')
+                  'params', 'user', 'creator', 'workspace', 'tool', 'import_source')
 
 
 class CommandView(PaginatedMixin, ReadWriteWorkspacedView):

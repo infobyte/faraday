@@ -26,8 +26,8 @@ from test_api_workspaced_base import (
     ReadWriteAPITests,
     PaginationTestsMixin,
 )
-from server.models import db, Host, Hostname
-from server.api.modules.hosts import HostsView
+from faraday.server.models import db, Host, Hostname
+from faraday.server.api.modules.hosts import HostsView
 from test_cases.factories import HostFactory, CommandFactory, \
     EmptyCommandFactory, WorkspaceFactory
 

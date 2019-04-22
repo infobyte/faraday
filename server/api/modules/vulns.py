@@ -676,9 +676,7 @@ class VulnerabilityView(PaginatedMixin,
                                                         object_id=vuln_id).all()
             res = {}
             for file_obj in files:
-                ret, errors = EvidenceSchema().dump(file_obj)
-                if errors:
-                    raise ValidationError(errors, data=ret)
+                ret = EvidenceSchema().dump(file_obj)
                 res[file_obj.filename] = ret
 
             return flask.jsonify(res)

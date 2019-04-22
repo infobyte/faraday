@@ -55,7 +55,7 @@ class TestCredentialsAPIGeneric(ReadOnlyAPITests):
         raw_comment = self._create_raw_comment('workspace', service.id)
         res = test_client.post(self.url(), data=raw_comment)
         assert res.status_code == 400
-        assert res.json == {u'messages': {u'object_type': [u'Not a valid choice.']}}
+        assert 'Must be one of' in res.json['messages']['object_type'][0]
 
     def test_cannot_create_comment_of_another_workspace_object(self, test_client, session, second_workspace):
         service = ServiceFactory.create(workspace=self.workspace)

@@ -19,10 +19,12 @@ class CustomFieldsSchemaSchema(AutoSchema):
 
     class Meta:
         model = CustomFieldsSchema
-        fields = ('field_name',
+        fields = ('id',
+                  'field_name',
                   'field_type',
                   'field_display_name',
                   'field_order',
+                  'table_name'
                   )
 
 

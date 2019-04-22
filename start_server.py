@@ -162,7 +162,7 @@ def check_alembic_version():
 
 def main():
     os.chdir(FARADAY_BASE)
-    # check_alembic_version()
+    check_alembic_version()
     check_postgresql()
     parser = argparse.ArgumentParser()
     parser.add_argument('--ssl', action='store_true', help='enable HTTPS')

@@ -665,6 +665,27 @@ class VulnerabilityView(PaginatedMixin,
         else:
             flask.abort(404, "Vulnerability not found")
 
+    @route('/<int:vuln_id>/attachments/', methods=['GET'])
+    def get_attachments_by_vuln(self, workspace_name, vuln_id):
+        workspace = self._get_workspace(workspace_name)
+        vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
+            Workspace).filter(VulnerabilityGeneric.id == vuln_id,
+                              Workspace.name == workspace.name).first()
+        if vuln_workspace_check:
+            files = db.session.query(File).filter_by(object_type='vulnerability',
+                                                        object_id=vuln_id).all()
+            res = {}
+            for file_obj in files:
+                ret, errors = EvidenceSchema().dump(file_obj)
+                if errors:
+                    raise ValidationError(errors, data=ret)
+                res[file_obj.filename] = ret
+
+            return flask.jsonify(res)
+        else:
+            flask.abort(404, "Vulnerability not found")
+
+
     @route('/<int:vuln_id>/attachment/<attachment_filename>/', methods=['DELETE'])
     def delete_attachment(self, workspace_name, vuln_id, attachment_filename):
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(

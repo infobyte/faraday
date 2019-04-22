@@ -8,11 +8,12 @@ angular.module("faradayApp")
                      "$location", "$uibModal", "$cookies", "$q", "$window", "BASEURL",
                      "SEVERITIES", "EASEOFRESOLUTION", "STATUSES", "hostsManager", "commonsFact", 'parserFact',
                      "vulnsManager", "workspacesFact", "csvService", "uiGridConstants", "vulnModelsManager",
-                     "referenceFact", "ServerAPI", '$http',
+                     "referenceFact", "ServerAPI", '$http', 'uiCommonFact', 'FileUploader',
                     function($scope, $filter, $routeParams,
                         $location, $uibModal, $cookies, $q, $window, BASEURL,
                         SEVERITIES, EASEOFRESOLUTION, STATUSES, hostsManager, commonsFact,parserFact,
-                        vulnsManager, workspacesFact, csvService, uiGridConstants, vulnModelsManager, referenceFact, ServerAPI, $http) {
+                        vulnsManager, workspacesFact, csvService, uiGridConstants, vulnModelsManager, referenceFact,
+                        ServerAPI, $http, uiCommonFact, FileUploader) {
         $scope.baseurl;
         $scope.columns;
         $scope.columnsWidths;
@@ -33,6 +34,17 @@ angular.module("faradayApp")
 
         $scope.gridHeight;
         $scope.customFields;
+
+        $scope.isShowingPreview;
+
+        $scope.cweList;
+        $scope.temTemplate;
+        $scope.new_ref;
+        $scope.new_policyviolation;
+
+        $scope.selectedAtachment;
+
+
         var allVulns;
 
         var searchFilter = {};
@@ -43,6 +55,27 @@ angular.module("faradayApp")
             sortColumn: null,
             sortDirection: null
         };
+
+        var uploader = $scope.uploader = new FileUploader({});
+
+        // FILTERS
+
+        // a sync filter
+        uploader.filters.push({
+            name: 'syncFilter',
+            fn: function(item /*{File|FileLikeObject}*/, options) {
+                return this.queue.length < 10;
+            }
+        });
+
+        // an async filter
+        uploader.filters.push({
+            name: 'asyncFilter',
+            fn: function(item /*{File|FileLikeObject}*/, options, deferred) {
+                setTimeout(deferred.resolve, 1e3);
+            }
+        });
+
 
         var init = function() {
             $scope.baseurl = BASEURL;
@@ -288,6 +321,23 @@ angular.module("faradayApp")
             });
 
             $cookies.remove("selectedVulns");
+            $scope.isShowingPreview = false;
+
+            $scope.cweList = [];
+
+            vulnModelsManager.get().then(function (data) {
+                $scope.cweList = data;
+            });
+
+            $scope.temTemplate = undefined;
+            $scope.new_ref = "";
+            $scope.new_policyviolation = "";
+
+            $scope.selectedAtachment = {
+                url: '',
+                name: '',
+                imgPrevFail: false
+            };
         };
 
 
@@ -828,6 +878,7 @@ angular.module("faradayApp")
 
         // action triggered from EDIT button
         $scope.edit = function() {
+            $scope.hideVulnPreview();
             _edit($scope.getCurrentSelection());
         };
 
@@ -1109,6 +1160,7 @@ angular.module("faradayApp")
         };
 
         $scope.new = function() {
+            $scope.hideVulnPreview();
             var modal = $uibModal.open({
                 templateUrl: 'scripts/statusReport/partials/modalNew.html',
                 backdrop : 'static',
@@ -1266,6 +1318,298 @@ angular.module("faradayApp")
 
             return elements.join("\n" + (useDoubleLinebreak ? "\n" : ""));
         };
+
+        $scope.showVulnPreview = function () {
+          $scope.isShowingPreview = true;
+          angular.element('#vuln-preview').addClass('show-preview');
+          // angular.element('.faraday-page-header').addClass('show-preview');
+          // angular.element('#btn_bar').addClass('show-preview');
+        };
+
+        $scope.hideVulnPreview = function () {
+            $scope.lastClickedVuln = undefined;
+            $scope.isShowingPreview = false;
+            angular.element('#vuln-preview').removeClass('show-preview');
+            // angular.element('.faraday-page-header').removeClass('show-preview');
+            // angular.element('#btn_bar').removeClass('show-preview');
+        };
+
+
+        var updateSelectedVulnAtachments = function () {
+            var url = '/_api/v2/ws/' + $routeParams.wsId + '/vulns/' + $scope.lastClickedVuln._id + '/attachments/';
+            $http.get(url).then(
+                function (response) {
+                    $scope.lastClickedVuln._attachments = response.data
+                }
+            );
+        };
+
+        $scope.toggleVulnPreview = function (e, vuln) {
+            e.stopPropagation();
+            if ($scope.lastClickedVuln !== undefined && $scope.lastClickedVuln._id === vuln._id){
+                $scope.hideVulnPreview();
+                $scope.lastClickedVuln = undefined;
+            }else{
+                $scope.showVulnPreview();
+                $scope.realVuln = vuln;
+                $scope.lastClickedVuln = angular.copy(vuln);
+                updateSelectedVulnAtachments();
+                uiCommonFact.updateBtnSeverityColor($scope.lastClickedVuln.severity, '#btn-chg-severity-prev', '#caret-chg-severity-prev');
+                uiCommonFact.updateBtnStatusColor($scope.lastClickedVuln.status, '#btn-chg-status-prev', '#caret-chg-status-prev');
+            }
+            $scope.cwe_selected = undefined;
+            $scope.selectedAtachment = {
+                url: '',
+                name: '',
+                imgPrevFail: false
+            };
+
+            $scope.uploader.clearQueue();
+        };
+
+
+        $scope.changeVulnPrevByEventKey = function (event) {
+            if ($scope.lastClickedVuln !== undefined) {
+                var curRowindex = -1;
+                var targetIndex = -1;
+                for (var i = 0; i < $scope.gridApi.grid.rows.length; i++) {
+                    if ($scope.gridApi.grid.rows[i].entity._id === $scope.lastClickedVuln._id) {
+                        curRowindex = i;
+                        break;
+                    }
+                }
+
+                if (event.keyCode === uiGridConstants.keymap.DOWN)
+                    targetIndex = curRowindex + 1;
+                else if (event.keyCode === uiGridConstants.keymap.UP)
+                    targetIndex = curRowindex - 1;
+
+                if (targetIndex !== -1 && targetIndex < $scope.gridApi.grid.rows.length) {
+                    $scope.lastClickedVuln = $scope.gridApi.grid.rows[targetIndex].entity;
+                }
+            }
+
+        };
+
+        $scope.activeEditPreview = function (field) {
+            $scope.fieldToEdit = field;
+        };
+
+        $scope.processToEditPreview = function (isMandatory) {
+            if (($scope.lastClickedVuln.hasOwnProperty($scope.fieldToEdit) &&
+                $scope.lastClickedVuln[$scope.fieldToEdit] !== undefined &&
+                $scope.lastClickedVuln[$scope.fieldToEdit] !== '') || isMandatory === false){
+
+                $scope.isUpdatingVuln = true;
+                if ($scope.realVuln[$scope.fieldToEdit] !== $scope.lastClickedVuln[$scope.fieldToEdit] ||
+                    ($scope.realVuln['custom_fields'].hasOwnProperty($scope.fieldToEdit))){
+                        vulnsManager.updateVuln($scope.realVuln, $scope.lastClickedVuln).then(function () {
+                            $scope.isUpdatingVuln = false;
+                            $scope.fieldToEdit = undefined;
+                            }, function (data) {
+                                $scope.hideVulnPreview();
+                                commonsFact.showMessage("Error updating vuln " + $scope.realVuln.name + " (" + $scope.realVuln._id + "): " + (data.message || JSON.stringify(data.messages)));
+                                $scope.fieldToEdit = undefined;
+                                $scope.isUpdatingVuln = false;
+                    });
+                }else{
+                    $scope.fieldToEdit = undefined;
+                    $scope.isUpdatingVuln = false;
+                }
+
+            }
+        };
+
+         $scope.changeSeverity = function (severity) {
+                $scope.fieldToEdit = 'severity';
+                $scope.lastClickedVuln.severity = severity;
+                uiCommonFact.updateBtnSeverityColor(severity, '#btn-chg-severity-prev', '#caret-chg-severity-prev');
+                $scope.processToEditPreview();
+         };
+
+          $scope.changeEaseOfResolution = function (easeofresolution) {
+                $scope.fieldToEdit = 'easeofresolution';
+                $scope.lastClickedVuln.easeofresolution = easeofresolution;
+                $scope.processToEditPreview();
+         };
+
+          $scope.changeStatus = function (status) {
+                $scope.fieldToEdit = 'status';
+                $scope.lastClickedVuln.status = status;
+                uiCommonFact.updateBtnStatusColor(status, '#btn-chg-status-prev', '#caret-chg-status-prev');
+                $scope.processToEditPreview();
+         };
+
+          $scope.changeConfirmed = function (confirmed) {
+                $scope.fieldToEdit = 'confirmed';
+                $scope.lastClickedVuln.confirmed = confirmed;
+                $scope.processToEditPreview();
+         };
+
+          $scope.toggleImpact = function (key) {
+              $scope.fieldToEdit = 'impact';
+              $scope.lastClickedVuln.impact[key] = !$scope.lastClickedVuln.impact[key];
+              $scope.processToEditPreview();
+          };
+
+
+          $scope.populate = function () {
+              $scope.temTemplate = angular.copy($scope.lastClickedVuln);
+              uiCommonFact.populate($scope.cwe_selected, $scope.lastClickedVuln);
+          };
+
+          $scope.applyTemplate = function () {
+              $scope.fieldToEdit = 'template';
+              $scope.isUpdatingVuln = true;
+              vulnsManager.updateVuln($scope.realVuln, $scope.lastClickedVuln).then(function () {
+                  $scope.isUpdatingVuln = false;
+                  $scope.fieldToEdit = undefined;
+                  $scope.temTemplate = undefined;
+                  $scope.cwe_selected = undefined
+              }, function (data) {
+                  commonsFact.showMessage("Error updating vuln " + $scope.realVuln.name + " (" + $scope.realVuln._id + "): " + (data.message || JSON.stringify(data.messages)));
+                  $scope.fieldToEdit = undefined;
+                  $scope.isUpdatingVuln = false;
+                  $scope.temTemplate = undefined;
+                  $scope.cwe_selected = undefined;
+                  $scope.hideVulnPreview();
+              });
+          };
+
+           $scope.discardTemplate = function () {
+              uiCommonFact.populate($scope.temTemplate, $scope.lastClickedVuln);
+              $scope.temTemplate = undefined;
+              $scope.cwe_selected = undefined;
+          };
+
+
+           $scope.newReference = function () {
+               $scope.fieldToEdit = 'refs';
+               uiCommonFact.newReference($scope.new_ref, $scope.lastClickedVuln);
+               $scope.processToEditPreview();
+               $scope.new_ref = "";
+          };
+
+
+           $scope.removeReference = function (index) {
+                $scope.fieldToEdit = 'refs';
+                $scope.lastClickedVuln.refs.splice(index, 1);
+                $scope.isUpdatingVuln = true;
+
+                vulnsManager.updateVuln($scope.realVuln, $scope.lastClickedVuln).then(function () {
+                    $scope.isUpdatingVuln = false;
+                    $scope.fieldToEdit = undefined;
+                    }, function (data) {
+                        $scope.hideVulnPreview();
+                        commonsFact.showMessage("Error updating vuln " + $scope.realVuln.name + " (" + $scope.realVuln._id + "): " + (data.message || JSON.stringify(data.messages)));
+                        $scope.fieldToEdit = undefined;
+                        $scope.isUpdatingVuln = false;
+
+                });
+          };
+
+           $scope.openReference = function (text) {
+                window.open(referenceFact.processReference(text), '_blank');
+           };
+
+
+           $scope.newPolicyviolation = function () {
+               $scope.fieldToEdit = 'policyviolations';
+               uiCommonFact.newPolicyViolation($scope.new_policyviolation, $scope.lastClickedVuln);
+               $scope.processToEditPreview();
+               $scope.new_policyviolation = "";
+          };
+
+
+           $scope.removePolicyviolation = function (index) {
+                $scope.fieldToEdit = 'policyviolations';
+                $scope.lastClickedVuln.policyviolations.splice(index, 1);
+                $scope.isUpdatingVuln = true;
+
+                vulnsManager.updateVuln($scope.realVuln, $scope.lastClickedVuln).then(function () {
+                    $scope.isUpdatingVuln = false;
+                    $scope.fieldToEdit = undefined;
+                    }, function (data) {
+                        $scope.hideVulnPreview();
+                        commonsFact.showMessage("Error updating vuln " + $scope.realVuln.name + " (" + $scope.realVuln._id + "): " + (data.message || JSON.stringify(data.messages)));
+                        $scope.fieldToEdit = undefined;
+                        $scope.isUpdatingVuln = false;
+
+                });
+          };
+
+
+           uploader.onAfterAddingFile = function(fileItem) {
+               if ($scope.lastClickedVuln._attachments.hasOwnProperty(fileItem.file.name)){
+                   fileItem.isError = true;
+                   fileItem.isReady = true;
+                   return;
+               }
+
+               $http.get('/_api/session').then(
+                  function(d) {
+                    $scope.csrf_token = d.data.csrf_token;
+                    fileItem.formData.push({'csrf_token': $scope.csrf_token});
+                    fileItem.url = '_api/v2/ws/' + $routeParams.wsId + '/vulns/' + $scope.lastClickedVuln._id + '/attachment/';
+                    $scope.uploader.uploadAll();
+                  }
+                );
+
+           };
+
+
+
+           uploader.onSuccessItem = function(fileItem, response, status, headers) {
+               updateSelectedVulnAtachments();
+           };
+
+            $scope.removeEvidence = function (name) {
+                var url = '/_api/v2/ws/'+ $routeParams.wsId +'/vulns/'+ $scope.lastClickedVuln._id +'/attachment/' + name + '/'
+                $http.delete(url).then(
+                      function(response) {
+                          if (response && response.status === 200){
+                              uiCommonFact.removeEvidence(name, $scope.lastClickedVuln);
+                          }
+                      }
+                );
+            };
+
+            $scope.selectItemToPrev = function (name) {
+                $scope.selectedAtachment.name = name;
+                $scope.selectedAtachment.url = BASEURL + '_api/v2/ws/' + $routeParams.wsId + /vulns/ + $scope.lastClickedVuln._id + /attachment/ + name
+                $scope.selectedAtachment.imgPrevFail = false;
+                var format = $scope.selectedAtachment.name.split('.').pop();
+                var imagesFormat = ['png','jpg', 'jpeg', 'gif'];
+                if (imagesFormat.indexOf(format) === -1){
+                    $scope.selectedAtachment.imgPrevFail = true;
+                }
+            };
+
+
+            $scope.copyToClipboard = function (name) {
+                var url = BASEURL + '_api/v2/ws/' + $routeParams.wsId + /vulns/ + $scope.lastClickedVuln._id + /attachment/ + name;
+                var copyElement = document.createElement("textarea");
+                copyElement.style.position = 'fixed';
+                copyElement.style.opacity = '0';
+                copyElement.textContent = decodeURI(url);
+                var body = document.getElementsByTagName('body')[0];
+                body.appendChild(copyElement);
+                copyElement.select();
+                document.execCommand('copy');
+                body.removeChild(copyElement);
+            }
+
+
+
+            $scope.openEvidence = function (name) {
+                uiCommonFact.openEvidence(name, $scope.lastClickedVuln, $routeParams.wsId);
+            };
+
+            $scope.processLinesToHtml = function (rawText) {
+                if (rawText !== undefined)
+                    return rawText.replace(/(?:\r\n|\r|\n)/g, '<br>');
+                return '';
+            };
 
         init();
     }]);

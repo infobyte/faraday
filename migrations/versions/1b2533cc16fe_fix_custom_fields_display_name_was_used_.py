@@ -8,6 +8,7 @@ Create Date: 2019-04-05 16:19:11.216571+00:00
 import json
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.sql import text
 
 
 # revision identifiers, used by Alembic.
@@ -37,9 +38,13 @@ def upgrade():
                     new_data = {field_name: custom_fields[field_display_name]}
                     custom_fields.update(new_data)
                     del custom_fields[field_display_name]
-                    connection.execute("""
-                        UPDATE vulnerability SET custom_fields='{0}' WHERE id={1}
-                    """.format(json.dumps(custom_fields), vuln_id))
+                    connection.execute(text("""
+                        UPDATE vulnerability SET custom_fields = :json_data
+                            WHERE id = :vuln_id
+                    """), **{
+                        'json_data': json.dumps(custom_fields),
+                        'vuln_id': vuln_id
+                    })
 
 
 def downgrade():
@@ -62,7 +67,11 @@ def downgrade():
                     new_data = {field_display_name: custom_fields[field_name]}
                     custom_fields.update(new_data)
                     del custom_fields[field_name]
-                    connection.execute("""
-                        UPDATE vulnerability SET custom_fields='{0}' WHERE id={1}
-                    """.format(json.dumps(custom_fields), vuln_id))
+                    connection.execute(text("""
+                        UPDATE vulnerability SET custom_fields = :json_data
+                        WHERE id = :vuln_id
+                    """), **{
+                        'json_data': json.dumps(custom_fields),
+                        'vuln_id': vuln_id
+                    })
 

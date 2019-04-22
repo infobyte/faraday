@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('vulndDbModalEdit',
-                ['$scope', '$modalInstance', 'VulnModel', 'model', 'EXPLOITATIONS', 'EASEOFRESOLUTION',
-                 function($scope, $modalInstance, VulnModel, model, EXPLOITATIONS, EASEOFRESOLUTION) {
+                ['$scope', '$modalInstance', 'VulnModel', 'model', 'EXPLOITATIONS', 'EASEOFRESOLUTION', 'customFields',
+                 function($scope, $modalInstance, VulnModel, model, EXPLOITATIONS, EASEOFRESOLUTION, customFields) {
 
         $scope.data;
         $scope.openedStart;
@@ -16,12 +16,18 @@ angular.module('faradayApp')
             $scope.exploitations = EXPLOITATIONS;
             $scope.easeofresolution = EASEOFRESOLUTION;
             $scope.data = new VulnModel;
+            $scope.data.custom_fields = {};
             $scope.data.set(model);
             $scope.impact = angular.copy($scope.data.impact);
             $scope.policyviolations = clearList(angular.copy($scope.data.policyviolations), EXCLUDED_TOKENS);
             $scope.references = clearList(angular.copy($scope.data.refs), EXCLUDED_TOKENS);
             $scope.new_policyviolation = "";
             $scope.new_reference = "";
+            $scope.customFields = customFields;
+
+            customFields.forEach(function(cf) {
+                $scope.data.custom_fields[cf.field_display_name] = null;
+            });
         };
 
         $scope.ok = function() {

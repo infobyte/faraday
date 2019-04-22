@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('vulnModelModalNew',
-                ['$scope', '$modalInstance', 'VulnModel', 'vulnModelsManager', 'EXPLOITATIONS', 'EASEOFRESOLUTION',
-                 function($scope, $modalInstance, VulnModel, vulnModelsManager, EXPLOITATIONS, EASEOFRESOLUTION) {
+                ['$scope', '$modalInstance', 'VulnModel', 'vulnModelsManager', 'EXPLOITATIONS', 'EASEOFRESOLUTION', 'customFields',
+                 function($scope, $modalInstance, VulnModel, vulnModelsManager, EXPLOITATIONS, EASEOFRESOLUTION, customFields) {
 
         $scope.data;
         $scope.exploitations;
@@ -16,7 +16,9 @@ angular.module('faradayApp')
             $scope.easeofresolution = EASEOFRESOLUTION;
             $scope.data = new VulnModel;
             $scope.models = vulnModelsManager.models;
+            $scope.data.custom_fields = {};
             // $scope.exploitations = ['a'];
+            $scope.customFields = customFields;
 
             $scope.$watch(function() {
                 return $scope.data.model;
@@ -27,6 +29,10 @@ angular.module('faradayApp')
                     $scope.other = false;
                 }
             }, true);
+
+            customFields.forEach(function(cf) {
+                $scope.data.custom_fields[cf.field_display_name] = null;
+            });
         };
 
         $scope.open = function($event, isStart) {

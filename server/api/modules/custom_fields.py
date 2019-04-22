@@ -18,6 +18,10 @@ custom_fields_schema_api = Blueprint('custom_fields_schema_api', __name__)
 
 class CustomFieldsSchemaSchema(AutoSchema):
 
+    field_name = fields.String(dump_only=True)
+    field_type = fields.String(dump_only=True)
+    table_name = fields.String(dump_only=True)
+
     class Meta:
         model = CustomFieldsSchema
         fields = ('id',

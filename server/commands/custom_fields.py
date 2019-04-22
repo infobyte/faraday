@@ -38,7 +38,7 @@ def add_custom_field_wizard():
     field_display_name = click.prompt('Display name')
     field_type = click.prompt('Field type (int, str, list)', type=click.Choice(['int', 'str', 'list']))
     custom_fields = db.session.query(CustomFieldsSchema)
-    
+
     #Checks the name of the fields wont be a duplicate
     for custom_field in custom_fields:
         if field_name == custom_field.field_name \
@@ -47,7 +47,7 @@ def add_custom_field_wizard():
             sys.exit(1)
 
     current_used_orders = set()
-    
+
     if custom_fields.count():
         print('Custom field current order')
     for custom_field in custom_fields:
@@ -74,13 +74,14 @@ def add_custom_field_wizard():
     if not confirmation:
         sys.exit(1)
 
-    custom_field_data, created = get_or_create(
-            db.session,
-            CustomFieldsSchema,
-            table_name='vulnerability',
-            field_name=field_name,
-            field_order=field_order,
-    )
+    for model_name in ['vulnerability', 'vulnerability_template']:
+        custom_field_data, created = get_or_create(
+                db.session,
+                CustomFieldsSchema,
+                table_name=model_name,
+                field_name=field_name,
+                field_order=field_order,
+        )
     if not created:
         print('Custom field already exists, skipping')
         sys.exit(1)

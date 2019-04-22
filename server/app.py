@@ -29,6 +29,9 @@ from flask_security import (
     Security,
     SQLAlchemyUserDatastore,
 )
+from flask_security.decorators import (
+    auth_token_required,
+)
 from flask_security.forms import LoginForm
 from flask_security.utils import (
     _datastore,
@@ -118,22 +121,32 @@ def register_handlers(app):
     def unauthorized():
         flask.abort(403)
 
+    @auth_token_required
+    def verify_token():
+        return True
+
     @app.before_request
     def default_login_required():
         view = app.view_functions.get(flask.request.endpoint)
-        logged_in = 'user_id' in flask.session
-        if (not logged_in and not getattr(view, 'is_public', False)):
-            flask.abort(401)
 
-        g.user = None
-        if logged_in:
-            user = User.query.filter_by(id=session["user_id"]).first()
-            g.user = user
-            if user is None:
-                logger.warn("Unknown user id {}".format(session["user_id"]))
-                del flask.session['user_id']
-                flask.abort(401)  # 403 would be better but breaks the web ui
-                return
+        if app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER'] in flask.request.headers:
+            if verify_token() is not True:
+                logger.warn ('Auth token not valid. Did you change your password recently?')
+                flask.abort(401)
+        else:
+            logged_in = 'user_id' in flask.session
+            if (not logged_in and not getattr(view, 'is_public', False)):
+                flask.abort(401)
+
+            g.user = None
+            if logged_in:
+                user = User.query.filter_by(id=session["user_id"]).first()
+                g.user = user
+                if user is None:
+                    logger.warn("Unknown user id {}".format(session["user_id"]))
+                    del flask.session['user_id']
+                    flask.abort(401)  # 403 would be better but breaks the web ui
+                    return
 
     @app.after_request
     def log_queries_count(response):
@@ -199,6 +212,7 @@ def create_app(db_connection_string=None, testing=None):
         'SECURITY_CHANGEABLE': True,
         'SECURITY_SEND_PASSWORD_CHANGE_EMAIL': False,
         'SECURITY_MSG_USER_DOES_NOT_EXIST': login_failed_message,
+        'SECURITY_TOKEN_AUTHENTICATION_HEADER': 'Authentication-Token',
 
         # The line bellow should not be necessary because of the
         # CustomLoginForm, but i'll include it anyway.

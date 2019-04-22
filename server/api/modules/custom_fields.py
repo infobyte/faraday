@@ -34,16 +34,5 @@ class CustomFieldsSchemaView(ReadWriteView):
     model_class = CustomFieldsSchema
     schema_class = CustomFieldsSchemaSchema
 
-    def _perform_create(self, data, **kwargs):
-        super(CustomFieldsSchemaView, self)._perform_create(data, **kwargs)
-        if data['table_name'] == 'vulnerability':
-            custom_field_data, created = get_or_create(
-                    db.session,
-                    CustomFieldsSchema,
-                    table_name='vulnerability_template',
-                    field_name=data['field_name'],
-                    field_order=data['field_order'],
-            )
-
 
 CustomFieldsSchemaView.register(custom_fields_schema_api)

@@ -74,14 +74,13 @@ def add_custom_field_wizard():
     if not confirmation:
         sys.exit(1)
 
-    for model_name in ['vulnerability', 'vulnerability_template']:
-        custom_field_data, created = get_or_create(
-                db.session,
-                CustomFieldsSchema,
-                table_name=model_name,
-                field_name=field_name,
-                field_order=field_order,
-        )
+    custom_field_data, created = get_or_create(
+            db.session,
+            CustomFieldsSchema,
+            table_name='vulnerability',
+            field_name=field_name,
+            field_order=field_order,
+    )
     if not created:
         print('Custom field already exists, skipping')
         sys.exit(1)

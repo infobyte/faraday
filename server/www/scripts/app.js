@@ -12,7 +12,7 @@ var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.
                                                 'filter', 'angular-clipboard', 'ngCookies', 'cfp.hotkeys', 'chart.js',
                                                 'ui.grid', 'ui.grid.selection', 'ui.grid.grouping', 'ngSanitize',
                                                 'ui.grid.pagination', 'ui.grid.pinning', 'angularMoment', 'ui-notification',
-                                                'ui.grid.resizeColumns', 'angularSimplePagination', 'angularFileUploadLib'])
+                                                'ui.grid.resizeColumns', 'angularSimplePagination', 'dndLists', 'angularFileUploadLib'])
     .constant("BASEURL", (function() {
         var url = window.location.origin + "/";
         return url;
@@ -286,6 +286,16 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             templateUrl: 'scripts/dashboard/partials/vulns-by-price.html',
             controller: 'vulnsByPriceCtrl',
             title: ' Workspace worth |'
+        }).
+        when('/admin', {
+            templateUrl: 'scripts/admin/admin.html',
+            controller: 'adminCtrl',
+            title: ' Admin | '
+        }).
+        when('/admin/:item', {
+            templateUrl: 'scripts/admin/admin.html',
+            controller: 'adminCtrl',
+            title: ' Admin | '
         }).
         otherwise({
             templateUrl: 'scripts/commons/partials/home.html',

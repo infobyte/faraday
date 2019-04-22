@@ -918,4 +918,5 @@ ul#nav-tabs-container {
 .line-breaks{
     white-space: pre-wrap;
     line-height: 1.5;
+    overflow-wrap: break-word;
 }

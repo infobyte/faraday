@@ -20,7 +20,7 @@ from hypothesis import given, assume, settings, strategies as st
 
 import pytest
 
-from test_cases import factories
+from tests import factories
 from test_api_workspaced_base import (
     API_PREFIX,
     ReadWriteAPITests,
@@ -28,7 +28,7 @@ from test_api_workspaced_base import (
 )
 from faraday.server.models import db, Host, Hostname
 from faraday.server.api.modules.hosts import HostsView
-from test_cases.factories import HostFactory, CommandFactory, \
+from tests.factories import HostFactory, CommandFactory, \
     EmptyCommandFactory, WorkspaceFactory
 
 HOSTS_COUNT = 5

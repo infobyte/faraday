@@ -16,7 +16,7 @@ from faraday.client.persistence.mappers.abstract_mapper import NullPersistenceMa
 from faraday.client.model.hosts import Host, ModelObjectVuln
 from faraday.client.model.diff import ModelObjectDiff
 
-import test_cases.common as test_utils
+import tests.common as test_utils
 
 
 class DiffTests(unittest.TestCase):

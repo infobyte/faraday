@@ -10,7 +10,7 @@ import pytest
 from io import BytesIO
 from mock import Mock, patch
 
-from test_cases.factories import WorkspaceFactory
+from tests.factories import WorkspaceFactory
 from faraday.config.configuration import getInstanceConfiguration
 
 @pytest.mark.usefixtures('logged_user')

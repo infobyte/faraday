@@ -9,8 +9,8 @@ import pytest
 
 from faraday.server.models import Workspace, Scope
 from faraday.server.api.modules.workspaces import WorkspaceView
-from test_cases.test_api_non_workspaced_base import ReadWriteAPITests
-from test_cases import factories
+from tests.test_api_non_workspaced_base import ReadWriteAPITests
+from tests import factories
 
 class TestWorkspaceAPI(ReadWriteAPITests):
     model = Workspace

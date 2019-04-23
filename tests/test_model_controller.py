@@ -14,7 +14,7 @@ import pytest
 from faraday.client.managers.mapper_manager import MapperManager
 from faraday.client.model import Modelactions
 from faraday.client.model.controller import ModelController
-from test_cases.factories import (
+from tests.factories import (
     WorkspaceFactory,
     VulnerabilityFactory,
     HostFactory,

@@ -14,7 +14,7 @@ import faraday.server.config
 
 from test_api_workspaced_base import GenericAPITest
 
-from test_cases.factories import VulnerabilityWebFactory, VulnerabilityFactory
+from tests.factories import VulnerabilityWebFactory, VulnerabilityFactory
 
 
 @pytest.mark.usefixtures('logged_user')

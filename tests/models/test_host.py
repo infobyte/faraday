@@ -11,10 +11,10 @@ from faraday.server.models import Hostname, Host
 
 from faraday.server.api.modules.hosts import HostsView
 
-from test_cases.test_api_workspaced_base import (
+from tests.test_api_workspaced_base import (
     ReadOnlyAPITests)
-from test_cases import factories
-from test_cases.factories import WorkspaceFactory
+from tests import factories
+from tests.factories import WorkspaceFactory
 
 @pytest.mark.parametrize(
     "with_host_vulns,with_service_vulns", [[True, False],

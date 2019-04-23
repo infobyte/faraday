@@ -20,7 +20,7 @@ from pytest_factoryboy import register
 sys.path.append(os.path.abspath(os.getcwd()))
 from faraday.server.app import create_app
 from faraday.server.models import db
-from test_cases import factories
+from tests import factories
 
 TEST_BASE = os.path.abspath(os.path.dirname(__file__))
 TEST_DATA = os.path.join(TEST_BASE, 'data')

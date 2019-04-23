@@ -15,8 +15,8 @@ class TestAPIInfoEndpoint:
         current_dir = os.getcwd()
         # this is a bug on the info api!
         # we require faraday to be a package since we can't import
-        # from base path when our current working dir is test_cases.
-        if 'test_cases' in current_dir:
+        # from base path when our current working dir is tests.
+        if 'tests' in current_dir:
             faraday_base = os.path.join(current_dir, '..')
             os.chdir(faraday_base)
 

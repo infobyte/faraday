@@ -15,12 +15,12 @@ import pytest
 import json
 
 from faraday.server.api.modules.services import ServiceView
-from test_cases import factories
+from tests import factories
 from test_api_workspaced_base import ReadOnlyAPITests
 from faraday.server.models import (
     Service
 )
-from test_cases.factories import HostFactory, EmptyCommandFactory
+from tests.factories import HostFactory, EmptyCommandFactory
 
 
 @pytest.mark.usefixtures('logged_user')

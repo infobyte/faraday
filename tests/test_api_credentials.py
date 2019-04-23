@@ -6,13 +6,13 @@ See the file 'doc/LICENSE' for the license information
 '''
 import pytest
 
-from test_cases import factories
+from tests import factories
 from test_api_workspaced_base import (
     ReadWriteAPITests,
 )
 from faraday.server.api.modules.credentials import CredentialView
 from faraday.server.models import Credential
-from test_cases.factories import HostFactory, ServiceFactory
+from tests.factories import HostFactory, ServiceFactory
 
 
 class TestCredentialsAPIGeneric(ReadWriteAPITests):

@@ -5,7 +5,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 from faraday.server.models import db, Workspace
-from test_cases.factories import (
+from tests.factories import (
     HostFactory,
     ServiceFactory,
     SourceCodeFactory,

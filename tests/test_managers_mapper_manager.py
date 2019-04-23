@@ -26,7 +26,7 @@ from faraday.client.persistence.server.utils import (
     get_vuln_properties,
     get_vuln_web_properties,
     get_credential_properties, get_command_properties)
-from test_cases.factories import (
+from tests.factories import (
     WorkspaceFactory,
     CommandFactory,
     HostFactory,

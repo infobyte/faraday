@@ -9,7 +9,7 @@ import pytest
 from io import BytesIO
 from datetime import timedelta, datetime
 
-from test_cases.factories import WorkspaceFactory, VulnerabilityFactory, CommandFactory
+from tests.factories import WorkspaceFactory, VulnerabilityFactory, CommandFactory
 
 @pytest.mark.usefixtures('logged_user')
 class TestActivityFeed():

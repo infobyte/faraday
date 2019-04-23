@@ -11,13 +11,13 @@ import pytest
 import pytz
 from hypothesis import given, strategies as st
 
-from test_cases import factories
+from tests import factories
 from test_api_non_workspaced_base import ReadWriteAPITests, API_PREFIX
 from faraday.server.models import (
     License,
 )
 from faraday.server.api.modules.licenses import LicenseView
-from test_cases.factories import LicenseFactory
+from tests.factories import LicenseFactory
 
 
 class LicenseEnvelopedView(LicenseView):

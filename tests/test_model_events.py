@@ -5,7 +5,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 import pytest
-from test_cases.factories import HostFactory, ServiceFactory
+from tests.factories import HostFactory, ServiceFactory
 
 
 def test_child_parent_verification_event_fails(session, workspace,

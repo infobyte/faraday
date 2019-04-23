@@ -10,7 +10,7 @@ import datetime
 import pytest
 import time
 
-from test_cases import factories
+from tests import factories
 from test_api_workspaced_base import API_PREFIX, ReadOnlyAPITests
 from faraday.server.models import (
     Command,
@@ -18,7 +18,7 @@ from faraday.server.models import (
     Vulnerability)
 from faraday.server.api.modules.commandsrun import CommandView
 from faraday.server.api.modules.workspaces import WorkspaceView
-from test_cases.factories import VulnerabilityFactory, EmptyCommandFactory, CommandObjectFactory, HostFactory, \
+from tests.factories import VulnerabilityFactory, EmptyCommandFactory, CommandObjectFactory, HostFactory, \
     WorkspaceFactory, ServiceFactory
 
 

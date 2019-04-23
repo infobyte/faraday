@@ -6,9 +6,9 @@ See the file 'doc/LICENSE' for the license information
 '''
 from faraday.server.api.modules.comments import CommentView
 from faraday.server.models import Comment
-from test_cases.factories import ServiceFactory
-from test_cases.test_api_workspaced_base import ReadOnlyAPITests
-from test_cases import factories
+from tests.factories import ServiceFactory
+from tests.test_api_workspaced_base import ReadOnlyAPITests
+from tests import factories
 
 
 class TestCredentialsAPIGeneric(ReadOnlyAPITests):

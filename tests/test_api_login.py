@@ -1,5 +1,5 @@
 
-from test_cases import factories
+from tests import factories
 
 class TestLogin():
     def test_case_bug_with_username(self, test_client, session):

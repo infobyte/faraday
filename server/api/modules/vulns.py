@@ -232,7 +232,6 @@ class VulnerabilitySchema(AutoSchema):
         if not parent_class:
             raise ValidationError('Unknown parent type')
         if parent_type == 'Host' and data['type'] == 'vulnerability_web':
-            raise Exception('Invariant error')
             raise ValidationError('Trying to set a host for a vulnerability web')
 
         try:

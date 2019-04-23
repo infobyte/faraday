@@ -14,10 +14,10 @@ except ImportError:
 import pytest
 import json
 
-from server.api.modules.services import ServiceView
+from faraday.server.api.modules.services import ServiceView
 from test_cases import factories
 from test_api_workspaced_base import ReadOnlyAPITests
-from server.models import (
+from faraday.server.models import (
     Service
 )
 from test_cases.factories import HostFactory, EmptyCommandFactory

@@ -5,12 +5,12 @@
 import os
 import logging
 import logging.handlers
-import server.config
+import faraday.server.config
 import errno
 
 LOG_FILE = os.path.expanduser(os.path.join(
-    server.config.CONSTANTS.CONST_FARADAY_HOME_PATH,
-    server.config.CONSTANTS.CONST_FARADAY_LOGS_PATH, 'faraday-server.log'))
+    faraday.server.config.CONSTANTS.CONST_FARADAY_HOME_PATH,
+    faraday.server.config.CONSTANTS.CONST_FARADAY_LOGS_PATH, 'faraday-server.log'))
 
 MAX_LOG_FILE_SIZE = 5 * 1024 * 1024     # 5 MB
 MAX_LOG_FILE_BACKUP_COUNT = 5
@@ -34,7 +34,7 @@ def setup_logging():
 def setup_console_logging(formatter):
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
-    console_handler.setLevel(server.config.LOGGING_LEVEL)
+    console_handler.setLevel(faraday.server.config.LOGGING_LEVEL)
     add_handler(console_handler)
     LVL_SETTABLE_HANDLERS.append(console_handler)
 
@@ -71,7 +71,7 @@ def get_logger(obj=None):
 
 
 def set_logging_level(level):
-    server.config.LOGGING_LEVEL = level
+    faraday.server.config.LOGGING_LEVEL = level
     for handler in LVL_SETTABLE_HANDLERS:
         handler.setLevel(level)
 

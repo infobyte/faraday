@@ -11,8 +11,8 @@ import os
 sys.path.append(os.getcwd())
 
 import click
-from server.models import db
-from server.web import app
+from faraday.server.models import db
+from faraday.server.web import app
 
 
 def reset_db_all():
@@ -28,9 +28,9 @@ def reset_db_all():
 
     # db.create_all()
     # Ugly hack to create tables and also setting alembic revision
-    import server.config
-    conn_string = server.config.database.connection_string
-    from server.commands.initdb import InitDB
+    import faraday.server.config
+    conn_string = faraday.server.config.database.connection_string
+    from faraday.server.commands.initdb import InitDB
     InitDB()._create_tables(conn_string)
 
 

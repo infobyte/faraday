@@ -11,7 +11,7 @@ from io import BytesIO
 from mock import Mock, patch
 
 from test_cases.factories import WorkspaceFactory
-from config.configuration import getInstanceConfiguration
+from faraday.config.configuration import getInstanceConfiguration
 
 @pytest.mark.usefixtures('logged_user')
 class TestFileUpload():

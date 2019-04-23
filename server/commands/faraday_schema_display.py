@@ -15,8 +15,8 @@ except ImportError:
     sys.exit(1)
 from sqlalchemy.orm import class_mapper
 
-from server import models
-import server.config
+from faraday.server import models
+import faraday.server.config
 
 
 class DatabaseSchema():
@@ -32,7 +32,7 @@ class DatabaseSchema():
     def _draw_entity_diagrama(self):
         # create the pydot graph object by autoloading all tables via a bound metadata object
         graph = create_schema_graph(
-            metadata=MetaData(server.config.database.connection_string.strip("'")),
+            metadata=MetaData(faraday.server.config.database.connection_string.strip("'")),
             show_datatypes=False,  # The image would get nasty big if we'd show the datatypes
             show_indexes=False,  # ditto for indexes
             rankdir='LR',  # From left to right (instead of top to bottom)

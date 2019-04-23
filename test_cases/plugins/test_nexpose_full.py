@@ -17,10 +17,10 @@ import os
 sys.path.append(os.path.abspath(os.getcwd()))
 # module's path has a dash (-) in it, so we need to do this...
 import importlib
-plugin = importlib.import_module('plugins.repo.nexpose-full.plugin')
+plugin = importlib.import_module('faraday.client.plugins.repo.nexpose-full.plugin')
 NexposeFullPlugin = plugin.NexposeFullPlugin
-from model.common import factory
-from persistence.server.models import (
+from faraday.client.model.common import factory
+from faraday.client.persistence.server.models import (
     Vuln,
     Credential,
     VulnWeb,

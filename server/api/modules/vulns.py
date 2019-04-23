@@ -21,15 +21,15 @@ from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
 from sqlalchemy.orm.exc import NoResultFound
 
 from depot.manager import DepotManager
-from server.api.base import (
+from faraday.server.api.base import (
     AutoSchema,
     FilterAlchemyMixin,
     FilterSetMeta,
     PaginatedMixin,
     ReadWriteWorkspacedView,
     InvalidUsage)
-from server.fields import FaradayUploadedFile
-from server.models import (
+from faraday.server.fields import FaradayUploadedFile
+from faraday.server.models import (
     db,
     File,
     Host,
@@ -40,10 +40,10 @@ from server.models import (
     VulnerabilityWeb,
     VulnerabilityGeneric,
 )
-from server.utils.database import get_or_create
+from faraday.server.utils.database import get_or_create
 
-from server.api.modules.services import ServiceSchema
-from server.schemas import (
+from faraday.server.api.modules.services import ServiceSchema
+from faraday.server.schemas import (
     MutableField,
     SeverityField,
     MetadataSchema,
@@ -159,10 +159,13 @@ class VulnerabilitySchema(AutoSchema):
         res = {}
 
         for file_obj in obj.evidence:
-            ret, errors = EvidenceSchema().dump(file_obj)
-            if errors:
-                raise ValidationError(errors, data=ret)
-            res[file_obj.filename] = ret
+            try:
+                ret, errors = EvidenceSchema().dump(file_obj)
+                if errors:
+                    raise ValidationError(errors, data=ret)
+                res[file_obj.filename] = ret
+            except IOError:
+                logger.warning("File not found. Did you move your server?")
 
         return res
 

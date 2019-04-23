@@ -5,7 +5,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from server.models import Host, Service, Vulnerability
+from faraday.server.models import Host, Service, Vulnerability
 import random
 def new_random_workspace_name():
     return ("aworkspace" + "".join(random.sample([chr(i) for i in range(65, 90)

@@ -12,12 +12,12 @@ import time
 
 from test_cases import factories
 from test_api_workspaced_base import API_PREFIX, ReadOnlyAPITests
-from server.models import (
+from faraday.server.models import (
     Command,
     Workspace,
     Vulnerability)
-from server.api.modules.commandsrun import CommandView
-from server.api.modules.workspaces import WorkspaceView
+from faraday.server.api.modules.commandsrun import CommandView
+from faraday.server.api.modules.workspaces import WorkspaceView
 from test_cases.factories import VulnerabilityFactory, EmptyCommandFactory, CommandObjectFactory, HostFactory, \
     WorkspaceFactory, ServiceFactory
 
@@ -29,12 +29,20 @@ from test_cases.factories import VulnerabilityFactory, EmptyCommandFactory, Comm
 # and https://github.com/pytest-dev/pytest/issues/568 for more information
 
 @pytest.mark.usefixtures('logged_user')
-class TestListCommandView(ReadOnlyAPITests):
+class TestListCommandView(object, ReadOnlyAPITests):
     model = Command
     factory = factories.CommandFactory
     api_endpoint = 'commands'
     view_class = CommandView
 
+    @pytest.mark.usefixtures('ignore_nplusone')
+    @pytest.mark.usefixtures('mock_envelope_list')
+    def test_list_retrieves_all_items_from_workspace(self, test_client,
+                                                     second_workspace,
+                                                     session):
+        super(TestListCommandView, self).test_list_retrieves_all_items_from_workspace(test_client, second_workspace, session)
+
+    @pytest.mark.usefixtures('ignore_nplusone')
     def test_backwards_compatibility_list(self, test_client, second_workspace, session):
         self.factory.create(workspace=second_workspace)
         session.commit()
@@ -55,9 +63,14 @@ class TestListCommandView(ReadOnlyAPITests):
                 u'workspace',
                 u'tool',
                 u'import_source',
+                u'creator',
             ]
             assert command['value']['workspace'] == self.workspace.name
             assert set(object_properties) == set(command['value'].keys())
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_can_list_readonly(self, test_client, session):
+        super(TestListCommandView, self).test_can_list_readonly(test_client, session)
 
     def test_activity_feed(self, session, test_client):
         command = self.factory.create()

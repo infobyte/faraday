@@ -9,14 +9,14 @@ import errno
 try:
     import ConfigParser
 except ImportError:
-    import configparser as ConfigParser
+    import faraday.client.configparser as ConfigParser
 
 from logging import (
     DEBUG,
     INFO,
 )
-from config import constant as CONSTANTS
-from config.configuration import getInstanceConfiguration
+from faraday.config import constant as CONSTANTS
+from faraday.config.configuration import getInstanceConfiguration
 
 LOGGING_LEVEL = INFO
 
@@ -63,7 +63,7 @@ def copy_default_config_to_local():
     # Copy default config file into faraday local config
     shutil.copyfile(DEFAULT_CONFIG_FILE, LOCAL_CONFIG_FILE)
 
-    from server.utils.logger import get_logger
+    from faraday.server.utils.logger import get_logger
     get_logger(__name__).info(u"Local faraday-server configuration created at {}".format(LOCAL_CONFIG_FILE))
 
 
@@ -99,7 +99,8 @@ def gen_web_config():
         'ver': __get_version(),
         'lic_db': CONSTANTS.CONST_LICENSES_DB,
         "osint": __get_osint(),
-        'vuln_model_db': CONSTANTS.CONST_VULN_MODEL_DB
+        'vuln_model_db': CONSTANTS.CONST_VULN_MODEL_DB,
+        'show_vulns_by_price': dashboard.show_vulns_by_price,
     }
     return doc
 
@@ -111,7 +112,15 @@ def is_debug_mode():
 class ConfigSection(object):
     def parse(self, __parser):
         for att in self.__dict__:
-            self.__setattr__(att,__parser.get(att))
+            if isinstance(self.__dict__[att], bool):
+                value = __parser.get(att)
+                if value in ("yes", "true", "t", "1", "True"):
+                    self.__setattr__(att, True)
+                else:
+                    self.__setattr__(att, False)
+
+            else:
+                self.__setattr__(att, __parser.get(att))
 
     @staticmethod
     def parse_section(section_name, __parser):
@@ -120,6 +129,8 @@ class ConfigSection(object):
             section = couchdb
         elif section_name == 'database':
             section = database
+        elif section_name == 'dashboard':
+            section = dashboard
         elif section_name == 'faraday_server':
             section = faraday_server
         elif section_name == 'ldap':
@@ -146,6 +157,11 @@ class CouchDBConfigObject(ConfigSection):
 class DatabaseConfigObject(ConfigSection):
     def __init__(self):
         self.connection_string = None
+
+
+class DashboardConfigObject(ConfigSection):
+    def __init__(self):
+        self.show_vulns_by_price = False
 
 
 class FaradayServerConfigObject(ConfigSection):
@@ -186,6 +202,7 @@ class StorageConfigObject(ConfigSection):
 
 couchdb = CouchDBConfigObject()
 database = DatabaseConfigObject()
+dashboard = DashboardConfigObject()
 faraday_server = FaradayServerConfigObject()
 ldap = LDAPConfigObject()
 ssl = SSLConfigObject()

@@ -10,6 +10,7 @@ with (import <nixpkgs> {});
       VENV_PATH=.venv-white
       grep -q p- VERSION && VENV_PATH=.venv-pink
       grep -q b- VERSION && VENV_PATH=.venv-black
+      grep -q c- VERSION && VENV_PATH=.venv-black
 
       mkvirtualenv(){
         # Reset previous virtualenv
@@ -19,8 +20,9 @@ with (import <nixpkgs> {});
         # Build new virtualenv with system packages
         virtualenv --system-site-packages $VENV_PATH
         source $VENV_PATH/bin/activate
-        pip install -r requirements_server.txt
-        pip install -r requirements.txt
+        ./develop.sh
+        # pip install -r requirements_server.txt
+        # pip install -r requirements.txt
         pip install -r requirements_dev.txt
       }
 

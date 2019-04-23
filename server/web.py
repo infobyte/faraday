@@ -15,7 +15,7 @@ if os.path.split(os.path.dirname(__file__))[-1] == 'server':
     path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     sys.path.append(path)
 
-import server.config
+import faraday.server.config
 
 from twisted.internet import ssl, reactor, error
 from twisted.web.static import File
@@ -24,18 +24,18 @@ from twisted.web.wsgi import WSGIResource
 from autobahn.twisted.websocket import (
     listenWS
 )
-import server.config
-from server.utils import logger
+import faraday.server.config
+from faraday.server.utils import logger
 
-from server.app import create_app
-from server.websocket_factories import (
+from faraday.server.app import create_app
+from faraday.server.websocket_factories import (
     WorkspaceServerFactory,
     BroadcastServerProtocol
 )
-from server.api.modules.upload_reports import RawReportProcessor
+from faraday.server.api.modules.upload_reports import RawReportProcessor
 
 app = create_app()  # creates a Flask(__name__) app
-logger = server.utils.logger.get_logger(__name__)
+logger = faraday.server.utils.logger.get_logger(__name__)
 
 
 class CleanHttpHeadersResource(Resource, object):
@@ -72,25 +72,25 @@ class FaradayRedirectResource(Redirect, object):
 class WebServer(object):
     UI_URL_PATH = '_ui'
     API_URL_PATH = '_api'
-    WEB_UI_LOCAL_PATH = os.path.join(server.config.FARADAY_BASE, 'server/www')
+    WEB_UI_LOCAL_PATH = os.path.join(faraday.server.config.FARADAY_BASE, 'server/www')
 
     def __init__(self, enable_ssl=False):
         logger.info('Starting web server at {}://{}:{}/'.format(
             'https' if enable_ssl else 'http',
-            server.config.faraday_server.bind_address,
-            server.config.faraday_server.port))
+            faraday.server.config.faraday_server.bind_address,
+            faraday.server.config.faraday_server.port))
         self.__ssl_enabled = enable_ssl
         self.__config_server()
         self.__build_server_tree()
 
     def __config_server(self):
-        self.__bind_address = server.config.faraday_server.bind_address
-        self.__listen_port = int(server.config.faraday_server.port)
+        self.__bind_address = faraday.server.config.faraday_server.bind_address
+        self.__listen_port = int(faraday.server.config.faraday_server.port)
         if self.__ssl_enabled:
-            self.__listen_port = int(server.config.ssl.port)
+            self.__listen_port = int(faraday.server.config.ssl.port)
 
     def __load_ssl_certs(self):
-        certs = (server.config.ssl.keyfile, server.config.ssl.certificate)
+        certs = (faraday.server.config.ssl.keyfile, faraday.server.config.ssl.certificate)
         if not all(certs):
             logger.critical("HTTPS request but SSL certificates are not configured")
             exit(1) # Abort web-server startup
@@ -113,7 +113,7 @@ class WebServer(object):
         return FaradayWSGIResource(reactor, reactor.getThreadPool(), app)
 
     def __build_websockets_resource(self):
-        websocket_port = int(server.config.faraday_server.websocket_port)
+        websocket_port = int(faraday.server.config.faraday_server.websocket_port)
         url = '{0}:{1}'.format(self.__bind_address, websocket_port)
         if self.__ssl_enabled:
             url = 'wss://' + url

@@ -9,8 +9,8 @@ import logging
 import itsdangerous
 
 import Cookie
-import server.utils
-import server.utils.logger
+import faraday.server.utils
+import faraday.server.utils.logger
 from collections import defaultdict
 from Queue import Queue, Empty
 
@@ -22,9 +22,9 @@ from autobahn.twisted.websocket import (
     WebSocketServerProtocol
 )
 
-from server.models import Workspace
+from faraday.server.models import Workspace
 
-logger = server.utils.logger.get_logger(__name__)
+logger = faraday.server.utils.logger.get_logger(__name__)
 changes_queue = Queue()
 
 
@@ -43,7 +43,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
         return (protocol, headers)
 
     def onMessage(self, payload, is_binary):
-        from server.web import app
+        from faraday.server.web import app
         """
             We only support JOIN and LEAVE workspace messages.
             When authentication is implemented we need to verify

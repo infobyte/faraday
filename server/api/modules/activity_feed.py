@@ -7,9 +7,9 @@ from datetime import datetime
 from flask import Blueprint
 from marshmallow import fields
 
-from server.api.base import AutoSchema, ReadWriteWorkspacedView, PaginatedMixin
-from server.models import Command
-from server.schemas import PrimaryKeyRelatedField
+from faraday.server.api.base import AutoSchema, ReadWriteWorkspacedView, PaginatedMixin
+from faraday.server.models import Command
+from faraday.server.schemas import PrimaryKeyRelatedField
 
 activityfeed_api = Blueprint('activityfeed_api', __name__)
 
@@ -23,6 +23,7 @@ class ActivityFeedSchema(AutoSchema):
     sum_created_vulnerability_critical = fields.Method(serialize='get_sum_created_vulnerability_critical',
                                                        allow_none=True)
     workspace = PrimaryKeyRelatedField('name', dump_only=True)
+    creator = PrimaryKeyRelatedField('username', dump_only=True)
 
     def load_itime(self, value):
         return datetime.fromtimestamp(value)
@@ -47,7 +48,7 @@ class ActivityFeedSchema(AutoSchema):
         fields = ('_id', 'command', 'ip', 'hostname',
                   'params', 'user', 'workspace', 'tool',
                   'import_source', 'itime', 'sum_created_vulnerabilities',
-                  'sum_created_hosts', 'sum_created_services', 'sum_created_vulnerability_critical')
+                  'sum_created_hosts', 'sum_created_services', 'sum_created_vulnerability_critical', 'creator')
 
 
 class ActivityFeedView(PaginatedMixin, ReadWriteWorkspacedView):
@@ -72,6 +73,7 @@ class ActivityFeedView(PaginatedMixin, ReadWriteWorkspacedView):
                 'services_count': command['sum_created_services'] or 0,
                 'criticalIssue': command['sum_created_vulnerability_critical'] or 0,
                 'date': command['itime'],
+                'creator': command['creator']
             })
         return {
             'activities': commands,

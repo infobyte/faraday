@@ -3,9 +3,9 @@ from __future__ import with_statement
 import sys
 import os
 sys.path.append(os.getcwd())
-import server.config
-from server.web import app
-from server.models import db
+import faraday.server.config
+from faraday.server.web import app
+from faraday.server.models import db
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
@@ -43,7 +43,7 @@ def run_migrations_offline():
     script output.
 
     """
-    url = server.config.database.connection_string
+    url = faraday.server.config.database.connection_string
     context.configure(
         url=url, target_metadata=target_metadata, literal_binds=True)
 

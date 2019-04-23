@@ -1,0 +1,5 @@
+recursive-include ./server/www *
+recursive-include ./migrations *
+include ./VERSION
+include ./requirements_server.txt
+include ./config/default.xml

@@ -10,7 +10,7 @@ See the file 'doc/LICENSE' for the license information
 import logging
 import logging.handlers
 import os
-from config.constant import CONST_FARADAY_HOME_PATH, CONST_FARADAY_LOGS_PATH
+from faraday.config.constant import CONST_FARADAY_HOME_PATH, CONST_FARADAY_LOGS_PATH
 
 
 FARADAY_USER_HOME = os.path.expanduser(CONST_FARADAY_HOME_PATH)

@@ -239,6 +239,7 @@ angular.module('faradayApp')
 
                 $scope.insert = function(data) {
                     $scope.loading = false;
+
                     return vulnModelsManager.create(data)
                         .then(function(data) {
                             $scope.loading = false;

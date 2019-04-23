@@ -16,7 +16,6 @@ angular.module('faradayApp')
             $scope.exploitations = EXPLOITATIONS;
             $scope.easeofresolution = EASEOFRESOLUTION;
             $scope.data = new VulnModel;
-            $scope.data.custom_fields = {};
             $scope.data.set(model);
             $scope.impact = angular.copy($scope.data.impact);
             $scope.policyviolations = clearList(angular.copy($scope.data.policyviolations), EXCLUDED_TOKENS);
@@ -25,9 +24,12 @@ angular.module('faradayApp')
             $scope.new_reference = "";
             $scope.customFields = customFields;
 
-            customFields.forEach(function(cf) {
-                $scope.data.custom_fields[cf.field_display_name] = null;
-            });
+            for (var key in $scope.data.customfields) {
+                $scope.customFields.forEach(function(cf){
+                    if(cf.field_name == key)
+                        cf.value = $scope.data.customfields[key];
+                })
+            }
         };
 
         $scope.ok = function() {
@@ -35,6 +37,13 @@ angular.module('faradayApp')
             $scope.data.policyviolations = angular.copy($scope.policyviolations);
             $scope.data.refs = angular.copy($scope.references);
             $scope.data.references = $scope.data.refs.join(',');
+            $scope.customFields.forEach(function(cf){
+                if(cf.value){
+                    $scope.data.customfields[cf.field_name] = cf.value;
+                }
+            })
+
+
             $modalInstance.close($scope.data);
         };
 

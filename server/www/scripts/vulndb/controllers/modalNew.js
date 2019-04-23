@@ -16,7 +16,7 @@ angular.module('faradayApp')
             $scope.easeofresolution = EASEOFRESOLUTION;
             $scope.data = new VulnModel;
             $scope.models = vulnModelsManager.models;
-            $scope.data.custom_fields = {};
+            $scope.data.customfields = {};
             // $scope.exploitations = ['a'];
             $scope.customFields = customFields;
 
@@ -31,7 +31,7 @@ angular.module('faradayApp')
             }, true);
 
             customFields.forEach(function(cf) {
-                $scope.data.custom_fields[cf.field_display_name] = null;
+                $scope.data.customfields[cf.field_name] = null;
             });
         };
 
@@ -46,6 +46,12 @@ angular.module('faradayApp')
             if($scope.other) {
                 $scope.data.model = $scope.other_model;
             }
+
+            $scope.customFields.forEach(function(cf){
+                if(cf.value){
+                    $scope.data.customfields[cf.field_name] = cf.value;
+                }
+            })
 
             if ($scope.data.easeofresolution === ""){
                 $scope.data.easeofresolution = null;

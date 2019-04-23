@@ -4,6 +4,7 @@ import signal
 import subprocess
 from datetime import datetime
 from faraday.server.utils import daemonize
+from faraday.server.config import FARADAY_BASE
 
 try:
     import ConfigParser
@@ -64,7 +65,8 @@ def test_start_and_kill_faraday_server():
         # assert subproc.returncode == 0, ('Can not install!', std, err)
 
         command = ['faraday-manage', 'create-tables']
-        subproc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subproc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                   cwd=FARADAY_BASE) # TODO THIS SHOULD FIXED AND THEN REMOVED ISSUE 5570
         subproc.wait()
         std, err = subproc.communicate()
         assert subproc.returncode == 0, ('Create tables failed!', std, err)

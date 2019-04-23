@@ -9,7 +9,7 @@
 set -eu -o pipefail
 
 CLIENT_DIRS=(apis bin gui helpers managers model persistence plugins zsh)
-FARADAY_PACKAGE_DIRS=(client config server)
+FARADAY_PACKAGE_DIRS=(client config server utils)
 
 DRY_RUN_PREFIX=""
 DRY_RUN_GIT_MV=""

@@ -29,7 +29,7 @@ done
 for dir in "${CLIENT_DIRS[@]}"; do
     if [[ -d "${dir}" ]]; then
         for subfile in $(find "${dir}" -type f); do
-            $DRY_RUN_PREFIX mkdir -p "client/$(dirname "${subfile}")"
+            $DRY_RUN_PREFIX mkdir -p "faraday/client/$(dirname "${subfile}")"
             git mv $DRY_RUN_GIT_MV -k "${subfile}" "faraday/client/${subfile}"
         done
         $DRY_RUN_PREFIX rmdir --ignore-fail-on-non-empty "${dir}"
@@ -40,7 +40,7 @@ done
 for dir in "${FARADAY_PACKAGE_DIRS[@]}"; do
     if [[ -d "${dir}" ]]; then
         for subfile in $(find "${dir}" -type f); do
-            $DRY_RUN_PREFIX mkdir -p "client/$(dirname "${subfile}")"
+            $DRY_RUN_PREFIX mkdir -p "faraday/$(dirname "${subfile}")"
             git mv $DRY_RUN_GIT_MV -k "${subfile}" "faraday/${subfile}"
         done
         $DRY_RUN_PREFIX rmdir --ignore-fail-on-non-empty "${dir}"

@@ -1,4 +1,5 @@
 recursive-include faraday/server/www *
+recursive-include faraday/migrations *
 include faraday/config/default.xml
 include requirements.txt
 include requirements_server.txt

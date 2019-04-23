@@ -31,3 +31,30 @@ class TestVulnerabilityCustomFields(ReadOnlyAPITests):
         res = test_client.get(self.url()) # '/v2/custom_fields_schema/')
         assert res.status_code == 200
         assert {u'table_name': u'vulnerability', u'id': add_text_field.id, u'field_type': u'text', u'field_name': u'cvss', u'field_display_name': u'CVSS', u'field_order': 1} in res.json
+
+    def test_custom_fields_field_name_cant_be_changed(self, session, test_client):
+        add_text_field = CustomFieldsSchemaFactory.create(
+            table_name='vulnerability',
+            field_name='cvss',
+            field_type='str',
+            field_order=1,
+            field_display_name='CVSS',
+        )
+        session.add(add_text_field)
+        session.commit()
+
+        data = {
+            u'field_name': u'cvss 2',
+            u'field_type': 'int',
+            u'talbe_name': 'sarasa',
+            u'field_display_name': u'CVSS new',
+            u'field_order': 1
+        }
+        res = test_client.put(self.url(add_text_field.id), data=data)
+        assert res.status_code == 200
+
+        custom_field_obj = session.query(CustomFieldsSchema).filter_by(id=add_text_field.id).first()
+        assert custom_field_obj.field_name == 'cvss'
+        assert custom_field_obj.table_name == 'vulnerability'
+        assert custom_field_obj.field_type == 'str'
+        assert custom_field_obj.field_display_name == 'CVSS new'

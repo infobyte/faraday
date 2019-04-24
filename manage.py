@@ -11,6 +11,7 @@ import sys
 
 import click
 import requests
+from urlparse import urlparse
 from alembic.config import CommandLine
 
 import faraday.server.config
@@ -107,9 +108,14 @@ def sql_shell():
         print('PGCli was not found, please install it with: pip install pgcli')
         sys.exit(1)
     conn_string = faraday.server.config.database.connection_string.strip("'")
-
+    conn_string = urlparse(conn_string)
+    parsed_conn_string = ("user={username} password={password} host={hostname} dbname={dbname}"
+                          .format(username=conn_string.username,
+                                  password=conn_string.password,
+                                  hostname=conn_string.hostname,
+                                  dbname=conn_string.path[1:]))
     pgcli = PGCli()
-    pgcli.connect_uri(conn_string)
+    pgcli.connect_uri(parsed_conn_string)
     pgcli.run_cli()
 
 

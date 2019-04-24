@@ -132,20 +132,21 @@ def register_handlers(app):
             if verify_token() is not True:
                 logger.warn ('Auth token not valid. Did you change your password recently?')
                 flask.abort(401)
+            logged_in = True
         else:
             logged_in = 'user_id' in flask.session
             if (not logged_in and not getattr(view, 'is_public', False)):
                 flask.abort(401)
 
-            g.user = None
-            if logged_in:
-                user = User.query.filter_by(id=session["user_id"]).first()
-                g.user = user
-                if user is None:
-                    logger.warn("Unknown user id {}".format(session["user_id"]))
-                    del flask.session['user_id']
-                    flask.abort(401)  # 403 would be better but breaks the web ui
-                    return
+        g.user = None
+        if logged_in:
+            user = User.query.filter_by(id=session["user_id"]).first()
+            g.user = user
+            if user is None:
+                logger.warn("Unknown user id {}".format(session["user_id"]))
+                del flask.session['user_id']
+                flask.abort(401)  # 403 would be better but breaks the web ui
+                return
 
     @app.after_request
     def log_queries_count(response):

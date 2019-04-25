@@ -74,11 +74,13 @@ angular.module('faradayApp')
         };
 
         var loadHosts = function() {
+            $scope.loading = true;
             hostsManager.getHosts(
                 $scope.workspace, $scope.currentPage,
                 $scope.pageSize, $scope.expression,
                 $scope.sortField, $scope.sortDirection)
                 .then(function(batch) {
+                    $scope.loading = false;
                     $scope.hosts = batch.hosts;
                     $scope.totalHosts = batch.total;
                     $scope.loadedVulns = true;
@@ -86,6 +88,7 @@ angular.module('faradayApp')
                     $scope.loadMac();
                 })
                 .catch(function(e) {
+                    $scope.loading = false;
                     console.log(e);
                 });
         };

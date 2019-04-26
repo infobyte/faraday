@@ -8,9 +8,8 @@ with (import <nixpkgs> {});
       unset SOURCE_DATE_EPOCH  # Required to make pip work
 
       VENV_PATH=.venv-white
-      grep -q p- VERSION && VENV_PATH=.venv-pink
-      grep -q b- VERSION && VENV_PATH=.venv-black
-      grep -q c- VERSION && VENV_PATH=.venv-black
+      [[ -f faraday/server/api/modules/reports.py ]] && VENV_PATH=.venv-pink
+      [[ -f faraday/server/api/modules/jira.py ]] && VENV_PATH=.venv-black
 
       mkvirtualenv(){
         # Reset previous virtualenv
@@ -36,8 +35,5 @@ with (import <nixpkgs> {});
       # Without this, the import report dialog of the client breaks
       # Taken from https://github.com/NixOS/nixpkgs/pull/26614
       export XDG_DATA_DIRS=$XDG_ICON_DIRS:$GSETTINGS_SCHEMAS_PATH\''${XDG_DATA_DIRS:+:}\$XDG_DATA_DIRS
-
-      alias c="PS1= python faraday.py"
-
     '';
   }

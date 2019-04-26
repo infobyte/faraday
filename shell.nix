@@ -8,9 +8,8 @@ with (import <nixpkgs> {});
       unset SOURCE_DATE_EPOCH  # Required to make pip work
 
       VENV_PATH=.venv-white
-      grep -q p- VERSION && VENV_PATH=.venv-pink
-      grep -q b- VERSION && VENV_PATH=.venv-black
-      grep -q c- VERSION && VENV_PATH=.venv-black
+      [[ -f faraday/server/api/modules/reports.py ]] && VENV_PATH=.venv-pink
+      [[ -f faraday/server/api/modules/jira.py ]] && VENV_PATH=.venv-black
 
       mkvirtualenv(){
         # Reset previous virtualenv

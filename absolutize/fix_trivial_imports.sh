@@ -24,6 +24,6 @@ do
     sed -Ei "s/^(\s*)from $OTHER_ROOTS/\1from faraday.\2/" $PYFILE
     sed -Ei "/ as / { s/^(\s*)import $CLIENT_ROOTS/\1import faraday.client.\2/; }" $PYFILE
     sed -Ei "/ as / { s/^(\s*)import $OTHER_ROOTS/\1import faraday.\2/; }" $PYFILE
-    sed -Ei "s/^(\s*)from faraday import/\1from faraday.client.start_client import/" $PYFILE
+    sed -Ei "/__version__/! s/^(\s*)from faraday import/\1from faraday.client.start_client import/" $PYFILE
 done
 

@@ -203,7 +203,7 @@ def print_postgresql_status():
         exit_code = 1
         return exit_code
     elif result == None:
-        print('[{red}-{white}] Database not initialized. Execute: python faraday-manage initdb'\
+        print('[{red}-{white}] Database not initialized. Execute: faraday-manage initdb'\
             .format(red=Fore.RED, white=Fore.WHITE))
         exit_code = 1
         return exit_code

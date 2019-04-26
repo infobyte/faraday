@@ -32,7 +32,6 @@ class dirbPlugin(core.PluginBase):
         self._command_regex = re.compile(r'^(?:sudo dirb|dirb|\.\/dirb|sudo \.\/dirb)\s+(?:(http[s]?)\:\/\/([\w\.]+)[.\S]+)')
         self.text = []
 
-
     def getPort(self, host, proto):
         p = re.search(r"\:([0-9]+)\/", host)
         if p is not None:
@@ -42,7 +41,6 @@ class dirbPlugin(core.PluginBase):
         else:
             return 80
 
-
     def getIP(self, host):
         try:
             ip = socket.gethostbyname(host)
@@ -51,13 +49,11 @@ class dirbPlugin(core.PluginBase):
 
         return ip
 
-
     def state(self, output):
         if output.find('COULDNT CONNECT') != -1:
             return "close"
         else:
             return "open"
-
 
     def pathsDirListing(self, output):
         data = []
@@ -69,7 +65,6 @@ class dirbPlugin(core.PluginBase):
         paths = "\n".join(data)
         return paths
 
-
     def note(self, output):
         dirs  = re.findall(r"==> DIRECTORY: "+self.regexpUrl, output)
         files = re.findall(r"\+ " + self.regexpUrl + r" \(.+\)", output)
@@ -80,7 +75,6 @@ class dirbPlugin(core.PluginBase):
             self.text.append("FILE: " + f[0])
 
         self.text = '\n'.join(self.text)
-
 
     def parseOutputString(self, output, debug=False):
 
@@ -107,8 +101,6 @@ class dirbPlugin(core.PluginBase):
                 self.createAndAddVulnWebToService(host_id, serv_id, "Directory Listing", severity = "med", website = domain, request = paths, method = "GET")
 
         return True
-
-
 
     def processCommandString(self, username, current_path, command_string):
         """

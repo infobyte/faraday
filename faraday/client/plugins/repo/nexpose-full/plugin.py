@@ -343,7 +343,16 @@ def createPlugin():
     return NexposeFullPlugin()
 
 if __name__ == '__main__':
-    parser = NexposeFullXmlParser(sys.argv[1])
-    for item in parser.items:
-        if item.status == 'up':
-            print item
+    if len(sys.argv) == 2:
+        xml_file = sys.argv[1]
+        if os.path.isfile(xml_file):
+            with open(xml_file) as f:
+                parser = NexposeFullXmlParser(f.read())
+                for item in parser.items:
+                    print "* {0} ({1}) - Vulns: {2}".format(item['name'], item['os'], len(item['vulns']))
+                    for vuln in item['vulns']:
+                        print "- {0} (Severity: {1})".format(vuln['name'], vuln['severity'])
+        else:
+            print "File (%s) not found" % xml_file
+    else:
+        print "Usage: {0} XML_FILE".format(sys.argv[0])

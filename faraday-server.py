@@ -10,12 +10,12 @@ from __future__ import print_function
 import sys
 
 print(
-    "From Faraday v3.8 onwards, running ./faraday-server.py doesn't work"
+    "From Faraday v3.8 onwards, running ./faraday-server.py doesn't work "
     "anymore. You should run faraday-server instead.\n\n"
 
-    "This was done to allow users to put the faraday-server script in any "
-    "directory (like /usr/local/bin) and to run it from anywhere, with no "
-    "need of switching to the Faraday directory.",
+    "This allows users to put the faraday-server script in any directory "
+    "(like /usr/local/bin) and to run it from anywhere, with no need of "
+    "switching to the Faraday directory.",
 
     file=sys.stderr
 )

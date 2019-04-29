@@ -13,9 +13,9 @@ print(
     "From Faraday v3.8 onwards, running ./manage.py doesn't work anymore. "
     "You should run faraday-manage instead.\n\n"
 
-    "This was done to allow users to put the faraday-manage script in any "
-    "directory (like /usr/local/bin) and to run it from anywhere, with no "
-    "need of switching to the Faraday directory.",
+    "This allows users to put the faraday-manage script in any directory "
+    "(like /usr/local/bin) and to run it from anywhere, with no need of "
+    "switching to the Faraday directory.",
 
     file=sys.stderr
 )

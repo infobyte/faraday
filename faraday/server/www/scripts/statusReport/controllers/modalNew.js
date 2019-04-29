@@ -3,9 +3,29 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('modalNewVulnCtrl',
-        ['$modalInstance', '$filter', '$upload', 'EASEOFRESOLUTION', 'commonsFact', 'severities', 'workspace', 'targetFact', 'vulnModelsManager', 'vulnsManager', 'customFields',
-        function($modalInstance, $filter, $upload, EASEOFRESOLUTION, commonsFact, severities, workspace, targetFact, vulnModelsManager, vulnsManager, customFields) {
+    .controller('modalNewVulnCtrl', [
+        '$modalInstance',
+        '$filter',
+        '$upload',
+        'EASEOFRESOLUTION',
+        'commonsFact',
+        'severities',
+        'workspace',
+        'targetFact',
+        'vulnModelsManager',
+        'vulnsManager',
+        'customFields',
+        function ($modalInstance,
+                  $filter,
+                  $upload,
+                  EASEOFRESOLUTION,
+                  commonsFact,
+                  severities,
+                  workspace,
+                  targetFact,
+                  vulnModelsManager,
+                  vulnsManager,
+                  customFields) {
 
         var vm = this;
 

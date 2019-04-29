@@ -3,7 +3,8 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('targetFact', ['BASEURL', '$q', 'hostsManager', 'servicesManager', function(BASEURL, $q, hostsManager, servicesManager) {
+    .factory('targetFact', ['BASEURL', '$q', 'hostsManager', 'servicesManager',
+        function(BASEURL, $q, hostsManager, servicesManager) {
         var targetFact = {};
 
         targetFact.getTargets = function(workspace) {

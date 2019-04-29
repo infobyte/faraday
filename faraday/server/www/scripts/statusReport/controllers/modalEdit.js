@@ -3,13 +3,35 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('modalEditCtrl',
-        ['$modalInstance', '$routeParams', 'EASEOFRESOLUTION', 'STATUSES', 'commonsFact',
-            'BASEURL', 'severities', 'vuln', 'vulnModelsManager', 'vulnsManager', 'referenceFact',
-            'encodeURIComponentFilter', 'customFields', 'workspace',
-            function ($modalInstance, $routeParams, EASEOFRESOLUTION, STATUSES, commonsFact,
-                      BASEURL, severities, vuln, vulnModelsManager, vulnsManager, referenceFact,
-                      encodeURIComponent, customFields, workspace) {
+    .controller('modalEditCtrl', [
+        '$modalInstance',
+        '$routeParams',
+        'EASEOFRESOLUTION',
+        'STATUSES',
+        'commonsFact',
+        'BASEURL',
+        'severities',
+        'vuln',
+        'vulnModelsManager',
+        'vulnsManager',
+        'referenceFact',
+        'encodeURIComponentFilter',
+        'customFields',
+        'workspace',
+        function ($modalInstance,
+                  $routeParams,
+                  EASEOFRESOLUTION,
+                  STATUSES,
+                  commonsFact,
+                  BASEURL,
+                  severities,
+                  vuln,
+                  vulnModelsManager,
+                  vulnsManager,
+                  referenceFact,
+                  encodeURIComponent,
+                  customFields,
+                  workspace) {
 
                 var vm = this;
 

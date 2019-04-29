@@ -3,17 +3,57 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module("faradayApp")
-    .controller("statusReportCtrl",
-                    ["$scope", "$filter", "$routeParams",
-                     "$location", "$uibModal", "$cookies", "$q", "$window", "BASEURL",
-                     "SEVERITIES", "EASEOFRESOLUTION", "STATUSES", "hostsManager", "commonsFact", 'parserFact',
-                     "vulnsManager", "workspacesFact", "csvService", "uiGridConstants", "vulnModelsManager",
-                     "referenceFact", "ServerAPI", '$http', 'uiCommonFact', 'FileUploader',
-                    function($scope, $filter, $routeParams,
-                        $location, $uibModal, $cookies, $q, $window, BASEURL,
-                        SEVERITIES, EASEOFRESOLUTION, STATUSES, hostsManager, commonsFact,parserFact,
-                        vulnsManager, workspacesFact, csvService, uiGridConstants, vulnModelsManager, referenceFact,
-                        ServerAPI, $http, uiCommonFact, FileUploader) {
+    .controller("statusReportCtrl", [
+        "$scope",
+        "$filter",
+        "$routeParams",
+        "$location",
+        "$uibModal",
+        "$cookies",
+        "$q",
+        "$window",
+        "BASEURL",
+        "SEVERITIES",
+        "EASEOFRESOLUTION",
+        "STATUSES",
+        "hostsManager",
+        "commonsFact",
+        'parserFact',
+        "vulnsManager",
+        "workspacesFact",
+        "csvService",
+        "uiGridConstants",
+        "vulnModelsManager",
+        "referenceFact",
+        "ServerAPI",
+        '$http',
+        'uiCommonFact',
+        'FileUploader',
+        function ($scope,
+                  $filter,
+                  $routeParams,
+                  $location,
+                  $uibModal,
+                  $cookies,
+                  $q,
+                  $window,
+                  BASEURL,
+                  SEVERITIES,
+                  EASEOFRESOLUTION,
+                  STATUSES,
+                  hostsManager,
+                  commonsFact,
+                  parserFact,
+                  vulnsManager,
+                  workspacesFact,
+                  csvService,
+                  uiGridConstants,
+                  vulnModelsManager,
+                  referenceFact,
+                  ServerAPI,
+                  $http,
+                  uiCommonFact,
+                  FileUploader) {
         $scope.baseurl;
         $scope.columns;
         $scope.columnsWidths;
@@ -320,7 +360,7 @@ angular.module("faradayApp")
 
             loadVulns();
 
-            loadCustomFields();                
+            loadCustomFields();
 
             $cookies.remove("selectedVulns");
             $scope.isShowingPreview = false;

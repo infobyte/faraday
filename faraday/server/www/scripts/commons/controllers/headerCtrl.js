@@ -3,9 +3,24 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('headerCtrl',
-        ['$scope', '$routeParams', '$location', '$cookies', 'dashboardSrv', 'workspacesFact', 'vulnsManager', '$uibModal',
-        function($scope, $routeParams, $location, $cookies, dashboardSrv, workspacesFact, vulnsManager, $uibModal) {
+    .controller('headerCtrl', [
+        '$scope',
+        '$routeParams',
+        '$location',
+        '$cookies',
+        'dashboardSrv',
+        'workspacesFact',
+        'vulnsManager',
+        '$uibModal',
+        function ($scope,
+                  $routeParams,
+                  $location,
+                  $cookies,
+                  dashboardSrv,
+                  workspacesFact,
+                  vulnsManager,
+                  $uibModal) {
+
             $scope.confirmed = ($cookies.get('confirmed') == undefined) ? false : JSON.parse($cookies.get('confirmed'));
 
             $scope.showSwitcher = function() {

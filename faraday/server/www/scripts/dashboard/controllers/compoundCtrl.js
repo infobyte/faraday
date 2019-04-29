@@ -3,9 +3,23 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('compoundCtrl',
-        ['$scope', '$location', '$route', '$routeParams', '$uibModal', 'hostsManager', 'workspacesFact', 'dashboardSrv',
-        function($scope, $location, $route, $routeParams, $uibModal, hostsManager, workspacesFact, dashboardSrv) {
+    .controller('compoundCtrl', [
+        '$scope',
+        '$location',
+        '$route',
+        '$routeParams',
+        '$uibModal',
+        'hostsManager',
+        'workspacesFact',
+        'dashboardSrv',
+        function ($scope,
+                  $location,
+                  $route,
+                  $routeParams,
+                  $uibModal,
+                  hostsManager,
+                  workspacesFact,
+                  dashboardSrv) {
 
         init = function() {
             // hosts list

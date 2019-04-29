@@ -153,6 +153,9 @@ class NexposeFullXmlParser(object):
         @returns vulns A dict of Vulnerability Definitions
         """
         vulns = dict()
+        #CVSS V3
+        SEVERITY_MAPPING_DICT = {'0': 'info', '1': 'low', '2': 'low', '3': 'low', '4': 'med', '5': 'med', '6': 'med',
+                                 '7': 'high', '8': 'high', '9': 'critical', '10': 'critical'}
 
         for vulnsDef in tree.iter('VulnerabilityDefinitions'):
             for vulnDef in vulnsDef.iter('vulnerability'):
@@ -164,7 +167,7 @@ class NexposeFullXmlParser(object):
                     'name': vulnDef.get('title'),
                     'refs': ["vector: " + vector, vid],
                     'resolution': "",
-                    'severity': (int(vulnDef.get('severity')) - 1) / 2,
+                    'severity': SEVERITY_MAPPING_DICT[vulnDef.get('severity')],
                     'tags': list(),
                     'is_web': vid.startswith('http-')
                 }

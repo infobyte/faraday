@@ -17,8 +17,7 @@ def test_manage_migrate():
         # I'm on gitlab ci runner
 
         command = ['faraday-manage', 'migrate']
-        subproc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                   cwd=FARADAY_BASE) # TODO THIS SHOULD FIXED AND THEN REMOVED ISSUE 5570
+        subproc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         subproc.wait()
         std, err = subproc.communicate()
-        assert subproc.returncode == 0, ('Create tables failed!', std, err)
+        assert subproc.returncode == 0, ('manage migrate failed!', std, err)

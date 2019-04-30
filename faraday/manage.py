@@ -6,16 +6,20 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
+import os
 import re
 import sys
 
 import click
 import requests
+import alembic.command
 from urlparse import urlparse
-from alembic.config import CommandLine
+from alembic.config import Config
 
 import faraday.server.config
+from faraday.server.config import FARADAY_BASE
 from faraday.client.persistence.server.server import _conf, FARADAY_UP, SERVER_URL
+from faraday.client.start_client import FARADAY_PLUGINS_BASEPATH
 from faraday.server.commands.initdb import InitDB
 from faraday.server.commands.faraday_schema_display import DatabaseSchema
 from faraday.server.commands.app_urls import show_all_urls
@@ -26,13 +30,11 @@ from faraday.server.commands.custom_fields import add_custom_field_main, delete_
 from faraday.server.commands import support as support_zip
 from faraday.server.models import db, User
 from faraday.server.importer import ImportCouchDB
-
 from faraday.server.web import app
 from faraday.utils.logs import setUpLogger
-import os
-from faraday.client.start_client import FARADAY_PLUGINS_BASEPATH
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 def cli():
@@ -204,7 +206,6 @@ def create_superuser(username, email, password):
 def create_tables():
     with app.app_context():
         # Ugly hack to create tables and also setting alembic revision
-        import faraday.server.config
         conn_string = faraday.server.config.database.connection_string
         from faraday.server.commands.initdb import InitDB
         InitDB()._create_tables(conn_string)
@@ -232,8 +233,11 @@ def support():
         )
 def migrate(downgrade, revision):
     revision = revision or ("-1" if downgrade else "head")
-    action = "downgrade" if downgrade else "upgrade"
-    CommandLine(prog=None).main(argv=[action, revision])
+    config = Config(os.path.join(FARADAY_BASE,"alembic.ini"))
+    if downgrade:
+        alembic.command.downgrade(config, revision)
+    else:
+        alembic.command.upgrade(config, revision)
 
 
 @click.command(help='Custom field wizard')

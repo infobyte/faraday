@@ -20,4 +20,6 @@ def test_manage_migrate():
         subproc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         subproc.wait()
         std, err = subproc.communicate()
+        print std
+        print err
         assert subproc.returncode == 0, ('manage migrate failed!', std, err)

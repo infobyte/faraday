@@ -485,6 +485,10 @@ class VulnerabilityView(PaginatedMixin,
                 content=faraday_file,
             )
 
+    def _update_object(self, obj, data):
+        data.pop('type') # It's forbidden to change vuln type!
+        return super(VulnerabilityView, self)._update_object(obj, data)
+
     def _perform_update(self, object_id, obj, data, workspace_name):
         attachments = data.pop('_attachments', {})
         obj = super(VulnerabilityView, self)._perform_update(object_id, obj, data, workspace_name)

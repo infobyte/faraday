@@ -33,8 +33,7 @@ def test_manage_migrate():
             faraday_config.write(faraday_config_file)
 
         command = ['faraday-manage', 'create-tables']
-        subproc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                   cwd=FARADAY_BASE)  # TODO THIS SHOULD FIXED AND THEN REMOVED ISSUE 5570
+        subproc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         subproc.wait()
         std, err = subproc.communicate()
         assert subproc.returncode == 0, ('Create tables failed!', std, err)

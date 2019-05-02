@@ -41,6 +41,7 @@ from colorama import Fore
 from sqlalchemy.exc import OperationalError, ProgrammingError
 
 import faraday.server.config
+from faraday.server.config import FARADAY_BASE
 from faraday.config.constant import CONST_FARADAY_HOME_PATH
 from faraday.server.config import LOCAL_CONFIG_FILE
 init()
@@ -305,5 +306,6 @@ class InitDB():
         else:
             from alembic.config import Config
             from alembic import command
-            alembic_cfg = Config(os.path.join(os.getcwd(), 'alembic.ini'))
+            alembic_cfg = Config(os.path.join(FARADAY_BASE, 'alembic.ini'))
+            os.chdir(FARADAY_BASE)
             command.stamp(alembic_cfg, "head")

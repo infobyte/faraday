@@ -5,21 +5,22 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 import os
-import sys
 import socket
-import argparse
+
 import requests
 import sqlalchemy
-import faraday.server.config
 from colorama import init
+from colorama import Fore, Back, Style
+from requests.exceptions import InvalidURL, ConnectionError
+
+import faraday.server.config
+from faraday.config import constant as CONSTANTS
+from faraday.config.configuration import getInstanceConfiguration
 from faraday.server.web import app
 from faraday.server.models import db
-from faraday.utils import dependencies
-from requests.exceptions import InvalidURL, ConnectionError
-from colorama import Fore, Back, Style
+from faraday.server.config import FARADAY_BASE
 from faraday.server.utils.daemonize import is_server_running
-from faraday.config.configuration import getInstanceConfiguration
-from faraday.config import constant as CONSTANTS
+from faraday.utils import dependencies
 
 
 CONF = getInstanceConfiguration()
@@ -118,8 +119,9 @@ def check_client():
 
 def check_server_dependencies():
 
+    requirements_file=os.path.join(FARADAY_BASE,'requirements_server.txt')
     installed_deps, missing_deps, conflict_deps = dependencies.check_dependencies(
-        requirements_file='requirements_server.txt')
+        requirements_file=requirements_file)
 
     if conflict_deps:
         return True, conflict_deps
@@ -133,8 +135,9 @@ def check_server_dependencies():
 
 def check_client_dependencies():
 
+    requirements_file=os.path.join(FARADAY_BASE,'requirements.txt')
     installed_deps, missing_deps, conflict_deps = dependencies.check_dependencies(
-        requirements_file='requirements.txt')
+        requirements_file=requirements_file)
 
     if 'argparse' in conflict_deps:
             conflict_deps.remove('argparse')

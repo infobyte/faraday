@@ -52,6 +52,8 @@ class FaradayCustomField(fields.Field):
         serialized = {}
         if value is not None and value:
             for key, raw_data in value.iteritems():
+                if not raw_data:
+                    continue
                 field_schema = db.session.query(CustomFieldsSchema).filter_by(
                     table_name=self.table_name,
                     field_name=key,

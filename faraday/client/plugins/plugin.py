@@ -170,7 +170,7 @@ class PluginBase(object):
             args = args + (self.command_id, )
         else:
             logger.warn('Warning command id not set for action {0}'.format(args))
-        logger.debug('AddPendingAction', args)
+        logger.debug('AddPendingAction %s', args)
         self._pending_actions.put(args)
 
     def createAndAddHost(self, name, os="unknown", hostnames=None, mac=None):

@@ -1,0 +1,1 @@
+Add admin panel to Faraday

@@ -1,0 +1,25 @@
+<article id="vulns-by-price" class="panel" ng-controller="vulnsByPriceCtrl">
+            <header>
+                <h2>
+                    Workspace's worth
+                    <span class="glyphicon glyphicon-info-sign" uib-tooltip="Total net worth of Workspace, according to current vulnerabilities prices"></span>
+                </h2>
+            </header>
+            <div ng-if="workspaceWorth === 0" class="no-info-overlay">
+                <p class="no-info-text">No vulnerabilities found yet.</p>
+            </div>
+            <div class="main" ng-if="workspaceWorth > 0">
+                <div class="center-lg-6"><h4><i class="fa fa-money"></i> {{workspaceWorth | currency}} total</h4></div>
+                <div d3-horizontal-stacked-bar data="vulns" class="stackedbars"></div>
+                <div id="vulns-by-price-reference" class="center-lg-6">
+                    <ul class="label-list">
+                        <li ng-repeat="(severity, price) in vulnPrices" uib-tooltip="Click on number to edit price">
+                            <span class="label vuln fondo-{{severity}}">
+                                {{severity}} $
+                                <span contenteditable="true" ng-model="vulnPrices[severity]"></span>
+                            </span>
+                        </li>
+                    </ul>
+                </div><!-- #vulns-by-price-reference .center-lg-6 -->
+            </div>
+        </article>

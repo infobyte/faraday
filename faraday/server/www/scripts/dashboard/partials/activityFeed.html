@@ -1,0 +1,80 @@
+<article class='panel left-big-box' ng-controller="activityFeedCtrl as activityFeed">
+    <header>
+        <h2>Activity Feed
+            <span class="glyphicon glyphicon-info-sign" uib-tooltip="Faraday feed"></span>
+
+            <span class="pull-right" ng-show="!isExpanded && activityFeed.commands.length > 5">
+                <img src="images/icon_viewmore.svg" class="feed-icon"/>
+                <a href="javascript:;" ng-click="toggleExpanded()" >View more</a>
+            </span>
+
+            <span class="pull-right" ng-show="isExpanded">
+                <img src="images/icon_viewless.svg" class="feed-icon"/>
+                <a href="javascript:;" ng-click="toggleExpanded()" >View less</a>
+            </span>
+
+            <!--TODO: Change icon-->
+            <span class="pull-right margin-right-15px" ng-show="isExpanded && !hideEmpty">
+                <!--<img src="images/icon_viewless.svg" class="feed-icon"/> -->
+                <a href="javascript:;" ng-click="hideEmpty = true" >Hide empty</a>
+            </span>
+
+            <!--TODO: Change icon-->
+            <span class="pull-right margin-right-15px" ng-show="isExpanded && hideEmpty">
+                <!--<img src="images/icon_viewless.svg" class="feed-icon"/>-->
+                <a href="javascript:;" ng-click="hideEmpty = false" >Show empty</a>
+            </span>
+
+
+        </h2>
+
+
+    </header>
+    <div ng-if="activityFeed.commands.length === 0 || (getValidCount() === 0 && hideEmpty == true)" class="no-info-overlay">
+        <p class="no-info-text">No activities found yet.</p>
+    </div>
+    <div class="ph-xl">
+        <table id="commands" ng-if="activityFeed.commands.length > 0" class="tablesorter table table-striped">
+            <tbody>
+            <tr ng-repeat="cmd in activityFeed.commands | orderBy : '-date' | limitTo:settings.pageLimit:settings.offset"
+                ng-show="!isEmpty(cmd) || !hideEmpty">
+                <td align="left" ng-class="{'hide-border-top':$first}">
+                    <span ng-if="cmd.import_source == 'report'">
+                        <img src="images/icon_terminal.svg" class="feed-icon"/>
+                    </span>
+                    <span ng-if="cmd.import_source == 'shell'">
+                        <img src="images/icon_terminal.svg" class="feed-icon"/>
+                    </span>
+
+                    <b class="capitalize fg-blue">{{cmd.creator || Anonymous}}</b>
+                    <span ng-if="cmd.import_source == 'shell'"
+                          uib-tooltip="{{ cmd.command + ' ' + cmd.params}}"><span class="little-gray">ran</span> <strong>{{cmd.command}}</strong></span>
+                    <span ng-if="cmd.import_source == 'report'"
+                          uib-tooltip="Import {{ cmd.command + ': ' + cmd.params}}">imported <strong>{{cmd.tool == 'unknown' ? cmd.command : cmd.tool}}</strong> report</span>
+                    <span class="little-gray"> and found</span>
+                    <span ng-if="cmd.hosts_count == 0 && cmd.services_count == 0 && cmd.vulnerabilities_count == 0 "> <strong>nothing</strong></span>
+                    <span ng-if="cmd.hosts_count != 0 || cmd.services_count != 0 || cmd.vulnerabilities_count != 0 ">: </span>
+                    <span ng-if="cmd.hosts_count > 0">{{cmd.hosts_count}} {{cmd.hosts_count == 1 ? 'host' : 'hosts'}}</span>
+                    <span ng-if="cmd.hosts_count != 0 && cmd.services_count != 0 && cmd.vulnerabilities_count != 0">, </span>
+                    <span ng-if="(cmd.hosts_count != 0 && cmd.services_count != 0 && cmd.vulnerabilities_count == 0) || (cmd.hosts_count != 0 && cmd.services_count == 0 && cmd.vulnerabilities_count != 0)"> & </span>
+                    <span ng-if="cmd.services_count > 0">{{cmd.services_count}} {{cmd.services_count == 1 ? 'service' : 'services'}}</span>
+                    <span ng-if="(cmd.hosts_count != 0 && cmd.services_count != 0 && cmd.vulnerabilities_count != 0) || (cmd.hosts_count == 0 && cmd.services_count != 0 && cmd.vulnerabilities_count != 0)"> & </span>
+                    <span ng-if="cmd.vulnerabilities_count > 0"><a
+                            ng-click="navigate('/status/ws/' + workspace + '/search/command_id=' + cmd._id)"> {{cmd.vulnerabilities_count}} {{cmd.vulnerabilities_count == 1 ? 'vulnerability' : 'vulnerabilities'}}</a></span>
+                    <span ng-if="cmd.criticalIssue > 0">- {{cmd.criticalIssue}} {{cmd.criticalIssue == 1 ? 'is' : 'are'}} rated as <b>Critical</b>.</span>
+                    <span class="small-size fg-light-gray" am-time-ago="cmd.date" am-preprocess="utc"/>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <simple-pagination ng-if="isExpanded == true && hideEmpty == false"
+            current-page="settings.currentPage"
+            offset="settings.offset"
+            page-limit="settings.pageLimit"
+            page-limits="settings.pageLimits"
+            total="activityFeed.commands.length">
+        </simple-pagination>
+
+    </div>
+</article>

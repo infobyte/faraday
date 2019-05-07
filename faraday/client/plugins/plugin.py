@@ -20,6 +20,7 @@ from threading import Thread
 import faraday.server.config
 import faraday.client.model.api
 import faraday.client.model.common
+from faraday import __license_version__ as license_version
 from faraday.client.model.common import factory
 from faraday.client.persistence.server.models import get_host , update_host
 from faraday.client.persistence.server.models import (
@@ -35,7 +36,7 @@ from faraday.client.model import Modelactions
 
 from faraday.config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
-VERSION = faraday.server.config.__get_version().split('-')[0].split('rc')[0]
+VERSION = license_version.split('-')[0].split('rc')[0]
 logger = logging.getLogger(__name__)
 
 

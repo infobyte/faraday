@@ -128,7 +128,7 @@ def check_postgresql():
             sys.exit(1)
         except sqlalchemy.exc.ProgrammingError:
             logger.error(
-                    '\n\nn{WHITE}Missing migrations, please execute: \n\nfaraday-manage migrate'.format(GREEN=Fore.GREEN, YELLOW=Fore.YELLOW, WHITE=Fore.WHITE, RED=Fore.RED))
+                    '\n\nn{WHITE}Missing migrations, please execute: \n\nfaraday-manage migrate'.format(WHITE=Fore.WHITE, RED=Fore.RED))
             sys.exit(1)
 
 

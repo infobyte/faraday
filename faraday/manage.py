@@ -162,7 +162,7 @@ def change_password(username, password):
         change_pass.changes_password(username, password)
     except ProgrammingError:
         print('\n\nMissing migrations, please execute: \n\nfaraday-manage migrate')
-            sys.exit(1)
+        sys.exit(1)
 def validate_user_unique_field(ctx, param, value):
     with app.app_context():
         if User.query.filter_by(**{param.name: value}).count():

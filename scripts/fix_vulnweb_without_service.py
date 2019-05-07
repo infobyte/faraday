@@ -1,5 +1,5 @@
 import server.config
-from server.models import (
+from faraday.server.models import (
     Host,
     Service,
     Workspace,

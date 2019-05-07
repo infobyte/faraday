@@ -3,3 +3,4 @@
 # See the file 'doc/LICENSE' for the license information
 
 __version__ = '3.7.3'
+__license_version__ = __version__

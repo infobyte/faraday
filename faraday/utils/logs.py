@@ -51,6 +51,7 @@ def getLogger(obj=None):
      Allowing logger to additionally accept strings as names
      for non-class loggings.
     """
+    print "utils", obj
     if obj is None:
         logger = logging.getLogger(
             'faraday')

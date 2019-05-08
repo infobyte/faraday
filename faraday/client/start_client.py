@@ -11,6 +11,7 @@ import shutil
 import getpass
 import argparse
 import requests.exceptions
+import logging
 
 from faraday.config.configuration import getInstanceConfiguration
 from faraday.config.constant import (
@@ -67,7 +68,7 @@ FARADAY_DEFAULT_PORT_XMLRPC = 9876
 FARADAY_DEFAULT_PORT_REST = 9977
 FARADAY_DEFAULT_HOST = "localhost"
 
-logger = getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def getParserArgs():
@@ -533,12 +534,12 @@ def main():
     """
     os.chdir(FARADAY_BASE)
 
-    global logger, args
+    global args
 
-    logger = getLogger("launcher")
+    #logger = getLogger("launcher")
     args = getParserArgs()
     setupFolders(CONST_FARADAY_FOLDER_LIST)
-    setUpLogger(args.debug)
+    #setUpLogger(args.debug)
     if not args.nodeps:
         check_dependencies_or_exit()
     printBanner()

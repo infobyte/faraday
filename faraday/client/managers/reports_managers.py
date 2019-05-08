@@ -9,13 +9,15 @@ import os
 import re
 import time
 import traceback
+import logging
 
 from random import random
 from threading import Thread, Timer
-from faraday.utils.logs import getLogger
 
 from faraday.config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
+
+logger = logging.getLogger(__name__)
 
 try:
     import xml.etree.cElementTree as ET
@@ -51,7 +53,7 @@ class OnlinePlugins(Thread):
         random_id = random()
         self.plugin_controller.processCommandInput(random_id, cmd, './')
         self.plugin_controller.onCommandFinished(random_id, 0, cmd)
-        getLogger(self).debug("Running online plugin...")
+        logger.debug("Running online plugin...")
 
     def stop(self):
         self._stop = True
@@ -68,7 +70,7 @@ class OnlinePlugins(Thread):
                             config_dict["time"],
                             self.runPluginThread, args=(config_dict["command"],))
 
-                        getLogger(self).debug(
+                        logger.debug(
                             "Starting Thread for online plugin: %s" % name)
 
                         self.online_plugins[name]["thread_running"] = True
@@ -85,13 +87,13 @@ class ReportProcessor:
 
     def processReport(self, filename):
         """ Process one Report """
-        getLogger(self).debug("Report file is %s" % filename)
+        logger.debug("Report file is %s" % filename)
 
         parser = ReportParser(filename)
 
         if parser.report_type is None:
 
-            getLogger(self).error(
+            logger.error(
                 'Plugin not found: automatic and manual try!')
             return False
 
@@ -100,7 +102,7 @@ class ReportProcessor:
     def sendReport(self, plugin_id, filename):
         """Sends a report to the appropiate plugin specified by plugin_id"""
 
-        getLogger(self).info(
+        logger.info(
             'The file is %s, %s' % (filename, plugin_id))
 
         command_id = self.plugin_controller.processReport(
@@ -108,7 +110,7 @@ class ReportProcessor:
 
         if not command_id:
 
-            getLogger(self).error(
+            logger.error(
                 "Faraday doesn't have a plugin for this tool... Processing: ABORT")
             return False
 
@@ -163,7 +165,7 @@ class ReportManager(Thread):
 
                 except Exception:
 
-                    getLogger(self).error(
+                    logger.error(
                         "An exception was captured while saving reports\n%s"
                         % traceback.format_exc())
 
@@ -193,7 +195,7 @@ class ReportManager(Thread):
                     # when the plugin finishes
                     if self.processor.processReport(filename) is False:
 
-                        getLogger(self).info(
+                        logger.info(
                             'Plugin not detected. Moving {0} to unprocessed'.format(filename))
 
                         os.rename(
@@ -201,7 +203,7 @@ class ReportManager(Thread):
                             os.path.join(self._report_upath, name))
                     else:
 
-                        getLogger(self).info(
+                        logger.info(
                             'Detected valid report {0}'.format(filename))
 
                         os.rename(
@@ -229,7 +231,7 @@ class ReportParser(object):
 
         if self.report_type is None:
 
-            getLogger(self).debug(
+            logger.debug(
                 'Automatical detection FAILED... Trying manual...')
 
             self.report_type = self.getUserPluginName(report_path)
@@ -294,10 +296,10 @@ class ReportParser(object):
 
         except IOError as err:
             self.report_type = None
-            getLogger(self).error(
+            logger.error(
                 "Error while opening file.\n%s. %s" % (err, file_path))
 
-        getLogger(self).debug("Report type detected: %s" % result)
+        logger.debug("Report type detected: %s" % result)
         f.seek(0)
         return f, result
 
@@ -330,7 +332,7 @@ class ReportParser(object):
 
             except SyntaxError as err:
                 self.report_type = None
-                getLogger(self).error("Not an xml file.\n %s" % (err))
+                logger.error("Not an xml file.\n %s" % (err))
 
         f.seek(0)
         output = f.read()

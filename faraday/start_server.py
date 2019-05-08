@@ -29,7 +29,8 @@ except ImportError as ex:
     print(ex)
     print('Missing dependencies.\nPlease execute: pip install -r requirements_server.txt')
     sys.exit(1)
-logger = faraday.server.utils.logger.get_logger(__name__)
+logger = faraday.server.utils.logger.get_logger(faraday.server.utils.logger.ROOT_LOGGER)
+
 init()
 
 

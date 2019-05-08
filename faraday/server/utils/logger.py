@@ -14,7 +14,7 @@ LOG_FILE = os.path.expanduser(os.path.join(
 
 MAX_LOG_FILE_SIZE = 5 * 1024 * 1024     # 5 MB
 MAX_LOG_FILE_BACKUP_COUNT = 5
-ROOT_LOGGER = u'faraday-server'
+ROOT_LOGGER = u'faraday'
 LOGGING_HANDLERS = []
 LVL_SETTABLE_HANDLERS = []
 
@@ -58,15 +58,16 @@ def get_logger(obj=None):
     """Creates a logger named by a string or an object's class name.
      Allowing logger to additionally accept strings as names
      for non-class loggings."""
-
     if obj is None:
         logger = logging.getLogger(ROOT_LOGGER)
     elif isinstance(obj, basestring):
-        logger = logging.getLogger(u'{}.{}'.format(ROOT_LOGGER, obj))
+        if obj != ROOT_LOGGER:
+            logger = logging.getLogger(u'{}.{}'.format(ROOT_LOGGER, obj))
+        else:
+            logger = logging.getLogger(obj)
     else:
         cls_name = obj.__class__.__name__
         logger = logging.getLogger(u'{}.{}'.format(ROOT_LOGGER, cls_name))
-
     return logger
 
 

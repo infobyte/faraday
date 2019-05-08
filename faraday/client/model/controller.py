@@ -74,8 +74,13 @@ class ModelController(Thread):
         self.objects_with_updates = []
         self.processing = False
 
+        # Fix for using PyDev in DEBUG
+        self.is_pydev_daemon_thread = False
+        self.__pydevd_id__ = False
+        self.pydev_do_not_trace = False
+
     def __getattr__(self, name):
-        getLogger(self).debug("ModelObject attribute to refactor: %s" % name)
+        logger.debug("ModelObject attribute to refactor: %s",  name)
 
     def __acquire_host_lock(self):
         self._saving_model_lock.acquire()
@@ -115,7 +120,7 @@ class ModelController(Thread):
                     add_func(new_obj, parent_id, *args)
                 else:
                     msg = "A parent is needed for %s objects" % new_obj.class_signature
-                    getLogger(self).error(msg)
+                    logger.error(msg)
                     return False
             return addWrapper
         return checkParentDecorator
@@ -292,9 +297,9 @@ class ModelController(Thread):
             # because if we don't do it, the daemon will be blocked forever
             pass
         except Exception as ex:
-            getLogger(self).debug(
+            logger.debug(
                 "something strange happened... unhandled exception?")
-            getLogger(self).debug(traceback.format_exc())
+            logger.debug(traceback.format_exc())
 
     def sync_lock(self):
         self._sync_api_request = True
@@ -420,7 +425,7 @@ class ModelController(Thread):
         self.active_plugins_count_lock.acquire()
         self.processing = True
         if name not in ["MetasploitOn", "Beef", "Sentinel"]:
-            getLogger(self).info("Plugin Started: {0}. ".format(name, command_id))
+            logger.info("Plugin Started: {0}. ".format(name, command_id))
         self.active_plugins_count += 1
         self.active_plugins_count_lock.release()
         return True
@@ -428,10 +433,10 @@ class ModelController(Thread):
     def _pluginEnd(self, name, command_id):
         self.active_plugins_count_lock.acquire()
         if name not in ["MetasploitOn", "Beef", "Sentinel"]:
-            getLogger(self).info("Plugin Ended: {0}".format(name))
+            logger.info("Plugin Ended: {0}".format(name))
         if self.active_plugins_count == 0:
             self.active_plugins_count_lock.release()
-            getLogger(self).warn("All plugins ended, but a plugin end action was received.")
+            logger.warn("All plugins ended, but a plugin end action was received.")
             return True
         self.active_plugins_count -= 1
         if self.active_plugins_count == 0:
@@ -515,7 +520,7 @@ class ModelController(Thread):
             hosts = models.Hosts.class_signature
             count = self.mappers_manager.getMapper(hosts).getCount()
         except:
-            getLogger(self).debug(
+            logger.debug(
                 "Couldn't get host count: assuming it is zero.")
             count = 0
         return count
@@ -527,7 +532,7 @@ class ModelController(Thread):
             services = models.Service.class_signature
             count = self.mappers_manager.getMapper(services).getCount()
         except:
-            getLogger(self).debug(
+            logger.debug(
                 "Couldn't get services count: assuming it is zero.")
             count = 0
         return count
@@ -541,7 +546,7 @@ class ModelController(Thread):
             count = (self.mappers_manager.getMapper(vulns).getCount() +
                      self.mappers_manager.getMapper(web_vulns).getCount())
         except:
-            getLogger(self).debug(
+            logger.debug(
                 "Couldn't get vulnerabilities count: assuming it is zero.")
             count = 0
         return count

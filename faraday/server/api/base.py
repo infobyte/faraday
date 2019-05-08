@@ -5,6 +5,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 import json
+import logging
 
 import flask
 import sqlalchemy
@@ -23,13 +24,12 @@ from webargs.flaskparser import FlaskParser, parser
 from webargs.core import ValidationError
 from faraday.server.models import Workspace, db, Command, CommandObject
 from faraday.server.schemas import NullToBlankString
-import faraday.server.utils.logger
 from faraday.server.utils.database import (
     get_conflict_object,
     is_unique_constraint_violation
     )
 
-logger = faraday.server.utils.logger.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def output_json(data, code, headers=None):

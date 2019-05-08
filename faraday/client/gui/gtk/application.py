@@ -12,7 +12,7 @@ import os
 import sys
 import threading
 import webbrowser
-
+import logging
 
 try:
     import gi
@@ -48,7 +48,7 @@ import faraday.client.model.log
 
 from faraday.client.gui.gui_app import FaradayUi
 from faraday.config.configuration import getInstanceConfiguration
-from faraday.utils.logs import getLogger
+from faraday.server.utils.logger import get_logger
 from appwindow import AppWindow
 
 from faraday.client.persistence.server.server import is_authenticated, check_faraday_version, Unauthorized
@@ -84,6 +84,7 @@ from faraday.client.plugins import fplugin_utils
 
 CONF = getInstanceConfiguration()
 
+logger = logging.getLogger(__name__)
 
 class GuiApp(Gtk.Application, FaradayUi):
     """
@@ -313,8 +314,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         connect callbacks (which will send the widget as an argument and
         self.window.destroy, which takes none.
         """
-        getLogger(self).error("Faraday exited because you didn't connect "
-                              "to a valid Faraday Server.")
+        logger.error("Faraday exited because you didn't connect to a valid Faraday Server.")
         GObject.idle_add(self.window.destroy)
         GObject.idle_add(self.on_quit)
 
@@ -484,7 +484,7 @@ class GuiApp(Gtk.Application, FaradayUi):
                 GObject.idle_add(CONF.saveConfig)
             except Exception as e:
                 GObject.idle_add(self.handle_no_active_workspace)
-                getLogger("GTK").error(e)
+                get_logger("GTK").error(e)
 
             GObject.idle_add(loading_workspace, 'destroy')
             return True

@@ -31,7 +31,6 @@ from faraday.server.commands import support as support_zip
 from faraday.server.models import db, User
 from faraday.server.importer import ImportCouchDB
 from faraday.server.web import app
-from faraday.utils.logs import setUpLogger
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -60,7 +59,6 @@ def process_reports(debug, workspace, polling):
     except ImportError:
         print('SQLAlchemy was not found please install it with: pip install sqlalchemy')
         sys.exit(1)
-    setUpLogger(debug)
     configuration = _conf()
     url = '{0}/_api/v2/info'.format(configuration.getServerURI() if FARADAY_UP else SERVER_URL)
     with app.app_context():

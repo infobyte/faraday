@@ -24,7 +24,6 @@ from faraday.client.managers.workspace_manager import WorkspaceManager
 from faraday.client.plugins.controller import PluginController
 from faraday.client.persistence.server.server import login_user
 
-from faraday.utils.logs import setUpLogger
 import faraday.client.model.api
 import faraday.client.model.guiapi
 import faraday.client.apis.rest.api as restapi

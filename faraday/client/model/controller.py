@@ -15,7 +15,6 @@ from threading import Thread
 from faraday.config.configuration import getInstanceConfiguration
 from faraday.client.model import Modelactions
 from faraday.client.persistence.server.server_io_exceptions import ConflictInDatabase
-from faraday.utils.logs import getLogger
 import faraday.client.model.api as api
 from faraday.client.model.guiapi import notification_center as notifier
 from faraday.client.gui.customevents import *

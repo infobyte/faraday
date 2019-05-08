@@ -77,7 +77,7 @@ from mainwidgets import Terminal
 from mainwidgets import Statusbar
 
 from faraday.client.gui.loghandler import GUIHandler
-from faraday.utils.logs import addHandler
+from faraday.server.utils.logger import add_handler
 from faraday.utils.common import checkSSL
 
 from faraday.client.plugins import fplugin_utils
@@ -758,7 +758,7 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         self.loghandler = GUIHandler()
         faraday.client.model.guiapi.setMainApp(self)
-        addHandler(self.loghandler)
+        add_handler(self.loghandler)
         self.loghandler.registerGUIOutput(self.window)
 
         notifier = faraday.client.model.log.getNotifier()

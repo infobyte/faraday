@@ -30,7 +30,7 @@ from faraday.config.constant import (
     CONST_FARADAY_FOLDER_LIST,
 )
 from faraday.utils import dependencies
-from faraday.utils.logs import getLogger, setUpLogger
+from faraday.server.utils.logger import get_logger
 from faraday.utils.user_input import query_yes_no
 
 from faraday import __version__ as f_version
@@ -429,7 +429,7 @@ def check_faraday_version():
     try:
         server.check_faraday_version()
     except RuntimeError:
-        getLogger("launcher").error(
+        get_logger("launcher").error(
             "The server is running a different Faraday version than the client you are running. Version numbers must match!")
         sys.exit(2)
 
@@ -536,10 +536,9 @@ def main():
 
     global args
 
-    #logger = getLogger("launcher")
+    logger = getLogger("launcher")
     args = getParserArgs()
     setupFolders(CONST_FARADAY_FOLDER_LIST)
-    #setUpLogger(args.debug)
     if not args.nodeps:
         check_dependencies_or_exit()
     printBanner()

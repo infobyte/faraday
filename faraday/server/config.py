@@ -138,6 +138,8 @@ class ConfigSection(object):
             section = ssl
         elif section_name == 'storage':
             section = storage
+        elif section_name == 'rfc5424':
+            section = rfc5424_config
         else:
             return
         section.parse(__parser)
@@ -198,6 +200,9 @@ class StorageConfigObject(ConfigSection):
         self.path = None
 
 
+class RFC5424Config(ConfigSection):
+    def __init__(self):
+        self.use_rfc5424_formatter = False
 
 couchdb = CouchDBConfigObject()
 database = DatabaseConfigObject()
@@ -206,5 +211,6 @@ faraday_server = FaradayServerConfigObject()
 ldap = LDAPConfigObject()
 ssl = SSLConfigObject()
 storage = StorageConfigObject()
+rfc5424_config = RFC5424Config()
 
 parse_and_bind_configuration()

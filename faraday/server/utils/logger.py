@@ -8,6 +8,8 @@ import logging.handlers
 import faraday.server.config
 import errno
 
+from syslog_rfc5424_formatter import RFC5424Formatter
+
 LOG_FILE = os.path.expanduser(os.path.join(
     faraday.server.config.CONSTANTS.CONST_FARADAY_HOME_PATH,
     faraday.server.config.CONSTANTS.CONST_FARADAY_LOGS_PATH, 'faraday-server.log'))
@@ -24,9 +26,11 @@ def setup_logging():
     logger.propagate = False
     logger.setLevel(logging.DEBUG)
 
-    formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s {%(threadName)s} [%(filename)s:%(lineno)s - %(funcName)s() ]  %(message)s')
-
+    if faraday.server.config.rfc5424_config.use_rfc5424_formatter:
+        formatter = RFC5424Formatter()
+    else:
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s {%(threadName)s} [%(filename)s:%(lineno)s - %(funcName)s() ]  %(message)s')
     setup_console_logging(formatter)
     setup_file_logging(formatter)
 

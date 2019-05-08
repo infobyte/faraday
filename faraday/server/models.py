@@ -1488,10 +1488,6 @@ class WorkspacePermission(db.Model):
         return
 
 
-def is_valid_workspace(workspace_name):
-    return db.session.query(server.models.Workspace).filter_by(name=workspace_name).first() is not None
-
-
 def get(workspace_name):
     return db.session.query(Workspace).filter_by(name=workspace_name).first()
 

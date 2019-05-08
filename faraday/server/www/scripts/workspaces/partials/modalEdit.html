@@ -12,19 +12,19 @@
     </div>
     <div class="modal-body">
         <div class="form-horizontal">
-            <div class="form-group" ng-class="{'has-error': form.name.$invalid }">
+            <div class="form-group" ng-class="{'has-error': form.name.$invalid && form.name.$dirty}">
                 <div class="col-md-12">
                     <ng-form name="form" novalidate>
                         <label class="sr-only" for="wsp-name">Workspace Name</label>
                         <input type="text" class="form-control"
                                            ng-pattern=/^[a-z0-9][a-z0-9\_\$\(\)\+\-\/]*$/ id="vuln-name" name="name" placeholder="Workspace Name"
                                                                               ng-model="workspace.name" required/>
-                        <div ng-if="form.$invalid">
+                        <div ng-if="form.$invalid && form.name.$dirty">
                             <div class="alert alert-danger target_not_selected" role="alert" ng-hide="">
                                 <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
                                 <span class="sr-only">Error:</span>
                                 <button type="button" class="close" data-dismiss="alert"><span area-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                                Workspace name should follow pattern [a-z0-9][a-z0-9_$()+-/]*
+                                Workspace name can not contain white spaces or start with uppercase.
                             </div>
                         </div>
                     </ng-form>

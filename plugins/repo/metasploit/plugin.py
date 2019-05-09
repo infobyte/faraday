@@ -368,7 +368,7 @@ class MetasploitPlugin(core.PluginBase):
         parser = MetasploitXmlParser(output)
 
         for item in parser.hosts:
-            self.hostnames = ""
+            self.hostnames = []
             if item.host:
                 self.hostnames = [item.host]
             

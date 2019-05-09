@@ -84,10 +84,12 @@ angular.module('faradayApp')
                     for(var i = 0; i < response.data.vulnerabilities.length; i++) {
                         var vulnData = response.data.vulnerabilities[i].value;
                         try {
-                            if(vulnData.type === "vulnerability") {
+                            if(vulnData.type === "Vulnerability") {
                                 var vuln = new Vuln(wsName, vulnData);
-                            } else {
+                            } else if(vulnData.type === "VulnerabilityWeb") {
                                 var vuln = new WebVuln(wsName, vulnData);
+                            } else {
+                                throw Exception("Unknown vulnerability type");
                             }
                             result.vulnerabilities.push(vuln);
                         } catch(e) {

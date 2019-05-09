@@ -35,13 +35,16 @@ angular.module('faradayApp')
                 for (var i = 0; i < $scope.customFields.length; i++) {
                     if (ids.indexOf($scope.customFields[i].id) === -1) {
                         $scope.customFields[i].field_order = i;
-                        customFieldFact.updateCustomField($scope.customFields[i]);
-                        ids.push($scope.customFields[i].id);
+                        customFieldFact.updateCustomField($scope.customFields[i]).then(function(){
+                            ids.push($scope.customFields[i].id);
+
+                            if(i == $scope.customFields.length){
+                                $scope.clearSelection();
+                                console.log($scope.customFields);
+                            }
+                        });
                     }
                 }
-
-                $scope.clearSelection();
-                console.log($scope.customFields);
             };
 
 

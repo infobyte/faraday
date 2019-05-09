@@ -124,7 +124,7 @@ def check_postgresql():
             sys.exit(1)
         except sqlalchemy.exc.OperationalError:
             logger.error(
-                    '\n\n{RED}Could not connect to PostgreSQL.\n{WHITE}Please check: \n{YELLOW}  * if database is running \n  * configuration settings are correct. \n\n{WHITE}For first time installations execute{WHITE}: \n\n {GREEN} python manage.py initdb\n\n'.format(GREEN=Fore.GREEN, YELLOW=Fore.YELLOW, WHITE=Fore.WHITE, RED=Fore.RED))
+                    '\n\n{RED}Could not connect to PostgreSQL.\n{WHITE}Please check: \n{YELLOW}  * if database is running \n  * configuration settings are correct. \n\n{WHITE}For first time installations execute{WHITE}: \n\n {GREEN} faraday-manage initdb\n\n'.format(GREEN=Fore.GREEN, YELLOW=Fore.YELLOW, WHITE=Fore.WHITE, RED=Fore.RED))
             sys.exit(1)
 
 
@@ -139,7 +139,7 @@ def check_alembic_version():
             conn = db.session.connection()
         except ImportError as ex:
             if not faraday.server.config.database.connection_string:
-                print("\n\nNo database configuration found. Did you execute \"python manage.py initdb\"? \n\n")
+                print("\n\nNo database configuration found. Did you execute \"faraday-manage initdb\"? \n\n")
                 sys.exit(1)
 
         context = MigrationContext.configure(conn)
@@ -150,7 +150,7 @@ def check_alembic_version():
                          '{}_*.py'.format(current_revision))):
                 print('--' * 20)
                 print('Missing migrations, please execute: \n\n')
-                print('python manage.py migrate')
+                print('faraday-manage migrate')
                 sys.exit(1)
             else:
                 logger.warning(

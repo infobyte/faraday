@@ -32,7 +32,6 @@ class dirbPlugin(core.PluginBase):
         self._command_regex = re.compile(r'^(?:sudo dirb|dirb|\.\/dirb|sudo \.\/dirb)\s+(?:(http[s]?)\:\/\/([\w\.]+)[.\S]+)')
         self.text = []
 
-
     def getPort(self, host, proto):
         p = re.search(r"\:([0-9]+)\/", host)
         if p is not None:
@@ -42,7 +41,6 @@ class dirbPlugin(core.PluginBase):
         else:
             return 80
 
-
     def getIP(self, host):
         try:
             ip = socket.gethostbyname(host)
@@ -51,13 +49,11 @@ class dirbPlugin(core.PluginBase):
 
         return ip
 
-
     def state(self, output):
         if output.find('COULDNT CONNECT') != -1:
             return "close"
         else:
             return "open"
-
 
     def pathsDirListing(self, output):
         data = []
@@ -68,7 +64,6 @@ class dirbPlugin(core.PluginBase):
 
         paths = "\n".join(data)
         return paths
-
 
     def note(self, output):
         dirs  = re.findall(r"==> DIRECTORY: "+self.regexpUrl, output)
@@ -81,7 +76,6 @@ class dirbPlugin(core.PluginBase):
 
         self.text = '\n'.join(self.text)
 
-
     def parseOutputString(self, output, debug=False):
 
         url = re.search(r"URL_BASE: " + self.regexpUrl, output)
@@ -90,7 +84,6 @@ class dirbPlugin(core.PluginBase):
         self.note(output)
 
         if output.find('END_TIME') != -1 and url is not None:
-
             proto = url.group(2)
             domain = url.group(3)
             ip = self.getIP(domain)
@@ -102,14 +95,12 @@ class dirbPlugin(core.PluginBase):
             serv_id  = self.createAndAddServiceToInterface(host_id, iface_id, proto, protocol = proto, ports =[puerto], status = status)
 
             if len(self.text) > 0:
-                self.createAndAddVulnWebToService(host_id, serv_id, 'Url Fuzzing', severity=0, desc=self.text, ref=refs, website=domain)
+                self.createAndAddVulnWebToService(host_id, serv_id, 'Url Fuzzing', severity=0, desc=self.text, website=domain)
 
             if len(paths) > 0:
                 self.createAndAddVulnWebToService(host_id, serv_id, "Directory Listing", severity = "med", website = domain, request = paths, method = "GET")
 
         return True
-
-
 
     def processCommandString(self, username, current_path, command_string):
         """

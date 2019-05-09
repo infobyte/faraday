@@ -52,6 +52,14 @@
           case 'tag':
               processedName = 'tags__name';
               break;
+          case 'port':
+          case 'service_port':
+              processedName = 'service__port';
+              break;
+          case 'protocol':
+          case 'service_protocol':
+              processedName = 'service__protocol';
+              break;
           default:
               processedName = name;
               break;
@@ -79,6 +87,8 @@
                processedOperator = operator !== 'not' ? 'eq' : '!=';
                break;
            case 'service__name':
+           case 'service__port':
+           case 'service__protocol':
            case 'host__os':
                processedOperator = operator !== 'not' ? 'has' : '!=';
                break;

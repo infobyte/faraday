@@ -26,6 +26,7 @@ angular.module('faradayApp').
                     integrity: false
                 };
                 this.policyviolations = [];
+                this.customfields = [];
                 this.easeofresolution = "";
                 if (data) {
                     if(data.name === undefined || data.name === "") {
@@ -38,7 +39,7 @@ angular.module('faradayApp').
             VulnModel.prototype = {
 
                 public_properties: ['exploitation', 'references', 'name', 'resolution', 'cwe', 'description',
-                                    'desc', 'data', 'id', 'refs', 'impact', 'easeofresolution', 'policyviolations'],
+                                    'desc', 'data', 'id', 'refs', 'impact', 'easeofresolution', 'policyviolations', 'customfields'],
 
                 set: function(data) {
                     var self = this;

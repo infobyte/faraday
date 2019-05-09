@@ -26,7 +26,7 @@ def setup_logging():
     logger.propagate = False
     logger.setLevel(logging.DEBUG)
 
-    if faraday.server.config.rfc5424_config.use_rfc5424_formatter:
+    if faraday.server.config.logger_config.use_rfc5424_formatter:
         formatter = RFC5424Formatter()
     else:
         formatter = logging.Formatter(

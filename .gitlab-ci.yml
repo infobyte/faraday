@@ -83,7 +83,9 @@ sqlite_test:
         - pip install --upgrade -r requirements_dev.txt
         - mkdir -p ~/.faraday/config
         - cp tests/data/server.ini ~/.faraday/config
-        - pytest tests --capture=sys -v --cov=./faraday/server --color=yes --disable-warnings
+        - ls -al
+        - mkdir run_from
+        - cd run_from && pytest tests --capture=sys -v --cov=./faraday/server --color=yes --disable-warnings
     artifacts:
         when: on_failure
         paths:

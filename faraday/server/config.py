@@ -15,6 +15,7 @@ from logging import (
     DEBUG,
     INFO,
 )
+from faraday import __license_version__ as license_version
 from faraday.config import constant as CONSTANTS
 from faraday.config.configuration import getInstanceConfiguration
 
@@ -76,14 +77,6 @@ def parse_and_bind_configuration():
     for section_name in __parser.sections():
         ConfigSection.parse_section(section_name, __parser._sections[section_name])
 
-def __get_version():
-    try:
-        version = open(VERSION_FILE, 'r').read().strip()
-    except:
-        version = ''
-    return version
-
-
 def __get_osint():
     try:
         return getInstanceConfiguration().getOsint()
@@ -95,7 +88,7 @@ def gen_web_config():
     # Warning: This is publicly accesible via the API, it doesn't even need an
     # authenticated user. Don't add sensitive information here.
     doc = {
-        'ver': __get_version(),
+        'ver': license_version,
         'lic_db': CONSTANTS.CONST_LICENSES_DB,
         "osint": __get_osint(),
         'vuln_model_db': CONSTANTS.CONST_VULN_MODEL_DB,

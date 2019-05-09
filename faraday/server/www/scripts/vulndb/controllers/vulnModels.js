@@ -11,6 +11,7 @@ angular.module('faradayApp')
                 $scope.currentPage;
                 $scope.pageSize = 20;
                 $scope.loading = false;
+                $scope.customFields;
 
                 var init = function() {
                     // table stuff
@@ -40,6 +41,19 @@ angular.module('faradayApp')
                             $scope.currentPage = $scope.pageCount();
                         }
                     });;
+
+                    loadCustomFields();
+                };
+
+                var loadCustomFields = function () {
+                    var deferred = $q.defer();
+                    ServerAPI.getCustomFields().then(
+                        function(response){
+                            $scope.customFields = response.data;
+                            deferred.resolve($scope.customFields);
+                        }, function(){
+                            deferred.reject();
+                        });
                 };
 
                 $scope.pageCount = function() {
@@ -225,6 +239,7 @@ angular.module('faradayApp')
 
                 $scope.insert = function(data) {
                     $scope.loading = false;
+
                     return vulnModelsManager.create(data)
                         .then(function(data) {
                             $scope.loading = false;
@@ -241,7 +256,11 @@ angular.module('faradayApp')
                         backdrop : 'static',
                         controller: 'vulnModelModalNew',
                         size: 'lg',
-                        resolve: {}
+                        resolve: {
+                                customFields: function () {
+                                return $scope.customFields;
+                            }
+                        }
                     });
 
                     modal.result
@@ -274,6 +293,8 @@ angular.module('faradayApp')
                             resolve: {
                                 model: function() {
                                     return model;
+                                },customFields: function () {
+                                    return $scope.customFields;
                                 }
                             }
                         });

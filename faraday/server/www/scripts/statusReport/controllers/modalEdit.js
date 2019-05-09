@@ -207,6 +207,12 @@ angular.module('faradayApp')
                         policyviolations.push({value: policyviolation});
                     });
                     vm.data.policyviolations = policyviolations;
+
+                    if(item.customfields){
+                        for(var cf in item.customfields){
+                            vm.data.custom_fields[cf] = item.customfields[cf];
+                        }
+                    }
                 };
 
 

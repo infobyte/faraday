@@ -192,8 +192,6 @@ setup(
     # MANIFEST.in as well.
     include_package_data=True,
     package_data={  # Optional
-         'faraday': ['server/www/*',
-                     'config/default.xml'],
          '': ['requirements.txt',
               'requirements_server.txt'],
     },

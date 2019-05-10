@@ -1313,3 +1313,10 @@ a.button-disable{cursor: not-allowed;pointer-events: none;opacity: 0.5}
 .overall{
     z-index: 1000000 !important;
 }
+
+.hr_divider{
+    height:1px;
+    border-width:0;
+    background-color: #e5e5e5;
+    margin: 8px 0 8px 0;
+}

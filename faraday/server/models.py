@@ -1816,6 +1816,37 @@ class ExecutiveReport(Metadata):
         )
 
 
+class Notification(db.Model):
+
+    __tablename__ = 'notification'
+    id = Column(Integer, primary_key=True)
+
+    user_notified_id = Column(Integer, ForeignKey('faraday_user.id'), index=True, nullable=False)
+    user_notified = relationship(
+        'User',
+        backref=backref('notification', cascade="all, delete-orphan"),
+        #primaryjoin="User.id == Notification.user_notified_id"
+    )
+
+    object_id = Column(Integer, nullable=False)
+    object_type = Column(Enum(*OBJECT_TYPES, name='object_types'), nullable=False)
+    notification_text = Column(Text, nullable=False)
+
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship(
+        'Workspace',
+        backref=backref('notification', cascade="all, delete-orphan"),
+        #primaryjoin="Notification.id == Notification.workspace_id"
+    )
+
+    mark_read = Column(Boolean, default=False, index=True)
+    create_date = Column(DateTime, default=datetime.utcnow)
+
+    @property
+    def parent(self):
+        return
+
+
 # This constraint uses Columns from different classes
 # Since it applies to the table vulnerability it should be adVulnerability.ded to the Vulnerability class
 # However, since it contains columns from children classes, this cannot be done

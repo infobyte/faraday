@@ -13,7 +13,6 @@ angular.module('faradayApp').
                     vulnModelsManager.create = function(data) {
                     var deferred = $q.defer();
                     var self = this;
-
                     try {
                         var vulnModel = new VulnModel(data);
                         vulnModel.save()

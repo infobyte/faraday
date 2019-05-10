@@ -32,6 +32,16 @@ with open('requirements_server.txt') as fp:
 with open('requirements_dev.txt') as fp:
     dev_required = fp.read().splitlines()
 
+try:
+    # When setuptools_scm is installed, it ignores the MANIFEST.in contents,
+    # so a developer won't notice the MANIFEST.in includes are incomplete.
+    # This can make some user bugs irrepoducible in a dev environment,
+    # and we don't want this!
+    # Taken from https://github.com/pypa/setuptools_scm/issues/190#issuecomment-351181286
+    import setuptools_scm.integration
+    setuptools_scm.integration.find_files = lambda _: []
+except ImportError:
+    pass
 
 # Arguments marked as "Required" below must be included for upload to PyPI.
 # Fields marked as "Optional" may be commented out.

@@ -536,7 +536,6 @@ def main():
 
     global args
 
-    logger = getLogger("launcher")
     args = getParserArgs()
     setupFolders(CONST_FARADAY_FOLDER_LIST)
     if not args.nodeps:

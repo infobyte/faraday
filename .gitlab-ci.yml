@@ -85,7 +85,7 @@ sqlite_test:
         - cp tests/data/server.ini ~/.faraday/config
         - ls -al
         - mkdir run_from
-        - cd run_from && pytest tests --capture=sys -v --cov=./faraday/server --color=yes --disable-warnings
+        - cd run_from && pytest ../tests --capture=sys -v --cov=../faraday/server --color=yes --disable-warnings
     artifacts:
         when: on_failure
         paths:

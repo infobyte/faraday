@@ -142,6 +142,7 @@ angular.module('faradayApp')
                     vulnsManager.loadVulnsCounter($routeParams.wsId);
 
                 getWorkspaces();
+
             };
 
             init();

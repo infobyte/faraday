@@ -235,6 +235,7 @@ angular.module("faradayApp")
             }
 
             var modVulnerabilityTemplate = function (createOrUpdate, vulnerabilityTemplate) {
+
                 var data_name = 'vulnerability_template';
                 if (typeof vulnerabilityTemplate.cwe === "undefined") {
                     vulnerabilityTemplate.cwe = ""

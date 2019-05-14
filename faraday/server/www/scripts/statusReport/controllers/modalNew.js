@@ -59,8 +59,9 @@ angular.module('faradayApp')
             vm.file_name_error = false;
 
             vm.pageSize = 5;
-            vm.currentPage = 0;
+            vm.currentPage = 1;
             vm.newCurrentPage = 0;
+            vm.total_rows = 0;
 
             vm.data = {
                 _attachments: {},
@@ -100,8 +101,9 @@ angular.module('faradayApp')
             vm.targets = [];
             vm.target_filter = "";
 
-            targetFact.getTargets(workspace).then(function(targets){
-                vm.targets = targets;
+            targetFact.getTargets(workspace,  vm.currentPage, vm.pageSize).then(function(targets){
+                vm.targets = targets.hosts;
+                vm.total_rows = targets.total;
             });
         };
 
@@ -198,10 +200,12 @@ angular.module('faradayApp')
 
         vm.go = function() {
             vm.currentPage = 0;
-            if((vm.newCurrentPage-1) <= parseInt(vm.targets.length/vm.pageSize)
-                    && (vm.newCurrentPage-1) > -1) {
-                vm.currentPage = (vm.newCurrentPage-1);
+            if((vm.newCurrentPage) <= parseInt(vm.total_rows/vm.pageSize)
+                    && (vm.newCurrentPage) > 0) {
+                vm.currentPage = vm.newCurrentPage;
             }
+
+            vm.updatePaginator(false, vm.newCurrentPage)
         }
 
         vm.newReference = function() {
@@ -287,6 +291,26 @@ angular.module('faradayApp')
         vm.changeSeverity = function (severity) {
             vm.data.severity = severity;
             vm.updateBtnSeverityColor(severity);
+        };
+
+        vm.updatePaginator = function (isNext, toGo) {
+            if (isNext === true)
+                vm.currentPage = vm.currentPage + 1;
+            else
+                vm.currentPage = vm.currentPage - 1;
+
+            if (toGo)
+                vm.currentPage = toGo;
+
+
+            targetFact.getTargets(workspace,  vm.currentPage, vm.pageSize).then(function(targets){
+                vm.targets = targets.hosts;
+                vm.targets_filtered = vm.targets
+            });
+        };
+
+        vm.isParentSelected = function (target) {
+               return $.grep(vm.data.parents, function(e){ return e.id === target.id && e.type === target.type}).length > 0;
         };
 
         init();

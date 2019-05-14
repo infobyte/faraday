@@ -208,7 +208,7 @@
                             <td class="ui-grid-cell-contents date-cell"
                                 ng-show="columns['create_time']">
                                 <div class="">
-                                    <span am-time-ago="host.metadata.create_time" am-preprocess="utc"></span>
+                                    <span ng-style="{'display': 'inline-block'}" am-time-ago="host.metadata.create_time" am-preprocess="utc"></span><p ng-style="{'display': 'inline-block'}">&nbsp; {{host.metadata.creator ? (' by ' + host.metadata.creator) : ''}}</p>
                                 </div>
                             </td>
                             <td

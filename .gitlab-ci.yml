@@ -14,6 +14,7 @@ stages:
     - pre_testing
     - testing
     - post_testing
+    - build
 
 services:
     - postgres:latest
@@ -106,6 +107,29 @@ generate_release_file:
             - $FULL_DOC == "True"
             - $RELEASE_FILE == "True"
             - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/
+
+binary_files:
+    image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base
+    stage: build
+    script:
+        - pip install virtualenv
+        - virtualenv -p python2 faraday_venv
+        - source faraday_venv/bin/activate
+        - pip install pyinstaller
+        - python setup.py install
+        - pyinstaller -F -w --onefile --hidden-import='sqlalchemy.sql.default_comparator' --hidden-import='backports.functools_lru_cache' --hidden-import='depot.io.local' --hidden-import='passlib.handlers.bcrypt' --hidden-import='passlib.handlers.pbkdf2' --hidden-import='passlib.handlers.misc' --hidden-import='passlib.handlers.sha2_crypt' --hidden-import='passlib.handlers.digests' --add-data 'faraday:faraday' faraday/start_server.py
+        - mv dist/start_server dist/faraday-server
+        - pyinstaller -F -w --onefile --hidden-import='sqlalchemy.sql.default_comparator' --hidden-import='backports.functools_lru_cache' --hidden-import='depot.io.local' --hidden-import='passlib.handlers.bcrypt' --hidden-import='passlib.handlers.pbkdf2' --hidden-import='passlib.handlers.misc' --hidden-import='passlib.handlers.sha2_crypt' --hidden-import='passlib.handlers.digests' --add-data 'faraday:faraday' faraday/manage.py
+        - mv dist/manage dist/faraday-manage
+        - pyinstaller -F -w --onefile --hidden-import='sqlalchemy.sql.default_comparator' --hidden-import='backports.functools_lru_cache' --hidden-import='depot.io.local' --hidden-import='passlib.handlers.bcrypt' --hidden-import='passlib.handlers.pbkdf2' --hidden-import='passlib.handlers.misc' --hidden-import='passlib.handlers.sha2_crypt' --hidden-import='passlib.handlers.digests' --add-data 'faraday:faraday' faraday/client/start_client.py
+        - mv dist/start_client dist/faraday-client
+    artifacts:
+        name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME-binaries"
+        paths:
+          - dist/faraday-server
+          - dist/faraday-manage
+          - dist/faraday-client
+        expire_in: 1 month
 
 # This is a test of future test case that will be scheduled
 i_do_nothing:

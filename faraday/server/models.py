@@ -1805,6 +1805,7 @@ class ExecutiveReport(Metadata):
         collection_class=set,
     )
     severities = Column(JSONType, nullable=True, default=[])
+    filter = Column(JSONType, nullable=True, default=[])
     @property
     def parent(self):
         return

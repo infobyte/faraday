@@ -30,6 +30,8 @@ from faraday.client.persistence.server.server import login_user
 
 CONF = getInstanceConfiguration()
 
+plugins = None
+
 
 class RawDescriptionAndDefaultsHelpFormatter(argparse.RawDescriptionHelpFormatter,
                                              argparse.ArgumentDefaultsHelpFormatter):
@@ -140,6 +142,7 @@ def dispatch(args, unknown, user_help, username, password):
 
 
 def main():
+    global plugins
 
     signal.signal(signal.SIGINT, signal_handler)
 

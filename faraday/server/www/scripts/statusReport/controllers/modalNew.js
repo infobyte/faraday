@@ -33,6 +33,8 @@ angular.module('faradayApp')
         // true if all the parents in data.parents are type Host
         vm.host_parents;
 
+        vm.activeSearch;
+
         init = function() {
             vm.vuln_types = [
                 {name:'Vulnerability', value:'Vulnerability'},
@@ -182,15 +184,16 @@ angular.module('faradayApp')
         }
 
         vm.setTarget = function(target) {
-            var index = vm.data.parents.indexOf(target);
+            var index = -1;
+            var array = $.grep(vm.data.parents, function(e, i){
+                index = i;
+                return e.id === target.id && e.type === target.type
+            });
 
-            if(index >= 0) {
-                // if target already selected, user is deselecting
+            if (array.length > 0)
                 vm.data.parents.splice(index, 1);
-            } else {
-                // else, add to parents list
+            else
                 vm.data.parents.push(target);
-            }
 
             // refresh host_parents var
             vm.host_parents = vm.data.parents.some(function(elem, ind, arr) {
@@ -311,6 +314,22 @@ angular.module('faradayApp')
 
         vm.isParentSelected = function (target) {
                return $.grep(vm.data.parents, function(e){ return e.id === target.id && e.type === target.type}).length > 0;
+        };
+
+        vm.filterTargets = function () {
+            var filter = { ip : vm.target_filter };
+            targetFact.getTargets(workspace,  vm.currentPage, vm.pageSize, filter).then(function(targets){
+                vm.targets = targets.hosts;
+                vm.activeSearch = true;
+            });
+        };
+
+        vm.clearFilterTargets = function () {
+            vm.activeSearch = false;
+            targetFact.getTargets(workspace,  vm.currentPage, vm.pageSize).then(function(targets){
+                vm.targets = targets.hosts;
+                vm.target_filter = '';
+            });
         };
 
         init();

@@ -20,13 +20,13 @@ from Queue import Queue
 
 parent_path = os.path.abspath(os.path.join(__file__, '../..'))
 sys.path.insert(0, parent_path)
-from plugins import fplugin_utils
+from faraday.client.plugins import fplugin_utils
 
 from colorama import Fore
-from config.configuration import getInstanceConfiguration
-from managers.mapper_manager import MapperManager
-from model.controller import ModelController
-from persistence.server.server import login_user
+from faraday.config.configuration import getInstanceConfiguration
+from faraday.client.managers.mapper_manager import MapperManager
+from faraday.client.model.controller import ModelController
+from faraday.client.persistence.server.server import login_user
 
 CONF = getInstanceConfiguration()
 

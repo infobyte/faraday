@@ -104,6 +104,10 @@
                                 <span ng-click="toggleSort('owned')">OWNED</span>
                                 <a ng-click="toggleShow('owned')"><span class="glyphicon glyphicon-remove"></span></a>
                             </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell" ng-show="columns['owner']">
+                                <span ng-click="toggleSort('owner')">OWNER</span>
+                                <a ng-click="toggleShow('owner')"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
                             <th class="ui-grid-cell-contents ui-grid-header-cell" ng-show="columns['description']">
                                 <span ng-click="toggleSort('description')">DESCRIPTION</span>
                                 <a ng-click="toggleShow('description')"><span class="glyphicon glyphicon-remove"></span></a>
@@ -197,6 +201,12 @@
                                     <span class="fa fa-exclamation-triangle" aria-hidden="true" ng-if="host.owned"></span>
                                     <span ng-if="host.owned">owned</span>
                                     <span ng-if="!host.owned">not yet</span>
+                                </div>
+                            </td>
+                            <td class="ui-grid-cell-contents"
+                                ng-show="columns['owner']">
+                                <div class="">
+                                    <span>{{host.owner}}</span>
                                 </div>
                             </td>
                             <td class="ui-grid-cell-contents"

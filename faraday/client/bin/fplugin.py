@@ -139,7 +139,7 @@ def dispatch(args, unknown, user_help, username, password):
         sys.exit(ret)
 
 
-if __name__ == '__main__':
+def main():
 
     signal.signal(signal.SIGINT, signal_handler)
 
@@ -240,3 +240,7 @@ if __name__ == '__main__':
                 sys.exit(0)
             except SystemExit:
                 pass
+
+
+if __name__ == '__main__':
+    main()

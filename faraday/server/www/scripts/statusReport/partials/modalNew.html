@@ -125,26 +125,28 @@
                         <div class="form-horizontal">
                             <div class="tab-pane-header">Target</div>
                             <div class="form-group">
-                                <div class="col-md-8">
+                                <form name="formSearch" role="form">
+                                    <div class="col-md-8">
                                     <div class="form-group input-accordion">
                                         <input type="text" ng-model="modal.target_filter" class="form-control input-sm"
-                                               placeholder="Search targets" ng-change="modal.currentPage = 1">
+                                               placeholder="Search targets" ng-change="modal.currentPage = 1" >
                                         <span class="btn btn-danger" id="btn_clear_search"
                                               ng-if="modal.target_filter != '' && modal.activeSearch == true"
                                               ng-click="modal.clearFilterTargets()"> <i class="fa fa-times"></i></span>
                                     </div>
                                 </div>
 
-                                <div class="col-md-2">
+                                    <div class="col-md-2">
                                     <div class="form-group">
-                                        <button type="button" class="btn btn-success btn-xs" title="Search targets"
+                                        <button type="submit" class="btn btn-success btn-xs" title="Search targets"
                                                 ng-click="modal.filterTargets()"
-                                                style="height: 30px!important; float: left;">
+                                                style="height: 30px!important; float: left;"
+                                                ng-disabled="modal.target_filter == ''">
                                             Search
                                         </button>
                                     </div>
                                 </div>
-
+                                </form>
                                 <div class="col-md-2">
                                     <div class="btn-group btn-small-margin">
                                         <button type="button" class="btn btn-default btn-xs" title="Select page"

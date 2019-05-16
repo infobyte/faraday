@@ -4,7 +4,7 @@
 
 angular.module('faradayApp')
     .controller('customFieldsCtrl',
-        ['$scope', 'customFieldFact', '$uibModal', function ($scope, customFieldFact, $uibModal) {
+        ['$scope', 'customFieldFact', '$uibModal', 'commonsFact', function ($scope, customFieldFact, $uibModal, commonsFact) {
 
             $scope.customFields = [];
             $scope.selected_cf = {
@@ -27,6 +27,19 @@ angular.module('faradayApp')
 
             var compareFunction = function (cf1, cf2) {
                 return cf1.field_order - cf2.field_order;
+            };
+
+
+            var errorHandler = function (error) {
+                if (typeof(error) === "object") {
+                    if (error.status=== 409)
+                        commonsFact.showMessage(error.data.object.field_display_name + " has the same field name: '" +
+                            error.data.object.field_name + "'");
+                }
+                else if (typeof(error) === "string")
+                    commonsFact.showMessage(error);
+                else
+                    commonsFact.showMessage('Something bad happened');
             };
 
 
@@ -86,7 +99,7 @@ angular.module('faradayApp')
                     function (response) {
                         $scope.customFields.push(response.data);
                         $scope.clearSelection();
-                    });
+                    }, errorHandler);
             };
 
 

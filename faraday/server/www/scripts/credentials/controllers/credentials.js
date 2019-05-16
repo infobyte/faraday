@@ -157,6 +157,16 @@ angular.module('faradayApp')
             var createCredential = function(credentialData, parent_id, parent_type){
                 // Add parent id, create credential and save to server.
                 try {
+                    // If parent_id is undefined, assign host or service to credential from modal
+                    if(parent_id === undefined){
+                        if(credentialData.hostSelectedId !== ""){
+                            parent_id = credentialData.hostSelectedId;
+                            parent_type = "Host";
+                        } else if(credentialData.serviceSelectedId !== "") {
+                            parent_id = credentialData.serviceSelectedId;
+                            parent_type = "Service";
+                        }
+                    }
                     var credentialObj = new credential(credentialData, parent_id, parent_type);
 
                     credentialObj.create($scope.workspace).then(function(){

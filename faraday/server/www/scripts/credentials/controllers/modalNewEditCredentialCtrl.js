@@ -6,15 +6,18 @@
 
 angular.module('faradayApp')
     .controller('modalNewEditCredentialCtrl',
-        ['$scope', '$modalInstance', 'title', 'credential',
-        function($scope, $modalInstance, title, credential) {
-
+        ['$scope', '$modalInstance', 'title', 'credential', 'targetFact', '$routeParams',
+        function($scope, $modalInstance, title, credential, targetFact, $routeParams) {
         $scope.title = title;
-
+        $scope.workspace = $routeParams.wsId;
+        $scope.targets;
         $scope.credentialData = {
             'name': '',
             'username': '',
-            'password': ''
+            'password': '',
+            'hostSelectedId': '',
+            'serviceSelectedId': '',
+            'target': ''
         };
         
         var init = function(){
@@ -32,6 +35,36 @@ angular.module('faradayApp')
         $scope.cancel = function() {
             $modalInstance.dismiss('cancel');
         };
+
+        targetFact.getTargets($scope.workspace).then(function(targets){
+                $scope.targets = targets;
+            });
+
+
+        $scope.showTargets = function() {
+            // Don't show targets in modal:
+            // If Credential creation from hosts/services tab
+            // If user wants to create credential and not edit it
+            if(($routeParams.hId === undefined && $routeParams.sId === undefined) && title === 'New credential'){
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        $scope.assignTarget = function(target, hostIp) {
+            // Receive hostIp as parameter because if target
+            // is Service, it does not have hostIp
+            if(target.type === "Host"){
+                $scope.credentialData.hostSelectedId = target.id;
+                $scope.credentialData.target = hostIp;
+            }
+            else if(target.type === "Service") {
+                $scope.credentialData.serviceSelectedId = target.id;
+                $scope.credentialData.target = hostIp + "/" + target.name;
+            }
+        }
 
         init();
 }]);

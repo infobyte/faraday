@@ -24,10 +24,12 @@ def get_available_plugins():
 
     plugin_list = os.listdir(scan_path)
 
-    if 'fplugin' in plugin_list:
-        plugin_list.remove('fplugin')
-
-    plugin_list = filter(lambda p: p[-3:] == '.py', plugin_list)
+    plugin_list = [
+        p for p in plugin_list
+        if p.endswith('.py')
+        ]
+    plugin_list.remove('fplugin.py')
+    plugin_list.remove('__init__.py')
 
     plugins_dic = {}
 

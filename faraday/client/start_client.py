@@ -7,6 +7,7 @@ See the file 'doc/LICENSE' for the license information
 
 import os
 import sys
+import imp
 import shutil
 import getpass
 import argparse
@@ -37,7 +38,9 @@ from faraday.client.persistence.server import server
 from faraday.client.persistence.server.server import is_authenticated, login_user, get_user_info
 
 USER_HOME = os.path.expanduser(CONST_USER_HOME)
-FARADAY_BASE = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))  # Use double dirname to obtain parent directory
+# find_module returns if search is successful, the return value is a 3-element tuple (file, pathname, description):
+FARADAY_BASE = imp.find_module("faraday")[1]
+os.path.dirname(os.path.dirname(os.path.realpath(__file__)))  # Use double dirname to obtain parent directory
 FARADAY_CLIENT_BASE = os.path.join(FARADAY_BASE, 'client')
 
 FARADAY_USER_HOME = os.path.expanduser(CONST_FARADAY_HOME_PATH)
@@ -531,16 +534,12 @@ def main():
     """
     Main function for launcher.
     """
-    os.chdir(FARADAY_BASE)
-
     global logger, args
 
     logger = getLogger("launcher")
     args = getParserArgs()
     setupFolders(CONST_FARADAY_FOLDER_LIST)
     setUpLogger(args.debug)
-    if not args.nodeps:
-        check_dependencies_or_exit()
     printBanner()
     if args.cert_path:
         os.environ[REQUESTS_CA_BUNDLE_VAR] = args.cert_path

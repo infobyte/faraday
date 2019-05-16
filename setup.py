@@ -13,12 +13,16 @@ from os import path
 # and accepts an argument to specify the text encoding
 # Python 3 only projects can skip this import
 from io import open
+from re import search
 
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
+
+with open('faraday/__init__.py', 'rt', encoding='utf8') as f:
+    version = search(r'__version__ = \'(.*?)\'', f.read()).group(1)
 
 # Taken from https://stackoverflow.com/questions/14399534/reference-requirements-txt-for-the-install-requires-kwarg-in-setuptools-setup-py/14399775#14399775
 with open('requirements_server.txt') as fp:
@@ -28,6 +32,16 @@ with open('requirements_server.txt') as fp:
 with open('requirements_dev.txt') as fp:
     dev_required = fp.read().splitlines()
 
+try:
+    # When setuptools_scm is installed, it ignores the MANIFEST.in contents,
+    # so a developer won't notice the MANIFEST.in includes are incomplete.
+    # This can make some user bugs irrepoducible in a dev environment,
+    # and we don't want this!
+    # Taken from https://github.com/pypa/setuptools_scm/issues/190#issuecomment-351181286
+    import setuptools_scm.integration
+    setuptools_scm.integration.find_files = lambda _: []
+except ImportError:
+    pass
 
 # Arguments marked as "Required" below must be included for upload to PyPI.
 # Fields marked as "Optional" may be commented out.
@@ -53,7 +67,7 @@ setup(
     # For a discussion on single-sourcing the version across setup.py and the
     # project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='3.7.0',  # Required
+    version=version,  # Required
 
     # This is a one-line description or tagline of what your project does. This
     # corresponds to the "Summary" metadata field:
@@ -145,12 +159,13 @@ setup(
     # packages=find_packages(exclude=['contrib', 'docs', 'tests']),  # Required
     # packages=[''],
     # packages=['faraday', 'faraday.server', 'faraday.utils'],
-    packages=['faraday.' + package
-              for package in find_packages(
-                  '.', include=['server.*', 'config.*', 'utils.*', 'client.*',
-                                'server', 'config', 'utils', 'client'])
-              ] + ['faraday'],
-    package_dir={'faraday': '.'},
+    #packages=['faraday.' + package
+    #          for package in find_packages(
+    #              '.', include=['server.*', 'config.*', 'utils.*', 'client.*',
+    #                            'server', 'config', 'utils', 'client'])
+    #          ] + ['faraday'],
+    #package_dir={'faraday': '.'},
+    packages=find_packages(include=['faraday', 'faraday.*']),
 
     # Specify which Python versions you support. In contrast to the
     # 'Programming Language' classifiers above, 'pip install' will check this
@@ -185,10 +200,11 @@ setup(
     #
     # If using Python 2.6 or earlier, then these have to be included in
     # MANIFEST.in as well.
-    # package_data={  # Optional
-    #     'faraday': ['VERSION', 'requirements_server.txt'],
-    # },
     include_package_data=True,
+    package_data={  # Optional
+         '': ['requirements.txt',
+              'requirements_server.txt'],
+    },
 
     # Although 'package_data' is the preferred approach, in some case you may
     # need to place data files outside of your packages. See:

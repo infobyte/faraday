@@ -2,8 +2,10 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 
+import logging
+import csv
 import flask
-from flask import Blueprint
+from flask import Blueprint, make_response, jsonify, abort
 from flask_classful import route
 from marshmallow import fields, Schema
 from filteralchemy import Filter, FilterSet, operators
@@ -29,6 +31,7 @@ from faraday.server.api.modules.services import ServiceSchema
 
 host_api = Blueprint('host_api', __name__)
 
+logger = logging.getLogger(__name__)
 
 class HostSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
@@ -113,6 +116,19 @@ class HostsView(PaginatedMixin,
                    Host.open_service_count,
                    Host.vulnerability_count]
     get_joinedloads = [Host.hostnames, Host.services, Host.update_user]
+
+    @route('/bulk_create/', methods=['POST'])
+    def bulk_create(self, workspace_name):
+        logger.debug("Import hosts CSV")
+        #services = self._get_object(host_id, workspace_name).services
+        #return ServiceSchema(many=True).dump(services).data
+        if 'file' not in flask.request.files:
+            abort(400)
+        hosts_file = flask.request.files['file']
+        hosts_reader = csv.reader(hosts_file)
+        for row in hosts_reader:
+            print row
+        return make_response(jsonify(message="ok"), 200)
 
     @route('/<host_id>/services/')
     def service_list(self, workspace_name, host_id):

@@ -20,10 +20,11 @@ angular.module('faradayApp')
             'target': ''
         };
 
+        $scope.targetsArray = [];
         $scope.total_rows = 0;
         $scope.pageSize = 5;
         $scope.currentPage = 1;
-        
+
         var init = function(){
             if(credential !== undefined){
                 $scope.credentialData.name = credential.name;
@@ -60,13 +61,27 @@ angular.module('faradayApp')
         $scope.assignTarget = function(target, hostIp) {
             // Receive hostIp as parameter because if target
             // is Service, it does not have hostIp
-            if(target.type === "Host"){
-                $scope.credentialData.hostSelectedId = target.id;
-                $scope.credentialData.target = hostIp;
+            var index = -1;
+            var array = $.grep($scope.targetsArray, function(item, i){
+                index = i;
+                return item.id === target.id && item.type === target.type;
+            });
+
+            if(array.length > 0) {
+                // Remove target selection
+                $scope.targetsArray.splice(index, 1);
             }
-            else if(target.type === "Service") {
-                $scope.credentialData.serviceSelectedId = target.id;
-                $scope.credentialData.target = hostIp + "/" + target.name;
+            else {
+                if(target.type === "Host"){
+                    $scope.credentialData.hostSelectedId = target.id;
+                    $scope.credentialData.target = hostIp;
+                    $scope.targetsArray.push(target);
+                }
+                else if(target.type === "Service") {
+                    $scope.credentialData.serviceSelectedId = target.id;
+                    $scope.credentialData.target = hostIp + "/" + target.name;
+                    $scope.targetsArray.push(target);
+                }
             }
         };
 

@@ -72,9 +72,6 @@ OBJECT_TYPE_END_POINT_MAPPER = {
     'Cred': 'credential',
 }
 
-from faraday.client.start_client import CONST_FARADAY_HOME_PATH
-LOCAL_CONFIG_FILE = os.path.expanduser(
-    os.path.join(CONST_FARADAY_HOME_PATH, 'config/server.ini'))
 
 
 def _conf():

@@ -6,11 +6,11 @@
 
 angular.module('faradayApp')
     .controller('modalNewEditCredentialCtrl',
-        ['$scope', '$modalInstance', 'title', 'credential', 'targetFact', '$routeParams',
-        function($scope, $modalInstance, title, credential, targetFact, $routeParams) {
+        ['$scope', '$modalInstance', 'title', 'credential', 'targetFactCred', '$routeParams',
+        function($scope, $modalInstance, title, credential, targetFactCred, $routeParams) {
         $scope.title = title;
         $scope.workspace = $routeParams.wsId;
-        $scope.targets;
+        $scope.targets = [];
         $scope.credentialData = {
             'name': '',
             'username': '',
@@ -19,6 +19,10 @@ angular.module('faradayApp')
             'serviceSelectedId': '',
             'target': ''
         };
+
+        $scope.total_rows = 0;
+        $scope.pageSize = 5;
+        $scope.currentPage = 1;
         
         var init = function(){
             if(credential !== undefined){
@@ -26,6 +30,11 @@ angular.module('faradayApp')
                 $scope.credentialData.username = credential.username;
                 $scope.credentialData.password = credential.password;
             }
+
+            targetFactCred.getTargets($scope.workspace, $scope.currentPage, $scope.pageSize).then(function(targets){
+                $scope.targets = targets.hosts;
+                $scope.total_rows = targets.total;
+            });
         };
 
         $scope.ok = function() {
@@ -35,11 +44,6 @@ angular.module('faradayApp')
         $scope.cancel = function() {
             $modalInstance.dismiss('cancel');
         };
-
-        targetFact.getTargets($scope.workspace).then(function(targets){
-                $scope.targets = targets;
-            });
-
 
         $scope.showTargets = function() {
             // Don't show targets in modal:
@@ -51,7 +55,7 @@ angular.module('faradayApp')
             else {
                 return false;
             }
-        }
+        };
 
         $scope.assignTarget = function(target, hostIp) {
             // Receive hostIp as parameter because if target
@@ -64,7 +68,19 @@ angular.module('faradayApp')
                 $scope.credentialData.serviceSelectedId = target.id;
                 $scope.credentialData.target = hostIp + "/" + target.name;
             }
-        }
+        };
+
+        $scope.updatePaginator = function(isNext) {
+            if (isNext === true)
+                $scope.currentPage = $scope.currentPage + 1;
+            else
+                $scope.currentPage = $scope.currentPage - 1;
+
+            targetFactCred.getTargets($scope.workspace, $scope.currentPage, $scope.pageSize).then(function(targets){
+                $scope.targets = targets.hosts;
+            });
+
+        };
 
         init();
 }]);

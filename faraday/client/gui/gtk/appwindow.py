@@ -6,9 +6,11 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+import os
 import gi
 
 from faraday.config.configuration import getInstanceConfiguration
+from faraday.client.start_client import FARADAY_CLIENT_BASE
 
 gi.require_version('Gtk', '3.0')
 
@@ -49,7 +51,7 @@ class AppWindow(Gtk.ApplicationWindow):
         self.statusbar = statusbar
 
         self.terminal.connect("child_exited", self.on_terminal_exit)
-        self.icons = CONF.getImagePath() + "icons/"
+        self.icons = os.path.join(FARADAY_CLIENT_BASE, "data", "images", "icons")
 
         window = self.create_window_main_structure()
         self.add(window)
@@ -92,7 +94,7 @@ class AppWindow(Gtk.ApplicationWindow):
     def append_remove_terminal_button_to_notebook(self):
         """Apprends a remove_terminal_icon to the end of notebooks
         action area"""
-        remove_terminal_icon = Gtk.Image.new_from_file(self.icons + "exit.png")
+        remove_terminal_icon = Gtk.Image.new_from_file(os.path.join(self.icons,"exit.png"))
         remove_terminal_button = Gtk.Button()
         remove_terminal_button.set_tooltip_text("Delete current tab")
         remove_terminal_button.connect("clicked", self.delete_tab)

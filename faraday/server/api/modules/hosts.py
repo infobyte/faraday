@@ -5,6 +5,7 @@
 import logging
 import csv
 import flask
+import re
 from flask import Blueprint, make_response, jsonify, abort
 from flask_classful import route
 from marshmallow import fields, Schema
@@ -119,16 +120,40 @@ class HostsView(PaginatedMixin,
 
     @route('/bulk_create/', methods=['POST'])
     def bulk_create(self, workspace_name):
-        logger.debug("Import hosts CSV")
-        #services = self._get_object(host_id, workspace_name).services
-        #return ServiceSchema(many=True).dump(services).data
+
+        def parse_list(list_string):
+            items = re.findall(r"(\w+)", list_string)
+            return items
+        logger.debug("Create hosts from CSV")
         if 'file' not in flask.request.files:
             abort(400)
         hosts_file = flask.request.files['file']
-        hosts_reader = csv.reader(hosts_file)
-        for row in hosts_reader:
-            print row
-        return make_response(jsonify(message="ok"), 200)
+        try:
+            hosts_reader = csv.DictReader(hosts_file, skipinitialspace=True)
+            created_hosts_count = 0
+            error_hosts_count = 0
+            workspace = self._get_workspace(workspace_name)
+            for host_dict in hosts_reader:
+                try:
+                    hostnames = parse_list(host_dict.pop('hostnames'))
+                    tags = parse_list(host_dict.pop('tags'))
+                    other_fields = {'owned': False, 'mac': u'00:00:00:00:00:00', 'default_gateway_ip': u'None'}
+                    host_dict.update(other_fields)
+                    host = super(HostsView, self)._perform_create(host_dict, workspace_name)
+                    host.workspace = workspace
+                    for name in hostnames:
+                        get_or_create(db.session, Hostname, name=name, host=host, workspace=host.workspace)
+                    db.session.commit()
+                except Exception as e:
+                    logger.error("Error creating host (%s)", e)
+                else:
+                    logger.debug("Host Created (%s)", host_dict)
+                    created_hosts_count += 1
+            return make_response(jsonify(hosts=created_hosts_count, error_hosts=error_hosts_count), 200)
+        except Exception as e:
+            logger.error("Error parsing hosts CSV (%s)", e)
+            abort(400)
+
 
     @route('/<host_id>/services/')
     def service_list(self, workspace_name, host_id):

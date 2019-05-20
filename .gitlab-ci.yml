@@ -120,7 +120,7 @@ binary_files:
     script:
         - apt-get update -qy
         - apt-get install -y gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libgdk-pixbuf2.0-dev
-        - apt-get install -y libcanberra-gtk-module libcanberra-gtk3-module libxml2-dev libxslt1-dev
+        - apt-get install -y libcanberra-gtk-module libcanberra-gtk3-module libxml2-dev libxslt1-dev libgirepository-gir2.0 resp. lib64girepository-gir2.0
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate

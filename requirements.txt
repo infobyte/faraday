@@ -10,6 +10,6 @@ requests>=2.18.4
 tornado==4.5.1
 tqdm>=4.15.0
 whoosh>=2.7.4
-Pygobject
-cairocffi
-pycairo
+PyGObject==3.32.1
+cairocffi==0.9.0
+pycairo==1.18.1

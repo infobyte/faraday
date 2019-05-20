@@ -24,6 +24,8 @@ angular.module('faradayApp')
         $scope.total_rows = 0;
         $scope.pageSize = 5;
         $scope.currentPage = 1;
+        $scope.targetFilter = {};
+        $scope.activeSearch;
 
         var init = function(){
             if(credential !== undefined){
@@ -56,6 +58,22 @@ angular.module('faradayApp')
             else {
                 return false;
             }
+        };
+
+        $scope.filterTargets = function() {
+            var filter = {ip: $scope.targetFilter.ip};
+            targetFactCred.getTargets($scope.workspace, $scope.currentPage, $scope.pageSize, filter).then(function(targets){
+                $scope.targets = targets.hosts;
+                $scope.activeSearch = true;
+            });
+        };
+
+        $scope.clearFilterTargets = function() {
+            $scope.activeSearch = false;
+            targetFactCred.getTargets($scope.workspace, $scope.currentPage, $scope.pageSize).then(function(targets){
+                $scope.targets = targets.hosts;
+                $scope.targetFilter = {};
+            });
         };
 
         $scope.assignTarget = function(target, hostIp) {

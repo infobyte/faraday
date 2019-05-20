@@ -489,18 +489,19 @@ class TestHostAPI:
         ws = WorkspaceFactory.create(name='abc')
         session.add(ws)
         session.commit()
-        expected_created_hosts = 1
-        file_contents = "ip, description, os, hostnames, tags\n127.0.0.1, test_host, linux, \"['localhost', 'test_host']\", \"['homepc']\""
+        expected_created_hosts = 2
+        file_contents = """ip, description, os, hostnames, tags\n
+        10.10.10.10, test_host, linux, \"['localhost', 'test_host']\", \"['homepc']\"\n
+        10.10.10.11, test_host, linux, \"['localhost', 'test_host_1']\", \"['homepc']\""""
         data = {
             'file': (BytesIO(file_contents), 'hosts.csv')
         }
         headers = {'Content-type': 'multipart/form-data'}
-
         res = test_client.post('/v2/ws/{0}/hosts/bulk_create/'.format(ws.name),
                                data=data, headers=headers, use_json_data=False)
         assert res.status_code == 200
-        assert res.json['hosts'] == expected_created_hosts
-        assert session.query(Host).filter_by(ip="127.0.0.1").count() == expected_created_hosts
+        assert res.json['hosts_created'] == expected_created_hosts
+        assert session.query(Host).filter_by(description="test_host").count() == expected_created_hosts
 
 
 

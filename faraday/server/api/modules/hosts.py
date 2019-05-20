@@ -134,8 +134,8 @@ class HostsView(PaginatedMixin,
             if set(hosts_reader.fieldnames) != FILE_HEADERS:
                 logger.error("Missing Required headers in CSV (%s)", FILE_HEADERS)
                 abort(400, "Missing Required headers in CSV (%s)" % FILE_HEADERS)
-            created_hosts_count = 0
-            error_hosts_count = 0
+            hosts_created_count = 0
+            hosts_with_errors_count = 0
             workspace = self._get_workspace(workspace_name)
             for host_dict in hosts_reader:
                 try:
@@ -152,11 +152,11 @@ class HostsView(PaginatedMixin,
                     db.session.commit()
                 except Exception as e:
                     logger.error("Error creating host (%s)", e)
-                    error_hosts_count += 1
+                    hosts_with_errors_count += 1
                 else:
                     logger.debug("Host Created (%s)", host_dict)
-                    created_hosts_count += 1
-            return make_response(jsonify(hosts=created_hosts_count, error_hosts=error_hosts_count), 200)
+                    hosts_created_count += 1
+            return make_response(jsonify(hosts_created=hosts_created_count, hosts_with_errors=hosts_with_errors_count), 200)
         except Exception as e:
             logger.error("Error parsing hosts CSV (%s)", e)
             abort(400, "Error parsing hosts CSV (%s)" % e)

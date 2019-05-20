@@ -59,6 +59,7 @@ postgresql_test:
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate
         #- pip install --upgrade -r requirements_server.txt
+        - pip install --upgrade -r requirements.txt
         - python setup.py install
         - pip install --upgrade responses pytest-xdist pytest-cov
         - pip install --upgrade -r requirements_dev.txt
@@ -82,6 +83,7 @@ sqlite_test:
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate
         #- pip install --upgrade -r requirements_server.txt
+        - pip install --upgrade -r requirements.txt
         - python setup.py install
         - pip install --upgrade responses pytest-xdist pytest-cov
         - pip install --upgrade -r requirements_dev.txt
@@ -122,6 +124,7 @@ binary_files:
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate
         - pip install pyinstaller
+        - pip install --upgrade -r requirements.txt
         - python setup.py install
         - pyinstaller -F -w --onefile --hidden-import='sqlalchemy.sql.default_comparator' --hidden-import='backports.functools_lru_cache' --hidden-import='depot.io.local' --hidden-import='passlib.handlers.bcrypt' --hidden-import='passlib.handlers.pbkdf2' --hidden-import='passlib.handlers.misc' --hidden-import='passlib.handlers.sha2_crypt' --hidden-import='passlib.handlers.digests' --hidden-import='xml.sax.xmlreader' --hidden-import='xml.sax.expatreader' --hidden-import='sqlalchemy.ext.baked' --hidden-import='faraday.client.plugins.core' --add-data 'faraday:faraday' faraday/start_server.py
         - mv dist/start_server dist/faraday-server

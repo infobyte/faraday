@@ -10,4 +10,3 @@ requests>=2.18.4
 tornado==4.5.1
 tqdm>=4.15.0
 whoosh>=2.7.4
-Flask-Restless>=0.17.0

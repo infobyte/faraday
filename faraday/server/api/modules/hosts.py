@@ -128,7 +128,7 @@ class HostsView(PaginatedMixin,
         if 'file' not in flask.request.files:
             abort(400, "Missing File in request")
         hosts_file = flask.request.files['file']
-        FILE_HEADERS = {'description', 'hostnames', 'ip', 'os', 'tags'}
+        FILE_HEADERS = {'description', 'hostnames', 'ip', 'os'}
         try:
             hosts_reader = csv.DictReader(hosts_file, skipinitialspace=True)
             if set(hosts_reader.fieldnames) != FILE_HEADERS:
@@ -140,7 +140,6 @@ class HostsView(PaginatedMixin,
             for host_dict in hosts_reader:
                 try:
                     hostnames = parse_list(host_dict.pop('hostnames'))
-                    tags = parse_list(host_dict.pop('tags'))
                     other_fields = {'owned': False, 'mac': u'00:00:00:00:00:00', 'default_gateway_ip': u'None'}
                     host_dict.update(other_fields)
                     host = super(HostsView, self)._perform_create(host_dict, workspace_name)

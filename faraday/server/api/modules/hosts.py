@@ -147,8 +147,6 @@ class HostsView(PaginatedMixin,
                     host.workspace = workspace
                     for name in hostnames:
                         get_or_create(db.session, Hostname, name=name, host=host, workspace=host.workspace)
-                    #for tag in tags:
-                    #    host.tags.add(tag)
                     db.session.commit()
                 except Exception as e:
                     logger.error("Error creating host (%s)", e)

@@ -54,7 +54,7 @@ postgresql_test:
     stage: testing
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
-        - apt-get install -y gobject-introspection libgirepository1.0-dev
+        - apt-get install -y gobject-introspection libgirepository1.0-dev libcairo2-dev
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate
@@ -77,7 +77,7 @@ sqlite_test:
     stage: testing
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
-        - apt-get install -y gobject-introspection libgirepository1.0-dev
+        - apt-get install -y gobject-introspection libgirepository1.0-dev libcairo2-dev
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate
@@ -117,7 +117,7 @@ binary_files:
     stage: build
     script:
         - apt-get update -qy
-        - apt-get install -y gobject-introspection libgirepository1.0-dev
+        - apt-get install -y gobject-introspection libgirepository1.0-dev libcairo2-dev
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate

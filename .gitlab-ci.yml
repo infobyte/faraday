@@ -119,7 +119,7 @@ binary_files:
     stage: build
     script:
         - apt-get update -qy
-        - apt-get install -y gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo
+        - apt-get install -y gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libgdk-pixbuf2.0-dev
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate

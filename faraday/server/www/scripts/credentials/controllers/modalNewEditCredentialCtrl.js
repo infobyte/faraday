@@ -24,6 +24,7 @@ angular.module('faradayApp')
         $scope.total_rows = 0;
         $scope.pageSize = 5;
         $scope.currentPage = 1;
+        $scope.newCurrentPage = {};
         $scope.targetFilter = {};
         $scope.activeSearch;
 
@@ -103,16 +104,35 @@ angular.module('faradayApp')
             }
         };
 
-        $scope.updatePaginator = function(isNext) {
+        $scope.updatePaginator = function(isNext, toGo) {
             if (isNext === true)
                 $scope.currentPage = $scope.currentPage + 1;
-            else
-                $scope.currentPage = $scope.currentPage - 1;
+            else if (toGo) {
+                $scope.currentPage = toGo;
+            } else
+                $scope.currentPage =  1;
 
             targetFactCred.getTargets($scope.workspace, $scope.currentPage, $scope.pageSize).then(function(targets){
                 $scope.targets = targets.hosts;
             });
 
+        };
+
+        $scope.go = function() {
+            $scope.currentPage = 0;
+            if($scope.newCurrentPage.value <= (parseInt($scope.total_rows/$scope.pageSize) + 1) && $scope.newCurrentPage.value > 0) {
+                $scope.currentPage = $scope.newCurrentPage.value;
+            }
+
+            $scope.updatePaginator(false, $scope.currentPage);
+        };
+
+        $scope.isEmpty = function(obj) {
+            for(var key in obj) {
+                if(obj.hasOwnProperty(key))
+                    return false;
+            }
+            return true;
         };
 
         init();

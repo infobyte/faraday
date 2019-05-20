@@ -11,4 +11,4 @@ tornado==4.5.1
 tqdm>=4.15.0
 whoosh>=2.7.4
 Pygobject
-cairo
+pycairo

@@ -124,12 +124,16 @@ class HostsView(PaginatedMixin,
         def parse_list(list_string):
             items = re.findall(r"(\w+)", list_string)
             return items
-        logger.debug("Create hosts from CSV")
+        logger.info("Create hosts from CSV")
         if 'file' not in flask.request.files:
-            abort(400)
+            abort(400, "Missing File in request")
         hosts_file = flask.request.files['file']
+        FILE_HEADERS = {'description', 'hostnames', 'ip', 'os', 'tags'}
         try:
             hosts_reader = csv.DictReader(hosts_file, skipinitialspace=True)
+            if set(hosts_reader.fieldnames) != FILE_HEADERS:
+                logger.error("Missing Required headers in CSV (%s)", FILE_HEADERS)
+                abort(400, "Missing Required headers in CSV (%s)" % FILE_HEADERS)
             created_hosts_count = 0
             error_hosts_count = 0
             workspace = self._get_workspace(workspace_name)
@@ -143,16 +147,19 @@ class HostsView(PaginatedMixin,
                     host.workspace = workspace
                     for name in hostnames:
                         get_or_create(db.session, Hostname, name=name, host=host, workspace=host.workspace)
+                    #for tag in tags:
+                    #    host.tags.add(tag)
                     db.session.commit()
                 except Exception as e:
                     logger.error("Error creating host (%s)", e)
+                    error_hosts_count += 1
                 else:
                     logger.debug("Host Created (%s)", host_dict)
                     created_hosts_count += 1
             return make_response(jsonify(hosts=created_hosts_count, error_hosts=error_hosts_count), 200)
         except Exception as e:
             logger.error("Error parsing hosts CSV (%s)", e)
-            abort(400)
+            abort(400, "Error parsing hosts CSV (%s)" % e)
 
 
     @route('/<host_id>/services/')

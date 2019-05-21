@@ -49,6 +49,18 @@ angular.module('faradayApp')
             $modalInstance.dismiss('cancel');
         };
 
+        $scope.invalidSubmit = function() {
+            if($scope.showTargets() === true){
+                if($scope.targetsArray.length > 0) {
+                    return false;
+                } else {
+                    return true;
+                }
+            } else {
+                return false;
+            }
+        };
+
         $scope.showTargets = function() {
             // Don't show targets in modal:
             // If Credential creation from hosts/services tab

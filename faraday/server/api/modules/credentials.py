@@ -2,7 +2,7 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 from flask import Blueprint
-from marshmallow import fields, post_load, ValidationError
+from marshmallow import fields, post_load, ValidationError, validate
 from filteralchemy import FilterSet, operators
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -23,7 +23,8 @@ class CredentialSchema(AutoSchema):
     owned = fields.Boolean(default=False, dump_only=True)
     owner = fields.String(dump_only=True, attribute='creator.username',
                           default='')
-    username = fields.String(default='')
+    username = fields.String(default='', required=True,
+                             validate=validate.Length(min=1, error="Username must be defined"))
     password = fields.String(default='')
     description = fields.String(default='')
     couchdbid = fields.String(default='')  # backwards compatibility

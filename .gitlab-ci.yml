@@ -51,6 +51,8 @@ pylint:
 
 postgresql_test:
     image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base
+    tags:
+        - faradaytests
     stage: testing
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
@@ -75,6 +77,8 @@ postgresql_test:
 
 sqlite_test:
     image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base
+    tags:
+        - faradaytests
     stage: testing
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:

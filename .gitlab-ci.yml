@@ -20,6 +20,8 @@ services:
     - postgres:latest
 
 closure_compiler:
+    tags:
+        - faradaytests
     image:
         name: jborza/closure-compiler
         entrypoint: ["/bin/sh", "-c"]
@@ -29,6 +31,8 @@ closure_compiler:
         - /opt/cc.sh faraday/server/www/scripts
 
 merge_conflict_check:
+    tags:
+        - faradaytests
     image: python:3
     stage: pre_testing
     allow_failure: true
@@ -38,6 +42,8 @@ merge_conflict_check:
         - python3 merge-conflict-detector.py
 
 pylint:
+    tags:
+        - faradaytests
     image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base  # I just need an image with python-dev and python-pip
     stage: pre_testing
     script:

@@ -180,12 +180,18 @@ class AppWindow(Gtk.ApplicationWindow):
         toolbar.set_hexpand(True)
         icons = self.icons
 
-        new_button_icon = Gtk.Image.new_from_file(icons + "Documentation.png")
-        new_terminal_icon = Gtk.Image.new_from_file(icons + "newshell.png")
-        preferences_icon = Gtk.Image.new_from_file(icons + "config.png")
-        toggle_log_icon = Gtk.Image.new_from_file(icons + "debug.png")
-        open_report_icon = Gtk.Image.new_from_file(icons + "FolderSteel-20.png")
-        go_to_web_ui_icon = Gtk.Image.new_from_file(icons + "visualize.png")
+        new_button_icon = Gtk.Image.new_from_file(
+            os.path.join(icons, "Documentation.png"))
+        new_terminal_icon = Gtk.Image.new_from_file(
+            os.path.join(icons, "newshell.png"))
+        preferences_icon = Gtk.Image.new_from_file(
+            os.path.join(icons, "config.png"))
+        toggle_log_icon = Gtk.Image.new_from_file(
+            os.path.join(icons, "debug.png"))
+        open_report_icon = Gtk.Image.new_from_file(
+            os.path.join(icons, "FolderSteel-20.png"))
+        go_to_web_ui_icon = Gtk.Image.new_from_file(
+            os.path.join(icons, "visualize.png"))
 
         new_terminal_button = Gtk.ToolButton.new(new_terminal_icon, None)
         new_terminal_button.set_tooltip_text("Create a new tab")

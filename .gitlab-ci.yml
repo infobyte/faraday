@@ -132,7 +132,7 @@ binary_files:
         - apt-get install -y build-essential ipython python-setuptools python-pip python-dev libssl-dev libffi-dev pkg-config libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev
         - apt-get install -y libpq-dev python-pip python-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 python-gobject zsh curl
         - apt-get install -y gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libgdk-pixbuf2.0-dev
-        - apt-get install -y libcanberra-gtk-module libcanberra-gtk3-module libxml2-dev libxslt1-dev gir1.2-gtk-3.0 gir1.2-vte-2.91
+        - apt-get install -y libcanberra-gtk-module libcanberra-gtk* libxml2-dev libxslt1-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 unity-gtk*
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate
@@ -143,7 +143,7 @@ binary_files:
         - mv dist/start_server dist/faraday-server
         - pyinstaller -F -w --onefile --hidden-import='sqlalchemy.sql.default_comparator' --hidden-import='backports.functools_lru_cache' --hidden-import='depot.io.local' --hidden-import='passlib.handlers.bcrypt' --hidden-import='passlib.handlers.pbkdf2' --hidden-import='passlib.handlers.misc' --hidden-import='passlib.handlers.sha2_crypt' --hidden-import='passlib.handlers.digests' --hidden-import='text_unidecode' --add-data 'faraday:faraday' faraday/manage.py
         - mv dist/manage dist/faraday-manage
-        - pyinstaller -F -w --onefile --hidden-import='sqlalchemy.sql.default_comparator' --hidden-import='backports.functools_lru_cache' --hidden-import='depot.io.local' --hidden-import='passlib.handlers.bcrypt' --hidden-import='passlib.handlers.pbkdf2' --hidden-import='passlib.handlers.misc' --hidden-import='passlib.handlers.sha2_crypt' --hidden-import='passlib.handlers.digests' --hidden-import='tornado' --hidden-import='faraday.client.plugins.core' --hidden-import='pipes' --hidden-import='xml.sax.drivers' --hidden-import='xml.sax.drivers2' --add-data 'faraday:faraday' faraday/client/start_client.py
+        - pyinstaller -F -w --onefile --hidden-import='sqlalchemy.sql.default_comparator' --hidden-import='backports.functools_lru_cache' --hidden-import='depot.io.local' --hidden-import='passlib.handlers.bcrypt' --hidden-import='passlib.handlers.pbkdf2' --hidden-import='passlib.handlers.misc' --hidden-import='passlib.handlers.sha2_crypt' --hidden-import='passlib.handlers.digests' --hidden-import='tornado' --hidden-import='faraday.client.plugins.core' --hidden-import='pipes' --hidden-import='xml.sax.drivers' --hidden-import='xml.sax.drivers2' --hidden-import='tqdm' --add-data 'faraday:faraday' faraday/client/start_client.py
         - mv dist/start_client dist/faraday-client
     artifacts:
         name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME-binaries"

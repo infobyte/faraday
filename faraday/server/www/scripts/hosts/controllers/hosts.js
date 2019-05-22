@@ -388,6 +388,7 @@ angular.module('faradayApp')
                 },
                 function(d){
                     commonsFact.showMessage("Error uploading hosts");
+                    toggleFileUpload();
                 }
             );
         };

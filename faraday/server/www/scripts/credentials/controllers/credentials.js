@@ -159,22 +159,37 @@ angular.module('faradayApp')
                 try {
                     // If parent_id is undefined, assign host or service to credential from modal
                     if(parent_id === undefined){
-                        if(credentialData.hostSelectedId !== ""){
-                            parent_id = credentialData.hostSelectedId;
-                            parent_type = "Host";
-                        } else if(credentialData.serviceSelectedId !== "") {
-                            parent_id = credentialData.serviceSelectedId;
-                            parent_type = "Service";
-                        }
+                        credentialData.targetsArray.forEach(function(target) {
+                            if(target.type === "Service") {
+                                // Since it is not possible to get the host's IP from target if it is a service,
+                                // credentialData.hostsIp contains the host's IPs of every target that is a service.
+                                // To get the host's Ip, use the host's ID
+                                credentialData.target = credentialData.hostsIp[target.host_id] + "/" + target.name;
+                            } else {
+                                credentialData.target = target.ip;
+                            }
+
+                            parent_id = target.id;
+                            parent_type = target.type;
+
+                            var credentialObj = new credential(credentialData, parent_id, parent_type);
+
+                            credentialObj.create($scope.workspace).then(function(){
+                                 $scope.credentials.push(credentialObj);
+                            }, function(){
+                                console.log('Error creating credential.');
+                            });
+
+                        });
+                    } else {
+                        var credentialObj = new credential(credentialData, parent_id, parent_type);
+
+                        credentialObj.create($scope.workspace).then(function(){
+                             $scope.credentials.push(credentialObj);
+                        }, function(){
+                            console.log('Error creating credential.');
+                        });
                     }
-                    var credentialObj = new credential(credentialData, parent_id, parent_type);
-
-                    credentialObj.create($scope.workspace).then(function(){
-                         $scope.credentials.push(credentialObj);
-                    }, function(){
-                        console.log('Error creating credential.');
-                    });
-
                 } catch (error) {
                     console.log(error);
                 }

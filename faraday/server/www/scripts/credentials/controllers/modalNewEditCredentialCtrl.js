@@ -15,12 +15,11 @@ angular.module('faradayApp')
             'name': '',
             'username': '',
             'password': '',
-            'hostSelectedId': '',
-            'serviceSelectedId': '',
-            'target': ''
+            'target': '',
+            'hostsIp': {},
+            'targetsArray': []
         };
 
-        $scope.targetsArray = [];
         $scope.total_rows = 0;
         $scope.pageSize = 5;
         $scope.currentPage = 1;
@@ -51,7 +50,7 @@ angular.module('faradayApp')
 
         $scope.invalidSubmit = function() {
             if($scope.showTargets() === true){
-                if($scope.targetsArray.length > 0) {
+                if($scope.credentialData.targetsArray.length > 0) {
                     return false;
                 } else {
                     return true;
@@ -93,26 +92,21 @@ angular.module('faradayApp')
             // Receive hostIp as parameter because if target
             // is Service, it does not have hostIp
             var index = -1;
-            var array = $.grep($scope.targetsArray, function(item, i){
+            var array = $.grep($scope.credentialData.targetsArray, function(item, i){
                 index = i;
                 return item.id === target.id && item.type === target.type;
             });
 
             if(array.length > 0) {
                 // Remove target selection
-                $scope.targetsArray.splice(index, 1);
-            }
-            else {
-                if(target.type === "Host"){
-                    $scope.credentialData.hostSelectedId = target.id;
-                    $scope.credentialData.target = hostIp;
-                    $scope.targetsArray.push(target);
-                }
-                else if(target.type === "Service") {
-                    $scope.credentialData.serviceSelectedId = target.id;
-                    $scope.credentialData.target = hostIp + "/" + target.name;
-                    $scope.targetsArray.push(target);
-                }
+                $scope.credentialData.targetsArray.splice(index, 1);
+            } else {
+                $scope.credentialData.targetsArray.push(target);
+
+                // Since it is not possible to obtain the hostIp from target if it is a service,
+                // credentialData.hostsIp contains the host's id with its IP if target is service
+                if(target.type === "Service")
+                    $scope.credentialData.hostsIp[target.host_id] = hostIp;
             }
         };
 

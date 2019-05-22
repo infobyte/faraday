@@ -29,9 +29,6 @@ with open('requirements_server.txt') as fp:
     required = fp.read().splitlines()
     required.reverse()
 
-with open('requirements.txt') as fp:
-    required += fp.read().splitlines()
-
 with open('requirements_dev.txt') as fp:
     dev_required = fp.read().splitlines()
 

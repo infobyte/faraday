@@ -139,6 +139,7 @@ binary_files:
         - pip install pyinstaller
         - pip install --upgrade -r requirements.txt
         - python setup.py install
+        - pip install .[gtk]
         - pyinstaller -F -w --onefile --hidden-import='sqlalchemy.sql.default_comparator' --hidden-import='backports.functools_lru_cache' --hidden-import='depot.io.local' --hidden-import='passlib.handlers.bcrypt' --hidden-import='passlib.handlers.pbkdf2' --hidden-import='passlib.handlers.misc' --hidden-import='passlib.handlers.sha2_crypt' --hidden-import='passlib.handlers.digests' --hidden-import='xml.sax.xmlreader' --hidden-import='xml.sax.expatreader' --hidden-import='sqlalchemy.ext.baked' --hidden-import='faraday.client.plugins.core' --add-data 'faraday:faraday' faraday/start_server.py
         - mv dist/start_server dist/faraday-server
         - pyinstaller -F -w --onefile --hidden-import='sqlalchemy.sql.default_comparator' --hidden-import='backports.functools_lru_cache' --hidden-import='depot.io.local' --hidden-import='passlib.handlers.bcrypt' --hidden-import='passlib.handlers.pbkdf2' --hidden-import='passlib.handlers.misc' --hidden-import='passlib.handlers.sha2_crypt' --hidden-import='passlib.handlers.digests' --hidden-import='text_unidecode' --add-data 'faraday:faraday' faraday/manage.py

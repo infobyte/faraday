@@ -1847,6 +1847,24 @@ class Notification(db.Model):
         return
 
 
+class Agent(Metadata):
+    __tablename__ = 'agent'
+    id = Column(Integer, primary_key=True)
+    type = Column(Enum(*['shared', 'specific'], name='types'), nullable=False)
+    status = Column(Enum(*['locked', 'pause', 'offline'], name='status'), nullable=True)
+    token = Column(Text, nullable=True)
+    description = Column(Text, nullable=True)
+    version = Column(Text, nullable=True)
+    projects = Column(Integer, nullable=True)
+    jobs = Column(Integer, nullable=True)
+    tags = relationship(
+        "Tag",
+        secondary="tag_object",
+        primaryjoin="and_(TagObject.object_id==Agent.id)",
+        collection_class=set,
+    )
+
+
 # This constraint uses Columns from different classes
 # Since it applies to the table vulnerability it should be adVulnerability.ded to the Vulnerability class
 # However, since it contains columns from children classes, this cannot be done

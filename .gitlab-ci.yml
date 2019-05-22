@@ -132,7 +132,7 @@ binary_files:
         - apt-get install -y build-essential ipython python-setuptools python-pip python-dev libssl-dev libffi-dev pkg-config libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev
         - apt-get install -y libpq-dev python-pip python-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 python-gobject zsh curl
         - apt-get install -y gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libgdk-pixbuf2.0-dev
-        - apt-get install -y libcanberra-gtk-module libcanberra-gtk* libxml2-dev libxslt1-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 unity-gtk-module
+        - apt-get install -y libcanberra-gtk-module libcanberra-gtk* libxml2-dev libxslt1-dev gir1.2-gtk-3.0 gir1.2-vte-2.91
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate

@@ -380,11 +380,11 @@ angular.module('faradayApp')
             $http.post(BASEURL + '_api/v2/ws/' + $scope.workspace + '/hosts/bulk_create', fd, {
                 transformRequest: angular.identity,
                 withCredentials: false,
-                headers: {'Content-Type': undefined},
-                responseType: "arraybuffer",
+                headers: {'Content-Type': undefined}
             }).then(
                 function(d) {
-                    $route.reload()
+                    commonsFact.showMessage("Hosts Created: " + d.data.hosts_created + "  Hosts with error: " + d.data.hosts_with_errors + "", true);
+                    $route.reload();
                 },
                 function(d){
                     commonsFact.showMessage("Error uploading hosts");

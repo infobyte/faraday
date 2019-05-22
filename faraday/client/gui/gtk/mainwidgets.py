@@ -35,14 +35,15 @@ class Terminal(VteTerminal):
         """Initialize terminal with infinite scrollback, no bell, connecting
         all keys presses to copy_or_past, and starting faraday-terminal
         """
+        from faraday.client.start_client import FARADAY_BASE, FARADAY_CLIENT_BASE
         VteTerminal.__init__(self)
         self.set_scrollback_lines(-1)
         self.set_audible_bell(0)
         self.connect("key_press_event", self.copy_or_paste)
         self.host, self.port = CONF.getApiRestfulConInfo()
 
-        self.faraday_directory = os.path.dirname(os.path.realpath('faraday.py'))
-        self.faraday_exec = self.faraday_directory + "/faraday-terminal.zsh"
+        self.faraday_directory = FARADAY_BASE
+        self.faraday_exec = os.path.join(FARADAY_CLIENT_BASE, "zsh/faraday-terminal.zsh")
 
         self.start_faraday()
 

@@ -322,32 +322,17 @@ class NiktoPlugin(core.PluginBase):
 
         for host in parser.hosts:
 
-            h_id = self.createAndAddHost(host.targetip)
-
-            i_id = self.createAndAddInterface(
-                h_id,
-                host.targetip,
-                ipv4_address=host.targetip,
-                hostname_resolution=host.targethostname
+            h_id = self.createAndAddHost(
+                    host.targetip,
+                    hostnames=[host.targethostname]
             )
 
-            s_id = self.createAndAddServiceToInterface(
+            s_id = self.createAndAddServiceToHost(
                 h_id,
-                i_id,
                 "http",
                 "tcp",
                 ports=[host.port],
                 status="open"
-            )
-
-            n_id = self.createAndAddNoteToService(h_id, s_id, "website", "")
-
-            n2_id = self.createAndAddNoteToNote(
-                h_id,
-                s_id,
-                n_id,
-                host.targethostname,
-                ""
             )
 
             for item in host.items:

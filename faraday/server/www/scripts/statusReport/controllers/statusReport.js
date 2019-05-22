@@ -8,12 +8,12 @@ angular.module("faradayApp")
                      "$location", "$uibModal", "$cookies", "$q", "$window", "BASEURL",
                      "SEVERITIES", "EASEOFRESOLUTION", "STATUSES", "hostsManager", "commonsFact", 'parserFact',
                      "vulnsManager", "workspacesFact", "csvService", "uiGridConstants", "vulnModelsManager",
-                     "referenceFact", "ServerAPI", '$http', 'uiCommonFact', 'FileUploader',
+                     "referenceFact", "ServerAPI", '$http', 'uiCommonFact', 'FileUploader', "workspaceData", "$templateCache",
                     function($scope, $filter, $routeParams,
                         $location, $uibModal, $cookies, $q, $window, BASEURL,
                         SEVERITIES, EASEOFRESOLUTION, STATUSES, hostsManager, commonsFact,parserFact,
                         vulnsManager, workspacesFact, csvService, uiGridConstants, vulnModelsManager, referenceFact,
-                        ServerAPI, $http, uiCommonFact, FileUploader) {
+                        ServerAPI, $http, uiCommonFact, FileUploader, workspaceData,$templateCache) {
         $scope.baseurl;
         $scope.columns;
         $scope.columnsWidths;
@@ -60,7 +60,7 @@ angular.module("faradayApp")
 
         // FILTERS
 
-        // a sync filter
+        // a sync filteronRegisterApi
         uploader.filters.push({
             name: 'syncFilter',
             fn: function(item /*{File|FileLikeObject}*/, options) {
@@ -93,7 +93,6 @@ angular.module("faradayApp")
                 enableSelectAll: true,
                 enableColumnMenus: false,
                 enableRowSelection: true,
-                enableRowHeaderSelection: false,
                 useExternalPagination: true,
                 useExternalSorting: true,
                 paginationPageSizes: paginationOptions.defaultPageSizes,
@@ -101,9 +100,11 @@ angular.module("faradayApp")
                 enableHorizontalScrollbar: 0,
                 treeRowHeaderAlwaysVisible: false,
                 enableGroupHeaderSelection: true,
-                rowHeight: 47
+                rowHeight: 47,
+                enableFullRowSelection: false
             };
             $scope.gridOptions.columnDefs = [];
+
 
             var storedPageSize = parseInt($cookies.get("pageSize"));
             if ( storedPageSize && storedPageSize > 0 ) {
@@ -320,7 +321,7 @@ angular.module("faradayApp")
 
             loadVulns();
 
-            loadCustomFields();                
+            loadCustomFields();
 
             $cookies.remove("selectedVulns");
             $scope.isShowingPreview = false;
@@ -368,12 +369,12 @@ angular.module("faradayApp")
         };
 
         var defineColumns = function() {
-            $scope.gridOptions.columnDefs.push({ name: "confirmVuln", width: "45", enableColumnResizing: false, headerCellTemplate:  "<i class=\"fa fa-check cursor\" ng-click=\"grid.appScope.selectAll()\" ng-style=\"{'opacity':(grid.appScope.selected === true) ? '1':'0.6'}\"></i>", cellTemplate: "scripts/statusReport/partials/ui-grid/confirmbutton.html" });
+
 
             function getColumnSort(columnName){
                 if($cookies.get("SRsortColumn") === columnName){
                     direction = ($cookies.get("SRsortDirection").toLowerCase() == "asc")
-                                 ? uiGridConstants.ASC
+                                 ? uiGridConstants.AuiGridConstantsSC
                                  : uiGridConstants.DESC;
                     return {ignoreSort: true, priority: 0, direction: direction};
                 }else{
@@ -381,7 +382,7 @@ angular.module("faradayApp")
                 }
             }
 
-            var header = '<div ng-class="{ \'sortable\': sortable }">'+
+            var header = '<div ng-class="{ \'sort$scope.columnsable\': sortable }">'+
                     '       <div class="ui-grid-cell-contents" col-index="renderIndex" title="TOOLTIP">{{ col.displayName CUSTOM_FILTERS }}'+
                     '           <a href="" ng-click="grid.appScope.toggleShow(col.displayName, true)">'+
                     '               <span class="glyphicon glyphicon-remove"></span>'+
@@ -394,6 +395,30 @@ angular.module("faradayApp")
                     '       <div ui-grid-filter></div>'+
                     '   </div>';
 
+            var headerConfirm = '<div ng-class="{ \'sort$scope.columnsable\': sortable }">'+
+            '       <div class="ui-grid-cell-contents" col-index="renderIndex" title="TOOLTIP">{{ col.displayName CUSTOM_FILTERS }}'+
+            '           <a href="" ng-click="grid.appScope.toggleShow(col.displayName, true)">'+
+            '           </a>'+
+            '           <span ui-grid-visible="col.sort.direction" ng-class="{ \'ui-grid-icon-up-dir\': col.sort.direction == asc, \'ui-grid-icon-down-dir\': col.sort.direction == desc, \'ui-grid-icon-blank\': !col.sort.direction }">&nbsp;</span>'+
+            '       </div>'+
+            '       <div class="ui-grid-column-menu-button" ng-if="grid.options.enableColumnMenus && !col.isRowHeader  && col.colDef.enableColumnMenu !== false" ng-click="toggleMenu($event)" ng-class="{\'ui-grid-column-menu-button-last-col\': isLastCol}">'+
+            '           <i class="ui-grid-icon-angle-down">&nbsp;</i>'+
+            '       </div>'+
+            '       <div ui-grid-filter></div>'+
+            '   </div>';
+
+
+            $scope.gridOptions.columnDefs.push({displayName : "conf", name: "confirmVuln", width: "50", enableColumnResizing: false, headerCellTemplate:  headerConfirm, cellTemplate: "scripts/statusReport/partials/ui-grid/confirmbutton.html" });
+
+            $templateCache.put('ui-grid/selectionRowHeaderButtons',
+                "<div class=\"ui-grid-selection-row-header-buttons \"  ng-class=\"{'ui-grid-row-selected': row.isSelected}\" ><input style=\"margin: 0; vertical-align: middle; background-position: -20px 0;\" type=\"checkbox\" ng-model=\"row.isSelected\" ng-click=\"row.isSelected=!row.isSelected;selectButtonClick(row, $event)\">&nbsp;</div>"
+            );
+
+
+            $templateCache.put('ui-grid/selectionSelectAllButtons',
+                "<div class=\"ui-grid-selection-row-header-buttons \" ng-class=\"{'ui-grid-all-selected': grid.selection.selectAll}\" ng-if=\"grid.options.enableSelectAll\"><input style=\"margin: 0; vertical-align: middle\" type=\"checkbox\" ng-model=\"grid.selection.selectAll\" ng-click=\"grid.selection.selectAll=!grid.selection.selectAll;headerButtonClick($event)\"></div>"
+            );
+
             $scope.gridOptions.columnDefs.push({ name : 'severity',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/severitycolumn.html',
                 headerCellTemplate: header,
@@ -403,7 +428,7 @@ angular.module("faradayApp")
                 sort: getColumnSort('severity'),
                 sortingAlgorithm: compareSeverities,
                 maxWidth: 50,
-                minWidth: 50,
+                minWidth: 50
             });
             $scope.gridOptions.columnDefs.push({ name : 'name',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/namecolumn.html',

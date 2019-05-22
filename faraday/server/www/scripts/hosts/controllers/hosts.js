@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('hostsCtrl',
-        ['$scope', '$cookies', '$filter', '$location', '$route', '$routeParams', '$uibModal', 'hostsManager', 'workspacesFact', 'commonsFact', 'credential',
-        function($scope, $cookies, $filter, $location, $route, $routeParams, $uibModal, hostsManager, workspacesFact, commonsFact, credential) {
+        ['$scope', '$cookies', '$filter', '$location', '$route', '$routeParams', '$uibModal', 'hostsManager', 'workspacesFact', 'commonsFact', 'credential', '$http', 'BASEURL',
+        function($scope, $cookies, $filter, $location, $route, $routeParams, $uibModal, hostsManager, workspacesFact, commonsFact, credential, $http, BASEURL) {
 
         var init = function() {
             $scope.selectall_hosts = false;
@@ -349,6 +349,47 @@ angular.module('faradayApp')
 
         $scope.pageCount = function() {
             return Math.ceil($scope.totalHosts / $scope.pageSize);
+        };
+
+        $scope.enableFileUpload = function() {
+            if($scope.fileUploadEnabled === undefined) {
+                $http.get('/_api/session').then(
+                  function(d) {
+                    $scope.csrf_token = d.data.csrf_token;
+                    $scope.fileUploadEnabled = true;
+                  }
+                );
+            } else {
+              toggleFileUpload();
+            }
+        };
+
+        function toggleFileUpload() {
+            if($scope.fileUploadEnabled === false) {
+                $scope.fileUploadEnabled = true;
+            } else {
+                $scope.fileUploadEnabled = false;
+                $scope.fileToUpload = undefined;
+            }
+        };
+
+        $scope.uploadFile = function() {
+            var fd = new FormData();
+            fd.append('csrf_token', $scope.csrf_token);
+            fd.append('file', $scope.fileToUpload);
+            $http.post(BASEURL + '_api/v2/ws/' + $scope.workspace + '/hosts/bulk_create', fd, {
+                transformRequest: angular.identity,
+                withCredentials: false,
+                headers: {'Content-Type': undefined},
+                responseType: "arraybuffer",
+            }).then(
+                function(d) {
+                    $route.reload()
+                },
+                function(d){
+                    commonsFact.showMessage("Error uploading hosts");
+                }
+            );
         };
 
         init();

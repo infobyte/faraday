@@ -115,8 +115,9 @@ angular.module('faradayApp')
                 $scope.currentPage = $scope.currentPage + 1;
             else if (toGo) {
                 $scope.currentPage = toGo;
-            } else
-                $scope.currentPage =  1;
+            } else {
+                $scope.currentPage =  $scope.currentPage - 1;
+            }
 
             targetFactCred.getTargets($scope.workspace, $scope.currentPage, $scope.pageSize).then(function(targets){
                 $scope.targets = targets.hosts;
@@ -125,7 +126,7 @@ angular.module('faradayApp')
         };
 
         $scope.go = function() {
-            $scope.currentPage = 0;
+            $scope.currentPage = 1;
             if($scope.newCurrentPage.value <= (parseInt($scope.total_rows/$scope.pageSize) + 1) && $scope.newCurrentPage.value > 0) {
                 $scope.currentPage = $scope.newCurrentPage.value;
             }

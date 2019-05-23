@@ -1865,6 +1865,12 @@ class Agent(Metadata):
     )
 
 
+class AgentAuthToken(Metadata):
+    __tablename__ = 'agent_auth_token'
+    id = Column(Integer, primary_key=True)
+    token = Column(Text, nullable=False)
+
+
 # This constraint uses Columns from different classes
 # Since it applies to the table vulnerability it should be adVulnerability.ded to the Vulnerability class
 # However, since it contains columns from children classes, this cannot be done

@@ -146,6 +146,7 @@ class WebServer(object):
             self.raw_report_processor.stop()
 
         site = twisted.web.server.Site(self.__root_resource)
+        site.displayTracebacks = False
         if self.__ssl_enabled:
             ssl_context = self.__load_ssl_certs()
             self.__listen_func = functools.partial(

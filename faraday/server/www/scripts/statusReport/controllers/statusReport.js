@@ -1170,7 +1170,7 @@ angular.module("faradayApp")
 
                 // Add the total amount of vulnerabilities as an option for pagination
                 // if it is larger than our biggest page size
-                if ($scope.gridOptions.totalItems > paginationOptions.defaultPageSizes[paginationOptions.defaultPageSizes.length - 1]) {
+                /*if ($scope.gridOptions.totalItems > paginationOptions.defaultPageSizes[paginationOptions.defaultPageSizes.length - 1]) {
 
                     $scope.gridOptions.paginationPageSizes = paginationOptions.defaultPageSizes.concat([$scope.gridOptions.totalItems]);
 
@@ -1182,7 +1182,7 @@ angular.module("faradayApp")
                     if ($scope.gridOptions.paginationPageSize === $scope.gridOptions.totalItems - 1)
                         $scope.gridOptions.paginationPageSize = $scope.gridOptions.totalItems;
 
-                }
+                }*/
             });
         };
 

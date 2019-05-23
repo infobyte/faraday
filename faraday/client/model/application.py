@@ -60,8 +60,9 @@ class TimerClass(threading.Thread):
             try:
                 sleep(5)
                 res = requests.get(
-                    "https://www.faradaysec.com/scripts/updatedb.php",
-                    params={'version': CONF.getVersion()},
+                    "https://portal.faradaysec.com/api/v1/license_check",
+                    params={'version': CONF.getVersion(),
+                            'key': 'white'},
                     timeout=1,
                     verify=True)
 

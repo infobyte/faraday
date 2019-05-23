@@ -194,12 +194,22 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
         when('/status/ws/:wsId/groupby/:groupbyId/search', {
             templateUrl: 'scripts/statusReport/partials/statusReport.html',
             controller: 'statusReportCtrl',
-            title: 'Status Report | '
+            title: 'Status Report | ',
+            resolve: {
+                workspaceData: function($route, workspacesFact){
+                    return workspacesFact.get($route.current.params.wsId);
+                }
+            }
         }).
         when('/status/ws/:wsId/search/:search', {
             templateUrl: 'scripts/statusReport/partials/statusReport.html',
             controller: 'statusReportCtrl',
-            title: 'Status Report | '
+            title: 'Status Report | ',
+            resolve: {
+                workspaceData: function($route, workspacesFact){
+                    return workspacesFact.get($route.current.params.wsId);
+                }
+            }
         }).
         when('/status/ws/:wsId/search', {
             templateUrl: 'scripts/statusReport/partials/statusReport.html',

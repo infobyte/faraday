@@ -10,6 +10,7 @@ from future.builtins import range # __future__
 from os.path import join, expanduser
 from random import SystemRandom
 
+from faraday.server.api.modules.agent_auth_token import agent_auth_token_api
 from faraday.server.api.modules.agents import agent_api
 from faraday.server.config import LOCAL_CONFIG_FILE, copy_default_config_to_local
 from faraday.server.models import User, Vulnerability, VulnerabilityWeb, Workspace, VulnerabilityGeneric
@@ -100,6 +101,7 @@ def register_blueprints(app):
     app.register_blueprint(exploits_api)
     app.register_blueprint(custom_fields_schema_api)
     app.register_blueprint(agent_api)
+    app.register_blueprint(agent_auth_token_api)
 
 
 def check_testing_configuration(testing, app):

@@ -555,6 +555,11 @@ angular.module("faradayApp")
                  return send_data(postUrl, customField, false, "POST");
             }
 
+            ServerAPI.createAgentToken = function (agentToken) {
+                 var postUrl = createNonWorkspacedGetUrl('agent_tokens');
+                 return send_data(postUrl, agentToken, false, "POST");
+            };
+
             ServerAPI.updateCustomField = function (customField) {
                  var postUrl = createNonWorkspacedGetUrl('custom_fields_schema', customField.id);
                  return send_data(postUrl, customField, true, "PUT");

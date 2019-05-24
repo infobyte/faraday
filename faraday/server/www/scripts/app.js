@@ -12,7 +12,8 @@ var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.
                                                 'filter', 'angular-clipboard', 'ngCookies', 'cfp.hotkeys', 'chart.js',
                                                 'ui.grid', 'ui.grid.selection', 'ui.grid.grouping', 'ngSanitize',
                                                 'ui.grid.pagination', 'ui.grid.pinning', 'angularMoment', 'ui-notification',
-                                                'ui.grid.resizeColumns', 'angularSimplePagination', 'dndLists', 'angularFileUploadLib'])
+                                                'ui.grid.resizeColumns', 'angularSimplePagination', 'dndLists', 'angularFileUploadLib',
+                                                "angular-uuid"])
     .constant("BASEURL", (function() {
         var url = window.location.origin + "/";
         return url;
@@ -321,6 +322,11 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             templateUrl: 'scripts/admin/admin.html',
             controller: 'adminCtrl',
             title: ' Admin | '
+        }).
+        when('/agents', {
+            templateUrl: 'scripts/agents/partials/agents.html',
+            controller: 'agentsCtrl',
+            title: ' Agents | '
         }).
         otherwise({
             templateUrl: 'scripts/commons/partials/home.html',

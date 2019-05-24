@@ -1,0 +1,79 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+<form novalidate>
+    <div class="faraday-header-border-fix"></div>
+    <section id="main" class="seccion clearfix">
+        <div class="right-main">
+
+            <div ng-controller="headerCtrl" ng-include="'scripts/commons/partials/header.html'"></div>
+            <div id="reports-main" class="fila clearfix">
+
+                <div class="reports col-md-12 col-sm-12 col-xs-12">
+                    <div class="panel panel-default custom-panel">
+                        <div class="panel-heading custom-panel-heading">To register a new agent you should enter a following token</div>
+                        <div class="panel-body custom-panel-body">
+                            <span class="agent-token-container"><code>{{newToken}}</code></span>
+                            <button type="button" class="btn btn-success" title="Accept token" ng-click="new()">
+                                <i class="fa fa-copy"></i>  Accept and copy token
+                            </button>
+                            <button type="button" class="btn btn-success" title="Refresh token" ng-click="new()">
+                                <i class="fa fa-refresh"></i> Refresh token
+                            </button>
+                        </div>
+
+                    </div>
+
+
+
+                    <table class="table-v3 table table-responsive">
+                        <thead>
+                            <tr class="ui-grid-header">
+                                <th class="ui-grid-cell-contents ui-grid-header-cell">Type</th>
+                                <th class="ui-grid-cell-contents ui-grid-header-cell">Status</th>
+                                <th class="ui-grid-cell-contents ui-grid-header-cell">Token</th>
+                                <th class="ui-grid-cell-contents ui-grid-header-cell">Description</th>
+                                <th class="ui-grid-cell-contents ui-grid-header-cell">Version</th>
+                                <th class="ui-grid-cell-contents ui-grid-header-cell">Projects</th>
+                                <th class="ui-grid-cell-contents ui-grid-header-cell">Jobs</th>
+                                <th class="ui-grid-cell-contents ui-grid-header-cell">Tags</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="ws in workspaces | filter:query | filter:search | orderBy:sortField:reverse"
+                                selection-model selection-model-selected-class="multi-selected">
+
+                                <td class="ui-grid-cell-contents active-toggle">
+                                    <div class="toogle-img-container">
+                                        <span ng-click="readonlyToggle(ws)" class="active-toggle-container" ng-class="{ disabled:ws.readonly === false }" uib-tooltip="{{(ws.readonly === false) ? 'Workspace with all permissions' : 'Workspace read only'}}" tooltip-placement="right">
+                                            <img ng-src="{{ (ws.readonly == true) ? 'images/icon-list-confirmed.svg' : 'images/icon-list-notconfirmed.svg'}}" class="confirm-icon" ng-style="{ 'opacity': (ws.readonly === true) ? '1' : '0.7' }" />
+                                        </span>
+                                    </div>
+                                </td>
+
+                                <td class="ui-grid-cell-contents active-toggle">
+                                    <div class="toogle-img-container">
+                                        <span ng-click="activeToggle(ws)" class="active-toggle-container" ng-class="{ disabled:ws.active === false }" uib-tooltip="{{(ws.active === true) ? 'Disable workspace' : 'Enable workspace'}}" tooltip-placement="right">
+                                            <img ng-src="{{ (ws.active) ? 'images/icon-list-confirmed.svg' : 'images/icon-list-notconfirmed.svg'}}" class="confirm-icon" ng-style="{ 'opacity': (ws.active === true) ? '1' : '0.7' }" />
+                                        </span>
+                                    </div>
+                                </td>
+                                <td class="ui-grid-cell-contents">
+                                    <span class="onhover upsize" ng-click="dashboardRedirect(ws.name)">
+                                       <b>{{ws.name}}</b>
+                                    </span>
+                                </td>
+                                <td class="ui-grid-cell-contents" ng-bind="ws.duration.start_date | amUtc | amDateFormat:'MM/DD/YYYY'"></td>
+                                <td class="ui-grid-cell-contents" ng-bind="ws.duration.end_date | amUtc | amDateFormat:'MM/DD/YYYY'"></td>
+                                <td class="ui-grid-cell-contents"><a href="#/status/ws/{{ws.name}}">{{objects[ws.name]['total_vulns']}}</a></td>
+                                <td class="ui-grid-cell-contents"><a href="#/hosts/ws/{{ws.name}}">{{objects[ws.name]['hosts']}}</a></td>
+                                <td class="ui-grid-cell-contents" ng-bind="objects[ws.name]['services']"></td>
+                                <td class="ui-grid-cell-contents" ng-bind="ws.last_modified | amUtc | amDateFormat:'MM/DD/YYYY'"></td>
+                            </tr>
+                        </tbody>
+                    </table><!-- #hosts -->
+                </div><!-- .reports -->
+        </div><!-- #reports-main --></div><!-- .right-main -->
+    </section><!-- #main -->
+</form>

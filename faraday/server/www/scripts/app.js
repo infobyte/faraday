@@ -302,7 +302,7 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
         when('/vulndb', {
             templateUrl: 'scripts/vulndb/partials/vulndb.html',
             controller: 'vulnModelsCtrl',
-            title: 'Vulnerabilities |'
+            title: 'Vulnerabilities | '
         }).
         when('/data_analysis', {
             templateUrl: 'scripts/commons/partials/commercial.html',
@@ -315,12 +315,12 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
         }).
         when('/forbidden', {
             templateUrl: 'scripts/auth/partials/forbidden.html',
-            title: ' Forbidden |'
+            title: ' Forbidden | '
         }).
         when('/workspace-worth/ws/:wsId', {
             templateUrl: 'scripts/dashboard/partials/vulns-by-price.html',
             controller: 'vulnsByPriceCtrl',
-            title: ' Workspace worth |'
+            title: ' Workspace worth | '
         }).
         when('/admin', {
             templateUrl: 'scripts/admin/admin.html',

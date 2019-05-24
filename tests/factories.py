@@ -427,7 +427,7 @@ class NoteFactory(FaradayFactory):
         model = Comment
 
 
-class AgentFactory(FaradayFactory):
+class AgentFactory(WorkspaceObjectFactory):
     type = FuzzyChoice(['shared', 'specific'])
     status = FuzzyChoice(['locked', 'pause', 'offline'])
     token = FuzzyText()

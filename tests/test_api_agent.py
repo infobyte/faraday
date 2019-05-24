@@ -7,13 +7,14 @@ See the file 'doc/LICENSE' for the license information
 import pytest
 
 from faraday.server.api.modules.agents import AgentView
-from faraday.server.models import Agent
+from faraday.server.api.modules.comments import CommentView
+from faraday.server.models import Agent, Comment
 from tests.factories import AgentFactory
-from tests.test_api_non_workspaced_base import ReadOnlyAPITests
+from tests.test_api_workspaced_base import ReadOnlyAPITests
 from tests import factories
 
 
-@pytest.mark.usefixtures('logged_user')
+# @pytest.mark.usefixtures('logged_user')
 class TestAgentAPIGeneric(ReadOnlyAPITests):
     model = Agent
     factory = factories.AgentFactory
@@ -51,7 +52,7 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
         assert res.json == {u'messages': {u'status': [u'Not a valid choice.']}}
 
     def test_update_agent(self, test_client, session):
-        agent = AgentFactory.create(type='shared')
+        agent = AgentFactory.create(workspace=self.workspace, type='shared')
         session.commit()
         raw_agent = self.create_raw_agent(_type="specific")
         res = test_client.put(self.url(agent.id), data=raw_agent)
@@ -60,7 +61,7 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
 
     def test_delete_agent(self, test_client, session):
         initial_agent_count = len(session.query(Agent).all())
-        agent = AgentFactory.create(type='shared')
+        agent = AgentFactory.create(workspace=self.workspace, type='shared')
         session.commit()
         assert len(session.query(Agent).all()) == initial_agent_count + 1
         res = test_client.delete(self.url(agent.id))

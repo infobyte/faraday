@@ -6,7 +6,6 @@ angular.module('faradayApp')
     .factory('agentFact', ['BASEURL', 'ServerAPI', '$http', '$q', function(BASEURL, ServerAPI, $http, $q) {
         var agentFact = {};
 
-
         agentFact.createAgentToken = function(agentToken) {
             var deferred = $q.defer();
             ServerAPI.createAgentToken(agentToken).then(function(response) {

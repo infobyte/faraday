@@ -3,11 +3,13 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('agentsCtrl', ['$scope', 'uuid', 'agentFact', 'Notification',
-        function ($scope, uuid, agentFact, Notification) {
+    .controller('agentsCtrl', ['$scope', 'uuid', 'agentFact', 'Notification', '$routeParams',
+        function ($scope, uuid, agentFact, Notification, $routeParams) {
             $scope.newToken = null;
+            $scope.workspace = null;
 
             $scope.init = function () {
+                $scope.workspace = $routeParams.wsId;
                 $scope.newToken = uuid.v4();
                 getAgents();
             };

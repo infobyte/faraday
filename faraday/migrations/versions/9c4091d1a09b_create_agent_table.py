@@ -30,6 +30,7 @@ def upgrade():
         sa.Column('update_date', sa.DateTime),
         sa.Column('creator_id', sa.Integer),
         sa.Column('update_user_id', sa.Integer),
+        sa.Column('workspace_id', sa.Integer),
     )
     # There is a bug with alembic and postgresql with enum types
     # alembic tries to create the enum type when creating a new table.
@@ -43,7 +44,8 @@ def upgrade():
     agent_status.create(op.get_bind())
 
     op.add_column('agent', sa.Column('type', sa.Enum(('shared', 'specific'), name='agent_types'), nullable=False))
-    op.add_column('agent', sa.Column('status', sa.Enum(('locked', 'pause', 'offline'), name='agent_status'), nullable=True))
+    op.add_column('agent',
+                  sa.Column('status', sa.Enum(('locked', 'pause', 'offline'), name='agent_status'), nullable=True))
 
     op.create_foreign_key(
         'agent_creator_id_fkey',
@@ -55,6 +57,12 @@ def upgrade():
         'agent_update_user_id_fkey',
         'agent',
         'faraday_user', ['update_user_id'], ['id']
+    )
+
+    op.create_foreign_key(
+        'agent_workspace_id_fkey',
+        'agent',
+        'workspace', ['workspace_id'], ['id']
     )
 
 

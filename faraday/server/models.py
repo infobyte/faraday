@@ -1853,6 +1853,8 @@ class Agent(Metadata):
     type = Column(Enum(*['shared', 'specific'], name='types'), nullable=False)
     status = Column(Enum(*['locked', 'pause', 'offline'], name='status'), nullable=True)
     token = Column(Text, nullable=True)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship('Workspace', foreign_keys=[workspace_id], backref='agents')
     description = Column(Text, nullable=True)
     version = Column(Text, nullable=True)
     projects = Column(Integer, nullable=True)
@@ -1863,6 +1865,10 @@ class Agent(Metadata):
         primaryjoin="and_(TagObject.object_id==Agent.id)",
         collection_class=set,
     )
+
+    @property
+    def parent(self):
+        return
 
 
 class AgentAuthToken(Metadata):

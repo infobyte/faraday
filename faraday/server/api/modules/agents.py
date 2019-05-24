@@ -5,9 +5,7 @@ from flask import Blueprint
 from marshmallow import fields
 from marshmallow.validate import OneOf
 
-from faraday.server.api.base import (
-    AutoSchema,
-    ReadWriteView)
+from faraday.server.api.base import (AutoSchema, ReadWriteWorkspacedView)
 from faraday.server.models import Agent
 from faraday.server.schemas import PrimaryKeyRelatedField
 
@@ -29,7 +27,7 @@ class AgentSchema(AutoSchema):
         )
 
 
-class AgentView(ReadWriteView):
+class AgentView(ReadWriteWorkspacedView):
     route_base = 'agents'
     model_class = Agent
     schema_class = AgentSchema

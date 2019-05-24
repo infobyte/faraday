@@ -7,6 +7,7 @@ angular.module('faradayApp')
         function ($scope, uuid, agentFact, Notification, $routeParams) {
             $scope.newToken = null;
             $scope.workspace = null;
+            $scope.agents = [];
 
             $scope.init = function () {
                 $scope.workspace = $routeParams.wsId;
@@ -15,7 +16,12 @@ angular.module('faradayApp')
             };
 
             var getAgents = function () {
-
+                agentFact.getAgents($scope.workspace).then(
+                    function (response) {
+                       $scope.agents = response.data
+                    }, function (error) {
+                        console.log(error);
+                    });
             };
 
             var copyToClipboard = function (token) {

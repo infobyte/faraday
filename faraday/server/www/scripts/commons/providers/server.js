@@ -377,6 +377,11 @@ angular.module("faradayApp")
                 return get(getUrl, data);
             }
 
+            ServerAPI.getAgents = function (wsName, data) {
+                var getUrl = createGetUrl(wsName, 'agents');
+                return get(getUrl);
+            }
+
             ServerAPI.getNotes = function (wsName, data) {
                 var getUrl = createGetUrl(wsName, 'notes');
                 return get(getUrl, data);

@@ -40,7 +40,7 @@ def upgrade():
     agent_types = postgresql.ENUM('shared', 'specific', name='agent_types')
     agent_types.create(op.get_bind())
 
-    agent_status = postgresql.ENUM('locked', 'pause', 'offline', name='agent_status')
+    agent_status = postgresql.ENUM('locked', 'paused', 'offline', name='agent_status')
     agent_status.create(op.get_bind())
 
     op.add_column('agent', sa.Column('type', sa.Enum(('shared', 'specific'), name='agent_types'), nullable=False))

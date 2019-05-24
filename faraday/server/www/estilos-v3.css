@@ -934,3 +934,37 @@ ul#nav-tabs-container {
     margin-right: 20px;
     padding: 12px;
 }
+
+#agent-table td {
+    text-align: left!important;
+}
+
+.tag-blue {
+    background-color: #2e97bd;
+    color: white;
+    text-transform: uppercase;
+}
+
+.tag-green {
+    background-color: #a1ce31;
+    color: white;
+    text-transform: uppercase;
+}
+
+.tag-yellow {
+    background-color: #dfbf35;
+    color: white;
+    text-transform: uppercase;
+}
+
+.tag-red {
+    background-color: #df3936;
+    color: white;
+    text-transform: uppercase;
+}
+
+.tag-gray {
+    background-color: #999999;
+    color: white;
+    text-transform: uppercase;
+}

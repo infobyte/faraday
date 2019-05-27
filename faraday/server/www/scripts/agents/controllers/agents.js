@@ -3,8 +3,8 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('agentsCtrl', ['$scope', 'uuid', 'agentFact', 'Notification', '$routeParams',
-        function ($scope, uuid, agentFact, Notification, $routeParams) {
+    .controller('agentsCtrl', ['$scope', 'uuid', 'agentFact', 'Notification', '$routeParams', '$uibModal',
+        function ($scope, uuid, agentFact, Notification, $routeParams, $uibModal) {
             $scope.newToken = null;
             $scope.workspace = null;
             $scope.agents = [];
@@ -36,6 +36,15 @@ angular.module('faradayApp')
                 body.removeChild(copyElement);
             };
 
+            var removeAgentFromScope = function (agentId) {
+                for(var i = 0; i < $scope.agents.length; i++){
+                    if ($scope.agents[i].id === agentId){
+                        $scope.agents.splice(i, 1);
+                        break;
+                    }
+                }
+            };
+
             $scope.refreshToken = function () {
                 $scope.newToken = uuid.v4();
             };
@@ -48,6 +57,58 @@ angular.module('faradayApp')
                         Notification.success("Token " + $scope.newToken + " copied to clipboard");
                         $scope.newToken = uuid.v4();
                     }, function (error) {
+                        console.log(error);
+                    });
+            };
+
+            var _delete = function (agentId) {
+                var modal = $uibModal.open({
+                    templateUrl: 'scripts/commons/partials/modalDelete.html',
+                    controller: 'commonsModalDelete',
+                    size: 'md',
+                    resolve: {
+                        msg: function () {
+                            return "A agent will be deleted. This action cannot be undone. " +
+                                "Are you sure you want to proceed?";
+                        }
+                    }
+                });
+
+                modal.result.then(function () {
+                    agentFact.deleteAgent($scope.workspace, agentId).then(
+                        function (response) {
+                            removeAgentFromScope(agentId);
+                            Notification.success("The Agent has been removed");
+                        }, function (error) {
+                            console.log(error);
+                        });
+                });
+            };
+
+            $scope.removeAgent = function (agentId) {
+                _delete(agentId);
+            };
+
+            $scope.changeStatusAgent = function (agent) {
+                var oldStatus = agent.status;
+                if (agent.status === 'paused')
+                    agent.status = 'running';
+                else
+                    agent.status = 'paused';
+
+                var agentData  = {
+                    id: agent.id,
+                    status: agent.status
+                };
+
+                agentFact.updateAgent($scope.workspace, agentData).then(
+                    function (response) {
+                        if (response.data.status === 'paused')
+                            Notification.success("The Agent has been paused");
+                        else
+                            Notification.success("The Agent is running");
+                    }, function (error) {
+                        agent.status = oldStatus;
                         console.log(error);
                     });
             };

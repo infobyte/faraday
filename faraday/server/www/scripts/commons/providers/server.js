@@ -695,5 +695,21 @@ angular.module("faradayApp")
                 return get(APIURL + 'vulners/exploits/' + cveId);
             }
 
+            ServerAPI.deleteAgent = function (wsName, agentId, rev) {
+                var deleteUrl = createDeleteUrl(wsName, agentId, 'agents');
+                if (typeof rev === "undefined") {
+                    return _delete(deleteUrl, false)
+                }
+                else {
+                    return _delete(deleteUrl, true);
+                }
+            };
+
+
+            ServerAPI.updateAgent = function (wsName, agent) {
+                 var putUrl = createPutUrl(wsName, agent.id, 'agents');
+                 return send_data(putUrl, agent, true, "PUT");
+            };
+
             return ServerAPI;
         }]);

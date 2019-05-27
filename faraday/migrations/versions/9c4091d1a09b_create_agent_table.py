@@ -40,12 +40,12 @@ def upgrade():
     agent_types = postgresql.ENUM('shared', 'specific', name='agent_types')
     agent_types.create(op.get_bind())
 
-    agent_status = postgresql.ENUM('locked', 'paused', 'offline', name='agent_status')
+    agent_status = postgresql.ENUM('locked', 'paused', 'offline', 'running', name='agent_status')
     agent_status.create(op.get_bind())
 
     op.add_column('agent', sa.Column('type', sa.Enum(('shared', 'specific'), name='agent_types'), nullable=False))
     op.add_column('agent',
-                  sa.Column('status', sa.Enum(('locked', 'pause', 'offline'), name='agent_status'), nullable=True))
+                  sa.Column('status', sa.Enum(('locked', 'paused', 'offline', 'running'), name='agent_status'), nullable=True))
 
     op.create_foreign_key(
         'agent_creator_id_fkey',
@@ -72,5 +72,5 @@ def downgrade():
     agent_types = postgresql.ENUM('shared', 'specific', name='agent_types')
     agent_types.drop(op.get_bind())
 
-    agent_status = postgresql.ENUM('locked', 'pause', 'offline', name='agent_status')
+    agent_status = postgresql.ENUM('locked', 'paused', 'offline', 'running', name='agent_status')
     agent_status.drop(op.get_bind())

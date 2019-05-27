@@ -40,6 +40,7 @@
                             <th class="ui-grid-cell-contents ui-grid-header-cell">Projects</th>
                             <th class="ui-grid-cell-contents ui-grid-header-cell">Jobs</th>
                             <th class="ui-grid-cell-contents ui-grid-header-cell">Tags</th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell"></th>
                         </tr>
                         </thead>
                         <tbody>
@@ -49,6 +50,7 @@
                             </td>
                             <td class="ui-grid-cell-contents active-toggle">
                                 <span class="preview-tag" ng-class="{'tag-yellow':agent.status=='locked',
+                                'tag-green':agent.status=='running',
                                 'tag-red':agent.status=='paused','tag-gray':agent.status=='offline'}">{{agent.status}}</span>
                             </td>
 
@@ -73,7 +75,18 @@
                             </td>
 
                             <td class="ui-grid-cell-contents active-toggle">
-                                {{agent.tags}}
+                                <span class="preview-tag tag-blue" ng-repeat="tag in agent.tags">{{tag}}</span>
+                            </td>
+
+
+                            <td class="ui-grid-cell-contents active-toggle">
+                                <button type="button" class="btn" ng-class="{'btn-danger': agent.status === 'running', 'btn-success': agent.status === 'paused'}"
+                                        title="{{agent.status === 'running'?'Pause Agent': 'Run Agent'}}" ng-click="changeStatusAgent(agent)">
+                                    <span ng-bind="agent.status === 'running'?'Pause': 'Run'"></span>
+                                </button>
+                                <button type="button" class="btn btn-danger" title="Remove Agent" ng-click="removeAgent(agent.id)">
+                                    Remove
+                                </button>
                             </td>
                         </tr>
                         </tbody>

@@ -15,7 +15,7 @@ agent_api = Blueprint('agent_api', __name__)
 class AgentSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     type = fields.String(attribute='type', validate=OneOf(['shared', 'specific']))
-    status = fields.String(attribute='status', validate=OneOf(['locked', 'paused', 'offline']))
+    status = fields.String(attribute='status', validate=OneOf(['locked', 'paused', 'offline', 'running']))
     creator = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
 
     class Meta:

@@ -68,7 +68,8 @@ OBJECT_TYPES = [
     'comment',
     'executive_report',
     'workspace',
-    'task'
+    'task',
+    'agent'  # TODO: Make migration
 ]
 
 
@@ -1851,7 +1852,7 @@ class Agent(Metadata):
     __tablename__ = 'agent'
     id = Column(Integer, primary_key=True)
     type = Column(Enum(*['shared', 'specific'], name='types'), nullable=False)
-    status = Column(Enum(*['locked', 'pause', 'offline'], name='status'), nullable=True)
+    status = Column(Enum(*['locked', 'paused', 'offline', 'running'], name='status'), nullable=True)
     token = Column(Text, nullable=True)
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', foreign_keys=[workspace_id], backref='agents')

@@ -968,3 +968,8 @@ ul#nav-tabs-container {
     color: white;
     text-transform: uppercase;
 }
+
+#agent-table .preview-tag {
+    box-shadow: none;
+    font-size: 0.8em;
+}

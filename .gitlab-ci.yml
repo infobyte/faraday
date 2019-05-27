@@ -25,7 +25,7 @@ closure_compiler:
 
     stage: pre_testing
     script:
-        - /opt/cc.sh server/www/scripts
+        - /opt/cc.sh faraday/server/www/scripts
 
 merge_conflict_check:
     image: python:3
@@ -41,7 +41,7 @@ pylint:
     stage: pre_testing
     script:
         - pip install pylint anybadge
-        - pylint server |tee pylint.txt || true
+        - pylint faraday/server |tee pylint.txt || true
         - score=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' pylint.txt)
         - anybadge --label pylint --value=$score --file pylint.svg 4=red 6=orange 8=yellow 10=green
     artifacts:
@@ -56,13 +56,15 @@ postgresql_test:
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate
-        - pip install --upgrade -r requirements_server.txt
+        #- pip install --upgrade -r requirements_server.txt
+        - python setup.py install
         - pip install --upgrade responses pytest-xdist pytest-cov
         - pip install --upgrade -r requirements_dev.txt
         - mkdir -p ~/.faraday/config
-        - cp test_cases/data/server.ini ~/.faraday/config
-        - sed -i 's/mapped_table/persist_selectable/' faraday_venv/lib/python2.7/site-packages/flask_sqlalchemy/__init__.py  # TODO remove when flask_sqlalchemy fixes the issue
-        - pytest test_cases -v --cov=server --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB
+        - cp tests/data/server.ini ~/.faraday/config
+        #- sed -i 's/mapped_table/persist_selectable/' faraday_venv/lib/python2.7/site-packages/flask_sqlalchemy/__init__.py  # TODO remove when flask_sqlalchemy fixes the issue
+        - mkdir run_from
+        - cd run_from && pytest ../tests -v --capture=sys --cov=../faraday/server --color=yes --disable-warnings --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB
     artifacts:
         when: on_failure
         paths:
@@ -76,13 +78,18 @@ sqlite_test:
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate
-        - pip install --upgrade -r requirements_server.txt
+        #- pip install --upgrade -r requirements_server.txt
+        - python setup.py install
         - pip install --upgrade responses pytest-xdist pytest-cov
         - pip install --upgrade -r requirements_dev.txt
         - mkdir -p ~/.faraday/config
-        - cp test_cases/data/server.ini ~/.faraday/config
-        - sed -i 's/mapped_table/persist_selectable/' faraday_venv/lib/python2.7/site-packages/flask_sqlalchemy/__init__.py  # TODO remove when flask_sqlalchemy fixes the issue
-        - pytest test_cases -v --cov=server --color=yes
+        - cp tests/data/server.ini ~/.faraday/config
+        - mkdir run_from
+        - cd run_from && pytest ../tests --capture=sys -v --cov=../faraday/server --color=yes --disable-warnings
+    artifacts:
+        when: on_failure
+        paths:
+            - dist/*
 
 generate_release_file:
     image: python:3

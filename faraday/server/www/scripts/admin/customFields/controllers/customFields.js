@@ -49,12 +49,11 @@ angular.module('faradayApp')
                     if (ids.indexOf($scope.customFields[i].id) === -1) {
                         $scope.customFields[i].field_order = i;
                         customFieldFact.updateCustomField($scope.customFields[i]).then(function(){
-                            ids.push($scope.customFields[i].id);
-
-                            if(i == $scope.customFields.length){
-                                $scope.clearSelection();
-                                console.log($scope.customFields);
+                            if (i < $scope.customFields.length ) {
+                                ids.push($scope.customFields[i].id);
                             }
+
+                            $scope.clearSelection();
                         });
                     }
                 }
@@ -65,7 +64,6 @@ angular.module('faradayApp')
                 customFieldFact.getCustomFields().then(
                     function (response) {
                         $scope.customFields = response.data.sort(compareFunction);
-                        console.log($scope.customFields);
                     });
             };
 

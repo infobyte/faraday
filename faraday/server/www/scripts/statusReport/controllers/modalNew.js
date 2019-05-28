@@ -180,7 +180,7 @@ angular.module('faradayApp')
 
         vm.resetTarget = function() {
             vm.data.parents = [];
-            vm.host_parents = false; 
+            vm.host_parents = false;
         }
 
         vm.setTarget = function(target) {
@@ -317,7 +317,7 @@ angular.module('faradayApp')
         };
 
         vm.filterTargets = function () {
-            var filter = { ip : vm.target_filter };
+            var filter = { search : vm.target_filter };
             targetFact.getTargets(workspace,  vm.currentPage, vm.pageSize, filter).then(function(targets){
                 vm.targets = targets.hosts;
                 vm.activeSearch = true;

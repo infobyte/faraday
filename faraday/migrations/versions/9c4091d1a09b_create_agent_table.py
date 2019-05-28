@@ -43,9 +43,9 @@ def upgrade():
     agent_status = postgresql.ENUM('locked', 'paused', 'offline', 'running', name='agent_status')
     agent_status.create(op.get_bind())
 
-    op.add_column('agent', sa.Column('type', sa.Enum(('shared', 'specific'), name='agent_types'), nullable=False))
+    op.add_column('agent', sa.Column('type', sa.Enum(('shared', 'specific'), name='agent_types'), nullable=False, default='specific'))
     op.add_column('agent',
-                  sa.Column('status', sa.Enum(('locked', 'paused', 'offline', 'running'), name='agent_status'), nullable=True))
+                  sa.Column('status', sa.Enum(('locked', 'paused', 'offline', 'running'), name='agent_status'), nullable=False, default='running'))
 
     op.create_foreign_key(
         'agent_creator_id_fkey',

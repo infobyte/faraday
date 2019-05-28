@@ -1851,8 +1851,8 @@ class Notification(db.Model):
 class Agent(Metadata):
     __tablename__ = 'agent'
     id = Column(Integer, primary_key=True)
-    type = Column(Enum(*['shared', 'specific'], name='types'), nullable=False)
-    status = Column(Enum(*['locked', 'paused', 'offline', 'running'], name='status'), nullable=True)
+    type = Column(Enum(*['shared', 'specific'], name='types'), nullable=False, default='specific')
+    status = Column(Enum(*['locked', 'paused', 'offline', 'running'], name='status'), nullable=False, default='running')
     token = Column(Text, nullable=True)
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', foreign_keys=[workspace_id], backref='agents')

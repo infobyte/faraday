@@ -17,6 +17,26 @@ angular.module('faradayApp')
         };
 
 
+        agentFact.getAgentToken = function() {
+            var deferred = $q.defer();
+            ServerAPI.getAgentToken().then(function(response) {
+                    deferred.resolve(response);
+                }, function (error) {
+                deferred.reject(error)
+            });
+            return deferred.promise;
+        };
+
+        agentFact.updateAgentToken = function(agentToken) {
+            var deferred = $q.defer();
+            ServerAPI.updateAgentToken(agentToken).then(function(response) {
+                    deferred.resolve(response);
+                }, function (error) {
+                deferred.reject(error)
+            });
+            return deferred.promise;
+        };
+
         agentFact.getAgents = function(wsName) {
             var deferred = $q.defer();
             ServerAPI.getAgents(wsName).then(function(response) {

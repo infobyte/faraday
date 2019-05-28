@@ -16,7 +16,7 @@
                             following token
                         </div>
                         <div class="panel-body custom-panel-body">
-                            <span class="agent-token-container"><code>{{newToken}}</code> &nbsp;<span class="cursor" title="Copy token to clipboard" ng-click="copyToClipboard()"><i class="fa fa-copy"></i></span></span>
+                            <span class="agent-token-container"><code>{{agentToken.token}}</code> &nbsp;<span class="cursor" title="Copy token to clipboard" ng-click="copyToClipboard()"><i class="fa fa-copy"></i></span></span>
                             <button type="button" class="btn btn-success" title="A new token will be shown and the current token will be lost"
                                     ng-click="refreshToken()">
                                 <i class="fa fa-refresh"></i> New Token

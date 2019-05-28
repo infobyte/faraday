@@ -5,29 +5,52 @@
 angular.module('faradayApp')
     .controller('agentsCtrl', ['$scope', 'uuid', 'agentFact', 'Notification', '$routeParams', '$uibModal',
         function ($scope, uuid, agentFact, Notification, $routeParams, $uibModal) {
-            $scope.newToken = null;
+            $scope.agentToken = {id: null, token: null};
             $scope.workspace = null;
             $scope.agents = [];
 
             $scope.init = function () {
                 $scope.workspace = $routeParams.wsId;
-                $scope.newToken = uuid.v4();
+                getToken();
                 getAgents();
             };
 
-            var getAgents = function () {
-                agentFact.getAgents($scope.workspace).then(
+
+            var getToken = function () {
+                agentFact.getAgentToken($scope.workspace).then(
                     function (response) {
-                       $scope.agents = response.data
+                        if (response.data.length > 0)
+                            $scope.agentToken = response.data[0];
+                        else {
+                            createToken();
+                        }
                     }, function (error) {
                         console.log(error);
                     });
             };
 
+            var createToken = function () {
+                var agentToken = {'token': uuid.v4()};
+                agentFact.createAgentToken(agentToken).then(
+                    function (response) {
+                        $scope.agentToken = response.data;
+                    }, function (error) {
+                        console.log(error);
+                    });
+            };
+
+            var getAgents = function () {
+                agentFact.getAgents($scope.workspace).then(
+                    function (response) {
+                        $scope.agents = response.data
+                    }, function (error) {
+                        console.log(error);
+                    });
+            };
 
             var removeAgentFromScope = function (agentId) {
-                for(var i = 0; i < $scope.agents.length; i++){
-                    if ($scope.agents[i].id === agentId){
+                for (var i = 0; i < $scope.agents.length; i++) {
+                    if ($scope.agents[i].id === agentId) {
                         $scope.agents.splice(i, 1);
                         break;
                     }
@@ -35,20 +58,26 @@ angular.module('faradayApp')
             };
 
             $scope.refreshToken = function () {
-                $scope.newToken = uuid.v4();
+                var agentToken = {id: $scope.agentToken.id, token: uuid.v4()};
+                agentFact.updateAgentToken(agentToken).then(
+                    function (response) {
+                        $scope.agentToken = response.data;
+                    }, function (error) {
+                        console.log(error);
+                    });
             };
 
             $scope.copyToClipboard = function () {
                 var copyElement = document.createElement("textarea");
                 copyElement.style.position = 'fixed';
                 copyElement.style.opacity = '0';
-                copyElement.textContent = decodeURI($scope.newToken);
+                copyElement.textContent = decodeURI($scope.agentToken);
                 var body = document.getElementsByTagName('body')[0];
                 body.appendChild(copyElement);
                 copyElement.select();
                 document.execCommand('copy');
                 body.removeChild(copyElement);
-                Notification.success("Token " + $scope.newToken + " copied to clipboard");
+                Notification.success("Token " + $scope.agentToken.token + " copied to clipboard");
             };
 
             var _delete = function (agentId) {
@@ -86,7 +115,7 @@ angular.module('faradayApp')
                 else
                     agent.status = 'paused';
 
-                var agentData  = {
+                var agentData = {
                     id: agent.id,
                     status: agent.status
                 };

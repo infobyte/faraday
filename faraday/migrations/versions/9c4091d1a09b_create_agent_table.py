@@ -30,7 +30,7 @@ def upgrade():
         sa.Column('update_date', sa.DateTime),
         sa.Column('creator_id', sa.Integer),
         sa.Column('update_user_id', sa.Integer),
-        sa.Column('workspace_id', sa.Integer),
+        sa.Column('workspace_id', sa.Integer,  nullable=False),
     )
     # There is a bug with alembic and postgresql with enum types
     # alembic tries to create the enum type when creating a new table.

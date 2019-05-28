@@ -5,6 +5,8 @@ Revises: 9c4091d1a09b
 Create Date: 2019-05-23 16:36:23.308907+00:00
 
 """
+import uuid
+
 from alembic import op
 import sqlalchemy as sa
 
@@ -19,7 +21,7 @@ def upgrade():
     op.create_table(
         'agent_auth_token',
         sa.Column('id', sa.Integer, primary_key=True),
-        sa.Column('token', sa.String(256), nullable=False),
+        sa.Column('token', sa.String(256), nullable=False, default=str(uuid.uuid4())),
         sa.Column('create_date', sa.DateTime),
         sa.Column('update_date', sa.DateTime),
         sa.Column('creator_id', sa.Integer),

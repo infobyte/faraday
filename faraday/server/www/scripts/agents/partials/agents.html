@@ -16,13 +16,10 @@
                             following token
                         </div>
                         <div class="panel-body custom-panel-body">
-                            <span class="agent-token-container"><code>{{newToken}}</code></span>
-                            <button type="button" class="btn btn-success" title="Accept token" ng-click="acceptToken()">
-                                <i class="fa fa-copy"></i> Accept and copy token
-                            </button>
-                            <button type="button" class="btn btn-success" title="Refresh token"
+                            <span class="agent-token-container"><code>{{newToken}}</code> &nbsp;<span class="cursor" title="Copy token to clipboard" ng-click="copyToClipboard()"><i class="fa fa-copy"></i></span></span>
+                            <button type="button" class="btn btn-success" title="A new token will be shown and the current token will be lost"
                                     ng-click="refreshToken()">
-                                <i class="fa fa-refresh"></i> Refresh token
+                                <i class="fa fa-refresh"></i> New Token
                             </button>
                         </div>
 

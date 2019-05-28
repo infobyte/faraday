@@ -24,17 +24,6 @@ angular.module('faradayApp')
                     });
             };
 
-            var copyToClipboard = function (token) {
-                var copyElement = document.createElement("textarea");
-                copyElement.style.position = 'fixed';
-                copyElement.style.opacity = '0';
-                copyElement.textContent = decodeURI(token);
-                var body = document.getElementsByTagName('body')[0];
-                body.appendChild(copyElement);
-                copyElement.select();
-                document.execCommand('copy');
-                body.removeChild(copyElement);
-            };
 
             var removeAgentFromScope = function (agentId) {
                 for(var i = 0; i < $scope.agents.length; i++){
@@ -49,16 +38,17 @@ angular.module('faradayApp')
                 $scope.newToken = uuid.v4();
             };
 
-            $scope.acceptToken = function () {
-                var agentToken = {'token': $scope.newToken};
-                agentFact.createAgentToken(agentToken).then(
-                    function (response) {
-                        copyToClipboard($scope.newToken);
-                        Notification.success("Token " + $scope.newToken + " copied to clipboard");
-                        $scope.newToken = uuid.v4();
-                    }, function (error) {
-                        console.log(error);
-                    });
+            $scope.copyToClipboard = function () {
+                var copyElement = document.createElement("textarea");
+                copyElement.style.position = 'fixed';
+                copyElement.style.opacity = '0';
+                copyElement.textContent = decodeURI($scope.newToken);
+                var body = document.getElementsByTagName('body')[0];
+                body.appendChild(copyElement);
+                copyElement.select();
+                document.execCommand('copy');
+                body.removeChild(copyElement);
+                Notification.success("Token " + $scope.newToken + " copied to clipboard");
             };
 
             var _delete = function (agentId) {

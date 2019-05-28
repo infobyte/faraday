@@ -17,6 +17,7 @@ class AgentSchema(AutoSchema):
     type = fields.String(attribute='type', validate=OneOf(['shared', 'specific']))
     status = fields.String(attribute='status', validate=OneOf(['locked', 'paused', 'offline', 'running']))
     creator = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
+    tags = PrimaryKeyRelatedField('name', dump_only=True, many=True)
 
     class Meta:
         model = Agent

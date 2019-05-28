@@ -65,6 +65,15 @@ def upgrade():
         'workspace', ['workspace_id'], ['id']
     )
 
+    conn = op.get_bind()
+    conn.execute("ALTER TYPE OBJECT_TYPES RENAME TO _OBJECT_TYPES;")
+    conn.execute("CREATE TYPE OBJECT_TYPES as enum ( 'vulnerability', 'host', 'credential', 'service', 'source_code', 'comment', 'executive_report', 'workspace', 'task', 'agent');")
+    conn.execute("ALTER table tag_object rename column object_type to _object_type;")
+    conn.execute("ALTER table tag_object add object_type OBJECT_TYPES not null default 'vulnerability';")
+    conn.execute("UPDATE tag_object set object_type = _object_type::text::OBJECT_TYPES;")
+    conn.execute("alter table tag_object drop column _object_type;")
+    conn.execute("DROP TYPE _OBJECT_TYPES CASCADE;")
+
 
 def downgrade():
     op.drop_table('agent')

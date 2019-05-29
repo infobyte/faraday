@@ -46,3 +46,11 @@ for dir in "${FARADAY_PACKAGE_DIRS[@]}"; do
         $DRY_RUN_PREFIX rmdir --ignore-fail-on-non-empty "${dir}"
     fi
 done
+
+
+if [[ -d test_cases ]]; then
+    for subfile in $(find test_cases -type f); do
+        $DRY_RUN_PREFIX mkdir -p "tests/$(dirname "${subfile}")"
+        git mv $DRY_RUN_GIT_MV -k "${subfile}" "tests/${subfile#test_cases/}"
+    done
+fi

@@ -156,8 +156,6 @@ binary_files:
 
 
 macos_dmg:
-    variables:
-        - $PKG_CONFIG_PATH == "${PKG_CONFIG_PATH}:/usr/local/opt/libffi/lib/pkgconfig"
     tags:
         - macos
     stage: build
@@ -165,6 +163,7 @@ macos_dmg:
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate
+        - export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:/usr/local/opt/libffi/lib/pkgconfig"
         - pip install pyinstaller
         - pip install --upgrade -r requirements.txt
         - python setup.py install

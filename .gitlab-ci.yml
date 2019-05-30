@@ -156,6 +156,8 @@ binary_files:
 
 
 macos_dmg:
+    variables:
+        - $PKG_CONFIG_PATH == "${PKG_CONFIG_PATH}:/usr/local/opt/libffi/lib/pkgconfig"
     tags:
         - macos
     stage: build

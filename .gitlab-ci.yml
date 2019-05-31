@@ -143,6 +143,7 @@ binary_files:
         - pyinstaller -F -w --onefile --icon=faraday/faraday/server/www/favicon.ico start_server.spec
         - pyinstaller -F -w --onefile --icon=faraday/faraday/server/www/favicon.ico manage.spec
         - pyinstaller -F -w --onefile --icon=faraday/faraday/server/www/favicon.ico start_client.spec
+        - pyinstaller -F -w --onefile --icon=faraday/faraday/server/www/favicon.ico fplugin.spec
         - mv dist/start_client dist/faraday-client
         - mv dist/start_server dist/faraday-server
         - mv dist/manage dist/faraday-manage

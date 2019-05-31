@@ -471,7 +471,7 @@ def doLoginLoop(force_login=False):
         else:
             new_server_url = raw_input(
                 "\nPlease enter the Faraday Server URL (Press enter for last used: {}): ".format(old_server_url)) or old_server_url
-        
+
         CONF.setAPIUrl(new_server_url)
 
         print("""\nTo login please provide your valid Faraday credentials.\nYou have 3 attempts.""")

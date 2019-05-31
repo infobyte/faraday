@@ -147,12 +147,14 @@ binary_files:
         - mv dist/start_client dist/faraday-client
         - mv dist/start_server dist/faraday-server
         - mv dist/manage dist/faraday-manage
+        - mv dist/fplugin dist/faraday-fplugin
     artifacts:
         name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME-binaries"
         paths:
           - dist/faraday-server
           - dist/faraday-manage
           - dist/faraday-client
+          - dist/faraday-fplugin
         expire_in: 1 week
 
 
@@ -172,9 +174,11 @@ macos_dmg:
         - pyinstaller -F -w --onefile --onefile --icon=faraday/faraday/server/www/favicon.ico start_server.spec
         - pyinstaller -F -w --onefile --onefile --icon=faraday/faraday/server/www/favicon.ico manage.spec
         - pyinstaller -F -w --onefile --onefile --icon=faraday/faraday/server/www/favicon.ico start_client.spec
+        - pyinstaller -F -w --onefile --icon=faraday/faraday/server/www/favicon.ico fplugin.spec
         - mv dist/start_client dist/faraday-client
         - mv dist/start_server dist/faraday-server
         - mv dist/manage dist/faraday-manage
+        - mv dist/fplugin dist/faraday-fplugin
         - hdiutil create /tmp/tmp.dmg -ov -volname "Faraday" -fs HFS+ -srcfolder "./dist"
         - hdiutil convert /tmp/tmp.dmg -format UDZO -o Faraday.dmg
     artifacts:

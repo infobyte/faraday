@@ -1,5 +1,5 @@
-import server.config
-from server.models import (
+import faraday.server.config
+from faraday.server.models import (
     Host,
     Service,
     Workspace,
@@ -29,7 +29,7 @@ def change_vulns(affected_vulns, workspace):
     print "    Vulnerabilities ID: {ids}".format(ids=vulns_id)
 
 
-conn_string = server.config.database.connection_string
+conn_string = faraday.server.config.database.connection_string
 engine = create_engine(conn_string)
 Session = sessionmaker(bind=engine)
 session = Session()

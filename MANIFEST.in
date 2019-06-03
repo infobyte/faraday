@@ -1,0 +1,11 @@
+recursive-include faraday/server/www *
+recursive-include faraday/migrations *
+include faraday/alembic.ini
+include faraday/config/default.xml
+include faraday/server/default.ini
+include requirements.txt
+include requirements_server.txt
+include faraday/client/zsh/faraday.zsh
+include faraday/client/zsh/faraday-terminal.zsh
+include faraday/client/gui/gtk/menubar.xml
+recursive-include faraday/client/data *

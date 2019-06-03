@@ -1,1 +1,0 @@
-Fix status report provider.

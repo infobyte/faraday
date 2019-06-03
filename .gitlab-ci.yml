@@ -14,11 +14,14 @@ stages:
     - pre_testing
     - testing
     - post_testing
+    - build
 
 services:
     - postgres:latest
 
 closure_compiler:
+    tags:
+        - faradaytests
     image:
         name: jborza/closure-compiler
         entrypoint: ["/bin/sh", "-c"]
@@ -28,6 +31,8 @@ closure_compiler:
         - /opt/cc.sh faraday/server/www/scripts
 
 merge_conflict_check:
+    tags:
+        - faradaytests
     image: python:3
     stage: pre_testing
     allow_failure: true
@@ -37,6 +42,8 @@ merge_conflict_check:
         - python3 merge-conflict-detector.py
 
 pylint:
+    tags:
+        - faradaytests
     image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base  # I just need an image with python-dev and python-pip
     stage: pre_testing
     script:
@@ -50,13 +57,18 @@ pylint:
 
 postgresql_test:
     image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base
+    tags:
+        - faradaytests
     stage: testing
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
+        - apt-get update -qy
+        - apt-get install -y gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libpq-dev
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate
         #- pip install --upgrade -r requirements_server.txt
+        - pip install --upgrade -r requirements.txt
         - python setup.py install
         - pip install --upgrade responses pytest-xdist pytest-cov
         - pip install --upgrade -r requirements_dev.txt
@@ -72,13 +84,18 @@ postgresql_test:
 
 sqlite_test:
     image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base
+    tags:
+        - faradaytests
     stage: testing
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
+        - apt-get update -qy
+        - apt-get install -y gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libpq-dev
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate
         #- pip install --upgrade -r requirements_server.txt
+        - pip install --upgrade -r requirements.txt
         - python setup.py install
         - pip install --upgrade responses pytest-xdist pytest-cov
         - pip install --upgrade -r requirements_dev.txt
@@ -108,6 +125,70 @@ generate_release_file:
             - $FULL_DOC == "True"
             - $RELEASE_FILE == "True"
             - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/
+
+binary_files:
+    image: python:2.7.16
+    stage: build
+    script:
+        - apt-get update -qy
+        - apt-get install -y build-essential ipython python-setuptools python-pip python-dev libssl-dev libffi-dev pkg-config libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev
+        - apt-get install -y libpq-dev python-pip python-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 python-gobject zsh curl
+        - apt-get install -y gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libgdk-pixbuf2.0-dev
+        - apt-get install -y libcanberra-gtk-module libcanberra-gtk* libxml2-dev libxslt1-dev gir1.2-gtk-3.0 gir1.2-vte-2.91
+        - pip install virtualenv
+        - virtualenv -p python2 faraday_venv
+        - source faraday_venv/bin/activate
+        - pip install pyinstaller
+        - pip install --upgrade -r requirements.txt
+        - python setup.py install
+        - pip install .[gtk]
+        - pyinstaller -F -w --onefile --icon=faraday/faraday/server/www/favicon.ico start_server.spec
+        - pyinstaller -F -w --onefile --icon=faraday/faraday/server/www/favicon.ico manage.spec
+        - pyinstaller -F -w --onefile --icon=faraday/faraday/server/www/favicon.ico start_client.spec
+        - pyinstaller -F -w --onefile --icon=faraday/faraday/server/www/favicon.ico fplugin.spec
+        - mv dist/start_client dist/faraday-client
+        - mv dist/start_server dist/faraday-server
+        - mv dist/manage dist/faraday-manage
+        - mv dist/fplugin dist/faraday-fplugin
+    artifacts:
+        name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME-binaries"
+        paths:
+          - dist/faraday-server
+          - dist/faraday-manage
+          - dist/faraday-client
+          - dist/faraday-fplugin
+        expire_in: 1 week
+
+
+macos_dmg:
+    tags:
+        - macos
+    stage: build
+    script:
+        - pip install virtualenv
+        - virtualenv -p python2 faraday_venv
+        - source faraday_venv/bin/activate
+        - export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:/usr/local/opt/libffi/lib/pkgconfig"
+        - pip install pyinstaller
+        - pip install --upgrade -r requirements.txt
+        - python setup.py install
+        - pip install .[gtk]
+        - pyinstaller -F -w --onefile --onefile --icon=faraday/faraday/server/www/favicon.ico start_server.spec
+        - pyinstaller -F -w --onefile --onefile --icon=faraday/faraday/server/www/favicon.ico manage.spec
+        - pyinstaller -F -w --onefile --onefile --icon=faraday/faraday/server/www/favicon.ico start_client.spec
+        - pyinstaller -F -w --onefile --icon=faraday/faraday/server/www/favicon.ico fplugin.spec
+        - mv dist/start_client dist/faraday-client
+        - mv dist/start_server dist/faraday-server
+        - mv dist/manage dist/faraday-manage
+        - mv dist/fplugin dist/faraday-fplugin
+        - hdiutil create /tmp/tmp.dmg -ov -volname "Faraday" -fs HFS+ -srcfolder "./dist"
+        - hdiutil convert /tmp/tmp.dmg -format UDZO -o Faraday.dmg
+    artifacts:
+        name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME-binaries"
+        paths:
+            - Faraday.dmg
+        expire_in: 1 week
+
 
 # This is a test of future test case that will be scheduled
 i_do_nothing:

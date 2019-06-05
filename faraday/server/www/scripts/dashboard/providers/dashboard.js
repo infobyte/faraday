@@ -32,6 +32,8 @@ angular.module('faradayApp')
 
             dashboardSrv.props["confirmed"] = val;
             $cookies.put('confirmed', val);
+
+            val ? $cookies.put('filterConfirmed', "Confirmed"): $cookies.put('filterConfirmed', "All");
         };
 
         dashboardSrv.vulnPrices = {

@@ -229,8 +229,7 @@ angular.module("faradayApp")
 
             if($scope.search !== "" && $scope.search !== undefined && $scope.search.indexOf("=") > -1) {
                 searchFilter = commonsFact.parseSearchURL($scope.search);
-                if ($scope.propertyFilterConfirmed === "All")
-                    $scope.searchParams = commonsFact.searchFilterToExpression(searchFilter);
+                $scope.searchParams = commonsFact.searchFilterToExpression(searchFilter);
             }
 
             $scope.columns = {

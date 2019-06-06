@@ -161,6 +161,7 @@ binary_files:
     only:
         variables:
             - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/
+            - $CI_COMMIT_TAG
 
 macos_dmg:
     tags:
@@ -193,7 +194,7 @@ macos_dmg:
     only:
         variables:
             - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/
-
+            - $CI_COMMIT_TAG
 # This is a test of future test case that will be scheduled
 i_do_nothing:
     image: python:3

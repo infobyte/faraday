@@ -158,7 +158,10 @@ binary_files:
           - dist/faraday-client
           - dist/faraday-fplugin
         expire_in: 1 week
-
+    only:
+        variables:
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/
+            - $CI_COMMIT_TAG
 
 macos_dmg:
     tags:
@@ -188,8 +191,10 @@ macos_dmg:
         paths:
             - Faraday.dmg
         expire_in: 1 week
-
-
+    only:
+        variables:
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/
+            - $CI_COMMIT_TAG
 # This is a test of future test case that will be scheduled
 i_do_nothing:
     image: python:3

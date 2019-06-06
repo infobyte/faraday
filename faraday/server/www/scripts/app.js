@@ -77,6 +77,11 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
         appendToBody: true
     });
     $routeProvider.
+        when('/', {
+            templateUrl: 'scripts/commons/partials/home.html',
+            controller: 'homeCtrl',
+            title: ' Welcome | '
+        }).
         when('/dashboard/ws/:wsId', {
             templateUrl: 'scripts/dashboard/partials/dashboard.html',
             controller: 'dashboardCtrl',
@@ -332,10 +337,7 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             controller: 'adminCtrl',
             title: ' Admin | '
         }).
-        otherwise({
-            templateUrl: 'scripts/commons/partials/home.html',
-            controller: 'homeCtrl'
-        });
+        otherwise({redirectTo:'/'});
 }]);
 
 faradayApp.run(['$location', '$rootScope', 'loginSrv', function($location, $rootScope, loginSrv) {

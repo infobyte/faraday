@@ -1,1 +1,1 @@
-Fix hosts routing.
+Fix workspace switching from host details page

@@ -367,7 +367,6 @@ angular.module('faradayApp')
                 $scope.toggleSort = function(field) {
                     $scope.toggleSortField(field);
                     $scope.toggleReverse();
-                    $scope.sort();
                 };
 
                 // toggles column sort field

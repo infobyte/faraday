@@ -746,11 +746,13 @@ angular.module("faradayApp")
             var promises = [];
             try {
                 selected.forEach(function(vuln) {
-                    vuln.exploitation = vuln.severity;
-                    vuln.description = vuln.desc;
-                    vuln.desc_summary = vuln.desc;
-                    vuln.references = vuln.refs;
-                    promises.push(self.vulnModelsManager.create(vuln, true));
+                    let vulnCopy = angular.copy(vuln);
+                    vulnCopy.data = '';
+                    vulnCopy.exploitation = vuln.severity;
+                    vulnCopy.description = vuln.desc;
+                    vulnCopy.desc_summary = vuln.desc;
+                    vulnCopy.references = vuln.refs;
+                    promises.push(self.vulnModelsManager.create(vulnCopy, true));
                 });
                 $q.all(promises).then(function(success) {
                     commonsFact.showMessage("Created " + selected.length + " templates successfully.", true);

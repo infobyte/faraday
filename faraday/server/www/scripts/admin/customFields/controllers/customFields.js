@@ -4,7 +4,7 @@
 
 angular.module('faradayApp')
     .controller('customFieldsCtrl',
-        ['$scope', 'customFieldFact', '$uibModal', function ($scope, customFieldFact, $uibModal) {
+        ['$scope', 'customFieldFact', '$uibModal', 'commonsFact', function ($scope, customFieldFact, $uibModal, commonsFact) {
 
             $scope.customFields = [];
             $scope.selected_cf = {
@@ -30,18 +30,33 @@ angular.module('faradayApp')
             };
 
 
+            var errorHandler = function (error) {
+                if (typeof(error) === "object") {
+                    if (error.status=== 409)
+                        commonsFact.showMessage(error.data.object.field_display_name + " has the same field name: '" +
+                            error.data.object.field_name + "'");
+                }
+                else if (typeof(error) === "string")
+                    commonsFact.showMessage(error);
+                else
+                    commonsFact.showMessage('Something bad happened');
+            };
+
+
             $scope.insertCallback = function () {
                 var ids = [];
                 for (var i = 0; i < $scope.customFields.length; i++) {
                     if (ids.indexOf($scope.customFields[i].id) === -1) {
                         $scope.customFields[i].field_order = i;
-                        customFieldFact.updateCustomField($scope.customFields[i]);
-                        ids.push($scope.customFields[i].id);
+                        customFieldFact.updateCustomField($scope.customFields[i]).then(function(){
+                            if (i < $scope.customFields.length ) {
+                                ids.push($scope.customFields[i].id);
+                            }
+
+                            $scope.clearSelection();
+                        });
                     }
                 }
-
-                $scope.clearSelection();
-                console.log($scope.customFields);
             };
 
 
@@ -49,7 +64,6 @@ angular.module('faradayApp')
                 customFieldFact.getCustomFields().then(
                     function (response) {
                         $scope.customFields = response.data.sort(compareFunction);
-                        console.log($scope.customFields);
                     });
             };
 
@@ -83,7 +97,7 @@ angular.module('faradayApp')
                     function (response) {
                         $scope.customFields.push(response.data);
                         $scope.clearSelection();
-                    });
+                    }, errorHandler);
             };
 
 

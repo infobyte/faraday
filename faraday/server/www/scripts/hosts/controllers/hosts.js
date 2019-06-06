@@ -47,6 +47,7 @@ angular.module('faradayApp')
                 "owned": true,
                 "create_time": true,
                 "last_modified": true,
+                "owner": true
             }
             if($cookies.get('HColumns')) {
                 preferences = JSON.parse($cookies.get('HColumns'))

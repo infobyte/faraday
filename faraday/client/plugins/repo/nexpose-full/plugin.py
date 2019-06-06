@@ -153,6 +153,9 @@ class NexposeFullXmlParser(object):
         @returns vulns A dict of Vulnerability Definitions
         """
         vulns = dict()
+        #CVSS V3
+        SEVERITY_MAPPING_DICT = {'0': 'info', '1': 'low', '2': 'low', '3': 'low', '4': 'med', '5': 'med', '6': 'med',
+                                 '7': 'high', '8': 'high', '9': 'critical', '10': 'critical'}
 
         for vulnsDef in tree.iter('VulnerabilityDefinitions'):
             for vulnDef in vulnsDef.iter('vulnerability'):
@@ -164,7 +167,7 @@ class NexposeFullXmlParser(object):
                     'name': vulnDef.get('title'),
                     'refs': ["vector: " + vector, vid],
                     'resolution': "",
-                    'severity': (int(vulnDef.get('severity')) - 1) / 2,
+                    'severity': SEVERITY_MAPPING_DICT[vulnDef.get('severity')],
                     'tags': list(),
                     'is_web': vid.startswith('http-')
                 }
@@ -343,7 +346,16 @@ def createPlugin():
     return NexposeFullPlugin()
 
 if __name__ == '__main__':
-    parser = NexposeFullXmlParser(sys.argv[1])
-    for item in parser.items:
-        if item.status == 'up':
-            print item
+    if len(sys.argv) == 2:
+        xml_file = sys.argv[1]
+        if os.path.isfile(xml_file):
+            with open(xml_file) as f:
+                parser = NexposeFullXmlParser(f.read())
+                for item in parser.items:
+                    print "* {0} ({1}) - Vulns: {2}".format(item['name'], item['os'], len(item['vulns']))
+                    for vuln in item['vulns']:
+                        print "- {0} (Severity: {1})".format(vuln['name'], vuln['severity'])
+        else:
+            print "File (%s) not found" % xml_file
+    else:
+        print "Usage: {0} XML_FILE".format(sys.argv[0])

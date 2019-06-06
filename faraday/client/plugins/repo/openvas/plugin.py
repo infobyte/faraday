@@ -11,6 +11,7 @@ from __future__ import with_statement
 import re
 import os
 import sys
+from collections import defaultdict
 
 try:
     import xml.etree.cElementTree as ET
@@ -54,9 +55,9 @@ class OpenvasXmlParser(object):
         self.port = "80"
         self.host = None
         tree = self.parse_xml(xml_output)
-
         if tree:
-            self.items = [data for data in self.get_items(tree)]
+            self.hosts = self.get_hosts(tree)
+            self.items = [data for data in self.get_items(tree, self.hosts)]
         else:
             self.items = []
 
@@ -77,7 +78,7 @@ class OpenvasXmlParser(object):
 
         return tree
 
-    def get_items(self, tree):
+    def get_items(self, tree, hosts):
         """
         @return items A list of Host instances
         """
@@ -85,13 +86,49 @@ class OpenvasXmlParser(object):
             report = tree.findall('report')[0]
             results = report.findall('results')[0]
             for node in results.findall('result'):
-                yield Item(node,report)
+                yield Item(node, hosts)
 
         except Exception:
-
             result = tree.findall('result')
             for node in result:
-                yield Item(node)
+                yield Item(node, hosts)
+
+    def get_hosts(self, tree):
+        # Hosts are located in: /report/report/host
+        # hosts_dict will contain has keys its details and its hostnames
+        hosts = tree.findall('report/host')
+        hosts_dict = {}
+        for host in hosts:
+            details = self.get_data_from_detail(host.findall('detail'))
+            hosts_dict[host.find('ip').text] = details
+
+        return hosts_dict
+
+    def get_data_from_detail(self, details):
+        data = {}
+        details_data = defaultdict(list)
+        hostnames = []
+        for item in details:
+            name = item.find('name').text
+            value = item.find('value').text
+            if 'EXIT' not in name:
+                if name == 'hostname':
+                    hostnames.append(value)
+                else:
+                    value = self.do_clean(value)
+                    details_data[name].append(value)
+
+        data['details'] = details_data
+        data['hostnames'] = hostnames
+
+        return data
+
+    def do_clean(self, value):
+        myreturn = ""
+        if value is not None:
+            myreturn = re.sub("\s+", " ", value)
+
+        return myreturn.strip()
 
 
 def get_attrib_from_subnode(xml_node, subnode_xpath_expr, attrib_name):
@@ -135,7 +172,7 @@ class Item(object):
     @param item_node A item_node taken from an openvas xml tree
     """
 
-    def __init__(self, item_node, report):
+    def __init__(self, item_node, hosts):
         self.node = item_node
         self.host = self.get_text_from_subnode('host')
         self.subnet = self.get_text_from_subnode('subnet')
@@ -144,7 +181,7 @@ class Item(object):
             self.subnet = self.host
 
         self.port = "None"
-        self.severity = self.get_text_from_subnode('threat')
+        self.severity = self.severity_mapper()
         self.service = "Unknown"
         self.protocol = ""
         port = self.get_text_from_subnode('port')
@@ -154,14 +191,15 @@ class Item(object):
             info = port.split("/")
             self.port = info[0]
             self.protocol = info[1]
-            self.service = self.get_service(port, report, self.host)
+            host_details = hosts[self.host].get('details')
+            self.service = self.get_service(port, host_details)
         else:
             # general was found in port data
             # this is a host vuln
             # this case will have item.port = 'None'
             info = port.split("/")
             self.protocol = info[1]
-            self.service = info[0] # this value is general
+            self.service = info[0]  # this value is general
 
         self.nvt = self.node.findall('nvt')[0]
         self.node = self.nvt
@@ -184,7 +222,6 @@ class Item(object):
             self.resolution = tags_data['solution']
             self.cvss_vector = tags_data['cvss_base_vector']
 
-
     def get_text_from_subnode(self, subnode_xpath_expr):
         """
         Finds a subnode in the host node and the retrieves a value from it.
@@ -197,20 +234,23 @@ class Item(object):
 
         return ''
 
+    def severity_mapper(self):
+        severity = self.get_text_from_subnode('threat')
+        if severity == 'Alarm':
+            severity = 'Critical'
+        return severity
 
-    def get_service(self, port, report, result_host_ip):
-        detail = self.get_detail_from_host(report,result_host_ip)
-
-        # dict detail:
-        # key is the host ip
-        # value_dict is a dictionary with every detail in the host
-        for key,value_dict in detail.items():
-            service_detail = self.get_service_from_details(value_dict,port)
+    def get_service(self, port, details_from_host):
+        # details_from_host:
+        # name: name of detail
+        # value: list with the values associated with the name
+        for name, value in details_from_host.items():
+            service_detail = self.get_service_from_details(name, value, port)
 
             if service_detail:
                 return service_detail
 
-        # if the service is not in detail, we will search it in
+        # if the service is not in details_from_host, we will search it in
         # the file port_mapper.txt
         srv = filter_services()
         for service in srv:
@@ -219,32 +259,6 @@ class Item(object):
 
         return "Unknown"
 
-
-    def get_detail_from_host(self, report, result_host_ip):
-        report_hosts = report.findall('host')
-        host_dict = {}
-        for host in report_hosts:
-            report_host_ip = host.find('ip').text.strip()
-            if report_host_ip == result_host_ip:
-                details = self.get_details(host)
-                host_dict[report_host_ip] = details
-
-        return host_dict
-
-
-    def get_details(self, host):
-        details_list = host.findall('detail')
-        details_dict = {}
-
-        for detail in details_list:
-            name = detail.find('name').text.strip()
-            if not 'EXIT' in name:
-                value = self.do_clean(detail.find('value').text)
-                details_dict[value] = name
-
-        return details_dict
-
-
     def do_clean(self, value):
         myreturn = ""
         if value is not None:
@@ -252,41 +266,41 @@ class Item(object):
 
         return myreturn.strip()
 
-
-    def get_service_from_details(self, value_dict, port):
-        # dict value: 
-        # key is port or protocol of the service 
-        # value is service description
+    def get_service_from_details(self, name, value_list, port):
+        # detail:
+        # name: name of detail
+        # value_list: list with the values associated with the name
         res = None
         priority = 0
-        for key, value in value_dict.items():
-            if value == 'Services':
+
+        for value in value_list:
+            if name == 'Services':
                 aux_port = port.split('/')[0]
-                key_splited = key.split(',')
-                if key_splited[0] == aux_port:
-                    res = key_splited[2]
+                value_splited = value.split(',')
+                if value_splited[0] == aux_port:
+                    res = value_splited[2]
                     priority = 3
-        
-            elif '/' in key and priority != 3:
-                auxiliar_key = key.split('/')[0]
-                if auxiliar_key == port.split('/')[0]:
-                    res = value
+
+            elif '/' in value and priority != 3:
+                auxiliar_value = value.split('/')[0]
+                if auxiliar_value == port.split('/')[0]:
+                    res = name
                     priority = 2
 
-            elif key.isdigit() and priority == 0:
-                if key == port.split('/')[0]:
-                    res = value
+            elif value.isdigit() and priority == 0:
+                if value == port.split('/')[0]:
+                    res = name
                     priority = 1
 
-            elif '::' in key and priority == 0:
-                aux_key = key.split('::')[0]
+            elif '::' in value and priority == 0:
+                aux_value = value.split('::')[0]
                 auxiliar_port = port.split('/')[0]
-                if aux_key == auxiliar_port:
-                    res = value
+                if aux_value == auxiliar_port:
+                    res = name
 
         return res
 
-    def get_data_from_tags(self,tags_text):
+    def get_data_from_tags(self, tags_text):
         clean_text = self.do_clean(tags_text)
         tags = clean_text.split('|')
         summary = ''
@@ -294,10 +308,10 @@ class Item(object):
         data = {
             'solution': '',
             'cvss_base_vector': '',
-            'description':''
+            'description': ''
         }
         for tag in tags:
-            splited_tag = tag.split('=',1)
+            splited_tag = tag.split('=', 1)
             if splited_tag[0] in data.keys():
                 data[splited_tag[0]] = splited_tag[1]
             elif splited_tag[0] == 'summary':
@@ -305,7 +319,7 @@ class Item(object):
             elif splited_tag[0] == 'insight':
                 insight = splited_tag[1]
 
-        data['description'] = ' '.join([summary,insight]).strip()
+        data['description'] = ' '.join([summary, insight]).strip()
 
         return data
 
@@ -334,8 +348,8 @@ class OpenvasPlugin(core.PluginBase):
 
     def parseOutputString(self, output, debug=False):
         """
-        This method will discard the output the shell sends, it will read it from
-        the xml where it expects it to be present.
+        This method will discard the output the shell sends, it will read it
+        from the xml where it expects it to be present.
 
         NOTE: if 'debug' is true then it is being run from a test case and the
         output being sent is valid.
@@ -345,9 +359,18 @@ class OpenvasPlugin(core.PluginBase):
 
         web = False
         ids = {}
+        # The following threats values will not be taken as vulns
+        self.ignored_severities = ['Log', 'Debug']
+
+        for ip, values in parser.hosts.items():
+            # values contains: ip details and ip hostnames
+            h_id = self.createAndAddHost(
+                ip,
+                hostnames=values['hostnames']
+            )
+            ids[ip] = h_id
 
         for item in parser.items:
-            
             if item.name is not None:
                 ref = []
                 if item.cve:
@@ -359,78 +382,43 @@ class OpenvasPlugin(core.PluginBase):
                 if item.tags and item.cvss_vector:
                     ref.append(item.cvss_vector.encode("utf-8"))
 
-                if ids.has_key(item.subnet):
+                if item.subnet in ids:
                     h_id = ids[item.host]
                 else:
-                    h_id = self.createAndAddHost(item.subnet)
+                    h_id = self.createAndAddHost(
+                        item.subnet,
+                        hostnames=[item.host])
                     ids[item.subnet] = h_id
 
                 if item.port == "None":
-                    v_id = self.createAndAddVulnToHost(
-                        h_id,
-                        item.name.encode("utf-8"),
-                        desc=item.description.encode("utf-8"),
-                        severity=item.severity.encode("utf-8"),
-                        resolution=item.resolution.encode("utf-8"),
-                        ref=ref)
+                    if item.severity not in self.ignored_severities:
+                        v_id = self.createAndAddVulnToHost(
+                            h_id,
+                            item.name.encode("utf-8"),
+                            desc=item.description.encode("utf-8"),
+                            severity=item.severity.encode("utf-8"),
+                            resolution=item.resolution.encode("utf-8"),
+                            ref=ref)
                 else:
                     if item.service:
                         web = True if re.search(
                             r'^(www|http)',
                             item.service) else False
                     else:
-                    
                         web = True if item.port in ('80', '443', '8080') else False
 
-                    if ids.has_key(item.subnet + "_" + item.subnet):
-                        i_id = ids[item.subnet + "_" + item.subnet]
-                    else:
-
-                        if self._isIPV4(item.subnet):
-                            i_id = self.createAndAddInterface(
-                                h_id,
-                                item.subnet,
-                                ipv4_address=item.subnet,
-                                hostname_resolution=item.host)
-                        else:
-                            i_id = self.createAndAddInterface(
-                                h_id,
-                                item.subnet,
-                                ipv6_address=item.subnet,
-                                hostname_resolution=item.host)
-
-                        ids[item.subnet + "_" + item.subnet] = i_id
-
-                    if ids.has_key(item.subnet + "_" + item.port):
+                    if item.subnet + "_" + item.port in ids:
                         s_id = ids[item.subnet + "_" + item.port]
                     else:
-                        s_id = self.createAndAddServiceToInterface(
+                        s_id = self.createAndAddServiceToHost(
                             h_id,
-                            i_id,
                             item.service,
                             item.protocol,
-                            ports=[str(item.port)],
-                            status="open")
-                        
+                            ports=[str(item.port)]
+                        )
                         ids[item.subnet + "_" + item.port] = s_id
-                        
-                        if web:
-                        
-                            n_id = self.createAndAddNoteToService(
-                                h_id,
-                                s_id,
-                                "website",
-                                "")
-                            
-                            self.createAndAddNoteToNote(
-                                h_id,
-                                s_id,
-                                n_id,
-                                item.host,
-                                "")
-
-                    if item.name:
-                        if web:
+                    if web:
+                        if item.severity not in self.ignored_severities:
                             v_id = self.createAndAddVulnWebToService(
                                 h_id,
                                 s_id,
@@ -440,15 +428,15 @@ class OpenvasPlugin(core.PluginBase):
                                 severity=item.severity.encode("utf-8"),
                                 ref=ref,
                                 resolution=item.resolution.encode("utf-8"))
-                        else:
-                            self.createAndAddVulnToService(
-                                h_id,
-                                s_id,
-                                item.name.encode("utf-8"),
-                                desc=item.description.encode("utf-8"),
-                                severity=item.severity.encode("utf-8"),
-                                ref=ref,
-                                resolution=item.resolution.encode("utf-8"))
+                    elif item.severity not in self.ignored_severities:
+                        self.createAndAddVulnToService(
+                            h_id,
+                            s_id,
+                            item.name.encode("utf-8"),
+                            desc=item.description.encode("utf-8"),
+                            severity=item.severity.encode("utf-8"),
+                            ref=ref,
+                            resolution=item.resolution.encode("utf-8"))
 
         del parser
 
@@ -469,8 +457,9 @@ def createPlugin():
     return OpenvasPlugin()
 
 if __name__ == '__main__':
-    with open("/home/javier/openvas-report.xml","r") as report:
-        parser = OpenvasXmlParser(report.read())
+    parser = OpenvasPlugin()
+    with open("/home/javier/7_faraday_Openvas.xml","r") as report:
+        parser.parseOutputString(report.read())
         #for item in parser.items:
             #if item.status == 'up':
                 #print item

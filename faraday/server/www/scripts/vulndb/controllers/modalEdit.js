@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('vulndDbModalEdit',
-                ['$scope', '$modalInstance', 'VulnModel', 'model', 'EXPLOITATIONS', 'EASEOFRESOLUTION',
-                 function($scope, $modalInstance, VulnModel, model, EXPLOITATIONS, EASEOFRESOLUTION) {
+                ['$scope', '$modalInstance', 'VulnModel', 'model', 'EXPLOITATIONS', 'EASEOFRESOLUTION', 'customFields',
+                 function($scope, $modalInstance, VulnModel, model, EXPLOITATIONS, EASEOFRESOLUTION, customFields) {
 
         $scope.data;
         $scope.openedStart;
@@ -22,6 +22,14 @@ angular.module('faradayApp')
             $scope.references = clearList(angular.copy($scope.data.refs), EXCLUDED_TOKENS);
             $scope.new_policyviolation = "";
             $scope.new_reference = "";
+            $scope.customFields = customFields;
+
+            for (var key in $scope.data.customfields) {
+                $scope.customFields.forEach(function(cf){
+                    if(cf.field_name == key)
+                        cf.value = $scope.data.customfields[key];
+                })
+            }
         };
 
         $scope.ok = function() {
@@ -29,6 +37,13 @@ angular.module('faradayApp')
             $scope.data.policyviolations = angular.copy($scope.policyviolations);
             $scope.data.refs = angular.copy($scope.references);
             $scope.data.references = $scope.data.refs.join(',');
+            $scope.customFields.forEach(function(cf){
+                if(cf.value){
+                    $scope.data.customfields[cf.field_name] = cf.value;
+                }
+            })
+
+
             $modalInstance.close($scope.data);
         };
 

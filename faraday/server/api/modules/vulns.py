@@ -197,6 +197,8 @@ class VulnerabilitySchema(AutoSchema):
             return 'vulnerability'
         if value == 'VulnerabilityWeb':
             return 'vulnerability_web'
+        else:
+            raise ValidationError('Invalid vulnerability type.')
 
     def load_parent(self, value):
         try:
@@ -232,6 +234,8 @@ class VulnerabilitySchema(AutoSchema):
             parent_field = 'service_id'
         if not parent_class:
             raise ValidationError('Unknown parent type')
+        if parent_type == 'Host' and data['type'] == 'vulnerability_web':
+            raise ValidationError('Trying to set a host for a vulnerability web')
 
         try:
             parent = db.session.query(parent_class).join(Workspace).filter(
@@ -452,7 +456,13 @@ class VulnerabilityView(PaginatedMixin,
         references = data.pop('references', [])
         policyviolations = data.pop('policy_violations', [])
 
-        obj = super(VulnerabilityView, self)._perform_create(data, **kwargs)
+        try:
+            obj = super(VulnerabilityView, self)._perform_create(data, **kwargs)
+        except TypeError:
+            # TypeError is raised when trying to instantiate an sqlalchemy model
+            # with invalid attributes, for example VulnerabilityWeb with host_id
+            flask.abort(400)
+
         obj.references = references
         obj.policy_violations = policyviolations
         db.session.commit()
@@ -477,6 +487,10 @@ class VulnerabilityView(PaginatedMixin,
                 filename=os.path.basename(filename),
                 content=faraday_file,
             )
+
+    def _update_object(self, obj, data):
+        data.pop('type') # It's forbidden to change vuln type!
+        return super(VulnerabilityView, self)._update_object(obj, data)
 
     def _perform_update(self, object_id, obj, data, workspace_name):
         attachments = data.pop('_attachments', {})

@@ -429,7 +429,7 @@ class NoteFactory(FaradayFactory):
 
 class AgentFactory(WorkspaceObjectFactory):
     type = FuzzyChoice(['shared', 'specific'])
-    status = FuzzyChoice(['locked', 'pause', 'offline'])
+    status = FuzzyChoice(['locked', 'paused', 'offline'])
     token = FuzzyText()
     description = FuzzyText()
     version = FuzzyText()

@@ -6,11 +6,14 @@ import io
 import json
 import logging
 from base64 import b64encode, b64decode
+import cStringIO
+import csv
+import re
 
 import flask
 import wtforms
 from filteralchemy import Filter, FilterSet, operators
-from flask import request
+from flask import request, send_file
 from flask import Blueprint
 from flask_classful import route
 from flask_restless.search import search
@@ -727,5 +730,31 @@ class VulnerabilityView(PaginatedMixin,
         else:
             flask.abort(404, "Vulnerability not found")
 
+    @route('export_csv/', methods=['GET'])
+    def export_csv(self, workspace_name):
+
+        memory_file = cStringIO.StringIO()
+        headers = ["confirmed", "id", "date", "name", "severity", "service", "target", "desc", "status", "hostnames"]
+        writer = csv.DictWriter(memory_file, fieldnames=headers)
+        writer.writeheader()
+        workspace = self._get_workspace(workspace_name)
+        for vuln in db.session.query(VulnerabilityGeneric).filter(VulnerabilityGeneric.workspace==workspace):
+            vuln_description = re.sub(' +', ' ', vuln.description.strip().replace("\n", ""))
+            vuln_date = vuln.create_date.strftime("%m/%d/%Y")
+            if vuln.service:
+               service_fields = ["status", "protocol", "name", "summary", "version", "port"]
+               service_fields_values = map(lambda field: "%s:%s" % (field, getattr(vuln.service, field)), service_fields)
+               vuln_service = " - ".join(service_fields_values)
+            else:
+               vuln_service = ""
+            vuln_hostnames = str(map(lambda host: str(host.name), vuln.hostnames))
+            vuln_dict = {"confirmed": vuln.confirmed, "id": vuln.id, "date": vuln_date,
+                         "severity": vuln.severity, "target": vuln.target, "status": vuln.status, "hostnames": vuln_hostnames,
+                         "desc": vuln_description, "name": vuln.name, "service": vuln_service}
+            writer.writerow(vuln_dict)
+        memory_file.seek(0)
+        return send_file(memory_file,
+                         attachment_filename="Faraday-SR-%s.csv" % workspace_name,
+                         as_attachment=True)
 
 VulnerabilityView.register(vulns_api)

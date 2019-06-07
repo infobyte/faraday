@@ -973,3 +973,11 @@ ul#nav-tabs-container {
     box-shadow: none;
     font-size: 0.8em;
 }
+
+#btn_clear_search {
+    position: absolute;
+    height: 30px;
+    border-radius: 2px;
+    right: 15px;
+    padding-top: 3px;
+}

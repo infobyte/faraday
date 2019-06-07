@@ -16,7 +16,6 @@ import requests.exceptions
 from faraday.config.configuration import getInstanceConfiguration
 from faraday.config.constant import (
     CONST_USER_HOME,
-    CONST_FARADAY_HOME_PATH,
     CONST_FARADAY_PLUGINS_PATH,
     CONST_FARADAY_PLUGINS_REPO_PATH,
     CONST_FARADAY_IMAGES,
@@ -29,6 +28,8 @@ from faraday.config.constant import (
     CONST_REQUIREMENTS_FILE,
     CONST_FARADAY_FOLDER_LIST,
 )
+
+CONST_FARADAY_HOME_PATH = os.path.expanduser('~/.faraday')
 from faraday.utils import dependencies
 from faraday.utils.logs import getLogger, setUpLogger
 from faraday.utils.user_input import query_yes_no
@@ -470,7 +471,7 @@ def doLoginLoop(force_login=False):
         else:
             new_server_url = raw_input(
                 "\nPlease enter the Faraday Server URL (Press enter for last used: {}): ".format(old_server_url)) or old_server_url
-        
+
         CONF.setAPIUrl(new_server_url)
 
         print("""\nTo login please provide your valid Faraday credentials.\nYou have 3 attempts.""")

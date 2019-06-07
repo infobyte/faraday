@@ -229,8 +229,7 @@ angular.module("faradayApp")
 
             if($scope.search !== "" && $scope.search !== undefined && $scope.search.indexOf("=") > -1) {
                 searchFilter = commonsFact.parseSearchURL($scope.search);
-                if ($scope.propertyFilterConfirmed === "All")
-                    $scope.searchParams = commonsFact.searchFilterToExpression(searchFilter);
+                $scope.searchParams = commonsFact.searchFilterToExpression(searchFilter);
             }
 
             $scope.columns = {
@@ -746,11 +745,13 @@ angular.module("faradayApp")
             var promises = [];
             try {
                 selected.forEach(function(vuln) {
-                    vuln.exploitation = vuln.severity;
-                    vuln.description = vuln.desc;
-                    vuln.desc_summary = vuln.desc;
-                    vuln.references = vuln.refs;
-                    promises.push(self.vulnModelsManager.create(vuln, true));
+                    let vulnCopy = angular.copy(vuln);
+                    vulnCopy.data = '';
+                    vulnCopy.exploitation = vuln.severity;
+                    vulnCopy.description = vuln.desc;
+                    vulnCopy.desc_summary = vuln.desc;
+                    vulnCopy.references = vuln.refs;
+                    promises.push(self.vulnModelsManager.create(vulnCopy, true));
                 });
                 $q.all(promises).then(function(success) {
                     commonsFact.showMessage("Created " + selected.length + " templates successfully.", true);
@@ -1170,7 +1171,7 @@ angular.module("faradayApp")
 
                 // Add the total amount of vulnerabilities as an option for pagination
                 // if it is larger than our biggest page size
-                if ($scope.gridOptions.totalItems > paginationOptions.defaultPageSizes[paginationOptions.defaultPageSizes.length - 1]) {
+                /*if ($scope.gridOptions.totalItems > paginationOptions.defaultPageSizes[paginationOptions.defaultPageSizes.length - 1]) {
 
                     $scope.gridOptions.paginationPageSizes = paginationOptions.defaultPageSizes.concat([$scope.gridOptions.totalItems]);
 
@@ -1182,7 +1183,7 @@ angular.module("faradayApp")
                     if ($scope.gridOptions.paginationPageSize === $scope.gridOptions.totalItems - 1)
                         $scope.gridOptions.paginationPageSize = $scope.gridOptions.totalItems;
 
-                }
+                }*/
             });
         };
 

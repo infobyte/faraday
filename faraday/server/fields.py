@@ -56,7 +56,7 @@ class FaradayUploadedFile(UploadedFile):
         try:
             uploaded_image = Image.open(content)
         except:
-            flask.abort(409, ValidationError(
+            flask.abort(400, ValidationError(
                 {
                     'message': 'File Format',
                     'object': {"error": "Format Incorrect"},

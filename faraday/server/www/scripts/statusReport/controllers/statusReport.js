@@ -1241,13 +1241,19 @@ angular.module("faradayApp")
         };
 
         $scope.searchFor = function(params, clear, search) {
+            // TODO: REFACTOR
             if (clear === true){
-                $scope.searchParams = '';
-                $scope.propertyFilterConfirmed = "All";
-                $cookies.put('filterConfirmed', $scope.propertyFilterConfirmed);
-                $location.path("/status/ws/" + $routeParams.wsId);
-                loadVulns();
-                return;
+                if(window.location.hash.substring(1).indexOf('groupby') === -1) {
+                    $scope.searchParams = '';
+                    $scope.propertyFilterConfirmed = "All";
+                    $cookies.put('filterConfirmed', $scope.propertyFilterConfirmed);
+                    $location.path("/status/ws/" + $routeParams.wsId);
+                    loadVulns();
+                    return;
+                }else{
+                    var url = "/status/ws/" + $routeParams.wsId + "/groupby/" + $routeParams.groupbyId;
+                    $location.path(url);
+                }
             }
 
             if (search === false) {

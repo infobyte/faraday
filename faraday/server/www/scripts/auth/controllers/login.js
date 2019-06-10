@@ -3,7 +3,8 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('loginCtrl', ['$scope', '$location', '$cookies', 'loginSrv', function($scope, $location, $cookies, loginSrv) {
+    .controller('loginCtrl', ['$scope', '$location', '$cookies', 'loginSrv',
+        function($scope, $location, $cookies, loginSrv) {
 
         $scope.data = {
             "user": null,

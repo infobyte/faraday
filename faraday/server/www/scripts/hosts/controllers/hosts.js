@@ -3,9 +3,29 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('hostsCtrl',
-        ['$scope', '$cookies', '$filter', '$location', '$route', '$routeParams', '$uibModal', 'hostsManager', 'workspacesFact', 'commonsFact', 'credential',
-        function($scope, $cookies, $filter, $location, $route, $routeParams, $uibModal, hostsManager, workspacesFact, commonsFact, credential) {
+    .controller('hostsCtrl', [
+        '$scope',
+        '$cookies',
+        '$filter',
+        '$location',
+        '$route',
+        '$routeParams',
+        '$uibModal',
+        'hostsManager',
+        'workspacesFact',
+        'commonsFact',
+        'credential',
+        function ($scope,
+                  $cookies,
+                  $filter,
+                  $location,
+                  $route,
+                  $routeParams,
+                  $uibModal,
+                  hostsManager,
+                  workspacesFact,
+                  commonsFact,
+                  credential) {
 
         var init = function() {
             $scope.selectall_hosts = false;

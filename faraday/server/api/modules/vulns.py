@@ -732,13 +732,16 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('export_csv/', methods=['GET'])
     def export_csv(self, workspace_name):
-
+        confirmed = bool(request.args.get('confirmed'))
+        workspace = self._get_workspace(workspace_name)
         memory_file = cStringIO.StringIO()
         headers = ["confirmed", "id", "date", "name", "severity", "service", "target", "desc", "status", "hostnames"]
         writer = csv.DictWriter(memory_file, fieldnames=headers)
         writer.writeheader()
-        workspace = self._get_workspace(workspace_name)
-        for vuln in db.session.query(VulnerabilityGeneric).filter(VulnerabilityGeneric.workspace==workspace):
+        vulns_query = db.session.query(VulnerabilityGeneric).filter(VulnerabilityGeneric.workspace==workspace)
+        if confirmed:
+            vulns_query = vulns_query.filter(VulnerabilityGeneric.confirmed==confirmed)
+        for vuln in vulns_query:
             vuln_description = re.sub(' +', ' ', vuln.description.strip().replace("\n", ""))
             vuln_date = vuln.create_date.strftime("%m/%d/%Y")
             if vuln.service:

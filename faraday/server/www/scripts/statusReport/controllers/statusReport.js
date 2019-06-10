@@ -806,28 +806,37 @@ angular.module("faradayApp")
         };
 
         $scope.csv = function() {
-           deferred = $q.defer();
+            deferred = $q.defer();
 
-           let confirmed = $scope.propertyFilterConfirmed === "Confirmed" ? true : false;
+            let confirmed = $scope.propertyFilterConfirmed === "Confirmed" ? true : false;
+            $scope.loading = true;
 
-           vulnsManager.exportCsv($scope.workspace, confirmed).then(function(result){
-                var title = "";
+            vulnsManager.exportCsv($scope.workspace, confirmed)
+            .then(function(result){
+                 var title = "";
 
-                if ($scope.workspace === null) {
-                    title = 'Vulnerability Model CSV';
-                } else {
-                    title = "SR-" + $scope.workspace;
-                }
+                 if ($scope.workspace === null) {
+                     title = 'Vulnerability Model CSV';
+                 } else {
+                     title = "SR-" + $scope.workspace;
+                 }
 
-                var csvObj = {
-                    "content":  result.data,
-                    "extension": "csv",
-                    "title":    title,
-                    "type": "text/csv"
-                };
-                deferred.resolve(csvObj);
-           });
-           return deferred.promise;
+                 var csvObj = {
+                     "content":  result.data,
+                     "extension": "csv",
+                     "title":    title,
+                     "type": "text/csv"
+                 };
+
+                 $scope.loading = false;
+
+                 deferred.resolve(csvObj);
+            })
+            .catch(function(){
+                 commonsFact.showMessage('An error has occurred.');
+                 $scope.loading = false;
+            });
+            return deferred.promise;
         };
 
         $scope.filterConfirmed = function (filter) {

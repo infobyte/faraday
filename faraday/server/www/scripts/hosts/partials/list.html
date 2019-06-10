@@ -104,6 +104,10 @@
                                 <span ng-click="toggleSort('owned')">OWNED</span>
                                 <a ng-click="toggleShow('owned')"><span class="glyphicon glyphicon-remove"></span></a>
                             </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell" ng-show="columns['owner']">
+                                <span ng-click="toggleSort('owner')">OWNER</span>
+                                <a ng-click="toggleShow('owner')"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
                             <th class="ui-grid-cell-contents ui-grid-header-cell" ng-show="columns['description']">
                                 <span ng-click="toggleSort('description')">DESCRIPTION</span>
                                 <a ng-click="toggleShow('description')"><span class="glyphicon glyphicon-remove"></span></a>
@@ -200,6 +204,12 @@
                                 </div>
                             </td>
                             <td class="ui-grid-cell-contents"
+                                ng-show="columns['owner']">
+                                <div class="">
+                                    <span>{{host.owner}}</span>
+                                </div>
+                            </td>
+                            <td class="ui-grid-cell-contents"
                                 ng-show="columns['description']">
                                 <div class="">
                                     {{host.description}}
@@ -208,7 +218,7 @@
                             <td class="ui-grid-cell-contents date-cell"
                                 ng-show="columns['create_time']">
                                 <div class="">
-                                    <span am-time-ago="host.metadata.create_time" am-preprocess="utc"></span>
+                                    <span ng-style="{'display': 'inline-block'}" am-time-ago="host.metadata.create_time" am-preprocess="utc"></span><p ng-style="{'display': 'inline-block'}">&nbsp; {{host.metadata.creator ? (' by ' + host.metadata.creator) : ''}}</p>
                                 </div>
                             </td>
                             <td

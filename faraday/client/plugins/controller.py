@@ -21,8 +21,12 @@ from faraday.client.model.commands_history import CommandRunInformation
 from faraday.client.model import Modelactions
 
 from faraday.config.constant import (
+    CONST_FARADAY_ZSH_OUTPUT_PATH,
+)
+
+from faraday.client.start_client import (
     CONST_FARADAY_HOME_PATH,
-    CONST_FARADAY_ZSH_OUTPUT_PATH)
+)
 CONF = getInstanceConfiguration()
 
 logger = logging.getLogger(__name__)

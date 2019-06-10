@@ -77,6 +77,7 @@ from mainwidgets import Terminal
 from mainwidgets import Statusbar
 
 from faraday.client.gui.loghandler import GUIHandler
+from faraday.client.start_client import FARADAY_CLIENT_BASE
 from faraday.server.utils.logger import add_handler
 from faraday.utils.common import checkSSL
 
@@ -120,8 +121,8 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.lost_connection_dialog_raised = None
         self.workspace_dialogs_raised = None
         self.loading_dialog_raised = None
-        self.icons = CONF.getImagePath() + "icons/"
-        faraday_icon = self.icons + "faraday_icon.png"
+        self.icons = os.path.join(FARADAY_CLIENT_BASE, "data", "images", "icons")
+        faraday_icon = os.path.join(self.icons, "faraday_icon.png")
         self.icon = GdkPixbuf.Pixbuf.new_from_file_at_scale(faraday_icon, 16,
                                                             16, False)
         self.window = None

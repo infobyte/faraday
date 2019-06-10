@@ -10,11 +10,6 @@ from signal import SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM, SIG_DFL, signal
 
 import twisted.web
 from twisted.web.resource import Resource, ForbiddenResource
-# Ugly hack to make "flask shell" work. It works because when running via flask
-# shell, __file__ will be server/web.py instead of faraday-server.py
-if os.path.split(os.path.dirname(__file__))[-1] == 'server':
-    path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    sys.path.append(path)
 
 import faraday.server.config
 
@@ -146,6 +141,7 @@ class WebServer(object):
             self.raw_report_processor.stop()
 
         site = twisted.web.server.Site(self.__root_resource)
+        site.displayTracebacks = False
         if self.__ssl_enabled:
             ssl_context = self.__load_ssl_certs()
             self.__listen_func = functools.partial(

@@ -35,9 +35,9 @@ angular.module('faradayApp')
             return vuln.remove();
         };
 
-        vulnsManager.exportCsv = function(ws){
+        vulnsManager.exportCsv = function(ws, confirmed){
             let deferred = $q.defer();
-            ServerAPI.exportCsv(ws)
+            ServerAPI.exportCsv(ws, confirmed)
                 .then(function(response) {
                     deferred.resolve(response);
                 }, function(response) {

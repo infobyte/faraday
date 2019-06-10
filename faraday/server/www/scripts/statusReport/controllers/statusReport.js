@@ -807,7 +807,10 @@ angular.module("faradayApp")
 
         $scope.csv = function() {
            deferred = $q.defer();
-           vulnsManager.exportCsv($scope.workspace).then(function(result){
+
+           let confirmed = $scope.propertyFilterConfirmed === "Confirmed" ? true : false;
+
+           vulnsManager.exportCsv($scope.workspace, confirmed).then(function(result){
                 var title = "";
 
                 if ($scope.workspace === null) {

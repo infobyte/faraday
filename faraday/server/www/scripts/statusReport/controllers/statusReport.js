@@ -806,22 +806,25 @@ angular.module("faradayApp")
         };
 
         $scope.csv = function() {
-            deferred = $q.defer();
-            delete searchFilter.confirmed;
-            if ($scope.propertyFilterConfirmed === "Confirmed")
-                searchFilter.confirmed = true;
-            if ($scope.propertyFilterConfirmed === "Unconfirmed")
-                searchFilter.confirmed = false;
-            vulnsManager.getVulns($scope.workspace,
-                                  null,
-                                  null,
-                                  searchFilter,
-                                  null,
-                                  null)
-            .then(function(response) {
-                deferred.resolve(csvService.generator($scope.columns, response.vulnerabilities, $scope.workspace));
-            });
-            return deferred.promise;
+           deferred = $q.defer();
+           vulnsManager.exportCsv($scope.workspace).then(function(result){
+                var title = "";
+
+                if ($scope.workspace === null) {
+                    title = 'Vulnerability Model CSV';
+                } else {
+                    title = "SR-" + $scope.workspace;
+                }
+
+                var csvObj = {
+                    "content":  result.data,
+                    "extension": "csv",
+                    "title":    title,
+                    "type": "text/csv"
+                };
+                deferred.resolve(csvObj);
+           });
+           return deferred.promise;
         };
 
         $scope.filterConfirmed = function (filter) {

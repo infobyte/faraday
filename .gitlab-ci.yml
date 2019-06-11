@@ -167,6 +167,7 @@ macos_dmg:
     tags:
         - macos
     stage: build
+    allow_failure: true
     script:
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv

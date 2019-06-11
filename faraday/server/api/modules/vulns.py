@@ -758,6 +758,7 @@ class VulnerabilityView(PaginatedMixin,
         memory_file.seek(0)
         return send_file(memory_file,
                          attachment_filename="Faraday-SR-%s.csv" % workspace_name,
-                         as_attachment=True)
+                         as_attachment=True,
+                         cache_timeout=-1)
 
 VulnerabilityView.register(vulns_api)

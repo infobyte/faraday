@@ -34,7 +34,8 @@ closure_compiler:
     script:
         - /opt/cc.sh faraday/server/www/scripts
     except:
-        - $BUILD_TEST
+        variables:
+            - $BUILD_TEST
 
 merge_conflict_check:
     tags:
@@ -47,7 +48,8 @@ merge_conflict_check:
         - git config --global user.name "Mergerbot"
         - python3 merge-conflict-detector.py
     except:
-        - $BUILD_TEST
+        variables:
+            - $BUILD_TEST
 
 pylint:
     tags:
@@ -63,7 +65,8 @@ pylint:
         paths:
             - pylint.svg
     except:
-        - $BUILD_TEST
+        variables:
+            - $BUILD_TEST
 
 postgresql_test:
     image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base
@@ -92,7 +95,8 @@ postgresql_test:
         paths:
             - ~/.faraday/logs/faraday-server.log
     except:
-        - $BUILD_TEST
+        variables:
+            - $BUILD_TEST
 
 sqlite_test:
     image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base
@@ -120,7 +124,8 @@ sqlite_test:
         paths:
             - dist/*
     except:
-        - $BUILD_TEST
+        variables:
+            - $BUILD_TEST
 
 generate_release_file:
     image: python:3

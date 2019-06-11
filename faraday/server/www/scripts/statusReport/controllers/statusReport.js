@@ -1253,6 +1253,8 @@ angular.module("faradayApp")
                 }else{
                     var url = "/status/ws/" + $routeParams.wsId + "/groupby/" + $routeParams.groupbyId;
                     $location.path(url);
+                    $scope.searchParams = '';
+                    return;
                 }
             }
 

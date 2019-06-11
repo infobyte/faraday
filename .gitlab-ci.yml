@@ -33,6 +33,8 @@ closure_compiler:
     stage: pre_testing
     script:
         - /opt/cc.sh faraday/server/www/scripts
+    except:
+        - $BUILD_TEST
 
 merge_conflict_check:
     tags:

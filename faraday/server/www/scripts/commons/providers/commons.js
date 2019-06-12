@@ -347,15 +347,19 @@ angular.module('faradayApp')
                 searchExpression += searchFilter.search;
             }
 
+            var index = 0;
             for (var filter in searchFilter) {
                 if (searchFilter.hasOwnProperty(filter)) {
-                    if (filter !== "search" && filter !== "confirmed") {
-                        if (searchExpression != "") {
+                    if (filter !== "search") {
+                        if (searchExpression !== "") {
                             searchExpression += " ";
                         }
+                        if (index > 0)
+                            searchExpression += ' and ';
                         searchExpression += filter + ":" + searchFilter[filter];
                     }
                 }
+                index ++;
             }
 
             return searchExpression.trim();

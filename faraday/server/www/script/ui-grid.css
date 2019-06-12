@@ -1624,9 +1624,9 @@ select[multiple].ui-grid-pager-row-count-picker select {
 }
 .ui-grid-pinned-container.ui-grid-pinned-container-left .ui-grid-header-cell:last-child {
   box-sizing: border-box;
-  border-right: 1px solid;
+ /* border-right: 1px solid;*/
   border-width: 1px;
-  border-right-color: #aeaeae;
+  /*border-right-color: #aeaeae;*/
 }
 .ui-grid-pinned-container.ui-grid-pinned-container-left .ui-grid-cell:last-child {
   box-sizing: border-box;

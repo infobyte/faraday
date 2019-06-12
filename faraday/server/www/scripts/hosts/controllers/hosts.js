@@ -3,9 +3,29 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('hostsCtrl',
-        ['$scope', '$cookies', '$filter', '$location', '$route', '$routeParams', '$uibModal', 'hostsManager', 'workspacesFact', 'commonsFact', 'credential', '$http', 'BASEURL',
-        function($scope, $cookies, $filter, $location, $route, $routeParams, $uibModal, hostsManager, workspacesFact, commonsFact, credential, $http, BASEURL) {
+    .controller('hostsCtrl', [
+        '$scope',
+        '$cookies',
+        '$filter',
+        '$location',
+        '$route',
+        '$routeParams',
+        '$uibModal',
+        'hostsManager',
+        'workspacesFact',
+        'commonsFact',
+        'credential',
+        function ($scope,
+                  $cookies,
+                  $filter,
+                  $location,
+                  $route,
+                  $routeParams,
+                  $uibModal,
+                  hostsManager,
+                  workspacesFact,
+                  commonsFact,
+                  credential) {
 
         var init = function() {
             $scope.selectall_hosts = false;
@@ -15,6 +35,7 @@ angular.module('faradayApp')
             $scope.columns = {
                 "id": false,
                 "ip": true,
+                "search_in_shodan": true,
                 "description": false,
                 "hostnames": false,
                 "services": false,
@@ -27,6 +48,7 @@ angular.module('faradayApp')
                 "owned": true,
                 "create_time": true,
                 "last_modified": true,
+                "owner": true
             }
             if($cookies.get('HColumns')) {
                 preferences = JSON.parse($cookies.get('HColumns'))
@@ -60,6 +82,7 @@ angular.module('faradayApp')
             parseSearchQuery();
 
             loadHosts();
+
         };
 
         var parseSearchQuery = function() {
@@ -350,6 +373,53 @@ angular.module('faradayApp')
         $scope.pageCount = function() {
             return Math.ceil($scope.totalHosts / $scope.pageSize);
         };
+
+        $scope.copyToClipboard = function(ip){
+            var elem = document.getElementsByName(ip)[0];
+
+            var targetId = "_hiddenCopyText_";
+            var isInput = elem.tagName === "INPUT" || elem.tagName === "TEXTAREA";
+            var origSelectionStart, origSelectionEnd;
+            if (isInput) {
+                target = elem;
+                origSelectionStart = elem.selectionStart;
+                origSelectionEnd = elem.selectionEnd;
+            } else {
+                target = document.getElementById(targetId);
+                if (!target) {
+                    var target = document.createElement("textarea");
+                    target.style.position = "absolute";
+                    target.style.left = "-9999px";
+                    target.style.top = "0";
+                    target.id = targetId;
+                    document.body.appendChild(target);
+                }
+                target.textContent = elem.innerText;
+            }
+
+            var currentFocus = document.activeElement;
+            target.focus();
+            target.setSelectionRange(0, target.value.length);
+
+
+            var succeed;
+            try {
+                succeed = document.execCommand("copy");
+            } catch(e) {
+                succeed = false;
+            }
+
+            if (currentFocus && typeof currentFocus.focus === "function") {
+                currentFocus.focus();
+            }
+
+            if (isInput) {
+                elem.setSelectionRange(origSelectionStart, origSelectionEnd);
+            } else {
+                target.textContent = "";
+            }
+            return succeed;
+        }
 
         $scope.enableFileUpload = function() {
             if($scope.fileUploadEnabled === undefined) {

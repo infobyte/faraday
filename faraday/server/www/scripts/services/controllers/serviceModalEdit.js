@@ -3,9 +3,25 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('serviceModalEdit',
-        ['$q', '$scope', '$modalInstance', '$routeParams', 'SERVICE_STATUSES', 'service', 'servicesManager', 'commonsFact', 'workspace',
-        function($q, $scope, $modalInstance, $routeParams, SERVICE_STATUSES, service, servicesManager, commonsFact, workspace) {
+    .controller('serviceModalEdit', [
+        '$q',
+        '$scope',
+        '$modalInstance',
+        '$routeParams',
+        'SERVICE_STATUSES',
+        'service',
+        'servicesManager',
+        'commonsFact',
+        'workspace',
+        function ($q,
+                  $scope,
+                  $modalInstance,
+                  $routeParams,
+                  SERVICE_STATUSES,
+                  service,
+                  servicesManager,
+                  commonsFact,
+                  workspace) {
 
         init = function() {
             // current Workspace

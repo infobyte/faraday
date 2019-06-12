@@ -1,1 +1,0 @@
-Update os icons.

@@ -7,11 +7,12 @@ See the file 'doc/LICENSE' for the license information
 
 import os
 
-from faraday.client.start_client import FARADAY_BASE
+from faraday.client.start_client import FARADAY_CLIENT_BASE
 
 def filter_services():
-    open_file = open(os.path.join(FARADAY_BASE,'plugins/port_mapper.txt'),"r")
-    mapper = open_file.read()
+    filename = os.path.join(FARADAY_CLIENT_BASE, 'plugins/port_mapper.txt')
+    with open(filename, "r") as fp:
+        mapper = fp.read()
     filtering = mapper.split('\n')
     services = []
 

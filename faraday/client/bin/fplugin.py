@@ -18,17 +18,17 @@ import argparse
 import readline
 from Queue import Queue
 
-parent_path = os.path.abspath(os.path.join(__file__, '../..'))
-sys.path.insert(0, parent_path)
-from plugins import fplugin_utils
+from faraday.client.plugins import fplugin_utils
 
 from colorama import Fore
-from config.configuration import getInstanceConfiguration
-from managers.mapper_manager import MapperManager
-from model.controller import ModelController
-from persistence.server.server import login_user
+from faraday.config.configuration import getInstanceConfiguration
+from faraday.client.managers.mapper_manager import MapperManager
+from faraday.client.model.controller import ModelController
+from faraday.client.persistence.server.server import login_user
 
 CONF = getInstanceConfiguration()
+
+plugins = None
 
 
 class RawDescriptionAndDefaultsHelpFormatter(argparse.RawDescriptionHelpFormatter,
@@ -79,10 +79,10 @@ def dispatch(args, unknown, user_help, username, password):
         else:
             sys.exit(1)
 
-    faraday_directory = os.path.dirname(os.path.realpath(os.path.join(__file__, "../")))
+    from faraday import client
+    faraday_directory = os.path.dirname(os.path.realpath(os.path.join(client.__file__)))
 
     plugin_path = os.path.join(faraday_directory, "bin/", args.command + '.py')
-
     # Get filename and import this
     module_fplugin = imp.load_source('module_fplugin', plugin_path)
     module_fplugin.models.server.FARADAY_UP = False
@@ -139,7 +139,8 @@ def dispatch(args, unknown, user_help, username, password):
         sys.exit(ret)
 
 
-if __name__ == '__main__':
+def main():
+    global plugins
 
     signal.signal(signal.SIGINT, signal_handler)
 
@@ -188,6 +189,10 @@ if __name__ == '__main__':
     # Only parse known args. Unknown ones will be passed on the the called script
     args, unknown = parser.parse_known_args()
 
+    # print("""\nTo login please provide your valid DB Credentials.\n""")
+    # username = raw_input('Username: ')
+    # password = getpass.getpass('Password: ')
+
     if not args.interactive:
         dispatch(args, unknown, parser.format_help(), args.username, args.password)
     else:
@@ -217,6 +222,7 @@ if __name__ == '__main__':
 
                 # Split line read from stdin into argv
                 new_args = shlex.split(line)
+                new_args += ['--username', args.username, '--password', args.password]
 
                 if '-i' in new_args or '--interactive' in new_args:
                     print 'Already in interactive mode!'
@@ -240,3 +246,7 @@ if __name__ == '__main__':
                 sys.exit(0)
             except SystemExit:
                 pass
+
+
+if __name__ == '__main__':
+    main()

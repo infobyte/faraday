@@ -6,9 +6,11 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+import os
 import gi
 
 from faraday.config.configuration import getInstanceConfiguration
+from faraday.client.start_client import FARADAY_CLIENT_BASE
 
 gi.require_version('Gtk', '3.0')
 
@@ -49,7 +51,7 @@ class AppWindow(Gtk.ApplicationWindow):
         self.statusbar = statusbar
 
         self.terminal.connect("child_exited", self.on_terminal_exit)
-        self.icons = CONF.getImagePath() + "icons/"
+        self.icons = os.path.join(FARADAY_CLIENT_BASE, "data", "images", "icons")
 
         window = self.create_window_main_structure()
         self.add(window)
@@ -92,7 +94,7 @@ class AppWindow(Gtk.ApplicationWindow):
     def append_remove_terminal_button_to_notebook(self):
         """Apprends a remove_terminal_icon to the end of notebooks
         action area"""
-        remove_terminal_icon = Gtk.Image.new_from_file(self.icons + "exit.png")
+        remove_terminal_icon = Gtk.Image.new_from_file(os.path.join(self.icons,"exit.png"))
         remove_terminal_button = Gtk.Button()
         remove_terminal_button.set_tooltip_text("Delete current tab")
         remove_terminal_button.connect("clicked", self.delete_tab)
@@ -178,12 +180,18 @@ class AppWindow(Gtk.ApplicationWindow):
         toolbar.set_hexpand(True)
         icons = self.icons
 
-        new_button_icon = Gtk.Image.new_from_file(icons + "Documentation.png")
-        new_terminal_icon = Gtk.Image.new_from_file(icons + "newshell.png")
-        preferences_icon = Gtk.Image.new_from_file(icons + "config.png")
-        toggle_log_icon = Gtk.Image.new_from_file(icons + "debug.png")
-        open_report_icon = Gtk.Image.new_from_file(icons + "FolderSteel-20.png")
-        go_to_web_ui_icon = Gtk.Image.new_from_file(icons + "visualize.png")
+        new_button_icon = Gtk.Image.new_from_file(
+            os.path.join(icons, "Documentation.png"))
+        new_terminal_icon = Gtk.Image.new_from_file(
+            os.path.join(icons, "newshell.png"))
+        preferences_icon = Gtk.Image.new_from_file(
+            os.path.join(icons, "config.png"))
+        toggle_log_icon = Gtk.Image.new_from_file(
+            os.path.join(icons, "debug.png"))
+        open_report_icon = Gtk.Image.new_from_file(
+            os.path.join(icons, "FolderSteel-20.png"))
+        go_to_web_ui_icon = Gtk.Image.new_from_file(
+            os.path.join(icons, "visualize.png"))
 
         new_terminal_button = Gtk.ToolButton.new(new_terminal_icon, None)
         new_terminal_button.set_tooltip_text("Create a new tab")

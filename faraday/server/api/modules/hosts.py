@@ -10,6 +10,8 @@ from flask import Blueprint, make_response, jsonify, abort
 from flask_classful import route
 from marshmallow import fields, Schema
 from filteralchemy import Filter, FilterSet, operators
+import wtforms
+from flask_wtf.csrf import validate_csrf
 
 from faraday.server.utils.database import get_or_create
 
@@ -84,7 +86,7 @@ class ServiceFilter(Filter):
 class HostFilterSet(FilterSet):
     class Meta(FilterSetMeta):
         model = Host
-        fields = ('ip', 'os', 'service')
+        fields = ('ip', 'name', 'os', 'service')
         operators = (operators.Equal, operators.Like, operators.ILike)
     service = ServiceFilter(fields.Str())
 
@@ -120,7 +122,10 @@ class HostsView(PaginatedMixin,
 
     @route('/bulk_create/', methods=['POST'])
     def bulk_create(self, workspace_name):
-
+        try:
+            validate_csrf(flask.request.form.get('csrf_token'))
+        except wtforms.ValidationError:
+            flask.abort(403)
         def parse_list(list_string):
             items = re.findall(r"(\w+)", list_string)
             return items

@@ -3,8 +3,29 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('navigationCtrl', ['$scope', '$http', '$route', '$routeParams', '$cookies', '$location', '$interval', '$uibModal', 'configSrv', 'workspacesFact', 'Notification',
-        function($scope, $http, $route, $routeParams, $cookies, $location, $interval, $uibModal, configSrv, workspacesFact, Notification) {
+    .controller('navigationCtrl', [
+        '$scope',
+        '$http',
+        '$route',
+        '$routeParams',
+        '$cookies',
+        '$location',
+        '$interval',
+        '$uibModal',
+        'configSrv',
+        'workspacesFact',
+        'Notification',
+        function ($scope,
+                  $http,
+                  $route,
+                  $routeParams,
+                  $cookies,
+                  $location,
+                  $interval,
+                  $uibModal,
+                  configSrv,
+                  workspacesFact,
+                  Notification) {
 
         $scope.workspace = "";
         $scope.component = "";

@@ -32,7 +32,7 @@ from faraday.config.constant import (
 
 CONST_FARADAY_HOME_PATH = os.path.expanduser('~/.faraday')
 from faraday.utils import dependencies
-from faraday.server.utils.logger import get_logger
+from faraday.server.utils.logger import get_logger, set_logging_level
 from faraday.utils.user_input import query_yes_no
 
 from faraday import __version__ as f_version
@@ -221,6 +221,8 @@ def setConf():
 
     CONF = getInstanceConfiguration()
     CONF.setDebugStatus(args.debug)
+    if args.debug:
+        set_logging_level(logging.DEBUG)
 
     host = CONF.getApiConInfoHost() if str(CONF.getApiConInfoHost()) != "None" else FARADAY_DEFAULT_HOST
     port_xmlrpc = CONF.getApiConInfoPort() if str(CONF.getApiConInfoPort()) != "None" else FARADAY_DEFAULT_PORT_XMLRPC

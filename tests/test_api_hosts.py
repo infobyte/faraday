@@ -492,7 +492,8 @@ class TestHostAPI:
         expected_created_hosts = 2
         file_contents = """ip, description, os, hostnames\n
         10.10.10.10, test_host, linux, \"['localhost', 'test_host']\"\n
-        10.10.10.11, test_host, linux, \"['localhost', 'test_host_1']\""""
+        10.10.10.11, test_host, linux, \"['localhost', 'test_host_1']\"
+        """
         data = {
             'file': (BytesIO(file_contents), 'hosts.csv'),
             'csrf_token': csrf_token

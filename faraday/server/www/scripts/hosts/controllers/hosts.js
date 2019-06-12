@@ -15,6 +15,7 @@ angular.module('faradayApp')
         'workspacesFact',
         'commonsFact',
         'credential',
+        '$http',
         function ($scope,
                   $cookies,
                   $filter,
@@ -25,7 +26,8 @@ angular.module('faradayApp')
                   hostsManager,
                   workspacesFact,
                   commonsFact,
-                  credential) {
+                  credential,
+                  $http) {
 
         var init = function() {
             $scope.selectall_hosts = false;

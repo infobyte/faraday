@@ -1313,3 +1313,22 @@ a.button-disable{cursor: not-allowed;pointer-events: none;opacity: 0.5}
 .overall{
     z-index: 1000000 !important;
 }
+.markdown-preview {
+    height: 200px;
+    overflow-x: auto;
+}
+.hr_divider{
+    height:1px;
+    border-width:0;
+    background-color: #e5e5e5;
+    margin: 8px 0 8px 0;
+}
+.ui-grid-selection-row-header-buttons {
+cursor: pointer !important;
+    opacity: 1 !important;
+
+}
+
+.visible-overflow {
+    overflow-y: visible !important;
+}

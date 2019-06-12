@@ -488,7 +488,7 @@ class CustomFieldsSchema(db.Model):
     __tablename__ = 'custom_fields_schema'
 
     id = Column(Integer, primary_key=True)
-    field_name = Column(Text)
+    field_name = Column(Text, unique=True)
     field_type = Column(Text)
     field_display_name = Column(Text)
     field_order = Column(Integer)

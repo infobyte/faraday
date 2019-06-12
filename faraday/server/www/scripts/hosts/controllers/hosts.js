@@ -16,6 +16,7 @@ angular.module('faradayApp')
         'commonsFact',
         'credential',
         '$http',
+        'BASEURL',
         function ($scope,
                   $cookies,
                   $filter,
@@ -27,7 +28,8 @@ angular.module('faradayApp')
                   workspacesFact,
                   commonsFact,
                   credential,
-                  $http) {
+                  $http,
+                  BASEURL) {
 
         var init = function() {
             $scope.selectall_hosts = false;

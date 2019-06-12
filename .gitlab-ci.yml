@@ -5,6 +5,10 @@ variables:
     POSTGRES_USER: custom_user
     POSTGRES_PASSWORD: custom_pass
     PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+    ## ENV_VARS LIST
+    # FULL_TEST = Test all jobs
+    # BUILD_TEST = Test default and build jobs
+    # DAILY_TEST = Run every night at 03 am
 
 cache:
   paths:
@@ -29,6 +33,9 @@ closure_compiler:
     stage: pre_testing
     script:
         - /opt/cc.sh faraday/server/www/scripts
+    except:
+        variables:
+            - $BUILD_TEST
 
 merge_conflict_check:
     tags:
@@ -40,6 +47,9 @@ merge_conflict_check:
         - git config --global user.email "you@example.com"
         - git config --global user.name "Mergerbot"
         - python3 merge-conflict-detector.py
+    except:
+        variables:
+            - $BUILD_TEST
 
 pylint:
     tags:
@@ -54,6 +64,9 @@ pylint:
     artifacts:
         paths:
             - pylint.svg
+    except:
+        variables:
+            - $BUILD_TEST
 
 postgresql_test:
     image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base
@@ -81,6 +94,9 @@ postgresql_test:
         when: on_failure
         paths:
             - ~/.faraday/logs/faraday-server.log
+    except:
+        variables:
+            - $BUILD_TEST
 
 sqlite_test:
     image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base
@@ -107,6 +123,9 @@ sqlite_test:
         when: on_failure
         paths:
             - dist/*
+    except:
+        variables:
+            - $BUILD_TEST
 
 generate_release_file:
     image: python:3
@@ -124,7 +143,10 @@ generate_release_file:
         variables:
             - $FULL_DOC == "True"
             - $RELEASE_FILE == "True"
-            - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(master)$/
+            - $BUILD_TEST
+            - $FULL_TEST
+            - $DAILY_TEST
 
 binary_files:
     image: python:2.7.16
@@ -160,13 +182,17 @@ binary_files:
         expire_in: 1 week
     only:
         variables:
-            - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(master)$/
             - $CI_COMMIT_TAG
+            - $BUILD_TEST
+            - $FULL_TEST
+            - $DAILY_TEST
 
 macos_dmg:
     tags:
         - macos
     stage: build
+    allow_failure: true
     script:
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
@@ -193,31 +219,8 @@ macos_dmg:
         expire_in: 1 week
     only:
         variables:
-            - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(master)$/
             - $CI_COMMIT_TAG
-# This is a test of future test case that will be scheduled
-i_do_nothing:
-    image: python:3
-    stage: post_testing
-    allow_failure: true
-    script:
-        - apt-get update -qy
-        - apt-get install -y python-dev python-pip
-    only:
-        variables:
-            - $FULL_TEST == "True"
-            - $I_DO_NOTH_TEST == "True"
-
-
-# This is a test of future test case that will be scheduled
-i_do_nothing2:
-    image: python:3
-    stage: post_testing
-    allow_failure: true
-    script:
-        - apt-get update -qy
-        - apt-get install -y python-dev python-pip
-    only:
-        variables:
-            - $FULL_TEST == "True"
-            - $I_DO_NOTH2_TEST == "True"
+            - $BUILD_TEST
+            - $FULL_TEST
+            - $DAILY_TEST

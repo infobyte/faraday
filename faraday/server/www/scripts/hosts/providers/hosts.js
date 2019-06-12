@@ -3,7 +3,9 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('hostsManager', ['BASEURL', '$http', '$q', 'ServerAPI', 'Host', 'commonsFact', function(BASEURL, $http, $q, ServerAPI, Host, commonsFact) {
+    .factory('hostsManager', ['BASEURL', '$http', '$q', 'ServerAPI', 'Host', 'commonsFact',
+            function(BASEURL, $http, $q, ServerAPI, Host, commonsFact) {
+
         var hostsManager = {};
 
         hostsManager._objects = {};

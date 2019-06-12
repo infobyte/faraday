@@ -24,7 +24,7 @@ LVL_SETTABLE_HANDLERS = []
 def setup_logging():
     logger = logging.getLogger(ROOT_LOGGER)
     logger.propagate = False
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
 
     if faraday.server.config.logger_config.use_rfc5424_formatter:
         formatter = RFC5424Formatter()

@@ -485,7 +485,7 @@ class TestHostAPI:
             u'service_summaries': [],
             u'vulns': 0}
 
-    def test_add_hosts_from_csv(self, session, test_client):
+    def test_add_hosts_from_csv(self, session, test_client, csrf_token):
         ws = WorkspaceFactory.create(name='abc')
         session.add(ws)
         session.commit()
@@ -494,7 +494,8 @@ class TestHostAPI:
         10.10.10.10, test_host, linux, \"['localhost', 'test_host']\"\n
         10.10.10.11, test_host, linux, \"['localhost', 'test_host_1']\""""
         data = {
-            'file': (BytesIO(file_contents), 'hosts.csv')
+            'file': (BytesIO(file_contents), 'hosts.csv'),
+            'csrf_token': csrf_token
         }
         headers = {'Content-type': 'multipart/form-data'}
         res = test_client.post('/v2/ws/{0}/hosts/bulk_create/'.format(ws.name),

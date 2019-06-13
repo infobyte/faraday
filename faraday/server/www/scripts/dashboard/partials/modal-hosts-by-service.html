@@ -44,11 +44,14 @@
             </tr>
         </tbody>
     </table>
-    <div class="form-group">
-        <button class="btn btn-danger" clipboard supported="supported" text="clip" on-copied="messageCopied()">{{clipText}}</button>
-    </div>
-</div>
+    <div class="">
+        <div class="col-md-6" style="padding: 0px">
+            <button class="btn btn-danger" clipboard supported="supported" text="clip" on-copied="messageCopied()">{{clipText}}</button>
+        </div>
 
-<div class="modal-footer btn-group">
-    <button class="btn btn-success" ng-click="ok()">OK</button>
+        <div class="col-md-6 btn-group" style="padding: 0px">
+            <button class="btn btn-success pull-right" ng-click="ok()">OK</button>
+        </div>
+    </div>
+    <div class="modal-footer"></div>
 </div>

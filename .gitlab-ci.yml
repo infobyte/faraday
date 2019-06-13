@@ -224,3 +224,44 @@ macos_dmg:
             - $BUILD_TEST
             - $FULL_TEST
             - $DAILY_TEST
+
+documentation:
+    image: python:3
+    stage: post_testing
+    script:
+        - apt-get update -qy
+        - apt-get install -y python-pip python-dev
+        - pip install sphinx
+        - cd doc && make html
+    artifacts:
+        paths:
+            - doc/_build/html
+    only:
+        variables:
+            - $FULL_DOC
+            - $DOC
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/
+
+
+test_hypothesis:
+    image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base
+    stage: testing
+    allow_failure: true
+    script:
+        - apt-get update -qy
+        - pip install virtualenv
+        - virtualenv -p python2 faraday_venv
+        - source faraday_venv/bin/activate
+        #- pip install --upgrade -r requirements_server.txt
+        - python setup.py install
+        - pip install --upgrade responses pytest-xdist pytest-cov
+        - pip install --upgrade -r requirements_dev.txt
+        - mkdir -p ~/.faraday/config
+        - cp tests/data/server.ini ~/.faraday/config
+        #- sed -i 's/mapped_table/persist_selectable/' faraday_venv/lib/python2.7/site-packages/flask_sqlalchemy/__init__.py  # TODO remove when flask_sqlalchemy fixes the issue
+        - pytest tests -v --cov=faraday/server/api --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB -m hypothesis
+    only:
+        variables:
+            - $FULL_TEST
+            - $HYPO_TEST
+            - $DAILY_TEST

@@ -3,9 +3,26 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('dashboardCtrl',
-        ['$scope', '$filter', '$route', '$routeParams', '$location', 'dashboardSrv', 'workspacesFact', 'vulnsManager','configSrv',
-        function($scope, $filter, $route, $routeParams, $location, dashboardSrv, workspacesFact, vulnsManager, configSrv) {
+    .controller('dashboardCtrl',[
+        '$scope',
+        '$filter',
+        '$route',
+        '$routeParams',
+        '$location',
+        'dashboardSrv',
+        'workspacesFact',
+        'vulnsManager',
+        'configSrv',
+        function($scope,
+                 $filter,
+                 $route,
+                 $routeParams,
+                 $location,
+                 dashboardSrv,
+                 workspacesFact,
+                 vulnsManager,
+                 configSrv) {
+
             $scope.props = dashboardSrv.props;
 
             init = function() {

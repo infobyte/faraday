@@ -3,20 +3,23 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('targetFact', ['BASEURL', '$q', 'hostsManager', 'servicesManager', function(BASEURL, $q, hostsManager, servicesManager) {
+    .factory('targetFact', ['BASEURL', '$q', 'hostsManager', 'servicesManager',
+        function(BASEURL, $q, hostsManager, servicesManager) {
         var targetFact = {};
 
-        targetFact.getTargets = function(workspace) {
+        targetFact.getTargets = function(workspace, page, page_size, filter, sort, sort_direction) {
             var deferred = $q.defer();
-            var res = [];
+            var res = {hosts: [], total: 0};
             var hosts_dict = {};
-            hostsManager.getHosts(workspace).then(function(resp) {
+            hostsManager.getHosts(workspace, page, page_size, filter, sort, sort_direction).then(function(resp) {
                 resp.hosts.forEach(function(host) {
                     host.hostnames = host.hostnames || [];
                     host.services = [];
                     hosts_dict[host._id] = host;
-                    res.push(host);
+                    res.hosts.push(host);
                 });
+
+                res.total = resp.total;
 
                 servicesManager.getServices(workspace).then(function(services) {
                     services.forEach(function(service) {

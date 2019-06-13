@@ -1,7 +1,24 @@
 angular.module('faradayApp')
-    .controller('vulnModelsCtrl',
-        ['$scope', '$filter', '$http', '$q', '$uibModal', 'ServerAPI', 'csvService', 'commonsFact', 'vulnModelsManager',
-            function($scope, $filter, $http, $q, $uibModal, ServerAPI, csvService, commonsFact, vulnModelsManager) {
+    .controller('vulnModelsCtrl', [
+        '$scope',
+        '$filter',
+        '$http',
+        '$q',
+        '$uibModal',
+        'ServerAPI',
+        'csvService',
+        'commonsFact',
+        'vulnModelsManager',
+        function ($scope,
+                  $filter,
+                  $http,
+                  $q,
+                  $uibModal,
+                  ServerAPI,
+                  csvService,
+                  commonsFact,
+                  vulnModelsManager) {
+
                 $scope.models = [];
                 $scope.loaded_models = false;
                 $scope.totalModels = 0;
@@ -11,6 +28,7 @@ angular.module('faradayApp')
                 $scope.currentPage;
                 $scope.pageSize = 20;
                 $scope.loading = false;
+                $scope.customFields;
 
                 var init = function() {
                     // table stuff
@@ -40,6 +58,19 @@ angular.module('faradayApp')
                             $scope.currentPage = $scope.pageCount();
                         }
                     });;
+
+                    loadCustomFields();
+                };
+
+                var loadCustomFields = function () {
+                    var deferred = $q.defer();
+                    ServerAPI.getCustomFields().then(
+                        function(response){
+                            $scope.customFields = response.data;
+                            deferred.resolve($scope.customFields);
+                        }, function(){
+                            deferred.reject();
+                        });
                 };
 
                 $scope.pageCount = function() {
@@ -225,6 +256,7 @@ angular.module('faradayApp')
 
                 $scope.insert = function(data) {
                     $scope.loading = false;
+
                     return vulnModelsManager.create(data)
                         .then(function(data) {
                             $scope.loading = false;
@@ -241,7 +273,11 @@ angular.module('faradayApp')
                         backdrop : 'static',
                         controller: 'vulnModelModalNew',
                         size: 'lg',
-                        resolve: {}
+                        resolve: {
+                                customFields: function () {
+                                return $scope.customFields;
+                            }
+                        }
                     });
 
                     modal.result
@@ -274,6 +310,8 @@ angular.module('faradayApp')
                             resolve: {
                                 model: function() {
                                     return model;
+                                },customFields: function () {
+                                    return $scope.customFields;
                                 }
                             }
                         });
@@ -346,7 +384,6 @@ angular.module('faradayApp')
                 $scope.toggleSort = function(field) {
                     $scope.toggleSortField(field);
                     $scope.toggleReverse();
-                    $scope.sort();
                 };
 
                 // toggles column sort field

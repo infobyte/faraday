@@ -65,7 +65,7 @@ class TestCredentialsAPIGeneric(ReadOnlyAPITests):
         assert res.status_code == 400
         assert res.json == {u'message': u"Can't comment object of another workspace"}
 
-    def test_cannot_create_comment_of_another_workspace_object(self, test_client, session):
+    def test_cannot_create_comment_of_inexistent_object(self, test_client, session):
         raw_comment = self._create_raw_comment('service', 456464556)
         res = test_client.post(self.url(workspace=self.workspace), data=raw_comment)
         assert res.status_code == 400
@@ -87,6 +87,26 @@ class TestCredentialsAPIGeneric(ReadOnlyAPITests):
         assert len(session.query(Comment).all()) == initial_comment_count + 1
 
         url = self.url(workspace=self.workspace).strip('/') + '_unique/'
+        res = test_client.post(url, data=raw_comment)
+        assert res.status_code == 409
+        assert 'object' in res.json
+        assert type(res.json) == dict
+
+    def test_create_unique_comment_for_plugins_after_and_before(self, session, test_client):
+        """
+
+
+        """
+        service = ServiceFactory.create(workspace=self.workspace)
+        session.commit()
+        initial_comment_count = len(session.query(Comment).all())
+        raw_comment = self._create_raw_comment('service', service.id)
+        url = self.url(workspace=self.workspace).strip('/') + '_unique/'
+        res = test_client.post(url,
+                               data=raw_comment)
+        assert res.status_code == 201
+        assert len(session.query(Comment).all()) == initial_comment_count + 1
+
         res = test_client.post(url, data=raw_comment)
         assert res.status_code == 409
         assert 'object' in res.json

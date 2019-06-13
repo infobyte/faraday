@@ -3,9 +3,29 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('modalNewVulnCtrl',
-        ['$modalInstance', '$filter', '$upload', 'EASEOFRESOLUTION', 'commonsFact', 'severities', 'workspace', 'targetFact', 'vulnModelsManager', 'vulnsManager', 'customFields',
-        function($modalInstance, $filter, $upload, EASEOFRESOLUTION, commonsFact, severities, workspace, targetFact, vulnModelsManager, vulnsManager, customFields) {
+    .controller('modalNewVulnCtrl', [
+        '$modalInstance',
+        '$filter',
+        '$upload',
+        'EASEOFRESOLUTION',
+        'commonsFact',
+        'severities',
+        'workspace',
+        'targetFact',
+        'vulnModelsManager',
+        'vulnsManager',
+        'customFields',
+        function ($modalInstance,
+                  $filter,
+                  $upload,
+                  EASEOFRESOLUTION,
+                  commonsFact,
+                  severities,
+                  workspace,
+                  targetFact,
+                  vulnModelsManager,
+                  vulnsManager,
+                  customFields) {
 
         var vm = this;
 
@@ -33,6 +53,8 @@ angular.module('faradayApp')
         // true if all the parents in data.parents are type Host
         vm.host_parents;
 
+        vm.activeSearch;
+
         init = function() {
             vm.vuln_types = [
                 {name:'Vulnerability', value:'Vulnerability'},
@@ -59,8 +81,9 @@ angular.module('faradayApp')
             vm.file_name_error = false;
 
             vm.pageSize = 5;
-            vm.currentPage = 0;
+            vm.currentPage = 1;
             vm.newCurrentPage = 0;
+            vm.total_rows = 0;
 
             vm.data = {
                 _attachments: {},
@@ -100,8 +123,9 @@ angular.module('faradayApp')
             vm.targets = [];
             vm.target_filter = "";
 
-            targetFact.getTargets(workspace).then(function(targets){
-                vm.targets = targets;
+            targetFact.getTargets(workspace,  vm.currentPage, vm.pageSize).then(function(targets){
+                vm.targets = targets.hosts;
+                vm.total_rows = targets.total;
             });
         };
 
@@ -176,19 +200,20 @@ angular.module('faradayApp')
 
         vm.resetTarget = function() {
             vm.data.parents = [];
-            vm.host_parents = false; 
+            vm.host_parents = false;
         }
 
         vm.setTarget = function(target) {
-            var index = vm.data.parents.indexOf(target);
+            var index = -1;
+            var array = $.grep(vm.data.parents, function(e, i){
+                index = i;
+                return e.id === target.id && e.type === target.type
+            });
 
-            if(index >= 0) {
-                // if target already selected, user is deselecting
+            if (array.length > 0)
                 vm.data.parents.splice(index, 1);
-            } else {
-                // else, add to parents list
+            else
                 vm.data.parents.push(target);
-            }
 
             // refresh host_parents var
             vm.host_parents = vm.data.parents.some(function(elem, ind, arr) {
@@ -198,10 +223,12 @@ angular.module('faradayApp')
 
         vm.go = function() {
             vm.currentPage = 0;
-            if((vm.newCurrentPage-1) <= parseInt(vm.targets.length/vm.pageSize)
-                    && (vm.newCurrentPage-1) > -1) {
-                vm.currentPage = (vm.newCurrentPage-1);
+            if((vm.newCurrentPage) <= parseInt(vm.total_rows/vm.pageSize)
+                    && (vm.newCurrentPage) > 0) {
+                vm.currentPage = vm.newCurrentPage;
             }
+
+            vm.updatePaginator(false, vm.newCurrentPage)
         }
 
         vm.newReference = function() {
@@ -246,6 +273,12 @@ angular.module('faradayApp')
                 policyviolations.push({value: policyviolation});
             });
             vm.data.policyviolations = policyviolations;
+
+            if(item.customfields){
+                for(var cf in item.customfields){
+                    vm.data.custom_fields[cf] = item.customfields[cf];
+                }
+            }
         }
 
         vm.updateBtnSeverityColor = function (severity) {
@@ -281,6 +314,42 @@ angular.module('faradayApp')
         vm.changeSeverity = function (severity) {
             vm.data.severity = severity;
             vm.updateBtnSeverityColor(severity);
+        };
+
+        vm.updatePaginator = function (isNext, toGo) {
+            if (isNext === true)
+                vm.currentPage = vm.currentPage + 1;
+            else
+                vm.currentPage = vm.currentPage - 1;
+
+            if (toGo)
+                vm.currentPage = toGo;
+
+
+            targetFact.getTargets(workspace,  vm.currentPage, vm.pageSize).then(function(targets){
+                vm.targets = targets.hosts;
+                vm.targets_filtered = vm.targets
+            });
+        };
+
+        vm.isParentSelected = function (target) {
+               return $.grep(vm.data.parents, function(e){ return e.id === target.id && e.type === target.type}).length > 0;
+        };
+
+        vm.filterTargets = function () {
+            var filter = { search : vm.target_filter };
+            targetFact.getTargets(workspace,  vm.currentPage, vm.pageSize, filter).then(function(targets){
+                vm.targets = targets.hosts;
+                vm.activeSearch = true;
+            });
+        };
+
+        vm.clearFilterTargets = function () {
+            vm.activeSearch = false;
+            targetFact.getTargets(workspace,  vm.currentPage, vm.pageSize).then(function(targets){
+                vm.targets = targets.hosts;
+                vm.target_filter = '';
+            });
         };
 
         init();

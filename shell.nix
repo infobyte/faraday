@@ -1,7 +1,7 @@
 with (import <nixpkgs> {});
   mkShell {
     buildInputs = [pandoc] ++ (with python27Packages;
-      [virtualenv pyopenssl psycopg2 pillow pygobject3 pynacl matplotlib lxml ldap
+      [virtualenv pyopenssl psycopg2 pillow pygobject3 pynacl matplotlib lxml ldap autobahn
       gobjectIntrospection gtk3 gnome3.vte ipython gssapi
       ]);
     shellHook = ''
@@ -19,7 +19,7 @@ with (import <nixpkgs> {});
         # Build new virtualenv with system packages
         virtualenv --system-site-packages $VENV_PATH
         source $VENV_PATH/bin/activate
-        ./develop.sh
+        python setup.py develop
         # pip install -r requirements_server.txt
         # pip install -r requirements.txt
         pip install -r requirements_dev.txt

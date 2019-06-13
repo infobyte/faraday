@@ -3,11 +3,33 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('hostCtrl',
-        ['$scope', '$cookies', '$filter', '$location', '$route', '$routeParams', '$uibModal', '$q',
-            'hostsManager', 'workspacesFact', 'dashboardSrv', 'servicesManager', 'commonsFact',
-            function($scope, $cookies, $filter, $location, $route, $routeParams, $uibModal, $q,
-            hostsManager, workspacesFact, dashboardSrv, servicesManager, commons) {
+    .controller('hostCtrl', [
+        '$scope',
+        '$cookies',
+        '$filter',
+        '$location',
+        '$route',
+        '$routeParams',
+        '$uibModal',
+        '$q',
+        'hostsManager',
+        'workspacesFact',
+        'dashboardSrv',
+        'servicesManager',
+        'commonsFact',
+        function ($scope,
+                  $cookies,
+                  $filter,
+                  $location,
+                  $route,
+                  $routeParams,
+                  $uibModal,
+                  $q,
+                  hostsManager,
+                  workspacesFact,
+                  dashboardSrv,
+                  servicesManager,
+                  commons) {
 
         loadHosts = function(){
             hostsManager.getHost($routeParams.hidId, $scope.workspace, true)

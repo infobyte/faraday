@@ -3,8 +3,24 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('dashboardSrv', ['BASEURL', 'SEVERITIES', '$cookies', '$q', '$http', '$interval', 'hostsManager', 'ServerAPI',
-        function(BASEURL, SEVERITIES, $cookies, $q, $http, $interval, hostsManager, ServerAPI) {
+    .factory('dashboardSrv', [
+        'BASEURL',
+        'SEVERITIES',
+        '$cookies',
+        '$q',
+        '$http',
+        '$interval',
+        'hostsManager',
+        'ServerAPI',
+        function (BASEURL,
+                  SEVERITIES,
+                  $cookies,
+                  $q,
+                  $http,
+                  $interval,
+                  hostsManager,
+                  ServerAPI) {
+
         var dashboardSrv = {};
 
         dashboardSrv._getView = function(url) {

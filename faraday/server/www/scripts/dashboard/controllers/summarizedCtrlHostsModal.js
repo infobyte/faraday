@@ -33,8 +33,10 @@ angular.module('faradayApp')
                 $scope.name = srv_name;
                 $scope.hosts = hosts;
                 $scope.clip = "";
-                $scope.hosts.forEach(function(h){
+                $scope.hosts.forEach(function(h, index){
                     $scope.clip += h.name + "\n";
+                    let port = $scope.getPort(h.service_summaries);
+                    $scope.hosts[index].port = port;
                 });
             });
 
@@ -44,5 +46,22 @@ angular.module('faradayApp')
 
             $scope.ok = function(){
                 $modalInstance.close();
+            }
+
+            $scope.getPort = function(summaries){
+
+                let port = "";
+
+                summaries.forEach(function(summarie){
+                    let summarieSplited = summarie.split(" ");
+
+                    if(summarieSplited[1] == $scope.name){
+                        let index = summarieSplited[0].indexOf("/");
+
+                        port = summarieSplited[0].substring(1, index);
+                    }
+                })
+
+                return port;
             }
     }]);

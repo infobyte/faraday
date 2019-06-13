@@ -55,17 +55,24 @@ class HostSchema(AutoSchema):
     type = fields.Function(lambda obj: 'Host', dump_only=True)
     service_summaries = fields.Method('get_service_summaries',
                                       dump_only=True)
+    versions = fields.Method('get_service_version',
+                                      dump_only=True)
 
     class Meta:
         model = Host
         fields = ('id', '_id', '_rev', 'ip', 'description', 'mac',
                   'credentials', 'default_gateway', 'metadata',
                   'name', 'os', 'owned', 'owner', 'services', 'vulns',
-                  'hostnames', 'type', 'service_summaries'
+                  'hostnames', 'type', 'service_summaries', 'versions'
                   )
 
     def get_service_summaries(self, obj):
         return [service.summary
+                for service in obj.services
+                if service.status == 'open']
+
+    def get_service_version(self, obj):
+        return [service.version
                 for service in obj.services
                 if service.status == 'open']
 

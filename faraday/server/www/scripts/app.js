@@ -29,7 +29,8 @@ var faradayApp = angular.module('faradayApp', [
                                                     'ui.grid.resizeColumns',
                                                     'angularSimplePagination',
                                                     'dndLists',
-                                                    'angularFileUploadLib'
+                                                    'angularFileUploadLib',
+                                                    'ui'
                                              ])
     .constant("BASEURL", (function() {
         var url = window.location.origin + "/";

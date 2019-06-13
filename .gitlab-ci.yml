@@ -259,7 +259,6 @@ test_hypothesis:
         - mkdir -p ~/.faraday/config
         - cp tests/data/server.ini ~/.faraday/config
         #- sed -i 's/mapped_table/persist_selectable/' faraday_venv/lib/python2.7/site-packages/flask_sqlalchemy/__init__.py  # TODO remove when flask_sqlalchemy fixes the issue
-        #- ./prepare_test_env.sh
         - pytest tests -v --cov=faraday/server/api --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB -m hypothesis
     only:
         variables:

@@ -24,7 +24,7 @@ from autobahn.twisted.websocket import (
 
 from faraday.server.models import Workspace
 
-logger = faraday.server.utils.logger.get_logger(__name__)
+logger = logging.getLogger(__name__)
 changes_queue = Queue()
 
 

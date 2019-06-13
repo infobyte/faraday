@@ -25,7 +25,7 @@ import re
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from StringIO import StringIO
-from faraday.utils.logs import getLogger
+
 
 # List all nodes in a ReportItem object that can have multiple values
 MULTI_VALUED_ATTS = [

@@ -14,7 +14,6 @@ from faraday.config.configuration import getInstanceConfiguration
 #from workspace import Workspace
 import faraday.client.model.log
 from faraday.client.model import Modelactions
-from faraday.utils.logs import getLogger
 from faraday.utils.common import socket, gateway
 import shutil
 #from plugins.api import PluginControllerAPI
@@ -37,6 +36,7 @@ _remote_sync_server_proxy = None
 # name of the currently logged user
 __current_logged_user = ""
 
+logger = logging.getLogger(__name__)
 
 def setUpAPIs(controller, workspace_manager, hostname=None, port=None):
     global __model_controller
@@ -113,7 +113,7 @@ def _setUpAPIServer(hostname=None, port=None):
                 CONF.setApiConInfo(hostname, port)
                 CONF.saveConfig()
 
-                getLogger().info(
+                logger.info(
                     "XMLRPC API server configured on %s" % str(
                         CONF.getApiConInfo()))
                 break
@@ -482,13 +482,13 @@ def log(msg ,level = "INFO"):
         "NOTSET": logging.NOTSET
     }
     level = levels.get(level, logging.NOTSET)
-    getLogger().log(level, msg)
+    logger.log(level, msg)
 
 def devlog(msg):
     """
     If DEBUG is set it will print information directly to stdout
     """
-    getLogger().debug(msg)
+    logger.debug(msg)
 
 def showDialog(msg, level="Information"):
     return faraday.client.model.log.getNotifier().showDialog(msg, level)

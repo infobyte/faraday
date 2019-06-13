@@ -45,6 +45,7 @@ import faraday.server.config
 # Load SQLAlchemy Events
 import faraday.server.events
 from faraday.server.utils.logger import LOGGING_HANDLERS
+
 logger = logging.getLogger(__name__)
 
 

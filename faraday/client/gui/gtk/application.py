@@ -759,6 +759,10 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.window.present()
 
         self.loghandler = GUIHandler()
+        if CONF.getDebugStatus():
+            self.loghandler.setLevel(logging.DEBUG)
+        else:
+            self.loghandler.setLevel(logging.INFO)
         faraday.client.model.guiapi.setMainApp(self)
         add_handler(self.loghandler)
         self.loghandler.registerGUIOutput(self.window)

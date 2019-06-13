@@ -126,9 +126,11 @@ class HostsView(PaginatedMixin,
             validate_csrf(flask.request.form.get('csrf_token'))
         except wtforms.ValidationError:
             flask.abort(403)
-        def parse_list(list_string):
-            items = re.findall(r"(\w+)", list_string)
+
+        def parse_hosts(list_string):
+            items = re.findall(r"([.a-zA-Z0-9_-]+)", list_string)
             return items
+
         logger.info("Create hosts from CSV")
         if 'file' not in flask.request.files:
             abort(400, "Missing File in request")
@@ -144,7 +146,7 @@ class HostsView(PaginatedMixin,
             workspace = self._get_workspace(workspace_name)
             for host_dict in hosts_reader:
                 try:
-                    hostnames = parse_list(host_dict.pop('hostnames'))
+                    hostnames = parse_hosts(host_dict.pop('hostnames'))
                     other_fields = {'owned': False, 'mac': u'00:00:00:00:00:00', 'default_gateway_ip': u'None'}
                     host_dict.update(other_fields)
                     host = super(HostsView, self)._perform_create(host_dict, workspace_name)

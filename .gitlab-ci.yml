@@ -264,3 +264,4 @@ test_hypothesis:
         variables:
             - $FULL_TEST
             - $HYPO_TEST
+            - $DAILY_TEST

@@ -54,6 +54,7 @@
                         </span>Upload CSV</button>
                         <p class="file-name">{{fileToUpload.name}}</p>
                     </span>
+                    <p ng-if="fileToUpload === undefined" style="display: inline-block;">Format: ip, description, os, hostnames, tags</p>
                 </div>
                 <div class="space-wrapper"></div>
                 <div class="control-wrapper control-wrap-right">

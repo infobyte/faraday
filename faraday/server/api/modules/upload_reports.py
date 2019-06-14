@@ -47,6 +47,7 @@ UPLOAD_REPORTS_QUEUE = MultiProcessingQueue()
 UPLOAD_REPORTS_CMD_QUEUE = MultiProcessingQueue()
 upload_api = Blueprint('upload_reports', __name__)
 
+logger = logging.getLogger(__name__)
 
 class RawReportProcessor(Thread):
     def __init__(self):
@@ -60,7 +61,7 @@ class RawReportProcessor(Thread):
         try:
             plugin_manager = PluginManager(os.path.join(CONF.getConfigPath(), "plugins"))
         except AttributeError:
-            get_logger().warning(
+            logger.warning(
                 "Upload reports in WEB-UI not configurated, run Faraday client and try again...")
             self._stop = True
             return
@@ -91,7 +92,7 @@ class RawReportProcessor(Thread):
             try:
 
                 workspace, file_path, cookie = UPLOAD_REPORTS_QUEUE.get(False, timeout=0.1)
-                get_logger().info('Processing raw report {0}'.format(file_path))
+                logger.info('Processing raw report {0}'.format(file_path))
 
                 # Cookie of user, used to create objects in server with the right owner.
                 server.FARADAY_UPLOAD_REPORTS_WEB_COOKIE = cookie
@@ -106,18 +107,18 @@ class RawReportProcessor(Thread):
                     continue
 
                 self.end_event.wait()
-                get_logger().info('Report processing of report {0} finished'.format(file_path))
+                logger.info('Report processing of report {0} finished'.format(file_path))
                 self.end_event.clear()
 
             except Empty:
                 time.sleep(0.1)
 
             except KeyboardInterrupt as ex:
-                get_logger().info('Keyboard interrupt, stopping report processing thread')
+                logger.info('Keyboard interrupt, stopping report processing thread')
                 self.stop()
 
             except Exception as ex:
-                get_logger().exception(ex)
+                logger.exception(ex)
                 continue
 
 
@@ -127,7 +128,7 @@ def file_upload(workspace=None):
     """
     Upload a report file to Server and process that report with Faraday client plugins.
     """
-    get_logger(__name__).debug("Importing new plugin report in server...")
+    logger.debug("Importing new plugin report in server...")
 
     # Authorization code copy-pasted from server/api/base.py
     ws = Workspace.query.filter_by(name=workspace).one()
@@ -157,7 +158,7 @@ def file_upload(workspace=None):
                 CONF.getConfigPath(),
                 'uploaded_reports/{0}'.format(raw_report_filename))
         except AttributeError:
-            get_logger().warning(
+            logger.warning(
                 "Upload reports in WEB-UI not configurated, run Faraday client and try again...")
             abort(make_response(jsonify(message="Upload reports not configurated: Run faraday client and start Faraday server again"), 500))
 

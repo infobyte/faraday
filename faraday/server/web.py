@@ -5,6 +5,7 @@
 import os
 import sys
 import functools
+import logging
 from signal import SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM, SIG_DFL, signal
 
 import twisted.web
@@ -30,7 +31,7 @@ from faraday.server.websocket_factories import (
 from faraday.server.api.modules.upload_reports import RawReportProcessor
 
 app = create_app()  # creates a Flask(__name__) app
-logger = faraday.server.utils.logger.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class CleanHttpHeadersResource(Resource, object):
@@ -133,7 +134,6 @@ class WebServer(object):
 
 
     def run(self):
-        print self.WEB_UI_LOCAL_PATH
         def signal_handler(*args):
             logger.info('Received SIGTERM, shutting down.')
             logger.info("Stopping threads, please wait...")

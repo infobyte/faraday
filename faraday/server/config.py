@@ -131,6 +131,8 @@ class ConfigSection(object):
             section = ssl
         elif section_name == 'storage':
             section = storage
+        elif section_name == 'logger':
+            section = logger_config
         else:
             return
         section.parse(__parser)
@@ -191,6 +193,9 @@ class StorageConfigObject(ConfigSection):
         self.path = None
 
 
+class LoggerConfig(ConfigSection):
+    def __init__(self):
+        self.use_rfc5424_formatter = False
 
 couchdb = CouchDBConfigObject()
 database = DatabaseConfigObject()
@@ -199,5 +204,6 @@ faraday_server = FaradayServerConfigObject()
 ldap = LDAPConfigObject()
 ssl = SSLConfigObject()
 storage = StorageConfigObject()
+logger_config = LoggerConfig()
 
 parse_and_bind_configuration()

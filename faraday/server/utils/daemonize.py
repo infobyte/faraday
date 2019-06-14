@@ -14,10 +14,12 @@ import errno
 import atexit
 import signal
 from functools import partial
+import logging
 
 import faraday.server.config
 from faraday.server.utils.logger import get_logger
 
+logger = logging.getLogger(__name__)
 
 # Default daemon parameters.
 # File mode creation mask of the daemon.
@@ -136,13 +138,13 @@ def createDaemon():
    return(0)
 
 def start_server():
-    get_logger(__name__).info('Running as a daemon')
+    logger.info('Running as a daemon')
     WORKDIR = faraday.server.config.FARADAY_BASE
     createDaemon()
 
 def stop_server(port):
     """Stops Faraday Server if it isn't running"""
-    logger = get_logger(__name__)
+    #logger = get_logger(__name__)
     pid = is_server_running(port)
     if pid is None:
         logger.error('Faraday Server is not running')
@@ -165,7 +167,7 @@ def stop_server(port):
 
 def is_server_running(port):
     """Returns server PID if it is running. Otherwise returns None"""
-    logger = get_logger(__name__)
+    #logger = get_logger(__name__)
     pid = get_server_pid(port)
     if pid is None:
         return None
@@ -186,7 +188,7 @@ def is_server_running(port):
         return pid
 
 def get_server_pid(port):
-    logger = get_logger(__name__)
+    #logger = get_logger(__name__)
 
     if not os.path.isfile(faraday.server.config.FARADAY_SERVER_PID_FILE.format(port)):
         return None

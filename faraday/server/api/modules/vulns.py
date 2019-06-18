@@ -151,7 +151,7 @@ class VulnerabilitySchema(AutoSchema):
             'service', 'obj_id', 'type', 'policyviolations',
             '_attachments',
             'target', 'host_os', 'resolution', 'metadata',
-            'custom_fields')
+            'custom_fields', 'external_id')
 
     def get_type(self, obj):
         return obj.__class__.__name__

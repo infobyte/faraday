@@ -1908,6 +1908,7 @@ class RuleExecution(Metadata):
     id = Column(Integer, primarykey=True)
     start = Column(DateTime, nullable=True)
     end = Column(DateTime, nullable=True)
+    rule_id = Column(Integer, ForeignKey('rule.id'), index=True, nullable=False)
     rule = relationship('Rule', backref=backref('executions', cascade="all, delete-orphan"))
 
     @property

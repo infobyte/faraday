@@ -8,7 +8,6 @@ Create Date: 2019-06-18 18:07:41.834191+00:00
 from alembic import op
 import sqlalchemy as sa
 
-
 # revision identifiers, used by Alembic.
 revision = '085188e0a016'
 down_revision = '2db31733fb78'
@@ -23,7 +22,23 @@ def upgrade():
         sa.Column('model', sa.String, nullable=False),
         sa.Column('parent', sa.String, nullable=True),
         sa.Column('fields', sa.JSON, nullable=True),
-        sa.Column('object', sa.JSON, nullable=False)
+        sa.Column('object', sa.JSON, nullable=False),
+        sa.Column('create_date', sa.DateTime),
+        sa.Column('update_date', sa.DateTime),
+        sa.Column('creator_id', sa.Integer),
+        sa.Column('update_user_id', sa.Integer)
+    )
+
+    op.create_foreign_key(
+        'rule_creator_id_fkey',
+        'rule',
+        'faraday_user', ['creator_id'], ['id']
+    )
+
+    op.create_foreign_key(
+        'rule_update_user_id_fkey',
+        'rule',
+        'faraday_user', ['update_user_id'], ['id']
     )
 
     op.create_table(
@@ -32,14 +47,46 @@ def upgrade():
         sa.Column('name', sa.String, nullable=True),
         sa.Column('command', sa.String, nullable=False),
         sa.Column('field', sa.String, nullable=True),
-        sa.Column('value', sa.String, nullable=True)
+        sa.Column('value', sa.String, nullable=True),
+        sa.Column('create_date', sa.DateTime),
+        sa.Column('update_date', sa.DateTime),
+        sa.Column('creator_id', sa.Integer),
+        sa.Column('update_user_id', sa.Integer)
+    )
+
+    op.create_foreign_key(
+        'action_creator_id_fkey',
+        'action',
+        'faraday_user', ['creator_id'], ['id']
+    )
+
+    op.create_foreign_key(
+        'action_update_user_id_fkey',
+        'action',
+        'faraday_user', ['update_user_id'], ['id']
     )
 
     op.create_table(
         'rule_action',
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('rule_id', sa.Integer, primary_key=True),
-        sa.Column('action_id', sa.Integer, primary_key=True)
+        sa.Column('action_id', sa.Integer, primary_key=True),
+        sa.Column('create_date', sa.DateTime),
+        sa.Column('update_date', sa.DateTime),
+        sa.Column('creator_id', sa.Integer),
+        sa.Column('update_user_id', sa.Integer)
+    )
+
+    op.create_foreign_key(
+        'rule_action_creator_id_fkey',
+        'rule_action',
+        'faraday_user', ['creator_id'], ['id']
+    )
+
+    op.create_foreign_key(
+        'rule_action_update_user_id_fkey',
+        'rule_action',
+        'faraday_user', ['update_user_id'], ['id']
     )
 
     op.create_foreign_key(
@@ -60,7 +107,23 @@ def upgrade():
         sa.Column('field', sa.String, nullable=False),
         sa.Column('value', sa.String, nullable=False),
         sa.Column('operator', sa.String, nullable=True),
-        sa.Column('rule_id', sa.Integer, nullable=False)
+        sa.Column('rule_id', sa.Integer, nullable=False),
+        sa.Column('create_date', sa.DateTime),
+        sa.Column('update_date', sa.DateTime),
+        sa.Column('creator_id', sa.Integer),
+        sa.Column('update_user_id', sa.Integer)
+    )
+
+    op.create_foreign_key(
+        'condition_creator_id_fkey',
+        'condition',
+        'faraday_user', ['creator_id'], ['id']
+    )
+
+    op.create_foreign_key(
+        'condition_update_user_id_fkey',
+        'condition',
+        'faraday_user', ['update_user_id'], ['id']
     )
 
     op.create_foreign_key(
@@ -74,7 +137,23 @@ def upgrade():
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('start', sa.DateTime, nullable=True),
         sa.Column('end', sa.DateTime, nullable=True),
-        sa.Column('rule_id', sa.Integer, nullable=False)
+        sa.Column('rule_id', sa.Integer, nullable=False),
+        sa.Column('create_date', sa.DateTime),
+        sa.Column('update_date', sa.DateTime),
+        sa.Column('creator_id', sa.Integer),
+        sa.Column('update_user_id', sa.Integer)
+    )
+
+    op.create_foreign_key(
+        'rule_execution_creator_id_fkey',
+        'rule_execution',
+        'faraday_user', ['creator_id'], ['id']
+    )
+
+    op.create_foreign_key(
+        'rule_execution_update_user_id_fkey',
+        'rule_execution',
+        'faraday_user', ['update_user_id'], ['id']
     )
 
     op.create_foreign_key(

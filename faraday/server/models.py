@@ -1847,6 +1847,74 @@ class Notification(db.Model):
         return
 
 
+class Rule(Metadata):
+    __tablename__ = 'rule'
+
+    id = Column(Integer, primary_key=True)
+    model = Column(String, nullable=False)
+    parent = Column(String, nullable=True)
+    fields = Column(JSONType, nullable=True)
+    object = Column(JSONType, nullable=False)
+    actions = relationship("Action", secondary=RuleAction, backref="rules")
+
+    @property
+    def parent(self):
+        return
+
+
+class Action(Metadata):
+    __tablename__ = 'action'
+    id = Column(Integer, primarykey=True)
+    name = Column(String, nullable=True)
+    command = Column(String, nullable=False)
+    field = Column(String, nullable=True)
+    value = Column(String, nullable=True)
+
+    @property
+    def parent(self):
+        return
+
+
+class RuleAction(Metadata):
+    __tablename__ = 'rule_action'
+
+    rule_id = Column(Integer, ForeignKey('rule.id'), index=True, nullable=False)
+    rule = relationship('Rule', backref=backref('rule_action', cascade="all, delete-orphan"))
+    action_id = Column(Integer, ForeignKey('action.id'), index=True, nullable=False)
+    action = relationship('Action', backref=backref('rule_action', cascade="all, delete-orphan"))
+
+    @property
+    def parent(self):
+        return
+
+
+class Condition(Metadata):
+    __tablename__ = 'condition'
+
+    id = Column(Integer, primary_key=True)
+    field = Column(String)
+    value = Column(String)
+    operator = Column(String, default='equals')
+    rule_id = Column(Integer, ForeignKey('rule.id'), index=True, nullable=False)
+    rule = relationship('Rule', backref=backref('conditions', cascade="all, delete-orphan"))
+
+    @property
+    def parent(self):
+        return
+
+
+class RuleExecution(Metadata):
+    __tablename__ = 'rule_execution'
+    id = Column(Integer, primarykey=True)
+    start = Column(DateTime, nullable=True)
+    end = Column(DateTime, nullable=True)
+    rule = relationship('Rule', backref=backref('executions', cascade="all, delete-orphan"))
+
+    @property
+    def parent(self):
+        return
+
+
 # This constraint uses Columns from different classes
 # Since it applies to the table vulnerability it should be adVulnerability.ded to the Vulnerability class
 # However, since it contains columns from children classes, this cannot be done

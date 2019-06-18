@@ -18,8 +18,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     event,
-    text
-)
+    text)
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship, undefer
 from sqlalchemy.sql import select, text, table
@@ -1855,7 +1854,7 @@ class Rule(Metadata):
     parent = Column(String, nullable=True)
     fields = Column(JSONType, nullable=True)
     object = Column(JSONType, nullable=False)
-    actions = relationship("Action", secondary=RuleAction, backref="rules")
+    actions = relationship("Action", secondary="rule_action", backref=backref("rules"))
 
     @property
     def parent(self):
@@ -1864,7 +1863,7 @@ class Rule(Metadata):
 
 class Action(Metadata):
     __tablename__ = 'action'
-    id = Column(Integer, primarykey=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String, nullable=True)
     command = Column(String, nullable=False)
     field = Column(String, nullable=True)
@@ -1877,11 +1876,11 @@ class Action(Metadata):
 
 class RuleAction(Metadata):
     __tablename__ = 'rule_action'
-
+    id = Column(Integer, primary_key=True)
     rule_id = Column(Integer, ForeignKey('rule.id'), index=True, nullable=False)
-    rule = relationship('Rule', backref=backref('rule_action', cascade="all, delete-orphan"))
+    rule = relationship('Rule', foreign_keys=[rule_id], backref=backref('rule_actions', cascade="all, delete-orphan"))
     action_id = Column(Integer, ForeignKey('action.id'), index=True, nullable=False)
-    action = relationship('Action', backref=backref('rule_action', cascade="all, delete-orphan"))
+    action = relationship('Action', foreign_keys=[action_id], backref=backref('rule_actions', cascade="all, delete-orphan"))
 
     @property
     def parent(self):
@@ -1896,7 +1895,7 @@ class Condition(Metadata):
     value = Column(String)
     operator = Column(String, default='equals')
     rule_id = Column(Integer, ForeignKey('rule.id'), index=True, nullable=False)
-    rule = relationship('Rule', backref=backref('conditions', cascade="all, delete-orphan"))
+    rule = relationship('Rule', foreign_keys=[rule_id], backref=backref('conditions', cascade="all, delete-orphan"))
 
     @property
     def parent(self):
@@ -1905,11 +1904,11 @@ class Condition(Metadata):
 
 class RuleExecution(Metadata):
     __tablename__ = 'rule_execution'
-    id = Column(Integer, primarykey=True)
+    id = Column(Integer, primary_key=True)
     start = Column(DateTime, nullable=True)
     end = Column(DateTime, nullable=True)
     rule_id = Column(Integer, ForeignKey('rule.id'), index=True, nullable=False)
-    rule = relationship('Rule', backref=backref('executions', cascade="all, delete-orphan"))
+    rule = relationship('Rule', foreign_keys=[rule_id], backref=backref('executions', cascade="all, delete-orphan"))
 
     @property
     def parent(self):

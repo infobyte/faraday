@@ -15,6 +15,7 @@ import requests
 import alembic.command
 from urlparse import urlparse
 from alembic.config import Config
+from sqlalchemy.exc import ProgrammingError
 
 import faraday.server.config
 from faraday.server.config import FARADAY_BASE
@@ -155,8 +156,11 @@ def status_check(check_postgresql, check_faraday, check_dependencies, check_conf
 @click.option('--username', required=True, prompt=True)
 @click.option('--password', required=True, prompt=True, confirmation_prompt=True, hide_input=True)
 def change_password(username, password):
-    change_pass.changes_password(username, password)
-
+    try:
+        change_pass.changes_password(username, password)
+    except ProgrammingError:
+        print('\n\nMissing migrations, please execute: \n\nfaraday-manage migrate')
+        sys.exit(1)
 def validate_user_unique_field(ctx, param, value):
     with app.app_context():
         if User.query.filter_by(**{param.name: value}).count():

@@ -72,7 +72,7 @@ py3checker:
     tags:
         - faradaytests
     image: python:3
-    stage: pre_testing
+    stage: testing
     script:
         - pip install pylint
         - python3 py3-checker.py -o py3_checker_result.txt

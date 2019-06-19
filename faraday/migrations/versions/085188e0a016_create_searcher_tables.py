@@ -23,6 +23,7 @@ def upgrade():
         sa.Column('parent', sa.String, nullable=True),
         sa.Column('fields', sa.JSON, nullable=True),
         sa.Column('object', sa.JSON, nullable=False),
+        sa.Column('workspace_id', sa.Integer, nullable=False),
         sa.Column('create_date', sa.DateTime),
         sa.Column('update_date', sa.DateTime),
         sa.Column('creator_id', sa.Integer),
@@ -39,6 +40,12 @@ def upgrade():
         'rule_update_user_id_fkey',
         'rule',
         'faraday_user', ['update_user_id'], ['id']
+    )
+
+    op.create_foreign_key(
+        'rule_workspace_id_fkey',
+        'rule',
+        'workspace', ['workspace_id'], ['id']
     )
 
     op.create_table(

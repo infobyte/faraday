@@ -75,10 +75,11 @@ py3checker:
     stage: pre_testing
     script:
         - pip install pylint
-        - python3 py3-checker.py
+        - python3 py3-checker.py -o py3_checker_result.txt
     artifacts:
         paths:
-            - pylint.svg
+            - py3_checker_result.txt
+        expire_in: 1 week
     except:
         variables:
             - $BUILD_TEST

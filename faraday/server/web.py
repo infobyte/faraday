@@ -160,24 +160,24 @@ class WebServer(object):
                 self.__listen_port, site,
                 interface=self.__bind_address)
             # websockets
-                if faraday.server.config.websocket_ssl.enabled:
-                    contextFactory = ssl.DefaultOpenSSLContextFactory(
-                            faraday.server.config.websocket_ssl.keyfile.strip('\''),
-                            faraday.server.config.websocket_ssl.certificate.strip('\'')
-                    )
-                    try:
-                        listenWS(self.__build_websockets_resource(), interface=self.__bind_address, contextFactory=contextFactory)
-                    except error.CannotListenError:
-                        logger.warn('Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
-                    except Exception as ex:
-                        logger.warn('Could not start websocket, error: {}'.format(ex))
-                else:
-                    try:
-                        listenWS(self.__build_websockets_resource(), interface=self.__bind_address)
-                    except error.CannotListenError:
-                        logger.warn('Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
-                    except Exception as ex:
-                        logger.warn('Could not start websocket, error: {}'.format(ex))
+            if faraday.server.config.websocket_ssl.enabled:
+                contextFactory = ssl.DefaultOpenSSLContextFactory(
+                        faraday.server.config.websocket_ssl.keyfile.strip('\''),
+                        faraday.server.config.websocket_ssl.certificate.strip('\'')
+                )
+                try:
+                    listenWS(self.__build_websockets_resource(), interface=self.__bind_address, contextFactory=contextFactory)
+                except error.CannotListenError:
+                    logger.warn('Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
+                except Exception as ex:
+                    logger.warn('Could not start websocket, error: {}'.format(ex))
+            else:
+                try:
+                    listenWS(self.__build_websockets_resource(), interface=self.__bind_address)
+                except error.CannotListenError:
+                    logger.warn('Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
+                except Exception as ex:
+                    logger.warn('Could not start websocket, error: {}'.format(ex))
             logger.info('Faraday Server is ready')
             reactor.addSystemEventTrigger('before', 'shutdown', signal_handler)
             reactor.run()

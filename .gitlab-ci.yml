@@ -68,6 +68,22 @@ pylint:
         variables:
             - $BUILD_TEST
 
+py3checker:
+    tags:
+        - faradaytests
+    image: python:3
+    stage: testing
+    script:
+        - pip install pylint
+        - python3 py3-checker.py -o py3_checker_result.txt
+    artifacts:
+        paths:
+            - py3_checker_result.txt
+        expire_in: 1 week
+    except:
+        variables:
+            - $BUILD_TEST
+
 postgresql_test:
     image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base
     tags:

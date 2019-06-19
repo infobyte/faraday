@@ -74,8 +74,7 @@ py3checker:
     image: python:3
     stage: pre_testing
     script:
-        - apt-get update -qy
-        - apt-get install -y pylint
+        - pip install pylint
         - python3 py3-checker.py
     artifacts:
         paths:

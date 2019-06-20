@@ -154,7 +154,11 @@ angular.module('faradayApp')
                 if (response.status == 409) {
                     commonsFact.showMessage("Error while creating a new Vulnerability " + vm.data.name + " Conflicting Vulnerability with id: " + response.data.object._id + ". " + response.data.message);
                 } else if (response.status == 400){
-                    commonsFact.showMessage("Format Incorrect");
+                    //commonsFact.showMessage("Your input data is wrong, Attachments error");
+                    var field = Object.keys(response.data.messages)[0];
+                    var error = response.data.messages[field][0];
+                    commonsFact.showMessage("Your input data is wrong,    " + field.toUpperCase() +":      " + error);
+
                 }else {
                     commonsFact.showMessage("Error from backend: " + response.status);
                 }

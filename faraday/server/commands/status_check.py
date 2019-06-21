@@ -10,7 +10,7 @@ import socket
 import requests
 import sqlalchemy
 from colorama import init
-from colorama import Fore, Back, Style
+from colorama import Fore
 from requests.exceptions import InvalidURL, ConnectionError
 
 import faraday.server.config

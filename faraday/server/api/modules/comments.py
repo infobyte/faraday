@@ -6,7 +6,7 @@ from marshmallow import fields, ValidationError
 from marshmallow.validate import OneOf
 
 
-from faraday.server.models import db, Host, Service, CommandObject
+from faraday.server.models import db, Host, Service
 from faraday.server.api.base import (
     AutoSchema,
     ReadWriteWorkspacedView,

@@ -23,6 +23,7 @@ from faraday.client.persistence.server import models
 
 # XXX: consider re-writing this module! There's alot of repeated code
 # and things are really messy
+# XXX-2019: we should consider deleting this module!
 
 CONF = getInstanceConfiguration()
 logger = logging.getLogger(__name__)

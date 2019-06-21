@@ -7,16 +7,14 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 import os
+import shutil
 import logging
 
 import faraday.client.model.common
 from faraday.config.configuration import getInstanceConfiguration
-#from workspace import Workspace
 import faraday.client.model.log
 from faraday.client.model import Modelactions
 from faraday.utils.common import socket, gateway
-import shutil
-#from plugins.api import PluginControllerAPI
 
 CONF = getInstanceConfiguration()
 

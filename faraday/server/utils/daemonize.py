@@ -8,7 +8,6 @@
 
 import os
 import re
-import random
 import sys
 import errno
 import atexit
@@ -17,7 +16,6 @@ from functools import partial
 import logging
 
 import faraday.server.config
-from faraday.server.utils.logger import get_logger
 
 logger = logging.getLogger(__name__)
 

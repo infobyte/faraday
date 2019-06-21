@@ -37,7 +37,7 @@ from faraday.utils.user_input import query_yes_no
 
 from faraday import __version__ as f_version
 from faraday.client.persistence.server import server
-from faraday.client.persistence.server.server import is_authenticated, login_user, get_user_info
+from faraday.client.persistence.server.server import login_user, get_user_info
 
 USER_HOME = os.path.expanduser(CONST_USER_HOME)
 # find_module returns if search is successful, the return value is a 3-element tuple (file, pathname, description):

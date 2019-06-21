@@ -137,7 +137,7 @@ class VulnerabilitySchema(AutoSchema):
     date = fields.DateTime(attribute='create_date',
                            dump_only=True)  # This is only used for sorting
     custom_fields = FaradayCustomField(table_name='vulnerability', attribute='custom_fields')
-    external_id = fields.String(default='')
+    external_id = fields.String(allow_none=True)
 
     class Meta:
         model = Vulnerability

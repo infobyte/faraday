@@ -114,7 +114,7 @@ def check_client():
     except ConnectionError:
         return False
     except InvalidURL:
-    	return False
+        return False
 
 
 def check_server_dependencies():

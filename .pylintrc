@@ -245,9 +245,6 @@ disable=print-statement,
         bad-indentation,
         unreachable,
         function-redefined,
-        wildcard-import,
-        mixed-indentation,
-
 
 
 

@@ -239,8 +239,6 @@ disable=print-statement,
         useless-super-delegation,
         method-hidden,
         unused-import,
-        bad-indentation,
-        unreachable,
 
 
 

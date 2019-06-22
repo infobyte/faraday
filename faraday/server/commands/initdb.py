@@ -56,7 +56,7 @@ class InitDB():
                 if reconfigure.lower() == 'no':
                     return False
                 elif reconfigure.lower() == 'yes':
-                   continue
+                    continue
                 else:
                     reconfigure = None
         except NoSectionError:

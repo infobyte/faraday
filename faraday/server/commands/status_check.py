@@ -35,14 +35,14 @@ def check_server_running():
 
 
 def check_open_ports():
-   address =  faraday.server.config.faraday_server.bind_address
-   port = int(faraday.server.config.faraday_server.port)
-   sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-   result = sock.connect_ex((address,port))
-   if result == 0:
-       return True
-   else:
-       return False
+    address =  faraday.server.config.faraday_server.bind_address
+    port = int(faraday.server.config.faraday_server.port)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    result = sock.connect_ex((address, port))
+    if result == 0:
+        return True
+    else:
+        return False
 
 
 def check_postgres():
@@ -140,7 +140,7 @@ def check_client_dependencies():
         requirements_file=requirements_file)
 
     if 'argparse' in conflict_deps:
-            conflict_deps.remove('argparse')
+        conflict_deps.remove('argparse')
     
     if conflict_deps:
         return True, conflict_deps

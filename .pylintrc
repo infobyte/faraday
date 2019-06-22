@@ -238,13 +238,9 @@ disable=print-statement,
         useless-super-delegation,
         useless-super-delegation,
         method-hidden,
-        reimported,
-        import-error,
         unused-import,
-        syntax-error,
         bad-indentation,
         unreachable,
-        function-redefined,
 
 
 

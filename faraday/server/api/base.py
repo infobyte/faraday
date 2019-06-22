@@ -301,7 +301,7 @@ class GenericView(FlaskView):
         super(GenericView, cls).register(app, *args, **kwargs)
 
         @app.errorhandler(422)
-        def handle_conflict(err):
+        def handle_error(err):
             # webargs attaches additional metadata to the `data` attribute
             exc = getattr(err, 'exc')
             if exc:

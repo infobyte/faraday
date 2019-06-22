@@ -20,7 +20,6 @@ from twisted.web.wsgi import WSGIResource
 from autobahn.twisted.websocket import (
     listenWS
 )
-import faraday.server.config
 from faraday.server.utils import logger
 
 from faraday.server.app import create_app

@@ -18,7 +18,6 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     event,
-    text
 )
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship, undefer
@@ -42,10 +41,8 @@ from flask_sqlalchemy import (
 
 from depot.fields.sqlalchemy import UploadedFileField
 
-import faraday.server.config
 from faraday.server.fields import FaradayUploadedFile, JSONType
 from flask_security import (
-    RoleMixin,
     UserMixin,
 )
 from faraday.server.utils.database import (

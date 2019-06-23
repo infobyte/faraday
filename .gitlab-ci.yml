@@ -5,6 +5,7 @@ variables:
     POSTGRES_USER: custom_user
     POSTGRES_PASSWORD: custom_pass
     PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+    APT_CACHE_DIR: "$CI_PROJECT_DIR/apt-cache"
     ## ENV_VARS LIST
     # FULL_TEST = Test all jobs
     # BUILD_TEST = Test default and build jobs
@@ -12,7 +13,8 @@ variables:
 
 cache:
   paths:
-    - .cache/pip
+    - "$CI_PROJECT_DIR/.cache/pip"
+    - "$CI_PROJECT_DIR/apt-cache"
 
 stages:
     - pre_testing
@@ -92,7 +94,7 @@ postgresql_test:
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
         - apt-get update -qy
-        - apt-get install -y gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libpq-dev
+        - apt-get install -o dir::cache::archives="$APT_CACHE_DIR" -y gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libpq-dev
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate
@@ -122,7 +124,7 @@ sqlite_test:
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
         - apt-get update -qy
-        - apt-get install -y gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libpq-dev
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libpq-dev
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate
@@ -149,7 +151,7 @@ generate_release_file:
     allow_failure: true
     script:
         - apt-get update -qy
-        - apt-get install -y python-dev python-pip
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" python-dev python-pip
         - pip install packaging
         - cd CHANGELOG && python3 changelog.py
     artifacts:
@@ -169,10 +171,10 @@ binary_files:
     stage: build
     script:
         - apt-get update -qy
-        - apt-get install -y build-essential ipython python-setuptools python-pip python-dev libssl-dev libffi-dev pkg-config libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev
-        - apt-get install -y libpq-dev python-pip python-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 python-gobject zsh curl
-        - apt-get install -y gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libgdk-pixbuf2.0-dev
-        - apt-get install -y libcanberra-gtk-module libcanberra-gtk* libxml2-dev libxslt1-dev gir1.2-gtk-3.0 gir1.2-vte-2.91
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" build-essential ipython python-setuptools python-pip python-dev libssl-dev libffi-dev pkg-config libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" libpq-dev python-pip python-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 python-gobject zsh curl
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libgdk-pixbuf2.0-dev
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" libcanberra-gtk-module libcanberra-gtk* libxml2-dev libxslt1-dev gir1.2-gtk-3.0 gir1.2-vte-2.91
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate
@@ -246,7 +248,7 @@ documentation:
     stage: post_testing
     script:
         - apt-get update -qy
-        - apt-get install -y python-pip python-dev
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" python-pip python-dev
         - pip install sphinx
         - cd doc && make html
     artifacts:

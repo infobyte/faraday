@@ -5,9 +5,9 @@ import random
 from faraday.client.plugins import core
 
 try:
-	from lxml import etree as ET
+    from lxml import etree as ET
 except ImportError:
-	import xml.etree.ElementTree as ET
+    import xml.etree.ElementTree as ET
 
 
 WEAK_CIPHER_LIST = [

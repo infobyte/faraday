@@ -28,7 +28,6 @@ import faraday.client.model.api
 import faraday.client.model.guiapi
 import faraday.client.apis.rest.api as restapi
 import faraday.client.model.log
-import traceback
 from faraday.client.plugins.manager import PluginManager
 from faraday.client.managers.mapper_manager import MapperManager
 from faraday.utils.error_report import exception_handler

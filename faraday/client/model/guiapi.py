@@ -6,12 +6,10 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-#from faraday.client.model.common import factory
 import faraday.client.model.common
 from faraday.client.gui.notifier import NotificationCenter
 from faraday.config.configuration import getInstanceConfiguration
 import faraday.client.model.api
-#from faraday.client.model.api import showDialog, showPopup
 
 CONF = getInstanceConfiguration()
 
@@ -20,28 +18,34 @@ notification_center = NotificationCenter()
 __the_mainapp = None
 __model_controller = None
 
+
 def setMainApp(ref):
     global __the_mainapp
     __the_mainapp = ref
     notification_center.setUiApp(__the_mainapp)
 
+
 def getMainApp():
     global __the_mainapp
     return __the_mainapp
 
+
 def getMainWindow():
     global __the_mainapp
     return __the_mainapp.getMainWindow()
+
 
 def postCustomEvent(event, receiver=None):
     if receiver is None:
         receiver = getMainWindow()
     __the_mainapp.postEvent(receiver, event)
 
+
 def sendCustomEvent(event, receiver=None):
     if receiver is None:
         receiver = getMainWindow()
     __the_mainapp.sendEvent(receiver, event)
+
 
 def setUpGUIAPIs(controller):
     global __model_controller
@@ -424,32 +428,39 @@ def editCred(cred, username=None, password=None):
 def getParent(parent_id):
     return __model_controller.find(parent_id)
 
+
 def conflictMissing(conflict):
     __model_controller.conflictMissing(conflict)
+
 
 def resolveConflicts():
     __model_controller.resolveConflicts()
 
+
 def resolveConflict(conflict, kwargs):
     __model_controller.resolveConflict(conflict, kwargs)
+
 
 def merge(host1, host2):
     return __model_controller.merge(host1, host2)
 
+
 def addHostFromChanges(obj):
-     if obj is not None:
-         notification_center.addHostFromChanges(obj)
-         return True
-     return False
+    if obj is not None:
+        notification_center.addHostFromChanges(obj)
+        return True
+    return False
+
 
 def deleteHostFromChanges(obj):
-     if obj is not None:
-         notification_center.deleteHostFromChanges(obj)
-         return True
-     return False
+    if obj is not None:
+        notification_center.deleteHostFromChanges(obj)
+        return True
+    return False
+
 
 def editHostFromChanges(obj):
-     if obj is not None:
-         notification_center.editHostFromChanges(obj)
-         return True
-     return False
+    if obj is not None:
+        notification_center.editHostFromChanges(obj)
+        return True
+    return False

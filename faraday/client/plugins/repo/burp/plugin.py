@@ -8,14 +8,14 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 from __future__ import with_statement
-from bs4 import BeautifulSoup, Comment
-from faraday.client.plugins import core
-from faraday.client.model import api
-from urlparse import urlsplit
-import distutils.util
 import re
 import os
 import sys
+from bs4 import BeautifulSoup, Comment
+from faraday.client.plugins import core
+from urlparse import urlsplit
+import distutils.util #pylint: disable=import-error
+
 
 try:
     import xml.etree.cElementTree as ET

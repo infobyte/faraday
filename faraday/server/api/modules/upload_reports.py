@@ -25,7 +25,6 @@ from flask_wtf.csrf import validate_csrf
 from werkzeug.utils import secure_filename
 from wtforms import ValidationError
 
-from faraday.server.utils.logger import get_logger
 from faraday.server.utils.web import gzipped
 
 from faraday.client.model.controller import ModelController

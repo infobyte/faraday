@@ -17,12 +17,12 @@ from faraday.client.model import Modelactions
 from faraday.client.persistence.server.server_io_exceptions import ConflictInDatabase
 import faraday.client.model.api as api
 from faraday.client.model.guiapi import notification_center as notifier
-from faraday.client.gui.customevents import *
 from functools import wraps
 from faraday.client.persistence.server import models
 
 # XXX: consider re-writing this module! There's alot of repeated code
 # and things are really messy
+# XXX-2019: we should consider deleting this module!
 
 CONF = getInstanceConfiguration()
 logger = logging.getLogger(__name__)

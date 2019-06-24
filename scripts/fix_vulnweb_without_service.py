@@ -18,12 +18,13 @@ def change_vulns(affected_vulns, workspace):
         assert vuln.service_id == None and vuln.type == 'vulnerability_web'
         session.execute(text("""
             UPDATE vulnerability SET type=\'vulnerability\' where id= :affected_vuln_id ;
-        """, **{'affected_vuln_id': vuln.id}))
+        """), {'affected_vuln_id': vuln.id})
 
         vulns_id.append(vuln.id)
+        session.commit()
 
     print ("[+] {vulns_length} vulnerabilities changed in workspace named {ws_name}"
-           .format(vulns_length=len(vulns),
+           .format(vulns_length=len(affected_vulns),
                    ws_name=workspace.name))
     print "    Vulnerabilities ID: {ids}".format(ids=vulns_id)
 

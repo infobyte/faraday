@@ -9,6 +9,10 @@ New features in the latest update
 =====================================
 
 
+3.8.1 [Jun 19th, 2019]:
+---
+* Add configurations for websocket ssl
+
 3.8 [Jun 4th, 2019]:
 ---
  * Refactor the project to use absolute imports to make the installation easier

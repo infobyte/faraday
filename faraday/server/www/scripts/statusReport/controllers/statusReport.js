@@ -1297,11 +1297,17 @@ angular.module("faradayApp")
         };
 
         $scope.searchFor = function(params, clear, search) {
+            // TODO: REFACTOR
             if (clear === true){
+                if(window.location.hash.substring(1).indexOf('groupby') === -1) {
+                    $scope.propertyFilterConfirmed = "All";
+                    $cookies.put('filterConfirmed', $scope.propertyFilterConfirmed);
+                    $location.path("/status/ws/" + $routeParams.wsId);
+                }else{
+                    var url = "/status/ws/" + $routeParams.wsId + "/groupby/" + $routeParams.groupbyId;
+                    $location.path(url);
+                }
                 $scope.searchParams = '';
-                $scope.propertyFilterConfirmed = "All";
-                $cookies.put('filterConfirmed', $scope.propertyFilterConfirmed);
-                $location.path("/status/ws/" + $routeParams.wsId);
                 loadVulns();
                 return;
             }
@@ -1333,6 +1339,11 @@ angular.module("faradayApp")
                 }
 
             } else {
+                if (params !== undefined && params !== '') {
+                    params = params.replace(/^ +| +$/g, '');
+                    var jsonOptions = parserFact.evaluateExpression(params);
+                    loadFilteredVulns($routeParams.wsId, jsonOptions);
+                }
                 var url = "/status/ws/" + $routeParams.wsId + "/groupby/" + $routeParams.groupbyId;
                 $location.path(url);
             }

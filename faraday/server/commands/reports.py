@@ -8,8 +8,6 @@ import os
 import logging
 from Queue import Queue
 
-from tqdm import tqdm
-
 from faraday.client.managers.mapper_manager import MapperManager
 from faraday.client.managers.reports_managers import ReportManager, CONF
 from faraday.client.managers.workspace_manager import WorkspaceManager

@@ -312,6 +312,34 @@ class TestHostAPI:
         expected_host_ids = set(host.id for host in hosts)
         assert shown_hosts_ids == expected_host_ids
 
+    def test_filter_by_service_port(self, test_client, session, workspace,
+                               service_factory, host_factory):
+        services = service_factory.create_batch(10, workspace=workspace, port=25)
+        hosts = [service.host for service in services]
+
+        # Hosts that shouldn't be shown
+        host_factory.create_batch(5, workspace=workspace)
+
+        session.commit()
+        res = test_client.get(self.url() + '?port=25')
+        assert res.status_code == 200
+        shown_hosts_ids = set(obj['id'] for obj in res.json['rows'])
+        expected_host_ids = set(host.id for host in hosts)
+        assert shown_hosts_ids == expected_host_ids
+
+    def test_filter_by_invalid_service_port(self, test_client, session, workspace,
+                               service_factory, host_factory):
+        services = service_factory.create_batch(10, workspace=workspace, port=25)
+        hosts = [service.host for service in services]
+
+        # Hosts that shouldn't be shown
+        host_factory.create_batch(5, workspace=workspace)
+
+        session.commit()
+        res = test_client.get(self.url() + '?port=invalid_port')
+        assert res.status_code == 200
+        assert res.json['total_rows'] == 0
+
     def test_search_ip(self, test_client, session, workspace, host_factory):
         host = host_factory.create(ip="longname",
                                    workspace=workspace)

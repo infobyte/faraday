@@ -6,6 +6,7 @@ variables:
     POSTGRES_PASSWORD: custom_pass
     PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
     APT_CACHE_DIR: "$CI_PROJECT_DIR/apt-cache"
+    DEBIAN_FRONTEND: noninteractive
     ## ENV_VARS LIST
     # FULL_TEST = Test all jobs
     # BUILD_TEST = Test default and build jobs

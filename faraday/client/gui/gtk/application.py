@@ -6,13 +6,14 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-import traceback
 
 import os
 import sys
 import threading
-import webbrowser
+import traceback
 
+import webbrowser
+import logging
 
 try:
     import gi
@@ -47,44 +48,46 @@ import faraday.client.model.api
 import faraday.client.model.log
 
 from faraday.client.gui.gui_app import FaradayUi
+
 from faraday.config.configuration import getInstanceConfiguration
-from faraday.utils.logs import getLogger
-from appwindow import AppWindow
+from faraday.server.utils.logger import get_logger
+from faraday.client.gui.gtk.appwindow import AppWindow
 
 from faraday.client.persistence.server.server import is_authenticated, check_faraday_version, Unauthorized
 
 from faraday.client.gui.gtk.server import ServerIO
-from dialogs import PreferenceWindowDialog
-from dialogs import NewWorkspaceDialog
-from dialogs import PluginOptionsDialog
-from dialogs import NotificationsDialog
-from dialogs import aboutDialog
-from dialogs import ConflictsDialog
-from dialogs import HostInfoDialog
-from dialogs import ForceChooseWorkspaceDialog
-from dialogs import ForceNewWorkspaceDialog
-from dialogs import ForcePreferenceWindowDialog
-from dialogs import errorDialog
-from dialogs import ImportantErrorDialog
-from dialogs import LoginDialog, ForceLoginDialog
-from dialogs import FaradayPluginsDialog
+from faraday.client.gui.gtk.dialogs import aboutDialog
+from faraday.client.gui.gtk.dialogs import ConflictsDialog
+from faraday.client.gui.gtk.dialogs import ForceChooseWorkspaceDialog
+from faraday.client.gui.gtk.dialogs import ForceNewWorkspaceDialog
+from faraday.client.gui.gtk.dialogs import ForcePreferenceWindowDialog
+from faraday.client.gui.gtk.dialogs import HostInfoDialog
+from faraday.client.gui.gtk.dialogs import ImportantErrorDialog
+from faraday.client.gui.gtk.dialogs import ForceLoginDialog
+from faraday.client.gui.gtk.dialogs import NewWorkspaceDialog
+from faraday.client.gui.gtk.dialogs import NotificationsDialog
+from faraday.client.gui.gtk.dialogs import PluginOptionsDialog
+from faraday.client.gui.gtk.dialogs import PreferenceWindowDialog
+from faraday.client.gui.gtk.dialogs import FaradayPluginsDialog
+from faraday.client.gui.gtk.dialogs import errorDialog
 
-from mainwidgets import Sidebar
-from mainwidgets import WorkspaceSidebar
-from mainwidgets import HostsSidebar
-from mainwidgets import ConsoleLog
-from mainwidgets import Terminal
-from mainwidgets import Statusbar
+from faraday.client.gui.gtk.mainwidgets import Sidebar
+from faraday.client.gui.gtk.mainwidgets import WorkspaceSidebar
+from faraday.client.gui.gtk.mainwidgets import HostsSidebar
+from faraday.client.gui.gtk.mainwidgets import ConsoleLog
+from faraday.client.gui.gtk.mainwidgets import Terminal
+from faraday.client.gui.gtk.mainwidgets import Statusbar
 
 from faraday.client.gui.loghandler import GUIHandler
+from faraday.server.utils.logger import add_handler
 from faraday.client.start_client import FARADAY_CLIENT_BASE
-from faraday.utils.logs import addHandler
 from faraday.utils.common import checkSSL
 
 from faraday.client.plugins import fplugin_utils
 
 CONF = getInstanceConfiguration()
 
+logger = logging.getLogger(__name__)
 
 class GuiApp(Gtk.Application, FaradayUi):
     """
@@ -195,6 +198,7 @@ class GuiApp(Gtk.Application, FaradayUi):
                            connect_to_a_different_couch=None):
         """Creates a simple dialog with an error message to inform the user
         some kind of problem has happened and the connection was lost.
+
         Returns whether the login dialog should be shown or not
         """
 
@@ -250,7 +254,6 @@ class GuiApp(Gtk.Application, FaradayUi):
         response = dialog.run()
         if response == Gtk.ResponseType.DELETE_EVENT:
             GObject.idle_add(self.exit_faraday_without_confirm)
-
         elif response in [0, 42, 43]:
             return False
 
@@ -283,7 +286,6 @@ class GuiApp(Gtk.Application, FaradayUi):
             dialog = ForceChooseWorkspaceDialog(self.window,
                                                 workspace_model,
                                                 self.change_workspace)
-
         else:
             dialog = ForceNewWorkspaceDialog(self.window,
                                              self.createWorkspace,
@@ -314,8 +316,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         connect callbacks (which will send the widget as an argument and
         self.window.destroy, which takes none.
         """
-        getLogger(self).error("Faraday exited because you didn't connect "
-                              "to a valid Faraday Server.")
+        logger.error("Faraday exited because you didn't connect to a valid Faraday Server.")
         GObject.idle_add(self.window.destroy)
         GObject.idle_add(self.on_quit)
 
@@ -485,7 +486,7 @@ class GuiApp(Gtk.Application, FaradayUi):
                 GObject.idle_add(CONF.saveConfig)
             except Exception as e:
                 GObject.idle_add(self.handle_no_active_workspace)
-                getLogger("GTK").error(e)
+                get_logger("GTK").error(e)
 
             GObject.idle_add(loading_workspace, 'destroy')
             return True
@@ -758,8 +759,12 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.window.present()
 
         self.loghandler = GUIHandler()
+        if CONF.getDebugStatus():
+            self.loghandler.setLevel(logging.DEBUG)
+        else:
+            self.loghandler.setLevel(logging.INFO)
         faraday.client.model.guiapi.setMainApp(self)
-        addHandler(self.loghandler)
+        add_handler(self.loghandler)
         self.loghandler.registerGUIOutput(self.window)
 
         notifier = faraday.client.model.log.getNotifier()

@@ -5,15 +5,15 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-from faraday.utils.logs import getLogger
+from faraday.server.utils.logger import get_logger
 from faraday.client.gui.customevents import CHANGEFROMINSTANCE
 
 
 class EventWatcher(object):
     def __init__(self):
-        self.logger = getLogger(self)
+        self.logger = get_logger(self)
 
     def update(self, event):
         if event.type() == CHANGEFROMINSTANCE:
-            getLogger(self).info(
+            get_logger(self).info(
                 "[Update Received] " + event.change.getMessage())

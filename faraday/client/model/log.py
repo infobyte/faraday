@@ -5,13 +5,12 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-
+import logging
 from faraday.client.gui.customevents import (ShowPopupCustomEvent,
                               ShowDialogCustomEvent)
 import faraday.client.model.guiapi
-from faraday.utils.logs import getLogger
-
 from faraday.config.configuration import getInstanceConfiguration
+
 CONF = getInstanceConfiguration()
 
 __notifier = None
@@ -40,7 +39,7 @@ class Notifier(object):
         self.widget = None
 
     def _postCustomEvent(self, text, level, customEventClass):
-        getLogger().log(text, "INFO")
+        logging.getLogger(__name__).log(text, "INFO")
         if self.widget is not None:
             event = customEventClass(text, level)
             faraday.client.model.guiapi.postEvent(event, self.widget)

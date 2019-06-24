@@ -125,6 +125,7 @@ OBJ_DATA = [
             'owner': 'leo',
             'severity': 'critical',
             'data': '',
+            'external_id': '1.30.9988.20.asdf.x20.vuln'
         },
         'expected_payload': {
             'command_id': None,
@@ -168,6 +169,7 @@ OBJ_DATA = [
             'request': 'test',
             'query': 'query test',
             'response': 'repsonse data',
+            'external_id': '1.30.9988.20.asdf.x20.vuln'
         },
         'expected_payload': {
             'category': '',

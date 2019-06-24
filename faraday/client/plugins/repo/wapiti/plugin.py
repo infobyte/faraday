@@ -8,14 +8,12 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 from __future__ import with_statement
-from faraday.client.plugins import core
-from faraday.client.model import api
 import re
 import os
-import pprint
-import sys
 import socket
 from urlparse import urlparse
+
+from faraday.client.plugins import core
 
 
 try:
@@ -71,8 +69,8 @@ class WapitiXmlParser(object):
         """
         try:
             tree = ET.fromstring(xml_output)
-        except SyntaxError, err:
-            print "SyntaxError: %s. %s" % (err, xml_output)
+        except SyntaxError as err:
+            print("SyntaxError: %s. %s" % (err, xml_output))
             return None
 
         return tree
@@ -352,6 +350,6 @@ def createPlugin():
     return WapitiPlugin()
 
 if __name__ == '__main__':
-        parser = WapitiPlugin()
-        with open('/home/javier/Reports_Testing/wapiti3.0.1.xml') as report:
-            parser.parseOutputString(report.read())
+    parser = WapitiPlugin()
+    with open('/home/javier/Reports_Testing/wapiti3.0.1.xml') as report:
+        parser.parseOutputString(report.read())

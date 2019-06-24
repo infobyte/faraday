@@ -97,9 +97,7 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
     });
     $routeProvider.
         when('/', {
-            templateUrl: 'scripts/commons/partials/home.html',
-            controller: 'homeCtrl',
-            title: ' Welcome | '
+            redirectTo: "/dashboard/ws/:wsId"
         }).
         when('/dashboard/ws/:wsId', {
             templateUrl: 'scripts/dashboard/partials/dashboard.html',

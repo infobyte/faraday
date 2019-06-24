@@ -1700,8 +1700,9 @@ class aboutDialog(Gtk.AboutDialog):
     def __init__(self, main_window):
 
         Gtk.AboutDialog.__init__(self, transient_for=main_window, modal=True)
-        icons = CONF.getImagePath() + "icons/"
-        faraday_icon = GdkPixbuf.Pixbuf.new_from_file(icons+"about.png")
+        icons = os.path.join(FARADAY_CLIENT_BASE, "data", "images", "icons")
+        faraday_icon = GdkPixbuf.Pixbuf.new_from_file(
+            os.path.join(icons, "about.png"))
         self.set_logo(faraday_icon)
         self.set_program_name("Faraday")
         self.set_comments("Penetration Test IDE -"

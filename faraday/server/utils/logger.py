@@ -8,13 +8,15 @@ import logging.handlers
 import faraday.server.config
 import errno
 
+from syslog_rfc5424_formatter import RFC5424Formatter
+
 LOG_FILE = os.path.expanduser(os.path.join(
     faraday.server.config.CONSTANTS.CONST_FARADAY_HOME_PATH,
     faraday.server.config.CONSTANTS.CONST_FARADAY_LOGS_PATH, 'faraday-server.log'))
 
 MAX_LOG_FILE_SIZE = 5 * 1024 * 1024     # 5 MB
 MAX_LOG_FILE_BACKUP_COUNT = 5
-ROOT_LOGGER = u'faraday-server'
+ROOT_LOGGER = u'faraday'
 LOGGING_HANDLERS = []
 LVL_SETTABLE_HANDLERS = []
 
@@ -24,9 +26,11 @@ def setup_logging():
     logger.propagate = False
     logger.setLevel(logging.DEBUG)
 
-    formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s {%(threadName)s} [%(filename)s:%(lineno)s - %(funcName)s() ]  %(message)s')
-
+    if faraday.server.config.logger_config.use_rfc5424_formatter:
+        formatter = RFC5424Formatter()
+    else:
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s {%(threadName)s} [%(filename)s:%(lineno)s - %(funcName)s() ]  %(message)s')
     setup_console_logging(formatter)
     setup_file_logging(formatter)
 
@@ -58,15 +62,16 @@ def get_logger(obj=None):
     """Creates a logger named by a string or an object's class name.
      Allowing logger to additionally accept strings as names
      for non-class loggings."""
-
     if obj is None:
         logger = logging.getLogger(ROOT_LOGGER)
     elif isinstance(obj, basestring):
-        logger = logging.getLogger(u'{}.{}'.format(ROOT_LOGGER, obj))
+        if obj != ROOT_LOGGER:
+            logger = logging.getLogger(u'{}.{}'.format(ROOT_LOGGER, obj))
+        else:
+            logger = logging.getLogger(obj)
     else:
         cls_name = obj.__class__.__name__
         logger = logging.getLogger(u'{}.{}'.format(ROOT_LOGGER, cls_name))
-
     return logger
 
 

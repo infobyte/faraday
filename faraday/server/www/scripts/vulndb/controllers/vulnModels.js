@@ -1,7 +1,24 @@
 angular.module('faradayApp')
-    .controller('vulnModelsCtrl',
-        ['$scope', '$filter', '$http', '$q', '$uibModal', 'ServerAPI', 'csvService', 'commonsFact', 'vulnModelsManager',
-            function($scope, $filter, $http, $q, $uibModal, ServerAPI, csvService, commonsFact, vulnModelsManager) {
+    .controller('vulnModelsCtrl', [
+        '$scope',
+        '$filter',
+        '$http',
+        '$q',
+        '$uibModal',
+        'ServerAPI',
+        'csvService',
+        'commonsFact',
+        'vulnModelsManager',
+        function ($scope,
+                  $filter,
+                  $http,
+                  $q,
+                  $uibModal,
+                  ServerAPI,
+                  csvService,
+                  commonsFact,
+                  vulnModelsManager) {
+
                 $scope.models = [];
                 $scope.loaded_models = false;
                 $scope.totalModels = 0;
@@ -367,7 +384,6 @@ angular.module('faradayApp')
                 $scope.toggleSort = function(field) {
                     $scope.toggleSortField(field);
                     $scope.toggleReverse();
-                    $scope.sort();
                 };
 
                 // toggles column sort field

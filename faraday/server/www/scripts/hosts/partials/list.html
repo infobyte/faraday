@@ -68,6 +68,10 @@
                                 <span ng-click="toggleSort('ip')">IP</span>
                                 <a ng-click="toggleShow('ip')"><span class="glyphicon glyphicon-remove"></span></a>
                             </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell" ng-show="columns['search_in_shodan']">
+                                <span ng-click="toggleSort('search_in_shodan')">SEARCH</span>
+                                <a ng-click="toggleShow('search_in_shodan')"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
                             <th class="ui-grid-cell-contents ui-grid-header-cell" ng-show="columns['os']">
                                 <span ng-click="toggleSort('os')">OS</span>
                                 <a ng-click="toggleShow('os')"><span class="glyphicon glyphicon-remove"></span></a>
@@ -104,6 +108,10 @@
                                 <span ng-click="toggleSort('owned')">OWNED</span>
                                 <a ng-click="toggleShow('owned')"><span class="glyphicon glyphicon-remove"></span></a>
                             </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell" ng-show="columns['owner']">
+                                <span ng-click="toggleSort('owner')">OWNER</span>
+                                <a ng-click="toggleShow('owner')"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
                             <th class="ui-grid-cell-contents ui-grid-header-cell" ng-show="columns['description']">
                                 <span ng-click="toggleSort('description')">DESCRIPTION</span>
                                 <a ng-click="toggleShow('description')"><span class="glyphicon glyphicon-remove"></span></a>
@@ -120,13 +128,11 @@
                     </thead>
                     <tbody>
                         <tr ng-repeat="host in hosts" class="ui-grid-row "
-                            selection-model selection-model-type="checkbox"
-                                            selection-model-mode="multiple-additive"
-                                            selection-model-selected-class="multi-selected"
+                            selection-model selection-model-mode="multiple-additive"
                                             selection-model-on-change="selectedHosts()">
                             <td class="ui-grid-cell-contents checkbox-select">
                                 <div class="">
-                                    <input type="checkbox" name="{{host._id}}"/>
+                                    <input type="checkbox" ng-model="host.selected" ng-click="host.selected = !host.selected" name="{{host._id}}"/>
                                 </div>
                             </td>
                             <td class="ui-grid-cell-contents" ng-show="columns['id']">
@@ -137,7 +143,13 @@
                             <td class="ui-grid-cell-contents"
                                 ng-show="columns['ip']">
                                 <div class="">
-                                    <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}">{{host.ip}}</a>
+                                    <a name="{{ 'ip-' + host._id }}" ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}">{{host.ip}}</a>
+                                    <a  ng-href="" ng-click="copyToClipboard('ip-'+host._id)" tooltip="Copy as clipboard"><i ng-style="{'font-size':'14px'}" class="fa">&#xf0c5;</i></a>
+                                </div>
+                            </td>
+                            <td class="ui-grid-cell-contents"
+                                ng-show="columns['search_in_shodan']">
+                                <div class="">
                                     <osint-link query="host.ip" osint="osint"></osint-link>
                                 </div>
                             </td>
@@ -200,6 +212,12 @@
                                 </div>
                             </td>
                             <td class="ui-grid-cell-contents"
+                                ng-show="columns['owner']">
+                                <div class="">
+                                    <span>{{host.owner}}</span>
+                                </div>
+                            </td>
+                            <td class="ui-grid-cell-contents"
                                 ng-show="columns['description']">
                                 <div class="">
                                     {{host.description}}
@@ -208,7 +226,7 @@
                             <td class="ui-grid-cell-contents date-cell"
                                 ng-show="columns['create_time']">
                                 <div class="">
-                                    <span am-time-ago="host.metadata.create_time" am-preprocess="utc"></span>
+                                    <span ng-style="{'display': 'inline-block'}" am-time-ago="host.metadata.create_time" am-preprocess="utc"></span><p ng-style="{'display': 'inline-block'}">&nbsp; {{host.metadata.creator ? (' by ' + host.metadata.creator) : ''}}</p>
                                 </div>
                             </td>
                             <td

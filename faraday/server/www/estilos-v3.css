@@ -919,3 +919,11 @@ ul#nav-tabs-container {
     line-height: 1.5;
     overflow-wrap: break-word;
 }
+
+#btn_clear_search {
+    position: absolute;
+    height: 30px;
+    border-radius: 2px;
+    right: 15px;
+    padding-top: 3px;
+}

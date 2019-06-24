@@ -16,7 +16,6 @@ import threading
 import faraday.client.model.guiapi
 from cStringIO import StringIO
 from faraday.client.gui.customevents import ShowExceptionCustomEvent
-from faraday.client.gui.customevents import EXCEPTION_ID
 from faraday.config.configuration import getInstanceConfiguration
 import json
 import time

@@ -3,7 +3,7 @@
 # See the file 'doc/LICENSE' for the license information
 import requests
 from gi.repository import Gtk
-from faraday.utils.logs import getLogger
+from faraday.server.utils.logger import get_logger
 from functools import wraps
 from compatibility import CompatibleScrolledWindow as GtkScrolledWindow
 from faraday.client.persistence.server.server_io_exceptions import ServerRequestException
@@ -20,16 +20,16 @@ def safe_io_with_server(response_in_emergency):
                 res = func(*args, **kwargs)
             except ServerRequestException as e:
                 res = response_in_emergency
-                getLogger("Server-GTK IO").warning(e)
+                get_logger("Server-GTK IO").warning(e)
             except (requests.exceptions.MissingSchema, requests.exceptions.InvalidSchema):
                 res = response_in_emergency
-                getLogger("Server-GTK IO").error("It looks like the Faraday Server "
+                get_logger("Server-GTK IO").error("It looks like the Faraday Server "
                         "URL is not correctly formated. Please change it and "
                         "remember to set it with a valid protocol, like http.\n"
                         "For example: http://faradayserver:port/")
             except Exception:
                 res = response_in_emergency
-                getLogger("Server-GTK IO").error("It looks like the Faraday Server is not running\n")
+                get_logger("Server-GTK IO").error("It looks like the Faraday Server is not running\n")
 
             return res
         return wrapper

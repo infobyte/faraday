@@ -3,14 +3,12 @@
 # See the file 'doc/LICENSE' for the license information
 
 from flask import Blueprint
-from marshmallow import fields
 
 from faraday.server.models import db, CustomFieldsSchema
 from faraday.server.api.base import (
     AutoSchema,
     ReadWriteView,
 )
-from faraday.server.utils.database import get_or_create
 
 
 custom_fields_schema_api = Blueprint('custom_fields_schema_api', __name__)

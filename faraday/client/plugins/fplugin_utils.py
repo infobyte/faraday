@@ -7,21 +7,21 @@ See the file 'doc/LICENSE' for the license information
 import imp
 import os
 import sys
+import logging
 
 from colorama import Fore
-from faraday.utils.logs import getLogger
 
 from faraday.config.configuration import getInstanceConfiguration
 
 CONF = getInstanceConfiguration()
-logger = getLogger()
+logger = logging.getLogger(__name__)
 
 
 def get_available_plugins():
-    faraday_directory = os.path.dirname(os.path.realpath(os.path.join(__file__, "../")))
+    from faraday import client
+    client_base_path = os.path.dirname(os.path.abspath(client.__file__))
 
-    scan_path = os.path.join(faraday_directory, "bin/")
-
+    scan_path = os.path.join(client_base_path, "bin")
     plugin_list = os.listdir(scan_path)
 
     plugin_list = [

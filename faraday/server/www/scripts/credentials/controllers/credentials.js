@@ -5,9 +5,29 @@
 "use strict";
 
 angular.module('faradayApp')
-    .controller('credentialsCtrl',
-        ['$scope', '$filter', '$q', '$uibModal', '$routeParams', '$window', 'commonsFact', 'credential', 'ServerAPI', 'workspacesFact', 'vulnsManager',
-        function($scope, $filter, $q, $uibModal, $routeParams, $window, commonsFact, credential, ServerAPI, workspacesFact, vulnsManager) {
+    .controller('credentialsCtrl', [
+        '$scope',
+        '$filter',
+        '$q',
+        '$uibModal',
+        '$routeParams',
+        '$window',
+        'commonsFact',
+        'credential',
+        'ServerAPI',
+        'workspacesFact',
+        'vulnsManager',
+        function ($scope,
+                  $filter,
+                  $q,
+                  $uibModal,
+                  $routeParams,
+                  $window,
+                  commonsFact,
+                  credential,
+                  ServerAPI,
+                  workspacesFact,
+                  vulnsManager) {
 
             $scope.workspace;
             $scope.workspaces;

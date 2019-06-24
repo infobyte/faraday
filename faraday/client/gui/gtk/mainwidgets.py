@@ -141,10 +141,10 @@ class HostsSidebar(Gtk.Widget):
         self.host_amount_in_model = 0
         self.page = 1
         self.host_id_to_iter = {}
-        self.linux_icon = icons + "tux.png"
-        self.windows_icon = icons + "windows.png"
-        self.mac_icon = icons + "Apple.png"
-        self.no_os_icon = icons + "TreeHost.png"
+        self.linux_icon = os.path.join(icons, "tux.png")
+        self.windows_icon = os.path.join(icons, "windows.png")
+        self.mac_icon = os.path.join(icons, "Apple.png")
+        self.no_os_icon = os.path.join(icons, "TreeHost.png")
 
     @property
     def number_of_pages(self):

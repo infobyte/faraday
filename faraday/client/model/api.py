@@ -7,17 +7,14 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 import os
+import shutil
 import logging
 
 import faraday.client.model.common
 from faraday.config.configuration import getInstanceConfiguration
-#from workspace import Workspace
 import faraday.client.model.log
 from faraday.client.model import Modelactions
-from faraday.utils.logs import getLogger
 from faraday.utils.common import socket, gateway
-import shutil
-#from plugins.api import PluginControllerAPI
 
 CONF = getInstanceConfiguration()
 
@@ -36,6 +33,8 @@ _remote_sync_server_proxy = None
 
 # name of the currently logged user
 __current_logged_user = ""
+
+logger = logging.getLogger(__name__)
 
 
 def setUpAPIs(controller, workspace_manager, hostname=None, port=None):
@@ -113,7 +112,7 @@ def _setUpAPIServer(hostname=None, port=None):
                 CONF.setApiConInfo(hostname, port)
                 CONF.saveConfig()
 
-                getLogger().info(
+                logger.info(
                     "XMLRPC API server configured on %s" % str(
                         CONF.getApiConInfo()))
                 break
@@ -124,7 +123,7 @@ def _setUpAPIServer(hostname=None, port=None):
                 devlog("[WARNING] - %s" % msg)
 
         if not listening:
-               raise RuntimeError("Port already in use")
+            raise RuntimeError("Port already in use")
 
 #-------------------------------------------------------------------------------
 # APIs to create and add elements to model
@@ -140,11 +139,13 @@ def createAndAddHost(ip, os="Unknown", hostnames=None):
         return host.getID()
     return None
 
+
 def createAndAddInterface(host_id, name="", mac="00:00:00:00:00:00", ipv4_address="0.0.0.0", ipv4_mask="0.0.0.0",
                  ipv4_gateway="0.0.0.0", ipv4_dns=[], ipv6_address="0000:0000:0000:0000:0000:0000:0000:0000",
                  ipv6_prefix="00", ipv6_gateway="0000:0000:0000:0000:0000:0000:0000:0000", ipv6_dns=[],
                  network_segment="", hostname_resolution=[]):
     return host_id
+
 
 def createAndAddServiceToInterface(host_id, interface_id, name, protocol = "tcp?",
                 ports = [], status = "running", version = "unknown", description = ""):
@@ -154,6 +155,7 @@ def createAndAddServiceToInterface(host_id, interface_id, name, protocol = "tcp?
     if addServiceToHost(service):
         return service.getID()
     return None
+
 
 def createAndAddServiceToHost(host_id, name,
                                        protocol="tcp?", ports=[],
@@ -197,11 +199,14 @@ def createAndAddVulnWebToService(host_id, service_id, name, desc, ref, severity,
 def createAndAddNoteToHost(host_id, name, text):
     return None
 
+
 def createAndAddNoteToService(host_id, service_id, name, text):
     return None
 
+
 def createAndAddNoteToNote(host_id, service_id, note_id, name, text):
     return None
+
 
 def createAndAddCredToService(host_id, service_id, username, password):
     cred = newCred(username, password, parent_id=service_id)
@@ -214,7 +219,6 @@ def createAndAddCredToService(host_id, service_id, username, password):
 #-------------------------------------------------------------------------------
 
 #TODO: add class check to object passed to be sure we are adding the right thing to the model
-
 def addHost(host):
     if host is not None:
         __model_controller.add_action((Modelactions.ADDHOST, host))
@@ -482,13 +486,13 @@ def log(msg ,level = "INFO"):
         "NOTSET": logging.NOTSET
     }
     level = levels.get(level, logging.NOTSET)
-    getLogger().log(level, msg)
+    logger.log(level, msg)
 
 def devlog(msg):
     """
     If DEBUG is set it will print information directly to stdout
     """
-    getLogger().debug(msg)
+    logger.debug(msg)
 
 def showDialog(msg, level="Information"):
     return faraday.client.model.log.getNotifier().showDialog(msg, level)

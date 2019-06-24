@@ -3,9 +3,23 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('serviceModalNew',
-        ['$scope', '$modalInstance', '$routeParams', 'SERVICE_STATUSES', 'host', 'servicesManager', 'hostsManager', 'commonsFact',
-        function($scope, $modalInstance, $routeParams, SERVICE_STATUSES, host, servicesManager, hostsManager, commonsFact) {
+    .controller('serviceModalNew', [
+        '$scope',
+        '$modalInstance',
+        '$routeParams',
+        'SERVICE_STATUSES',
+        'host',
+        'servicesManager',
+        'hostsManager',
+        'commonsFact',
+        function ($scope,
+                  $modalInstance,
+                  $routeParams,
+                  SERVICE_STATUSES,
+                  host,
+                  servicesManager,
+                  hostsManager,
+                  commonsFact) {
 
         init = function() {
             $scope.data = {

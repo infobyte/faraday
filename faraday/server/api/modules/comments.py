@@ -6,7 +6,7 @@ from marshmallow import fields, ValidationError
 from marshmallow.validate import OneOf
 
 
-from faraday.server.models import db, Host, Service, CommandObject
+from faraday.server.models import db, Host, Service
 from faraday.server.api.base import (
     AutoSchema,
     ReadWriteWorkspacedView,
@@ -61,8 +61,6 @@ class UniqueCommentView(GenericWorkspacedView, CommentCreateMixing):
     schema_class = CommentSchema
 
     def _perform_create(self, data, workspace_name):
-        res = super(UniqueCommentView, self)._perform_create(data, workspace_name)
-
         comment = db.session.query(Comment).filter_by(
             text=data['text'],
             object_type=data['object_type'],
@@ -77,6 +75,7 @@ class UniqueCommentView(GenericWorkspacedView, CommentCreateMixing):
                     'object': self.schema_class().dump(comment).data,
                 }
             ))
+        res = super(UniqueCommentView, self)._perform_create(data, workspace_name)
         return res
 
 CommentView.register(comment_api)

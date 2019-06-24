@@ -389,6 +389,7 @@ GET_OBJ_DATA = [
                 'status': 'opened',
                 'website': 'www.faradaysec.com',
                 "query": "query",
+                'external_id': '1.30.9988.20.asdf.x20.vuln',
                 "pname": "pname"
             }
 

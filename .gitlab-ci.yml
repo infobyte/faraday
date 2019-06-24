@@ -6,6 +6,7 @@ variables:
     POSTGRES_PASSWORD: custom_pass
     PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
     APT_CACHE_DIR: "$CI_PROJECT_DIR/apt-cache"
+    DEBIAN_FRONTEND: noninteractive
     ## ENV_VARS LIST
     # FULL_TEST = Test all jobs
     # BUILD_TEST = Test default and build jobs
@@ -15,6 +16,9 @@ cache:
   paths:
     - "$CI_PROJECT_DIR/.cache/pip"
     - "$CI_PROJECT_DIR/apt-cache"
+
+before_script:
+    - mkdir -pv $APT_CACHE_DIR
 
 stages:
     - pre_testing
@@ -59,8 +63,19 @@ pylint:
     image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base  # I just need an image with python-dev and python-pip
     stage: pre_testing
     script:
-        - pip install pylint anybadge
-        - pylint --rcfile=.pylintrc faraday | tee pylint.txt
+        - apt-get update -qy
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" build-essential ipython python-setuptools python-pip python-dev libssl-dev libffi-dev pkg-config libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" libpq-dev python-pip python-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 python-gobject zsh curl
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libgdk-pixbuf2.0-dev
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" libcanberra-gtk-module libcanberra-gtk* libxml2-dev libxslt1-dev gir1.2-gtk-3.0 gir1.2-vte-2.91
+        - pip install virtualenv
+        - virtualenv -p python2 faraday_venv
+        - source faraday_venv/bin/activate
+        - pip install --upgrade -r requirements.txt
+        - python setup.py install
+        # pylint slow issue https://github.com/PyCQA/pylint/issues/2765
+        - pip install pylint isort==4.3.4 anybadge
+        - pylint --rcfile=.pylintrc faraday/server | tee pylint.txt
         - score=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' pylint.txt)
         - anybadge --label pylint --value=$score --file pylint.svg 4=red 6=orange 8=yellow 10=green
     artifacts:

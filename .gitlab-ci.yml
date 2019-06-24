@@ -5,10 +5,20 @@ variables:
     POSTGRES_USER: custom_user
     POSTGRES_PASSWORD: custom_pass
     PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+    APT_CACHE_DIR: "$CI_PROJECT_DIR/apt-cache"
+    DEBIAN_FRONTEND: noninteractive
+    ## ENV_VARS LIST
+    # FULL_TEST = Test all jobs
+    # BUILD_TEST = Test default and build jobs
+    # DAILY_TEST = Run every night at 03 am
 
 cache:
   paths:
-    - .cache/pip
+    - "$CI_PROJECT_DIR/.cache/pip"
+    - "$CI_PROJECT_DIR/apt-cache"
+
+before_script:
+    - mkdir -pv $APT_CACHE_DIR
 
 stages:
     - pre_testing
@@ -29,6 +39,9 @@ closure_compiler:
     stage: pre_testing
     script:
         - /opt/cc.sh faraday/server/www/scripts
+    except:
+        variables:
+            - $BUILD_TEST
 
 merge_conflict_check:
     tags:
@@ -40,6 +53,9 @@ merge_conflict_check:
         - git config --global user.email "you@example.com"
         - git config --global user.name "Mergerbot"
         - python3 merge-conflict-detector.py
+    except:
+        variables:
+            - $BUILD_TEST
 
 pylint:
     tags:
@@ -47,13 +63,43 @@ pylint:
     image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base  # I just need an image with python-dev and python-pip
     stage: pre_testing
     script:
-        - pip install pylint anybadge
-        - pylint faraday/server |tee pylint.txt || true
+        - apt-get update -qy
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" build-essential ipython python-setuptools python-pip python-dev libssl-dev libffi-dev pkg-config libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" libpq-dev python-pip python-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 python-gobject zsh curl
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libgdk-pixbuf2.0-dev
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" libcanberra-gtk-module libcanberra-gtk* libxml2-dev libxslt1-dev gir1.2-gtk-3.0 gir1.2-vte-2.91
+        - pip install virtualenv
+        - virtualenv -p python2 faraday_venv
+        - source faraday_venv/bin/activate
+        - pip install --upgrade -r requirements.txt
+        - python setup.py install
+        # pylint slow issue https://github.com/PyCQA/pylint/issues/2765
+        - pip install pylint isort==4.3.4 anybadge
+        - pylint --rcfile=.pylintrc faraday/server | tee pylint.txt
         - score=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' pylint.txt)
         - anybadge --label pylint --value=$score --file pylint.svg 4=red 6=orange 8=yellow 10=green
     artifacts:
         paths:
             - pylint.svg
+    except:
+        variables:
+            - $BUILD_TEST
+
+py3checker:
+    tags:
+        - faradaytests
+    image: python:3
+    stage: testing
+    script:
+        - pip install pylint
+        - python3 py3-checker.py -o py3_checker_result.txt
+    artifacts:
+        paths:
+            - py3_checker_result.txt
+        expire_in: 1 week
+    except:
+        variables:
+            - $BUILD_TEST
 
 postgresql_test:
     image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base
@@ -63,7 +109,7 @@ postgresql_test:
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
         - apt-get update -qy
-        - apt-get install -y gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libpq-dev
+        - apt-get install -o dir::cache::archives="$APT_CACHE_DIR" -y gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libpq-dev
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate
@@ -81,6 +127,9 @@ postgresql_test:
         when: on_failure
         paths:
             - ~/.faraday/logs/faraday-server.log
+    except:
+        variables:
+            - $BUILD_TEST
 
 sqlite_test:
     image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base
@@ -90,7 +139,7 @@ sqlite_test:
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
         - apt-get update -qy
-        - apt-get install -y gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libpq-dev
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libpq-dev
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate
@@ -107,6 +156,9 @@ sqlite_test:
         when: on_failure
         paths:
             - dist/*
+    except:
+        variables:
+            - $BUILD_TEST
 
 generate_release_file:
     image: python:3
@@ -114,7 +166,7 @@ generate_release_file:
     allow_failure: true
     script:
         - apt-get update -qy
-        - apt-get install -y python-dev python-pip
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" python-dev python-pip
         - pip install packaging
         - cd CHANGELOG && python3 changelog.py
     artifacts:
@@ -124,17 +176,20 @@ generate_release_file:
         variables:
             - $FULL_DOC == "True"
             - $RELEASE_FILE == "True"
-            - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(master)$/
+            - $BUILD_TEST
+            - $FULL_TEST
+            - $DAILY_TEST
 
 binary_files:
     image: python:2.7.16
     stage: build
     script:
         - apt-get update -qy
-        - apt-get install -y build-essential ipython python-setuptools python-pip python-dev libssl-dev libffi-dev pkg-config libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev
-        - apt-get install -y libpq-dev python-pip python-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 python-gobject zsh curl
-        - apt-get install -y gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libgdk-pixbuf2.0-dev
-        - apt-get install -y libcanberra-gtk-module libcanberra-gtk* libxml2-dev libxslt1-dev gir1.2-gtk-3.0 gir1.2-vte-2.91
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" build-essential ipython python-setuptools python-pip python-dev libssl-dev libffi-dev pkg-config libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" libpq-dev python-pip python-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 python-gobject zsh curl
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libgdk-pixbuf2.0-dev
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" libcanberra-gtk-module libcanberra-gtk* libxml2-dev libxslt1-dev gir1.2-gtk-3.0 gir1.2-vte-2.91
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate
@@ -158,12 +213,19 @@ binary_files:
           - dist/faraday-client
           - dist/faraday-fplugin
         expire_in: 1 week
-
+    only:
+        variables:
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(master)$/
+            - $CI_COMMIT_TAG
+            - $BUILD_TEST
+            - $FULL_TEST
+            - $DAILY_TEST
 
 macos_dmg:
     tags:
         - macos
     stage: build
+    allow_failure: true
     script:
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
@@ -188,31 +250,53 @@ macos_dmg:
         paths:
             - Faraday.dmg
         expire_in: 1 week
+    only:
+        variables:
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(master)$/
+            - $CI_COMMIT_TAG
+            - $BUILD_TEST
+            - $FULL_TEST
+            - $DAILY_TEST
 
-
-# This is a test of future test case that will be scheduled
-i_do_nothing:
+documentation:
     image: python:3
     stage: post_testing
+    script:
+        - apt-get update -qy
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" python-pip python-dev
+        - pip install sphinx
+        - cd doc && make html
+    artifacts:
+        paths:
+            - doc/_build/html
+    only:
+        variables:
+            - $FULL_DOC
+            - $DOC
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/
+
+
+test_hypothesis:
+    tags:
+        - hypothesis
+    image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base
+    stage: testing
     allow_failure: true
     script:
         - apt-get update -qy
-        - apt-get install -y python-dev python-pip
+        - pip install virtualenv
+        - virtualenv -p python2 faraday_venv
+        - source faraday_venv/bin/activate
+        #- pip install --upgrade -r requirements_server.txt
+        - python setup.py install
+        - pip install --upgrade responses pytest-xdist pytest-cov
+        - pip install --upgrade -r requirements_dev.txt
+        - mkdir -p ~/.faraday/config
+        - cp tests/data/server.ini ~/.faraday/config
+        #- sed -i 's/mapped_table/persist_selectable/' faraday_venv/lib/python2.7/site-packages/flask_sqlalchemy/__init__.py  # TODO remove when flask_sqlalchemy fixes the issue
+        - pytest tests -v --cov=faraday/server/api --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB -m hypothesis
     only:
         variables:
-            - $FULL_TEST == "True"
-            - $I_DO_NOTH_TEST == "True"
-
-
-# This is a test of future test case that will be scheduled
-i_do_nothing2:
-    image: python:3
-    stage: post_testing
-    allow_failure: true
-    script:
-        - apt-get update -qy
-        - apt-get install -y python-dev python-pip
-    only:
-        variables:
-            - $FULL_TEST == "True"
-            - $I_DO_NOTH2_TEST == "True"
+            - $FULL_TEST
+            - $HYPO_TEST
+            - $DAILY_TEST

@@ -5,8 +5,6 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-import faraday.client.model
-
 
 def simple_decorator(decorator):
     '''this decorator can be used to turn simple functions

@@ -3,17 +3,62 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module("faradayApp")
-    .controller("statusReportCtrl",
-                    ["$scope", "$filter", "$routeParams",
-                     "$location", "$uibModal", "$cookies", "$q", "$window", "BASEURL",
-                     "SEVERITIES", "EASEOFRESOLUTION", "STATUSES", "hostsManager", "commonsFact", 'parserFact',
-                     "vulnsManager", "workspacesFact", "csvService", "uiGridConstants", "vulnModelsManager",
-                     "referenceFact", "ServerAPI", '$http', 'uiCommonFact', 'FileUploader', "workspaceData", "$templateCache",
-                    function($scope, $filter, $routeParams,
-                        $location, $uibModal, $cookies, $q, $window, BASEURL,
-                        SEVERITIES, EASEOFRESOLUTION, STATUSES, hostsManager, commonsFact,parserFact,
-                        vulnsManager, workspacesFact, csvService, uiGridConstants, vulnModelsManager, referenceFact,
-                        ServerAPI, $http, uiCommonFact, FileUploader, workspaceData,$templateCache) {
+    .controller("statusReportCtrl", [
+        "$scope",
+        "$filter",
+        "$routeParams",
+        "$location",
+        "$uibModal",
+        "$cookies",
+        "$q",
+        "$window",
+        "BASEURL",
+        "SEVERITIES",
+        "EASEOFRESOLUTION",
+        "STATUSES",
+        "hostsManager",
+        "commonsFact",
+        'parserFact',
+        "vulnsManager",
+        "workspacesFact",
+        "csvService",
+        "uiGridConstants",
+        "vulnModelsManager",
+        "referenceFact",
+        "ServerAPI",
+        '$http',
+        'uiCommonFact',
+        'FileUploader',
+        "workspaceData",
+        "$templateCache",
+        function ($scope,
+                  $filter,
+                  $routeParams,
+                  $location,
+                  $uibModal,
+                  $cookies,
+                  $q,
+                  $window,
+                  BASEURL,
+                  SEVERITIES,
+                  EASEOFRESOLUTION,
+                  STATUSES,
+                  hostsManager,
+                  commonsFact,
+                  parserFact,
+                  vulnsManager,
+                  workspacesFact,
+                  csvService,
+                  uiGridConstants,
+                  vulnModelsManager,
+                  referenceFact,
+                  ServerAPI,
+                  $http,
+                  uiCommonFact,
+                  FileUploader,
+                  workspaceData,
+                  $templateCache
+        ) {
         $scope.baseurl;
         $scope.columns;
         $scope.columnsWidths;
@@ -229,8 +274,7 @@ angular.module("faradayApp")
 
             if($scope.search !== "" && $scope.search !== undefined && $scope.search.indexOf("=") > -1) {
                 searchFilter = commonsFact.parseSearchURL($scope.search);
-                if ($scope.propertyFilterConfirmed === "All")
-                    $scope.searchParams = commonsFact.searchFilterToExpression(searchFilter);
+                $scope.searchParams = commonsFact.searchFilterToExpression(searchFilter);
             }
 
             $scope.columns = {
@@ -746,11 +790,13 @@ angular.module("faradayApp")
             var promises = [];
             try {
                 selected.forEach(function(vuln) {
-                    vuln.exploitation = vuln.severity;
-                    vuln.description = vuln.desc;
-                    vuln.desc_summary = vuln.desc;
-                    vuln.references = vuln.refs;
-                    promises.push(self.vulnModelsManager.create(vuln, true));
+                    let vulnCopy = angular.copy(vuln);
+                    vulnCopy.data = '';
+                    vulnCopy.exploitation = vuln.severity;
+                    vulnCopy.description = vuln.desc;
+                    vulnCopy.desc_summary = vuln.desc;
+                    vulnCopy.references = vuln.refs;
+                    promises.push(self.vulnModelsManager.create(vulnCopy, true));
                 });
                 $q.all(promises).then(function(success) {
                     commonsFact.showMessage("Created " + selected.length + " templates successfully.", true);

@@ -8,11 +8,29 @@ $.ajaxSetup({
     async: false
 });
 
-var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.bootstrap', 'angularFileUpload',
-                                                'filter', 'angular-clipboard', 'ngCookies', 'cfp.hotkeys', 'chart.js',
-                                                'ui.grid', 'ui.grid.selection', 'ui.grid.grouping', 'ngSanitize',
-                                                'ui.grid.pagination', 'ui.grid.pinning', 'angularMoment', 'ui-notification',
-                                                'ui.grid.resizeColumns', 'angularSimplePagination', 'dndLists', 'angularFileUploadLib'])
+var faradayApp = angular.module('faradayApp', [
+                                                    'ngRoute',
+                                                    'selectionModel',
+                                                    'ui.bootstrap',
+                                                    'angularFileUpload',
+                                                    'filter',
+                                                    'angular-clipboard',
+                                                    'ngCookies',
+                                                    'cfp.hotkeys',
+                                                    'chart.js',
+                                                    'ui.grid',
+                                                    'ui.grid.selection',
+                                                    'ui.grid.grouping',
+                                                    'ngSanitize',
+                                                    'ui.grid.pagination',
+                                                    'ui.grid.pinning',
+                                                    'angularMoment',
+                                                    'ui-notification',
+                                                    'ui.grid.resizeColumns',
+                                                    'angularSimplePagination',
+                                                    'dndLists',
+                                                    'angularFileUploadLib'
+                                             ])
     .constant("BASEURL", (function() {
         var url = window.location.origin + "/";
         return url;
@@ -77,6 +95,11 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
         appendToBody: true
     });
     $routeProvider.
+        when('/', {
+            templateUrl: 'scripts/commons/partials/home.html',
+            controller: 'homeCtrl',
+            title: ' Welcome | '
+        }).
         when('/dashboard/ws/:wsId', {
             templateUrl: 'scripts/dashboard/partials/dashboard.html',
             controller: 'dashboardCtrl',
@@ -145,6 +168,9 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             templateUrl: 'scripts/hosts/partials/new.html',
             controller: 'newHostCtrl',
             title: 'New host | '
+        }).
+        when('/host/ws/:wsId/', { 
+            redirectTo: "/hosts/ws/:wsId/" 
         }).
         when('/license/lid/:lidId', {
             templateUrl: 'scripts/licenses/partials/license.html',
@@ -332,10 +358,7 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             controller: 'adminCtrl',
             title: ' Admin | '
         }).
-        otherwise({
-            templateUrl: 'scripts/commons/partials/home.html',
-            controller: 'homeCtrl'
-        });
+        otherwise({redirectTo:'/'});
 }]);
 
 faradayApp.run(['$location', '$rootScope', 'loginSrv', function($location, $rootScope, loginSrv) {

@@ -7,6 +7,7 @@ from flask import Blueprint
 from flask_classful import route
 from marshmallow import fields, Schema
 from filteralchemy import Filter, FilterSet, operators
+from sqlalchemy import or_
 
 from faraday.server.utils.database import get_or_create
 
@@ -70,19 +71,30 @@ class HostSchema(AutoSchema):
                 if service.status == 'open']
 
 
-class ServiceFilter(Filter):
+class ServiceNameFilter(Filter):
     """Filter hosts by service name"""
 
     def filter(self, query, model, attr, value):
         return query.filter(model.services.any(Service.name == value))
 
 
+class ServicePortFilter(Filter):
+    """Filter hosts by service port"""
+
+    def filter(self, query, model, attr, value):
+        try:
+            return query.filter(model.services.any(Service.port == int(value)))
+        except ValueError:
+            return query.filter(None)
+
+
 class HostFilterSet(FilterSet):
     class Meta(FilterSetMeta):
         model = Host
-        fields = ('ip', 'name', 'os', 'service')
+        fields = ('ip', 'name', 'os', 'service', 'port')
         operators = (operators.Equal, operators.Like, operators.ILike)
-    service = ServiceFilter(fields.Str())
+    service = ServiceNameFilter(fields.Str())
+    port = ServicePortFilter(fields.Str())
 
 
 class HostCountSchema(Schema):

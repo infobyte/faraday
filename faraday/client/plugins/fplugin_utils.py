@@ -7,14 +7,14 @@ See the file 'doc/LICENSE' for the license information
 import imp
 import os
 import sys
+import logging
 
 from colorama import Fore
-from faraday.utils.logs import getLogger
 
 from faraday.config.configuration import getInstanceConfiguration
 
 CONF = getInstanceConfiguration()
-logger = getLogger()
+logger = logging.getLogger(__name__)
 
 
 def get_available_plugins():

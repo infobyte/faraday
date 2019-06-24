@@ -7,13 +7,12 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 from __future__ import with_statement
-from faraday.client.plugins import core
-from faraday.client.model import api
 import re
 import os
 import socket
-import pprint
 import sys
+from faraday.client.plugins import core
+
 
 try:
     import xml.etree.cElementTree as ET
@@ -211,40 +210,40 @@ class Item(object):
         self.requests = "\n".join([i['uri'] for i in self.items])
 
     def parse_uri(self, uri):
-            mregex = re.search(
-                "(http|https|ftp)\://([a-zA-Z0-9\.\-]+(\:[a-zA-Z0-9\.&amp"
-                ";%\$\-]+)*@)*((25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]"
-                "{1}|[1-9])\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}"
-                "|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}"
-                "|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|"
-                "[0-9])|localhost|([a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\.(com|edu|gov|"
-                "int|mil|net|org|biz|arpa|info|name|pro|aero|coop|museum|[a-zA-Z]{2"
-                "}))[\:]*([0-9]+)*([/]*($|[a-zA-Z0-9\.\,\?\'\\\+&amp;%\$#\=~_\-]+))"
-                ".*?$",
-                uri)
+        mregex = re.search(
+            "(http|https|ftp)\://([a-zA-Z0-9\.\-]+(\:[a-zA-Z0-9\.&amp"
+            ";%\$\-]+)*@)*((25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]"
+            "{1}|[1-9])\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}"
+            "|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}"
+            "|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|"
+            "[0-9])|localhost|([a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\.(com|edu|gov|"
+            "int|mil|net|org|biz|arpa|info|name|pro|aero|coop|museum|[a-zA-Z]{2"
+            "}))[\:]*([0-9]+)*([/]*($|[a-zA-Z0-9\.\,\?\'\\\+&amp;%\$#\=~_\-]+))"
+            ".*?$",
+            uri)
 
-            protocol = mregex.group(1)
-            host = mregex.group(4)
-            port = 80
-            if protocol == 'https':
-                port = 443
-            if mregex.group(11) is not None:
-                port = mregex.group(11)
+        protocol = mregex.group(1)
+        host = mregex.group(4)
+        port = 80
+        if protocol == 'https':
+            port = 443
+        if mregex.group(11) is not None:
+            port = mregex.group(11)
 
-            try:
-                params = [i.split('=')[0]
-                          for i in uri.split('?')[1].split('&')]
-            except Exception as e:
-                params = ''
+        try:
+            params = [i.split('=')[0]
+                      for i in uri.split('?')[1].split('&')]
+        except Exception as e:
+            params = ''
 
-            item = {
-                'uri': uri,
-                'params': ', '.join(params),
-                'host': host,
-                'protocol': protocol,
-                'port': port
-            }
-            self.items.append(item)
+        item = {
+            'uri': uri,
+            'params': ', '.join(params),
+            'host': host,
+            'protocol': protocol,
+            'port': port
+        }
+        self.items.append(item)
 
 
     def get_text_from_subnode(self, subnode_xpath_expr):

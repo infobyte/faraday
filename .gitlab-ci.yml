@@ -16,6 +16,9 @@ cache:
     - "$CI_PROJECT_DIR/.cache/pip"
     - "$CI_PROJECT_DIR/apt-cache"
 
+before_script:
+    - mkdir -pv $APT_CACHE_DIR
+
 stages:
     - pre_testing
     - testing

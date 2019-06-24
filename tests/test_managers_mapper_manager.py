@@ -364,7 +364,8 @@ GET_OBJ_DATA = [
                 "_attachments": [],
                 "target": "172.16.138.1",
                 "_id": 348,
-                "resolution": "resolution"
+                "resolution": "resolution",
+                "external_id": "1.30.9988.20.asdf.x20.vuln"
                 },
             'serialized_expected_results': {
                 'confirmed': True,
@@ -455,7 +456,8 @@ GET_OBJ_DATA = [
                 "_attachments": [],
                 "target": "192.168.0.1",
                 "_id": 1,
-                "resolution": ""
+                "resolution": "",
+                "external_id": "1.30.9988.20.asdf.x20.vuln"
         },
             'serialized_expected_results': {
                 'confirmed': True,

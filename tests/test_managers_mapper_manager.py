@@ -143,6 +143,7 @@ OBJ_DATA = [
             'refs': [],
             'status': 'opened',
             'resolution': None,
+            'external_id': '1.30.9988.20.asdf.x20.vuln'
         },
     },
     {
@@ -196,6 +197,7 @@ OBJ_DATA = [
             'request': 'test',
             'query': 'query test',
             'response': 'repsonse data',
+            'external_id': '1.30.9988.20.asdf.x20.vuln'
         },
     },
     {

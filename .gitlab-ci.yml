@@ -59,6 +59,11 @@ pylint:
     image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base  # I just need an image with python-dev and python-pip
     stage: pre_testing
     script:
+        - apt-get update -qy
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" build-essential ipython python-setuptools python-pip python-dev libssl-dev libffi-dev pkg-config libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" libpq-dev python-pip python-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 python-gobject zsh curl
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libgdk-pixbuf2.0-dev
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" libcanberra-gtk-module libcanberra-gtk* libxml2-dev libxslt1-dev gir1.2-gtk-3.0 gir1.2-vte-2.91
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate

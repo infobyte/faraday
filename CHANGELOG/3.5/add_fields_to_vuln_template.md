@@ -1,1 +1,0 @@
-Add  fields 'impact', 'easeofresolution' and 'policyviolations' to vulnerability_template

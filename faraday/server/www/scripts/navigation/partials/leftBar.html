@@ -1,0 +1,72 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+<aside class="left-nav" ng-if="showNavigation()">
+    <div class="head">
+        <a href="#/" class="ws-dashboard" uib-tooltip="{{version}}" tooltip-placement="bottom">
+            <img class="logo animated fadeInDown" src="images/logo-faraday-blanco.svg" alt="Faraday home | WS Dashboard"/>
+        </a>
+    </div>
+    <nav>
+        <ul>
+            <li>
+                <a href="#/dashboard/ws/{{workspace}}" class="ws-dashboard" ng-class="{'active' : component == 'dashboard'}" style="color: #ffffff !important" uib-tooltip="Dashboard" tooltip-placement="right">
+                    <img src="images/ico-dashboard-menu.svg" alt="Dashboard"/>
+                </a>
+            </li>
+            <li>
+                <a href="#/status/ws/{{workspace}}" class="status-report" ng-class="{'active' : component == 'status'}" style="color: #ffffff !important" uib-tooltip="Status Report" tooltip-placement="right">
+                    <img src="images/ico-status-menu.svg" alt="Status Report"/>
+                </a>
+            </li>
+            <li>
+                <a href="#/hosts/ws/{{workspace}}" class="workspaces" ng-class="{'active' : component == 'hosts'}" style="color: #ffffff !important" uib-tooltip="Hosts" tooltip-placement="right">
+                    <img src="images/ico-hosts-menu.svg" alt="Hosts"/>
+                </a>
+            </li>
+            <li>
+                <a href="#/credentials/ws/{{workspace}}" class="workspaces" ng-class="{'active' : component == 'credentials'}" style="color: #ffffff !important" uib-tooltip="Credentials" tooltip-placement="right">
+                    <img src="images/ico-credentials-menu.svg" alt="Credentials"/>
+                </a>
+            </li>
+            <li>
+                <a href="#/executive" class="executive-report" ng-class="{'active' : component == 'executive'}" style="color: #ffffff !important" uib-tooltip="Executive Report" tooltip-placement="right">
+                    <img src="images/ico-executive-menu.svg" alt="Executive Report"/>
+                </a>
+            </li>
+            <li>
+                <a href="#/taskgroup" class="executive-report" ng-class="{'active' : component == 'taskgroup'}" style="color: #ffffff !important" uib-tooltip="Tasks" tooltip-placement="right">
+                    <img src="images/ico-tasks-menu.svg" alt="Tasks"/>
+                </a>
+            </li>
+            <li>
+                <a href="#/comparison" class="executive-report" ng-class="{'active' : component == 'comparison'}" style="color: #ffffff !important" uib-tooltip="Workspaces Comparison" tooltip-placement="right">
+                    <img src="images/ico-workspace-comparison-menu.svg" alt="Workspaces Comparison"/>
+                </a>
+            </li>
+            <li>
+                <a href="#/webshell" class="executive-report" ng-class="{'active' : component == 'webshell'}" style="color: #ffffff !important" uib-tooltip="Web Shell" tooltip-placement="right">
+                    <img src="images/ico-web-shell-menu.svg" alt="Webshell"/>
+                </a>
+            </li>
+            <li>
+                <a href="#/vulndb" class="status-report" ng-class="{'active' : component == 'vulndb'}" style="color: #ffffff !important" uib-tooltip="Vulnerability Templates" tooltip-placement="right">
+                    <img src="images/ico-vulnerability-templates-menu.svg" alt="Vulnerability Templates"/>
+                </a>
+            </li>
+            <li>
+                <a href="#/data_analysis" class="status-report" ng-class="{'active' : component == 'data_analysis'}" style="color: #ffffff !important" uib-tooltip="Data Analysis" tooltip-placement="right">
+                    <img src="images/ico-data-analysis-menu.svg" alt="Data Analysis"/>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <div ng-show="isIceweasel" class="alert alert-danger alert-dismissible">
+        <button type="button" class="close" data-dismiss="alert">
+            <span aria-hidden="true">&times;</span>
+            <span class="sr-only">Close</span>
+        </button>
+        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+        <span ng-bind="isIceweasel"></span>
+    </div>
+</aside>

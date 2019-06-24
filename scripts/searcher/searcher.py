@@ -18,28 +18,24 @@ from datetime import datetime
 from difflib import SequenceMatcher
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import requests
-import json
 import ast
-from config.configuration import getInstanceConfiguration
-from persistence.server import models
-from persistence.server import server
-from persistence.server.server import login_user
-from persistence.server.server_io_exceptions import ResourceDoesNotExist, ConflictInDatabase
 from validator import *
-import urlparse
-
+from api import Api
 
 logger = logging.getLogger('Faraday searcher')
 
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
-CONF = getInstanceConfiguration()
+mail_from = ''
+mail_password = ''
+mail_protocol = 'smtp.gmail.com'
+mail_port = 587
 
 
 def send_mail(to_addr, subject, body):
-    from_addr = 'faraday.searcher@gmail.com'
+    global mail_from, mail_password, mail_protocol, mail_port
+    from_addr = mail_from
     msg = MIMEMultipart()
     msg['From'] = from_addr
     msg['To'] = to_addr
@@ -47,9 +43,9 @@ def send_mail(to_addr, subject, body):
 
     msg.attach(MIMEText(body, 'plain'))
     try:
-        server_mail = smtplib.SMTP('smtp.gmail.com', 587)
+        server_mail = smtplib.SMTP(mail_protocol, mail_port)
         server_mail.starttls()
-        server_mail.login(from_addr, "faradaySearcher.2018")
+        server_mail.login(from_addr, mail_password)
         text = msg.as_string()
         server_mail.sendmail(from_addr, to_addr, text)
         server_mail.quit()
@@ -62,40 +58,12 @@ def compare(a, b):
     return SequenceMatcher(None, a, b).ratio()
 
 
-def get_cwe(data, _server='http://127.0.0.1:5985/'):
-    logger.debug("Getting vulnerability templates from %s " % _server)
-    try:
-        url = urlparse.urljoin(_server, "_api/v2/vulnerability_template/")
-        session_cookie = CONF.getDBSessionCookies()
-        response = requests.request("GET", url, cookies=session_cookie)
-        if response.status_code == 200:
-            templates = json.loads(response.content)
-            cwe = None
-            for row in templates['rows']:
-                doc = row['doc']
-                _id = doc['_id']
-                name = doc['name']
-                description = doc['description']
-                resolution = doc['resolution']
-                if str(_id) == data or name == data:
-                    cwe = {
-                        'id': _id,
-                        'name': name,
-                        'description': description,
-                        'resolution': resolution
-                    }
-                    break
-            return cwe
-        elif response.status_code == 401:
-            logger.error('You are not authorized to get the vulnerability templates')
-            return None
-        else:
-            logger.error('We can\'t get the vulnerability templates')
-            return None
-
-    except Exception as error:
-        logger.error(error)
-        return None
+def get_cwe(data):
+    logger.debug("Getting vulnerability templates")
+    templates = api.get_filtered_templates(id=data, name=data)
+    if len(templates) > 0:
+        return templates.pop()
+    return None
 
 
 def is_same_level(model1, model2):
@@ -227,15 +195,15 @@ def set_array(field, value, add=True):
 
 def update_vulnerability(ws, vuln, key, value, _server):
     if key == 'template':
-        cwe = get_cwe(value, _server)
+        cwe = get_cwe(value)
         if cwe is None:
             logger.error("%s: cwe not found" % value)
             return False
 
-        vuln.name = cwe['name']
-        vuln.description = cwe['description']
-        vuln.desc = cwe['description']
-        vuln.resolution = cwe['resolution']
+        vuln.name = cwe.name
+        vuln.description = cwe.description
+        vuln.desc = cwe.description
+        vuln.resolution = cwe.resolution
 
         logger.info("Applying template '%s' to vulnerability '%s' with id '%s'" % (value, vuln.name, vuln.id))
 
@@ -253,8 +221,14 @@ def update_vulnerability(ws, vuln, key, value, _server):
             key = key.strip('-')
             to_add = False
 
-        field = get_field(vuln, key)
-        if field is not None:
+        is_custom_field = False
+        if key in vuln.custom_fields:
+            field = vuln.custom_fields
+            is_custom_field = True
+        else:
+            field = get_field(vuln, key)
+
+        if field is not None and is_custom_field is False:
             if isinstance(field, str) or isinstance(field, unicode):
                 setattr(vuln, key, value)
                 logger.info(
@@ -268,16 +242,13 @@ def update_vulnerability(ws, vuln, key, value, _server):
 
                 logger.info(action)
 
+        if field is not None and is_custom_field is True:
+            vuln.custom_fields[key] = value
+            logger.info(
+                "Changing custom field %s to %s in vulnerability '%s' with id %s" % (key, value, vuln.name, vuln.id))
+
     try:
-        if vuln.class_signature == "Vulnerability":
-            models.update_vuln(ws, vuln)
-
-        elif vuln.class_signature == "VulnerabilityWeb":
-            models.update_vuln_web(ws, vuln)
-
-    except ConflictInDatabase:
-        logger.error("There was a conflict trying to save '%s' with ID: %s" % (vuln.name, vuln.id))
-        return False
+        api.update_vulnerability(vuln)
     except Exception as error:
         logger.error(error)
         return False
@@ -312,7 +283,7 @@ def update_service(ws, service, key, value):
 
                 logger.info(action)
     try:
-        models.update_service(ws, service, "")
+        api.update_service(service)
     except Exception as error:
         logger.error(error)
         return False
@@ -346,7 +317,7 @@ def update_host(ws, host, key, value):
 
                 logger.info(action)
     try:
-        models.update_host(ws, host, "")
+        api.update_host(host)
     except Exception as error:
         logger.error(error)
         return False
@@ -357,14 +328,8 @@ def update_host(ws, host, key, value):
 
 def get_parent(ws, parent_tag):
     logger.debug("Getting parent")
-    try:
-        parent = models.get_host(ws, parent_tag) or models.get_service(ws, parent_tag)
-    except ResourceDoesNotExist:
-        parent = models.get_hosts(ws, name=parent_tag) or models.get_services(ws, name=parent_tag)
-        if len(parent) == 0:
-            return None
-
-    return parent
+    return api.get_filtered_services(id=parent_tag, name=parent_tag) or \
+           api.get_filtered_hosts(id=parent_tag, name=parent_tag)
 
 
 def filter_objects_by_parent(_objects, parent):
@@ -397,8 +362,11 @@ def evaluate_condition(model, condition):
         return False
 
     if isinstance(temp_value, list):
-        if value not in temp_value and str(value) not in temp_value and int(value) not in temp_value:
-            return False
+        if value not in temp_value and str(value) not in temp_value:
+            if not isinstance(value, int):
+                return False
+            elif int(value) not in temp_value:
+                return False
         return True
 
     if isinstance(temp_value, bool):
@@ -407,6 +375,9 @@ def evaluate_condition(model, condition):
         if value == 'False' and temp_value:
             return False
         return True
+
+    if isinstance(temp_value, int):
+        return value == str(temp_value)
 
     if value.encode("utf-8") != temp_value.encode("utf-8"):
         return False
@@ -490,21 +461,17 @@ def execute_action(ws, objects, rule, _server):
                     update_host(ws, obj, key, value)
 
             elif command == 'DELETE':
-                if obj.class_signature == 'VulnerabilityWeb':
-                    models.delete_vuln_web(ws, obj.id)
-                    logger.info(" Deleting vulnerability web '%s' with id '%s':" % (obj.name, obj.id))
+                if obj.class_signature == 'VulnerabilityWeb' or obj.class_signature == 'Vulnerability':
+                    api.delete_vulnerability(obj.id)
+                    logger.info("Deleting vulnerability '%s' with id '%s':" % (obj.name, obj.id))
                     insert_rule(rule['id'], command, obj, _objs_value)
 
-                elif obj.class_signature == 'Vulnerability':
-                    models.delete_vuln(ws, obj.id)
-                    logger.info("Deleting vulnerability '%s' with id '%s':" % (obj.name, obj.id))
-
                 elif obj.class_signature == 'Service':
-                    models.delete_service(ws, obj.id)
+                    api.delete_service(obj.id)
                     logger.info("Deleting service '%s' with id '%s':" % (obj.name, obj.id))
 
                 elif obj.class_signature == 'Host':
-                    models.delete_host(ws, obj.id)
+                    api.delete_host(obj.id)
                     logger.info("Deleting host '%s' with id '%s':" % (obj.name, obj.id))
 
             elif command == 'EXECUTE':
@@ -533,7 +500,7 @@ def replace_rule(rule, value_item):
     _vars = list(set(r))
     for var in _vars:
         value = value_item[var]
-        rule_str = rule_str.replace('{{'+var+'}}', value)
+        rule_str = rule_str.replace('{{' + var + '}}', value)
 
     return ast.literal_eval(rule_str)
 
@@ -635,6 +602,10 @@ def main():
     parser.add_argument('-u', '--user', help='Faraday user', required=False, default="")
     parser.add_argument('-p', '--password', help='Faraday password', required=False, default="")
     parser.add_argument('-o', '--output', help='Choose a custom output directory', required=False)
+    parser.add_argument('-e', '--email', help='Custom email', required=False, default="faraday.searcher@gmail.com")
+    parser.add_argument('-ep', '--email_pass', help='Email password', required=False)
+    parser.add_argument('-mp', '--mail_protocol', help='Email protocol', required=False, default="smtp.gmail.com")
+    parser.add_argument('-pp', '--port_protocol', help='Port protocol', required=False, default=587)
     parser.add_argument('-l', '--log', help='Choose a custom log level', required=False)
     args = parser.parse_args()
 
@@ -671,6 +642,20 @@ def main():
     if args.log:
         loglevel = args.log
 
+    global mail_from, mail_password, mail_protocol, mail_port
+
+    if args.email:
+        mail_from = args.email
+
+    if args.email_pass:
+        mail_password = args.email_pass
+
+    if args.mail_protocol:
+        mail_protocol = args.mail_protocol
+
+    if args.port_protocol:
+        mail_port = args.port_protocol
+
     for d in [output, 'log/']:
         if not os.path.isdir(d):
             os.makedirs(d)
@@ -688,7 +673,8 @@ def main():
         ch = logging.StreamHandler()
         ch.setLevel(numeric_level)
         # create formatter and add it to the handlers
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s: %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s: %(message)s',
+                                      datefmt='%m/%d/%Y %I:%M:%S %p')
 
         fh.setFormatter(formatter)
         ch.setFormatter(formatter)
@@ -697,29 +683,20 @@ def main():
         logger.addHandler(ch)
 
     try:
-        session_cookie = login_user(_server, _user, _password)
-        if not session_cookie:
-            raise UserWarning('Invalid credentials!')
-        else:
-            CONF.setDBUser(_user)
-            CONF.setDBSessionCookies(session_cookie)
-
-        server.AUTH_USER = _user
-        server.AUTH_PASS = _password
-        server.SERVER_URL = _server
-        server.FARADAY_UP = False
-
         logger.info('Started')
         logger.info('Searching objects into workspace %s ' % workspace)
 
+        global api
+        api = Api(workspace, _user, _password)
+
         logger.debug("Getting hosts ...")
-        hosts = models.get_hosts(workspace)
+        hosts = api.get_hosts()
 
         logger.debug("Getting services ...")
-        services = models.get_services(workspace)
+        services = api.get_services()
 
         logger.debug("Getting vulnerabilities ...")
-        vulns = models.get_all_vulns(workspace)
+        vulns = api.get_vulnerabilities()
 
         if validate_rules():
             process_vulnerabilities(workspace, vulns, _server)
@@ -730,11 +707,6 @@ def main():
         os.remove(lockf)
 
         logger.info('Finished')
-
-    except ResourceDoesNotExist:
-        logger.error("Resource not found")
-        os.remove(lockf)
-        exit(0)
 
     except Exception as errorMsg:
         logger.error(errorMsg)

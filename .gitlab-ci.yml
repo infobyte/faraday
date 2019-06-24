@@ -4,89 +4,299 @@ variables:
     POSTGRES_DB: custom_db
     POSTGRES_USER: custom_user
     POSTGRES_PASSWORD: custom_pass
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+    APT_CACHE_DIR: "$CI_PROJECT_DIR/apt-cache"
+    DEBIAN_FRONTEND: noninteractive
+    ## ENV_VARS LIST
+    # FULL_TEST = Test all jobs
+    # BUILD_TEST = Test default and build jobs
+    # DAILY_TEST = Run every night at 03 am
+
+cache:
+  paths:
+    - "$CI_PROJECT_DIR/.cache/pip"
+    - "$CI_PROJECT_DIR/apt-cache"
+
+before_script:
+    - mkdir -pv $APT_CACHE_DIR
 
 stages:
-    - merge_conflict_check
-    - fast_test
-    - doeverything
+    - pre_testing
+    - testing
+    - post_testing
+    - build
 
 services:
     - postgres:latest
 
-test:
-    image: ubuntu
-    stage: fast_test
-    coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
-    script:
-        - ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
-        - echo $TZ > /etc/timezone
-        - apt-get update -qy
-        - apt-get -y install build-essential ipython python-setuptools python-pip python-dev pkg-config libssl-dev libffi-dev libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev postgresql sudo libsasl2-dev libldap2-dev git
-        - apt-get install -y python-dev python-pip
-        - pip install virtualenv
-        - virtualenv -p python2 faraday_venv
-        - source faraday_venv/bin/activate
-        - pip install -r requirements_server.txt
-        - pip install responses pytest-xdist pytest-cov
-        - pip install -r requirements_dev.txt
-        - pytest test_cases -v --cov=server
-
-pylint:
-  image: ubuntu
-  stage: doeverything
-  script:
-    - apt-get update -qy
-    - apt-get install -y python-dev python-pip
-    - pip install pylint anybadge
-    - pylint server |tee pylint.txt || true
-    - score=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' pylint.txt)
-    - anybadge --label pylint --value=$score --file pylint.svg 4=red 6=orange 8=yellow 10=green
-  artifacts:
-    paths:
-      - pylint.svg
-
-test_postgresql:
-    image: ubuntu
-    stage: doeverything
-    coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
-    script:
-        - ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
-        - echo $TZ > /etc/timezone
-        - apt-get update -qy
-        - apt-get -y install build-essential ipython python-setuptools python-pip python-dev pkg-config libssl-dev libffi-dev libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev postgresql sudo libsasl2-dev libldap2-dev git python-lxml
-        - apt-get install -y python-dev python-pip
-        - pip install virtualenv
-        - virtualenv -p python2 faraday_venv
-        - source faraday_venv/bin/activate
-        - pip install -r requirements_server.txt
-        - pip install responses pytest-xdist pytest-cov
-        - pip install -r requirements_dev.txt
-        - mkdir -p ~/.faraday/config
-        - cp test_cases/data/server.ini ~/.faraday/config
-        - pytest test_cases -v --cov=server --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_db -n 10
-    artifacts:
-        when: on_failure
-        paths:
-          - ~/.faraday/logs/faraday-server.log
-
 closure_compiler:
-    image: ubuntu
-    stage: doeverything
-    script:
-        - apt-get update -qy
-        - apt-get -y install wget default-jre unzip
-        - wget https://dl.google.com/closure-compiler/compiler-latest.zip
-        - unzip -n compiler-latest.zip
-        - mv "$(unzip -Z1 compiler-latest.zip | grep jar)" compiler-latest.jar
-        - java -jar compiler-latest.jar server/www/scripts
+    tags:
+        - faradaytests
+    image:
+        name: jborza/closure-compiler
+        entrypoint: ["/bin/sh", "-c"]
 
+    stage: pre_testing
+    script:
+        - /opt/cc.sh faraday/server/www/scripts
+    except:
+        variables:
+            - $BUILD_TEST
 
 merge_conflict_check:
+    tags:
+        - faradaytests
     image: python:3
-    stage: merge_conflict_check
+    stage: pre_testing
     allow_failure: true
     script:
         - git config --global user.email "you@example.com"
         - git config --global user.name "Mergerbot"
         - python3 merge-conflict-detector.py
+    except:
+        variables:
+            - $BUILD_TEST
 
+pylint:
+    tags:
+        - faradaytests
+    image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base  # I just need an image with python-dev and python-pip
+    stage: pre_testing
+    script:
+        - apt-get update -qy
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" build-essential ipython python-setuptools python-pip python-dev libssl-dev libffi-dev pkg-config libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" libpq-dev python-pip python-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 python-gobject zsh curl
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libgdk-pixbuf2.0-dev
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" libcanberra-gtk-module libcanberra-gtk* libxml2-dev libxslt1-dev gir1.2-gtk-3.0 gir1.2-vte-2.91
+        - pip install virtualenv
+        - virtualenv -p python2 faraday_venv
+        - source faraday_venv/bin/activate
+        - pip install --upgrade -r requirements.txt
+        - python setup.py install
+        # pylint slow issue https://github.com/PyCQA/pylint/issues/2765
+        - pip install pylint isort==4.3.4 anybadge
+        - pylint --rcfile=.pylintrc faraday --ignore=faraday_venv | tee pylint.txt
+        - score=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' pylint.txt)
+        - anybadge --label pylint --value=$score --file pylint.svg 4=red 6=orange 8=yellow 10=green
+    artifacts:
+        paths:
+            - pylint.svg
+    except:
+        variables:
+            - $BUILD_TEST
+
+py3checker:
+    tags:
+        - faradaytests
+    image: python:3
+    stage: testing
+    script:
+        - pip install pylint
+        - python3 py3-checker.py -o py3_checker_result.txt
+    artifacts:
+        paths:
+            - py3_checker_result.txt
+        expire_in: 1 week
+    except:
+        variables:
+            - $BUILD_TEST
+
+postgresql_test:
+    image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base
+    tags:
+        - faradaytests
+    stage: testing
+    coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
+    script:
+        - apt-get update -qy
+        - apt-get install -o dir::cache::archives="$APT_CACHE_DIR" -y gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libpq-dev
+        - pip install virtualenv
+        - virtualenv -p python2 faraday_venv
+        - source faraday_venv/bin/activate
+        #- pip install --upgrade -r requirements_server.txt
+        - pip install --upgrade -r requirements.txt
+        - python setup.py install
+        - pip install --upgrade responses pytest-xdist pytest-cov
+        - pip install --upgrade -r requirements_dev.txt
+        - mkdir -p ~/.faraday/config
+        - cp tests/data/server.ini ~/.faraday/config
+        #- sed -i 's/mapped_table/persist_selectable/' faraday_venv/lib/python2.7/site-packages/flask_sqlalchemy/__init__.py  # TODO remove when flask_sqlalchemy fixes the issue
+        - mkdir run_from
+        - cd run_from && pytest ../tests -v --capture=sys --cov=../faraday/server --color=yes --disable-warnings --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB
+    artifacts:
+        when: on_failure
+        paths:
+            - ~/.faraday/logs/faraday-server.log
+    except:
+        variables:
+            - $BUILD_TEST
+
+sqlite_test:
+    image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base
+    tags:
+        - faradaytests
+    stage: testing
+    coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
+    script:
+        - apt-get update -qy
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libpq-dev
+        - pip install virtualenv
+        - virtualenv -p python2 faraday_venv
+        - source faraday_venv/bin/activate
+        #- pip install --upgrade -r requirements_server.txt
+        - pip install --upgrade -r requirements.txt
+        - python setup.py install
+        - pip install --upgrade responses pytest-xdist pytest-cov
+        - pip install --upgrade -r requirements_dev.txt
+        - mkdir -p ~/.faraday/config
+        - cp tests/data/server.ini ~/.faraday/config
+        - mkdir run_from
+        - cd run_from && pytest ../tests --capture=sys -v --cov=../faraday/server --color=yes --disable-warnings
+    artifacts:
+        when: on_failure
+        paths:
+            - dist/*
+    except:
+        variables:
+            - $BUILD_TEST
+
+generate_release_file:
+    image: python:3
+    stage: post_testing
+    allow_failure: true
+    script:
+        - apt-get update -qy
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" python-dev python-pip
+        - pip install packaging
+        - cd CHANGELOG && python3 changelog.py
+    artifacts:
+        paths:
+            - CHANGELOG/RELEASE.md
+    only:
+        variables:
+            - $FULL_DOC == "True"
+            - $RELEASE_FILE == "True"
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(master)$/
+            - $BUILD_TEST
+            - $FULL_TEST
+            - $DAILY_TEST
+
+binary_files:
+    image: python:2.7.16
+    stage: build
+    script:
+        - apt-get update -qy
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" build-essential ipython python-setuptools python-pip python-dev libssl-dev libffi-dev pkg-config libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" libpq-dev python-pip python-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 python-gobject zsh curl
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libgdk-pixbuf2.0-dev
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" libcanberra-gtk-module libcanberra-gtk* libxml2-dev libxslt1-dev gir1.2-gtk-3.0 gir1.2-vte-2.91
+        - pip install virtualenv
+        - virtualenv -p python2 faraday_venv
+        - source faraday_venv/bin/activate
+        - pip install pyinstaller
+        - pip install --upgrade -r requirements.txt
+        - python setup.py install
+        - pip install .[gtk]
+        - pyinstaller -F -w --onefile --icon=faraday/faraday/server/www/favicon.ico start_server.spec
+        - pyinstaller -F -w --onefile --icon=faraday/faraday/server/www/favicon.ico manage.spec
+        - pyinstaller -F -w --onefile --icon=faraday/faraday/server/www/favicon.ico start_client.spec
+        - pyinstaller -F -w --onefile --icon=faraday/faraday/server/www/favicon.ico fplugin.spec
+        - mv dist/start_client dist/faraday-client
+        - mv dist/start_server dist/faraday-server
+        - mv dist/manage dist/faraday-manage
+        - mv dist/fplugin dist/faraday-fplugin
+    artifacts:
+        name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME-binaries"
+        paths:
+          - dist/faraday-server
+          - dist/faraday-manage
+          - dist/faraday-client
+          - dist/faraday-fplugin
+        expire_in: 1 week
+    only:
+        variables:
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(master)$/
+            - $CI_COMMIT_TAG
+            - $BUILD_TEST
+            - $FULL_TEST
+            - $DAILY_TEST
+
+macos_dmg:
+    tags:
+        - macos
+    stage: build
+    allow_failure: true
+    script:
+        - pip install virtualenv
+        - virtualenv -p python2 faraday_venv
+        - source faraday_venv/bin/activate
+        - export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:/usr/local/opt/libffi/lib/pkgconfig"
+        - pip install pyinstaller
+        - pip install --upgrade -r requirements.txt
+        - python setup.py install
+        - pip install .[gtk]
+        - pyinstaller -F -w --onefile --onefile --icon=faraday/faraday/server/www/favicon.ico start_server.spec
+        - pyinstaller -F -w --onefile --onefile --icon=faraday/faraday/server/www/favicon.ico manage.spec
+        - pyinstaller -F -w --onefile --onefile --icon=faraday/faraday/server/www/favicon.ico start_client.spec
+        - pyinstaller -F -w --onefile --icon=faraday/faraday/server/www/favicon.ico fplugin.spec
+        - mv dist/start_client dist/faraday-client
+        - mv dist/start_server dist/faraday-server
+        - mv dist/manage dist/faraday-manage
+        - mv dist/fplugin dist/faraday-fplugin
+        - hdiutil create /tmp/tmp.dmg -ov -volname "Faraday" -fs HFS+ -srcfolder "./dist"
+        - hdiutil convert /tmp/tmp.dmg -format UDZO -o Faraday.dmg
+    artifacts:
+        name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME-binaries"
+        paths:
+            - Faraday.dmg
+        expire_in: 1 week
+    only:
+        variables:
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(master)$/
+            - $CI_COMMIT_TAG
+            - $BUILD_TEST
+            - $FULL_TEST
+            - $DAILY_TEST
+
+documentation:
+    image: python:3
+    stage: post_testing
+    script:
+        - apt-get update -qy
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" python-pip python-dev
+        - pip install sphinx
+        - cd doc && make html
+    artifacts:
+        paths:
+            - doc/_build/html
+    only:
+        variables:
+            - $FULL_DOC
+            - $DOC
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/
+
+
+test_hypothesis:
+    tags:
+        - hypothesis
+    image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base
+    stage: testing
+    allow_failure: true
+    script:
+        - apt-get update -qy
+        - pip install virtualenv
+        - virtualenv -p python2 faraday_venv
+        - source faraday_venv/bin/activate
+        #- pip install --upgrade -r requirements_server.txt
+        - python setup.py install
+        - pip install --upgrade responses pytest-xdist pytest-cov
+        - pip install --upgrade -r requirements_dev.txt
+        - mkdir -p ~/.faraday/config
+        - cp tests/data/server.ini ~/.faraday/config
+        #- sed -i 's/mapped_table/persist_selectable/' faraday_venv/lib/python2.7/site-packages/flask_sqlalchemy/__init__.py  # TODO remove when flask_sqlalchemy fixes the issue
+        - pytest tests -v --cov=faraday/server/api --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB -m hypothesis
+    only:
+        variables:
+            - $FULL_TEST
+            - $HYPO_TEST
+            - $DAILY_TEST

@@ -1,0 +1,5 @@
+<div ng-if="row.entity._id != undefined" class="ui-grid-cell-contents row-tooltip confirm-toggle" style="margin-left: -7px;">
+    <span ng-click="grid.appScope.toggleConfirmVuln(row.entity, row.entity.confirmed); $event.stopPropagation();" class="cursor" uib-tooltip="{{grid.appScope.confirmedTooltip(row.entity.confirmed)}}" tooltip-placement="right" ng-class="{ disabled:row.entity.confirmed === false }">
+        <img ng-src="{{ (row.entity.confirmed) ? 'images/icon-list-confirmed.png' : 'images/icon-list-notconfirmed.png'}}" class="confirm-icon" ng-style="{ 'opacity': (row.entity.confirmed === true) ? '1' : '0.7' }" />
+    </span>
+</div>

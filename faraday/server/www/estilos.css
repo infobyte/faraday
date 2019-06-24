@@ -1320,6 +1320,8 @@ a.button-disable{cursor: not-allowed;pointer-events: none;opacity: 0.5}
     border-radius: 2px;
     right: 15px;
     padding-top: 3px;
+}
+
 .markdown-preview {
     height: 200px;
     overflow-x: auto;

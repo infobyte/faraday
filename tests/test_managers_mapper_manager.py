@@ -473,6 +473,7 @@ GET_OBJ_DATA = [
                 'refs': [],
                 'resolution': '',
                 'severity': 'med',
+                'external_id': '1.30.9988.20.asdf.x20.vuln',
                 'status': 'opened'
             }
 

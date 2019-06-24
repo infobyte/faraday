@@ -437,7 +437,6 @@ def check_faraday_version():
     except RuntimeError:
         get_logger("launcher").error(
             "The server is running a different Faraday version than the client you are running. Version numbers must match!")
-        sys.exit(2)
 
 
 def try_login_user(server_uri, api_username, api_password):

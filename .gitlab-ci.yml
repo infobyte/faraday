@@ -59,6 +59,11 @@ pylint:
     image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base  # I just need an image with python-dev and python-pip
     stage: pre_testing
     script:
+        - pip install virtualenv
+        - virtualenv -p python2 faraday_venv
+        - source faraday_venv/bin/activate
+        - pip install --upgrade -r requirements.txt
+        - python setup.py install
         - pip install pylint anybadge
         - pylint --rcfile=.pylintrc faraday | tee pylint.txt
         - score=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' pylint.txt)

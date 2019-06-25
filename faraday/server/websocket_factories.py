@@ -9,13 +9,10 @@ import logging
 import itsdangerous
 
 import Cookie
-import faraday.server.utils
-import faraday.server.utils.logger
 from collections import defaultdict
 from Queue import Queue, Empty
 
 from twisted.internet import reactor
-# from twisted.python import log
 
 from autobahn.twisted.websocket import (
     WebSocketServerFactory,

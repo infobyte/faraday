@@ -98,11 +98,16 @@ class Analyser:
 
 
 def main(filename):
+    PYTLINT = ".pylintrc"
+    RENAMED = ".to_be_renamed"
+    os.rename(PYTLINT, RENAMED)
+
     if filename:
         import sys
         sys.stdout = open(filename, 'w')
     Analyser().run()
 
+    os.rename(RENAMED, PYTLINT)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

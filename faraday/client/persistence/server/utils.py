@@ -8,6 +8,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 import re
 import logging
+import socket
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +59,14 @@ def get_host_properties(host):
     if 'ip' not in host_dict and ip:
         if re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", ip) is None:
             logger.warn('Host with invalid IP address detected.')
+            logger.warn('Let\'s try to resolve %s', ip)
+            try:
+                #This is not perfect. Could resolve to different ip addr depending on the dns registry.
+                ip = socket.gethostbyname(ip)
+                logger.warn('Resolved to %s', ip)
+            except socket.gaierror as e:
+                logger.error('Couldn\'t resolve hostname %s', ip)
+                pass
         host_dict['ip'] = ip
     return host_dict
 

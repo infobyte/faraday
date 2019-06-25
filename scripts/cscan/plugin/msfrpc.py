@@ -6,13 +6,15 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import time
 import string
 import random
 import argparse
 import msgpack
-import httplib
+import http.client
 import ssl
 
 
@@ -39,9 +41,9 @@ class Msfrpc:
         self.token = False
         self.headers = {"Content-type": "binary/message-pack"}
         if self.ssl:
-            self.client = httplib.HTTPSConnection(self.host, self.port, context=ssl._create_unverified_context())
+            self.client = http.client.HTTPSConnection(self.host, self.port, context=ssl._create_unverified_context())
         else:
-            self.client = httplib.HTTPConnection(self.host, self.port)
+            self.client = http.client.HTTPConnection(self.host, self.port)
 
     def encode(self, data):
         return msgpack.packb(data)
@@ -91,7 +93,7 @@ class CscanMsf:
             logfile.write("%s\n" % msg)
             logfile.close()
         if not self.quiet or critical:
-            print msg
+            print(msg)
 
     def rpc_call(self, meth, opts, key=""):
         if self.check_auth():
@@ -234,7 +236,7 @@ def main():
         client.login(args.msfrpc_user if args.msfrpc_user else os.environ.get("MSFRPC_USER"),
                      args.msfrpc_pass if args.msfrpc_pass else os.environ.get("MSFRPC_PASS"))
     except:
-        print "ERROR: Cannot connect to server.."
+        print("ERROR: Cannot connect to server..")
         exit(1)
 
     cscan = CscanMsf(client, args.log, args.quiet)
@@ -242,11 +244,11 @@ def main():
     tmp_ws = None
     current_ws = cscan.rpc_call("db.current_workspace", [], "workspace")
 
-    print banner(args, current_ws)
+    print(banner(args, current_ws))
     cscan.create_console()
 
     if not args.disable_tmp_ws and os.environ.get("CS_MSF_TMP_WS") == "enabled":
-        tmp_ws = "cscan_" + "".join(random.sample(string.lowercase,6))
+        tmp_ws = "cscan_" + "".join(random.sample(string.ascii_lowercase,6))
         cscan.create_ws(tmp_ws, True)
         if args.xml:
             cscan.import_xml_data(tmp_ws, args.xml)

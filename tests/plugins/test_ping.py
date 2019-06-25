@@ -8,9 +8,10 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
+from __future__ import absolute_import
 import unittest
 import sys
-from Queue import Queue
+from queue import Queue
 from collections import defaultdict
 
 import os
@@ -51,7 +52,7 @@ class TestCmdPingPlugin:
             actions[action[0]].append(action[1])
 
         assert actions[2000][0].name == "216.58.222.142"
-        assert actions.keys() == [2000]
+        assert list(actions.keys()) == [2000]
 
         assert len(actions[2000]) == 1
 

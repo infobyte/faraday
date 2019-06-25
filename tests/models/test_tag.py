@@ -4,7 +4,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-import pytest
+from __future__ import absolute_import
 from faraday.server.models import TagObject
 
 

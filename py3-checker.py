@@ -65,8 +65,8 @@ class Analyser:
         if find_py3_ok_result and not lint_ok_result:
             self.logger.error("The auto-claimed python file {path} as python is not python3".format(path=path))
             error_list.append(path)
-        if not find_py3_ok_result and lint_ok_result:
-            self.logger.info("The file {path} is python3".format(path=path))
+        if not lint_ok_result:
+            self.logger.info("The file {path} is python2".format(path=path))
         return 1 if lint_ok_result else 0, 1, [], error_list
 
     def analyse_folder(self, parent_path):

@@ -6,6 +6,8 @@
 ## Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
 ## See the file 'doc/LICENSE' for the license information
 ###
+from __future__ import absolute_import
+from __future__ import print_function
 
 import re
 import json
@@ -44,7 +46,7 @@ def validate_fields(model, fields):
     if model in vfields and len(fields) != 0:
         for field in fields:
             if field not in vfields[model]:
-                print "ERROR: The field '%s' doesn't exist in model '%s'" % (field, model)
+                print("ERROR: The field '%s' doesn't exist in model '%s'" % (field, model))
                 logger.error("The field '%s' doesn't exist in model '%s'" % (field, model))
                 return False
         return True

@@ -6,6 +6,11 @@
 ## Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
 ## See the file 'doc/LICENSE' for the license information
 ###
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
+from builtins import str
+from imp import reload
 
 import argparse
 import os
@@ -19,8 +24,8 @@ from difflib import SequenceMatcher
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import ast
-from validator import *
-from api import Api
+from .validator import *
+from .api import Api
 
 logger = logging.getLogger('Faraday searcher')
 
@@ -87,8 +92,7 @@ def equals(m1, m2, rule):
                 else:
                     ratio = min_weight
 
-            elif isinstance(f_m1, str) or isinstance(f_m1, unicode) and isinstance(f_m2, str) or isinstance(f_m2,
-                                                                                                            unicode):
+            elif isinstance(f_m1, str) or isinstance(f_m2, str):
                 ratio = compare(f_m1.lower().replace('\n', ' '), f_m2.lower().replace('\n', ' '))
 
             elif isinstance(f_m1, bool) and isinstance(f_m2, bool):
@@ -104,7 +108,7 @@ def equals(m1, m2, rule):
             count_fields += 1
 
     if total_ratio != 0:
-        percent = (total_ratio * 100) / count_fields
+        percent = (total_ratio * 100.0) / count_fields
     else:
         percent = 0.0
     logger.debug("Verify result with %.2f %% evaluating rule %s:" % (percent, rule['id']))
@@ -125,8 +129,8 @@ def get_model_environment(model, _models):
 
 def process_models_by_similarity(ws, _models, rule, _server):
     logger.debug("--> Start Process models by similarity")
-    for index_m1, m1 in zip(range(len(_models) - 1), _models):
-        for index_m2, m2 in zip(range(index_m1 + 1, len(_models)), _models[index_m1 + 1:]):
+    for index_m1, m1 in zip(list(range(len(_models) - 1)), _models):
+        for index_m2, m2 in zip(list(range(index_m1 + 1, len(_models))), _models[index_m1 + 1:]):
             if m1.id != m2.id and is_same_level(m1, m2):
                 if equals(m1, m2, rule):
                     environment = [m1, m2]
@@ -229,7 +233,7 @@ def update_vulnerability(ws, vuln, key, value, _server):
             field = get_field(vuln, key)
 
         if field is not None and is_custom_field is False:
-            if isinstance(field, str) or isinstance(field, unicode):
+            if isinstance(field, str):
                 setattr(vuln, key, value)
                 logger.info(
                     "Changing property %s to %s in vulnerability '%s' with id %s" % (key, value, vuln.name, vuln.id))
@@ -270,7 +274,7 @@ def update_service(ws, service, key, value):
 
         field = get_field(service, key)
         if field is not None:
-            if isinstance(field, str) or isinstance(field, unicode):
+            if isinstance(field, str):
                 setattr(service, key, value)
                 logger.info(
                     "Changing property %s to %s in service '%s' with id %s" % (key, value, service.name, service.id))
@@ -305,7 +309,7 @@ def update_host(ws, host, key, value):
 
         field = get_field(host, key)
         if field is not None:
-            if isinstance(field, str) or isinstance(field, unicode):
+            if isinstance(field, str):
                 setattr(host, key, value)
                 logger.info("Changing property %s to %s in host '%s' with id %s" % (key, value, host.name, host.id))
             else:
@@ -611,7 +615,7 @@ def main():
 
     lockf = ".lock.pod"
     if not lock_file(lockf):
-        print ("You can run only one instance of searcher (%s)" % lockf)
+        print("You can run only one instance of searcher (%s)" % lockf)
         exit(0)
 
     workspace = ''

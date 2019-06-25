@@ -5,9 +5,12 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+from __future__ import print_function
+
 import shodan
 import sys
-import xmlrpclib
+import xmlrpc.client
 import argparse
 import base64
 
@@ -29,14 +32,14 @@ def strip_non_ascii(string):
     return ''.join(stripped)
 
 def send_faraday(result):
-    print 'IP: %s' % result['ip_str']
+    print('IP: %s' % result['ip_str'])
 
     if result['data'] is not None:
         result['data'] = base64.b64encode(str(strip_non_ascii(result['data']))) #fix: to avoid non ascii caracters
     if args.debug == "1":
-    	print '==============='
+        print('===============')
         for key in result.keys():
-           print "kname:" + key + ", value:" + str(result[key])
+           print("kname:" + key + ", value:" + str(result[key]))
 
     h_id = api.createAndAddHost(str(result['ip_str']),str(result['os']) if result['os'] is not None else "")
     #i_id = api.createAndAddInterface(h_id,str(result['ip_str']),"00:00:00:00:00:00", str(result['ip_str']), "0.0.0.0", "0.0.0.0",[],
@@ -46,7 +49,7 @@ def send_faraday(result):
         "tcp",[str(result['port'])],"open",str(result['version']) if result.has_key('version') else "")
 
     if result['data'] is not None:
-    	n_id = api.createAndAddNoteToService(h_id, s_id, "shadon_response", str(result['data']))
+        n_id = api.createAndAddNoteToService(h_id, s_id, "shadon_response", str(result['data']))
 
     #Notes - Information geo/shadon
     n_id = api.createAndAddNoteToHost(h_id, "geo_country", result['location']['country_name'] if result['location']['country_name']  is not None else "" )
@@ -70,36 +73,36 @@ args = parser.parse_args()
 
 try:
     # Setup the apis
-    api = xmlrpclib.ServerProxy(args.faradayapi)
+    api = xmlrpc.client.ServerProxy(args.faradayapi)
     shodan_api = shodan.Shodan(args.skey)
     c_page=1
 
     results = shodan_api.search(args.shodan_query)
-    print 'Results found: %s, query "%s"' % (results['total'], args.shodan_query)
+    print('Results found: %s, query "%s"' % (results['total'], args.shodan_query))
 
     for r in shodan_api.search_cursor(args.shodan_query, minify=True, retries=5):
         if args.count != "all" and c_page >= int(args.count):
-     		break
+            break
 
         send_faraday(r)
         c_page+=1
 
 
-except xmlrpclib.ProtocolError as e:
+except xmlrpc.client.ProtocolError as e:
     if e.errcode == 500:
-    	print "[ERROR] Faraday Api error:", sys.exc_info()[0]
+        print("[ERROR] Faraday Api error:", sys.exc_info()[0])
         pass
     else:
-        print "[ERROR] Unexpected error:", sys.exc_info()[0]
-        print e.__dict__
+        print("[ERROR] Unexpected error:", sys.exc_info()[0])
+        print(e.__dict__)
         raise
 except shodan.client.APIError as e:
-    print "[ERROR] :", sys.exc_info()[0]
+    print("[ERROR] :", sys.exc_info()[0])
     raise
 
 except Exception as e:
-    print "Unexpected error:", sys.exc_info()[0]
-    print e.__dict__
+    print("Unexpected error:", sys.exc_info()[0])
+    print(e.__dict__)
     raise
 
 

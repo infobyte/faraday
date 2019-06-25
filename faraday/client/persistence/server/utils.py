@@ -66,7 +66,6 @@ def get_host_properties(host):
                 logger.warn('Resolved to %s', ip)
             except socket.gaierror as e:
                 logger.error('Couldn\'t resolve hostname %s', ip)
-                pass
         host_dict['ip'] = ip
     return host_dict
 

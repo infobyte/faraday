@@ -304,8 +304,8 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             title: 'Credentials | '
         }).
         when('/credentials/ws', {
-            templateUrl: 'scripts/credentials/partials/list.html',
-            controller: 'credentialsCtrl',
+            templateUrl: 'scripts/commons/partials/workspaces.html',
+            controller: 'workspacesCtrl',
             title: 'Credentials | '
         }).
         when('/credentials/ws/:wsId', {

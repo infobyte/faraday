@@ -78,6 +78,12 @@
                         <th class="ui-grid-cell-contents ui-grid-header-cell">
                             <span ng-click="toggleSort('policyviolations')">Policy Violations</span>
                         </th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('creator')">Creator</span>
+                        </th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('creator_at')">Create Date</span>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -96,6 +102,8 @@
                         <td>{{model.exploitation}}</td>
                         <td>{{model.easeofresolution}}</td>
                         <td><div ng-repeat="policy in model.policyviolations">{{policy}}</div></td>
+                        <td>{{model.creator}}</td>
+                        <td><p ng-bind="model.create_at | date:'MM/dd/yyyy'"></p></td>
                     </tr>
                 </tbody>
             </table>

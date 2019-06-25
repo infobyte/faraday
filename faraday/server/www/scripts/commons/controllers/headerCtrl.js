@@ -22,6 +22,7 @@ angular.module('faradayApp')
                   $uibModal) {
 
             $scope.confirmed = ($cookies.get('confirmed') == undefined) ? false : JSON.parse($cookies.get('confirmed'));
+            $scope.confirmed ? $cookies.put('filterConfirmed', "Confirmed"): $cookies.put('filterConfirmed', "All");
 
             $scope.showSwitcher = function() {
                 var noSwitcher = [

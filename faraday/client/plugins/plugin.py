@@ -32,7 +32,6 @@ from faraday.client.persistence.server.models import (
     Note
 )
 from faraday.client.model import Modelactions
-#from plugins.modelactions import modelactions
 
 from faraday.config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()

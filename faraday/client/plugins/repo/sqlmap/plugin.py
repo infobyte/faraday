@@ -5,7 +5,6 @@ Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
-
 from __future__ import with_statement
 
 import argparse
@@ -17,7 +16,6 @@ import shlex
 import socket
 import sqlite3
 import sys
-from urlparse import urlparse
 from BaseHTTPServer import BaseHTTPRequestHandler
 from StringIO import StringIO
 from urlparse import urlparse
@@ -411,9 +409,9 @@ class SqlmapPlugin(PluginTerminalOutput):
         sys.path.append(self.getSetting("Sqlmap path"))
 
         try:
-            from lib.core.settings import HASHDB_MILESTONE_VALUE
-            from lib.core.enums import HASHDB_KEYS
-            from lib.core.settings import UNICODE_ENCODING
+            from lib.core.settings import HASHDB_MILESTONE_VALUE #pylint: disable=import-error,bad-option-value
+            from lib.core.enums import HASHDB_KEYS #pylint: disable=import-error
+            from lib.core.settings import UNICODE_ENCODING #pylint: disable=import-error
         except:
             self.log('Remember set your Sqlmap Path Setting!... Abort plugin.', 'ERROR')
             return

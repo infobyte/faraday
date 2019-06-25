@@ -426,11 +426,29 @@ angular.module('faradayApp')
         }
 
         $scope.enableFileUpload = function() {
+
             if($scope.fileUploadEnabled === undefined) {
                 $http.get('/_api/session').then(
                   function(d) {
                     $scope.csrf_token = d.data.csrf_token;
                     $scope.fileUploadEnabled = true;
+
+                    var modal = $uibModal.open({
+                        templateUrl: 'scripts/hosts/partials/upload.html',
+                        controller: 'hostModelModalUpload',
+                        size: 'lg',
+                        resolve: { }
+                    });
+
+                    modal.result.then(function(data) {
+                        $scope.fileUploadEnabled = undefined;
+                        $scope.fileToUpload = data;
+                        $scope.uploadFile();
+                    });
+
+                    modal.result.finally(function(){
+                        $scope.fileUploadEnabled = undefined;
+                    });
                   }
                 );
             } else {

@@ -36,26 +36,11 @@
                         </div>
                     </form>
                 </div>
-                <div class="control-wrapper download-wrapper" ng-hide="fileUploadEnabled === true">
+                <div class="control-wrapper download-wrapper">
                     <button ng-click="enableFileUpload()" type="button" class="btn btn-default" title="{{workspaceData.readonly == true ? 'Read-only. Workspace disabled': 'Upload a report'}}" ng-disabled="workspaceData.readonly == true">
                         <img src="images/icon-toolbar-upload.svg"/>
                     </button>
                 </div>
-                <div class="pl" ng-show="fileUploadEnabled === true">
-                    <span class="file-container">
-                        <button ng-if="fileToUpload === undefined" type="button" class="btn btn-success btn-labeled no-border-radius">
-                            <span class="btn-label"><i class="fa fa-upload"></i>
-                        </span>Select file</button>
-                        <input type="file" file-model="fileToUpload" ng-class="{'file-selected': fileToUpload !== undefined}">
-                    </span>
-                    <span ng-if="fileToUpload !== undefined">
-                        <button type="button" class="btn btn-success btn-labeled no-border-radius" title="Upload selected file" ng-click="uploadFile()">
-                            <span class="btn-label"><i class="fa fa-upload"></i>
-                        </span>Upload CSV</button>
-                        <p class="file-name">{{fileToUpload.name}}</p>
-                    </span>
-                </div>
-                <span ng-if="fileUploadEnabled === true && fileToUpload === undefined" style="display: inline-block; margin-left: 5px;">Format: ip, description, os, hostnames <br>Example: 10.10.10.10, test_host, linux, "['localhost', 'test_host']"</span>
                 <div class="space-wrapper"></div>
                 <div class="control-wrapper control-wrap-right">
                     <div class="btn-group">

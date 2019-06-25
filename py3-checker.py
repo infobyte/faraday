@@ -67,7 +67,7 @@ class Analyser:
             error_list.append(path)
         if not find_py3_ok_result and lint_ok_result:
             self.logger.info("The file {path} is python3".format(path=path))
-        return 0 if lint_ok_result else 1, 1, [], error_list
+        return 1 if lint_ok_result else 0, 1, [], error_list
 
     def analyse_folder(self, parent_path):
         are3, total, strs, error_files = 0, 0, [], []

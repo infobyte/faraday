@@ -6,6 +6,7 @@ See the file 'doc/LICENSE' for the license information
 
 This script fixes invalid XMLs.
 '''
+from __future__ import absolute_import
 
 import argparse
 from bs4 import BeautifulSoup

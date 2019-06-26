@@ -1,0 +1,28 @@
+/*
+ * angular-table-resize
+ * https://github.com/tympanix/angular-table-resize
+ * - minimal stylesheet
+ */
+
+ table.rz-table {
+   table-layout: fixed;
+   border-collapse: collapse;
+ }
+
+table.rz-table th {
+    position: relative;
+    min-width: 25px;
+}
+
+table.rz-table th .rz-handle {
+    width: 10px;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    right: 0;
+    cursor: ew-resize !important;
+}
+
+table.rz-table th .rz-handle.rz-handle-active {
+    border-right: 1px dotted #000;
+}

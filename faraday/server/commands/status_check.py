@@ -4,6 +4,9 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+from __future__ import print_function
+
 import os
 import socket
 
@@ -308,11 +311,11 @@ def print_config_status():
             .format(red=Fore.RED, white=Fore.WHITE))
 
     if check_open_ports():
-        print "[{green}+{white}] Port {PORT} in {ad} is open"\
-            .format(PORT=faraday.server.config.faraday_server.port, green=Fore.GREEN,white=Fore.WHITE,ad=faraday.server.config.faraday_server.bind_address)
+        print("[{green}+{white}] Port {PORT} in {ad} is open"\
+            .format(PORT=faraday.server.config.faraday_server.port, green=Fore.GREEN,white=Fore.WHITE,ad=faraday.server.config.faraday_server.bind_address))
     else:
-        print "[{red}-{white}] Port {PORT} in {ad} is not open"\
-            .format(PORT=faraday.server.config.faraday_server.port,red=Fore.RED,white=Fore.WHITE,ad =faraday.server.config.faraday_server.bind_address)
+        print("[{red}-{white}] Port {PORT} in {ad} is not open"\
+            .format(PORT=faraday.server.config.faraday_server.port,red=Fore.RED,white=Fore.WHITE,ad =faraday.server.config.faraday_server.bind_address))
 
 
 def full_status_check():

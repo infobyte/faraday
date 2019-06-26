@@ -4,6 +4,10 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+from __future__ import print_function
+from builtins import input
+
 import getpass
 import shutil
 import string
@@ -52,7 +56,7 @@ class InitDB():
             config.get('database', 'connection_string')
             reconfigure = None
             while not reconfigure:
-                reconfigure = raw_input('Database section {yellow} already found{white}. Do you want to reconfigure database? (yes/no) '.format(yellow=Fore.YELLOW, white=Fore.WHITE))
+                reconfigure = input('Database section {yellow} already found{white}. Do you want to reconfigure database? (yes/no) '.format(yellow=Fore.YELLOW, white=Fore.WHITE))
                 if reconfigure.lower() == 'no':
                     return False
                 elif reconfigure.lower() == 'yes':
@@ -160,7 +164,7 @@ class InitDB():
         conf.saveConfig()
 
     def _configure_existing_postgres_user(self):
-        username = raw_input('Please enter the postgresql username: ')
+        username = input('Please enter the postgresql username: ')
         password = getpass.getpass('Please enter the postgresql password: ')
 
         return username, password
@@ -282,10 +286,10 @@ class InitDB():
         try:
             db.create_all()
         except OperationalError as ex:
-            if 'could not connect to server' in ex.message:
+            if 'could not connect to server' in str(ex):
                 print('ERROR: {red}PostgreSQL service{white} is not running. Please verify that it is running in port 5432 before executing setup script.'.format(red=Fore.RED, white=Fore.WHITE))
                 sys.exit(1)
-            elif 'password authentication failed' in ex.message:
+            elif 'password authentication failed' in str(ex):
                 print('ERROR: ')
                 sys.exit(1)
             else:

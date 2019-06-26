@@ -1,6 +1,9 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+from __future__ import absolute_import
+from builtins import str
+
 import os
 import json
 
@@ -86,7 +89,7 @@ class WorkspaceSchema(AutoSchema):
 class WorkspaceView(ReadWriteView):
     route_base = 'ws'
     lookup_field = 'name'
-    lookup_field_type = unicode
+    lookup_field_type = str
     model_class = Workspace
     schema_class = WorkspaceSchema
     order_field = Workspace.name.asc()

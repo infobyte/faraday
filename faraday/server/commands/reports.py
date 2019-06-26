@@ -4,9 +4,11 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 import os
 import logging
-from Queue import Queue
+from queue import Queue
 
 from faraday.client.managers.mapper_manager import MapperManager
 from faraday.client.managers.reports_managers import ReportManager, CONF

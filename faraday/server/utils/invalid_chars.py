@@ -4,8 +4,12 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+from builtins import basestring, chr
+
 import re
 import sys
+import binascii
 
 def clean_dict(d):
     if not isinstance(d, dict):
@@ -86,7 +90,7 @@ def remove_invalid_chars(c):
                     (0xDFFFE, 0xDFFFF), (0xEFFFE, 0xEFFFF), (0xFFFFE, 0xFFFFF),
                     (0x10FFFE, 0x10FFFF) ]
 
-    illegal_ranges = ["%s-%s" % (unichr(low), unichr(high))
+    illegal_ranges = ["%s-%s" % (chr(low), chr(high))
                   for (low, high) in illegal_unichrs
                   if low < sys.maxunicode]
 
@@ -95,7 +99,7 @@ def remove_invalid_chars(c):
         # ret = hex(ord(c))
         # ret = binascii.b2a_uu(c)
         # ret_final = ret[1:-1]
-        ret = '\\x'+c.encode('hex')
+        ret = '\\x'+binascii.hexlify(c)
         return ret
     else:
         return c

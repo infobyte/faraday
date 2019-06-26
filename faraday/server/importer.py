@@ -2,6 +2,11 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from builtins import str
+
 import string
 from random import SystemRandom
 
@@ -280,7 +285,7 @@ def set_metadata(document, obj):
                     obj.creator = creator
             except ValueError:
                 if key == 'create_time':
-                    obj.create_date = datetime.datetime.fromtimestamp(document['metadata']['create_time'] / 1000)
+                    obj.create_date = datetime.datetime.fromtimestamp(document['metadata']['create_time'] // 1000)
             except TypeError:
                 print('')
 
@@ -365,7 +370,7 @@ class EntityMetadataImporter(object):
         epoch timestamps expressed in milliseconds to seconds"""
         limit = 32503680000  # 01 Jan 3000 00:00:00 GMT
         if timestamp > limit:
-            return timestamp / 1000
+            return timestamp // 1000
         else:
             return timestamp
 
@@ -487,7 +492,7 @@ class HostImporter(object):
             if not host.description:
                 host.description = ''
             host.description += '\n Interface data: {0}'.format(interface['description'])
-        if type(interface['hostnames']) in (str, unicode):
+        if isinstance(type(interface['hostnames']), str):
             interface['hostnames'] = [interface['hostnames']]
 
         for hostname_str in interface['hostnames'] or []:
@@ -764,7 +769,7 @@ class VulnerabilityImporter(object):
                 workspace=workspace
             )
             session.flush()
-            if created and pv.name not in map(lambda pva: pva.name, policy_violations):
+            if created and pv.name not in list(map(lambda pva: pva.name, policy_violations)):
                 policy_violations.add(pv)
         return policy_violations
 
@@ -780,7 +785,7 @@ class VulnerabilityImporter(object):
                 workspace=workspace
             )
             session.flush()
-            if created and reference not in map(lambda ref: ref.name, references):
+            if created and reference not in list(map(lambda ref: ref.name, references)):
                 references.add(reference)
         return references
 
@@ -888,9 +893,9 @@ class WorkspaceImporter(object):
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         workspace.description = document.get('description')
         if document.get('duration') and document.get('duration')['start']:
-            workspace.start_date = datetime.datetime.fromtimestamp(float(document.get('duration')['start'])/1000)
+            workspace.start_date = datetime.datetime.fromtimestamp(float(document.get('duration')['start'])//1000)
         if document.get('duration') and document.get('duration')['end']:
-            workspace.end_date = datetime.datetime.fromtimestamp(float(document.get('duration')['end'])/1000)
+            workspace.end_date = datetime.datetime.fromtimestamp(float(document.get('duration')['end'])//1000)
         for scope in [x.strip() for x in document.get('scope', '').split('\n') if x.strip()]:
             scope_obj, created = get_or_create(session, Scope, name=scope, workspace=workspace)
             session.flush()  # This fixes integrity errors for duplicate scope elements
@@ -1236,7 +1241,7 @@ class ImportVulnerabilityTemplates():
 
             if isinstance(document.get('references'), list):
                 references = document.get('references')
-            elif isinstance(document.get('references'), (str, unicode)):
+            elif isinstance(document.get('references'), str):
                 references = [x.strip()
                               for x in document.get('references').split(',')
                               if x.strip()]
@@ -1412,7 +1417,7 @@ class ImportCouchDB():
                     port=faraday.server.config.couchdb.port,
                     workspace_name=workspace.name
         )
-        all_ids = map(lambda x: x['doc']['_id'], requests.get(all_docs_url).json()['rows'])
+        all_ids = list(map(lambda x: x['doc']['_id'], requests.get(all_docs_url).json()['rows']))
         if len(all_ids) != len(couchdb_relational_map.keys()):
             missing_objs_filename = os.path.join(os.path.expanduser('~/.faraday'), 'logs', 'import_missing_objects_{0}.json'.format(workspace.name))
             missing_ids = set(all_ids) - set(couchdb_relational_map.keys())

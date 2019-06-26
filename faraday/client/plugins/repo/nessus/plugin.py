@@ -17,7 +17,7 @@ import os
 import socket
 import pprint
 import sys
-import dotnessus_v2
+import faraday.client.plugins.repo.nessus.dotnessus_v2 as dotnessus_v2
 
 
 current_path = os.path.abspath(os.getcwd())

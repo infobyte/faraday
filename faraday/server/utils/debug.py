@@ -1,12 +1,14 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+from __future__ import absolute_import
 
 import time
 import cProfile
-import StringIO
 import pstats
 import contextlib
+from io import StringIO
+
 import faraday.server.utils.logger
 
 debug_logger = faraday.server.utils.logger.get_logger(__name__)
@@ -34,7 +36,7 @@ def profiled():
     pr.enable()
     yield
     pr.disable()
-    s = StringIO.StringIO()
+    s = StringIO()
     ps = pstats.Stats(pr, stream=s).sort_stats('cumulative')
     ps.print_stats()
     # uncomment this to see who's calling what

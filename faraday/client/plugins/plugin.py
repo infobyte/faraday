@@ -8,6 +8,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
+from __future__ import absolute_import
 
 import os
 import re
@@ -84,7 +85,7 @@ class PluginBase(object):
         self.command_id = command_id
 
     def getSettings(self):
-        for param, (param_type, value) in self._settings.iteritems():
+        for param, (param_type, value) in self._settings.items():
             yield param, value
 
     def get_ws(self):
@@ -120,7 +121,7 @@ class PluginBase(object):
         cword = words[len(words) - 1]
 
         options = {}
-        for k, v in self._completition.iteritems():
+        for k, v in self._completition.items():
             if re.search(str("^" + cword), k, flags=re.IGNORECASE):
                 options[k] = v
 

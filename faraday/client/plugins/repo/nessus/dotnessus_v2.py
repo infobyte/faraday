@@ -20,11 +20,12 @@
 # Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # 2011-03-12:	0.1.1: Initial version.
+from __future__ import absolute_import
 import sys
 import re
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from StringIO import StringIO
+from io import StringIO
 
 
 # List all nodes in a ReportItem object that can have multiple values

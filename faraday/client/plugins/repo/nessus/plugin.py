@@ -7,6 +7,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+from __future__ import print_function
 from __future__ import with_statement
 from faraday.client.plugins import core
 from faraday.client.model import api
@@ -100,7 +102,7 @@ class NessusPlugin(core.PluginBase):
         try:
             p.parse(output, from_string=True)
         except Exception as e:
-            print "Exception - %s" % e
+            print("Exception - %s" % e)
 
         for t in p.targets:
             mac = ""
@@ -212,4 +214,4 @@ if __name__ == '__main__':
         parser.parseOutputString(report.read())
         for item in parser.items:
             if item.status == 'up':
-                print item
+                print(item)

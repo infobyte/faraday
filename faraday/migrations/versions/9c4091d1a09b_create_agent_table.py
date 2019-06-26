@@ -5,6 +5,7 @@ Revises: 0d216660da28
 Create Date: 2019-05-22 19:17:31.444968+00:00
 
 """
+import uuid
 from alembic import op
 import sqlalchemy as sa
 
@@ -12,7 +13,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 revision = '9c4091d1a09b'
-down_revision = '0d216660da28'
+down_revision = '2db31733fb78'
 branch_labels = None
 depends_on = None
 

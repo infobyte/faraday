@@ -1849,6 +1849,40 @@ class Notification(db.Model):
         return
 
 
+class AgentsSchedule(Metadata):
+    __tablename__ = 'agent_schedule'
+    id = Column(Integer, primary_key=True)
+    description = NonBlankColumn(Text)
+    crontab = NonBlankColumn(Text)
+    timezone = NonBlankColumn(Text)
+    active = Column(Boolean, nullable=False, default=True)
+    # last_pipeline = BlankColumn(Text)
+
+    owner_id = Column(Integer, ForeignKey('faraday_user.id'), index=True, nullable=False)
+    owner = relationship(
+        'User',
+        backref=backref('schedules', cascade="all, delete-orphan"),
+        foreign_keys=[owner_id]
+    )
+
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship(
+        'Workspace',
+        backref=backref('schedules', cascade="all, delete-orphan"),
+        # primaryjoin="Notification.id == Notification.workspace_id"
+    )
+
+    agent_id = Column(Integer, ForeignKey('agent.id'), index=True, nullable=False)
+    agent = relationship(
+        'Agent',
+        backref=backref('schedules', cascade="all, delete-orphan"),
+    )
+
+    @property
+    def parent(self):
+        return
+
+
 class Agent(Metadata):
     __tablename__ = 'agent'
     id = Column(Integer, primary_key=True)

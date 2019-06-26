@@ -108,9 +108,38 @@ def upgrade():
         sa.Column('creator_id', sa.Integer),
         sa.Column('update_user_id', sa.Integer),
     )
+    op.create_table(
+        'agent_schedule',
+        sa.Column('id', sa.Integer, primary_key=True),
+        sa.Column('description', sa.String(1024), nullable=False),
+        sa.Column('crontab', sa.String(128)),
+        sa.Column('timezone', sa.String(128)),
+        sa.Column('active', sa.Boolean),
+        sa.Column('owner_id', sa.Integer),
+        sa.Column('creator_id', sa.Integer),
+        sa.Column('update_user_id', sa.Integer),
+        sa.Column('create_date', sa.DateTime),
+        sa.Column('update_date', sa.DateTime),
+        sa.Column('workspace_id', sa.Integer)
+        # last_pipeline
+        # agent_id
+    )
+
+    op.create_foreign_key(
+        'agent_schedule_user_id_fkey',
+        'agent_schedule',
+        'faraday_user', ['owner_id'], ['id']
+    )
+
+    op.create_foreign_key(
+        'agent_schedule_id_fkey',
+        'agent_schedule',
+        'workspace', ['workspace_id'], ['id']
+    )
 
 
 def downgrade():
+    op.drop_table('agent_schedule')
     op.drop_table('agent_auth_token')
     op.drop_table('agent')
 

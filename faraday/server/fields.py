@@ -15,6 +15,8 @@ from depot.fields.upload import UploadedFile
 from depot.io.utils import file_from_content
 from depot.io.utils import INMEMORY_FILESIZE
 from depot.manager import DepotManager
+from webargs.core import ValidationError
+import flask
 
 
 class FaradayUploadedFile(UploadedFile):
@@ -51,7 +53,15 @@ class FaradayUploadedFile(UploadedFile):
 
     def generate_thumbnail(self, content):
         content = file_from_content(content)
-        uploaded_image = Image.open(content)
+        try:
+            uploaded_image = Image.open(content)
+        except:
+            flask.abort(400, ValidationError(
+                {
+                    'message': 'File Format',
+                    'object': {"error": "Format Incorrect"},
+                }
+            ))
         if max(uploaded_image.size) >= self.max_size:
             uploaded_image.thumbnail((self.max_size, self.max_size), Image.BILINEAR)
             content = SpooledTemporaryFile(INMEMORY_FILESIZE)

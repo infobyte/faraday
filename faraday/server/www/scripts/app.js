@@ -29,7 +29,8 @@ var faradayApp = angular.module('faradayApp', [
                                                     'ui.grid.resizeColumns',
                                                     'angularSimplePagination',
                                                     'dndLists',
-                                                    'angularFileUploadLib'
+                                                    'angularFileUploadLib',
+                                                    'rzTable'
                                              ])
     .constant("BASEURL", (function() {
         var url = window.location.origin + "/";
@@ -304,8 +305,8 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             title: 'Credentials | '
         }).
         when('/credentials/ws', {
-            templateUrl: 'scripts/credentials/partials/list.html',
-            controller: 'credentialsCtrl',
+            templateUrl: 'scripts/commons/partials/workspaces.html',
+            controller: 'workspacesCtrl',
             title: 'Credentials | '
         }).
         when('/credentials/ws/:wsId', {

@@ -98,8 +98,19 @@ def upgrade():
 
     conn.execute("DROP TYPE _OBJECT_TYPES CASCADE;")
 
+    op.create_table(
+        'agent_auth_token',
+        sa.Column('id', sa.Integer, primary_key=True),
+        sa.Column('token', sa.String(256), nullable=False, default=str(uuid.uuid4())),
+        sa.Column('create_date', sa.DateTime),
+        sa.Column('update_date', sa.DateTime),
+        sa.Column('creator_id', sa.Integer),
+        sa.Column('update_user_id', sa.Integer),
+    )
+
 
 def downgrade():
+    op.drop_table('agent_auth_token')
     op.drop_table('agent')
 
     agent_types = postgresql.ENUM('shared', 'specific', name='agent_types')

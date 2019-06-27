@@ -110,9 +110,10 @@ def main(filename):
     if filename:
         import sys
         sys.stdout = open(filename, 'w')
-    Analyser().run()
-
-    os.rename(RENAMED, PYTLINT)
+    try:
+        Analyser().run()
+    finally:
+        os.rename(RENAMED, PYTLINT)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

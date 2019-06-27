@@ -751,11 +751,11 @@ class VulnerabilityView(PaginatedMixin,
             vuln_description = re.sub(' +', ' ', vuln.description.strip().replace("\n", ""))
             vuln_date = vuln.create_date.strftime("%m/%d/%Y")
             if vuln.service:
-               service_fields = ["status", "protocol", "name", "summary", "version", "port"]
-               service_fields_values = map(lambda field: "%s:%s" % (field, getattr(vuln.service, field)), service_fields)
-               vuln_service = " - ".join(service_fields_values)
+                service_fields = ["status", "protocol", "name", "summary", "version", "port"]
+                service_fields_values = map(lambda field: "%s:%s" % (field, getattr(vuln.service, field)), service_fields)
+                vuln_service = " - ".join(service_fields_values)
             else:
-               vuln_service = ""
+                vuln_service = ""
             vuln_hostnames = str(map(lambda host: str(host.name), vuln.hostnames))
             vuln_dict = {"confirmed": vuln.confirmed, "id": vuln.id, "date": vuln_date,
                          "severity": vuln.severity, "target": vuln.target, "status": vuln.status, "hostnames": vuln_hostnames,

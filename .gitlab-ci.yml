@@ -88,11 +88,11 @@ pylint:
 py3checker:
     tags:
         - faradaytests
-    image: python:3
+    image: python:2
     stage: testing
     script:
         - pip install pylint
-        - python3 py3-checker.py -o py3_checker_result.txt
+        - python py3-checker.py -o py3_checker_result.txt
     artifacts:
         paths:
             - py3_checker_result.txt

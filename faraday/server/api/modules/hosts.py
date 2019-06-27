@@ -1,13 +1,15 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+from collections import defaultdict
 
 import flask
+import pytz
 from flask import Blueprint
 from flask_classful import route
 from marshmallow import fields, Schema
 from filteralchemy import Filter, FilterSet, operators
-from sqlalchemy import or_
+from sqlalchemy import or_, desc
 
 from faraday.server.utils.database import get_or_create
 
@@ -25,7 +27,7 @@ from faraday.server.schemas import (
     PrimaryKeyRelatedField,
     SelfNestedField
 )
-from faraday.server.models import Host, Service, db, Hostname
+from faraday.server.models import Host, Service, db, Hostname, CommandObject, Command
 from faraday.server.api.modules.services import ServiceSchema
 
 host_api = Blueprint('host_api', __name__)
@@ -148,6 +150,21 @@ class HostsView(PaginatedMixin,
             res_dict["hosts"][host.id] = host_count_schema.dump(host).data
         # return counts.data
 
+        return res_dict
+
+    @route('/<host_id>/tools_history/')
+    def tool_impacted_by_host(self, workspace_name, host_id):
+        workspace = self._get_workspace(workspace_name)
+        query = db.session.query(Host, Command).filter(Host.id == CommandObject.object_id,
+                                                       CommandObject.object_type == 'host',
+                                                       Command.id == CommandObject.command_id,
+                                                       Host.workspace_id == workspace.id,
+                                                       Host.id == host_id).order_by(desc(CommandObject.create_date))
+        result = query.all()
+        res_dict = {'tools': []}
+        for row in result:
+            host, command = row
+            res_dict['tools'].append({'command': command.tool, 'create_date': command.create_date.replace(tzinfo=pytz.utc).strftime("%c")})
         return res_dict
 
     def _perform_create(self, data, **kwargs):

@@ -419,4 +419,4 @@ class PluginProcess(Thread):
         return
 
     def stop(self):
-        self.stop = True
+        self.stop = True# I'm Py3

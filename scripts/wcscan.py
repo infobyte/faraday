@@ -130,3 +130,4 @@ for file in args.files:
         
     except KeyboardInterrupt:       
         print("\n[+]Interrupting the checking of \033[1;30m{}\033[0m...".format(file))
+# I'm Py3

@@ -319,3 +319,4 @@ def is_unique_constraint_violation(exception):
         return True
     assert isinstance(exception.orig.pgcode, str)
     return exception.orig.pgcode == UNIQUE_VIOLATION
+# I'm Py3

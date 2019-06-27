@@ -205,3 +205,4 @@ class HostsView(PaginatedMixin,
 
 
 HostsView.register(host_api)
+# I'm Py3

@@ -332,3 +332,4 @@ class CustomLoginForm(LoginForm):
             self.email.errors.append(get_message('DISABLED_ACCOUNT')[0])
             return False
         return True
+# I'm Py3

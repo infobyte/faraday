@@ -55,3 +55,4 @@ class TestCmdPingPlugin:
         assert list(actions.keys()) == [2000]
 
         assert len(actions[2000]) == 8
+# I'm Py3

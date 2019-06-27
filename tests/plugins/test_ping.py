@@ -60,3 +60,4 @@ class TestCmdPingPlugin:
 
 if __name__ == '__main__':
     unittest.main()
+# I'm Py3

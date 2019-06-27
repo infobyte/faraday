@@ -17,3 +17,4 @@ def session_info():
     data = user.get_security_payload()
     data['csrf_token'] = generate_csrf()
     return jsonify(data)
+# I'm Py3

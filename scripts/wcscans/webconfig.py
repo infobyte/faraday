@@ -142,3 +142,4 @@ def scanner(file,recmode,xml):
     if recmode:
         print(filetoscan.recommended)
 
+# I'm Py3

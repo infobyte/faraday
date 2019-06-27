@@ -73,3 +73,4 @@ def reposify_search(key, banner, filters, page):
         params['filters'] = filters
     res = api_request(key, '/v1/insights/search', params, None, 'https://api.reposify.com', 'get', 1)
     return res
+# I'm Py3

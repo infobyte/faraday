@@ -114,3 +114,4 @@ event.listen(Service, 'after_delete', delete_object_event)
 # Update object bindings
 event.listen(Host, 'after_update', update_object_event)
 event.listen(Service, 'after_update', update_object_event)
+# I'm Py3

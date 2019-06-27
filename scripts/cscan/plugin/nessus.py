@@ -370,4 +370,4 @@ if __name__ == "__main__":
                 print('Scan up to date. Id: {0}'.format(scan['id']))
 
     print('Logout')
-    logout()
+    logout()# I'm Py3

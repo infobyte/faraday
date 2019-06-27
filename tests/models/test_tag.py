@@ -30,3 +30,4 @@ def test_vulnweb_tags(vulnerability_web_factory, tag_factory, session):
 
     session.commit()
     assert vuln.tags == set(correct_tags)
+# I'm Py3

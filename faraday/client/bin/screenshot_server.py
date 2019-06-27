@@ -70,3 +70,4 @@ def main(workspace='', args=None, parser=None):
                 print(protocol + "://" + ip + ":" + port)
                 screenshot(path, protocol, ip, port)
     return 0, None
+# I'm Py3

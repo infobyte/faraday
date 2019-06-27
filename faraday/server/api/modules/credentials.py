@@ -129,3 +129,4 @@ class CredentialView(FilterAlchemyMixin, ReadWriteWorkspacedView):
 
 
 CredentialView.register(credentials_api)
+# I'm Py3

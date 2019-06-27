@@ -732,3 +732,4 @@ class VulnerabilityView(PaginatedMixin,
 
 
 VulnerabilityView.register(vulns_api)
+# I'm Py3

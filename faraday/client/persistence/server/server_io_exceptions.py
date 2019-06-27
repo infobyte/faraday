@@ -87,3 +87,4 @@ class CantAccessConfigurationWithoutTheClient(Exception):
     def __str__(self):
         return ("You're tring to access to the Faraday Configuration without "
                 "having the client up. This is not possible at the moment.")
+# I'm Py3

@@ -14,3 +14,4 @@ class View(object):
 
 class HostsServiceFrequencies(View):
     pass
+# I'm Py3

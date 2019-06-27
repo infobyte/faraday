@@ -92,3 +92,4 @@ class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
         return res
 
 CommandView.register(commandsrun_api)
+# I'm Py3

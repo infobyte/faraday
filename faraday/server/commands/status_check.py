@@ -331,3 +331,4 @@ def full_status_check():
 
     print('\n{white}Checking Faraday config...{white}'.format(white=Fore.WHITE))
     print_config_status()
+# I'm Py3

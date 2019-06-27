@@ -123,3 +123,4 @@ class JSONType(sa.types.TypeDecorator):
         if value is not None:
             value = json.loads(value)
         return value
+# I'm Py3

@@ -185,3 +185,4 @@ class SentinelPlugin(core.PluginBase):
 
 def createPlugin():
     return SentinelPlugin()
+# I'm Py3

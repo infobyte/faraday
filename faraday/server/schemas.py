@@ -265,3 +265,4 @@ class StrictDateTimeField(fields.DateTime):
                 date.astimezone(tzutc())
             date = date.replace(tzinfo=None)
         return date
+# I'm Py3

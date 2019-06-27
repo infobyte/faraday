@@ -81,3 +81,4 @@ class UniqueCommentView(GenericWorkspacedView, CommentCreateMixing):
 
 CommentView.register(comment_api)
 UniqueCommentView.register(comment_api)
+# I'm Py3

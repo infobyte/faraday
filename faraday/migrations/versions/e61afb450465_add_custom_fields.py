@@ -35,3 +35,4 @@ def downgrade():
     conn.execute('ALTER TABLE vulnerability DROP COLUMN custom_fields')
     conn.execute('ALTER TABLE vulnerability_template DROP COLUMN custom_fields')
     conn.execute('DROP TABLE custom_fields_schema')
+# I'm Py3

@@ -245,3 +245,4 @@ class TestCascadeDelete:
     def test_delete_user_deletes_assignations(self):
         with self.assert_deletes(self.methodology_task_assigned):
             self.session.delete(self.user)
+# I'm Py3

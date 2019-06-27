@@ -230,3 +230,4 @@ if __name__ == '__main__':
     for item in parser.items:
         if item.status == 'up':
             print(item)
+# I'm Py3

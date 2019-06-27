@@ -128,3 +128,4 @@ class BurpExtender(IBurpExtender, IHttpListener, IScannerListener):
 		print("Port: " + str(self.port1) + "\n")
 		print("Path: " + self.path + "\n")
 	return True
+# I'm Py3

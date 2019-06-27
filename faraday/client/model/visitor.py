@@ -32,3 +32,4 @@ class VulnsLookupVisitor(ModelObjectVisitor):
                 parent = parent.getParent()
 
         self.parents.append(parents) 
+# I'm Py3

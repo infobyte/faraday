@@ -107,3 +107,4 @@ def validate_admin_perm():
         res = False
     if not res:
         abort(401)
+# I'm Py3

@@ -39,3 +39,4 @@ class LicenseView(ReadWriteView):
 
 
 LicenseView.register(license_api)
+# I'm Py3

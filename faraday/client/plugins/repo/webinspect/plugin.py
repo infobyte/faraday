@@ -170,3 +170,4 @@ class WebInspectPlugin(core.PluginBase):
 
 def createPlugin():
     return WebInspectPlugin()
+# I'm Py3

@@ -311,3 +311,4 @@ class InitDB():
             alembic_cfg = Config(os.path.join(FARADAY_BASE, 'alembic.ini'))
             os.chdir(FARADAY_BASE)
             command.stamp(alembic_cfg, "head")
+# I'm Py3

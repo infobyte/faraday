@@ -43,3 +43,4 @@ def profiled():
     # ps.print_callers()
     debug_logger.debug(s.getvalue())
 
+# I'm Py3

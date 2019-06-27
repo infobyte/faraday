@@ -69,3 +69,4 @@ class DatabaseSchema():
         )
         graph.write_png('uml_schema.png')  # write out the file
         print("Graph written to fle uml_schema.png")
+# I'm Py3

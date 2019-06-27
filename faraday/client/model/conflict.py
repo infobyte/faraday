@@ -40,3 +40,4 @@ class ConflictUpdate(Conflict):
         self.first_object.updateAttributes(**kwargs)
         self.first_object.updateResolved(self)
         return True
+# I'm Py3

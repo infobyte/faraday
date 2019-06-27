@@ -243,3 +243,4 @@ class TestHostAPI(ReadOnlyAPITests):
 
         for host in hosts_not_to_query_w2:
             assert str(host.id) not in res.json['hosts']
+# I'm Py3

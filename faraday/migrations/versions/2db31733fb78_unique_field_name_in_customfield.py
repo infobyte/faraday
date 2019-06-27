@@ -25,3 +25,4 @@ def upgrade():
 def downgrade():
     conn = op.get_bind()
     conn.execute('ALTER TABLE custom_fields_schema DROP CONSTRAINT custom_fields_schema_field_name_key;')
+# I'm Py3

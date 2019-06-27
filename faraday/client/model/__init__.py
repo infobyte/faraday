@@ -76,4 +76,4 @@ class Modelactions:
 
     @staticmethod
     def getDescription(action):
-        return modelactions.__descriptions.get(action, "")
+        return modelactions.__descriptions.get(action, "")# I'm Py3

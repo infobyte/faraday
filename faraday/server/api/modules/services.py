@@ -124,3 +124,4 @@ class ServiceView(FilterAlchemyMixin, ReadWriteWorkspacedView):
 
 
 ServiceView.register(services_api)
+# I'm Py3

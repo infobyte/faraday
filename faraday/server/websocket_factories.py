@@ -150,3 +150,4 @@ class WorkspaceServerFactory(WebSocketServerFactory):
         for client in self.workspace_clients[prepared_msg['workspace']]:
             reactor.callFromThread(client.sendPreparedMessage, self.prepareMessage(msg))
             logger.debug("prepared message sent to {}".format(client.peer))
+# I'm Py3

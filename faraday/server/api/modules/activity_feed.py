@@ -83,3 +83,4 @@ class ActivityFeedView(PaginatedMixin, ReadWriteWorkspacedView):
 
 
 ActivityFeedView.register(activityfeed_api)
+# I'm Py3

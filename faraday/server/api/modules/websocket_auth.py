@@ -22,3 +22,4 @@ class WebsocketAuthView(GenericWorkspacedView):
 
 
 WebsocketAuthView.register(websocket_auth_api)
+# I'm Py3

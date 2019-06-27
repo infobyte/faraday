@@ -72,3 +72,4 @@ class CmdArpScanPlugin(core.PluginBase):
 
 def createPlugin():
     return CmdArpScanPlugin()
+# I'm Py3

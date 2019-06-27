@@ -148,3 +148,4 @@ def scanner(file,recmode,xml):
     filetoscan.global_check()
     if recmode:
         print(filetoscan.recommended)
+# I'm Py3

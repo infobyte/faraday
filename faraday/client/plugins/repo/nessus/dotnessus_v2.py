@@ -328,3 +328,4 @@ class ReportItem(object):
             return getattr(self, attr)
         except AttributeError:
             return None
+# I'm Py3

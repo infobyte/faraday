@@ -162,3 +162,4 @@ class Api:
                         (getattr(template, key, None) == value or str(getattr(template, key, None)) == value):
                     filtered_templates.append(template)
         return filtered_templates
+# I'm Py3

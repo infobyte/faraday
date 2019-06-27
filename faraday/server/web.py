@@ -189,3 +189,4 @@ class WebServer(object):
             logger.error('Something went wrong when trying to setup the Web UI')
             logger.exception(e)
             sys.exit(1)
+# I'm Py3

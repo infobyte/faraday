@@ -103,3 +103,4 @@ def remove_invalid_chars(c):
         return ret
     else:
         return c
+# I'm Py3

@@ -23,3 +23,4 @@ def upgrade():
 
 def downgrade():
     op.drop_column('workspace', 'readonly')
+# I'm Py3

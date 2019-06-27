@@ -232,3 +232,4 @@ class WorkspaceView(ReadWriteView):
 
 
 WorkspaceView.register(workspace_api)
+# I'm Py3

@@ -951,3 +951,4 @@ class FilterSetMeta:
     """Base Meta class of FilterSet objects"""
     parser = parser
     converter = FilterAlchemyModelConverter()
+# I'm Py3

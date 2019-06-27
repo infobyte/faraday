@@ -12,3 +12,4 @@ from faraday.server.web import app
 
 def show_all_urls():
     print(app.url_map)
+# I'm Py3

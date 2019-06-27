@@ -85,3 +85,4 @@ class MergeSolver(object):
 
     def solve(self, old, new):
         return self.strategy.solve(old, new)
+# I'm Py3

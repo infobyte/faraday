@@ -41,6 +41,7 @@ from faraday.server.models import (
     Workspace,
     Vulnerability,
     VulnerabilityWeb,
+    CustomFieldsSchema,
     VulnerabilityGeneric,
 )
 from faraday.server.utils.database import get_or_create
@@ -735,7 +736,11 @@ class VulnerabilityView(PaginatedMixin,
         confirmed = bool(request.args.get('confirmed'))
         workspace = self._get_workspace(workspace_name)
         memory_file = cStringIO.StringIO()
+        custom_fields_columns = []
+        for custom_field in db.session.query(CustomFieldsSchema).order_by(CustomFieldsSchema.field_order):
+            custom_fields_columns.append(custom_field.field_name)
         headers = ["confirmed", "id", "date", "name", "severity", "service", "target", "desc", "status", "hostnames"]
+        headers += custom_fields_columns
         writer = csv.DictWriter(memory_file, fieldnames=headers)
         writer.writeheader()
         vulns_query = db.session.query(VulnerabilityGeneric).filter(VulnerabilityGeneric.workspace==workspace)
@@ -754,6 +759,10 @@ class VulnerabilityView(PaginatedMixin,
             vuln_dict = {"confirmed": vuln.confirmed, "id": vuln.id, "date": vuln_date,
                          "severity": vuln.severity, "target": vuln.target, "status": vuln.status, "hostnames": vuln_hostnames,
                          "desc": vuln_description, "name": vuln.name, "service": vuln_service}
+            if vuln.custom_fields:
+                for field_name, value in vuln.custom_fields.items():
+                    if field_name in custom_fields_columns:
+                        vuln_dict.update({field_name: value})
             writer.writerow(vuln_dict)
         memory_file.seek(0)
         return send_file(memory_file,

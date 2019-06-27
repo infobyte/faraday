@@ -131,9 +131,8 @@ def file_upload(workspace=None):
     logger.debug("Importing new plugin report in server...")
 
     # Authorization code copy-pasted from server/api/base.py
-    ws = Workspace.query.filter_by(name=workspace).one()
-    if not (ws.active
-            ):
+    ws = Workspace.query.filter_by(name=workspace).first()
+    if not ws or not (ws.active):
         # Don't raise a 403 to prevent workspace name enumeration
         abort(404, "Workspace disabled: %s" % workspace)
 

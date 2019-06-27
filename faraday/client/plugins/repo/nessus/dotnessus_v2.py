@@ -26,7 +26,7 @@ import sys
 import re
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from io import StringIO
+from io import StringIO, BytesIO
 
 
 # List all nodes in a ReportItem object that can have multiple values
@@ -90,7 +90,13 @@ class Report(object):
         # Parse XML file
         #getLogger(self).debug("Parsing report start")
         if from_string:
-            xml_file = StringIO(xml_file)
+            try:
+                xml_file = BytesIO(xml_file)
+            except Exception as e1:
+                try:
+                    xml_file = StringIO(xml_file)
+                except Exception as e2:
+                    raise str(e1) + "\n" + str(e2)
 
         # Iterate through each host scanned and create objects for each
         for event, elem in ET.iterparse(xml_file):

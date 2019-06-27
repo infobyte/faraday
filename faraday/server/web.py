@@ -11,8 +11,6 @@ from signal import SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM, SIG_DFL, signal
 import twisted.web
 from twisted.web.resource import Resource, ForbiddenResource
 
-import faraday.server.config
-
 from twisted.internet import ssl, reactor, error
 from twisted.web.static import File
 from twisted.web.util import Redirect

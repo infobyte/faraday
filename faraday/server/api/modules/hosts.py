@@ -143,6 +143,8 @@ class HostsView(PaginatedMixin,
             items = re.findall(r"([.a-zA-Z0-9_-]+)", list_string)
             return items
 
+        workspace = self._get_workspace(workspace_name)
+
         logger.info("Create hosts from CSV")
         if 'file' not in flask.request.files:
             abort(400, "Missing File in request")
@@ -155,7 +157,6 @@ class HostsView(PaginatedMixin,
                 abort(400, "Missing Required headers in CSV (%s)" % FILE_HEADERS)
             hosts_created_count = 0
             hosts_with_errors_count = 0
-            workspace = self._get_workspace(workspace_name)
             for host_dict in hosts_reader:
                 try:
                     hostnames = parse_hosts(host_dict.pop('hostnames'))

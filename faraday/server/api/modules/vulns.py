@@ -6,11 +6,14 @@ import io
 import json
 import logging
 from base64 import b64encode, b64decode
+import cStringIO
+import csv
+import re
 
 import flask
 import wtforms
 from filteralchemy import Filter, FilterSet, operators
-from flask import request
+from flask import request, send_file
 from flask import Blueprint
 from flask_classful import route
 from flask_restless.search import search
@@ -38,6 +41,7 @@ from faraday.server.models import (
     Workspace,
     Vulnerability,
     VulnerabilityWeb,
+    CustomFieldsSchema,
     VulnerabilityGeneric,
 )
 from faraday.server.utils.database import get_or_create
@@ -728,5 +732,43 @@ class VulnerabilityView(PaginatedMixin,
         else:
             flask.abort(404, "Vulnerability not found")
 
+    @route('export_csv/', methods=['GET'])
+    def export_csv(self, workspace_name):
+        confirmed = bool(request.args.get('confirmed'))
+        workspace = self._get_workspace(workspace_name)
+        memory_file = cStringIO.StringIO()
+        custom_fields_columns = []
+        for custom_field in db.session.query(CustomFieldsSchema).order_by(CustomFieldsSchema.field_order):
+            custom_fields_columns.append(custom_field.field_name)
+        headers = ["confirmed", "id", "date", "name", "severity", "service", "target", "desc", "status", "hostnames"]
+        headers += custom_fields_columns
+        writer = csv.DictWriter(memory_file, fieldnames=headers)
+        writer.writeheader()
+        vulns_query = db.session.query(VulnerabilityGeneric).filter(VulnerabilityGeneric.workspace==workspace)
+        if confirmed:
+            vulns_query = vulns_query.filter(VulnerabilityGeneric.confirmed==confirmed)
+        for vuln in vulns_query:
+            vuln_description = re.sub(' +', ' ', vuln.description.strip().replace("\n", ""))
+            vuln_date = vuln.create_date.strftime("%m/%d/%Y")
+            if vuln.service:
+               service_fields = ["status", "protocol", "name", "summary", "version", "port"]
+               service_fields_values = map(lambda field: "%s:%s" % (field, getattr(vuln.service, field)), service_fields)
+               vuln_service = " - ".join(service_fields_values)
+            else:
+               vuln_service = ""
+            vuln_hostnames = str(map(lambda host: str(host.name), vuln.hostnames))
+            vuln_dict = {"confirmed": vuln.confirmed, "id": vuln.id, "date": vuln_date,
+                         "severity": vuln.severity, "target": vuln.target, "status": vuln.status, "hostnames": vuln_hostnames,
+                         "desc": vuln_description, "name": vuln.name, "service": vuln_service}
+            if vuln.custom_fields:
+                for field_name, value in vuln.custom_fields.items():
+                    if field_name in custom_fields_columns:
+                        vuln_dict.update({field_name: value})
+            writer.writerow(vuln_dict)
+        memory_file.seek(0)
+        return send_file(memory_file,
+                         attachment_filename="Faraday-SR-%s.csv" % workspace_name,
+                         as_attachment=True,
+                         cache_timeout=-1)
 
 VulnerabilityView.register(vulns_api)

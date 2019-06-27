@@ -852,19 +852,34 @@ angular.module("faradayApp")
 
         $scope.csv = function() {
             deferred = $q.defer();
-            delete searchFilter.confirmed;
-            if ($scope.propertyFilterConfirmed === "Confirmed")
-                searchFilter.confirmed = true;
-            if ($scope.propertyFilterConfirmed === "Unconfirmed")
-                searchFilter.confirmed = false;
-            vulnsManager.getVulns($scope.workspace,
-                                  null,
-                                  null,
-                                  searchFilter,
-                                  null,
-                                  null)
-            .then(function(response) {
-                deferred.resolve(csvService.generator($scope.columns, response.vulnerabilities, $scope.workspace));
+
+            let confirmed = $scope.propertyFilterConfirmed === "Confirmed" ? true : false;
+            $scope.loading = true;
+
+            vulnsManager.exportCsv($scope.workspace, confirmed)
+            .then(function(result){
+                 var title = "";
+
+                 if ($scope.workspace === null) {
+                     title = 'Vulnerability Model CSV';
+                 } else {
+                     title = "SR-" + $scope.workspace;
+                 }
+
+                 var csvObj = {
+                     "content":  result.data,
+                     "extension": "csv",
+                     "title":    title,
+                     "type": "text/csv"
+                 };
+
+                 $scope.loading = false;
+
+                 deferred.resolve(csvObj);
+            })
+            .catch(function(){
+                 commonsFact.showMessage('An error has occurred.');
+                 $scope.loading = false;
             });
             return deferred.promise;
         };

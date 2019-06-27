@@ -6,6 +6,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 import time
 import operator
+from io import BytesIO
 
 import pytz
 
@@ -512,6 +513,26 @@ class TestHostAPI:
             u'service_summaries': [],
             u'vulns': 0}
 
+    def test_add_hosts_from_csv(self, session, test_client, csrf_token):
+        ws = WorkspaceFactory.create(name='abc')
+        session.add(ws)
+        session.commit()
+        expected_created_hosts = 2
+        file_contents = """ip, description, os, hostnames\n
+        10.10.10.10, test_host, linux, \"['localhost', 'test_host']\"\n
+        10.10.10.11, test_host, linux, \"['localhost', 'test_host_1']\"
+        """
+        data = {
+            'file': (BytesIO(file_contents), 'hosts.csv'),
+            'csrf_token': csrf_token
+        }
+        headers = {'Content-type': 'multipart/form-data'}
+        res = test_client.post('/v2/ws/{0}/hosts/bulk_create/'.format(ws.name),
+                               data=data, headers=headers, use_json_data=False)
+        assert res.status_code == 200
+        assert res.json['hosts_created'] == expected_created_hosts
+        assert session.query(Host).filter_by(description="test_host").count() == expected_created_hosts
+
 
 
 class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
@@ -700,6 +721,7 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
 
         assert session.query(Hostname).filter_by(host=host).count() == 1
         assert session.query(Hostname).all()[0].name == 'dasdas'
+
 
 
 def host_json():

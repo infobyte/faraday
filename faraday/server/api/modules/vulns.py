@@ -2,13 +2,14 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 import os
+import re
 import io
+import csv
 import json
 import logging
-from base64 import b64encode, b64decode
 import cStringIO
-import csv
-import re
+from base64 import b64encode, b64decode
+
 
 import flask
 import wtforms
@@ -36,6 +37,7 @@ from faraday.server.models import (
     db,
     File,
     Host,
+    Comment,
     Service,
     Hostname,
     Workspace,

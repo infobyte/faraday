@@ -633,10 +633,18 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('/filter')
     def filter(self, workspace_name):
+        filters = request.args.get('q')
+        return self._envelope_list(self._filter(filters, workspace_name))
+
+    def _filter(self, filters, workspace_name, confirmed=False):
         try:
-            filters = json.loads(request.args.get('q'))
+            filters = json.loads(filters)
         except ValueError as ex:
             flask.abort(400, "Invalid filters")
+        if confirmed:
+            if 'filters' not in filters:
+                filters['filters'] = []
+            filters['filters'].append({"name":"confirmed","op":"==","val":"true"})
 
         workspace = self._get_workspace(workspace_name)
         marshmallow_params = {'many': True, 'context': {}, 'strict': True}
@@ -658,7 +666,7 @@ class VulnerabilityView(PaginatedMixin,
             web_vulns_data = json.loads(web_vulns.data)
         except Exception:
             web_vulns_data = []
-        return self._envelope_list(normal_vulns_data + web_vulns_data)
+        return normal_vulns_data + web_vulns_data
 
     @route('/<int:vuln_id>/attachment/<attachment_filename>/', methods=['GET'])
     def get_attachment(self, workspace_name, vuln_id, attachment_filename):
@@ -744,9 +752,8 @@ class VulnerabilityView(PaginatedMixin,
         headers += custom_fields_columns
         writer = csv.DictWriter(memory_file, fieldnames=headers)
         writer.writeheader()
-        vulns_query = db.session.query(VulnerabilityGeneric).filter(VulnerabilityGeneric.workspace==workspace)
-        if confirmed:
-            vulns_query = vulns_query.filter(VulnerabilityGeneric.confirmed==confirmed)
+        filters = request.args.get('q') or '{}'
+        vulns_query = self._filter(filters, workspace_name, confirmed)
         for vuln in vulns_query:
             vuln_description = re.sub(' +', ' ', vuln.description.strip().replace("\n", ""))
             vuln_date = vuln.create_date.strftime("%m/%d/%Y")

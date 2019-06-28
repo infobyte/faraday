@@ -57,13 +57,20 @@ def get_host_properties(host):
     # name was removed from host and changed to ip
     ip = host_dict.pop('name')
     if 'ip' not in host_dict and ip:
+        #TODO: check ip v6
         if re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", ip) is None:
             logger.warn('Host with invalid IP address detected.')
             logger.warn('Let\'s try to resolve %s', ip)
             try:
                 #This is not perfect. Could resolve to different ip addr depending on the dns registry.
+                hostname = ip
                 ip = socket.gethostbyname(ip)
                 logger.warn('Resolved to %s', ip)
+                #Adding to hostnames list
+                logger.debug('Adding host %s to hostnames list', ip)
+                host_dict['hostnames'].append(hostname)
+                #In case of dup hostnames
+                host_dict['hostnames'] = list(set(host_dict['hostnames']))
             except socket.gaierror as e:
                 logger.error('Couldn\'t resolve hostname %s', ip)
         host_dict['ip'] = ip

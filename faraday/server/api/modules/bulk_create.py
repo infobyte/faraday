@@ -1,14 +1,48 @@
 import sqlalchemy
+from marshmallow import fields
+from marshmallow.validate import Range
 from faraday.server.models import (
     db,
     Host,
     Hostname,
+    Service,
 )
 from faraday.server.utils.database import (
     get_conflict_object,
     is_unique_constraint_violation
     )
-from faraday.server.api.modules.hosts import HostSchema
+from faraday.server.api.modules.hosts import HostSchema as OriginalHostSchema
+from faraday.server.api.modules.services import ServiceSchema as OriginalServiceSchema
+
+
+class ServiceSchema(OriginalServiceSchema):
+    """It's like the original service schema, but now it only uses port
+    instead of ports (a single integer array). That field was only used
+    to keep backwards compatibility with the Web UI"""
+    port = fields.Integer(strict=True, required=True,
+                          validate=[Range(min=0, error="The value must be greater than or equal to 0")])
+
+    def post_load_parent(self, data):
+        # Don't require the parent field
+        return
+
+    class Meta(OriginalServiceSchema.Meta):
+        fields = tuple(
+            field_name for field_name in OriginalServiceSchema.Meta.fields
+            if field_name not in ('parent', 'ports')
+        )
+
+
+class HostSchema(OriginalHostSchema):
+    services = fields.Nested(
+        ServiceSchema(many=True, context={'updating': False}),
+        many=True,
+        missing=[],
+    )
+
+    class Meta(OriginalHostSchema.Meta):
+        fields = OriginalHostSchema.Meta.fields + ('services',)
+
 
 def get_or_create(ws, model_class, data):
     """Check for conflicts and create a new object
@@ -34,16 +68,30 @@ def get_or_create(ws, model_class, data):
     # self._set_command_id(obj, True)  # TODO check this
     return (True, obj)
 
+
 def bulk_create(ws, data):
     for host in data['hosts']:
         create_host(ws, host)
+
 
 def create_host(ws, raw_data):
     schema = HostSchema(strict=True)
     host_data = schema.load(raw_data).data
     hostnames = host_data.pop('hostnames', [])
+    services = host_data.pop('services')
     (created, host) = get_or_create(ws, Host, host_data)
     if created:
         for name in hostnames:
             db.session.add(Hostname(name=name, host=host, workspace=ws))
+    db.session.commit()
+
+    for service_data in services:
+        create_service(ws, host, service_data)
+
+
+def create_service(ws, host, raw_data):
+    schema = ServiceSchema(strict=True, context={'updating': False})
+    service_data = schema.load(raw_data).data
+    service_data['host'] = host
+    (_, service) = get_or_create(ws, Service, service_data)
     db.session.commit()

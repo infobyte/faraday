@@ -8,9 +8,9 @@ import io
 import json
 import logging
 from base64 import b64encode, b64decode
-import cStringIO
 import csv
 import re
+from io import StringIO
 
 import flask
 import wtforms
@@ -738,7 +738,7 @@ class VulnerabilityView(PaginatedMixin,
     def export_csv(self, workspace_name):
         confirmed = bool(request.args.get('confirmed'))
         workspace = self._get_workspace(workspace_name)
-        memory_file = cStringIO.StringIO()
+        memory_file = StringIO()
         custom_fields_columns = []
         for custom_field in db.session.query(CustomFieldsSchema).order_by(CustomFieldsSchema.field_order):
             custom_fields_columns.append(custom_field.field_name)
@@ -754,11 +754,11 @@ class VulnerabilityView(PaginatedMixin,
             vuln_date = vuln.create_date.strftime("%m/%d/%Y")
             if vuln.service:
                 service_fields = ["status", "protocol", "name", "summary", "version", "port"]
-                service_fields_values = map(lambda field: "%s:%s" % (field, getattr(vuln.service, field)), service_fields)
+                service_fields_values = list(map(lambda field: "%s:%s" % (field, getattr(vuln.service, field)), service_fields))
                 vuln_service = " - ".join(service_fields_values)
             else:
                 vuln_service = ""
-            vuln_hostnames = str(map(lambda host: str(host.name), vuln.hostnames))
+            vuln_hostnames = str(list(map(lambda host: str(host.name), vuln.hostnames)))
             vuln_dict = {"confirmed": vuln.confirmed, "id": vuln.id, "date": vuln_date,
                          "severity": vuln.severity, "target": vuln.target, "status": vuln.status, "hostnames": vuln_hostnames,
                          "desc": vuln_description, "name": vuln.name, "service": vuln_service}

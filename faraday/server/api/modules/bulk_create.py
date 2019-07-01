@@ -26,7 +26,7 @@ def get_or_create(ws, model_class, data):
         if not is_unique_constraint_violation(ex):
             raise
         db.session.rollback()
-        conflict_obj = get_conflict_object(db.session, obj, data)
+        conflict_obj = get_conflict_object(db.session, obj, data, ws)
         if conflict_obj:
             return (False, obj)
         else:
@@ -42,7 +42,8 @@ def create_host(ws, raw_data):
     schema = HostSchema(strict=True)
     host_data = schema.load(raw_data).data
     hostnames = host_data.pop('hostnames', [])
-    (_, host) = get_or_create(ws, Host, host_data)
-    for name in hostnames:
-        db.session.add(Hostname(name=name, host=host, workspace=ws))
+    (created, host) = get_or_create(ws, Host, host_data)
+    if created:
+        for name in hostnames:
+            db.session.add(Hostname(name=name, host=host, workspace=ws))
     db.session.commit()

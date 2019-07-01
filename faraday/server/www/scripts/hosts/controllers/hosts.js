@@ -15,6 +15,8 @@ angular.module('faradayApp')
         'workspacesFact',
         'commonsFact',
         'credential',
+        '$http',
+        'BASEURL',
         function ($scope,
                   $cookies,
                   $filter,
@@ -25,7 +27,9 @@ angular.module('faradayApp')
                   hostsManager,
                   workspacesFact,
                   commonsFact,
-                  credential) {
+                  credential,
+                  $http,
+                  BASEURL) {
 
         var init = function() {
             $scope.selectall_hosts = false;
@@ -420,6 +424,66 @@ angular.module('faradayApp')
             }
             return succeed;
         }
+
+        $scope.enableFileUpload = function() {
+
+            if($scope.fileUploadEnabled === undefined) {
+                $http.get('/_api/session').then(
+                  function(d) {
+                    $scope.csrf_token = d.data.csrf_token;
+                    $scope.fileUploadEnabled = true;
+
+                    var modal = $uibModal.open({
+                        templateUrl: 'scripts/hosts/partials/upload.html',
+                        controller: 'hostModelModalUpload',
+                        size: 'lg',
+                        resolve: { }
+                    });
+
+                    modal.result.then(function(data) {
+                        $scope.fileUploadEnabled = undefined;
+                        $scope.fileToUpload = data;
+                        $scope.uploadFile();
+                    });
+
+                    modal.result.finally(function(){
+                        $scope.fileUploadEnabled = undefined;
+                    });
+                  }
+                );
+            } else {
+              toggleFileUpload();
+            }
+        };
+
+        function toggleFileUpload() {
+            if($scope.fileUploadEnabled === false) {
+                $scope.fileUploadEnabled = true;
+            } else {
+                $scope.fileUploadEnabled = false;
+                $scope.fileToUpload = undefined;
+            }
+        };
+
+        $scope.uploadFile = function() {
+            var fd = new FormData();
+            fd.append('csrf_token', $scope.csrf_token);
+            fd.append('file', $scope.fileToUpload);
+            $http.post(BASEURL + '_api/v2/ws/' + $scope.workspace + '/hosts/bulk_create', fd, {
+                transformRequest: angular.identity,
+                withCredentials: false,
+                headers: {'Content-Type': undefined}
+            }).then(
+                function(d) {
+                    commonsFact.showMessage("Hosts Created: " + d.data.hosts_created + "  Hosts with error: " + d.data.hosts_with_errors + "", true);
+                    $route.reload();
+                },
+                function(d){
+                    commonsFact.showMessage("Error uploading hosts");
+                    toggleFileUpload();
+                }
+            );
+        };
 
         init();
     }]);

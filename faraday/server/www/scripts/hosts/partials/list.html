@@ -36,6 +36,11 @@
                         </div>
                     </form>
                 </div>
+                <div class="control-wrapper download-wrapper">
+                    <button ng-click="enableFileUpload()" type="button" class="btn btn-default" title="{{workspaceData.readonly == true ? 'Read-only. Workspace disabled': 'Upload a report'}}" ng-disabled="workspaceData.readonly == true">
+                        <img src="images/icon-toolbar-upload.svg"/>
+                    </button>
+                </div>
                 <div class="space-wrapper"></div>
                 <div class="control-wrapper control-wrap-right">
                     <div class="btn-group">

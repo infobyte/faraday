@@ -11,8 +11,12 @@ host_data = {
 }
 
 
+def count(model, ws):
+    return model.query.filter(model.workspace == ws).count()
+
+
 def test_create_host(session, workspace):
-    assert Host.query.filter(Host.workspace == workspace).count() == 0
+    assert count(Host, workspace) == 0
     bulk_create(workspace, dict(hosts=[host_data]))
     db.session.commit()
     host = Host.query.filter(Host.workspace == workspace).one()
@@ -21,20 +25,20 @@ def test_create_host(session, workspace):
 
 
 def test_create_duplicated_hosts(session, workspace):
-    assert Host.query.filter(Host.workspace == workspace).count() == 0
+    assert count(Host, workspace) == 0
     bulk_create(workspace, dict(hosts=[host_data, host_data]))
     db.session.commit()
-    assert Host.query.filter(Host.workspace == workspace).count() == 1
+    assert count(Host, workspace) == 1
 
 
 def test_create_existing_host(session, host):
     session.add(host)
     session.commit()
-    assert Host.query.filter(Host.workspace == host.workspace).count() == 1
+    assert count(Host, host.workspace) == 1
     data = {
         "ip": host.ip,
         "description": host.description,
         "hostnames": [hn.name for hn in host.hostnames]
     }
     bulk_create(host.workspace, dict(hosts=[data]))
-    assert Host.query.filter(Host.workspace == host.workspace).count() == 1
+    assert count(Host, host.workspace) == 1

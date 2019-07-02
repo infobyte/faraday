@@ -18,8 +18,8 @@ service_data = {
 }
 
 
-def count(model, ws):
-    return model.query.filter(model.workspace == ws).count()
+def count(model, workspace):
+    return model.query.filter(model.workspace == workspace).count()
 
 
 def test_create_host(session, workspace):

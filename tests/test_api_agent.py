@@ -7,34 +7,43 @@ See the file 'doc/LICENSE' for the license information
 import pytest
 
 from faraday.server.api.modules.agents import AgentView
-from faraday.server.api.modules.comments import CommentView
-from faraday.server.models import Agent, Comment
+from faraday.server.models import Agent, AgentAuthToken
 from tests.factories import AgentFactory
 from tests.test_api_workspaced_base import ReadOnlyAPITests
 from tests import factories
 
 
-# @pytest.mark.usefixtures('logged_user')
 class TestAgentAPIGeneric(ReadOnlyAPITests):
     model = Agent
     factory = factories.AgentFactory
     view_class = AgentView
     api_endpoint = 'agents'
 
-    def create_raw_agent(self, _type='shared', status="offline"):
+    def create_raw_agent(self, _type='shared', status="offline", token="TOKEN"):
         return {
             "projects": 1,
             "type": _type,
             "version": "1",
-            "token": "TOKEN",
+            "token": token,
             "status": status,
             "jobs": 1,
             "description": "My Desc"
         }
 
-    def test_create_agent(self, test_client, session):
+    def test_create_agent_invalid(self, test_client, session):
         initial_agent_count = len(session.query(Agent).all())
         raw_agent = self.create_raw_agent()
+        res = test_client.post(self.url(), data=raw_agent)
+        assert res.status_code == 401
+        assert len(session.query(Agent).all()) == initial_agent_count
+
+    def test_create_agent_valid(self, test_client, session):
+        valid_token = 'sarasa_tokenator'
+        token_obj = AgentAuthToken(token=valid_token)
+        session.add(token_obj)
+        session.commit()
+        initial_agent_count = len(session.query(Agent).all())
+        raw_agent = self.create_raw_agent(token=valid_token)
         res = test_client.post(self.url(), data=raw_agent)
         assert res.status_code == 201
         assert len(session.query(Agent).all()) == initial_agent_count + 1

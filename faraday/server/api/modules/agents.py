@@ -1,12 +1,13 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2019  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-from flask import Blueprint
+from flask import abort, Blueprint
 from marshmallow import fields
 from marshmallow.validate import OneOf
+from sqlalchemy.orm.exc import NoResultFound
 
 from faraday.server.api.base import (AutoSchema, ReadWriteWorkspacedView)
-from faraday.server.models import Agent
+from faraday.server.models import db, Agent, AgentAuthToken
 from faraday.server.schemas import PrimaryKeyRelatedField
 
 agent_api = Blueprint('agent_api', __name__)
@@ -32,6 +33,22 @@ class AgentView(ReadWriteWorkspacedView):
     route_base = 'agents'
     model_class = Agent
     schema_class = AgentSchema
+
+    def _perform_create(self,  data, **kwargs):
+        if 'token' in data:
+            token = data.pop('token')
+            try:
+                db_token = db.session.query(AgentAuthToken).one()
+            except NoResultFound:
+                abort(401, "Invalid Token")
+            if token != db_token.token:
+                abort(401, "Invalid Token")
+        else:
+            abort(401, "Invalid Token")
+
+        agent = super(AgentView, self)._perform_create(data, **kwargs)
+
+        return agent
 
 
 AgentView.register(agent_api)

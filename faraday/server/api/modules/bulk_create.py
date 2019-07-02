@@ -19,12 +19,25 @@ from faraday.server.api.modules import (
 )
 
 
+class VulnerabilitySchema(vulns.VulnerabilitySchema):
+    class Meta(vulns.VulnerabilitySchema.Meta):
+        fields = tuple(
+            field_name for field_name in vulns.VulnerabilitySchema.Meta.fields
+            if field_name not in ('parent', 'parent_type')
+        )
+
+
 class ServiceSchema(services.ServiceSchema):
     """It's like the original service schema, but now it only uses port
     instead of ports (a single integer array). That field was only used
     to keep backwards compatibility with the Web UI"""
     port = fields.Integer(strict=True, required=True,
                           validate=[Range(min=0, error="The value must be greater than or equal to 0")])
+    vulnerabilities = fields.Nested(
+        VulnerabilitySchema(many=True),
+        many=True,
+        missing=[],
+    )
 
     def post_load_parent(self, data):
         # Don't require the parent field
@@ -34,15 +47,7 @@ class ServiceSchema(services.ServiceSchema):
         fields = tuple(
             field_name for field_name in services.ServiceSchema.Meta.fields
             if field_name not in ('parent', 'ports')
-        )
-
-
-class VulnerabilitySchema(vulns.VulnerabilitySchema):
-    class Meta(vulns.VulnerabilitySchema.Meta):
-        fields = tuple(
-            field_name for field_name in vulns.VulnerabilitySchema.Meta.fields
-            if field_name not in ('parent', 'parent_type')
-        )
+        ) + ('vulnerabilities',)
 
 
 class HostSchema(hosts.HostSchema):
@@ -113,9 +118,13 @@ def create_host(ws, raw_data):
 def create_service(ws, host, raw_data):
     schema = ServiceSchema(strict=True, context={'updating': False})
     service_data = schema.load(raw_data).data
+    vulns = service_data.pop('vulnerabilities')
     service_data['host'] = host
     (_, service) = get_or_create(ws, Service, service_data)
     db.session.commit()
+
+    for vuln_data in vulns:
+        create_servicevuln(ws, service, vuln_data, False)
 
 
 def create_hostvuln(ws, host, vuln_data, reload_data=True):
@@ -128,6 +137,29 @@ def create_hostvuln(ws, host, vuln_data, reload_data=True):
     policyviolations = vuln_data.pop('policy_violations', [])
 
     vuln_data['host'] = host
+    if vuln_data['type'] != 'vulnerability':
+        raise ValidationError('Type must be "Vulnerability"')
+    (created, vuln) = get_or_create(ws, Vulnerability, vuln_data)
+    db.session.commit()
+
+    if created:
+        vuln.references = references
+        vuln.policyviolations = policyviolations
+        # TODO attachments
+        db.session.add(vuln)
+        db.session.commit()
+
+
+def create_servicevuln(ws, service, vuln_data, reload_data=True):
+    if reload_data:
+        schema = VulnerabilitySchema(strict=True)
+        vuln_data = schema.load(vuln_data).data
+
+    attachments = vuln_data.pop('_attachments', {})
+    references = vuln_data.pop('references', [])
+    policyviolations = vuln_data.pop('policy_violations', [])
+
+    vuln_data['service'] = service
     if vuln_data['type'] != 'vulnerability':
         raise ValidationError('Type must be "Vulnerability"')
     (created, vuln) = get_or_create(ws, Vulnerability, vuln_data)

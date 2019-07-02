@@ -111,6 +111,21 @@ def test_create_host_vuln(session, host):
     assert vuln.references == {u'CVE-1234'}
 
 
+def test_create_service_vuln(session, service):
+    bc.create_servicevuln(service.workspace, service, vuln_data)
+    assert count(VulnerabilityGeneric, service.workspace) == 1
+    assert count(Vulnerability, service.workspace) == 1
+    vuln = service.workspace.vulnerabilities[0]
+    assert vuln.service == service
+    assert vuln.name == 'sql injection'
+    assert vuln.description == 'test'
+    assert vuln.severity == 'high'
+    assert vuln.impact_accountability
+    assert not vuln.impact_availability
+    assert not vuln.impact_confidentiality
+    assert vuln.references == {u'CVE-1234'}
+
+
 def test_cannot_create_host_vulnweb(session, host):
     data = vuln_data.copy()
     data['type'] = 'VulnerabilityWeb'
@@ -151,3 +166,16 @@ def test_create_host_with_vuln(session, workspace):
     vuln = Vulnerability.query.filter(Vulnerability.workspace == workspace).one()
     assert vuln.name == 'sql injection'
     assert vuln.host == host
+
+
+def test_create_service_with_vuln(session, host):
+    service_data_ = service_data.copy()
+    service_data_['vulnerabilities'] = [vuln_data]
+    bc.create_service(host.workspace, host, service_data_)
+    assert count(Service, host.workspace) == 1
+    service = host.workspace.services[0]
+    assert count(Vulnerability, service.workspace) == 1
+    vuln = Vulnerability.query.filter(
+        Vulnerability.workspace == service.workspace).one()
+    assert vuln.name == 'sql injection'
+    assert vuln.service == service

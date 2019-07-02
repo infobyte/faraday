@@ -18,7 +18,6 @@ from tornado.ioloop import IOLoop
 
 from faraday.client.model.visitor import VulnsLookupVisitor
 
-import faraday.utils.logs as logger
 from faraday.config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
@@ -61,7 +60,7 @@ def startAPIs(plugin_controller, model_controller, hostname, port):
     for hostname in hostnames:
         try:
             _http_server.listen(port, address=hostname)
-            logger.getLogger().info(
+            logging.getLogger(__name__).info(
                     "REST API server configured on %s" % str(
                         CONF.getApiRestfulConInfo()))
             listening = True
@@ -78,7 +77,7 @@ def startAPIs(plugin_controller, model_controller, hostname, port):
     for route in routes:
         app.add_url_rule(route.path, view_func=route.view_func, methods=route.methods)
 
-    logging.getLogger("tornado.access").addHandler(logger.getLogger(app))
+    logging.getLogger("tornado.access").addHandler(logging.getLogger(__name__))
     logging.getLogger("tornado.access").propagate = False
     threading.Thread(target=startServer).start()
 

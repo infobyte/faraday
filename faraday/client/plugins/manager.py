@@ -13,13 +13,13 @@ import os
 import re
 import sys
 import traceback
+import logging
 
-from faraday.client.plugins.controller import PluginController
 from faraday.config.configuration import getInstanceConfiguration
-import faraday.server.utils.logger
 
 CONF = getInstanceConfiguration()
 
+logger = logging.getLogger(__name__)
 
 class PluginManager(object):
 
@@ -97,7 +97,7 @@ class PluginManager(object):
 
         dir_name_regexp = re.compile(r"^[\d\w\-\_]+$")
         if not os.path.exists(plugin_repo_path):
-            faraday.server.utils.logger.get_logger(self).error('Plugins path could not be opened, no pluging will be available!')
+            logger.error('Plugins path could not be opened, no pluging will be available!')
             return
         for name in os.listdir(plugin_repo_path):
             if dir_name_regexp.match(name):
@@ -117,12 +117,12 @@ class PluginManager(object):
                     elif file_ext.lower() == '.pyc':
                         self._plugin_modules[name] = imp.load_compiled(name,
                                                                        module_filename)
-                    faraday.server.utils.logger.get_logger(self).debug('Loading plugin {0}'.format(name))
+                    logger.debug('Loading plugin {0}'.format(name))
                 except Exception as e:
                     msg = "An error ocurred while loading plugin %s.\n%s" % (
                         module_filename, traceback.format_exc())
-                    faraday.server.utils.logger.get_logger(self).debug(msg)
-                    faraday.server.utils.logger.get_logger(self).warn(e)
+                    logger.debug(msg)
+                    logger.warn(e)
 
     def getPlugins(self):
         plugins = self._instancePlugins()

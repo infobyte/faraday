@@ -5,21 +5,23 @@
 import os
 import sys
 import functools
+import logging
 from signal import SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM, SIG_DFL, signal
 
 import twisted.web
 from twisted.web.resource import Resource, ForbiddenResource
 
-import faraday.server.config
-
 from twisted.internet import ssl, reactor, error
 from twisted.web.static import File
 from twisted.web.util import Redirect
+from twisted.web.http import proxiedLogFormatter
 from twisted.web.wsgi import WSGIResource
 from autobahn.twisted.websocket import (
     listenWS
 )
 import faraday.server.config
+
+from faraday.config.constant import CONST_FARADAY_HOME_PATH
 from faraday.server.utils import logger
 
 from faraday.server.app import create_app
@@ -30,7 +32,8 @@ from faraday.server.websocket_factories import (
 from faraday.server.api.modules.upload_reports import RawReportProcessor
 
 app = create_app()  # creates a Flask(__name__) app
-logger = faraday.server.utils.logger.get_logger(__name__)
+logger = logging.getLogger(__name__)
+
 
 
 class CleanHttpHeadersResource(Resource, object):
@@ -75,6 +78,8 @@ class WebServer(object):
             faraday.server.config.faraday_server.bind_address,
             faraday.server.config.faraday_server.port))
         self.__ssl_enabled = enable_ssl
+        self.__websocket_ssl_enabled = faraday.server.config.websocket_ssl.enabled
+        self.__websocket_port = faraday.server.config.faraday_server.websocket_port or 9000
         self.__config_server()
         self.__build_server_tree()
 
@@ -110,14 +115,14 @@ class WebServer(object):
     def __build_websockets_resource(self):
         websocket_port = int(faraday.server.config.faraday_server.websocket_port)
         url = '{0}:{1}'.format(self.__bind_address, websocket_port)
-        if self.__ssl_enabled:
+        if self.__websocket_ssl_enabled:
             url = 'wss://' + url
         else:
             url = 'ws://' + url
         # logger.info(u"Websocket listening at {url}".format(url=url))
         logger.info('Starting websocket server at port {0} with bind address {1}. '
                     'SSL {2}'.format(
-            websocket_port,
+            self.__websocket_port,
             self.__bind_address,
             self.__ssl_enabled
         ))
@@ -130,17 +135,17 @@ class WebServer(object):
         for sig in (SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM):
             signal(sig, SIG_DFL)
 
-
-
     def run(self):
-        print self.WEB_UI_LOCAL_PATH
         def signal_handler(*args):
             logger.info('Received SIGTERM, shutting down.')
             logger.info("Stopping threads, please wait...")
             # teardown()
             self.raw_report_processor.stop()
 
-        site = twisted.web.server.Site(self.__root_resource)
+        log_path = os.path.join(CONST_FARADAY_HOME_PATH, 'logs', 'access-logging.log')
+        site = twisted.web.server.Site(self.__root_resource,
+                                       logPath=log_path,
+                                       logFormatter=proxiedLogFormatter)
         site.displayTracebacks = False
         if self.__ssl_enabled:
             ssl_context = self.__load_ssl_certs()
@@ -160,10 +165,24 @@ class WebServer(object):
                 self.__listen_port, site,
                 interface=self.__bind_address)
             # websockets
-            try:
-                listenWS(self.__build_websockets_resource(), interface=self.__bind_address)
-            except :
-                logger.warn('Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
+            if faraday.server.config.websocket_ssl.enabled:
+                contextFactory = ssl.DefaultOpenSSLContextFactory(
+                        faraday.server.config.websocket_ssl.keyfile.strip('\''),
+                        faraday.server.config.websocket_ssl.certificate.strip('\'')
+                )
+                try:
+                    listenWS(self.__build_websockets_resource(), interface=self.__bind_address, contextFactory=contextFactory)
+                except error.CannotListenError:
+                    logger.warn('Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
+                except Exception as ex:
+                    logger.warn('Could not start websocket, error: {}'.format(ex))
+            else:
+                try:
+                    listenWS(self.__build_websockets_resource(), interface=self.__bind_address)
+                except error.CannotListenError:
+                    logger.warn('Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
+                except Exception as ex:
+                    logger.warn('Could not start websocket, error: {}'.format(ex))
             logger.info('Faraday Server is ready')
             reactor.addSystemEventTrigger('before', 'shutdown', signal_handler)
             reactor.run()

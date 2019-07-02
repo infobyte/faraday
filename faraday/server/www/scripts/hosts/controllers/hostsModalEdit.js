@@ -3,9 +3,19 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('hostsModalEdit',
-        ['$scope', '$modalInstance', '$routeParams', 'hostsManager', 'host', 'commonsFact',
-        function($scope, $modalInstance, $routeParams, hostsManager, host, commons) {
+    .controller('hostsModalEdit', [
+        '$scope',
+        '$modalInstance',
+        '$routeParams',
+        'hostsManager',
+        'host',
+        'commonsFact',
+        function ($scope,
+                  $modalInstance,
+                  $routeParams,
+                  hostsManager,
+                  host,
+                  commons) {
 
         var ws = $routeParams.wsId; 
         $scope.hostdata = {};

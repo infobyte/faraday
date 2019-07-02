@@ -6,6 +6,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 import time
 import operator
+from io import BytesIO
 
 import pytz
 
@@ -312,6 +313,34 @@ class TestHostAPI:
         expected_host_ids = set(host.id for host in hosts)
         assert shown_hosts_ids == expected_host_ids
 
+    def test_filter_by_service_port(self, test_client, session, workspace,
+                               service_factory, host_factory):
+        services = service_factory.create_batch(10, workspace=workspace, port=25)
+        hosts = [service.host for service in services]
+
+        # Hosts that shouldn't be shown
+        host_factory.create_batch(5, workspace=workspace)
+
+        session.commit()
+        res = test_client.get(self.url() + '?port=25')
+        assert res.status_code == 200
+        shown_hosts_ids = set(obj['id'] for obj in res.json['rows'])
+        expected_host_ids = set(host.id for host in hosts)
+        assert shown_hosts_ids == expected_host_ids
+
+    def test_filter_by_invalid_service_port(self, test_client, session, workspace,
+                               service_factory, host_factory):
+        services = service_factory.create_batch(10, workspace=workspace, port=25)
+        hosts = [service.host for service in services]
+
+        # Hosts that shouldn't be shown
+        host_factory.create_batch(5, workspace=workspace)
+
+        session.commit()
+        res = test_client.get(self.url() + '?port=invalid_port')
+        assert res.status_code == 200
+        assert res.json['total_rows'] == 0
+
     def test_search_ip(self, test_client, session, workspace, host_factory):
         host = host_factory.create(ip="longname",
                                    workspace=workspace)
@@ -483,6 +512,26 @@ class TestHostAPI:
             u'services': 0,
             u'service_summaries': [],
             u'vulns': 0}
+
+    def test_add_hosts_from_csv(self, session, test_client, csrf_token):
+        ws = WorkspaceFactory.create(name='abc')
+        session.add(ws)
+        session.commit()
+        expected_created_hosts = 2
+        file_contents = """ip, description, os, hostnames\n
+        10.10.10.10, test_host, linux, \"['localhost', 'test_host']\"\n
+        10.10.10.11, test_host, linux, \"['localhost', 'test_host_1']\"
+        """
+        data = {
+            'file': (BytesIO(file_contents), 'hosts.csv'),
+            'csrf_token': csrf_token
+        }
+        headers = {'Content-type': 'multipart/form-data'}
+        res = test_client.post('/v2/ws/{0}/hosts/bulk_create/'.format(ws.name),
+                               data=data, headers=headers, use_json_data=False)
+        assert res.status_code == 200
+        assert res.json['hosts_created'] == expected_created_hosts
+        assert session.query(Host).filter_by(description="test_host").count() == expected_created_hosts
 
 
 
@@ -672,6 +721,7 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
 
         assert session.query(Hostname).filter_by(host=host).count() == 1
         assert session.query(Hostname).all()[0].name == 'dasdas'
+
 
 
 def host_json():

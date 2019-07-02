@@ -8,17 +8,6 @@ See the file 'doc/LICENSE' for the license information
 Contains base classes used to represent the application model
 and some other common objects and functions used in the model
 """
-import sys
-import os
-import traceback
-import threading
-import SimpleXMLRPCServer
-import xmlrpclib
-from faraday.utils.decorators import updateLocalMetadata
-import json
-import faraday.client.model
-from conflict import ConflictUpdate
-from faraday.client.model.diff import ModelObjectDiff
 
 
 class ModelObjectVisitor(object):

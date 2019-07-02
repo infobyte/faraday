@@ -3,7 +3,8 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('loginCtrl', ['$scope', '$location', '$cookies', 'loginSrv', function($scope, $location, $cookies, loginSrv) {
+    .controller('loginCtrl', ['$scope', '$location', '$cookies', 'loginSrv',
+        function($scope, $location, $cookies, loginSrv) {
 
         $scope.data = {
             "user": null,
@@ -20,7 +21,7 @@ angular.module('faradayApp')
         $scope.login = function(){
             if ($scope.data.user && $scope.data.pass){
                 loginSrv.login($scope.data.user, $scope.data.pass).then(function(user){
-                    var currentUrl = "";
+                    var currentUrl = "/dashboard/ws";
                     if($cookies.currentUrl != undefined) {
                         currentUrl = $cookies.currentUrl;
                     }
@@ -66,7 +67,7 @@ angular.module('faradayApp')
         $scope.logout = function(){
             loginSrv.logout().then(function(){
                 $location.path('/login');
-                $cookies.currentUrl = "";
+                $cookies.currentUrl = "/dashboard/ws";
             });
         };
 

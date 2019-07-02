@@ -9,7 +9,6 @@ from cStringIO import StringIO as IO
 
 from flask import after_this_request, request, abort, jsonify
 
-from faraday.server.models import db, Workspace
 from faraday.server import config
 
 

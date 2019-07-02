@@ -3,9 +3,29 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('modalNewVulnCtrl',
-        ['$modalInstance', '$filter', '$upload', 'EASEOFRESOLUTION', 'commonsFact', 'severities', 'workspace', 'targetFact', 'vulnModelsManager', 'vulnsManager', 'customFields',
-        function($modalInstance, $filter, $upload, EASEOFRESOLUTION, commonsFact, severities, workspace, targetFact, vulnModelsManager, vulnsManager, customFields) {
+    .controller('modalNewVulnCtrl', [
+        '$modalInstance',
+        '$filter',
+        '$upload',
+        'EASEOFRESOLUTION',
+        'commonsFact',
+        'severities',
+        'workspace',
+        'targetFact',
+        'vulnModelsManager',
+        'vulnsManager',
+        'customFields',
+        function ($modalInstance,
+                  $filter,
+                  $upload,
+                  EASEOFRESOLUTION,
+                  commonsFact,
+                  severities,
+                  workspace,
+                  targetFact,
+                  vulnModelsManager,
+                  vulnsManager,
+                  customFields) {
 
         var vm = this;
 
@@ -153,7 +173,13 @@ angular.module('faradayApp')
             }, function(response){
                 if (response.status == 409) {
                     commonsFact.showMessage("Error while creating a new Vulnerability " + vm.data.name + " Conflicting Vulnerability with id: " + response.data.object._id + ". " + response.data.message);
-                } else {
+                } else if (response.status == 400){
+                    //commonsFact.showMessage("Your input data is wrong, Attachments error");
+                    var field = Object.keys(response.data.messages)[0];
+                    var error = response.data.messages[field][0];
+                    commonsFact.showMessage("Your input data is wrong,    " + field.toUpperCase() +":      " + error);
+
+                }else {
                     commonsFact.showMessage("Error from backend: " + response.status);
                 }
             });

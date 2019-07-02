@@ -14,7 +14,6 @@ from Queue import Queue
 from collections import defaultdict
 
 import os
-sys.path.append(os.path.abspath(os.getcwd()))
 from faraday.client.plugins.repo.whois.plugin import CmdWhoisPlugin
 from faraday.client.model.common import factory
 from faraday.client.persistence.server.models import (

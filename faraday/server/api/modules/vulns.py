@@ -661,10 +661,11 @@ class VulnerabilityView(PaginatedMixin,
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(VulnerabilityGeneric.id == vuln_id,
                               Workspace.name == workspace_name).first()
+
         if vuln_workspace_check:
             file_obj = db.session.query(File).filter_by(object_type='vulnerability',
                                          object_id=vuln_id,
-                                         filename=attachment_filename).first()
+                                         filename=attachment_filename.replace(" ", "%20")).first()
             if file_obj:
                 depot = DepotManager.get()
                 depot_file = depot.get(file_obj.content.get('file_id'))

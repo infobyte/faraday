@@ -132,7 +132,7 @@
                                             selection-model-on-change="selectedHosts()">
                             <td class="ui-grid-cell-contents checkbox-select">
                                 <div class="">
-                                    <input type="checkbox" name="{{host._id}}"/>
+                                    <input type="checkbox" ng-model="host.selected" ng-click="host.selected = !host.selected" name="{{host._id}}"/>
                                 </div>
                             </td>
                             <td class="ui-grid-cell-contents" ng-show="columns['id']">

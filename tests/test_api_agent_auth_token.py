@@ -25,18 +25,34 @@ class TestAgentAuthTokenAPIGeneric(ReadOnlyAPITests):
             "token": token
         }
 
-    def test_create_agent_token(self, test_client, session):
-        initial_agent_token_count = len(session.query(AgentAuthToken).all())
+    def test_multiple_post_return_the_same_id(self, session, test_client):
+        session.query(AgentAuthToken).delete()
+        initial_agent_token_count = session.query(AgentAuthToken).count()
         raw_agent = self.create_raw_agent_token()
         res = test_client.post(self.url(), data=raw_agent)
         assert res.status_code == 201
         assert len(session.query(AgentAuthToken).all()) == initial_agent_token_count + 1
+        initial_agent_token_count = session.query(AgentAuthToken).count()
+        raw_agent = self.create_raw_agent_token(token="pepito")
+        res = test_client.post(self.url(), data=raw_agent)
+        assert res.status_code == 201
+        # the second post will not create more entries
+        assert session.query(AgentAuthToken).count() == initial_agent_token_count
+
+    def test_create_agent_token(self, test_client, session):
+        session.query(AgentAuthToken).delete()
+        initial_agent_token_count = session.query(AgentAuthToken).count()
+        raw_agent = self.create_raw_agent_token()
+        res = test_client.post(self.url(), data=raw_agent)
+        assert res.status_code == 201
+        assert session.query(AgentAuthToken).count() == initial_agent_token_count + 1
 
     def test_delete_agent_token(self, test_client, session):
-        initial_agent_token_count = len(session.query(AgentAuthToken).all())
+        session.query(AgentAuthToken).delete()
+        initial_agent_token_count = session.query(AgentAuthToken).count()
         agent_token = AgentAuthTokenFactory.create()
         session.commit()
-        assert len(session.query(AgentAuthToken).all()) == initial_agent_token_count + 1
+        assert session.query(AgentAuthToken).count() == initial_agent_token_count + 1
         res = test_client.delete(self.url(agent_token.id))
         assert res.status_code == 204
-        assert len(session.query(AgentAuthToken).all()) == initial_agent_token_count
+        assert session.query(AgentAuthToken).count() == initial_agent_token_count

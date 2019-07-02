@@ -601,9 +601,12 @@ angular.module("faradayApp")
                 }
             }
 
-            ServerAPI.exportCsv = function (wsName, confirmed) {
+            ServerAPI.exportCsv = function (wsName, confirmed, filter) {
 
                 let url = APIURL + "ws/" + wsName + "/vulns/export_csv/";
+
+                if(filter && filter.length > 0)
+                    url += filter;
 
                 if(confirmed)
                     return get(url, {confirmed: confirmed});

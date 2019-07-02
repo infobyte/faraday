@@ -855,7 +855,6 @@ angular.module("faradayApp")
 
             let confirmed = $scope.propertyFilterConfirmed === "Confirmed" ? true : false;
             $scope.loading = true;
-
             vulnsManager.exportCsv($scope.workspace, confirmed)
             .then(function(result){
                  var title = "";

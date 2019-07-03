@@ -53,7 +53,7 @@ angular.module('faradayApp')
                 var expand = function () {
                     $scope.settings.pageLimit =  15;
                     $scope.isExpanded = true;
-                    $scope.hideEmpty = true;
+                    $scope.hideEmpty = false;
                     angular.element('#first-row-panel').css('display', 'none');
                     angular.element('#activities-container-row').removeClass('mt-md');
                 };

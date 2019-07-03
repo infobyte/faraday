@@ -745,6 +745,7 @@ class VulnerabilityView(PaginatedMixin,
     @route('export_csv/', methods=['GET'])
     def export_csv(self, workspace_name):
         confirmed = bool(request.args.get('confirmed'))
+        filters = request.args.get('q') or '{}'
         workspace = self._get_workspace(workspace_name)
         memory_file = cStringIO.StringIO()
         custom_fields_columns = []
@@ -754,18 +755,22 @@ class VulnerabilityView(PaginatedMixin,
         headers += custom_fields_columns
         writer = csv.DictWriter(memory_file, fieldnames=headers)
         writer.writeheader()
-        filters = request.args.get('q') or '{}'
         vulns_query = self._filter(filters, workspace_name, confirmed)
         for vuln in vulns_query:
             vuln_description = re.sub(' +', ' ', vuln['description'].strip().replace("\n", ""))
             vuln_date = vuln['metadata']['create_time']
             if vuln['service']:
-                service_fields = ["status", "protocol", "name", "summary", "version", "port"]
-                service_fields_values = map(lambda field: "%s:%s" % (field, getattr(vuln['service'], field)), service_fields)
+                service_fields = ["status", "protocol", "name", "summary", "version", "ports"]
+                service_fields_values = map(lambda field: "%s:%s" % (field, vuln['service'][field]), service_fields)
                 vuln_service = " - ".join(service_fields_values)
             else:
                 vuln_service = ""
-            vuln_hostnames = str(map(lambda host: str(host['name']), vuln['hostnames']))
+
+            if all(isinstance(hostname, (str, unicode)) for hostname in vuln['hostnames']):
+                vuln_hostnames = str(map(lambda host: str(host), vuln['hostnames']))
+            else:
+                vuln_hostnames = str(map(lambda host: str(host['name']), vuln['hostnames']))
+
             vuln_dict = {"confirmed": vuln['confirmed'], "id": vuln['_id'], "date": vuln_date,
                          "severity": vuln['severity'], "target": vuln['target'], "status": vuln['status'], "hostnames": vuln_hostnames,
                          "desc": vuln_description, "name": vuln['name'], "service": vuln_service}

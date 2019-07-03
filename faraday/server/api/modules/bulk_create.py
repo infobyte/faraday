@@ -127,7 +127,7 @@ def create_service(ws, host, raw_data):
         create_servicevuln(ws, service, vuln_data, False)
 
 
-def create_hostvuln(ws, host, vuln_data, reload_data=True):
+def create_vuln(ws, vuln_data, reload_data=True, **kwargs):
     if reload_data:
         schema = VulnerabilitySchema(strict=True)
         vuln_data = schema.load(vuln_data).data
@@ -136,7 +136,7 @@ def create_hostvuln(ws, host, vuln_data, reload_data=True):
     references = vuln_data.pop('references', [])
     policyviolations = vuln_data.pop('policy_violations', [])
 
-    vuln_data['host'] = host
+    vuln_data.update(kwargs)
     if vuln_data['type'] != 'vulnerability':
         raise ValidationError('Type must be "Vulnerability"')
     (created, vuln) = get_or_create(ws, Vulnerability, vuln_data)
@@ -148,26 +148,11 @@ def create_hostvuln(ws, host, vuln_data, reload_data=True):
         # TODO attachments
         db.session.add(vuln)
         db.session.commit()
+
+
+def create_hostvuln(ws, host, vuln_data, reload_data=True):
+    create_vuln(ws, vuln_data, reload_data, host=host)
 
 
 def create_servicevuln(ws, service, vuln_data, reload_data=True):
-    if reload_data:
-        schema = VulnerabilitySchema(strict=True)
-        vuln_data = schema.load(vuln_data).data
-
-    attachments = vuln_data.pop('_attachments', {})
-    references = vuln_data.pop('references', [])
-    policyviolations = vuln_data.pop('policy_violations', [])
-
-    vuln_data['service'] = service
-    if vuln_data['type'] != 'vulnerability':
-        raise ValidationError('Type must be "Vulnerability"')
-    (created, vuln) = get_or_create(ws, Vulnerability, vuln_data)
-    db.session.commit()
-
-    if created:
-        vuln.references = references
-        vuln.policyviolations = policyviolations
-        # TODO attachments
-        db.session.add(vuln)
-        db.session.commit()
+    create_vuln(ws, vuln_data, reload_data, service=service)

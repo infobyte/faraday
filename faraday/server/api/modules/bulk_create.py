@@ -1,5 +1,5 @@
 import sqlalchemy
-from marshmallow import fields, ValidationError
+from marshmallow import fields, ValidationError, utils
 from marshmallow.validate import Range
 from faraday.server.models import (
     db,
@@ -7,6 +7,7 @@ from faraday.server.models import (
     Hostname,
     Service,
     Vulnerability,
+    VulnerabilityWeb,
 )
 from faraday.server.utils.database import (
     get_conflict_object,
@@ -27,13 +28,51 @@ class VulnerabilitySchema(vulns.VulnerabilitySchema):
         )
 
 
+class VulnerabilityWebSchema(vulns.VulnerabilityWebSchema):
+    class Meta(vulns.VulnerabilityWebSchema.Meta):
+        fields = tuple(
+            field_name for field_name in vulns.VulnerabilityWebSchema.Meta.fields
+            if field_name not in ('parent', 'parent_type')
+        )
+
+
+class PolymorphicVulnerabilityField(fields.Field):
+    """Used like a nested field with many objects, but it decides which
+    schema to use based on the type of each vuln"""
+    def __init__(self, *args, **kwargs):
+        super(PolymorphicVulnerabilityField, self).__init__(*args, **kwargs)
+        self.many = kwargs.get('many', False)
+        self.vuln_schema = VulnerabilitySchema(strict=True)
+        self.vulnweb_schema = VulnerabilityWebSchema(strict=True)
+
+    def _deserialize(self, value, attr, data):
+        if self.many and not utils.is_collection(value):
+            self.fail('type', input=value, type=value.__class__.__name__)
+        if self.many:
+            return [self._deserialize_item(item) for item in value]
+        return self._deserialize_item(value)
+
+    def _deserialize_item(self, value):
+        try:
+            type_ = value.get('type')
+        except AttributeError:
+            raise ValidationError("Value is expected to be an object")
+        if type_ == 'Vulnerability':
+            schema = self.vuln_schema
+        elif type_ == 'VulnerabilityWeb':
+            schema = self.vulnweb_schema
+        else:
+            raise ValidationError('type must be "Vulnerability" or "VulnerabilityWeb"')
+        return schema.load(value).data
+
+
 class ServiceSchema(services.ServiceSchema):
     """It's like the original service schema, but now it only uses port
     instead of ports (a single integer array). That field was only used
     to keep backwards compatibility with the Web UI"""
     port = fields.Integer(strict=True, required=True,
                           validate=[Range(min=0, error="The value must be greater than or equal to 0")])
-    vulnerabilities = fields.Nested(
+    vulnerabilities = PolymorphicVulnerabilityField(
         VulnerabilitySchema(many=True),
         many=True,
         missing=[],
@@ -128,18 +167,33 @@ def create_service(ws, host, raw_data):
 
 
 def create_vuln(ws, vuln_data, reload_data=True, **kwargs):
+    """Create standard or web vulnerabilites"""
+    assert 'host' in kwargs or 'service' in kwargs
+    assert not ('host' in kwargs and 'service' in kwargs)
+
     if reload_data:
-        schema = VulnerabilitySchema(strict=True)
-        vuln_data = schema.load(vuln_data).data
+        if 'host' in kwargs:
+            # Only allow standard vulns
+            schema = VulnerabilitySchema(strict=True)
+            vuln_data = schema.load(vuln_data).data
+        else:
+            vuln_data = PolymorphicVulnerabilityField()._deserialize_item(vuln_data)
 
     attachments = vuln_data.pop('_attachments', {})
     references = vuln_data.pop('references', [])
     policyviolations = vuln_data.pop('policy_violations', [])
 
     vuln_data.update(kwargs)
-    if vuln_data['type'] != 'vulnerability':
+    if 'host' in kwargs and vuln_data['type'] != 'vulnerability':
         raise ValidationError('Type must be "Vulnerability"')
-    (created, vuln) = get_or_create(ws, Vulnerability, vuln_data)
+    if vuln_data['type'] == 'vulnerability':
+        model_class = Vulnerability
+    elif vuln_data['type'] == 'vulnerability_web':
+        model_class = VulnerabilityWeb
+    else:
+        raise ValidationError("unknown type")
+
+    (created, vuln) = get_or_create(ws, model_class, vuln_data)
     db.session.commit()
 
     if created:

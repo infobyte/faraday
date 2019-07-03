@@ -6,6 +6,7 @@ from faraday.server.models import (
     Service,
     Vulnerability,
     VulnerabilityGeneric,
+    VulnerabilityWeb,
 )
 from faraday.server.api.modules import bulk_create as bc
 
@@ -31,6 +32,15 @@ vuln_data = {
         'availability': False,
     },
     'refs': ['CVE-1234']
+}
+
+vuln_web_data = {
+    'type': 'VulnerabilityWeb',
+    'method': 'POST',
+    'website': 'https://faradaysec.com',
+    'path': '/search',
+    'parameter_name': 'q',
+    'status_code': 200,
 }
 
 
@@ -179,3 +189,44 @@ def test_create_service_with_vuln(session, host):
         Vulnerability.workspace == service.workspace).one()
     assert vuln.name == 'sql injection'
     assert vuln.service == service
+
+
+def test_create_service_with_invalid_vuln(session, host):
+    service_data_ = service_data.copy()
+    vuln_data_ = vuln_data.copy()
+    del vuln_data_['name']
+    service_data_['vulnerabilities'] = [vuln_data_]
+    with pytest.raises(ValidationError):
+        bc.create_service(host.workspace, host, service_data_)
+    assert count(Service, host.workspace) == 0
+    assert count(Vulnerability, host.workspace) == 0
+
+
+def test_create_service_with_invalid_vulns(session, host):
+    service_data_ = service_data.copy()
+    vuln_data_ = vuln_data.copy()
+    del vuln_data_['name']
+    service_data_['vulnerabilities'] = [1, 2, 3]
+    with pytest.raises(ValidationError):
+        bc.create_service(host.workspace, host, service_data_)
+    assert count(Service, host.workspace) == 0
+    assert count(Vulnerability, host.workspace) == 0
+
+
+def test_create_service_with_vulnweb(session, host):
+    service_data_ = service_data.copy()
+    vuln_data_ = vuln_data.copy()
+    vuln_data_.update(vuln_web_data)
+    service_data_['vulnerabilities'] = [vuln_data_]
+    bc.create_service(host.workspace, host, service_data_)
+    assert count(Service, host.workspace) == 1
+    service = host.workspace.services[0]
+    assert count(Vulnerability, service.workspace) == 0
+    assert count(VulnerabilityWeb, service.workspace) == 1
+    vuln = VulnerabilityWeb.query.filter(
+        Vulnerability.workspace == service.workspace).one()
+    assert vuln.name == 'sql injection'
+    assert vuln.service == service
+    assert vuln.method == 'POST'
+    assert vuln.website == 'https://faradaysec.com'
+    assert vuln.status_code == 200

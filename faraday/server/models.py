@@ -830,6 +830,25 @@ class VulnerabilityGeneric(VulnerabilityABC):
     status = Column(Enum(*STATUSES, name='vulnerability_statuses'), nullable=False, default="open")
     type = Column(Enum(*VULN_TYPES, name='vulnerability_types'), nullable=False)
     issuetracker = BlankColumn(Text)
+    association_date = Column(DateTime, nullable=False)
+
+    vulnerability_duplicate_id =  Column(
+                        Integer,
+                        ForeignKey('vulnerability.id'),
+                        index=True,
+                        nullable=True,
+                        )
+
+    vulnerability_duplicate = relationship('VulnerabilityGeneric')
+
+    vulnerability_template_id =  Column(
+                        Integer,
+                        ForeignKey('vulnerability_template.id'),
+                        index=True,
+                        nullable=True,
+                        )
+
+    vulnerability_template = relationship('VulnerabilityTemplate', backref='duplicate_vulnerabilities')
 
     workspace_id = Column(
                         Integer,
@@ -954,6 +973,10 @@ class VulnerabilityGeneric(VulnerabilityABC):
     @hybrid_property
     def target(self):
         return self.target_host_ip
+
+    @property
+    def has_duplicate(self):
+        return self.vulnerability_duplicate_id == None
 
 
 class Vulnerability(VulnerabilityGeneric):
@@ -1842,6 +1865,20 @@ class Notification(db.Model):
     @property
     def parent(self):
         return
+
+
+class KnowledgeBase(Metadata):
+    __tablename__ = 'knowledge_base'
+    id = Column(Integer, primary_key=True)
+
+    vulnerability_template_id =  Column(
+                        Integer,
+                        ForeignKey('vulnerability_template.id'),
+                        index=True,
+                        nullable=True,
+                        )
+
+    shipped = Column(Boolean, default=False)
 
 
 # This constraint uses Columns from different classes

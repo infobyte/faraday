@@ -278,7 +278,7 @@ angular.module("faradayApp")
             }
 
             $scope.columns = {
-                "_id":               true,
+                "_id":              true,
                 "date":             true,
                 "name":             true,
                 "severity":         true,
@@ -305,7 +305,8 @@ angular.module("faradayApp")
                 "response":         false,
                 "web":              false,
                 "creator":          false,
-                "policyviolations":  false
+                "policyviolations": false,
+                "external_id":      false
             };
 
 
@@ -655,6 +656,16 @@ angular.module("faradayApp")
                 visible: $scope.columns["date"],
                 maxWidth: 100,
                 minWidth: 100,
+            });
+	    $scope.gridOptions.columnDefs.push({ name : 'external_id',
+                displayName : "external_id",
+                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/defaultcolumn.html',
+                headerCellTemplate: header,
+                field: "external_id",
+                sort: getColumnSort('external_id'),
+                visible: $scope.columns["external_id"],
+                maxWidth: 150,
+                minWidth: 130,
             });
             $scope.gridOptions.columnDefs.push({ name : 'status',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/statuscolumn.html',

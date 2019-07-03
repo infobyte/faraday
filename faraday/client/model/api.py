@@ -169,16 +169,16 @@ def createAndAddServiceToHost(host_id, name,
 
 
 # Vulnerability
-def createAndAddVulnToHost(host_id, name, desc, ref, severity, resolution):
-    vuln = newVuln(name, desc, ref, severity, resolution, parent_id=host_id)
+def createAndAddVulnToHost(host_id, name, desc, ref, severity, resolution, external_id=None):
+    vuln = newVuln(name, desc, ref, severity, resolution, parent_id=host_id, external_id=external_id)
     if addVulnToHost(host_id, vuln):
         return vuln.getID()
     return None
 
 
-def createAndAddVulnToService(host_id, service_id, name, desc, ref, severity, resolution):
+def createAndAddVulnToService(host_id, service_id, name, desc, ref, severity, resolution, external_id=None):
     #we should give the application_id too? I think we should...
-    vuln = newVuln(name, desc, ref, severity, resolution, parent_id=service_id)
+    vuln = newVuln(name, desc, ref, severity, resolution, parent_id=service_id, external_id=external_id)
     if addVulnToService(host_id, service_id, vuln):
         return vuln.getID()
     return None
@@ -186,10 +186,10 @@ def createAndAddVulnToService(host_id, service_id, name, desc, ref, severity, re
 #WebVuln
 
 def createAndAddVulnWebToService(host_id, service_id, name, desc, ref, severity, resolution, website, path, request, response,
-                method,pname, params,query,category):
+                method,pname, params,query,category,external_id=None):
     #we should give the application_id too? I think we should...
     vuln = newVulnWeb(name, desc, ref, severity, resolution, website, path, request, response,
-                method,pname, params, query, category, parent_id=service_id)
+                method,pname, params, query, category, parent_id=service_id, external_id=external_id)
     if addVulnWebToService(host_id, service_id, vuln):
         return vuln.getID()
     return None
@@ -347,19 +347,19 @@ def newService(name, protocol = "tcp?", ports = [], status = "running",
 
 
 def newVuln(name, desc="", ref=None, severity="", resolution="",
-            confirmed=False, parent_id=None):
+            confirmed=False, parent_id=None, external_id=None):
     """
     It creates and returns a Vulnerability object.
     The created object is not added to the model.
     """
     return __model_controller.newVuln(
-        name, desc, ref, severity, resolution, confirmed, parent_id)
+        name, desc, ref, severity, resolution, confirmed, parent_id, external_id)
 
 
 def newVulnWeb(name, desc="", ref=None, severity="", resolution="", website="",
                path="", request="", response="", method="", pname="",
                params="", query="", category="", confirmed=False,
-               parent_id=None):
+               parent_id=None, external_id=None):
     """
     It creates and returns a Vulnerability object.
     The created object is not added to the model.
@@ -367,7 +367,7 @@ def newVulnWeb(name, desc="", ref=None, severity="", resolution="", website="",
     return __model_controller.newVulnWeb(
         name, desc, ref, severity, resolution, website, path, request,
         response, method, pname, params, query, category, confirmed,
-        parent_id)
+        parent_id, external_id)
 
 
 def newNote(name, text, parent_id=None, parent_type=None):

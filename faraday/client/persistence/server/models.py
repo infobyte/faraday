@@ -1026,6 +1026,7 @@ class Vuln(ModelBase):
         self.resolution = vuln.get('resolution')
         self.status = vuln.get('status', "opened")
         self.policyviolations = vuln.get('policyviolations', list())
+        self.external_id = vuln.get('external_id')
 
     @staticmethod
     def publicattrsrefs():
@@ -1100,7 +1101,7 @@ class Vuln(ModelBase):
         return severity
 
     def updateAttributes(self, name=None, desc=None, data=None,
-                         severity=None, resolution=None, refs=None, status=None, policyviolations=None):
+                         severity=None, resolution=None, refs=None, status=None, policyviolations=None, external_id=None):
         if name is not None:
             self.name = name
         if desc is not None:
@@ -1117,6 +1118,8 @@ class Vuln(ModelBase):
             self.setStatus(status)
         if policyviolations is not None:
             self.policyviolations = policyviolations
+        if external_id is not None:
+            self.external_id = external_id
 
     def getDesc(self):
         return self.desc
@@ -1144,6 +1147,9 @@ class Vuln(ModelBase):
 
     def setStatus(self, status):
         self.status = status
+
+    def getExternalID(self):
+        return self.external_id
 
 
 class VulnWeb(Vuln):
@@ -1173,6 +1179,7 @@ class VulnWeb(Vuln):
         self.target = vuln_web.get('target')
         self.policyviolations = vuln_web.get('policyviolations', list())
         self.parent_type = 'Service'
+        self.external_id = vuln_web.get('external_id')
 
     @staticmethod
     def publicattrsrefs():
@@ -1193,7 +1200,7 @@ class VulnWeb(Vuln):
 
     def updateAttributes(self, name=None, desc=None, data=None, website=None, path=None, refs=None,
                         severity=None, resolution=None, request=None,response=None, method=None,
-                        pname=None, params=None, query=None, category=None, status=None, policyviolations=None):
+                        pname=None, params=None, query=None, category=None, status=None, policyviolations=None, external_id=None):
 
         super(self.__class__, self).updateAttributes(name, desc, data, severity, resolution, refs, status)
 
@@ -1217,6 +1224,8 @@ class VulnWeb(Vuln):
             self.category = category
         if policyviolations is not None:
             self.policyviolations = policyviolations
+        if external_id is not None:
+            self.external_id = external_id
 
     def getDescription(self):
         return self.description
@@ -1274,6 +1283,9 @@ class VulnWeb(Vuln):
 
     def getPolicyViolations(self):
         return self.policyviolations
+
+    def getExternalID(self):
+        return self.external_id
 
     def tieBreakable(self, key):
         """

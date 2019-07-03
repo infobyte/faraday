@@ -3,6 +3,7 @@ from marshmallow import fields, ValidationError, utils, post_load
 from marshmallow.validate import Range
 from faraday.server.models import (
     Command,
+    CommandObject,
     db,
     Host,
     Hostname,
@@ -146,7 +147,7 @@ def get_or_create(ws, model_class, data):
         db.session.rollback()
         conflict_obj = get_conflict_object(db.session, obj, data, ws)
         if conflict_obj:
-            return (False, obj)
+            return (False, conflict_obj)
         else:
             raise
     # self._set_command_id(obj, True)  # TODO check this
@@ -156,8 +157,10 @@ def get_or_create(ws, model_class, data):
 def bulk_create(ws, data):
     if 'command' in data:
         command = create_command(ws, data['command'])
+    else:
+        command = None
     for host in data['hosts']:
-        create_host(ws, host)
+        create_host(ws, host, command)
 
 
 def create_command(ws, raw_data):
@@ -168,7 +171,7 @@ def create_command(ws, raw_data):
     return command
 
 
-def create_host(ws, raw_data):
+def create_host(ws, raw_data, command=None):
     schema = HostSchema(strict=True)
     host_data = schema.load(raw_data).data
     hostnames = host_data.pop('hostnames', [])
@@ -180,26 +183,43 @@ def create_host(ws, raw_data):
             db.session.add(Hostname(name=name, host=host, workspace=ws))
     db.session.commit()
 
+    if command is not None:
+        create_command_object_for(ws, created, host, command)
+
     for service_data in services:
-        create_service(ws, host, service_data)
+        create_service(ws, host, service_data, command, False)
 
     for vuln_data in vulns:
-        create_hostvuln(ws, host, vuln_data, False)
+        create_hostvuln(ws, host, vuln_data, command, False)
 
 
-def create_service(ws, host, raw_data):
-    schema = ServiceSchema(strict=True, context={'updating': False})
-    service_data = schema.load(raw_data).data
-    vulns = service_data.pop('vulnerabilities')
-    service_data['host'] = host
-    (_, service) = get_or_create(ws, Service, service_data)
+def create_command_object_for(ws, created, obj, command):
+    assert command is not None
+    db.session.add(CommandObject(
+        obj,
+        command=command,
+        created_persistent=created,
+        workspace=ws))
     db.session.commit()
 
+
+def create_service(ws, host, service_data, command=None, reload_data=True):
+    if reload_data:
+        schema = ServiceSchema(strict=True, context={'updating': False})
+        service_data = schema.load(service_data).data
+    vulns = service_data.pop('vulnerabilities')
+    service_data['host'] = host
+    (created, service) = get_or_create(ws, Service, service_data)
+    db.session.commit()
+
+    if command is not None:
+        create_command_object_for(ws, created, service, command)
+
     for vuln_data in vulns:
-        create_servicevuln(ws, service, vuln_data, False)
+        create_servicevuln(ws, service, vuln_data, command, False)
 
 
-def create_vuln(ws, vuln_data, reload_data=True, **kwargs):
+def create_vuln(ws, vuln_data, command=None, reload_data=True, **kwargs):
     """Create standard or web vulnerabilites"""
     assert 'host' in kwargs or 'service' in kwargs
     assert not ('host' in kwargs and 'service' in kwargs)
@@ -229,6 +249,9 @@ def create_vuln(ws, vuln_data, reload_data=True, **kwargs):
     (created, vuln) = get_or_create(ws, model_class, vuln_data)
     db.session.commit()
 
+    if command is not None:
+        create_command_object_for(ws, created, vuln, command)
+
     if created:
         vuln.references = references
         vuln.policyviolations = policyviolations
@@ -237,9 +260,9 @@ def create_vuln(ws, vuln_data, reload_data=True, **kwargs):
         db.session.commit()
 
 
-def create_hostvuln(ws, host, vuln_data, reload_data=True):
-    create_vuln(ws, vuln_data, reload_data, host=host)
+def create_hostvuln(ws, host, vuln_data, command=None, reload_data=True):
+    create_vuln(ws, vuln_data, command, reload_data, host=host)
 
 
-def create_servicevuln(ws, service, vuln_data, reload_data=True):
-    create_vuln(ws, vuln_data, reload_data, service=service)
+def create_servicevuln(ws, service, vuln_data, command=None, reload_data=True):
+    create_vuln(ws, vuln_data, command, reload_data, service=service)

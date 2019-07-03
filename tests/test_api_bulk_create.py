@@ -3,6 +3,7 @@ from marshmallow import ValidationError
 from faraday.server.models import (
     db,
     Command,
+    CommandObject,
     Host,
     Service,
     Vulnerability,
@@ -250,3 +251,140 @@ def test_create_command(session, workspace):
     assert command.tool == 'pytest'
     assert command.user == 'root'
     assert (command.end_date - command.start_date).seconds == 30
+
+
+def test_creates_command_object(session, workspace):
+    host_data_ = host_data.copy()
+    service_data_ = service_data.copy()
+    vuln_web_data_ = vuln_data.copy()
+    vuln_web_data_.update(vuln_web_data)
+    service_data_['vulnerabilities'] = [vuln_data, vuln_web_data_]
+    host_data_['services'] = [service_data_]
+    host_data_['vulnerabilities'] = [vuln_data]
+    bc.bulk_create(workspace, dict(command=command_data, hosts=[host_data_]))
+
+    command = workspace.commands[0]
+    host = workspace.hosts[0]
+    service = host.services[0]
+    vuln_host = Vulnerability.query.filter(
+        Vulnerability.workspace == workspace,
+        Vulnerability.service == None).one()
+    vuln_service = Vulnerability.query.filter(
+        Vulnerability.workspace == workspace,
+        Vulnerability.host == None).one()
+    vuln_web = VulnerabilityWeb.query.filter(
+        VulnerabilityWeb.workspace == workspace).one()
+
+    objects_with_command_object = [
+        ('host', host),
+        ('service', service),
+        ('vulnerability', vuln_host),
+        ('vulnerability', vuln_service),
+        ('vulnerability', vuln_web),
+    ]
+
+    for (table_name, obj) in objects_with_command_object:
+        assert obj.id is not None and command.id is not None
+        CommandObject.query.filter(
+            CommandObject.workspace == workspace,
+            CommandObject.command == command,
+            CommandObject.object_type == table_name,
+            CommandObject.object_id == obj.id,
+            CommandObject.created_persistent == True,
+        ).one()
+
+
+def test_creates_command_object_on_duplicates(
+        session, command, service, vulnerability_factory, vulnerability_web_factory):
+    vuln_host = vulnerability_factory.create(
+        workspace=service.workspace, host=service.host, service=None)
+    vuln_service = vulnerability_factory.create(
+        workspace=service.workspace, service=service, host=None)
+    vuln_web = vulnerability_web_factory.create(
+        workspace=service.workspace, service=service)
+    session.add(command)
+    session.add(service)
+    session.add(vuln_host)
+    session.add(vuln_service)
+    session.add(vuln_web)
+    session.commit()
+    assert command.workspace == service.workspace
+    assert len(command.workspace.command_objects) == 0
+
+    objects_with_command_object = [
+        ('host', service.host),
+        ('service', service),
+        ('vulnerability', vuln_host),
+        ('vulnerability', vuln_service),
+        ('vulnerability', vuln_web),
+    ]
+
+    for (table_name, obj) in objects_with_command_object:
+        assert obj.id is not None and command.id is not None
+        db.session.add(CommandObject(
+            object_type=table_name,
+            object_id=obj.id,
+            command=command,
+            created_persistent=True,
+            workspace=command.workspace,
+        ))
+    session.commit()
+
+    data = {
+        'hosts': [
+            {
+                'ip': service.host.ip,
+                'description': service.host.description,
+                'vulnerabilities': [
+                    {
+                        'name': vuln_host.name,
+                        'severity': 'high',
+                        'desc': vuln_host.description,
+                        'type': 'Vulnerability',
+                    }
+                ],
+                'services': [
+                    {
+                        'name': service.name,
+                        'protocol': service.protocol,
+                        'port': service.port,
+                        'vulnerabilities': [
+                            {
+                                'name': vuln_service.name,
+                                'severity': 'high',
+                                'desc': vuln_service.description,
+                                'type': 'Vulnerability',
+                            },
+                            {
+                                'name': vuln_web.name,
+                                'severity': 'high',
+                                'desc': vuln_web.description,
+                                'type': 'VulnerabilityWeb',
+                                'method': vuln_web.method,
+                                'pname': vuln_web.parameter_name,
+                                'path': vuln_web.path,
+                                'website': vuln_web.website,
+                            },
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+
+    data['command'] = command_data.copy()
+
+    bc.bulk_create(command.workspace, data)
+    assert count(Command, command.workspace) == 2
+
+    new_command = Command.query.filter_by(tool='pytest').one()
+
+    for (table_name, obj) in objects_with_command_object:
+        assert obj.id is not None and new_command.id is not None
+        CommandObject.query.filter(
+            CommandObject.workspace == command.workspace,
+            CommandObject.command == new_command,
+            CommandObject.object_type == table_name,
+            CommandObject.object_id == obj.id,
+            CommandObject.created_persistent == False,
+        ).one()

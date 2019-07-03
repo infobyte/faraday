@@ -2,6 +2,7 @@ import pytest
 from marshmallow import ValidationError
 from faraday.server.models import (
     db,
+    Command,
     Host,
     Service,
     Vulnerability,
@@ -41,6 +42,16 @@ vuln_web_data = {
     'path': '/search',
     'parameter_name': 'q',
     'status_code': 200,
+}
+
+
+command_data = {
+    'tool': 'pytest',
+    'command': 'pytest tests/test_api_bulk_create.py',
+    'user': 'root',
+    'hostname': 'pc',
+    'start_date': '2014-12-22T03:12:58.019077+00:00',
+    'duration': 30,
 }
 
 
@@ -230,3 +241,12 @@ def test_create_service_with_vulnweb(session, host):
     assert vuln.method == 'POST'
     assert vuln.website == 'https://faradaysec.com'
     assert vuln.status_code == 200
+
+
+def test_create_command(session, workspace):
+    bc.bulk_create(workspace, dict(command=command_data, hosts=[]))
+    assert count(Command, workspace) == 1
+    command = workspace.commands[0]
+    assert command.tool == 'pytest'
+    assert command.user == 'root'
+    assert (command.end_date - command.start_date).seconds == 30

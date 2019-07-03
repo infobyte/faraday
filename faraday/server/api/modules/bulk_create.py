@@ -1,7 +1,8 @@
 import sqlalchemy
-from marshmallow import fields, ValidationError, utils
+from marshmallow import fields, ValidationError, utils, post_load
 from marshmallow.validate import Range
 from faraday.server.models import (
+    Command,
     db,
     Host,
     Hostname,
@@ -18,6 +19,7 @@ from faraday.server.api.modules import (
     services,
     vulns,
 )
+from faraday.server.api.base import AutoSchema
 
 
 class VulnerabilitySchema(vulns.VulnerabilitySchema):
@@ -105,6 +107,27 @@ class HostSchema(hosts.HostSchema):
         fields = hosts.HostSchema.Meta.fields + ('services', 'vulnerabilities')
 
 
+class CommandSchema(AutoSchema):
+    """The schema of faraday/server/api/modules/commandsrun.py has a lot
+    of ugly things because of the Web UI backwards compatibility.
+
+    I don't need that here, so I'll write a schema from scratch."""
+
+    duration = fields.TimeDelta('seconds', required=True)
+
+    class Meta:
+        model = Command
+        fields = (
+            'command', 'duration', 'start_date', 'ip', 'hostname', 'params',
+            'user', 'creator', 'tool', 'import_source',
+        )
+
+    @post_load
+    def load_end_date(self, data):
+        duration = data.pop('duration')
+        data['end_date'] = data['start_date'] + duration
+
+
 def get_or_create(ws, model_class, data):
     """Check for conflicts and create a new object
 
@@ -131,8 +154,18 @@ def get_or_create(ws, model_class, data):
 
 
 def bulk_create(ws, data):
+    if 'command' in data:
+        command = create_command(ws, data['command'])
     for host in data['hosts']:
         create_host(ws, host)
+
+
+def create_command(ws, raw_data):
+    schema = CommandSchema(strict=True)
+    command_data = schema.load(raw_data).data
+    (created, command) = get_or_create(ws, Command, command_data)
+    assert created  # There isn't an unique constraint in command
+    return command
 
 
 def create_host(ws, raw_data):

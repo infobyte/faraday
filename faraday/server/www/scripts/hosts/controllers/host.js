@@ -34,17 +34,20 @@ angular.module('faradayApp')
         loadHosts = function(){
             hostsManager.getHost($routeParams.hidId, $scope.workspace, true)
                 .then(function(host) {
-                    $scope.host = host;
-                    $scope.host.hostnames = $scope.host.hostnames.map(function(hostname){
-                        return {key: hostname}
-                    });
-                    $scope.hostName = host.ip; // User can edit $scope.host.name but not $scope.hostName
-                    $scope.loadIcons();
-                    workspacesFact.get($scope.workspace).then(function(response) {
-                        $scope.workspaceData = response;
-                    });
-
-                    $scope.loadMac();
+                    hostsManager.getTools($routeParams.hidId, $scope.workspace)
+                        .then(function(tools){
+                            host.tools = tools;
+                            $scope.host = host;
+                            $scope.host.hostnames = $scope.host.hostnames.map(function(hostname){
+                                return {key: hostname}
+                            });
+                            $scope.hostName = host.ip; // User can edit $scope.host.name but not $scope.hostName
+                            $scope.loadIcons();
+                            workspacesFact.get($scope.workspace).then(function(response) {
+                                $scope.workspaceData = response;
+                            });
+                            $scope.loadMac();
+                        })
                 });
         };
 
@@ -94,7 +97,7 @@ angular.module('faradayApp')
             loadHosts();
             loadServices(hostId);
 
-            $scope.pageSize = 25;
+            $scope.pageSize = 10;
             $scope.currentPage = 1;
             $scope.newCurrentPage = 1;
 

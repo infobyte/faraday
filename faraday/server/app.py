@@ -10,10 +10,8 @@ from future.builtins import range # __future__
 from os.path import join, expanduser
 from random import SystemRandom
 
-from faraday.server.api.modules.agent_auth_token import agent_auth_token_api
-from faraday.server.api.modules.agents import agent_api
 from faraday.server.config import LOCAL_CONFIG_FILE, copy_default_config_to_local
-from faraday.server.models import User, Vulnerability, VulnerabilityWeb, Workspace, VulnerabilityGeneric
+from faraday.server.models import User
 
 try:
     # py2.7
@@ -39,7 +37,6 @@ from flask_security.utils import (
     get_message,
     verify_and_update_password
 )
-from flask_session import Session
 from nplusone.ext.flask_sqlalchemy import NPlusOne
 from depot.manager import DepotManager
 
@@ -87,6 +84,8 @@ def register_blueprints(app):
     from faraday.server.api.modules.websocket_auth import websocket_auth_api
     from faraday.server.api.modules.get_exploits import exploits_api
     from faraday.server.api.modules.custom_fields import custom_fields_schema_api
+    from faraday.server.api.modules.agent_auth_token import agent_auth_token_api
+    from faraday.server.api.modules.agent import agent_api
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(activityfeed_api)
     app.register_blueprint(credentials_api)
@@ -278,6 +277,7 @@ def create_app(db_connection_string=None, testing=None):
     Security(app, app.user_datastore, login_form=CustomLoginForm)
     # Make API endpoints require a login user by default. Based on
     # https://stackoverflow.com/questions/13428708/best-way-to-make-flask-logins-login-required-the-default
+
     app.view_functions['security.login'].is_public = True
     app.view_functions['security.logout'].is_public = True
 
@@ -289,6 +289,8 @@ def create_app(db_connection_string=None, testing=None):
 
     register_blueprints(app)
     register_handlers(app)
+
+    app.view_functions['agent_api.AgentCreationView:post'].is_public = True
 
     return app
 

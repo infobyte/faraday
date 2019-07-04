@@ -21,7 +21,7 @@ from sqlalchemy import (
     event,
 )
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import relationship, undefer
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import select, text, table
 from sqlalchemy.sql.expression import asc, case, join
 from sqlalchemy.ext.hybrid import hybrid_property

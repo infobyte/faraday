@@ -3,21 +3,57 @@ Faraday Penetration Test IDE
 Copyright (C) 2019  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 """
-
-import pytest
-
-from faraday.server.api.modules.agents import AgentView
+from faraday.server.api.modules.agent import AgentView
 from faraday.server.models import Agent, AgentAuthToken
-from tests.factories import AgentFactory
+from tests.factories import AgentFactory, WorkspaceFactory
 from tests.test_api_workspaced_base import ReadOnlyAPITests
 from tests import factories
+
+
+def http_req(method, client, endpoint, json_dict, expected_status_codes, follow_redirects=False):
+    res = ""
+    if method.upper() == "GET":
+        res = client.get(endpoint, json=json_dict, follow_redirects=follow_redirects)
+    elif method.upper() == "POST":
+        res = client.post(endpoint, json=json_dict, follow_redirects=follow_redirects)
+    elif method.upper() == "PUT":
+        res = client.put(endpoint, json=json_dict, follow_redirects=follow_redirects)
+    assert res.status_code in expected_status_codes
+    return res
+
+
+def logout(client, expected_status_codes):
+    res = http_req(method="GET",
+                   client=client,
+                   endpoint="/logout",
+                   json_dict=dict(),
+                   expected_status_codes=expected_status_codes)
+    return res
+
+
+class TestAgentCreationAPI():
+
+    def test_create_agent_valid(self, test_client, session):
+        workspace = WorkspaceFactory.create(name='test')
+        session.add(workspace)
+        logout(test_client, [302])
+        valid_token = 'sarasa_tokenator'
+        token_obj = AgentAuthToken(token=valid_token)
+        session.add(token_obj)
+        session.commit()
+        initial_agent_count = len(session.query(Agent).all())
+        raw_data = {"token": valid_token}
+        # /v2/ws/<workspace_name>/agent_registration/
+        res = test_client.post('/v2/ws/{0}/agent_registration/'.format(workspace.name), data=raw_data)
+        assert res.status_code == 201
+        assert len(session.query(Agent).all()) == initial_agent_count + 1
 
 
 class TestAgentAPIGeneric(ReadOnlyAPITests):
     model = Agent
     factory = factories.AgentFactory
     view_class = AgentView
-    api_endpoint = 'agents'
+    api_endpoint = 'agent'
 
     def create_raw_agent(self, _type='shared', status="offline", token="TOKEN"):
         return {
@@ -34,31 +70,18 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
         initial_agent_count = len(session.query(Agent).all())
         raw_agent = self.create_raw_agent()
         res = test_client.post(self.url(), data=raw_agent)
-        assert res.status_code == 401
+        assert res.status_code == 405  # the only way to create agents is by using the token!
         assert len(session.query(Agent).all()) == initial_agent_count
-
-    def test_create_agent_valid(self, test_client, session):
-        valid_token = 'sarasa_tokenator'
-        token_obj = AgentAuthToken(token=valid_token)
-        session.add(token_obj)
-        session.commit()
-        initial_agent_count = len(session.query(Agent).all())
-        raw_agent = self.create_raw_agent(token=valid_token)
-        res = test_client.post(self.url(), data=raw_agent)
-        assert res.status_code == 201
-        assert len(session.query(Agent).all()) == initial_agent_count + 1
 
     def test_cannot_create_agent_with_invalid_type(self, test_client):
         raw_agent = self.create_raw_agent(_type="wrong_type")
         res = test_client.post(self.url(), data=raw_agent)
-        assert res.status_code == 400
-        assert res.json == {u'messages': {u'type': [u'Not a valid choice.']}}
+        assert res.status_code == 405  # the only way to create agents is by using the token!
 
     def test_cannot_create_agent_with_invalid_status(self, test_client):
         raw_agent = self.create_raw_agent(status="wrong_status")
         res = test_client.post(self.url(), data=raw_agent)
-        assert res.status_code == 400
-        assert res.json == {u'messages': {u'status': [u'Not a valid choice.']}}
+        assert res.status_code == 405  # you can only create agents by using the token
 
     def test_update_agent(self, test_client, session):
         agent = AgentFactory.create(workspace=self.workspace, type='shared')

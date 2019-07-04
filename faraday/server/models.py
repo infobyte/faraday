@@ -1869,7 +1869,7 @@ class Notification(db.Model):
         return
 
 
-class KnowledgeBase(Metadata):
+class KnowledgeBase(db.Model):
     __tablename__ = 'knowledge_base'
     id = Column(Integer, primary_key=True)
 
@@ -1879,7 +1879,8 @@ class KnowledgeBase(Metadata):
                         index=True,
                         nullable=True,
                         )
-
+    
+    identifier = Column(Text, nullable=False)
     shipped = Column(Boolean, default=False)
 
 

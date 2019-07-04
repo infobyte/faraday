@@ -30,6 +30,7 @@ var faradayApp = angular.module('faradayApp', [
                                                     'angularSimplePagination',
                                                     'dndLists',
                                                     'angularFileUploadLib',
+                                                    'ui',
                                                     'rzTable'
                                              ])
     .constant("BASEURL", (function() {
@@ -168,8 +169,8 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             controller: 'newHostCtrl',
             title: 'New host | '
         }).
-        when('/host/ws/:wsId/', { 
-            redirectTo: "/hosts/ws/:wsId/" 
+        when('/host/ws/:wsId/', {
+            redirectTo: "/hosts/ws/:wsId/"
         }).
         when('/license/lid/:lidId', {
             templateUrl: 'scripts/licenses/partials/license.html',

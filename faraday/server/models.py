@@ -1892,12 +1892,6 @@ class Agent(Metadata):
     version = Column(Text, nullable=True)
     projects = Column(Integer, nullable=True)
     jobs = Column(Integer, nullable=True)
-    tags = relationship(
-        "Tag",
-        secondary="tag_object",
-        primaryjoin="and_(TagObject.object_id==Agent.id)",
-        collection_class=set,
-    )
 
     @property
     def parent(self):

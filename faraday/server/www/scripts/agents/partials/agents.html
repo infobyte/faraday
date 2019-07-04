@@ -36,7 +36,6 @@
                             <th class="ui-grid-cell-contents ui-grid-header-cell">Version</th>
                             <th class="ui-grid-cell-contents ui-grid-header-cell">Projects</th>
                             <th class="ui-grid-cell-contents ui-grid-header-cell">Jobs</th>
-                            <th class="ui-grid-cell-contents ui-grid-header-cell">Tags</th>
                             <th class="ui-grid-cell-contents ui-grid-header-cell"></th>
                         </tr>
                         </thead>
@@ -70,11 +69,6 @@
                             <td class="ui-grid-cell-contents active-toggle">
                                 {{agent.jobs}}
                             </td>
-
-                            <td class="ui-grid-cell-contents active-toggle">
-                                <span class="preview-tag tag-blue" ng-repeat="tag in agent.tags">{{tag}}</span>
-                            </td>
-
 
                             <td class="ui-grid-cell-contents active-toggle">
                                 <button type="button" class="btn" ng-class="{'btn-danger': agent.status === 'running', 'btn-success': agent.status === 'paused'}"

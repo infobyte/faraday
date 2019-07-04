@@ -66,39 +66,6 @@ def upgrade():
         'workspace', ['workspace_id'], ['id']
     )
 
-    conn = op.get_bind()
-    conn.execute("ALTER TYPE OBJECT_TYPES RENAME TO _OBJECT_TYPES;")
-
-    conn.execute("CREATE TYPE OBJECT_TYPES as enum "
-                 "( 'vulnerability', 'host', 'credential', 'service', 'source_code', 'comment', "
-                 "'executive_report', 'workspace', 'task', 'agent');")
-
-    conn.execute("ALTER table tag_object rename column object_type to _object_type;")
-    conn.execute("ALTER table command_object rename column object_type to _object_type;")
-    conn.execute("ALTER table comment rename column object_type to _object_type;")
-    conn.execute("ALTER table notification rename column object_type to _object_type;")
-    conn.execute("ALTER table file rename column object_type to _object_type;")
-
-    conn.execute("ALTER table tag_object add object_type OBJECT_TYPES not null default 'vulnerability';")
-    conn.execute("ALTER table command_object add object_type OBJECT_TYPES not null default 'vulnerability';")
-    conn.execute("ALTER table comment add object_type OBJECT_TYPES not null default 'vulnerability';")
-    conn.execute("ALTER table notification add object_type OBJECT_TYPES not null default 'vulnerability';")
-    conn.execute("ALTER table file add object_type OBJECT_TYPES not null default 'vulnerability';")
-
-    conn.execute("UPDATE tag_object set object_type = _object_type::text::OBJECT_TYPES;")
-    conn.execute("UPDATE command_object set object_type = _object_type::text::OBJECT_TYPES;")
-    conn.execute("UPDATE comment set object_type = _object_type::text::OBJECT_TYPES;")
-    conn.execute("UPDATE notification set object_type = _object_type::text::OBJECT_TYPES;")
-    conn.execute("UPDATE file set object_type = _object_type::text::OBJECT_TYPES;")
-
-    conn.execute("ALTER table tag_object drop column _object_type;")
-    conn.execute("ALTER table command_object drop column _object_type;")
-    conn.execute("ALTER table comment drop column _object_type;")
-    conn.execute("ALTER table notification drop column _object_type;")
-    conn.execute("ALTER table file drop column _object_type;")
-
-    conn.execute("DROP TYPE _OBJECT_TYPES CASCADE;")
-
     op.create_table(
         'agent_auth_token',
         sa.Column('id', sa.Integer, primary_key=True),

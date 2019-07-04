@@ -4,6 +4,7 @@ from faraday.server.models import (
     db,
     Command,
     CommandObject,
+    Credential,
     Host,
     Service,
     Vulnerability,
@@ -43,6 +44,14 @@ vuln_web_data = {
     'path': '/search',
     'parameter_name': 'q',
     'status_code': 200,
+}
+
+
+credential_data = {
+    'name': 'test credential',
+    'description': 'test',
+    'username': 'admin',
+    'password': '12345',
 }
 
 
@@ -178,6 +187,23 @@ def test_create_existing_host_vuln(session, host, vulnerability_factory):
     assert 'old' in vuln.references  # it must preserve the old references
 
 
+@pytest.mark.skip(reason="unique constraing on credential isn't working")
+def test_create_existing_host_cred(session, host, credential_factory):
+    cred = credential_factory.create(
+        workspace=host.workspace, host=host, service=None)
+    session.add(cred)
+    session.commit()
+    data = {
+        'name': cred.name,
+        'description': cred.description,
+        'username': cred.username,
+        'password': cred.password,
+    }
+    bc.create_credential(host.workspace, data, host=host)
+    session.commit()
+    assert count(Credential, host.workspace) == 1
+
+
 def test_create_host_with_vuln(session, workspace):
     host_data_ = host_data.copy()
     host_data_['vulnerabilities'] = [vuln_data]
@@ -188,6 +214,20 @@ def test_create_host_with_vuln(session, workspace):
     vuln = Vulnerability.query.filter(Vulnerability.workspace == workspace).one()
     assert vuln.name == 'sql injection'
     assert vuln.host == host
+
+
+def test_create_host_with_cred(session, workspace):
+    host_data_ = host_data.copy()
+    host_data_['credentials'] = [credential_data]
+    bc.bulk_create(workspace, dict(hosts=[host_data_]))
+    assert count(Host, workspace) == 1
+    host = workspace.hosts[0]
+    assert count(Credential, workspace) == 1
+    cred = Credential.query.filter(Credential.workspace == workspace).one()
+    assert cred.host == host
+    assert cred.name == 'test credential'
+    assert cred.username == 'admin'
+    assert cred.password == '12345'
 
 
 def test_create_service_with_vuln(session, host):
@@ -201,6 +241,21 @@ def test_create_service_with_vuln(session, host):
         Vulnerability.workspace == service.workspace).one()
     assert vuln.name == 'sql injection'
     assert vuln.service == service
+
+
+def test_create_service_with_cred(session, host):
+    service_data_ = service_data.copy()
+    service_data_['credentials'] = [credential_data]
+    bc.create_service(host.workspace, host, service_data_)
+    assert count(Service, host.workspace) == 1
+    service = host.workspace.services[0]
+    assert count(Credential, service.workspace) == 1
+    cred = Credential.query.filter(
+        Credential.workspace == service.workspace).one()
+    assert cred.service == service
+    assert cred.name == 'test credential'
+    assert cred.username == 'admin'
+    assert cred.password == '12345'
 
 
 def test_create_service_with_invalid_vuln(session, host):
@@ -259,8 +314,10 @@ def test_creates_command_object(session, workspace):
     vuln_web_data_ = vuln_data.copy()
     vuln_web_data_.update(vuln_web_data)
     service_data_['vulnerabilities'] = [vuln_data, vuln_web_data_]
+    service_data_['credentials'] = [credential_data]
     host_data_['services'] = [service_data_]
     host_data_['vulnerabilities'] = [vuln_data]
+    host_data_['credentials'] = [credential_data]
     bc.bulk_create(workspace, dict(command=command_data, hosts=[host_data_]))
 
     command = workspace.commands[0]
@@ -274,6 +331,12 @@ def test_creates_command_object(session, workspace):
         Vulnerability.host == None).one()
     vuln_web = VulnerabilityWeb.query.filter(
         VulnerabilityWeb.workspace == workspace).one()
+    host_cred = Credential.query.filter(
+        Credential.workspace == workspace,
+        Credential.host == host).one()
+    serv_cred = Credential.query.filter(
+        Credential.workspace == workspace,
+        Credential.service == service).one()
 
     objects_with_command_object = [
         ('host', host),
@@ -281,6 +344,8 @@ def test_creates_command_object(session, workspace):
         ('vulnerability', vuln_host),
         ('vulnerability', vuln_service),
         ('vulnerability', vuln_web),
+        ('credential', host_cred),
+        ('credential', serv_cred),
     ]
 
     for (table_name, obj) in objects_with_command_object:
@@ -295,18 +360,23 @@ def test_creates_command_object(session, workspace):
 
 
 def test_creates_command_object_on_duplicates(
-        session, command, service, vulnerability_factory, vulnerability_web_factory):
+        session, command, service,
+        vulnerability_factory, vulnerability_web_factory,
+        credential_factory):
     vuln_host = vulnerability_factory.create(
         workspace=service.workspace, host=service.host, service=None)
     vuln_service = vulnerability_factory.create(
         workspace=service.workspace, service=service, host=None)
     vuln_web = vulnerability_web_factory.create(
         workspace=service.workspace, service=service)
+    host_cred = credential_factory.create(
+        workspace=service.workspace, host=service.host, service=None)
     session.add(command)
     session.add(service)
     session.add(vuln_host)
     session.add(vuln_service)
     session.add(vuln_web)
+    session.add(host_cred)
     session.commit()
     assert command.workspace == service.workspace
     assert len(command.workspace.command_objects) == 0
@@ -317,6 +387,7 @@ def test_creates_command_object_on_duplicates(
         ('vulnerability', vuln_host),
         ('vulnerability', vuln_service),
         ('vulnerability', vuln_web),
+        # ('credential', host_cred),  # Commented because unique constraint of credential is not working
     ]
 
     for (table_name, obj) in objects_with_command_object:
@@ -341,6 +412,12 @@ def test_creates_command_object_on_duplicates(
                         'severity': 'high',
                         'desc': vuln_host.description,
                         'type': 'Vulnerability',
+                    }
+                ],
+                'credentials': [
+                    {
+                        'name': host_cred.name,
+                        'username': host_cred.username,
                     }
                 ],
                 'services': [

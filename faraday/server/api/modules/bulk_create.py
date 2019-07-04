@@ -4,6 +4,7 @@ from marshmallow.validate import Range
 from faraday.server.models import (
     Command,
     CommandObject,
+    Credential,
     db,
     Host,
     Hostname,
@@ -69,6 +70,12 @@ class PolymorphicVulnerabilityField(fields.Field):
         return schema.load(value).data
 
 
+class CredentialSchema(AutoSchema):
+    class Meta:
+        model = Credential
+        fields = ('username', 'password', 'description', 'name')
+
+
 class ServiceSchema(services.ServiceSchema):
     """It's like the original service schema, but now it only uses port
     instead of ports (a single integer array). That field was only used
@@ -77,6 +84,11 @@ class ServiceSchema(services.ServiceSchema):
                           validate=[Range(min=0, error="The value must be greater than or equal to 0")])
     vulnerabilities = PolymorphicVulnerabilityField(
         VulnerabilitySchema(many=True),
+        many=True,
+        missing=[],
+    )
+    credentials = fields.Nested(
+        CredentialSchema(many=True),
         many=True,
         missing=[],
     )
@@ -100,6 +112,11 @@ class HostSchema(hosts.HostSchema):
     )
     vulnerabilities = fields.Nested(
         VulnerabilitySchema(many=True),
+        many=True,
+        missing=[],
+    )
+    credentials = fields.Nested(
+        CredentialSchema(many=True),
         many=True,
         missing=[],
     )
@@ -176,6 +193,7 @@ def create_host(ws, raw_data, command=None):
     host_data = schema.load(raw_data).data
     hostnames = host_data.pop('hostnames', [])
     services = host_data.pop('services')
+    credentials = host_data.pop('credentials')
     vulns = host_data.pop('vulnerabilities')
     (created, host) = get_or_create(ws, Host, host_data)
     if created:
@@ -191,6 +209,9 @@ def create_host(ws, raw_data, command=None):
 
     for vuln_data in vulns:
         create_hostvuln(ws, host, vuln_data, command, False)
+
+    for cred_data in credentials:
+        create_credential(ws, cred_data, command, False, host=host)
 
 
 def create_command_object_for(ws, created, obj, command):
@@ -208,6 +229,7 @@ def create_service(ws, host, service_data, command=None, reload_data=True):
         schema = ServiceSchema(strict=True, context={'updating': False})
         service_data = schema.load(service_data).data
     vulns = service_data.pop('vulnerabilities')
+    creds = service_data.pop('credentials')
     service_data['host'] = host
     (created, service) = get_or_create(ws, Service, service_data)
     db.session.commit()
@@ -217,6 +239,9 @@ def create_service(ws, host, service_data, command=None, reload_data=True):
 
     for vuln_data in vulns:
         create_servicevuln(ws, service, vuln_data, command, False)
+
+    for cred_data in creds:
+        create_credential(ws, cred_data, command, False, service=service)
 
 
 def create_vuln(ws, vuln_data, command=None, reload_data=True, **kwargs):
@@ -266,3 +291,15 @@ def create_hostvuln(ws, host, vuln_data, command=None, reload_data=True):
 
 def create_servicevuln(ws, service, vuln_data, command=None, reload_data=True):
     create_vuln(ws, vuln_data, command, reload_data, service=service)
+
+
+def create_credential(ws, cred_data, command=None, reload_data=True, **kwargs):
+    if reload_data:
+        schema = CredentialSchema(strict=True)
+        cred_data = schema.load(cred_data).data
+    cred_data.update(kwargs)
+    (created, cred) = get_or_create(ws, Credential, cred_data)
+    db.session.commit()
+
+    if command is not None:
+        create_command_object_for(ws, created, cred, command)

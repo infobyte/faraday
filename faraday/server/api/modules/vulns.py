@@ -142,6 +142,7 @@ class VulnerabilitySchema(AutoSchema):
     date = fields.DateTime(attribute='create_date',
                            dump_only=True)  # This is only used for sorting
     custom_fields = FaradayCustomField(table_name='vulnerability', attribute='custom_fields')
+    external_id = fields.String(allow_none=True)
 
     class Meta:
         model = Vulnerability
@@ -155,7 +156,7 @@ class VulnerabilitySchema(AutoSchema):
             'service', 'obj_id', 'type', 'policyviolations',
             '_attachments',
             'target', 'host_os', 'resolution', 'metadata',
-            'custom_fields')
+            'custom_fields', 'external_id')
 
     def get_type(self, obj):
         return obj.__class__.__name__
@@ -279,7 +280,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'service', 'obj_id', 'type', 'policyviolations',
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
-            'status_code', 'custom_fields'
+            'status_code', 'custom_fields', 'external_id'
         )
 
 

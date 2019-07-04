@@ -129,7 +129,7 @@ class SslcheckPlugin(core.PluginBase):
                     i_id = self.createAndAddInterface(h_id,
                                                       host,
                                                       ipv4_address=host,
-                                                      hostname_resolution=parser.hostinfo[host]['hostname'])
+                                                      hostname_resolution=[parser.hostinfo[host]['hostname']])
                 else:
                     i_id = self.createAndAddInterface(h_id,
                                                       host,

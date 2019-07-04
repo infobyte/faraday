@@ -194,11 +194,19 @@ class PluginBase(object):
     def createAndAddInterface(
         self, host_id, name="", mac="00:00:00:00:00:00",
         ipv4_address="0.0.0.0", ipv4_mask="0.0.0.0", ipv4_gateway="0.0.0.0",
-        ipv4_dns=[], ipv6_address="0000:0000:0000:0000:0000:0000:0000:0000",
+        ipv4_dns=None, ipv6_address="0000:0000:0000:0000:0000:0000:0000:0000",
         ipv6_prefix="00",
-        ipv6_gateway="0000:0000:0000:0000:0000:0000:0000:0000", ipv6_dns=[],
-        network_segment="", hostname_resolution=[]):
-
+        ipv6_gateway="0000:0000:0000:0000:0000:0000:0000:0000", ipv6_dns=None,
+        network_segment="", hostname_resolution=None):
+        if ipv4_dns is None:
+            ipv4_dns = []
+        if ipv6_dns is None:
+            ipv6_dns = []
+        if hostname_resolution is None:
+            hostname_resolution = []
+        if not isinstance(hostname_resolution, list):
+            logger.warning("hostname_resolution parameter must be a list and is (%s)", type(hostname_resolution))
+            hostname_resolution = [hostname_resolution]
         # We don't use interface anymore, so return a host id to maintain
         # backwards compatibility
         # Little hack because we dont want change all the plugins for add hostnames in Host object.

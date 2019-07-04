@@ -10,6 +10,7 @@ angular.module('faradayApp')
         'commonsFact',
         'vulnModelsManager',
         'APIURL',
+        '$route',
         function ($scope,
                   $filter,
                   $http,
@@ -19,7 +20,8 @@ angular.module('faradayApp')
                   csvService,
                   commonsFact,
                   vulnModelsManager,
-                  APIURL) {
+                  APIURL,
+                  $route) {
 
                 $scope.models = [];
                 $scope.loaded_models = false;

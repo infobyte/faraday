@@ -32,7 +32,7 @@ angular.module('faradayApp')
         var componentsNeedsWS = ["dashboard","status","hosts"];
 
         $scope.checkNews = function() {
-             $http.get('https://www.faradaysec.com/scripts/updatedb.php?version=' + configSrv.faraday_version).then(function(response) {
+             $http.get('https://portal.faradaysec.com/api/v1/license_check?version' + configSrv.faraday_version + '&key=\'white\'').then(function(response) {
                  try{
                      response.data['news'].forEach(function(element) {
 

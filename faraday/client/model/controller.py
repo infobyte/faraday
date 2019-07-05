@@ -74,9 +74,9 @@ class ModelController(Thread):
         self.processing = False
 
         # Fix for using PyDev in DEBUG
-        self.is_pydev_daemon_thread = False
-        self.__pydevd_id__ = False
-        self.pydev_do_not_trace = False
+        self.is_pydev_daemon_thread = ""
+        self.__pydevd_id__ = ""
+        self.pydev_do_not_trace = ""
 
     def __getattr__(self, name):
         logger.debug("ModelObject attribute to refactor: %s",  name)

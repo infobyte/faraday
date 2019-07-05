@@ -18,12 +18,10 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    conn.execute('ALTER TABLE executive_report ADD COLUMN severities JSONB')
     conn.execute('ALTER TABLE executive_report ADD COLUMN filter JSONB')
 
 
 
 def downgrade():
     conn = op.get_bind()
-    conn.execute('ALTER TABLE executive_report DROP COLUMN severities')
     conn.execute('ALTER TABLE executive_report DROP COLUMN filter')

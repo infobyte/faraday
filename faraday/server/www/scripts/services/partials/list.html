@@ -143,7 +143,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr ng-repeat="tool in host.tools">
+                        <tr ng-repeat="tool in host.tools | startFrom:(currentToolPage-1)*toolPageSize | limitTo:toolPageSize">
                             <td ng-bind="tool.command" class="ui-grid-cell-contents"></td>
                             <td ng-bind="tool.create_date | amUtc | amDateFormat:'MM/DD/YYYY'" class="ui-grid-cell-contents"></td>
                         </tr>
@@ -152,15 +152,15 @@
                 <div class="showPagination">
                     <div class="form-group">
                         <ul class="pagination">
-                            <li><a ng-hide="prevPageDisabled()" ng-click="prevToolPage()"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
+                            <li><a ng-hide="prevToolPageDisabled()" ng-click="prevToolPage()"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
                             <li><a>{{currentToolPage}}/{{toolPageCount()}}</a></li>
-                            <li><a ng-hide="nextPageDisabled()" ng-click="nextToolPage()"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
+                            <li><a ng-hide="nextToolPageDisabled()" ng-click="nextToolPage()"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
                         </ul>
                         <form name="goToPage" id="goToPageStatus">
                             <div class="col-md-2">
-                                <input type="number" min="0" max="{{toolpageCount()}}" class="form-control" ng-model="newCurrentToolPage" placeholder="Go to page"/>
+                                <input type="number" min="0" max="{{toolPageCount()}}" class="form-control" ng-model="newCurrentToolPage" placeholder="Go to page"/>
                             </div>
-                            <button class="btn btn-default" ng-click="go()">GO</button>
+                            <button class="btn btn-default" ng-click="goTools()">GO</button>
                             <input type="number" min="1" class="form-control vuln_per_page" ng-model=newToolPageSize placeholder="Number page" />
                         </form>
                     </div>

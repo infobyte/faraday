@@ -98,11 +98,15 @@ angular.module('faradayApp')
             loadServices(hostId);
 
             $scope.pageSize = 10;
+            $scope.toolPageSize = 10;
             $scope.currentPage = 1;
             $scope.newCurrentPage = 1;
+            $scope.currentToolPage = 1;
+            $scope.newCurrentToolPage = 1;
 
             if(!isNaN(parseInt($cookies.pageSize))) $scope.pageSize = parseInt($cookies.pageSize);
             $scope.newPageSize = $scope.pageSize;
+            $scope.newToolPageSize = $scope.toolPageSize;
 
             // current search
             $scope.search = $routeParams.search;
@@ -455,6 +459,41 @@ angular.module('faradayApp')
             var tmp_services = $filter('orderBy')($scope.services, $scope.sortField, $scope.reverse);
             tmp_services = $filter('filter')(tmp_services, $scope.expression);
             return Math.ceil(tmp_services.length / $scope.pageSize);
+        };
+
+        $scope.toolPageCount = function() {
+            if($scope.host && $scope.host.tools)
+                return Math.ceil($scope.host.tools.length / $scope.toolPageSize);
+            else
+                return false;
+        };
+
+        $scope.goTools = function() {
+            if ($scope.newToolPageSize === undefined)
+                $scope.newToolPageSize = 1;
+            $scope.toolPageSize = $scope.newToolPageSize;
+            $cookies.toolPageSize = $scope.toolPageSize;
+            $scope.currentToolPage = 1;
+            if ($scope.newCurrentToolPage <= $scope.toolPageCount() && $scope.newCurrentToolPage > 0 &&
+                !isNaN(parseInt($scope.newCurrentToolPage))) {
+                $scope.currentToolPage = $scope.newCurrentToolPage;
+            }
+        };
+
+        $scope.prevToolPage = function() {
+            $scope.currentToolPage -= 1;
+        };
+
+        $scope.nextToolPage = function() {
+            $scope.currentToolPage += 1;
+        };
+
+        $scope.prevToolPageDisabled = function() {
+            return $scope.currentToolPage <= 1;
+        };
+
+        $scope.nextToolPageDisabled = function() {
+            return $scope.currentToolPage >= $scope.toolPageCount();
         };
 
         $scope.loadIcons = function() {

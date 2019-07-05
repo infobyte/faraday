@@ -1803,6 +1803,8 @@ class ExecutiveReport(Metadata):
                     "TagObject.object_type=='executive_report')",
         collection_class=set,
     )
+    severities = Column(JSONType, nullable=True, default=[])
+    filter = Column(JSONType, nullable=True, default=[])
     @property
     def parent(self):
         return

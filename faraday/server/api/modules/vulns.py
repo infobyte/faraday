@@ -767,9 +767,9 @@ class VulnerabilityView(PaginatedMixin,
                 vuln_service = ""
 
             if all(isinstance(hostname, (str, unicode)) for hostname in vuln['hostnames']):
-                vuln_hostnames = str(map(lambda host: str(host), vuln['hostnames']))
+                vuln_hostnames = vuln['hostnames']
             else:
-                vuln_hostnames = str(map(lambda host: str(host['name']), vuln['hostnames']))
+                vuln_hostnames = [str(hostname['name']) for hostname in vuln['hostnames']]
 
             vuln_dict = {"confirmed": vuln['confirmed'], "id": vuln['_id'], "date": vuln_date,
                          "severity": vuln['severity'], "target": vuln['target'], "status": vuln['status'], "hostnames": vuln_hostnames,

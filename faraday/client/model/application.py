@@ -52,7 +52,7 @@ class TimerClass(threading.Thread):
 
         information = loads(json_response)
 
-        for news in information["news"]:
+        for news in information.get("news", []):
             faraday.client.model.guiapi.notification_center.sendCustomLog(
                 "NEWS -" + news["url"] + "|" + news["description"])
 
@@ -68,9 +68,10 @@ class TimerClass(threading.Thread):
                     verify=True)
 
                 self.sendNewstoLogGTK(res.text)
-
-            except Exception:
-                faraday.client.model.api.devlog(
+                logger.info('License status {0}'.format(res.json().get('license_status', 'FAILED!')))
+            except Exception as ex:
+                logger.exception(ex)
+                logger.warn(
                     "NEWS: Can't connect to faradaysec.com...")
 
             self.__event.wait(43200)

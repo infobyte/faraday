@@ -2,13 +2,14 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 import os
+import re
 import io
+import csv
 import json
 import logging
-from base64 import b64encode, b64decode
 import cStringIO
-import csv
-import re
+from base64 import b64encode, b64decode
+
 
 import flask
 import wtforms
@@ -37,6 +38,7 @@ from faraday.server.models import (
     db,
     File,
     Host,
+    Comment,
     Service,
     Hostname,
     Workspace,
@@ -637,10 +639,18 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('/filter')
     def filter(self, workspace_name):
+        filters = request.args.get('q')
+        return self._envelope_list(self._filter(filters, workspace_name))
+
+    def _filter(self, filters, workspace_name, confirmed=False):
         try:
-            filters = json.loads(request.args.get('q'))
+            filters = json.loads(filters)
         except ValueError as ex:
             flask.abort(400, "Invalid filters")
+        if confirmed:
+            if 'filters' not in filters:
+                filters['filters'] = []
+            filters['filters'].append({"name":"confirmed","op":"==","val":"true"})
 
         workspace = self._get_workspace(workspace_name)
         marshmallow_params = {'many': True, 'context': {}, 'strict': True}
@@ -662,7 +672,7 @@ class VulnerabilityView(PaginatedMixin,
             web_vulns_data = json.loads(web_vulns.data)
         except Exception:
             web_vulns_data = []
-        return self._envelope_list(normal_vulns_data + web_vulns_data)
+        return normal_vulns_data + web_vulns_data
 
     @route('/<int:vuln_id>/attachment/<attachment_filename>/', methods=['GET'])
     def get_attachment(self, workspace_name, vuln_id, attachment_filename):
@@ -739,6 +749,7 @@ class VulnerabilityView(PaginatedMixin,
     @route('export_csv/', methods=['GET'])
     def export_csv(self, workspace_name):
         confirmed = bool(request.args.get('confirmed'))
+        filters = request.args.get('q') or '{}'
         workspace = self._get_workspace(workspace_name)
         memory_file = cStringIO.StringIO()
         custom_fields_columns = []
@@ -748,24 +759,27 @@ class VulnerabilityView(PaginatedMixin,
         headers += custom_fields_columns
         writer = csv.DictWriter(memory_file, fieldnames=headers)
         writer.writeheader()
-        vulns_query = db.session.query(VulnerabilityGeneric).filter(VulnerabilityGeneric.workspace==workspace)
-        if confirmed:
-            vulns_query = vulns_query.filter(VulnerabilityGeneric.confirmed==confirmed)
+        vulns_query = self._filter(filters, workspace_name, confirmed)
         for vuln in vulns_query:
-            vuln_description = re.sub(' +', ' ', vuln.description.strip().replace("\n", ""))
-            vuln_date = vuln.create_date.strftime("%m/%d/%Y")
-            if vuln.service:
-                service_fields = ["status", "protocol", "name", "summary", "version", "port"]
-                service_fields_values = map(lambda field: "%s:%s" % (field, getattr(vuln.service, field)), service_fields)
+            vuln_description = re.sub(' +', ' ', vuln['description'].strip().replace("\n", ""))
+            vuln_date = vuln['metadata']['create_time']
+            if vuln['service']:
+                service_fields = ["status", "protocol", "name", "summary", "version", "ports"]
+                service_fields_values = map(lambda field: "%s:%s" % (field, vuln['service'][field]), service_fields)
                 vuln_service = " - ".join(service_fields_values)
             else:
                 vuln_service = ""
-            vuln_hostnames = str(map(lambda host: str(host.name), vuln.hostnames))
-            vuln_dict = {"confirmed": vuln.confirmed, "id": vuln.id, "date": vuln_date,
-                         "severity": vuln.severity, "target": vuln.target, "status": vuln.status, "hostnames": vuln_hostnames,
-                         "desc": vuln_description, "name": vuln.name, "service": vuln_service}
-            if vuln.custom_fields:
-                for field_name, value in vuln.custom_fields.items():
+
+            if all(isinstance(hostname, (str, unicode)) for hostname in vuln['hostnames']):
+                vuln_hostnames = vuln['hostnames']
+            else:
+                vuln_hostnames = [str(hostname['name']) for hostname in vuln['hostnames']]
+
+            vuln_dict = {"confirmed": vuln['confirmed'], "id": vuln['_id'], "date": vuln_date,
+                         "severity": vuln['severity'], "target": vuln['target'], "status": vuln['status'], "hostnames": vuln_hostnames,
+                         "desc": vuln_description, "name": vuln['name'], "service": vuln_service}
+            if vuln['custom_fields']:
+                for field_name, value in vuln['custom_fields'].items():
                     if field_name in custom_fields_columns:
                         vuln_dict.update({field_name: value})
             writer.writerow(vuln_dict)

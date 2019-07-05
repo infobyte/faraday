@@ -9,13 +9,10 @@ import logging
 import itsdangerous
 
 import Cookie
-import faraday.server.utils
-import faraday.server.utils.logger
 from collections import defaultdict
 from Queue import Queue, Empty
 
 from twisted.internet import reactor
-# from twisted.python import log
 
 from autobahn.twisted.websocket import (
     WebSocketServerFactory,
@@ -24,7 +21,7 @@ from autobahn.twisted.websocket import (
 
 from faraday.server.models import Workspace
 
-logger = faraday.server.utils.logger.get_logger(__name__)
+logger = logging.getLogger(__name__)
 changes_queue = Queue()
 
 

@@ -8,14 +8,14 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 from __future__ import with_statement
-from bs4 import BeautifulSoup, Comment
-from faraday.client.plugins import core
-from faraday.client.model import api
-from urlparse import urlsplit
-import distutils.util
 import re
 import os
 import sys
+from bs4 import BeautifulSoup, Comment
+from faraday.client.plugins import core
+from urlparse import urlsplit
+import distutils.util #pylint: disable=import-error
+
 
 try:
     import xml.etree.cElementTree as ET
@@ -137,6 +137,7 @@ class Item(object):
         path = item_node.findall('path')[0]
         location = item_node.findall('location')[0]
         severity = item_node.findall('severity')[0]
+        external_id = item_node.findall('type')[0]
         request = self.decode_binary_node('./requestresponse/request')
         response = self.decode_binary_node('./requestresponse/response')
 
@@ -167,6 +168,8 @@ class Item(object):
         self.detail = detail
         self.remediation = remediation
         self.background = background
+        self.external_id = external_id.text
+
 
     def do_clean(self, value):
 
@@ -280,7 +283,8 @@ class BurpPlugin(core.PluginBase):
                 path=item.path,
                 request=item.request,
                 response=item.response,
-                resolution=resolution)
+                resolution=resolution,
+                external_id=item.external_id)
 
         del parser
 

@@ -3,17 +3,62 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module("faradayApp")
-    .controller("statusReportCtrl",
-                    ["$scope", "$filter", "$routeParams",
-                     "$location", "$uibModal", "$cookies", "$q", "$window", "BASEURL",
-                     "SEVERITIES", "EASEOFRESOLUTION", "STATUSES", "hostsManager", "commonsFact", 'parserFact',
-                     "vulnsManager", "workspacesFact", "csvService", "uiGridConstants", "vulnModelsManager",
-                     "referenceFact", "ServerAPI", '$http', 'uiCommonFact', 'FileUploader', "workspaceData", "$templateCache",
-                    function($scope, $filter, $routeParams,
-                        $location, $uibModal, $cookies, $q, $window, BASEURL,
-                        SEVERITIES, EASEOFRESOLUTION, STATUSES, hostsManager, commonsFact,parserFact,
-                        vulnsManager, workspacesFact, csvService, uiGridConstants, vulnModelsManager, referenceFact,
-                        ServerAPI, $http, uiCommonFact, FileUploader, workspaceData,$templateCache) {
+    .controller("statusReportCtrl", [
+        "$scope",
+        "$filter",
+        "$routeParams",
+        "$location",
+        "$uibModal",
+        "$cookies",
+        "$q",
+        "$window",
+        "BASEURL",
+        "SEVERITIES",
+        "EASEOFRESOLUTION",
+        "STATUSES",
+        "hostsManager",
+        "commonsFact",
+        'parserFact',
+        "vulnsManager",
+        "workspacesFact",
+        "csvService",
+        "uiGridConstants",
+        "vulnModelsManager",
+        "referenceFact",
+        "ServerAPI",
+        '$http',
+        'uiCommonFact',
+        'FileUploader',
+        "workspaceData",
+        "$templateCache",
+        function ($scope,
+                  $filter,
+                  $routeParams,
+                  $location,
+                  $uibModal,
+                  $cookies,
+                  $q,
+                  $window,
+                  BASEURL,
+                  SEVERITIES,
+                  EASEOFRESOLUTION,
+                  STATUSES,
+                  hostsManager,
+                  commonsFact,
+                  parserFact,
+                  vulnsManager,
+                  workspacesFact,
+                  csvService,
+                  uiGridConstants,
+                  vulnModelsManager,
+                  referenceFact,
+                  ServerAPI,
+                  $http,
+                  uiCommonFact,
+                  FileUploader,
+                  workspaceData,
+                  $templateCache
+        ) {
         $scope.baseurl;
         $scope.columns;
         $scope.columnsWidths;
@@ -229,12 +274,11 @@ angular.module("faradayApp")
 
             if($scope.search !== "" && $scope.search !== undefined && $scope.search.indexOf("=") > -1) {
                 searchFilter = commonsFact.parseSearchURL($scope.search);
-                if ($scope.propertyFilterConfirmed === "All")
-                    $scope.searchParams = commonsFact.searchFilterToExpression(searchFilter);
+                $scope.searchParams = commonsFact.searchFilterToExpression(searchFilter);
             }
 
             $scope.columns = {
-                "_id":               true,
+                "_id":              true,
                 "date":             true,
                 "name":             true,
                 "severity":         true,
@@ -261,7 +305,8 @@ angular.module("faradayApp")
                 "response":         false,
                 "web":              false,
                 "creator":          false,
-                "policyviolations":  false
+                "policyviolations": false,
+                "external_id":      false
             };
 
 
@@ -612,6 +657,16 @@ angular.module("faradayApp")
                 maxWidth: 100,
                 minWidth: 100,
             });
+	    $scope.gridOptions.columnDefs.push({ name : 'external_id',
+                displayName : "external_id",
+                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/defaultcolumn.html',
+                headerCellTemplate: header,
+                field: "external_id",
+                sort: getColumnSort('external_id'),
+                visible: $scope.columns["external_id"],
+                maxWidth: 150,
+                minWidth: 130,
+            });
             $scope.gridOptions.columnDefs.push({ name : 'status',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/statuscolumn.html',
                 headerCellTemplate: header,
@@ -746,11 +801,13 @@ angular.module("faradayApp")
             var promises = [];
             try {
                 selected.forEach(function(vuln) {
-                    vuln.exploitation = vuln.severity;
-                    vuln.description = vuln.desc;
-                    vuln.desc_summary = vuln.desc;
-                    vuln.references = vuln.refs;
-                    promises.push(self.vulnModelsManager.create(vuln, true));
+                    let vulnCopy = angular.copy(vuln);
+                    vulnCopy.data = '';
+                    vulnCopy.exploitation = vuln.severity;
+                    vulnCopy.description = vuln.desc;
+                    vulnCopy.desc_summary = vuln.desc;
+                    vulnCopy.references = vuln.refs;
+                    promises.push(self.vulnModelsManager.create(vulnCopy, true));
                 });
                 $q.all(promises).then(function(success) {
                     commonsFact.showMessage("Created " + selected.length + " templates successfully.", true);
@@ -806,19 +863,37 @@ angular.module("faradayApp")
 
         $scope.csv = function() {
             deferred = $q.defer();
-            delete searchFilter.confirmed;
-            if ($scope.propertyFilterConfirmed === "Confirmed")
-                searchFilter.confirmed = true;
-            if ($scope.propertyFilterConfirmed === "Unconfirmed")
-                searchFilter.confirmed = false;
-            vulnsManager.getVulns($scope.workspace,
-                                  null,
-                                  null,
-                                  searchFilter,
-                                  null,
-                                  null)
-            .then(function(response) {
-                deferred.resolve(csvService.generator($scope.columns, response.vulnerabilities, $scope.workspace));
+            $scope.loading = true;
+
+            var jsonOptions;
+
+            if($scope.searchParams.length > 0)
+                jsonOptions = parserFact.evaluateExpression($scope.searchParams);
+
+            vulnsManager.exportCsv($scope.workspace, jsonOptions)
+            .then(function(result){
+                 var title = "";
+
+                 if ($scope.workspace === null) {
+                     title = 'Vulnerability Model CSV';
+                 } else {
+                     title = "SR-" + $scope.workspace;
+                 }
+
+                 var csvObj = {
+                     "content":  result.data,
+                     "extension": "csv",
+                     "title":    title,
+                     "type": "text/csv"
+                 };
+
+                 $scope.loading = false;
+
+                 deferred.resolve(csvObj);
+            })
+            .catch(function(){
+                 commonsFact.showMessage('An error has occurred.');
+                 $scope.loading = false;
             });
             return deferred.promise;
         };
@@ -1170,7 +1245,7 @@ angular.module("faradayApp")
 
                 // Add the total amount of vulnerabilities as an option for pagination
                 // if it is larger than our biggest page size
-                if ($scope.gridOptions.totalItems > paginationOptions.defaultPageSizes[paginationOptions.defaultPageSizes.length - 1]) {
+                /*if ($scope.gridOptions.totalItems > paginationOptions.defaultPageSizes[paginationOptions.defaultPageSizes.length - 1]) {
 
                     $scope.gridOptions.paginationPageSizes = paginationOptions.defaultPageSizes.concat([$scope.gridOptions.totalItems]);
 
@@ -1182,7 +1257,7 @@ angular.module("faradayApp")
                     if ($scope.gridOptions.paginationPageSize === $scope.gridOptions.totalItems - 1)
                         $scope.gridOptions.paginationPageSize = $scope.gridOptions.totalItems;
 
-                }
+                }*/
             });
         };
 
@@ -1240,11 +1315,17 @@ angular.module("faradayApp")
         };
 
         $scope.searchFor = function(params, clear, search) {
+            // TODO: REFACTOR
             if (clear === true){
+                if(window.location.hash.substring(1).indexOf('groupby') === -1) {
+                    $scope.propertyFilterConfirmed = "All";
+                    $cookies.put('filterConfirmed', $scope.propertyFilterConfirmed);
+                    $location.path("/status/ws/" + $routeParams.wsId);
+                }else{
+                    var url = "/status/ws/" + $routeParams.wsId + "/groupby/" + $routeParams.groupbyId;
+                    $location.path(url);
+                }
                 $scope.searchParams = '';
-                $scope.propertyFilterConfirmed = "All";
-                $cookies.put('filterConfirmed', $scope.propertyFilterConfirmed);
-                $location.path("/status/ws/" + $routeParams.wsId);
                 loadVulns();
                 return;
             }
@@ -1276,6 +1357,11 @@ angular.module("faradayApp")
                 }
 
             } else {
+                if (params !== undefined && params !== '') {
+                    params = params.replace(/^ +| +$/g, '');
+                    var jsonOptions = parserFact.evaluateExpression(params);
+                    loadFilteredVulns($routeParams.wsId, jsonOptions);
+                }
                 var url = "/status/ws/" + $routeParams.wsId + "/groupby/" + $routeParams.groupbyId;
                 $location.path(url);
             }

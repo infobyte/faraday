@@ -601,6 +601,16 @@ angular.module("faradayApp")
                 }
             }
 
+            ServerAPI.exportCsv = function (wsName, jsonOptions) {
+                if(jsonOptions){
+                    let url = APIURL + "ws/" + wsName + "/vulns/export_csv";
+                    return get(url  + '?q=' + jsonOptions);
+                }else{
+                    let url = APIURL + "ws/" + wsName + "/vulns/export_csv/";
+                    return get(url);
+                }
+            }
+
             ServerAPI.deleteVuln = function (wsName, vulnId, rev) {
                 var deleteUrl = createDeleteUrl(wsName, vulnId, 'vulns');
                 if (typeof rev === "undefined") {

@@ -23,7 +23,6 @@ from collections import (
     defaultdict,
     OrderedDict
 )
-from slugify import slugify
 from sqlalchemy import Text, String
 from binascii import unhexlify
 try:
@@ -249,6 +248,7 @@ def get_children_from_couch(workspace, parent_couchdb_id, child_type):
 
 
 def create_tags(raw_tags, parent_id, parent_type):
+    from slugify import slugify
     for tag_name in [x.strip() for x in raw_tags if x.strip()]:
         tag, tag_created = get_or_create(session, Tag, slug=slugify(tag_name))
         tag.name = tag_name
@@ -358,25 +358,7 @@ class EntityNotFound(Exception):
 class EntityMetadataImporter(object):
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
-        # entity, created = get_or_create(session, EntityMetadata, couchdb_id=document.get('_id'))
-        # TODO migration: use inline metadata, not additional class
         return
-        metadata = document.get('metadata', dict())
-        entity.update_time = metadata.get('update_time', None)
-        entity.update_user = metadata.get('update_user', None)
-        entity.update_action = metadata.get('update_action', None)
-        entity.creator = metadata.get('creator', None)
-        entity.owner = metadata.get('owner', None)
-        entity.create_time = metadata.get('create_time', None)
-        entity.update_controller_action = metadata.get('update_controller_action', None)
-        entity.revision = document.get('_rev')
-        entity.document_type = document.get('type')
-        entity.command_id = metadata.get('command_id', None)
-
-        if entity.create_time is not None:
-            entity.create_time = self.__truncate_to_epoch_in_seconds(entity.create_time)
-
-        yield entity
 
     def __truncate_to_epoch_in_seconds(self, timestamp):
         """ In a not so elegant fashion, identifies and truncate
@@ -390,7 +372,7 @@ class EntityMetadataImporter(object):
 
 def check_ip_address(ip_str):
     if not ip_str:
-     return False
+        return False
     if ip_str == '0.0.0.0':
         return False
     if ip_str == '0000:0000:0000:0000:0000:0000:0000:0000':
@@ -1213,7 +1195,6 @@ class ImportCouchDBUsers():
         db.session.commit()
 
 
-
 class ImportVulnerabilityTemplates():
 
     def __init__(self):
@@ -1301,6 +1282,7 @@ class ImportVulnerabilityTemplates():
 
         return default
 
+
 class ImportLicense():
 
     def run(self):
@@ -1333,6 +1315,7 @@ class ImportLicense():
             )
             license_obj.notes=document.get('notes')
             license_obj.type=document.get('lictype')
+
 
 class ImportCouchDB():
     def _open_couchdb_conn(self):

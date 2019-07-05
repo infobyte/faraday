@@ -26,7 +26,7 @@
 
             <!-- Tab panes -->
             <div class="tab-content height-100 ">
-                <div id="general" class="container tab-pane-container tab-pane active"><br>
+                <div id="general" class="container tab-pane-container tab-pane active visible-overflow"><br>
                     <div class="col-md-12 margin-bottom-15px">
                         <div class="form-horizontal">
                             <div class="form-group">
@@ -46,6 +46,13 @@
                                     <textarea class="form-control" name="description" placeholder="Description" ng-model="data.description"></textarea>
                                 </div>
                             </div><!-- .form-group -->
+                            <div class="form-group">
+                                <div class="col-md-12">
+                                    <label for="external_id">External ID</label>
+                                    <input type="text" class="form-control" name="external_id" id="external_id" placeholder="External ID" ng-model="data.external_id">
+                                </div>
+                            </div><!-- .form-group -->
+
                             <div class="form-group">
                                 <div class="col-md-12">
                                     <label for="data">Data</label>
@@ -97,13 +104,12 @@
                             </div><!-- .form-group -->
 
                             <div class="form-group">
-                                <div class="col-md-6">
+                                <div class="col-md-8">
                                     <label>Impact</label>
                                     <h4><span ng-repeat="(key, value) in data.impact" class="normal-size" style="cursor: pointer;">
                                     <span ng-class="{'label-impact label-default-impact': !value, 'label-impact label-success-impact': value}" ng-click="toggleImpact(key)">{{key}}</span>
                                     </span></h4><!-- .normal-size -->
                                 </div>
-                                <div class="col-md-2"></div>
                                 <div class="col-md-4">
                                     <label>Ease of Resolution</label>
                                     <select class="form-control" ng-model="data.easeofresolution" ng-options="e for e in easeofresolution"  style="padding:0px 12px;">

@@ -2,11 +2,17 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 
+import logging
+import csv
 import flask
-from flask import Blueprint
+import re
+from flask import Blueprint, make_response, jsonify, abort
 from flask_classful import route
 from marshmallow import fields, Schema
 from filteralchemy import Filter, FilterSet, operators
+from sqlalchemy import or_
+import wtforms
+from flask_wtf.csrf import validate_csrf
 
 from faraday.server.utils.database import get_or_create
 
@@ -29,6 +35,7 @@ from faraday.server.api.modules.services import ServiceSchema
 
 host_api = Blueprint('host_api', __name__)
 
+logger = logging.getLogger(__name__)
 
 class HostSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
@@ -55,13 +62,15 @@ class HostSchema(AutoSchema):
     type = fields.Function(lambda obj: 'Host', dump_only=True)
     service_summaries = fields.Method('get_service_summaries',
                                       dump_only=True)
+    versions = fields.Method('get_service_version',
+                                      dump_only=True)
 
     class Meta:
         model = Host
         fields = ('id', '_id', '_rev', 'ip', 'description', 'mac',
                   'credentials', 'default_gateway', 'metadata',
                   'name', 'os', 'owned', 'owner', 'services', 'vulns',
-                  'hostnames', 'type', 'service_summaries'
+                  'hostnames', 'type', 'service_summaries', 'versions'
                   )
 
     def get_service_summaries(self, obj):
@@ -69,20 +78,36 @@ class HostSchema(AutoSchema):
                 for service in obj.services
                 if service.status == 'open']
 
+    def get_service_version(self, obj):
+        return [service.version
+                for service in obj.services
+                if service.status == 'open']
 
-class ServiceFilter(Filter):
+
+class ServiceNameFilter(Filter):
     """Filter hosts by service name"""
 
     def filter(self, query, model, attr, value):
         return query.filter(model.services.any(Service.name == value))
 
 
+class ServicePortFilter(Filter):
+    """Filter hosts by service port"""
+
+    def filter(self, query, model, attr, value):
+        try:
+            return query.filter(model.services.any(Service.port == int(value)))
+        except ValueError:
+            return query.filter(None)
+
+
 class HostFilterSet(FilterSet):
     class Meta(FilterSetMeta):
         model = Host
-        fields = ('ip', 'os', 'service')
+        fields = ('ip', 'name', 'os', 'service', 'port')
         operators = (operators.Equal, operators.Like, operators.ILike)
-    service = ServiceFilter(fields.Str())
+    service = ServiceNameFilter(fields.Str())
+    port = ServicePortFilter(fields.Str())
 
 
 class HostCountSchema(Schema):
@@ -113,6 +138,53 @@ class HostsView(PaginatedMixin,
                    Host.open_service_count,
                    Host.vulnerability_count]
     get_joinedloads = [Host.hostnames, Host.services, Host.update_user]
+
+    @route('/bulk_create/', methods=['POST'])
+    def bulk_create(self, workspace_name):
+        try:
+            validate_csrf(flask.request.form.get('csrf_token'))
+        except wtforms.ValidationError:
+            flask.abort(403)
+
+        def parse_hosts(list_string):
+            items = re.findall(r"([.a-zA-Z0-9_-]+)", list_string)
+            return items
+
+        workspace = self._get_workspace(workspace_name)
+
+        logger.info("Create hosts from CSV")
+        if 'file' not in flask.request.files:
+            abort(400, "Missing File in request")
+        hosts_file = flask.request.files['file']
+        FILE_HEADERS = {'description', 'hostnames', 'ip', 'os'}
+        try:
+            hosts_reader = csv.DictReader(hosts_file, skipinitialspace=True)
+            if set(hosts_reader.fieldnames) != FILE_HEADERS:
+                logger.error("Missing Required headers in CSV (%s)", FILE_HEADERS)
+                abort(400, "Missing Required headers in CSV (%s)" % FILE_HEADERS)
+            hosts_created_count = 0
+            hosts_with_errors_count = 0
+            for host_dict in hosts_reader:
+                try:
+                    hostnames = parse_hosts(host_dict.pop('hostnames'))
+                    other_fields = {'owned': False, 'mac': u'00:00:00:00:00:00', 'default_gateway_ip': u'None'}
+                    host_dict.update(other_fields)
+                    host = super(HostsView, self)._perform_create(host_dict, workspace_name)
+                    host.workspace = workspace
+                    for name in hostnames:
+                        get_or_create(db.session, Hostname, name=name, host=host, workspace=host.workspace)
+                    db.session.commit()
+                except Exception as e:
+                    logger.error("Error creating host (%s)", e)
+                    hosts_with_errors_count += 1
+                else:
+                    logger.debug("Host Created (%s)", host_dict)
+                    hosts_created_count += 1
+            return make_response(jsonify(hosts_created=hosts_created_count, hosts_with_errors=hosts_with_errors_count), 200)
+        except Exception as e:
+            logger.error("Error parsing hosts CSV (%s)", e)
+            abort(400, "Error parsing hosts CSV (%s)" % e)
+
 
     @route('/<host_id>/services/')
     def service_list(self, workspace_name, host_id):

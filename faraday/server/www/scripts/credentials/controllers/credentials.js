@@ -5,9 +5,29 @@
 "use strict";
 
 angular.module('faradayApp')
-    .controller('credentialsCtrl',
-        ['$scope', '$filter', '$q', '$uibModal', '$routeParams', '$window', 'commonsFact', 'credential', 'ServerAPI', 'workspacesFact', 'vulnsManager',
-        function($scope, $filter, $q, $uibModal, $routeParams, $window, commonsFact, credential, ServerAPI, workspacesFact, vulnsManager) {
+    .controller('credentialsCtrl', [
+        '$scope',
+        '$filter',
+        '$q',
+        '$uibModal',
+        '$routeParams',
+        '$window',
+        'commonsFact',
+        'credential',
+        'ServerAPI',
+        'workspacesFact',
+        'vulnsManager',
+        function ($scope,
+                  $filter,
+                  $q,
+                  $uibModal,
+                  $routeParams,
+                  $window,
+                  commonsFact,
+                  credential,
+                  ServerAPI,
+                  workspacesFact,
+                  vulnsManager) {
 
             $scope.workspace;
             $scope.workspaces;
@@ -157,14 +177,39 @@ angular.module('faradayApp')
             var createCredential = function(credentialData, parent_id, parent_type){
                 // Add parent id, create credential and save to server.
                 try {
-                    var credentialObj = new credential(credentialData, parent_id, parent_type);
+                    // If parent_id is undefined, assign host or service to credential from modal
+                    if(parent_id === undefined){
+                        credentialData.targetsArray.forEach(function(target) {
+                            if(target.type === "Service") {
+                                // Since it is not possible to get the host's IP from target if it is a service,
+                                // credentialData.hostsIp contains the host's IPs of every target that is a service.
+                                // To get the host's Ip, use the host's ID
+                                credentialData.target = credentialData.hostsIp[target.host_id] + "/" + target.name;
+                            } else {
+                                credentialData.target = target.ip;
+                            }
 
-                    credentialObj.create($scope.workspace).then(function(){
-                         $scope.credentials.push(credentialObj);
-                    }, function(){
-                        console.log('Error creating credential.');
-                    });
+                            parent_id = target.id;
+                            parent_type = target.type;
 
+                            var credentialObj = new credential(credentialData, parent_id, parent_type);
+
+                            credentialObj.create($scope.workspace).then(function(){
+                                 $scope.credentials.push(credentialObj);
+                            }, function(){
+                                console.log('Error creating credential.');
+                            });
+
+                        });
+                    } else {
+                        var credentialObj = new credential(credentialData, parent_id, parent_type);
+
+                        credentialObj.create($scope.workspace).then(function(){
+                             $scope.credentials.push(credentialObj);
+                        }, function(){
+                            console.log('Error creating credential.');
+                        });
+                    }
                 } catch (error) {
                     console.log(error);
                 }

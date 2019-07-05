@@ -2,15 +2,19 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 import os
+import re
 import io
+import csv
 import json
 import logging
+import cStringIO
 from base64 import b64encode, b64decode
+
 
 import flask
 import wtforms
 from filteralchemy import Filter, FilterSet, operators
-from flask import request
+from flask import request, send_file
 from flask import Blueprint
 from flask_classful import route
 from flask_restless.search import search
@@ -19,6 +23,7 @@ from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy import desc
 
 from depot.manager import DepotManager
 from faraday.server.api.base import (
@@ -33,11 +38,13 @@ from faraday.server.models import (
     db,
     File,
     Host,
+    Comment,
     Service,
     Hostname,
     Workspace,
     Vulnerability,
     VulnerabilityWeb,
+    CustomFieldsSchema,
     VulnerabilityGeneric,
 )
 from faraday.server.utils.database import get_or_create
@@ -137,6 +144,7 @@ class VulnerabilitySchema(AutoSchema):
     date = fields.DateTime(attribute='create_date',
                            dump_only=True)  # This is only used for sorting
     custom_fields = FaradayCustomField(table_name='vulnerability', attribute='custom_fields')
+    external_id = fields.String(allow_none=True)
 
     class Meta:
         model = Vulnerability
@@ -150,7 +158,7 @@ class VulnerabilitySchema(AutoSchema):
             'service', 'obj_id', 'type', 'policyviolations',
             '_attachments',
             'target', 'host_os', 'resolution', 'metadata',
-            'custom_fields')
+            'custom_fields', 'external_id')
 
     def get_type(self, obj):
         return obj.__class__.__name__
@@ -274,7 +282,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'service', 'obj_id', 'type', 'policyviolations',
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
-            'status_code', 'custom_fields'
+            'status_code', 'custom_fields', 'external_id'
         )
 
 
@@ -425,6 +433,8 @@ class VulnerabilityView(PaginatedMixin,
     filterset_class = VulnerabilityFilterSet
     sort_model_class = VulnerabilityWeb  # It has all the fields
     sort_pass_silently = True  # For compatibility with the Web UI
+    order_field = desc(VulnerabilityGeneric.confirmed), VulnerabilityGeneric.severity, VulnerabilityGeneric.create_date
+
     unique_fields_by_class = {
         'Vulnerability': [('name', 'description', 'host_id', 'service_id')],
         'VulnerabilityWeb': [('name', 'description', 'service_id', 'method',
@@ -629,10 +639,18 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('/filter')
     def filter(self, workspace_name):
+        filters = request.args.get('q')
+        return self._envelope_list(self._filter(filters, workspace_name))
+
+    def _filter(self, filters, workspace_name, confirmed=False):
         try:
-            filters = json.loads(request.args.get('q'))
+            filters = json.loads(filters)
         except ValueError as ex:
             flask.abort(400, "Invalid filters")
+        if confirmed:
+            if 'filters' not in filters:
+                filters['filters'] = []
+            filters['filters'].append({"name":"confirmed","op":"==","val":"true"})
 
         workspace = self._get_workspace(workspace_name)
         marshmallow_params = {'many': True, 'context': {}, 'strict': True}
@@ -654,17 +672,18 @@ class VulnerabilityView(PaginatedMixin,
             web_vulns_data = json.loads(web_vulns.data)
         except Exception:
             web_vulns_data = []
-        return self._envelope_list(normal_vulns_data + web_vulns_data)
+        return normal_vulns_data + web_vulns_data
 
     @route('/<int:vuln_id>/attachment/<attachment_filename>/', methods=['GET'])
     def get_attachment(self, workspace_name, vuln_id, attachment_filename):
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(VulnerabilityGeneric.id == vuln_id,
                               Workspace.name == workspace_name).first()
+
         if vuln_workspace_check:
             file_obj = db.session.query(File).filter_by(object_type='vulnerability',
                                          object_id=vuln_id,
-                                         filename=attachment_filename).first()
+                                         filename=attachment_filename.replace(" ", "%20")).first()
             if file_obj:
                 depot = DepotManager.get()
                 depot_file = depot.get(file_obj.content.get('file_id'))
@@ -727,5 +746,47 @@ class VulnerabilityView(PaginatedMixin,
         else:
             flask.abort(404, "Vulnerability not found")
 
+    @route('export_csv/', methods=['GET'])
+    def export_csv(self, workspace_name):
+        confirmed = bool(request.args.get('confirmed'))
+        filters = request.args.get('q') or '{}'
+        workspace = self._get_workspace(workspace_name)
+        memory_file = cStringIO.StringIO()
+        custom_fields_columns = []
+        for custom_field in db.session.query(CustomFieldsSchema).order_by(CustomFieldsSchema.field_order):
+            custom_fields_columns.append(custom_field.field_name)
+        headers = ["confirmed", "id", "date", "name", "severity", "service", "target", "desc", "status", "hostnames"]
+        headers += custom_fields_columns
+        writer = csv.DictWriter(memory_file, fieldnames=headers)
+        writer.writeheader()
+        vulns_query = self._filter(filters, workspace_name, confirmed)
+        for vuln in vulns_query:
+            vuln_description = re.sub(' +', ' ', vuln['description'].strip().replace("\n", ""))
+            vuln_date = vuln['metadata']['create_time']
+            if vuln['service']:
+                service_fields = ["status", "protocol", "name", "summary", "version", "ports"]
+                service_fields_values = map(lambda field: "%s:%s" % (field, vuln['service'][field]), service_fields)
+                vuln_service = " - ".join(service_fields_values)
+            else:
+                vuln_service = ""
+
+            if all(isinstance(hostname, (str, unicode)) for hostname in vuln['hostnames']):
+                vuln_hostnames = vuln['hostnames']
+            else:
+                vuln_hostnames = [str(hostname['name']) for hostname in vuln['hostnames']]
+
+            vuln_dict = {"confirmed": vuln['confirmed'], "id": vuln['_id'], "date": vuln_date,
+                         "severity": vuln['severity'], "target": vuln['target'], "status": vuln['status'], "hostnames": vuln_hostnames,
+                         "desc": vuln_description, "name": vuln['name'], "service": vuln_service}
+            if vuln['custom_fields']:
+                for field_name, value in vuln['custom_fields'].items():
+                    if field_name in custom_fields_columns:
+                        vuln_dict.update({field_name: value})
+            writer.writerow(vuln_dict)
+        memory_file.seek(0)
+        return send_file(memory_file,
+                         attachment_filename="Faraday-SR-%s.csv" % workspace_name,
+                         as_attachment=True,
+                         cache_timeout=-1)
 
 VulnerabilityView.register(vulns_api)

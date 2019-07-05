@@ -17,19 +17,17 @@ try:
 except ImportError:
     from queue import Queue
 import requests
+import logging
 
 from faraday.client.model.controller import ModelController
 from faraday.client.managers.workspace_manager import WorkspaceManager
 from faraday.client.plugins.controller import PluginController
 from faraday.client.persistence.server.server import login_user
 
-from faraday.utils.logs import setUpLogger
 import faraday.client.model.api
 import faraday.client.model.guiapi
 import faraday.client.apis.rest.api as restapi
 import faraday.client.model.log
-from faraday.utils.logs import getLogger
-import traceback
 from faraday.client.plugins.manager import PluginManager
 from faraday.client.managers.mapper_manager import MapperManager
 from faraday.utils.error_report import exception_handler
@@ -40,6 +38,9 @@ from faraday.client.model.cli_app import CliApp
 
 from faraday.config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
+
+
+logger = logging.getLogger(__name__)
 
 
 class TimerClass(threading.Thread):
@@ -85,7 +86,6 @@ class MainApplication(object):
 
         self.args = args
 
-        logger = getLogger(self)
         if args.creds_file:
             try:
                 with open(args.creds_file, 'r') as fp:
@@ -217,5 +217,5 @@ class MainApplication(object):
         self.app.quit()
 
     def ctrlC(self, signal, frame):
-        getLogger(self).info("Exiting...")
+        logger.info("Exiting...")
         self.app.quit()

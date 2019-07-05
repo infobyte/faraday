@@ -3,13 +3,35 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('modalEditCtrl',
-        ['$modalInstance', '$routeParams', 'EASEOFRESOLUTION', 'STATUSES', 'commonsFact',
-            'BASEURL', 'severities', 'vuln', 'vulnModelsManager', 'vulnsManager', 'referenceFact',
-            'encodeURIComponentFilter', 'customFields', 'workspace',
-            function ($modalInstance, $routeParams, EASEOFRESOLUTION, STATUSES, commonsFact,
-                      BASEURL, severities, vuln, vulnModelsManager, vulnsManager, referenceFact,
-                      encodeURIComponent, customFields, workspace) {
+    .controller('modalEditCtrl', [
+        '$modalInstance',
+        '$routeParams',
+        'EASEOFRESOLUTION',
+        'STATUSES',
+        'commonsFact',
+        'BASEURL',
+        'severities',
+        'vuln',
+        'vulnModelsManager',
+        'vulnsManager',
+        'referenceFact',
+        'encodeURIComponentFilter',
+        'customFields',
+        'workspace',
+        function ($modalInstance,
+                  $routeParams,
+                  EASEOFRESOLUTION,
+                  STATUSES,
+                  commonsFact,
+                  BASEURL,
+                  severities,
+                  vuln,
+                  vulnModelsManager,
+                  vulnsManager,
+                  referenceFact,
+                  encodeURIComponent,
+                  customFields,
+                  workspace) {
 
                 var vm = this;
 
@@ -79,7 +101,8 @@ angular.module('faradayApp')
                         website: "",
                         status: "opened",
                         policyviolations: [],
-                        custom_fields:{}
+                        custom_fields:{},
+			external_id: ""
                     };
 
                     vm.vuln = angular.copy(vuln);

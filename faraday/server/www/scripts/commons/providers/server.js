@@ -601,14 +601,14 @@ angular.module("faradayApp")
                 }
             }
 
-            ServerAPI.exportCsv = function (wsName, confirmed) {
-
-                let url = APIURL + "ws/" + wsName + "/vulns/export_csv/";
-
-                if(confirmed)
-                    return get(url, {confirmed: confirmed});
-                else
+            ServerAPI.exportCsv = function (wsName, jsonOptions) {
+                if(jsonOptions){
+                    let url = APIURL + "ws/" + wsName + "/vulns/export_csv";
+                    return get(url  + '?q=' + jsonOptions);
+                }else{
+                    let url = APIURL + "ws/" + wsName + "/vulns/export_csv/";
                     return get(url);
+                }
             }
 
             ServerAPI.deleteVuln = function (wsName, vulnId, rev) {

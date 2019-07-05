@@ -9,14 +9,13 @@ import os
 import sys
 import signal
 import json
-import threading
-from json import loads
-from time import sleep
+
+from faraday.server import TimerClass
+
 try:
     from Queue import Queue
 except ImportError:
     from queue import Queue
-import requests
 import logging
 
 from faraday.client.model.controller import ModelController
@@ -41,43 +40,6 @@ CONF = getInstanceConfiguration()
 
 
 logger = logging.getLogger(__name__)
-
-
-class TimerClass(threading.Thread):
-    def __init__(self):
-        threading.Thread.__init__(self)
-        self.__event = threading.Event()
-
-    def sendNewstoLogGTK(self, json_response):
-
-        information = loads(json_response)
-
-        for news in information.get("news", []):
-            faraday.client.model.guiapi.notification_center.sendCustomLog(
-                "NEWS -" + news["url"] + "|" + news["description"])
-
-    def run(self):
-        while not self.__event.is_set():
-            try:
-                sleep(5)
-                res = requests.get(
-                    "https://portal.faradaysec.com/api/v1/license_check",
-                    params={'version': CONF.getVersion(),
-                            'key': 'white'},
-                    timeout=1,
-                    verify=True)
-
-                self.sendNewstoLogGTK(res.text)
-                logger.info('License status {0}'.format(res.json().get('license_status', 'FAILED!')))
-            except Exception as ex:
-                logger.exception(ex)
-                logger.warn(
-                    "NEWS: Can't connect to faradaysec.com...")
-
-            self.__event.wait(43200)
-
-    def stop(self):
-        self.__event.set()
 
 
 class MainApplication(object):

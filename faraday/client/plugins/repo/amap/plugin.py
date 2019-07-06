@@ -90,7 +90,7 @@ class AmapPlugin(core.PluginBase):
                 args['ipv4_address'] = address
 
             if address != self.args.m:
-                args['hostname_resolution'] = self.args.m
+                args['hostname_resolution'] = [self.args.m]
 
             i_id = self.createAndAddInterface(h_id, name=address, **args)
 

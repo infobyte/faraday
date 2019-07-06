@@ -200,7 +200,7 @@ class RetinaPlugin(core.PluginBase):
             h_id = self.createAndAddHost(item.ip, item.os)
             hostname = item.hostname if item.hostname else item.ip
             i_id = self.createAndAddInterface(
-                h_id, item.ip, ipv4_address=item.ip, hostname_resolution=hostname)
+                h_id, item.ip, ipv4_address=item.ip, hostname_resolution=[hostname])
 
             if not item.netbiosname == 'N/A':
                 self.createAndAddNoteToHost(

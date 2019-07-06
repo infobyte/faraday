@@ -695,5 +695,9 @@ angular.module("faradayApp")
                 return get(APIURL + 'vulners/exploits/' + cveId);
             }
 
+            ServerAPI.getTools = function(hid, ws){
+                return get(APIURL + 'ws/' + ws + '/hosts/' + hid + '/tools_history/');
+            }
+
             return ServerAPI;
         }]);

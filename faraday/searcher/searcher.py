@@ -601,25 +601,25 @@ def signal_handler(signal, frame):
 
 
 @click.command()
-@click.option('--workspace', required=True, promtp=True, help='Workspacer name')
+@click.option('--workspace', required=True, prompt=True, help='Workspacer name')
 @click.option('--server', required=True, prompt=True, help='Faraday server address')
-@click.option('--user', required=True, promtp=True, help='')
-@click.option('--password', required=True, promtp=True, password=True, help='')
+@click.option('--user', required=True, prompt=True, help='')
+@click.option('--password', required=True, prompt=True, hide_input=True, help='')
 @click.option('--output', required=False, help='Choose a custom output directory', default='output')
 @click.option('--email', required=False)
 @click.option('--email_password', required=False)
 @click.option('--mail_protocol', required=False)
-@click.option('--port_procol', required=False, default=587)
+@click.option('--port_protocol', required=False, default=587)
 @click.option('--log', required=False, default='debug')
 @click.option('--rules', required=True, help='Filename with rules')
-def main(workspace, server, user, password, output, email, email_pass, mail_protocol, port_protocol, log, rules):
+def main(workspace, server, user, password, output, email, email_password, mail_protocol, port_protocol, log, rules):
 
     signal.signal(signal.SIGINT, signal_handler)
 
     lockf = ".lock.pod"
     if not lock_file(lockf):
         print ("You can run only one instance of searcher (%s)" % lockf)
-        exit(0)
+        sys.exit(1)
 
     loglevel = log
     with open(rules, 'r') as rules_file:
@@ -629,9 +629,9 @@ def main(workspace, server, user, password, output, email, email_pass, mail_prot
             print("Invalid rules file.")
             sys.exit(1)
 
-    mail_notificacion = MailNotificacion(
+    mail_notificacion = MailNotification(
         email,
-        email_pass,
+        email_password,
         mail_protocol,
         port_protocol,
 
@@ -692,7 +692,7 @@ def main(workspace, server, user, password, output, email, email_pass, mail_prot
     except Exception as errorMsg:
         logger.error(errorMsg)
         os.remove(lockf)
-        exit(0)
+        sys.exit(0)
 
 
 if __name__ == "__main__":

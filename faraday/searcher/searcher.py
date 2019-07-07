@@ -19,6 +19,7 @@ import logging
 import subprocess
 from datetime import datetime
 
+import click
 import sqlite3
 from difflib import SequenceMatcher
 from email.mime.multipart import MIMEMultipart
@@ -33,31 +34,34 @@ logger = logging.getLogger('Faraday searcher')
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
-mail_from = ''
-mail_password = ''
-mail_protocol = 'smtp.gmail.com'
-mail_port = 587
 
 
-def send_mail(to_addr, subject, body):
-    global mail_from, mail_password, mail_protocol, mail_port
-    from_addr = mail_from
-    msg = MIMEMultipart()
-    msg['From'] = from_addr
-    msg['To'] = to_addr
-    msg['Subject'] = subject
+class MailNotificacion:
 
-    msg.attach(MIMEText(body, 'plain'))
-    try:
-        server_mail = smtplib.SMTP(mail_protocol, mail_port)
-        server_mail.starttls()
-        server_mail.login(from_addr, mail_password)
-        text = msg.as_string()
-        server_mail.sendmail(from_addr, to_addr, text)
-        server_mail.quit()
-    except Exception as error:
-        logger.error("Error: unable to send email")
-        logger.error(error)
+    def __init__(self, mail_from, mail_password, mail_protocol, mail_port):
+        self.mail_from = mail_from
+        self.mail_password = mail_password
+        self.mail_protocol = mail_protocol
+        self.mail_port = mail_port
+
+    def send_mail(self, to_addr, subject, body):
+        from_addr = self.mail_from
+        msg = MIMEMultipart()
+        msg['From'] = from_addr
+        msg['To'] = to_addr
+        msg['Subject'] = subject
+
+        msg.attach(MIMEText(body, 'plain'))
+        try:
+            server_mail = smtplib.SMTP(self.mail_protocol, self.mail_port)
+            server_mail.starttls()
+            server_mail.login(from_addr, self.mail_password)
+            text = msg.as_string()
+            server_mail.sendmail(from_addr, to_addr, text)
+            server_mail.quit()
+        except Exception as error:
+            logger.error("Error: unable to send email")
+            logger.error(error)
 
 
 def compare(a, b):
@@ -129,7 +133,7 @@ def get_model_environment(model, _models):
     return environment
 
 
-def process_models_by_similarity(ws, _models, rule, _server):
+def process_models_by_similarity(ws, _models, rule, _server, mail_notificacion):
     logger.debug("--> Start Process models by similarity")
     for index_m1, m1 in zip(range(len(_models) - 1), _models):
         for index_m2, m2 in zip(range(index_m1 + 1, len(_models)), _models[index_m1 + 1:]):
@@ -144,9 +148,9 @@ def process_models_by_similarity(ws, _models, rule, _server):
                         if 'conditions' in rule:
                             environment = get_model_environment(m2, _models)
                             if can_execute_action(environment, rule['conditions']):
-                                execute_action(ws, _object, rule, _server)
+                                execute_action(ws, _object, rule, _server, mail_notificacion)
                         else:
-                            execute_action(ws, _object, rule, _server)
+                            execute_action(ws, _object, rule, _server, mail_notificacion)
     logger.debug("<-- Finish Process models by similarity")
 
 
@@ -438,7 +442,7 @@ def can_execute_action(_models, conditions):
     return True
 
 
-def execute_action(ws, objects, rule, _server):
+def execute_action(ws, objects, rule, _server, mail_notificacion=None):
     logger.info("Running actions of rule '%s' :" % rule['id'])
     actions = rule['actions']
     _objs_value = None
@@ -491,7 +495,7 @@ def execute_action(ws, objects, rule, _server):
                 subject = 'Faraday searcher alert'
                 body = '%s %s have been modified by rule %s at %s' % (
                     obj.class_signature, obj.name, rule['id'], str(datetime.now()))
-                send_mail(expression, subject, body)
+                mail_notificacion.send_mail(expression, subject, body)
                 insert_rule(rule['id'], command, obj, _objs_value, fields=None, key=None, value=expression)
                 logger.info("Sending mail to: '%s'" % expression)
     return True
@@ -511,7 +515,7 @@ def replace_rule(rule, value_item):
     return ast.literal_eval(rule_str)
 
 
-def process_vulnerabilities(ws, vulns, _server):
+def process_vulnerabilities(ws, vulns, _server, mail_notificacion):
     logger.debug("--> Start Process vulnerabilities")
     for rule_item in rules:
         if rule_item['model'] == 'Vulnerability':
@@ -525,7 +529,7 @@ def process_vulnerabilities(ws, vulns, _server):
                 rule = replace_rule(rule_item, values[index])
                 vulnerabilities = get_models(ws, vulns, rule)
                 if 'fields' in rule:
-                    process_models_by_similarity(ws, vulnerabilities, rule, _server)
+                    process_models_by_similarity(ws, vulnerabilities, rule, _server, mail_notificacion)
                 else:
                     _objs_value = None
                     if 'object' in rule:
@@ -534,13 +538,13 @@ def process_vulnerabilities(ws, vulns, _server):
                     if objects is not None and len(objects) != 0:
                         if 'conditions' in rule:
                             if can_execute_action(vulnerabilities, rule['conditions']):
-                                execute_action(ws, objects, rule, _server)
+                                execute_action(ws, objects, rule, _server, mail_notificacion)
                         else:
-                            execute_action(ws, objects, rule, _server)
+                            execute_action(ws, objects, rule, _server, mail_notificacion)
     logger.debug("<-- Finish Process vulnerabilities")
 
 
-def process_services(ws, services, _server):
+def process_services(ws, services, _server, mail_notificacion):
     logger.debug("--> Start Process services")
     for rule in rules:
         if rule['model'] == 'Service':
@@ -556,13 +560,13 @@ def process_services(ws, services, _server):
                 if objects is not None and len(objects) != 0:
                     if 'conditions' in rule:
                         if can_execute_action(services, rule['conditions']):
-                            execute_action(ws, objects, rule, _server)
+                            execute_action(ws, objects, rule, _server, mail_notificacion)
                     else:
-                        execute_action(ws, objects, rule, _server)
+                        execute_action(ws, objects, rule, _server, mail_notificacion)
     logger.debug("<-- Finish Process services")
 
 
-def process_hosts(ws, hosts, _server):
+def process_hosts(ws, hosts, _server, mail_notificacion):
     logger.debug("--> Start Process Hosts")
     for rule in rules:
         if rule['model'] == 'Host':
@@ -578,9 +582,9 @@ def process_hosts(ws, hosts, _server):
                 if objects is not None and len(objects) != 0:
                     if 'conditions' in rule:
                         if can_execute_action(hosts, rule['conditions']):
-                            execute_action(ws, objects, rule, _server)
+                            execute_action(ws, objects, rule, _server, mail_notificacion)
                     else:
-                        execute_action(ws, objects, rule, _server)
+                        execute_action(ws, objects, rule, _server, mail_notificacion)
         logger.debug("<-- Finish Process Hosts")
 
 
@@ -599,68 +603,35 @@ def signal_handler(signal, frame):
     sys.exit(0)
 
 
-def main():
-    signal.signal(signal.SIGINT, signal_handler)
+@click.command()
+@click.option('--workspace', required=True, promtp=True, help='Workspacer name')
+@click.option('--server', required=True, prompt=True, help='Faraday server address')
+@click.option('--user', required=True, promtp=True, help='')
+@click.option('--password', required=True, promtp=True, password=True, help='')
+@click.option('--output', required=False, help='Choose a custom output directory', default='output')
+@click.option('--email', required=False)
+@click.option('--email_password', required=False)
+@click.option('--mail_protocol', required=False)
+@click.option('--port_procol', required=False, default=587)
+@click.option('--log', required=False, default='debug')
+def main(workspace, server, user, password, output, email, email_pass, mail_protocol, port_protocol, log):
 
-    parser = argparse.ArgumentParser(description='Search duplicated objects on Faraday')
-    parser.add_argument('-w', '--workspace', help='Search duplicated objects into this workspace', required=True)
-    parser.add_argument('-s', '--server', help='Faraday server', required=False, default="http://127.0.0.1:5985/")
-    parser.add_argument('-u', '--user', help='Faraday user', required=False, default="")
-    parser.add_argument('-p', '--password', help='Faraday password', required=False, default="")
-    parser.add_argument('-o', '--output', help='Choose a custom output directory', required=False)
-    parser.add_argument('-e', '--email', help='Custom email', required=False, default="faraday.searcher@gmail.com")
-    parser.add_argument('-ep', '--email_pass', help='Email password', required=False)
-    parser.add_argument('-mp', '--mail_protocol', help='Email protocol', required=False, default="smtp.gmail.com")
-    parser.add_argument('-pp', '--port_protocol', help='Port protocol', required=False, default=587)
-    parser.add_argument('-l', '--log', help='Choose a custom log level', required=False)
-    args = parser.parse_args()
+    signal.signal(signal.SIGINT, signal_handler)
 
     lockf = ".lock.pod"
     if not lock_file(lockf):
         print ("You can run only one instance of searcher (%s)" % lockf)
         exit(0)
 
-    workspace = ''
-    if args.workspace:
-        workspace = args.workspace
-    else:
-        print("You must enter a workspace in command line, please use --help to read more")
-        os.remove(lockf)
-        exit(0)
+    loglevel = log
 
-    _server = 'http://127.0.0.1:5985/'
-    if args.server:
-        _server = args.server
+    mail_notificacion = MailNotificacion(
+        email,
+        email_pass,
+        mail_protocol,
+        port_protocol,
 
-    _user = 'faraday'
-    if args.user:
-        _user = args.user
-
-    _password = 'changeme'
-    if args.password:
-        _password = args.password
-
-    output = 'output/'
-    if args.output:
-        output = args.output
-
-    loglevel = 'debug'
-    if args.log:
-        loglevel = args.log
-
-    global mail_from, mail_password, mail_protocol, mail_port
-
-    if args.email:
-        mail_from = args.email
-
-    if args.email_pass:
-        mail_password = args.email_pass
-
-    if args.mail_protocol:
-        mail_protocol = args.mail_protocol
-
-    if args.port_protocol:
-        mail_port = args.port_protocol
+    )
 
     for d in [output, 'log/']:
         if not os.path.isdir(d):
@@ -693,7 +664,7 @@ def main():
         logger.info('Searching objects into workspace %s ' % workspace)
 
         global api
-        api = Api(workspace, _user, _password)
+        api = Api(workspace, user, password)
 
         logger.debug("Getting hosts ...")
         hosts = api.get_hosts()
@@ -705,9 +676,9 @@ def main():
         vulns = api.get_vulnerabilities()
 
         if validate_rules():
-            process_vulnerabilities(workspace, vulns, _server)
-            process_services(workspace, services, _server)
-            process_hosts(workspace, hosts, _server)
+            process_vulnerabilities(workspace, vulns, server, mail_notificacion)
+            process_services(workspace, services, server, mail_notificacion)
+            process_hosts(workspace, hosts, server, mail_notificacion)
 
         # Remove lockfile
         os.remove(lockf)

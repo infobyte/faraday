@@ -19,6 +19,7 @@ import logging
 import subprocess
 from datetime import datetime
 
+import click
 import sqlite3
 from difflib import SequenceMatcher
 from email.mime.multipart import MIMEMultipart
@@ -599,68 +600,35 @@ def signal_handler(signal, frame):
     sys.exit(0)
 
 
-def main():
-    signal.signal(signal.SIGINT, signal_handler)
+@click.command()
+@click.option('--workspace', required=True, promtp=True, help='Workspacer name')
+@click.option('--server', required=True, prompt=True, help='Faraday server address')
+@click.option('--user', required=True, promtp=True, help='')
+@click.option('--password', required=True, promtp=True, password=True, help='')
+@click.option('--output', required=False, help='Choose a custom output directory', default='output')
+@click.option('--email', required=False)
+@click.option('--email_password', required=False)
+@click.option('--mail_protocol', required=False)
+@click.option('--port_procol', required=False, default=587)
+@click.option('--log', required=False, default='debug')
+def main(workspace, server, user, password, output, email, email_pass, mail_protocol, port_protocol, log):
 
-    parser = argparse.ArgumentParser(description='Search duplicated objects on Faraday')
-    parser.add_argument('-w', '--workspace', help='Search duplicated objects into this workspace', required=True)
-    parser.add_argument('-s', '--server', help='Faraday server', required=False, default="http://127.0.0.1:5985/")
-    parser.add_argument('-u', '--user', help='Faraday user', required=False, default="")
-    parser.add_argument('-p', '--password', help='Faraday password', required=False, default="")
-    parser.add_argument('-o', '--output', help='Choose a custom output directory', required=False)
-    parser.add_argument('-e', '--email', help='Custom email', required=False, default="faraday.searcher@gmail.com")
-    parser.add_argument('-ep', '--email_pass', help='Email password', required=False)
-    parser.add_argument('-mp', '--mail_protocol', help='Email protocol', required=False, default="smtp.gmail.com")
-    parser.add_argument('-pp', '--port_protocol', help='Port protocol', required=False, default=587)
-    parser.add_argument('-l', '--log', help='Choose a custom log level', required=False)
-    args = parser.parse_args()
+    signal.signal(signal.SIGINT, signal_handler)
 
     lockf = ".lock.pod"
     if not lock_file(lockf):
         print ("You can run only one instance of searcher (%s)" % lockf)
         exit(0)
 
-    workspace = ''
-    if args.workspace:
-        workspace = args.workspace
-    else:
-        print("You must enter a workspace in command line, please use --help to read more")
-        os.remove(lockf)
-        exit(0)
+    loglevel = log
 
-    _server = 'http://127.0.0.1:5985/'
-    if args.server:
-        _server = args.server
+    mail_notificacion = MailNotificacion(
+        email,
+        email_pass,
+        mail_protocol,
+        port_protocol,
 
-    _user = 'faraday'
-    if args.user:
-        _user = args.user
-
-    _password = 'changeme'
-    if args.password:
-        _password = args.password
-
-    output = 'output/'
-    if args.output:
-        output = args.output
-
-    loglevel = 'debug'
-    if args.log:
-        loglevel = args.log
-
-    global mail_from, mail_password, mail_protocol, mail_port
-
-    if args.email:
-        mail_from = args.email
-
-    if args.email_pass:
-        mail_password = args.email_pass
-
-    if args.mail_protocol:
-        mail_protocol = args.mail_protocol
-
-    if args.port_protocol:
-        mail_port = args.port_protocol
+    )
 
     for d in [output, 'log/']:
         if not os.path.isdir(d):
@@ -693,7 +661,7 @@ def main():
         logger.info('Searching objects into workspace %s ' % workspace)
 
         global api
-        api = Api(workspace, _user, _password)
+        api = Api(workspace, user, password)
 
         logger.debug("Getting hosts ...")
         hosts = api.get_hosts()

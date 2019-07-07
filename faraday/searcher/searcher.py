@@ -7,20 +7,26 @@
 ## See the file 'doc/LICENSE' for the license information
 ###
 
-import argparse
 import os
+import re
+import sys
+import ast
+import json
 import signal
 import smtplib
-import sqlite3
+import argparse
+import logging
 import subprocess
-import sys
 from datetime import datetime
+
+import sqlite3
 from difflib import SequenceMatcher
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import ast
-from validator import *
-from api import Api
+
+from faraday.searcher.validator import validate_rules
+from faraday.searcher.api import Api
+from faraday.searcher.rules import rules, min_weight, threshold
 
 logger = logging.getLogger('Faraday searcher')
 

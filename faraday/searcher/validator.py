@@ -10,7 +10,7 @@
 import re
 import json
 import logging
-from rules import *
+from faraday.searcher.rules import rules
 
 logger = logging.getLogger('Faraday searcher')
 

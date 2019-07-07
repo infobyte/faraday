@@ -236,7 +236,7 @@ def update_vulnerability(ws, vuln, key, value, _server):
             field = get_field(vuln, key)
 
         if field is not None and is_custom_field is False:
-            if isinstance(field, str) or isinstance(field, unicode):
+            if isinstance(field, str, unicode):
                 setattr(vuln, key, value)
                 logger.info(
                     "Changing property %s to %s in vulnerability '%s' with id %s" % (key, value, vuln.name, vuln.id))
@@ -277,7 +277,7 @@ def update_service(ws, service, key, value):
 
         field = get_field(service, key)
         if field is not None:
-            if isinstance(field, str) or isinstance(field, unicode):
+            if isinstance(field, str, unicode):
                 setattr(service, key, value)
                 logger.info(
                     "Changing property %s to %s in service '%s' with id %s" % (key, value, service.name, service.id))
@@ -312,7 +312,7 @@ def update_host(ws, host, key, value):
 
         field = get_field(host, key)
         if field is not None:
-            if isinstance(field, str) or isinstance(field, unicode):
+            if isinstance(field, str, unicode):
                 setattr(host, key, value)
                 logger.info("Changing property %s to %s in host '%s' with id %s" % (key, value, host.name, host.id))
             else:
@@ -548,7 +548,6 @@ def process_services(ws, services, _server, mail_notificacion, rules):
             services = get_models(ws, services, rule)
             if 'fields' in rule:
                 process_models_by_similarity(ws, services, rule, _server)
-                pass
             else:
                 _objs_value = None
                 if 'object' in rule:
@@ -570,7 +569,6 @@ def process_hosts(ws, hosts, _server, mail_notificacion, rules):
             hosts = get_models(ws, hosts, rule)
             if 'fields' in rule:
                 process_models_by_similarity(ws, hosts, rule, _server)
-                pass
             else:
                 _objs_value = None
                 if 'object' in rule:

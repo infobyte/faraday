@@ -14,7 +14,6 @@ import ast
 import json
 import signal
 import smtplib
-import argparse
 import logging
 import subprocess
 from datetime import datetime
@@ -30,13 +29,11 @@ from faraday.searcher.api import Api
 
 logger = logging.getLogger('Faraday searcher')
 
-reload(sys)
-sys.setdefaultencoding("utf-8")
 threshold = 0.75
 min_weight = 0.3
 
 
-class MailNotificacion:
+class MailNotification:
 
     def __init__(self, mail_from, mail_password, mail_protocol, mail_port):
         self.mail_from = mail_from

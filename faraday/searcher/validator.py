@@ -163,7 +163,7 @@ def validate(key, dictionary, validate_function=None, rule_id=None, mandatory=Tr
     return True
 
 
-def validate_rules():
+def validate_rules(rules):
     logger.info('--> Validating rules ...')
     id_list = []
     for rule in rules:

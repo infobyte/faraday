@@ -27,13 +27,13 @@ from email.mime.text import MIMEText
 
 from faraday.searcher.validator import validate_rules
 from faraday.searcher.api import Api
-from faraday.searcher.rules import rules, min_weight, threshold
 
 logger = logging.getLogger('Faraday searcher')
 
 reload(sys)
 sys.setdefaultencoding("utf-8")
-
+threshold = 0.75
+min_weight = 0.3
 
 
 class MailNotificacion:
@@ -515,7 +515,7 @@ def replace_rule(rule, value_item):
     return ast.literal_eval(rule_str)
 
 
-def process_vulnerabilities(ws, vulns, _server, mail_notificacion):
+def process_vulnerabilities(ws, vulns, _server, mail_notificacion, rules):
     logger.debug("--> Start Process vulnerabilities")
     for rule_item in rules:
         if rule_item['model'] == 'Vulnerability':
@@ -544,7 +544,7 @@ def process_vulnerabilities(ws, vulns, _server, mail_notificacion):
     logger.debug("<-- Finish Process vulnerabilities")
 
 
-def process_services(ws, services, _server, mail_notificacion):
+def process_services(ws, services, _server, mail_notificacion, rules):
     logger.debug("--> Start Process services")
     for rule in rules:
         if rule['model'] == 'Service':
@@ -566,7 +566,7 @@ def process_services(ws, services, _server, mail_notificacion):
     logger.debug("<-- Finish Process services")
 
 
-def process_hosts(ws, hosts, _server, mail_notificacion):
+def process_hosts(ws, hosts, _server, mail_notificacion, rules):
     logger.debug("--> Start Process Hosts")
     for rule in rules:
         if rule['model'] == 'Host':
@@ -614,7 +614,8 @@ def signal_handler(signal, frame):
 @click.option('--mail_protocol', required=False)
 @click.option('--port_procol', required=False, default=587)
 @click.option('--log', required=False, default='debug')
-def main(workspace, server, user, password, output, email, email_pass, mail_protocol, port_protocol, log):
+@click.option('--rules', required=True, help='Filename with rules')
+def main(workspace, server, user, password, output, email, email_pass, mail_protocol, port_protocol, log, rules):
 
     signal.signal(signal.SIGINT, signal_handler)
 
@@ -624,6 +625,12 @@ def main(workspace, server, user, password, output, email, email_pass, mail_prot
         exit(0)
 
     loglevel = log
+    with open(rules, 'r') as rules_file:
+        try:
+            rules = json.loads(rules_file.read())
+        except Exception:
+            print("Invalid rules file.")
+            sys.exit(1)
 
     mail_notificacion = MailNotificacion(
         email,
@@ -675,10 +682,10 @@ def main(workspace, server, user, password, output, email, email_pass, mail_prot
         logger.debug("Getting vulnerabilities ...")
         vulns = api.get_vulnerabilities()
 
-        if validate_rules():
-            process_vulnerabilities(workspace, vulns, server, mail_notificacion)
-            process_services(workspace, services, server, mail_notificacion)
-            process_hosts(workspace, hosts, server, mail_notificacion)
+        if validate_rules(rules):
+            process_vulnerabilities(workspace, vulns, server, mail_notificacion, rules)
+            process_services(workspace, services, server, mail_notificacion, rules)
+            process_hosts(workspace, hosts, server, mail_notificacion, rules)
 
         # Remove lockfile
         os.remove(lockf)

@@ -301,10 +301,12 @@ binary_files:
         - pyinstaller -F -w --onefile --icon=faraday/faraday/server/www/favicon.ico start_client.spec
         - pyinstaller -F -w --onefile --icon=faraday/faraday/server/www/favicon.ico fplugin.spec
         - pyinstaller -F -w --onefile --icon=faraday/faraday/server/www/favicon.ico seacher.spec
-        - mv dist/start_client dist/faraday-client
-        - mv dist/start_server dist/faraday-server
-        - mv dist/manage dist/faraday-manage
-        - mv dist/fplugin dist/faraday-fplugin
+        - mkdir output
+        - mv dist/start_client output/faraday-client
+        - mv dist/start_server output/faraday-server
+        - mv dist/manage output/faraday-manage
+        - mv dist/fplugin output/faraday-fplugin
+        - mv dist/searcher output/faraday-searcher
     artifacts:
         name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME-binaries"
         paths:

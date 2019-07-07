@@ -185,7 +185,7 @@ generate_release_file:
 
 generate_build_file:
     image: registry.gitlab.com/faradaysec/faraday/faraday_testing_pink
-    stage: build_faraday 
+    stage: build_faraday
     script:
         - apt-get update -qy
         - apt-get install -y rsync
@@ -303,6 +303,7 @@ binary_files:
         - pyinstaller -F -w --onefile --icon=faraday/faraday/server/www/favicon.ico manage.spec
         - pyinstaller -F -w --onefile --icon=faraday/faraday/server/www/favicon.ico start_client.spec
         - pyinstaller -F -w --onefile --icon=faraday/faraday/server/www/favicon.ico fplugin.spec
+        - pyinstaller -F -w --onefile --icon=faraday/faraday/server/www/favicon.ico seacher.spec
         - mv dist/start_client dist/faraday-client
         - mv dist/start_server dist/faraday-server
         - mv dist/manage dist/faraday-manage

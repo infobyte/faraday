@@ -239,6 +239,7 @@ setup(
             'faraday-client=faraday.client.start_client:main',
             'fplugin=faraday.client.bin.fplugin:main',
             'faraday-manage=faraday.manage:cli',
+            'faraday-searcher=faraday.searcher.searcher:main'
         ],
     },
 

@@ -196,7 +196,6 @@ generate_build_file:
         - tags
         - white/master
         - white/dev
-        - tkt_white_5751_white_deb_rpm_installers
     artifacts:
         name: 'faraday'
         paths:
@@ -239,7 +238,6 @@ generate_deb:
         - tags
         - white/master
         - white/dev
-        - tkt_white_5751_white_deb_rpm_installers
 
 generate_rpm:
     stage: build
@@ -280,7 +278,6 @@ generate_rpm:
         - tags
         - white/master
         - white/dev
-        - tkt_white_5751_white_deb_rpm_installers
 
 
 binary_files:

@@ -30,7 +30,7 @@ def validate_id(id_list, rule_id):
 
 
 def validate_model(model):
-    if model is not 'Host' and model is not 'Service' and model is not 'Vulnerability':
+    if model not in ['Host', 'Service', 'Vulnerability']:
         return False
     return True
 

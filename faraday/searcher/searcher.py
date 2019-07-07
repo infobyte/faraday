@@ -65,7 +65,7 @@ def compare(a, b):
     return SequenceMatcher(None, a, b).ratio()
 
 
-def get_cwe(data):
+def get_cwe(api, data):
     logger.debug("Getting vulnerability templates")
     templates = api.get_filtered_templates(id=data, name=data)
     if len(templates) > 0:
@@ -130,7 +130,7 @@ def get_model_environment(model, _models):
     return environment
 
 
-def process_models_by_similarity(ws, _models, rule, _server, mail_notificacion):
+def process_models_by_similarity(api, ws, _models, rule, mail_notificacion):
     logger.debug("--> Start Process models by similarity")
     for index_m1, m1 in zip(range(len(_models) - 1), _models):
         for index_m2, m2 in zip(range(index_m1 + 1, len(_models)), _models[index_m1 + 1:]):
@@ -145,9 +145,9 @@ def process_models_by_similarity(ws, _models, rule, _server, mail_notificacion):
                         if 'conditions' in rule:
                             environment = get_model_environment(m2, _models)
                             if can_execute_action(environment, rule['conditions']):
-                                execute_action(ws, _object, rule, _server, mail_notificacion)
+                                execute_action(api, ws, _object, rule, mail_notificacion)
                         else:
-                            execute_action(ws, _object, rule, _server, mail_notificacion)
+                            execute_action(api, ws, _object, rule, mail_notificacion)
     logger.debug("<-- Finish Process models by similarity")
 
 
@@ -200,9 +200,9 @@ def set_array(field, value, add=True):
                 field.remove(value)
 
 
-def update_vulnerability(ws, vuln, key, value, _server):
+def update_vulnerability(api, ws, vuln, key, value):
     if key == 'template':
-        cwe = get_cwe(value)
+        cwe = get_cwe(api, value)
         if cwe is None:
             logger.error("%s: cwe not found" % value)
             return False
@@ -264,7 +264,7 @@ def update_vulnerability(ws, vuln, key, value, _server):
     return True
 
 
-def update_service(ws, service, key, value):
+def update_service(api, ws, service, key, value):
     if key == 'owned':
         value = value == 'True'
         service.owned = value
@@ -299,7 +299,7 @@ def update_service(ws, service, key, value):
     return True
 
 
-def update_host(ws, host, key, value):
+def update_host(api, ws, host, key, value):
     if key == 'owned':
         value = value == 'True'
         host.owned = value
@@ -333,7 +333,7 @@ def update_host(ws, host, key, value):
     return True
 
 
-def get_parent(ws, parent_tag):
+def get_parent(api, ws, parent_tag):
     logger.debug("Getting parent")
     return api.get_filtered_services(id=parent_tag, name=parent_tag) or \
            api.get_filtered_hosts(id=parent_tag, name=parent_tag)
@@ -412,10 +412,10 @@ def get_object(_models, obj):
     return objects
 
 
-def get_models(ws, objects, rule):
+def get_models(api, ws, objects, rule):
     logger.debug("Getting models")
     if 'parent' in rule:
-        parent = get_parent(ws, rule['parent'])
+        parent = get_parent(api, ws, rule['parent'])
         if parent is None:
             logger.warning("WARNING: Parent %s not found in rule %s " % (rule['parent'], rule['id']))
             return objects
@@ -439,7 +439,7 @@ def can_execute_action(_models, conditions):
     return True
 
 
-def execute_action(ws, objects, rule, _server, mail_notificacion=None):
+def execute_action(api, ws, objects, rule, mail_notificacion=None):
     logger.info("Running actions of rule '%s' :" % rule['id'])
     actions = rule['actions']
     _objs_value = None
@@ -458,14 +458,14 @@ def execute_action(ws, objects, rule, _server, mail_notificacion=None):
                 key = array_exp[0]
                 value = str('=').join(array_exp[1:])
                 if obj.class_signature == 'VulnerabilityWeb' or obj.class_signature == 'Vulnerability':
-                    if update_vulnerability(ws, obj, key, value, _server):
+                    if update_vulnerability(api, ws, obj, key, value):
                         insert_rule(rule['id'], command, obj, _objs_value, fields=None, key=key, value=value)
 
                 if obj.class_signature == 'Service':
-                    update_service(ws, obj, key, value)
+                    update_service(api, ws, obj, key, value)
 
                 if obj.class_signature == 'Host':
-                    update_host(ws, obj, key, value)
+                    update_host(api, ws, obj, key, value)
 
             elif command == 'DELETE':
                 if obj.class_signature == 'VulnerabilityWeb' or obj.class_signature == 'Vulnerability':
@@ -512,7 +512,7 @@ def replace_rule(rule, value_item):
     return ast.literal_eval(rule_str)
 
 
-def process_vulnerabilities(ws, vulns, _server, mail_notificacion, rules):
+def process_vulnerabilities(api, ws, vulns, mail_notificacion, rules):
     logger.debug("--> Start Process vulnerabilities")
     for rule_item in rules:
         if rule_item['model'] == 'Vulnerability':
@@ -524,9 +524,9 @@ def process_vulnerabilities(ws, vulns, _server, mail_notificacion, rules):
 
             for index in range(count_values):
                 rule = replace_rule(rule_item, values[index])
-                vulnerabilities = get_models(ws, vulns, rule)
+                vulnerabilities = get_models(api, ws, vulns, rule)
                 if 'fields' in rule:
-                    process_models_by_similarity(ws, vulnerabilities, rule, _server, mail_notificacion)
+                    process_models_by_similarity(ws, vulnerabilities, rule, mail_notificacion)
                 else:
                     _objs_value = None
                     if 'object' in rule:
@@ -535,17 +535,17 @@ def process_vulnerabilities(ws, vulns, _server, mail_notificacion, rules):
                     if objects is not None and len(objects) != 0:
                         if 'conditions' in rule:
                             if can_execute_action(vulnerabilities, rule['conditions']):
-                                execute_action(ws, objects, rule, _server, mail_notificacion)
+                                execute_action(api, ws, objects, rule, mail_notificacion)
                         else:
-                            execute_action(ws, objects, rule, _server, mail_notificacion)
+                            execute_action(api, ws, objects, rule, mail_notificacion)
     logger.debug("<-- Finish Process vulnerabilities")
 
 
-def process_services(ws, services, _server, mail_notificacion, rules):
+def process_services(api, ws, services, mail_notificacion, rules):
     logger.debug("--> Start Process services")
     for rule in rules:
         if rule['model'] == 'Service':
-            services = get_models(ws, services, rule)
+            services = get_models(api, ws, services, rule)
             if 'fields' in rule:
                 process_models_by_similarity(ws, services, rule, _server)
             else:
@@ -556,17 +556,17 @@ def process_services(ws, services, _server, mail_notificacion, rules):
                 if objects is not None and len(objects) != 0:
                     if 'conditions' in rule:
                         if can_execute_action(services, rule['conditions']):
-                            execute_action(ws, objects, rule, _server, mail_notificacion)
+                            execute_action(api, ws, objects, rule, mail_notificacion)
                     else:
-                        execute_action(ws, objects, rule, _server, mail_notificacion)
+                        execute_action(api, ws, objects, rule, mail_notificacion)
     logger.debug("<-- Finish Process services")
 
 
-def process_hosts(ws, hosts, _server, mail_notificacion, rules):
+def process_hosts(api, ws, hosts, mail_notificacion, rules):
     logger.debug("--> Start Process Hosts")
     for rule in rules:
         if rule['model'] == 'Host':
-            hosts = get_models(ws, hosts, rule)
+            hosts = get_models(api, ws, hosts, rule)
             if 'fields' in rule:
                 process_models_by_similarity(ws, hosts, rule, _server)
             else:
@@ -577,25 +577,61 @@ def process_hosts(ws, hosts, _server, mail_notificacion, rules):
                 if objects is not None and len(objects) != 0:
                     if 'conditions' in rule:
                         if can_execute_action(hosts, rule['conditions']):
-                            execute_action(ws, objects, rule, _server, mail_notificacion)
+                            execute_action(api, ws, objects, rule, mail_notificacion)
                     else:
-                        execute_action(ws, objects, rule, _server, mail_notificacion)
+                        execute_action(api, ws, objects, rule, mail_notificacion)
         logger.debug("<-- Finish Process Hosts")
-
-
-def lock_file(lockfile):
-    if os.path.isfile(lockfile):
-        return False
-    else:
-        f = open(lockfile, 'w')
-        f.close()
-        return True
 
 
 def signal_handler(signal, frame):
     os.remove(".lock.pod")
     logger.info('Killed')
     sys.exit(0)
+
+
+class Searcher:
+
+    def __init__(self, api, rules, workspace, mail_notificacion=None):
+        self.api = api
+        self.rules = rules
+        self.mail_notificacion = mail_notificacion
+        self.workspace = workspace
+
+
+        logger.debug("Getting hosts ...")
+        self.hosts = api.get_hosts()
+
+        logger.debug("Getting services ...")
+        self.services = api.get_services()
+
+        logger.debug("Getting vulnerabilities ...")
+        self.vulns = api.get_vulnerabilities()
+
+    def run(self):
+
+
+        if validate_rules(self.rules):
+            process_vulnerabilities(
+                self.api,
+                self.workspace,
+                self.vulns,
+                self.mail_notificacion,
+                self.rules
+            )
+            process_services(
+                self.api,
+                self.workspace,
+                self.services,
+                self.mail_notificacion,
+                self.rules
+            )
+            process_hosts(
+                self.api,
+                self.workspace,
+                self.hosts,
+                self.mail_notificacion,
+                self.rules
+            )
 
 
 @click.command()
@@ -613,11 +649,6 @@ def signal_handler(signal, frame):
 def main(workspace, server, user, password, output, email, email_password, mail_protocol, port_protocol, log, rules):
 
     signal.signal(signal.SIGINT, signal_handler)
-
-    lockf = ".lock.pod"
-    if not lock_file(lockf):
-        print ("You can run only one instance of searcher (%s)" % lockf)
-        sys.exit(1)
 
     loglevel = log
     with open(rules, 'r') as rules_file:
@@ -652,7 +683,7 @@ def main(workspace, server, user, password, output, email, email_password, mail_
         ch = logging.StreamHandler()
         ch.setLevel(numeric_level)
         # create formatter and add it to the handlers
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s: %(message)s',
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s[%(pathname)s %(lineno)d ]: %(message)s',
                                       datefmt='%m/%d/%Y %I:%M:%S %p')
 
         fh.setFormatter(formatter)
@@ -661,36 +692,15 @@ def main(workspace, server, user, password, output, email, email_password, mail_
         logger.addHandler(fh)
         logger.addHandler(ch)
 
-    try:
-        logger.info('Started')
-        logger.info('Searching objects into workspace %s ' % workspace)
+    logger.info('Started')
+    logger.info('Searching objects into workspace %s ' % workspace)
 
-        global api
-        api = Api(workspace, user, password)
+    api = Api(workspace, user, password, base=server)
 
-        logger.debug("Getting hosts ...")
-        hosts = api.get_hosts()
+    searcher = Searcher(api, rules, workspace, mail_notificacion)
+    searcher.run()
 
-        logger.debug("Getting services ...")
-        services = api.get_services()
-
-        logger.debug("Getting vulnerabilities ...")
-        vulns = api.get_vulnerabilities()
-
-        if validate_rules(rules):
-            process_vulnerabilities(workspace, vulns, server, mail_notificacion, rules)
-            process_services(workspace, services, server, mail_notificacion, rules)
-            process_hosts(workspace, hosts, server, mail_notificacion, rules)
-
-        # Remove lockfile
-        os.remove(lockf)
-
-        logger.info('Finished')
-
-    except Exception as errorMsg:
-        logger.error(errorMsg)
-        os.remove(lockf)
-        sys.exit(0)
+    logger.info('Finished')
 
 
 if __name__ == "__main__":

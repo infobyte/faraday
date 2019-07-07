@@ -593,7 +593,7 @@ def signal_handler(signal, frame):
 
 class Searcher:
 
-    def __init__(self, api, rules, workspace, mail_notificacion):
+    def __init__(self, api, rules, workspace, mail_notificacion=None):
         self.api = api
         self.rules = rules
         self.mail_notificacion = mail_notificacion

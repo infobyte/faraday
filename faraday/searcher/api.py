@@ -41,15 +41,17 @@ class Structure:
 
 
 class Api:
-    def __init__(self, workspace, username, password, base='http://127.0.0.1:5985/_api/'):
+    def __init__(self, workspace, username=None, password=None, base='http://127.0.0.1:5985/_api/', cookies=None):
         self.base = base
         if not self.base.endswith('/'):
             self.base += '/'
         self.base += '_api/'
         self.workspace = workspace
-        self.cookies = self.login(username, password)
-        if self.cookies is None:
-            raise UserWarning('Invalid username or password')
+        self.cookies = cookies
+        if not self.cookies and username and password:
+            self.cookies = self.login(username, password)
+            if self.cookies is None:
+                raise UserWarning('Invalid username or password')
 
     def _url(self, path):
         return self.base + 'v2/' + path

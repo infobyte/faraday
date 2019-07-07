@@ -34,31 +34,34 @@ logger = logging.getLogger('Faraday searcher')
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
-mail_from = ''
-mail_password = ''
-mail_protocol = 'smtp.gmail.com'
-mail_port = 587
 
 
-def send_mail(to_addr, subject, body):
-    global mail_from, mail_password, mail_protocol, mail_port
-    from_addr = mail_from
-    msg = MIMEMultipart()
-    msg['From'] = from_addr
-    msg['To'] = to_addr
-    msg['Subject'] = subject
+class MailNotificacion:
 
-    msg.attach(MIMEText(body, 'plain'))
-    try:
-        server_mail = smtplib.SMTP(mail_protocol, mail_port)
-        server_mail.starttls()
-        server_mail.login(from_addr, mail_password)
-        text = msg.as_string()
-        server_mail.sendmail(from_addr, to_addr, text)
-        server_mail.quit()
-    except Exception as error:
-        logger.error("Error: unable to send email")
-        logger.error(error)
+    def __init__(self, mail_from, mail_password, mail_protocol, mail_port):
+        self.mail_from = mail_from
+        self.mail_password = mail_password
+        self.mail_protocol = mail_protocol
+        self.mail_port = mail_port
+
+    def send_mail(self, to_addr, subject, body):
+        from_addr = self.mail_from
+        msg = MIMEMultipart()
+        msg['From'] = from_addr
+        msg['To'] = to_addr
+        msg['Subject'] = subject
+
+        msg.attach(MIMEText(body, 'plain'))
+        try:
+            server_mail = smtplib.SMTP(self.mail_protocol, self.mail_port)
+            server_mail.starttls()
+            server_mail.login(from_addr, self.mail_password)
+            text = msg.as_string()
+            server_mail.sendmail(from_addr, to_addr, text)
+            server_mail.quit()
+        except Exception as error:
+            logger.error("Error: unable to send email")
+            logger.error(error)
 
 
 def compare(a, b):
@@ -130,7 +133,7 @@ def get_model_environment(model, _models):
     return environment
 
 
-def process_models_by_similarity(ws, _models, rule, _server):
+def process_models_by_similarity(ws, _models, rule, _server, mail_notificacion):
     logger.debug("--> Start Process models by similarity")
     for index_m1, m1 in zip(range(len(_models) - 1), _models):
         for index_m2, m2 in zip(range(index_m1 + 1, len(_models)), _models[index_m1 + 1:]):
@@ -145,9 +148,9 @@ def process_models_by_similarity(ws, _models, rule, _server):
                         if 'conditions' in rule:
                             environment = get_model_environment(m2, _models)
                             if can_execute_action(environment, rule['conditions']):
-                                execute_action(ws, _object, rule, _server)
+                                execute_action(ws, _object, rule, _server, mail_notificacion)
                         else:
-                            execute_action(ws, _object, rule, _server)
+                            execute_action(ws, _object, rule, _server, mail_notificacion)
     logger.debug("<-- Finish Process models by similarity")
 
 
@@ -439,7 +442,7 @@ def can_execute_action(_models, conditions):
     return True
 
 
-def execute_action(ws, objects, rule, _server):
+def execute_action(ws, objects, rule, _server, mail_notificacion=None):
     logger.info("Running actions of rule '%s' :" % rule['id'])
     actions = rule['actions']
     _objs_value = None
@@ -492,7 +495,7 @@ def execute_action(ws, objects, rule, _server):
                 subject = 'Faraday searcher alert'
                 body = '%s %s have been modified by rule %s at %s' % (
                     obj.class_signature, obj.name, rule['id'], str(datetime.now()))
-                send_mail(expression, subject, body)
+                mail_notificacion.send_mail(expression, subject, body)
                 insert_rule(rule['id'], command, obj, _objs_value, fields=None, key=None, value=expression)
                 logger.info("Sending mail to: '%s'" % expression)
     return True
@@ -512,7 +515,7 @@ def replace_rule(rule, value_item):
     return ast.literal_eval(rule_str)
 
 
-def process_vulnerabilities(ws, vulns, _server):
+def process_vulnerabilities(ws, vulns, _server, mail_notificacion):
     logger.debug("--> Start Process vulnerabilities")
     for rule_item in rules:
         if rule_item['model'] == 'Vulnerability':
@@ -526,7 +529,7 @@ def process_vulnerabilities(ws, vulns, _server):
                 rule = replace_rule(rule_item, values[index])
                 vulnerabilities = get_models(ws, vulns, rule)
                 if 'fields' in rule:
-                    process_models_by_similarity(ws, vulnerabilities, rule, _server)
+                    process_models_by_similarity(ws, vulnerabilities, rule, _server, mail_notificacion)
                 else:
                     _objs_value = None
                     if 'object' in rule:
@@ -535,13 +538,13 @@ def process_vulnerabilities(ws, vulns, _server):
                     if objects is not None and len(objects) != 0:
                         if 'conditions' in rule:
                             if can_execute_action(vulnerabilities, rule['conditions']):
-                                execute_action(ws, objects, rule, _server)
+                                execute_action(ws, objects, rule, _server, mail_notificacion)
                         else:
-                            execute_action(ws, objects, rule, _server)
+                            execute_action(ws, objects, rule, _server, mail_notificacion)
     logger.debug("<-- Finish Process vulnerabilities")
 
 
-def process_services(ws, services, _server):
+def process_services(ws, services, _server, mail_notificacion):
     logger.debug("--> Start Process services")
     for rule in rules:
         if rule['model'] == 'Service':
@@ -557,13 +560,13 @@ def process_services(ws, services, _server):
                 if objects is not None and len(objects) != 0:
                     if 'conditions' in rule:
                         if can_execute_action(services, rule['conditions']):
-                            execute_action(ws, objects, rule, _server)
+                            execute_action(ws, objects, rule, _server, mail_notificacion)
                     else:
-                        execute_action(ws, objects, rule, _server)
+                        execute_action(ws, objects, rule, _server, mail_notificacion)
     logger.debug("<-- Finish Process services")
 
 
-def process_hosts(ws, hosts, _server):
+def process_hosts(ws, hosts, _server, mail_notificacion):
     logger.debug("--> Start Process Hosts")
     for rule in rules:
         if rule['model'] == 'Host':
@@ -579,9 +582,9 @@ def process_hosts(ws, hosts, _server):
                 if objects is not None and len(objects) != 0:
                     if 'conditions' in rule:
                         if can_execute_action(hosts, rule['conditions']):
-                            execute_action(ws, objects, rule, _server)
+                            execute_action(ws, objects, rule, _server, mail_notificacion)
                     else:
-                        execute_action(ws, objects, rule, _server)
+                        execute_action(ws, objects, rule, _server, mail_notificacion)
         logger.debug("<-- Finish Process Hosts")
 
 
@@ -673,9 +676,9 @@ def main(workspace, server, user, password, output, email, email_pass, mail_prot
         vulns = api.get_vulnerabilities()
 
         if validate_rules():
-            process_vulnerabilities(workspace, vulns, _server)
-            process_services(workspace, services, _server)
-            process_hosts(workspace, hosts, _server)
+            process_vulnerabilities(workspace, vulns, server, mail_notificacion)
+            process_services(workspace, services, server, mail_notificacion)
+            process_hosts(workspace, hosts, server, mail_notificacion)
 
         # Remove lockfile
         os.remove(lockf)

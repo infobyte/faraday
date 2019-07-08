@@ -193,9 +193,12 @@ generate_build_file:
         - "/usr/bin/rsync -aq --exclude 'faraday_copy' --exclude '.cache' . faraday_copy"
         - "/bin/tar -zcf faraday.tar.gz faraday_copy"
     only:
-        - tags
-        - white/master
-        - white/dev
+        variables:
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(master)$/
+            - $CI_COMMIT_TAG
+            - $BUILD_TEST
+            - $FULL_TEST
+            - $DAILY_TEST
     artifacts:
         name: 'faraday'
         paths:
@@ -235,9 +238,12 @@ generate_deb:
             - "faraday-server_amd64.deb"
         expire_in: 15 days
     only:
-        - tags
-        - white/master
-        - white/dev
+        variables:
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(master)$/
+            - $CI_COMMIT_TAG
+            - $BUILD_TEST
+            - $FULL_TEST
+            - $DAILY_TEST
 
 generate_rpm:
     stage: build
@@ -275,10 +281,12 @@ generate_rpm:
             - "faraday-server_amd64.rpm"
         expire_in: 15 days
     only:
-        - tags
-        - white/master
-        - white/dev
-
+        variables:
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(master)$/
+            - $CI_COMMIT_TAG
+            - $BUILD_TEST
+            - $FULL_TEST
+            - $DAILY_TEST
 
 binary_files:
     image: python:2.7.16
@@ -307,13 +315,11 @@ binary_files:
         - mv dist/manage output/faraday-manage
         - mv dist/fplugin output/faraday-fplugin
         - mv dist/searcher output/faraday-searcher
+        - tar -zcvf linux-binaries.tar.gz output
     artifacts:
         name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME-binaries"
         paths:
-          - dist/faraday-server
-          - dist/faraday-manage
-          - dist/faraday-client
-          - dist/faraday-fplugin
+            - linux-binaries.tar.gz
         expire_in: 1 week
     only:
         variables:

@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['faraday/searcher/searcher.py'],
-             pathex=['/home/faraday/faraday'],
+             pathex=['/Users/lcubo/workspace/faraday'],
              binaries=[],
              datas=[],
              hiddenimports=[],
@@ -30,3 +30,7 @@ exe = EXE(pyz,
           upx=True,
           runtime_tmpdir=None,
           console=False , icon='faraday/faraday/server/www/favicon.ico')
+app = BUNDLE(exe,
+             name='searcher.app',
+             icon='faraday/faraday/server/www/favicon.ico',
+             bundle_identifier=None)

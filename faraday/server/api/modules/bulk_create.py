@@ -1,5 +1,12 @@
+import flask
 import sqlalchemy
-from marshmallow import fields, ValidationError, utils, post_load
+from marshmallow import (
+    fields,
+    post_load,
+    Schema,
+    utils,
+    ValidationError,
+)
 from marshmallow.validate import Range
 from faraday.server.models import (
     Command,
@@ -21,8 +28,9 @@ from faraday.server.api.modules import (
     services,
     vulns,
 )
-from faraday.server.api.base import AutoSchema
+from faraday.server.api.base import AutoSchema, GenericWorkspacedView
 
+bulk_create_api = flask.Blueprint('bulk_create_api', __name__)
 
 class VulnerabilitySchema(vulns.VulnerabilitySchema):
     class Meta(vulns.VulnerabilitySchema.Meta):
@@ -146,6 +154,18 @@ class CommandSchema(AutoSchema):
         data['end_date'] = data['start_date'] + duration
 
 
+class BulkCreateSchema(Schema):
+    hosts = fields.Nested(
+        HostSchema(many=True),
+        many=True,
+        missing=[],
+    )
+    command = fields.Nested(
+        CommandSchema(),
+        required=False,
+    )
+
+
 def get_or_create(ws, model_class, data):
     """Check for conflicts and create a new object
 
@@ -171,26 +191,31 @@ def get_or_create(ws, model_class, data):
     return (True, obj)
 
 
-def bulk_create(ws, data):
+def bulk_create(ws, data, reload_data=True):
+    if reload_data:
+        schema = BulkCreateSchema(strict=True)
+        data = schema.load(data).data
     if 'command' in data:
-        command = create_command(ws, data['command'])
+        command = create_command(ws, data['command'], False)
     else:
         command = None
     for host in data['hosts']:
-        create_host(ws, host, command)
+        create_host(ws, host, command, False)
 
 
-def create_command(ws, raw_data):
-    schema = CommandSchema(strict=True)
-    command_data = schema.load(raw_data).data
+def create_command(ws, command_data, reload_data=True):
+    if reload_data:
+        schema = CommandSchema(strict=True)
+        command_data = schema.load(command_data).data
     (created, command) = get_or_create(ws, Command, command_data)
     assert created  # There isn't an unique constraint in command
     return command
 
 
-def create_host(ws, raw_data, command=None):
-    schema = HostSchema(strict=True)
-    host_data = schema.load(raw_data).data
+def create_host(ws, host_data, command=None, reload_data=True):
+    if reload_data:
+        schema = HostSchema(strict=True)
+        host_data = schema.load(host_data).data
     hostnames = host_data.pop('hostnames', [])
     services = host_data.pop('services')
     credentials = host_data.pop('credentials')
@@ -303,3 +328,15 @@ def create_credential(ws, cred_data, command=None, reload_data=True, **kwargs):
 
     if command is not None:
         create_command_object_for(ws, created, cred, command)
+
+
+class BulkCreateView(GenericWorkspacedView):
+    route_base = 'bulk_create'
+    schema_class = BulkCreateSchema
+
+    def post(self, workspace_name):
+        data = self._parse_data(self._get_schema_instance({}), flask.request)
+        bulk_create(self._get_workspace(workspace_name), data, False)
+        return "Created", 201
+
+BulkCreateView.register(bulk_create_api)

@@ -465,3 +465,19 @@ def test_creates_command_object_on_duplicates(
             CommandObject.object_id == obj.id,
             CommandObject.created_persistent == False,
         ).one()
+
+
+@pytest.mark.usefixtures('logged_user')
+def test_bulk_create_endpoint(session, workspace, test_client):
+    assert count(Host, workspace) == 0
+    assert count(VulnerabilityGeneric, workspace) == 0
+    url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
+    host_data_ = host_data.copy()
+    host_data_['vulnerabilities'] = [vuln_data]
+    res = test_client.post(url, data=dict(hosts=[host_data_]))
+    assert res.status_code == 201, res.json
+    assert count(Host, workspace) == 1
+    assert count(Vulnerability, workspace) == 1
+    host = Host.query.filter(Host.workspace == workspace).one()
+    assert host.ip == "127.0.0.1"
+    assert set({hn.name for hn in host.hostnames}) == {"test.com", "test2.org"}

@@ -13,7 +13,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 revision = '9c4091d1a09b'
-down_revision = '2db31733fb78'
+down_revision = 'be89aa03e35e'
 branch_labels = None
 depends_on = None
 
@@ -22,7 +22,7 @@ def upgrade():
     op.create_table(
         'agent',
         sa.Column('id', sa.Integer, primary_key=True),
-        sa.Column('token', sa.String(256), nullable=True),
+        sa.Column('token', sa.String(256), nullable=False),
         sa.Column('description', sa.String(256), nullable=True),
         sa.Column('version', sa.String(50), nullable=True),
         sa.Column('projects', sa.Integer),

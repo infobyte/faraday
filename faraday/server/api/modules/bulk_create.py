@@ -253,6 +253,7 @@ def create_service(ws, host, service_data, command=None, reload_data=True):
     if reload_data:
         schema = ServiceSchema(strict=True, context={'updating': False})
         service_data = schema.load(service_data).data
+    service_data = service_data.copy()
     vulns = service_data.pop('vulnerabilities')
     creds = service_data.pop('credentials')
     service_data['host'] = host
@@ -286,6 +287,7 @@ def create_vuln(ws, vuln_data, command=None, reload_data=True, **kwargs):
     references = vuln_data.pop('references', [])
     policyviolations = vuln_data.pop('policy_violations', [])
 
+    vuln_data = vuln_data.copy()
     vuln_data.update(kwargs)
     if 'host' in kwargs and vuln_data['type'] != 'vulnerability':
         raise ValidationError('Type must be "Vulnerability"')
@@ -322,6 +324,7 @@ def create_credential(ws, cred_data, command=None, reload_data=True, **kwargs):
     if reload_data:
         schema = CredentialSchema(strict=True)
         cred_data = schema.load(cred_data).data
+    cred_data = cred_data.copy()
     cred_data.update(kwargs)
     (created, cred) = get_or_create(ws, Credential, cred_data)
     db.session.commit()

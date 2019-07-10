@@ -5,7 +5,8 @@ from flask import Blueprint
 from marshmallow import fields
 from faraday.server.api.base import (
     AutoSchema,
-    ReadWriteView)
+    GenericView,
+)
 from faraday.server.models import db, AgentAuthToken
 from faraday.server.schemas import PrimaryKeyRelatedField
 
@@ -24,20 +25,20 @@ class AgentAuthTokenSchema(AutoSchema):
         fields = ('id', 'token', 'create_date', 'update_date', 'creator')
 
 
-class AgentAuthTokenView(ReadWriteView):
-    route_base = 'agent_tokens'
+class AgentAuthTokenView(GenericView):
+    route_base = 'agent_token'
     model_class = AgentAuthToken
     schema_class = AgentAuthTokenSchema
 
-    def _perform_create(self, data, **kwargs):
-        current_auth_token = db.session.query(AgentAuthToken).first()
-        if current_auth_token:
-            current_auth_token.token = data['token']
-            agent_token = current_auth_token
-        else:
-            agent_token = super(AgentAuthTokenView, self)._perform_create(data, **kwargs)
+    def get(self, **kwargs):
+        token = AgentAuthToken.query.first()
+        if not token:
+            # generate a random token
+            token = AgentAuthToken()
+            db.session.add(token)
+            db.session.commit()
 
-        return agent_token
+        return self._dump(token, kwargs)
 
 
 AgentAuthTokenView.register(agent_auth_token_api)

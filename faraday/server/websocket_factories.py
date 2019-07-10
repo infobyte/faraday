@@ -81,20 +81,30 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
             if message['action'] == 'LEAVE_WORKSPACE':
                 self.factory.leave_workspace(self, message['workspace'])
             if message['action'] == 'JOIN_AGENT':
-                if 'agent_id' not in message or 'token' not in message:
+                if 'token' not in message:
                     logger.warn("Invalid agent join message")
                     self.sendClose()
                     return
                 with app.app_context():
-                    agent = Agent.query.filter_by(id=message['agent_id'])
-                    if message['token'] != agent.token:
+                    agent = Agent.query.filter_by(token=message['token']).first()
+                    if not agent:
                         logger.warn('Invalid agent token!')
                         self.sendClose()
                         return
                 # factory will now send broadcast messages to the agent
-                self.factory.join_agent(self, message['agent_id'])
+                self.factory.join_agent(self, agent)
             if message['action'] == 'LEAVE_AGENT':
-                self.factory.leave_agent(self, message['agent_id'])
+                if 'token' not in message:
+                    logger.warn("Invalid agent join message")
+                    self.sendClose()
+                    return
+                with app.app_context():
+                    agent = Agent.query.filter_by(id=message['token']).first()
+                    if not agent:
+                        logger.warn('Invalid agent token!')
+                        self.sendClose()
+                        return
+                self.factory.leave_agent(self, agent)
 
 
     def connectionLost(self, reason):
@@ -123,7 +133,7 @@ class WorkspaceServerFactory(WebSocketServerFactory):
         # this dict has a key for each channel
         # values are list of clients.
         self.workspace_clients = defaultdict(list)
-        self.agents = []
+        self.agents = {}
         self.tick()
 
     def tick(self):
@@ -148,14 +158,13 @@ class WorkspaceServerFactory(WebSocketServerFactory):
         logger.debug('Leave workspace {0}'.format(workspace_name))
         self.workspace_clients[workspace_name].remove(client)
 
-    def join_agent(self, agent_connection, agent_id):
-        logger.info("Agent {} joined!".format(agent_id))
-        if agent_id not in self.agents:
-            self.agents.append(agent_connection)
+    def join_agent(self, agent_connection, agent):
+        logger.info("Agent {} joined!".format(agent.id))
+        self.agents[agent.id] = agent_connection
 
-    def leave_agent(self, agent_id):
-        logger.info("Agent {} leaved".format(agent_id))
-        self.agents.remove(agent_id)
+    def leave_agent(self, agent):
+        logger.info("Agent {} leaved".format(agent.id))
+        self.agents.pop(agent.id)
 
     def unregister(self, client_to_unregister):
         """
@@ -177,6 +186,6 @@ class WorkspaceServerFactory(WebSocketServerFactory):
                 logger.debug("prepared message sent to {}".format(client.peer))
 
         if 'agent_id' in msg:
-            for agent_connection in self.agents[prepared_msg['agent_id']]:
-                reactor.callFromThread(agent_connection.sendPreparedMessage, self.prepareMessage(msg))
-                logger.debug("prepared message sent to agent id: {}".format(client.peer))
+            agent_connection = self.agents[prepared_msg['agent_id']]
+            reactor.callFromThread(agent_connection.sendPreparedMessage, self.prepareMessage(msg))
+            logger.debug("prepared message sent to agent id: {}".format(client.peer))

@@ -20,7 +20,6 @@ class AgentSchema(AutoSchema):
     type = fields.String(validate=OneOf(['shared', 'specific']))
     status = fields.String(validate=OneOf(['locked', 'paused', 'offline', 'running']))
     creator = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
-    tags = PrimaryKeyRelatedField('name', dump_only=True, many=True)
     token = fields.String(dump_only=True)
 
     class Meta:
@@ -29,7 +28,7 @@ class AgentSchema(AutoSchema):
             'id', 'type', 'status',
             'description', 'version',
             'projects', 'jobs',
-            'tags', 'create_date',
+            'create_date',
             'update_date', 'creator',
             'token'
         )
@@ -69,7 +68,7 @@ class AgentView(UpdateWorkspacedMixin,
     route_base = 'agent'
     model_class = Agent
     schema_class = AgentSchema
-    get_joinedloads = [Agent.creator, Agent.tags]
+    get_joinedloads = [Agent.creator]
 
 
 AgentView.register(agent_api)

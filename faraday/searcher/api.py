@@ -73,16 +73,10 @@ class Api:
         response = self.requests.post(url, json=data, headers=self.headers)
         if response.status_code == 401:
             raise ApiError('Unauthorized operation trying to get {}'.format(object_name))
-        if response.status_code != 200:
+        if response.status_code != 201:
             raise ApiError('Cannot fetch {}, api response: {}'.format(object_name, getattr(response, 'text', None)))
         if isinstance(response.json, dict):
             return response.json
-        return json.loads(response.content)
-
-        if response.status_code == 401:
-            raise ApiError('Unauthorized operation trying to create {}'.format(object_name))
-        if response.status_code != 201:
-            raise ApiError('Unable to create {}'.format(object_name))
         return json.loads(response.content)
 
     def _put(self, url, data, object_name):

@@ -9,6 +9,19 @@ See the file 'doc/LICENSE' for the license information
 import os
 import re
 import sys
+import platform
+
+# If is linux and its installed with deb or rpm, it must run with a user in the faraday group
+if platform.system() == "Linux":
+    import grp
+    try:
+        FARADAY_GROUP = "faraday"
+        faraday_group = grp.getgrnam(FARADAY_GROUP)
+        if faraday_group.gr_gid not in os.getgroups():
+            print("User (%s) must be in the '%s' group." % (os.getlogin(), FARADAY_GROUP))
+            sys.exit(1)
+    except KeyError:
+        pass
 
 import click
 import requests

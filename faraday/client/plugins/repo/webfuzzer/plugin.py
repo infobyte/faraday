@@ -125,7 +125,7 @@ class WebfuzzerPlugin(core.PluginBase):
             h_id = self.createAndAddHost(parser.ipaddress)
 
             i_id = self.createAndAddInterface(
-                h_id, parser.ipaddress, ipv4_address=parser.ipaddress, hostname_resolution=parser.hostname)
+                h_id, parser.ipaddress, ipv4_address=parser.ipaddress, hostname_resolution=[parser.hostname])
 
             first = True
             for item in parser.items:

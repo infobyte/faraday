@@ -480,7 +480,8 @@ class TestHostAPI:
             "_id": 4000,
             "os":"Microsoft Windows Server 2008 R2 Standard Service Pack 1",
             "id": 4000,
-            "icon":"windows"}
+            "icon":"windows",
+            "versions": []}
 
         res = test_client.put(self.url(host, workspace=host.workspace), data=raw_data)
         assert res.status_code == 200
@@ -511,7 +512,8 @@ class TestHostAPI:
             u'owner': host.creator.username,
             u'services': 0,
             u'service_summaries': [],
-            u'vulns': 0}
+            u'vulns': 0,
+            u"versions": []}
 
     def test_add_hosts_from_csv(self, session, test_client, csrf_token):
         ws = WorkspaceFactory.create(name='abc')

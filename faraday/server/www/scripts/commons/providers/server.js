@@ -606,14 +606,14 @@ angular.module("faradayApp")
                 }
             }
 
-            ServerAPI.exportCsv = function (wsName, confirmed) {
-
-                let url = APIURL + "ws/" + wsName + "/vulns/export_csv/";
-
-                if(confirmed)
-                    return get(url, {confirmed: confirmed});
-                else
+            ServerAPI.exportCsv = function (wsName, jsonOptions) {
+                if(jsonOptions){
+                    let url = APIURL + "ws/" + wsName + "/vulns/export_csv";
+                    return get(url  + '?q=' + jsonOptions);
+                }else{
+                    let url = APIURL + "ws/" + wsName + "/vulns/export_csv/";
                     return get(url);
+                }
             }
 
             ServerAPI.deleteVuln = function (wsName, vulnId, rev) {
@@ -700,6 +700,7 @@ angular.module("faradayApp")
                 return get(APIURL + 'vulners/exploits/' + cveId);
             }
 
+<<<<<<< HEAD
             ServerAPI.deleteAgent = function (wsName, agentId, rev) {
                 var deleteUrl = createDeleteUrl(wsName, agentId, 'agents');
                 if (typeof rev === "undefined") {
@@ -730,6 +731,9 @@ angular.module("faradayApp")
                  var putUrl = createNonWorkspacedPutUrl(agentToken.id, 'agent_tokens');
                  return send_data(putUrl, agentToken, true, "PUT");
             };
+            ServerAPI.getTools = function(hid, ws){
+                return get(APIURL + 'ws/' + ws + '/hosts/' + hid + '/tools_history/');
+            }
 
             return ServerAPI;
         }]);

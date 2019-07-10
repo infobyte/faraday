@@ -48,7 +48,7 @@ class hping3 (core.PluginBase):
         host_id = self.createAndAddHost(hostname)
 
         i_id = self.createAndAddInterface(
-            host_id, ip_address, ipv4_address=ip_address, hostname_resolution=hostname)
+            host_id, ip_address, ipv4_address=ip_address, hostname_resolution=[hostname])
 
         if re.match("HPING", output):
 

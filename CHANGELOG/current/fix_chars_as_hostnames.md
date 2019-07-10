@@ -1,0 +1,1 @@
+fix bug of plugins who save chars as hostnames

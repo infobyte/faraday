@@ -113,7 +113,8 @@ angular.module('faradayApp')
                 severity: undefined,
                 type: "Vulnerability",
                 website: "",
-                custom_fields:{}
+                custom_fields:{},
+		external_id: "",
             };
 
             customFields.forEach(function(cf) {

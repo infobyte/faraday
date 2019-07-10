@@ -41,8 +41,9 @@ class Structure:
 
 class Api:
 
-    def __init__(self, requests, username=None, password=None, base='http://127.0.0.1:5985/_api/', token=None):
+    def __init__(self, requests, workspace, username=None, password=None, base='http://127.0.0.1:5985/_api/', token=None):
         self.requests = requests
+        self.workspace = workspace
         self.base = base
         if not self.base.endswith('/'):
             self.base += '/'
@@ -64,6 +65,8 @@ class Api:
             raise ApiError('Unauthorized operation trying to get {}'.format(object_name))
         if response.status_code != 200:
             raise ApiError('Cannot fetch {}'.format(object_name))
+        if isinstance(response.json, dict):
+            return response.json
         return json.loads(response.content)
 
     def _post(self, url, data, object_name):
@@ -116,7 +119,7 @@ class Api:
             return None
 
     def get_vulnerabilities(self):
-        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/vulns'.format(self.workspace)),
+        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/vulns/'.format(self.workspace)),
                                                                  'vulnerabilities')['vulnerabilities']]
 
     def update_vulnerability(self, vulnerability):
@@ -127,7 +130,7 @@ class Api:
         return self._delete(self._url('ws/{}/vulns/{}/'.format(self.workspace, vulnerability_id)), 'vulnerability')
 
     def get_services(self):
-        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/services'.format(self.workspace)),
+        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/services/'.format(self.workspace)),
                                                                  'services')['services']]
 
     def get_filtered_services(self, **params):
@@ -152,7 +155,7 @@ class Api:
         return self._delete(self._url('ws/{}/services/{}/'.format(self.workspace, service_id)), 'service')
 
     def get_hosts(self):
-        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/hosts'.format(self.workspace)),
+        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/hosts/'.format(self.workspace)),
                                                                  'hosts')['rows']]
 
     def get_filtered_hosts(self, **params):

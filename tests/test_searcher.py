@@ -12,7 +12,7 @@ class TestSearcherRules():
         workspace = WorkspaceFactory.create()
         session.add(workspace)
         session.commit()
-        api = Api(test_client, username='test', password='test', base='')
+        api = Api(test_client, workspace.name, username='test', password='test', base='')
         searcher = Searcher(api)
 
         rules = [{
@@ -22,4 +22,4 @@ class TestSearcherRules():
             'actions': ["--UPDATE:severity=med"]
         }]
 
-        searcher.process(rules, workspace.name)
+        searcher.process(rules)

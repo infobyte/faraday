@@ -700,7 +700,6 @@ angular.module("faradayApp")
                 return get(APIURL + 'vulners/exploits/' + cveId);
             }
 
-<<<<<<< HEAD
             ServerAPI.deleteAgent = function (wsName, agentId, rev) {
                 var deleteUrl = createDeleteUrl(wsName, agentId, 'agents');
                 if (typeof rev === "undefined") {

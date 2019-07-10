@@ -1,8 +1,11 @@
 import pytest
 from itsdangerous import TimedJSONWebSignatureSerializer
 
+from faraday.server.models import User
 from faraday.server.web import app
 from tests import factories
+from tests.conftest import logged_user, login_as
+
 
 class TestLogin():
     def test_case_bug_with_username(self, test_client, session):
@@ -82,7 +85,7 @@ class TestLogin():
         headers = {'Authorization': token}
 
         ws = test_client.get('/v2/ws/wonderland/', headers=headers)
-        assert ws.status_code == 200
+        assert ws.status_code == 401
 
     @pytest.mark.usefixtures('logged_user')
     def test_retrieve_token_from_api_and_use_it(self, test_client, session):
@@ -90,20 +93,35 @@ class TestLogin():
 
         assert res.status_code == 200
 
-        ws = factories.WorkspaceFactory.create(name='wonderland')
-        session.add(ws)
-        session.commit()
-
         headers = {'Authorization': res.json}
 
         # clean cookies make sure test_client has no session
         test_client.cookie_jar.clear()
-        ws = test_client.get('/v2/ws/wonderland/', headers=headers)
-        assert ws.status_code == 200
+        res = test_client.get('/session', headers=headers)
+        assert res.status_code == 200
 
     def test_cant_retrieve_token_unauthenticated(self, test_client):
         # clean cookies make sure test_client has no session
         test_client.cookie_jar.clear()
         res = test_client.get('/v2/token/')
 
+        assert res.status_code == 401
+
+    @pytest.mark.usefixtures('logged_user')
+    def test_token_expires_after_password_change(self, test_client, session):
+        user = User.query.filter_by(username="test").first()
+        res = test_client.get('/v2/token/')
+
+        assert res.status_code == 200
+
+        headers = {'Authorization': res.json}
+
+        if user:
+            user.password = 'SECRET_VERY_SECRET_PASSWORD_TEST'
+        session.add(user)
+        session.commit()
+
+        # clean cookies make sure test_client has no session
+        test_client.cookie_jar.clear()
+        res = test_client.get('/v2/ws/', headers=headers)
         assert res.status_code == 401

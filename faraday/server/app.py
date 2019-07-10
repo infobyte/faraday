@@ -36,8 +36,8 @@ from flask_security.forms import LoginForm
 from flask_security.utils import (
     _datastore,
     get_message,
-    verify_and_update_password
-)
+    verify_and_update_password,
+    hash_data, verify_hash)
 from flask_session import Session
 from nplusone.ext.flask_sqlalchemy import NPlusOne
 from depot.manager import DepotManager
@@ -125,7 +125,7 @@ def register_handlers(app):
         flask.abort(403)
 
     def verify_token(token):
-        serialized = TimedJSONWebSignatureSerializer(app.config['SECRET_KEY'], salt="token")
+        serialized = TimedJSONWebSignatureSerializer(app.config['SECRET_KEY'], salt="api_token")
         try:
             return serialized.loads(token)
         except SignatureExpired:
@@ -144,15 +144,20 @@ def register_handlers(app):
                 flask.abort(401)
             logged_in = True
             user_id = data["user_id"]
+            user = User.query.filter_by(id=user_id).first()
+            if not verify_hash(data['validation_check'], user.password):
+                logger.warn('Invalid authentication token. token invalid after password change')
+                flask.abort(401)
+            flask.session['user_id'] = user_id
         else:
             logged_in = 'user_id' in flask.session
-            if (not logged_in and not getattr(view, 'is_public', False)):
+            if not logged_in and not getattr(view, 'is_public', False):
                 flask.abort(401)
             user_id = session.get("user_id")
+            user = User.query.filter_by(id=user_id).first()
 
         g.user = None
         if logged_in:
-            user = User.query.filter_by(id=user_id).first()
             g.user = user
             if user is None:
                 logger.warn("Unknown user id {}".format(session["user_id"]))

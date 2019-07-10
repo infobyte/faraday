@@ -2,9 +2,11 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 import operator
+import string
 import uuid
 from datetime import datetime
 from functools import partial
+from random import SystemRandom
 
 from sqlalchemy import (
     Boolean,
@@ -1905,7 +1907,7 @@ class Agent(Metadata):
 class AgentAuthToken(Metadata):
     __tablename__ = 'agent_auth_token'
     id = Column(Integer, primary_key=True)
-    token = Column(Text, nullable=False, default=str(uuid.uuid4()))
+    token = Column(Text, nullable=False, default=lambda: "".join([SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64)]))
 
 
 # This constraint uses Columns from different classes

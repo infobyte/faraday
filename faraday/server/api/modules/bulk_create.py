@@ -191,31 +191,25 @@ def get_or_create(ws, model_class, data):
     return (True, obj)
 
 
-def bulk_create(ws, data, reload_data=True):
-    if reload_data:
+def bulk_create(ws, data, data_already_deserialized=False):
+    if not data_already_deserialized:
         schema = BulkCreateSchema(strict=True)
         data = schema.load(data).data
     if 'command' in data:
-        command = create_command(ws, data['command'], False)
+        command = _create_command(ws, data['command'])
     else:
         command = None
     for host in data['hosts']:
-        create_host(ws, host, command, False)
+        _create_host(ws, host, command)
 
 
-def create_command(ws, command_data, reload_data=True):
-    if reload_data:
-        schema = CommandSchema(strict=True)
-        command_data = schema.load(command_data).data
+def _create_command(ws, command_data):
     (created, command) = get_or_create(ws, Command, command_data)
     assert created  # There isn't an unique constraint in command
     return command
 
 
-def create_host(ws, host_data, command=None, reload_data=True):
-    if reload_data:
-        schema = HostSchema(strict=True)
-        host_data = schema.load(host_data).data
+def _create_host(ws, host_data, command=None):
     hostnames = host_data.pop('hostnames', [])
     services = host_data.pop('services')
     credentials = host_data.pop('credentials')
@@ -227,19 +221,19 @@ def create_host(ws, host_data, command=None, reload_data=True):
     db.session.commit()
 
     if command is not None:
-        create_command_object_for(ws, created, host, command)
+        _create_command_object_for(ws, created, host, command)
 
     for service_data in services:
-        create_service(ws, host, service_data, command, False)
+        _create_service(ws, host, service_data, command)
 
     for vuln_data in vulns:
-        create_hostvuln(ws, host, vuln_data, command, False)
+        _create_hostvuln(ws, host, vuln_data, command)
 
     for cred_data in credentials:
-        create_credential(ws, cred_data, command, False, host=host)
+        _create_credential(ws, cred_data, command, host=host)
 
 
-def create_command_object_for(ws, created, obj, command):
+def _create_command_object_for(ws, created, obj, command):
     assert command is not None
     db.session.add(CommandObject(
         obj,
@@ -249,10 +243,7 @@ def create_command_object_for(ws, created, obj, command):
     db.session.commit()
 
 
-def create_service(ws, host, service_data, command=None, reload_data=True):
-    if reload_data:
-        schema = ServiceSchema(strict=True, context={'updating': False})
-        service_data = schema.load(service_data).data
+def _create_service(ws, host, service_data, command=None):
     service_data = service_data.copy()
     vulns = service_data.pop('vulnerabilities')
     creds = service_data.pop('credentials')
@@ -261,27 +252,19 @@ def create_service(ws, host, service_data, command=None, reload_data=True):
     db.session.commit()
 
     if command is not None:
-        create_command_object_for(ws, created, service, command)
+        _create_command_object_for(ws, created, service, command)
 
     for vuln_data in vulns:
-        create_servicevuln(ws, service, vuln_data, command, False)
+        _create_servicevuln(ws, service, vuln_data, command)
 
     for cred_data in creds:
-        create_credential(ws, cred_data, command, False, service=service)
+        _create_credential(ws, cred_data, command, service=service)
 
 
-def create_vuln(ws, vuln_data, command=None, reload_data=True, **kwargs):
+def _create_vuln(ws, vuln_data, command=None, **kwargs):
     """Create standard or web vulnerabilites"""
     assert 'host' in kwargs or 'service' in kwargs
     assert not ('host' in kwargs and 'service' in kwargs)
-
-    if reload_data:
-        if 'host' in kwargs:
-            # Only allow standard vulns
-            schema = VulnerabilitySchema(strict=True)
-            vuln_data = schema.load(vuln_data).data
-        else:
-            vuln_data = PolymorphicVulnerabilityField()._deserialize_item(vuln_data)
 
     attachments = vuln_data.pop('_attachments', {})
     references = vuln_data.pop('references', [])
@@ -302,7 +285,7 @@ def create_vuln(ws, vuln_data, command=None, reload_data=True, **kwargs):
     db.session.commit()
 
     if command is not None:
-        create_command_object_for(ws, created, vuln, command)
+        _create_command_object_for(ws, created, vuln, command)
 
     if created:
         vuln.references = references
@@ -312,25 +295,22 @@ def create_vuln(ws, vuln_data, command=None, reload_data=True, **kwargs):
         db.session.commit()
 
 
-def create_hostvuln(ws, host, vuln_data, command=None, reload_data=True):
-    create_vuln(ws, vuln_data, command, reload_data, host=host)
+def _create_hostvuln(ws, host, vuln_data, command=None):
+    _create_vuln(ws, vuln_data, command, host=host)
 
 
-def create_servicevuln(ws, service, vuln_data, command=None, reload_data=True):
-    create_vuln(ws, vuln_data, command, reload_data, service=service)
+def _create_servicevuln(ws, service, vuln_data, command=None):
+    _create_vuln(ws, vuln_data, command, service=service)
 
 
-def create_credential(ws, cred_data, command=None, reload_data=True, **kwargs):
-    if reload_data:
-        schema = CredentialSchema(strict=True)
-        cred_data = schema.load(cred_data).data
+def _create_credential(ws, cred_data, command=None, **kwargs):
     cred_data = cred_data.copy()
     cred_data.update(kwargs)
     (created, cred) = get_or_create(ws, Credential, cred_data)
     db.session.commit()
 
     if command is not None:
-        create_command_object_for(ws, created, cred, command)
+        _create_command_object_for(ws, created, cred, command)
 
 
 class BulkCreateView(GenericWorkspacedView):
@@ -339,7 +319,7 @@ class BulkCreateView(GenericWorkspacedView):
 
     def post(self, workspace_name):
         data = self._parse_data(self._get_schema_instance({}), flask.request)
-        bulk_create(self._get_workspace(workspace_name), data, False)
+        bulk_create(self._get_workspace(workspace_name), data, True)
         return "Created", 201
 
 BulkCreateView.register(bulk_create_api)

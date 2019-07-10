@@ -236,7 +236,7 @@ def update_vulnerability(api, ws, vuln, key, value):
             field = get_field(vuln, key)
 
         if field is not None and is_custom_field is False:
-            if isinstance(field, str, unicode):
+            if isinstance(field, (str, unicode)):
                 setattr(vuln, key, value)
                 logger.info(
                     "Changing property %s to %s in vulnerability '%s' with id %s" % (key, value, vuln.name, vuln.id))
@@ -277,7 +277,7 @@ def update_service(api, ws, service, key, value):
 
         field = get_field(service, key)
         if field is not None:
-            if isinstance(field, str, unicode):
+            if isinstance(field, (str, unicode)):
                 setattr(service, key, value)
                 logger.info(
                     "Changing property %s to %s in service '%s' with id %s" % (key, value, service.name, service.id))
@@ -312,7 +312,7 @@ def update_host(api, ws, host, key, value):
 
         field = get_field(host, key)
         if field is not None:
-            if isinstance(field, str, unicode):
+            if isinstance(field, (str, unicode)):
                 setattr(host, key, value)
                 logger.info("Changing property %s to %s in host '%s' with id %s" % (key, value, host.name, host.id))
             else:
@@ -635,7 +635,7 @@ class Searcher:
 
 
 @click.command()
-@click.option('--workspace', required=True, prompt=True, help='Workspacer name')
+@click.option('--workspace', required=True, prompt=True, help='Workspace name')
 @click.option('--server', required=True, prompt=True, help='Faraday server address')
 @click.option('--user', required=True, prompt=True, help='')
 @click.option('--password', required=True, prompt=True, hide_input=True, help='')

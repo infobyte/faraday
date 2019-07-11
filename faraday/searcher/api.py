@@ -85,6 +85,8 @@ class Api:
             raise ApiError('Unauthorized operation trying to update {}'.format(object_name))
         if response.status_code != 200:
             raise ApiError('Unable to update {}'.format(object_name))
+        if isinstance(response.json, dict):
+            return response.json
         return json.loads(response.content)
 
     def _delete(self, url, object_name):
@@ -103,7 +105,11 @@ class Api:
                 logger.info("Invalid credentials")
                 return None
             else:
-                token = self.requests.get('/v2/token/').json
+                cookies = getattr(resp, 'cookies', None)
+                if cookies is not None:
+                    token = self.requests.get(self.base + 'v2/token/', cookies=cookies).json()
+                else:
+                    token = self.requests.get(self.base + 'v2/token/').json
                 return token
         except ConnectionError as ex:
             logger.exception(ex)

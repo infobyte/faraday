@@ -127,28 +127,30 @@ def register_handlers(app):
     def verify_token(token):
         serialized = TimedJSONWebSignatureSerializer(app.config['SECRET_KEY'], salt="api_token")
         try:
-            return serialized.loads(token)
+            data = serialized.loads(token)
+            user_id = data["user_id"]
+            user = User.query.filter_by(id=user_id).first()
+            if not user or not verify_hash(data['validation_check'], user.password):
+                logger.warn('Invalid authentication token. token invalid after password change')
+                return None
+            return user
         except SignatureExpired:
             return None  # valid token, but expired
         except BadSignature:
             return None  # invalid token
+
 
     @app.before_request
     def default_login_required():
         view = app.view_functions.get(flask.request.endpoint)
 
         if app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER'] in flask.request.headers:
-            data = verify_token(flask.request.headers[app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER']])
-            if not data:
+            user = verify_token(flask.request.headers[app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER']])
+            if not user:
                 logger.warn('Invalid authentication token.')
                 flask.abort(401)
             logged_in = True
-            user_id = data["user_id"]
-            user = User.query.filter_by(id=user_id).first()
-            if not verify_hash(data['validation_check'], user.password):
-                logger.warn('Invalid authentication token. token invalid after password change')
-                flask.abort(401)
-            flask.session['user_id'] = user_id
+            flask.session['user_id'] = user.id
         else:
             logged_in = 'user_id' in flask.session
             if not logged_in and not getattr(view, 'is_public', False):

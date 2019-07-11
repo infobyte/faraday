@@ -1,1 +1,1 @@
-If faraday is installed with deb or rpm, the user must be in faraday group to run faraday-manage
+Require being in the faraday-manage group when running faraday from a .deb or .rpm package

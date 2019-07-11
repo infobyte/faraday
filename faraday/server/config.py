@@ -154,6 +154,7 @@ class FaradayServerConfigObject(ConfigSection):
         self.port = None
         self.secret_key = None
         self.websocket_port = None
+        self.api_token_expiration = 2592000
 
 
 class LDAPConfigObject(ConfigSection):

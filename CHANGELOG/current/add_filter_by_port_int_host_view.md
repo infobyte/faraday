@@ -1,1 +1,1 @@
-Add filter by a port in the hosts view
+Allow filtering hosts by its service's ports in the Web UI

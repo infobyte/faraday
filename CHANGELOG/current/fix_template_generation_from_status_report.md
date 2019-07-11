@@ -1,1 +1,1 @@
-Avoid copy of technical details when template is generated from status report.
+Avoid copying technical details when a vuln template is generated from the status report.

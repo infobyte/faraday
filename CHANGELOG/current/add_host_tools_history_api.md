@@ -1,1 +1,1 @@
-Add api to get what tools impacted in a host
+Add API endpoint to get which tools impacted in a host

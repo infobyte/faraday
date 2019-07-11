@@ -1,1 +1,1 @@
-Add order for date and creator to vuln template.
+Add ordering for date and creator to vuln templates view.

@@ -17,6 +17,9 @@
                             <li href="javascript:;" ng-class="{'active':on=='custom_fields'}"
                                 ng-click="setItemPanel('custom_fields')">Custom fields
                             </li>
+                             <li href="javascript:;" ng-class="{'active':on=='agents'}"
+                                ng-click="setItemPanel('agents')">Agents
+                            </li>
                         </ul>
                     </div>
 
@@ -25,6 +28,10 @@
                             <div ng-switch-when="custom_fields">
                                 <div ng-controller="customFieldsCtrl" ng-include="'scripts/admin/customFields/partials/customFields.html'"></div>
                             </div>
+                             <div ng-switch-when="agents">
+                                <div ng-controller="agentsCtrl" ng-include="'scripts/admin/agents/partials/agents.html'"></div>
+                            </div>
+
 
                             <div ng-switch-default>
                                 <h1>Switch</h1>

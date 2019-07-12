@@ -67,15 +67,6 @@ def upgrade():
     )
 
     op.create_table(
-        'agent_auth_token',
-        sa.Column('id', sa.Integer, primary_key=True),
-        sa.Column('token', sa.String(256), nullable=False, default=str(uuid.uuid4())),
-        sa.Column('create_date', sa.DateTime),
-        sa.Column('update_date', sa.DateTime),
-        sa.Column('creator_id', sa.Integer),
-        sa.Column('update_user_id', sa.Integer),
-    )
-    op.create_table(
         'agent_schedule',
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('description', sa.String(1024), nullable=False),
@@ -107,7 +98,6 @@ def upgrade():
 
 def downgrade():
     op.drop_table('agent_schedule')
-    op.drop_table('agent_auth_token')
     op.drop_table('agent')
 
     agent_types = postgresql.ENUM('shared', 'specific', name='agent_types')

@@ -1,16 +1,20 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2019  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+import random
+import string
+
 from flask import abort, Blueprint
 from marshmallow import fields, Schema
 from marshmallow.validate import OneOf
 from sqlalchemy.orm.exc import NoResultFound
 
-from faraday.server.api.base import (AutoSchema, ReadWriteWorkspacedView, UpdateWorkspacedMixin, DeleteWorkspacedMixin,
+from faraday.server.api.base import (AutoSchema, UpdateWorkspacedMixin, DeleteWorkspacedMixin,
                                      CountWorkspacedMixin, ReadOnlyWorkspacedView, CreateWorkspacedMixin,
                                      GenericWorkspacedView)
-from faraday.server.models import db, Agent, AgentAuthToken
+from faraday.server.models import Agent
 from faraday.server.schemas import PrimaryKeyRelatedField
+from faraday.server.config import faraday_server
 
 agent_api = Blueprint('agent_api', __name__)
 
@@ -47,14 +51,13 @@ class AgentCreationView(GenericWorkspacedView, CreateWorkspacedMixin):
     def _perform_create(self,  data, **kwargs):
         if 'token' in data:
             token = data.pop('token')
-            try:
-                db_token = db.session.query(AgentAuthToken).one()
-            except NoResultFound:
+            if not faraday_server.agent_token:
+                # someone is trying to use the token, but no token was generated yet.
                 abort(401, "Invalid Token")
-            if token != db_token.token:
+            if token != faraday_server.agent_token:
                 abort(401, "Invalid Token")
         else:
-            abort(401, "Invalid Token")
+            abort(400, "Token required")
 
         agent = super(AgentCreationView, self)._perform_create(data, **kwargs)
 

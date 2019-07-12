@@ -20,6 +20,7 @@ from autobahn.twisted.websocket import (
 )
 
 from faraday.server.models import Workspace, Agent
+from faraday.server.api.modules.websocket_auth import decode_agent_websocket_token
 
 logger = logging.getLogger(__name__)
 changes_queue = Queue()
@@ -86,8 +87,9 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                     self.sendClose()
                     return
                 with app.app_context():
-                    agent = Agent.query.filter_by(token=message['token']).first()
-                    if not agent:
+                    try:
+                        agent = decode_agent_websocket_token(message['token'])
+                    except ValueError:
                         logger.warn('Invalid agent token!')
                         self.sendClose()
                         return

@@ -164,6 +164,10 @@ def register_handlers(app):
                     flask.abort(401)
                 logged_in = True
                 flask.session['user_id'] = user.id
+            elif auth_type == 'agent':
+                # Don't handle the agent logic here, do it in another
+                # before_request handler
+                logged_in = False
             else:
                 logger.warn("Invalid authorization type")
                 flask.abort(401)

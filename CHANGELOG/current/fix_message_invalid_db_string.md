@@ -1,1 +1,1 @@
-* Fix: improve error message when db string is invalid
+Improve error message when DB connection string is invalid

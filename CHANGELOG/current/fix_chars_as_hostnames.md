@@ -1,1 +1,1 @@
-fix bug of plugins who save chars as hostnames
+Fix bug in many plugins that loaded hostnames incorrectly (one hostname per chararcter)

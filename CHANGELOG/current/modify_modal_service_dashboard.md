@@ -1,1 +1,1 @@
-Modify modal service dashboard.
+Small improvements in the service modal of the dashboard

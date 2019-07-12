@@ -1,1 +1,1 @@
-Add username creator to hosts detail.
+Add creator's username to hosts detail.

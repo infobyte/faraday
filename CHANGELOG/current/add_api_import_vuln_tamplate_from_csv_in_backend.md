@@ -1,1 +1,1 @@
-Add api to import Vuln Templates from CSV
+Add API endpoint to import Vuln Templates from a CSV file

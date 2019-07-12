@@ -15,6 +15,7 @@ import json
 import signal
 import smtplib
 import logging
+import requests
 import subprocess
 from datetime import datetime
 
@@ -130,7 +131,7 @@ def get_model_environment(model, _models):
     return environment
 
 
-def process_models_by_similarity(api, ws, _models, rule, mail_notificacion):
+def process_models_by_similarity(api, _models, rule, mail_notificacion):
     logger.debug("--> Start Process models by similarity")
     for index_m1, m1 in zip(range(len(_models) - 1), _models):
         for index_m2, m2 in zip(range(index_m1 + 1, len(_models)), _models[index_m1 + 1:]):
@@ -145,9 +146,9 @@ def process_models_by_similarity(api, ws, _models, rule, mail_notificacion):
                         if 'conditions' in rule:
                             environment = get_model_environment(m2, _models)
                             if can_execute_action(environment, rule['conditions']):
-                                execute_action(api, ws, _object, rule, mail_notificacion)
+                                execute_action(api, _object, rule, mail_notificacion)
                         else:
-                            execute_action(api, ws, _object, rule, mail_notificacion)
+                            execute_action(api, _object, rule, mail_notificacion)
     logger.debug("<-- Finish Process models by similarity")
 
 
@@ -200,7 +201,7 @@ def set_array(field, value, add=True):
                 field.remove(value)
 
 
-def update_vulnerability(api, workspace, vuln, key, value):
+def update_vulnerability(api, vuln, key, value):
     if key == 'template':
         cwe = get_cwe(api, value)
         if cwe is None:
@@ -254,13 +255,13 @@ def update_vulnerability(api, workspace, vuln, key, value):
             logger.info(
                 "Changing custom field %s to %s in vulnerability '%s' with id %s" % (key, value, vuln.name, vuln.id))
 
-    api.update_vulnerability(vuln, workspace)
+    api.update_vulnerability(vuln)
 
     logger.info("Done")
     return True
 
 
-def update_service(api, workspace, service, key, value):
+def update_service(api, service, key, value):
     if key == 'owned':
         value = value == 'True'
         service.owned = value
@@ -286,13 +287,13 @@ def update_service(api, workspace, service, key, value):
 
                 logger.info(action)
 
-    api.update_service(service, workspace)
+    api.update_service(service)
 
     logger.info("Done")
     return True
 
 
-def update_host(api, workspace, host, key, value):
+def update_host(api, host, key, value):
     if key == 'owned':
         value = value == 'True'
         host.owned = value
@@ -316,13 +317,13 @@ def update_host(api, workspace, host, key, value):
                         value, key, host.name, host.id)
 
                 logger.info(action)
-    api.update_host(host, workspace)
+    api.update_host(host)
 
     logger.info("Done")
     return True
 
 
-def get_parent(api, ws, parent_tag):
+def get_parent(api, parent_tag):
     logger.debug("Getting parent")
     return api.get_filtered_services(id=parent_tag, name=parent_tag) or \
            api.get_filtered_hosts(id=parent_tag, name=parent_tag)
@@ -401,10 +402,10 @@ def get_object(_models, obj):
     return objects
 
 
-def get_models(api, ws, objects, rule):
+def get_models(api, objects, rule):
     logger.debug("Getting models")
     if 'parent' in rule:
-        parent = get_parent(api, ws, rule['parent'])
+        parent = get_parent(api, rule['parent'])
         if parent is None:
             logger.warning("WARNING: Parent %s not found in rule %s " % (rule['parent'], rule['id']))
             return objects
@@ -428,7 +429,7 @@ def can_execute_action(_models, conditions):
     return True
 
 
-def execute_action(api, workspace, objects, rule, mail_notificacion=None):
+def execute_action(api, objects, rule, mail_notificacion=None):
     logger.info("Running actions of rule '%s' :" % rule['id'])
     actions = rule['actions']
     _objs_value = None
@@ -447,33 +448,35 @@ def execute_action(api, workspace, objects, rule, mail_notificacion=None):
                 key = array_exp[0]
                 value = str('=').join(array_exp[1:])
                 if obj.class_signature == 'VulnerabilityWeb' or obj.class_signature == 'Vulnerability':
-                    if update_vulnerability(api, workspace, obj, key, value):
-                        insert_rule(rule['id'], command, obj, _objs_value, fields=None, key=key, value=value)
+
+                    if update_vulnerability(api, obj, key, value):
+                        pass
+                        # insert_rule(rule['id'], command, obj, _objs_value, fields=None, key=key, value=value)
 
                 if obj.class_signature == 'Service':
-                    update_service(api, workspace, obj, key, value)
+                    update_service(api, obj, key, value)
 
                 if obj.class_signature == 'Host':
-                    update_host(api, workspace, obj, key, value)
+                    update_host(api, obj, key, value)
 
             elif command == 'DELETE':
                 if obj.class_signature == 'VulnerabilityWeb' or obj.class_signature == 'Vulnerability':
                     api.delete_vulnerability(obj.id)
                     logger.info("Deleting vulnerability '%s' with id '%s':" % (obj.name, obj.id))
-                    insert_rule(rule['id'], command, obj, _objs_value)
+                    # insert_rule(rule['id'], command, obj, _objs_value)
 
                 elif obj.class_signature == 'Service':
                     api.delete_service(obj.id)
                     logger.info("Deleting service '%s' with id '%s':" % (obj.name, obj.id))
 
                 elif obj.class_signature == 'Host':
-                    api.delete_host(obj.id, workspace)
+                    api.delete_host(obj.id)
                     logger.info("Deleting host '%s' with id '%s':" % (obj.name, obj.id))
 
             elif command == 'EXECUTE':
                 if subprocess.call(expression, shell=True, stdin=None) is 0:
                     logger.info("Running command: '%s'" % expression)
-                    insert_rule(rule['id'], command, obj, _objs_value, fields=None, key=None, value=expression)
+                    # insert_rule(rule['id'], command, obj, _objs_value, fields=None, key=None, value=expression)
                 else:
                     logger.error("Operation fail running command: '%s'" % expression)
                     return False
@@ -482,7 +485,7 @@ def execute_action(api, workspace, objects, rule, mail_notificacion=None):
                 body = '%s %s have been modified by rule %s at %s' % (
                     obj.class_signature, obj.name, rule['id'], str(datetime.now()))
                 mail_notificacion.send_mail(expression, subject, body)
-                insert_rule(rule['id'], command, obj, _objs_value, fields=None, key=None, value=expression)
+                # insert_rule(rule['id'], command, obj, _objs_value, fields=None, key=None, value=expression)
                 logger.info("Sending mail to: '%s'" % expression)
     return True
 
@@ -501,7 +504,7 @@ def replace_rule(rule, value_item):
     return ast.literal_eval(rule_str)
 
 
-def process_vulnerabilities(api, ws, vulns, mail_notificacion, rules):
+def process_vulnerabilities(api, vulns, mail_notificacion, rules):
     logger.debug("--> Start Process vulnerabilities")
     for rule_item in rules:
         logger.debug('Processing rule {}'.format(rule_item['id']))
@@ -514,9 +517,9 @@ def process_vulnerabilities(api, ws, vulns, mail_notificacion, rules):
 
             for index in range(count_values):
                 rule = replace_rule(rule_item, values[index])
-                vulnerabilities = get_models(api, ws, vulns, rule)
+                vulnerabilities = get_models(api, vulns, rule)
                 if 'fields' in rule:
-                    process_models_by_similarity(api, ws, vulnerabilities, rule, mail_notificacion)
+                    process_models_by_similarity(api, vulnerabilities, rule, mail_notificacion)
                 else:
                     _objs_value = None
                     if 'object' in rule:
@@ -525,19 +528,19 @@ def process_vulnerabilities(api, ws, vulns, mail_notificacion, rules):
                     if objects is not None and len(objects) != 0:
                         if 'conditions' in rule:
                             if can_execute_action(vulnerabilities, rule['conditions']):
-                                execute_action(api, ws, objects, rule, mail_notificacion)
+                                execute_action(api, objects, rule, mail_notificacion)
                         else:
-                            execute_action(api, ws, objects, rule, mail_notificacion)
+                            execute_action(api, objects, rule, mail_notificacion)
     logger.debug("<-- Finish Process vulnerabilities")
 
 
-def process_services(api, ws, services, mail_notificacion, rules):
+def process_services(api, services, mail_notificacion, rules):
     logger.debug("--> Start Process services")
     for rule in rules:
         if rule['model'] == 'Service':
-            services = get_models(api, ws, services, rule)
+            services = get_models(api, services, rule)
             if 'fields' in rule:
-                process_models_by_similarity(api, ws, services, rule, _server)
+                process_models_by_similarity(api, services, rule, mail_notificacion)
             else:
                 _objs_value = None
                 if 'object' in rule:
@@ -546,19 +549,19 @@ def process_services(api, ws, services, mail_notificacion, rules):
                 if objects is not None and len(objects) != 0:
                     if 'conditions' in rule:
                         if can_execute_action(services, rule['conditions']):
-                            execute_action(api, ws, objects, rule, mail_notificacion)
+                            execute_action(api, objects, rule, mail_notificacion)
                     else:
-                        execute_action(api, ws, objects, rule, mail_notificacion)
+                        execute_action(api, objects, rule, mail_notificacion)
     logger.debug("<-- Finish Process services")
 
 
-def process_hosts(api, ws, hosts, mail_notificacion, rules):
+def process_hosts(api, hosts, mail_notificacion, rules):
     logger.debug("--> Start Process Hosts")
     for rule in rules:
         if rule['model'] == 'Host':
-            hosts = get_models(api, ws, hosts, rule)
+            hosts = get_models(api, hosts, rule)
             if 'fields' in rule:
-                process_models_by_similarity(api, ws, hosts, rule, _server)
+                process_models_by_similarity(api, hosts, rule, mail_notificacion)
             else:
                 _objs_value = None
                 if 'object' in rule:
@@ -567,9 +570,9 @@ def process_hosts(api, ws, hosts, mail_notificacion, rules):
                 if objects is not None and len(objects) != 0:
                     if 'conditions' in rule:
                         if can_execute_action(hosts, rule['conditions']):
-                            execute_action(api, ws, objects, rule, mail_notificacion)
+                            execute_action(api, objects, rule, mail_notificacion)
                     else:
-                        execute_action(api, ws, objects, rule, mail_notificacion)
+                        execute_action(api, objects, rule, mail_notificacion)
         logger.debug("<-- Finish Process Hosts")
 
 
@@ -585,34 +588,33 @@ class Searcher:
         self.api = api
         self.mail_notificacion = mail_notificacion
 
-    def process(self, rules, workspace):
         logger.debug("Getting hosts ...")
-        self.hosts = self.api.get_hosts(workspace)
+
+        self.hosts = self.api.get_hosts()
 
         logger.debug("Getting services ...")
-        self.services = self.api.services(workspace)
+        self.services = self.api.get_services()
 
         logger.debug("Getting vulnerabilities ...")
-        self.vulns = self.api.get_vulnerabilities(workspace)
+        self.vulns = self.api.get_vulnerabilities()
+
+    def process(self, rules):
 
         if rules and validate_rules(rules):
             process_vulnerabilities(
                 self.api,
-                workspace,
                 self.vulns,
                 self.mail_notificacion,
                 rules
             )
             process_services(
                 self.api,
-                workspace,
                 self.services,
                 self.mail_notificacion,
                 rules
             )
             process_hosts(
                 self.api,
-                workspace,
                 self.hosts,
                 self.mail_notificacion,
                 rules
@@ -677,15 +679,24 @@ def main(workspace, server, user, password, output, email, email_password, mail_
         logger.addHandler(fh)
         logger.addHandler(ch)
 
-    logger.info('Started')
-    logger.info('Searching objects into workspace %s ' % workspace)
+    try:
+        logger.info('Started')
+        logger.info('Searching objects into workspace %s ' % workspace)
 
-    api = Api(user, password, base=server)
+        if not server.endswith('/'):
+            server += '/'
+        if not server.endswith('/_api'):
+            server += '_api'
 
-    searcher = Searcher(api, mail_notificacion)
-    searcher.process(rules, workspace)
 
-    logger.info('Finished')
+        api = Api(requests, workspace, user, password, base=server)
+
+        searcher = Searcher(api, mail_notificacion)
+        searcher.process(rules)
+
+        logger.info('Finished')
+    except Exception as error:
+        logger.exception(error)
 
 
 if __name__ == "__main__":

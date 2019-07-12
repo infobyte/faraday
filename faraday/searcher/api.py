@@ -1,8 +1,7 @@
 import json
 import logging
 
-import requests
-
+from requests.adapters import ConnectionError, ReadTimeout
 
 logger = logging.getLogger('Faraday searcher')
 
@@ -41,47 +40,57 @@ class Structure:
 
 
 class Api:
-    def __init__(self, workspace, username=None, password=None, base='http://127.0.0.1:5985/_api/', cookies=None):
+
+    def __init__(self, requests, workspace, username=None, password=None, base='http://127.0.0.1:5985/_api/', token=None):
+        self.requests = requests
+        self.workspace = workspace
         self.base = base
         if not self.base.endswith('/'):
             self.base += '/'
-        self.base += '_api/'
-        self.workspace = workspace
-        self.cookies = cookies
-        if not self.cookies and username and password:
-            self.cookies = self.login(username, password)
-            if self.cookies is None:
+        self.token = token
+        if not self.token and username and password:
+            self.token = self.login(username, password)
+            if self.token is None:
                 raise UserWarning('Invalid username or password')
+
+            self.headers = {'Authorization': self.token}
 
     def _url(self, path):
         return self.base + 'v2/' + path
 
     def _get(self, url, object_name):
-        response = requests.get(url, cookies=self.cookies)
+        logger.debug('Getting url {}'.format(url))
+        response = self.requests.get(url, headers=self.headers)
         if response.status_code == 401:
             raise ApiError('Unauthorized operation trying to get {}'.format(object_name))
         if response.status_code != 200:
             raise ApiError('Cannot fetch {}'.format(object_name))
+        if isinstance(response.json, dict):
+            return response.json
         return json.loads(response.content)
 
     def _post(self, url, data, object_name):
-        response = requests.post(url, json=data, cookies=self.cookies)
+        response = self.requests.post(url, json=data, headers=self.headers)
         if response.status_code == 401:
-            raise ApiError('Unauthorized operation trying to create {}'.format(object_name))
+            raise ApiError('Unauthorized operation trying to get {}'.format(object_name))
         if response.status_code != 201:
-            raise ApiError('Unable to create {}'.format(object_name))
+            raise ApiError('Cannot fetch {}, api response: {}'.format(object_name, getattr(response, 'text', None)))
+        if isinstance(response.json, dict):
+            return response.json
         return json.loads(response.content)
 
     def _put(self, url, data, object_name):
-        response = requests.put(url, json=data, cookies=self.cookies)
+        response = self.requests.put(url, json=data, headers=self.headers)
         if response.status_code == 401:
             raise ApiError('Unauthorized operation trying to update {}'.format(object_name))
         if response.status_code != 200:
             raise ApiError('Unable to update {}'.format(object_name))
+        if isinstance(response.json, dict):
+            return response.json
         return json.loads(response.content)
 
     def _delete(self, url, object_name):
-        response = requests.delete(url, cookies=self.cookies)
+        response = self.requests.delete(url, headers=self.headers)
         if response.status_code == 401:
             raise ApiError('Unauthorized operation trying to delete {}'.format(object_name))
         if response.status_code != 204:
@@ -91,21 +100,26 @@ class Api:
     def login(self,  username, password):
         auth = {"email": username, "password": password}
         try:
-            resp = requests.post(self.base + 'login', json=auth)
-            if resp.status_code == 401:
+            resp = self.requests.post(self.base + 'login', json=auth)
+            if resp.status_code not in [200, 302]:
                 logger.info("Invalid credentials")
                 return None
             else:
-                return resp.cookies
-        except requests.adapters.ConnectionError as ex:
+                cookies = getattr(resp, 'cookies', None)
+                if cookies is not None:
+                    token = self.requests.get(self.base + 'v2/token/', cookies=cookies).json()
+                else:
+                    token = self.requests.get(self.base + 'v2/token/').json
+                return token
+        except ConnectionError as ex:
             logger.exception(ex)
             logger.info("Connection error to the faraday server")
             return None
-        except requests.adapters.ReadTimeout:
+        except ReadTimeout:
             return None
 
     def get_vulnerabilities(self):
-        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/vulns'.format(self.workspace)),
+        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/vulns/'.format(self.workspace)),
                                                                  'vulnerabilities')['vulnerabilities']]
 
     def update_vulnerability(self, vulnerability):
@@ -116,7 +130,7 @@ class Api:
         return self._delete(self._url('ws/{}/vulns/{}/'.format(self.workspace, vulnerability_id)), 'vulnerability')
 
     def get_services(self):
-        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/services'.format(self.workspace)),
+        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/services/'.format(self.workspace)),
                                                                  'services')['services']]
 
     def get_filtered_services(self, **params):
@@ -141,7 +155,7 @@ class Api:
         return self._delete(self._url('ws/{}/services/{}/'.format(self.workspace, service_id)), 'service')
 
     def get_hosts(self):
-        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/hosts'.format(self.workspace)),
+        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/hosts/'.format(self.workspace)),
                                                                  'hosts')['rows']]
 
     def get_filtered_hosts(self, **params):

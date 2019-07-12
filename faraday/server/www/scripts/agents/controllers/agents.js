@@ -30,8 +30,7 @@ angular.module('faradayApp')
             };
 
             var createToken = function () {
-                var agentToken = {'token': uuid.v4()};
-                agentFact.createAgentToken(agentToken).then(
+                agentFact.getNewAgentToken().then(
                     function (response) {
                         $scope.agentToken = response.data;
                     }, function (error) {
@@ -58,8 +57,7 @@ angular.module('faradayApp')
             };
 
             $scope.refreshToken = function () {
-                var agentToken = {id: $scope.agentToken.id, token: uuid.v4()};
-                agentFact.updateAgentToken(agentToken).then(
+                agentFact.getNewAgentToken().then(
                     function (response) {
                         $scope.agentToken = response.data;
                     }, function (error) {

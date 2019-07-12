@@ -5,6 +5,7 @@ import random
 import string
 from ConfigParser import ConfigParser
 
+import flask
 from flask import Blueprint
 from marshmallow import fields, Schema
 from faraday.server.api.base import (
@@ -26,7 +27,7 @@ class AgentAuthTokenView(GenericView):
     schema_class = AgentAuthTokenSchema
 
     def get(self, **kwargs):
-        if not faraday_server.agent_token:
+        if not faraday_server.agent_token or bool(flask.request.args.get('new_token', False)):
             rng = random.SystemRandom()
             faraday_server.agent_token = ''.join([rng.choice(string.ascii_letters + string.digits) for _ in range(0, 20)])
             config = ConfigParser()

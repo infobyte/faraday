@@ -53,7 +53,7 @@ class Api:
             if self.token is None:
                 raise UserWarning('Invalid username or password')
 
-            self.headers = {'Authorization': self.token}
+            self.headers = {'Authorization': 'Token {}'.format(self.token)}
 
     def _url(self, path):
         return self.base + 'v2/' + path

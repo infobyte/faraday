@@ -49,18 +49,16 @@ class Api:
             self.base += '/'
         self.token = token
         if not self.token and username and password:
-            self.token = self.login(username, password)
-            if self.token is None:
+            self.headers, self.cookies = self.login(username, password)
+            if self.headers is None:
                 raise UserWarning('Invalid username or password')
-
-            self.headers = {'Authorization': 'Token {}'.format(self.token)}
 
     def _url(self, path):
         return self.base + 'v2/' + path
 
     def _get(self, url, object_name):
         logger.debug('Getting url {}'.format(url))
-        response = self.requests.get(url, headers=self.headers)
+        response = self.requests.get(url, headers=self.headers, cookies=self.cookies)
         if response.status_code == 401:
             raise ApiError('Unauthorized operation trying to get {}'.format(object_name))
         if response.status_code != 200:
@@ -70,7 +68,7 @@ class Api:
         return json.loads(response.content)
 
     def _post(self, url, data, object_name):
-        response = self.requests.post(url, json=data, headers=self.headers)
+        response = self.requests.post(url, json=data, headers=self.headers, cookies=self.cookies)
         if response.status_code == 401:
             raise ApiError('Unauthorized operation trying to get {}'.format(object_name))
         if response.status_code != 201:
@@ -80,7 +78,7 @@ class Api:
         return json.loads(response.content)
 
     def _put(self, url, data, object_name):
-        response = self.requests.put(url, json=data, headers=self.headers)
+        response = self.requests.put(url, json=data, headers=self.headers, cookies=self.cookies)
         if response.status_code == 401:
             raise ApiError('Unauthorized operation trying to update {}'.format(object_name))
         if response.status_code != 200:
@@ -90,7 +88,7 @@ class Api:
         return json.loads(response.content)
 
     def _delete(self, url, object_name):
-        response = self.requests.delete(url, headers=self.headers)
+        response = self.requests.delete(url, headers=self.headers, cookies=self.cookies)
         if response.status_code == 401:
             raise ApiError('Unauthorized operation trying to delete {}'.format(object_name))
         if response.status_code != 204:
@@ -98,6 +96,7 @@ class Api:
         return response.ok
 
     def login(self,  username, password):
+        header = None
         auth = {"email": username, "password": password}
         try:
             resp = self.requests.post(self.base + 'login', json=auth)
@@ -107,10 +106,15 @@ class Api:
             else:
                 cookies = getattr(resp, 'cookies', None)
                 if cookies is not None:
-                    token = self.requests.get(self.base + 'v2/token/', cookies=cookies).json()
+                    token_response = self.requests.get(self.base + 'v2/token/', cookies=cookies)
+                    if token_response.status_code != 404:
+                        token = token_response.json()
                 else:
                     token = self.requests.get(self.base + 'v2/token/').json
-                return token
+
+                header = {'Authorization': 'Token {}'.format(token)}
+
+                return header, cookies
         except ConnectionError as ex:
             logger.exception(ex)
             logger.info("Connection error to the faraday server")

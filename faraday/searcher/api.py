@@ -58,7 +58,10 @@ class Api:
 
     def _get(self, url, object_name):
         logger.debug('Getting url {}'.format(url))
-        response = self.requests.get(url, headers=self.headers, cookies=self.cookies)
+        if self.headers:
+            response = self.requests.get(url, headers=self.headers)
+        else:
+            response = self.requests.get(url, cookies=self.cookies)
         if response.status_code == 401:
             raise ApiError('Unauthorized operation trying to get {}'.format(object_name))
         if response.status_code != 200:
@@ -68,7 +71,10 @@ class Api:
         return json.loads(response.content)
 
     def _post(self, url, data, object_name):
-        response = self.requests.post(url, json=data, headers=self.headers, cookies=self.cookies)
+        if self.headers:
+            response = self.requests.post(url, json=data, headers=self.headers)
+        else:
+            response = self.requests.post(url, json=data, cookies=self.cookies)
         if response.status_code == 401:
             raise ApiError('Unauthorized operation trying to get {}'.format(object_name))
         if response.status_code != 201:
@@ -78,7 +84,10 @@ class Api:
         return json.loads(response.content)
 
     def _put(self, url, data, object_name):
-        response = self.requests.put(url, json=data, headers=self.headers, cookies=self.cookies)
+        if self.headers:
+            response = self.requests.put(url, json=data, headers=self.headerss)
+        else:
+            response = self.requests.put(url, json=data, cookies=self.cookies)
         if response.status_code == 401:
             raise ApiError('Unauthorized operation trying to update {}'.format(object_name))
         if response.status_code != 200:

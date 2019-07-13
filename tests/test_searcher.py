@@ -50,7 +50,7 @@ class TestSearcherRules():
         vulns_count = session.query(Vulnerability).filter_by(workspace=workspace).count()
         assert vulns_count == 0
 
-    @pytest.mark.skip("Not working yet")
+    @pytest.mark.skip("No available in community")
     def test_searcher_rules_tag_vulns_low(self, session, test_client):
         workspace = WorkspaceFactory.create()
         vuln = VulnerabilityFactory.create(workspace=workspace, severity='low')

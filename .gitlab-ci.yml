@@ -7,6 +7,7 @@ variables:
     PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
     APT_CACHE_DIR: "$CI_PROJECT_DIR/apt-cache"
     DEBIAN_FRONTEND: noninteractive
+    IMAGE_TAG: '/bin/egrep -o "[0-9]\.[0-9]\.[0-9]" faraday/__init__.py'
     ## ENV_VARS LIST
     # FULL_TEST = Test all jobs
     # BUILD_TEST = Test default and build jobs
@@ -228,7 +229,7 @@ generate_deb:
         - ls
         - cd faraday_copy
         - git clone git@gitlab.com:faradaysec/faraday-linux-installers-builder.git
-        - sh faraday-linux-installers-builder/build-deb.sh
+        - sh faraday-linux-installers-builder/build-deb.sh $(eval $IMAGE_TAG)
         - mv faraday-server_amd64.deb ../../faraday-server_amd64.deb
     dependencies:
         - generate_build_file
@@ -271,7 +272,7 @@ generate_rpm:
         - ls
         - cd faraday_copy
         - git clone git@gitlab.com:faradaysec/faraday-linux-installers-builder.git
-        - sh faraday-linux-installers-builder/build-rpm.sh
+        - sh faraday-linux-installers-builder/build-rpm.sh $(eval $IMAGE_TAG)
         - mv faraday-server_amd64.rpm ../../faraday-server_amd64.rpm
     dependencies:
         - generate_build_file

@@ -1,1 +1,1 @@
-Fix resolve hostname to save ip addr
+When a plugin creates a host with its IP set to a domain name, resolve the IP address of that domain

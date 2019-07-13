@@ -82,7 +82,7 @@ class TestLogin():
         serializer = TimedJSONWebSignatureSerializer(app.config['SECRET_KEY'], expires_in=500, salt="token")
         token = serializer.dumps({ 'user_id': alice.id})
 
-        headers = {'Authorization': token}
+        headers = {'Authorization': 'Token ' + token}
 
         ws = test_client.get('/v2/ws/wonderland/', headers=headers)
         assert ws.status_code == 401
@@ -93,7 +93,7 @@ class TestLogin():
 
         assert res.status_code == 200
 
-        headers = {'Authorization': res.json}
+        headers = {'Authorization': 'Token ' + res.json}
 
         # clean cookies make sure test_client has no session
         test_client.cookie_jar.clear()
@@ -114,7 +114,7 @@ class TestLogin():
 
         assert res.status_code == 200
 
-        headers = {'Authorization': res.json}
+        headers = {'Authorization': 'Token ' + res.json}
 
         if user:
             user.password = 'SECRET_VERY_SECRET_PASSWORD_TEST'

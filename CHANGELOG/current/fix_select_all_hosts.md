@@ -1,1 +1,1 @@
-Fix select all hosts.
+Fix broken select all hosts checkbox

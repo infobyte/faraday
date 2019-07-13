@@ -85,11 +85,11 @@ class Api:
 
     def _put(self, url, data, object_name):
         if self.headers:
-            response = self.requests.put(url, json=data, headers=self.headerss)
+            response = self.requests.put(url, json=data, headers=self.headers)
         else:
             response = self.requests.put(url, json=data, cookies=self.cookies)
         if response.status_code == 401:
-            raise ApiError('Unauthorized operation trying to update {}'.format(object_name))
+            raise ApiError('Unauthorized operation trying to upFdate {}'.format(object_name))
         if response.status_code != 200:
             raise ApiError('Unable to update {}'.format(object_name))
         if isinstance(response.json, dict):
@@ -97,15 +97,17 @@ class Api:
         return json.loads(response.content)
 
     def _delete(self, url, object_name):
-        response = self.requests.delete(url, headers=self.headers, cookies=self.cookies)
+        if self.headers:
+            response = self.requests.delete(url, headers=self.headers)
+        else:
+            response = self.requests.delete(url, cookies=self.cookies)
         if response.status_code == 401:
             raise ApiError('Unauthorized operation trying to delete {}'.format(object_name))
         if response.status_code != 204:
             raise ApiError('Unable to delete {}'.format(object_name))
-        return response.ok
+        return True
 
     def login(self,  username, password):
-        header = None
         auth = {"email": username, "password": password}
         try:
             resp = self.requests.post(self.base + 'login', json=auth)

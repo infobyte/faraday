@@ -449,9 +449,8 @@ def execute_action(api, objects, rule, mail_notificacion=None):
                 value = str('=').join(array_exp[1:])
                 if obj.class_signature == 'VulnerabilityWeb' or obj.class_signature == 'Vulnerability':
 
-                    if update_vulnerability(api, obj, key, value):
-                        pass
-                        # insert_rule(rule['id'], command, obj, _objs_value, fields=None, key=key, value=value)
+                    update_vulnerability(api, obj, key, value)
+                    # insert_rule(rule['id'], command, obj, _objs_value, fields=None, key=key, value=value)
 
                 if obj.class_signature == 'Service':
                     update_service(api, obj, key, value)

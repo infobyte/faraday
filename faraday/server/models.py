@@ -1905,12 +1905,19 @@ class Condition(Metadata):
 
 
 class RuleExecution(Metadata):
+    """
+        Searcher uses command_id to enable faraday activity tracking.
+        We then use this model to link rule execution with the command that the searcher
+        executed.
+    """
     __tablename__ = 'rule_execution'
     id = Column(Integer, primary_key=True)
     start = Column(DateTime, nullable=True)
     end = Column(DateTime, nullable=True)
     rule_id = Column(Integer, ForeignKey('rule.id'), index=True, nullable=False)
     rule = relationship('Rule', foreign_keys=[rule_id], backref=backref('executions', cascade="all, delete-orphan"))
+    command_id = Column(Integer, ForeignKey('command.id'), index=True, nullable=False)
+    command = relationship('Command', foreign_keys=[rule_id], backref=backref('rule_executions', cascade="all, delete-orphan"))
 
     @property
     def parent(self):

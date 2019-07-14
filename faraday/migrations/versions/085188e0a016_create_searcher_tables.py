@@ -142,9 +142,8 @@ def upgrade():
     op.create_table(
         'rule_execution',
         sa.Column('id', sa.Integer, primary_key=True),
-        sa.Column('start', sa.DateTime, nullable=True),
-        sa.Column('end', sa.DateTime, nullable=True),
         sa.Column('rule_id', sa.Integer, nullable=False),
+        sa.Column('command_id', sa.Integer, nullable=False),
         sa.Column('create_date', sa.DateTime),
         sa.Column('update_date', sa.DateTime),
         sa.Column('creator_id', sa.Integer),
@@ -167,6 +166,12 @@ def upgrade():
         'rule_execution_rule_id_fkey',
         'rule_execution',
         'rule', ['rule_id'], ['id']
+    )
+
+    op.create_foreign_key(
+        'rule_execution_command_id_fkey',
+        'rule_execution',
+        'command', ['command_id'], ['id']
     )
 
 

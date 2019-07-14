@@ -228,7 +228,6 @@ class Api:
         data = {
             "itime": self.itime,
             "duration": duration,
-            "command": "Searcher",
             "command": self.tool_name,
             "ip": socket.gethostbyname(socket.gethostname()),
             "import_source": "shell",

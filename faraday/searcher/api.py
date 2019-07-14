@@ -211,6 +211,7 @@ class Api:
     def create_command(self, itime, params, tool_name):
         self.itime = itime
         self.params = params
+        self.tool_name = tool_name
         data = {
             "itime": self.itime,
             "command": self.tool_name,
@@ -228,6 +229,7 @@ class Api:
             "itime": self.itime,
             "duration": duration,
             "command": "Searcher",
+            "command": self.tool_name,
             "ip": socket.gethostbyname(socket.gethostname()),
             "import_source": "shell",
             "tool": "Searcher",

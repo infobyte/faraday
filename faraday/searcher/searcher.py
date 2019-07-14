@@ -543,7 +543,8 @@ def signal_handler(signal, frame):
 
 class Searcher:
 
-    def __init__(self, api, mail_notificacion=None):
+    def __init__(self, api, mail_notificacion=None, tool_name='Searcher'):
+        self.tool_name = tool_name
         self.api = api
         self.mail_notificacion = mail_notificacion
 
@@ -564,6 +565,7 @@ class Searcher:
             command_id = self.api.create_command(
                 itime=time.mktime(start.timetuple()),
                 params=rules,
+                tool_name=self.tool_name
             )
             self.api.command_id = command_id
             process_vulnerabilities(

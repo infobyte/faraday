@@ -208,12 +208,12 @@ class Api:
                     filtered_templates.append(template)
         return filtered_templates
 
-    def create_command(self, itime, params):
+    def create_command(self, itime, params, tool_name):
         self.itime = itime
         self.params = params
         data = {
             "itime": self.itime,
-            "command": "Searcher",
+            "command": self.tool_name,
             "ip": socket.gethostbyname(socket.gethostname()),
             "import_source": "shell",
             "tool": "Searcher",

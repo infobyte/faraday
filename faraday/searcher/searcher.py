@@ -15,12 +15,13 @@ import json
 import signal
 import smtplib
 import logging
+import time
+
 import requests
 import subprocess
 from datetime import datetime
 
 import click
-import sqlite3
 from difflib import SequenceMatcher
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -150,35 +151,6 @@ def process_models_by_similarity(api, _models, rule, mail_notificacion):
                         else:
                             execute_action(api, _object, rule, mail_notificacion)
     logger.debug("<-- Finish Process models by similarity")
-
-
-def insert_rule(_id, command, obj, selector, fields=None, key=None, value=None, output_file='output/searcher.db'):
-    logger.debug("Inserting rule %s into SQlite database ..." % _id)
-    conn = sqlite3.connect(output_file)
-    conn.text_factory = str
-    try:
-        cursor = conn.cursor()
-        cursor.execute('''CREATE TABLE IF NOT EXISTS rule (
-                                id TEXT,
-                                model TEXT NOT NULL,
-                                fields TEXT,
-                                command TEXT NOT NULL,
-                                object_id TEXT NOT NULL,
-                                object_name TEXT NOT NULL,
-                                key TEXT,
-                                value TEXT,
-                                created TEXT NOT NULL,
-                                selector TEXT)''')
-
-        created = str(datetime.now())
-        rule = (_id, obj.class_signature, fields, command, obj.id, obj.name, key, value, created, selector)
-        cursor.execute('INSERT INTO rule VALUES (?,?,?,?,?,?,?,?,?,?)', rule)
-        conn.commit()
-        conn.close()
-        logger.debug("Done")
-    except sqlite3.Error as e:
-        conn.close()
-        logger.exception(e)
 
 
 def get_field(obj, field):
@@ -448,9 +420,7 @@ def execute_action(api, objects, rule, mail_notificacion=None):
                 key = array_exp[0]
                 value = str('=').join(array_exp[1:])
                 if obj.class_signature == 'VulnerabilityWeb' or obj.class_signature == 'Vulnerability':
-
                     update_vulnerability(api, obj, key, value)
-                    # insert_rule(rule['id'], command, obj, _objs_value, fields=None, key=key, value=value)
 
                 if obj.class_signature == 'Service':
                     update_service(api, obj, key, value)
@@ -462,7 +432,6 @@ def execute_action(api, objects, rule, mail_notificacion=None):
                 if obj.class_signature == 'VulnerabilityWeb' or obj.class_signature == 'Vulnerability':
                     api.delete_vulnerability(obj.id)
                     logger.info("Deleting vulnerability '%s' with id '%s':" % (obj.name, obj.id))
-                    # insert_rule(rule['id'], command, obj, _objs_value)
 
                 elif obj.class_signature == 'Service':
                     api.delete_service(obj.id)
@@ -471,20 +440,11 @@ def execute_action(api, objects, rule, mail_notificacion=None):
                 elif obj.class_signature == 'Host':
                     api.delete_host(obj.id)
                     logger.info("Deleting host '%s' with id '%s':" % (obj.name, obj.id))
-
-            elif command == 'EXECUTE':
-                if subprocess.call(expression, shell=True, stdin=None) is 0:
-                    logger.info("Running command: '%s'" % expression)
-                    # insert_rule(rule['id'], command, obj, _objs_value, fields=None, key=None, value=expression)
-                else:
-                    logger.error("Operation fail running command: '%s'" % expression)
-                    return False
             else:
                 subject = 'Faraday searcher alert'
                 body = '%s %s have been modified by rule %s at %s' % (
                     obj.class_signature, obj.name, rule['id'], str(datetime.now()))
                 mail_notificacion.send_mail(expression, subject, body)
-                # insert_rule(rule['id'], command, obj, _objs_value, fields=None, key=None, value=expression)
                 logger.info("Sending mail to: '%s'" % expression)
     return True
 
@@ -600,6 +560,12 @@ class Searcher:
     def process(self, rules):
 
         if rules and validate_rules(rules):
+            start = datetime.now()
+            command_id = self.api.create_command(
+                itime=time.mktime(start.timetuple()),
+                params=rules,
+            )
+            self.api.command_id = command_id
             process_vulnerabilities(
                 self.api,
                 self.vulns,
@@ -618,6 +584,8 @@ class Searcher:
                 self.mail_notificacion,
                 rules
             )
+            duration = (datetime.now() - start).seconds
+            self.api.close_command(command_id, duration)
 
 
 @click.command()

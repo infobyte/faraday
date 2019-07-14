@@ -2,8 +2,16 @@ import pytest
 
 from faraday.searcher.api import Api
 from faraday.searcher.searcher import Searcher
-from faraday.server.models import Vulnerability
+from faraday.server.models import Vulnerability, CommandObject
 from tests.factories import WorkspaceFactory, VulnerabilityFactory
+
+
+def check_command(vuln, session):
+    command_obj_rel = session.query(CommandObject).filter_by(object_type='vulnerability', object_id=vuln.id).first()
+    assert command_obj_rel is not None
+    assert command_obj_rel.command.tool == 'Searcher'
+    count = session.query(CommandObject).filter_by(object_type='vulnerability', object_id=vuln.id).count()
+    assert count == 1
 
 
 @pytest.mark.usefixtures('logged_user')
@@ -29,6 +37,7 @@ class TestSearcherRules():
         assert vulns_count == 1
         vuln = session.query(Vulnerability).filter_by(workspace=workspace).first()
         assert vuln.severity == 'medium'
+        check_command(vuln, session)
 
     def test_searcher_delete_rules(self, session, test_client):
         workspace = WorkspaceFactory.create()
@@ -72,4 +81,5 @@ class TestSearcherRules():
         assert vulns_count == 1
         vuln = session.query(Vulnerability).filter_by(workspace=workspace, id=vuln.id).first()
         assert list(vuln.tags) == ["TEST"]
+        check_command(vuln, session)
 

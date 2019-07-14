@@ -1,5 +1,6 @@
 import json
 import logging
+import socket
 
 from requests.adapters import ConnectionError, ReadTimeout
 
@@ -44,6 +45,7 @@ class Api:
     def __init__(self, requests, workspace, username=None, password=None, base='http://127.0.0.1:5985/_api/', token=None):
         self.requests = requests
         self.workspace = workspace
+        self.command_id = None  # Faraday uses this to tracker searcher changes.
         self.base = base
         if not self.base.endswith('/'):
             self.base += '/'
@@ -54,7 +56,10 @@ class Api:
                 raise UserWarning('Invalid username or password')
 
     def _url(self, path):
-        return self.base + 'v2/' + path
+        url =  self.base + 'v2/' + path
+        if self.command_id and 'commands' not in url:
+            url += '?command_id={}'.format(self.command_id)
+        return url
 
     def _get(self, url, object_name):
         logger.debug('Getting url {}'.format(url))
@@ -202,3 +207,30 @@ class Api:
                         (getattr(template, key, None) == value or str(getattr(template, key, None)) == value):
                     filtered_templates.append(template)
         return filtered_templates
+
+    def create_command(self, itime, params):
+        self.itime = itime
+        self.params = params
+        data = {
+            "itime": self.itime,
+            "command": "Searcher",
+            "ip": socket.gethostbyname(socket.gethostname()),
+            "import_source": "shell",
+            "tool": "Searcher",
+            "params": json.dumps(params),
+        }
+        res = self._post(self._url('ws/{}/commands/'.format(self.workspace)), data, 'command')
+        return res["_id"]
+
+    def close_command(self, command_id, duration):
+        data = {}
+        data = {
+            "itime": self.itime,
+            "duration": duration,
+            "command": "Searcher",
+            "ip": socket.gethostbyname(socket.gethostname()),
+            "import_source": "shell",
+            "tool": "Searcher",
+            "params": json.dumps(self.params),
+        }
+        self._put(self._url('ws/{}/commands/{}/'.format(self.workspace, command_id)), data, 'command')

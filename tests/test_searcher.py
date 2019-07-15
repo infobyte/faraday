@@ -120,13 +120,14 @@ class TestSearcherRules():
         session.commit()
 
         template_name = template.name
+        template_id = template.id
         api = Api(test_client, workspace.name, username='test', password='test', base='')
         searcher = Searcher(api)
         rules = [{
             'id': 'APPLY_TEMPLATE',
             'model': 'Vulnerability',
             'object': "severity=low",
-            'actions': ["--UPDATE:template=1"]
+            'actions': ["--UPDATE:template={}".format(template_id)]
         }]
 
         searcher.process(rules)

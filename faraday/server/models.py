@@ -68,7 +68,6 @@ OBJECT_TYPES = [
     'executive_report',
     'workspace',
     'task',
-    'agent'  # TODO: Make migration
 ]
 
 

@@ -76,10 +76,10 @@ pylint:
         - pip install --upgrade -r requirements.txt
         - python setup.py install
         # pylint slow issue https://github.com/PyCQA/pylint/issues/2765
-        - pip install pylint isort==4.3.4 anybadge
+        - pip install pylint isort==4.3.4
         - pylint --rcfile=.pylintrc faraday --ignore=faraday_venv | tee pylint.txt
         - score=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' pylint.txt)
-        - anybadge --label pylint --value=$score --file pylint.svg 4=red 6=orange 8=yellow 10=green
+          #- anybadge --label pylint --value=$score --file pylint.svg 4=red 6=orange 8=yellow 10=green
     artifacts:
         paths:
             - pylint.svg
@@ -186,7 +186,7 @@ generate_release_file:
 
 generate_build_file:
     image: registry.gitlab.com/faradaysec/faraday/faraday_testing_pink
-    stage: build_faraday 
+    stage: build_faraday
     script:
         - apt-get update -qy
         - apt-get install -y rsync

@@ -150,12 +150,23 @@ def register_handlers(app):
         view = app.view_functions.get(flask.request.endpoint)
 
         if app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER'] in flask.request.headers:
-            user = verify_token(flask.request.headers[app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER']])
-            if not user:
-                logger.warn('Invalid authentication token.')
+            header = flask.request.headers[app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER']]
+            try:
+                (auth_type, token) = header.split(None, 1)
+            except ValueError:
+                logger.warn("Authorization header does not have type")
                 flask.abort(401)
-            logged_in = True
-            flask.session['user_id'] = user.id
+            auth_type = auth_type.lower()
+            if auth_type == 'token':
+                user = verify_token(token)
+                if not user:
+                    logger.warn('Invalid authentication token.')
+                    flask.abort(401)
+                logged_in = True
+                flask.session['user_id'] = user.id
+            else:
+                logger.warn("Invalid authorization type")
+                flask.abort(401)
         else:
             logged_in = 'user_id' in flask.session
             if not logged_in and not getattr(view, 'is_public', False):

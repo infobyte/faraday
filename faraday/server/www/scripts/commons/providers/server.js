@@ -710,26 +710,16 @@ angular.module("faradayApp")
                 }
             };
 
-
-            ServerAPI.updateAgent = function (wsName, agent) {
-                 var putUrl = createPutUrl(wsName, agent.id, 'agents');
-                 return send_data(putUrl, agent, true, "PUT");
-            };
-
-            ServerAPI.createAgentToken = function (agentToken) {
-                 var postUrl = createNonWorkspacedGetUrl('agent_tokens');
-                 return send_data(postUrl, agentToken, false, "POST");
-            };
-
             ServerAPI.getAgentToken = function () {
-                 var getUrl = createNonWorkspacedGetUrl('agent_tokens');
+                 var getUrl = createNonWorkspacedGetUrl('agent_token');
                  return get(getUrl);
             };
 
-            ServerAPI.updateAgentToken = function (agentToken) {
-                 var putUrl = createNonWorkspacedPutUrl(agentToken.id, 'agent_tokens');
-                 return send_data(putUrl, agentToken, true, "PUT");
+            ServerAPI.getNewAgentToken = function () {
+                 var getUrl = createNonWorkspacedGetUrl('agent_token');
+                 return get(getUrl + '?new_token=True');
             };
+
             ServerAPI.getTools = function(hid, ws){
                 return get(APIURL + 'ws/' + ws + '/hosts/' + hid + '/tools_history/');
             }

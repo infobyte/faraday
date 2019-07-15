@@ -41,7 +41,7 @@ from faraday.server.models import (
     CommandObject,
     Comment,
     CustomFieldsSchema,
-    Agent, AgentAuthToken)
+    Agent)
 
 # Make partials for start and end date. End date must be after start date
 FuzzyStartTime = lambda: (
@@ -428,22 +428,11 @@ class NoteFactory(FaradayFactory):
 
 
 class AgentFactory(WorkspaceObjectFactory):
-    type = FuzzyChoice(['shared', 'specific'])
-    status = FuzzyChoice(['locked', 'paused', 'offline'])
-    token = FuzzyText()
-    description = FuzzyText()
-    version = FuzzyText()
-    projects = FuzzyInteger(1)
-    jobs = FuzzyInteger(1)
+    name = FuzzyText()
+    active = True
 
     class Meta:
         model = Agent
         sqlalchemy_session = db.session
 
 
-class AgentAuthTokenFactory(FaradayFactory):
-    token = FuzzyText()
-
-    class Meta:
-        model = AgentAuthToken
-        sqlalchemy_session = db.session

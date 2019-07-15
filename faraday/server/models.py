@@ -1859,20 +1859,11 @@ class AgentsSchedule(Metadata):
     crontab = NonBlankColumn(Text)
     timezone = NonBlankColumn(Text)
     active = Column(Boolean, nullable=False, default=True)
-    # last_pipeline = BlankColumn(Text)
-
-    owner_id = Column(Integer, ForeignKey('faraday_user.id'), index=True, nullable=False)
-    owner = relationship(
-        'User',
-        backref=backref('schedules', cascade="all, delete-orphan"),
-        foreign_keys=[owner_id]
-    )
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
         'Workspace',
         backref=backref('schedules', cascade="all, delete-orphan"),
-        # primaryjoin="Notification.id == Notification.workspace_id"
     )
 
     agent_id = Column(Integer, ForeignKey('agent.id'), index=True, nullable=False)
@@ -1889,25 +1880,30 @@ class AgentsSchedule(Metadata):
 class Agent(Metadata):
     __tablename__ = 'agent'
     id = Column(Integer, primary_key=True)
-    type = Column(Enum(*['shared', 'specific'], name='types'), nullable=False, default='specific')
-    status = Column(Enum(*['locked', 'paused', 'offline', 'running'], name='status'), nullable=False, default='running')
-    token = Column(Text, nullable=False, default=str(uuid.uuid4()))
+    token = Column(Text, unique=True, nullable=False, default=lambda:
+                    "".join([SystemRandom().choice(string.ascii_letters + string.digits)
+                            for _ in range(64)]))
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
-    workspace = relationship('Workspace', foreign_keys=[workspace_id], backref='agents')
-    description = Column(Text, nullable=True)
-    version = Column(Text, nullable=True)
-    projects = Column(Integer, nullable=True)
-    jobs = Column(Integer, nullable=True)
+    workspace = relationship(
+        'Workspace',
+        foreign_keys=[workspace_id],
+        backref=backref('agents', cascade="all, delete-orphan"),
+    )
+    name = Column(Text, nullable=False)
+    active = Column(Boolean, default=True)
 
     @property
     def parent(self):
         return
 
-
-class AgentAuthToken(Metadata):
-    __tablename__ = 'agent_auth_token'
-    id = Column(Integer, primary_key=True)
-    token = Column(Text, nullable=False, default=lambda: "".join([SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64)]))
+    @property
+    def status(self):
+        # ver si esta conectado en websocket
+        if not self.active:
+            return 'paused'
+        else:
+            # verifico en websockets
+            pass
 
 
 # This constraint uses Columns from different classes

@@ -3,14 +3,58 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('agentsCtrl', ['$scope', 'uuid', 'agentFact', 'Notification', '$routeParams', '$uibModal',
-        function ($scope, uuid, agentFact, Notification, $routeParams, $uibModal) {
+    .controller('agentsCtrl', [
+        '$scope',
+        'uuid',
+        'agentFact',
+        'workspacesFact',
+        'Notification',
+        '$routeParams',
+        '$uibModal',
+        'commonsFact',
+        function ($scope,
+                  uuid,
+                  agentFact,
+                  workspacesFact,
+                  Notification,
+                  $routeParams,
+                  $uibModal,
+                  commonsFact) {
             $scope.agentToken = {id: null, token: null};
             $scope.workspace = null;
             $scope.agents = [];
+            $scope.selectAll = false;
+            $scope.options = [];
 
             $scope.init = function () {
-                $scope.workspace = $routeParams.wsId;
+                getWorkspaces();
+            };
+
+
+            var getWorkspaces = function () {
+                workspacesFact.getWorkspaces().then(function (wss) {
+                    $scope.workspaces = [];
+
+                    wss.forEach(function (ws) {
+                        $scope.workspaces.push(ws);
+                    });
+
+                    $scope.workspace = $scope.workspaces[0].name;
+                    $scope.workspaceData = $scope.workspaces[0];
+
+                    getToken();
+                    getAgents();
+                });
+            };
+
+
+            $scope.switchWorkspace = function (workspace) {
+                $scope.workspace = workspace;
+
+                workspacesFact.get(workspace).then(function (ws) {
+                    $scope.workspaceData = ws
+                });
+
                 getToken();
                 getAgents();
             };
@@ -18,20 +62,6 @@ angular.module('faradayApp')
 
             var getToken = function () {
                 agentFact.getAgentToken($scope.workspace).then(
-                    function (response) {
-                        if (response.data.length > 0)
-                            $scope.agentToken = response.data[0];
-                        else {
-                            createToken();
-                        }
-                    }, function (error) {
-                        console.log(error);
-                    });
-            };
-
-            var createToken = function () {
-                var agentToken = {'token': uuid.v4()};
-                agentFact.createAgentToken(agentToken).then(
                     function (response) {
                         $scope.agentToken = response.data;
                     }, function (error) {
@@ -58,8 +88,7 @@ angular.module('faradayApp')
             };
 
             $scope.refreshToken = function () {
-                var agentToken = {id: $scope.agentToken.id, token: uuid.v4()};
-                agentFact.updateAgentToken(agentToken).then(
+                agentFact.getNewAgentToken().then(
                     function (response) {
                         $scope.agentToken = response.data;
                     }, function (error) {
@@ -71,13 +100,13 @@ angular.module('faradayApp')
                 var copyElement = document.createElement("textarea");
                 copyElement.style.position = 'fixed';
                 copyElement.style.opacity = '0';
-                copyElement.textContent = decodeURI($scope.agentToken);
+                copyElement.textContent = decodeURI($scope.agentToken.token);
                 var body = document.getElementsByTagName('body')[0];
                 body.appendChild(copyElement);
                 copyElement.select();
                 document.execCommand('copy');
                 body.removeChild(copyElement);
-                Notification.success("Token " + $scope.agentToken.token + " copied to clipboard");
+                Notification.success("Token copied to clipboard");
             };
 
             var _delete = function (agentId) {
@@ -130,6 +159,69 @@ angular.module('faradayApp')
                         agent.status = oldStatus;
                         console.log(error);
                     });
+            };
+
+
+            $scope.toggleAgent = function (index) {
+                $scope.agents[index].checked = !$scope.agents[index].checked;
+                if (!$scope.agents[index].checked) {
+                    $scope.selectAll = false;
+                } else {
+                    $scope.selectAll = $scope.agents.filter(function (agent) {
+                            return agent.checked === true
+                        }).length === $scope.agents.length;
+                }
+            };
+
+            $scope.toggleAll = function () {
+                var checked = $scope.selectAll;
+                for (var i = 0; i < $scope.agents.length; i++) {
+                    $scope.options[i] = checked;
+                    $scope.agents[i].checked = checked;
+                    $scope.agents[i].selected = checked;
+                }
+            };
+
+            var getCurrentSelection = function () {
+                return $scope.agents.filter(function (agent) {
+                    return agent.selected === true
+                });
+            };
+
+
+            var putTag = function (data) {
+                getCurrentSelection().forEach(function (agent) {
+                    agent.tags = data.tags;
+                    agentFact.updateAgent($scope.workspace, agent).then(
+                        function (response) {
+                        }, function (error) {
+                            console.log(error);
+                        });
+                });
+            };
+
+            $scope.agentsTags = function () {
+                if (getCurrentSelection().length > 0) {
+                    var modal = $uibModal.open({
+                        templateUrl: 'scripts/tags/partials/modalTags.html',
+                        controller: 'modalTagsCtrl',
+                        size: 'lg',
+                        resolve: {
+                            vulns: function () {  // TODO: CHANGE VAR NAME, SHOULD BE 'items' or 'objects' IN 'modalTagsCtrl'
+                                return getCurrentSelection();
+                            },
+                            workspace: function () {
+                                return $scope.workspace;
+                            }
+                        }
+                    });
+
+                    modal.result.then(function (data) {
+                        putTag(data);
+                    });
+                } else {
+                    commonsFact.showMessage('No agents were selected to tag');
+                }
             };
 
             $scope.init();

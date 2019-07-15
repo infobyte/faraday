@@ -21,19 +21,19 @@ agent_api = Blueprint('agent_api', __name__)
 
 class AgentSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
-    type = fields.String(validate=OneOf(['shared', 'specific']))
-    status = fields.String(validate=OneOf(['locked', 'paused', 'offline', 'running']))
+    status = fields.String(dump_only=True)
     creator = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
     token = fields.String(dump_only=True)
+    create_date = fields.DateTime(dump_only=True)
+    update_date = fields.DateTime(dump_only=True)
 
     class Meta:
         model = Agent
         fields = (
-            'id', 'type', 'status',
-            'description', 'version',
-            'projects', 'jobs',
+            'id', 'name', 'status', 'active',
             'create_date',
-            'update_date', 'creator',
+            'update_date',
+            'creator',
             'token'
         )
 

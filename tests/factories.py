@@ -428,13 +428,8 @@ class NoteFactory(FaradayFactory):
 
 
 class AgentFactory(WorkspaceObjectFactory):
-    type = FuzzyChoice(['shared', 'specific'])
-    status = FuzzyChoice(['locked', 'paused', 'offline'])
-    token = FuzzyText()
-    description = FuzzyText()
-    version = FuzzyText()
-    projects = FuzzyInteger(1)
-    jobs = FuzzyInteger(1)
+    name = FuzzyText()
+    active = True
 
     class Meta:
         model = Agent

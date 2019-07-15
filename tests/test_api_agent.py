@@ -88,15 +88,11 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
     view_class = AgentView
     api_endpoint = 'agent'
 
-    def create_raw_agent(self, _type='shared', status="offline", token="TOKEN"):
+    def create_raw_agent(self, _type='shared', active=False, token="TOKEN"):
         return {
-            "projects": 1,
-            "type": _type,
-            "version": "1",
             "token": token,
-            "status": status,
-            "jobs": 1,
-            "description": "My Desc"
+            "active": active,
+            "name": "My agent"
         }
 
     def test_create_agent_invalid(self, test_client, session):
@@ -106,27 +102,17 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
         assert res.status_code == 405  # the only way to create agents is by using the token!
         assert len(session.query(Agent).all()) == initial_agent_count
 
-    def test_cannot_create_agent_with_invalid_type(self, test_client):
-        raw_agent = self.create_raw_agent(_type="wrong_type")
-        res = test_client.post(self.url(), data=raw_agent)
-        assert res.status_code == 405  # the only way to create agents is by using the token!
-
-    def test_cannot_create_agent_with_invalid_status(self, test_client):
-        raw_agent = self.create_raw_agent(status="wrong_status")
-        res = test_client.post(self.url(), data=raw_agent)
-        assert res.status_code == 405  # you can only create agents by using the token
-
     def test_update_agent(self, test_client, session):
-        agent = AgentFactory.create(workspace=self.workspace, type='shared')
+        agent = AgentFactory.create(workspace=self.workspace, active=True)
         session.commit()
-        raw_agent = self.create_raw_agent(_type="specific")
+        raw_agent = self.create_raw_agent(active=False)
         res = test_client.put(self.url(agent.id), data=raw_agent)
         assert res.status_code == 200
-        assert res.json['type'] == 'specific'
+        assert not res.json['active']
 
     def test_delete_agent(self, test_client, session):
         initial_agent_count = len(session.query(Agent).all())
-        agent = AgentFactory.create(workspace=self.workspace, type='shared')
+        agent = AgentFactory.create(workspace=self.workspace)
         session.commit()
         assert len(session.query(Agent).all()) == initial_agent_count + 1
         res = test_client.delete(self.url(agent.id))

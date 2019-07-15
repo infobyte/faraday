@@ -1880,7 +1880,7 @@ class AgentsSchedule(Metadata):
 class Agent(Metadata):
     __tablename__ = 'agent'
     id = Column(Integer, primary_key=True)
-    token = Column(Text, nullable=False, default=lambda:
+    token = Column(Text, unique=True, nullable=False, default=lambda:
                     "".join([SystemRandom().choice(string.ascii_letters + string.digits)
                             for _ in range(64)]))
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
@@ -1889,7 +1889,7 @@ class Agent(Metadata):
         foreign_keys=[workspace_id],
         backref=backref('agents', cascade="all, delete-orphan"),
     )
-    name = Column(Text, nullable=True)
+    name = Column(Text, nullable=False)
     active = Column(Boolean, default=True)
 
     @property

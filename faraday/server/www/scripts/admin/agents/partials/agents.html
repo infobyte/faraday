@@ -69,14 +69,9 @@
             <th class="ui-grid-cell-contents ui-grid-header-cell hosts-list-checkall" style="width: 1%;">
                 <input type="checkbox" name="agent" id="cbox-all" ng-model="selectAll" ng-change="toggleAll()">
             </th>
-            <th class="ui-grid-cell-contents ui-grid-header-cell">Type</th>
+            <th class="ui-grid-cell-contents ui-grid-header-cell">Name</th>
             <th class="ui-grid-cell-contents ui-grid-header-cell">Status</th>
             <th class="ui-grid-cell-contents ui-grid-header-cell">Token</th>
-            <th class="ui-grid-cell-contents ui-grid-header-cell">Description</th>
-            <th class="ui-grid-cell-contents ui-grid-header-cell">Version</th>
-            <th class="ui-grid-cell-contents ui-grid-header-cell">Projects</th>
-            <th class="ui-grid-cell-contents ui-grid-header-cell">Jobs</th>
-            <th class="ui-grid-cell-contents ui-grid-header-cell" ng-if="">Tags</th>
             <th class="ui-grid-cell-contents ui-grid-header-cell"></th>
         </tr>
         </thead>
@@ -91,40 +86,18 @@
                 <input type="checkbox" name="cbox-{{agent.id}}" id="cbox-{{agent.id}}" ng-model="options[$index]"
                        ng-value="agent.checked" ng-change="toggleAgent($index)">
             </td>
-            <td class="ui-grid-cell-contents active-toggle">
-                    <span class="preview-tag"
-                          ng-class="{'tag-blue':agent.type=='shared', 'tag-green':agent.type=='specific'}">{{agent.type}}</span>
+             <td class="ui-grid-cell-contents active-toggle">
+                {{agent.name}}
             </td>
             <td class="ui-grid-cell-contents active-toggle">
-                                <span class="preview-tag" ng-class="{'tag-yellow':agent.status=='locked',
+                                <span class="preview-tag" ng-class="{
                                 'tag-green':agent.status=='running',
-                                'tag-red':agent.status=='paused','tag-gray':agent.status=='offline'}">{{agent.status}}</span>
+                                'tag-yellow':agent.status=='paused','tag-red':agent.status=='offline'}">{{agent.status}}</span>
             </td>
 
             <td class="ui-grid-cell-contents active-toggle">
-                {{agent.token | limitTo: 8}}
+                {{agent.token}}
             </td>
-
-            <td class="ui-grid-cell-contents active-toggle">
-                {{agent.description}}
-            </td>
-
-            <td class="ui-grid-cell-contents active-toggle">
-                {{agent.version}}
-            </td>
-
-            <td class="ui-grid-cell-contents active-toggle">
-                {{agent.projects}}
-            </td>
-
-            <td class="ui-grid-cell-contents active-toggle">
-                {{agent.jobs}}
-            </td>
-
-            <td class="ui-grid-cell-contents active-toggle" ng-if="">
-                <span class="preview-tag tag-blue" ng-repeat="tag in agent.tags">{{tag}}</span>
-            </td>
-
 
             <td class="ui-grid-cell-contents active-toggle" selection-model-ignore="">
                 <button type="button" class="btn"

@@ -22,7 +22,7 @@ def upgrade():
     op.create_table(
         'agent',
         sa.Column('id', sa.Integer, primary_key=True),
-        sa.Column('token', sa.Text, nullable=False),
+        sa.Column('token', sa.Text, nullable=False, unique=True),
         sa.Column('name', sa.Text, nullable=False),
         sa.Column('active', sa.Boolean, nullable=False),
         sa.Column('workspace_id', sa.Integer, nullable=False),

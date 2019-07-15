@@ -39,25 +39,22 @@ class AgentSchema(AutoSchema):
 
 
 class AgentCreationSchema(Schema):
-    token = fields.String(dump_only=False)
+    token = fields.String(dump_only=False, required=True)
+    name = fields.String(required=True)
 
 
 class AgentCreationView(GenericWorkspacedView, CreateWorkspacedMixin):
     route_base = 'agent_registration'
     model_class = Agent
     schema_class = AgentCreationSchema
-    is_public = True
 
     def _perform_create(self,  data, **kwargs):
-        if 'token' in data:
-            token = data.pop('token')
-            if not faraday_server.agent_token:
-                # someone is trying to use the token, but no token was generated yet.
-                abort(401, "Invalid Token")
-            if token != faraday_server.agent_token:
-                abort(401, "Invalid Token")
-        else:
-            abort(400, "Token required")
+        token = data.pop('token')
+        if not faraday_server.agent_token:
+            # someone is trying to use the token, but no token was generated yet.
+            abort(401, "Invalid Token")
+        if token != faraday_server.agent_token:
+            abort(401, "Invalid Token")
 
         agent = super(AgentCreationView, self)._perform_create(data, **kwargs)
 

@@ -113,7 +113,7 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
     model = Agent
     factory = factories.AgentFactory
     view_class = AgentView
-    api_endpoint = 'agent'
+    api_endpoint = 'agents'
 
     def create_raw_agent(self, _type='shared', active=False, token="TOKEN"):
         return {

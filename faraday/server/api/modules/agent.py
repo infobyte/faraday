@@ -65,7 +65,7 @@ class AgentView(UpdateWorkspacedMixin,
                 DeleteWorkspacedMixin,
                 CountWorkspacedMixin,
                 ReadOnlyWorkspacedView):
-    route_base = 'agent'
+    route_base = 'agents'
     model_class = Agent
     schema_class = AgentSchema
     get_joinedloads = [Agent.creator]

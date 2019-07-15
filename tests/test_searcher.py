@@ -1,8 +1,11 @@
 import pytest
 
 from faraday.searcher.api import Api
-from faraday.searcher.searcher import Searcher
+from faraday.searcher.searcher import Searcher, MailNotification
+from faraday.server.models import Service, Host
 from faraday.server.models import Vulnerability, CommandObject
+from tests.factories import VulnerabilityTemplateFactory, ServiceFactory, \
+    HostFactory, CustomFieldsSchemaFactory
 from tests.factories import WorkspaceFactory, VulnerabilityFactory
 
 
@@ -83,3 +86,344 @@ class TestSearcherRules():
         assert list(vuln.tags) == ["TEST"]
         check_command(vuln, session)
 
+    def test_confirm_vuln(self, session, test_client):
+        workspace = WorkspaceFactory.create()
+        vuln = VulnerabilityFactory.create(workspace=workspace, severity='low', confirmed=False)
+        session.add(workspace)
+        session.add(vuln)
+        session.commit()
+
+        assert vuln.confirmed is False
+
+        api = Api(test_client, workspace.name, username='test', password='test', base='')
+        searcher = Searcher(api)
+        rules = [{
+            'id': 'CONFIRM_VULN',
+            'model': 'Vulnerability',
+            'object': "severity=low",
+            'actions': ["--UPDATE:confirmed=True"]
+        }]
+
+        searcher.process(rules)
+        vulns_count = session.query(Vulnerability).filter_by(workspace=workspace).count()
+        assert vulns_count == 1
+        vuln = session.query(Vulnerability).filter_by(workspace=workspace).first()
+        assert vuln.confirmed is True
+
+    def test_apply_template_by_id(self, session, test_client):
+        workspace = WorkspaceFactory.create()
+        template = VulnerabilityTemplateFactory.create()
+        vuln = VulnerabilityFactory.create(workspace=workspace, severity='low', confirmed=False)
+        session.add(workspace)
+        session.add(vuln)
+        session.add(template)
+        session.commit()
+
+        template_name = template.name
+        api = Api(test_client, workspace.name, username='test', password='test', base='')
+        searcher = Searcher(api)
+        rules = [{
+            'id': 'APPLY_TEMPLATE',
+            'model': 'Vulnerability',
+            'object': "severity=low",
+            'actions': ["--UPDATE:template=1"]
+        }]
+
+        searcher.process(rules)
+        vulns_count = session.query(Vulnerability).filter_by(workspace=workspace).count()
+        assert vulns_count == 1
+        vuln = session.query(Vulnerability).filter_by(workspace=workspace).first()
+        assert vuln.name == template_name
+
+    def test_remove_duplicated_by_name(self, session, test_client):
+        workspace = WorkspaceFactory.create()
+        host = HostFactory.create(workspace=workspace)
+        vuln = VulnerabilityFactory.create(workspace=workspace, severity='low',
+                                           name='Duplicated Vuln',
+                                           host=host, service=None)
+        duplicated_vuln = VulnerabilityFactory.create(workspace=workspace, severity='low',
+                                                      name='Duplicated Vuln 2',
+                                                      host=host, service=None)
+        session.add(workspace)
+        session.add(vuln)
+        session.add(duplicated_vuln)
+        session.add(host)
+        session.commit()
+
+        api = Api(test_client, workspace.name, username='test', password='test', base='')
+        searcher = Searcher(api)
+        rules = [{
+            'id': 'REMOVE_DUPLICATED_VULNS',
+            'model': 'Vulnerability',
+            'fields': ['name'],
+            'object': "severity=low --old",  # Without --old param Searcher deletes  all duplicated objects
+            'actions': ["--DELETE:"]
+        }]
+
+        vulns_count = session.query(Vulnerability).filter_by(workspace=workspace).count()
+        assert vulns_count == 2
+
+        searcher.process(rules)
+
+        vulns_count = session.query(Vulnerability).filter_by(workspace=workspace).count()
+        assert vulns_count == 1
+
+    def test_mail_notification(self, session, test_client):
+        workspace = WorkspaceFactory.create()
+        vuln = VulnerabilityFactory.create(workspace=workspace, severity='low')
+        session.add(workspace)
+        session.add(vuln)
+        session.commit()
+
+        api = Api(test_client, workspace.name, username='test', password='test', base='')
+        mail_notification = MailNotification(
+            'test@test.com',
+            'testpass',
+            'smtp.gmail.com',
+            587
+        )
+        searcher = Searcher(api, mail_notificacion=mail_notification)
+        rules = [{
+            'id': 'SEND_MAIL',
+            'model': 'Vulnerability',
+            'object': "severity=low",
+            'actions': ["--ALERT:test2@test.com"]
+        }]
+
+        searcher.process(rules)
+
+        assert searcher.mail_notificacion == mail_notification
+
+    def test_add_ref_to_duplicated_vuln(self, session, test_client):
+        workspace = WorkspaceFactory.create()
+        host = HostFactory.create(workspace=workspace)
+        vuln = VulnerabilityFactory.create(workspace=workspace, severity='low',
+                                           name='Duplicated Vuln',
+                                           host=host, service=None)
+        duplicated_vuln = VulnerabilityFactory.create(workspace=workspace, severity='low',
+                                                      name='Duplicated Vuln 2',
+                                                      host=host, service=None)
+        session.add(workspace)
+        session.add(vuln)
+        session.add(duplicated_vuln)
+        session.add(host)
+        session.commit()
+
+        first_vuln_id = vuln.id
+
+        api = Api(test_client, workspace.name, username='test', password='test', base='')
+        searcher = Searcher(api)
+        rules = [{
+            'id': 'ADD_REFS_DUPLICATED_VULNS',
+            'model': 'Vulnerability',
+            'fields': ['name'],
+            'object': "severity=low --old",  # Without --old param Searcher deletes  all duplicated objects
+            'conditions': ['severity=low'],
+            'actions': ["--UPDATE:refs=REF_TEST"]
+        }]
+
+        vulns_count = session.query(Vulnerability).filter_by(workspace=workspace).count()
+        assert vulns_count == 2
+
+        searcher.process(rules)
+
+        vuln1 = session.query(Vulnerability).get(first_vuln_id)
+        assert len(vuln1.references) > 0
+        assert list(vuln1.references)[0] == 'REF_TEST'
+
+    def test_update_severity_inside_one_host(self, session, test_client):
+        workspace = WorkspaceFactory.create()
+        host = HostFactory.create(workspace=workspace)
+        vuln1 = VulnerabilityFactory.create(workspace=workspace, severity='low',
+                                            host=host, service=None)
+        vuln2 = VulnerabilityFactory.create(workspace=workspace, severity='low',
+                                            host=host, service=None)
+        session.add(workspace)
+        session.add(vuln1)
+        session.add(vuln2)
+        session.add(host)
+        session.commit()
+
+        parent_id = host.id
+        first_vuln_id = vuln1.id
+        second_vuln_id = vuln2.id
+
+        assert vuln1.severity == 'low'
+        assert vuln2.severity == 'low'
+        assert vuln1.parent.id == parent_id
+        assert vuln2.parent.id == parent_id
+
+        api = Api(test_client, workspace.name, username='test', password='test', base='')
+        searcher = Searcher(api)
+        rules = [{
+            'id': 'CHANGE_SEVERITY_INSIDE_HOST',
+            'model': 'Vulnerability',
+            'parent': parent_id,
+            'object': "severity=low",  # Without --old param Searcher deletes  all duplicated objects
+            'conditions': ['severity=low'],
+            'actions': ["--UPDATE:severity=info"]
+        }]
+
+        searcher.process(rules)
+
+        vuln1 = session.query(Vulnerability).get(first_vuln_id)
+        vuln2 = session.query(Vulnerability).get(second_vuln_id)
+
+        assert vuln1.severity == 'informational'
+        assert vuln2.severity == 'informational'
+
+    def test_delete_vulns_with_dynamic_values(self, session, test_client):
+        workspace = WorkspaceFactory.create()
+        vuln1 = VulnerabilityFactory.create(workspace=workspace, name="TEST1")
+        vuln2 = VulnerabilityFactory.create(workspace=workspace, name="TEST2")
+        session.add(workspace)
+        session.add(vuln1)
+        session.add(vuln2)
+        session.commit()
+
+        api = Api(test_client, workspace.name, username='test', password='test', base='')
+        searcher = Searcher(api)
+        rules = [{
+            'id': 'DELETE_VULN_{{name}}',
+            'model': 'Vulnerability',
+            'object': "regex=^{{name}}",
+            'actions': ["--DELETE:"],
+            'values': [{'name': 'TEST1'}, {'name': 'TEST2'}]
+        }]
+
+        vulns_count = session.query(Vulnerability).filter_by(workspace=workspace).count()
+        assert vulns_count == 2
+
+        searcher.process(rules)
+
+        vulns_count = session.query(Vulnerability).filter_by(workspace=workspace).count()
+        assert vulns_count == 0
+
+    def test_update_custom_field(self, session, test_client):
+        workspace = WorkspaceFactory.create()
+        custom_field = CustomFieldsSchemaFactory.create(
+            table_name='vulnerability',
+            field_name='cfield',
+            field_type='str',
+            field_order=1,
+            field_display_name='CField',
+        )
+        vuln = VulnerabilityFactory.create(workspace=workspace, severity='low', confirmed=True)
+        vuln.custom_fields = {'cfield': 'test'}
+        session.add(workspace)
+        session.add(custom_field)
+        session.add(vuln)
+        session.commit()
+
+        api = Api(test_client, workspace.name, username='test', password='test', base='')
+        searcher = Searcher(api)
+
+        rules = [{
+            'id': 'CHANGE_CUSTOM_FIELD',
+            'model': 'Vulnerability',
+            'object': "severity=low",
+            'conditions': ['confirmed=True'],
+            'actions': ["--UPDATE:cfield=CUSTOM_FIELD_UPDATED"]
+        }]
+
+        searcher.process(rules)
+
+        vulns_count = session.query(Vulnerability).filter_by(workspace=workspace).count()
+        assert vulns_count == 1
+        vuln = session.query(Vulnerability).filter_by(workspace=workspace).first()
+        assert vuln.custom_fields['cfield'] == 'CUSTOM_FIELD_UPDATED'
+        check_command(vuln, session)
+
+    def test_delete_services(self, session, test_client):
+        workspace = WorkspaceFactory.create()
+        service = ServiceFactory.create(workspace=workspace, name="http")
+        session.add(workspace)
+        session.add(service)
+        session.commit()
+
+        api = Api(test_client, workspace.name, username='test', password='test', base='')
+        searcher = Searcher(api)
+        rules = [{
+            'id': 'DELETE_SERVICE',
+            'model': 'Service',
+            'object': "name=http",
+            'actions': ["--DELETE:"]
+        }]
+
+        service_count = session.query(Service).filter_by(workspace=workspace).count()
+        assert service_count == 1
+
+        searcher.process(rules)
+
+        service_count = session.query(Service).filter_by(workspace=workspace).count()
+        assert service_count == 0
+
+    def test_delete_host(self, session, test_client):
+        workspace = WorkspaceFactory.create()
+        host = HostFactory.create(workspace=workspace, ip="10.25.86.39")
+        session.add(workspace)
+        session.add(host)
+        session.commit()
+
+        api = Api(test_client, workspace.name, username='test', password='test', base='')
+        searcher = Searcher(api)
+        rules = [{
+            'id': 'DELETE_HOST',
+            'model': 'Host',
+            'object': "ip=10.25.86.39",
+            'actions': ["--DELETE:"]
+        }]
+
+        host_count = session.query(Host).filter_by(workspace=workspace).count()
+        assert host_count == 1
+
+        searcher.process(rules)
+
+        host_count = session.query(Host).filter_by(workspace=workspace).count()
+        assert host_count == 0
+
+    def test_update_services(self, session, test_client):
+        workspace = WorkspaceFactory.create()
+        service = ServiceFactory.create(workspace=workspace, name="http", owned=False)
+        session.add(workspace)
+        session.add(service)
+        session.commit()
+
+        assert service.owned is False
+
+        api = Api(test_client, workspace.name, username='test', password='test', base='')
+        searcher = Searcher(api)
+        rules = [{
+            'id': 'UPDATE_SERVICE',
+            'model': 'Service',
+            'object': "name=http",
+            'actions': ["--UPDATE:owned=True"]
+        }]
+
+        searcher.process(rules)
+
+        service = session.query(Service).filter_by(workspace=workspace).first()
+        assert service.owned is True
+
+    def test_update_host(self, session, test_client):
+        workspace = WorkspaceFactory.create()
+        host = HostFactory.create(workspace=workspace, ip="10.25.86.39", owned=False)
+        session.add(workspace)
+        session.add(host)
+        session.commit()
+
+        assert host.owned is False
+
+        api = Api(test_client, workspace.name, username='test', password='test', base='')
+        searcher = Searcher(api)
+        rules = [{
+            'id': 'UPDATE_HOST',
+            'model': 'Host',
+            'object': "ip=10.25.86.39",
+            'actions': ["--UPDATE:owned=True"]
+        }]
+
+        searcher.process(rules)
+
+        host = session.query(Host).filter_by(workspace=workspace).first()
+        assert host.owned is True

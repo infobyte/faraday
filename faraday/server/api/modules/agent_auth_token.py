@@ -7,6 +7,8 @@ from ConfigParser import ConfigParser
 
 import flask
 from flask import Blueprint
+from flask_wtf.csrf import validate_csrf
+from wtforms import ValidationError
 from marshmallow import fields, Schema
 from faraday.server.api.base import (
     GenericView,
@@ -26,18 +28,19 @@ class AgentAuthTokenView(GenericView):
     route_base = 'agent_token'
     schema_class = AgentAuthTokenSchema
 
-    def index(self, **kwargs):
-        if not faraday_server.agent_token or bool(flask.request.args.get('new_token', False)):
-            rng = random.SystemRandom()
-            faraday_server.agent_token = ''.join([rng.choice(string.ascii_letters + string.digits) for _ in range(0, 20)])
-            config = ConfigParser()
-            config.read(LOCAL_CONFIG_FILE)
-            config.set('faraday_server', 'agent_token', faraday_server.agent_token)
+    def index(self):
+        return AgentAuthTokenSchema().dump(
+            {'token': faraday_server.agent_token}).data
 
-            with open(LOCAL_CONFIG_FILE, 'w') as configfile:
-                config.write(configfile)
-
-        return AgentAuthTokenSchema().dump({'token': faraday_server.agent_token}).data
+    def post(self):
+        from faraday.server.app import save_new_agent_creation_token
+        try:
+            validate_csrf(flask.request.form.get('csrf_token'))
+        except ValidationError:
+            flask.abort(403)
+        save_new_agent_creation_token()
+        return AgentAuthTokenSchema().dump(
+            {'token': faraday_server.agent_token}).data
 
 
 AgentAuthTokenView.register(agent_auth_token_api)

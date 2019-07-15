@@ -222,6 +222,18 @@ def save_new_secret_key(app):
         config.write(configfile)
 
 
+def save_new_agent_creation_token():
+    assert os.path.exists(LOCAL_CONFIG_FILE)
+    config = ConfigParser()
+    config.read(LOCAL_CONFIG_FILE)
+    rng = SystemRandom()
+    agent_token = "".join([rng.choice(string.ascii_letters + string.digits) for _ in range(25)])
+    config.set('faraday_server', 'agent_token', agent_token)
+    with open(LOCAL_CONFIG_FILE, 'w') as configfile:
+        config.write(configfile)
+    faraday.server.config.faraday_server.agent_token = agent_token
+
+
 def create_app(db_connection_string=None, testing=None):
     app = Flask(__name__)
 
@@ -238,6 +250,9 @@ def create_app(db_connection_string=None, testing=None):
             save_new_secret_key(app)
         else:
             app.config['SECRET_KEY'] = secret_key
+
+    if faraday.server.config.faraday_server.agent_token is None:
+        save_new_agent_creation_token()
 
     login_failed_message = ("Invalid username or password", 'error')
 

@@ -9,8 +9,8 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 import os
-from couchdbkit import designer
 
+# TODO: remove this in next versions
 
 class ViewsManager(object):
     """docstring for ViewsWrapper"""

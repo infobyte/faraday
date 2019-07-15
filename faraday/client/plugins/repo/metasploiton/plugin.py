@@ -118,7 +118,7 @@ class MetasploitOnPlugin(core.PluginBase):
                     str(h[2]),
                     mac=str(h[3]),
                     ipv4_address=str(h[2]),
-                    hostname_resolution=str(h[5]))
+                    hostname_resolution=[str(h[5])])
             else:
 
                 i_id = self.createAndAddInterface(
@@ -126,7 +126,7 @@ class MetasploitOnPlugin(core.PluginBase):
                     str(h[2]),
                     mac=str(h[3]),
                     ipv6_address=str(h[2]),
-                    hostname_resolution=str(h[5]))
+                    hostname_resolution=[str(h[5])])
 
             self._checkDate(str(h[13]))
 

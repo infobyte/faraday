@@ -1,1 +1,1 @@
-Add copy to clipboard in hosts ip.
+Add copy IP to clipboard button in hosts view.

@@ -6,11 +6,6 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-                                                         
-from faraday.client.model.hosts import Host
-import faraday.client.model
-from mockito import mock
-import traceback
 
 class ModelObjectContainer(dict):
                                    

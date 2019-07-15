@@ -29,7 +29,9 @@ var faradayApp = angular.module('faradayApp', [
                                                     'ui.grid.resizeColumns',
                                                     'angularSimplePagination',
                                                     'dndLists',
-                                                    'angularFileUploadLib'
+                                                    'angularFileUploadLib',
+                                                    'ui',
+                                                    'rzTable'
                                              ])
     .constant("BASEURL", (function() {
         var url = window.location.origin + "/";
@@ -96,9 +98,7 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
     });
     $routeProvider.
         when('/', {
-            templateUrl: 'scripts/commons/partials/home.html',
-            controller: 'homeCtrl',
-            title: ' Welcome | '
+            redirectTo: "/dashboard/ws/:wsId"
         }).
         when('/dashboard/ws/:wsId', {
             templateUrl: 'scripts/dashboard/partials/dashboard.html',
@@ -169,8 +169,8 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             controller: 'newHostCtrl',
             title: 'New host | '
         }).
-        when('/host/ws/:wsId/', { 
-            redirectTo: "/hosts/ws/:wsId/" 
+        when('/host/ws/:wsId/', {
+            redirectTo: "/hosts/ws/:wsId/"
         }).
         when('/license/lid/:lidId', {
             templateUrl: 'scripts/licenses/partials/license.html',
@@ -306,8 +306,8 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             title: 'Credentials | '
         }).
         when('/credentials/ws', {
-            templateUrl: 'scripts/credentials/partials/list.html',
-            controller: 'credentialsCtrl',
+            templateUrl: 'scripts/commons/partials/workspaces.html',
+            controller: 'workspacesCtrl',
             title: 'Credentials | '
         }).
         when('/credentials/ws/:wsId', {

@@ -77,24 +77,12 @@ def parse_and_bind_configuration():
     for section_name in __parser.sections():
         ConfigSection.parse_section(section_name, __parser._sections[section_name])
 
+
 def __get_osint():
     try:
         return getInstanceConfiguration().getOsint()
     except:
         return ''
-
-
-def gen_web_config():
-    # Warning: This is publicly accesible via the API, it doesn't even need an
-    # authenticated user. Don't add sensitive information here.
-    doc = {
-        'ver': license_version,
-        'lic_db': CONSTANTS.CONST_LICENSES_DB,
-        "osint": __get_osint(),
-        'vuln_model_db': CONSTANTS.CONST_VULN_MODEL_DB,
-        'show_vulns_by_price': dashboard.show_vulns_by_price,
-    }
-    return doc
 
 
 def is_debug_mode():
@@ -129,6 +117,8 @@ class ConfigSection(object):
             section = ldap
         elif section_name == 'ssl':
             section = ssl
+        elif section_name == 'websocket_ssl':
+            section = websocket_ssl
         elif section_name == 'storage':
             section = storage
         elif section_name == 'logger':
@@ -164,6 +154,7 @@ class FaradayServerConfigObject(ConfigSection):
         self.port = None
         self.secret_key = None
         self.websocket_port = None
+        self.api_token_expiration = 2592000
 
 
 class LDAPConfigObject(ConfigSection):
@@ -188,6 +179,13 @@ class SSLConfigObject(ConfigSection):
         self.enabled = False
 
 
+class WebsocketSSLConfigObject(ConfigSection):
+    def __init__(self):
+        self.keyfile = None
+        self.certificate = None
+        self.enabled = False
+
+
 class StorageConfigObject(ConfigSection):
     def __init__(self):
         self.path = None
@@ -203,7 +201,25 @@ dashboard = DashboardConfigObject()
 faraday_server = FaradayServerConfigObject()
 ldap = LDAPConfigObject()
 ssl = SSLConfigObject()
+websocket_ssl = WebsocketSSLConfigObject()
 storage = StorageConfigObject()
 logger_config = LoggerConfig()
 
 parse_and_bind_configuration()
+
+
+def gen_web_config():
+    # Warning: This is publicly accesible via the API, it doesn't even need an
+    # authenticated user. Don't add sensitive information here.
+    doc = {
+        'ver': license_version,
+        'lic_db': CONSTANTS.CONST_LICENSES_DB,
+        "osint": __get_osint(),
+        'vuln_model_db': CONSTANTS.CONST_VULN_MODEL_DB,
+        'show_vulns_by_price': dashboard.show_vulns_by_price,
+        'websocket_ssl': websocket_ssl.enabled,
+        'websocket_port': faraday_server.websocket_port,
+    }
+    return doc
+
+

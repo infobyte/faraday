@@ -36,7 +36,7 @@
                     </div>
                 </button>
                 <ul class="dropdown-menu" role="menu" aria-labelledby="workspaceSwitcher">
-                    <li ng-repeat="ws in workspaces"><a href="#/{{location}}/ws/{{ws.name}}" class="ws" >{{ws.name}}</a></li>
+                    <li ng-repeat="ws in workspaces | filter:{active:true}"><a href="#/{{location}}/ws/{{ws.name}}" class="ws" >{{ws.name}}</a></li>
                 </ul>
             </div>
         </div>

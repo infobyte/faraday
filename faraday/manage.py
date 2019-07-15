@@ -9,6 +9,19 @@ See the file 'doc/LICENSE' for the license information
 import os
 import re
 import sys
+import platform
+
+# If is linux and its installed with deb or rpm, it must run with a user in the faraday group
+if platform.system() == "Linux":
+    import grp
+    try:
+        FARADAY_GROUP = "faraday"
+        faraday_group = grp.getgrnam(FARADAY_GROUP)
+        if faraday_group.gr_gid not in os.getgroups():
+            print("User (%s) must be in the '%s' group." % (os.getlogin(), FARADAY_GROUP))
+            sys.exit(1)
+    except KeyError:
+        pass
 
 import click
 import requests
@@ -209,7 +222,6 @@ def create_tables():
     with app.app_context():
         # Ugly hack to create tables and also setting alembic revision
         conn_string = faraday.server.config.database.connection_string
-        from faraday.server.commands.initdb import InitDB
         InitDB()._create_tables(conn_string)
         click.echo(click.style(
             'Tables created successfully!',

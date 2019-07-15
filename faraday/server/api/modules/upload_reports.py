@@ -25,7 +25,6 @@ from flask_wtf.csrf import validate_csrf
 from werkzeug.utils import secure_filename
 from wtforms import ValidationError
 
-from faraday.server.utils.logger import get_logger
 from faraday.server.utils.web import gzipped
 
 from faraday.client.model.controller import ModelController
@@ -131,9 +130,8 @@ def file_upload(workspace=None):
     logger.debug("Importing new plugin report in server...")
 
     # Authorization code copy-pasted from server/api/base.py
-    ws = Workspace.query.filter_by(name=workspace).one()
-    if not (ws.active
-            ):
+    ws = Workspace.query.filter_by(name=workspace).first()
+    if not ws or not (ws.active):
         # Don't raise a 403 to prevent workspace name enumeration
         abort(404, "Workspace disabled: %s" % workspace)
 

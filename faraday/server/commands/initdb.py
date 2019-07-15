@@ -15,14 +15,13 @@ import psycopg2
 from future.builtins import range # __future__
 from random import SystemRandom
 from tempfile import TemporaryFile
-from subprocess import Popen, PIPE
+from subprocess import Popen
 
 import sqlalchemy
 from sqlalchemy import create_engine
 
 from faraday.config.configuration import Configuration
 from faraday.client.start_client import (  # TODO load this from other place
-    FARADAY_USER_CONFIG_XML,
     FARADAY_BASE_CONFIG_XML,
     FARADAY_BASE,
 )
@@ -41,7 +40,6 @@ from colorama import Fore
 from sqlalchemy.exc import OperationalError, ProgrammingError
 
 import faraday.server.config
-from faraday.server.config import FARADAY_BASE
 from faraday.config.constant import CONST_FARADAY_HOME_PATH
 from faraday.server.config import LOCAL_CONFIG_FILE
 init()
@@ -58,7 +56,7 @@ class InitDB():
                 if reconfigure.lower() == 'no':
                     return False
                 elif reconfigure.lower() == 'yes':
-                   continue
+                    continue
                 else:
                     reconfigure = None
         except NoSectionError:

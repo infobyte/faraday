@@ -18,7 +18,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     event,
-    text)
+)
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship, undefer
 from sqlalchemy.sql import select, text, table
@@ -41,10 +41,8 @@ from flask_sqlalchemy import (
 
 from depot.fields.sqlalchemy import UploadedFileField
 
-import faraday.server.config
 from faraday.server.fields import FaradayUploadedFile, JSONType
 from flask_security import (
-    RoleMixin,
     UserMixin,
 )
 from faraday.server.utils.database import (
@@ -83,37 +81,37 @@ class SQLAlchemy(OriginalSQLAlchemy):
 
 
 class CustomEngineConnector(_EngineConnector):
-        """Used by overrided SQLAlchemy class to fix rollback issues.
+    """Used by overrided SQLAlchemy class to fix rollback issues.
 
-        Also set case sensitive likes (in SQLite there are case
-        insensitive by default)"""
+    Also set case sensitive likes (in SQLite there are case
+    insensitive by default)"""
 
-        def get_engine(self):
-            # Use an existent engine and don't register events if possible
-            uri = self.get_uri()
-            echo = self._app.config['SQLALCHEMY_ECHO']
-            if (uri, echo) == self._connected_for:
-                return self._engine
+    def get_engine(self):
+        # Use an existent engine and don't register events if possible
+        uri = self.get_uri()
+        echo = self._app.config['SQLALCHEMY_ECHO']
+        if (uri, echo) == self._connected_for:
+            return self._engine
 
-            # Call original metohd and register events
-            rv = super(CustomEngineConnector, self).get_engine()
-            if uri.startswith('sqlite://'):
-                with self._lock:
-                    @event.listens_for(rv, "connect")
-                    def do_connect(dbapi_connection, connection_record):
-                        # disable pysqlite's emitting of the BEGIN statement
-                        # entirely.  also stops it from emitting COMMIT before any
-                        # DDL.
-                        dbapi_connection.isolation_level = None
-                        cursor = dbapi_connection.cursor()
-                        cursor.execute("PRAGMA case_sensitive_like=true")
-                        cursor.close()
+        # Call original metohd and register events
+        rv = super(CustomEngineConnector, self).get_engine()
+        if uri.startswith('sqlite://'):
+            with self._lock:
+                @event.listens_for(rv, "connect")
+                def do_connect(dbapi_connection, connection_record):
+                    # disable pysqlite's emitting of the BEGIN statement
+                    # entirely.  also stops it from emitting COMMIT before any
+                    # DDL.
+                    dbapi_connection.isolation_level = None
+                    cursor = dbapi_connection.cursor()
+                    cursor.execute("PRAGMA case_sensitive_like=true")
+                    cursor.close()
 
-                    @event.listens_for(rv, "begin")
-                    def do_begin(conn):
-                        # emit our own BEGIN
-                        conn.execute("BEGIN")
-            return rv
+                @event.listens_for(rv, "begin")
+                def do_begin(conn):
+                    # emit our own BEGIN
+                    conn.execute("BEGIN")
+        return rv
 
 
 db = SQLAlchemy()
@@ -527,6 +525,8 @@ class VulnerabilityABC(Metadata):
     impact_availability = Column(Boolean, default=False, nullable=False)
     impact_confidentiality = Column(Boolean, default=False, nullable=False)
     impact_integrity = Column(Boolean, default=False, nullable=False)
+
+    external_id = BlankColumn(Text)
 
     __table_args__ = (
         CheckConstraint('1.0 <= risk AND risk <= 10.0',
@@ -1803,6 +1803,8 @@ class ExecutiveReport(Metadata):
                     "TagObject.object_type=='executive_report')",
         collection_class=set,
     )
+    severities = Column(JSONType, nullable=True, default=[])
+    filter = Column(JSONType, nullable=True, default=[])
     @property
     def parent(self):
         return

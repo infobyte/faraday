@@ -14,7 +14,6 @@ from Queue import Queue
 from collections import defaultdict
 
 import os
-sys.path.append(os.path.abspath(os.getcwd()))
 from faraday.client.plugins.repo.whois.plugin import CmdWhoisPlugin
 from faraday.client.model.common import factory
 from faraday.client.persistence.server.models import (
@@ -44,6 +43,12 @@ class TestCmdPingPlugin:
         pending_actions = Queue()
         self.plugin.set_actions_queue(pending_actions)
         monkeypatch.setattr(ModelBase, 'getID', lambda _: 1)
+
+        # Disable deprecation warnings
+        import deprecation
+        monkeypatch.setattr(
+                deprecation.warnings, 'warn', lambda *a, **kw: None)
+
         self.plugin.parseOutputString(self.outputWhoisInfobyte)
 
         actions = defaultdict(list)

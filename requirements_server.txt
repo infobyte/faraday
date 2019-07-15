@@ -23,7 +23,7 @@ service_identity>=17.0.0
 SQLAlchemy>=1.2.0b2
 sqlalchemy_schemadisplay>=1.3
 tqdm>=4.15.0
-twisted>=18.7.0
+twisted>=18.9.0
 webargs>=5.1.0
 marshmallow-sqlalchemy==0.15.0
 filteralchemy-fork
@@ -35,3 +35,5 @@ attrs>=17.4.0
 Flask-Restless==0.17.0
 simplejson>=3.16.0
 syslog-rfc5424-formatter==1.1.1
+typing==3.6.6
+beautifulsoup4==4.7.1

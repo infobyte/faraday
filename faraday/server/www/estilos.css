@@ -1313,6 +1313,15 @@ a.button-disable{cursor: not-allowed;pointer-events: none;opacity: 0.5}
 .overall{
     z-index: 1000000 !important;
 }
+
+#btn_clear_search {
+    position: absolute;
+    height: 30px;
+    border-radius: 2px;
+    right: 15px;
+    padding-top: 3px;
+}
+
 .markdown-preview {
     height: 200px;
     overflow-x: auto;

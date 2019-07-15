@@ -301,7 +301,7 @@ class GenericView(FlaskView):
         super(GenericView, cls).register(app, *args, **kwargs)
 
         @app.errorhandler(422)
-        def handle_conflict(err):
+        def handle_error(err):
             # webargs attaches additional metadata to the `data` attribute
             exc = getattr(err, 'exc')
             if exc:
@@ -426,7 +426,11 @@ class ListMixin(object):
         query = self._filter_query(self._get_eagerloaded_query(**kwargs))
         order_field = self._get_order_field(**kwargs)
         if order_field is not None:
-            query = query.order_by(order_field)
+            if isinstance(order_field, tuple):
+                query = query.order_by(*order_field)
+            else:
+                query = query.order_by(order_field)
+
         objects, pagination_metadata = self._paginate(query)
         return self._envelope_list(self._dump(objects, kwargs, many=True),
                                    pagination_metadata)
@@ -503,7 +507,12 @@ class SortableMixin(object):
             raise InvalidUsage("Invalid value for sorting direction: %s" %
                                sort_dir)
         try:
-            return getattr(field, sort_dir)()
+            if self.order_field is not None:
+                if not isinstance(self.order_field, tuple):
+                    self.order_field = (self.order_field,)
+                return (getattr(field, sort_dir)(),) + self.order_field
+            else:
+                return getattr(field, sort_dir)()
         except NotImplementedError:
             if self.sort_pass_silently:
                 logger.warn("field {} doesn't support sorting".format(

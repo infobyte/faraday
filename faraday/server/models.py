@@ -3,7 +3,6 @@
 # See the file 'doc/LICENSE' for the license information
 import operator
 import string
-import uuid
 from datetime import datetime
 from functools import partial
 from random import SystemRandom

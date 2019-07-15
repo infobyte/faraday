@@ -56,9 +56,12 @@ class Api:
                 raise UserWarning('Invalid username or password')
 
     def _url(self, path):
-        url =  self.base + 'v2/' + path
+        url = self.base + 'v2/' + path
         if self.command_id and 'commands' not in url:
-            url += '?command_id={}'.format(self.command_id)
+            if url.endswith('/'):
+                url += '?command_id={}'.format(self.command_id)
+            else:
+                url += '/?command_id={}'.format(self.command_id)
         return url
 
     def _get(self, url, object_name):

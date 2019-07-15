@@ -76,7 +76,7 @@ def get_cwe(api, data):
 
 
 def is_same_level(model1, model2):
-    return model1.parent_id == model2.parent_id
+    return model1.parent_id == model2.parent_id and model1.parent_type == model2.parent_type
 
 
 def equals(m1, m2, rule):

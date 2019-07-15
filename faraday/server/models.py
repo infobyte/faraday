@@ -1887,7 +1887,7 @@ class Agent(Metadata):
         foreign_keys=[workspace_id],
         backref=backref('agents', cascade="all, delete-orphan"),
     )
-    name = Column(Text, nullable=False)
+    name = NonBlankColumn(Text)
     active = Column(Boolean, default=True)
 
     @property

@@ -82,9 +82,3 @@ def upgrade():
 def downgrade():
     op.drop_table('agent_schedule')
     op.drop_table('agent')
-
-    agent_types = postgresql.ENUM('shared', 'specific', name='agent_types')
-    agent_types.drop(op.get_bind())
-
-    agent_status = postgresql.ENUM('locked', 'paused', 'offline', 'running', name='agent_status')
-    agent_status.drop(op.get_bind())

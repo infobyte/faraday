@@ -30,6 +30,9 @@ logger = logging.getLogger(__name__)
 changes_queue = Queue()
 
 
+connected_agents = {}
+
+
 class BroadcastServerProtocol(WebSocketServerProtocol):
 
     def onConnect(self, request):
@@ -105,7 +108,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                 with app.app_context():
                     (agent_id,) = [
                         k
-                        for (k, v) in self.factory.agents.items()
+                        for (k, v) in connected_agents.items()
                         if v == self
                     ]
                     agent = Agent.query.get(agent_id)
@@ -144,7 +147,6 @@ class WorkspaceServerFactory(WebSocketServerFactory):
         # this dict has a key for each channel
         # values are list of clients.
         self.workspace_clients = defaultdict(list)
-        self.agents = {}
         self.tick()
 
     def tick(self):
@@ -171,12 +173,12 @@ class WorkspaceServerFactory(WebSocketServerFactory):
 
     def join_agent(self, agent_connection, agent):
         logger.info("Agent {} joined!".format(agent.id))
-        self.agents[agent.id] = agent_connection
+        connected_agents[agent.id] = agent_connection
         return True
 
     def leave_agent(self, agent_connection, agent):
         logger.info("Agent {} leaved".format(agent.id))
-        self.agents.pop(agent.id)
+        connected_agents.pop(agent.id)
         return True
 
     def unregister(self, client_to_unregister):
@@ -199,6 +201,6 @@ class WorkspaceServerFactory(WebSocketServerFactory):
                 logger.debug("prepared message sent to {}".format(client.peer))
 
         if 'agent_id' in msg:
-            agent_connection = self.agents[prepared_msg['agent_id']]
+            agent_connection = connected_agents[prepared_msg['agent_id']]
             reactor.callFromThread(agent_connection.sendPreparedMessage, self.prepareMessage(msg))
             logger.debug("prepared message sent to agent id: {}".format(client.peer))

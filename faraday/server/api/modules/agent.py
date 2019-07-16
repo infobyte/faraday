@@ -30,7 +30,7 @@ class AgentSchema(AutoSchema):
     class Meta:
         model = Agent
         fields = (
-            'id', 'name', 'status', 'active',
+            'id', 'name', 'is_online', 'active',
             'create_date',
             'update_date',
             'creator',

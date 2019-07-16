@@ -1895,13 +1895,9 @@ class Agent(Metadata):
         return
 
     @property
-    def status(self):
-        # ver si esta conectado en websocket
-        if not self.active:
-            return 'paused'
-        else:
-            # verifico en websockets
-            pass
+    def is_online(self):
+        from faraday.server.websocket_factories import connected_agents
+        return self.id in connected_agents
 
 
 # This constraint uses Columns from different classes

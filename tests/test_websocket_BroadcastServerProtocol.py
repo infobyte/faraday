@@ -44,3 +44,14 @@ class TestWebsockerBroadcastServerProtocol():
         message = '{{"action": "LEAVE_AGENT" }}'.format(token)
         assert not proto.onMessage(message, False)
 
+    def test_agent_status(self, session, proto, test_client):
+        token = _join_agent(test_client, session)
+        agent = Agent.query.one()
+        assert not agent.is_online
+        message = '{{"action": "JOIN_AGENT", "token": "{}" }}'.format(token)
+        assert proto.onMessage(message, False)
+        assert agent.is_online
+
+        message = '{{"action": "LEAVE_AGENT"}}'.format(token)
+        assert not proto.onMessage(message, False)
+        assert not agent.is_online

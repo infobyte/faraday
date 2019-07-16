@@ -207,7 +207,12 @@ class WorkspaceServerFactory(WebSocketServerFactory):
                 logger.debug("prepared message sent to {}".format(client.peer))
 
         if 'agent_id' in msg:
-            agent_connection = connected_agents[prepared_msg['agent_id']]
+            agent_id = prepared_msg['agent_id']
+            try:
+                agent_connection = connected_agents[agent_id]
+            except KeyError:
+                # The agent is offline
+                return
             reactor.callFromThread(agent_connection.sendPreparedMessage, self.prepareMessage(msg))
             logger.debug("prepared message sent to agent id: {}".format(
-                prepared_msg['agent_id']))
+                agent_id))

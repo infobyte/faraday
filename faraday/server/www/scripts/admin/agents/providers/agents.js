@@ -18,11 +18,19 @@ angular.module('faradayApp')
 
         agentFact.getNewAgentToken = function() {
             var deferred = $q.defer();
-            ServerAPI.getNewAgentToken().then(function(response) {
-                    deferred.resolve(response);
-                }, function (error) {
-                deferred.reject(error)
+            $http.get('/_api/session').then(function(response){
+                var fd = new FormData();
+                fd.append('csrf_token', response.data.csrf_token);
+                $http.post('_api/v2/agent_token/', fd, {
+                    transformRequest: angular.identity,
+                    withCredentials: false,
+                    headers: {'Content-Type': undefined},
+                }).then(
+                    function(tokenResponse) {
+                        deferred.resolve(tokenResponse)
+                    });
             });
+
             return deferred.promise;
         };
 

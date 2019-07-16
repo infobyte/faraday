@@ -19,7 +19,7 @@ angular.module("faradayApp")
 
             var createGetUrl = function (wsName, objectName, objectId) {
                 var objectName = ((objectName) ? "/" + objectName : "");
-                if (typeof objectId == 'string' || typeof objectId == "number") {
+                if (typeof objectId == 'getNewAgentTokenstring' || typeof objectId == "number") {
                     objectName = objectName + "/" + objectId;
                 }
 
@@ -718,11 +718,6 @@ angular.module("faradayApp")
             ServerAPI.getAgentToken = function () {
                  var getUrl = createNonWorkspacedGetUrl('agent_token');
                  return get(getUrl);
-            };
-
-            ServerAPI.getNewAgentToken = function () {
-                 var getUrl = createNonWorkspacedGetUrl('agent_token');
-                 return get(getUrl + '?new_token=True');
             };
 
             ServerAPI.getTools = function(hid, ws){

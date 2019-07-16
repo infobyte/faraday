@@ -66,9 +66,6 @@
     <table id="agent-table" class="status-report-grid hosts-list table table-responsive">
         <thead>
         <tr class="ui-grid-header">
-            <th class="ui-grid-cell-contents ui-grid-header-cell hosts-list-checkall" style="width: 1%;">
-                <input type="checkbox" name="agent" id="cbox-all" ng-model="selectAll" ng-change="toggleAll()">
-            </th>
             <th class="ui-grid-cell-contents ui-grid-header-cell">Name</th>
             <th class="ui-grid-cell-contents ui-grid-header-cell">Status</th>
             <th class="ui-grid-cell-contents ui-grid-header-cell">Token</th>
@@ -76,16 +73,7 @@
         </tr>
         </thead>
         <tbody>
-        <tr ng-repeat="agent in agents"
-            selection-model selection-model-type="checkbox"
-            data-selection-model-stack-id="cbox-{{agent.id}}"
-            selection-model-mode="multiple-additive"
-            selection-model-selected-class="multi-selected"
-            ng-class="{'multi-selected': agent.checked == true}">
-            <td class="ui-grid-cell-contents custom-checkbox-select checkbox-select text-center">
-                <input type="checkbox" name="cbox-{{agent.id}}" id="cbox-{{agent.id}}" ng-model="options[$index]"
-                       ng-value="agent.checked" ng-change="toggleAgent($index)">
-            </td>
+        <tr ng-repeat="agent in agents">
              <td class="ui-grid-cell-contents active-toggle">
                 {{agent.name}}
             </td>

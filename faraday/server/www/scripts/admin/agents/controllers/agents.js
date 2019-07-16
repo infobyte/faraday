@@ -188,41 +188,5 @@ angular.module('faradayApp')
                 });
             };
 
-
-            var putTag = function (data) {
-                getCurrentSelection().forEach(function (agent) {
-                    agent.tags = data.tags;
-                    agentFact.updateAgent($scope.workspace, agent).then(
-                        function (response) {
-                        }, function (error) {
-                            console.log(error);
-                        });
-                });
-            };
-
-            $scope.agentsTags = function () {
-                if (getCurrentSelection().length > 0) {
-                    var modal = $uibModal.open({
-                        templateUrl: 'scripts/tags/partials/modalTags.html',
-                        controller: 'modalTagsCtrl',
-                        size: 'lg',
-                        resolve: {
-                            vulns: function () {  // TODO: CHANGE VAR NAME, SHOULD BE 'items' or 'objects' IN 'modalTagsCtrl'
-                                return getCurrentSelection();
-                            },
-                            workspace: function () {
-                                return $scope.workspace;
-                            }
-                        }
-                    });
-
-                    modal.result.then(function (data) {
-                        putTag(data);
-                    });
-                } else {
-                    commonsFact.showMessage('No agents were selected to tag');
-                }
-            };
-
             $scope.init();
         }]);

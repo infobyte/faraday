@@ -57,6 +57,10 @@
   margin-top: 37px;
 }
 
+.margin-top-65px {
+  margin-top: 65px;
+}
+
 .clear-margin {
   margin: 0px;
 }
@@ -980,4 +984,16 @@ ul#nav-tabs-container {
     border-radius: 2px;
     right: 15px;
     padding-top: 3px;
+}
+
+.panel-default .workspace-selector-wrapper {
+    padding: 0;
+}
+
+.workspace-selector-wrapper.inside-admin:hover {
+     background-color: transparent;
+}
+
+.switcher-wrapper.inside-admin:hover {
+    background-color: #ebebeb;
 }

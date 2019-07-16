@@ -19,18 +19,18 @@
             </button>
 
             <span class="control-wrapper" ng-if="">
-                                <button type="button" class="btn btn-default"
-                                        title="{{workspaceData.readonly == false ? 'Tags' : 'Read-only. Workspace disabled'}}"
-                                        ng-click="agentsTags()"
-                                        ng-disabled="user.roles[0] === 'client' || workspaceData.readonly == true">
-                                    <span class="glyphicon glyphicon-tags"></span>
-                                </button>
-                            </span>
+                <button type="button" class="btn btn-default"
+                        title="{{workspaceData.readonly == false ? 'Tags' : 'Read-only. Workspace disabled'}}"
+                        ng-click="agentsTags()"
+                        ng-disabled="user.roles[0] === 'client' || workspaceData.readonly == true">
+                    <span class="glyphicon glyphicon-tags"></span>
+                </button>
+            </span>
 
 
             <span class="col-md-3">
-                <div ng-if="workspace" class="workspace-selector-wrapper">
-                    <div class="switcher-wrapper">
+                <div ng-if="workspace" class="workspace-selector-wrapper inside-admin">
+                    <div class="switcher-wrapper inside-admin">
                         <div class="dropdown">
                             <button id="workspaceSwitcher" type="button"
                                     class="btn btn-default dropdown-toggle workspace-switcher"
@@ -49,7 +49,7 @@
                                     </div>
                                 </div>
                             </button>
-                            <ul class="dropdown-menu" role="menu" aria-labelledby="workspaceSwitcher">
+                            <ul class="dropdown-menu" role="menu" aria-labelledby="workspaceSwitcher" style="width: 100%;">
                                 <li ng-repeat="ws in workspaces"><a href="javascript:;" class="ws"
                                                                     ng-click="switchWorkspace(ws.name)">{{ws.name}}</a></li>
                             </ul>

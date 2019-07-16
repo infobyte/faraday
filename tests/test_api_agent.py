@@ -44,6 +44,23 @@ class TestAgentAuthTokenAPIGeneric():
         assert 'token' in res.json
         assert len(res.json['token'])
 
+    @mock.patch('faraday.server.api.modules.agent.faraday_server')
+    def test_create_agent_token_without_csrf_fails(self, faraday_server_config, test_client, session):
+        faraday_server_config.agent_token = None
+        res = test_client.post('/v2/agent_token/')
+        assert res.status_code == 403
+
+    @mock.patch('faraday.server.api.modules.agent.faraday_server')
+    def test_create_new_agent_token(self, faraday_server_config, test_client, session, csrf_token):
+        faraday_server_config.agent_token = None
+        headers = {'Content-type': 'multipart/form-data'}
+        res = test_client.post('/v2/agent_token/',
+                               data={"csrf_token": csrf_token},
+                               headers=headers,
+                               use_json_data=False)
+        assert res.status_code == 200
+        assert len(res.json['token'])
+
 
 class TestAgentCreationAPI():
 

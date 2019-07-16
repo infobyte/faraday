@@ -29,7 +29,7 @@
 }
 
 .border-red {
-  border-top-color: #de4456;
+  border-top-color: #00a8e1;
 }
 
 .border-strong {
@@ -109,7 +109,7 @@
 }
 
 .fg-red {
-  color: #de4456
+  color: #00a8e1;
 }
 
 .font-bold {
@@ -606,9 +606,9 @@ button[disabled], html input[disabled] {
 }
 
 .setting-sidebar li.active {
-    border-left: 5px solid #de4456;
+    border-left: 5px solid #00a8e1;
     padding-left: 19px;
-    color: #de4456;
+    color: #00a8e1;
 }
 
 .setting-sidebar li:hover{

@@ -64,7 +64,7 @@ header.head {
     text-align: left;
     position: fixed;
     z-index:1000;
-    background-color: #de4456;
+    background-color: #00a8e1;
 }
     header.head .logo {
         margin: 7px 12px;
@@ -96,7 +96,7 @@ header.head {
                     -webkit-transition: all .3s ease;
             }
                 header.head nav .menu li a.activo, header.head nav .menu li a:hover {
-                    background: #DF3936;
+                    background: #00a8e1;
                 }
 
 .left-nav {
@@ -142,7 +142,7 @@ header.head {
             height: 72px;
             text-align: left;
             z-index:1000;
-            background-color: #de4456;
+            background-color: #00a8e1;
             padding: 12px;
             display: flex;
             justify-content: center;

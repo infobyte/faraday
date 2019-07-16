@@ -138,25 +138,23 @@ angular.module('faradayApp')
             };
 
             $scope.changeStatusAgent = function (agent) {
-                var oldStatus = agent.status;
-                if (agent.status === 'paused')
-                    agent.status = 'running';
-                else
-                    agent.status = 'paused';
+                var oldStatus = agent.is_online;
+                agent.is_online = !agent.is_online;
 
                 var agentData = {
                     id: agent.id,
-                    status: agent.status
+                    name: agent.name,
+                    is_online: agent.is_online
                 };
 
                 agentFact.updateAgent($scope.workspace, agentData).then(
                     function (response) {
-                        if (response.data.status === 'paused')
+                        if (!response.data.is_online)
                             Notification.success("The Agent has been paused");
                         else
                             Notification.success("The Agent is running");
                     }, function (error) {
-                        agent.status = oldStatus;
+                        agent.is_online = oldStatus;
                         console.log(error);
                     });
             };

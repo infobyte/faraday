@@ -710,6 +710,11 @@ angular.module("faradayApp")
                 }
             };
 
+            ServerAPI.updateAgent = function (wsName, agent) {
+                 var putUrl = createPutUrl(wsName, agent.id, 'agents');
+                 return send_data(putUrl, agent, true, "PUT");
+            };
+
             ServerAPI.getAgentToken = function () {
                  var getUrl = createNonWorkspacedGetUrl('agent_token');
                  return get(getUrl);

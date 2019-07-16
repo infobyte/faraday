@@ -79,8 +79,9 @@
             </td>
             <td class="ui-grid-cell-contents active-toggle">
                                 <span class="preview-tag" ng-class="{
-                                'tag-green':agent.status=='running',
-                                'tag-yellow':agent.status=='paused','tag-red':agent.status=='offline'}">{{agent.status}}</span>
+                                'tag-green':agent.is_online,
+                                'tag-yellow':agent.is_online==false}"
+                                ng-bind="agent.is_online?'Running':'Paused'"></span>
             </td>
 
             <td class="ui-grid-cell-contents active-toggle">
@@ -89,10 +90,10 @@
 
             <td class="ui-grid-cell-contents active-toggle" selection-model-ignore="">
                 <button type="button" class="btn"
-                        ng-class="{'btn-danger': agent.status === 'running', 'btn-success': agent.status === 'paused'}"
-                        title="{{agent.status === 'running'?'Pause Agent': 'Run Agent'}}"
+                        ng-class="{'btn-danger': agent.is_online, 'btn-success': agent.is_online==false}"
+                        title="{{agent.is_online?'Pause Agent': 'Run Agent'}}"
                         ng-click="changeStatusAgent(agent)">
-                    <span ng-bind="agent.status === 'running'?'Pause': 'Run'"></span>
+                    <span ng-bind="agent.is_online?'Pause': 'Run'"></span>
                 </button>
                 <button type="button" class="btn btn-danger" title="Remove Agent" ng-click="removeAgent(agent.id)">
                     Remove

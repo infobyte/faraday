@@ -46,5 +46,15 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
+        agentFact.updateAgent = function(wsName, agent) {
+            var deferred = $q.defer();
+            ServerAPI.updateAgent(wsName, agent).then(function(response) {
+                    deferred.resolve(response);
+                }, function (error) {
+                deferred.reject(error)
+            });
+            return deferred.promise;
+        };
+
         return agentFact;
     }]);

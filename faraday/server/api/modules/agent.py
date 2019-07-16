@@ -3,8 +3,11 @@
 # See the file 'doc/LICENSE' for the license information
 import random
 import string
+import wtforms
 
-from flask import abort, Blueprint
+from flask import Blueprint, abort, request
+from flask_classful import route
+from flask_wtf.csrf import validate_csrf
 from marshmallow import fields, Schema
 from marshmallow.validate import OneOf
 from sqlalchemy.orm.exc import NoResultFound
@@ -15,6 +18,7 @@ from faraday.server.api.base import (AutoSchema, UpdateWorkspacedMixin, DeleteWo
 from faraday.server.models import Agent
 from faraday.server.schemas import PrimaryKeyRelatedField
 from faraday.server.config import faraday_server
+from faraday.server.websocket_factories import changes_queue
 
 agent_api = Blueprint('agent_api', __name__)
 
@@ -70,6 +74,19 @@ class AgentView(UpdateWorkspacedMixin,
     model_class = Agent
     schema_class = AgentSchema
     get_joinedloads = [Agent.creator]
+
+    @route('/<int:agent_id>/run/', methods=['POST'])
+    def run_agent(self, workspace_name, agent_id):
+        try:
+            validate_csrf(request.form.get('csrf_token'))
+        except wtforms.ValidationError:
+            abort(403)
+        agent = self._get_object(agent_id, workspace_name)
+        changes_queue.put({
+            'agent_id': agent.id,
+            'action': 'RUN',
+        })
+        return 'OK'
 
 
 AgentView.register(agent_api)

@@ -209,4 +209,5 @@ class WorkspaceServerFactory(WebSocketServerFactory):
         if 'agent_id' in msg:
             agent_connection = connected_agents[prepared_msg['agent_id']]
             reactor.callFromThread(agent_connection.sendPreparedMessage, self.prepareMessage(msg))
-            logger.debug("prepared message sent to agent id: {}".format(client.peer))
+            logger.debug("prepared message sent to agent id: {}".format(
+                prepared_msg['agent_id']))

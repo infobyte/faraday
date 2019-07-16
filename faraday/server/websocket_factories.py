@@ -12,6 +12,10 @@ import Cookie
 from collections import defaultdict
 from Queue import Queue, Empty
 
+import txaio
+txaio.use_twisted()
+
+from autobahn.websocket.protocol import WebSocketProtocol
 from twisted.internet import reactor
 
 from autobahn.twisted.websocket import (
@@ -84,29 +88,34 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
             if message['action'] == 'JOIN_AGENT':
                 if 'token' not in message:
                     logger.warn("Invalid agent join message")
+                    self.state = WebSocketProtocol.STATE_CLOSING
                     self.sendClose()
-                    return
+                    return False
                 with app.app_context():
                     try:
                         agent = decode_agent_websocket_token(message['token'])
                     except ValueError:
                         logger.warn('Invalid agent token!')
+                        self.state = WebSocketProtocol.STATE_CLOSING
                         self.sendClose()
-                        return
+                        return False
                 # factory will now send broadcast messages to the agent
-                self.factory.join_agent(self, agent)
+                return self.factory.join_agent(self, agent)
             if message['action'] == 'LEAVE_AGENT':
                 if 'token' not in message:
                     logger.warn("Invalid agent join message")
+                    self.state = WebSocketProtocol.STATE_CLOSING
                     self.sendClose()
-                    return
+                    return False
                 with app.app_context():
-                    agent = Agent.query.filter_by(id=message['token']).first()
-                    if not agent:
+                    try:
+                        agent = decode_agent_websocket_token(message['token'])
+                    except ValueError:
                         logger.warn('Invalid agent token!')
+                        self.state = WebSocketProtocol.STATE_CLOSING
                         self.sendClose()
-                        return
-                self.factory.leave_agent(self, agent)
+                        return False
+                return self.factory.leave_agent(self, agent)
 
 
     def connectionLost(self, reason):
@@ -130,6 +139,8 @@ class WorkspaceServerFactory(WebSocketServerFactory):
 
         The message in the queue must contain the workspace.
     """
+    protocol = BroadcastServerProtocol
+
     def __init__(self, url):
         WebSocketServerFactory.__init__(self, url)
         # this dict has a key for each channel
@@ -163,10 +174,12 @@ class WorkspaceServerFactory(WebSocketServerFactory):
     def join_agent(self, agent_connection, agent):
         logger.info("Agent {} joined!".format(agent.id))
         self.agents[agent.id] = agent_connection
+        return True
 
-    def leave_agent(self, agent):
+    def leave_agent(self, agent_connection, agent):
         logger.info("Agent {} leaved".format(agent.id))
         self.agents.pop(agent.id)
+        return True
 
     def unregister(self, client_to_unregister):
         """

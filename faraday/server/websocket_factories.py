@@ -102,20 +102,18 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                 # factory will now send broadcast messages to the agent
                 return self.factory.join_agent(self, agent)
             if message['action'] == 'LEAVE_AGENT':
-                if 'token' not in message:
-                    logger.warn("Invalid agent join message")
-                    self.state = WebSocketProtocol.STATE_CLOSING
-                    self.sendClose()
-                    return False
                 with app.app_context():
-                    try:
-                        agent = decode_agent_websocket_token(message['token'])
-                    except ValueError:
-                        logger.warn('Invalid agent token!')
-                        self.state = WebSocketProtocol.STATE_CLOSING
-                        self.sendClose()
-                        return False
-                return self.factory.leave_agent(self, agent)
+                    (agent_id,) = [
+                        k
+                        for (k, v) in self.factory.agents.items()
+                        if v == self
+                    ]
+                    agent = Agent.query.get(agent_id)
+                    assert agent is not None  # TODO the agent could be deleted here
+                self.factory.leave_agent(self, agent)
+                self.state = WebSocketProtocol.STATE_CLOSING
+                self.sendClose()
+                return False
 
 
     def connectionLost(self, reason):

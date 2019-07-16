@@ -1,4 +1,5 @@
 import pytest
+from faraday.server.models import Agent
 from faraday.server.websocket_factories import WorkspaceServerFactory
 
 from tests.factories import AgentFactory
@@ -40,22 +41,6 @@ class TestWebsockerBroadcastServerProtocol():
         message = '{{"action": "JOIN_AGENT", "token": "{}" }}'.format(token)
         assert proto.onMessage(message, False)
 
-        message = '{{"action": "LEAVE_AGENT", "token": "{}" }}'.format(token)
-        assert proto.onMessage(message, False)
-
-    def test_leave_agent_without_token_fails(self, session, proto, test_client):
-        token = _join_agent(test_client, session)
-        message = '{{"action": "JOIN_AGENT", "token": "{}" }}'.format(token)
-        assert proto.onMessage(message, False)
-
         message = '{{"action": "LEAVE_AGENT" }}'.format(token)
-        assert not proto.onMessage(message, False)
-
-    def test_leave_agent_with_invalid_token_fails(self, session, proto, test_client):
-        token = _join_agent(test_client, session)
-        message = '{{"action": "JOIN_AGENT", "token": "{}" }}'.format(token)
-        assert proto.onMessage(message, False)
-
-        message = '{{"action": "LEAVE_AGENT", "token": "pepito" }}'.format(token)
         assert not proto.onMessage(message, False)
 

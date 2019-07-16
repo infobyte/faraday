@@ -158,6 +158,14 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
         assert res.status_code == 200
         assert not res.json['active']
 
+    def test_update_bug_case(self, test_client, session):
+        agent = AgentFactory.create(workspace=self.workspace)
+        session.add(agent)
+        session.commit()
+        update_data = {"id": 1, "name": "Agent test", "is_online": True}
+        res = test_client.put(self.url(agent.id), data=update_data)
+        assert res.status_code == 200
+
     def test_delete_agent(self, test_client, session):
         initial_agent_count = len(session.query(Agent).all())
         agent = AgentFactory.create(workspace=self.workspace)

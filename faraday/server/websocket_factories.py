@@ -122,6 +122,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
     def connectionLost(self, reason):
         WebSocketServerProtocol.connectionLost(self, reason)
         self.factory.unregister(self)
+        self.factory.unregister_agent(self)
 
     def sendServerStatus(self, redirectUrl=None, redirectAfter=0):
         self.sendHtml('This is a websocket port.')
@@ -191,6 +192,11 @@ class WorkspaceServerFactory(WebSocketServerFactory):
                     logger.debug("unregistered client from workspace {0}".format(workspace_name))
                     self.leave_workspace(client, workspace_name)
                     return
+
+    def unregister_agent(self, protocol):
+        for (key, value) in connected_agents.items():
+            if value == protocol:
+                del connected_agents[key]
 
     def broadcast(self, msg):
         logger.debug("broadcasting prepared message '{}' ..".format(msg))

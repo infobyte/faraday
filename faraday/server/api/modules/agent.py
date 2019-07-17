@@ -30,7 +30,6 @@ class AgentSchema(AutoSchema):
     token = fields.String(dump_only=True)
     create_date = fields.DateTime(dump_only=True)
     update_date = fields.DateTime(dump_only=True)
-    status = fields.Boolean(dump_only=True)
     is_online = fields.Boolean(dump_only=True)
 
     class Meta:

@@ -487,7 +487,8 @@ class NmapPlugin(core.PluginBase):
                     v.name,
                     desc=v.desc,
                     ref=v.refs,
-                    severity=0)
+                    severity=0,
+                    external_id=v.name)
 
             for port in host.ports:
 
@@ -544,7 +545,8 @@ class NmapPlugin(core.PluginBase):
                             response = v.response if v.response else "",
                             ref=refs,
                             severity=severity,
-                            website=minterfase)
+                            website=minterfase,
+                            external_id=v.name)
                     else:
                         v_id = self.createAndAddVulnToService(
                             h_id,

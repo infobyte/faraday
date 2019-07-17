@@ -175,10 +175,15 @@ def register_handlers(app):
                 flask.abort(401)
         else:
             logged_in = 'user_id' in flask.session
-            if not logged_in and not getattr(view, 'is_public', False):
-                flask.abort(401)
             user_id = session.get("user_id")
-            user = User.query.filter_by(id=user_id).first()
+            if logged_in:
+                user = User.query.filter_by(id=user_id).first()
+
+        if logged_in:
+            assert user
+
+        if not logged_in and not getattr(view, 'is_public', False):
+            flask.abort(401)
 
         g.user = None
         if logged_in:

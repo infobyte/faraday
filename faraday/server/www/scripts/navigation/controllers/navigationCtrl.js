@@ -28,7 +28,13 @@ angular.module('faradayApp')
                   Notification) {
 
         $scope.workspace = "";
-        $scope.component = "";
+
+        if(!$scope.component)
+            $scope.component = "";
+
+        if(!$scope.timer)
+            $scope.timer;
+
         var componentsNeedsWS = ["dashboard","status","hosts"];
 
         $scope.checkNews = function() {
@@ -57,12 +63,12 @@ angular.module('faradayApp')
         };
 
         configSrv.promise.then(function() {
-            var timer = $interval($scope.checkNews, 43200000);
+            $scope.timer = $interval($scope.checkNews, 43200000);
             $scope.checkNews();
         });
 
         $scope.$on('$destroy', function() {
-            $interval.cancel(timer);
+            $interval.cancel($scope.timer);
         });
 
         $scope.$on('$routeChangeSuccess', function() {

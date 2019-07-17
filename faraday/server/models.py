@@ -1907,7 +1907,7 @@ class Agent(Metadata):
             else:
                 return 'offline'
         else:
-            'paused'
+            return 'paused'
 
 
 # This constraint uses Columns from different classes

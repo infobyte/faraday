@@ -30,16 +30,22 @@ class AgentSchema(AutoSchema):
     token = fields.String(dump_only=True)
     create_date = fields.DateTime(dump_only=True)
     update_date = fields.DateTime(dump_only=True)
+    status = fields.Boolean(dump_only=True)
     is_online = fields.Boolean(dump_only=True)
 
     class Meta:
         model = Agent
         fields = (
-            'id', 'name', 'is_online', 'active',
+            'id',
+            'name',
+            'status',
+            'active',
             'create_date',
             'update_date',
             'creator',
-            'token'
+            'token',
+            'is_online',
+            'active',
         )
 
 

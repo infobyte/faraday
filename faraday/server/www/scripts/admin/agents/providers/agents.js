@@ -34,6 +34,26 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
+
+        agentFact.runAgent = function(wsName, agentId) {
+            var deferred = $q.defer();
+            $http.get('/_api/session').then(function(response){
+                var fd = new FormData();
+                fd.append('csrf_token', response.data.csrf_token);
+                var postUrl = '_api/v2/ws/' + wsName + '/agents/' + agentId + '/run/';
+                $http.post(postUrl, fd, {
+                    transformRequest: angular.identity,
+                    withCredentials: false,
+                    headers: {'Content-Type': undefined},
+                }).then(
+                    function(tokenResponse) {
+                        deferred.resolve(tokenResponse)
+                    });
+            });
+
+            return deferred.promise;
+        };
+
         agentFact.getAgents = function(wsName) {
             var deferred = $q.defer();
             ServerAPI.getAgents(wsName).then(function(response) {

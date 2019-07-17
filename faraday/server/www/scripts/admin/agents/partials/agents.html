@@ -79,9 +79,11 @@
             </td>
             <td class="ui-grid-cell-contents active-toggle">
                                 <span class="preview-tag" ng-class="{
-                                'tag-green':agent.is_online,
-                                'tag-yellow':agent.is_online==false}"
-                                ng-bind="agent.is_online?'Running':'Paused'"></span>
+                                'tag-green':agent.status == 'online',
+                                'tag-yellow':agent.status=='offline',
+                                'tag-red': agent.status=='paused'}">
+                                    {{agent.status |uppercase}}
+                                </span>
             </td>
 
             <td class="ui-grid-cell-contents active-toggle">
@@ -89,11 +91,17 @@
             </td>
 
             <td class="ui-grid-cell-contents active-toggle" selection-model-ignore="">
+                <button type="button" class="btn btn-info"
+                        ng-class="{'disabled': !agent.active || disableExecute}"
+                        title="Run Agent"
+                        ng-click="runAgent(agent.id)" ng-disabled="!agent.active || disableExecute">
+                    Execute
+                </button>
                 <button type="button" class="btn"
-                        ng-class="{'btn-danger': agent.is_online, 'btn-success': agent.is_online==false}"
-                        title="{{agent.is_online?'Pause Agent': 'Run Agent'}}"
+                        ng-class="{'btn-danger': agent.active, 'btn-success': !agent.active}"
+                        title="{{agent.active?'Pause Agent': 'Unpause Agent'}}"
                         ng-click="changeStatusAgent(agent)">
-                    <span ng-bind="agent.is_online?'Pause': 'Run'"></span>
+                    <span ng-bind="agent.active ?'Pause': 'Unpause'"></span>
                 </button>
                 <button type="button" class="btn btn-danger" title="Remove Agent" ng-click="removeAgent(agent.id)">
                     Remove

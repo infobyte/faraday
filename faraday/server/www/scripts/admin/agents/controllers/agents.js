@@ -25,6 +25,7 @@ angular.module('faradayApp')
             $scope.agents = [];
             $scope.selectAll = false;
             $scope.options = [];
+            $scope.disableExecute = false;
 
             $scope.init = function () {
                 getWorkspaces();
@@ -96,6 +97,19 @@ angular.module('faradayApp')
                     });
             };
 
+             $scope.runAgent = function (agentId) {
+                 $scope.disableExecute = true;
+                 agentFact.runAgent($scope.workspace, agentId).then(
+                    function (response) {
+                        Notification.success("The Agent is running");
+                        setInterval(function () {
+                            $scope.disableExecute = false;
+                        }, 2000);
+                    }, function (error) {
+                        console.log(error);
+                    });
+            };
+
             $scope.copyToClipboard = function () {
                 var copyElement = document.createElement("textarea");
                 copyElement.style.position = 'fixed';
@@ -138,23 +152,23 @@ angular.module('faradayApp')
             };
 
             $scope.changeStatusAgent = function (agent) {
-                var oldStatus = agent.is_online;
-                agent.is_online = !agent.is_online;
+                var oldStatus = agent.active;
+                agent.active = !agent.active;
 
                 var agentData = {
                     id: agent.id,
                     name: agent.name,
-                    is_online: agent.is_online
+                    active: agent.active
                 };
 
                 agentFact.updateAgent($scope.workspace, agentData).then(
                     function (response) {
-                        if (!response.data.is_online)
+                        if (!response.data.active)
                             Notification.success("The Agent has been paused");
                         else
-                            Notification.success("The Agent is running");
+                            Notification.success("The Agent is active");
                     }, function (error) {
-                        agent.is_online = oldStatus;
+                        agent.active = oldStatus;
                         console.log(error);
                     });
             };

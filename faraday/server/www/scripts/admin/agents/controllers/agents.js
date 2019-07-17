@@ -167,6 +167,7 @@ angular.module('faradayApp')
                             Notification.success("The Agent has been paused");
                         else
                             Notification.success("The Agent is active");
+                        agent.status = response.data.status;
                     }, function (error) {
                         agent.active = oldStatus;
                         console.log(error);

@@ -86,6 +86,7 @@ def register_blueprints(app):
     from faraday.server.api.modules.websocket_auth import websocket_auth_api
     from faraday.server.api.modules.get_exploits import exploits_api
     from faraday.server.api.modules.custom_fields import custom_fields_schema_api
+    from faraday.server.api.modules.bulk_create import bulk_create_api
     from faraday.server.api.modules.token import token_api
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(activityfeed_api)
@@ -104,6 +105,7 @@ def register_blueprints(app):
     app.register_blueprint(websocket_auth_api)
     app.register_blueprint(exploits_api)
     app.register_blueprint(custom_fields_schema_api)
+    app.register_blueprint(bulk_create_api)
     app.register_blueprint(token_api)
 
 

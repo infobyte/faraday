@@ -74,9 +74,9 @@ class ModelController(Thread):
         self.processing = False
 
         # Fix for using PyDev in DEBUG
-        self.is_pydev_daemon_thread = False
-        self.__pydevd_id__ = False
-        self.pydev_do_not_trace = False
+        self.is_pydev_daemon_thread = ""
+        self.__pydevd_id__ = ""
+        self.pydev_do_not_trace = ""
 
     def __getattr__(self, name):
         logger.debug("ModelObject attribute to refactor: %s",  name)
@@ -466,22 +466,22 @@ class ModelController(Thread):
             version=version, description=description, parent_id=parent_id)
 
     def newVuln(self, name, desc="", ref=None, severity="", resolution="",
-                confirmed=False, parent_id=None):
+                confirmed=False, parent_id=None, external_id=None):
         return faraday.client.model.common.factory.createModelObject(
             models.Vuln.class_signature, name,
             workspace_name=self.mappers_manager.workspace_name, desc=desc, ref=ref, severity=severity, resolution=resolution,
-            confirmed=confirmed, parent_id=parent_id)
+            confirmed=confirmed, parent_id=parent_id, external_id=external_id)
 
     def newVulnWeb(self, name, desc="", ref=None, severity="", resolution="",
                    website="", path="", request="", response="", method="",
                    pname="", params="", query="", category="", confirmed=False,
-                   parent_id=None):
+                   parent_id=None, external_id=None):
         return faraday.client.model.common.factory.createModelObject(
             models.VulnWeb.class_signature, name,
             workspace_name=self.mappers_manager.workspace_name, desc=desc, ref=ref, severity=severity, resolution=resolution,
             website=website, path=path, request=request, response=response,
             method=method, pname=pname, params=params, query=query,
-            category=category, confirmed=confirmed, parent_id=parent_id)
+            category=category, confirmed=confirmed, parent_id=parent_id, external_id=external_id)
 
     def newNote(self, name, text, parent_id=None, parent_type=None):
         return faraday.client.model.common.factory.createModelObject(

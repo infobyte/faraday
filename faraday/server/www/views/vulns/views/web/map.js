@@ -46,6 +46,7 @@ function(doc) {
             "query":        	doc.query,
             "request":      	doc.request,
             "response":     	doc.response,
+            "external_id":  	doc.external_id,
             "website":      	doc.website
         };
         emit(doc._id, obj);

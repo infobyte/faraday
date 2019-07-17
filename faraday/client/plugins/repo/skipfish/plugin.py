@@ -165,7 +165,7 @@ class SkipfishPlugin(core.PluginBase):
                         h_id,
                         ip,
                         ipv4_address=ip,
-                        hostname_resolution=host)
+                        hostname_resolution=[host])
 
                     s_id = self.createAndAddServiceToInterface(
                         h_id,

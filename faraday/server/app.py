@@ -7,6 +7,7 @@ import os
 import string
 import datetime
 from future.builtins import range # __future__
+from itsdangerous import TimedJSONWebSignatureSerializer, SignatureExpired, BadSignature
 from os.path import join, expanduser
 from random import SystemRandom
 
@@ -35,8 +36,8 @@ from flask_security.forms import LoginForm
 from flask_security.utils import (
     _datastore,
     get_message,
-    verify_and_update_password
-)
+    verify_and_update_password,
+    hash_data, verify_hash)
 from flask_session import Session
 from nplusone.ext.flask_sqlalchemy import NPlusOne
 from depot.manager import DepotManager
@@ -86,6 +87,7 @@ def register_blueprints(app):
     from faraday.server.api.modules.get_exploits import exploits_api
     from faraday.server.api.modules.custom_fields import custom_fields_schema_api
     from faraday.server.api.modules.bulk_create import bulk_create_api
+    from faraday.server.api.modules.token import token_api
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(activityfeed_api)
     app.register_blueprint(credentials_api)
@@ -104,6 +106,7 @@ def register_blueprints(app):
     app.register_blueprint(exploits_api)
     app.register_blueprint(custom_fields_schema_api)
     app.register_blueprint(bulk_create_api)
+    app.register_blueprint(token_api)
 
 
 def check_testing_configuration(testing, app):
@@ -123,27 +126,53 @@ def register_handlers(app):
     def unauthorized():
         flask.abort(403)
 
-    @auth_token_required
-    def verify_token():
-        return True
+    def verify_token(token):
+        serialized = TimedJSONWebSignatureSerializer(app.config['SECRET_KEY'], salt="api_token")
+        try:
+            data = serialized.loads(token)
+            user_id = data["user_id"]
+            user = User.query.filter_by(id=user_id).first()
+            if not user or not verify_hash(data['validation_check'], user.password):
+                logger.warn('Invalid authentication token. token invalid after password change')
+                return None
+            return user
+        except SignatureExpired:
+            return None  # valid token, but expired
+        except BadSignature:
+            return None  # invalid token
+
 
     @app.before_request
     def default_login_required():
         view = app.view_functions.get(flask.request.endpoint)
 
         if app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER'] in flask.request.headers:
-            if verify_token() is not True:
-                logger.warn ('Auth token not valid. Did you change your password recently?')
+            header = flask.request.headers[app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER']]
+            try:
+                (auth_type, token) = header.split(None, 1)
+            except ValueError:
+                logger.warn("Authorization header does not have type")
                 flask.abort(401)
-            logged_in = True
+            auth_type = auth_type.lower()
+            if auth_type == 'token':
+                user = verify_token(token)
+                if not user:
+                    logger.warn('Invalid authentication token.')
+                    flask.abort(401)
+                logged_in = True
+                flask.session['user_id'] = user.id
+            else:
+                logger.warn("Invalid authorization type")
+                flask.abort(401)
         else:
             logged_in = 'user_id' in flask.session
-            if (not logged_in and not getattr(view, 'is_public', False)):
+            if not logged_in and not getattr(view, 'is_public', False):
                 flask.abort(401)
+            user_id = session.get("user_id")
+            user = User.query.filter_by(id=user_id).first()
 
         g.user = None
         if logged_in:
-            user = User.query.filter_by(id=session["user_id"]).first()
             g.user = user
             if user is None:
                 logger.warn("Unknown user id {}".format(session["user_id"]))
@@ -215,7 +244,7 @@ def create_app(db_connection_string=None, testing=None):
         'SECURITY_CHANGEABLE': True,
         'SECURITY_SEND_PASSWORD_CHANGE_EMAIL': False,
         'SECURITY_MSG_USER_DOES_NOT_EXIST': login_failed_message,
-        'SECURITY_TOKEN_AUTHENTICATION_HEADER': 'Authentication-Token',
+        'SECURITY_TOKEN_AUTHENTICATION_HEADER': 'Authorization',
 
         # The line bellow should not be necessary because of the
         # CustomLoginForm, but i'll include it anyway.

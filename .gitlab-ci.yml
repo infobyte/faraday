@@ -7,6 +7,7 @@ variables:
     PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
     APT_CACHE_DIR: "$CI_PROJECT_DIR/apt-cache"
     DEBIAN_FRONTEND: noninteractive
+    IMAGE_TAG: '/bin/egrep -o "[0-9]\.[0-9]\.[0-9]" faraday/__init__.py'
     ## ENV_VARS LIST
     # FULL_TEST = Test all jobs
     # BUILD_TEST = Test default and build jobs
@@ -75,10 +76,10 @@ pylint:
         - pip install --upgrade -r requirements.txt
         - python setup.py install
         # pylint slow issue https://github.com/PyCQA/pylint/issues/2765
-        - pip install pylint isort==4.3.4 anybadge
+        - pip install pylint isort==4.3.4
         - pylint --rcfile=.pylintrc faraday --ignore=faraday_venv | tee pylint.txt
         - score=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' pylint.txt)
-        - anybadge --label pylint --value=$score --file pylint.svg 4=red 6=orange 8=yellow 10=green
+          #- anybadge --label pylint --value=$score --file pylint.svg 4=red 6=orange 8=yellow 10=green
     artifacts:
         paths:
             - pylint.svg
@@ -185,7 +186,7 @@ generate_release_file:
 
 generate_build_file:
     image: registry.gitlab.com/faradaysec/faraday/faraday_testing_pink
-    stage: build_faraday 
+    stage: build_faraday
     script:
         - apt-get update -qy
         - apt-get install -y rsync
@@ -196,7 +197,6 @@ generate_build_file:
         - tags
         - white/master
         - white/dev
-        - tkt_white_5751_white_deb_rpm_installers
     artifacts:
         name: 'faraday'
         paths:
@@ -226,7 +226,7 @@ generate_deb:
         - ls
         - cd faraday_copy
         - git clone git@gitlab.com:faradaysec/faraday-linux-installers-builder.git
-        - sh faraday-linux-installers-builder/build-deb.sh
+        - sh faraday-linux-installers-builder/build-deb.sh $(eval $IMAGE_TAG)
         - mv faraday-server_amd64.deb ../../faraday-server_amd64.deb
     dependencies:
         - generate_build_file
@@ -239,7 +239,6 @@ generate_deb:
         - tags
         - white/master
         - white/dev
-        - tkt_white_5751_white_deb_rpm_installers
 
 generate_rpm:
     stage: build
@@ -267,7 +266,7 @@ generate_rpm:
         - ls
         - cd faraday_copy
         - git clone git@gitlab.com:faradaysec/faraday-linux-installers-builder.git
-        - sh faraday-linux-installers-builder/build-rpm.sh
+        - sh faraday-linux-installers-builder/build-rpm.sh $(eval $IMAGE_TAG)
         - mv faraday-server_amd64.rpm ../../faraday-server_amd64.rpm
     dependencies:
         - generate_build_file
@@ -280,7 +279,6 @@ generate_rpm:
         - tags
         - white/master
         - white/dev
-        - tkt_white_5751_white_deb_rpm_installers
 
 
 binary_files:

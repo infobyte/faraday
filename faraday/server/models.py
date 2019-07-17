@@ -526,6 +526,8 @@ class VulnerabilityABC(Metadata):
     impact_confidentiality = Column(Boolean, default=False, nullable=False)
     impact_integrity = Column(Boolean, default=False, nullable=False)
 
+    external_id = BlankColumn(Text)
+
     __table_args__ = (
         CheckConstraint('1.0 <= risk AND risk <= 10.0',
                         name='check_vulnerability_risk'),
@@ -1801,6 +1803,8 @@ class ExecutiveReport(Metadata):
                     "TagObject.object_type=='executive_report')",
         collection_class=set,
     )
+    severities = Column(JSONType, nullable=True, default=[])
+    filter = Column(JSONType, nullable=True, default=[])
     @property
     def parent(self):
         return

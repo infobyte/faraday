@@ -465,7 +465,7 @@ class SqlmapPlugin(PluginTerminalOutput):
             h_id,
             name=self.ip,
             ipv4_address=self.ip,
-            hostname_resolution=self.hostname)
+            hostname_resolution=[self.hostname])
 
         s_id = self.createAndAddServiceToInterface(
             h_id,

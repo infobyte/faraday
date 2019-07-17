@@ -1,1 +1,1 @@
-* evidence filename error 
+Fix bug viewing an attachment/evidence when its filename contained whitespaces

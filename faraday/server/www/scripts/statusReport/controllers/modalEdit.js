@@ -101,7 +101,8 @@ angular.module('faradayApp')
                         website: "",
                         status: "opened",
                         policyviolations: [],
-                        custom_fields:{}
+                        custom_fields:{},
+			external_id: ""
                     };
 
                     vm.vuln = angular.copy(vuln);

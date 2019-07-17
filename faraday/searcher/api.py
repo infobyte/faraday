@@ -215,26 +215,27 @@ class Api:
         self.itime = itime
         self.params = params
         self.tool_name = tool_name
-        data = {
-            "itime": self.itime,
-            "command": self.tool_name,
-            "ip": socket.gethostbyname(socket.gethostname()),
-            "import_source": "shell",
-            "tool": "Searcher",
-            "params": json.dumps(params),
-        }
+        data = self._command_info()
         res = self._post(self._url('ws/{}/commands/'.format(self.workspace)), data, 'command')
         return res["_id"]
 
-    def close_command(self, command_id, duration):
-        data = {}
+    def _command_info(self, duration=None):
+        try:
+            ip = socket.gethostbyname(socket.gethostname())
+        except socket.gaierror:
+            ip = socket.gethostname()
         data = {
             "itime": self.itime,
-            "duration": duration,
             "command": self.tool_name,
-            "ip": socket.gethostbyname(socket.gethostname()),
+            "ip": ip,
             "import_source": "shell",
             "tool": "Searcher",
             "params": json.dumps(self.params),
         }
+        if duration:
+            data.update({"duration": duration})
+        return data
+
+    def close_command(self, command_id, duration):
+        data = self._command_info(duration)
         self._put(self._url('ws/{}/commands/{}/'.format(self.workspace, command_id)), data, 'command')

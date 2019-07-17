@@ -756,6 +756,10 @@ div[dnd-list] > div{
     overflow-x: hidden;
 }
 
+.left-main{
+  overflow-x: hidden;
+}
+
 #vuln-preview {
     position: fixed;
     z-index: 100000;

@@ -768,7 +768,7 @@ angular.module("faradayApp")
             });
         }
         var resizeGrid = function() {
-            $scope.gridHeight = getGridHeight('grid', 'right-main', 15);
+            $scope.gridHeight = getGridHeight('grid', 'left-main', 15);
         };
 
         var recalculateLastVisibleColSize = function () {

@@ -176,6 +176,30 @@ header.head {
     -moz-border-radius-topleft: 10px;
     border-top-left-radius: 10px;
 }
+
+.left-main {
+    position: absolute;
+    top: 0px;
+    border-top: 3px solid #464646;
+    right: 0;
+    bottom: 0;
+    background-color: #F4F3F4;
+    -webkit-border-top-left-radius: 10px;
+    -moz-border-radius-topleft: 10px;
+    border-top-left-radius: 10px;
+}
+
+.left-main-without-pagination {
+    top: 0px;
+    border-top: 3px solid #464646;
+    right: 0;
+    bottom: 0;
+    background-color: #F4F3F4;
+    -webkit-border-top-left-radius: 10px;
+    -moz-border-radius-topleft: 10px;
+    border-top-left-radius: 10px;
+}
+
 .seccion {
     padding: 0px;
     width: 100%;
@@ -1340,4 +1364,7 @@ cursor: pointer !important;
 
 .visible-overflow {
     overflow-y: visible !important;
+}
+.navigation-active{
+    margin-bottom: 5px #00a8e1;
 }

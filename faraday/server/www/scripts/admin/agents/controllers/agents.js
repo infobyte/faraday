@@ -5,21 +5,18 @@
 angular.module('faradayApp')
     .controller('agentsCtrl', [
         '$scope',
-        'uuid',
         'agentFact',
         'workspacesFact',
         'Notification',
         '$routeParams',
         '$uibModal',
-        'commonsFact',
         function ($scope,
-                  uuid,
                   agentFact,
                   workspacesFact,
                   Notification,
                   $routeParams,
                   $uibModal,
-                  commonsFact) {
+                  ) {
             $scope.agentToken = {id: null, token: null};
             $scope.workspace = null;
             $scope.agents = [];

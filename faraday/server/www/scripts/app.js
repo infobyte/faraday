@@ -31,7 +31,6 @@ var faradayApp = angular.module('faradayApp', [
                                                     'dndLists',
                                                     'angularFileUploadLib',
                                                     'rzTable',
-                                                    'angular-uuid',
                                                     'ui'
                                              ])
     .constant("BASEURL", (function() {

@@ -15,7 +15,7 @@ angular.module('faradayApp')
                   workspacesFact,
                   Notification,
                   $routeParams,
-                  $uibModal,
+                  $uibModal
                   ) {
             $scope.agentToken = {id: null, token: null};
             $scope.workspace = null;

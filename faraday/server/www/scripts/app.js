@@ -272,11 +272,6 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             controller: 'workspacesCtrl',
             title: 'Status Report | '
         }).
-        when('/agents', {
-            templateUrl: 'scripts/commons/partials/workspaces.html',
-            controller: 'workspacesCtrl',
-            title: 'Status Report | '
-        }).
         when('/workspaces', {
             templateUrl: 'scripts/workspaces/partials/list.html',
             controller: 'workspacesCtrl',
@@ -362,11 +357,6 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             templateUrl: 'scripts/admin/admin.html',
             controller: 'adminCtrl',
             title: ' Admin | '
-        }).
-        when('/agents/ws/:wsId', {
-            templateUrl: 'scripts/agents/partials/agents.html',
-            controller: 'agentsCtrl',
-            title: ' Agents | '
         }).
         otherwise({redirectTo:'/'});
 }]);

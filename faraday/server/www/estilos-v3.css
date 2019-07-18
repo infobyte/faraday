@@ -1,9 +1,12 @@
 #login-main {
-  background-image: url(images/fondo_faraday.png) !important;
+  background-image: url(images/fondo_faraday.svg) !important;
   width: 100%;
   height: 100%;
   display: inline-block;
-  position: absolute;
+  position: fixed;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center;
 }
 
 #login-container {

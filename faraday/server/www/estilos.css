@@ -1370,3 +1370,8 @@ cursor: pointer !important;
 a {
     text-decoration: none !important;
 }
+.background-blue{
+    background-color: #00a8e1 !important;
+    border-color: #00a8e1 !important;
+    color: white !important;
+}

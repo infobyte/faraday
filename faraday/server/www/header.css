@@ -33,7 +33,7 @@
 
 .faraday-header-border-fix {
     border-top: 3px solid #464646;
-    background-color: #464646;
+    /*background-color: #464646;*/
 }
 
 .workspace-selector-wrapper, .icon-wrapper {

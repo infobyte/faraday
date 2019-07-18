@@ -34,7 +34,7 @@ WebsocketWorkspaceAuthView.register(websocket_auth_api)
 @websocket_auth_api.route('/v2/agent_websocket_token/', methods=['POST'])
 def agent_websocket_token():
     agent = require_agent_token()
-    return {"token": generate_agent_websocket_token(agent)}
+    return flask.jsonify({"token": generate_agent_websocket_token(agent)})
 
 
 agent_websocket_token.is_public = True

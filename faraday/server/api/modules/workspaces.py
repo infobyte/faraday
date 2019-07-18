@@ -172,6 +172,9 @@ class WorkspaceView(ReadWriteView):
         return obj
 
     def _perform_create(self, data, **kwargs):
+        if data["start_date"] and data["end_date"]:
+            if data["start_date"] > data["end_date"]:
+                flask.abort(400, "Workspace start date can't be grater than the end date")
         scope = data.pop('scope', [])
         workspace = super(WorkspaceView, self)._perform_create(data, **kwargs)
         workspace.set_scope(scope)

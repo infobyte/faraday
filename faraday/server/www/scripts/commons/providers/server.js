@@ -19,7 +19,7 @@ angular.module("faradayApp")
 
             var createGetUrl = function (wsName, objectName, objectId) {
                 var objectName = ((objectName) ? "/" + objectName : "");
-                if (typeof objectId == 'getNewAgentTokenstring' || typeof objectId == "number") {
+                if (typeof objectId == 'string' || typeof objectId == "number") {
                     objectName = objectName + "/" + objectId;
                 }
 

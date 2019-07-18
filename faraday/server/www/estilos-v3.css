@@ -499,7 +499,7 @@ li.nav-item.has-error:not(.active) a {
 }
 
 .nav-item{
-    margin-right: 10px;
+    margin-right: 40px;
 }
 
 .active-toggle{

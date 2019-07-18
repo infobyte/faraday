@@ -89,6 +89,7 @@ def register_blueprints(app):
     from faraday.server.api.modules.custom_fields import custom_fields_schema_api
     from faraday.server.api.modules.agent_auth_token import agent_auth_token_api
     from faraday.server.api.modules.agent import agent_api
+    from faraday.server.api.modules.bulk_create import bulk_create_api
     from faraday.server.api.modules.token import token_api
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(activityfeed_api)
@@ -109,6 +110,7 @@ def register_blueprints(app):
     app.register_blueprint(custom_fields_schema_api)
     app.register_blueprint(agent_api)
     app.register_blueprint(agent_auth_token_api)
+    app.register_blueprint(bulk_create_api)
     app.register_blueprint(token_api)
 
 
@@ -173,10 +175,15 @@ def register_handlers(app):
                 flask.abort(401)
         else:
             logged_in = 'user_id' in flask.session
-            if not logged_in and not getattr(view, 'is_public', False):
-                flask.abort(401)
             user_id = session.get("user_id")
-            user = User.query.filter_by(id=user_id).first()
+            if logged_in:
+                user = User.query.filter_by(id=user_id).first()
+
+        if logged_in:
+            assert user
+
+        if not logged_in and not getattr(view, 'is_public', False):
+            flask.abort(401)
 
         g.user = None
         if logged_in:

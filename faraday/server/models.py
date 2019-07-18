@@ -1899,6 +1899,16 @@ class Agent(Metadata):
         from faraday.server.websocket_factories import connected_agents
         return self.id in connected_agents
 
+    @property
+    def status(self):
+        if self.active:
+            if self.is_online:
+                return 'online'
+            else:
+                return 'offline'
+        else:
+            return 'paused'
+
 
 # This constraint uses Columns from different classes
 # Since it applies to the table vulnerability it should be adVulnerability.ded to the Vulnerability class

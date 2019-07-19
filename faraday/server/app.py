@@ -82,6 +82,8 @@ def register_blueprints(app):
     from faraday.server.api.modules.websocket_auth import websocket_auth_api
     from faraday.server.api.modules.get_exploits import exploits_api
     from faraday.server.api.modules.custom_fields import custom_fields_schema_api
+    from faraday.server.api.modules.agent_auth_token import agent_auth_token_api
+    from faraday.server.api.modules.agent import agent_api
     from faraday.server.api.modules.bulk_create import bulk_create_api
     from faraday.server.api.modules.token import token_api
     app.register_blueprint(commandsrun_api)
@@ -101,6 +103,8 @@ def register_blueprints(app):
     app.register_blueprint(websocket_auth_api)
     app.register_blueprint(exploits_api)
     app.register_blueprint(custom_fields_schema_api)
+    app.register_blueprint(agent_api)
+    app.register_blueprint(agent_auth_token_api)
     app.register_blueprint(bulk_create_api)
     app.register_blueprint(token_api)
 
@@ -157,15 +161,24 @@ def register_handlers(app):
                     flask.abort(401)
                 logged_in = True
                 flask.session['user_id'] = user.id
+            elif auth_type == 'agent':
+                # Don't handle the agent logic here, do it in another
+                # before_request handler
+                logged_in = False
             else:
                 logger.warn("Invalid authorization type")
                 flask.abort(401)
         else:
             logged_in = 'user_id' in flask.session
-            if not logged_in and not getattr(view, 'is_public', False):
-                flask.abort(401)
             user_id = session.get("user_id")
-            user = User.query.filter_by(id=user_id).first()
+            if logged_in:
+                user = User.query.filter_by(id=user_id).first()
+
+        if logged_in:
+            assert user
+
+        if not logged_in and not getattr(view, 'is_public', False):
+            flask.abort(401)
 
         g.user = None
         if logged_in:
@@ -211,6 +224,18 @@ def save_new_secret_key(app):
         config.write(configfile)
 
 
+def save_new_agent_creation_token():
+    assert os.path.exists(LOCAL_CONFIG_FILE)
+    config = ConfigParser()
+    config.read(LOCAL_CONFIG_FILE)
+    rng = SystemRandom()
+    agent_token = "".join([rng.choice(string.ascii_letters + string.digits) for _ in range(25)])
+    config.set('faraday_server', 'agent_token', agent_token)
+    with open(LOCAL_CONFIG_FILE, 'w') as configfile:
+        config.write(configfile)
+    faraday.server.config.faraday_server.agent_token = agent_token
+
+
 def create_app(db_connection_string=None, testing=None):
     app = Flask(__name__)
 
@@ -227,6 +252,9 @@ def create_app(db_connection_string=None, testing=None):
             save_new_secret_key(app)
         else:
             app.config['SECRET_KEY'] = secret_key
+
+    if faraday.server.config.faraday_server.agent_token is None:
+        save_new_agent_creation_token()
 
     login_failed_message = ("Invalid username or password", 'error')
 
@@ -301,6 +329,7 @@ def create_app(db_connection_string=None, testing=None):
     Security(app, app.user_datastore, login_form=CustomLoginForm)
     # Make API endpoints require a login user by default. Based on
     # https://stackoverflow.com/questions/13428708/best-way-to-make-flask-logins-login-required-the-default
+
     app.view_functions['security.login'].is_public = True
     app.view_functions['security.logout'].is_public = True
 
@@ -312,6 +341,8 @@ def create_app(db_connection_string=None, testing=None):
 
     register_blueprints(app)
     register_handlers(app)
+
+    app.view_functions['agent_api.AgentCreationView:post'].is_public = True
 
     return app
 

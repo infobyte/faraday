@@ -29,17 +29,12 @@ from flask_security import (
     Security,
     SQLAlchemyUserDatastore,
 )
-from flask_security.decorators import (
-    auth_token_required,
-)
 from flask_security.forms import LoginForm
 from flask_security.utils import (
     _datastore,
     get_message,
     verify_and_update_password,
-    hash_data,
-    verify_hash,
-)
+    verify_hash)
 from nplusone.ext.flask_sqlalchemy import NPlusOne
 from depot.manager import DepotManager
 

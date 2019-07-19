@@ -548,3 +548,33 @@ def test_bulk_create_endpoint_with_agent_token(session, agent, test_client):
     )
     assert res.status_code == 201
     assert count(Host, agent.workspace) == 1
+
+
+def test_bulk_create_endpoint_with_agent_token_readonly_workspace(
+        session, agent, test_client):
+    agent.workspace.readonly = True
+    session.add(agent)
+    session.add(agent.workspace)
+    session.commit()
+    url = 'v2/ws/{}/bulk_create/'.format(agent.workspace.name)
+    res = test_client.post(
+        url,
+        data=dict(hosts=[host_data]),
+        headers=[("authorization", "agent {}".format(agent.token))]
+    )
+    assert res.status_code == 403
+
+
+def test_bulk_create_endpoint_with_agent_token_disabled_workspace(
+        session, agent, test_client):
+    agent.workspace.active = False
+    session.add(agent)
+    session.add(agent.workspace)
+    session.commit()
+    url = 'v2/ws/{}/bulk_create/'.format(agent.workspace.name)
+    res = test_client.post(
+        url,
+        data=dict(hosts=[host_data]),
+        headers=[("authorization", "agent {}".format(agent.token))]
+    )
+    assert res.status_code == 403

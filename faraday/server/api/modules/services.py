@@ -2,7 +2,7 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 
-from flask import Blueprint
+from flask import Blueprint, abort, make_response, jsonify
 from filteralchemy import FilterSet, operators
 from marshmallow import fields, post_load, ValidationError
 from marshmallow.validate import OneOf, Range
@@ -20,7 +20,8 @@ from faraday.server.schemas import (
 
 
 services_api = Blueprint('services_api', __name__)
-
+import logging
+logger = logging.getLogger(__name__)
 
 class ServiceSchema(AutoSchema):
     _id = fields.Integer(attribute='id', dump_only=True)
@@ -121,5 +122,14 @@ class ServiceView(FilterAlchemyMixin, ReadWriteWorkspacedView):
             'services': services,
         }
 
+    def _perform_create(self, data, **kwargs):
+        port_number = data.get("port", "1")
+        if port_number.isdigit():
+            port_number_int = int(port_number)
+            if port_number_int > 65535 or port_number_int < 1:
+                abort(make_response(jsonify(message="Invalid Port number"), 400))
+        else:
+            abort(make_response(jsonify(message="Invalid Port number"), 400))
+        return super(ServiceView, self)._perform_create( data, **kwargs)
 
 ServiceView.register(services_api)

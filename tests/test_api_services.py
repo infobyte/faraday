@@ -303,3 +303,15 @@ class TestListServiceView(ReadOnlyAPITests):
         }
         res = test_client.post(self.url(), data=data)
         assert res.status_code == 400
+
+    def test_load_invalid_port(self, test_client):
+        data = {
+            "name": "ports",
+            "description": "testing ports load",
+            "owned": False,
+            "ports": [65536],
+            "protocol": "tcp",
+            "status": "open",
+        }
+        res = test_client.post(self.url(), data=data)
+        assert res.status_code == 400

@@ -5,7 +5,7 @@ import os
 import json
 
 import flask
-from flask import Blueprint
+from flask import Blueprint, abort, make_response, jsonify
 from flask_classful import route
 from marshmallow import Schema, fields, post_load, validate
 from sqlalchemy.orm import (
@@ -176,7 +176,7 @@ class WorkspaceView(ReadWriteView):
         end_date = data.get("end_date", None)
         if start_date and end_date:
             if start_date > end_date:
-                flask.abort(400, "Workspace start date can't be grater than the end date")
+                abort(make_response(jsonify(message="Workspace start date can't be grater than the end date"), 400))
         scope = data.pop('scope', [])
         workspace = super(WorkspaceView, self)._perform_create(data, **kwargs)
         workspace.set_scope(scope)

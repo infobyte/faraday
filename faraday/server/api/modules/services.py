@@ -20,8 +20,7 @@ from faraday.server.schemas import (
 
 
 services_api = Blueprint('services_api', __name__)
-import logging
-logger = logging.getLogger(__name__)
+
 
 class ServiceSchema(AutoSchema):
     _id = fields.Integer(attribute='id', dump_only=True)

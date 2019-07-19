@@ -61,6 +61,10 @@
   margin-top: 37px;
 }
 
+.margin-top-65px {
+  margin-top: 65px;
+}
+
 .clear-margin {
   margin: 0px;
 }
@@ -932,10 +936,76 @@ ul#nav-tabs-container {
     overflow-wrap: break-word;
 }
 
+.custom-panel-heading{
+    padding: 15px!important;
+    text-transform: uppercase;
+}
+
+.custom-panel-body{
+    background-color: #f4f3f4;
+}
+
+.agent-token-container {
+    font-size: 1.5em;
+    margin-right: 20px;
+    padding: 12px;
+}
+
+#agent-table td {
+    text-align: left!important;
+}
+
+.tag-blue {
+    background-color: #2e97bd;
+    color: white;
+    text-transform: uppercase;
+}
+
+.tag-green {
+    background-color: #a1ce31;
+    color: white;
+    text-transform: uppercase;
+}
+
+.tag-yellow {
+    background-color: #dfbf35;
+    color: white;
+    text-transform: uppercase;
+}
+
+.tag-red {
+    background-color: #df3936;
+    color: white;
+    text-transform: uppercase;
+}
+
+.tag-gray {
+    background-color: #999999;
+    color: white;
+    text-transform: uppercase;
+}
+
+#agent-table .preview-tag {
+    box-shadow: none;
+    font-size: 0.8em;
+}
+
 #btn_clear_search {
     position: absolute;
     height: 30px;
     border-radius: 2px;
     right: 15px;
     padding-top: 3px;
+}
+
+.panel-default .workspace-selector-wrapper {
+    padding: 0;
+}
+
+.workspace-selector-wrapper.inside-admin:hover {
+     background-color: transparent;
+}
+
+.switcher-wrapper.inside-admin:hover {
+    background-color: #ebebeb;
 }

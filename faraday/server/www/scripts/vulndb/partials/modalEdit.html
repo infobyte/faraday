@@ -19,6 +19,9 @@
                             href="javascript:;">General</a>
                     </li>
                 <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" data-target="#details" href="javascript:;">Details</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" data-toggle="tab" data-target="#custom_fields" href="javascript:;">Custom FIelds</a>
                 </li>
             </ul>
@@ -45,6 +48,39 @@
                                     <textarea class="form-control" name="description" placeholder="Description" ng-model="data.description"></textarea>
                                 </div>
                             </div><!-- .form-group -->
+                            <div class="form-group">
+                                <div class="col-md-6">
+                                    <label>Impact</label>
+                                    <h4><span ng-repeat="(key, value) in impact" class="normal-size" style="cursor: pointer;">
+                                    <span ng-class="{'label-impact label-default-impact': !value, 'label-impact label-success-impact': value}" ng-click="toggleImpact(key)">{{key}}</span>
+                                    </span></h4><!-- .normal-size -->
+                                </div>
+                                <div class="col-md-2"></div>
+                                <div class="col-md-4">
+                                    <label>Ease of Resolution</label>
+                                    <select class="form-control" ng-model="data.easeofresolution" ng-options="e for e in easeofresolution"  style="padding:0px 12px;">
+                                        <option value=""></option>
+                                    </select>
+                                </div>
+                            </div><!-- .form-group -->
+                            <div class="form-group">
+                                <div class="col-md-12">
+                                    <label for="Explotation">Severity</label>
+                                    <button type="button" class="btn btn-default dropdown-toggle" name="exploitation" data-toggle="dropdown" title="Choose exploitation" ng-class="{'button-error': data.exploitation === undefined}">
+                                    {{data.exploitation || 'Choose Severity'}} <span class="caret"></span>
+                                    </button>
+                                    <ul id="nav" class="dropdown-menu dropdown-menu-left" role="menu">
+                                        <li ng-repeat="s in exploitations"><a href="" class="ws color-{{s}}" ng-click="data.exploitation=s">{{s}}</a></li>
+                                    </ul><!-- WS navigation -->
+                                </div>
+                            </div><!-- .form-group -->
+                            <p>All fields marked * are required</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="details" class="container tab-pane-container tab-pane"><br>
+                    <div class="col-md-12 margin-bottom-15px">
+                        <div class="form-horizontal">
                             <div class="form-group">
                                 <div class="col-md-12">
                                     <label for="external_id">External ID</label>
@@ -80,7 +116,6 @@
                                     </div>
                                 </div>
                             </div><!-- .form-group -->
-
                             <div class="form-group">
                                 <div class="col-md-12">
                                     <label for="vuln-policyviolations">Policy Violations</label>
@@ -97,36 +132,7 @@
                                         <span class="input-group-addon cursor" ng-click="policyviolations.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
                                     </div>
                                 </div>
-                            </div><!-- .form-group -->
-
-                            <div class="form-group">
-                                <div class="col-md-6">
-                                    <label>Impact</label>
-                                    <h4><span ng-repeat="(key, value) in impact" class="normal-size" style="cursor: pointer;">
-                                    <span ng-class="{'label-impact label-default-impact': !value, 'label-impact label-success-impact': value}" ng-click="toggleImpact(key)">{{key}}</span>
-                                    </span></h4><!-- .normal-size -->
-                                </div>
-                                <div class="col-md-2"></div>
-                                <div class="col-md-4">
-                                    <label>Ease of Resolution</label>
-                                    <select class="form-control" ng-model="data.easeofresolution" ng-options="e for e in easeofresolution"  style="padding:0px 12px;">
-                                        <option value=""></option>
-                                    </select>
-                                </div>
-                            </div><!-- .form-group -->
-
-                            <div class="form-group">
-                                <div class="col-md-12">
-                                    <label for="Explotation">Severity</label>
-                                    <button type="button" class="btn btn-default dropdown-toggle" name="exploitation" data-toggle="dropdown" title="Choose exploitation" ng-class="{'button-error': data.exploitation === undefined}">
-                                    {{data.exploitation || 'Choose Severity'}} <span class="caret"></span>
-                                    </button>
-                                    <ul id="nav" class="dropdown-menu dropdown-menu-left" role="menu">
-                                        <li ng-repeat="s in exploitations"><a href="" class="ws color-{{s}}" ng-click="data.exploitation=s">{{s}}</a></li>
-                                    </ul><!-- WS navigation -->
-                                </div>
-                            </div><!-- .form-group -->
-                            <p>All fields marked * are required</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -142,7 +148,7 @@
                                 <!--<custom-field field="{{cf}}"></custom-field>-->
                                 <div class="col-md-6">
                                     <label for="model">{{cf.field_display_name}}</label>
-                                    <input type="text" name="name" class="form-control" placeholder="Name" ng-model="cf.value" required>
+                                    <input type="text" name="name" class="form-control" placeholder="Name" ng-model="cf.value">
                                 </div>
                             </div>
                         </div>

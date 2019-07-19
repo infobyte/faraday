@@ -57,6 +57,12 @@ p {margin-bottom: 1em;}
         .uncuarto {width: 200px;}
         .unquinto {width: 85px;}
         .unsexto {width: 85px;}
+.head{
+    background-color: #00a8e1;
+    width: 50px;
+    border-radius: 10px;
+    margin-bottom: 5px;
+}
 
 header.head {
     margin-top: 9px;

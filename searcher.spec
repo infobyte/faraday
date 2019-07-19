@@ -3,8 +3,7 @@
 block_cipher = None
 
 
-a = Analysis(['faraday/searcher/searcher.py'],
-             pathex=['/Users/lcubo/workspace/faraday'],
+a = Analysis(['faraday/searcher/searcher.py', 'searcher.spec'],
              binaries=[],
              datas=[],
              hiddenimports=[],

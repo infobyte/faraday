@@ -12,7 +12,7 @@ from os.path import join, expanduser
 from random import SystemRandom
 
 from faraday.server.config import LOCAL_CONFIG_FILE, copy_default_config_to_local
-from faraday.server.models import User, Vulnerability, VulnerabilityWeb, Workspace, VulnerabilityGeneric
+from faraday.server.models import User
 
 try:
     # py2.7
@@ -29,16 +29,12 @@ from flask_security import (
     Security,
     SQLAlchemyUserDatastore,
 )
-from flask_security.decorators import (
-    auth_token_required,
-)
 from flask_security.forms import LoginForm
 from flask_security.utils import (
     _datastore,
     get_message,
     verify_and_update_password,
-    hash_data, verify_hash)
-from flask_session import Session
+    verify_hash)
 from nplusone.ext.flask_sqlalchemy import NPlusOne
 from depot.manager import DepotManager
 

@@ -1375,3 +1375,6 @@ a {
     border-color: #00a8e1 !important;
     color: white !important;
 }
+.col-s-1{
+    padding-right: 15px;
+}

@@ -2,11 +2,12 @@
     margin-top: 0px;
     padding-top: 9px;
     padding-left: 13px;
-    padding-bottom: 9px;
+    background-color: white;
+    margin-bottom: 10px;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    height: 78px;
+    height: 70px;
 }
 
 .faraday-page-header h3 {

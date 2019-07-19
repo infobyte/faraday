@@ -592,7 +592,7 @@ class Searcher:
 
 @click.command()
 @click.option('--workspace', required=True, prompt=True, help='Workspacer name')
-@click.option('--server', required=True, prompt=True, help='Faraday server address')
+@click.option('--server_address', required=True, prompt=True, help='Faraday server address')
 @click.option('--user', required=True, prompt=True, help='')
 @click.option('--password', required=True, prompt=True, hide_input=True, help='')
 @click.option('--output', required=False, help='Choose a custom output directory', default='output')
@@ -601,8 +601,8 @@ class Searcher:
 @click.option('--mail_protocol', required=False)
 @click.option('--port_protocol', required=False, default=587)
 @click.option('--log', required=False, default='debug')
-@click.option('--rules', required=True, help='Filename with rules')
-def main(workspace, server, user, password, output, email, email_password, mail_protocol, port_protocol, log, rules):
+@click.option('--rules', required=True, prompt=True, help='Filename with rules')
+def main(workspace, server_address, user, password, output, email, email_password, mail_protocol, port_protocol, log, rules):
 
     signal.signal(signal.SIGINT, signal_handler)
 
@@ -652,13 +652,13 @@ def main(workspace, server, user, password, output, email, email_password, mail_
         logger.info('Started')
         logger.info('Searching objects into workspace %s ' % workspace)
 
-        if not server.endswith('/'):
-            server += '/'
-        if not server.endswith('/_api'):
-            server += '_api'
+        if not server_address.endswith('/'):
+            server_address += '/'
+        if not server_address.endswith('/_api'):
+            server_address += '_api'
 
 
-        api = Api(requests, workspace, user, password, base=server)
+        api = Api(requests, workspace, user, password, base=server_address)
 
         searcher = Searcher(api, mail_notificacion)
         searcher.process(rules)

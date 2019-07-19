@@ -661,7 +661,7 @@ class VulnerabilityView(PaginatedMixin,
             normal_vulns = normal_vulns.filter_by(workspace_id=workspace.id)
             normal_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(normal_vulns.all())
             normal_vulns_data = json.loads(normal_vulns.data)
-        except Exception:
+        except Exception as ex:
             normal_vulns_data = []
         try:
             web_vulns = search(db.session,

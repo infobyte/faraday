@@ -112,10 +112,10 @@ postgresql_test:
     script:
         - apt-get update -qy
         - apt-get install -o dir::cache::archives="$APT_CACHE_DIR" -y gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libpq-dev
-        - pip install pip -U
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate
+        - pip install pip -U
         #- pip install --upgrade -r requirements_server.txt
         - pip install --upgrade -r requirements.txt
         - python setup.py install
@@ -143,10 +143,10 @@ sqlite_test:
     script:
         - apt-get update -qy
         - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libpq-dev
-        - pip install pip -U
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate
+        - pip install pip -U
         #- pip install --upgrade -r requirements_server.txt
         - pip install --upgrade -r requirements.txt
         - python setup.py install

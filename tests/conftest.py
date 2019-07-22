@@ -69,6 +69,10 @@ class CustomClient(FlaskClient):
         #        ret.json = None
         return ret
 
+    @property
+    def cookies(self):
+        return self.cookie_jar
+
 
 def pytest_addoption(parser):
     # currently for tests using sqlite and memory have problem while using transactions

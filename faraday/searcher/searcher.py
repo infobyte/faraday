@@ -7,58 +7,67 @@
 ## See the file 'doc/LICENSE' for the license information
 ###
 
-import argparse
 import os
+import re
+import sys
+import ast
+import json
 import signal
 import smtplib
-import sqlite3
+import logging
+import time
+
+import requests
 import subprocess
-import sys
 from datetime import datetime
+
+import click
 from difflib import SequenceMatcher
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import ast
-from validator import *
-from api import Api
+
+from faraday.searcher.validator import validate_rules
+from faraday.searcher.api import Api
 
 logger = logging.getLogger('Faraday searcher')
 
-reload(sys)
-sys.setdefaultencoding("utf-8")
-
-mail_from = ''
-mail_password = ''
-mail_protocol = 'smtp.gmail.com'
-mail_port = 587
+threshold = 0.75
+min_weight = 0.3
 
 
-def send_mail(to_addr, subject, body):
-    global mail_from, mail_password, mail_protocol, mail_port
-    from_addr = mail_from
-    msg = MIMEMultipart()
-    msg['From'] = from_addr
-    msg['To'] = to_addr
-    msg['Subject'] = subject
+class MailNotification:
 
-    msg.attach(MIMEText(body, 'plain'))
-    try:
-        server_mail = smtplib.SMTP(mail_protocol, mail_port)
-        server_mail.starttls()
-        server_mail.login(from_addr, mail_password)
-        text = msg.as_string()
-        server_mail.sendmail(from_addr, to_addr, text)
-        server_mail.quit()
-    except Exception as error:
-        logger.error("Error: unable to send email")
-        logger.error(error)
+    def __init__(self, mail_from, mail_password, mail_protocol, mail_port):
+        self.mail_from = mail_from
+        self.mail_password = mail_password
+        self.mail_protocol = mail_protocol
+        self.mail_port = mail_port
+
+    def send_mail(self, to_addr, subject, body):
+        from_addr = self.mail_from
+        msg = MIMEMultipart()
+        msg['From'] = from_addr
+        msg['To'] = to_addr
+        msg['Subject'] = subject
+
+        msg.attach(MIMEText(body, 'plain'))
+        try:
+            server_mail = smtplib.SMTP(self.mail_protocol, self.mail_port)
+            server_mail.starttls()
+            server_mail.login(from_addr, self.mail_password)
+            text = msg.as_string()
+            server_mail.sendmail(from_addr, to_addr, text)
+            server_mail.quit()
+        except Exception as error:
+            logger.error("Error: unable to send email")
+            logger.exception(error)
 
 
 def compare(a, b):
     return SequenceMatcher(None, a, b).ratio()
 
 
-def get_cwe(data):
+def get_cwe(api, data):
     logger.debug("Getting vulnerability templates")
     templates = api.get_filtered_templates(id=data, name=data)
     if len(templates) > 0:
@@ -67,7 +76,7 @@ def get_cwe(data):
 
 
 def is_same_level(model1, model2):
-    return model1.parent_id == model2.parent_id
+    return model1.parent_id == model2.parent_id and model1.parent_type == model2.parent_type
 
 
 def equals(m1, m2, rule):
@@ -123,7 +132,7 @@ def get_model_environment(model, _models):
     return environment
 
 
-def process_models_by_similarity(ws, _models, rule, _server):
+def process_models_by_similarity(api, _models, rule, mail_notificacion):
     logger.debug("--> Start Process models by similarity")
     for index_m1, m1 in zip(range(len(_models) - 1), _models):
         for index_m2, m2 in zip(range(index_m1 + 1, len(_models)), _models[index_m1 + 1:]):
@@ -138,39 +147,10 @@ def process_models_by_similarity(ws, _models, rule, _server):
                         if 'conditions' in rule:
                             environment = get_model_environment(m2, _models)
                             if can_execute_action(environment, rule['conditions']):
-                                execute_action(ws, _object, rule, _server)
+                                execute_action(api, _object, rule, mail_notificacion)
                         else:
-                            execute_action(ws, _object, rule, _server)
+                            execute_action(api, _object, rule, mail_notificacion)
     logger.debug("<-- Finish Process models by similarity")
-
-
-def insert_rule(_id, command, obj, selector, fields=None, key=None, value=None, output_file='output/searcher.db'):
-    logger.debug("Inserting rule %s into SQlite database ..." % _id)
-    conn = sqlite3.connect(output_file)
-    conn.text_factory = str
-    try:
-        cursor = conn.cursor()
-        cursor.execute('''CREATE TABLE IF NOT EXISTS rule (
-                                id TEXT,
-                                model TEXT NOT NULL,
-                                fields TEXT,
-                                command TEXT NOT NULL,
-                                object_id TEXT NOT NULL,
-                                object_name TEXT NOT NULL,
-                                key TEXT,
-                                value TEXT,
-                                created TEXT NOT NULL,
-                                selector TEXT)''')
-
-        created = str(datetime.now())
-        rule = (_id, obj.class_signature, fields, command, obj.id, obj.name, key, value, created, selector)
-        cursor.execute('INSERT INTO rule VALUES (?,?,?,?,?,?,?,?,?,?)', rule)
-        conn.commit()
-        conn.close()
-        logger.debug("Done")
-    except sqlite3.Error as e:
-        conn.close()
-        logger.error(e)
 
 
 def get_field(obj, field):
@@ -193,9 +173,9 @@ def set_array(field, value, add=True):
                 field.remove(value)
 
 
-def update_vulnerability(ws, vuln, key, value, _server):
+def update_vulnerability(api, vuln, key, value):
     if key == 'template':
-        cwe = get_cwe(value)
+        cwe = get_cwe(api, value)
         if cwe is None:
             logger.error("%s: cwe not found" % value)
             return False
@@ -229,7 +209,7 @@ def update_vulnerability(ws, vuln, key, value, _server):
             field = get_field(vuln, key)
 
         if field is not None and is_custom_field is False:
-            if isinstance(field, str) or isinstance(field, unicode):
+            if isinstance(field, (str, unicode)):
                 setattr(vuln, key, value)
                 logger.info(
                     "Changing property %s to %s in vulnerability '%s' with id %s" % (key, value, vuln.name, vuln.id))
@@ -247,17 +227,13 @@ def update_vulnerability(ws, vuln, key, value, _server):
             logger.info(
                 "Changing custom field %s to %s in vulnerability '%s' with id %s" % (key, value, vuln.name, vuln.id))
 
-    try:
-        api.update_vulnerability(vuln)
-    except Exception as error:
-        logger.error(error)
-        return False
+    api.update_vulnerability(vuln)
 
     logger.info("Done")
     return True
 
 
-def update_service(ws, service, key, value):
+def update_service(api, service, key, value):
     if key == 'owned':
         value = value == 'True'
         service.owned = value
@@ -270,7 +246,7 @@ def update_service(ws, service, key, value):
 
         field = get_field(service, key)
         if field is not None:
-            if isinstance(field, str) or isinstance(field, unicode):
+            if isinstance(field, (str, unicode)):
                 setattr(service, key, value)
                 logger.info(
                     "Changing property %s to %s in service '%s' with id %s" % (key, value, service.name, service.id))
@@ -282,17 +258,14 @@ def update_service(ws, service, key, value):
                         value, key, service.name, service.id)
 
                 logger.info(action)
-    try:
-        api.update_service(service)
-    except Exception as error:
-        logger.error(error)
-        return False
+
+    api.update_service(service)
 
     logger.info("Done")
     return True
 
 
-def update_host(ws, host, key, value):
+def update_host(api, host, key, value):
     if key == 'owned':
         value = value == 'True'
         host.owned = value
@@ -305,7 +278,7 @@ def update_host(ws, host, key, value):
 
         field = get_field(host, key)
         if field is not None:
-            if isinstance(field, str) or isinstance(field, unicode):
+            if isinstance(field, (str, unicode)):
                 setattr(host, key, value)
                 logger.info("Changing property %s to %s in host '%s' with id %s" % (key, value, host.name, host.id))
             else:
@@ -316,17 +289,13 @@ def update_host(ws, host, key, value):
                         value, key, host.name, host.id)
 
                 logger.info(action)
-    try:
-        api.update_host(host)
-    except Exception as error:
-        logger.error(error)
-        return False
+    api.update_host(host)
 
     logger.info("Done")
     return True
 
 
-def get_parent(ws, parent_tag):
+def get_parent(api, parent_tag):
     logger.debug("Getting parent")
     return api.get_filtered_services(id=parent_tag, name=parent_tag) or \
            api.get_filtered_hosts(id=parent_tag, name=parent_tag)
@@ -405,10 +374,10 @@ def get_object(_models, obj):
     return objects
 
 
-def get_models(ws, objects, rule):
+def get_models(api, objects, rule):
     logger.debug("Getting models")
     if 'parent' in rule:
-        parent = get_parent(ws, rule['parent'])
+        parent = get_parent(api, rule['parent'])
         if parent is None:
             logger.warning("WARNING: Parent %s not found in rule %s " % (rule['parent'], rule['id']))
             return objects
@@ -432,7 +401,7 @@ def can_execute_action(_models, conditions):
     return True
 
 
-def execute_action(ws, objects, rule, _server):
+def execute_action(api, objects, rule, mail_notificacion=None):
     logger.info("Running actions of rule '%s' :" % rule['id'])
     actions = rule['actions']
     _objs_value = None
@@ -451,20 +420,18 @@ def execute_action(ws, objects, rule, _server):
                 key = array_exp[0]
                 value = str('=').join(array_exp[1:])
                 if obj.class_signature == 'VulnerabilityWeb' or obj.class_signature == 'Vulnerability':
-                    if update_vulnerability(ws, obj, key, value, _server):
-                        insert_rule(rule['id'], command, obj, _objs_value, fields=None, key=key, value=value)
+                    update_vulnerability(api, obj, key, value)
 
                 if obj.class_signature == 'Service':
-                    update_service(ws, obj, key, value)
+                    update_service(api, obj, key, value)
 
                 if obj.class_signature == 'Host':
-                    update_host(ws, obj, key, value)
+                    update_host(api, obj, key, value)
 
             elif command == 'DELETE':
                 if obj.class_signature == 'VulnerabilityWeb' or obj.class_signature == 'Vulnerability':
                     api.delete_vulnerability(obj.id)
                     logger.info("Deleting vulnerability '%s' with id '%s':" % (obj.name, obj.id))
-                    insert_rule(rule['id'], command, obj, _objs_value)
 
                 elif obj.class_signature == 'Service':
                     api.delete_service(obj.id)
@@ -473,20 +440,11 @@ def execute_action(ws, objects, rule, _server):
                 elif obj.class_signature == 'Host':
                     api.delete_host(obj.id)
                     logger.info("Deleting host '%s' with id '%s':" % (obj.name, obj.id))
-
-            elif command == 'EXECUTE':
-                if subprocess.call(expression, shell=True, stdin=None) is 0:
-                    logger.info("Running command: '%s'" % expression)
-                    insert_rule(rule['id'], command, obj, _objs_value, fields=None, key=None, value=expression)
-                else:
-                    logger.error("Operation fail running command: '%s'" % expression)
-                    return False
             else:
                 subject = 'Faraday searcher alert'
                 body = '%s %s have been modified by rule %s at %s' % (
                     obj.class_signature, obj.name, rule['id'], str(datetime.now()))
-                send_mail(expression, subject, body)
-                insert_rule(rule['id'], command, obj, _objs_value, fields=None, key=None, value=expression)
+                mail_notificacion.send_mail(expression, subject, body)
                 logger.info("Sending mail to: '%s'" % expression)
     return True
 
@@ -505,9 +463,10 @@ def replace_rule(rule, value_item):
     return ast.literal_eval(rule_str)
 
 
-def process_vulnerabilities(ws, vulns, _server):
+def process_vulnerabilities(api, vulns, mail_notificacion, rules):
     logger.debug("--> Start Process vulnerabilities")
     for rule_item in rules:
+        logger.debug('Processing rule {}'.format(rule_item['id']))
         if rule_item['model'] == 'Vulnerability':
             count_values = 1
             values = [None]
@@ -517,9 +476,9 @@ def process_vulnerabilities(ws, vulns, _server):
 
             for index in range(count_values):
                 rule = replace_rule(rule_item, values[index])
-                vulnerabilities = get_models(ws, vulns, rule)
+                vulnerabilities = get_models(api, vulns, rule)
                 if 'fields' in rule:
-                    process_models_by_similarity(ws, vulnerabilities, rule, _server)
+                    process_models_by_similarity(api, vulnerabilities, rule, mail_notificacion)
                 else:
                     _objs_value = None
                     if 'object' in rule:
@@ -528,20 +487,19 @@ def process_vulnerabilities(ws, vulns, _server):
                     if objects is not None and len(objects) != 0:
                         if 'conditions' in rule:
                             if can_execute_action(vulnerabilities, rule['conditions']):
-                                execute_action(ws, objects, rule, _server)
+                                execute_action(api, objects, rule, mail_notificacion)
                         else:
-                            execute_action(ws, objects, rule, _server)
+                            execute_action(api, objects, rule, mail_notificacion)
     logger.debug("<-- Finish Process vulnerabilities")
 
 
-def process_services(ws, services, _server):
+def process_services(api, services, mail_notificacion, rules):
     logger.debug("--> Start Process services")
     for rule in rules:
         if rule['model'] == 'Service':
-            services = get_models(ws, services, rule)
+            services = get_models(api, services, rule)
             if 'fields' in rule:
-                process_models_by_similarity(ws, services, rule, _server)
-                pass
+                process_models_by_similarity(api, services, rule, mail_notificacion)
             else:
                 _objs_value = None
                 if 'object' in rule:
@@ -550,20 +508,19 @@ def process_services(ws, services, _server):
                 if objects is not None and len(objects) != 0:
                     if 'conditions' in rule:
                         if can_execute_action(services, rule['conditions']):
-                            execute_action(ws, objects, rule, _server)
+                            execute_action(api, objects, rule, mail_notificacion)
                     else:
-                        execute_action(ws, objects, rule, _server)
+                        execute_action(api, objects, rule, mail_notificacion)
     logger.debug("<-- Finish Process services")
 
 
-def process_hosts(ws, hosts, _server):
+def process_hosts(api, hosts, mail_notificacion, rules):
     logger.debug("--> Start Process Hosts")
     for rule in rules:
         if rule['model'] == 'Host':
-            hosts = get_models(ws, hosts, rule)
+            hosts = get_models(api, hosts, rule)
             if 'fields' in rule:
-                process_models_by_similarity(ws, hosts, rule, _server)
-                pass
+                process_models_by_similarity(api, hosts, rule, mail_notificacion)
             else:
                 _objs_value = None
                 if 'object' in rule:
@@ -572,19 +529,10 @@ def process_hosts(ws, hosts, _server):
                 if objects is not None and len(objects) != 0:
                     if 'conditions' in rule:
                         if can_execute_action(hosts, rule['conditions']):
-                            execute_action(ws, objects, rule, _server)
+                            execute_action(api, objects, rule, mail_notificacion)
                     else:
-                        execute_action(ws, objects, rule, _server)
+                        execute_action(api, objects, rule, mail_notificacion)
         logger.debug("<-- Finish Process Hosts")
-
-
-def lock_file(lockfile):
-    if os.path.isfile(lockfile):
-        return False
-    else:
-        f = open(lockfile, 'w')
-        f.close()
-        return True
 
 
 def signal_handler(signal, frame):
@@ -593,68 +541,86 @@ def signal_handler(signal, frame):
     sys.exit(0)
 
 
-def main():
+class Searcher:
+
+    def __init__(self, api, mail_notificacion=None, tool_name='Searcher'):
+        self.tool_name = tool_name
+        self.api = api
+        self.mail_notificacion = mail_notificacion
+
+        logger.debug("Getting hosts ...")
+
+        self.hosts = self.api.get_hosts()
+
+        logger.debug("Getting services ...")
+        self.services = self.api.get_services()
+
+        logger.debug("Getting vulnerabilities ...")
+        self.vulns = self.api.get_vulnerabilities()
+
+    def process(self, rules):
+
+        if rules and validate_rules(rules):
+            start = datetime.now()
+            command_id = self.api.create_command(
+                itime=time.mktime(start.timetuple()),
+                params=rules,
+                tool_name=self.tool_name
+            )
+            self.api.command_id = command_id
+            process_vulnerabilities(
+                self.api,
+                self.vulns,
+                self.mail_notificacion,
+                rules
+            )
+            process_services(
+                self.api,
+                self.services,
+                self.mail_notificacion,
+                rules
+            )
+            process_hosts(
+                self.api,
+                self.hosts,
+                self.mail_notificacion,
+                rules
+            )
+            duration = (datetime.now() - start).seconds
+            self.api.close_command(command_id, duration)
+
+
+@click.command()
+@click.option('--workspace', required=True, prompt=True, help='Workspacer name')
+@click.option('--server_address', required=True, prompt=True, help='Faraday server address')
+@click.option('--user', required=True, prompt=True, help='')
+@click.option('--password', required=True, prompt=True, hide_input=True, help='')
+@click.option('--output', required=False, help='Choose a custom output directory', default='output')
+@click.option('--email', required=False)
+@click.option('--email_password', required=False)
+@click.option('--mail_protocol', required=False)
+@click.option('--port_protocol', required=False, default=587)
+@click.option('--log', required=False, default='debug')
+@click.option('--rules', required=True, prompt=True, help='Filename with rules')
+def main(workspace, server_address, user, password, output, email, email_password, mail_protocol, port_protocol, log, rules):
+
     signal.signal(signal.SIGINT, signal_handler)
 
-    parser = argparse.ArgumentParser(description='Search duplicated objects on Faraday')
-    parser.add_argument('-w', '--workspace', help='Search duplicated objects into this workspace', required=True)
-    parser.add_argument('-s', '--server', help='Faraday server', required=False, default="http://127.0.0.1:5985/")
-    parser.add_argument('-u', '--user', help='Faraday user', required=False, default="")
-    parser.add_argument('-p', '--password', help='Faraday password', required=False, default="")
-    parser.add_argument('-o', '--output', help='Choose a custom output directory', required=False)
-    parser.add_argument('-e', '--email', help='Custom email', required=False, default="faraday.searcher@gmail.com")
-    parser.add_argument('-ep', '--email_pass', help='Email password', required=False)
-    parser.add_argument('-mp', '--mail_protocol', help='Email protocol', required=False, default="smtp.gmail.com")
-    parser.add_argument('-pp', '--port_protocol', help='Port protocol', required=False, default=587)
-    parser.add_argument('-l', '--log', help='Choose a custom log level', required=False)
-    args = parser.parse_args()
+    loglevel = log
+    with open(rules, 'r') as rules_file:
+        try:
+            rules = json.loads(rules_file.read())
+        except Exception:
+            print("Invalid rules file.")
+            sys.exit(1)
 
-    lockf = ".lock.pod"
-    if not lock_file(lockf):
-        print ("You can run only one instance of searcher (%s)" % lockf)
-        exit(0)
+    mail_notificacion = MailNotification(
+        email,
+        email_password,
+        mail_protocol,
+        port_protocol,
 
-    workspace = ''
-    if args.workspace:
-        workspace = args.workspace
-    else:
-        print("You must enter a workspace in command line, please use --help to read more")
-        os.remove(lockf)
-        exit(0)
-
-    _server = 'http://127.0.0.1:5985/'
-    if args.server:
-        _server = args.server
-
-    _user = 'faraday'
-    if args.user:
-        _user = args.user
-
-    _password = 'changeme'
-    if args.password:
-        _password = args.password
-
-    output = 'output/'
-    if args.output:
-        output = args.output
-
-    loglevel = 'debug'
-    if args.log:
-        loglevel = args.log
-
-    global mail_from, mail_password, mail_protocol, mail_port
-
-    if args.email:
-        mail_from = args.email
-
-    if args.email_pass:
-        mail_password = args.email_pass
-
-    if args.mail_protocol:
-        mail_protocol = args.mail_protocol
-
-    if args.port_protocol:
-        mail_port = args.port_protocol
+    )
 
     for d in [output, 'log/']:
         if not os.path.isdir(d):
@@ -673,7 +639,7 @@ def main():
         ch = logging.StreamHandler()
         ch.setLevel(numeric_level)
         # create formatter and add it to the handlers
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s: %(message)s',
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s[%(pathname)s %(lineno)d ]: %(message)s',
                                       datefmt='%m/%d/%Y %I:%M:%S %p')
 
         fh.setFormatter(formatter)
@@ -686,32 +652,20 @@ def main():
         logger.info('Started')
         logger.info('Searching objects into workspace %s ' % workspace)
 
-        global api
-        api = Api(workspace, _user, _password)
+        if not server_address.endswith('/'):
+            server_address += '/'
+        if not server_address.endswith('/_api'):
+            server_address += '_api'
 
-        logger.debug("Getting hosts ...")
-        hosts = api.get_hosts()
 
-        logger.debug("Getting services ...")
-        services = api.get_services()
+        api = Api(requests, workspace, user, password, base=server_address)
 
-        logger.debug("Getting vulnerabilities ...")
-        vulns = api.get_vulnerabilities()
-
-        if validate_rules():
-            process_vulnerabilities(workspace, vulns, _server)
-            process_services(workspace, services, _server)
-            process_hosts(workspace, hosts, _server)
-
-        # Remove lockfile
-        os.remove(lockf)
+        searcher = Searcher(api, mail_notificacion)
+        searcher.process(rules)
 
         logger.info('Finished')
-
-    except Exception as errorMsg:
-        logger.error(errorMsg)
-        os.remove(lockf)
-        exit(0)
+    except Exception as error:
+        logger.exception(error)
 
 
 if __name__ == "__main__":

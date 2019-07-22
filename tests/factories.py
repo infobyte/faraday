@@ -40,8 +40,8 @@ from faraday.server.models import (
     ReferenceTemplate,
     CommandObject,
     Comment,
-    CustomFieldsSchema
-)
+    CustomFieldsSchema,
+    Agent)
 
 # Make partials for start and end date. End date must be after start date
 FuzzyStartTime = lambda: (
@@ -425,3 +425,14 @@ class NoteFactory(FaradayFactory):
 
     class Meta:
         model = Comment
+
+
+class AgentFactory(WorkspaceObjectFactory):
+    name = FuzzyText()
+    active = True
+
+    class Meta:
+        model = Agent
+        sqlalchemy_session = db.session
+
+

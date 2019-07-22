@@ -179,7 +179,7 @@ def main():
 
     args = parser.parse_args()
 
-    if args.debug:
+    if args.debug or faraday.server.config.faraday_server.debug:
         faraday.server.utils.logger.set_logging_level(faraday.server.config.DEBUG)
 
     if args.restart:

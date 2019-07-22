@@ -227,7 +227,7 @@ def main():
         faraday.server.config.faraday_server.bind_address = args.bind_address
 
     if args.websocket_port:
-        faraday.server.config.faraday_faraday.server.websocket_port = args.websocket_port
+        faraday.server.config.faraday_server.websocket_port = args.websocket_port
 
     if args.start:
         # Starts a new process on background with --ignore-setup

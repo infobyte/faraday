@@ -176,7 +176,7 @@ class WorkspaceView(ReadWriteView):
         end_date = data.get("end_date", None)
         if start_date and end_date:
             if start_date > end_date:
-                abort(make_response(jsonify(message="Workspace start date can't be grater than the end date"), 400))
+                abort(make_response(jsonify(message="Workspace start date can't be greater than the end date"), 400))
         scope = data.pop('scope', [])
         workspace = super(WorkspaceView, self)._perform_create(data, **kwargs)
         workspace.set_scope(scope)

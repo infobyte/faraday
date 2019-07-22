@@ -18,7 +18,8 @@ if platform.system() == "Linux":
         FARADAY_GROUP = "faraday"
         faraday_group = grp.getgrnam(FARADAY_GROUP)
         if faraday_group.gr_gid not in os.getgroups():
-            print("User (%s) must be in the '%s' group." % (os.getlogin(), FARADAY_GROUP))
+            print("\n\nUser (%s) must be in the '%s' group." % (os.getlogin(), FARADAY_GROUP))
+            print("After adding the user to the group, please logout and login again.")
             sys.exit(1)
     except KeyError:
         pass

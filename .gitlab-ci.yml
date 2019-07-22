@@ -115,6 +115,7 @@ postgresql_test:
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate
+        - pip install pip -U
         #- pip install --upgrade -r requirements_server.txt
         - pip install --upgrade -r requirements.txt
         - python setup.py install
@@ -145,6 +146,7 @@ sqlite_test:
         - pip install virtualenv
         - virtualenv -p python2 faraday_venv
         - source faraday_venv/bin/activate
+        - pip install pip -U
         #- pip install --upgrade -r requirements_server.txt
         - pip install --upgrade -r requirements.txt
         - python setup.py install

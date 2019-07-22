@@ -1,0 +1,35 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-light" style="margin-top: 20px; margin-bottom: 0px;" ng-if="showNavigation()">
+    <div class="collapse navbar-collapse">
+        <ul class="navbar-nav mr-auto">
+        <li class="nav-item">
+            <a href="#/dashboard/ws/{{workspace}}" class="ws-dashboard"  ng-class="{'navigation-active' : component == 'dashboard'}" style="color: black !important; font-weight: bold; font-size: 15px;" uib-tooltip="Dashboard" tooltip-placement="right">
+                DASHBOARD
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#/status/ws/{{workspace}}" class="status-report" ng-class="{'navigation-active' : component == 'status' || component == 'hosts' || component == 'credentials'}" style="color: black !important; font-weight: bold; font-size: 15px;" uib-tooltip="Manage" tooltip-placement="right">
+                MANAGE
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#/executive" class="executive-report" ng-class="{'navigation-active' : component == 'executive'}" style="color: black !important; font-weight: bold; font-size: 15px;" uib-tooltip="Report" tooltip-placement="right">
+                REPORT
+            </a>
+        </li>
+        <li class="nav-item">
+                <a href="#/webshell" class="executive-report" ng-class="{'navigation-active' : component == 'webshell'}" style="color: black !important; font-weight: bold; font-size: 15px;" uib-tooltip="Insight" tooltip-placement="right">
+                    INSIGHT
+                </a>
+            </li>
+        <li class="nav-item">
+            <a href="#/taskgroup" class="executive-report" ng-class="{'navigation-active' : component == 'taskgroup'}" style="color: black !important; font-weight: bold; font-size: 15px;" uib-tooltip="Tasks" tooltip-placement="right">
+                TASKS
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#/vulndb" class="status-report" ng-class="{'navigation-active' : component == 'vulndb'}" style="color: black !important; font-weight: bold; font-size: 15px;" uib-tooltip="Knowledge Base" tooltip-placement="right">
+                KB
+            </a>
+        </li>
+    </div>
+</nav>

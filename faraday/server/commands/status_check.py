@@ -192,18 +192,18 @@ def print_postgresql_status():
     """Prints the status of PostgreSQL using check_postgres()"""
     exit_code = 0
     result = check_postgres()
-    print(result[0])
-    if result[1]<90400:
+
+    if result == False:
+        print('[{red}-{white}] Could not connect to PostgreSQL, please check if database is running'\
+            .format(red=Fore.RED, white=Fore.WHITE))
+        exit_code = 1
+        return exit_code
+    elif result[1]<90400:
         print('[{red}-{white}] PostgreSQL is running, but needs to be 9.4 or newer, please update PostgreSQL'.\
             format(red=Fore.RED, white=Fore.WHITE))
     elif result:
         print('[{green}+{white}] PostgreSQL is running and up to date'.\
             format(green=Fore.GREEN, white=Fore.WHITE))
-        return exit_code
-    elif result == False:
-        print('[{red}-{white}] Could not connect to PostgreSQL, please check if database is running'\
-            .format(red=Fore.RED, white=Fore.WHITE))
-        exit_code = 1
         return exit_code
     elif result == None:
         print('[{red}-{white}] Database not initialized. Execute: faraday-manage initdb'\

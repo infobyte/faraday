@@ -4,7 +4,6 @@ import signal
 import subprocess
 from datetime import datetime
 from faraday.server.utils import daemonize
-from faraday.server.config import FARADAY_BASE
 
 try:
     import ConfigParser
@@ -20,7 +19,6 @@ def test_start_and_kill_faraday_server():
         After sending the signal we wait for 15 seconds and
         if the server didn't stop we fail the test also.
     """
-    current_path = os.path.dirname(os.path.abspath(__file__))
     server_port = 5988
     while daemonize.is_server_running(server_port) and server_port < 6500:
         server_port += 1
@@ -66,7 +64,6 @@ def test_start_and_kill_faraday_server():
             subproc.send_signal(signal.SIGTERM)
             subproc.wait()
         subproc.poll()
-        delta = now - start
         subproc.poll()
         time.sleep(0.1)
     out, err = subproc.communicate()

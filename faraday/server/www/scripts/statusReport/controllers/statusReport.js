@@ -970,9 +970,9 @@ angular.module("faradayApp")
                 promises.push(vulnsManager.updateVuln(vuln, toggleConfirm));
             });
             $q.all(promises).then(function(res) {
-                if(confirm === true) {
+                /*if(confirm === true) {
                     loadVulns();
-                }
+                }*/
             }, function(errorMsg){
                 commonsFact.showMessage("Error updating vuln " + vuln.name + " (" + vuln._id + "): " + errorMsg);
             });

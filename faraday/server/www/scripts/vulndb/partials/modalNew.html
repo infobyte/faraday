@@ -20,10 +20,12 @@
                            href="javascript:;">General</a>
                     </li>
                 <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" data-target="#details" href="javascript:;">Details</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" data-toggle="tab" data-target="#custom_fields" href="javascript:;">Custom FIelds</a>
                 </li>
             </ul>
-
             <!-- Tab panes -->
             <div class="tab-content height-100 ">
                 <div id="general" class="container tab-pane-container tab-pane active visible-overflow"><br>
@@ -33,82 +35,25 @@
                                 <div class="col-md-6">
                                     <label for="model">Name *</label>
                                     <input type="text" name="name" class="form-control" placeholder="Name" ng-model="data.name" required>
-                                </div><!-- .col-md-6 -->
+                                </div>
                                 <div class="col-md-12">
                                     <p class="has-error" ng-show="(form.name.$touched && form.name.$error.required)">
                                         <span class="help-block">Vulnerability Template name is required</span>
                                     </p>
-                                </div><!-- .col-md-12 -->
-                            </div><!-- .form-group -->
+                                </div>
+                            </div>
                             <div class="form-group">
                                 <div class="col-md-12">
                                     <label for="description">Description</label>
                                     <textarea class="form-control" name="description" placeholder="Description" ng-model="data.description"></textarea>
                                 </div>
-                            </div><!-- .form-group -->
-                            <div class="form-group">
-                                <div class="col-md-12">
-                                    <label for="external_id">External ID</label>
-                                    <input type="text" class="form-control" name="external_id" id="external_id" placeholder="External ID" ng-model="data.external_id">
-                                </div>
-                            </div><!-- .form-group -->
-
-                            <div class="form-group">
-                                <div class="col-md-12">
-                                    <label for="data">Data</label>
-                                    <textarea class="form-control" id="data" placeholder="Data" ng-model="data.data"></textarea>
-                                </div>
-                            </div><!-- .form-group -->
-                            <div class="form-group">
-                                <div class="col-md-12">
-                                    <label for="resolution">Resolution</label>
-                                    <textarea class="form-control" name="resolution" placeholder="Resolution" ng-model="data.resolution"></textarea>
-                                </div>
-                            </div><!-- .form-group -->
-
-                            <div class="form-group">
-                                <div class="col-md-12">
-                                    <label for="references">References</label>
-                                    <div class="input-group margin-bottom-sm">
-                                        <label class="sr-only" for="references">References</label>
-                                        <input type="text" class="form-control" id="references" placeholder="References" ng-model="new_reference"/>
-                                        <span class="input-group-addon cursor" ng-click="newReference()"><i class="fa fa-plus-circle"></i></span>
-                                    </div>
-                                </div>
-                                <div class="col-md-12 reference" ng-repeat="reference in data.references">
-                                    <div class="input-group margin-bottom-sm">
-                                        <label class="sr-only" for="ireferences">References</label>
-                                        <input type="text" class="form-control" id="ireferences" placeholder="References" ng-model="reference" readonly/>
-                                        <span class="input-group-addon cursor" ng-click="data.references.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
-                                    </div>
-                                </div>
-                            </div><!-- .form-group -->
-
-
-                            <div class="form-group">
-                                <div class="col-md-12">
-                                    <label for="vuln-policyviolations">Policy Violations</label>
-                                    <div class="input-group margin-bottom-sm">
-                                        <label class="sr-only" for="vuln-policyviolations">Policy Violations</label>
-                                        <input type="text" class="form-control" id="vuln-policyviolations" placeholder="Policy Violations" ng-model="new_policyviolation"/>
-                                        <span class="input-group-addon cursor" ng-click="newPolicyViolation()"><i class="fa fa-plus-circle"></i></span>
-                                    </div>
-                                </div>
-                                <div class="col-md-12 reference" ng-repeat="policyviolation in data.policyviolations">
-                                    <div class="input-group margin-bottom-sm">
-                                        <label class="sr-only" for="vuln-policyviolations">Policy Violation</label>
-                                        <input type="text" class="form-control" id="vuln-policyviolations" placeholder="Policy Violation" ng-model="policyviolation" readonly/>
-                                        <span class="input-group-addon cursor" ng-click="data.policyviolations.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
-                                    </div>
-                                </div>
-                            </div><!-- .form-group -->
-
+                            </div>
                             <div class="form-group">
                                 <div class="col-md-8">
                                     <label>Impact</label>
                                     <h4><span ng-repeat="(key, value) in data.impact" class="normal-size" style="cursor: pointer;">
                                     <span ng-class="{'label-impact label-default-impact': !value, 'label-impact label-success-impact': value}" ng-click="toggleImpact(key)">{{key}}</span>
-                                    </span></h4><!-- .normal-size -->
+                                    </span></h4>
                                 </div>
                                 <div class="col-md-4">
                                     <label>Ease of Resolution</label>
@@ -116,8 +61,7 @@
                                         <option value=""></option>
                                     </select>
                                 </div>
-                            </div><!-- .form-group -->
-
+                            </div>
                             <div class="form-group">
                                 <div class="col-md-12">
                                     <label for="Explotation">Severity *</label>
@@ -139,6 +83,64 @@
                         </div>
                     </div>
                 </div>
+                <div id="details" class="container tab-pane-container tab-pane visible-overflow"><br>
+                    <div class="col-md-12 margin-bottom-15px">
+                        <div class="form-horizontal">
+                            <div class="form-group">
+                                <div class="col-md-12">
+                                    <label for="external_id">External ID</label>
+                                    <input type="text" class="form-control" name="external_id" id="external_id" placeholder="External ID" ng-model="data.external_id">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-md-12">
+                                    <label for="data">Data</label>
+                                    <textarea class="form-control" id="data" placeholder="Data" ng-model="data.data"></textarea>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-md-12">
+                                    <label for="resolution">Resolution</label>
+                                    <textarea class="form-control" name="resolution" placeholder="Resolution" ng-model="data.resolution"></textarea>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-md-12">
+                                    <label for="references">References</label>
+                                    <div class="input-group margin-bottom-sm">
+                                        <label class="sr-only" for="references">References</label>
+                                        <input type="text" class="form-control" id="references" placeholder="References" ng-model="new_reference"/>
+                                        <span class="input-group-addon cursor" ng-click="newReference()"><i class="fa fa-plus-circle"></i></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-12 reference" ng-repeat="reference in data.references">
+                                    <div class="input-group margin-bottom-sm">
+                                        <label class="sr-only" for="ireferences">References</label>
+                                        <input type="text" class="form-control" id="ireferences" placeholder="References" ng-model="reference" readonly/>
+                                        <span class="input-group-addon cursor" ng-click="data.references.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-md-12">
+                                    <label for="vuln-policyviolations">Policy Violations</label>
+                                    <div class="input-group margin-bottom-sm">
+                                        <label class="sr-only" for="vuln-policyviolations">Policy Violations</label>
+                                        <input type="text" class="form-control" id="vuln-policyviolations" placeholder="Policy Violations" ng-model="new_policyviolation"/>
+                                        <span class="input-group-addon cursor" ng-click="newPolicyViolation()"><i class="fa fa-plus-circle"></i></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-12 reference" ng-repeat="policyviolation in data.policyviolations">
+                                    <div class="input-group margin-bottom-sm">
+                                        <label class="sr-only" for="vuln-policyviolations">Policy Violation</label>
+                                        <input type="text" class="form-control" id="vuln-policyviolations" placeholder="Policy Violation" ng-model="policyviolation" readonly/>
+                                        <span class="input-group-addon cursor" ng-click="data.policyviolations.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div id="custom_fields" class="container tab-pane-container tab-pane fade"><br>
                     <div ng-if="customFields.length === 0" class="no-info-overlay" style="margin-bottom: 15px;">
                            <p class="no-info-text">
@@ -151,7 +153,7 @@
                             <!--<custom-field field="{{cf}}"></custom-field>-->
                             <div class="col-md-6">
                                 <label for="model">{{cf.field_display_name}}</label>
-                                <input type="text" name="name" class="form-control" placeholder="Name" ng-model="cf.value" required>
+                                <input type="text" name="name" class="form-control" placeholder="Name" ng-model="cf.value">
                             </div>
                         </div>
                     </div>

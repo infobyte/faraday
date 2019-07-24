@@ -883,6 +883,7 @@ function peg$parse(input, options) {
                  break;
              case 'severity':
              case 'target':
+             case 'hostnames':
                  processedOperator = operator !== 'not' ? 'eq' : '!=';
                  break;
              case 'service__name':

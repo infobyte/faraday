@@ -60,6 +60,9 @@
           case 'service_protocol':
               processedName = 'service__protocol';
               break;
+          case 'hostname':
+              processedName = 'hostnames';
+              break;
           default:
               processedName = name;
               break;
@@ -85,7 +88,6 @@
            case 'severity':
            case 'target':
            case 'hostnames':
-           case 'hostname':
                processedOperator = operator !== 'not' ? 'eq' : '!=';
                break;
            case 'service__name':

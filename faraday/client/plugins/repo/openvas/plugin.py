@@ -398,7 +398,8 @@ class OpenvasPlugin(core.PluginBase):
                             desc=item.description.encode("utf-8"),
                             severity=item.severity.encode("utf-8"),
                             resolution=item.resolution.encode("utf-8"),
-                            ref=ref)
+                            ref=ref,
+                            external_id=item.id)
                 else:
                     if item.service:
                         web = True if re.search(
@@ -427,7 +428,8 @@ class OpenvasPlugin(core.PluginBase):
                                 website=item.host,
                                 severity=item.severity.encode("utf-8"),
                                 ref=ref,
-                                resolution=item.resolution.encode("utf-8"))
+                                resolution=item.resolution.encode("utf-8"),
+                                external_id=item.id)
                     elif item.severity not in self.ignored_severities:
                         self.createAndAddVulnToService(
                             h_id,
@@ -436,7 +438,8 @@ class OpenvasPlugin(core.PluginBase):
                             desc=item.description.encode("utf-8"),
                             severity=item.severity.encode("utf-8"),
                             ref=ref,
-                            resolution=item.resolution.encode("utf-8"))
+                            resolution=item.resolution.encode("utf-8"),
+                            external_id=item.id )
 
         del parser
 

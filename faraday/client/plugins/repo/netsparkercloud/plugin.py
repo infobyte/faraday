@@ -253,7 +253,7 @@ class NetsparkerCloudPlugin(core.PluginBase):
                 ip = self.resolve(i.hostname)
                 h_id = self.createAndAddHost(ip)
                 i_id = self.createAndAddInterface(
-                    h_id, ip, ipv4_address=ip, hostname_resolution=i.hostname)
+                    h_id, ip, ipv4_address=ip, hostname_resolution=[i.hostname])
 
                 s_id = self.createAndAddServiceToInterface(h_id, i_id, str(i.port),
                                                            str(i.protocol),

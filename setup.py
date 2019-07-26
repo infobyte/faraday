@@ -18,8 +18,15 @@ from re import search
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
+long_description = """Faraday introduces a new concept - IPE (Integrated Penetration-Test Environment) a multiuser Penetration test IDE. Designed for distributing, indexing, and analyzing the data generated during a security audit.
+
+Made for true pentesters!
+
+Faraday was made to let you take advantage of the available tools in the community in a truly multiuser way.
+
+Designed for simplicity, users should notice no difference between their own terminal application and the one included in Faraday. Developed with a specialized set of functionalities, users improve their own work. Do you remember the last time you programmed without an IDE? What IDEs are to programming, Faraday is to pentesting.
+
+To read about the latest features check out the [release notes](https://github.com/infobyte/faraday/blob/master/RELEASE.md)!"""
 
 with open('faraday/__init__.py', 'rt', encoding='utf8') as f:
     version = search(r'__version__ = \'(.*?)\'', f.read()).group(1)
@@ -32,6 +39,16 @@ with open('requirements_server.txt') as fp:
 with open('requirements_dev.txt') as fp:
     dev_required = fp.read().splitlines()
 
+try:
+    # When setuptools_scm is installed, it ignores the MANIFEST.in contents,
+    # so a developer won't notice the MANIFEST.in includes are incomplete.
+    # This can make some user bugs irrepoducible in a dev environment,
+    # and we don't want this!
+    # Taken from https://github.com/pypa/setuptools_scm/issues/190#issuecomment-351181286
+    import setuptools_scm.integration
+    setuptools_scm.integration.find_files = lambda _: []
+except ImportError:
+    pass
 
 # Arguments marked as "Required" below must be included for upload to PyPI.
 # Fields marked as "Optional" may be commented out.
@@ -62,7 +79,8 @@ setup(
     # This is a one-line description or tagline of what your project does. This
     # corresponds to the "Summary" metadata field:
     # https://packaging.python.org/specifications/core-metadata/#summary
-    description='A sample Python project',  # Optional
+    description='Collaborative Penetration Test and Vulnerability Management '
+                'Platform https://www.faradaysec.com',  # Optional
 
     # This is an optional longer description of your project that represents
     # the body of text which users will see when they visit PyPI.
@@ -73,7 +91,7 @@ setup(
     # This field corresponds to the "Description" metadata field:
     # https://packaging.python.org/specifications/core-metadata/#description-optional
     long_description=long_description,  # Optional
-
+    long_description_content_type='text/markdown',
     # Denotes that our long_description is in Markdown; valid values are
     # text/plain, text/x-rst, and text/markdown
     #
@@ -84,21 +102,21 @@ setup(
     #
     # This field corresponds to the "Description-Content-Type" metadata field:
     # https://packaging.python.org/specifications/core-metadata/#description-content-type-optional
-    long_description_content_type='text/markdown',  # Optional (see note above)
+    # long_description_content_type='text/markdown',  # Optional (see note above)
 
     # This should be a valid link to your project's main homepage.
     #
     # This field corresponds to the "Home-Page" metadata field:
     # https://packaging.python.org/specifications/core-metadata/#home-page-optional
-    url='https://github.com/pypa/sampleproject',  # Optional
+    url='https://github.com/infobyte/faraday',  # Optional
 
     # This should be your name or the name of the organization which owns the
     # project.
-    author='The Python Packaging Authority',  # Optional
+    author='Faradaysec',  # Optional
 
     # This should be a valid email address corresponding to the author listed
     # above.
-    author_email='pypa-dev@googlegroups.com',  # Optional
+    author_email='devel@faradaysec.com',  # Optional
 
     # Classifiers help users find your project by categorizing it.
     #
@@ -108,11 +126,15 @@ setup(
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 5 - Production/Stable',
 
         # Indicate who your project is intended for
-        'Intended Audience :: Developers',
-        'Topic :: Software Development :: Build Tools',
+        'Intended Audience :: Information Technology',
+        'Intended Audience :: System Administrators',
+        'Topic :: Security',
+        'Topic :: Software Development :: Bug Tracking',
+        'Topic :: Software Development :: Quality Assurance',
+        'Topic :: System :: Networking :: Monitoring',
 
         # Pick your license as you wish
         'License :: OSI Approved :: MIT License',
@@ -123,18 +145,18 @@ setup(
         # 'python_requires' below.
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
+        #'Programming Language :: Python :: 3',
+        #'Programming Language :: Python :: 3.4',
+        #'Programming Language :: Python :: 3.5',
+        #'Programming Language :: Python :: 3.6',
+        #'Programming Language :: Python :: 3.7',
     ],
 
     # This field adds keywords for your project which will appear on the
     # project page. What does your project relate to?
     #
     # Note that this is a string of words separated by whitespace, not a list.
-    keywords='sample setuptools development',  # Optional
+    keywords='security tools',  # Optional
 
     # You can just specify package directories manually here if your project is
     # simple. Or you can use find_packages().
@@ -192,8 +214,6 @@ setup(
     # MANIFEST.in as well.
     include_package_data=True,
     package_data={  # Optional
-         'faraday': ['server/www/*',
-                     'config/default.xml'],
          '': ['requirements.txt',
               'requirements_server.txt'],
     },
@@ -217,7 +237,9 @@ setup(
         'console_scripts': [
             'faraday-server=faraday.start_server:main',
             'faraday-client=faraday.client.start_client:main',
+            'fplugin=faraday.client.bin.fplugin:main',
             'faraday-manage=faraday.manage:cli',
+            'faraday-searcher=faraday.searcher.searcher:main'
         ],
     },
 
@@ -231,10 +253,10 @@ setup(
     # maintainers, and where to support the project financially. The key is
     # what's used to render the link text on PyPI.
     project_urls={  # Optional
-        'Bug Reports': 'https://github.com/pypa/sampleproject/issues',
-        'Funding': 'https://donate.pypi.org',
-        'Say Thanks!': 'http://saythanks.io/to/example',
-        'Source': 'https://github.com/pypa/sampleproject/',
+        'Bug Reports': 'https://github.com/infobyte/faraday/issues',
+        #'Funding': 'https://donate.pypi.org',
+        'Say Thanks!': 'http://saythanks.io/to/faradaysec',
+        'Source': 'https://github.com/infobyte/faraday/',
     },
     setup_requires=['pytest-runner'],
     tests_require=['pytest', 'flask'] + dev_required,

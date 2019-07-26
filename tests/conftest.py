@@ -69,6 +69,10 @@ class CustomClient(FlaskClient):
         #        ret.json = None
         return ret
 
+    @property
+    def cookies(self):
+        return self.cookie_jar
+
 
 def pytest_addoption(parser):
     # currently for tests using sqlite and memory have problem while using transactions
@@ -84,6 +88,8 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
+    if config.option.markexpr == 'hypothesis':
+        return
     if not config.option.use_hypothesis:
         config.option.markexpr = 'not hypothesis'
 

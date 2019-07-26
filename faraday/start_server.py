@@ -9,6 +9,7 @@ import socket
 import argparse
 import subprocess
 
+from faraday.server import TimerClass
 
 try:
     from colorama import init, Fore
@@ -21,7 +22,6 @@ try:
     from faraday.utils import dependencies
     from faraday.utils.user_input import query_yes_no
     from faraday.server.config import FARADAY_BASE
-    from faraday.utils.logs import setUpLogger
     from alembic.script import ScriptDirectory
     from alembic.config import Config
     from alembic.migration import MigrationContext
@@ -29,7 +29,8 @@ except ImportError as ex:
     print(ex)
     print('Missing dependencies.\nPlease execute: pip install -r requirements_server.txt')
     sys.exit(1)
-logger = faraday.server.utils.logger.get_logger(__name__)
+logger = faraday.server.utils.logger.get_logger(faraday.server.utils.logger.ROOT_LOGGER)
+
 init()
 
 
@@ -47,18 +48,6 @@ def setup_environment(check_deps=False):
 
         if conflict_deps:
             logger.info("Some dependencies are old. Update them with \"pip install -r requirements_server.txt -U\"")
-
-        if missing_deps:
-
-            install_deps = query_yes_no("Do you want to install them?", default="no")
-
-            if install_deps:
-                dependencies.install_packages(missing_deps)
-                logger.info("Dependencies installed. Please launch Faraday Server again.")
-                sys.exit(0)
-            else:
-                logger.error("Dependencies not met. Please refer to the documentation in order to install them. [%s]",
-                             ", ".join(missing_deps))
 
         logger.info("Dependencies met")
 
@@ -126,6 +115,10 @@ def check_postgresql():
             logger.error(
                     '\n\n{RED}Could not connect to PostgreSQL.\n{WHITE}Please check: \n{YELLOW}  * if database is running \n  * configuration settings are correct. \n\n{WHITE}For first time installations execute{WHITE}: \n\n {GREEN} faraday-manage initdb\n\n'.format(GREEN=Fore.GREEN, YELLOW=Fore.YELLOW, WHITE=Fore.WHITE, RED=Fore.RED))
             sys.exit(1)
+        except sqlalchemy.exc.ProgrammingError:
+            logger.error(
+                    '\n\nn{WHITE}Missing migrations, please execute: \n\nfaraday-manage migrate'.format(WHITE=Fore.WHITE, RED=Fore.RED))
+            sys.exit(1)
 
 
 def check_alembic_version():
@@ -141,6 +134,9 @@ def check_alembic_version():
             if not faraday.server.config.database.connection_string:
                 print("\n\nNo database configuration found. Did you execute \"faraday-manage initdb\"? \n\n")
                 sys.exit(1)
+        except sqlalchemy.exc.OperationalError as ex:
+            print("Bad Credentials, please check the .faraday/config/server.ini")
+            sys.exit(1)
 
         context = MigrationContext.configure(conn)
 
@@ -182,9 +178,8 @@ def main():
                         version='Faraday v{version}'.format(version=f_version))
 
     args = parser.parse_args()
-    setUpLogger(args.debug)
 
-    if args.debug:
+    if args.debug or faraday.server.config.faraday_server.debug:
         faraday.server.utils.logger.set_logging_level(faraday.server.config.DEBUG)
 
     if args.restart:
@@ -232,7 +227,7 @@ def main():
         faraday.server.config.faraday_server.bind_address = args.bind_address
 
     if args.websocket_port:
-        faraday.server.config.faraday_faraday.server.websocket_port = args.websocket_port
+        faraday.server.config.faraday_server.websocket_port = args.websocket_port
 
     if args.start:
         # Starts a new process on background with --ignore-setup

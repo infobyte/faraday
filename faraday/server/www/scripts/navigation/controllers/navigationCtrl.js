@@ -3,15 +3,36 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('navigationCtrl', ['$scope', '$http', '$route', '$routeParams', '$cookies', '$location', '$interval', '$uibModal', 'configSrv', 'workspacesFact', 'Notification',
-        function($scope, $http, $route, $routeParams, $cookies, $location, $interval, $uibModal, configSrv, workspacesFact, Notification) {
+    .controller('navigationCtrl', [
+        '$scope',
+        '$http',
+        '$route',
+        '$routeParams',
+        '$cookies',
+        '$location',
+        '$interval',
+        '$uibModal',
+        'configSrv',
+        'workspacesFact',
+        'Notification',
+        function ($scope,
+                  $http,
+                  $route,
+                  $routeParams,
+                  $cookies,
+                  $location,
+                  $interval,
+                  $uibModal,
+                  configSrv,
+                  workspacesFact,
+                  Notification) {
 
         $scope.workspace = "";
         $scope.component = "";
         var componentsNeedsWS = ["dashboard","status","hosts"];
 
         $scope.checkNews = function() {
-             $http.get('https://www.faradaysec.com/scripts/updatedb.php?version=' + configSrv.faraday_version).then(function(response) {
+             $http.get('https://portal.faradaysec.com/api/v1/license_check?version=' + configSrv.faraday_version + '&key=\'white\'').then(function(response) {
                  try{
                      response.data['news'].forEach(function(element) {
 

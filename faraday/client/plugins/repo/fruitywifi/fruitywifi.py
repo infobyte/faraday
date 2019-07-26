@@ -16,30 +16,30 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-import os, sys, getopt
-import urllib2
+import sys, getopt
 import json
 import requests
-from requests import session
 
-requests.packages.urllib3.disable_warnings() # DISABLE SSL CHECK WARNINGS
+requests.packages.urllib3.disable_warnings()  # DISABLE SSL CHECK WARNINGS
 
 gVersion = "1.0"
 server = "http://127.0.0.1:8000";
 token = "e5dab9a69988dd65e578041416773149ea57a054"
 
+
 def usage():
-    print "\nFruityWiFi API " + gVersion + " by @xtr4nge"
+    print("\nFruityWiFi API " + gVersion + " by @xtr4nge")
     
-    print "Usage: ./client <options>\n"
-    print "Options:"
-    print "-x <command>, --execute=<commnd>      exec the command passed as parameter."
-    print "-t <token>,   --token=<token>         authentication token."
-    print "-s <server>,  --server=<server>       FruityWiFi server [http{s}://ip:port]."
-    print "-h                                    Print this help message."
-    print ""
-    print "FruityWiFi: http://www.fruitywifi.com"
-    print ""
+    print("Usage: ./client <options>\n")
+    print("Options:")
+    print("-x <command>, --execute=<commnd>      exec the command passed as parameter.")
+    print("-t <token>,   --token=<token>         authentication token.")
+    print("-s <server>,  --server=<server>       FruityWiFi server [http{s}://ip:port].")
+    print("-h                                    Print this help message.")
+    print("")
+    print("FruityWiFi: http://www.fruitywifi.com")
+    print("")
+
 
 def parseOptions(argv):
     
@@ -70,6 +70,7 @@ def parseOptions(argv):
 
 (execute, token, server) = parseOptions(sys.argv[1:])
 
+
 class webclient:
 
     def __init__(self, server, token):
@@ -98,7 +99,7 @@ class webclient:
             self.login()
 
         if response.text != "":
-            print json.dumps("[FruityWiFi]: Ah, Ah, Ah! You didn't say the magic word! (check API token and server)")
+            print(json.dumps("[FruityWiFi]: Ah, Ah, Ah! You didn't say the magic word! (check API token and server)"))
             sys.exit()
 
         return True
@@ -107,16 +108,8 @@ class webclient:
         response = self.s.post(self.global_webserver + data)
         return response.json
 
-        if response.text == "":
-            return True
-        else:
-            return False
-
     def submitGet(self, data):
         response = self.s.get(self.global_webserver + self.path + "?" + data)
-        #print response.headers
-        #print "debug: " + response.text
-        #print response.json
 
         return response
 
@@ -124,8 +117,8 @@ try:
     w = webclient(server, token)
     w.login()
     w.loginCheck()
-except Exception, e:
-    print json.dumps("[FruityWiFi]: There is something wrong (%s)" % e)
+except Exception as e:
+    print(json.dumps("[FruityWiFi]: There is something wrong (%s)" % e))
     sys.exit(1)
         
 _exec = "/log/dhcp"
@@ -134,8 +127,8 @@ if _exec != "":
     try:
         out =  w.submitGet("api=" + str(_exec))
         json_output = out.json()
-    except Exception, e:
-        print json.dumps("[FruityWiFi]: There is something wrong (%s)" % e)
+    except Exception as e:
+        print(json.dumps("[FruityWiFi]: There is something wrong (%s)" % e))
         sys.exit(1)
         
 output = []
@@ -147,6 +140,6 @@ else:
     output = json_output
 
 if len(output) > 0:
-    print json.dumps(output)
+    print(json.dumps(output))
 else:
-    print json.dumps("No clients connected")
+    print(json.dumps("No clients connected"))

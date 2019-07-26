@@ -326,7 +326,7 @@ class TestListCommandView(object, ReadOnlyAPITests):
         assert res.status_code == 200
         assert res.json['commands'][0]['value']['duration'] == 1.442406
 
-    def test_more_than_one_hour_command_returns_correct_duration_value(self, test_client):
+    def test_more_than_one_minute_command_returns_correct_duration_value(self, test_client):
         command = self.factory(
             start_date=datetime.datetime(2017, 11, 14, 12, 28, 20, 248433),
             end_date=datetime.datetime(2017, 11, 14, 12, 29, 21, 690839)
@@ -334,6 +334,24 @@ class TestListCommandView(object, ReadOnlyAPITests):
         res = test_client.get(self.url(workspace=command.workspace))
         assert res.status_code == 200
         assert res.json['commands'][0]['value']['duration'] == 61.442406
+
+    def test_more_than_one_day_none_end_date_command_returns_msg(self, test_client):
+        command = self.factory(
+            start_date=datetime.datetime(2017, 11, 14, 12, 28, 20, 0),
+            end_date=None
+        )
+        res = test_client.get(self.url(workspace=command.workspace))
+        assert res.status_code == 200
+        assert res.json['commands'][0]['value']['duration'].lower() == "timeout"
+
+    def test_less_than_one_day_none_end_date_command_returns_msg(self, test_client):
+        command = self.factory(
+            start_date=datetime.datetime.now(),
+            end_date=None
+        )
+        res = test_client.get(self.url(workspace=command.workspace))
+        assert res.status_code == 200
+        assert res.json['commands'][0]['value']['duration'].lower() == "in progress"
 
     def test_create_command(self, test_client):
         raw_data ={
@@ -349,7 +367,6 @@ class TestListCommandView(object, ReadOnlyAPITests):
 
         res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 201
-
 
     def test_update_command(self, test_client, session):
         command = self.factory()

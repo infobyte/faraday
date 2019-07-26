@@ -28,7 +28,9 @@ angular.module('faradayApp')
             var deferred = $q.defer();
             ServerAPI.createCustomField(customField).then(function (response) {
                 deferred.resolve(response)
-            }, errorHandler);
+            }, function (err) {
+                deferred.reject(err);
+            });
             return deferred.promise;
         };
 

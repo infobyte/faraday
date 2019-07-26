@@ -9,12 +9,27 @@ See the file 'doc/LICENSE' for the license information
 import os
 import re
 import sys
+import platform
+
+# If is linux and its installed with deb or rpm, it must run with a user in the faraday group
+if platform.system() == "Linux":
+    import grp
+    try:
+        FARADAY_GROUP = "faraday"
+        faraday_group = grp.getgrnam(FARADAY_GROUP)
+        if faraday_group.gr_gid not in os.getgroups():
+            print("\n\nUser (%s) must be in the '%s' group." % (os.getlogin(), FARADAY_GROUP))
+            print("After adding the user to the group, please logout and login again.")
+            sys.exit(1)
+    except KeyError:
+        pass
 
 import click
 import requests
 import alembic.command
 from urlparse import urlparse
 from alembic.config import Config
+from sqlalchemy.exc import ProgrammingError
 
 import faraday.server.config
 from faraday.server.config import FARADAY_BASE
@@ -31,7 +46,6 @@ from faraday.server.commands import support as support_zip
 from faraday.server.models import db, User
 from faraday.server.importer import ImportCouchDB
 from faraday.server.web import app
-from faraday.utils.logs import setUpLogger
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -60,7 +74,6 @@ def process_reports(debug, workspace, polling):
     except ImportError:
         print('SQLAlchemy was not found please install it with: pip install sqlalchemy')
         sys.exit(1)
-    setUpLogger(debug)
     configuration = _conf()
     url = '{0}/_api/v2/info'.format(configuration.getServerURI() if FARADAY_UP else SERVER_URL)
     with app.app_context():
@@ -157,8 +170,11 @@ def status_check(check_postgresql, check_faraday, check_dependencies, check_conf
 @click.option('--username', required=True, prompt=True)
 @click.option('--password', required=True, prompt=True, confirmation_prompt=True, hide_input=True)
 def change_password(username, password):
-    change_pass.changes_password(username, password)
-
+    try:
+        change_pass.changes_password(username, password)
+    except ProgrammingError:
+        print('\n\nMissing migrations, please execute: \n\nfaraday-manage migrate')
+        sys.exit(1)
 def validate_user_unique_field(ctx, param, value):
     with app.app_context():
         if User.query.filter_by(**{param.name: value}).count():
@@ -207,7 +223,6 @@ def create_tables():
     with app.app_context():
         # Ugly hack to create tables and also setting alembic revision
         conn_string = faraday.server.config.database.connection_string
-        from faraday.server.commands.initdb import InitDB
         InitDB()._create_tables(conn_string)
         click.echo(click.style(
             'Tables created successfully!',

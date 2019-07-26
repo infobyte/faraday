@@ -7,15 +7,16 @@ See the file 'doc/LICENSE' for the license information
 
 import os
 import sys
+import imp
 import shutil
 import getpass
 import argparse
 import requests.exceptions
+import logging
 
 from faraday.config.configuration import getInstanceConfiguration
 from faraday.config.constant import (
     CONST_USER_HOME,
-    CONST_FARADAY_HOME_PATH,
     CONST_FARADAY_PLUGINS_PATH,
     CONST_FARADAY_PLUGINS_REPO_PATH,
     CONST_FARADAY_IMAGES,
@@ -28,16 +29,20 @@ from faraday.config.constant import (
     CONST_REQUIREMENTS_FILE,
     CONST_FARADAY_FOLDER_LIST,
 )
+
+CONST_FARADAY_HOME_PATH = os.path.expanduser('~/.faraday')
 from faraday.utils import dependencies
-from faraday.utils.logs import getLogger, setUpLogger
+from faraday.server.utils.logger import get_logger, set_logging_level
 from faraday.utils.user_input import query_yes_no
 
 from faraday import __version__ as f_version
 from faraday.client.persistence.server import server
-from faraday.client.persistence.server.server import is_authenticated, login_user, get_user_info
+from faraday.client.persistence.server.server import login_user, get_user_info
 
 USER_HOME = os.path.expanduser(CONST_USER_HOME)
-FARADAY_BASE = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))  # Use double dirname to obtain parent directory
+# find_module returns if search is successful, the return value is a 3-element tuple (file, pathname, description):
+FARADAY_BASE = imp.find_module("faraday")[1]
+os.path.dirname(os.path.dirname(os.path.realpath(__file__)))  # Use double dirname to obtain parent directory
 FARADAY_CLIENT_BASE = os.path.join(FARADAY_BASE, 'client')
 
 FARADAY_USER_HOME = os.path.expanduser(CONST_FARADAY_HOME_PATH)
@@ -46,7 +51,7 @@ FARADAY_PLUGINS_PATH = os.path.join(FARADAY_USER_HOME, CONST_FARADAY_PLUGINS_PAT
 
 FARADAY_PLUGINS_BASEPATH = os.path.join(FARADAY_CLIENT_BASE, CONST_FARADAY_PLUGINS_REPO_PATH)
 
-FARADAY_BASE_IMAGES = os.path.join(FARADAY_BASE, "data", CONST_FARADAY_IMAGES)
+FARADAY_BASE_IMAGES = os.path.join(FARADAY_CLIENT_BASE, "data", CONST_FARADAY_IMAGES)
 
 FARADAY_USER_CONFIG_XML = os.path.join(FARADAY_USER_HOME, CONST_FARADAY_USER_CFG)
 
@@ -67,7 +72,7 @@ FARADAY_DEFAULT_PORT_XMLRPC = 9876
 FARADAY_DEFAULT_PORT_REST = 9977
 FARADAY_DEFAULT_HOST = "localhost"
 
-logger = getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def getParserArgs():
@@ -216,6 +221,8 @@ def setConf():
 
     CONF = getInstanceConfiguration()
     CONF.setDebugStatus(args.debug)
+    if args.debug:
+        set_logging_level(logging.DEBUG)
 
     host = CONF.getApiConInfoHost() if str(CONF.getApiConInfoHost()) != "None" else FARADAY_DEFAULT_HOST
     port_xmlrpc = CONF.getApiConInfoPort() if str(CONF.getApiConInfoPort()) != "None" else FARADAY_DEFAULT_PORT_XMLRPC
@@ -428,9 +435,8 @@ def check_faraday_version():
     try:
         server.check_faraday_version()
     except RuntimeError:
-        getLogger("launcher").error(
+        get_logger("launcher").error(
             "The server is running a different Faraday version than the client you are running. Version numbers must match!")
-        sys.exit(2)
 
 
 def try_login_user(server_uri, api_username, api_password):
@@ -467,7 +473,7 @@ def doLoginLoop(force_login=False):
         else:
             new_server_url = raw_input(
                 "\nPlease enter the Faraday Server URL (Press enter for last used: {}): ".format(old_server_url)) or old_server_url
-        
+
         CONF.setAPIUrl(new_server_url)
 
         print("""\nTo login please provide your valid Faraday credentials.\nYou have 3 attempts.""")
@@ -531,16 +537,10 @@ def main():
     """
     Main function for launcher.
     """
-    os.chdir(FARADAY_BASE)
+    global args
 
-    global logger, args
-
-    logger = getLogger("launcher")
     args = getParserArgs()
     setupFolders(CONST_FARADAY_FOLDER_LIST)
-    setUpLogger(args.debug)
-    if not args.nodeps:
-        check_dependencies_or_exit()
     printBanner()
     if args.cert_path:
         os.environ[REQUESTS_CA_BUNDLE_VAR] = args.cert_path

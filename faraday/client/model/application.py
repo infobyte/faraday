@@ -9,27 +9,24 @@ import os
 import sys
 import signal
 import json
-import threading
-from json import loads
-from time import sleep
+
+from faraday.server import TimerClass
+
 try:
     from Queue import Queue
 except ImportError:
     from queue import Queue
-import requests
+import logging
 
 from faraday.client.model.controller import ModelController
 from faraday.client.managers.workspace_manager import WorkspaceManager
 from faraday.client.plugins.controller import PluginController
 from faraday.client.persistence.server.server import login_user
 
-from faraday.utils.logs import setUpLogger
 import faraday.client.model.api
 import faraday.client.model.guiapi
 import faraday.client.apis.rest.api as restapi
 import faraday.client.model.log
-from faraday.utils.logs import getLogger
-import traceback
 from faraday.client.plugins.manager import PluginManager
 from faraday.client.managers.mapper_manager import MapperManager
 from faraday.utils.error_report import exception_handler
@@ -42,39 +39,7 @@ from faraday.config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
 
-class TimerClass(threading.Thread):
-    def __init__(self):
-        threading.Thread.__init__(self)
-        self.__event = threading.Event()
-
-    def sendNewstoLogGTK(self, json_response):
-
-        information = loads(json_response)
-
-        for news in information["news"]:
-            faraday.client.model.guiapi.notification_center.sendCustomLog(
-                "NEWS -" + news["url"] + "|" + news["description"])
-
-    def run(self):
-        while not self.__event.is_set():
-            try:
-                sleep(5)
-                res = requests.get(
-                    "https://www.faradaysec.com/scripts/updatedb.php",
-                    params={'version': CONF.getVersion()},
-                    timeout=1,
-                    verify=True)
-
-                self.sendNewstoLogGTK(res.text)
-
-            except Exception:
-                faraday.client.model.api.devlog(
-                    "NEWS: Can't connect to faradaysec.com...")
-
-            self.__event.wait(43200)
-
-    def stop(self):
-        self.__event.set()
+logger = logging.getLogger(__name__)
 
 
 class MainApplication(object):
@@ -84,7 +49,6 @@ class MainApplication(object):
 
         self.args = args
 
-        logger = getLogger(self)
         if args.creds_file:
             try:
                 with open(args.creds_file, 'r') as fp:
@@ -216,5 +180,5 @@ class MainApplication(object):
         self.app.quit()
 
     def ctrlC(self, signal, frame):
-        getLogger(self).info("Exiting...")
+        logger.info("Exiting...")
         self.app.quit()

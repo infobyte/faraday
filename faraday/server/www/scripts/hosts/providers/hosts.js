@@ -3,7 +3,9 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('hostsManager', ['BASEURL', '$http', '$q', 'ServerAPI', 'Host', 'commonsFact', function(BASEURL, $http, $q, ServerAPI, Host, commonsFact) {
+    .factory('hostsManager', ['BASEURL', '$http', '$q', 'ServerAPI', 'Host', 'commonsFact',
+            function(BASEURL, $http, $q, ServerAPI, Host, commonsFact) {
+
         var hostsManager = {};
 
         hostsManager._objects = {};
@@ -53,7 +55,7 @@ angular.module('faradayApp')
         hostsManager.getHosts = function(ws, page, page_size, filter, sort, sort_direction) {
             var deferred = $q.defer();
 
-            options = {page: page, page_size: page_size, sort:sort, sort_dir: sort_direction}
+            var options = {page: page, page_size: page_size, sort:sort, sort_dir: sort_direction};
             for( var property in filter ) {
                 if (filter.hasOwnProperty(property)) {
                     options[property] = filter[property];
@@ -145,6 +147,18 @@ angular.module('faradayApp')
 
         hostsManager.getAllServicesCount = function(ws) {
             return this.get_count(ws, 'services');
+        };
+
+        hostsManager.getTools = function(hid, ws) {
+            var deferred = $q.defer();
+            ServerAPI.getTools(hid, ws).then(
+                function(result) {
+                    deferred.resolve(result.data.tools)
+                }, function() {
+                    deferred.reject("Unable to get tools for selected host")
+                }
+            )
+            return deferred.promise;
         };
 
         return hostsManager;

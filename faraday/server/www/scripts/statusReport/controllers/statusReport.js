@@ -3,17 +3,62 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module("faradayApp")
-    .controller("statusReportCtrl",
-                    ["$scope", "$filter", "$routeParams",
-                     "$location", "$uibModal", "$cookies", "$q", "$window", "BASEURL",
-                     "SEVERITIES", "EASEOFRESOLUTION", "STATUSES", "hostsManager", "commonsFact", 'parserFact',
-                     "vulnsManager", "workspacesFact", "csvService", "uiGridConstants", "vulnModelsManager",
-                     "referenceFact", "ServerAPI", '$http', 'uiCommonFact', 'FileUploader',
-                    function($scope, $filter, $routeParams,
-                        $location, $uibModal, $cookies, $q, $window, BASEURL,
-                        SEVERITIES, EASEOFRESOLUTION, STATUSES, hostsManager, commonsFact,parserFact,
-                        vulnsManager, workspacesFact, csvService, uiGridConstants, vulnModelsManager, referenceFact,
-                        ServerAPI, $http, uiCommonFact, FileUploader) {
+    .controller("statusReportCtrl", [
+        "$scope",
+        "$filter",
+        "$routeParams",
+        "$location",
+        "$uibModal",
+        "$cookies",
+        "$q",
+        "$window",
+        "BASEURL",
+        "SEVERITIES",
+        "EASEOFRESOLUTION",
+        "STATUSES",
+        "hostsManager",
+        "commonsFact",
+        'parserFact',
+        "vulnsManager",
+        "workspacesFact",
+        "csvService",
+        "uiGridConstants",
+        "vulnModelsManager",
+        "referenceFact",
+        "ServerAPI",
+        '$http',
+        'uiCommonFact',
+        'FileUploader',
+        "workspaceData",
+        "$templateCache",
+        function ($scope,
+                  $filter,
+                  $routeParams,
+                  $location,
+                  $uibModal,
+                  $cookies,
+                  $q,
+                  $window,
+                  BASEURL,
+                  SEVERITIES,
+                  EASEOFRESOLUTION,
+                  STATUSES,
+                  hostsManager,
+                  commonsFact,
+                  parserFact,
+                  vulnsManager,
+                  workspacesFact,
+                  csvService,
+                  uiGridConstants,
+                  vulnModelsManager,
+                  referenceFact,
+                  ServerAPI,
+                  $http,
+                  uiCommonFact,
+                  FileUploader,
+                  workspaceData,
+                  $templateCache
+        ) {
         $scope.baseurl;
         $scope.columns;
         $scope.columnsWidths;
@@ -60,7 +105,7 @@ angular.module("faradayApp")
 
         // FILTERS
 
-        // a sync filter
+        // a sync filteronRegisterApi
         uploader.filters.push({
             name: 'syncFilter',
             fn: function(item /*{File|FileLikeObject}*/, options) {
@@ -93,7 +138,6 @@ angular.module("faradayApp")
                 enableSelectAll: true,
                 enableColumnMenus: false,
                 enableRowSelection: true,
-                enableRowHeaderSelection: false,
                 useExternalPagination: true,
                 useExternalSorting: true,
                 paginationPageSizes: paginationOptions.defaultPageSizes,
@@ -101,9 +145,11 @@ angular.module("faradayApp")
                 enableHorizontalScrollbar: 0,
                 treeRowHeaderAlwaysVisible: false,
                 enableGroupHeaderSelection: true,
-                rowHeight: 47
+                rowHeight: 47,
+                enableFullRowSelection: false
             };
             $scope.gridOptions.columnDefs = [];
+
 
             var storedPageSize = parseInt($cookies.get("pageSize"));
             if ( storedPageSize && storedPageSize > 0 ) {
@@ -228,12 +274,11 @@ angular.module("faradayApp")
 
             if($scope.search !== "" && $scope.search !== undefined && $scope.search.indexOf("=") > -1) {
                 searchFilter = commonsFact.parseSearchURL($scope.search);
-                if ($scope.propertyFilterConfirmed === "All")
-                    $scope.searchParams = commonsFact.searchFilterToExpression(searchFilter);
+                $scope.searchParams = commonsFact.searchFilterToExpression(searchFilter);
             }
 
             $scope.columns = {
-                "_id":               true,
+                "_id":              true,
                 "date":             true,
                 "name":             true,
                 "severity":         true,
@@ -260,7 +305,8 @@ angular.module("faradayApp")
                 "response":         false,
                 "web":              false,
                 "creator":          false,
-                "policyviolations":  false
+                "policyviolations": false,
+                "external_id":      false
             };
 
 
@@ -320,7 +366,7 @@ angular.module("faradayApp")
 
             loadVulns();
 
-            loadCustomFields();                
+            loadCustomFields();
 
             $cookies.remove("selectedVulns");
             $scope.isShowingPreview = false;
@@ -368,12 +414,12 @@ angular.module("faradayApp")
         };
 
         var defineColumns = function() {
-            $scope.gridOptions.columnDefs.push({ name: "confirmVuln", width: "45", enableColumnResizing: false, headerCellTemplate:  "<i class=\"fa fa-check cursor\" ng-click=\"grid.appScope.selectAll()\" ng-style=\"{'opacity':(grid.appScope.selected === true) ? '1':'0.6'}\"></i>", cellTemplate: "scripts/statusReport/partials/ui-grid/confirmbutton.html" });
+
 
             function getColumnSort(columnName){
                 if($cookies.get("SRsortColumn") === columnName){
                     direction = ($cookies.get("SRsortDirection").toLowerCase() == "asc")
-                                 ? uiGridConstants.ASC
+                                 ? uiGridConstants.AuiGridConstantsSC
                                  : uiGridConstants.DESC;
                     return {ignoreSort: true, priority: 0, direction: direction};
                 }else{
@@ -381,7 +427,7 @@ angular.module("faradayApp")
                 }
             }
 
-            var header = '<div ng-class="{ \'sortable\': sortable }">'+
+            var header = '<div ng-class="{ \'sort$scope.columnsable\': sortable }">'+
                     '       <div class="ui-grid-cell-contents" col-index="renderIndex" title="TOOLTIP">{{ col.displayName CUSTOM_FILTERS }}'+
                     '           <a href="" ng-click="grid.appScope.toggleShow(col.displayName, true)">'+
                     '               <span class="glyphicon glyphicon-remove"></span>'+
@@ -394,6 +440,30 @@ angular.module("faradayApp")
                     '       <div ui-grid-filter></div>'+
                     '   </div>';
 
+            var headerConfirm = '<div ng-class="{ \'sort$scope.columnsable\': sortable }">'+
+            '       <div class="ui-grid-cell-contents" col-index="renderIndex" title="TOOLTIP">{{ col.displayName CUSTOM_FILTERS }}'+
+            '           <a href="" ng-click="grid.appScope.toggleShow(col.displayName, true)">'+
+            '           </a>'+
+            '           <span ui-grid-visible="col.sort.direction" ng-class="{ \'ui-grid-icon-up-dir\': col.sort.direction == asc, \'ui-grid-icon-down-dir\': col.sort.direction == desc, \'ui-grid-icon-blank\': !col.sort.direction }">&nbsp;</span>'+
+            '       </div>'+
+            '       <div class="ui-grid-column-menu-button" ng-if="grid.options.enableColumnMenus && !col.isRowHeader  && col.colDef.enableColumnMenu !== false" ng-click="toggleMenu($event)" ng-class="{\'ui-grid-column-menu-button-last-col\': isLastCol}">'+
+            '           <i class="ui-grid-icon-angle-down">&nbsp;</i>'+
+            '       </div>'+
+            '       <div ui-grid-filter></div>'+
+            '   </div>';
+
+
+            $scope.gridOptions.columnDefs.push({displayName : "conf", name: "confirmVuln", width: "50", enableColumnResizing: false, headerCellTemplate:  headerConfirm, cellTemplate: "scripts/statusReport/partials/ui-grid/confirmbutton.html" });
+
+            $templateCache.put('ui-grid/selectionRowHeaderButtons',
+                "<div class=\"ui-grid-selection-row-header-buttons \"  ng-class=\"{'ui-grid-row-selected': row.isSelected}\" ><input style=\"margin: 0; vertical-align: middle; background-position: -20px 0;\" type=\"checkbox\" ng-model=\"row.isSelected\" ng-click=\"row.isSelected=!row.isSelected;selectButtonClick(row, $event)\">&nbsp;</div>"
+            );
+
+
+            $templateCache.put('ui-grid/selectionSelectAllButtons',
+                "<div class=\"ui-grid-selection-row-header-buttons \" ng-class=\"{'ui-grid-all-selected': grid.selection.selectAll}\" ng-if=\"grid.options.enableSelectAll\"><input style=\"margin: 0; vertical-align: middle\" type=\"checkbox\" ng-model=\"grid.selection.selectAll\" ng-click=\"grid.selection.selectAll=!grid.selection.selectAll;headerButtonClick($event)\"></div>"
+            );
+
             $scope.gridOptions.columnDefs.push({ name : 'severity',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/severitycolumn.html',
                 headerCellTemplate: header,
@@ -403,7 +473,7 @@ angular.module("faradayApp")
                 sort: getColumnSort('severity'),
                 sortingAlgorithm: compareSeverities,
                 maxWidth: 50,
-                minWidth: 50,
+                minWidth: 50
             });
             $scope.gridOptions.columnDefs.push({ name : 'name',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/namecolumn.html',
@@ -587,6 +657,16 @@ angular.module("faradayApp")
                 maxWidth: 100,
                 minWidth: 100,
             });
+	    $scope.gridOptions.columnDefs.push({ name : 'external_id',
+                displayName : "external_id",
+                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/defaultcolumn.html',
+                headerCellTemplate: header,
+                field: "external_id",
+                sort: getColumnSort('external_id'),
+                visible: $scope.columns["external_id"],
+                maxWidth: 150,
+                minWidth: 130,
+            });
             $scope.gridOptions.columnDefs.push({ name : 'status',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/statuscolumn.html',
                 headerCellTemplate: header,
@@ -721,11 +801,13 @@ angular.module("faradayApp")
             var promises = [];
             try {
                 selected.forEach(function(vuln) {
-                    vuln.exploitation = vuln.severity;
-                    vuln.description = vuln.desc;
-                    vuln.desc_summary = vuln.desc;
-                    vuln.references = vuln.refs;
-                    promises.push(self.vulnModelsManager.create(vuln, true));
+                    let vulnCopy = angular.copy(vuln);
+                    vulnCopy.data = '';
+                    vulnCopy.exploitation = vuln.severity;
+                    vulnCopy.description = vuln.desc;
+                    vulnCopy.desc_summary = vuln.desc;
+                    vulnCopy.references = vuln.refs;
+                    promises.push(self.vulnModelsManager.create(vulnCopy, true));
                 });
                 $q.all(promises).then(function(success) {
                     commonsFact.showMessage("Created " + selected.length + " templates successfully.", true);
@@ -781,19 +863,37 @@ angular.module("faradayApp")
 
         $scope.csv = function() {
             deferred = $q.defer();
-            delete searchFilter.confirmed;
-            if ($scope.propertyFilterConfirmed === "Confirmed")
-                searchFilter.confirmed = true;
-            if ($scope.propertyFilterConfirmed === "Unconfirmed")
-                searchFilter.confirmed = false;
-            vulnsManager.getVulns($scope.workspace,
-                                  null,
-                                  null,
-                                  searchFilter,
-                                  null,
-                                  null)
-            .then(function(response) {
-                deferred.resolve(csvService.generator($scope.columns, response.vulnerabilities, $scope.workspace));
+            $scope.loading = true;
+
+            var jsonOptions;
+
+            if($scope.searchParams.length > 0)
+                jsonOptions = parserFact.evaluateExpression($scope.searchParams);
+
+            vulnsManager.exportCsv($scope.workspace, jsonOptions)
+            .then(function(result){
+                 var title = "";
+
+                 if ($scope.workspace === null) {
+                     title = 'Vulnerability Model CSV';
+                 } else {
+                     title = "SR-" + $scope.workspace;
+                 }
+
+                 var csvObj = {
+                     "content":  result.data,
+                     "extension": "csv",
+                     "title":    title,
+                     "type": "text/csv"
+                 };
+
+                 $scope.loading = false;
+
+                 deferred.resolve(csvObj);
+            })
+            .catch(function(){
+                 commonsFact.showMessage('An error has occurred.');
+                 $scope.loading = false;
             });
             return deferred.promise;
         };
@@ -870,9 +970,9 @@ angular.module("faradayApp")
                 promises.push(vulnsManager.updateVuln(vuln, toggleConfirm));
             });
             $q.all(promises).then(function(res) {
-                if(confirm === true) {
+                /*if(confirm === true) {
                     loadVulns();
-                }
+                }*/
             }, function(errorMsg){
                 commonsFact.showMessage("Error updating vuln " + vuln.name + " (" + vuln._id + "): " + errorMsg);
             });
@@ -1145,7 +1245,7 @@ angular.module("faradayApp")
 
                 // Add the total amount of vulnerabilities as an option for pagination
                 // if it is larger than our biggest page size
-                if ($scope.gridOptions.totalItems > paginationOptions.defaultPageSizes[paginationOptions.defaultPageSizes.length - 1]) {
+                /*if ($scope.gridOptions.totalItems > paginationOptions.defaultPageSizes[paginationOptions.defaultPageSizes.length - 1]) {
 
                     $scope.gridOptions.paginationPageSizes = paginationOptions.defaultPageSizes.concat([$scope.gridOptions.totalItems]);
 
@@ -1157,7 +1257,7 @@ angular.module("faradayApp")
                     if ($scope.gridOptions.paginationPageSize === $scope.gridOptions.totalItems - 1)
                         $scope.gridOptions.paginationPageSize = $scope.gridOptions.totalItems;
 
-                }
+                }*/
             });
         };
 
@@ -1215,11 +1315,17 @@ angular.module("faradayApp")
         };
 
         $scope.searchFor = function(params, clear, search) {
+            // TODO: REFACTOR
             if (clear === true){
+                if(window.location.hash.substring(1).indexOf('groupby') === -1) {
+                    $scope.propertyFilterConfirmed = "All";
+                    $cookies.put('filterConfirmed', $scope.propertyFilterConfirmed);
+                    $location.path("/status/ws/" + $routeParams.wsId);
+                }else{
+                    var url = "/status/ws/" + $routeParams.wsId + "/groupby/" + $routeParams.groupbyId;
+                    $location.path(url);
+                }
                 $scope.searchParams = '';
-                $scope.propertyFilterConfirmed = "All";
-                $cookies.put('filterConfirmed', $scope.propertyFilterConfirmed);
-                $location.path("/status/ws/" + $routeParams.wsId);
                 loadVulns();
                 return;
             }
@@ -1251,6 +1357,11 @@ angular.module("faradayApp")
                 }
 
             } else {
+                if (params !== undefined && params !== '') {
+                    params = params.replace(/^ +| +$/g, '');
+                    var jsonOptions = parserFact.evaluateExpression(params);
+                    loadFilteredVulns($routeParams.wsId, jsonOptions);
+                }
                 var url = "/status/ws/" + $routeParams.wsId + "/groupby/" + $routeParams.groupbyId;
                 $location.path(url);
             }

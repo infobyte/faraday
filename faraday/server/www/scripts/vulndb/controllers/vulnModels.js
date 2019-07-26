@@ -1,7 +1,28 @@
 angular.module('faradayApp')
-    .controller('vulnModelsCtrl',
-        ['$scope', '$filter', '$http', '$q', '$uibModal', 'ServerAPI', 'csvService', 'commonsFact', 'vulnModelsManager',
-            function($scope, $filter, $http, $q, $uibModal, ServerAPI, csvService, commonsFact, vulnModelsManager) {
+    .controller('vulnModelsCtrl', [
+        '$scope',
+        '$filter',
+        '$http',
+        '$q',
+        '$uibModal',
+        'ServerAPI',
+        'csvService',
+        'commonsFact',
+        'vulnModelsManager',
+        'APIURL',
+        '$route',
+        function ($scope,
+                  $filter,
+                  $http,
+                  $q,
+                  $uibModal,
+                  ServerAPI,
+                  csvService,
+                  commonsFact,
+                  vulnModelsManager,
+                  APIURL,
+                  $route) {
+
                 $scope.models = [];
                 $scope.loaded_models = false;
                 $scope.totalModels = 0;
@@ -123,43 +144,34 @@ angular.module('faradayApp')
                     });
 
                     var loadCSV = function(data) {
-                        var datas = [];
-                        Papa.parse(data, {
-                            worker: true,
-                            header: true,
-                            skipEmptyLines: true,
-                            step: function(results) {
-                                if (results.data) {
-                                    datas.push(results.data[0]);
-                                }
-                            },
-                            complete: function(res, file) {
-                                // i feel dirty, really, but it works.
-                                // pro tip: 'complete' only means it has completed 'parsing'
-                                // not completed doing whatever is defined on step
-                                var length = datas.length;
-                                var counter = 0;
-                                $scope.loading = true;
-                                datas.forEach(function(data) {
-                                    if (!data.easeofresolution || data.easeofresolution === "")
-                                         data.easeofresolution = null;
-                                    $scope.insert(data).then(function() {
-                                        counter = counter + 1;
-                                        if (length == counter) {
 
-                                            vulnModelsManager.get().then(function() {
-                                                $scope.totalModels = vulnModelsManager.totalNumberOfModels;
-                                                $scope.models = vulnModelsManager.models;
-                                            });
+                        $http.get('/_api/session').then(
+                            function(d) {
+                              $scope.csrf_token = d.data.csrf_token;
 
-                                            $scope.loading = false;
-                                            document.body.style.cursor = "default";
-                                            $scope.disabledClick = false;
-                                        }
-                                    });
-                                });
+                              var fd = new FormData();
+                              fd.append('csrf_token', $scope.csrf_token);
+                              fd.append('file', data);
+
+                              $scope.loading = true;
+
+                              $http.post(APIURL + 'vulnerability_template/bulk_create/', fd, {
+                                transformRequest: angular.identity,
+                                withCredentials: false,
+                                headers: {'Content-Type': undefined}
+                                }).then(
+                                    function(d) {
+                                        $scope.loading = false;
+                                        commonsFact.showMessage("Vulnerability templates created: " + d.data.vulns_created + "  Vulnerability templates with error: " + d.data.vulns_with_errors + "", true);
+                                        $route.reload();
+                                    },
+                                    function(d){
+                                        $scope.loading = false;
+                                        commonsFact.showMessage("Error uploading vulnerability templates");
+                                    }
+                                );
                             }
-                        });
+                          );
                     };
 
                     modal.result.then(function(data) {
@@ -367,7 +379,6 @@ angular.module('faradayApp')
                 $scope.toggleSort = function(field) {
                     $scope.toggleSortField(field);
                     $scope.toggleReverse();
-                    $scope.sort();
                 };
 
                 // toggles column sort field

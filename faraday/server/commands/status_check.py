@@ -10,7 +10,7 @@ import socket
 import requests
 import sqlalchemy
 from colorama import init
-from colorama import Fore, Back, Style
+from colorama import Fore
 from requests.exceptions import InvalidURL, ConnectionError
 
 import faraday.server.config
@@ -35,14 +35,14 @@ def check_server_running():
 
 
 def check_open_ports():
-   address =  faraday.server.config.faraday_server.bind_address
-   port = int(faraday.server.config.faraday_server.port)
-   sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-   result = sock.connect_ex((address,port))
-   if result == 0:
-       return True
-   else:
-       return False
+    address =  faraday.server.config.faraday_server.bind_address
+    port = int(faraday.server.config.faraday_server.port)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    result = sock.connect_ex((address, port))
+    if result == 0:
+        return True
+    else:
+        return False
 
 
 def check_postgres():
@@ -114,7 +114,7 @@ def check_client():
     except ConnectionError:
         return False
     except InvalidURL:
-    	return False
+        return False
 
 
 def check_server_dependencies():
@@ -140,7 +140,7 @@ def check_client_dependencies():
         requirements_file=requirements_file)
 
     if 'argparse' in conflict_deps:
-            conflict_deps.remove('argparse')
+        conflict_deps.remove('argparse')
     
     if conflict_deps:
         return True, conflict_deps

@@ -34,6 +34,7 @@ function(doc) {
             "owned":            doc.owned,
             "owner":            doc.owner,
             "parent":           doc.parent, 
+            "external_id":      doc.external_id,
             "refs":             doc.refs,
             "resolution":       resolution,
             "severity":         doc.severity, 

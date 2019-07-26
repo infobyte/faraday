@@ -2,8 +2,10 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 import operator
+import string
 from datetime import datetime
 from functools import partial
+from random import SystemRandom
 
 from sqlalchemy import (
     Boolean,
@@ -18,10 +20,9 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     event,
-    text
 )
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import relationship, undefer
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import select, text, table
 from sqlalchemy.sql.expression import asc, case, join
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -42,10 +43,8 @@ from flask_sqlalchemy import (
 
 from depot.fields.sqlalchemy import UploadedFileField
 
-import faraday.server.config
 from faraday.server.fields import FaradayUploadedFile, JSONType
 from flask_security import (
-    RoleMixin,
     UserMixin,
 )
 from faraday.server.utils.database import (
@@ -68,7 +67,7 @@ OBJECT_TYPES = [
     'comment',
     'executive_report',
     'workspace',
-    'task'
+    'task',
 ]
 
 
@@ -84,37 +83,37 @@ class SQLAlchemy(OriginalSQLAlchemy):
 
 
 class CustomEngineConnector(_EngineConnector):
-        """Used by overrided SQLAlchemy class to fix rollback issues.
+    """Used by overrided SQLAlchemy class to fix rollback issues.
 
-        Also set case sensitive likes (in SQLite there are case
-        insensitive by default)"""
+    Also set case sensitive likes (in SQLite there are case
+    insensitive by default)"""
 
-        def get_engine(self):
-            # Use an existent engine and don't register events if possible
-            uri = self.get_uri()
-            echo = self._app.config['SQLALCHEMY_ECHO']
-            if (uri, echo) == self._connected_for:
-                return self._engine
+    def get_engine(self):
+        # Use an existent engine and don't register events if possible
+        uri = self.get_uri()
+        echo = self._app.config['SQLALCHEMY_ECHO']
+        if (uri, echo) == self._connected_for:
+            return self._engine
 
-            # Call original metohd and register events
-            rv = super(CustomEngineConnector, self).get_engine()
-            if uri.startswith('sqlite://'):
-                with self._lock:
-                    @event.listens_for(rv, "connect")
-                    def do_connect(dbapi_connection, connection_record):
-                        # disable pysqlite's emitting of the BEGIN statement
-                        # entirely.  also stops it from emitting COMMIT before any
-                        # DDL.
-                        dbapi_connection.isolation_level = None
-                        cursor = dbapi_connection.cursor()
-                        cursor.execute("PRAGMA case_sensitive_like=true")
-                        cursor.close()
+        # Call original metohd and register events
+        rv = super(CustomEngineConnector, self).get_engine()
+        if uri.startswith('sqlite://'):
+            with self._lock:
+                @event.listens_for(rv, "connect")
+                def do_connect(dbapi_connection, connection_record):
+                    # disable pysqlite's emitting of the BEGIN statement
+                    # entirely.  also stops it from emitting COMMIT before any
+                    # DDL.
+                    dbapi_connection.isolation_level = None
+                    cursor = dbapi_connection.cursor()
+                    cursor.execute("PRAGMA case_sensitive_like=true")
+                    cursor.close()
 
-                    @event.listens_for(rv, "begin")
-                    def do_begin(conn):
-                        # emit our own BEGIN
-                        conn.execute("BEGIN")
-            return rv
+                @event.listens_for(rv, "begin")
+                def do_begin(conn):
+                    # emit our own BEGIN
+                    conn.execute("BEGIN")
+        return rv
 
 
 db = SQLAlchemy()
@@ -488,7 +487,7 @@ class CustomFieldsSchema(db.Model):
     __tablename__ = 'custom_fields_schema'
 
     id = Column(Integer, primary_key=True)
-    field_name = Column(Text)
+    field_name = Column(Text, unique=True)
     field_type = Column(Text)
     field_display_name = Column(Text)
     field_order = Column(Integer)
@@ -528,6 +527,8 @@ class VulnerabilityABC(Metadata):
     impact_availability = Column(Boolean, default=False, nullable=False)
     impact_confidentiality = Column(Boolean, default=False, nullable=False)
     impact_integrity = Column(Boolean, default=False, nullable=False)
+
+    external_id = BlankColumn(Text)
 
     __table_args__ = (
         CheckConstraint('1.0 <= risk AND risk <= 10.0',
@@ -1804,6 +1805,8 @@ class ExecutiveReport(Metadata):
                     "TagObject.object_type=='executive_report')",
         collection_class=set,
     )
+    severities = Column(JSONType, nullable=True, default=[])
+    filter = Column(JSONType, nullable=True, default=[])
     @property
     def parent(self):
         return
@@ -1845,6 +1848,66 @@ class Notification(db.Model):
     @property
     def parent(self):
         return
+
+
+class AgentsSchedule(Metadata):
+    __tablename__ = 'agent_schedule'
+    id = Column(Integer, primary_key=True)
+    description = NonBlankColumn(Text)
+    crontab = NonBlankColumn(Text)
+    timezone = NonBlankColumn(Text)
+    active = Column(Boolean, nullable=False, default=True)
+
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship(
+        'Workspace',
+        backref=backref('schedules', cascade="all, delete-orphan"),
+    )
+
+    agent_id = Column(Integer, ForeignKey('agent.id'), index=True, nullable=False)
+    agent = relationship(
+        'Agent',
+        backref=backref('schedules', cascade="all, delete-orphan"),
+    )
+
+    @property
+    def parent(self):
+        return
+
+
+class Agent(Metadata):
+    __tablename__ = 'agent'
+    id = Column(Integer, primary_key=True)
+    token = Column(Text, unique=True, nullable=False, default=lambda:
+                    "".join([SystemRandom().choice(string.ascii_letters + string.digits)
+                            for _ in range(64)]))
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship(
+        'Workspace',
+        foreign_keys=[workspace_id],
+        backref=backref('agents', cascade="all, delete-orphan"),
+    )
+    name = NonBlankColumn(Text)
+    active = Column(Boolean, default=True)
+
+    @property
+    def parent(self):
+        return
+
+    @property
+    def is_online(self):
+        from faraday.server.websocket_factories import connected_agents
+        return self.id in connected_agents
+
+    @property
+    def status(self):
+        if self.active:
+            if self.is_online:
+                return 'online'
+            else:
+                return 'offline'
+        else:
+            return 'paused'
 
 
 # This constraint uses Columns from different classes

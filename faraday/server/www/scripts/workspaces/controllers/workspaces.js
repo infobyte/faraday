@@ -15,7 +15,7 @@ angular.module('faradayApp')
                 $scope.objects = [];
                 $scope.workspaces = [];
                 $scope.wss = [];
-                $scope.onlyActive = false;
+                $scope.onlyActive = true;
                 // $scope.newworkspace = {};
 
                 var hash_tmp = window.location.hash.split("/")[1];

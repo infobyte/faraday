@@ -1330,7 +1330,7 @@ a.button-disable{cursor: not-allowed;pointer-events: none;opacity: 0.5}
     height:1px;
     border-width:0;
     background-color: #e5e5e5;
-    margin: 8px 0 8px 0;
+    margin: 5px 0 5px 0;
 }
 .ui-grid-selection-row-header-buttons {
 cursor: pointer !important;

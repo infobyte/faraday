@@ -23,7 +23,7 @@ from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy import desc
+from sqlalchemy import desc, or_
 
 from depot.manager import DepotManager
 from faraday.server.api.base import (
@@ -645,12 +645,20 @@ class VulnerabilityView(PaginatedMixin,
     def _filter(self, filters, workspace_name, confirmed=False):
         try:
             filters = json.loads(filters)
+            hostname_filters = [hostname_filter for hostname_filter in filters.get('filters', [])
+                                if hostname_filter['name'] == 'hostnames']
+            filters['filters'] = [vuln_filter for vuln_filter in filters.get('filters', [])
+                                  if hostname_filter['name'] != 'hostnames']
         except ValueError as ex:
             flask.abort(400, "Invalid filters")
         if confirmed:
             if 'filters' not in filters:
                 filters['filters'] = []
-            filters['filters'].append({"name":"confirmed","op":"==","val":"true"})
+            filters['filters'].append({
+                "name": "confirmed",
+                "op": "==",
+                "val": "true"
+            })
 
         workspace = self._get_workspace(workspace_name)
         marshmallow_params = {'many': True, 'context': {}, 'strict': True}
@@ -659,6 +667,14 @@ class VulnerabilityView(PaginatedMixin,
                                   Vulnerability,
                                   filters)
             normal_vulns = normal_vulns.filter_by(workspace_id=workspace.id)
+            if hostname_filters:
+                or_filters = []
+                for hostname_filter in hostname_filters:
+                    or_filters.append(Hostname.name==hostname_filter['val'])
+
+                normal_vulns_host = normal_vulns.join(Host).join(Hostname).filter(or_(*or_filters))
+                normal_vulns = normal_vulns_host.union(normal_vulns.join(Service).join(Host).join(Hostname).filter(or_(*or_filters)))
+
             normal_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(normal_vulns.all())
             normal_vulns_data = json.loads(normal_vulns.data)
         except Exception as ex:
@@ -668,9 +684,15 @@ class VulnerabilityView(PaginatedMixin,
                            VulnerabilityWeb,
                            filters)
             web_vulns = web_vulns.filter_by(workspace_id=workspace.id)
+            if hostname_filters:
+                or_filters = []
+                for hostname_filter in hostname_filters:
+                    or_filters.append(Hostname.name == hostname_filter['val'])
+
+                web_vulns = web_vulns.join(Service).join(Host).join(Hostname).filter(or_(*or_filters))
             web_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(web_vulns.all())
             web_vulns_data = json.loads(web_vulns.data)
-        except Exception:
+        except Exception as ex:
             web_vulns_data = []
         return normal_vulns_data + web_vulns_data
 

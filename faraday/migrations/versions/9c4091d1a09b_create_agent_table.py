@@ -64,6 +64,7 @@ def upgrade():
         sa.Column('update_date', sa.DateTime),
         sa.Column('workspace_id', sa.Integer, nullable=False),
         sa.Column('agent_id', sa.Integer, nullable=False),
+        sa.Column('last_run', sa.DateTime),
     )
 
     op.create_foreign_key(

@@ -1879,6 +1879,7 @@ class AgentsSchedule(Metadata):
     crontab = NonBlankColumn(Text)
     timezone = NonBlankColumn(Text)
     active = Column(Boolean, nullable=False, default=True)
+    last_run = Column(DateTime)
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
@@ -1893,8 +1894,12 @@ class AgentsSchedule(Metadata):
     )
 
     @property
+    def next_run(self):
+        raise NotImplementedError()
+
+    @property
     def parent(self):
-        return
+        return self.agent
 
 
 class RuleAction(Metadata):

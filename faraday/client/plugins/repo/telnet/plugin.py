@@ -81,7 +81,7 @@ class TelnetRouterPlugin(core.PluginBase):
         if host_info is not None:
             h_id = self.createAndAddHost(ip_address)
             i_id = self.createAndAddInterface(
-                h_id, ip_address, ipv4_address=ip_address, hostname_resolution=hostname)
+                h_id, ip_address, ipv4_address=ip_address, hostname_resolution=[hostname])
             s_id = self.createAndAddServiceToInterface(h_id, i_id, self._port,
                                                        "tcp",
                                                        ports=[self._port],

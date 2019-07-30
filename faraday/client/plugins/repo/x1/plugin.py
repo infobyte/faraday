@@ -182,7 +182,7 @@ class X1Plugin(core.PluginBase):
         for item in parser.items:
             h_id = self.createAndAddHost(item.host, item.name)
             i_id = self.createAndAddInterface(
-                h_id, item.host, ipv4_address=item.host, hostname_resolution=item.vclass)
+                h_id, item.host, ipv4_address=item.host, hostname_resolution=[item.vclass])
             s_id = self.createAndAddServiceToInterface(h_id, i_id, item.srvname,
                                                        item.protocol,
                                                        ports=[str(item.port)],

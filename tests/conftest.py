@@ -69,6 +69,10 @@ class CustomClient(FlaskClient):
         #        ret.json = None
         return ret
 
+    @property
+    def cookies(self):
+        return self.cookie_jar
+
 
 def pytest_addoption(parser):
     # currently for tests using sqlite and memory have problem while using transactions
@@ -280,6 +284,14 @@ def ignore_nplusone(app):
     app.config['NPLUSONE_RAISE'] = False
     yield
     app.config['NPLUSONE_RAISE'] = old
+
+
+@pytest.fixture(autouse=True)
+def skip_by_sql_dialect(request):
+    dialect = db.session.bind.dialect.name
+    if request.node.get_closest_marker('skip_sql_dialect'):
+        if request.node.get_closest_marker('skip_sql_dialect').args[0] == dialect:
+            pytest.skip('Skipped dialect is {}'.format(dialect))
 
 
 @pytest.fixture

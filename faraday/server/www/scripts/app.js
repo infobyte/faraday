@@ -30,8 +30,8 @@ var faradayApp = angular.module('faradayApp', [
                                                     'angularSimplePagination',
                                                     'dndLists',
                                                     'angularFileUploadLib',
-                                                    'ui',
-                                                    'rzTable'
+                                                    'rzTable',
+                                                    'ui'
                                              ])
     .constant("BASEURL", (function() {
         var url = window.location.origin + "/";

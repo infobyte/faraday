@@ -399,7 +399,7 @@ class ArachniPlugin(core.PluginBase):
             host_id,
             self.address,
             ipv4_address=self.address,
-            hostname_resolution=self.hostname)
+            hostname_resolution=[self.hostname])
 
         # Create service
         service_id = self.createAndAddServiceToInterface(

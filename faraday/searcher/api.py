@@ -1,5 +1,10 @@
-import requests
 import json
+import logging
+import socket
+
+from requests.adapters import ConnectionError, ReadTimeout
+
+logger = logging.getLogger('Faraday searcher')
 
 
 class ApiError(Exception):
@@ -36,63 +41,108 @@ class Structure:
 
 
 class Api:
-    def __init__(self, workspace, username, password, base='http://127.0.0.1:5985/_api/'):
-        self.base = base
+
+    def __init__(self, requests, workspace, username=None, password=None, base='http://127.0.0.1:5985/_api/', token=None):
+        self.requests = requests
         self.workspace = workspace
-        self.cookies = self.login(username, password)
-        if self.cookies is None:
-            raise UserWarning('Invalid username or password')
+        self.command_id = None  # Faraday uses this to tracker searcher changes.
+        self.base = base
+        if not self.base.endswith('/'):
+            self.base += '/'
+        self.token = token
+        if not self.token and username and password:
+            self.headers, self.cookies = self.login(username, password)
+            if self.headers is None:
+                raise UserWarning('Invalid username or password')
 
     def _url(self, path):
-        return self.base + 'v2/' + path
+        url = self.base + 'v2/' + path
+        if self.command_id and 'commands' not in url:
+            if url.endswith('/'):
+                url += '?command_id={}'.format(self.command_id)
+            else:
+                url += '/?command_id={}'.format(self.command_id)
+        return url
 
     def _get(self, url, object_name):
-        response = requests.get(url, cookies=self.cookies)
+        logger.debug('Getting url {}'.format(url))
+        if self.headers:
+            response = self.requests.get(url, headers=self.headers)
+        else:
+            response = self.requests.get(url, cookies=self.cookies)
         if response.status_code == 401:
             raise ApiError('Unauthorized operation trying to get {}'.format(object_name))
         if response.status_code != 200:
             raise ApiError('Cannot fetch {}'.format(object_name))
+        if isinstance(response.json, dict):
+            return response.json
         return json.loads(response.content)
 
     def _post(self, url, data, object_name):
-        response = requests.post(url, json=data, cookies=self.cookies)
+        if self.headers:
+            response = self.requests.post(url, json=data, headers=self.headers)
+        else:
+            response = self.requests.post(url, json=data, cookies=self.cookies)
         if response.status_code == 401:
-            raise ApiError('Unauthorized operation trying to create {}'.format(object_name))
+            raise ApiError('Unauthorized operation trying to get {}'.format(object_name))
         if response.status_code != 201:
-            raise ApiError('Unable to create {}'.format(object_name))
+            raise ApiError('Cannot fetch {}, api response: {}'.format(object_name, getattr(response, 'text', None)))
+        if isinstance(response.json, dict):
+            return response.json
         return json.loads(response.content)
 
     def _put(self, url, data, object_name):
-        response = requests.put(url, json=data, cookies=self.cookies)
+        if self.headers:
+            response = self.requests.put(url, json=data, headers=self.headers)
+        else:
+            response = self.requests.put(url, json=data, cookies=self.cookies)
         if response.status_code == 401:
-            raise ApiError('Unauthorized operation trying to update {}'.format(object_name))
+            raise ApiError('Unauthorized operation trying to upFdate {}'.format(object_name))
         if response.status_code != 200:
             raise ApiError('Unable to update {}'.format(object_name))
+        if isinstance(response.json, dict):
+            return response.json
         return json.loads(response.content)
 
     def _delete(self, url, object_name):
-        response = requests.delete(url, cookies=self.cookies)
+        if self.headers:
+            response = self.requests.delete(url, headers=self.headers)
+        else:
+            response = self.requests.delete(url, cookies=self.cookies)
         if response.status_code == 401:
             raise ApiError('Unauthorized operation trying to delete {}'.format(object_name))
         if response.status_code != 204:
             raise ApiError('Unable to delete {}'.format(object_name))
-        return response.ok
+        return True
 
     def login(self,  username, password):
         auth = {"email": username, "password": password}
         try:
-            resp = requests.post(self.base + 'login', json=auth)
-            if resp.status_code == 401:
+            resp = self.requests.post(self.base + 'login', json=auth)
+            if resp.status_code not in [200, 302]:
+                logger.info("Invalid credentials")
                 return None
             else:
-                return resp.cookies
-        except requests.adapters.ConnectionError:
+                cookies = getattr(resp, 'cookies', None)
+                if cookies is not None:
+                    token_response = self.requests.get(self.base + 'v2/token/', cookies=cookies)
+                    if token_response.status_code != 404:
+                        token = token_response.json()
+                else:
+                    token = self.requests.get(self.base + 'v2/token/').json
+
+                header = {'Authorization': 'Token {}'.format(token)}
+
+                return header, cookies
+        except ConnectionError as ex:
+            logger.exception(ex)
+            logger.info("Connection error to the faraday server")
             return None
-        except requests.adapters.ReadTimeout:
+        except ReadTimeout:
             return None
 
     def get_vulnerabilities(self):
-        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/vulns'.format(self.workspace)),
+        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/vulns/'.format(self.workspace)),
                                                                  'vulnerabilities')['vulnerabilities']]
 
     def update_vulnerability(self, vulnerability):
@@ -103,7 +153,7 @@ class Api:
         return self._delete(self._url('ws/{}/vulns/{}/'.format(self.workspace, vulnerability_id)), 'vulnerability')
 
     def get_services(self):
-        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/services'.format(self.workspace)),
+        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/services/'.format(self.workspace)),
                                                                  'services')['services']]
 
     def get_filtered_services(self, **params):
@@ -128,7 +178,7 @@ class Api:
         return self._delete(self._url('ws/{}/services/{}/'.format(self.workspace, service_id)), 'service')
 
     def get_hosts(self):
-        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/hosts'.format(self.workspace)),
+        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/hosts/'.format(self.workspace)),
                                                                  'hosts')['rows']]
 
     def get_filtered_hosts(self, **params):
@@ -160,3 +210,32 @@ class Api:
                         (getattr(template, key, None) == value or str(getattr(template, key, None)) == value):
                     filtered_templates.append(template)
         return filtered_templates
+
+    def create_command(self, itime, params, tool_name):
+        self.itime = itime
+        self.params = params
+        self.tool_name = tool_name
+        data = self._command_info()
+        res = self._post(self._url('ws/{}/commands/'.format(self.workspace)), data, 'command')
+        return res["_id"]
+
+    def _command_info(self, duration=None):
+        try:
+            ip = socket.gethostbyname(socket.gethostname())
+        except socket.gaierror:
+            ip = socket.gethostname()
+        data = {
+            "itime": self.itime,
+            "command": self.tool_name,
+            "ip": ip,
+            "import_source": "shell",
+            "tool": "Searcher",
+            "params": json.dumps(self.params),
+        }
+        if duration:
+            data.update({"duration": duration})
+        return data
+
+    def close_command(self, command_id, duration):
+        data = self._command_info(duration)
+        self._put(self._url('ws/{}/commands/{}/'.format(self.workspace, command_id)), data, 'command')

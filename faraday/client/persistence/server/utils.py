@@ -101,6 +101,7 @@ def get_vuln_properties(vuln):
         'policyviolations': vuln.getPolicyViolations(),
         'parent': vuln.getParent(),
         'parent_type': vuln.getParentType(),
+        'external_id': vuln.getExternalID()
     }
     vuln_dict.update(get_object_properties(vuln))
     return vuln_dict
@@ -119,6 +120,7 @@ def get_vuln_web_properties(vuln_web):
         'status': vuln_web.getStatus(),
         'parent': vuln_web.getParent(),
         'parent_type': vuln_web.getParentType(),
+	'external_id': vuln_web.getExternalID()
     }
     vuln_web_dict.update(get_object_properties(vuln_web))
     vuln_web_dict.update(get_vuln_properties(vuln_web))

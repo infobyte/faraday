@@ -1,1 +1,1 @@
-add api for import hosts from csv file
+Add API endpoint to import hosts from a CSV file

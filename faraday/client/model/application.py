@@ -9,14 +9,13 @@ import os
 import sys
 import signal
 import json
-import threading
-from json import loads
-from time import sleep
+
+from faraday.server import TimerClass
+
 try:
     from Queue import Queue
 except ImportError:
     from queue import Queue
-import requests
 import logging
 
 from faraday.client.model.controller import ModelController
@@ -41,41 +40,6 @@ CONF = getInstanceConfiguration()
 
 
 logger = logging.getLogger(__name__)
-
-
-class TimerClass(threading.Thread):
-    def __init__(self):
-        threading.Thread.__init__(self)
-        self.__event = threading.Event()
-
-    def sendNewstoLogGTK(self, json_response):
-
-        information = loads(json_response)
-
-        for news in information["news"]:
-            faraday.client.model.guiapi.notification_center.sendCustomLog(
-                "NEWS -" + news["url"] + "|" + news["description"])
-
-    def run(self):
-        while not self.__event.is_set():
-            try:
-                sleep(5)
-                res = requests.get(
-                    "https://www.faradaysec.com/scripts/updatedb.php",
-                    params={'version': CONF.getVersion()},
-                    timeout=1,
-                    verify=True)
-
-                self.sendNewstoLogGTK(res.text)
-
-            except Exception:
-                faraday.client.model.api.devlog(
-                    "NEWS: Can't connect to faradaysec.com...")
-
-            self.__event.wait(43200)
-
-    def stop(self):
-        self.__event.set()
 
 
 class MainApplication(object):

@@ -1,1 +1,1 @@
-Add api token authentication
+Add API token authentication method

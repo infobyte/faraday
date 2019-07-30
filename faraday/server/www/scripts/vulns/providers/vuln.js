@@ -60,7 +60,7 @@ angular.module('faradayApp')
         var public_properties = [
             '_attachments', 'confirmed', 'data', 'desc', 'easeofresolution',
             'impact', 'name', 'owned', 'policyviolations', 'refs', 'resolution',
-            'severity', 'status', 'custom_fields'
+            'severity', 'status', 'custom_fields', 'external_id'
         ];
 
         var saved_properties = public_properties.concat(

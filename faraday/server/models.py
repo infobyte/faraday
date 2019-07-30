@@ -1855,7 +1855,7 @@ class Rule(Metadata):
 
     id = Column(Integer, primary_key=True)
     model = Column(String, nullable=False)
-    parent = Column(String, nullable=True)
+    object_parent = Column(String, nullable=True)
     fields = Column(JSONType, nullable=True)
     object = Column(JSONType, nullable=False)
     actions = relationship("Action", secondary="rule_action", backref=backref("rules"))

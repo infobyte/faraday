@@ -20,14 +20,14 @@ def upgrade():
         'rule',
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('model', sa.String, nullable=False),
-        sa.Column('parent', sa.String, nullable=True),
+        sa.Column('object_parent', sa.String, nullable=True),
         sa.Column('fields', sa.JSON, nullable=True),
         sa.Column('object', sa.JSON, nullable=False),
         sa.Column('workspace_id', sa.Integer, nullable=False),
         sa.Column('create_date', sa.DateTime),
         sa.Column('update_date', sa.DateTime),
         sa.Column('creator_id', sa.Integer),
-        sa.Column('update_user_id', sa.Integer)
+        sa.Column('update_user_id', sa.Integer, nullable=True)
     )
 
     op.create_foreign_key(
@@ -58,7 +58,7 @@ def upgrade():
         sa.Column('create_date', sa.DateTime),
         sa.Column('update_date', sa.DateTime),
         sa.Column('creator_id', sa.Integer),
-        sa.Column('update_user_id', sa.Integer)
+        sa.Column('update_user_id', sa.Integer, nullable=True)
     )
 
     op.create_foreign_key(
@@ -76,12 +76,12 @@ def upgrade():
     op.create_table(
         'rule_action',
         sa.Column('id', sa.Integer, primary_key=True),
-        sa.Column('rule_id', sa.Integer, primary_key=True),
-        sa.Column('action_id', sa.Integer, primary_key=True),
+        sa.Column('rule_id', sa.Integer),
+        sa.Column('action_id', sa.Integer),
         sa.Column('create_date', sa.DateTime),
         sa.Column('update_date', sa.DateTime),
         sa.Column('creator_id', sa.Integer),
-        sa.Column('update_user_id', sa.Integer)
+        sa.Column('update_user_id', sa.Integer, nullable=True)
     )
 
     op.create_foreign_key(
@@ -108,6 +108,8 @@ def upgrade():
         'action', ['action_id'], ['id']
     )
 
+    op.create_unique_constraint("rule_action_uc", "rule_action", ["rule_id", "action_id"])
+
     op.create_table(
         'condition',
         sa.Column('id', sa.Integer, primary_key=True),
@@ -118,7 +120,7 @@ def upgrade():
         sa.Column('create_date', sa.DateTime),
         sa.Column('update_date', sa.DateTime),
         sa.Column('creator_id', sa.Integer),
-        sa.Column('update_user_id', sa.Integer)
+        sa.Column('update_user_id', sa.Integer, nullable=True)
     )
 
     op.create_foreign_key(
@@ -147,7 +149,7 @@ def upgrade():
         sa.Column('create_date', sa.DateTime),
         sa.Column('update_date', sa.DateTime),
         sa.Column('creator_id', sa.Integer),
-        sa.Column('update_user_id', sa.Integer)
+        sa.Column('update_user_id', sa.Integer, nullable=True)
     )
 
     op.create_foreign_key(

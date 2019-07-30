@@ -1850,6 +1850,28 @@ class Notification(db.Model):
         return
 
 
+class Rule(Metadata):
+    __tablename__ = 'rule'
+
+    id = Column(Integer, primary_key=True)
+    model = Column(String, nullable=False)
+    object_parent = Column(String, nullable=True)
+    fields = Column(JSONType, nullable=True)
+    object = Column(JSONType, nullable=False)
+    actions = relationship("Action", secondary="rule_action", backref=backref("rules"))
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship('Workspace', backref=backref('rules', cascade="all, delete-orphan"))
+
+
+class Action(Metadata):
+    __tablename__ = 'action'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=True)
+    command = Column(String, nullable=False)
+    field = Column(String, nullable=True)
+    value = Column(String, nullable=True)
+
+
 class AgentsSchedule(Metadata):
     __tablename__ = 'agent_schedule'
     id = Column(Integer, primary_key=True)
@@ -1873,6 +1895,15 @@ class AgentsSchedule(Metadata):
     @property
     def parent(self):
         return
+
+
+class RuleAction(Metadata):
+    __tablename__ = 'rule_action'
+    id = Column(Integer, primary_key=True)
+    rule_id = Column(Integer, ForeignKey('rule.id'), index=True, nullable=False)
+    rule = relationship('Rule', foreign_keys=[rule_id], backref=backref('rule_actions', cascade="all, delete-orphan"))
+    action_id = Column(Integer, ForeignKey('action.id'), index=True, nullable=False)
+    action = relationship('Action', foreign_keys=[action_id], backref=backref('rule_actions', cascade="all, delete-orphan"))
 
 
 class Agent(Metadata):
@@ -1908,6 +1939,41 @@ class Agent(Metadata):
                 return 'offline'
         else:
             return 'paused'
+
+
+class Condition(Metadata):
+    __tablename__ = 'condition'
+
+    id = Column(Integer, primary_key=True)
+    field = Column(String)
+    value = Column(String)
+    operator = Column(String, default='equals')
+    rule_id = Column(Integer, ForeignKey('rule.id'), index=True, nullable=False)
+    rule = relationship('Rule', foreign_keys=[rule_id], backref=backref('conditions', cascade="all, delete-orphan"))
+
+    @property
+    def parent(self):
+        return
+
+
+class RuleExecution(Metadata):
+    """
+        Searcher uses command_id to enable faraday activity tracking.
+        We then use this model to link rule execution with the command that the searcher
+        executed.
+    """
+    __tablename__ = 'rule_execution'
+    id = Column(Integer, primary_key=True)
+    start = Column(DateTime, nullable=True)
+    end = Column(DateTime, nullable=True)
+    rule_id = Column(Integer, ForeignKey('rule.id'), index=True, nullable=False)
+    rule = relationship('Rule', foreign_keys=[rule_id], backref=backref('executions', cascade="all, delete-orphan"))
+    command_id = Column(Integer, ForeignKey('command.id'), index=True, nullable=False)
+    command = relationship('Command', foreign_keys=[command_id], backref=backref('rule_executions', cascade="all, delete-orphan"))
+
+    @property
+    def parent(self):
+        return
 
 
 # This constraint uses Columns from different classes

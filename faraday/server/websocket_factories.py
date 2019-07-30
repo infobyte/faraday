@@ -10,9 +10,11 @@ import itsdangerous
 
 import Cookie
 from collections import defaultdict
-from Queue import Queue, Empty
+from Queue import Empty
 
 import txaio
+
+
 txaio.use_twisted()
 
 from autobahn.websocket.protocol import WebSocketProtocol
@@ -25,9 +27,10 @@ from autobahn.twisted.websocket import (
 
 from faraday.server.models import Workspace, Agent
 from faraday.server.api.modules.websocket_auth import decode_agent_websocket_token
+from faraday.server.events import changes_queue
+
 
 logger = logging.getLogger(__name__)
-changes_queue = Queue()
 
 
 connected_agents = {}

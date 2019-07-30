@@ -34,14 +34,18 @@ class JSTimestampField(fields.Integer):
 class FaradayCustomField(fields.Field):
     def __init__(self, table_name='vulnerability', *args, **kwargs):
         self.table_name = table_name
+        self.custom_fields = None
         super(FaradayCustomField, self).__init__(*args, **kwargs)
 
     def _serialize(self, value, attr, obj, **kwargs):
         if not value:
             value = {}
         res = {}
-        custom_fields = db.session.query(CustomFieldsSchema).filter_by(
-            table_name=self.table_name)
+
+        # Try to use self.custom_fields to avoid duplicating the query
+        custom_fields = self.custom_fields or db.session.query(
+                CustomFieldsSchema).filter_by(table_name=self.table_name)
+
         for custom_field in custom_fields:
             serialized_value = value.get(custom_field.field_name)
             res[custom_field.field_name] = serialized_value

@@ -456,6 +456,20 @@ class VulnerabilityView(PaginatedMixin,
         super(VulnerabilityView, self)._validate_uniqueness(
             obj, object_id, unique_fields)
 
+    def _get_schema_instance(self, route_kwargs, **kwargs):
+        schema = super(VulnerabilityView, self)._get_schema_instance(
+            route_kwargs, **kwargs)
+
+        # This is an optimization to avoid to do many repeated SQL queries.
+        # If you delete this, the vuln templates endpoint will work the same
+        # way, but it will be much slower
+        custom_fields = CustomFieldsSchema.query.filter_by(
+                # use the same table as in the schema
+                table_name='vulnerability').all()
+        schema.fields['custom_fields'].custom_fields = custom_fields
+
+        return schema
+
     def _perform_create(self, data, **kwargs):
         data = self._parse_data(self._get_schema_instance(kwargs),
                                 request)

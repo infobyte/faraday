@@ -114,6 +114,7 @@ class ServiceSchema(services.ServiceSchema):
 
 
 class HostSchema(hosts.HostSchema):
+    ip = fields.String(required=True)
     services = fields.Nested(
         ServiceSchema(many=True, context={'updating': False}),
         many=True,

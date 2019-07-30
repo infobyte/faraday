@@ -493,6 +493,15 @@ def test_bulk_create_endpoint(session, workspace, test_client):
     assert set({hn.name for hn in host.hostnames}) == {"test.com", "test2.org"}
 
 
+@pytest.mark.usefixtures('logged_user')
+def test_bulk_create_endpoint_without_host_ip(session, workspace, test_client):
+    url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
+    host_data_ = host_data.copy()
+    host_data_.pop('ip')
+    res = test_client.post(url, data=dict(hosts=[host_data_]))
+    assert res.status_code == 400
+
+
 def test_bulk_create_endpoints_fails_without_auth(session, workspace, test_client):
     url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
     res = test_client.post(url, data=dict(hosts=[host_data]))

@@ -32,14 +32,9 @@
                     </tr>
                 </thead>
             </table>
-            <table class="col-md-9" ng-if="component == 'workflows' || component == 'scheduling' || component == 'vulndb'">
+            <table class="col-md-9" ng-if="component == 'scheduling' || component == 'vulndb'">
                 <thead>
                     <tr>
-                        <th class="col-md-1" style="border-left: 1px solid rgb(221, 221, 221); padding-left: 12px;">
-                                <a href="#/workflows" class="status-report" ng-class="{'navigation-active' : component == 'workflows'}" style="color: black !important; font-weight: bold; font-size: 15px;">
-                                    Workflows
-                                </a>
-                            </th>
                         <th class="col-md-1">
                             <a href="#/scheduling" class="workspaces" ng-class="{'navigation-active' : component == 'scheduling'}" style="color: black !important; font-weight: bold; font-size: 15px;">
                                 Scheduling

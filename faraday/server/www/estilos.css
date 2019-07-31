@@ -1384,3 +1384,5 @@ a {
 .col-s-1{
     padding-right: 15px;
 }
+.ui-grid-row:nth-child(odd):hover .ui-grid-cell{background:#ecebea}
+.ui-grid-row:nth-child(even):hover .ui-grid-cell{background:#ecebea}

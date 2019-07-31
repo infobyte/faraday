@@ -315,7 +315,7 @@ angular.module("faradayApp")
             }
             else {
                 $scope.columnsWidths = {
-                    "name":             "120",
+                    "name":             "180",
                     "service":          "110",
                     "hostnames":        "130",
                     "target":           "100",

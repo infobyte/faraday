@@ -693,11 +693,12 @@ class VulnerabilityView(PaginatedMixin,
     def _filter(self, filters, workspace_name, confirmed=False):
         try:
             filters = json.loads(filters)
-            filters, hostname_filters = self._hostname_filters(filters['filters'])
+            filters, hostname_filters = self._hostname_filters(filters.get('filters', []))
         except ValueError as ex:
             flask.abort(400, "Invalid filters")
         if confirmed:
             if 'filters' not in filters:
+                filters = {}
                 filters['filters'] = []
             filters['filters'].append({
                 "name": "confirmed",

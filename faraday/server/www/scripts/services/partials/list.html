@@ -6,7 +6,7 @@
   <div class="faraday-header-border-fix">
       <div ng-controller="headerCtrl" ng-include="'scripts/commons/partials/header.html'"></div>
       <div id="reports-main" class="fila clearfix">
-      <div class="col-md-8">
+      <div class="col-md-8" style="padding-left: 0px !important;">
         <span ng-hide="!showServices" class="reports">
             <h3>Services for host {{hostName}}</h3>
             <div class="button-control col-md-12 col-sm-12 col-xs-12">
@@ -85,12 +85,10 @@
                                 <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}/search/name={{service.name}}">
                                     <span ng-bind="service.name"></span>
                                 </a>
-                                <osint-link query="service.name" osint="osint"></osint-link>
                             </td>
                             <td ng-bind="service.version || '-'" class="ui-grid-cell-contents"></td>
                             <td class="ui-grid-cell-contents">
                                 <span ng-bind="service.ports"></span>
-                                <osint-link query="'port:' + service.ports" osint="osint"></osint-link>
                             </td>
                             <td class="ui-grid-cell-contents">
                                 <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}/search/protocol={{service.protocol}}">
@@ -137,14 +135,22 @@
                                 <span ng-click="toggleSort('command')">Command</span>
                             </th>
                             <th class="ui-grid-cell-contents ui-grid-header-cell">
+                                <span ng-click="toggleSort('user')">User</span>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell">
+                                <span>Parameters</span>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell">
                                 <span ng-click="toggleSort('create_date')">Create Date</span>
                             </th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr ng-repeat="tool in host.tools | startFrom:(currentToolPage-1)*toolPageSize | limitTo:toolPageSize">
-                            <td ng-bind="tool.command" class="ui-grid-cell-contents"></td>
-                            <td ng-bind="tool.create_date | amUtc | amDateFormat:'MM/DD/YYYY'" class="ui-grid-cell-contents"></td>
+                            <td class="ui-grid-cell-contents"><a href="#/status/ws/{{workspace}}/search/command_id={{tool.command_id}}">{{tool.command}}</a></td>
+                            <td ng-bind="tool.user" class="ui-grid-cell-contents"></td>
+                            <td class="ui-grid-cell-contents">{{tool.params.substring(tool.params.lastIndexOf('/') + 1, tool.params.length)}}</td>
+                            <td ng-bind="tool.create_date | amTimeAgo" class="ui-grid-cell-contents"></td>
                         </tr>
                     </tbody>
                 </table>

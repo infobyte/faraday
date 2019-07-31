@@ -41,8 +41,8 @@
                     <div class="control-wrapper">
                         <div class="checkbox">
                             <label>
-                                <input type="checkbox" id="onlyActive" ng-model="onlyActive"/>
-                                <span class="normal-size">Show only active workspaces</span>
+                                <input type="checkbox" id="archived" ng-model="archived"/>
+                                <span class="normal-size">Show archived</span>
                             </label>
                         </div>
                     </div>
@@ -64,7 +64,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr ng-repeat="ws in workspaces | filter:query | filter:search  | filter:{active:onlyActive == true? true : undefined} | orderBy:sortField:reverse"
+                        <tr ng-repeat="ws in workspaces | filter:query | filter:search  | filter:{active:archived == false? true : undefined} | orderBy:sortField:reverse"
                             selection-model selection-model-selected-class="multi-selected">
 
                             <td class="ui-grid-cell-contents active-toggle">

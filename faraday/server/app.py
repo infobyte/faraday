@@ -189,6 +189,10 @@ def register_handlers(app):
                 flask.abort(401)  # 403 would be better but breaks the web ui
                 return
 
+    @app.before_request
+    def load_g_custom_fields():
+        g.custom_fields = {}
+
     @app.after_request
     def log_queries_count(response):
         if flask.request.method not in ['GET', 'HEAD']:

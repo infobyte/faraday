@@ -7,6 +7,7 @@ See the file 'doc/LICENSE' for the license information
 import time
 import json
 import datetime
+from flask import g
 from marshmallow import fields, Schema
 from marshmallow.exceptions import ValidationError
 from dateutil.tz import tzutc
@@ -34,7 +35,6 @@ class JSTimestampField(fields.Integer):
 class FaradayCustomField(fields.Field):
     def __init__(self, table_name='vulnerability', *args, **kwargs):
         self.table_name = table_name
-        self.custom_fields = None
         super(FaradayCustomField, self).__init__(*args, **kwargs)
 
     def _serialize(self, value, attr, obj, **kwargs):
@@ -42,9 +42,12 @@ class FaradayCustomField(fields.Field):
             value = {}
         res = {}
 
-        # Try to use self.custom_fields to avoid duplicating the query
-        custom_fields = self.custom_fields or db.session.query(
-                CustomFieldsSchema).filter_by(table_name=self.table_name)
+        try:
+            custom_fields = g.custom_fields[self.table_name]
+        except KeyError:
+            custom_fields = db.session.query(CustomFieldsSchema).filter_by(
+                    table_name=self.table_name).all()
+            g.custom_fields[self.table_name] = custom_fields
 
         for custom_field in custom_fields:
             serialized_value = value.get(custom_field.field_name)

@@ -8,13 +8,41 @@
       <div id="reports-main" class="fila clearfix">
       <div class="col-md-8" style="padding-left: 0px !important;">
         <span ng-hide="!showServices" class="reports">
-            <h3>Services for host {{hostName}}</h3>
             <div class="button-control col-md-12 col-sm-12 col-xs-12">
                 <div class="control-wrapper control-new">
                 <button type="button" class="btn btn-success btn-new"  title="{{workspaceData.readonly == true ? 'Read-only. Workspace disabled': 'New service'}}"  ng-click="new()" style="padding:0px 0px" ng-disabled="workspaceData.readonly === true">
                     New service
                 </button>
                 </div>
+                <table>
+                        <thead>
+                            <tr>
+                                <th class="col-s-1" style="border-left: 1px solid rgb(221, 221, 221); padding-left: 12px;">
+                                        <a href="#/status/ws/{{workspace}}" class="status-report" ng-class="{'navigation-active' : component == 'status'}" style="color: black !important; font-weight: bold; font-size: 15px;" uib-tooltip="Vulns" tooltip-placement="right">
+                                            Vulns
+                                        </a>
+                                    </th>
+                                <th class="col-s-1">
+                                    <a href="#/hosts/ws/{{workspace}}" class="workspaces" ng-class="{'navigation-active' : true}" style="color: black !important; font-weight: bold; font-size: 15px;" uib-tooltip="Hosts" tooltip-placement="right">
+                                        Hosts
+                                    </a>
+                                    <div class="flex-spacer"></div>
+                                </th>
+                                <th class="col-s-1">
+                                    <a href="#/credentials/ws/{{workspace}}" class="workspaces" ng-class="{'navigation-active' : component == 'credentials'}" style="color: black !important; font-weight: bold; font-size: 15px;" uib-tooltip="Credentials" tooltip-placement="right">
+                                        Credentials
+                                    </a>
+                                    <div class="flex-spacer"></div>
+                                </th>
+                                <th class="col-md-1" style = "border-right: 1px solid rgb(221, 221, 221); padding-right: 12px">
+                                    <a href="#/taskgroup" class="executive-report" ng-class="{'navigation-active' : component == 'taskgroup'}" style="color: black !important; font-weight: bold; font-size: 15px;">
+                                        Tasks
+                                    </a>
+                                    <div class="flex-spacer"></div>
+                                </th>
+                            </tr>
+                        </thead>
+                    </table>
                 <div class="control-wrapper control-edit">
                 <button type="button" class="btn"  title="{{workspaceData.readonly == true ? 'Read-only. Workspace disabled': 'Edit selected services'}}" ng-click="edit()" ng-disabled="services.length == 0">
                     <img src="images/icon-toolbar-edit.svg" class="edit-icon" />
@@ -39,6 +67,9 @@
                             </div>
                         </form>
                     </div>
+            </div>
+            <div ng-if="loadedServices && services.length > 0">
+                <h3>Services for host {{hostName}}</h3>
             </div>
             <div ng-if="loadedServices && services.length == 0">
                 <h4>No services found for {{host.ip}}</h4>

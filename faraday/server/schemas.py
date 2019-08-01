@@ -48,6 +48,9 @@ class FaradayCustomField(fields.Field):
             custom_fields = db.session.query(CustomFieldsSchema).filter_by(
                     table_name=self.table_name).all()
             g.custom_fields[self.table_name] = custom_fields
+        except AttributeError:
+            custom_fields = db.session.query(CustomFieldsSchema).filter_by(
+                table_name=self.table_name).all()
 
         for custom_field in custom_fields:
             serialized_value = value.get(custom_field.field_name)

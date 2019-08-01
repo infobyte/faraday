@@ -1693,6 +1693,7 @@ angular.module("faradayApp")
                   function(d) {
                     $scope.csrf_token = d.data.csrf_token;
                     fileItem.formData.push({'csrf_token': $scope.csrf_token});
+                    fileItem.file.name = fileItem.file.name.replace(/ /g, '_');
                     fileItem.url = '_api/v2/ws/' + $routeParams.wsId + '/vulns/' + $scope.lastClickedVuln._id + '/attachment/';
                     $scope.uploader.uploadAll();
                   }

@@ -15,6 +15,7 @@ angular.module('faradayApp')
         'configSrv',
         'workspacesFact',
         'Notification',
+        '$rootScope',
         function ($scope,
                   $http,
                   $route,
@@ -25,7 +26,8 @@ angular.module('faradayApp')
                   $uibModal,
                   configSrv,
                   workspacesFact,
-                  Notification) {
+                  Notification,
+                  $rootScope) {
 
         $scope.workspace = "";
 
@@ -71,7 +73,7 @@ angular.module('faradayApp')
             $interval.cancel($scope.timer);
         });
 
-        $scope.$on('$routeChangeSuccess', function() {
+        $rootScope.$on('$routeChangeSuccess', function() {
             if(componentsNeedsWS.indexOf($location.path().split("/")[1]) != -1 && $routeParams.wsId !== undefined) {
                 workspacesFact.list().then(function(wss) {
                     $scope.wss = wss;

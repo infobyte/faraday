@@ -6,6 +6,9 @@ html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abb
 .clearfix{display:inline-block}html[xmlns] .clearfix{display:block}* html .clearfix{height:1%}
 /**/
 html#no-overflow{overflow-x:hidden;}
+html{
+    zoom: 0.8;
+}
 body {
     font-family: "Open Sans" !important;
     color: #2D2F31;

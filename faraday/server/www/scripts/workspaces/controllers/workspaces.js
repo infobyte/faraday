@@ -350,8 +350,11 @@ angular.module('faradayApp')
 
                             if (pos >= 0) {
                                 let savedWs = $cookies.get('currentUrl').slice(pos + 3);
-                                if (ws.name === savedWs)
-                                    $cookies.remove('currentUrl')
+                                if (ws.name === savedWs){
+                                    $cookies.remove('currentUrl');
+                                    workspacesFact.changeWorkspace(null);
+                                }
+
                             }
                         }
                     });

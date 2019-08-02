@@ -3,8 +3,9 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('workspacesFact', ['BASEURL', 'ServerAPI', '$http', '$q', function(BASEURL, ServerAPI, $http, $q) {
+    .factory('workspacesFact', ['BASEURL', 'ServerAPI', '$http', '$q', '$rootScope', function(BASEURL, ServerAPI, $http, $q, $rootScope) {
         var workspacesFact = {};
+        workspacesFact.workspace = '';
 
         workspacesFact.list = function() {
             var deferred = $q.defer();
@@ -136,6 +137,19 @@ angular.module('faradayApp')
                 deferred.reject(err);
             });
             return deferred.promise;
+        };
+
+        workspacesFact.changeWorkspace = function (workspace) {
+            this.workspace = workspace;
+            this.broadcastItem();
+        };
+
+        workspacesFact.getWorkspace = function () {
+            return workspacesFact.workspace;
+        };
+
+        workspacesFact.broadcastItem = function () {
+            $rootScope.$broadcast('handleChangeWSBroadcast');
         };
 
         return workspacesFact;

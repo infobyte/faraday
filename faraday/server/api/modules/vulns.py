@@ -791,12 +791,21 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('bulk_delete/', methods=['DELETE'])
     def bulk_delete(self, workspace_name):
-        json_quest = request.get_json()
-        vulnerability_ids = json_quest['vulnerability_ids']
         workspace = self._get_workspace(workspace_name)
-        deleted_vulns = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.id.in_(vulnerability_ids),
-                                                          VulnerabilityGeneric.workspace_id==workspace.id).delete(synchronize_session='fetch')
-        response = {'requested_delete_vulns': len(vulnerability_ids), 'deleted_vulns': deleted_vulns}
+        json_quest = request.get_json()
+        vulnerability_ids = json_quest.get('vulnerability_ids', [])
+        vulns_severities = json_quest.get('severities', [])
+        if vulnerability_ids:
+            deleted_vulns = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.id.in_(vulnerability_ids),
+                                                              VulnerabilityGeneric.workspace_id == workspace.id).delete(
+                synchronize_session='fetch')
+        elif vulns_severities:
+            deleted_vulns = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.severity.in_(vulns_severities),
+                                                              VulnerabilityGeneric.workspace_id == workspace.id).delete(
+                synchronize_session='fetch')
+        else:
+            flask.abort(400, "Invalid Request")
+        response = {'deleted_vulns': deleted_vulns}
         db.session.commit()
         return flask.jsonify(response)
 

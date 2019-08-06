@@ -5,13 +5,15 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 """Tests for many API endpoints that do not depend on workspace_name"""
 import datetime
 import pytest
 import time
 
 from tests import factories
-from test_api_workspaced_base import API_PREFIX, ReadOnlyAPITests
+from tests.test_api_workspaced_base import API_PREFIX, ReadOnlyAPITests
 from faraday.server.models import (
     Command,
     Workspace,
@@ -93,7 +95,7 @@ class TestListCommandView(object, ReadOnlyAPITests):
         res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
         assert res.status_code == 200
 
-        assert filter(lambda stats: stats['_id'] == command.id, res.json) == [
+        assert list(filter(lambda stats: stats['_id'] == command.id, res.json)) == [
             {u'_id': command.id,
              u'command': command.command,
              u'import_source': u'shell',
@@ -106,8 +108,8 @@ class TestListCommandView(object, ReadOnlyAPITests):
              u'vulnerabilities_count': 1,
              u'criticalIssue': 0}]
 
-        assert filter(lambda stats: stats['_id'] == another_command.id,
-                      res.json) == [{
+        assert list(filter(lambda stats: stats['_id'] == another_command.id,
+                      res.json)) == [{
                         u'_id': another_command.id,
                         u'command': another_command.command,
                         u'import_source': u'shell',
@@ -264,7 +266,7 @@ class TestListCommandView(object, ReadOnlyAPITests):
         session.commit()
         res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
         assert res.status_code == 200
-        raw_first_command = filter(lambda comm: comm['_id'] == commands[0].id, res.json)
+        raw_first_command = list(filter(lambda comm: comm['_id'] == commands[0].id, res.json))
 
         assert raw_first_command.pop() == {
             u'_id': first_command.id,
@@ -281,7 +283,7 @@ class TestListCommandView(object, ReadOnlyAPITests):
         }
 
         for in_the_middle_command in in_the_middle_commands:
-            raw_in_the_middle_command = filter(lambda comm: comm['_id'] == in_the_middle_command.id, res.json)
+            raw_in_the_middle_command = list(filter(lambda comm: comm['_id'] == in_the_middle_command.id, res.json))
             assert raw_in_the_middle_command.pop() == {u'_id': in_the_middle_command.id,
                                        u'command': in_the_middle_command.command,
                                        u'import_source': u'shell',
@@ -295,7 +297,7 @@ class TestListCommandView(object, ReadOnlyAPITests):
                                        u'criticalIssue': 0}
 
         # new command must create new service and vuln
-        raw_last_command = filter(lambda comm: comm['_id'] == last_command.id, res.json)
+        raw_last_command = list(filter(lambda comm: comm['_id'] == last_command.id, res.json))
         assert raw_last_command.pop() == {u'_id': last_command.id,
                                        u'command': last_command.command,
                                        u'import_source': u'shell',
@@ -409,8 +411,11 @@ class TestListCommandView(object, ReadOnlyAPITests):
 
         res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')
         assert res.status_code == 200
-        command_history = filter(lambda hist: hist['_id'] == command.id, res.json)
+        command_history = list(filter(lambda hist: hist['_id'] == command.id, res.json))
         assert len(command_history)
         command_history = command_history[0]
         assert command_history['hosts_count'] == 1
         assert command_history['tool'] == 'test'
+
+
+# I'm Py3

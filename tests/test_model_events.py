@@ -4,6 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 import pytest
 from tests.factories import HostFactory, ServiceFactory
 
@@ -23,3 +25,6 @@ def test_child_parent_verification_event_succeeds(session, workspace):
     host = HostFactory.build(workspace=workspace)
     ServiceFactory.build(host=host, workspace=workspace)
     session.commit()
+
+
+# I'm Py3

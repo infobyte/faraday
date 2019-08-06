@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import pytest
 
 from faraday.searcher.api import Api
@@ -428,3 +430,6 @@ class TestSearcherRules():
 
         host = session.query(Host).filter_by(workspace=workspace).first()
         assert host.owned is True
+
+
+# I'm Py3

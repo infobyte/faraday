@@ -5,6 +5,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
 """Tests for many API endpoints that do not depend on workspace_name"""
 try:
     from urllib import urlencode
@@ -16,7 +17,7 @@ import json
 
 from faraday.server.api.modules.services import ServiceView
 from tests import factories
-from test_api_workspaced_base import ReadOnlyAPITests
+from tests.test_api_workspaced_base import ReadOnlyAPITests
 from faraday.server.models import (
     Service
 )
@@ -303,3 +304,6 @@ class TestListServiceView(ReadOnlyAPITests):
         }
         res = test_client.post(self.url(), data=data)
         assert res.status_code == 400
+
+
+# I'm Py3

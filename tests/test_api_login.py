@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import pytest
 from itsdangerous import TimedJSONWebSignatureSerializer
 
@@ -125,3 +127,6 @@ class TestLogin():
         test_client.cookie_jar.clear()
         res = test_client.get('/v2/ws/', headers=headers)
         assert res.status_code == 401
+
+
+# I'm Py3

@@ -4,6 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 import pytest
 from faraday.server.api.modules.websocket_auth import decode_agent_websocket_token
 
@@ -85,3 +87,6 @@ class TestAgentWebsocketToken:
         assert res.status_code == 200
         decoded_agent = decode_agent_websocket_token(res.json['token'])
         assert decoded_agent == agent
+
+
+# I'm Py3

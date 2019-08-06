@@ -5,13 +5,15 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+from builtins import str
 
 """Generic tests for APIs prefixed with a workspace_name"""
 
 import pytest
 from sqlalchemy.orm.util import was_deleted
 from faraday.server.models import db, Workspace, Credential
-from test_api_pagination import PaginationTestsMixin as \
+from tests.test_api_pagination import PaginationTestsMixin as \
     OriginalPaginationTestsMixin
 
 API_PREFIX = '/v2/ws/'
@@ -51,8 +53,8 @@ class GenericAPITest:
         workspace = workspace or self.workspace
         url = API_PREFIX + workspace.name + '/' + self.api_endpoint + '/'
         if obj is not None:
-            id_ = unicode(obj.id) if isinstance(
-                obj, self.model) else unicode(obj)
+            id_ = str(obj.id) if isinstance(
+                obj, self.model) else str(obj)
             url += id_ + u'/'
         return url
 
@@ -287,3 +289,6 @@ class ReadOnlyAPITests(ListTestsMixin,
                        RetrieveTestsMixin,
                        GenericAPITest):
     pass
+
+
+# I'm Py3

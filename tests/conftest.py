@@ -4,6 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 from tempfile import NamedTemporaryFile
 
 import os
@@ -298,3 +300,6 @@ def skip_by_sql_dialect(request):
 def csrf_token(logged_user, test_client):
     session_response = test_client.get('/session')
     return session_response.json.get('csrf_token')
+
+
+# I'm Py3

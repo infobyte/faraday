@@ -4,6 +4,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
 
 import os
 import pytest
@@ -98,3 +99,6 @@ class TestFileUpload():
                 use_json_data=False)
 
         assert res.status_code == 404
+
+
+# I'm Py3

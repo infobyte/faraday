@@ -4,6 +4,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
 import time
 import operator
 from io import BytesIO
@@ -22,7 +23,7 @@ from hypothesis import given, assume, settings, strategies as st
 import pytest
 
 from tests import factories
-from test_api_workspaced_base import (
+from tests.test_api_workspaced_base import (
     API_PREFIX,
     ReadWriteAPITests,
     PaginationTestsMixin,
@@ -390,7 +391,7 @@ class TestHostAPI:
 
         res = test_client.get(self.url())
         assert res.status_code == 200
-        json_host = filter(lambda json_host: json_host['value']['id'] == host.id, res.json['rows'])[0]
+        json_host = list(filter(lambda json_host: json_host['value']['id'] == host.id, res.json['rows']))[0]
         # the host has one vuln associated. another one via service.
         assert json_host['value']['vulns'] == 2
 
@@ -772,3 +773,6 @@ def test_hypothesis(host_with_hostnames, test_client, session):
         assert res.status_code in [201, 400, 409]
 
     send_api_request()
+
+
+# I'm Py3

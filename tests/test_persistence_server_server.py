@@ -4,6 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 import os
 
 import responses
@@ -41,3 +43,6 @@ class TestServerFuncions:
 
     def test_test_server_url_aserver_down(self, test_client):
         assert not server.check_server_url('http://localhost')
+
+
+# I'm Py3

@@ -4,6 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 import os
 
 from faraday.server.fields import FaradayUploadedFile
@@ -33,3 +35,6 @@ def test_normal_attach_is_not_detected_as_image():
         field = FaradayUploadedFile(image_data.read())
         assert field['content_type'] == 'application/octet-stream'
         assert len(field['files']) == 1
+
+
+# I'm Py3

@@ -6,6 +6,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 """Tests for many API endpoints that do not depend on workspace_name"""
+from __future__ import absolute_import
 
 import pytest
 import pytz
@@ -87,3 +88,6 @@ def test_hypothesis_license(test_client, session):
         assert res.status_code in [201, 400, 409]
 
     send_api_request()
+
+
+# I'm Py3

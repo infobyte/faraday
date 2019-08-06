@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import pytest
 from marshmallow import ValidationError
 from faraday.server.models import (
@@ -587,3 +589,6 @@ def test_bulk_create_endpoint_with_agent_token_disabled_workspace(
         headers=[("authorization", "agent {}".format(agent.token))]
     )
     assert res.status_code == 403
+
+
+# I'm Py3

@@ -4,6 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 import os
 import sys
 import unittest
@@ -94,3 +96,6 @@ class TestAuthenticationPytest(BaseAPITestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+# I'm Py3

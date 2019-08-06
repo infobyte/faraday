@@ -4,6 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 import pytest
 from passlib.hash import pbkdf2_sha1
 from faraday.server.importer import ImportCouchDBUsers
@@ -68,3 +70,6 @@ def test_parse_all_docs_response_succeeds():
         "rows": [doc_with_metadata] * 15
     }
     assert import_users_from_couch.parse_all_docs(data) == [ADMIN_DOC] * 15
+
+
+# I'm Py3

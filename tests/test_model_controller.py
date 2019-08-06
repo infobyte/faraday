@@ -4,7 +4,10 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from Queue import Queue
+from __future__ import absolute_import
+from __future__ import print_function
+
+from queue import Queue
 
 import time
 
@@ -159,7 +162,7 @@ def test_end_pluging_multiple_times():
 
 
 
-@pytest.mark.parametrize("url_endpoint, test_data", TEST_CASES.items())
+@pytest.mark.parametrize("url_endpoint, test_data", list(TEST_CASES.items()))
 @mock.patch('faraday.client.persistence.server.server._get')
 def test_find(get, url_endpoint, test_data, session):
     if 'api_result' in test_data:
@@ -177,3 +180,6 @@ def test_find(get, url_endpoint, test_data, session):
     print(get.mock_calls[0][1][0])
     assert get.mock_calls[0][1][0].endswith(
         '/_api/v2/ws/{0}/{1}/{2}/'.format(workspace.name, url_endpoint, obj.id))
+
+
+# I'm Py3

@@ -4,6 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 """
 This module will help us to retrieve information
 about the app state and system information and
@@ -14,7 +16,7 @@ import sys
 import traceback
 import threading
 import faraday.client.model.guiapi
-from cStringIO import StringIO
+from io import StringIO
 from faraday.client.gui.customevents import ShowExceptionCustomEvent
 from faraday.config.configuration import getInstanceConfiguration
 import json

@@ -9,7 +9,7 @@ from __future__ import absolute_import
 import sys
 import logging
 import inspect
-from Queue import Queue
+from queue import Queue
 
 from sqlalchemy import event
 

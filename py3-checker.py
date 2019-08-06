@@ -68,7 +68,7 @@ class Analyser:
         if not find_py3_ok_result and lint_ok_result:
             self.logger.info("The file {path} is python3, adding the signature comment in the last line".format(path=path))
             with open(path,"a+") as py3_file:
-                py3_file.writelines(["", PY3_MSG, ""])
+                py3_file.writelines(["\n\n", PY3_MSG, "\n"])
 
         if not lint_ok_result:
             self.logger.info("The file {path} is python2".format(path=path))

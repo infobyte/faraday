@@ -2,6 +2,7 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 from __future__ import absolute_import
+from builtins import str
 
 import os
 import re
@@ -828,12 +829,12 @@ class VulnerabilityView(PaginatedMixin,
             vuln_date = vuln['metadata']['create_time']
             if vuln['service']:
                 service_fields = ["status", "protocol", "name", "summary", "version", "ports"]
-                service_fields_values = map(lambda field: "%s:%s" % (field, vuln['service'][field]), service_fields)
+                service_fields_values = ["%s:%s" % (field, vuln['service'][field]) for field in service_fields]
                 vuln_service = " - ".join(service_fields_values)
             else:
                 vuln_service = ""
 
-            if all(isinstance(hostname, (str, unicode)) for hostname in vuln['hostnames']):
+            if all(isinstance(hostname, str) for hostname in vuln['hostnames']):
                 vuln_hostnames = vuln['hostnames']
             else:
                 vuln_hostnames = [str(hostname['name']) for hostname in vuln['hostnames']]

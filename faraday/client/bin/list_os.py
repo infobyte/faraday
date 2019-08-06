@@ -6,6 +6,8 @@ Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
+from __future__ import absolute_import
+from __future__ import print_function
 
 __description__ = 'Lists all scanned OSs'
 __prettyname__ = 'Get All OSs'
@@ -36,3 +38,6 @@ def main(workspace='', args=None, parser=None):
             print('%s\t(%d)' % (host, count))
 
     return 0, None
+
+
+# I'm Py3

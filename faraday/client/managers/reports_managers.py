@@ -405,3 +405,6 @@ class ReportParser(object):
                 return "Sslyze"
         else:
             return None
+
+
+# I'm Py3

@@ -6,6 +6,10 @@ Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
+from __future__ import absolute_import
+from __future__ import print_function
+
+from past.builtins import cmp
 
 from colorama import Fore
 import sys
@@ -42,7 +46,7 @@ def main(workspace='', args=None, parser=None):
     parser.add_argument('-p', type=int, nargs='+', metavar='port', help='List of ports to filter', default=[])
     parser.add_argument('services', nargs='*', help='List of service names', default=[]),
     parser.add_argument('--columns', help='Comma separated list of columns to show.',
-                        default="host,service,ports,protocol,status,host_os", choices=COLUMNS.keys())
+                        default="host,service,ports,protocol,status,host_os", choices=list(COLUMNS.keys()))
 
     parser.add_argument('--status', help='Comma separated list of status to filter for.')
 
@@ -73,12 +77,12 @@ def main(workspace='', args=None, parser=None):
     if parsed_args.additional_info and not parsed_args.no_filter:
         print('Filtering services for ports: ' + ', '.join(map(str, sorted(port_list))))
 
-    columns = filter(None, parsed_args.columns.split(','))
+    columns = list(filter(None, parsed_args.columns.split(',')))
 
     status_filter = None
 
     if parsed_args.status is not None:
-        status_filter = filter(None, parsed_args.status.split(','))
+        status_filter = list(filter(None, parsed_args.status.split(',')))
 
     lines = []
 
@@ -107,11 +111,15 @@ def main(workspace='', args=None, parser=None):
         print('-' * (col_width * len(columns)))
 
     if parsed_args.sorted:
+        import functools
         # Compare lines using the first column (IP)
-        for row in sorted(lines, cmp=lambda l1, l2: cmp(l1[0], l2[0])):
+        for row in sorted(lines, key=functools.cmp_to_key(lambda l1, l2: cmp(l1[0], l2[0]))): # passed from py2 to py2/3, TODO check
             print("".join(word.ljust(col_width) for word in row))
     else:
         for row in lines:
             print("".join(word.ljust(col_width) for word in row))
 
     return 0, None
+
+
+# I'm Py3

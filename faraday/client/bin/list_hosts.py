@@ -5,6 +5,8 @@ Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 """
+from __future__ import absolute_import
+from __future__ import print_function
 
 from faraday.client.persistence.server import models
 
@@ -23,3 +25,6 @@ def main(workspace='', args=None, parser=None):
             print('%s\t%s' % (host.name, host.os))
 
     return 0, None
+
+
+# I'm Py3

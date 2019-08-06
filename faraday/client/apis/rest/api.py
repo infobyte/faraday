@@ -362,3 +362,6 @@ class Route(object):
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
+
+
+# I'm Py3

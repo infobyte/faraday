@@ -4,6 +4,8 @@ Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
+from __future__ import absolute_import
+from __future__ import print_function
 
 from faraday.client.persistence.server import models
 
@@ -26,6 +28,9 @@ def main(workspace='', args=None, parser=None):
             print(host.name)
 
     if parsed_args.sorted:
-        print '\n'.join(sorted(ips))
+        print('\n'.join(sorted(ips)))
 
     return 0, None
+
+
+# I'm Py3

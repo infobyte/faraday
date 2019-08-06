@@ -6,6 +6,9 @@ Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
+from __future__ import absolute_import
+from __future__ import print_function
+from builtins import input
 
 import re
 from faraday.client.persistence.server import models
@@ -26,7 +29,7 @@ def main(workspace='', args=None, parser=None):
                "matching the regex {} in the worspace {}? "
                "This action can't be undone [y/n] ".format(
                    parsed_args.regex, workspace))
-        if raw_input(msg) not in ('y', 'yes'):
+        if input(msg) not in ('y', 'yes'):
             return 1, None
 
     for vuln in models.get_all_vulns(workspace):
@@ -34,3 +37,6 @@ def main(workspace='', args=None, parser=None):
             print("Delete Vuln: " + vuln.name)
             models.delete_vuln(workspace, vuln.id)
     return 0, None
+
+
+# I'm Py3

@@ -5,6 +5,8 @@ Faraday Penetration Test IDE
 Copyright (C) 2017  Infobyte LLC (http://www.infobytesec.com/)
 See the file "doc/LICENSE" for the license information
 """
+from __future__ import absolute_import
+from __future__ import print_function
 
 import csv
 from time import mktime
@@ -105,7 +107,7 @@ def transform_dict_to_object(columns, register):
         obj.update(value)
 
     # Check if obj is Invalid, return None
-    for key, val in obj.iteritems():
+    for key, val in obj.items():
         if val != [""] and val != [] and val != "" and val != False and val != "info" and val != "opened" and val != "open":
             return obj
 
@@ -330,3 +332,6 @@ def main(workspace="", args=None, parser=None):
     print("[*]", counter, "new Faraday objects created.")
     file_csv.close()
     return 0, None
+
+
+# I'm Py3

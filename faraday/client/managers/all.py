@@ -58,3 +58,6 @@ class ViewsListObject(object):
 
     def get_all_views(self):
         return self.get_fs_designs()
+
+
+# I'm Py3

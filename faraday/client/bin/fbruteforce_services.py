@@ -6,7 +6,10 @@ Faraday Penetration Test IDE
 Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
+from __future__ import absolute_import
+from __future__ import print_function
 
+from builtins import input
 import os
 import sys
 import base64
@@ -114,7 +117,7 @@ def show_table_services(workspace):
 def input_index(text, leng):
     while 1:
 
-        stdin = raw_input(text+"[0-"+str(leng-1)+"/q]: ")
+        stdin = input(text+"[0-"+str(leng-1)+"/q]: ")
 
         if re.search("[0-9]", stdin) is not None:
 
@@ -154,8 +157,8 @@ def show_options(workspace):
 
     #Le pido el path de el user dic y el password dic
     if dictionary == 0:
-        usernames_dic_path = raw_input("Usernames file: ")
-        passwords_dic_path = raw_input("Passwords file: ")
+        usernames_dic_path = input("Usernames file: ")
+        passwords_dic_path = input("Passwords file: ")
         user_define_dictionary = True
 
     else:
@@ -235,3 +238,6 @@ def main(workspace='', args=None, parser=None):
     else:
         sys.exit("Hydra is not installed on the system. Install hydra to continue execution")
         return None, None
+
+
+# I'm Py3

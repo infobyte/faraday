@@ -44,3 +44,5 @@ class MapperManager(object):
 
     def remove(self, obj_id, class_signature):
         return delete_object(self.workspace_name, class_signature, obj_id)
+
+# I'm Py3

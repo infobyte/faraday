@@ -172,10 +172,12 @@ class WorkspaceView(ReadWriteView):
         return obj
 
     def _perform_create(self, data, **kwargs):
+
         scope = data.pop('scope', [])
         workspace = super(WorkspaceView, self)._perform_create(data, **kwargs)
         workspace.set_scope(scope)
-        self._createWorkspaceFolder(workspace.name)
+        if workspace.start_date > workspace.end_date:
+            flask.abort(404, "start_date or end_date not valid")
         db.session.commit()
         return workspace
 

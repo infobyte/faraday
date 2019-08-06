@@ -95,6 +95,11 @@ angular.module('faradayApp')
                 });
             };
 
+            $scope.$watch("workspace.start_date", function(newValue, oldValue) {
+                console.log("I've changed : ");
+            });
+
+
             $scope.onSuccessEdit = function (workspace) {
                 for (var i = 0; i < $scope.workspaces.length; i++) {
                     if ($scope.workspaces[i]._id == workspace._id) {

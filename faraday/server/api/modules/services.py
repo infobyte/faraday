@@ -36,7 +36,7 @@ class ServiceSchema(AutoSchema):
                          fields.Method(deserialize='load_ports'),
                          required=True,
                          attribute='port')
-    status = fields.String(default='open', validate=OneOf(Service.STATUSES),
+    status = fields.String(missing='open', validate=OneOf(Service.STATUSES),
                            required=True, allow_none=False)
     parent = fields.Integer(attribute='host_id')  # parent is not required for updates
     host_id = fields.Integer(attribute='host_id', dump_only=True)

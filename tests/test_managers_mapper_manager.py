@@ -125,6 +125,7 @@ OBJ_DATA = [
             'owner': 'leo',
             'severity': 'critical',
             'data': '',
+            'external_id': '1.30.9988.20.asdf.x20.vuln'
         },
         'expected_payload': {
             'command_id': None,
@@ -142,6 +143,7 @@ OBJ_DATA = [
             'refs': [],
             'status': 'opened',
             'resolution': None,
+            'external_id': '1.30.9988.20.asdf.x20.vuln'
         },
     },
     {
@@ -168,6 +170,7 @@ OBJ_DATA = [
             'request': 'test',
             'query': 'query test',
             'response': 'repsonse data',
+            'external_id': '1.30.9988.20.asdf.x20.vuln'
         },
         'expected_payload': {
             'category': '',
@@ -194,6 +197,7 @@ OBJ_DATA = [
             'request': 'test',
             'query': 'query test',
             'response': 'repsonse data',
+            'external_id': '1.30.9988.20.asdf.x20.vuln'
         },
     },
     {
@@ -364,7 +368,8 @@ GET_OBJ_DATA = [
                 "_attachments": [],
                 "target": "172.16.138.1",
                 "_id": 348,
-                "resolution": "resolution"
+                "resolution": "resolution",
+                "external_id": "1.30.9988.20.asdf.x20.vuln"
                 },
             'serialized_expected_results': {
                 'confirmed': True,
@@ -388,6 +393,7 @@ GET_OBJ_DATA = [
                 'status': 'opened',
                 'website': 'www.faradaysec.com',
                 "query": "query",
+                'external_id': '1.30.9988.20.asdf.x20.vuln',
                 "pname": "pname"
             }
 
@@ -455,7 +461,8 @@ GET_OBJ_DATA = [
                 "_attachments": [],
                 "target": "192.168.0.1",
                 "_id": 1,
-                "resolution": ""
+                "resolution": "",
+                "external_id": "1.30.9988.20.asdf.x20.vuln"
         },
             'serialized_expected_results': {
                 'confirmed': True,
@@ -471,6 +478,7 @@ GET_OBJ_DATA = [
                 'refs': [],
                 'resolution': '',
                 'severity': 'med',
+                'external_id': '1.30.9988.20.asdf.x20.vuln',
                 'status': 'opened'
             }
 

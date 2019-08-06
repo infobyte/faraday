@@ -28,6 +28,7 @@ angular.module('faradayApp').
                 this.policyviolations = [];
                 this.customfields = [];
                 this.easeofresolution = "";
+                this.external_id = "";
                 this.creator = "";
                 this.create_at = "";
                 if (data) {
@@ -42,7 +43,7 @@ angular.module('faradayApp').
 
                 public_properties: ['exploitation', 'references', 'name', 'resolution', 'cwe', 'description',
                                     'desc', 'data', 'id', 'refs', 'impact', 'easeofresolution', 'policyviolations', 'customfields',
-                                    'creator', 'create_at'],
+				    'external_id', 'creator', 'create_at'],
 
                 set: function(data) {
                     var self = this;

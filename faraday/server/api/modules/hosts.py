@@ -8,10 +8,11 @@ import csv
 import flask
 import re
 from flask import Blueprint, make_response, jsonify, abort
+import pytz
 from flask_classful import route
 from marshmallow import fields, Schema
 from filteralchemy import Filter, FilterSet, operators
-from sqlalchemy import or_
+from sqlalchemy import or_, desc
 import wtforms
 from flask_wtf.csrf import validate_csrf
 
@@ -31,7 +32,7 @@ from faraday.server.schemas import (
     PrimaryKeyRelatedField,
     SelfNestedField
 )
-from faraday.server.models import Host, Service, db, Hostname
+from faraday.server.models import Host, Service, db, Hostname, CommandObject, Command
 from faraday.server.api.modules.services import ServiceSchema
 
 host_api = Blueprint('host_api', __name__)
@@ -63,17 +64,24 @@ class HostSchema(AutoSchema):
     type = fields.Function(lambda obj: 'Host', dump_only=True)
     service_summaries = fields.Method('get_service_summaries',
                                       dump_only=True)
+    versions = fields.Method('get_service_version',
+                                      dump_only=True)
 
     class Meta:
         model = Host
         fields = ('id', '_id', '_rev', 'ip', 'description', 'mac',
                   'credentials', 'default_gateway', 'metadata',
                   'name', 'os', 'owned', 'owner', 'services', 'vulns',
-                  'hostnames', 'type', 'service_summaries'
+                  'hostnames', 'type', 'service_summaries', 'versions'
                   )
 
     def get_service_summaries(self, obj):
         return [service.summary
+                for service in obj.services
+                if service.status == 'open']
+
+    def get_service_version(self, obj):
+        return [service.version
                 for service in obj.services
                 if service.status == 'open']
 
@@ -202,6 +210,21 @@ class HostsView(PaginatedMixin,
             res_dict["hosts"][host.id] = host_count_schema.dump(host).data
         # return counts.data
 
+        return res_dict
+
+    @route('/<host_id>/tools_history/')
+    def tool_impacted_by_host(self, workspace_name, host_id):
+        workspace = self._get_workspace(workspace_name)
+        query = db.session.query(Host, Command).filter(Host.id == CommandObject.object_id,
+                                                       CommandObject.object_type == 'host',
+                                                       Command.id == CommandObject.command_id,
+                                                       Host.workspace_id == workspace.id,
+                                                       Host.id == host_id).order_by(desc(CommandObject.create_date))
+        result = query.all()
+        res_dict = {'tools': []}
+        for row in result:
+            host, command = row
+            res_dict['tools'].append({'command': command.tool, 'create_date': command.create_date.replace(tzinfo=pytz.utc).strftime("%c")})
         return res_dict
 
     def _perform_create(self, data, **kwargs):

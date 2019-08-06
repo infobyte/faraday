@@ -179,7 +179,6 @@
 
                     <div class="col-md-12 custom-divider"></div>
 
-
                     <div class="col-md-12">
                         <div class="tab-pane-header">Description</div>
                         <div class="form-group" ng-class="{'has-error': formEdit.desc.$invalid }">
@@ -188,6 +187,14 @@
                                       ng-model="modal.data.desc" placeholder="Description"
                             style="margin: 0 2px 0 0; height: 239px; width: 810px;" required></textarea>
                         </div><!-- .form-group -->
+                    </div>
+
+                    <div class="col-md-12  margin-top-22px">
+                        <div class="tab-pane-header">External ID</div>
+                        <div class="form-group">
+                        <label class="sr-only control-label" for="vuln-external_id">External ID</label>
+                            <input type="text" class="form-control" id="vuln-external_id" placeholder="External ID" name="external_id" ng-model="modal.data.external_id"/>
+                        </div>
                     </div>
 
 
@@ -214,6 +221,8 @@
                             </div>
                         </div>
                     </div><!-- .form-group -->
+
+
 
 
                     <div class="col-md-12 margin-top-22px">

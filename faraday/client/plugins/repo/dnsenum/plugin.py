@@ -194,7 +194,7 @@ class DnsenumPlugin(core.PluginBase):
                 h_id,
                 item.ip,
                 ipv4_address=item.ip,
-                hostname_resolution=item.hostname)
+                hostname_resolution=[item.hostname])
 
         del parser
 

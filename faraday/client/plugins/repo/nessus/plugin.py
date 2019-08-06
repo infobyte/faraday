@@ -133,6 +133,9 @@ class NessusPlugin(core.PluginBase):
             srv = {}
             web = False
             for v in t.vulns:
+                external_id = ""
+
+                external_id = v.get('plugin_id')
 
                 desc = ""
                 desc += v.get('description').encode("ascii",
@@ -155,7 +158,7 @@ class NessusPlugin(core.PluginBase):
                     ref.append(", ".join(v.get('xref')))
                 if v.get('svc_name') == "general":
                     v_id = self.createAndAddVulnToHost(h_id, v.get('plugin_name'),
-                                                       desc=desc, ref=ref, data=data, severity=v.get('severity'), resolution=resolution)
+                                                       desc=desc, ref=ref, data=data, severity=v.get('severity'), resolution=resolution, external_id=external_id)
                 else:
 
                     s_id = self.createAndAddServiceToInterface(h_id, i_id, v.get('svc_name'),
@@ -177,13 +180,12 @@ class NessusPlugin(core.PluginBase):
 
                     if web:
                         v_id = self.createAndAddVulnWebToService(h_id, s_id, v.get('plugin_name'),
-                                                                 desc=desc, data=data, website=host, severity=v.get(
-                                                                     'severity'),
-                                                                 resolution=resolution, ref=ref)
+                                                                 desc=desc, data=data, website=host, severity=v.get('severity'),
+                                                                 resolution=resolution, ref=ref, external_id=external_id)
                     else:
                         v_id = self.createAndAddVulnToService(h_id, s_id, v.get('plugin_name'),
                                                               desc=desc, data=data, severity=v.get('severity'), resolution=resolution,
-                                                              ref=ref)
+                                                              ref=ref, external_id=external_id)
 
     def _isIPV4(self, ip):
         if len(ip.split(".")) == 4:
@@ -210,7 +212,7 @@ def createPlugin():
 
 if __name__ == '__main__':
     parser = NessusPlugin()
-    with open('/home/javier/DNS_publicos_hlnn77.nessus', 'r') as report:
+    with open('/home/dnadares/report-collection/latest_reports/DNS_publicos_hlnn77.nessus', 'r') as report:
         parser.parseOutputString(report.read())
         for item in parser.items:
             if item.status == 'up':

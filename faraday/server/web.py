@@ -23,6 +23,7 @@ from autobahn.twisted.websocket import (
 import faraday.server.config
 
 from faraday.config.constant import CONST_FARADAY_HOME_PATH
+from faraday.server import TimerClass
 from faraday.server.utils import logger
 
 from faraday.server.app import create_app
@@ -142,6 +143,7 @@ class WebServer(object):
             logger.info("Stopping threads, please wait...")
             # teardown()
             self.raw_report_processor.stop()
+            self.timer.stop()
 
         log_path = os.path.join(CONST_FARADAY_HOME_PATH, 'logs', 'access-logging.log')
         site = twisted.web.server.Site(self.__root_resource,
@@ -161,6 +163,8 @@ class WebServer(object):
             # start threads and processes
             self.raw_report_processor = RawReportProcessor()
             self.raw_report_processor.start()
+            self.timer = TimerClass()
+            self.timer.start()
             # web and static content
             self.__listen_func(
                 self.__listen_port, site,

@@ -4,8 +4,10 @@
 from __future__ import absolute_import
 
 import operator
+import string
 from datetime import datetime
 from functools import partial
+from random import SystemRandom
 
 from sqlalchemy import (
     Boolean,
@@ -22,7 +24,7 @@ from sqlalchemy import (
     event,
 )
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import relationship, undefer
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import select, text, table
 from sqlalchemy.sql.expression import asc, case, join
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -67,7 +69,7 @@ OBJECT_TYPES = [
     'comment',
     'executive_report',
     'workspace',
-    'task'
+    'task',
 ]
 
 
@@ -527,6 +529,8 @@ class VulnerabilityABC(Metadata):
     impact_availability = Column(Boolean, default=False, nullable=False)
     impact_confidentiality = Column(Boolean, default=False, nullable=False)
     impact_integrity = Column(Boolean, default=False, nullable=False)
+
+    external_id = BlankColumn(Text)
 
     __table_args__ = (
         CheckConstraint('1.0 <= risk AND risk <= 10.0',
@@ -1803,6 +1807,8 @@ class ExecutiveReport(Metadata):
                     "TagObject.object_type=='executive_report')",
         collection_class=set,
     )
+    severities = Column(JSONType, nullable=True, default=[])
+    filter = Column(JSONType, nullable=True, default=[])
     @property
     def parent(self):
         return
@@ -1840,6 +1846,137 @@ class Notification(db.Model):
 
     mark_read = Column(Boolean, default=False, index=True)
     create_date = Column(DateTime, default=datetime.utcnow)
+
+    @property
+    def parent(self):
+        return
+
+
+class Rule(Metadata):
+    __tablename__ = 'rule'
+
+    id = Column(Integer, primary_key=True)
+    model = Column(String, nullable=False)
+    object_parent = Column(String, nullable=True)
+    fields = Column(JSONType, nullable=True)
+    object = Column(JSONType, nullable=False)
+    actions = relationship("Action", secondary="rule_action", backref=backref("rules"))
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship('Workspace', backref=backref('rules', cascade="all, delete-orphan"))
+
+
+class Action(Metadata):
+    __tablename__ = 'action'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=True)
+    command = Column(String, nullable=False)
+    field = Column(String, nullable=True)
+    value = Column(String, nullable=True)
+
+
+class AgentsSchedule(Metadata):
+    __tablename__ = 'agent_schedule'
+    id = Column(Integer, primary_key=True)
+    description = NonBlankColumn(Text)
+    crontab = NonBlankColumn(Text)
+    timezone = NonBlankColumn(Text)
+    active = Column(Boolean, nullable=False, default=True)
+    last_run = Column(DateTime)
+
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship(
+        'Workspace',
+        backref=backref('schedules', cascade="all, delete-orphan"),
+    )
+
+    agent_id = Column(Integer, ForeignKey('agent.id'), index=True, nullable=False)
+    agent = relationship(
+        'Agent',
+        backref=backref('schedules', cascade="all, delete-orphan"),
+    )
+
+    @property
+    def next_run(self):
+        raise NotImplementedError()
+
+    @property
+    def parent(self):
+        return self.agent
+
+
+class RuleAction(Metadata):
+    __tablename__ = 'rule_action'
+    id = Column(Integer, primary_key=True)
+    rule_id = Column(Integer, ForeignKey('rule.id'), index=True, nullable=False)
+    rule = relationship('Rule', foreign_keys=[rule_id], backref=backref('rule_actions', cascade="all, delete-orphan"))
+    action_id = Column(Integer, ForeignKey('action.id'), index=True, nullable=False)
+    action = relationship('Action', foreign_keys=[action_id], backref=backref('rule_actions', cascade="all, delete-orphan"))
+
+
+class Agent(Metadata):
+    __tablename__ = 'agent'
+    id = Column(Integer, primary_key=True)
+    token = Column(Text, unique=True, nullable=False, default=lambda:
+                    "".join([SystemRandom().choice(string.ascii_letters + string.digits)
+                            for _ in range(64)]))
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship(
+        'Workspace',
+        foreign_keys=[workspace_id],
+        backref=backref('agents', cascade="all, delete-orphan"),
+    )
+    name = NonBlankColumn(Text)
+    active = Column(Boolean, default=True)
+
+    @property
+    def parent(self):
+        return
+
+    @property
+    def is_online(self):
+        from faraday.server.websocket_factories import connected_agents
+        return self.id in connected_agents
+
+    @property
+    def status(self):
+        if self.active:
+            if self.is_online:
+                return 'online'
+            else:
+                return 'offline'
+        else:
+            return 'paused'
+
+
+class Condition(Metadata):
+    __tablename__ = 'condition'
+
+    id = Column(Integer, primary_key=True)
+    field = Column(String)
+    value = Column(String)
+    operator = Column(String, default='equals')
+    rule_id = Column(Integer, ForeignKey('rule.id'), index=True, nullable=False)
+    rule = relationship('Rule', foreign_keys=[rule_id], backref=backref('conditions', cascade="all, delete-orphan"))
+
+    @property
+    def parent(self):
+        return
+
+
+class RuleExecution(Metadata):
+    """
+        Searcher uses command_id to enable faraday activity tracking.
+        We then use this model to link rule execution with the command that the searcher
+        executed.
+    """
+    __tablename__ = 'rule_execution'
+    id = Column(Integer, primary_key=True)
+    start = Column(DateTime, nullable=True)
+    end = Column(DateTime, nullable=True)
+    rule_id = Column(Integer, ForeignKey('rule.id'), index=True, nullable=False)
+    rule = relationship('Rule', foreign_keys=[rule_id], backref=backref('executions', cascade="all, delete-orphan"))
+    command_id = Column(Integer, ForeignKey('command.id'), index=True, nullable=False)
+    command = relationship('Command', foreign_keys=[command_id], backref=backref('rule_executions', cascade="all, delete-orphan"))
 
     @property
     def parent(self):

@@ -195,11 +195,19 @@ class PluginBase(object):
     def createAndAddInterface(
         self, host_id, name="", mac="00:00:00:00:00:00",
         ipv4_address="0.0.0.0", ipv4_mask="0.0.0.0", ipv4_gateway="0.0.0.0",
-        ipv4_dns=[], ipv6_address="0000:0000:0000:0000:0000:0000:0000:0000",
+        ipv4_dns=None, ipv6_address="0000:0000:0000:0000:0000:0000:0000:0000",
         ipv6_prefix="00",
-        ipv6_gateway="0000:0000:0000:0000:0000:0000:0000:0000", ipv6_dns=[],
-        network_segment="", hostname_resolution=[]):
-
+        ipv6_gateway="0000:0000:0000:0000:0000:0000:0000:0000", ipv6_dns=None,
+        network_segment="", hostname_resolution=None):
+        if ipv4_dns is None:
+            ipv4_dns = []
+        if ipv6_dns is None:
+            ipv6_dns = []
+        if hostname_resolution is None:
+            hostname_resolution = []
+        if not isinstance(hostname_resolution, list):
+            logger.warning("hostname_resolution parameter must be a list and is (%s)", type(hostname_resolution))
+            hostname_resolution = [hostname_resolution]
         # We don't use interface anymore, so return a host id to maintain
         # backwards compatibility
         # Little hack because we dont want change all the plugins for add hostnames in Host object.
@@ -261,14 +269,14 @@ class PluginBase(object):
         return serv_obj.getID()
 
     def createAndAddVulnToHost(self, host_id, name, desc="", ref=[],
-                               severity="", resolution="", data=""):
+                               severity="", resolution="", data="", external_id=None):
 
         vuln_obj = faraday.client.model.common.factory.createModelObject(
             Vuln.class_signature,
             name, data=data, desc=desc, refs=ref, severity=severity,
             resolution=resolution, confirmed=False,
             parent_id=host_id, parent_type='Host',
-            workspace_name=self.workspace)
+            workspace_name=self.workspace,external_id=external_id)
 
         vuln_obj._metadata.creator = self.id
         self.__addPendingAction(Modelactions.ADDVULNHOST, vuln_obj)
@@ -293,16 +301,17 @@ class PluginBase(object):
         return vuln_obj.getID()
 
     def createAndAddVulnToService(self, host_id, service_id, name, desc="",
-                                  ref=[], severity="", resolution="", data=""):
+                                  ref=[], severity="", resolution="", data="", external_id=None):
 
         vuln_obj = faraday.client.model.common.factory.createModelObject(
             Vuln.class_signature,
             name, data=data, desc=desc, refs=ref, severity=severity,
             resolution=resolution, confirmed=False,
             parent_type='Service', parent_id=service_id,
-            workspace_name=self.workspace)
+            workspace_name=self.workspace, external_id=external_id)
 
         vuln_obj._metadata.creator = self.id
+
         self.__addPendingAction(Modelactions.ADDVULNSRV, vuln_obj)
         return vuln_obj.getID()
 
@@ -310,7 +319,7 @@ class PluginBase(object):
                                      ref=[], severity="", resolution="",
                                      website="", path="", request="",
                                      response="", method="", pname="",
-                                     params="", query="", category="", data=""):
+                                     params="", query="", category="", data="", external_id=None):
         vulnweb_obj = faraday.client.model.common.factory.createModelObject(
             VulnWeb.class_signature,
             name, data=data, desc=desc, refs=ref, severity=severity,
@@ -319,7 +328,7 @@ class PluginBase(object):
             pname=pname, params=params, query=query,
             category=category, confirmed=False, parent_id=service_id,
             parent_type='Service',
-            workspace_name=self.workspace)
+            workspace_name=self.workspace, external_id=external_id)
 
         vulnweb_obj._metadata.creator = self.id
         self.__addPendingAction(Modelactions.ADDVULNWEBSRV, vulnweb_obj)
@@ -419,4 +428,6 @@ class PluginProcess(Thread):
         return
 
     def stop(self):
-        self.stop = True# I'm Py3
+        self.stop = True
+
+# I'm Py3

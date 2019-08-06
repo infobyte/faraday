@@ -41,6 +41,7 @@ def process_workspaces(mappers_manager, plugin_manager, query, disable_polling):
     report_managers = []
     controllers = []
     for workspace in query.all():
+        logger.debug('Processing workspace {0}'.format(workspace.name))
         pending_actions = Queue()
         plugin_controller = PluginController(
             'PluginController',
@@ -64,7 +65,7 @@ def process_workspaces(mappers_manager, plugin_manager, query, disable_polling):
         report_manager.start()
 
     for report_manager in report_managers:
-        report_manager.stop()
+        report_manager.join()
 
     for controller in controllers:
         controller.stop()

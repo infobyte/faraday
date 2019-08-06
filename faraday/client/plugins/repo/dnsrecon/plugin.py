@@ -214,13 +214,13 @@ class DnsreconPlugin(core.PluginBase):
                     h_id,
                     name=host.address,
                     ipv4_address=host.address,
-                    hostname_resolution=hostname)
+                    hostname_resolution=[hostname])
             else:
                 i_id = self.createAndAddInterface(
                     h_id,
                     name=host.address,
                     ipv6_address=host.address,
-                    hostname_resolution=hostname)
+                    hostname_resolution=[hostname])
 
             if host.type == "info":
 

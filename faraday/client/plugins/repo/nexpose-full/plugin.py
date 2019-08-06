@@ -286,7 +286,7 @@ class NexposeFullPlugin(core.PluginBase):
                 h_id,
                 item['name'],
                 ipv4_address=item['name'],
-                hostname_resolution=' '.join(item['hostnames']))
+                hostname_resolution=item['hostnames'])
 
             for v in item['vulns']:
 

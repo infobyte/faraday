@@ -8,6 +8,7 @@ from __future__ import absolute_import
 import time
 import json
 import datetime
+from flask import g
 from marshmallow import fields, Schema
 from marshmallow.exceptions import ValidationError
 from dateutil.tz import tzutc
@@ -41,8 +42,17 @@ class FaradayCustomField(fields.Field):
         if not value:
             value = {}
         res = {}
-        custom_fields = db.session.query(CustomFieldsSchema).filter_by(
-            table_name=self.table_name)
+
+        try:
+            custom_fields = g.custom_fields[self.table_name]
+        except KeyError:
+            custom_fields = db.session.query(CustomFieldsSchema).filter_by(
+                    table_name=self.table_name).all()
+            g.custom_fields[self.table_name] = custom_fields
+        except AttributeError:
+            custom_fields = db.session.query(CustomFieldsSchema).filter_by(
+                table_name=self.table_name).all()
+
         for custom_field in custom_fields:
             serialized_value = value.get(custom_field.field_name)
             res[custom_field.field_name] = serialized_value

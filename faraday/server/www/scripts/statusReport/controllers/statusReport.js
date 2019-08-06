@@ -278,7 +278,7 @@ angular.module("faradayApp")
             }
 
             $scope.columns = {
-                "_id":               true,
+                "_id":              true,
                 "date":             true,
                 "name":             true,
                 "severity":         true,
@@ -305,7 +305,8 @@ angular.module("faradayApp")
                 "response":         false,
                 "web":              false,
                 "creator":          false,
-                "policyviolations":  false
+                "policyviolations": false,
+                "external_id":      false
             };
 
 
@@ -656,6 +657,16 @@ angular.module("faradayApp")
                 maxWidth: 100,
                 minWidth: 100,
             });
+	    $scope.gridOptions.columnDefs.push({ name : 'external_id',
+                displayName : "external_id",
+                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/defaultcolumn.html',
+                headerCellTemplate: header,
+                field: "external_id",
+                sort: getColumnSort('external_id'),
+                visible: $scope.columns["external_id"],
+                maxWidth: 150,
+                minWidth: 130,
+            });
             $scope.gridOptions.columnDefs.push({ name : 'status',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/statuscolumn.html',
                 headerCellTemplate: header,
@@ -852,11 +863,14 @@ angular.module("faradayApp")
 
         $scope.csv = function() {
             deferred = $q.defer();
-
-            let confirmed = $scope.propertyFilterConfirmed === "Confirmed" ? true : false;
             $scope.loading = true;
 
-            vulnsManager.exportCsv($scope.workspace, confirmed)
+            var jsonOptions;
+
+            if($scope.searchParams.length > 0)
+                jsonOptions = parserFact.evaluateExpression($scope.searchParams);
+
+            vulnsManager.exportCsv($scope.workspace, jsonOptions)
             .then(function(result){
                  var title = "";
 
@@ -956,9 +970,9 @@ angular.module("faradayApp")
                 promises.push(vulnsManager.updateVuln(vuln, toggleConfirm));
             });
             $q.all(promises).then(function(res) {
-                if(confirm === true) {
+                /*if(confirm === true) {
                     loadVulns();
-                }
+                }*/
             }, function(errorMsg){
                 commonsFact.showMessage("Error updating vuln " + vuln.name + " (" + vuln._id + "): " + errorMsg);
             });
@@ -1679,6 +1693,7 @@ angular.module("faradayApp")
                   function(d) {
                     $scope.csrf_token = d.data.csrf_token;
                     fileItem.formData.push({'csrf_token': $scope.csrf_token});
+                    fileItem.file.name = fileItem.file.name.replace(/ /g, '_');
                     fileItem.url = '_api/v2/ws/' + $routeParams.wsId + '/vulns/' + $scope.lastClickedVuln._id + '/attachment/';
                     $scope.uploader.uploadAll();
                   }

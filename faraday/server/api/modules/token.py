@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from itsdangerous import TimedJSONWebSignatureSerializer
 from flask import Blueprint, g
 from flask_security.utils import hash_data

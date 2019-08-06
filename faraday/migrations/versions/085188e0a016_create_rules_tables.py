@@ -185,3 +185,6 @@ def downgrade():
     op.drop_table('rule_action')
     op.drop_table('action')
     op.drop_table('rule')
+
+
+# I'm Py3

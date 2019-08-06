@@ -43,3 +43,6 @@ def install_packages(packages):
         if not hasattr(sys, 'real_prefix'):
             pip_cmd.append('--user')
         main(pip_cmd)
+
+
+# I'm Py3

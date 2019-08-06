@@ -672,3 +672,6 @@ def getInstanceConfiguration():
         else:
             the_config = Configuration(os.path.expanduser("~/.faraday/config/config.xml"))
     return the_config
+
+
+# I'm Py3

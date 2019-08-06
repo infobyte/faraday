@@ -65,3 +65,6 @@ def checkSSL(uri):
         return res.ok
     except Exception:
         return False
+
+
+# I'm Py3

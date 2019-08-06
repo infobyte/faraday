@@ -31,3 +31,6 @@ CONST_BLACKDBS = ('cwe','reports', CONST_LICENSES_DB)
 CONST_USER_HOME = "~"
 CONST_USER_ZSHRC = "~/.zshrc"
 CONST_ZSH_PATH = "zsh"
+
+
+# I'm Py3

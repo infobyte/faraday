@@ -85,3 +85,6 @@ def upgrade():
 def downgrade():
     op.drop_table('agent_schedule')
     op.drop_table('agent')
+
+
+# I'm Py3

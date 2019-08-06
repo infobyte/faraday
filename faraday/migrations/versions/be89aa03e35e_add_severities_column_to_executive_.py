@@ -27,3 +27,6 @@ def upgrade():
 def downgrade():
     conn = op.get_bind()
     conn.execute('ALTER TABLE executive_report DROP COLUMN filter')
+
+
+# I'm Py3

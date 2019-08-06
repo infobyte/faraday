@@ -87,9 +87,10 @@ class Analyser:
                 total += s_total
                 strs.extend(s_strs)
                 error_files.extend(s_error_files)
-        if 0 < total:
+        if are3 != total and total > 0:
+            prtg = 100.0*are3/total
             strs.append('Analysed {path}, {are3}/{total} {prtg}%'
-                        .format(path=parent_path, are3=are3, total=total, prtg=100.0*are3/total))
+                        .format(path=parent_path, are3=are3, total=total, prtg=prtg))
         return are3, total, strs, error_files
 
     def run(self):

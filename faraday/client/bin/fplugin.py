@@ -6,6 +6,9 @@ Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 """
+from __future__ import absolute_import
+from __future__ import print_function
+from builtins import input
 
 import os
 import sys
@@ -16,7 +19,7 @@ import signal
 import inspect
 import argparse
 import readline
-from Queue import Queue
+from queue import Queue
 
 from faraday.client.plugins import fplugin_utils
 
@@ -70,7 +73,7 @@ def dispatch(args, unknown, user_help, username, password):
         if not args.interactive:
             sys.exit(1)
 
-    if args.command not in plugins.keys():
+    if args.command not in list(plugins.keys()):
         sys.stderr.write(Fore.RED +
                          ("ERROR: Plugin %s not found.\n" % args.command) +
                          Fore.RESET)
@@ -154,7 +157,7 @@ def main():
 
     plugins = fplugin_utils.get_available_plugins()
 
-    for plugin in sorted(plugins.iterkeys()):
+    for plugin in sorted(plugins.keys()):
         epilog += '\t- %s: %s\n' % (plugin, plugins[plugin]['description'])
 
     parser = argparse.ArgumentParser(description=description,
@@ -215,7 +218,7 @@ def main():
 
         while True:
             try:
-                line = raw_input("> ")
+                line = input("> ")
 
                 if line.strip() == 'exit':
                     os._exit(0)
@@ -225,7 +228,7 @@ def main():
                 new_args += ['--username', args.username, '--password', args.password]
 
                 if '-i' in new_args or '--interactive' in new_args:
-                    print 'Already in interactive mode!'
+                    print('Already in interactive mode!')
                     continue
 
                 if 'h' in new_args or 'help' in new_args:
@@ -242,7 +245,7 @@ def main():
                 last_id = dispatch(parsed_args, new_unknown, parser.format_help(), args.username, args.password) or last_id
                 # print '$last = %s' % last_id
             except (EOFError, KeyboardInterrupt):
-                print 'Bye Bye!'
+                print('Bye Bye!')
                 sys.exit(0)
             except SystemExit:
                 pass
@@ -250,3 +253,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+# I'm Py3

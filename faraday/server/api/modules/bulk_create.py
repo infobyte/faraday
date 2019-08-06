@@ -337,3 +337,6 @@ class BulkCreateView(GenericWorkspacedView):
     post.is_public = True
 
 BulkCreateView.register(bulk_create_api)
+
+
+# I'm Py3

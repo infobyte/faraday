@@ -3,6 +3,8 @@ Faraday Penetration Test IDE
 Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 """
+from __future__ import absolute_import
+from __future__ import print_function
 
 import json
 import os
@@ -62,7 +64,7 @@ class OnlinePlugins(Thread):
 
         while not self._stop:
 
-            for name, config_dict in self.online_plugins.iteritems():
+            for name, config_dict in self.online_plugins.items():
                 if name in self.plugins_settings:
                     if self.plugins_settings[name]['settings']['Enable'] == "1":
 

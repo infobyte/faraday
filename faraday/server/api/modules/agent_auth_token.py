@@ -42,3 +42,6 @@ class AgentAuthTokenView(GenericView):
 
 
 AgentAuthTokenView.register(agent_auth_token_api)
+
+
+# I'm Py3

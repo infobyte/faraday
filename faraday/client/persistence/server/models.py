@@ -6,6 +6,8 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 import logging
 from time import time
 import traceback
@@ -674,8 +676,8 @@ def delete_workspace(workspace_name):
 
 def get_workspaces_names():
     """Return a list with all the workspace names available."""
-    active_workspaces = filter(lambda ws: ws['active'], server.get_workspaces_names())
-    return map(lambda ws: ws['name'], active_workspaces)
+    active_workspaces = list(filter(lambda ws: ws['active'], server.get_workspaces_names()))
+    return [ws['name'] for ws in active_workspaces]
 
 
 def server_info():
@@ -943,7 +945,7 @@ class Service(ModelBase):
             self.ports = [service['ports']]
         else:
             # plugin creates a list of strings with the ports
-            self.ports = map(int, service['ports'])
+            self.ports = list(map(int, service['ports']))
         self.version = service['version']
         self.status = service['status']
         self.vuln_amount = int(service.get('vulns', 0))
@@ -1524,3 +1526,6 @@ class Metadata(object):
         if controller_funcallnames:
             return "ModelControler." + " ModelControler.".join(controller_funcallnames)
         return "No model controller call"
+
+
+# I'm Py3

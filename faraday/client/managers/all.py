@@ -7,6 +7,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
 
 import os
 
@@ -49,8 +50,8 @@ class ViewsListObject(object):
         self.designs_path = os.path.join(self.views_path, "reports", "_attachments", "views")
 
     def _listPath(self, path):
-        flist = filter(lambda x: not x.startswith('.'), os.listdir(path))
-        return map(lambda x: os.path.join(path, x), flist)
+        flist = list(filter(lambda x: not x.startswith('.'), os.listdir(path)))
+        return [os.path.join(path, x) for x in flist]
 
     def get_fs_designs(self):
         return self._listPath(self.designs_path)

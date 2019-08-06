@@ -6,6 +6,8 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 import re
 import logging
 import socket
@@ -163,3 +165,6 @@ def get_command_properties(command):
         'params': command.params,
         'import_source': command.import_source,
     }
+
+
+# I'm Py3

@@ -22,6 +22,8 @@ Warning:
     be used with care, specially regarding the ID of objects, which must
     be always unique.
 """
+from __future__ import absolute_import
+
 import urllib
 
 import os
@@ -1582,3 +1584,6 @@ def get_user_info():
         return False
     except requests.adapters.ReadTimeout:
         return False
+
+
+# I'm Py3

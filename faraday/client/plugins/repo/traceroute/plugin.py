@@ -65,3 +65,6 @@ class traceroutePlugin(core.PluginBase):
 
 def createPlugin():
     return traceroutePlugin()
+
+
+# I'm Py3

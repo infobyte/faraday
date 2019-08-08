@@ -4,6 +4,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
 
 import os
 
@@ -18,7 +19,7 @@ def filter_services():
 
     for item in filtering:
         tup = ()
-        filt = filter(len,item.split('\t'))
+        filt = list(filter(len,item.split('\t')))
         tup = (filt[0],filt[1])
         services.append(tup)
 
@@ -84,3 +85,6 @@ def get_all_protocols():
 
     for item in protocols:
         yield item
+
+
+# I'm Py3

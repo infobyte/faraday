@@ -75,3 +75,6 @@ class SSHDefaultScanPlugin(core.PluginBase):
 
 def createPlugin():
     return SSHDefaultScanPlugin()
+
+
+# I'm Py3

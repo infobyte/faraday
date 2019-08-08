@@ -81,3 +81,6 @@ class PeepingTomPlugin(core.PluginBase):
 
 def createPlugin():
     return PeepingTomPlugin()
+
+
+# I'm Py3

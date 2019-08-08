@@ -196,3 +196,6 @@ class AmapPlugin(core.PluginBase):
 
 def createPlugin():
     return AmapPlugin()
+
+
+# I'm Py3

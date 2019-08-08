@@ -7,6 +7,10 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+from past.builtins import basestring
+from builtins import range
+
 import os
 import time
 import shlex
@@ -122,7 +126,7 @@ class PluginController(Thread):
 
         block_flag = False
         orig_args_len = len(orig_cmd_args)
-        for index in xrange(0, len(mod_cmd_args)):
+        for index in range(0, len(mod_cmd_args)):
             if (index < orig_args_len and
                     orig_cmd_args[index] == mod_cmd_args[index]):
                 continue
@@ -260,7 +264,7 @@ class PluginController(Thread):
         return None, None
 
     def onCommandFinished(self, pid, exit_code, term_output):
-        if pid not in self._active_plugins.keys():
+        if pid not in list(self._active_plugins.keys()):
             return False
         if exit_code != 0:
             del self._active_plugins[pid]
@@ -306,3 +310,6 @@ class PluginController(Thread):
 
     def clearActivePlugins(self):
         self._active_plugins = {}
+
+
+# I'm Py3

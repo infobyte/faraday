@@ -7,11 +7,17 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+from __future__ import print_function
+
 from __future__ import with_statement
 import re
 import os
 import socket
-from urlparse import urlparse
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
 
 from faraday.client.plugins import core
 
@@ -336,7 +342,7 @@ class WapitiPlugin(core.PluginBase):
         if self.protocol == 'https':
             self.port = 443
 
-        print "host = %s, port = %s" % (self.host, self.port)
+        print("host = %s, port = %s" % (self.host, self.port))
 
         arg_match = self.xml_arg_re.match(command_string)
 
@@ -353,3 +359,6 @@ if __name__ == '__main__':
     parser = WapitiPlugin()
     with open('/home/javier/Reports_Testing/wapiti3.0.1.xml') as report:
         parser.parseOutputString(report.read())
+
+
+# I'm Py3

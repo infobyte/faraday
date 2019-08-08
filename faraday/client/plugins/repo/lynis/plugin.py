@@ -6,6 +6,7 @@ Faraday Penetration Test IDE
 Copyright (C) 2017  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
+from __future__ import absolute_import
 
 from __future__ import with_statement
 import re
@@ -121,7 +122,7 @@ class LynisLogDataExtracter():
                 # self.aux_items will be an auxiliar list. We will use it...
                 # ...for poping the url and the protocol so that the last element...
                 # ... of the list, will be the name of the service
-                self.aux_items = filter(None, items_service)
+                self.aux_items = list(filter(None, items_service))
                 elements_ip_port, count = self.get_ip_and_port(self.aux_items, remove_from_list=True)
                 protocol = self.get_protocol()
                 name = self.aux_items[0]
@@ -351,3 +352,6 @@ class LynisPlugin(core.PluginBase):
 
 def createPlugin():
     return LynisPlugin()
+
+
+# I'm Py3

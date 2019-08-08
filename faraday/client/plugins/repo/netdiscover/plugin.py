@@ -52,3 +52,6 @@ class NetdiscoverPlugin(core.PluginBase):
 
 def createPlugin():
     return NetdiscoverPlugin()
+
+
+# I'm Py3

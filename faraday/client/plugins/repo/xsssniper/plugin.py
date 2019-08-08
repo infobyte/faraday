@@ -6,6 +6,7 @@ Faraday Penetration Test IDE
 Copyright (C) 2017  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
+from __future__ import absolute_import
 
 import re
 import socket
@@ -66,3 +67,6 @@ if __name__ == '__main__':
     plugin_xss = xsssniper()
     with open('xsssniper_out', 'r') as xsssniper_file:
         plugin_xss.parseOutputString(xsssniper_file.read())
+
+
+# I'm Py3

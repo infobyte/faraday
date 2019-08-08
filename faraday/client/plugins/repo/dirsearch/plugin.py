@@ -184,3 +184,6 @@ class DirsearchPlugin(PluginTerminalOutput):
 
 def createPlugin():
     return DirsearchPlugin()
+
+
+# I'm Py3

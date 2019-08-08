@@ -6,6 +6,8 @@ Faraday Penetration Test IDE
 Copyright (C) 2015  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 """
+from __future__ import absolute_import
+from __future__ import print_function
 
 from __future__ import with_statement
 from faraday.client.plugins import core
@@ -43,7 +45,7 @@ def openMtgx(mtgx_file):
         xml = ET.parse(file.open('Graphs/Graph1.graphml'))
 
     except:
-        print "Bad report format"
+        print("Bad report format")
         return None
 
     file.close()
@@ -446,3 +448,6 @@ class MaltegoPlugin(core.PluginBase):
 
 def createPlugin():
     return MaltegoPlugin()
+
+
+# I'm Py3

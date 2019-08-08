@@ -265,3 +265,6 @@ class WPScanPlugin(core.PluginBase):
 
 def createPlugin():
     return WPScanPlugin()
+
+
+# I'm Py3

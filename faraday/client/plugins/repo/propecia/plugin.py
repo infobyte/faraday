@@ -7,6 +7,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 from faraday.client.plugins import core
 from faraday.client.model import api
 import re
@@ -79,3 +81,6 @@ class CmdPropeciaPlugin(core.PluginBase):
 
 def createPlugin():
     return CmdPropeciaPlugin()
+
+
+# I'm Py3

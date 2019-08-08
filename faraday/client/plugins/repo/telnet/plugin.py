@@ -102,3 +102,6 @@ class TelnetRouterPlugin(core.PluginBase):
 
 def createPlugin():
     return TelnetRouterPlugin()
+
+
+# I'm Py3

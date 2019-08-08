@@ -603,3 +603,6 @@ if __name__ == '__main__':
     for host in parser.hosts:
         if host.status == 'up':
             print(host)
+
+
+# I'm Py3

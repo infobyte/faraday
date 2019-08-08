@@ -123,3 +123,6 @@ class dirbPlugin(core.PluginBase):
 
 def createPlugin():
     return dirbPlugin()
+
+
+# I'm Py3

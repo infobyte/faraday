@@ -144,3 +144,6 @@ class FruityWiFiPlugin(core.PluginBase):
 
 def createPlugin():
     return FruityWiFiPlugin()
+
+
+# I'm Py3

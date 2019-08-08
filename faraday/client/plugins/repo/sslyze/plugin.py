@@ -1,4 +1,7 @@
 #coding=utf-8
+from __future__ import absolute_import
+from __future__ import print_function
+
 import re
 import os
 import random
@@ -39,7 +42,7 @@ class SslyzeXmlParser(object):
             tree = ET.fromstring(xml_output)
             return tree
         except IndexError:
-            print "Syntax error"
+            print("Syntax error")
             return None
 
     def get_target(self, tree):
@@ -190,3 +193,5 @@ if __name__ == '__main__':
     parser = SslyzePlugin()
     with open("/home/javier/expired.xml","r") as report:
         parser.parseOutputString(report.read())
+
+# I'm Py3

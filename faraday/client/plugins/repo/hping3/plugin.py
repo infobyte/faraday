@@ -81,3 +81,6 @@ class hping3 (core.PluginBase):
 
 def createPlugin():
     return hping3()
+
+
+# I'm Py3

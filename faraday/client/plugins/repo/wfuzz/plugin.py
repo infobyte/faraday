@@ -110,3 +110,6 @@ if __name__ == '__main__':
     parser = WfuzzPlugin()
     with open("/home/javier/salida", "r") as report:
         parser.parseOutputString(report.read())
+
+
+# I'm Py3

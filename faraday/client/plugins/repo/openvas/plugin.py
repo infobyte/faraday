@@ -7,6 +7,9 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+from __future__ import print_function
+
 from __future__ import with_statement
 import re
 import os
@@ -73,7 +76,7 @@ class OpenvasXmlParser(object):
         try:
             tree = ET.fromstring(xml_output)
         except SyntaxError, err:
-            print "SyntaxError: %s. %s" % (err, xml_output)
+            print("SyntaxError: %s. %s" % (err, xml_output))
             return None
 
         return tree
@@ -466,3 +469,6 @@ if __name__ == '__main__':
         #for item in parser.items:
             #if item.status == 'up':
                 #print item
+
+
+# I'm Py3

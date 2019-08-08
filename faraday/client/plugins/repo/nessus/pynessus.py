@@ -583,3 +583,6 @@ def zerome(string):
     print("Clearing 0x%08x size %i bytes" % (location, size))
 
     memset(location, 0, size)
+
+
+# I'm Py3

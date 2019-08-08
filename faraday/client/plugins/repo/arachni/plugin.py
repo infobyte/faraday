@@ -6,6 +6,8 @@ Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
+from __future__ import absolute_import
+from __future__ import print_function
 
 from __future__ import with_statement
 from faraday.client.plugins import core
@@ -49,7 +51,7 @@ class ArachniXmlParser():
         try:
             tree = ET.fromstring(xml_output)
         except SyntaxError, err:
-            print 'SyntaxError In xml: %s. %s' % (err, xml_output)
+            print('SyntaxError In xml: %s. %s' % (err, xml_output))
             return None
 
         return tree
@@ -386,7 +388,7 @@ class ArachniPlugin(core.PluginBase):
 
         # Check xml parsed ok...
         if not parser.system:
-            print 'Error in xml report... Exiting...'
+            print('Error in xml report... Exiting...')
             return
 
         self.hostname = self.getHostname(parser.system.url)
@@ -547,3 +549,6 @@ class ArachniPlugin(core.PluginBase):
 
 def createPlugin():
     return ArachniPlugin()
+
+
+# I'm Py3

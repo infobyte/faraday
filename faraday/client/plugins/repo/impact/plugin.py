@@ -7,6 +7,9 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+from __future__ import print_function
+
 from __future__ import with_statement
 import re
 import os
@@ -326,3 +329,6 @@ if __name__ == '__main__':
     for item in parser.items:
         if item.status == 'up':
             print(item)
+
+
+# I'm Py3

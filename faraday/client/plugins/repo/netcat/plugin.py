@@ -157,3 +157,6 @@ class CmdNetcatPlugin(core.PluginBase):
 
 def createPlugin():
     return CmdNetcatPlugin()
+
+
+# I'm Py3

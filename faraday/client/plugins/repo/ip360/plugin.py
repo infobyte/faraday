@@ -30,7 +30,7 @@ def calculate_severity(number):
 class Ip360Parser:
 
     def __init__(self, csv_content):
-        self.csv_content = StringIO.StringIO(csv_content.decode('ascii', 'ignore'))
+        self.csv_content = StringIO(csv_content.decode('ascii', 'ignore'))
         self.csv_reader = csv.DictReader(self.csv_content, delimiter=',', quotechar='"')
 
     def parse(self):
@@ -121,3 +121,5 @@ class Ip360Plugin(core.PluginBase):
 
 def createPlugin():
     return Ip360Plugin()
+
+# I'm Py3

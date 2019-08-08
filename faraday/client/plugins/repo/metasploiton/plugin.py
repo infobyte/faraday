@@ -7,6 +7,9 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+from __future__ import print_function
+
 from __future__ import with_statement
 from faraday.client.plugins import core
 from faraday.client.model import api
@@ -85,16 +88,16 @@ class MetasploitOnPlugin(core.PluginBase):
 
             cur = conn.cursor()
         except Exception as e:
-            print "[Faraday - MetasplotiOn] Error Connecting to the database"
-            print "[Faraday - MetasplotiOn]Check your metasploit postgresql credentials and server IP/Port"
-            print e
+            print("[Faraday - MetasplotiOn] Error Connecting to the database")
+            print("[Faraday - MetasplotiOn]Check your metasploit postgresql credentials and server IP/Port")
+            print(e)
             return
 
         cur = self._doSql(
             cur,
             "select * from hosts inner join workspaces ON (hosts.workspace_id=workspaces.id) where workspaces.name like '" + self.getSetting("Workspace") + "';")
         if cur is None:
-            print "Error getting database data\n"
+            print("Error getting database data\n")
             return
 
         self.path = self.data_path + "/" + api.getActiveWorkspace().name + \
@@ -402,4 +405,7 @@ if __name__ == '__main__':
     parser = MetasploitOnXmlParser(sys.argv[1])
     for item in parser.items:
         if item.status == 'up':
-            print item
+            print(item)
+
+
+# I'm Py3

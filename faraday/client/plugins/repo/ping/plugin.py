@@ -69,3 +69,6 @@ class CmdPingPlugin(core.PluginBase):
 
 def createPlugin():
     return CmdPingPlugin()
+
+
+# I'm Py3

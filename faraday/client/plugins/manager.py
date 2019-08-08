@@ -7,6 +7,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
 
 import imp
 import os
@@ -40,7 +41,7 @@ class PluginManager(object):
             self._plugin_settings = _plugin_settings
 
         activep = self._instancePlugins()
-        for plugin_id, plugin in activep.iteritems():
+        for plugin_id, plugin in activep.items():
             if plugin_id in _plugin_settings:
                 plugin.updateSettings(_plugin_settings[plugin_id]["settings"])
             self._plugin_settings[plugin_id] = {
@@ -52,7 +53,7 @@ class PluginManager(object):
                 }
 
         dplugins = []
-        for k, v in self._plugin_settings.iteritems():
+        for k, v in self._plugin_settings.items():
             if k not in activep:
                 dplugins.append(k)
 
@@ -69,9 +70,9 @@ class PluginManager(object):
         self._plugin_settings = settings
         CONF.setPluginSettings(settings)
         CONF.saveConfig()
-        for plugin_id, params in settings.iteritems():
+        for plugin_id, params in settings.items():
             new_settings = params["settings"]
-            for c_id, c_instance in self._controllers.iteritems():
+            for c_id, c_instance in self._controllers.items():
                 c_instance.updatePluginSettings(plugin_id, new_settings)
 
     def _instancePlugins(self):

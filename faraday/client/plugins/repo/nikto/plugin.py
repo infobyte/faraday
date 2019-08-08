@@ -14,7 +14,7 @@ import re
 import os
 import sys
 import random
-import HTMLParser
+from html.parser import HTMLParser
 
 try:
     import xml.etree.cElementTree as ET
@@ -391,3 +391,6 @@ if __name__ == '__main__':
     for item in parser.items:
         if item.status == 'up':
             print(item)
+
+
+# I'm Py3

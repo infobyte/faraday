@@ -113,3 +113,6 @@ class pasteAnalyzerPlugin(core.PluginBase):
 
 def createPlugin():
     return pasteAnalyzerPlugin()
+
+
+# I'm Py3

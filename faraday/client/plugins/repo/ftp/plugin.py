@@ -105,3 +105,6 @@ class CmdFtpPlugin(core.PluginBase):
 
 def createPlugin():
     return CmdFtpPlugin()
+
+
+# I'm Py3

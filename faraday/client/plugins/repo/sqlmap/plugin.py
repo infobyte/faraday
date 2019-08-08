@@ -10,6 +10,7 @@ from __future__ import print_function
 from __future__ import with_statement
 
 import argparse
+import base64
 import hashlib
 import os
 import pickle
@@ -194,7 +195,7 @@ class SqlmapPlugin(PluginTerminalOutput):
         'foobar'
         """
 
-        return value.decode("base64")
+        return base64.b64decode(value)
 
     def base64encode(self, value):
         """
@@ -203,8 +204,7 @@ class SqlmapPlugin(PluginTerminalOutput):
         >>> base64encode('foobar')
         'Zm9vYmFy'
         """
-
-        return value.encode("base64")[:-1].replace("\n", "")
+        return base64.b64encode(value)[:-1].replace("\n", "")
 
     def base64unpickle(self, value):
         """
@@ -665,8 +665,7 @@ class SqlmapPlugin(PluginTerminalOutput):
 
             self._output_path = "%s%s" % (
                 os.path.join(self.data_path, "sqlmap_output-"),
-                re.sub(r'[\n\/]', r'',
-                args.u.encode("base64")[:-1]))
+                re.sub(r'[\n\/]', r'', base64.b64encode(args.u)[:-1]))
 
         if not args.s:
             return "%s -s %s" % (command_string, self._output_path)
@@ -677,3 +676,6 @@ class SqlmapPlugin(PluginTerminalOutput):
 
 def createPlugin():
     return SqlmapPlugin()
+
+
+# I'm Py3

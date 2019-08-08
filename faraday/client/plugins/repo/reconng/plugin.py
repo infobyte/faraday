@@ -157,7 +157,7 @@ class ReconngPlugin(PluginBase):
             )
             self.host_mapper[host['host']] = h_id
         for vuln in parser.vulns:
-            if vuln['host'] not in self.host_mapper.keys():
+            if vuln['host'] not in list(self.host_mapper.keys()):
                 ip = self.resolve_host(vuln['host'])
                 h_id = self.createAndAddHost(
                     ip,
@@ -196,3 +196,6 @@ if __name__ == '__main__':
         # for item in parser.items:
         # if item.status == 'up':
         # print item
+
+
+# I'm Py3

@@ -170,3 +170,6 @@ class DigPlugin(core.PluginBase):
 
 def createPlugin():
     return DigPlugin()
+
+
+# I'm Py3

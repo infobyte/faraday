@@ -68,3 +68,6 @@ class brutexss (core.PluginBase):
 
 def createPlugin():
     return brutexss()
+
+
+# I'm Py3

@@ -146,3 +146,6 @@ class PluginManager(object):
 
             return False
         return True
+
+
+# I'm Py3

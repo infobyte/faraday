@@ -6,6 +6,8 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 import os
 import gi
 
@@ -15,7 +17,7 @@ from faraday.client.start_client import FARADAY_CLIENT_BASE
 gi.require_version('Gtk', '3.0')
 
 from gi.repository import GLib, Gio, Gtk, GObject, Gdk
-from dialogs import ImportantErrorDialog
+from faraday.client.gui.gtk.dialogs import ImportantErrorDialog
 
 CONF = getInstanceConfiguration()
 
@@ -338,3 +340,6 @@ class AppWindow(Gtk.ApplicationWindow):
         is not sure if he wants to exit"""
         self.delete_tab()
         terminal.start_faraday()
+
+
+# I'm Py3

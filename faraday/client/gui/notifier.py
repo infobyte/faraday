@@ -5,6 +5,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 import threading
 from faraday.client.gui.gui_app import FaradayUi
 import faraday.client.gui.customevents as events
@@ -95,3 +97,6 @@ class NotificationCenter():
 
     def sendCustomLog(self, log_obj):
         self._notifyWidgets(events.LogCustomEvent(log_obj))
+
+
+# I'm Py3

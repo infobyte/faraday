@@ -6,12 +6,13 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
 
 import time
 import threading
 
 from faraday.client.model.guiapi import notification_center
-from decorators import safe_io_with_server
+from faraday.client.gui.gtk.decorators import safe_io_with_server
 from faraday.client.persistence.server import models, server_io_exceptions
 
 
@@ -156,3 +157,6 @@ class ServerIO(object):
         test_server_thread = threading.Thread(target=test_server_connection)
         test_server_thread.daemon = True
         test_server_thread.start()
+
+
+# I'm Py3

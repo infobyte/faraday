@@ -4,6 +4,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
 
 import logging
 import threading
@@ -39,3 +40,6 @@ class GUIHandler(logging.Handler):
             self._widgets_lock.release()
         except:
             self.handleError(record)
+
+
+# I'm Py3

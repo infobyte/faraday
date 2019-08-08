@@ -5,6 +5,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
 
 from faraday.client.managers.reports_managers import ReportManager
 
@@ -86,3 +87,6 @@ class FaradayUi(object):
         except Exception as e:
             raise e
         return ws
+
+
+# I'm Py3

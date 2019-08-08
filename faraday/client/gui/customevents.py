@@ -4,6 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 """
 This module contains the definition of all the CustomEvent's used
 in the application.
@@ -176,3 +178,6 @@ class UpdateObjectCustomEvent(CustomEvent):
     def __init__(self, obj):
         CustomEvent.__init__(self, UPDATEOBJECT)
         self.obj = obj
+
+
+# I'm Py3

@@ -1,11 +1,13 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+from __future__ import absolute_import
+
 import requests
 from gi.repository import Gtk
 from faraday.server.utils.logger import get_logger
 from functools import wraps
-from compatibility import CompatibleScrolledWindow as GtkScrolledWindow
+from faraday.client.gui.gtk.compatibility import CompatibleScrolledWindow as GtkScrolledWindow
 from faraday.client.persistence.server.server_io_exceptions import ServerRequestException
 
 def safe_io_with_server(response_in_emergency):
@@ -60,3 +62,6 @@ def scrollable(width=-1, height=-1, overlay_scrolling=False):
         return scroll_object_wrapper
 
     return scrollable_decorator
+
+
+# I'm Py3

@@ -8,6 +8,9 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 # Author: @EzequielTBH
+from __future__ import absolute_import
+from __future__ import print_function
+from builtins import str
 
 from faraday.client.plugins import core
 import json
@@ -78,7 +81,7 @@ class pasteAnalyzerPlugin(core.PluginBase):
             for element in data:
 
                 # Is Category
-                if type(element) == str or type(element) == unicode:
+                if type(element) == str: #TODO bte arrray decode
                     description += element + ": "
 
                 # Is a list with results!

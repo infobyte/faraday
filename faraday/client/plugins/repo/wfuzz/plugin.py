@@ -1,7 +1,12 @@
+from __future__ import absolute_import
+
 import re
 import sys
 import string
-from urlparse import urljoin, urlparse
+try:
+    from urlparse import urljoin, urlparse
+except ImportError:
+    from urllib.parse import urljoin, urlparse
 
 from faraday.client.plugins import core
 

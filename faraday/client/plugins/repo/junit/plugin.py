@@ -7,6 +7,9 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+from __future__ import print_function
+
 from __future__ import with_statement
 from faraday.client.plugins import core
 from faraday.client.model import api
@@ -84,7 +87,7 @@ class JunitXmlParser(object):
 #             return ET.fromstring(xml_output)
             tree = etree.fromstring(xml_output)
         except SyntaxError, err:
-            print "SyntaxError: %s. %s" % (err, xml_output)
+            print("SyntaxError: %s. %s" % (err, xml_output))
             return None
         return tree
 
@@ -106,7 +109,7 @@ class Testsuite(object):
         self.name = self.parent.get('name')
         self.host = self.parent.get('host')
         if self.host is None:
-            print 'host element is missing'
+            print('host element is missing')
             self.host = ''
 
         self.message = self.get_text_from_subnode('message')
@@ -155,4 +158,4 @@ if __name__ == '__main__':
     parser = JunitXmlParser(sys.argv[1])
     for item in parser.items:
         if item.status == 'up':
-            print item
+            print(item)

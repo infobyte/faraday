@@ -6,6 +6,9 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+from __future__ import print_function
+
 from __future__ import with_statement
 from faraday.client.plugins import core
 import socket
@@ -52,7 +55,7 @@ class FierceParser(object):
         if regex is not None:
             self.target = regex.group(1)
             mstr = re.sub("\t", "", regex.group(2))
-            self.dns = filter(None, mstr.splitlines())
+            self.dns = list(filter(None, mstr.splitlines()))
 
         regex = re.search(
             "Now performing [\d]+ test\(s\)...\n([^$]+)\nSubnets found ",
@@ -70,7 +73,7 @@ class FierceParser(object):
         self.isZoneVuln = False
         output = output.replace('\\$', '')
         regex = re.search(
-            "Whoah, it worked - misconfigured DNS server found:([^$]+)\There isn't much point continuing, you have  everything.", output)
+            "Whoah, it worked - misconfigured DNS server found:([^$]+)\nThere isn't much point continuing, you have  everything.", output)
 
         if regex is not None:
             self.isZoneVuln = True
@@ -212,4 +215,4 @@ if __name__ == '__main__':
     parser = FierceParser(sys.argv[1])
     for item in parser.items:
         if item.status == 'up':
-            print item
+            print(item)

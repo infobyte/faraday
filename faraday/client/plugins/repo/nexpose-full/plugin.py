@@ -7,6 +7,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+from __future__ import print_function
 from __future__ import with_statement
 from faraday.client.plugins import core
 from faraday.client.model import api
@@ -70,7 +72,7 @@ class NexposeFullXmlParser(object):
         try:
             tree = ET.fromstring(xml_output)
         except SyntaxError, err:
-            print "SyntaxError: %s. %s" % (err, xml_output)
+            print("SyntaxError: %s. %s" % (err, xml_output))
             return None
 
         return tree
@@ -352,10 +354,10 @@ if __name__ == '__main__':
             with open(xml_file) as f:
                 parser = NexposeFullXmlParser(f.read())
                 for item in parser.items:
-                    print "* {0} ({1}) - Vulns: {2}".format(item['name'], item['os'], len(item['vulns']))
+                    print("* {0} ({1}) - Vulns: {2}".format(item['name'], item['os'], len(item['vulns'])))
                     for vuln in item['vulns']:
-                        print "- {0} (Severity: {1})".format(vuln['name'], vuln['severity'])
+                        print("- {0} (Severity: {1})".format(vuln['name'], vuln['severity']))
         else:
-            print "File (%s) not found" % xml_file
+            print("File (%s) not found" % xml_file)
     else:
-        print "Usage: {0} XML_FILE".format(sys.argv[0])
+        print("Usage: {0} XML_FILE".format(sys.argv[0]))

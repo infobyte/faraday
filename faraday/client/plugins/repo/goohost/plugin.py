@@ -6,6 +6,8 @@ Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
+from __future__ import absolute_import
+from __future__ import print_function
 
 from __future__ import with_statement
 from faraday.client.plugins import core
@@ -40,7 +42,7 @@ class GoohostParser(object):
     def __init__(self, output, goohost_scantype):
 
         self.items = []
-        lines = filter(None, output.split('\n'))
+        lines = list(filter(None, output.split('\n')))
         for line in lines:
             if goohost_scantype == 'ip':
                 data = line.split()
@@ -180,4 +182,4 @@ if __name__ == '__main__':
     parser.parseOutputString(output)
     for item in parser.items:
         if item.status == 'up':
-            print item
+            print(item)

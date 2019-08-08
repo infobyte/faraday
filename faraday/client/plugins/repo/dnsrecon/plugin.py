@@ -6,6 +6,8 @@ Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
+from __future__ import absolute_import
+from __future__ import print_function
 
 from __future__ import with_statement
 from faraday.client.plugins import core
@@ -68,7 +70,7 @@ class DnsreconXmlParser(object):
         try:
             tree = ET.fromstring(xml_output)
         except SyntaxError, err:
-            print "SyntaxError: %s. %s" % (err, xml_output)
+            print("SyntaxError: %s. %s" % (err, xml_output))
             return None
 
         return tree
@@ -139,7 +141,7 @@ class Item(object):
         self.name = self.do_clean(self.node.get('name'))
         self.exchange = self.do_clean(self.node.get('exchange'))
 
-        print "GENERATION:" + self.type, self.address, self.zonetransfer
+        print("GENERATION:" + self.type, self.address, self.zonetransfer)
 
     def do_clean(self, value):
         myreturn = ''
@@ -184,7 +186,7 @@ class DnsreconPlugin(core.PluginBase):
 
     def validHosts(self, hosts):
         valid_records = ["NS", "CNAME", "A", "MX", "info"]
-        hosts = filter(lambda h: h.type in valid_records, hosts)
+        hosts = list(filter(lambda h: h.type in valid_records, hosts))
         return hosts
 
     def parseOutputString(self, output, debug=False):
@@ -200,7 +202,7 @@ class DnsreconPlugin(core.PluginBase):
 
         for host in self.validHosts(parser.hosts):
 
-            print host.type, host.name, host.zonetransfer
+            print(host.type, host.name, host.zonetransfer)
             hostname = host.target
             if host.type == "MX":
                 hostname = host.exchange
@@ -277,4 +279,4 @@ if __name__ == '__main__':
     parser = DnsreconXmlParser(sys.argv[1])
     for item in parser.items:
         if item.status == 'up':
-            print item
+            print(item)

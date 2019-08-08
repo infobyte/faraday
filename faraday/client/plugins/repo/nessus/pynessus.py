@@ -20,10 +20,18 @@
 #
 # 2010-08-12:	0.1.0: Initial version.
 # 2011-03-12:	0.2.1: Added a bunch of methods and robustified everything.
+from __future__ import absolute_import
+from __future__ import print_function
+
 import sys
-import urllib2
-from urlparse import urljoin
-from urllib import quote
+try:
+    from urllib2 import ProxyHandler, build_opener, urlopen, install_opener
+    from urlparse import urljoin
+    from urllib import quote
+except ImportError:
+    from urllib.request import ProxyHandler, build_opener, urlopen, install_opener
+    from urllib.parse import urljoin, quote
+
 import xml.etree.ElementTree as ET
 import re
 import datetime
@@ -56,9 +64,9 @@ class NessusServer(object):
         self.launched_scans = {}
 
         # Force urllib2 to not use a proxy
-        hand = urllib2.ProxyHandler({})
-        opener = urllib2.build_opener(hand)
-        urllib2.install_opener(opener)
+        hand = ProxyHandler({})
+        opener = build_opener(hand)
+        install_opener(opener)
 
         self.login()
 
@@ -80,7 +88,7 @@ class NessusServer(object):
         data = make_args(login=self.username, password=quote(self.password))
         resp = self._call('login', data)
         if self.verbose:
-            print resp
+            print(resp)
 
         # Parse token
         seq, status, parsed = parse_reply(resp, ['token'])
@@ -133,10 +141,10 @@ class NessusServer(object):
         else:
             data = make_args(token=self.token, report=uuid)
         url = urljoin(self.base_url, 'file/report/download/?%s' % data)
-        req = urllib2.urlopen(url)
+        req = urlopen(url)
         resp = req.read()
         if not check_auth(resp):
-            print >> sys.stderr, "Unauthorized"
+            print("Unauthorized", file=sys.stderr)
             return None
         return resp
 
@@ -147,7 +155,7 @@ class NessusServer(object):
             name), policy_id=policy_id, target=arg_targets)
         resp = self._call('/scan/new', data)
         if self.verbose:
-            print resp
+            print(resp)
 
         # Get parsed data
         keys = ['uuid', 'owner', 'start_time', 'scan_name']
@@ -173,7 +181,7 @@ class NessusServer(object):
     def get_policy_id(self, policy_name):
         """Attempts to grab the policy ID for a name"""
         pols = self.list_policies()
-        for k, v in pols.iteritems():
+        for k, v in pols.items():
             if v.get('policyName').lower() == policy_name:
                 return k
 
@@ -272,12 +280,12 @@ class NessusServer(object):
     def _call(self, func_url, args):
         url = urljoin(self.base_url, func_url)
         if self.verbose:
-            print "URL: '%s'" % url
-            print "POST: '%s'" % args
-        req = urllib2.urlopen(url, args)
+            print("URL: '%s'" % url)
+            print("POST: '%s'" % args)
+        req = urlopen(url, args)
         resp = req.read()
         if not check_auth(resp):
-            print >> sys.stderr, "200 Unauthorized"
+            print("200 Unauthorized", file=sys.stderr)
             return resp
         return resp
 
@@ -572,6 +580,6 @@ def zerome(string):
         # computer.
         memset = ctypes.CDLL("libc.so.6").memset
 
-    print "Clearing 0x%08x size %i bytes" % (location, size)
+    print("Clearing 0x%08x size %i bytes" % (location, size))
 
     memset(location, 0, size)

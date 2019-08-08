@@ -6,6 +6,8 @@ Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
+from __future__ import absolute_import
+from __future__ import print_function
 
 from __future__ import with_statement
 from faraday.client.plugins import core
@@ -50,7 +52,7 @@ class MedusaParser(object):
                 "ACCOUNT FOUND: \[([^$]+)\] Host: ([^$]+) User: ([^$]+) Password: ([^$]+) \[SUCCESS\]",
                 l)
             
-            print "REG" + str(reg)
+            print("REG" + str(reg))
 
             if reg:
         
@@ -60,10 +62,10 @@ class MedusaParser(object):
                 'user': reg.group(3),
                 'pass': reg.group(4)}
 
-                print "ITEM" + str(item)
+                print("ITEM" + str(item))
                 item['ip'] = self.getAddress(item['host'])
                 item['port'] = self.srv[item['service']]
-                print "ITEM" + str(item)
+                print("ITEM" + str(item))
                 self.items.append(item)
 
     def getAddress(self, hostname):
@@ -192,4 +194,4 @@ if __name__ == '__main__':
     parser = MedusaParser(sys.argv[1])
     for item in parser.items:
         if item.status == 'up':
-            print item
+            print(item)

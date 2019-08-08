@@ -6,6 +6,7 @@ Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
+from __future__ import absolute_import
 
 import re
 import os
@@ -14,7 +15,13 @@ import shlex
 import socket
 import argparse
 import tempfile
-import urlparse
+
+try:
+    import urlparse
+except ImportError:
+    import urllib.parse as urlparse
+
+
 from faraday.client.plugins.plugin import PluginTerminalOutput
 from faraday.client.plugins.plugin_utils import get_vulnweb_url_fields
 

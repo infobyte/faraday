@@ -6,6 +6,7 @@ Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
+from __future__ import absolute_import
 
 from __future__ import with_statement
 from faraday.client.plugins import core
@@ -130,11 +131,11 @@ class AmapPlugin(core.PluginBase):
 
     def get_ip_6(self, host, port=0):
         alladdr = socket.getaddrinfo(host, port)
-        ip6 = filter(
+        ip6 = list(filter(
             lambda x: x[0] == socket.AF_INET6,
-            alladdr)
+            alladdr))
 
-        return list(ip6)[0][4][0]
+        return ip6[0][4][0]
 
     def getAddress(self, hostname):
         """

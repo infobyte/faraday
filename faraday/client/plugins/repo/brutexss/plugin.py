@@ -6,10 +6,15 @@ Faraday Penetration Test IDE
 Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
+from __future__ import absolute_import
+from __future__ import print_function
 
 import re
 import socket
-from urlparse import urlparse
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
 
 from faraday.client.plugins import core
 

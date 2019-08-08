@@ -6,6 +6,8 @@ Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
+from __future__ import absolute_import
+from __future__ import print_function
 
 from __future__ import with_statement
 from faraday.client.plugins import core
@@ -61,7 +63,7 @@ class DnsmapParser(object):
                     self.add_host_info_to_items(ip, hostname)
 
     def parse_csv(self, output):
-        hosts = filter(None, output.splitlines())
+        hosts = list(filter(None, output.splitlines()))
 
         for host in hosts:
             host_data = host.split(",", 1)
@@ -177,4 +179,4 @@ if __name__ == '__main__':
     parser = DnsmapParser(sys.argv[1])
     for item in parser.items:
         if item.status == 'up':
-            print item
+            print(item)

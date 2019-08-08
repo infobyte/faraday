@@ -7,6 +7,9 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+from __future__ import print_function
+
 from faraday.client.plugins import core
 from faraday.client.model import api
 import re
@@ -64,7 +67,7 @@ class CmdFtpPlugin(core.PluginBase):
             ip_address = self.resolve(hostname)
             self._version = banner.groups(0) if banner else ""
             if debug:
-                print ip_address
+                print(ip_address)
 
             h_id = self.createAndAddHost(ip_address)
 

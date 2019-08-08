@@ -5,6 +5,8 @@ Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
+from __future__ import absolute_import
+from __future__ import print_function
 from __future__ import with_statement
 
 import argparse
@@ -16,9 +18,13 @@ import shlex
 import socket
 import sqlite3
 import sys
-from BaseHTTPServer import BaseHTTPRequestHandler
-from StringIO import StringIO
-from urlparse import urlparse
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
+from io import StringIO
+from http.server import BaseHTTPRequestHandler
+
 from collections import defaultdict
 
 from faraday.client.plugins.plugin import PluginTerminalOutput
@@ -231,7 +237,7 @@ class SqlmapPlugin(PluginTerminalOutput):
             data)
 
         if users:
-            return map((lambda x: x.replace("[*] ", "")), users.group(1).split("\n"))
+            return [x.replace("[*] ", "") for x in users.group(1).split("\n")]
 
     def getdbs(self, data):
 
@@ -240,7 +246,7 @@ class SqlmapPlugin(PluginTerminalOutput):
             data)
 
         if dbs:
-            return map((lambda x: x.replace("[*] ", "")), dbs.group(1).split("\n"))
+            return [x.replace("[*] ", "") for x in dbs.group(1).split("\n")]
 
     def getpassword(self, data):
 
@@ -512,7 +518,7 @@ class SqlmapPlugin(PluginTerminalOutput):
 
         # sqlmap.py --passwords
         if password:
-            for k, v in password.iteritems():
+            for k, v in password.items():
                 self.createAndAddCredToService(h_id, s_id2, k, v)
 
         # sqlmap.py --file-dest

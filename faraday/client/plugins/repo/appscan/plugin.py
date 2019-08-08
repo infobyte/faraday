@@ -6,12 +6,17 @@ Faraday Penetration Test IDE
 Copyright (C) 2017  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
+from __future__ import absolute_import
+from __future__ import print_function
 
 import pprint
 import socket
 from faraday.client.plugins import core
 from lxml import objectify
-from urlparse import urlparse
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
 
 __author__ = "Alejando Parodi, Ezequiel Tavella"
 __copyright__ = "Copyright (c) 2015, Infobyte LLC"
@@ -221,4 +226,4 @@ if __name__ == '__main__':
         parser.parseOutputString(report.read())
         for item in parser.items:
             if item.status == 'up':
-                print item
+                print(item)

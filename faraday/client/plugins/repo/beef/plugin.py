@@ -6,6 +6,8 @@ Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
+from __future__ import absolute_import
+from __future__ import print_function
 
 from __future__ import with_statement
 from faraday.client.plugins import core
@@ -13,7 +15,10 @@ from faraday.client.model import api
 import re
 import os
 import sys
-import urllib2
+try:
+    from urllib2 import urlopen
+except ImportError:
+    from urllib.parse import urlopen
 import json
 
 __author__ = "Francisco Amato"
@@ -116,4 +121,4 @@ if __name__ == '__main__':
     parser = BeefXmlParser(sys.argv[1])
     for item in parser.items:
         if item.status == 'up':
-            print item
+            print(item)

@@ -5,6 +5,9 @@ Faraday Penetration Test IDE
 Copyright (C) 2017  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
+from __future__ import absolute_import
+from __future__ import print_function
+
 import re
 import json
 import socket
@@ -59,7 +62,7 @@ class ReconngParser(object):
             tree = ET.fromstring(xml_output)
             return tree
         except IndexError:
-            print "Syntax error"
+            print("Syntax error")
             return None
 
     def parse_xml_report(self, tree):

@@ -4,12 +4,17 @@ Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 """
+from __future__ import absolute_import
+from __future__ import print_function
 
 import re
 import socket
 from os import path
 from faraday.client.plugins import core
-from urlparse import urlparse
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
 
 __author__ = "Andres Tarantini"
 __copyright__ = "Copyright (c) 2015 Andres Tarantini"
@@ -39,7 +44,7 @@ class PeepingTomPlugin(core.PluginBase):
     def parseOutputString(self, output):
         # Find data path
         data_path_search = re.search(r"in '(.*)\/'", output)
-        print data_path_search
+        print(data_path_search)
         if not data_path_search:
             # No data path found
             return True

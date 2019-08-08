@@ -5,6 +5,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 import logging
 from faraday.client.gui.customevents import (ShowPopupCustomEvent,
                               ShowDialogCustomEvent)
@@ -49,3 +51,6 @@ class Notifier(object):
 
     def showPopup(self, text, level="Information"):
         self._postCustomEvent(text, level, ShowPopupCustomEvent)
+
+
+# I'm Py3

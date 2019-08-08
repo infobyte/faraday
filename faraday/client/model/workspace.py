@@ -5,6 +5,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
 
 import time
 
@@ -75,8 +76,11 @@ class Workspace(object):
         return self.name == self._workspace_manager.getActiveWorkspace().name
 
     def getHosts(self):
-        return self.hosts.values()
+        return list(self.hosts.values())
 
     def setHosts(self, hosts):
         self.hosts = hosts
 
+
+
+# I'm Py3

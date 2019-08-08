@@ -4,6 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 import sys
 import traceback
 import threading
@@ -41,7 +43,7 @@ class ModelObjectFactory(object):
 
     def listModelObjectClasses(self):
         """returns a list of registered classes"""
-        return self._registered_objects.values()
+        return list(self._registered_objects.values())
 
     def getModelObjectClass(self, name):
         """get the class for a particular object typename"""
@@ -49,7 +51,7 @@ class ModelObjectFactory(object):
 
     def listModelObjectTypes(self):
         """returns an array with object typenames the factory is able to create"""
-        names = self._registered_objects.keys()
+        names = list(self._registered_objects.keys())
         names.sort()
         return names
 
@@ -345,3 +347,6 @@ class XMLRPCKeywordProxy(object):
         def _call(*args, **kwargs):
             return call_proxy(args, kwargs)
         return _call
+
+
+# I'm Py3

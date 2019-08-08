@@ -5,6 +5,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
 
 
 class ModelObjectContainer(dict):
@@ -23,14 +24,11 @@ class ModelObjectContainer(dict):
     def __getattr__( self, name):
         return getattr(self.container, name)
 
-    def itervalues(self):
-        return self.container.itervalues()
-
     def values(self):
-        return self.container.values()
+        return list(self.container.values())
 
     def keys(self):
-        return self.container.keys()
+        return list(self.container.keys())
 
     def __str__(self):
         return str(self.container)
@@ -64,3 +62,6 @@ class CouchedModelObjectContainer(ModelObjectContainer):
         ModelObjectContainer.__setitem__(self, k, v)
 
 
+
+
+# I'm Py3

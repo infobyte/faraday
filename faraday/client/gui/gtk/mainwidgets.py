@@ -930,3 +930,6 @@ class Statusbar(Gtk.Widget):
         vuln_string = str(vuln_count) + " vulnerabilities."
 
         return host_string, service_string, vuln_string
+
+
+# I'm Py3

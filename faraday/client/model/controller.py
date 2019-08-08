@@ -4,12 +4,14 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 import time
 import logging
 import traceback
 import faraday.client.model.common  # this is to make sure the factory is created
 from multiprocessing import Lock
-from Queue import Empty
+from queue import Empty
 from threading import Thread
 
 from faraday.config.configuration import getInstanceConfiguration
@@ -549,3 +551,6 @@ class ModelController(Thread):
                 "Couldn't get vulnerabilities count: assuming it is zero.")
             count = 0
         return count
+
+
+# I'm Py3

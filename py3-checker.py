@@ -94,13 +94,15 @@ class Analyser:
         return are3, total, strs, error_files
 
     def run(self):
-        _, _, strs, error_files = self.analyse_folder(os.getcwd())
+        are3, total, strs, error_files = self.analyse_folder(os.getcwd())
         for s in strs:
             self.logger.info(s)
         if len(error_files) > 0:
             for error_file in error_files:
                 self.logger.error("The auto-claimed python file {path} as python is not python3".format(path=error_file))
             raise Exception("One or more auto-claimed python file(s) as python is(are) not python3")
+        if are3 == total:
+            print("100% coverage")
 
 
 def main(filename):

@@ -5,6 +5,11 @@ Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
 
+from __future__ import absolute_import
+from __future__ import print_function
+
+from builtins import input
+
 import os
 import sys
 import imp
@@ -468,10 +473,10 @@ def doLoginLoop(force_login=False):
             return
 
         if old_server_url is None:
-            new_server_url = raw_input(
+            new_server_url = input(
             "\nPlease enter the Faraday Server URL (Press enter for http://localhost:5985): ") or "http://localhost:5985"
         else:
-            new_server_url = raw_input(
+            new_server_url = input(
                 "\nPlease enter the Faraday Server URL (Press enter for last used: {}): ".format(old_server_url)) or old_server_url
 
         CONF.setAPIUrl(new_server_url)
@@ -480,7 +485,7 @@ def doLoginLoop(force_login=False):
 
         for attempt in range(1, 4):
 
-            api_username = raw_input("Username (press enter for faraday): ") or "faraday"
+            api_username = input("Username (press enter for faraday): ") or "faraday"
             api_password = getpass.getpass('Password: ')
 
             session_cookie = try_login_user(new_server_url, api_username, api_password)
@@ -554,3 +559,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+# I'm Py3

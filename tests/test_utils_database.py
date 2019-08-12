@@ -64,7 +64,7 @@ def test_vulnerability_ddl_invariant(session):
                 raise Exception('Please check server.utils.database.get_unique_fields. Vulnerability DDL changed?')
 
 
-@pytest.mark.parametrize("obj_class, expected_unique_fields", sorted(UNIQUE_FIELDS.items()))
+@pytest.mark.parametrize("obj_class, expected_unique_fields", list(UNIQUE_FIELDS.items()))
 def test_unique_fields_workspace(obj_class, expected_unique_fields, session):
     object_ = obj_class()
     unique_constraints = get_unique_fields(session, object_)

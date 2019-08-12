@@ -5,10 +5,7 @@ import os
 import subprocess
 from faraday.server.config import FARADAY_BASE
 
-try:
-    import ConfigParser
-except ImportError:
-    import faraday.client.configparser as ConfigParser
+from configparser import SafeConfigParser, DuplicateSectionError
 
 
 def test_manage_migrate():
@@ -24,12 +21,12 @@ def test_manage_migrate():
             password=os.environ['POSTGRES_PASSWORD'],
             database=os.environ['POSTGRES_DB'],
         )
-        faraday_config = ConfigParser.SafeConfigParser()
+        faraday_config = SafeConfigParser()
         config_path = os.path.expanduser('~/.faraday/config/server.ini')
         faraday_config.read(config_path)
         try:
             faraday_config.add_section('database')
-        except ConfigParser.DuplicateSectionError:
+        except DuplicateSectionError:
             pass
         faraday_config.set('database', 'connection_string', connection_string)
         with open(config_path, 'w') as faraday_config_file:

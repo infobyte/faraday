@@ -12,10 +12,10 @@ import threading
 import logging
 try:
     import xmlrpclib
-    import SimpleXMLRPCServer
+    from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 except ImportError:
     from xmlrpc import client as xmlrpclib
-    from xmlrpc.server import SimpleXMLRPCServer
+    from xmlrpc.server import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 
 try:
     import faraday.client.model.api as api
@@ -121,10 +121,10 @@ factory = ModelObjectFactory()
 
 # -------------------------------------------------------------------------------
 
-class CustomXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
+class CustomXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
 
     def __init__(self, *args, **kwargs):
-        SimpleXMLRPCServer.SimpleXMLRPCRequestHandler.__init__(self, *args, **kwargs)
+        SimpleXMLRPCRequestHandler.__init__(self, *args, **kwargs)
 
     def handle(self):
         try:
@@ -133,7 +133,7 @@ class CustomXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             api.devlog("[XMLRPCHandler] - client_address = %s" % str(self.client_address))
             api.devlog("[XMLRPCHandler] - server = %s" % str(self.server))
             api.devlog("-" * 60)
-            SimpleXMLRPCServer.SimpleXMLRPCRequestHandler.handle(self)
+            SimpleXMLRPCRequestHandler.handle(self)
         except Exception:
             api.devlog("[XMLRPCHandler] - An error ocurred while handling a request\n%s" % traceback.format_exc())
 
@@ -205,14 +205,14 @@ class CustomXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
 # http://epydoc.sourceforge.net/stdlib/BaseHTTPServer.BaseHTTPRequestHandler-class.html#address_string
 #
 
-class XMLRPCServer(SimpleXMLRPCServer.SimpleXMLRPCServer, threading.Thread):
+class XMLRPCServer(SimpleXMLRPCServer, threading.Thread):
     """
     Stoppable XMLRPC Server with custom dispatch to send over complete traceback
     in case of exception.
     """
     def __init__(self, *args, **kwargs):
         threading.Thread.__init__(self)
-        SimpleXMLRPCServer.SimpleXMLRPCServer.__init__(self,
+        SimpleXMLRPCServer.__init__(self,
                                                        requestHandler=CustomXMLRPCRequestHandler,
                                                        allow_none=True, *args, **kwargs)
         self._stop = False

@@ -5,7 +5,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 from __future__ import absolute_import
-from builtins import basestring, chr
+from past.builtins import basestring, chr
 
 import re
 import sys

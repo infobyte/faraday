@@ -77,7 +77,7 @@ class AcunetixXmlParser(object):
         """
         try:
             tree = ET.fromstring(xml_output)
-        except SyntaxError, err:
+        except SyntaxError as err:
             print("SyntaxError: %s. %s" % (err, xml_output))
             return None
 

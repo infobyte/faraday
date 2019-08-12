@@ -6,10 +6,7 @@ from __future__ import absolute_import
 import os
 import shutil
 import errno
-try:
-    import ConfigParser
-except ImportError:
-    import faraday.client.configparser as ConfigParser
+from configparser import SafeConfigParser
 
 from logging import (
     DEBUG,
@@ -71,7 +68,7 @@ def parse_and_bind_configuration():
     """Load configuration from files declared in this module and put them
     on this module's namespace for convenient access"""
 
-    __parser = ConfigParser.SafeConfigParser()
+    __parser = SafeConfigParser()
     __parser.read(CONFIG_FILES)
 
     for section_name in __parser.sections():

@@ -2,7 +2,7 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 from __future__ import absolute_import
-from builtins import basestring
+from past.builtins import basestring
 
 import os
 import logging

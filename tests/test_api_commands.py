@@ -31,7 +31,7 @@ from tests.factories import VulnerabilityFactory, EmptyCommandFactory, CommandOb
 # and https://github.com/pytest-dev/pytest/issues/568 for more information
 
 @pytest.mark.usefixtures('logged_user')
-class TestListCommandView(object, ReadOnlyAPITests):
+class TestListCommandView(ReadOnlyAPITests):
     model = Command
     factory = factories.CommandFactory
     api_endpoint = 'commands'

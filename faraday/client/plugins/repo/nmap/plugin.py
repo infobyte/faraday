@@ -66,7 +66,7 @@ class NmapXmlParser(object):
 
         try:
             return ET.fromstring(xml_output)
-        except SyntaxError, err:
+        except SyntaxError as err:
             logger.error("SyntaxError: %s." % (err))
             return None
 

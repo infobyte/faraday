@@ -21,7 +21,7 @@ OBJECT_COUNT = 5
 
 
 @pytest.mark.usefixtures('logged_user')
-class GenericAPITest:
+class GenericAPITest(object):
 
     model = None
     factory = None
@@ -59,7 +59,7 @@ class GenericAPITest:
         return url
 
 
-class ListTestsMixin:
+class ListTestsMixin(object):
     view_class = None  # Must be overriden
 
     @pytest.fixture
@@ -87,7 +87,7 @@ class ListTestsMixin:
         res = test_client.get(self.url())
         assert res.status_code == 200
 
-class RetrieveTestsMixin:
+class RetrieveTestsMixin(object):
 
     def test_retrieve_one_object(self, test_client):
         res = test_client.get(self.url(self.first_object))

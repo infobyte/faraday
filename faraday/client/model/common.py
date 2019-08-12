@@ -19,7 +19,7 @@ except ImportError:
 
 try:
     import faraday.client.model.api as api
-except AttributeError:
+except AttributeError as e:
     import api
 
 from faraday.config.configuration import getInstanceConfiguration

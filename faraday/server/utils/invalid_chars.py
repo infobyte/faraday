@@ -5,7 +5,8 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 from __future__ import absolute_import
-from past.builtins import basestring, chr
+from past.builtins import basestring
+from builtins import chr #In py3 this is unicode!
 
 import re
 import sys

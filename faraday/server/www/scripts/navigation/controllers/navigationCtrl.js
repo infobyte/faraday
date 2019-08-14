@@ -131,6 +131,10 @@ angular.module('faradayApp')
             }
         };
 
+        $scope.$on('handleChangeWSBroadcast', function () {
+            $scope.workspace = workspacesFact.workspace;
+        });
+
         $scope.loadCurrentWorkspace();
 
         // if(navigator.userAgent.toLowerCase().indexOf('iceweasel') > -1) {

@@ -3,8 +3,8 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('workspacesCtrl', ['$uibModal', '$scope', '$q', 'workspacesFact', 'dashboardSrv', '$location',
-        function ($uibModal, $scope, $q, workspacesFact, dashboardSrv, $location) {
+    .controller('workspacesCtrl', ['$uibModal', '$scope', '$q', 'workspacesFact', 'dashboardSrv', '$location', '$cookies',
+        function ($uibModal, $scope, $q, workspacesFact, dashboardSrv, $location, $cookies) {
             $scope.hash;
             $scope.objects;
             $scope.workspaces;
@@ -342,7 +342,20 @@ angular.module('faradayApp')
                 if (ws.active) {
                     workspacesFact.deactivate(ws.name).then(function (resp) {
                         if (resp.data) {
-                            ws.active = false
+                            ws.active = false;
+
+                            let pos = -1;
+                            if ($cookies.get('currentUrl') !== undefined)
+                                pos = $cookies.get('currentUrl').indexOf('ws/');
+
+                            if (pos >= 0) {
+                                let savedWs = $cookies.get('currentUrl').slice(pos + 3);
+                                if (ws.name === savedWs){
+                                    $cookies.remove('currentUrl');
+                                    workspacesFact.changeWorkspace(null);
+                                }
+
+                            }
                         }
                     });
                 } else {

@@ -84,7 +84,10 @@
                             </td>
                             <td class="ui-grid-cell-contents">
                                 <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}/search/name={{service.name}}">
-                                    <span ng-bind="service.name"></span>
+                                    <span title="{{service.name.length > 60 ? service.name : ''}}">
+                                        {{service.name | limitTo: 60}}
+                                        <span ng-if="service.name.length > 60">...</span>
+                                    </span>
                                 </a>
                                 <osint-link query="service.name" osint="osint"></osint-link>
                             </td>

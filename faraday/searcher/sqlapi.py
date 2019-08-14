@@ -1,7 +1,9 @@
 import json
 import logging
 
-from faraday.server.api.modules.bulk_create import ServiceSchema, HostSchema
+from faraday.searcher.api import ApiError
+from faraday.server.api.modules.hosts import HostSchema
+from faraday.server.api.modules.services import ServiceSchema
 from faraday.server.api.modules.vulns import VulnerabilitySchema, VulnerabilityWebSchema
 from faraday.server.models import Workspace, Vulnerability, VulnerabilityWeb, Service, Host
 
@@ -9,37 +11,68 @@ logger = logging.getLogger('Faraday searcher')
 
 
 class SqlApi:
-    def __init__(self, session, workspace):
+    def __init__(self, session, workspace_name):
         self.session = session
-        self.workspace = workspace
+
+        workspace = self.session.query(Workspace).filter_by(name=workspace_name).all()
+        if len(workspace) > 0:
+            self.workspace = workspace[0]
+        else:
+            raise ApiError("Workspace %s doesn't exist" % workspace_name)
 
     def filter_vulnerabilities(self, kwargs):
-        kwargs['workspace_id'] = self.workspace
+        vulnerabilities = []
+        vulnerabilities_query = self.session.query(Vulnerability, Workspace.id).join(Workspace).filter(
+            Workspace.name == self.workspace.name)
+        for attr, value in kwargs.iteritems():
+            if hasattr(Vulnerability, attr):
+                vulnerabilities_query = vulnerabilities_query.filter(getattr(Vulnerability, attr) == value)
+                vulnerabilities = [vulnerability for vulnerability, pos in
+                                   vulnerabilities_query.distinct(Vulnerability.id)]
 
-        vulnerabilities = self.session.query(Vulnerability, Workspace.id).filter_by(**kwargs)
-        vulnerabilities = VulnerabilitySchema(many=True).dumps(vulnerabilities.all())
+        vulnerabilities = VulnerabilitySchema(many=True).dumps(vulnerabilities)
         vulnerabilities_data = json.loads(vulnerabilities.data)
 
-        web_vulnerabilities = self.session.query(VulnerabilityWeb, Workspace.id).filter_by(**kwargs)
-        web_vulnerabilities = VulnerabilityWebSchema(many=True).dumps(web_vulnerabilities.all())
+        web_vulnerabilities = []
+        web_vulnerabilities_query = self.session.query(Vulnerability, Workspace.id).join(Workspace).filter(
+            Workspace.name == self.workspace.name)
+        for attr, value in kwargs.iteritems():
+            if hasattr(VulnerabilityWeb, attr):
+                web_vulnerabilities_query = web_vulnerabilities_query.filter(getattr(VulnerabilityWeb, attr) == value)
+                web_vulnerabilities = [web_vulnerability for web_vulnerability, pos in
+                                       web_vulnerabilities_query.distinct(Vulnerability.id)]
+
+                web_vulnerabilities = VulnerabilityWebSchema(many=True).dumps(web_vulnerabilities)
         web_vulnerabilities_data = json.loads(web_vulnerabilities.data)
 
         return vulnerabilities_data + web_vulnerabilities_data
 
     def filter_services(self, kwargs):
-        kwargs['workspace_id'] = self.workspace
+        services = []
+        services_query = self.session.query(Service, Workspace.id).join(Workspace).filter(
+            Workspace.name == self.workspace.name)
+        for attr, value in kwargs.iteritems():
+            if hasattr(Service, attr):
+                services_query = services_query.filter(getattr(Service, attr) == value)
+                services = [service for service, pos in
+                            services_query.distinct(Service.id)]
 
-        services = self.session.query(Service, Workspace.id).filter_by(**kwargs)
-        services = ServiceSchema(many=True).dumps(services.all())
+        services = ServiceSchema(many=True).dumps(services)
         services_data = json.loads(services.data)
 
         return services_data
 
     def filter_hosts(self, kwargs):
-        kwargs['workspace_id'] = self.workspace
+        hosts = []
+        hosts_query = self.session.query(Host, Workspace.id).join(Workspace).filter(
+            Workspace.name == self.workspace.name)
+        for attr, value in kwargs.iteritems():
+            if hasattr(Host, attr):
+                hosts_query = hosts_query.filter(getattr(Host, attr) == value)
+                hosts = [host for host, pos in
+                         hosts_query.distinct(Host.id)]
 
-        hosts = self.session.query(Host, Workspace.id).filter_by(**kwargs)
-        hosts = HostSchema(many=True).dumps(hosts.all())
+        hosts = HostSchema(many=True).dumps(hosts)
         hosts_data = json.loads(hosts.data)
 
         return hosts_data

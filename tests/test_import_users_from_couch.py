@@ -35,9 +35,9 @@ ADMIN_DOC = {
 
 import_users_from_couch = ImportCouchDBUsers()
 
+
 def test_import_encrypted_password_from_admin_user():
-    original_hash = ('-pbkdf2-eeea435c505e74d33a8c1b55c39d8dd355db4c2d,'
-             'aedeef5a01f96a84360d2719fc521b9f,10')
+    original_hash = b'-pbkdf2-eeea435c505e74d33a8c1b55c39d8dd355db4c2d,aedeef5a01f96a84360d2719fc521b9f,10'
     new_hash = import_users_from_couch.convert_couchdb_hash(original_hash)
     assert pbkdf2_sha1.verify('12345', new_hash)
 

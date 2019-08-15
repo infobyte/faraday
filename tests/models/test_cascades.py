@@ -82,7 +82,7 @@ class TestCascadeDelete:
         self.attachment = File(
             name='test.png',
             filename='test.png',
-            content='test',
+            content=b'test',
             object_type='vulnerability',
             object_id=self.service_vuln.id,
             creator=user,
@@ -92,7 +92,7 @@ class TestCascadeDelete:
         self.host_attachment = File(
             name='test.png',
             filename='test.png',
-            content='test',
+            content=b'test',
             object_type='host',
             object_id=self.host.id,
             creator=user,

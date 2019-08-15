@@ -5,6 +5,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 from __future__ import absolute_import
+from builtins import str
 
 import pytest
 from faraday.server.api.modules.websocket_auth import decode_agent_websocket_token

@@ -521,7 +521,7 @@ class TestHostAPI:
         session.add(ws)
         session.commit()
         expected_created_hosts = 2
-        file_contents = """ip, description, os, hostnames\n
+        file_contents = b"""ip, description, os, hostnames\n
         10.10.10.10, test_host, linux, \"['localhost', 'test_host']\"\n
         10.10.10.11, test_host, linux, \"['localhost', 'test_host_1']\"
         """

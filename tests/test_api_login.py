@@ -84,7 +84,7 @@ class TestLogin():
         serializer = TimedJSONWebSignatureSerializer(app.config['SECRET_KEY'], expires_in=500, salt="token")
         token = serializer.dumps({ 'user_id': alice.id})
 
-        headers = {'Authorization': 'Token ' + token}
+        headers = {'Authorization': b'Token ' + token}
 
         ws = test_client.get('/v2/ws/wonderland/', headers=headers)
         assert ws.status_code == 401

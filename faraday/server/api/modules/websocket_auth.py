@@ -52,7 +52,7 @@ def decode_agent_websocket_token(token):
     signer = TimestampSigner(app.config['SECRET_KEY'],
                              salt="websocket_agent")
     try:
-        agent_id = signer.unsign(token, max_age=60)
+        agent_id = signer.unsign(token, max_age=60).decode('utf-8')
     except BadData as e:
         raise ValueError("Invalid Token")
     agent = Agent.query.get(agent_id)

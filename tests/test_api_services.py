@@ -89,7 +89,7 @@ class TestListServiceView(ReadOnlyAPITests):
         }
         res = test_client.post(self.url(), data=data)
         assert res.status_code == 400
-        assert 'Not a valid choice' in res.data
+        assert b'Not a valid choice' in res.data
 
     def test_create_fails_with_no_host_id(self, test_client,
                                           host, session):
@@ -104,7 +104,7 @@ class TestListServiceView(ReadOnlyAPITests):
         }
         res = test_client.post(self.url(), data=data)
         assert res.status_code == 400
-        assert 'Parent id is required' in res.data
+        assert b'Parent id is required' in res.data
 
     def test_create_fails_with_host_of_other_workspace(self, test_client,
                                                        host, session,
@@ -122,7 +122,7 @@ class TestListServiceView(ReadOnlyAPITests):
         }
         res = test_client.post(self.url(workspace=second_workspace), data=data)
         assert res.status_code == 400
-        assert 'Host with id' in res.data
+        assert b'Host with id' in res.data
 
     def test_update_fails_with_host_of_other_workspace(self, test_client,
                                                        second_workspace,
@@ -142,7 +142,7 @@ class TestListServiceView(ReadOnlyAPITests):
         }
         res = test_client.put(self.url(self.first_object), data=data)
         assert res.status_code == 400
-        assert 'Can\'t change service parent.' in res.data
+        assert b'Can\'t change service parent.' in res.data
 
     def test_create_service_returns_conflict_if_already_exists(self, test_client, host, session):
         session.commit()
@@ -200,7 +200,7 @@ class TestListServiceView(ReadOnlyAPITests):
         raw_data = self._raw_put_data(service.id, parent=host.id)
         res = test_client.put(self.url(service, workspace=service.workspace), data=raw_data)
         assert res.status_code == 400
-        assert 'Can\'t change service parent.' in res.data
+        assert b'Can\'t change service parent.' in res.data
         updated_service = Service.query.filter_by(id=service.id).first()
         assert updated_service.name == service.name
 

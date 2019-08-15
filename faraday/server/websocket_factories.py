@@ -5,6 +5,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 from __future__ import absolute_import
+from builtins import str
 
 import json
 import logging
@@ -204,14 +205,16 @@ class WorkspaceServerFactory(WebSocketServerFactory):
                 del connected_agents[key]
 
     def broadcast(self, msg):
+        if isinstance(msg, str):
+            msg = msg.encode('utf-8')
         logger.debug("broadcasting prepared message '{}' ..".format(msg))
         prepared_msg = json.loads(self.prepareMessage(msg).payload)
-        if 'agent_id' not in msg:
+        if b'agent_id' not in msg:
             for client in self.workspace_clients[prepared_msg['workspace']]:
                 reactor.callFromThread(client.sendPreparedMessage, self.prepareMessage(msg))
                 logger.debug("prepared message sent to {}".format(client.peer))
 
-        if 'agent_id' in msg:
+        if b'agent_id' in msg:
             agent_id = prepared_msg['agent_id']
             try:
                 agent_connection = connected_agents[agent_id]

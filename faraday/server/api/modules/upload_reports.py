@@ -156,13 +156,13 @@ def file_upload(workspace=None):
             file_path = os.path.join(
                 CONF.getConfigPath(),
                 'uploaded_reports/{0}'.format(raw_report_filename))
+            with open(file_path, 'wb') as output:
+                output.write(report_file.read())
         except AttributeError:
             logger.warning(
                 "Upload reports in WEB-UI not configurated, run Faraday client and try again...")
             abort(make_response(jsonify(message="Upload reports not configurated: Run faraday client and start Faraday server again"), 500))
 
-        with open(file_path, 'w') as output:
-            output.write(report_file.read())
 
     UPLOAD_REPORTS_QUEUE.put((workspace, file_path, request.cookies))
     return make_response(jsonify(message="ok"), 200)

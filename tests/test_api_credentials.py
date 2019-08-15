@@ -202,7 +202,7 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
         }
         res = test_client.post(self.url(), data=data)
         assert res.status_code == 400
-        assert 'Parent id not found' in res.data
+        assert b'Parent id not found' in res.data
 
     @pytest.mark.parametrize("parent_type, parent_factory", [
         ("Host", HostFactory),
@@ -233,7 +233,7 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
         }
         res = test_client.put(self.url(credential), data=data)
         assert res.status_code == 400
-        assert 'Parent id not found' in res.data
+        assert b'Parent id not found' in res.data
 
 
 # I'm Py3

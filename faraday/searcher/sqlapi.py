@@ -25,6 +25,11 @@ class SqlApi:
         vulnerabilities_query = self.session.query(Vulnerability, Workspace.id).join(Workspace).filter(
             Workspace.name == self.workspace.name)
         for attr, value in kwargs.iteritems():
+            if attr == 'regex':
+                vulnerabilities_query = vulnerabilities_query.filter(Vulnerability.name.op('~')(value))
+                vulnerabilities = [vulnerability for vulnerability, pos in
+                                   vulnerabilities_query.distinct(Vulnerability.id)]
+                continue
             if hasattr(Vulnerability, attr):
                 vulnerabilities_query = vulnerabilities_query.filter(getattr(Vulnerability, attr) == value)
                 vulnerabilities = [vulnerability for vulnerability, pos in
@@ -37,12 +42,17 @@ class SqlApi:
         web_vulnerabilities_query = self.session.query(Vulnerability, Workspace.id).join(Workspace).filter(
             Workspace.name == self.workspace.name)
         for attr, value in kwargs.iteritems():
+            if attr == 'regex':
+                web_vulnerabilities_query = web_vulnerabilities_query.filter(VulnerabilityWeb.name.op('~')(value))
+                web_vulnerabilities = [web_vulnerability for web_vulnerability, pos in
+                                       web_vulnerabilities_query.distinct(VulnerabilityWeb.id)]
+                continue
             if hasattr(VulnerabilityWeb, attr):
                 web_vulnerabilities_query = web_vulnerabilities_query.filter(getattr(VulnerabilityWeb, attr) == value)
                 web_vulnerabilities = [web_vulnerability for web_vulnerability, pos in
                                        web_vulnerabilities_query.distinct(Vulnerability.id)]
 
-                web_vulnerabilities = VulnerabilityWebSchema(many=True).dumps(web_vulnerabilities)
+        web_vulnerabilities = VulnerabilityWebSchema(many=True).dumps(web_vulnerabilities)
         web_vulnerabilities_data = json.loads(web_vulnerabilities.data)
 
         return vulnerabilities_data + web_vulnerabilities_data
@@ -52,6 +62,11 @@ class SqlApi:
         services_query = self.session.query(Service, Workspace.id).join(Workspace).filter(
             Workspace.name == self.workspace.name)
         for attr, value in kwargs.iteritems():
+            if attr == 'regex':
+                services_query = services_query.filter(Service.name.op('~')(value))
+                services = [service for service, pos in
+                            services_query.distinct(Service.id)]
+                continue
             if hasattr(Service, attr):
                 services_query = services_query.filter(getattr(Service, attr) == value)
                 services = [service for service, pos in
@@ -67,6 +82,11 @@ class SqlApi:
         hosts_query = self.session.query(Host, Workspace.id).join(Workspace).filter(
             Workspace.name == self.workspace.name)
         for attr, value in kwargs.iteritems():
+            if attr == 'regex':
+                hosts_query = hosts_query.filter(Host.ip.op('~')(value))
+                hosts = [host for host, pos in
+                         hosts_query.distinct(Host.id)]
+                continue
             if hasattr(Host, attr):
                 hosts_query = hosts_query.filter(getattr(Host, attr) == value)
                 hosts = [host for host, pos in

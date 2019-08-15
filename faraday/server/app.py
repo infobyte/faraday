@@ -35,6 +35,8 @@ from flask_security.utils import (
     get_message,
     verify_and_update_password,
     verify_hash)
+from flask_kvsession import KVSessionExtension
+from simplekv.fs import FilesystemStore
 from nplusone.ext.flask_sqlalchemy import NPlusOne
 from depot.manager import DepotManager
 
@@ -42,6 +44,8 @@ import faraday.server.config
 # Load SQLAlchemy Events
 import faraday.server.events
 from faraday.server.utils.logger import LOGGING_HANDLERS
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -296,6 +300,8 @@ def create_app(db_connection_string=None, testing=None):
         ],
         'PERMANENT_SESSION_LIFETIME': datetime.timedelta(hours=12),
     })
+    store = FilesystemStore('/tmp/data')
+    KVSessionExtension(store, app)
 
     storage_path = faraday.server.config.storage.path
     if not storage_path:

@@ -14,10 +14,13 @@ import platform
 # If is linux and its installed with deb or rpm, it must run with a user in the faraday group
 if platform.system() == "Linux":
     import grp
+    from getpass import getuser
     try:
         FARADAY_GROUP = "faraday"
         faraday_group = grp.getgrnam(FARADAY_GROUP)
-        if faraday_group.gr_gid not in os.getgroups():
+        #The current user may be different from the logged user
+        current_user = getuser()
+        if system_user != 'root' and faraday_group.gr_gid not in os.getgroups():
             print("\n\nUser (%s) must be in the '%s' group." % (os.getlogin(), FARADAY_GROUP))
             print("After adding the user to the group, please logout and login again.")
             sys.exit(1)

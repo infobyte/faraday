@@ -139,7 +139,7 @@ class PluginController(Thread):
         return block_flag
 
     def _get_plugins_by_input(self, cmd, plugin_set):
-        for plugin in plugin_set.itervalues():
+        for plugin in plugin_set.values():
             if plugin.canParseCommandString(cmd):
                 return plugin
         return None

@@ -62,7 +62,7 @@ class FaradayCustomField(fields.Field):
     def _deserialize(self, value, attr, data, **kwargs):
         serialized = {}
         if value is not None and value:
-            for key, raw_data in value.iteritems():
+            for key, raw_data in value.items():
                 if not raw_data:
                     continue
                 field_schema = db.session.query(CustomFieldsSchema).filter_by(

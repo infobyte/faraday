@@ -26,6 +26,9 @@ from difflib import SequenceMatcher
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+from faraday.server.web import app
+from faraday.server.models import db, Service, Host
+from faraday.searcher.sqlapi import SqlApi
 from faraday.searcher.validator import validate_rules
 from faraday.searcher.api import Api
 
@@ -36,7 +39,6 @@ min_weight = 0.3
 
 
 class MailNotification:
-
     def __init__(self, mail_from, mail_password, mail_protocol, mail_port):
         self.mail_from = mail_from
         self.mail_password = mail_password
@@ -295,26 +297,6 @@ def update_host(api, host, key, value):
     return True
 
 
-def get_parent(api, parent_tag):
-    logger.debug("Getting parent")
-    return api.get_filtered_services(id=parent_tag, name=parent_tag) or \
-           api.get_filtered_hosts(id=parent_tag, name=parent_tag)
-
-
-def filter_objects_by_parent(_objects, parent):
-    objects = []
-    parents = []
-    if isinstance(parent, list):
-        parents.extend(parent)
-    else:
-        parents.append(parent)
-    for obj in _objects:
-        for p in parents:
-            if p.id == obj.parent_id:
-                objects.append(obj)
-    return objects
-
-
 def evaluate_condition(model, condition):
     key, value = condition.split('=')
     value = value.replace('%', ' ')
@@ -351,38 +333,6 @@ def evaluate_condition(model, condition):
     if value.encode("utf-8") != temp_value.encode("utf-8"):
         return False
     return True
-
-
-def get_object(_models, obj):
-    logger.debug("Getting object")
-    objects = []
-    if obj is None:
-        if len(_models) > 0:
-            objects.append(_models[-1])
-            return objects
-        return None
-
-    items = obj.split()
-    allow_old_option = '--old' in items
-    if allow_old_option:
-        items.remove('--old')
-    for model in _models:
-        if all([evaluate_condition(model, cond) for cond in items]):
-            objects.append(model)
-            if allow_old_option:
-                break
-    return objects
-
-
-def get_models(api, objects, rule):
-    logger.debug("Getting models")
-    if 'parent' in rule:
-        parent = get_parent(api, rule['parent'])
-        if parent is None:
-            logger.warning("WARNING: Parent %s not found in rule %s " % (rule['parent'], rule['id']))
-            return objects
-        return filter_objects_by_parent(objects, parent)
-    return objects
 
 
 def evaluate_conditions(_models, conditions):
@@ -463,34 +413,15 @@ def replace_rule(rule, value_item):
     return ast.literal_eval(rule_str)
 
 
-def process_vulnerabilities(api, vulns, mail_notificacion, rules):
-    logger.debug("--> Start Process vulnerabilities")
-    for rule_item in rules:
-        logger.debug('Processing rule {}'.format(rule_item['id']))
-        if rule_item['model'] == 'Vulnerability':
-            count_values = 1
-            values = [None]
-            if 'values' in rule_item and len(rule_item['values']) > 0:
-                values = rule_item['values']
-                count_values = len(values)
-
-            for index in range(count_values):
-                rule = replace_rule(rule_item, values[index])
-                vulnerabilities = get_models(api, vulns, rule)
-                if 'fields' in rule:
-                    process_models_by_similarity(api, vulnerabilities, rule, mail_notificacion)
-                else:
-                    _objs_value = None
-                    if 'object' in rule:
-                        _objs_value = rule['object']
-                    objects = get_object(vulnerabilities, _objs_value)
-                    if objects is not None and len(objects) != 0:
-                        if 'conditions' in rule:
-                            if can_execute_action(vulnerabilities, rule['conditions']):
-                                execute_action(api, objects, rule, mail_notificacion)
-                        else:
-                            execute_action(api, objects, rule, mail_notificacion)
-    logger.debug("<-- Finish Process vulnerabilities")
+def get_objects_by_parent(parent, objects_type):
+    if isinstance(parent, Service) and objects_type == 'Vulnerability':
+        return parent.vulnerabilities + parent.web_vulnerabilities
+    elif isinstance(parent, Host) and objects_type == 'Vulnerability':
+        return parent.vulnerabilities
+    elif isinstance(parent, Host) and objects_type == 'Service':
+        return parent.services
+    else:
+        return None
 
 
 def process_services(api, services, mail_notificacion, rules):
@@ -542,10 +473,10 @@ def signal_handler(signal, frame):
 
 
 class Searcher:
-
-    def __init__(self, api, mail_notificacion=None, tool_name='Searcher'):
+    def __init__(self, api, sqlapi, mail_notificacion=None, tool_name='Searcher'):
         self.tool_name = tool_name
         self.api = api
+        self.sqlapi = sqlapi
         self.mail_notificacion = mail_notificacion
 
         logger.debug("Getting hosts ...")
@@ -555,11 +486,10 @@ class Searcher:
         logger.debug("Getting services ...")
         self.services = self.api.get_services()
 
-        logger.debug("Getting vulnerabilities ...")
-        self.vulns = self.api.get_vulnerabilities()
+        # logger.debug("Getting vulnerabilities ...")
+        # self.vulns = self.api.get_vulnerabilities()
 
     def process(self, rules):
-
         if rules and validate_rules(rules):
             start = datetime.now()
             command_id = self.api.create_command(
@@ -568,9 +498,7 @@ class Searcher:
                 tool_name=self.tool_name
             )
             self.api.command_id = command_id
-            process_vulnerabilities(
-                self.api,
-                self.vulns,
+            self._process_vulnerabilities(
                 self.mail_notificacion,
                 rules
             )
@@ -589,6 +517,85 @@ class Searcher:
             duration = (datetime.now() - start).seconds
             self.api.close_command(command_id, duration)
 
+    def _process_vulnerabilities(self, mail_notificacion, rules):
+        logger.debug("--> Start Process vulnerabilities")
+        for rule_item in rules:
+            logger.debug('Processing rule {}'.format(rule_item['id']))
+            if rule_item['model'] == 'Vulnerability':
+                count_values = 1
+                values = [None]
+                if 'values' in rule_item and len(rule_item['values']) > 0:
+                    values = rule_item['values']
+                    count_values = len(values)
+
+                for index in range(count_values):
+                    rule = replace_rule(rule_item, values[index])
+                    vulnerabilities = self._get_models(rule)
+                    if 'fields' in rule:
+                        process_models_by_similarity(self.api, vulnerabilities, rule, mail_notificacion)
+                    else:
+                        objects = self._get_object(rule)
+                        objects = set(objects).intersection(set(vulnerabilities))
+                        if objects is not None and len(objects) != 0:
+                            if 'conditions' in rule:
+                                if can_execute_action(vulnerabilities, rule['conditions']):
+                                    execute_action(self.api, objects, rule, mail_notificacion)
+                            else:
+                                execute_action(self.api, objects, rule, mail_notificacion)
+        logger.debug("<-- Finish Process vulnerabilities")
+
+    def _fetch_objects(self, rule_model):
+        if rule_model == 'Vulnerability':
+            return self.sqlapi.fetch_vulnerabilities()
+        if rule_model == 'Service':
+            return self.sqlapi.fetch_services()
+        if rule_model == 'Host':
+            return self.sqlapi.fetch_hosts()
+
+    def _filter_objects(self, rule_model, **kwargs):
+        if rule_model == 'Vulnerability':
+            return self.sqlapi.filter_vulnerabilities(**kwargs)
+        if rule_model == 'Service':
+            return self.sqlapi.filter_services(**kwargs)
+        if rule_model == 'Host':
+            return self.sqlapi.filter_hosts(**kwargs)
+
+    def _get_models(self, rule):
+        logger.debug("Getting models")
+        if 'parent' in rule:
+            parent = self._get_parent(rule['parent'])
+            if parent is None:
+                logger.warning("WARNING: Parent %s not found in rule %s " % (rule['parent'], rule['id']))
+                return self._fetch_objects(rule['model'])
+            return get_objects_by_parent(parent, rule['model'])
+        return self._fetch_objects(rule['model'])
+
+    def _get_parent(self, parent_tag):
+        logger.debug("Getting parent")
+        return self.sqlapi.filter_services(id=parent_tag, name=parent_tag) or \
+               self.sqlapi.filter_hosts(id=parent_tag, ip=parent_tag)
+
+    def _get_object(self, rule):
+        logger.debug("Getting object")
+        if 'object' in rule:
+            rule_obj = rule['object']
+        else:
+            return None
+
+        items = rule_obj.split()
+        allow_old_option = '--old' in items
+        if allow_old_option:
+            items.remove('--old')
+        kwargs = {}
+        for item in items:
+            key, value = item.split('=')
+            kwargs[key] = value
+
+        objects = self._filter_objects(rule['model'], kwargs)
+        if len(objects) == 0:
+            objects = self._fetch_objects(rule['model'])
+        return objects
+
 
 @click.command()
 @click.option('--workspace', required=True, prompt=True, help='Workspacer name')
@@ -602,8 +609,8 @@ class Searcher:
 @click.option('--port_protocol', required=False, default=587)
 @click.option('--log', required=False, default='debug')
 @click.option('--rules', required=True, prompt=True, help='Filename with rules')
-def main(workspace, server_address, user, password, output, email, email_password, mail_protocol, port_protocol, log, rules):
-
+def main(workspace, server_address, user, password, output, email, email_password, mail_protocol, port_protocol, log,
+         rules):
     signal.signal(signal.SIGINT, signal_handler)
 
     loglevel = log
@@ -657,11 +664,12 @@ def main(workspace, server_address, user, password, output, email, email_passwor
         if not server_address.endswith('/_api'):
             server_address += '_api'
 
-
         api = Api(requests, workspace, user, password, base=server_address)
+        with app.app_context():
+            sqlapi = SqlApi(db.session, workspace)
 
-        searcher = Searcher(api, mail_notificacion)
-        searcher.process(rules)
+            searcher = Searcher(api, sqlapi, mail_notificacion)
+            searcher.process(rules)
 
         logger.info('Finished')
     except Exception as error:

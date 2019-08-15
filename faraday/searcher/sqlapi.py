@@ -20,7 +20,7 @@ class SqlApi:
         else:
             raise ApiError("Workspace %s doesn't exist" % workspace_name)
 
-    def filter_vulnerabilities(self, kwargs):
+    def filter_vulnerabilities(self, **kwargs):
         vulnerabilities = []
         vulnerabilities_query = self.session.query(Vulnerability, Workspace.id).join(Workspace).filter(
             Workspace.name == self.workspace.name)
@@ -29,8 +29,7 @@ class SqlApi:
                 vulnerabilities_query = vulnerabilities_query.filter(Vulnerability.name.op('~')(value))
                 vulnerabilities = [vulnerability for vulnerability, pos in
                                    vulnerabilities_query.distinct(Vulnerability.id)]
-                continue
-            if hasattr(Vulnerability, attr):
+            elif hasattr(Vulnerability, attr):
                 vulnerabilities_query = vulnerabilities_query.filter(getattr(Vulnerability, attr) == value)
                 vulnerabilities = [vulnerability for vulnerability, pos in
                                    vulnerabilities_query.distinct(Vulnerability.id)]
@@ -46,8 +45,7 @@ class SqlApi:
                 web_vulnerabilities_query = web_vulnerabilities_query.filter(VulnerabilityWeb.name.op('~')(value))
                 web_vulnerabilities = [web_vulnerability for web_vulnerability, pos in
                                        web_vulnerabilities_query.distinct(VulnerabilityWeb.id)]
-                continue
-            if hasattr(VulnerabilityWeb, attr):
+            elif hasattr(VulnerabilityWeb, attr):
                 web_vulnerabilities_query = web_vulnerabilities_query.filter(getattr(VulnerabilityWeb, attr) == value)
                 web_vulnerabilities = [web_vulnerability for web_vulnerability, pos in
                                        web_vulnerabilities_query.distinct(Vulnerability.id)]
@@ -57,7 +55,7 @@ class SqlApi:
 
         return vulnerabilities_data + web_vulnerabilities_data
 
-    def filter_services(self, kwargs):
+    def filter_services(self, **kwargs):
         services = []
         services_query = self.session.query(Service, Workspace.id).join(Workspace).filter(
             Workspace.name == self.workspace.name)
@@ -66,8 +64,7 @@ class SqlApi:
                 services_query = services_query.filter(Service.name.op('~')(value))
                 services = [service for service, pos in
                             services_query.distinct(Service.id)]
-                continue
-            if hasattr(Service, attr):
+            elif hasattr(Service, attr):
                 services_query = services_query.filter(getattr(Service, attr) == value)
                 services = [service for service, pos in
                             services_query.distinct(Service.id)]
@@ -77,7 +74,7 @@ class SqlApi:
 
         return services_data
 
-    def filter_hosts(self, kwargs):
+    def filter_hosts(self, **kwargs):
         hosts = []
         hosts_query = self.session.query(Host, Workspace.id).join(Workspace).filter(
             Workspace.name == self.workspace.name)
@@ -86,11 +83,52 @@ class SqlApi:
                 hosts_query = hosts_query.filter(Host.ip.op('~')(value))
                 hosts = [host for host, pos in
                          hosts_query.distinct(Host.id)]
-                continue
-            if hasattr(Host, attr):
+            elif hasattr(Host, attr):
                 hosts_query = hosts_query.filter(getattr(Host, attr) == value)
                 hosts = [host for host, pos in
                          hosts_query.distinct(Host.id)]
+
+        hosts = HostSchema(many=True).dumps(hosts)
+        hosts_data = json.loads(hosts.data)
+
+        return hosts_data
+
+    def fetch_vulnerabilities(self):
+        vulnerabilities = self.session.query(Vulnerability, Workspace.id).join(Workspace).filter(
+            Workspace.name == self.workspace.name)
+
+        vulnerabilities = [vulnerability for vulnerability, pos in
+                           vulnerabilities.distinct(Vulnerability.id)]
+
+        vulnerabilities = VulnerabilitySchema(many=True).dumps(vulnerabilities)
+        vulnerabilities_data = json.loads(vulnerabilities.data)
+
+        web_vulnerabilities = self.session.query(Vulnerability, Workspace.id).join(Workspace).filter(
+            Workspace.name == self.workspace.name)
+
+        web_vulnerabilities = [web_vulnerability for web_vulnerability, pos in
+                               web_vulnerabilities.distinct(VulnerabilityWeb.id)]
+
+        web_vulnerabilities = VulnerabilityWebSchema(many=True).dumps(web_vulnerabilities)
+        web_vulnerabilities_data = json.loads(web_vulnerabilities.data)
+
+        return vulnerabilities_data + web_vulnerabilities_data
+
+    def fetch_services(self):
+        services = self.session.query(Service, Workspace.id).join(Workspace).filter(
+            Workspace.name == self.workspace.name)
+        services = [service for service, pos in
+                    services.distinct(Service.id)]
+        services = ServiceSchema(many=True).dumps(services)
+        services_data = json.loads(services.data)
+
+        return services_data
+
+    def fetch_hosts(self):
+        hosts = self.session.query(Host, Workspace.id).join(Workspace).filter(
+            Workspace.name == self.workspace.name)
+        hosts = [host for host, pos in
+                 hosts.distinct(Host.id)]
 
         hosts = HostSchema(many=True).dumps(hosts)
         hosts_data = json.loads(hosts.data)

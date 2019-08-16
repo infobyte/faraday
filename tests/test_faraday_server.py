@@ -20,6 +20,9 @@ def test_start_and_kill_faraday_server():
         if the server didn't stop we fail the test also.
     """
     server_port = 5988
+    import sys
+    if sys.version_info.major == 3:
+        raise UserWarning("Py3 test to be fixed")
     while daemonize.is_server_running(server_port) and server_port < 6500:
         server_port += 1
 
@@ -62,9 +65,6 @@ def test_start_and_kill_faraday_server():
             raise UserWarning('Faraday server test timeout!')
         if delta.seconds > 30:
             subproc.send_signal(signal.SIGTERM)
-            import sys
-            if sys.version_info.major == 3:
-                raise UserWarning("Py3 test to be fixed")
             subproc.wait()
         subproc.poll()
         subproc.poll()

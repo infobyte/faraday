@@ -13,7 +13,7 @@ import logging
 from base64 import b64encode, b64decode
 import csv
 import re
-from io import BytesIO
+from io import StringIO
 
 import flask
 import wtforms
@@ -815,7 +815,7 @@ class VulnerabilityView(PaginatedMixin,
         confirmed = bool(request.args.get('confirmed'))
         filters = request.args.get('q') or '{}'
         workspace = self._get_workspace(workspace_name)
-        memory_file = BytesIO()
+        memory_file = StringIO()
         custom_fields_columns = []
         for custom_field in db.session.query(CustomFieldsSchema).order_by(CustomFieldsSchema.field_order):
             custom_fields_columns.append(custom_field.field_name)

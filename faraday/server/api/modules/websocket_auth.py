@@ -25,7 +25,7 @@ class WebsocketWorkspaceAuthView(GenericWorkspacedView):
     def post(self, workspace_name):
         workspace = self._get_workspace(workspace_name)
         signer = TimestampSigner(app.config['SECRET_KEY'], salt="websocket")
-        token = signer.sign(str(workspace.id))
+        token = signer.sign(str(workspace.id)).decode('utf-8')
         return {"token": token}
 
 

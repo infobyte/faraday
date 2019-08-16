@@ -530,18 +530,16 @@ class Searcher:
 
                 for index in range(count_values):
                     rule = replace_rule(rule_item, values[index])
-                    vulnerabilities = self._get_models(rule)
+                    vulnerabilities, parent = self._get_models(rule)
                     if 'fields' in rule:
                         process_models_by_similarity(self.api, vulnerabilities, rule, mail_notificacion)
                     else:
                         objects = self._get_object(rule)
-                        objects = set(objects).intersection(set(vulnerabilities))
+                        objects = list(set(objects).intersection(set(vulnerabilities)))
                         if objects is not None and len(objects) != 0:
-                            if 'conditions' in rule:
-                                if can_execute_action(vulnerabilities, rule['conditions']):
-                                    execute_action(self.api, objects, rule, mail_notificacion)
-                            else:
+                            if self._can_execute_action(rule, parent):
                                 execute_action(self.api, objects, rule, mail_notificacion)
+
         logger.debug("<-- Finish Process vulnerabilities")
 
     def _fetch_objects(self, rule_model):
@@ -566,14 +564,19 @@ class Searcher:
             parent = self._get_parent(rule['parent'])
             if parent is None:
                 logger.warning("WARNING: Parent %s not found in rule %s " % (rule['parent'], rule['id']))
-                return self._fetch_objects(rule['model'])
-            return get_objects_by_parent(parent, rule['model'])
-        return self._fetch_objects(rule['model'])
+                return self._fetch_objects(rule['model']), None
+            return get_objects_by_parent(parent, rule['model']), parent
+        return self._fetch_objects(rule['model']), None
 
     def _get_parent(self, parent_tag):
         logger.debug("Getting parent")
-        return self.sqlapi.filter_services(id=parent_tag, name=parent_tag) or \
-               self.sqlapi.filter_hosts(id=parent_tag, ip=parent_tag)
+        parents = self.sqlapi.filter_services(id=parent_tag) or \
+                  self.sqlapi.filter_services(name=parent_tag) or \
+                  self.sqlapi.filter_hosts(id=parent_tag) or \
+                  self.sqlapi.filter_hosts(ip=parent_tag)
+        if len(parents) > 0:
+            return parents[0]
+        return None
 
     def _get_object(self, rule):
         logger.debug("Getting object")
@@ -591,10 +594,75 @@ class Searcher:
             key, value = item.split('=')
             kwargs[key] = value
 
-        objects = self._filter_objects(rule['model'], kwargs)
+        objects = self._filter_objects(rule['model'], **kwargs)
         if len(objects) == 0:
             objects = self._fetch_objects(rule['model'])
         return objects
+
+    def _can_execute_action(self, rule, parent):
+        if 'conditions' not in rule:
+            return True
+
+        kwargs = {}
+        if parent is not None:
+            if isinstance(parent, Service):
+                kwargs['service_id'] = parent.id
+            elif isinstance(parent, Host):
+                kwargs['host_id'] = parent.id
+
+        conditions = rule['conditions']
+        for condition in conditions:
+            key, value = condition.split('=')
+            kwargs[key] = value
+
+        return len(self._filter_objects(rule['model'], **kwargs)) > 0
+
+    def _execute_action(self, objects, rule):
+        logger.info("Running actions of rule '%s' :" % rule['id'])
+        actions = rule['actions']
+        _objs_value = None
+        if 'object' in rule:
+            _objs_value = rule['object']
+
+        for obj in objects:
+            for action in actions:
+                action = action.strip('--')
+                array = action.split(':')
+                command = array[0]
+                expression = str(':').join(array[1:])
+
+                if command == 'UPDATE':
+                    array_exp = expression.split('=')
+                    key = array_exp[0]
+                    value = str('=').join(array_exp[1:])
+                    if obj.class_signature == 'VulnerabilityWeb' or obj.class_signature == 'Vulnerability':
+                        update_vulnerability(self.api, obj, key, value)
+
+                    if obj.class_signature == 'Service':
+                        update_service(self.api, obj, key, value)
+
+                    if obj.class_signature == 'Host':
+                        update_host(self.api, obj, key, value)
+
+                elif command == 'DELETE':
+                    if obj.class_signature == 'VulnerabilityWeb' or obj.class_signature == 'Vulnerability':
+                        self.api.delete_vulnerability(obj.id)
+                        logger.info("Deleting vulnerability '%s' with id '%s':" % (obj.name, obj.id))
+
+                    elif obj.class_signature == 'Service':
+                        self.api.delete_service(obj.id)
+                        logger.info("Deleting service '%s' with id '%s':" % (obj.name, obj.id))
+
+                    elif obj.class_signature == 'Host':
+                        self.api.delete_host(obj.id)
+                        logger.info("Deleting host '%s' with id '%s':" % (obj.name, obj.id))
+                else:
+                    subject = 'Faraday searcher alert'
+                    body = '%s %s have been modified by rule %s at %s' % (
+                        obj.class_signature, obj.name, rule['id'], str(datetime.now()))
+                    self.mail_notificacion.send_mail(expression, subject, body)
+                    logger.info("Sending mail to: '%s'" % expression)
+        return True
 
 
 @click.command()

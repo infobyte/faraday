@@ -34,9 +34,6 @@ class SqlApi:
                 vulnerabilities = [vulnerability for vulnerability, pos in
                                    vulnerabilities_query.distinct(Vulnerability.id)]
 
-        vulnerabilities = VulnerabilitySchema(many=True).dumps(vulnerabilities)
-        vulnerabilities_data = json.loads(vulnerabilities.data)
-
         web_vulnerabilities = []
         web_vulnerabilities_query = self.session.query(Vulnerability, Workspace.id).join(Workspace).filter(
             Workspace.name == self.workspace.name)
@@ -50,10 +47,7 @@ class SqlApi:
                 web_vulnerabilities = [web_vulnerability for web_vulnerability, pos in
                                        web_vulnerabilities_query.distinct(Vulnerability.id)]
 
-        web_vulnerabilities = VulnerabilityWebSchema(many=True).dumps(web_vulnerabilities)
-        web_vulnerabilities_data = json.loads(web_vulnerabilities.data)
-
-        return vulnerabilities_data + web_vulnerabilities_data
+        return list(set(vulnerabilities + web_vulnerabilities))
 
     def filter_services(self, **kwargs):
         services = []
@@ -69,10 +63,7 @@ class SqlApi:
                 services = [service for service, pos in
                             services_query.distinct(Service.id)]
 
-        services = ServiceSchema(many=True).dumps(services)
-        services_data = json.loads(services.data)
-
-        return services_data
+        return services
 
     def filter_hosts(self, **kwargs):
         hosts = []
@@ -88,10 +79,7 @@ class SqlApi:
                 hosts = [host for host, pos in
                          hosts_query.distinct(Host.id)]
 
-        hosts = HostSchema(many=True).dumps(hosts)
-        hosts_data = json.loads(hosts.data)
-
-        return hosts_data
+        return hosts
 
     def fetch_vulnerabilities(self):
         vulnerabilities = self.session.query(Vulnerability, Workspace.id).join(Workspace).filter(
@@ -119,18 +107,11 @@ class SqlApi:
             Workspace.name == self.workspace.name)
         services = [service for service, pos in
                     services.distinct(Service.id)]
-        services = ServiceSchema(many=True).dumps(services)
-        services_data = json.loads(services.data)
-
-        return services_data
+        return services
 
     def fetch_hosts(self):
         hosts = self.session.query(Host, Workspace.id).join(Workspace).filter(
             Workspace.name == self.workspace.name)
         hosts = [host for host, pos in
                  hosts.distinct(Host.id)]
-
-        hosts = HostSchema(many=True).dumps(hosts)
-        hosts_data = json.loads(hosts.data)
-
-        return hosts_data
+        return hosts

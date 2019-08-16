@@ -2,6 +2,7 @@ import pytest
 
 from faraday.searcher.api import Api
 from faraday.searcher.searcher import Searcher, MailNotification
+from faraday.searcher.sqlapi import SqlApi
 from faraday.server.models import Service, Host
 from faraday.server.models import Vulnerability, CommandObject
 from tests.factories import VulnerabilityTemplateFactory, ServiceFactory, \
@@ -96,7 +97,8 @@ class TestSearcherRules():
         assert vuln.confirmed is False
 
         api = Api(test_client, workspace.name, username='test', password='test', base='')
-        searcher = Searcher(api)
+        sqlapi = SqlApi(session, workspace.name)
+        searcher = Searcher(api, sqlapi)
         rules = [{
             'id': 'CONFIRM_VULN',
             'model': 'Vulnerability',
@@ -255,7 +257,8 @@ class TestSearcherRules():
         assert vuln2.parent.id == parent_id
 
         api = Api(test_client, workspace.name, username='test', password='test', base='')
-        searcher = Searcher(api)
+        sqlapi = SqlApi(session, workspace.name)
+        searcher = Searcher(api, sqlapi)
         rules = [{
             'id': 'CHANGE_SEVERITY_INSIDE_HOST',
             'model': 'Vulnerability',

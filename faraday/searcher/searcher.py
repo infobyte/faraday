@@ -473,10 +473,9 @@ def signal_handler(signal, frame):
 
 
 class Searcher:
-    def __init__(self, api, sqlapi, mail_notificacion=None, tool_name='Searcher'):
+    def __init__(self, api, mail_notificacion=None, tool_name='Searcher'):
         self.tool_name = tool_name
         self.api = api
-        self.sqlapi = sqlapi
         self.mail_notificacion = mail_notificacion
 
         logger.debug("Getting hosts ...")
@@ -544,19 +543,19 @@ class Searcher:
 
     def _fetch_objects(self, rule_model):
         if rule_model == 'Vulnerability':
-            return self.sqlapi.fetch_vulnerabilities()
+            return self.api.fetch_vulnerabilities()
         if rule_model == 'Service':
-            return self.sqlapi.fetch_services()
+            return self.api.fetch_services()
         if rule_model == 'Host':
-            return self.sqlapi.fetch_hosts()
+            return self.api.fetch_hosts()
 
     def _filter_objects(self, rule_model, **kwargs):
         if rule_model == 'Vulnerability':
-            return self.sqlapi.filter_vulnerabilities(**kwargs)
+            return self.api.filter_vulnerabilities(**kwargs)
         if rule_model == 'Service':
-            return self.sqlapi.filter_services(**kwargs)
+            return self.api.filter_services(**kwargs)
         if rule_model == 'Host':
-            return self.sqlapi.filter_hosts(**kwargs)
+            return self.api.filter_hosts(**kwargs)
 
     def _get_models(self, rule):
         logger.debug("Getting models")
@@ -570,10 +569,10 @@ class Searcher:
 
     def _get_parent(self, parent_tag):
         logger.debug("Getting parent")
-        parents = self.sqlapi.filter_services(id=parent_tag) or \
-                  self.sqlapi.filter_services(name=parent_tag) or \
-                  self.sqlapi.filter_hosts(id=parent_tag) or \
-                  self.sqlapi.filter_hosts(ip=parent_tag)
+        parents = self.api.filter_services(id=parent_tag) or \
+                  self.api.filter_services(name=parent_tag) or \
+                  self.api.filter_hosts(id=parent_tag) or \
+                  self.api.filter_hosts(ip=parent_tag)
         if len(parents) > 0:
             return parents[0]
         return None
@@ -733,11 +732,8 @@ def main(workspace, server_address, user, password, output, email, email_passwor
             server_address += '_api'
 
         api = Api(requests, workspace, user, password, base=server_address)
-        with app.app_context():
-            sqlapi = SqlApi(db.session, workspace)
-
-            searcher = Searcher(api, sqlapi, mail_notificacion)
-            searcher.process(rules)
+        searcher = Searcher(api, mail_notificacion)
+        searcher.process(rules)
 
         logger.info('Finished')
     except Exception as error:

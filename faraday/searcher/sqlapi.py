@@ -11,7 +11,7 @@ logger = logging.getLogger('Faraday searcher')
 
 
 class SqlApi:
-    def __init__(self, session, workspace_name):
+    def __init__(self, workspace_name, test_cient=None, session=None):
         self.session = session
 
         workspace = self.session.query(Workspace).filter_by(name=workspace_name).all()

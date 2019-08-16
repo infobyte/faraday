@@ -42,7 +42,7 @@ class Structure:
 
 class Api:
 
-    def __init__(self, requests, workspace, username=None, password=None, base='http://127.0.0.1:5985/_api/', token=None):
+    def __init__(self, workspace, requests=None, session=None, username=None, password=None, base='http://127.0.0.1:5985/_api/', token=None):
         self.requests = requests
         self.workspace = workspace
         self.command_id = None  # Faraday uses this to tracker searcher changes.
@@ -141,9 +141,11 @@ class Api:
         except ReadTimeout:
             return None
 
-    def get_vulnerabilities(self):
+    def fetch_vulnerabilities(self):
         return [Structure(**item['value']) for item in self._get(self._url('ws/{}/vulns/'.format(self.workspace)),
                                                                  'vulnerabilities')['vulnerabilities']]
+    def filter_vulnerabilities(self, **kwargs):
+        pass
 
     def update_vulnerability(self, vulnerability):
         return Structure(**self._put(self._url('ws/{}/vulns/{}/'.format(self.workspace, vulnerability.id)),

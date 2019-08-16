@@ -87,7 +87,11 @@ class TestSearcherRules():
         assert list(vuln.tags) == ["TEST"]
         check_command(vuln, session)
 
-    def test_confirm_vuln(self, session, test_client):
+    @pytest.mark.parametrize("api", [
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session,  username='test', password='test', base=''),
+        lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+    ])
+    def test_confirm_vuln(self, api, session, test_client):
         workspace = WorkspaceFactory.create()
         vuln = VulnerabilityFactory.create(workspace=workspace, severity='low', confirmed=False)
         session.add(workspace)
@@ -96,9 +100,7 @@ class TestSearcherRules():
 
         assert vuln.confirmed is False
 
-        api = Api(test_client, workspace.name, username='test', password='test', base='')
-        sqlapi = SqlApi(session, workspace.name)
-        searcher = Searcher(api, sqlapi)
+        searcher = Searcher(api(workspace, test_client, session))
         rules = [{
             'id': 'CONFIRM_VULN',
             'model': 'Vulnerability',

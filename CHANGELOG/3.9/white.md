@@ -2,7 +2,7 @@
  * Add an API endpoint to to perform a bulk create of many objects (hosts,
 services, vulns, commands and credentials). This is used to avoid doing a lot
 of API requests to upload data. Now one request should be enough.
- * Modify color of styles and .png files.
+ * Major style and color changes to the Web UI
  * Add API token authentication method
  * Add "New" button to create credentials without host or service assigned yet
 were doing a lot of SQL queries because of a programming bug)

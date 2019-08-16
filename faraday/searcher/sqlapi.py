@@ -1,11 +1,12 @@
 import json
 import logging
+import socket
 
 from faraday.searcher.api import ApiError
 from faraday.server.api.modules.hosts import HostSchema
 from faraday.server.api.modules.services import ServiceSchema
 from faraday.server.api.modules.vulns import VulnerabilitySchema, VulnerabilityWebSchema
-from faraday.server.models import Workspace, Vulnerability, VulnerabilityWeb, Service, Host
+from faraday.server.models import Workspace, Vulnerability, VulnerabilityWeb, Service, Host, Command
 
 logger = logging.getLogger('Faraday searcher')
 
@@ -13,7 +14,7 @@ logger = logging.getLogger('Faraday searcher')
 class SqlApi:
     def __init__(self, workspace_name, test_cient=None, session=None):
         self.session = session
-
+        self.command_id = None  # Faraday uses this to tracker searcher changes.
         workspace = self.session.query(Workspace).filter_by(name=workspace_name).all()
         if len(workspace) > 0:
             self.workspace = workspace[0]
@@ -115,3 +116,36 @@ class SqlApi:
         hosts = [host for host, pos in
                  hosts.distinct(Host.id)]
         return hosts
+
+    def create_command(self, itime, params, tool_name):
+        self.itime = itime
+        self.params = params
+        self.tool_name = tool_name
+        data = self._command_info()
+
+        command = Command(**data)
+        self.session.add(command)
+        self.session.flush()
+
+        return command.id
+
+    def _command_info(self, duration=None):
+        try:
+            ip = socket.gethostbyname(socket.gethostname())
+        except socket.gaierror:
+            ip = socket.gethostname()
+        data = {
+            "itime": self.itime,
+            "command": self.tool_name,
+            "ip": ip,
+            "import_source": "shell",
+            "tool": "Searcher",
+            "params": json.dumps(self.params),
+        }
+        if duration:
+            data.update({"duration": duration})
+        return data
+
+    def close_command(self, command_id, duration):
+        data = self._command_info(duration)
+        self._put(self._url('ws/{}/commands/{}/'.format(self.workspace, command_id)), data, 'command')

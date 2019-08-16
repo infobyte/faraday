@@ -236,7 +236,11 @@ class TestSearcherRules():
         assert len(vuln1.references) > 0
         assert list(vuln1.references)[0] == 'REF_TEST'
 
-    def test_update_severity_inside_one_host(self, session, test_client):
+    @pytest.mark.parametrize("api", [
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test', password='test', base=''),
+        # lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+    ])
+    def test_update_severity_inside_one_host(self, api, session, test_client):
         workspace = WorkspaceFactory.create()
         host = HostFactory.create(workspace=workspace)
         vuln1 = VulnerabilityFactory.create(workspace=workspace, severity='low',
@@ -258,9 +262,7 @@ class TestSearcherRules():
         assert vuln1.parent.id == parent_id
         assert vuln2.parent.id == parent_id
 
-        api = Api(test_client, workspace.name, username='test', password='test', base='')
-        sqlapi = SqlApi(session, workspace.name)
-        searcher = Searcher(api, sqlapi)
+        searcher = Searcher(api(workspace, test_client, session))
         rules = [{
             'id': 'CHANGE_SEVERITY_INSIDE_HOST',
             'model': 'Vulnerability',

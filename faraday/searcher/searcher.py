@@ -478,12 +478,11 @@ class Searcher:
         self.api = api
         self.mail_notificacion = mail_notificacion
 
-        logger.debug("Getting hosts ...")
-
-        self.hosts = self.api.get_hosts()
-
-        logger.debug("Getting services ...")
-        self.services = self.api.get_services()
+        # logger.debug("Getting hosts ...")
+        # self.hosts = self.api.get_hosts()
+        #
+        # logger.debug("Getting services ...")
+        # self.services = self.api.get_services()
 
         # logger.debug("Getting vulnerabilities ...")
         # self.vulns = self.api.get_vulnerabilities()
@@ -497,26 +496,24 @@ class Searcher:
                 tool_name=self.tool_name
             )
             self.api.command_id = command_id
-            self._process_vulnerabilities(
-                self.mail_notificacion,
-                rules
-            )
-            process_services(
-                self.api,
-                self.services,
-                self.mail_notificacion,
-                rules
-            )
-            process_hosts(
-                self.api,
-                self.hosts,
-                self.mail_notificacion,
-                rules
-            )
+            self._process_vulnerabilities(rules)
+
+            # process_services(
+            #     self.api,
+            #     self.services,
+            #     self.mail_notificacion,
+            #     rules
+            # )
+            # process_hosts(
+            #     self.api,
+            #     self.hosts,
+            #     self.mail_notificacion,
+            #     rules
+            # )
             duration = (datetime.now() - start).seconds
             self.api.close_command(command_id, duration)
 
-    def _process_vulnerabilities(self, mail_notificacion, rules):
+    def _process_vulnerabilities(self, rules):
         logger.debug("--> Start Process vulnerabilities")
         for rule_item in rules:
             logger.debug('Processing rule {}'.format(rule_item['id']))
@@ -531,13 +528,13 @@ class Searcher:
                     rule = replace_rule(rule_item, values[index])
                     vulnerabilities, parent = self._get_models(rule)
                     if 'fields' in rule:
-                        process_models_by_similarity(self.api, vulnerabilities, rule, mail_notificacion)
+                        process_models_by_similarity(self.api, vulnerabilities, rule, self.mail_notificacion)
                     else:
                         objects = self._get_object(rule)
                         objects = list(set(objects).intersection(set(vulnerabilities)))
                         if objects is not None and len(objects) != 0:
                             if self._can_execute_action(rule, parent):
-                                execute_action(self.api, objects, rule, mail_notificacion)
+                                execute_action(self.api, objects, rule, self.mail_notificacion)
 
         logger.debug("<-- Finish Process vulnerabilities")
 

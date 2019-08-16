@@ -1,6 +1,7 @@
 import json
 import logging
 import socket
+import urllib
 
 from requests.adapters import ConnectionError, ReadTimeout
 
@@ -41,8 +42,8 @@ class Structure:
 
 
 class Api:
-
-    def __init__(self, workspace, requests=None, session=None, username=None, password=None, base='http://127.0.0.1:5985/_api/', token=None):
+    def __init__(self, workspace, requests=None, session=None, username=None, password=None,
+                 base='http://127.0.0.1:5985/_api/', token=None):
         self.requests = requests
         self.workspace = workspace
         self.command_id = None  # Faraday uses this to tracker searcher changes.
@@ -115,7 +116,7 @@ class Api:
             raise ApiError('Unable to delete {}'.format(object_name))
         return True
 
-    def login(self,  username, password):
+    def login(self, username, password):
         auth = {"email": username, "password": password}
         try:
             resp = self.requests.post(self.base + 'login', json=auth)
@@ -144,6 +145,7 @@ class Api:
     def fetch_vulnerabilities(self):
         return [Structure(**item['value']) for item in self._get(self._url('ws/{}/vulns/'.format(self.workspace)),
                                                                  'vulnerabilities')['vulnerabilities']]
+
     def filter_vulnerabilities(self, **kwargs):
         pass
 
@@ -201,7 +203,8 @@ class Api:
         return self._delete(self._url('ws/{}/hosts/{}/'.format(self.workspace, host_id)), 'host')
 
     def get_vulnerability_templates(self):
-        return [Structure(**item['doc']) for item in self._get(self._url('vulnerability_template'), 'templates')['rows']]
+        return [Structure(**item['doc']) for item in
+                self._get(self._url('vulnerability_template'), 'templates')['rows']]
 
     def get_filtered_templates(self, **params):
         templates = self.get_vulnerability_templates()
@@ -212,6 +215,16 @@ class Api:
                         (getattr(template, key, None) == value or str(getattr(template, key, None)) == value):
                     filtered_templates.append(template)
         return filtered_templates
+
+    def filter_services(self, **kwargs):
+        params = urllib.urlencode(kwargs)
+        return [Structure(**item['value']) for item in
+                self._get(self._url('ws/{}/services/?{}'.format(self.workspace, params)), 'services')['services']]
+
+    def filter_hosts(self, **kwargs):
+        params = urllib.urlencode(kwargs)
+        return [Structure(**item['value']) for item in
+                self._get(self._url('ws/{}/hosts/?{}'.format(self.workspace, params)), 'hosts')['rows']]
 
     def create_command(self, itime, params, tool_name):
         self.itime = itime

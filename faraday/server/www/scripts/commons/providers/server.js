@@ -377,6 +377,11 @@ angular.module("faradayApp")
                 return get(getUrl, data);
             }
 
+            ServerAPI.getAgents = function (wsName, data) {
+                var getUrl = createGetUrl(wsName, 'agents');
+                return get(getUrl);
+            }
+
             ServerAPI.getNotes = function (wsName, data) {
                 var getUrl = createGetUrl(wsName, 'notes');
                 return get(getUrl, data);
@@ -601,6 +606,16 @@ angular.module("faradayApp")
                 }
             }
 
+            ServerAPI.exportCsv = function (wsName, jsonOptions) {
+                if(jsonOptions){
+                    let url = APIURL + "ws/" + wsName + "/vulns/export_csv";
+                    return get(url  + '?q=' + jsonOptions);
+                }else{
+                    let url = APIURL + "ws/" + wsName + "/vulns/export_csv/";
+                    return get(url);
+                }
+            }
+
             ServerAPI.deleteVuln = function (wsName, vulnId, rev) {
                 var deleteUrl = createDeleteUrl(wsName, vulnId, 'vulns');
                 if (typeof rev === "undefined") {
@@ -683,6 +698,30 @@ angular.module("faradayApp")
 
             ServerAPI.getExploits = function (cveId) {
                 return get(APIURL + 'vulners/exploits/' + cveId);
+            }
+
+            ServerAPI.deleteAgent = function (wsName, agentId, rev) {
+                var deleteUrl = createDeleteUrl(wsName, agentId, 'agents');
+                if (typeof rev === "undefined") {
+                    return _delete(deleteUrl, false)
+                }
+                else {
+                    return _delete(deleteUrl, true);
+                }
+            };
+
+            ServerAPI.updateAgent = function (wsName, agent) {
+                 var putUrl = createPutUrl(wsName, agent.id, 'agents');
+                 return send_data(putUrl, agent, true, "PUT");
+            };
+
+            ServerAPI.getAgentToken = function () {
+                 var getUrl = createNonWorkspacedGetUrl('agent_token');
+                 return get(getUrl);
+            };
+
+            ServerAPI.getTools = function(hid, ws){
+                return get(APIURL + 'ws/' + ws + '/hosts/' + hid + '/tools_history/');
             }
 
             return ServerAPI;

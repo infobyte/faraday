@@ -11,15 +11,18 @@ from signal import SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM, SIG_DFL, signal
 import twisted.web
 from twisted.web.resource import Resource, ForbiddenResource
 
-import faraday.server.config
-
 from twisted.internet import ssl, reactor, error
 from twisted.web.static import File
 from twisted.web.util import Redirect
+from twisted.web.http import proxiedLogFormatter
 from twisted.web.wsgi import WSGIResource
 from autobahn.twisted.websocket import (
     listenWS
 )
+import faraday.server.config
+
+from faraday.config.constant import CONST_FARADAY_HOME_PATH
+from faraday.server import TimerClass
 from faraday.server.utils import logger
 
 from faraday.server.app import create_app
@@ -31,6 +34,7 @@ from faraday.server.api.modules.upload_reports import RawReportProcessor
 
 app = create_app()  # creates a Flask(__name__) app
 logger = logging.getLogger(__name__)
+
 
 
 class CleanHttpHeadersResource(Resource, object):
@@ -138,8 +142,12 @@ class WebServer(object):
             logger.info("Stopping threads, please wait...")
             # teardown()
             self.raw_report_processor.stop()
+            self.timer.stop()
 
-        site = twisted.web.server.Site(self.__root_resource)
+        log_path = os.path.join(CONST_FARADAY_HOME_PATH, 'logs', 'access-logging.log')
+        site = twisted.web.server.Site(self.__root_resource,
+                                       logPath=log_path,
+                                       logFormatter=proxiedLogFormatter)
         site.displayTracebacks = False
         if self.__ssl_enabled:
             ssl_context = self.__load_ssl_certs()
@@ -154,6 +162,8 @@ class WebServer(object):
             # start threads and processes
             self.raw_report_processor = RawReportProcessor()
             self.raw_report_processor.start()
+            self.timer = TimerClass()
+            self.timer.start()
             # web and static content
             self.__listen_func(
                 self.__listen_port, site,

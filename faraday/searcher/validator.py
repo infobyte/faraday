@@ -10,7 +10,6 @@
 import re
 import json
 import logging
-from rules import *
 
 logger = logging.getLogger('Faraday searcher')
 
@@ -31,7 +30,7 @@ def validate_id(id_list, rule_id):
 
 
 def validate_model(model):
-    if model is not 'Host' and model is not 'Service' and model is not 'Vulnerability':
+    if model not in ['Host', 'Service', 'Vulnerability']:
         return False
     return True
 
@@ -163,7 +162,7 @@ def validate(key, dictionary, validate_function=None, rule_id=None, mandatory=Tr
     return True
 
 
-def validate_rules():
+def validate_rules(rules):
     logger.info('--> Validating rules ...')
     id_list = []
     for rule in rules:

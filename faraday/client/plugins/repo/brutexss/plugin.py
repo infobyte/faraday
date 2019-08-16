@@ -52,7 +52,7 @@ class brutexss (core.PluginBase):
                     found_vuln=len(parametro) > 0
                     host_id = self.createAndAddHost(url)
                     address=socket.gethostbyname(url)
-                    interface_id = self.createAndAddInterface(host_id,address,ipv4_address=address,hostname_resolution=url)
+                    interface_id = self.createAndAddInterface(host_id,address,ipv4_address=address,hostname_resolution=[url])
                     service_id = self.createAndAddServiceToInterface(host_id,interface_id,self.protocol,'tcp',ports=[port],status='Open',version="",description="")
         if found_vuln:
             self.createAndAddVulnWebToService(host_id,service_id,name="xss",desc="XSS",ref='',severity='med',website=url,path='',method='',pname='',params=''.join(parametro),request='',response='')

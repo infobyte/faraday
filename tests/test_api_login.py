@@ -1,4 +1,11 @@
+import pytest
+from itsdangerous import TimedJSONWebSignatureSerializer
+
+from faraday.server.models import User
+from faraday.server.web import app
 from tests import factories
+from tests.conftest import logged_user, login_as
+
 
 class TestLogin():
     def test_case_bug_with_username(self, test_client, session):
@@ -57,7 +64,9 @@ class TestLogin():
         """
             Use of an invalid auth token
         """
-
+        # clean cookies make sure test_client has no session
+        test_client.cookie_jar.clear()
+        secret_key = app.config['SECRET_KEY']
         alice = factories.UserFactory.create(
                 active=True,
                 username='alice',
@@ -70,15 +79,49 @@ class TestLogin():
         session.add(ws)
         session.commit()
 
-        login_payload = {
-            'email': 'alice',
-            'password': 'passguord',
-        }
-        res = test_client.post('/login', data=login_payload)
-        assert res.status_code == 200
-        assert 'authentication_token' in res.json['response']['user']
-        
-        headers = {'Authentication-Token': 'hajimemashite'}
+        serializer = TimedJSONWebSignatureSerializer(app.config['SECRET_KEY'], expires_in=500, salt="token")
+        token = serializer.dumps({ 'user_id': alice.id})
+
+        headers = {'Authorization': 'Token ' + token}
 
         ws = test_client.get('/v2/ws/wonderland/', headers=headers)
         assert ws.status_code == 401
+
+    @pytest.mark.usefixtures('logged_user')
+    def test_retrieve_token_from_api_and_use_it(self, test_client, session):
+        res = test_client.get('/v2/token/')
+
+        assert res.status_code == 200
+
+        headers = {'Authorization': 'Token ' + res.json}
+
+        # clean cookies make sure test_client has no session
+        test_client.cookie_jar.clear()
+        res = test_client.get('/session', headers=headers)
+        assert res.status_code == 200
+
+    def test_cant_retrieve_token_unauthenticated(self, test_client):
+        # clean cookies make sure test_client has no session
+        test_client.cookie_jar.clear()
+        res = test_client.get('/v2/token/')
+
+        assert res.status_code == 401
+
+    @pytest.mark.usefixtures('logged_user')
+    def test_token_expires_after_password_change(self, test_client, session):
+        user = User.query.filter_by(username="test").first()
+        res = test_client.get('/v2/token/')
+
+        assert res.status_code == 200
+
+        headers = {'Authorization': 'Token ' + res.json}
+
+        if user:
+            user.password = 'SECRET_VERY_SECRET_PASSWORD_TEST'
+        session.add(user)
+        session.commit()
+
+        # clean cookies make sure test_client has no session
+        test_client.cookie_jar.clear()
+        res = test_client.get('/v2/ws/', headers=headers)
+        assert res.status_code == 401

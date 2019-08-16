@@ -149,5 +149,17 @@ angular.module('faradayApp')
             return this.get_count(ws, 'services');
         };
 
+        hostsManager.getTools = function(hid, ws) {
+            var deferred = $q.defer();
+            ServerAPI.getTools(hid, ws).then(
+                function(result) {
+                    deferred.resolve(result.data.tools)
+                }, function() {
+                    deferred.reject("Unable to get tools for selected host")
+                }
+            )
+            return deferred.promise;
+        };
+
         return hostsManager;
     }]);

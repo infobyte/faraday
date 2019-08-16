@@ -90,21 +90,6 @@ class TestListServiceView(ReadOnlyAPITests):
         assert res.status_code == 400
         assert 'Not a valid choice' in res.data
 
-    def test_create_fails_with_no_status(self, test_client,
-                                         host, session):
-        session.commit()
-        data = {
-            "name": "ftp",
-            "description": "test. test",
-            "owned": False,
-            "ports": [21],
-            "protocol": "tcp",
-            "parent": host.id
-        }
-        res = test_client.post(self.url(), data=data)
-        assert res.status_code == 400
-        assert 'Missing data' in res.data
-
     def test_create_fails_with_no_host_id(self, test_client,
                                           host, session):
         session.commit()

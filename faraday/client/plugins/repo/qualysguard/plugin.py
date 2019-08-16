@@ -307,6 +307,7 @@ class ResultsScanReport():
         self.port = parent.get('port')
         self.protocol = parent.get('protocol')
         self.name = self.node.get('number')
+        self.external_id = self.node.get('number')
         self.severity = self.node.get('severity')
         self.title = self.get_text_from_subnode('TITLE')
         self.cvss = self.get_text_from_subnode('CVSS_BASE')
@@ -391,7 +392,8 @@ class QualysguardPlugin(core.PluginBase):
                         ref=v.ref,
                         severity=str(int(v.severity) - 1),
                         resolution=v.solution if v.solution else '',
-                        desc=v.desc)
+                        desc=v.desc,
+                        external_id=v.external_id)
 
                 else:
 
@@ -417,7 +419,8 @@ class QualysguardPlugin(core.PluginBase):
                             website=item.ip,
                             severity=str(int(v.severity) - 1),
                             desc=v.desc,
-                            resolution=v.solution if v.solution else '')
+                            resolution=v.solution if v.solution else '',
+                            external_id=v.external_id)
 
                     else:
                         self.createAndAddVulnToService(
@@ -427,7 +430,8 @@ class QualysguardPlugin(core.PluginBase):
                             ref=v.ref,
                             severity=str(int(v.severity) - 1),
                             desc=v.desc,
-                            resolution=v.solution if v.solution else '')
+                            resolution=v.solution if v.solution else '',
+                            external_id=v.external_id)
 
         del parser
 

@@ -72,7 +72,7 @@ class CmdFtpPlugin(core.PluginBase):
                 h_id,
                 ip_address,
                 ipv4_address=ip_address,
-                hostname_resolution=hostname)
+                hostname_resolution=[hostname])
 
             s_id = self.createAndAddServiceToInterface(
                 h_id,

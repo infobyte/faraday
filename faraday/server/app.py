@@ -7,11 +7,12 @@ import os
 import string
 import datetime
 from future.builtins import range # __future__
+from itsdangerous import TimedJSONWebSignatureSerializer, SignatureExpired, BadSignature
 from os.path import join, expanduser
 from random import SystemRandom
 
 from faraday.server.config import LOCAL_CONFIG_FILE, copy_default_config_to_local
-from faraday.server.models import User, Vulnerability, VulnerabilityWeb, Workspace, VulnerabilityGeneric
+from faraday.server.models import User
 
 try:
     # py2.7
@@ -28,16 +29,12 @@ from flask_security import (
     Security,
     SQLAlchemyUserDatastore,
 )
-from flask_security.decorators import (
-    auth_token_required,
-)
 from flask_security.forms import LoginForm
 from flask_security.utils import (
     _datastore,
     get_message,
-    verify_and_update_password
-)
-from flask_session import Session
+    verify_and_update_password,
+    verify_hash)
 from nplusone.ext.flask_sqlalchemy import NPlusOne
 from depot.manager import DepotManager
 
@@ -85,6 +82,10 @@ def register_blueprints(app):
     from faraday.server.api.modules.websocket_auth import websocket_auth_api
     from faraday.server.api.modules.get_exploits import exploits_api
     from faraday.server.api.modules.custom_fields import custom_fields_schema_api
+    from faraday.server.api.modules.agent_auth_token import agent_auth_token_api
+    from faraday.server.api.modules.agent import agent_api
+    from faraday.server.api.modules.bulk_create import bulk_create_api
+    from faraday.server.api.modules.token import token_api
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(activityfeed_api)
     app.register_blueprint(credentials_api)
@@ -102,6 +103,10 @@ def register_blueprints(app):
     app.register_blueprint(websocket_auth_api)
     app.register_blueprint(exploits_api)
     app.register_blueprint(custom_fields_schema_api)
+    app.register_blueprint(agent_api)
+    app.register_blueprint(agent_auth_token_api)
+    app.register_blueprint(bulk_create_api)
+    app.register_blueprint(token_api)
 
 
 def check_testing_configuration(testing, app):
@@ -121,33 +126,72 @@ def register_handlers(app):
     def unauthorized():
         flask.abort(403)
 
-    @auth_token_required
-    def verify_token():
-        return True
+    def verify_token(token):
+        serialized = TimedJSONWebSignatureSerializer(app.config['SECRET_KEY'], salt="api_token")
+        try:
+            data = serialized.loads(token)
+            user_id = data["user_id"]
+            user = User.query.filter_by(id=user_id).first()
+            if not user or not verify_hash(data['validation_check'], user.password):
+                logger.warn('Invalid authentication token. token invalid after password change')
+                return None
+            return user
+        except SignatureExpired:
+            return None  # valid token, but expired
+        except BadSignature:
+            return None  # invalid token
+
 
     @app.before_request
     def default_login_required():
         view = app.view_functions.get(flask.request.endpoint)
 
         if app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER'] in flask.request.headers:
-            if verify_token() is not True:
-                logger.warn ('Auth token not valid. Did you change your password recently?')
+            header = flask.request.headers[app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER']]
+            try:
+                (auth_type, token) = header.split(None, 1)
+            except ValueError:
+                logger.warn("Authorization header does not have type")
                 flask.abort(401)
-            logged_in = True
+            auth_type = auth_type.lower()
+            if auth_type == 'token':
+                user = verify_token(token)
+                if not user:
+                    logger.warn('Invalid authentication token.')
+                    flask.abort(401)
+                logged_in = True
+                flask.session['user_id'] = user.id
+            elif auth_type == 'agent':
+                # Don't handle the agent logic here, do it in another
+                # before_request handler
+                logged_in = False
+            else:
+                logger.warn("Invalid authorization type")
+                flask.abort(401)
         else:
             logged_in = 'user_id' in flask.session
-            if (not logged_in and not getattr(view, 'is_public', False)):
-                flask.abort(401)
+            user_id = session.get("user_id")
+            if logged_in:
+                user = User.query.filter_by(id=user_id).first()
+
+        if logged_in:
+            assert user
+
+        if not logged_in and not getattr(view, 'is_public', False):
+            flask.abort(401)
 
         g.user = None
         if logged_in:
-            user = User.query.filter_by(id=session["user_id"]).first()
             g.user = user
             if user is None:
                 logger.warn("Unknown user id {}".format(session["user_id"]))
                 del flask.session['user_id']
                 flask.abort(401)  # 403 would be better but breaks the web ui
                 return
+
+    @app.before_request
+    def load_g_custom_fields():
+        g.custom_fields = {}
 
     @app.after_request
     def log_queries_count(response):
@@ -184,6 +228,18 @@ def save_new_secret_key(app):
         config.write(configfile)
 
 
+def save_new_agent_creation_token():
+    assert os.path.exists(LOCAL_CONFIG_FILE)
+    config = ConfigParser()
+    config.read(LOCAL_CONFIG_FILE)
+    rng = SystemRandom()
+    agent_token = "".join([rng.choice(string.ascii_letters + string.digits) for _ in range(25)])
+    config.set('faraday_server', 'agent_token', agent_token)
+    with open(LOCAL_CONFIG_FILE, 'w') as configfile:
+        config.write(configfile)
+    faraday.server.config.faraday_server.agent_token = agent_token
+
+
 def create_app(db_connection_string=None, testing=None):
     app = Flask(__name__)
 
@@ -201,6 +257,9 @@ def create_app(db_connection_string=None, testing=None):
         else:
             app.config['SECRET_KEY'] = secret_key
 
+    if faraday.server.config.faraday_server.agent_token is None:
+        save_new_agent_creation_token()
+
     login_failed_message = ("Invalid username or password", 'error')
 
     app.config.update({
@@ -213,7 +272,7 @@ def create_app(db_connection_string=None, testing=None):
         'SECURITY_CHANGEABLE': True,
         'SECURITY_SEND_PASSWORD_CHANGE_EMAIL': False,
         'SECURITY_MSG_USER_DOES_NOT_EXIST': login_failed_message,
-        'SECURITY_TOKEN_AUTHENTICATION_HEADER': 'Authentication-Token',
+        'SECURITY_TOKEN_AUTHENTICATION_HEADER': 'Authorization',
 
         # The line bellow should not be necessary because of the
         # CustomLoginForm, but i'll include it anyway.
@@ -274,6 +333,7 @@ def create_app(db_connection_string=None, testing=None):
     Security(app, app.user_datastore, login_form=CustomLoginForm)
     # Make API endpoints require a login user by default. Based on
     # https://stackoverflow.com/questions/13428708/best-way-to-make-flask-logins-login-required-the-default
+
     app.view_functions['security.login'].is_public = True
     app.view_functions['security.logout'].is_public = True
 
@@ -285,6 +345,8 @@ def create_app(db_connection_string=None, testing=None):
 
     register_blueprints(app)
     register_handlers(app)
+
+    app.view_functions['agent_api.AgentCreationView:post'].is_public = True
 
     return app
 

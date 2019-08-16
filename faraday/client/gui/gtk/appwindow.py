@@ -49,6 +49,7 @@ class AppWindow(Gtk.ApplicationWindow):
         self.terminal = terminal
         self.log = console_log
         self.statusbar = statusbar
+        self.user_confirmed_quit = False
 
         self.terminal.connect("child_exited", self.on_terminal_exit)
         self.icons = os.path.join(FARADAY_CLIENT_BASE, "data", "images", "icons")
@@ -300,6 +301,9 @@ class AppWindow(Gtk.ApplicationWindow):
     def do_delete_event(self, event=None, status=None, parent=None):
         """Override delete_event signal to show a confirmation dialog first.
         """
+        if self.user_confirmed_quit:
+            return False  # keep on going and destroy
+
         if parent is None:
             parent = self
 
@@ -322,6 +326,7 @@ class AppWindow(Gtk.ApplicationWindow):
         dialog.destroy()
 
         if response == Gtk.ResponseType.YES:
+            self.user_confirmed_quit = True
             return False  # keep on going and destroy
         else:
             # user said "you know what i don't want to exit"

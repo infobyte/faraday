@@ -41,6 +41,7 @@ function(doc) {
             "resolution":       resolution,
             "severity":         doc.severity, 
             "type":             doc.type,
+            "external_id":      doc.external_id,
         };
 
         if(doc.type == "VulnerabilityWeb") {

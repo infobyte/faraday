@@ -30,7 +30,7 @@ def setup_logging():
         formatter = RFC5424Formatter()
     else:
         formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s {%(threadName)s} [%(filename)s:%(lineno)s - %(funcName)s() ]  %(message)s')
+            '%(asctime)s - %(name)s - %(levelname)s {%(threadName)s} [%(filename)s:%(lineno)s - %(funcName)s()]  %(message)s')
     setup_console_logging(formatter)
     setup_file_logging(formatter)
 

@@ -29,7 +29,9 @@ var faradayApp = angular.module('faradayApp', [
                                                     'ui.grid.resizeColumns',
                                                     'angularSimplePagination',
                                                     'dndLists',
-                                                    'angularFileUploadLib'
+                                                    'angularFileUploadLib',
+                                                    'rzTable',
+                                                    'ui'
                                              ])
     .constant("BASEURL", (function() {
         var url = window.location.origin + "/";
@@ -167,8 +169,8 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             controller: 'newHostCtrl',
             title: 'New host | '
         }).
-        when('/host/ws/:wsId/', { 
-            redirectTo: "/hosts/ws/:wsId/" 
+        when('/host/ws/:wsId/', {
+            redirectTo: "/hosts/ws/:wsId/"
         }).
         when('/license/lid/:lidId', {
             templateUrl: 'scripts/licenses/partials/license.html',
@@ -287,6 +289,16 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             templateUrl: 'scripts/commons/partials/commercial.html',
             controller: 'commercialCtrl',
             title: 'Executive Report | '
+        }).
+        when('/workflows', {
+            templateUrl: 'scripts/commons/partials/commercial.html',
+            controller: 'commercialCtrl',
+            title: 'Workflows | '
+        }).
+        when('/scheduling', {
+            templateUrl: 'scripts/commons/partials/commercial.html',
+            controller: 'commercialCtrl',
+            title: 'Scheduling | '
         }).
         when('/login', {
             templateUrl: 'scripts/auth/partials/login.html',

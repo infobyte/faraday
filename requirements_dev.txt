@@ -3,5 +3,4 @@ pytest>=3.5.1
 pytest-factoryboy>=2.0.1
 responses>=0.9.0
 hypothesis==4.18.3
-beautifulsoup4>=4.6.0
 Sphinx>=1.7.6

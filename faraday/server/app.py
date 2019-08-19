@@ -37,6 +37,8 @@ from flask_security.utils import (
     verify_hash)
 from flask_kvsession import KVSessionExtension
 from simplekv.fs import FilesystemStore
+from simplekv.decorator import PrefixDecorator
+from flask_login import user_logged_out
 from nplusone.ext.flask_sqlalchemy import NPlusOne
 from depot.manager import DepotManager
 
@@ -244,6 +246,12 @@ def save_new_agent_creation_token():
     faraday.server.config.faraday_server.agent_token = agent_token
 
 
+def expire_session(app, user):
+    logger.debug("Cleanup sessions")
+    session.destroy()
+    KVSessionExtension(app=app).cleanup_sessions(app)
+
+
 def create_app(db_connection_string=None, testing=None):
     app = Flask(__name__)
 
@@ -300,8 +308,11 @@ def create_app(db_connection_string=None, testing=None):
         ],
         'PERMANENT_SESSION_LIFETIME': datetime.timedelta(hours=12),
     })
-    store = FilesystemStore('/tmp/data')
-    KVSessionExtension(store, app)
+
+    store = FilesystemStore(app.config['SESSION_FILE_DIR'])
+    prefixed_store = PrefixDecorator('sessions_', store)
+    KVSessionExtension(prefixed_store, app)
+    user_logged_out.connect(expire_session, app)
 
     storage_path = faraday.server.config.storage.path
     if not storage_path:

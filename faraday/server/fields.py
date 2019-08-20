@@ -5,6 +5,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 from __future__ import absolute_import
+from builtins import str
 
 import json
 import imghdr
@@ -46,6 +47,8 @@ class FaradayUploadedFile(UploadedFile):
     thumbnail_size = (128, 128)
 
     def process_content(self, content, filename=None, content_type=None):
+        if isinstance(content, str):
+            content = content.encode('utf-8')
         image_format = imghdr.what(None, h=content[:32])
         if image_format:
             content_type = 'image/{0}'.format(image_format)

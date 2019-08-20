@@ -56,11 +56,11 @@ class TestAuthentication(BaseAPITestCase, unittest.TestCase):
         self.assertEqual(res.status_code, 401)
 
     def test_401_when_posting_an_existent_view_and_not_logged(self):
-        res = self.app.post('/', 'data')
+        res = self.app.post('/', data={'data':'data'})
         self.assertEqual(res.status_code, 401)
 
     def test_401_when_accessing_a_non_existent_view_and_not_logged(self):
-        res = self.app.post('/dfsdfsdd', 'data')
+        res = self.app.post('/dfsdfsdd', data={'data':'data'})
         self.assertEqual(res.status_code, 401)
 
     def test_200_when_not_logged_but_endpoint_is_public(self):

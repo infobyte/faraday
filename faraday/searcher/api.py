@@ -58,8 +58,10 @@ class Api:
 
     def _url(self, path):
         url = self.base + 'v2/' + path
-        if self.command_id and 'commands' not in url:
-            if url.endswith('/'):
+        if self.command_id and 'commands' not in url and not url.endswith('}'):
+            if '?' in url:
+                url += '&command_id={}'.format(self.command_id)
+            elif url.endswith('/'):
                 url += '?command_id={}'.format(self.command_id)
             else:
                 url += '/?command_id={}'.format(self.command_id)
@@ -146,8 +148,52 @@ class Api:
         return [Structure(**item['value']) for item in self._get(self._url('ws/{}/vulns/'.format(self.workspace)),
                                                                  'vulnerabilities')['vulnerabilities']]
 
+    def fetch_services(self):
+        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/services/'.format(self.workspace)),
+                                                                 'services')['services']]
+
+    def get_hosts(self):
+        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/hosts/'.format(self.workspace)),
+                                                                 'hosts')['rows']]
+
     def filter_vulnerabilities(self, **kwargs):
-        pass
+        if len(kwargs.keys()) > 1:
+            params = urllib.urlencode(kwargs)
+            url = self._url('ws/{}/vulns/?{}'.format(self.workspace, params))
+        else:
+            params = self.parse_args(**kwargs)
+            url = self._url('ws/{}/vulns/{}'.format(self.workspace, params))
+        return [Structure(**item['value']) for item in
+                self._get(url, 'vulnerabilities')['vulnerabilities']]
+
+    def filter_services(self, **kwargs):
+        params = urllib.urlencode(kwargs)
+        url = self._url('ws/{}/services/?{}'.format(self.workspace, params))
+        return [Structure(**item['value']) for item in
+                self._get(url, 'services')['services']]
+
+    def filter_hosts(self, **kwargs):
+        params = urllib.urlencode(kwargs)
+        url = self._url('ws/{}/hosts/?{}'.format(self.workspace, params))
+        return [Structure(**item['value']) for item in
+                self._get(url, 'hosts')['rows']]
+
+    @staticmethod
+    def parse_args(**kwargs):
+        if len(kwargs.keys()) > 0:
+            key = kwargs.keys()[0]
+            value = kwargs.get(key, '')
+            item = '"name":"{}","op":"eq","val":"{}"'.format(key, value)
+            params = 'filter?q={"filters":[{' + item + '}]}'
+            return params
+        return ''
+
+    @staticmethod
+    def intersection(objects, models):
+        return [_object for _object in objects if _object.id in [model.id for model in models]]
+
+
+    # OLD IMPLEMENTATION
 
     def update_vulnerability(self, vulnerability):
         return Structure(**self._put(self._url('ws/{}/vulns/{}/'.format(self.workspace, vulnerability.id)),
@@ -215,16 +261,6 @@ class Api:
                         (getattr(template, key, None) == value or str(getattr(template, key, None)) == value):
                     filtered_templates.append(template)
         return filtered_templates
-
-    def filter_services(self, **kwargs):
-        params = urllib.urlencode(kwargs)
-        return [Structure(**item['value']) for item in
-                self._get(self._url('ws/{}/services/?{}'.format(self.workspace, params)), 'services')['services']]
-
-    def filter_hosts(self, **kwargs):
-        params = urllib.urlencode(kwargs)
-        return [Structure(**item['value']) for item in
-                self._get(self._url('ws/{}/hosts/?{}'.format(self.workspace, params)), 'hosts')['rows']]
 
     def create_command(self, itime, params, tool_name):
         self.itime = itime

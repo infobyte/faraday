@@ -238,8 +238,9 @@ class TestSearcherRules():
 
     @pytest.mark.parametrize("api", [
         lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test', password='test', base=''),
-        # lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+        lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
     ])
+    @pytest.mark.usefixtures('ignore_nplusone')
     def test_update_severity_inside_one_host(self, api, session, test_client):
         workspace = WorkspaceFactory.create()
         host = HostFactory.create(workspace=workspace)

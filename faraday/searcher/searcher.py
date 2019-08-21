@@ -413,6 +413,7 @@ def replace_rule(rule, value_item):
     return ast.literal_eval(rule_str)
 
 
+# TODO: REMOVE
 def get_objects_by_parent(parent, objects_type):
     if isinstance(parent, Service) and objects_type == 'Vulnerability':
         return parent.vulnerabilities + parent.web_vulnerabilities
@@ -531,7 +532,7 @@ class Searcher:
                         process_models_by_similarity(self.api, vulnerabilities, rule, self.mail_notificacion)
                     else:
                         objects = self._get_object(rule)
-                        objects = list(set(objects).intersection(set(vulnerabilities)))
+                        objects = self.api.intersection(objects, vulnerabilities)
                         if objects is not None and len(objects) != 0:
                             if self._can_execute_action(rule, parent):
                                 execute_action(self.api, objects, rule, self.mail_notificacion)
@@ -561,7 +562,7 @@ class Searcher:
             if parent is None:
                 logger.warning("WARNING: Parent %s not found in rule %s " % (rule['parent'], rule['id']))
                 return self._fetch_objects(rule['model']), None
-            return get_objects_by_parent(parent, rule['model']), parent
+            return self._get_objects_by_parent(parent, rule['model']), parent
         return self._fetch_objects(rule['model']), None
 
     def _get_parent(self, parent_tag):
@@ -594,6 +595,23 @@ class Searcher:
         if len(objects) == 0:
             objects = self._fetch_objects(rule['model'])
         return objects
+
+    def _get_objects_by_parent(self, parent, objects_type):
+        if isinstance(parent, Service) and objects_type == 'Vulnerability':
+            return parent.vulnerabilities + parent.web_vulnerabilities
+        elif isinstance(parent, Host) and objects_type == 'Vulnerability':
+            return parent.vulnerabilities
+        elif isinstance(parent, Host) and objects_type == 'Service':
+            return parent.services
+        else:
+            if parent.type == 'Service' and objects_type == 'Vulnerability':
+                return self.api.filter_vulnerabilities(service_id=parent.id)
+            elif parent.type == 'Host' and objects_type == 'Vulnerability':
+                return self.api.filter_vulnerabilities(host_id=parent.id)
+            elif parent.type == 'Host' and objects_type == 'Service':
+                return self.api.filter_services(host_id=parent.id)
+            else:
+                return None
 
     def _can_execute_action(self, rule, parent):
         if 'conditions' not in rule:

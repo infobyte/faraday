@@ -2,6 +2,8 @@ import json
 import logging
 import socket
 
+from datetime import datetime
+
 from faraday.searcher.api import ApiError
 from faraday.server.api.modules.hosts import HostSchema
 from faraday.server.api.modules.services import ServiceSchema
@@ -117,6 +119,10 @@ class SqlApi:
                  hosts.distinct(Host.id)]
         return hosts
 
+    @staticmethod
+    def intersection(objects, models):
+        return list(set(objects).intersection(set(models)))
+
     def create_command(self, itime, params, tool_name):
         self.itime = itime
         self.params = params
@@ -135,12 +141,13 @@ class SqlApi:
         except socket.gaierror:
             ip = socket.gethostname()
         data = {
-            "itime": self.itime,
+            "start_date": datetime.fromtimestamp(self.itime),
             "command": self.tool_name,
             "ip": ip,
             "import_source": "shell",
             "tool": "Searcher",
             "params": json.dumps(self.params),
+            "workspace_id": self.workspace.id
         }
         if duration:
             data.update({"duration": duration})

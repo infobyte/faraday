@@ -27,7 +27,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from faraday.server.web import app
-from faraday.server.models import db, Service, Host
+from faraday.server.models import db, Service, Host, VulnerabilityWeb, Vulnerability
 from faraday.searcher.sqlapi import SqlApi
 from faraday.searcher.validator import validate_rules
 from faraday.searcher.api import Api
@@ -535,7 +535,7 @@ class Searcher:
                         objects = self.api.intersection(objects, vulnerabilities)
                         if objects is not None and len(objects) != 0:
                             if self._can_execute_action(rule, parent):
-                                execute_action(self.api, objects, rule, self.mail_notificacion)
+                                self._execute_action(objects, rule)
 
         logger.debug("<-- Finish Process vulnerabilities")
 
@@ -649,25 +649,25 @@ class Searcher:
                     array_exp = expression.split('=')
                     key = array_exp[0]
                     value = str('=').join(array_exp[1:])
-                    if obj.class_signature == 'VulnerabilityWeb' or obj.class_signature == 'Vulnerability':
+                    if obj.type.capitalize() == 'VulnerabilityWeb' or obj.type.capitalize() == 'Vulnerability':
                         update_vulnerability(self.api, obj, key, value)
 
-                    if obj.class_signature == 'Service':
+                    if obj.type.capitalize() == 'Service':
                         update_service(self.api, obj, key, value)
 
-                    if obj.class_signature == 'Host':
+                    if obj.type.capitalize() == 'Host':
                         update_host(self.api, obj, key, value)
 
                 elif command == 'DELETE':
-                    if obj.class_signature == 'VulnerabilityWeb' or obj.class_signature == 'Vulnerability':
+                    if obj.type.capitalize() == 'VulnerabilityWeb' or obj.type.capitalize() == 'Vulnerability':
                         self.api.delete_vulnerability(obj.id)
                         logger.info("Deleting vulnerability '%s' with id '%s':" % (obj.name, obj.id))
 
-                    elif obj.class_signature == 'Service':
+                    elif obj.type.capitalize() == 'Service':
                         self.api.delete_service(obj.id)
                         logger.info("Deleting service '%s' with id '%s':" % (obj.name, obj.id))
 
-                    elif obj.class_signature == 'Host':
+                    elif obj.type.capitalize() == 'Host':
                         self.api.delete_host(obj.id)
                         logger.info("Deleting host '%s' with id '%s':" % (obj.name, obj.id))
                 else:

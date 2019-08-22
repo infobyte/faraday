@@ -96,7 +96,7 @@ class Report(object):
                 try:
                     xml_file = StringIO(xml_file)
                 except Exception as e2:
-                    raise str(e1) + "\n" + str(e2)
+                    raise Exception(str(e1) + "\n" + str(e2))
 
         # Iterate through each host scanned and create objects for each
         for event, elem in ET.iterparse(xml_file):
@@ -204,7 +204,7 @@ class ReportHost(object):
                     # Check to see if named fields were given
                     if res.groupdict():
                         # Store each named field as an attribute
-                        for k, v in res.groupdict().iteritems():
+                        for k, v in res.groupdict().items():
                             setattr(self, k, v)
 
                     # No named fields, just grab whatever matched

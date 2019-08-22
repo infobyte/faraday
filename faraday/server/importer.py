@@ -272,7 +272,7 @@ def create_tags(raw_tags, parent_id, parent_type):
 
 def set_metadata(document, obj):
     if 'metadata' in document:
-        for key, value in document['metadata'].iteritems():
+        for key, value in document['metadata'].items():
             if not value:
                 continue
             try:

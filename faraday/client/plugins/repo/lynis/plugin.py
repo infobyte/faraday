@@ -308,7 +308,7 @@ class LynisPlugin(core.PluginBase):
                                             ports=[service_data['port']])
 
     def create_vulns_with_kernel(self, host_id, kernel_versions):
-        for kernel, version in kernel_versions.iteritems():
+        for kernel, version in kernel_versions.items():
             self.createAndAddVulnToHost(
                 host_id=host_id,
                 name=kernel,

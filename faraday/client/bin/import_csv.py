@@ -42,7 +42,7 @@ def transform_dict_to_object(columns, register):
 
     obj = {}
 
-    for key, val in columns.iteritems():
+    for key, val in columns.items():
 
         # Default data
         value = {val : ""}

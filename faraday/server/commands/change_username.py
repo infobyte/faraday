@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import sys
 import click
 
@@ -24,3 +26,6 @@ def change_username(current_username, new_username):
                     .format(old=current_username, new=new_username))
             else:
                 print("Username not changed.")
+
+
+# I'm Py3

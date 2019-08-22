@@ -17,8 +17,8 @@ def clean_dict(d):
         return d
     else:
         new_dict = dict()
-        for key, value in d.iteritems():
-            if isinstance(value, basestring):
+        for key, value in d.items():
+            if isinstance(value, str):
                 new_dict[key] = clean_string(value)
             elif isinstance(value, dict):
                 new_dict[key] = clean_dict(value)

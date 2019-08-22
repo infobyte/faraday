@@ -49,7 +49,7 @@ class TestNessusParser:
             actions[action[0]].append(action[1])
 
         assert actions[2000][0].name == "12.233.108.201"
-        assert list(actions.keys()) == [2000, 2017, 2038, 20008]
+        assert set(actions.keys()) == {2000, 2017, 2038, 20008}
         assert len(actions[20008]) == 1
         assert len(actions[2038]) == 1
 

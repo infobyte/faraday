@@ -138,14 +138,11 @@ class NessusPlugin(core.PluginBase):
                 external_id = v.get('plugin_id')
 
                 desc = ""
-                desc += v.get('description').encode("ascii",
-                                                    errors="backslashreplace") if v.get('description') else ""
+                desc += v.get('description') if v.get('description') else ""
                 resolution = ""
-                resolution = v.get('solution').encode(
-                    "ascii", errors="backslashreplace") if v.get('solution') else ""
+                resolution = v.get('solution') if v.get('solution') else ""
 
-                data = "\nOutput: " + v.get('plugin_output').encode(
-                    "ascii", errors="backslashreplace") if v.get('plugin_output') else ""
+                data = "\nOutput: " + v.get('plugin_output') if v.get('plugin_output') else ""
 
                 ref = []
                 if v.get('cve'):
@@ -170,7 +167,7 @@ class NessusPlugin(core.PluginBase):
 
                     web = True if re.search(
                         r'^(www|http)', v.get('svc_name')) else False
-                    if srv.has_key(v.get('svc_name')) == False:
+                    if v.get('svc_name') in srv:
                         srv[v.get('svc_name')] = 1
                         if web:
                             n_id = self.createAndAddNoteToService(

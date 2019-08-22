@@ -198,7 +198,7 @@ class Item(object):
             return ""
         encoded = distutils.util.strtobool(subnode.get('base64', 'false'))
         if encoded:
-            res = base64.b64decode(subnode.text)
+            res = base64.b64decode(subnode.text).decode('utf-8', errors="backslashreplace")
         else:
             res = subnode.text
         return "".join([ch for ch in res if ord(ch) <= 128])

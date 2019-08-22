@@ -77,28 +77,26 @@ class NexposeFullXmlParser(object):
 
         return tree
 
-    def parse_html_type(self, node):
+    def parse_html_type(self, node: ET.Element) -> str:
         """
         Parse XML element of type HtmlType
 
         @return ret A string containing the parsed element
         """
         ret = ""
-        tag = node.tag.lower()
+        tag: str = node.tag.lower()
         if tag == 'containerblockelement':
             if len(list(node)) > 0:
                 for child in list(node):
                     ret += self.parse_html_type(child)
             else:
-                ret += node.text.encode(
-                    "ascii", errors="backslashreplace").strip() if node.text else ""
+                ret += node.text.strip() if node.text else ""
         if tag == 'listitem':
             if len(list(node)) > 0:
                 for child in list(node):
                     ret += self.parse_html_type(child)
             else:
-                ret = node.text.encode(
-                    "ascii", errors="backslashreplace").strip() if node.text else ""
+                ret = node.text.strip() if node.text else ""
         if tag == 'orderedlist':
             i = 1
             for item in list(node):
@@ -109,20 +107,17 @@ class NexposeFullXmlParser(object):
                 for child in list(node):
                     ret += self.parse_html_type(child)
             else:
-                ret += node.text.encode("ascii",
-                                        errors="backslashreplace") if node.text else ""
+                ret += node.text.strip() or ""
         if tag == 'unorderedlist':
             for item in list(node):
                 ret += "\t" + "* " + self.parse_html_type(item) + "\n"
         if tag == 'urllink':
             if node.get('text'):
-                ret += node.text.encode("ascii",
-                                        errors="backslashreplace").strip() + " "
+                ret += node.text.strip() + " "
             last = ""
             for attr in node.attrib:
                 if node.get(attr) and node.get(attr) != node.get(last):
-                    ret += node.get(attr).encode("ascii",
-                                                 errors="backslashreplace") + " "
+                    ret += node.get(attr) + " "
                 last = attr
 
         return ret

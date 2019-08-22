@@ -18,7 +18,7 @@ except ImportError:
     from xmlrpc.server import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 
 try:
-    import faraday.client.model.api as api
+    from faraday.client.model import api
 except AttributeError as e:
     import api
 

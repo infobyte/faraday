@@ -17,7 +17,7 @@ CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
 def depotfile():
     depot = DepotManager.get('default')
     path = os.path.join(CURRENT_PATH, '../data', 'faraday.png')
-    with open(path) as fp:
+    with open(path, 'rb') as fp:
         fileid = depot.create(fp, 'faraday.png', 'image/png')
     return fileid
 

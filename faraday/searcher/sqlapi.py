@@ -6,7 +6,8 @@ from datetime import datetime
 
 from faraday.searcher.api import ApiError
 from faraday.server.api.modules.vulns import VulnerabilitySchema, VulnerabilityWebSchema
-from faraday.server.models import Workspace, Vulnerability, VulnerabilityWeb, Service, Host, Command
+from faraday.server.models import Workspace, Vulnerability, VulnerabilityWeb, Service, Host, Command, \
+    VulnerabilityTemplate
 
 logger = logging.getLogger('Faraday searcher')
 
@@ -94,6 +95,12 @@ class SqlApi:
                  hosts.distinct(Host.id)]
         return hosts
 
+    def fetch_templates(self):
+        templates = self.session.query(VulnerabilityTemplate)
+        templates = [template for template, pos in
+                     templates.distinct(Host.id)]
+        return templates
+
     def filter_vulnerabilities(self, **kwargs):
         vulnerabilities = []
         vulnerabilities_query = self.session.query(Vulnerability, Workspace.id).join(Workspace).filter(
@@ -154,6 +161,17 @@ class SqlApi:
                          hosts_query.distinct(Host.id)]
 
         return hosts
+
+    def filter_templates(self, **kwargs):
+        templates = []
+        templates_query = self.session.query(VulnerabilityTemplate)
+        for attr, value in kwargs.iteritems():
+            if hasattr(VulnerabilityTemplate, attr):
+                templates_query = templates_query.filter(getattr(VulnerabilityTemplate, attr) == value)
+                templates = [template for template, pos in
+                             templates_query.distinct(VulnerabilityTemplate.id)]
+
+        return templates
 
     def update_vulnerability(self, vulnerability):
         # try:

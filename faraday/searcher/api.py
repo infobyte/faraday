@@ -185,6 +185,10 @@ class Api:
         return [Structure(**item['value']) for item in self._get(self._url('ws/{}/hosts/'.format(self.workspace)),
                                                                  'hosts')['rows']]
 
+    def fetch_templates(self):
+        return [Structure(**item['doc']) for item in
+                self._get(self._url('vulnerability_template'), 'templates')['rows']]
+
     def filter_vulnerabilities(self, **kwargs):
         if len(kwargs.keys()) > 1:
             params = urllib.urlencode(kwargs)
@@ -206,6 +210,16 @@ class Api:
         url = self._url('ws/{}/hosts/?{}'.format(self.workspace, params))
         return [Structure(**item['value']) for item in
                 self._get(url, 'hosts')['rows']]
+
+    def filter_templates(self, **kwargs):
+        templates = self.fetch_templates()
+        filtered_templates = []
+        for key, value in kwargs.items():
+            for template in templates:
+                if hasattr(template, key) and \
+                        (getattr(template, key, None) == value or str(getattr(template, key, None)) == value):
+                    filtered_templates.append(template)
+        return filtered_templates
 
     def update_vulnerability(self, vulnerability):
         return Structure(**self._put(self._url('ws/{}/vulns/{}/'.format(self.workspace, vulnerability.id)),
@@ -245,47 +259,3 @@ class Api:
     @staticmethod
     def intersection(objects, models):
         return [_object for _object in objects if _object.id in [model.id for model in models]]
-
-    # OLD IMPLEMENTATION
-
-    def get_services(self):
-        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/services/'.format(self.workspace)),
-                                                                 'services')['services']]
-
-    def get_filtered_services(self, **params):
-        services = self.get_services()
-        filtered_services = []
-        for key, value in params.items():
-            for service in services:
-                if hasattr(service, key) and \
-                        (getattr(service, key, None) == value or str(getattr(service, key, None)) == value):
-                    filtered_services.append(service)
-        return filtered_services
-
-    def get_hosts(self):
-        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/hosts/'.format(self.workspace)),
-                                                                 'hosts')['rows']]
-
-    def get_filtered_hosts(self, **params):
-        hosts = self.get_hosts()
-        filtered_hosts = []
-        for key, value in params.items():
-            for host in hosts:
-                if hasattr(host, key) and \
-                        (getattr(host, key, None) == value or str(getattr(host, key, None)) == value):
-                    filtered_hosts.append(host)
-        return filtered_hosts
-
-    def get_vulnerability_templates(self):
-        return [Structure(**item['doc']) for item in
-                self._get(self._url('vulnerability_template'), 'templates')['rows']]
-
-    def get_filtered_templates(self, **params):
-        templates = self.get_vulnerability_templates()
-        filtered_templates = []
-        for key, value in params.items():
-            for template in templates:
-                if hasattr(template, key) and \
-                        (getattr(template, key, None) == value or str(getattr(template, key, None)) == value):
-                    filtered_templates.append(template)
-        return filtered_templates

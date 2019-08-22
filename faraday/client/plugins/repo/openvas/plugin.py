@@ -15,6 +15,9 @@ import re
 import os
 import sys
 from collections import defaultdict
+import logging
+
+logger = logging.getLogger(__name__)
 
 try:
     import xml.etree.cElementTree as ET
@@ -75,8 +78,8 @@ class OpenvasXmlParser(object):
         """
         try:
             tree = ET.fromstring(xml_output)
-        except SyntaxError, err:
-            print("SyntaxError: %s. %s" % (err, xml_output))
+        except SyntaxError as err:
+            logger.error("SyntaxError: %s. %s", err, xml_output)
             return None
 
         return tree
@@ -377,9 +380,13 @@ class OpenvasPlugin(core.PluginBase):
             if item.name is not None:
                 ref = []
                 if item.cve:
-                    ref.append(item.cve.encode("utf-8"))
+                    cves = item.cve.split(',')
+                    for cve in cves:
+                        ref.append(cve.encode("utf-8").strip())
                 if item.bid:
-                    ref.append(item.bid.encode("utf-8"))
+                    bids = item.bid.split(',')
+                    for bid in bids:
+                        ref.append("BID-%s" % bid.encode("utf-8").strip() )
                 if item.xref:
                     ref.append(item.xref.encode("utf-8"))
                 if item.tags and item.cvss_vector:
@@ -464,7 +471,7 @@ def createPlugin():
 
 if __name__ == '__main__':
     parser = OpenvasPlugin()
-    with open("/home/javier/7_faraday_Openvas.xml","r") as report:
+    with open("pathtoxmlfile.xml","r") as report:
         parser.parseOutputString(report.read())
         #for item in parser.items:
             #if item.status == 'up':

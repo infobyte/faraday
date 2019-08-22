@@ -260,7 +260,15 @@
 button.btn-new {
     width:95px;
     height:33px;
-    background-color: #5cb85c;
+    background-color: #00a8e1;
+}
+
+button.btn-new:focus {
+    background-color: #00a8e1 !important;
+}
+
+button.btn-new:hover {
+    background-color: #0097ca !important;
 }
 
 .control-wrap-right {

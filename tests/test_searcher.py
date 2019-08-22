@@ -20,14 +20,18 @@ def check_command(vuln, session):
 
 @pytest.mark.usefixtures('logged_user')
 class TestSearcherRules():
-    def test_searcher_update_rules(self, session, test_client):
+    @pytest.mark.parametrize("api", [
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+                                                    password='test', base=''),
+        # lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+    ])
+    def test_searcher_update_rules(self, api, session, test_client):
         workspace = WorkspaceFactory.create()
         vuln = VulnerabilityFactory.create(workspace=workspace, severity='low')
         session.add(workspace)
         session.add(vuln)
         session.commit()
-        api = Api(test_client, workspace.name, username='test', password='test', base='')
-        searcher = Searcher(api)
+        searcher = Searcher(api(workspace, test_client, session))
 
         rules = [{
             'id': 'CHANGE_SEVERITY',

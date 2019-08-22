@@ -67,19 +67,13 @@ class SqlApi:
         vulnerabilities = [vulnerability for vulnerability, pos in
                            vulnerabilities.distinct(Vulnerability.id)]
 
-        vulnerabilities = VulnerabilitySchema(many=True).dumps(vulnerabilities)
-        vulnerabilities_data = json.loads(vulnerabilities.data)
-
         web_vulnerabilities = self.session.query(Vulnerability, Workspace.id).join(Workspace).filter(
             Workspace.name == self.workspace.name)
 
         web_vulnerabilities = [web_vulnerability for web_vulnerability, pos in
                                web_vulnerabilities.distinct(VulnerabilityWeb.id)]
 
-        web_vulnerabilities = VulnerabilityWebSchema(many=True).dumps(web_vulnerabilities)
-        web_vulnerabilities_data = json.loads(web_vulnerabilities.data)
-
-        return vulnerabilities_data + web_vulnerabilities_data
+        return list(set(vulnerabilities + web_vulnerabilities))
 
     def fetch_services(self):
         services = self.session.query(Service, Workspace.id).join(Workspace).filter(
@@ -189,7 +183,8 @@ class SqlApi:
         #     logger.error(str(ex))
         #     return False
         # return vulnerability
-        vulnerability.severity = 'informational'
+        # vulnerability.severity = 'informational'
+        setattr(vulnerability, 'severity', 'informational')  # TODO REMOVE IT
         self.session.commit()
 
     def update_service(self, service):

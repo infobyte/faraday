@@ -81,11 +81,11 @@ def test_controller_stop_when_is_not_processing():
     pending_actions = Queue()
     controller = ModelController(mappers_manager, pending_actions)
     assert controller.processing is False
-    assert controller._stop is False
+    assert controller._is_stopped is False
     controller.start()
     assert controller.isAlive()
     controller.stop()
-    assert controller._stop is True
+    assert controller._is_stopped is True
     controller.join()
     assert controller.isAlive() is False
 
@@ -100,13 +100,13 @@ def test_controller_cant_be_stopped_when_is_processing():
     pending_actions = Queue()
     controller = ModelController(mappers_manager, pending_actions)
     assert controller.processing is False
-    assert controller._stop is False
+    assert controller._is_stopped is False
     controller.start()
     controller.processing = True
     controller.active_plugins_count = 1
     assert controller.isAlive()
     controller.stop()
-    assert controller._stop
+    assert controller._is_stopped
     assert controller.processing
     controller.join(timeout=2)
     assert controller.isAlive()

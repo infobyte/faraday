@@ -40,8 +40,6 @@ class ModelController(Thread):
         # set as daemon
 #        self.setDaemon(True)
 
-        # flag to stop daemon thread
-        self._stop = False
         # locks needed to make model thread-safe
         self._hosts_lock = Lock()
 
@@ -173,7 +171,7 @@ class ModelController(Thread):
         """
         Sets the flag to stop daemon
         """
-        self._stop = True
+        self._stop()
 
     def _dispatchActionWithLock(self, action_callback, *args):
         res = False

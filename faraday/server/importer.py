@@ -1092,14 +1092,16 @@ class FaradayEntityImporter(object):
 
 class ImportCouchDBUsers():
 
-    def modular_crypt_pbkdf2_sha1(self, checksum, salt, iterations=1000):
+    def modular_crypt_pbkdf2_sha1(self, checksum: str, salt: str, iterations=1000):
         return '$pbkdf2${iterations}${salt}${checksum}'.format(
             iterations=iterations,
-            salt=ab64_encode(salt),
-            checksum=ab64_encode(unhexlify(checksum)),
+            salt=ab64_encode(salt.encode()).decode(),
+            checksum=ab64_encode(unhexlify(checksum.encode())).decode(),
         )
 
-    def convert_couchdb_hash(self, original_hash):
+    def convert_couchdb_hash(self, original_hash) -> str:
+        if isinstance(original_hash, bytes):
+            original_hash = original_hash.decode()
         if not original_hash.startswith(COUCHDB_PASSWORD_PREFIX):
             # Should be a plaintext password
             return original_hash

@@ -207,6 +207,31 @@ class Api:
         return [Structure(**item['value']) for item in
                 self._get(url, 'hosts')['rows']]
 
+    def update_vulnerability(self, vulnerability):
+        return Structure(**self._put(self._url('ws/{}/vulns/{}/'.format(self.workspace, vulnerability.id)),
+                                     vulnerability.__dict__, 'vulnerability'))
+
+    def update_service(self, service):
+        if isinstance(service.ports, int):
+            service.ports = [service.ports]
+        else:
+            service.ports = []
+        return Structure(**self._put(self._url('ws/{}/services/{}/'.format(self.workspace, service.id)),
+                                     service.__dict__, 'service'))
+
+    def update_host(self, host):
+        return Structure(**self._put(self._url('ws/{}/hosts/{}/'.format(self.workspace, host.id)),
+                                     host.__dict__, 'hosts'))
+
+    def delete_vulnerability(self, vulnerability_id):
+        return self._delete(self._url('ws/{}/vulns/{}/'.format(self.workspace, vulnerability_id)), 'vulnerability')
+
+    def delete_service(self, service_id):
+        return self._delete(self._url('ws/{}/services/{}/'.format(self.workspace, service_id)), 'service')
+
+    def delete_host(self, host_id):
+        return self._delete(self._url('ws/{}/hosts/{}/'.format(self.workspace, host_id)), 'host')
+
     @staticmethod
     def parse_args(**kwargs):
         if len(kwargs.keys()) > 0:
@@ -220,31 +245,6 @@ class Api:
     @staticmethod
     def intersection(objects, models):
         return [_object for _object in objects if _object.id in [model.id for model in models]]
-
-    def update_vulnerability(self, vulnerability):
-        return Structure(**self._put(self._url('ws/{}/vulns/{}/'.format(self.workspace, vulnerability.id)),
-                                     vulnerability.__dict__, 'vulnerability'))
-
-    def delete_vulnerability(self, vulnerability_id):
-        return self._delete(self._url('ws/{}/vulns/{}/'.format(self.workspace, vulnerability_id)), 'vulnerability')
-
-    def update_service(self, service):
-        if isinstance(service.ports, int):
-            service.ports = [service.ports]
-        else:
-            service.ports = []
-        return Structure(**self._put(self._url('ws/{}/services/{}/'.format(self.workspace, service.id)),
-                                     service.__dict__, 'service'))
-
-    def delete_service(self, service_id):
-        return self._delete(self._url('ws/{}/services/{}/'.format(self.workspace, service_id)), 'service')
-
-    def update_host(self, host):
-        return Structure(**self._put(self._url('ws/{}/hosts/{}/'.format(self.workspace, host.id)),
-                                     host.__dict__, 'hosts'))
-
-    def delete_host(self, host_id):
-        return self._delete(self._url('ws/{}/hosts/{}/'.format(self.workspace, host_id)), 'host')
 
     # OLD IMPLEMENTATION
 

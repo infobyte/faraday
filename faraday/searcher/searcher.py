@@ -175,66 +175,6 @@ def set_array(field, value, add=True):
                 field.remove(value)
 
 
-def update_vulnerability(api, vuln, key, value):
-    if key == 'template':
-        cwe = get_cwe(api, value)
-        if cwe is None:
-            logger.error("%s: cwe not found" % value)
-            return False
-
-        vuln.name = cwe.name
-        vuln.description = cwe.description
-        vuln.desc = cwe.description
-        vuln.resolution = cwe.resolution
-
-        logger.info("Applying template '%s' to vulnerability '%s' with id '%s'" % (value, vuln.name, vuln.id))
-
-    elif key == 'confirmed':
-        value = value == 'True'
-        vuln.confirmed = value
-        logger.info("Changing property %s to %s in vulnerability '%s' with id %s" % (key, value, vuln.name, vuln.id))
-    elif key == 'owned':
-        value = value == 'True'
-        vuln.owned = value
-        logger.info("Changing property %s to %s in vulnerability '%s' with id %s" % (key, value, vuln.name, vuln.id))
-    else:
-        to_add = True
-        if key.startswith('-'):
-            key = key.strip('-')
-            to_add = False
-
-        is_custom_field = False
-        if key in vuln.custom_fields:
-            field = vuln.custom_fields
-            is_custom_field = True
-        else:
-            field = get_field(vuln, key)
-
-        if field is not None and is_custom_field is False:
-            if isinstance(field, (str, unicode)):
-                setattr(vuln, key, value)
-                logger.info(
-                    "Changing property %s to %s in vulnerability '%s' with id %s" % (key, value, vuln.name, vuln.id))
-            else:
-                set_array(field, value, add=to_add)
-                action = 'Adding %s to %s list in vulnerability %s with id %s' % (value, key, vuln.name, vuln.id)
-                if not to_add:
-                    action = 'Removing %s from %s list in vulnerability %s with id %s' % (
-                        value, key, vuln.name, vuln.id)
-
-                logger.info(action)
-
-        if field is not None and is_custom_field is True:
-            vuln.custom_fields[key] = value
-            logger.info(
-                "Changing custom field %s to %s in vulnerability '%s' with id %s" % (key, value, vuln.name, vuln.id))
-
-    api.update_vulnerability(vuln)
-
-    logger.info("Done")
-    return True
-
-
 def update_service(api, service, key, value):
     if key == 'owned':
         value = value == 'True'
@@ -650,7 +590,7 @@ class Searcher:
                     key = array_exp[0]
                     value = str('=').join(array_exp[1:])
                     if obj.type.capitalize() == 'VulnerabilityWeb' or obj.type.capitalize() == 'Vulnerability':
-                        update_vulnerability(self.api, obj, key, value)
+                        self._update_vulnerability(obj, key, value)
 
                     if obj.type.capitalize() == 'Service':
                         update_service(self.api, obj, key, value)
@@ -676,6 +616,70 @@ class Searcher:
                         obj.class_signature, obj.name, rule['id'], str(datetime.now()))
                     self.mail_notificacion.send_mail(expression, subject, body)
                     logger.info("Sending mail to: '%s'" % expression)
+        return True
+
+    def _update_vulnerability(self, vuln, key, value):
+        if key == 'template':
+            cwe = get_cwe(self.api, value)
+            if cwe is None:
+                logger.error("%s: cwe not found" % value)
+                return False
+
+            vuln.name = cwe.name
+            vuln.description = cwe.description
+            vuln.desc = cwe.description
+            vuln.resolution = cwe.resolution
+
+            logger.info("Applying template '%s' to vulnerability '%s' with id '%s'" % (value, vuln.name, vuln.id))
+
+        elif key == 'confirmed':
+            value = value == 'True'
+            vuln.confirmed = value
+            logger.info(
+                "Changing property %s to %s in vulnerability '%s' with id %s" % (key, value, vuln.name, vuln.id))
+        elif key == 'owned':
+            value = value == 'True'
+            vuln.owned = value
+            logger.info(
+                "Changing property %s to %s in vulnerability '%s' with id %s" % (key, value, vuln.name, vuln.id))
+        else:
+            to_add = True
+            if key.startswith('-'):
+                key = key.strip('-')
+                to_add = False
+
+            is_custom_field = False
+            if vuln.custom_fields is not None and key in vuln.custom_fields:
+                field = vuln.custom_fields
+                is_custom_field = True
+            else:
+                field = get_field(vuln, key)
+
+            if field is not None and is_custom_field is False:
+                if isinstance(field, (str, unicode)):
+                    setattr(vuln, key, value)
+                    logger.info(
+                        "Changing property %s to %s in vulnerability '%s' with id %s" % (
+                        key, value, vuln.name, vuln.id))
+                else:
+                    set_array(field, value, add=to_add)
+                    action = 'Adding %s to %s list in vulnerability %s with id %s' % (value, key, vuln.name, vuln.id)
+                    if not to_add:
+                        action = 'Removing %s from %s list in vulnerability %s with id %s' % (
+                            value, key, vuln.name, vuln.id)
+
+                    logger.info(action)
+
+            if field is not None and is_custom_field is True:
+                vuln.custom_fields[key] = value
+                logger.info(
+                    "Changing custom field %s to %s in vulnerability '%s' with id %s" % (
+                    key, value, vuln.name, vuln.id))
+
+        result = self.api.update_vulnerability(vuln)
+        if result is False:
+            return result
+        logger.info("Done")
         return True
 
 

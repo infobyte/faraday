@@ -144,6 +144,35 @@ class Api:
         except ReadTimeout:
             return None
 
+    def create_command(self, itime, params, tool_name):
+        self.itime = itime
+        self.params = params
+        self.tool_name = tool_name
+        data = self._command_info()
+        res = self._post(self._url('ws/{}/commands/'.format(self.workspace)), data, 'command')
+        return res["_id"]
+
+    def _command_info(self, duration=None):
+        try:
+            ip = socket.gethostbyname(socket.gethostname())
+        except socket.gaierror:
+            ip = socket.gethostname()
+        data = {
+            "itime": self.itime,
+            "command": self.tool_name,
+            "ip": ip,
+            "import_source": "shell",
+            "tool": "Searcher",
+            "params": json.dumps(self.params),
+        }
+        if duration:
+            data.update({"duration": duration})
+        return data
+
+    def close_command(self, command_id, duration):
+        data = self._command_info(duration)
+        self._put(self._url('ws/{}/commands/{}/'.format(self.workspace, command_id)), data, 'command')
+
     def fetch_vulnerabilities(self):
         return [Structure(**item['value']) for item in self._get(self._url('ws/{}/vulns/'.format(self.workspace)),
                                                                  'vulnerabilities')['vulnerabilities']]
@@ -152,7 +181,7 @@ class Api:
         return [Structure(**item['value']) for item in self._get(self._url('ws/{}/services/'.format(self.workspace)),
                                                                  'services')['services']]
 
-    def get_hosts(self):
+    def fetch_hosts(self):
         return [Structure(**item['value']) for item in self._get(self._url('ws/{}/hosts/'.format(self.workspace)),
                                                                  'hosts')['rows']]
 
@@ -192,15 +221,32 @@ class Api:
     def intersection(objects, models):
         return [_object for _object in objects if _object.id in [model.id for model in models]]
 
-
-    # OLD IMPLEMENTATION
-
     def update_vulnerability(self, vulnerability):
         return Structure(**self._put(self._url('ws/{}/vulns/{}/'.format(self.workspace, vulnerability.id)),
                                      vulnerability.__dict__, 'vulnerability'))
 
     def delete_vulnerability(self, vulnerability_id):
         return self._delete(self._url('ws/{}/vulns/{}/'.format(self.workspace, vulnerability_id)), 'vulnerability')
+
+    def update_service(self, service):
+        if isinstance(service.ports, int):
+            service.ports = [service.ports]
+        else:
+            service.ports = []
+        return Structure(**self._put(self._url('ws/{}/services/{}/'.format(self.workspace, service.id)),
+                                     service.__dict__, 'service'))
+
+    def delete_service(self, service_id):
+        return self._delete(self._url('ws/{}/services/{}/'.format(self.workspace, service_id)), 'service')
+
+    def update_host(self, host):
+        return Structure(**self._put(self._url('ws/{}/hosts/{}/'.format(self.workspace, host.id)),
+                                     host.__dict__, 'hosts'))
+
+    def delete_host(self, host_id):
+        return self._delete(self._url('ws/{}/hosts/{}/'.format(self.workspace, host_id)), 'host')
+
+    # OLD IMPLEMENTATION
 
     def get_services(self):
         return [Structure(**item['value']) for item in self._get(self._url('ws/{}/services/'.format(self.workspace)),
@@ -216,17 +262,6 @@ class Api:
                     filtered_services.append(service)
         return filtered_services
 
-    def update_service(self, service):
-        if isinstance(service.ports, int):
-            service.ports = [service.ports]
-        else:
-            service.ports = []
-        return Structure(**self._put(self._url('ws/{}/services/{}/'.format(self.workspace, service.id)),
-                                     service.__dict__, 'service'))
-
-    def delete_service(self, service_id):
-        return self._delete(self._url('ws/{}/services/{}/'.format(self.workspace, service_id)), 'service')
-
     def get_hosts(self):
         return [Structure(**item['value']) for item in self._get(self._url('ws/{}/hosts/'.format(self.workspace)),
                                                                  'hosts')['rows']]
@@ -241,13 +276,6 @@ class Api:
                     filtered_hosts.append(host)
         return filtered_hosts
 
-    def update_host(self, host):
-        return Structure(**self._put(self._url('ws/{}/hosts/{}/'.format(self.workspace, host.id)),
-                                     host.__dict__, 'hosts'))
-
-    def delete_host(self, host_id):
-        return self._delete(self._url('ws/{}/hosts/{}/'.format(self.workspace, host_id)), 'host')
-
     def get_vulnerability_templates(self):
         return [Structure(**item['doc']) for item in
                 self._get(self._url('vulnerability_template'), 'templates')['rows']]
@@ -261,32 +289,3 @@ class Api:
                         (getattr(template, key, None) == value or str(getattr(template, key, None)) == value):
                     filtered_templates.append(template)
         return filtered_templates
-
-    def create_command(self, itime, params, tool_name):
-        self.itime = itime
-        self.params = params
-        self.tool_name = tool_name
-        data = self._command_info()
-        res = self._post(self._url('ws/{}/commands/'.format(self.workspace)), data, 'command')
-        return res["_id"]
-
-    def _command_info(self, duration=None):
-        try:
-            ip = socket.gethostbyname(socket.gethostname())
-        except socket.gaierror:
-            ip = socket.gethostname()
-        data = {
-            "itime": self.itime,
-            "command": self.tool_name,
-            "ip": ip,
-            "import_source": "shell",
-            "tool": "Searcher",
-            "params": json.dumps(self.params),
-        }
-        if duration:
-            data.update({"duration": duration})
-        return data
-
-    def close_command(self, command_id, duration):
-        data = self._command_info(duration)
-        self._put(self._url('ws/{}/commands/{}/'.format(self.workspace, command_id)), data, 'command')

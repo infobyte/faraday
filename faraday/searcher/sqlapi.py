@@ -1,12 +1,10 @@
 import json
 import logging
 import socket
-
+import sqlalchemy
 from datetime import datetime
 
 from faraday.searcher.api import ApiError
-from faraday.server.api.modules.hosts import HostSchema
-from faraday.server.api.modules.services import ServiceSchema
 from faraday.server.api.modules.vulns import VulnerabilitySchema, VulnerabilityWebSchema
 from faraday.server.models import Workspace, Vulnerability, VulnerabilityWeb, Service, Host, Command
 
@@ -156,3 +154,27 @@ class SqlApi:
     def close_command(self, command_id, duration):
         data = self._command_info(duration)
         self._put(self._url('ws/{}/commands/{}/'.format(self.workspace, command_id)), data, 'command')
+
+    def update_vulnerability(self, vulnerability):
+        try:
+            vuln = None
+            if isinstance(vulnerability, Vulnerability):
+                vuln = Vulnerability.query.get(vulnerability.id)
+            if isinstance(vulnerability, VulnerabilityWeb):
+                vuln = VulnerabilityWeb.query.get(vulnerability.id)
+
+            for (key, value) in vars(vulnerability).iteritems():
+                setattr(vuln, key, value)
+            self.session.commit()
+        except sqlalchemy.exc.IntegrityError as ex:
+            self.session.rollback()
+            logger.error(str(ex))
+            return False
+        return vulnerability
+
+    def delete_vulnerability(self, vulnerability_id):
+        vuln = Vulnerability.query.get(vulnerability_id)
+        if vuln is None:
+            vuln = VulnerabilityWeb.query.get(vulnerability_id)
+        self.session.delete(vuln)
+        self.session.commit()

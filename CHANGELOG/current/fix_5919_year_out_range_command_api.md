@@ -1,0 +1,1 @@
+Fixed command api when year is invalid

@@ -414,3 +414,19 @@ class TestListCommandView(object, ReadOnlyAPITests):
         command_history = command_history[0]
         assert command_history['hosts_count'] == 1
         assert command_history['tool'] == 'test'
+
+    def test_year_is_out_range(self, test_client):
+        raw_data ={
+            'command': 'Import Nessus:',
+            'tool': 'nessus',
+            'duration': None,
+            'hostname': 'mandarina',
+            'ip': '192.168.20.53',
+            'itime': 1511387720000.048548,
+            'params': u'/home/lcubo/.faraday/report/airbnb/nessus_report_Remote.nessus',
+            'user': 'lcubo'
+        }
+
+        res = test_client.post(self.url(), data=raw_data)
+
+        assert res.status_code == 400

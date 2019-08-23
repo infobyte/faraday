@@ -174,7 +174,6 @@ class ModelController(Thread):
         """
         Sets the flag to stop daemon
         """
-        #self._stop()
         self._must_stop = True
 
     def _dispatchActionWithLock(self, action_callback, *args):

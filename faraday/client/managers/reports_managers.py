@@ -34,7 +34,7 @@ class OnlinePlugins(Thread):
 
         Thread.__init__(self)
         self.setDaemon(True)
-        self._stop = False
+        self._must_stop = False
 
         self.online_plugins = {
             "MetasploitOn": {
@@ -58,11 +58,11 @@ class OnlinePlugins(Thread):
         logger.debug("Running online plugin...")
 
     def stop(self):
-        self._stop = True
+        self._must_stop = True
 
     def run(self):
 
-        while not self._stop:
+        while not self._must_stop:
 
             for name, config_dict in self.online_plugins.items():
                 if name in self.plugins_settings:

@@ -215,7 +215,7 @@ class XMLRPCServer(SimpleXMLRPCServer, threading.Thread):
         SimpleXMLRPCServer.__init__(self,
                                                        requestHandler=CustomXMLRPCRequestHandler,
                                                        allow_none=True, *args, **kwargs)
-        self._stop = False
+        self._must_stop = False
         # set timeout for handle_request. If we don't the server will hang
         self.timeout = 2
 
@@ -226,13 +226,13 @@ class XMLRPCServer(SimpleXMLRPCServer, threading.Thread):
 
     # overloaded method to be able to stop server
     def serve_forever(self):
-        while not self._stop:
+        while not self._must_stop:
             self.handle_request()
         api.devlog("server forever stopped by flag")
 
     def stop_server(self):
         api.devlog("server stopping...")
-        self._stop = True
+        self._must_stop = True
 
     # The default dispatcher does not send across the whole stack trace.
     # Only type and value are passed back. The client has no way of knowing

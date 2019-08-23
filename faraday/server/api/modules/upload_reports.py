@@ -63,7 +63,7 @@ class RawReportProcessor(Thread):
         except AttributeError:
             logger.warning(
                 "Upload reports in WEB-UI not configurated, run Faraday client and try again...")
-            self._stop = True
+            self._must_stop = True
             return
 
         mappers_manager = MapperManager()
@@ -80,15 +80,15 @@ class RawReportProcessor(Thread):
             self.end_event)
 
         self.processor = ReportProcessor(plugin_controller, None)
-        self._stop = False
+        self._must_stop = False
 
     def stop(self):
         self.model_controller.stop()
-        self._stop = True
+        self._must_stop = True
 
     def run(self):
         logger.info('Tool report processor started')
-        while not self._stop:
+        while not self._must_stop:
             try:
 
                 workspace, file_path, cookie = UPLOAD_REPORTS_QUEUE.get(False, timeout=0.1)

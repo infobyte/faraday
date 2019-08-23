@@ -828,6 +828,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
     ]
 
     __tablename__ = 'vulnerability'
+    id = Column(Integer, primary_key=True)
     confirmed = Column(Boolean, nullable=False, default=False)
     status = Column(Enum(*STATUSES, name='vulnerability_statuses'), nullable=False, default="open")
     type = Column(Enum(*VULN_TYPES, name='vulnerability_types'), nullable=False)
@@ -840,8 +841,9 @@ class VulnerabilityGeneric(VulnerabilityABC):
                         index=True,
                         nullable=True,
                         )
-
-    vulnerability_duplicate = relationship('VulnerabilityGeneric')
+    duplicate_childs = relationship("VulnerabilityGeneric", cascade="all, delete-orphan",
+                backref=backref('vulnerability_duplicate', remote_side=[id])
+            )
 
     vulnerability_template_id =  Column(
                         Integer,
@@ -850,7 +852,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
                         nullable=True,
                         )
 
-    vulnerability_template = relationship('VulnerabilityTemplate', backref='duplicate_vulnerabilities')
+    vulnerability_template = relationship('VulnerabilityTemplate', backref=backref('duplicate_vulnerabilities', passive_deletes='all'))
 
     workspace_id = Column(
                         Integer,
@@ -1879,10 +1881,20 @@ class KnowledgeBase(db.Model):
                         index=True,
                         nullable=True,
                         )
-    
-    identifier = Column(Text, nullable=False)
-    shipped = Column(Boolean, default=False)
+    vulnerability_template = relationship('VulnerabilityTemplate',
+        backref=backref('knowledge', cascade="all, delete-orphan"),
+    )
 
+    faraday_kb_id = Column(Text, nullable=False)
+    reference_id = Column(Integer, nullable=False)
+
+    script_name = Column(Text, nullable=False)
+    external_identifier = Column(Text, nullable=False)
+    tool_name = Column(Text, nullable=False)
+    false_positive = Column(Integer, nullable=False, default=0)
+    verified = Column(Integer, nullable=False, default=0)
+
+    __table_args__ = (UniqueConstraint('external_identifier', 'tool_name', 'reference_id', name='uix_externalidentifier_toolname_referenceid'),)
 
 # This constraint uses Columns from different classes
 # Since it applies to the table vulnerability it should be adVulnerability.ded to the Vulnerability class

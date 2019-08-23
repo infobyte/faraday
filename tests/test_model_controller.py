@@ -81,13 +81,13 @@ def test_controller_stop_when_is_not_processing():
     pending_actions = Queue()
     controller = ModelController(mappers_manager, pending_actions)
     assert controller.processing is False
-    assert controller._is_stopped is False
+    assert controller._must_stop is False
     controller.start()
-    assert controller.isAlive()
+    assert controller.is_alive()
     controller.stop()
-    assert controller._is_stopped is True
     controller.join()
-    assert controller.isAlive() is False
+    assert controller._must_stop is True
+    assert controller.is_alive() is False
 
 
 def test_controller_cant_be_stopped_when_is_processing():
@@ -100,19 +100,19 @@ def test_controller_cant_be_stopped_when_is_processing():
     pending_actions = Queue()
     controller = ModelController(mappers_manager, pending_actions)
     assert controller.processing is False
-    assert controller._is_stopped is False
+    assert controller._must_stop is False
     controller.start()
     controller.processing = True
     controller.active_plugins_count = 1
-    assert controller.isAlive()
+    assert controller.is_alive()
     controller.stop()
-    assert controller._is_stopped
+    assert controller._must_stop is True
     assert controller.processing
     controller.join(timeout=2)
-    assert controller.isAlive()
+    assert controller.is_alive()
     controller.processing = False
     controller.join()
-    assert controller.isAlive() is False
+    assert controller.is_alive() is False
 
 
 def test_controller_plugin_start_action_updates_internal_state():
@@ -130,7 +130,7 @@ def test_controller_plugin_start_action_updates_internal_state():
     assert controller.processing is False
     controller.stop()
     controller.join()
-    assert controller.isAlive() is False
+    assert controller.is_alive() is False
 
 def test_only_start_plugin():
     mappers_manager = MapperManager()

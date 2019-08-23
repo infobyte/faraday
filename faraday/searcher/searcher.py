@@ -353,6 +353,13 @@ def replace_rule(rule, value_item):
     return ast.literal_eval(rule_str)
 
 
+def parse_value(value):
+    if value == 'info':
+        return 'informational'
+    if value == 'med':
+        return 'medium'
+
+
 # TODO: REMOVE
 def get_objects_by_parent(parent, objects_type):
     if isinstance(parent, Service) and objects_type == 'Vulnerability':
@@ -619,6 +626,7 @@ class Searcher:
         return True
 
     def _update_vulnerability(self, vuln, key, value):
+        value = parse_value(value)
         if key == 'template':
             cwe = get_cwe(self.api, value)
             if cwe is None:

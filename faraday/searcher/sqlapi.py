@@ -168,30 +168,34 @@ class SqlApi:
         return templates
 
     def update_vulnerability(self, vulnerability):
-        # try:
-        #     vuln = None
-        #     if isinstance(vulnerability, Vulnerability):
-        #         vuln = Vulnerability.query.get(vulnerability.id)
-        #     if isinstance(vulnerability, VulnerabilityWeb):
-        #         vuln = VulnerabilityWeb.query.get(vulnerability.id)
-        #
-        #     for (key, value) in vars(vulnerability).iteritems():
-        #         setattr(vuln, key, value)
-        #     self.session.commit()
-        # except sqlalchemy.exc.IntegrityError as ex:
-        #     self.session.rollback()
-        #     logger.error(str(ex))
-        #     return False
-        # return vulnerability
-        # vulnerability.severity = 'informational'
-        setattr(vulnerability, 'severity', 'informational')  # TODO REMOVE IT
-        self.session.commit()
+        try:
+            self.session.add(vulnerability)
+            self.session.commit()
+        except Exception as error:
+            logger.warning(str(error))
+            return False
+
+        return vulnerability
 
     def update_service(self, service):
-        pass
+        try:
+            self.session.add(service)
+            self.session.commit()
+        except Exception as error:
+            logger.warning(str(error))
+            return False
+
+        return service
 
     def update_host(self, host):
-        pass
+        try:
+            self.session.add(host)
+            self.session.commit()
+        except Exception as error:
+            logger.warning(str(error))
+            return False
+
+        return host
 
     def delete_vulnerability(self, vulnerability_id):
         vuln = Vulnerability.query.get(vulnerability_id)

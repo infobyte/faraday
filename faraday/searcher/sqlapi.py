@@ -7,7 +7,7 @@ from datetime import datetime
 from faraday.searcher.api import ApiError
 from faraday.server.api.modules.vulns import VulnerabilitySchema, VulnerabilityWebSchema
 from faraday.server.models import Workspace, Vulnerability, VulnerabilityWeb, Service, Host, Command, \
-    VulnerabilityTemplate
+    VulnerabilityTemplate, CommandObject
 
 logger = logging.getLogger('Faraday searcher')
 
@@ -171,6 +171,15 @@ class SqlApi:
         try:
             self.session.add(vulnerability)
             self.session.commit()
+            cmd_object_relation = CommandObject(
+                workspace_id=self.workspace.id,
+                command_id=self.command_id,
+                object_type='vulnerability',
+                object_id=vulnerability.id,
+                created_persistent=False
+            )
+            self.session.add(cmd_object_relation)
+            self.session.commit()
         except Exception as error:
             logger.warning(str(error))
             return False
@@ -181,6 +190,15 @@ class SqlApi:
         try:
             self.session.add(service)
             self.session.commit()
+            cmd_object_relation = CommandObject(
+                workspace_id=self.workspace.id,
+                command_id=self.command_id,
+                object_type='service',
+                object_id=service.id,
+                created_persistent=False
+            )
+            self.session.add(cmd_object_relation)
+            self.session.commit()
         except Exception as error:
             logger.warning(str(error))
             return False
@@ -190,6 +208,15 @@ class SqlApi:
     def update_host(self, host):
         try:
             self.session.add(host)
+            self.session.commit()
+            cmd_object_relation = CommandObject(
+                workspace_id=self.workspace.id,
+                command_id=self.command_id,
+                object_type='host',
+                object_id=host.id,
+                created_persistent=False
+            )
+            self.session.add(cmd_object_relation)
             self.session.commit()
         except Exception as error:
             logger.warning(str(error))

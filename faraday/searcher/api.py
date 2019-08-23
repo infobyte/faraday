@@ -56,9 +56,9 @@ class Api:
             if self.headers is None:
                 raise UserWarning('Invalid username or password')
 
-    def _url(self, path):
+    def _url(self, path, is_get=False):
         url = self.base + 'v2/' + path
-        if self.command_id and 'commands' not in url and not url.endswith('}'):
+        if self.command_id and 'commands' not in url and not url.endswith('}') and not is_get:
             if '?' in url:
                 url += '&command_id={}'.format(self.command_id)
             elif url.endswith('/'):
@@ -174,20 +174,20 @@ class Api:
         self._put(self._url('ws/{}/commands/{}/'.format(self.workspace, command_id)), data, 'command')
 
     def fetch_vulnerabilities(self):
-        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/vulns/'.format(self.workspace)),
+        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/vulns/'.format(self.workspace), True),
                                                                  'vulnerabilities')['vulnerabilities']]
 
     def fetch_services(self):
-        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/services/'.format(self.workspace)),
+        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/services/'.format(self.workspace), True),
                                                                  'services')['services']]
 
     def fetch_hosts(self):
-        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/hosts/'.format(self.workspace)),
+        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/hosts/'.format(self.workspace), True),
                                                                  'hosts')['rows']]
 
     def fetch_templates(self):
         return [Structure(**item['doc']) for item in
-                self._get(self._url('vulnerability_template'), 'templates')['rows']]
+                self._get(self._url('vulnerability_template', True), 'templates')['rows']]
 
     def filter_vulnerabilities(self, **kwargs):
         if len(kwargs.keys()) > 1:
@@ -195,19 +195,19 @@ class Api:
             url = self._url('ws/{}/vulns/?{}'.format(self.workspace, params))
         else:
             params = self.parse_args(**kwargs)
-            url = self._url('ws/{}/vulns/{}'.format(self.workspace, params))
+            url = self._url('ws/{}/vulns/{}'.format(self.workspace, params), True)
         return [Structure(**item['value']) for item in
                 self._get(url, 'vulnerabilities')['vulnerabilities']]
 
     def filter_services(self, **kwargs):
         params = urllib.urlencode(kwargs)
-        url = self._url('ws/{}/services/?{}'.format(self.workspace, params))
+        url = self._url('ws/{}/services/?{}'.format(self.workspace, params), True)
         return [Structure(**item['value']) for item in
                 self._get(url, 'services')['services']]
 
     def filter_hosts(self, **kwargs):
         params = urllib.urlencode(kwargs)
-        url = self._url('ws/{}/hosts/?{}'.format(self.workspace, params))
+        url = self._url('ws/{}/hosts/?{}'.format(self.workspace, params), True)
         return [Structure(**item['value']) for item in
                 self._get(url, 'hosts')['rows']]
 

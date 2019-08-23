@@ -20,17 +20,20 @@ def check_command(vuln, session):
 
 @pytest.mark.usefixtures('logged_user')
 class TestSearcherRules():
+
     @pytest.mark.parametrize("api", [
-        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
-                                                    password='test', base=''),
-        # lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test', password='test', base=''),
+        lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
     ])
+    @pytest.mark.usefixtures('ignore_nplusone')
     def test_searcher_update_rules(self, api, session, test_client):
         workspace = WorkspaceFactory.create()
         vuln = VulnerabilityFactory.create(workspace=workspace, severity='low')
         session.add(workspace)
         session.add(vuln)
         session.commit()
+        assert vuln.severity == 'low'
+
         searcher = Searcher(api(workspace, test_client, session))
 
         rules = [{
@@ -92,7 +95,7 @@ class TestSearcherRules():
         check_command(vuln, session)
 
     @pytest.mark.parametrize("api", [
-        lambda workspace, test_client, session: Api(workspace.name, test_client, session,  username='test', password='test', base=''),
+        # lambda workspace, test_client, session: Api(workspace.name, test_client, session,  username='test', password='test', base=''),
         lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
     ])
     def test_confirm_vuln(self, api, session, test_client):

@@ -426,15 +426,6 @@ class Searcher:
         self.api = api
         self.mail_notificacion = mail_notificacion
 
-        # logger.debug("Getting hosts ...")
-        # self.hosts = self.api.get_hosts()
-        #
-        # logger.debug("Getting services ...")
-        # self.services = self.api.get_services()
-
-        # logger.debug("Getting vulnerabilities ...")
-        # self.vulns = self.api.get_vulnerabilities()
-
     def process(self, rules):
         if rules and validate_rules(rules):
             start = datetime.now()

@@ -71,7 +71,9 @@ def compare(a, b):
 
 def get_cwe(api, data):
     logger.debug("Getting vulnerability templates")
-    templates = api.get_filtered_templates(id=data, name=data)
+    templates_filtered_by_id = api.filter_templates(id=data)
+    templates_filtered_by_name = api.filter_templates(name=data)
+    templates = templates_filtered_by_id + templates_filtered_by_name
     if len(templates) > 0:
         return templates.pop()
     return None
@@ -237,6 +239,26 @@ def update_host(api, host, key, value):
     return True
 
 
+def get_parent(api, parent_tag):
+    logger.debug("Getting parent")
+    return api.get_filtered_services(id=parent_tag, name=parent_tag) or \
+           api.get_filtered_hosts(id=parent_tag, name=parent_tag)
+
+
+def filter_objects_by_parent(_objects, parent):
+    objects = []
+    parents = []
+    if isinstance(parent, list):
+        parents.extend(parent)
+    else:
+        parents.append(parent)
+    for obj in _objects:
+        for p in parents:
+            if p.id == obj.parent_id:
+                objects.append(obj)
+    return objects
+
+
 def evaluate_condition(model, condition):
     key, value = condition.split('=')
     value = value.replace('%', ' ')
@@ -273,6 +295,38 @@ def evaluate_condition(model, condition):
     if value.encode("utf-8") != temp_value.encode("utf-8"):
         return False
     return True
+
+
+def get_object(_models, obj):
+    logger.debug("Getting object")
+    objects = []
+    if obj is None:
+        if len(_models) > 0:
+            objects.append(_models[-1])
+            return objects
+        return None
+
+    items = obj.split()
+    allow_old_option = '--old' in items
+    if allow_old_option:
+        items.remove('--old')
+    for model in _models:
+        if all([evaluate_condition(model, cond) for cond in items]):
+            objects.append(model)
+            if allow_old_option:
+                break
+    return objects
+
+
+def get_models(api, objects, rule):
+    logger.debug("Getting models")
+    if 'parent' in rule:
+        parent = get_parent(api, rule['parent'])
+        if parent is None:
+            logger.warning("WARNING: Parent %s not found in rule %s " % (rule['parent'], rule['id']))
+            return objects
+        return filter_objects_by_parent(objects, parent)
+    return objects
 
 
 def evaluate_conditions(_models, conditions):
@@ -358,6 +412,7 @@ def parse_value(value):
         return 'informational'
     if value == 'med':
         return 'medium'
+    return value
 
 
 # TODO: REMOVE
@@ -611,7 +666,7 @@ class Searcher:
                 else:
                     subject = 'Faraday searcher alert'
                     body = '%s %s have been modified by rule %s at %s' % (
-                        obj.class_signature, obj.name, rule['id'], str(datetime.now()))
+                        obj.type.capitalize(), obj.name, rule['id'], str(datetime.now()))
                     self.mail_notificacion.send_mail(expression, subject, body)
                     logger.info("Sending mail to: '%s'" % expression)
         return True

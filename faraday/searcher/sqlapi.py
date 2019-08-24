@@ -162,7 +162,7 @@ class SqlApi:
         for attr, value in kwargs.iteritems():
             if hasattr(VulnerabilityTemplate, attr):
                 templates_query = templates_query.filter(getattr(VulnerabilityTemplate, attr) == value)
-                templates = [template for template, pos in
+                templates = [template for template in
                              templates_query.distinct(VulnerabilityTemplate.id)]
 
         return templates

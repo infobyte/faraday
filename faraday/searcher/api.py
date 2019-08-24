@@ -187,7 +187,7 @@ class Api:
 
     def fetch_templates(self):
         return [Structure(**item['doc']) for item in
-                self._get(self._url('vulnerability_template', True), 'templates')['rows']]
+                self._get(self._url('vulnerability_template/', True), 'templates')['rows']]
 
     def filter_vulnerabilities(self, **kwargs):
         if len(kwargs.keys()) > 1:

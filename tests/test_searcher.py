@@ -20,9 +20,9 @@ def check_command(vuln, session):
 
 @pytest.mark.usefixtures('logged_user')
 class TestSearcherRules():
-
     @pytest.mark.parametrize("api", [
-        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test', password='test', base=''),
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+                                                    password='test', base=''),
         lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
     ])
     @pytest.mark.usefixtures('ignore_nplusone')
@@ -50,14 +50,20 @@ class TestSearcherRules():
         assert vuln.severity == 'medium'
         check_command(vuln, session)
 
-    def test_searcher_delete_rules(self, session, test_client):
+    @pytest.mark.parametrize("api", [
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+                                                    password='test', base=''),
+        lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+    ])
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_searcher_delete_rules(self, api, session, test_client):
         workspace = WorkspaceFactory.create()
         vuln = VulnerabilityFactory.create(workspace=workspace, severity='low')
         session.add(workspace)
         session.add(vuln)
         session.commit()
-        api = Api(test_client, workspace.name, username='test', password='test', base='')
-        searcher = Searcher(api)
+
+        searcher = Searcher(api(workspace, test_client, session))
 
         rules = [{
             'id': 'DELETE_LOW',
@@ -70,15 +76,21 @@ class TestSearcherRules():
         vulns_count = session.query(Vulnerability).filter_by(workspace=workspace).count()
         assert vulns_count == 0
 
+    @pytest.mark.parametrize("api", [
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+                                                    password='test', base=''),
+        lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+    ])
+    @pytest.mark.usefixtures('ignore_nplusone')
     @pytest.mark.skip("No available in community")
-    def test_searcher_rules_tag_vulns_low(self, session, test_client):
+    def test_searcher_rules_tag_vulns_low(self, api, session, test_client):
         workspace = WorkspaceFactory.create()
         vuln = VulnerabilityFactory.create(workspace=workspace, severity='low')
         session.add(workspace)
         session.add(vuln)
         session.commit()
-        api = Api(test_client, workspace.name, username='test', password='test', base='')
-        searcher = Searcher(api)
+
+        searcher = Searcher(api(workspace, test_client, session))
 
         rules = [{
             'id': 'DELETE_LOW',
@@ -95,9 +107,11 @@ class TestSearcherRules():
         check_command(vuln, session)
 
     @pytest.mark.parametrize("api", [
-        # lambda workspace, test_client, session: Api(workspace.name, test_client, session,  username='test', password='test', base=''),
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+                                                    password='test', base=''),
         lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
     ])
+    @pytest.mark.usefixtures('ignore_nplusone')
     def test_confirm_vuln(self, api, session, test_client):
         workspace = WorkspaceFactory.create()
         vuln = VulnerabilityFactory.create(workspace=workspace, severity='low', confirmed=False)
@@ -121,7 +135,13 @@ class TestSearcherRules():
         vuln = session.query(Vulnerability).filter_by(workspace=workspace).first()
         assert vuln.confirmed is True
 
-    def test_apply_template_by_id(self, session, test_client):
+    @pytest.mark.parametrize("api", [
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+                                                    password='test', base=''),
+        lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+    ])
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_apply_template_by_id(self, api, session, test_client):
         workspace = WorkspaceFactory.create()
         template = VulnerabilityTemplateFactory.create()
         vuln = VulnerabilityFactory.create(workspace=workspace, severity='low', confirmed=False)
@@ -132,8 +152,7 @@ class TestSearcherRules():
 
         template_name = template.name
         template_id = template.id
-        api = Api(test_client, workspace.name, username='test', password='test', base='')
-        searcher = Searcher(api)
+        searcher = Searcher(api(workspace, test_client, session))
         rules = [{
             'id': 'APPLY_TEMPLATE',
             'model': 'Vulnerability',
@@ -147,7 +166,14 @@ class TestSearcherRules():
         vuln = session.query(Vulnerability).filter_by(workspace=workspace).first()
         assert vuln.name == template_name
 
-    def test_remove_duplicated_by_name(self, session, test_client):
+    @pytest.mark.parametrize("api", [
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+                                                    password='test', base=''),
+        lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+    ])
+    @pytest.mark.usefixtures('ignore_nplusone')
+    # TO FIX
+    def test_remove_duplicated_by_name(self, api, session, test_client):
         workspace = WorkspaceFactory.create()
         host = HostFactory.create(workspace=workspace)
         vuln = VulnerabilityFactory.create(workspace=workspace, severity='low',
@@ -162,8 +188,7 @@ class TestSearcherRules():
         session.add(host)
         session.commit()
 
-        api = Api(test_client, workspace.name, username='test', password='test', base='')
-        searcher = Searcher(api)
+        searcher = Searcher(api(workspace, test_client, session))
         rules = [{
             'id': 'REMOVE_DUPLICATED_VULNS',
             'model': 'Vulnerability',
@@ -180,21 +205,26 @@ class TestSearcherRules():
         vulns_count = session.query(Vulnerability).filter_by(workspace=workspace).count()
         assert vulns_count == 1
 
-    def test_mail_notification(self, session, test_client):
+    @pytest.mark.parametrize("api", [
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+                                                    password='test', base=''),
+        lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+    ])
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_mail_notification(self, api, session, test_client):
         workspace = WorkspaceFactory.create()
         vuln = VulnerabilityFactory.create(workspace=workspace, severity='low')
         session.add(workspace)
         session.add(vuln)
         session.commit()
 
-        api = Api(test_client, workspace.name, username='test', password='test', base='')
         mail_notification = MailNotification(
             'test@test.com',
             'testpass',
             'smtp.gmail.com',
             587
         )
-        searcher = Searcher(api, mail_notificacion=mail_notification)
+        searcher = Searcher(api(workspace, test_client, session), mail_notificacion=mail_notification)
         rules = [{
             'id': 'SEND_MAIL',
             'model': 'Vulnerability',
@@ -244,7 +274,8 @@ class TestSearcherRules():
         assert list(vuln1.references)[0] == 'REF_TEST'
 
     @pytest.mark.parametrize("api", [
-        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test', password='test', base=''),
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+                                                    password='test', base=''),
         lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
     ])
     @pytest.mark.usefixtures('ignore_nplusone')
@@ -288,7 +319,14 @@ class TestSearcherRules():
         assert vuln1.severity == 'informational'
         assert vuln2.severity == 'informational'
 
-    def test_delete_vulns_with_dynamic_values(self, session, test_client):
+    @pytest.mark.parametrize("api", [
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+                                                    password='test', base=''),
+        lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+    ])
+    @pytest.mark.usefixtures('ignore_nplusone')
+    # TO FIX
+    def test_delete_vulns_with_dynamic_values(self, api, session, test_client):
         workspace = WorkspaceFactory.create()
         vuln1 = VulnerabilityFactory.create(workspace=workspace, name="TEST1")
         vuln2 = VulnerabilityFactory.create(workspace=workspace, name="TEST2")
@@ -297,8 +335,7 @@ class TestSearcherRules():
         session.add(vuln2)
         session.commit()
 
-        api = Api(test_client, workspace.name, username='test', password='test', base='')
-        searcher = Searcher(api)
+        searcher = Searcher(api(workspace, test_client, session))
         rules = [{
             'id': 'DELETE_VULN_{{name}}',
             'model': 'Vulnerability',
@@ -315,7 +352,13 @@ class TestSearcherRules():
         vulns_count = session.query(Vulnerability).filter_by(workspace=workspace).count()
         assert vulns_count == 0
 
-    def test_update_custom_field(self, session, test_client):
+    @pytest.mark.parametrize("api", [
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+                                                    password='test', base=''),
+        lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+    ])
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_update_custom_field(self, api, session, test_client):
         workspace = WorkspaceFactory.create()
         custom_field = CustomFieldsSchemaFactory.create(
             table_name='vulnerability',
@@ -331,8 +374,7 @@ class TestSearcherRules():
         session.add(vuln)
         session.commit()
 
-        api = Api(test_client, workspace.name, username='test', password='test', base='')
-        searcher = Searcher(api)
+        searcher = Searcher(api(workspace, test_client, session))
 
         rules = [{
             'id': 'CHANGE_CUSTOM_FIELD',

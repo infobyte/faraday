@@ -238,7 +238,7 @@ class SqlApi:
             self.session.commit()
 
     def delete_host(self, host_id):
-        host = Service.query.get(host_id)
+        host = Host.query.get(host_id)
         if host:
             self.session.delete(host)
             self.session.commit()

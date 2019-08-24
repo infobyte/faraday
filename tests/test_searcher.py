@@ -358,6 +358,7 @@ class TestSearcherRules():
         lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
     ])
     @pytest.mark.usefixtures('ignore_nplusone')
+    # TO FIX
     def test_update_custom_field(self, api, session, test_client):
         workspace = WorkspaceFactory.create()
         custom_field = CustomFieldsSchemaFactory.create(
@@ -392,15 +393,20 @@ class TestSearcherRules():
         assert vuln.custom_fields['cfield'] == 'CUSTOM_FIELD_UPDATED'
         check_command(vuln, session)
 
-    def test_delete_services(self, session, test_client):
+    @pytest.mark.parametrize("api", [
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+                                                    password='test', base=''),
+        lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+    ])
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_delete_services(self, api, session, test_client):
         workspace = WorkspaceFactory.create()
         service = ServiceFactory.create(workspace=workspace, name="http")
         session.add(workspace)
         session.add(service)
         session.commit()
 
-        api = Api(test_client, workspace.name, username='test', password='test', base='')
-        searcher = Searcher(api)
+        searcher = Searcher(api(workspace, test_client, session))
         rules = [{
             'id': 'DELETE_SERVICE',
             'model': 'Service',
@@ -416,15 +422,20 @@ class TestSearcherRules():
         service_count = session.query(Service).filter_by(workspace=workspace).count()
         assert service_count == 0
 
-    def test_delete_host(self, session, test_client):
+    @pytest.mark.parametrize("api", [
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+                                                    password='test', base=''),
+        lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+    ])
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_delete_host(self, api, session, test_client):
         workspace = WorkspaceFactory.create()
         host = HostFactory.create(workspace=workspace, ip="10.25.86.39")
         session.add(workspace)
         session.add(host)
         session.commit()
 
-        api = Api(test_client, workspace.name, username='test', password='test', base='')
-        searcher = Searcher(api)
+        searcher = Searcher(api(workspace, test_client, session))
         rules = [{
             'id': 'DELETE_HOST',
             'model': 'Host',
@@ -440,7 +451,13 @@ class TestSearcherRules():
         host_count = session.query(Host).filter_by(workspace=workspace).count()
         assert host_count == 0
 
-    def test_update_services(self, session, test_client):
+    @pytest.mark.parametrize("api", [
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+                                                    password='test', base=''),
+        lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+    ])
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_update_services(self, api, session, test_client):
         workspace = WorkspaceFactory.create()
         service = ServiceFactory.create(workspace=workspace, name="http", owned=False)
         session.add(workspace)
@@ -449,8 +466,7 @@ class TestSearcherRules():
 
         assert service.owned is False
 
-        api = Api(test_client, workspace.name, username='test', password='test', base='')
-        searcher = Searcher(api)
+        searcher = Searcher(api(workspace, test_client, session))
         rules = [{
             'id': 'UPDATE_SERVICE',
             'model': 'Service',
@@ -463,7 +479,13 @@ class TestSearcherRules():
         service = session.query(Service).filter_by(workspace=workspace).first()
         assert service.owned is True
 
-    def test_update_host(self, session, test_client):
+    @pytest.mark.parametrize("api", [
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+                                                    password='test', base=''),
+        lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+    ])
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_update_host(self, api, session, test_client):
         workspace = WorkspaceFactory.create()
         host = HostFactory.create(workspace=workspace, ip="10.25.86.39", owned=False)
         session.add(workspace)
@@ -472,8 +494,7 @@ class TestSearcherRules():
 
         assert host.owned is False
 
-        api = Api(test_client, workspace.name, username='test', password='test', base='')
-        searcher = Searcher(api)
+        searcher = Searcher(api(workspace, test_client, session))
         rules = [{
             'id': 'UPDATE_HOST',
             'model': 'Host',

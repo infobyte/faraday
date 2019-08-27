@@ -36,7 +36,7 @@ try:
     from faraday.client.configparser import ConfigParser, NoSectionError, NoOptionError
 except ImportError:
     # py3
-    from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+    from configparser import ConfigParser, NoSectionError, NoOptionError
 
 from flask import current_app
 from colorama import init

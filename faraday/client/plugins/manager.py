@@ -9,12 +9,13 @@ See the file 'doc/LICENSE' for the license information
 '''
 from __future__ import absolute_import
 
-import imp
 import os
 import re
 import sys
 import traceback
 import logging
+
+from importlib.machinery import SourceFileLoader
 
 from faraday.config.configuration import getInstanceConfiguration
 
@@ -101,29 +102,26 @@ class PluginManager(object):
             logger.error('Plugins path could not be opened, no pluging will be available!')
             return
         for name in os.listdir(plugin_repo_path):
-            if dir_name_regexp.match(name):
+            if dir_name_regexp.match(name) and name != "__pycache__":
                 try:
                     module_path = os.path.join(plugin_repo_path, name)
                     sys.path.append(module_path)
                     module_filename = os.path.join(module_path, "plugin.py")
-                    if not os.path.exists(module_filename):
-                        module_filename = os.path.join(module_path,
-                                                       "plugin.pyc")
+                    # if not os.path.exists(module_filename):
+                    #     module_filename = os.path.join(module_path,
+                    #                                    "plugin.pyc")
 
                     file_ext = os.path.splitext(module_filename)[1]
                     if file_ext.lower() == '.py':
-                        self._plugin_modules[name] = imp.load_source(name,
-                                                                     module_filename)
-
-                    elif file_ext.lower() == '.pyc':
-                        self._plugin_modules[name] = imp.load_compiled(name,
-                                                                       module_filename)
+                        self._plugin_modules[name] = SourceFileLoader(name,  module_filename)
+                    #
+                    # elif file_ext.lower() == '.pyc':
+                    #     self._plugin_modules[name] = imp.load_compiled(name,
+                    #                                                    module_filename)
                     logger.debug('Loading plugin {0}'.format(name))
                 except Exception as e:
-                    msg = "An error ocurred while loading plugin %s.\n%s" % (
-                        module_filename, traceback.format_exc())
-                    logger.debug(msg)
-                    logger.warn(e)
+                    logger.debug("An error ocurred while loading plugin %s.\n%s", module_filename, traceback.format_exc())
+                    logger.warning(e)
 
     def getPlugins(self):
         plugins = self._instancePlugins()

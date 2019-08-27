@@ -143,7 +143,7 @@ class AmapPlugin(core.PluginBase):
         """
         try:
             return socket.gethostbyname(hostname)
-        except socket.error, msg:
+        except socket.error as msg:
             return hostname
 
     def processCommandString(self, username, current_path, command_string):

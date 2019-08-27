@@ -50,7 +50,7 @@ class ArachniXmlParser():
 
         try:
             tree = ET.fromstring(xml_output)
-        except SyntaxError, err:
+        except SyntaxError as err:
             print('SyntaxError In xml: %s. %s' % (err, xml_output))
             return None
 
@@ -543,7 +543,7 @@ class ArachniPlugin(core.PluginBase):
         # Returns remote IP address from hostname.
         try:
             return socket.gethostbyname(hostname)
-        except socket.error, msg:
+        except socket.error as msg:
             return self.hostname
 
 

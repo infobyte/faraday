@@ -82,7 +82,7 @@ class ZapXmlParser(object):
             parser.feed(xml_output)
             tree = parser.close()
 
-        except SyntaxError, err:
+        except SyntaxError as err:
             print("SyntaxError: %s. %s" % (err, xml_output))
             return None
 

@@ -72,7 +72,7 @@ class WebfuzzerParser(object):
                         1), 'url': info.group(2), 'resp': info.group(3)}
                     self.items.append(vuln)
 
-            except SyntaxError, err:
+            except SyntaxError as err:
                 print("SyntaxError: %s. %s" % (err, filepath))
                 return None
 

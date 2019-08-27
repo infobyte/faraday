@@ -92,7 +92,7 @@ class NetsparkerCloudXmlParser(object):
         """
         try:
             tree = ET.fromstring(xml_output)
-        except SyntaxError, err:
+        except SyntaxError as err:
             self.devlog("SyntaxError: %s. %s" % (err, xml_output))
             return None
 

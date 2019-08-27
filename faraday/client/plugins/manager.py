@@ -113,7 +113,8 @@ class PluginManager(object):
 
                     file_ext = os.path.splitext(module_filename)[1]
                     if file_ext.lower() == '.py':
-                        self._plugin_modules[name] = SourceFileLoader(name,  module_filename)
+                        loader = SourceFileLoader(name,  module_filename)
+                        self._plugin_modules[name] = loader.load_module()
                     #
                     # elif file_ext.lower() == '.pyc':
                     #     self._plugin_modules[name] = imp.load_compiled(name,

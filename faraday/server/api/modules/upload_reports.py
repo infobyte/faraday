@@ -60,7 +60,8 @@ class RawReportProcessor(Thread):
 
         try:
             plugin_manager = PluginManager(os.path.join(CONF.getConfigPath(), "plugins"))
-        except AttributeError:
+        except AttributeError as e:
+            logger.info("%s", e)
             logger.warning(
                 "Upload reports in WEB-UI not configurated, run Faraday client and try again...")
             self._must_stop = True
@@ -83,7 +84,8 @@ class RawReportProcessor(Thread):
         self._must_stop = False
 
     def stop(self):
-        self.model_controller.stop()
+        if self.model_controller.isAlive():
+            self.model_controller.stop()
         self._must_stop = True
 
     def run(self):

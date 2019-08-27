@@ -86,7 +86,7 @@ class JunitXmlParser(object):
         try:
 #             return ET.fromstring(xml_output)
             tree = etree.fromstring(xml_output)
-        except SyntaxError, err:
+        except SyntaxError as err:
             print("SyntaxError: %s. %s" % (err, xml_output))
             return None
         return tree

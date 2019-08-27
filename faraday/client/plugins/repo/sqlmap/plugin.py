@@ -180,7 +180,7 @@ class SqlmapPlugin(PluginTerminalOutput):
                 try:
                     for row in db.execute("SELECT value FROM storage WHERE id=?", (hash_,)):
                         retVal = row[0]
-                except sqlite3.OperationalError, ex:
+                except sqlite3.OperationalError as ex:
                     if not 'locked' in ex.message:
                         raise
                 else:
@@ -223,7 +223,7 @@ class SqlmapPlugin(PluginTerminalOutput):
         with open(filepath, "r") as f:
             try:
                 tree = ET.fromstring(f.read())
-            except SyntaxError, err:
+            except SyntaxError as err:
                 self.log("SyntaxError: %s. %s" % (err, filepath), "ERROR")
                 return None
 

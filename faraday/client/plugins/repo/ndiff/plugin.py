@@ -49,7 +49,7 @@ class NdiffXmlParser():
 
         try:
             return ET.fromstring(xmlOutput)
-        except SyntaxError, err:
+        except SyntaxError as err:
             print("SyntaxError: %s" % err)
             return None
 

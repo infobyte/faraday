@@ -142,7 +142,8 @@ class WebServer(object):
             logger.info('Received SIGTERM, shutting down.')
             logger.info("Stopping threads, please wait...")
             # teardown()
-            self.raw_report_processor.stop()
+            if self.raw_report_processor.isAlive():
+                self.raw_report_processor.stop()
             self.timer.stop()
 
         log_path = os.path.join(CONST_FARADAY_HOME_PATH, 'logs', 'access-logging.log')

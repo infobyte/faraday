@@ -108,7 +108,7 @@ class QualysguardXmlParser():
             else:
                 type_report = None
 
-        except SyntaxError, err:
+        except SyntaxError as err:
             logger.error('SyntaxError: %s.' % (err))
             return None, None
 

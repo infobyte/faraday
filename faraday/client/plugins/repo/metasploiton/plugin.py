@@ -338,7 +338,7 @@ class MetasploitOnPlugin(core.PluginBase):
         try:
             api.devlog("SQL:" + sql)
             db.execute(sql)
-        except Exception, e:
+        except Exception as e:
             print ("Error SQL[" + e.pgcode + "] - " + e.pgerror)
             return None
 

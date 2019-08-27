@@ -74,7 +74,7 @@ class MedusaParser(object):
         """
         try:
             return socket.gethostbyname(hostname)
-        except socket.error, msg:
+        except socket.error as msg:
             return hostname
 
 

@@ -44,9 +44,11 @@ from faraday import __version__ as f_version
 from faraday.client.persistence.server import server
 from faraday.client.persistence.server.server import login_user, get_user_info
 
+import faraday
+
 USER_HOME = os.path.expanduser(CONST_USER_HOME)
 # find_module returns if search is successful, the return value is a 3-element tuple (file, pathname, description):
-FARADAY_BASE = imp.find_module("faraday")[1]
+FARADAY_BASE = os.path.dirname(faraday.__file__)
 os.path.dirname(os.path.dirname(os.path.realpath(__file__)))  # Use double dirname to obtain parent directory
 FARADAY_CLIENT_BASE = os.path.join(FARADAY_BASE, 'client')
 

@@ -86,7 +86,7 @@ class InitDB():
             # current_psql_output is for checking psql command already known errors for each execution.
             psql_log_filename = os.path.join(faraday_path_conf, 'logs', 'psql_log.log')
             current_psql_output = TemporaryFile()
-            with open(psql_log_filename, 'a+') as psql_log_file:
+            with open(psql_log_filename, 'ab+') as psql_log_file:
                 hostname = 'localhost'
                 username, password, process_status = self._configure_new_postgres_user(current_psql_output)
                 current_psql_output.seek(0)
@@ -171,7 +171,7 @@ class InitDB():
 
     def _check_psql_output(self, current_psql_output_file, process_status):
         current_psql_output_file.seek(0)
-        psql_output = current_psql_output_file.read()
+        psql_output = current_psql_output_file.read().decode('utf-8')
         if 'unknown user: postgres' in psql_output:
             print('ERROR: Postgres user not found. Did you install package {blue}postgresql{white}?'.format(blue=Fore.BLUE, white=Fore.WHITE))
         elif 'could not connect to server' in psql_output:
@@ -205,6 +205,8 @@ class InitDB():
         p.wait()
         psql_log_file.seek(0)
         output = psql_log_file.read()
+        if isinstance(output, bytes):
+            output = output.decode('utf-8')
         already_exists_error = 'role "{0}" already exists'.format(username)
         return_code = p.returncode
         if already_exists_error in output:
@@ -255,7 +257,7 @@ class InitDB():
         p.wait()
         return_code = p.returncode
         psql_log_file.seek(0)
-        output = psql_log_file.read()
+        output = psql_log_file.read().decode('utf-8')
         already_exists_error = 'database creation failed: ERROR:  database "{0}" already exists'.format(database_name)
         if already_exists_error in output:
             print('{yellow}WARNING{white}: Database already exists.'.format(yellow=Fore.YELLOW, white=Fore.WHITE))

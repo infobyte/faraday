@@ -62,7 +62,7 @@ class BeefPlugin(core.PluginBase):
         output being sent is valid.
         """
         try:
-            f = urllib2.urlopen(self.getSetting(
+            f = urlopen(self.getSetting(
                 "Host") + "/api/hooks?token=" + self.getSetting("Authkey"))
             data = json.loads(f.read())
         except:

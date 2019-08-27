@@ -18,7 +18,7 @@ import sys
 try:
     from urllib2 import urlopen
 except ImportError:
-    from urllib.parse import urlopen
+    from urllib.request import urlopen
 import json
 
 __author__ = "Francisco Amato"

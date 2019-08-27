@@ -522,9 +522,9 @@ class TestHostAPI:
         session.commit()
         expected_created_hosts = 2
         file_contents = b"""ip,description,os,hostnames\n
-        10.10.10.10,test_host,linux,\"['localhost','test_host']\"\n
-        10.10.10.11,test_host,linux,\"['localhost','test_host_1']\"
-        """
+10.10.10.10,test_host,linux,\"['localhost','test_host']\"\n
+10.10.10.11,test_host,linux,\"['localhost','test_host_1']"
+"""
         data = {
             'file': (BytesIO(file_contents), 'hosts.csv'),
             'csrf_token': csrf_token
@@ -534,6 +534,7 @@ class TestHostAPI:
                                data=data, headers=headers, use_json_data=False)
         assert res.status_code == 200
         assert res.json['hosts_created'] == expected_created_hosts
+        assert res.json['hosts_with_errors'] == 0
         assert session.query(Host).filter_by(description="test_host").count() == expected_created_hosts
 
 

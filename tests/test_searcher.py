@@ -224,7 +224,8 @@ class TestSearcherRules():
             'smtp.gmail.com',
             587
         )
-        searcher = Searcher(api(workspace, test_client, session), mail_notificacion=mail_notification)
+        _api = api(workspace, test_client, session)
+        searcher = Searcher(_api, mail_notification=mail_notification)
         rules = [{
             'id': 'SEND_MAIL',
             'model': 'Vulnerability',
@@ -234,9 +235,15 @@ class TestSearcherRules():
 
         searcher.process(rules)
 
-        assert searcher.mail_notificacion == mail_notification
+        assert searcher.mail_notification == mail_notification
 
-    def test_add_ref_to_duplicated_vuln(self, session, test_client):
+    @pytest.mark.parametrize("api", [
+        # lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+        #                                             password='test', base=''),
+        lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+    ])
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_add_ref_to_duplicated_vuln(self, api, session, test_client):
         workspace = WorkspaceFactory.create()
         host = HostFactory.create(workspace=workspace)
         vuln = VulnerabilityFactory.create(workspace=workspace, severity='low',
@@ -253,8 +260,7 @@ class TestSearcherRules():
 
         first_vuln_id = vuln.id
 
-        api = Api(test_client, workspace.name, username='test', password='test', base='')
-        searcher = Searcher(api)
+        searcher = Searcher(api(workspace, test_client, session))
         rules = [{
             'id': 'ADD_REFS_DUPLICATED_VULNS',
             'model': 'Vulnerability',
@@ -325,7 +331,7 @@ class TestSearcherRules():
         lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
     ])
     @pytest.mark.usefixtures('ignore_nplusone')
-    # TO FIX
+    @pytest.mark.skip_sql_dialect('sqlite')
     def test_delete_vulns_with_dynamic_values(self, api, session, test_client):
         workspace = WorkspaceFactory.create()
         vuln1 = VulnerabilityFactory.create(workspace=workspace, name="TEST1")
@@ -358,7 +364,7 @@ class TestSearcherRules():
         lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
     ])
     @pytest.mark.usefixtures('ignore_nplusone')
-    # TO FIX
+    @pytest.mark.skip_sql_dialect('sqlite')
     def test_update_custom_field(self, api, session, test_client):
         workspace = WorkspaceFactory.create()
         custom_field = CustomFieldsSchemaFactory.create(
@@ -374,6 +380,8 @@ class TestSearcherRules():
         session.add(custom_field)
         session.add(vuln)
         session.commit()
+
+        assert vuln.confirmed is True
 
         searcher = Searcher(api(workspace, test_client, session))
 

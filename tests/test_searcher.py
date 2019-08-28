@@ -238,8 +238,8 @@ class TestSearcherRules():
         assert searcher.mail_notification == mail_notification
 
     @pytest.mark.parametrize("api", [
-        # lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
-        #                                             password='test', base=''),
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+                                                    password='test', base=''),
         lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
     ])
     @pytest.mark.usefixtures('ignore_nplusone')

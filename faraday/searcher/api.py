@@ -259,3 +259,13 @@ class Api:
     @staticmethod
     def intersection(objects, models):
         return [_object for _object in objects if _object.id in [model.id for model in models]]
+
+    @staticmethod
+    def set_array(field, value, add=True, key=None, object=None):
+        if isinstance(field, list):
+            if add:
+                if value not in field:
+                    field.append(value)
+            else:
+                if value in field:
+                    field.remove(value)

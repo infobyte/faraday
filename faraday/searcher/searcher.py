@@ -661,7 +661,7 @@ class Searcher:
                         "Changing property %s to %s in vulnerability '%s' with id %s" % (
                             key, value, vuln.name, vuln.id))
                 else:
-                    set_array(field, value, add=to_add)
+                    self.api.set_array(field, value, add=to_add, key=key, object=vuln)
                     action = 'Adding %s to %s list in vulnerability %s with id %s' % (value, key, vuln.name, vuln.id)
                     if not to_add:
                         action = 'Removing %s from %s list in vulnerability %s with id %s' % (

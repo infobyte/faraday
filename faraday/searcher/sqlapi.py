@@ -7,7 +7,7 @@ from datetime import datetime
 from faraday.searcher.api import ApiError
 from faraday.server.api.modules.vulns import VulnerabilitySchema, VulnerabilityWebSchema
 from faraday.server.models import Workspace, Vulnerability, VulnerabilityWeb, Service, Host, Command, \
-    VulnerabilityTemplate, CommandObject
+    VulnerabilityTemplate, CommandObject, Reference, ReferenceVulnerabilityAssociation, Tag, TagObject
 
 logger = logging.getLogger('Faraday searcher')
 
@@ -246,3 +246,56 @@ class SqlApi:
     @staticmethod
     def intersection(objects, models):
         return list(set(objects).intersection(set(models)))
+
+    def set_array(self, field, value, add=True, key=None, object=None):
+        try:
+            list(field)
+        except KeyError:
+            return field
+
+        if key == 'refs' and object:
+            if add:
+                self.add_reference(value, object.id)
+            else:
+                self.remove_reference(value, object.id)
+
+        if key == 'tags' and object:
+            if add:
+                self.add_tag(value, object)
+            else:
+                self.remove_tag(value, object.id)
+
+    def add_reference(self, reference, object_id):
+        ref = Reference(name=reference, workspace_id=self.workspace.id)
+        self.session.add(ref)
+        self.session.commit()
+
+        reference_association = ReferenceVulnerabilityAssociation(vulnerability_id=object_id, reference_id=ref.id)
+        self.session.add(reference_association)
+        self.session.commit()
+
+    def remove_reference(self, reference, object_id):
+        ref = Reference.query.filter(name=reference, workspace_id=self.workspace.id).first()
+        if ref:
+            reference_association = ReferenceVulnerabilityAssociation.query.filter(vulnerability_id=object_id,
+                                                                                   reference_id=ref.id).first()
+            if reference_association:
+                self.session.delete(reference_association)
+                self.session.commit()
+
+    def add_tag(self, tag, _object):
+        tag = Tag(name=tag, slug=tag)
+        self.session.add(tag)
+        self.session.commit()
+        object_type = type(_object).__name__
+        tag_object = TagObject(object_id=_object.id, object_type=object_type, tag_id=tag.id)
+        self.session.add(tag_object)
+        self.session.commit()
+
+    def remove_tag(self, reference, object_id):
+        tag = Tag.query.filter(name=reference).first()
+        if tag:
+            tag_object = TagObject.query.filter(object_id=object_id, tag_id=tag.id).first()
+            if tag_object:
+                self.session.delete(tag_object)
+                self.session.commit()

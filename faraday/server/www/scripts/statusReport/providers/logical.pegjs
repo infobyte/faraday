@@ -60,6 +60,9 @@
           case 'service_protocol':
               processedName = 'service__protocol';
               break;
+          case 'hostname':
+              processedName = 'hostnames';
+              break;
           default:
               processedName = name;
               break;
@@ -84,6 +87,7 @@
                break;
            case 'severity':
            case 'target':
+           case 'hostnames':
                processedOperator = operator !== 'not' ? 'eq' : '!=';
                break;
            case 'service__name':
@@ -182,7 +186,7 @@ expression
   }
 
 token
-  = token:[a-zA-Z0-9_]+ { return token.join(""); }
+  = token:[a-zA-Z0-9_.-]+ { return token.join(""); }
 
 ws
   = [ \t]

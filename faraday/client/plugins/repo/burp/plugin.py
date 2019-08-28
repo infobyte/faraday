@@ -244,7 +244,7 @@ class BurpPlugin(core.PluginBase):
                 h_id,
                 item.ip,
                 ipv4_address=item.ip,
-                hostname_resolution=item.host)
+                hostname_resolution=[item.host])
 
             s_id = self.createAndAddServiceToInterface(
                 h_id,

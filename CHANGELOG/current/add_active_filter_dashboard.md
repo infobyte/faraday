@@ -1,1 +1,1 @@
-Add active filter in workspaces abm. Show only actives in other workspaces view data.
+Add active filter in workspaces view. Only show active workspaces in other parts of the Web UI.

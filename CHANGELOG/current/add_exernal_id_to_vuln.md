@@ -1,1 +1,1 @@
-External id column added to vulns
+Add external ID column to vulns <!-- TODO Check if we should add this -->

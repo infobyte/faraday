@@ -315,7 +315,7 @@ angular.module("faradayApp")
             }
             else {
                 $scope.columnsWidths = {
-                    "name":             "120",
+                    "name":             "180",
                     "service":          "110",
                     "hostnames":        "130",
                     "target":           "100",
@@ -768,7 +768,7 @@ angular.module("faradayApp")
             });
         }
         var resizeGrid = function() {
-            $scope.gridHeight = getGridHeight('grid', 'right-main', 15);
+            $scope.gridHeight = getGridHeight('grid', 'left-main', 15);
         };
 
         var recalculateLastVisibleColSize = function () {
@@ -863,11 +863,14 @@ angular.module("faradayApp")
 
         $scope.csv = function() {
             deferred = $q.defer();
-
-            let confirmed = $scope.propertyFilterConfirmed === "Confirmed" ? true : false;
             $scope.loading = true;
 
-            vulnsManager.exportCsv($scope.workspace, confirmed)
+            var jsonOptions;
+
+            if($scope.searchParams.length > 0)
+                jsonOptions = parserFact.evaluateExpression($scope.searchParams);
+
+            vulnsManager.exportCsv($scope.workspace, jsonOptions)
             .then(function(result){
                  var title = "";
 
@@ -967,9 +970,9 @@ angular.module("faradayApp")
                 promises.push(vulnsManager.updateVuln(vuln, toggleConfirm));
             });
             $q.all(promises).then(function(res) {
-                if(confirm === true) {
+                /*if(confirm === true) {
                     loadVulns();
-                }
+                }*/
             }, function(errorMsg){
                 commonsFact.showMessage("Error updating vuln " + vuln.name + " (" + vuln._id + "): " + errorMsg);
             });
@@ -1690,6 +1693,7 @@ angular.module("faradayApp")
                   function(d) {
                     $scope.csrf_token = d.data.csrf_token;
                     fileItem.formData.push({'csrf_token': $scope.csrf_token});
+                    fileItem.file.name = fileItem.file.name.replace(/ /g, '_');
                     fileItem.url = '_api/v2/ws/' + $routeParams.wsId + '/vulns/' + $scope.lastClickedVuln._id + '/attachment/';
                     $scope.uploader.uploadAll();
                   }

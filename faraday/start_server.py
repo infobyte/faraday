@@ -9,6 +9,7 @@ import socket
 import argparse
 import subprocess
 
+from faraday.server import TimerClass
 
 try:
     from colorama import init, Fore
@@ -178,7 +179,7 @@ def main():
 
     args = parser.parse_args()
 
-    if args.debug:
+    if args.debug or faraday.server.config.faraday_server.debug:
         faraday.server.utils.logger.set_logging_level(faraday.server.config.DEBUG)
 
     if args.restart:
@@ -226,7 +227,7 @@ def main():
         faraday.server.config.faraday_server.bind_address = args.bind_address
 
     if args.websocket_port:
-        faraday.server.config.faraday_faraday.server.websocket_port = args.websocket_port
+        faraday.server.config.faraday_server.websocket_port = args.websocket_port
 
     if args.start:
         # Starts a new process on background with --ignore-setup

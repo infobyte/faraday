@@ -13,6 +13,9 @@ import re
 import os
 import sys
 import random
+import logging
+
+logger = logging.getLogger(__name__)
 
 try:
     import xml.etree.cElementTree as ET
@@ -61,7 +64,7 @@ class NmapXmlParser(object):
         try:
             return ET.fromstring(xml_output)
         except SyntaxError, err:
-            print "SyntaxError: %s." % (err)
+            logger.error("SyntaxError: %s." % (err))
             return None
 
     def get_hosts(self, tree):
@@ -482,12 +485,14 @@ class NmapPlugin(core.PluginBase):
             for v in host.vulns:
                 desc = v.desc
                 desc += "\nOutput: " + v.response if v.response else ""
+
                 v_id = self.createAndAddVulnToHost(
                     h_id,
                     v.name,
                     desc=v.desc,
                     ref=v.refs,
-                    severity=0)
+                    severity=0,
+                    external_id=v.name)
 
             for port in host.ports:
 
@@ -544,7 +549,8 @@ class NmapPlugin(core.PluginBase):
                             response = v.response if v.response else "",
                             ref=refs,
                             severity=severity,
-                            website=minterfase)
+                            website=minterfase,
+                            external_id=v.name)
                     else:
                         v_id = self.createAndAddVulnToService(
                             h_id,
@@ -552,7 +558,8 @@ class NmapPlugin(core.PluginBase):
                             v.name,
                             desc=v.desc,
                             ref=refs,
-                            severity=severity)
+                            severity=severity,
+                            external_id=v.name)
         del parser
         return True
 

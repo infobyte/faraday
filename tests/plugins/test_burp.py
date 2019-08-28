@@ -33,6 +33,11 @@ class TestBurp:
 
 
     def test_Plugin_creates_adecuate_objects(self, monkeypatch):
+        # Disable deprecation warnings
+        import deprecation
+        monkeypatch.setattr(
+                deprecation.warnings, 'warn', lambda *a, **kw: None)
+
         self.plugin = BurpPlugin()
         factory.register(Host)
         factory.register(Service)

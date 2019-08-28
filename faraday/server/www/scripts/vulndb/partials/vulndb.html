@@ -4,7 +4,7 @@
 
 <section id="main" class="seccion clearfix">
     <div class="faraday-header-border-fix"></div>
-    <div class="right-main">
+    <div class="left-main">
         <div ng-controller="headerCtrl" ng-include="'scripts/commons/partials/header.html'"></div>
         <div id="reports-main" class="fila clearfix">
           <div class="reports col-md-12 col-sm-12 col-xs-12">
@@ -14,6 +14,24 @@
                         New
                     </button>
                 </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="col-md-2">
+                                <a href="#/scheduling" class="workspaces" ng-class="{'navigation-active' : component == 'scheduling'}" style="color: black !important; font-weight: bold; font-size: 15px;">
+                                    Scheduling
+                                </a>
+                                <div class="flex-spacer"></div>
+                            </th>
+                            <th class="col-md-2" style = "border-right: 1px solid rgb(221, 221, 221); padding-right: 12px">
+                                <a href="#/vulndb" class="workspaces" ng-class="{'navigation-active' : component == 'vulndb'}" style="color: black !important; font-weight: bold; font-size: 15px;">
+                                    KB
+                                </a>
+                                <div class="flex-spacer"></div>
+                            </th>
+                        </tr>
+                    </thead>
+                </table>
                 <div class="control-wrapper control-edit">
                     <button type="button" class="btn btn-default edit" title="Edit selected vulns" ng-click="disabledClick || edit()">
                         <img src="images/icon-toolbar-edit.svg" class="edit-icon" />

@@ -84,14 +84,14 @@
                            title="Change type to Vulnerability">
                         <h5>Vulnerability</h5>
                         <input type="radio" checked="checked" name="radio" ng-checked="modal.data.type === 'Vulnerability'">
-                        <span class="checkmark"></span>
+                        <span class="checkmark background-blue"></span>
                     </label>
                     <label class="radio-container"
                            ng-click="modal.data.type = 'VulnerabilityWeb'"
                            title="Change type to Web Vulnerability">
                         <h5>Web Vulnerability</h5>
                         <input type="radio" name="radio" ng-checked="modal.data.type === 'VulnerabilityWeb'">
-                        <span class="checkmark"></span>
+                        <span class="checkmark background-blue"></span>
                     </label>
                 </div>
 
@@ -138,7 +138,7 @@
 
                                     <div class="col-md-2">
                                     <div class="form-group">
-                                        <button type="submit" class="btn btn-success btn-xs" title="Search targets"
+                                        <button type="submit" class="btn btn-success btn-xs background-blue" title="Search targets"
                                                 ng-click="modal.filterTargets()"
                                                 style="height: 30px!important; float: left;"
                                                 ng-disabled="modal.target_filter == ''">
@@ -222,7 +222,7 @@
                                                            ng-model="modal.newCurrentPage"
                                                            placeholder="Go to page"/>
                                                 </div>
-                                                <button class="btn btn-danger" ng-click="modal.go()">GO</button>
+                                                <button class="btn btn-danger background-blue" ng-click="modal.go()">GO</button>
                                             </ng-form>
                                         </div>
                                     </div>

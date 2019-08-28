@@ -6,6 +6,7 @@ from builtins import str
 
 import os
 import json
+import logging
 
 import flask
 from flask import Blueprint
@@ -28,7 +29,10 @@ from faraday.server.schemas import (
 from faraday.server.api.base import ReadWriteView, AutoSchema
 from faraday.config.configuration import getInstanceConfiguration
 
+logger = logging.getLogger(__name__)
+
 workspace_api = Blueprint('workspace_api', __name__)
+
 
 
 class WorkspaceSummarySchema(Schema):
@@ -98,17 +102,17 @@ class WorkspaceView(ReadWriteView):
         query = self._get_base_query()
         objects = []
         for workspace_stat in query:
-            workspace_stat = dict(workspace_stat)
-            for key, value in workspace_stat.items():
+            workspace_stat_dict = dict(workspace_stat)
+            for key, value in list(workspace_stat_dict.items()):
                 if key.startswith('workspace_'):
                     new_key = key.replace('workspace_', '')
-                    workspace_stat[new_key] = workspace_stat[key]
-            workspace_stat['scope'] = []
-            if workspace_stat['scope_raw']:
-                workspace_stat['scope_raw'] = workspace_stat['scope_raw'].split(',')
-                for scope in workspace_stat['scope_raw']:
-                    workspace_stat['scope'].append({'name': scope})
-            objects.append(workspace_stat)
+                    workspace_stat_dict[new_key] = workspace_stat_dict[key]
+            workspace_stat_dict['scope'] = []
+            if workspace_stat_dict['scope_raw']:
+                workspace_stat_dict['scope_raw'] = workspace_stat_dict['scope_raw'].split(',')
+                for scope in workspace_stat_dict['scope_raw']:
+                    workspace_stat_dict['scope'].append({'name': scope})
+            objects.append(workspace_stat_dict)
         return self._envelope_list(self._dump(objects, kwargs, many=True))
 
     def _get_querystring_boolean_field(self, field_name, default=None):

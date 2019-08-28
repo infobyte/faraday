@@ -180,7 +180,7 @@ class NexposeFullXmlParser(object):
                                     "ascii", errors="backslashreplace").strip()
                                 link = exploit.get('link').encode(
                                     "ascii", errors="backslashreplace").strip()
-                                vuln['refs'].append(title + ' ' + link)
+                                vuln['refs'].append(title + b' ' + link)
                     if item.tag == 'references':
                         for ref in list(item):
                             if ref.text:

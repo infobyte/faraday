@@ -92,6 +92,7 @@ CONF = getInstanceConfiguration()
 
 logger = logging.getLogger(__name__)
 
+
 class GuiApp(Gtk.Application, FaradayUi):
     """
     Creates the application and has the necesary callbacks to FaradayUi
@@ -484,7 +485,7 @@ class GuiApp(Gtk.Application, FaradayUi):
             """
             GObject.idle_add(loading_workspace, 'show')
             try:
-                ws = super(GuiApp, self).openWorkspace(workspace_name)
+                ws = self.openWorkspace(workspace_name)
                 GObject.idle_add(CONF.setLastWorkspace, ws.name)
                 GObject.idle_add(CONF.saveConfig)
             except Exception as e:

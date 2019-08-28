@@ -1100,7 +1100,7 @@ class HostInfoDialog(Gtk.Window):
             def safe_wrapper(*args, **kwargs):
                 try:
                     return func(*args, **kwargs)
-                except IndexError, ValueError:
+                except (IndexError, ValueError):
                     dialog = errorDialog(self, ("There has been a problem. "
                                                 "The object you clicked on "
                                                 "does not exist anymore."))

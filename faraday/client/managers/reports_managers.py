@@ -129,7 +129,7 @@ class ReportManager(Thread):
         self.polling = polling
         self.ws_name = ws_name
         self.timer = timer
-        self._stop = False
+        self._must_stop = False
 
         self._report_path = os.path.join(CONF.getReportPath(), ws_name)
         self._report_ppath = os.path.join(self._report_path, "process")
@@ -153,7 +153,7 @@ class ReportManager(Thread):
         self.online_plugins.start()
         tmp_timer = .0
 
-        while not self._stop:
+        while not self._must_stop:
 
             time.sleep(.1)
             tmp_timer += .1
@@ -175,7 +175,7 @@ class ReportManager(Thread):
                     tmp_timer = 0
 
     def stop(self):
-        self._stop = True
+        self._must_stop = True
         self.online_plugins.stop()
 
     def syncReports(self):
@@ -268,9 +268,9 @@ class ReportParser(object):
         f = result = None
 
         signatures = {
-            "\x50\x4B": "zip",
-            "\x3C\x3F\x78\x6D\x6C": "xml",
-            "# Lynis Re": "dat",
+            b"\x50\x4B": "zip",
+            b"\x3C\x3F\x78\x6D\x6C": "xml",
+            b"# Lynis Re": "dat",
         }
 
         try:

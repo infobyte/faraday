@@ -100,7 +100,6 @@ def _get_base_server_url():
         server_url = _conf().getAPIUrl()
     else:
         server_url = SERVER_URL
-
     return server_url.rstrip('/')
 
 
@@ -198,7 +197,7 @@ def _unsafe_io_with_server(server_io_function, server_expected_responses,
     Return the response from the server.
     """
     answer = None
-    logger.debug('Sending request to api endpoint {0}'.format(server_url))
+    logger.debug('Sending request to api endpoint %s', server_url)
     try:
         answer = server_io_function(server_url, **payload)
         if answer.status_code == 409:
@@ -591,6 +590,7 @@ def get_object_before_last_revision(workspace_name, object_id):
         A dictionary with the object's information.
     """
     get_url = _create_couch_get_url(workspace_name, object_id)
+
     response = _unsafe_io_with_server(requests.get, [200], get_url,
                                       params={'revs': 'true', 'open_revs': 'all'})
     try:

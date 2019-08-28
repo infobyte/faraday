@@ -144,7 +144,7 @@ def get_model_environment(model, _models):
 
 def get_field(obj, field):
     try:
-        if field in obj.__dict__:
+        if field in obj.__dict__ or hasattr(obj, field):
             return getattr(obj, field)
         if field == 'refs':
             return getattr(obj, 'reference_instances')
@@ -266,21 +266,12 @@ class Searcher:
 
     def process(self, rules):
         if rules and validate_rules(rules):
-            start = datetime.now()
-            command_id = self.api.create_command(
-                itime=time.mktime(start.timetuple()),
-                params=rules,
-                tool_name=self.tool_name
-            )
-            self.api.command_id = command_id
+            self.rules = rules
 
             self._process_vulnerabilities(rules)
             self._process_services(rules)
             self._process_hosts(rules)
             # TODO: FIX THIS
-
-            duration = (datetime.now() - start).seconds
-            self.api.close_command(command_id, duration)
 
     def _process_vulnerabilities(self, rules):
         logger.debug("--> Start Process vulnerabilities")
@@ -463,6 +454,14 @@ class Searcher:
                 object_type = type(obj).__name__
 
             for action in actions:
+                command_start = datetime.now()
+                command_id = self.api.create_command(
+                    itime=time.mktime(command_start.timetuple()),
+                    params=self.rules,
+                    tool_name=self.tool_name
+                )
+                self.api.command_id = command_id
+
                 action = action.strip('--')
                 array = action.split(':')
                 command = array[0]
@@ -499,6 +498,9 @@ class Searcher:
                         object_type, obj.name, rule['id'], str(datetime.now()))
                     self.mail_notification.send_mail(expression, subject, body)
                     logger.info("Sending mail to: '%s'" % expression)
+
+                duration = (datetime.now() - command_start).seconds
+                self.api.close_command(self.api.command_id, duration)
         return True
 
     def _update_vulnerability(self, vuln, key, value):

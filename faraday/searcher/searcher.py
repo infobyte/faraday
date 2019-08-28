@@ -154,98 +154,6 @@ def get_field(obj, field):
         return None
 
 
-def set_array(field, value, add=True):
-    if isinstance(field, list):
-        if add:
-            if value not in field:
-                field.append(value)
-        else:
-            if value in field:
-                field.remove(value)
-
-
-def update_service(api, service, key, value):
-    if key == 'owned':
-        value = value == 'True'
-        service.owned = value
-        logger.info("Changing property %s to %s in service '%s' with id %s" % (key, value, service.name, service.id))
-    else:
-        to_add = True
-        if key.startswith('-'):
-            key = key.strip('-')
-            to_add = False
-
-        field = get_field(service, key)
-        if field is not None:
-            if isinstance(field, (str, unicode)):
-                setattr(service, key, value)
-                logger.info(
-                    "Changing property %s to %s in service '%s' with id %s" % (key, value, service.name, service.id))
-            else:
-                set_array(field, value, add=to_add)
-                action = 'Adding %s to %s list in service %s with id %s' % (value, key, service.name, service.id)
-                if not to_add:
-                    action = 'Removing %s from %s list in service %s with id %s' % (
-                        value, key, service.name, service.id)
-
-                logger.info(action)
-
-    api.update_service(service)
-
-    logger.info("Done")
-    return True
-
-
-def update_host(api, host, key, value):
-    if key == 'owned':
-        value = value == 'True'
-        host.owned = value
-        logger.info("Changing property %s to %s in host '%s' with id %s" % (key, value, host.ip, host.id))
-    else:
-        to_add = True
-        if key.startswith('-'):
-            key = key.strip('-')
-            to_add = False
-
-        field = get_field(host, key)
-        if field is not None:
-            if isinstance(field, (str, unicode)):
-                setattr(host, key, value)
-                logger.info("Changing property %s to %s in host '%s' with id %s" % (key, value, host.ip, host.id))
-            else:
-                set_array(field, value, add=to_add)
-                action = 'Adding %s to %s list in host %s with id %s' % (value, key, host.ip, host.id)
-                if not to_add:
-                    action = 'Removing %s from %s list in host %s with id %s' % (
-                        value, key, host.ip, host.id)
-
-                logger.info(action)
-    api.update_host(host)
-
-    logger.info("Done")
-    return True
-
-
-def get_parent(api, parent_tag):
-    logger.debug("Getting parent")
-    return api.get_filtered_services(id=parent_tag, name=parent_tag) or \
-           api.get_filtered_hosts(id=parent_tag, name=parent_tag)
-
-
-def filter_objects_by_parent(_objects, parent):
-    objects = []
-    parents = []
-    if isinstance(parent, list):
-        parents.extend(parent)
-    else:
-        parents.append(parent)
-    for obj in _objects:
-        for p in parents:
-            if p.id == obj.parent_id:
-                objects.append(obj)
-    return objects
-
-
 def evaluate_condition(model, condition):
     key, value = condition.split('=')
     value = value.replace('%', ' ')
@@ -306,17 +214,6 @@ def get_object(_models, obj):
     return objects
 
 
-def get_models(api, objects, rule):
-    logger.debug("Getting models")
-    if 'parent' in rule:
-        parent = get_parent(api, rule['parent'])
-        if parent is None:
-            logger.warning("WARNING: Parent %s not found in rule %s " % (rule['parent'], rule['id']))
-            return objects
-        return filter_objects_by_parent(objects, parent)
-    return objects
-
-
 def evaluate_conditions(_models, conditions):
     logger.debug("Evaluating conditions")
     for model in _models:
@@ -353,18 +250,6 @@ def parse_value(value):
     if value == 'med':
         return 'medium'
     return value
-
-
-# TODO: REMOVE
-def get_objects_by_parent(parent, objects_type):
-    if isinstance(parent, Service) and objects_type == 'Vulnerability':
-        return parent.vulnerabilities + parent.web_vulnerabilities
-    elif isinstance(parent, Host) and objects_type == 'Vulnerability':
-        return parent.vulnerabilities
-    elif isinstance(parent, Host) and objects_type == 'Service':
-        return parent.services
-    else:
-        return None
 
 
 def signal_handler(signal, frame):
@@ -591,10 +476,10 @@ class Searcher:
                         self._update_vulnerability(obj, key, value)
 
                     if object_type == 'Service':
-                        update_service(self.api, obj, key, value)
+                        self._update_service(obj, key, value)
 
                     if object_type == 'Host':
-                        update_host(self.api, obj, key, value)
+                        self._update_host(obj, key, value)
 
                 elif command == 'DELETE':
                     if object_type == 'VulnerabilityWeb' or object_type == 'Vulnerability':
@@ -678,6 +563,68 @@ class Searcher:
         result = self.api.update_vulnerability(vuln)
         if result is False:
             return result
+        logger.info("Done")
+        return True
+
+    def _update_service(self, service, key, value):
+        if key == 'owned':
+            value = value == 'True'
+            service.owned = value
+            logger.info(
+                "Changing property %s to %s in service '%s' with id %s" % (key, value, service.name, service.id))
+        else:
+            to_add = True
+            if key.startswith('-'):
+                key = key.strip('-')
+                to_add = False
+
+            field = get_field(service, key)
+            if field is not None:
+                if isinstance(field, (str, unicode)):
+                    setattr(service, key, value)
+                    logger.info(
+                        "Changing property %s to %s in service '%s' with id %s" % (
+                            key, value, service.name, service.id))
+                else:
+                    self.api.set_array(field, value, add=to_add, key=key, object=service)
+                    action = 'Adding %s to %s list in service %s with id %s' % (value, key, service.name, service.id)
+                    if not to_add:
+                        action = 'Removing %s from %s list in service %s with id %s' % (
+                            value, key, service.name, service.id)
+
+                    logger.info(action)
+
+        self.api.update_service(service)
+
+        logger.info("Done")
+        return True
+
+    def _update_host(self, host, key, value):
+        if key == 'owned':
+            value = value == 'True'
+            host.owned = value
+            logger.info("Changing property %s to %s in host '%s' with id %s" % (key, value, host.ip, host.id))
+        else:
+            to_add = True
+            if key.startswith('-'):
+                key = key.strip('-')
+                to_add = False
+
+            field = get_field(host, key)
+            if field is not None:
+                if isinstance(field, (str, unicode)):
+                    setattr(host, key, value)
+                    logger.info("Changing property %s to %s in host '%s' with id %s" % (key, value, host.ip, host.id))
+                else:
+                    self.api.set_array(field, value, add=to_add, key=key, object=host)
+                    action = 'Adding %s to %s list in host %s with id %s' % (value, key, host.ip, host.id)
+                    if not to_add:
+                        action = 'Removing %s from %s list in host %s with id %s' % (
+                            value, key, host.ip, host.id)
+
+                    logger.info(action)
+        self.api.update_host(host)
+
         logger.info("Done")
         return True
 

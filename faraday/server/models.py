@@ -836,6 +836,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
     type = Column(Enum(*VULN_TYPES, name='vulnerability_types'), nullable=False)
     issuetracker = BlankColumn(Text)
     association_date = Column(DateTime, nullable=True)
+    desassociated_manually = Column(Boolean, nullable=False, default=False)
 
     vulnerability_duplicate_id =  Column(
                         Integer,

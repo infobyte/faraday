@@ -7,30 +7,26 @@
 ## See the file 'doc/LICENSE' for the license information
 ###
 
-import os
-import re
-import sys
 import ast
 import json
+import logging
+import os
+import re
 import signal
 import smtplib
-import logging
+import sys
 import time
-
-import requests
-import subprocess
 from datetime import datetime
-
-import click
 from difflib import SequenceMatcher
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from faraday.server.web import app
-from faraday.server.models import db, Service, Host, VulnerabilityWeb, Vulnerability
-from faraday.searcher.sqlapi import SqlApi
-from faraday.searcher.validator import validate_rules
+import click
+import requests
+
 from faraday.searcher.api import Api
+from faraday.searcher.validator import validate_rules
+from faraday.server.models import Service, Host
 
 logger = logging.getLogger('Faraday searcher')
 
@@ -93,10 +89,6 @@ def is_same_level(model1, model2):
         return False
 
 
-
-
-
-
 def equals(m1, m2, rule):
     logger.debug("Comparing by similarity '%s' and '%s'" % (m1.name, m2.name))
     match = True
@@ -150,31 +142,12 @@ def get_model_environment(model, _models):
     return environment
 
 
-# def process_models_by_similarity(api, _models, rule, mail_notification):
-#     logger.debug("--> Start Process models by similarity")
-#     for index_m1, m1 in zip(range(len(_models) - 1), _models):
-#         for index_m2, m2 in zip(range(index_m1 + 1, len(_models)), _models[index_m1 + 1:]):
-#             if m1.id != m2.id and is_same_level(m1, m2):
-#                 if equals(m1, m2, rule):
-#                     environment = [m1, m2]
-#                     _objs_value = None
-#                     if 'object' in rule:
-#                         _objs_value = rule['object']
-#                     _object = get_object(environment, _objs_value)
-#                     if _object is not None:
-#                         if 'conditions' in rule:
-#                             environment = get_model_environment(m2, _models)
-#                             if can_execute_action(environment, rule['conditions']):
-#                                 execute_action(api, _object, rule, mail_notification)
-#                         else:
-#                             execute_action(api, _object, rule, mail_notification)
-#     logger.debug("<-- Finish Process models by similarity")
-
-
 def get_field(obj, field):
     try:
         if field in obj.__dict__:
             return getattr(obj, field)
+        if field == 'refs':
+            return getattr(obj, 'reference_instances')
         return None
     except AttributeError:
         logger.error("ERROR: Field %s is invalid" % field)
@@ -360,54 +333,6 @@ def can_execute_action(_models, conditions):
     return True
 
 
-# def execute_action(api, objects, rule, mail_notification=None):
-#     logger.info("Running actions of rule '%s' :" % rule['id'])
-#     actions = rule['actions']
-#     _objs_value = None
-#     if 'object' in rule:
-#         _objs_value = rule['object']
-#
-#     for obj in objects:
-#         for action in actions:
-#             action = action.strip('--')
-#             array = action.split(':')
-#             command = array[0]
-#             expression = str(':').join(array[1:])
-#
-#             if command == 'UPDATE':
-#                 array_exp = expression.split('=')
-#                 key = array_exp[0]
-#                 value = str('=').join(array_exp[1:])
-#                 if obj.class_signature == 'VulnerabilityWeb' or obj.class_signature == 'Vulnerability':
-#                     update_vulnerability(api, obj, key, value)
-#
-#                 if obj.class_signature == 'Service':
-#                     update_service(api, obj, key, value)
-#
-#                 if obj.class_signature == 'Host':
-#                     update_host(api, obj, key, value)
-#
-#             elif command == 'DELETE':
-#                 if obj.class_signature == 'VulnerabilityWeb' or obj.class_signature == 'Vulnerability':
-#                     api.delete_vulnerability(obj.id)
-#                     logger.info("Deleting vulnerability '%s' with id '%s':" % (obj.name, obj.id))
-#
-#                 elif obj.class_signature == 'Service':
-#                     api.delete_service(obj.id)
-#                     logger.info("Deleting service '%s' with id '%s':" % (obj.name, obj.id))
-#
-#                 elif obj.class_signature == 'Host':
-#                     api.delete_host(obj.id)
-#                     logger.info("Deleting host '%s' with id '%s':" % (obj.name, obj.id))
-#             else:
-#                 subject = 'Faraday searcher alert'
-#                 body = '%s %s have been modified by rule %s at %s' % (
-#                     obj.class_signature, obj.name, rule['id'], str(datetime.now()))
-#                 mail_notification.send_mail(expression, subject, body)
-#                 logger.info("Sending mail to: '%s'" % expression)
-#     return True
-
-
 def replace_rule(rule, value_item):
     if value_item is None:
         return rule
@@ -440,48 +365,6 @@ def get_objects_by_parent(parent, objects_type):
         return parent.services
     else:
         return None
-
-
-# def process_services(api, services, mail_notification, rules):
-#     logger.debug("--> Start Process services")
-#     for rule in rules:
-#         if rule['model'] == 'Service':
-#             services = get_models(api, services, rule)
-#             if 'fields' in rule:
-#                 process_models_by_similarity(api, services, rule, mail_notification)
-#             else:
-#                 _objs_value = None
-#                 if 'object' in rule:
-#                     _objs_value = rule['object']
-#                 objects = get_object(services, _objs_value)
-#                 if objects is not None and len(objects) != 0:
-#                     if 'conditions' in rule:
-#                         if can_execute_action(services, rule['conditions']):
-#                             execute_action(api, objects, rule, mail_notification)
-#                     else:
-#                         execute_action(api, objects, rule, mail_notification)
-#     logger.debug("<-- Finish Process services")
-#
-#
-# def process_hosts(api, hosts, mail_notification, rules):
-#     logger.debug("--> Start Process Hosts")
-#     for rule in rules:
-#         if rule['model'] == 'Host':
-#             hosts = get_models(api, hosts, rule)
-#             if 'fields' in rule:
-#                 process_models_by_similarity(api, hosts, rule, mail_notification)
-#             else:
-#                 _objs_value = None
-#                 if 'object' in rule:
-#                     _objs_value = rule['object']
-#                 objects = get_object(hosts, _objs_value)
-#                 if objects is not None and len(objects) != 0:
-#                     if 'conditions' in rule:
-#                         if can_execute_action(hosts, rule['conditions']):
-#                             execute_action(api, objects, rule, mail_notification)
-#                     else:
-#                         execute_action(api, objects, rule, mail_notification)
-#         logger.debug("<-- Finish Process Hosts")
 
 
 def signal_handler(signal, frame):

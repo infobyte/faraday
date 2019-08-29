@@ -374,19 +374,14 @@ class CustomLoginForm(LoginForm):
         # want to skip the LoginForm validate logic
         if not super(LoginForm, self).validate():
             return False
-        self.email.data = self.remove_null_caracters(self.email.data)
-
         self.user = _datastore.get_user(self.email.data)
 
         if self.user is None:
             self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
             return False
-
-        self.user.password = self.remove_null_caracters(self.user.password)
         if not self.user.password:
             self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
             return False
-        self.password.data = self.remove_null_caracters(self.password.data)
         if not verify_and_update_password(self.password.data, self.user):
             self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
             return False
@@ -397,9 +392,3 @@ class CustomLoginForm(LoginForm):
             self.email.errors.append(get_message('DISABLED_ACCOUNT')[0])
             return False
         return True
-
-    def remove_null_caracters(self, string):
-        string = string.replace('\x00', '')
-        string = string.replace('\00', '')
-        string = string.replace('\0', '')
-        return string

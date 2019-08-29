@@ -7,6 +7,10 @@ See the file 'doc/LICENSE' for the license information
 import sys
 import logging
 import inspect
+from Queue import Queue
+
+from sqlalchemy import event
+
 from faraday.server.models import (
     Host,
     Service,
@@ -14,12 +18,10 @@ from faraday.server.models import (
     Comment,
     File,
 )
-
-from sqlalchemy import event
 from faraday.server.models import db
-from faraday.server.websocket_factories import changes_queue
 
 logger = logging.getLogger(__name__)
+changes_queue = Queue()
 
 
 def new_object_event(mapper, connection, instance):

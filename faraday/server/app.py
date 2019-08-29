@@ -35,6 +35,10 @@ from flask_security.utils import (
     get_message,
     verify_and_update_password,
     verify_hash)
+from flask_kvsession import KVSessionExtension
+from simplekv.fs import FilesystemStore
+from simplekv.decorator import PrefixDecorator
+from flask_login import user_logged_out
 from nplusone.ext.flask_sqlalchemy import NPlusOne
 from depot.manager import DepotManager
 
@@ -42,6 +46,8 @@ import faraday.server.config
 # Load SQLAlchemy Events
 import faraday.server.events
 from faraday.server.utils.logger import LOGGING_HANDLERS
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -189,6 +195,10 @@ def register_handlers(app):
                 flask.abort(401)  # 403 would be better but breaks the web ui
                 return
 
+    @app.before_request
+    def load_g_custom_fields():
+        g.custom_fields = {}
+
     @app.after_request
     def log_queries_count(response):
         if flask.request.method not in ['GET', 'HEAD']:
@@ -234,6 +244,12 @@ def save_new_agent_creation_token():
     with open(LOCAL_CONFIG_FILE, 'w') as configfile:
         config.write(configfile)
     faraday.server.config.faraday_server.agent_token = agent_token
+
+
+def expire_session(app, user):
+    logger.debug("Cleanup sessions")
+    session.destroy()
+    KVSessionExtension(app=app).cleanup_sessions(app)
 
 
 def create_app(db_connection_string=None, testing=None):
@@ -292,6 +308,11 @@ def create_app(db_connection_string=None, testing=None):
         ],
         'PERMANENT_SESSION_LIFETIME': datetime.timedelta(hours=12),
     })
+
+    store = FilesystemStore(app.config['SESSION_FILE_DIR'])
+    prefixed_store = PrefixDecorator('sessions_', store)
+    KVSessionExtension(prefixed_store, app)
+    user_logged_out.connect(expire_session, app)
 
     storage_path = faraday.server.config.storage.path
     if not storage_path:

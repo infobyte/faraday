@@ -3,19 +3,46 @@
 <!-- See the file 'doc/LICENSE' for the license information -->
 
 <section id="main" class="seccion clearfix">
-  <div class="faraday-header-border-fix"></div>
-  <div class="right-main">
+  <div class="faraday-header-border-fix">
       <div ng-controller="headerCtrl" ng-include="'scripts/commons/partials/header.html'"></div>
       <div id="reports-main" class="fila clearfix">
-      <div class="col-md-8">
+      <div class="col-md-8" style="padding-left: 0px !important;">
         <span ng-hide="!showServices" class="reports">
-            <h3>Services for host {{hostName}}</h3>
             <div class="button-control col-md-12 col-sm-12 col-xs-12">
                 <div class="control-wrapper control-new">
                 <button type="button" class="btn btn-success btn-new"  title="{{workspaceData.readonly == true ? 'Read-only. Workspace disabled': 'New service'}}"  ng-click="new()" style="padding:0px 0px" ng-disabled="workspaceData.readonly === true">
                     New service
                 </button>
                 </div>
+                <table>
+                        <thead>
+                            <tr>
+                                <th class="col-s-1" style="border-left: 1px solid rgb(221, 221, 221); padding-left: 12px;">
+                                        <a href="#/status/ws/{{workspace}}" class="status-report" ng-class="{'navigation-active' : component == 'status'}" style="color: black !important; font-weight: bold; font-size: 15px;" uib-tooltip="Vulns" tooltip-placement="right">
+                                            Vulns
+                                        </a>
+                                    </th>
+                                <th class="col-s-1">
+                                    <a href="#/hosts/ws/{{workspace}}" class="workspaces" ng-class="{'navigation-active' : true}" style="color: black !important; font-weight: bold; font-size: 15px;" uib-tooltip="Hosts" tooltip-placement="right">
+                                        Hosts
+                                    </a>
+                                    <div class="flex-spacer"></div>
+                                </th>
+                                <th class="col-s-1">
+                                    <a href="#/credentials/ws/{{workspace}}" class="workspaces" ng-class="{'navigation-active' : component == 'credentials'}" style="color: black !important; font-weight: bold; font-size: 15px;" uib-tooltip="Credentials" tooltip-placement="right">
+                                        Credentials
+                                    </a>
+                                    <div class="flex-spacer"></div>
+                                </th>
+                                <th class="col-md-1" style = "border-right: 1px solid rgb(221, 221, 221); padding-right: 12px">
+                                    <a href="#/taskgroup" class="executive-report" ng-class="{'navigation-active' : component == 'taskgroup'}" style="color: black !important; font-weight: bold; font-size: 15px;">
+                                        Tasks
+                                    </a>
+                                    <div class="flex-spacer"></div>
+                                </th>
+                            </tr>
+                        </thead>
+                    </table>
                 <div class="control-wrapper control-edit">
                 <button type="button" class="btn"  title="{{workspaceData.readonly == true ? 'Read-only. Workspace disabled': 'Edit selected services'}}" ng-click="edit()" ng-disabled="services.length == 0">
                     <img src="images/icon-toolbar-edit.svg" class="edit-icon" />
@@ -40,6 +67,9 @@
                             </div>
                         </form>
                     </div>
+            </div>
+            <div ng-if="loadedServices && services.length > 0">
+                <h3>Services for host {{hostName}}</h3>
             </div>
             <div ng-if="loadedServices && services.length == 0">
                 <h4>No services found for {{host.ip}}</h4>
@@ -84,14 +114,15 @@
                             </td>
                             <td class="ui-grid-cell-contents">
                                 <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}/search/name={{service.name}}">
-                                    <span ng-bind="service.name"></span>
+                                    <span title="{{service.name.length > 60 ? service.name : ''}}">
+                                        {{service.name | limitTo: 60}}
+                                        <span ng-if="service.name.length > 60">...</span>
+                                    </span>
                                 </a>
-                                <osint-link query="service.name" osint="osint"></osint-link>
                             </td>
                             <td ng-bind="service.version || '-'" class="ui-grid-cell-contents"></td>
                             <td class="ui-grid-cell-contents">
                                 <span ng-bind="service.ports"></span>
-                                <osint-link query="'port:' + service.ports" osint="osint"></osint-link>
                             </td>
                             <td class="ui-grid-cell-contents">
                                 <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}/search/protocol={{service.protocol}}">
@@ -138,14 +169,22 @@
                                 <span ng-click="toggleSort('command')">Command</span>
                             </th>
                             <th class="ui-grid-cell-contents ui-grid-header-cell">
+                                <span ng-click="toggleSort('user')">User</span>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell">
+                                <span>Parameters</span>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell">
                                 <span ng-click="toggleSort('create_date')">Create Date</span>
                             </th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr ng-repeat="tool in host.tools | startFrom:(currentToolPage-1)*toolPageSize | limitTo:toolPageSize">
-                            <td ng-bind="tool.command" class="ui-grid-cell-contents"></td>
-                            <td ng-bind="tool.create_date | amUtc | amDateFormat:'MM/DD/YYYY'" class="ui-grid-cell-contents"></td>
+                            <td class="ui-grid-cell-contents"><a href="#/status/ws/{{workspace}}/search/command_id={{tool.command_id}}">{{tool.command}}</a></td>
+                            <td ng-bind="tool.user" class="ui-grid-cell-contents"></td>
+                            <td class="ui-grid-cell-contents">{{tool.params.substring(tool.params.lastIndexOf('/') + 1, tool.params.length)}}</td>
+                            <td ng-bind="tool.create_date | amTimeAgo" class="ui-grid-cell-contents"></td>
                         </tr>
                     </tbody>
                 </table>
@@ -218,7 +257,7 @@
                             <div class="col-md-12">
                                 <strong ng-if="!editing">Hostnames</strong>
                                 <h5 ng-if="editing">Hostnames</h5>
-                                <span class="input-group-addon button-radius" ng-click="newHostnames($event)" ng-if="editing">Add Hostname</span>
+                                <span class="input-group-addon button-radius background-blue" ng-click="newHostnames($event)" ng-if="editing">Add Hostname</span>
                             </div>
                             <span ng-if="editing">
                                 <div class="col-md-12 input-margin" ng-repeat="hostname in host.hostnames">

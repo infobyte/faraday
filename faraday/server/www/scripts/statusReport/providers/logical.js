@@ -180,8 +180,8 @@ function peg$parse(input, options) {
                  val: processValue(name, null, mandatory += optional.join(""))
              }
         },
-      peg$c27 = /^[a-zA-Z0-9_]/,
-      peg$c28 = peg$classExpectation([["a", "z"], ["A", "Z"], ["0", "9"], "_"], false, false),
+      peg$c27 = /^[a-zA-Z0-9_.\-]/,
+      peg$c28 = peg$classExpectation([["a", "z"], ["A", "Z"], ["0", "9"], "_", ".", "-"], false, false),
       peg$c29 = function(token) { return token.join(""); },
       peg$c30 = /^[ \t]/,
       peg$c31 = peg$classExpectation([" ", "\t"], false, false),
@@ -859,6 +859,9 @@ function peg$parse(input, options) {
             case 'service_protocol':
                 processedName = 'service__protocol';
                 break;
+            case 'hostname':
+                processedName = 'hostnames';
+                break;
             default:
                 processedName = name;
                 break;
@@ -883,6 +886,7 @@ function peg$parse(input, options) {
                  break;
              case 'severity':
              case 'target':
+             case 'hostnames':
                  processedOperator = operator !== 'not' ? 'eq' : '!=';
                  break;
              case 'service__name':

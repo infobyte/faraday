@@ -1,0 +1,1 @@
+Add config in server.ini to set debug

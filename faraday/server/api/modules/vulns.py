@@ -5,15 +5,13 @@ from __future__ import absolute_import
 from builtins import str
 
 import os
-import re
 import io
-import csv
 import json
 import logging
 from base64 import b64encode, b64decode
 import csv
 import re
-from io import StringIO
+from io import StringIO, BytesIO
 
 import flask
 import wtforms
@@ -815,13 +813,13 @@ class VulnerabilityView(PaginatedMixin,
         confirmed = bool(request.args.get('confirmed'))
         filters = request.args.get('q') or '{}'
         workspace = self._get_workspace(workspace_name)
-        memory_file = StringIO()
+        buffer = StringIO()
         custom_fields_columns = []
         for custom_field in db.session.query(CustomFieldsSchema).order_by(CustomFieldsSchema.field_order):
             custom_fields_columns.append(custom_field.field_name)
         headers = ["confirmed", "id", "date", "name", "severity", "service", "target", "desc", "status", "hostnames"]
         headers += custom_fields_columns
-        writer = csv.DictWriter(memory_file, fieldnames=headers)
+        writer = csv.DictWriter(buffer, fieldnames=headers)
         writer.writeheader()
         vulns_query = self._filter(filters, workspace_name, confirmed)
         for vuln in vulns_query:
@@ -833,7 +831,6 @@ class VulnerabilityView(PaginatedMixin,
                 vuln_service = " - ".join(service_fields_values)
             else:
                 vuln_service = ""
-
             if all(isinstance(hostname, str) for hostname in vuln['hostnames']):
                 vuln_hostnames = vuln['hostnames']
             else:
@@ -847,6 +844,8 @@ class VulnerabilityView(PaginatedMixin,
                     if field_name in custom_fields_columns:
                         vuln_dict.update({field_name: value})
             writer.writerow(vuln_dict)
+        memory_file = BytesIO()
+        memory_file.write(buffer.getvalue().encode('utf-8'))
         memory_file.seek(0)
         return send_file(memory_file,
                          attachment_filename="Faraday-SR-%s.csv" % workspace_name,

@@ -196,6 +196,7 @@ def print_postgresql_status():
     exit_code = 0
     result = check_postgres()
 
+
     if result == False:
         print('[{red}-{white}] Could not connect to PostgreSQL, please check if database is running'\
             .format(red=Fore.RED, white=Fore.WHITE))
@@ -206,7 +207,7 @@ def print_postgresql_status():
             .format(red=Fore.RED, white=Fore.WHITE))
         exit_code = 1
         return exit_code
-    elif result[1]<90400:
+    elif int(result[1][0])<90400:
         print('[{red}-{white}] PostgreSQL is running, but needs to be 9.4 or newer, please update PostgreSQL'.\
             format(red=Fore.RED, white=Fore.WHITE))
     elif result:

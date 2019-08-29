@@ -105,7 +105,7 @@ class SqlApi:
                 vulnerabilities = [vulnerability for vulnerability, pos in
                                    vulnerabilities_query.distinct(Vulnerability.id)]
             elif hasattr(Vulnerability, attr):
-                vulnerabilities_query = vulnerabilities_query.filter(getattr(Vulnerability, attr) == value)
+                vulnerabilities_query = vulnerabilities_query.filter(getattr(Vulnerability, attr) == str(value))
                 vulnerabilities = [vulnerability for vulnerability, pos in
                                    vulnerabilities_query.distinct(Vulnerability.id)]
 
@@ -118,7 +118,7 @@ class SqlApi:
                 web_vulnerabilities = [web_vulnerability for web_vulnerability, pos in
                                        web_vulnerabilities_query.distinct(VulnerabilityWeb.id)]
             elif hasattr(VulnerabilityWeb, attr):
-                web_vulnerabilities_query = web_vulnerabilities_query.filter(getattr(VulnerabilityWeb, attr) == value)
+                web_vulnerabilities_query = web_vulnerabilities_query.filter(getattr(VulnerabilityWeb, attr) == str(value))
                 web_vulnerabilities = [web_vulnerability for web_vulnerability, pos in
                                        web_vulnerabilities_query.distinct(Vulnerability.id)]
 
@@ -134,7 +134,7 @@ class SqlApi:
                 services = [service for service, pos in
                             services_query.distinct(Service.id)]
             elif hasattr(Service, attr):
-                services_query = services_query.filter(getattr(Service, attr) == value)
+                services_query = services_query.filter(getattr(Service, attr) == str(value))
                 services = [service for service, pos in
                             services_query.distinct(Service.id)]
 
@@ -150,7 +150,7 @@ class SqlApi:
                 hosts = [host for host, pos in
                          hosts_query.distinct(Host.id)]
             elif hasattr(Host, attr):
-                hosts_query = hosts_query.filter(getattr(Host, attr) == value)
+                hosts_query = hosts_query.filter(getattr(Host, attr) == str(value))
                 hosts = [host for host, pos in
                          hosts_query.distinct(Host.id)]
 
@@ -161,7 +161,7 @@ class SqlApi:
         templates_query = self.session.query(VulnerabilityTemplate)
         for attr, value in kwargs.iteritems():
             if hasattr(VulnerabilityTemplate, attr):
-                templates_query = templates_query.filter(getattr(VulnerabilityTemplate, attr) == value)
+                templates_query = templates_query.filter(getattr(VulnerabilityTemplate, attr) == str(value))
                 templates = [template for template in
                              templates_query.distinct(VulnerabilityTemplate.id)]
 

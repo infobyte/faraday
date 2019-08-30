@@ -6,5 +6,5 @@ FROM ubuntu
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
 RUN echo $TZ > /etc/timezone
 RUN apt-get update -qy
-RUN apt-get -y install build-essential ipython python-setuptools python-pip python-dev pkg-config libssl-dev libffi-dev libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev postgresql sudo libsasl2-dev libldap2-dev git
-RUN apt-get install -y python-dev python-pip
+RUN apt-get -y install build-essential ipython3 python3-setuptools python3-pip python3-dev pkg-config libssl-dev libffi-dev libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev postgresql sudo libsasl2-dev libldap2-dev git
+RUN apt-get install -y python3-dev python3-pip

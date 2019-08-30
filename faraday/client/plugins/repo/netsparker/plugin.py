@@ -99,7 +99,7 @@ class Item(object):
             return "high"
         return severity
 
-    def __init__(self, item_node):
+    def __init__(self, item_node, encoding="ascii"):
         self.node = item_node
         self.url = self.get_text_from_subnode("url")
 
@@ -127,11 +127,11 @@ class Item(object):
         self.request = self.get_text_from_subnode("rawrequest")
         self.response = self.get_text_from_subnode("rawresponse")
         if self.response:
-            self.response = self.response.encode("ascii",errors="backslashreplace") 
+            self.response = self.response.encode(encoding,errors="backslashreplace").decode(encoding)
         if self.request:
-            self.request = self.request.encode("ascii",errors="backslashreplace") 
+            self.request = self.request.encode(encoding,errors="backslashreplace").decode(encoding)
         if self.reference:
-            self.reference = self.reference.encode("ascii",errors="backslashreplace") 
+            self.reference = self.reference.encode(encoding,errors="backslashreplace").decode(encoding)
 
 
         self.kvulns = []

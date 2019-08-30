@@ -107,7 +107,7 @@ class NexposeFullXmlParser(object):
                 for child in list(node):
                     ret += self.parse_html_type(child)
             else:
-                ret += node.text.strip() or ""
+                ret += node.text.strip() if node.text else ""
         if tag == 'unorderedlist':
             for item in list(node):
                 ret += "\t" + "* " + self.parse_html_type(item) + "\n"
@@ -346,7 +346,7 @@ if __name__ == '__main__':
     if len(sys.argv) == 2:
         xml_file = sys.argv[1]
         if os.path.isfile(xml_file):
-            with open(xml_file) as f:
+            with open(xml_file, 'rb') as f:
                 parser = NexposeFullXmlParser(f.read())
                 for item in parser.items:
                     print("* {0} ({1}) - Vulns: {2}".format(item['name'], item['os'], len(item['vulns'])))

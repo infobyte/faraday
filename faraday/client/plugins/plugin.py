@@ -402,25 +402,27 @@ class PluginProcess(Thread):
     def run(self):
         proc_name = self.name
         faraday.client.model.api.devlog("-" * 40)
-        faraday.client.model.api.devlog("proc_name = %s" % proc_name)
-        faraday.client.model.api.devlog("Starting run method on PluginProcess")
-        faraday.client.model.api.devlog('parent process: %s' % os.getppid())
-        faraday.client.model.api.devlog('process id: %s' % os.getpid())
+        faraday.client.model.api.devlog(f"proc_name = {proc_name}")
+        faraday.client.model.api.devlog(f"Starting run method on PluginProcess")
+        faraday.client.model.api.devlog(f"parent process: {os.getppid()}")
+        faraday.client.model.api.devlog(f"process id: {os.getpid()}")
         faraday.client.model.api.devlog("-" * 40)
         done = False
         while not done and not self.stop:
             output, command_id = self.output_queue.get()
             self.plugin.setCommandID(command_id)
             if output is not None:
-                faraday.client.model.api.devlog('%s: %s' % (proc_name, "New Output"))
+                faraday.client.model.api.devlog(f"{proc_name}: New Output")
                 try:
+                    if isinstance(output, bytes):
+                        output = output.decode()
                     self.plugin.processOutput(output)
                 except Exception as ex:
                     faraday.client.model.api.devlog("Plugin raised an exception:")
                     faraday.client.model.api.devlog(traceback.format_exc())
             else:
                 done = True
-                faraday.client.model.api.devlog('%s: Exiting' % proc_name)
+                faraday.client.model.api.devlog(f"{proc_name}: Exiting")
 
             self.output_queue.task_done()
             time.sleep(0.1)

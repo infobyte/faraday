@@ -337,7 +337,7 @@ class ReportParser(object):
                 logger.error("Not an xml file.\n %s" % (err))
 
         f.seek(0)
-        output = f.read()
+        output = f.read().decode()
         if f:
             f.close()
 

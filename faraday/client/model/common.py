@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 # -------------------------------------------------------------------------------
 # TODO: refactor this class to make it generic so this can be used also for plugins
 #  then create a subclass and inherit the generic factory
-class ModelObjectFactory(object):
+class ModelObjectFactory:
     """
     Factory to creat any ModelObject type
     """
@@ -332,7 +332,7 @@ class XMLRPCServer(SimpleXMLRPCServer, threading.Thread):
 
         return response
 
-class XMLRPCKeywordProxy(object):
+class XMLRPCKeywordProxy:
     """
     custom XMLRPC Server Proxy capable of receiving keyword arguments
     when calling remote methods

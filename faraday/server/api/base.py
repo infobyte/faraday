@@ -390,7 +390,7 @@ class GenericWorkspacedView(GenericView):
             flask.abort(403, "Altering a readonly workspace is not allowed")
 
 
-class ListMixin(object):
+class ListMixin:
     """Add GET / route"""
 
     #: If set (to a SQLAlchemy attribute instance) use this field to order the
@@ -440,7 +440,7 @@ class ListMixin(object):
                                    pagination_metadata)
 
 
-class SortableMixin(object):
+class SortableMixin:
     """Enables custom sorting by a field specified by the user
 
     See the example of :ref:`pagination-and-sorting-recipe` to learn
@@ -529,7 +529,7 @@ class SortableMixin(object):
             ))
 
 
-class PaginatedMixin(object):
+class PaginatedMixin:
     """Add pagination for list route"""
     per_page_parameter_name = 'page_size'
     page_number_parameter_name = 'page'
@@ -554,7 +554,7 @@ class PaginatedMixin(object):
         return super(PaginatedMixin, self)._paginate(query)
 
 
-class FilterAlchemyMixin(object):
+class FilterAlchemyMixin:
     """Add querystring parameter filtering to list route
 
     It is done by setting the ViewClass.filterset_class class
@@ -574,7 +574,7 @@ class ListWorkspacedMixin(ListMixin):
     # inside the view generic methods is enough
 
 
-class RetrieveMixin(object):
+class RetrieveMixin:
     """Add GET /<id>/ route"""
 
     def get(self, object_id, **kwargs):
@@ -609,7 +609,7 @@ class ReadOnlyWorkspacedView(SortableMixin,
     ListWorkspacedMixin, RetrieveWorkspacedMixin and SortableMixin"""
 
 
-class CreateMixin(object):
+class CreateMixin:
     """Add POST / route"""
 
     def post(self, **kwargs):
@@ -733,7 +733,7 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
         return obj
 
 
-class UpdateMixin(object):
+class UpdateMixin:
     """Add PUT /<id>/ route"""
 
     def put(self, object_id, **kwargs):
@@ -807,7 +807,7 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
             object_id, obj, data, workspace_name)
 
 
-class DeleteMixin(object):
+class DeleteMixin:
     """Add DELETE /<id>/ route"""
     def delete(self, object_id, **kwargs):
         obj = self._get_object(object_id, **kwargs)
@@ -830,7 +830,7 @@ class DeleteWorkspacedMixin(DeleteMixin):
             obj, workspace_name)
 
 
-class CountWorkspacedMixin(object):
+class CountWorkspacedMixin:
     """Add GET /<workspace_name>/<route_base>/count/ route
 
     Group objects by the field set in the group_by GET parameter. If it

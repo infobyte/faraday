@@ -23,7 +23,7 @@ CONF = getInstanceConfiguration()
 
 logger = logging.getLogger(__name__)
 
-class PluginManager(object):
+class PluginManager:
 
     def __init__(self, plugin_repo_path, pending_actions=None):
         self._controllers = {}

@@ -64,7 +64,7 @@ SUPPORTED_HASHDB_VERSIONS = {
 }
 
 
-class Database(object):
+class Database:
 
     def __init__(self, database):
         self.database = database

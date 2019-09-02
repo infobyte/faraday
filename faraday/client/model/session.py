@@ -10,7 +10,7 @@ import datetime
 import hashlib
 
 
-class Session(object):
+class Session:
     """
     It will handle a Faraday session, that contains:
         - current user logged in

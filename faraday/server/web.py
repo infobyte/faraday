@@ -37,8 +37,7 @@ app = create_app()  # creates a Flask(__name__) app
 logger = logging.getLogger(__name__)
 
 
-
-class CleanHttpHeadersResource(Resource, object):
+class CleanHttpHeadersResource(Resource):
     def render(self, request):
         request.responseHeaders.removeHeader('Server')
         return super(CleanHttpHeadersResource, self).render(request)
@@ -57,13 +56,13 @@ class FileWithoutDirectoryListing(File, CleanHttpHeadersResource):
         return ret
 
 
-class FaradayWSGIResource(WSGIResource, object):
+class FaradayWSGIResource(WSGIResource):
     def render(self, request):
         request.responseHeaders.removeHeader('Server')
         return super(FaradayWSGIResource, self).render(request)
 
 
-class FaradayRedirectResource(Redirect, object):
+class FaradayRedirectResource(Redirect):
     def render(self, request):
         request.responseHeaders.removeHeader('Server')
         return super(FaradayRedirectResource, self).render(request)

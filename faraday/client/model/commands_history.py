@@ -50,7 +50,7 @@ def get_user():
     return getpass.getuser()
 
 
-class CommandRunInformation(object):
+class CommandRunInformation:
     """Command Run information object containing:
         command, parameters, time, workspace, etc."""
     class_signature = "CommandRunInformation"

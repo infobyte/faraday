@@ -28,7 +28,7 @@ def getNotifier(singleton=True):
         return Notifier()
 
 
-class Notifier(object):
+class Notifier:
     """
     This class is used to show information to the user using dialog boxes or
     little pop ups (like tooltips).

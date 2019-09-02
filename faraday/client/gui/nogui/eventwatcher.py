@@ -10,7 +10,7 @@ from faraday.server.utils.logger import get_logger
 from faraday.client.gui.customevents import CHANGEFROMINSTANCE
 
 
-class EventWatcher(object):
+class EventWatcher:
     def __init__(self):
         self.logger = get_logger(self)
 

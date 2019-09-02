@@ -40,7 +40,7 @@ VERSION = license_version.split('-')[0].split('rc')[0]
 logger = logging.getLogger(__name__)
 
 
-class PluginBase(object):
+class PluginBase:
     # TODO: Add class generic identifier
     class_signature = "PluginBase"
 

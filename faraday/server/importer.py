@@ -303,8 +303,9 @@ def map_tool_with_command_id(command_tool_map, document):
         return
     old_tool = command_tool_map.get(command_id)
     if old_tool is not None and old_tool != tool:
-        logger.warn(f'Conflicting tool names for command {command_id}: "{old_tool}" and "{tool}". '
-                    f'Using "{tool}"')
+        logger.warn('Conflicting tool names for command {0}: "{1}" and "{2}". Using "{2}"'.format(command_id,
+                                                                                                  old_tool,
+                                                                                                  tool))
     command_tool_map[command_id] = tool
 
 

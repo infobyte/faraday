@@ -62,7 +62,7 @@ merge_conflict_check:
 pylint:
     tags:
         - faradaytests
-    image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base  # I just need an image with python-dev and python-pip
+    image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base_py3  # I just need an image with python-dev and python-pip
     stage: pre_testing
     script:
         - apt-get update -qy
@@ -71,7 +71,7 @@ pylint:
         - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libgdk-pixbuf2.0-dev
         - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" libcanberra-gtk-module libcanberra-gtk* libxml2-dev libxslt1-dev gir1.2-gtk-3.0 gir1.2-vte-2.91
         - pip install virtualenv
-        - virtualenv -p python2 faraday_venv
+        - virtualenv -p python3 faraday_venv
         - source faraday_venv/bin/activate
         - pip install --upgrade -r requirements.txt
         - python setup.py install
@@ -90,7 +90,7 @@ pylint:
 py3checker:
     tags:
         - faradaytests
-    image: python:2
+    image: python:3
     stage: testing
     script:
         - pip install pylint
@@ -104,7 +104,7 @@ py3checker:
             - $BUILD_TEST
 
 postgresql_test:
-    image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base
+    image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base_py3
     tags:
         - faradaytests
     stage: testing
@@ -113,7 +113,7 @@ postgresql_test:
         - apt-get update -qy
         - apt-get install -o dir::cache::archives="$APT_CACHE_DIR" -y gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libpq-dev
         - pip install virtualenv
-        - virtualenv -p python2 faraday_venv
+        - virtualenv -p python3 faraday_venv
         - source faraday_venv/bin/activate
         - pip install pip -U
         #- pip install --upgrade -r requirements_server.txt
@@ -135,7 +135,7 @@ postgresql_test:
             - $BUILD_TEST
 
 sqlite_test:
-    image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base
+    image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base_py3
     tags:
         - faradaytests
     stage: testing
@@ -144,7 +144,7 @@ sqlite_test:
         - apt-get update -qy
         - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libpq-dev
         - pip install virtualenv
-        - virtualenv -p python2 faraday_venv
+        - virtualenv -p python3 faraday_venv
         - source faraday_venv/bin/activate
         - pip install pip -U
         #- pip install --upgrade -r requirements_server.txt
@@ -187,7 +187,7 @@ generate_release_file:
 
 
 generate_build_file:
-    image: registry.gitlab.com/faradaysec/faraday/faraday_testing_pink
+    image: registry.gitlab.com/faradaysec/faraday/faraday_testing_pink_py3
     stage: build_faraday
     script:
         - apt-get update -qy
@@ -220,7 +220,7 @@ generate_deb:
         - ssh-keyscan -H gitlab.com >> ~/.ssh/known_hosts
     script:
         - apt-get update -qy
-        - apt-get -y install virtualenv git libcairo2-dev libgirepository1.0-dev gobject-introspection ruby ruby-dev rubygems build-essential build-essential libssl-dev libffi-dev libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev libsasl2-dev libldap2-dev libkrb5-dev pandoc python2.7 python-dev pkg-config libpq-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 zsh curl pandoc
+        - apt-get -y install virtualenv git libcairo2-dev libgirepository1.0-dev gobject-introspection ruby ruby-dev rubygems build-essential build-essential libssl-dev libffi-dev libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev libsasl2-dev libldap2-dev libkrb5-dev pandoc python3 python-dev pkg-config libpq-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 zsh curl pandoc
         - curl https://bootstrap.pypa.io/get-pip.py | python
         - pip install virtualenv-tools
         - gem install --no-ri --no-rdoc fpm
@@ -292,7 +292,7 @@ generate_rpm:
             - $DAILY_TEST
 
 binary_files:
-    image: python:2.7.16
+    image: python:3
     stage: build
     script:
         - apt-get update -qy
@@ -301,7 +301,7 @@ binary_files:
         - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libgdk-pixbuf2.0-dev
         - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" libcanberra-gtk-module libcanberra-gtk* libxml2-dev libxslt1-dev gir1.2-gtk-3.0 gir1.2-vte-2.91
         - pip install virtualenv
-        - virtualenv -p python2 faraday_venv
+        - virtualenv -p python3 faraday_venv
         - source faraday_venv/bin/activate
         - pip install pyinstaller
         - pip install --upgrade -r requirements.txt
@@ -339,7 +339,7 @@ macos_dmg:
     allow_failure: true
     script:
         - pip install virtualenv
-        - virtualenv -p python2 faraday_venv
+        - virtualenv -p python3 faraday_venv
         - source faraday_venv/bin/activate
         - export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:/usr/local/opt/libffi/lib/pkgconfig"
         - pip install pyinstaller
@@ -393,13 +393,13 @@ documentation:
 test_hypothesis:
     tags:
         - hypothesis
-    image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base
+    image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base_py3
     stage: testing
     allow_failure: true
     script:
         - apt-get update -qy
         - pip install virtualenv
-        - virtualenv -p python2 faraday_venv
+        - virtualenv -p python3 faraday_venv
         - source faraday_venv/bin/activate
         #- pip install --upgrade -r requirements_server.txt
         - python setup.py install

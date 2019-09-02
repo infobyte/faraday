@@ -147,6 +147,7 @@ sqlite_test:
         - virtualenv -p python3 faraday_venv
         - source faraday_venv/bin/activate
         - pip install pip -U
+        - pip install mock
         #- pip install --upgrade -r requirements_server.txt
         - pip install --upgrade -r requirements.txt
         - python setup.py install

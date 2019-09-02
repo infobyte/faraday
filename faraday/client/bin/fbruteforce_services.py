@@ -27,7 +27,7 @@ __description__ = 'Script to perform a brute force attack on different services 
 __prettyname__ = 'FBrute'
 
 SUPPORTED_SERVICES = ["asterisk", "cisco", "cisco-enable", "cvs", "firebird", "ftp", "ftps", "http",
-                      "https", "http-proxy", "icq" "imap", "imaps", "irc", "ldap2", "ldap3",
+                      "https", "http-proxy", "icq", "imap", "imaps", "irc", "ldap2", "ldap3",
                       "mssql", "mysql", "nntp", "oracle-listener", "oracle-sid", "pcanywhere",
                       "pcnfs", "pop3", "pop3s", "postgres", "rdp", "redis", "rexec", "rlogin",
                       "rsh", "rtsp", "s7-300", "sip", "smb", "smtp", "smtps", "smtp-enum", "snmp",

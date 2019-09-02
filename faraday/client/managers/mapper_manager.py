@@ -17,7 +17,7 @@ from faraday.client.persistence.server.models import create_object, get_object, 
 logger = logging.getLogger(__name__)
 
 
-class MapperManager(object):
+class MapperManager:
     def __init__(self):
         # create and store the datamappers
         self.workspace_name = None

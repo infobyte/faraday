@@ -26,7 +26,7 @@ from faraday.client.persistence.server.server_io_exceptions import (
 logger = logging.getLogger(__name__)
 
 
-class ChangesStream(object):
+class ChangesStream:
 
     def __enter__(self):
         return self
@@ -135,7 +135,7 @@ class WebsocketsChangesStream(ChangesStream):
         try:
             data = json.loads(self.changes_queue.get_nowait())
         except Empty:
-            raise StopIteration
+            return
         yield data
 
     def _get_object_type_and_name_from_change(self, change):

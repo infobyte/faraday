@@ -77,7 +77,7 @@ LOCAL_IP_LIST = [
 ]
 
 
-class Report(object):
+class Report:
 
     def __init__(self):
         self.name = None
@@ -136,7 +136,7 @@ class Report(object):
                 return t
 
 
-class ReportHost(object):
+class ReportHost:
 
     def __init__(self, xml_report_host):
         self.name = None
@@ -285,7 +285,7 @@ class ReportHost(object):
             return self.name
 
 
-class ReportItem(object):
+class ReportItem:
 
     def __init__(self, xml_report_item):
         # Make sure object is well formed

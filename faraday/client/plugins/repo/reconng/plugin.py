@@ -31,7 +31,7 @@ __status__ = 'Development'
 logger = logging.getLogger(__name__)
 
 
-class ReconngParser(object):
+class ReconngParser:
     def __init__(self, output):
         self._format = self.report_format(output)
         self.hosts = []

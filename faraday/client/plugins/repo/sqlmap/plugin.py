@@ -482,19 +482,6 @@ class SqlmapPlugin(PluginTerminalOutput):
             status="open",
             version=webserver)
 
-        n_id = self.createAndAddNoteToService(
-            h_id,
-            s_id,
-            "website",
-            '')
-
-        self.createAndAddNoteToNote(
-            h_id,
-            s_id,
-            n_id,
-            self.hostname,
-            '')
-
         db_port = 0
         for item in self.db_port.keys():
             if dbms_version.find(item) >= 0:

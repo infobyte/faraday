@@ -16,7 +16,7 @@ from faraday.client.gui.gtk.decorators import safe_io_with_server
 from faraday.client.persistence.server import models, server_io_exceptions
 
 
-class ServerIO(object):
+class ServerIO:
     def __init__(self, active_workspace):
         self.__active_workspace = active_workspace
         self.stream = None  # will be set when active workpsace is set

@@ -315,21 +315,7 @@ class MetasploitOnPlugin(core.PluginBase):
                     "select * from web_sites where service_id=" + str(s[0]) + self._mwhere)
 
                 for w in cur.fetchall():
-
                     self._checkDate(str(w[3]))
-
-                    n_id = self.createAndAddNoteToService(
-                        h_id,
-                        s_id,
-                        "website",
-                        "")
-
-                    n2_id = self.createAndAddNoteToNote(
-                        h_id,
-                        s_id,
-                        n_id,
-                        str(w[4]),
-                        "")
 
         cur.close()
         conn.close()

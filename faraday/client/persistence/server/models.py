@@ -695,7 +695,7 @@ def check_server_url(url_to_test):
 # I think there are several # discrepancies between the models here,
 # those on the server and the parameters the apis specify,
 # and this leads to potential dissaster. Remember params?
-class ModelBase(object):
+class ModelBase:
     """A model for all the Faraday Objects.
     There should be a one to one correspondance with the jsons the faraday
     server gives through apis and the classes inheriting from this one.
@@ -1067,7 +1067,7 @@ class Vuln(ModelBase):
             return True
 
         if key == "status":
-            if prop1 == "closed" or prop1 == "re-opened":
+            if prop1 in ["closed", "re-opened"]:
                 return "re-opened"
             if prop1 == "risk-accepted":
                 return 'risk-accepted'
@@ -1318,7 +1318,7 @@ class VulnWeb(Vuln):
             return self._resolve_response(prop1, prop2)
 
         if key == "status":
-            if prop1 == "closed" or prop1 == "re-opened":
+            if prop1 in ["closed", "re-opened"]:
                 return "re-opened"
             if prop1 == "risk-accepted":
                 return 'risk-accepted'
@@ -1476,14 +1476,14 @@ class _Workspace:
         return self.end_date
 
 
-class MetadataUpdateActions(object):
+class MetadataUpdateActions:
     """Constants for the actions made on the update"""
     UNDEFINED   = -1
     CREATE      = 0
     UPDATE      = 1
 
 
-class Metadata(object):
+class Metadata:
     """To save information about the modification of ModelObjects.
        All members declared public as this is only a wrapper"""
 

@@ -210,8 +210,6 @@ class AppscanPlugin(core.PluginBase):
                         response=cleaner_unicode(issue["response"]) if issue["response"] else "",
                         method=issue["method"] if issue["method"] else "")
 
-        return
-
     def processCommandString(self, username, current_path, command_string):
         return
 

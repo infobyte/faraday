@@ -95,7 +95,7 @@ def equals(m1, m2, rule):
         f_m2 = getattr(m2, field, None)
 
         if f_m1 is not None and f_m2 is not None:
-            if field == 'severity' or field == 'owner' or field == 'status':
+            if field in ['severity', 'owner', 'status']:
                 if f_m1 == f_m2:
                     ratio = 1.0
                 else:

@@ -76,8 +76,6 @@ class CmdPropeciaPlugin(core.PluginBase):
         if count_args.__len__() == 3:
             self._port = count_args[2]
 
-        return None
-
 
 def createPlugin():
     return CmdPropeciaPlugin()

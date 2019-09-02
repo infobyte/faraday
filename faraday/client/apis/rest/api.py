@@ -83,7 +83,7 @@ def startAPIs(plugin_controller, model_controller, hostname, port):
     threading.Thread(target=startServer).start()
 
 
-class RESTApi(object):
+class RESTApi:
     """ Abstract class for REST Controllers
     All REST Controllers should extend this class
     in order to get published"""
@@ -356,7 +356,7 @@ class PluginControllerAPI(RESTApi):
         return self.ok("active plugins cleared")
 
 
-class Route(object):
+class Route:
     """ Route class, abstracts information about:
     path, handler and methods """
     def __init__(self, **kwargs):

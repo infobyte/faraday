@@ -399,7 +399,7 @@ class HostsSidebar(Gtk.Widget):
         object_type = obj.class_signature
         if object_type == 'Host':
             self.add_host_after_initial_load(host=obj)
-        if object_type == "Vulnerability" or object_type == "VulnerabilityWeb":
+        if object_type in ["Vulnerability", "VulnerabilityWeb"]:
             self.add_vuln(vuln=obj)
 
     def remove_object(self, obj_id, obj_type):

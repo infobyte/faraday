@@ -187,7 +187,7 @@ class VulnerabilityGenericFactory(WorkspaceObjectFactory):
     severity = FuzzyChoice(['critical', 'high'])
 
 
-class HasParentHostOrService(object):
+class HasParentHostOrService:
     """
     Mixins for objects that must have either a host or a service,
     but ont both, as a parent.

@@ -217,7 +217,7 @@ class ReportManager(Thread):
         self.processor.sendReport(plugin_id, filename)
 
 
-class ReportParser(object):
+class ReportParser:
     """
     Class that handles reports files.
     :param filepath: report file.

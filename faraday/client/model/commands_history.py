@@ -35,7 +35,7 @@ def get_private_ip():
     if ip:
         if not ip.startswith('127'):
             return ip
-    if _platform == "linux" or _platform == "linux2": # linux
+    if _platform in ["linux", "linux2"]: # linux
         ip = subprocess.check_output(["ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1 -d'/'"], shell=True)
     elif _platform == "darwin": # MAC OS X
         ip = subprocess.check_output(["ifconfig | grep 'inet ' | grep -Fv 127.0.0.1 | awk '{print $2}' "], shell=True)

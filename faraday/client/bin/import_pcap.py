@@ -20,13 +20,13 @@ __prettyname__ = 'Import PCAP'
 
 def main(workspace='', args=None, parser=None):
 
-    parser.add_argument('-s', '--source', nargs='*', help='Filter packets by source'),
-    parser.add_argument('-d', '--dest', nargs='*', help='Filter packets by destination'),
+    parser.add_argument('-s', '--source', nargs='*', help='Filter packets by source')
+    parser.add_argument('-d', '--dest', nargs='*', help='Filter packets by destination')
 
     parser.add_argument('--dry-run', action='store_true', help='Do not touch the database. Only print the object ID')
 
     parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output from the pcapfile library.')
-    parser.add_argument('pcap', help='Path to the PCAP file'),
+    parser.add_argument('pcap', help='Path to the PCAP file')
 
     parsed_args = parser.parse_args(args)
 

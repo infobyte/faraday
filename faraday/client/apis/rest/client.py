@@ -12,7 +12,7 @@ import json
 import base64
 
 
-class RestApiClient(object):
+class RestApiClient:
     def __init__(self, hostname, port):
         self.hostname = hostname
         self.port = port
@@ -86,7 +86,7 @@ class ModelRestApiClient(RestApiClient):
             "cred", username=username, password=password, parent_id=parent_id)
 
 
-class PluginControllerAPIClient(object):
+class PluginControllerAPIClient:
     def __init__(self, hostname, port):
         self.hostname = hostname
         self.port = port

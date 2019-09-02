@@ -6,10 +6,10 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-class Branch(object):
+class Branch:
     pass
 
-class BranchItem(object):
+class BranchItem:
     pass
 
 

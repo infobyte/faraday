@@ -86,7 +86,7 @@ def is_debug_mode():
     return LOGGING_LEVEL is DEBUG
 
 
-class ConfigSection(object):
+class ConfigSection:
     def parse(self, __parser):
         for att in self.__dict__:
             if isinstance(self.__dict__[att], bool):

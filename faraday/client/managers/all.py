@@ -13,7 +13,8 @@ import os
 
 # TODO: remove this in next versions
 
-class ViewsManager(object):
+
+class ViewsManager:
     """docstring for ViewsWrapper"""
     def __init__(self):
         self.vw = ViewsListObject()
@@ -43,7 +44,7 @@ class ViewsManager(object):
                 self.addView(v, workspaceDB)
 
 
-class ViewsListObject(object):
+class ViewsListObject:
     """ Representation of the FS Views """
     def __init__(self):
         self.views_path = os.path.join(os.getcwd(), "views")

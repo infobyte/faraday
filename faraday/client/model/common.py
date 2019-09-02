@@ -222,7 +222,6 @@ class XMLRPCServer(SimpleXMLRPCServer, threading.Thread):
     def run(self):
         self.serve_forever()
         api.devlog("serve_forever ended")
-        return
 
     # overloaded method to be able to stop server
     def serve_forever(self):

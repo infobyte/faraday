@@ -6,7 +6,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 
-class ModelObjectDiff(object):
+class ModelObjectDiff:
     def __init__(self, objLeft, objRight):
         try:
             if not getattr(objLeft, 'class_signature') == getattr(objRight, 'class_signature'):
@@ -56,7 +56,7 @@ class ModelObjectDiff(object):
     #     return only_in_obj1, only_in_obj2
 
 
-class MergeStrategy(object):
+class MergeStrategy:
     @staticmethod
     def solve(old, new):
         raise NotImplementedError("This is an abstract class")
@@ -74,7 +74,7 @@ class MergeKeepOld(MergeStrategy):
         return old
 
 
-class MergeSolver(object):
+class MergeSolver:
     def __init__(self, strategy):
         if strategy == "new":
             self.strategy = MergeKeepNew

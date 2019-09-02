@@ -572,7 +572,6 @@ class ListWorkspacedMixin(ListMixin):
     """Add GET /<workspace_name>/<route_base>/ route"""
     # There are no differences with the non-workspaced implementations. The code
     # inside the view generic methods is enough
-    pass
 
 
 class RetrieveMixin(object):
@@ -587,7 +586,6 @@ class RetrieveWorkspacedMixin(RetrieveMixin):
     """Add GET /<workspace_name>/<route_base>/<id>/ route"""
     # There are no differences with the non-workspaced implementations. The code
     # inside the view generic methods is enough
-    pass
 
 
 class ReadOnlyView(SortableMixin,
@@ -599,7 +597,6 @@ class ReadOnlyView(SortableMixin,
     It is just a GenericView inheriting also from ListMixin,
     RetrieveMixin and SortableMixin.
     """
-    pass
 
 
 class ReadOnlyWorkspacedView(SortableMixin,
@@ -610,7 +607,6 @@ class ReadOnlyWorkspacedView(SortableMixin,
 
     It is just a GenericWorkspacedView inheriting also from
     ListWorkspacedMixin, RetrieveWorkspacedMixin and SortableMixin"""
-    pass
 
 
 class CreateMixin(object):
@@ -897,7 +893,6 @@ class ReadWriteView(CreateMixin,
     RetrieveMixin, SortableMixin, CreateMixin, UpdateMixin and
     DeleteMixin.
     """
-    pass
 
 
 class ReadWriteWorkspacedView(CreateWorkspacedMixin,
@@ -913,7 +908,6 @@ class ReadWriteWorkspacedView(CreateWorkspacedMixin,
     CreateWorkspacedMixin, DeleteWorkspacedMixin and
     CountWorkspacedMixin.
     """
-    pass
 
 
 class CustomModelConverter(ModelConverter):

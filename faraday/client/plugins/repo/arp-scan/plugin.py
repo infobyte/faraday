@@ -62,7 +62,6 @@ class CmdArpScanPlugin(core.PluginBase):
                         host = vals[0]
                         h_id = self.createAndAddHost(host)
                         i_id = self.createAndAddInterface(h_id, host, ipv4_address=host, mac=vals[1])
-                        n_id = self.createAndAddNoteToHost(h_id, "NIC VENDOR:", vals[2])
 
         return True
 

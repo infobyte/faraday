@@ -100,8 +100,6 @@ class CmdFtpPlugin(core.PluginBase):
         if re.search("[\d]+", count_args[c - 1]):
             self._port = count_args[c - 1]
 
-        return None
-
 
 def createPlugin():
     return CmdFtpPlugin()

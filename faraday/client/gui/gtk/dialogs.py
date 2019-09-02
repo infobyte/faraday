@@ -223,7 +223,7 @@ class LoginDialog(Gtk.Dialog):
 
                     return True
 
-            if run == Gtk.ResponseType.CANCEL or run == -4:
+            if run in [Gtk.ResponseType.CANCEL, -4]:
                 # run returns -4 when escape key pressed
                 self.exit()
                 return False
@@ -1586,7 +1586,7 @@ class ConflictsDialog(Gtk.Window):
         elif original_type == "float":
             raw_prop = float(prop)
 
-        elif original_type == "str" or original_type == "unicode":
+        elif original_type in ["str", "unicode"]:
             raw_prop = prop
         else:
             raw_prop = prop

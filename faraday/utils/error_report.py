@@ -129,9 +129,9 @@ def installThreadExcepthook():
         def run_with_except_hook(*args, **kw):
             try:
                 run_old(*args, **kw)
-            except (KeyboardInterrupt, SystemExit):
-                raise
-            except Exception:
+            except Exception as e:
+                if isinstance(e, (KeyboardInterrupt, SystemExit)):
+                    raise
                 sys.excepthook(*sys.exc_info())
         self.run = run_with_except_hook
     threading.Thread.__init__ = init

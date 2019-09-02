@@ -13,7 +13,7 @@ import faraday.server.utils.logger
 
 debug_logger = faraday.server.utils.logger.get_logger(__name__)
 
-class Timer(object):
+class Timer:
     def __init__(self, tag, logger=None):
         self.__tag = tag
         self.__logger = debug_logger if logger is None else logger

@@ -87,7 +87,7 @@ def add_custom_field_wizard():
     if not created:
         print('Custom field already exists, skipping')
         sys.exit(1)
-    custom_field_data.field_display_name = field_display_name,
+    custom_field_data.field_display_name = field_display_name
     custom_field_data.field_type = field_type
     db.session.commit()
 # I'm Py3

@@ -427,8 +427,6 @@ class PluginProcess(Thread):
             self.output_queue.task_done()
             time.sleep(0.1)
 
-        return
-
     def stop(self):
         self.stop = True
 

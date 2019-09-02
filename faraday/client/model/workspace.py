@@ -13,7 +13,7 @@ from faraday.config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
 
-class Workspace(object):
+class Workspace:
     """
     Handles a complete workspace (or project)
     It contains a reference to the model and the command execution

@@ -25,7 +25,7 @@ class WorkspaceException(Exception):
     pass
 
 
-class WorkspaceManager(object):
+class WorkspaceManager:
     """
     This class is in charge of creating, deleting and opening workspaces
     """

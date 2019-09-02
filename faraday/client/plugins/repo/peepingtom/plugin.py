@@ -76,7 +76,6 @@ class PeepingTomPlugin(core.PluginBase):
 
     def processCommandString(self, username, current_path, command_string):
         self._path = current_path
-        return None
 
 
 def createPlugin():

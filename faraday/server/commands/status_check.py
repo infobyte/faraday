@@ -263,30 +263,27 @@ def print_depencencies_status():
     """Prints Status of the dependencies using check_server_dependencies() and check_client_dependencies()"""
 
     status, server_dep = check_server_dependencies()
+    red = Fore.RED
+    white = Fore.WHITE
+    green = Fore.GREEN
     if status == True:
-        print('[{red}-{white}] Some server dependencies are old: [' + ', '.join(server_dep) + ']. Update them with \"pip install -r requirements_server.txt -U\"') \
-            .format(red=Fore.RED, white=Fore.WHITE)
+        print(f"[{red}-{white}] Some server dependencies are old: [{', '.join(server_dep)}']. Update them with \"pip install -r requirements_server.txt -U\"")
 
     elif status == 0:
-        print('[{red}-{white}] Client dependencies not met: [' + ', '.join(server_dep) + '] Install them with \"pip install -r requirements_server.txt -U\"')\
-            .format(red=Fore.RED, white=Fore.WHITE)
+        print(f"[{red}-{white}] Client dependencies not met: [{', '.join(server_dep)}'] Install them with \"pip install -r requirements_server.txt -U\"")
 
     else:
-        print('[{green}+{white}] Server dependencies met' \
-            .format(green=Fore.GREEN, white=Fore.WHITE))
+        print(f'[{green}+{white}] Server dependencies met')
 
     status, client_dep = check_client_dependencies()
     if status == True:
-        print('[{red}-{white}] Some client dependencies are old: [' + ', '.join(client_dep) + ']. Update them with \"pip install -r requirements.txt -U\"') \
-            .format(red=Fore.RED, white=Fore.WHITE)
+        print(f"[{red}-{white}] Some client dependencies are old: [{', '.join(client_dep)}]. Update them with \"pip install -r requirements.txt -U\"")
 
     elif status == 0:
-        print('[{red}-{white}] Client dependencies not met: [' + ', '.join(client_dep) + ']. Install them with \"pip install -r requirements.txt -U\"')\
-            .format(red=Fore.RED, white=Fore.WHITE)
+        print(f"[{red}-{white}] Client dependencies not met: [{', '.join(client_dep)}]. Install them with \"pip install -r requirements.txt -U\"")
 
     else:
-        print('[{green}+{white}] Client dependencies met'\
-            .format(green=Fore.GREEN, white=Fore.WHITE))
+        print(f'[{green}+{white}] Client dependencies met')
 
 
 def print_config_status():

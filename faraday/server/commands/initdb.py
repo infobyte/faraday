@@ -301,7 +301,7 @@ class InitDB():
             print('Please check postgres user permissions.')
             sys.exit(1)
         except ImportError as ex:
-            if 'psycopg2' in ex:
+            if 'psycopg2' in str(ex):
                 print(
                     'ERROR: Missing python depency {red}psycopg2{white}. Please install it with {blue}pip install psycopg2'.format(red=Fore.RED, white=Fore.WHITE, blue=Fore.BLUE))
                 sys.exit(1)

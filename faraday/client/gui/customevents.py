@@ -37,7 +37,7 @@ ADDOBJECT = 7777
 DELETEOBJECT = 8888
 UPDATEOBJECT = 9999
 
-class CustomEvent(object):
+class CustomEvent:
     def __init__(self, type):
         self._type = type
         self._time = time.time()

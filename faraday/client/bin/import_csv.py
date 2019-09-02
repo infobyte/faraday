@@ -50,19 +50,19 @@ def transform_dict_to_object(columns, register):
         if val == "service_id":
             value["parent"] = register["service_id"]
 
-        if val == "owned" or val == "confirmed":
+        if val in ["owned", "confirmed"]:
             value[val] = False
 
-        elif val == "ports" or val == "hostnames" or val == "refs" or val == "policyviolations":
+        elif val in ["ports", "hostnames", "refs", "policyviolations"]:
             value[val] = []
 
         elif key == "service_status":
             value[val] = "open"
 
-        elif key == "vulnerability_status" or key == "vulnerability_web_status":
+        elif key in ["vulnerability_status", "vulnerability_web_status"]:
             value[val] = "opened"
 
-        elif key == "vulnerability_severity" or key == "vulnerability_web_severity":
+        elif key in ["vulnerability_severity", "vulnerability_web_severity"]:
             value[val] = "info"
 
         # Copy data to new object
@@ -74,7 +74,7 @@ def transform_dict_to_object(columns, register):
             if val == "ports":
                 value[val] = [register[key]]
 
-            elif val == "owned" or val == "confirmed":
+            elif val in ["owned", "confirmed"]:
                 if register[key] == "true":
                     value[val] = True
 
@@ -82,18 +82,18 @@ def transform_dict_to_object(columns, register):
                 value["description"] = register[key]
                 value["desc"] = register[key]
 
-            elif val == "refs" or val == "hostnames" or val == "policyviolations":
+            elif val in ["refs", "hostnames", "policyviolations"]:
                 value[val] = register[key].split(",")
 
             elif key == "service_status":
                 if register[key].lower() in SERVICE_STATUS:
                     value[val] = register[key]
 
-            elif key == "vulnerability_status" or key =="vulnerability_web_status":
+            elif key in ["vulnerability_status", "vulnerability_web_status"]:
                 if register[key].lower() in VULN_STATUS:
                     value[val] = register[key]
 
-            elif key == "vulnerability_severity" or key == "vulnerability_web_severity":
+            elif key in ["vulnerability_severity", "vulnerability_web_severity"]:
                 if register[key].lower() == 'informational':
                     register[key] = 'info'
                 if register[key].lower() == 'medium':
@@ -108,7 +108,7 @@ def transform_dict_to_object(columns, register):
 
     # Check if obj is Invalid, return None
     for key, val in obj.items():
-        if val != [""] and val != [] and val != "" and val != False and val != "info" and val != "opened" and val != "open":
+        if val not in [[""], [], "", False, "info", "opened", "open"]:
             return obj
 
     return None

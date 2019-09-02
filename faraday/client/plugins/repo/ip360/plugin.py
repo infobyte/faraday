@@ -20,11 +20,11 @@ def calculate_severity(number):
     number = float(number)
 
     # Based in CVSS V2
-    if number >= 0 and number <= 3.9:
+    if 0 <= number < 4.0:
         return "low"
-    elif number >= 4.0 and number <= 6.9:
+    elif 4.0 <= number < 7.0:
         return "med"
-    elif number >= 7.0 and number <= 10:
+    elif 7.0 <= number <= 10:
         return "high"
 
 class Ip360Parser:

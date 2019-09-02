@@ -69,7 +69,7 @@ class FaradayRedirectResource(Redirect, object):
         return super(FaradayRedirectResource, self).render(request)
 
 
-class WebServer(object):
+class WebServer:
     UI_URL_PATH = b'_ui'
     API_URL_PATH = b'_api'
     WEB_UI_LOCAL_PATH = os.path.join(faraday.server.config.FARADAY_BASE, 'server/www')

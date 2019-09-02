@@ -414,37 +414,6 @@ class ArachniPlugin(core.PluginBase):
             version='',
             description='')
 
-        # Scan Note.
-        noteScan_id = self.createAndAddNoteToService(
-            host_id,
-            service_id,
-            'Scan Information',
-            parser.system.note)
-
-        # Plugins Notes
-        note_id = self.createAndAddNoteToService(
-            host_id,
-            service_id,
-            'Plugins arachni',
-            'Plugins used by arachni and results of this.')
-
-        if parser.plugins.waf != 'None':
-
-            note2_id = self.createAndAddNoteToNote(
-                host_id,
-                service_id,
-                note_id,
-                'Waf Plugin',
-                parser.plugins.waf)
-
-        if parser.plugins.healthmap != 'None':
-
-            note3_id = self.createAndAddNoteToNote(
-                host_id,
-                service_id,
-                note_id,
-                'Healthmap Plugin',
-                parser.plugins.healthmap)
 
         # Create issues.
         for issue in parser.issues:

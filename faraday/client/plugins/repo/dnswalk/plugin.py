@@ -28,7 +28,7 @@ __email__ = "famato@infobytesec.com"
 __status__ = "Development"
 
 
-class DnswalkParser(object):
+class DnswalkParser:
     """
     The objective of this class is to parse an xml file generated
     by the dnswalk tool.

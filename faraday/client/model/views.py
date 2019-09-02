@@ -6,7 +6,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-class View(object):
+class View:
     """A view for the data in a CouchDB"""
     def __init__(self):
         pass

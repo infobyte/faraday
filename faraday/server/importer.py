@@ -303,13 +303,8 @@ def map_tool_with_command_id(command_tool_map, document):
         return
     old_tool = command_tool_map.get(command_id)
     if old_tool is not None and old_tool != tool:
-        logger.warn('Conflicting tool names for command {}: "{}" and "{}". '
-                    'Using "{}"'.format(
-                        command_id,
-                        old_tool,
-                        tool,
-                        tool
-                    ))
+        logger.warn(f'Conflicting tool names for command {command_id}: "{old_tool}" and "{tool}". '
+                    f'Using "{tool}"')
     command_tool_map[command_id] = tool
 
 
@@ -360,7 +355,7 @@ class EntityNotFound(Exception):
         super(EntityNotFound, self).__init__("Entity (%s) wasn't found" % entity_id)
 
 
-class EntityMetadataImporter(object):
+class EntityMetadataImporter:
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         return
@@ -389,7 +384,7 @@ def check_ip_address(ip_str):
     return True
 
 
-class HostImporter(object):
+class HostImporter:
     """
         Class interface was removed in the new model.
         We will merge the interface data with the host.
@@ -510,7 +505,7 @@ class HostImporter(object):
         return host
 
 
-class ServiceImporter(object):
+class ServiceImporter:
     DOC_TYPE = 'Service'
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
@@ -598,7 +593,7 @@ def get_or_create_user(session, username):
     return creator
 
 
-class VulnerabilityImporter(object):
+class VulnerabilityImporter:
     DOC_TYPE = ['Vulnerability', 'VulnerabilityWeb']
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
@@ -790,7 +785,7 @@ class VulnerabilityImporter(object):
         return references
 
 
-class CommandImporter(object):
+class CommandImporter:
 
     DOC_TYPE = 'CommandRunInformation'
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
@@ -827,7 +822,7 @@ class CommandImporter(object):
         yield command
 
 
-class NoteImporter(object):
+class NoteImporter:
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         couch_parent_id = '.'.join(document['_id'].split('.')[:-1])
@@ -842,7 +837,7 @@ class NoteImporter(object):
         yield comment
 
 
-class CredentialImporter(object):
+class CredentialImporter:
 
     DOC_TYPE = 'Cred'
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
@@ -887,7 +882,7 @@ class CredentialImporter(object):
             yield credential
 
 
-class WorkspaceImporter(object):
+class WorkspaceImporter:
 
     DOC_TYPE = 'Workspace'
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
@@ -914,7 +909,7 @@ class WorkspaceImporter(object):
         yield workspace
 
 
-class MethodologyImporter(object):
+class MethodologyImporter:
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         if document.get('group_type') == 'template':
             methodology, created = get_or_create(session, MethodologyTemplate, name=document.get('name'))
@@ -925,7 +920,7 @@ class MethodologyImporter(object):
             yield methodology
 
 
-class TaskImporter(object):
+class TaskImporter:
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         try:
@@ -983,7 +978,7 @@ class TaskImporter(object):
 
 
 
-class ReportsImporter(object):
+class ReportsImporter:
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         report, created = get_or_create(session, ExecutiveReport, name=document.get('name'))
@@ -1038,7 +1033,7 @@ class ReportsImporter(object):
         yield report
 
 
-class CommunicationImporter(object):
+class CommunicationImporter:
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         comment, created = get_or_create(
             session,
@@ -1050,7 +1045,7 @@ class CommunicationImporter(object):
         yield comment
 
 
-class FaradayEntityImporter(object):
+class FaradayEntityImporter:
     # Document Types: [u'Service', u'Communication', u'Vulnerability', u'CommandRunInformation', u'Reports', u'Host', u'Workspace']
 
     def __init__(self, workspace_name):
@@ -1062,7 +1057,7 @@ class FaradayEntityImporter(object):
         if importer_class is not None:
             importer = importer_class()
             entity = importer.update_from_document(document)
-            metadata = EntityMetadataImporter().update_from_document(document)
+            metadata = None  # EntityMetadataImporter().update_from_document(document) this always None
             entity.entity_metadata = metadata
             return importer, entity
         return None, None
@@ -1423,7 +1418,7 @@ class ImportCouchDB():
         if len(all_ids) != len(couchdb_relational_map.keys()):
             missing_objs_filename = os.path.join(os.path.expanduser('~/.faraday'), 'logs', 'import_missing_objects_{0}.json'.format(workspace.name))
             missing_ids = set(all_ids) - set(couchdb_relational_map.keys())
-            missing_ids = set([x for x in missing_ids if not re.match(r'^\_design', x)])
+            missing_ids = {x for x in missing_ids if not re.match(r'^\_design', x)}
             objs_diff = []
             if missing_ids:
                 logger.debug('Downloading missing couchdb docs')

@@ -52,7 +52,7 @@ PLUGIN_MULTI_VAL = [
 ]
 
 
-class NessusServer(object):
+class NessusServer:
 
     def __init__(self, server, port, username, password, verbose=False):
         self.server = server

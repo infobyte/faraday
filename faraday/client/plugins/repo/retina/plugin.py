@@ -232,10 +232,6 @@ class RetinaPlugin(core.PluginBase):
                         if web:
                             v_id = self.createAndAddVulnWebToService(h_id, s_id, v.name.encode(
                                 "utf-8"), ref=v.ref, website=hostname, severity=v.severity, resolution=v.solution.encode("utf-8"), desc=v.desc.encode("utf-8"))
-                            n_id = self.createAndAddNoteToService(
-                                h_id, s_id, "website", "")
-                            n2_id = self.createAndAddNoteToNote(
-                                h_id, s_id, n_id, hostname, "")
                         else:
                             v_id = self.createAndAddVulnToService(h_id, s_id, v.name.encode(
                                 "utf-8"), ref=v.ref, severity=v.severity, resolution=v.solution.encode("utf-8"), desc=v.desc.encode("utf-8"))

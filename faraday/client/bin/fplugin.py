@@ -56,9 +56,9 @@ def dispatch(args, unknown, user_help, username, password):
     session_cookie = login_user(args.url, username, password)
     if not session_cookie:
         raise UserWarning('Invalid credentials!')
-    else:
-        CONF.setDBUser(username)
-        CONF.setDBSessionCookies(session_cookie)
+
+    CONF.setDBUser(username)
+    CONF.setDBSessionCookies(session_cookie)
 
     if '--' in unknown:
         unknown.remove('--')

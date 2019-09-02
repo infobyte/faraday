@@ -27,7 +27,7 @@ WEAK_CIPHER_LIST = [
 ]
 
 
-class SslyzeXmlParser(object):
+class SslyzeXmlParser:
 
     def __init__(self, xml_output):
         self.parser = self.parse_xml(xml_output)

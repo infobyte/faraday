@@ -10,7 +10,7 @@ and some other common objects and functions used in the model
 """
 
 
-class ModelObjectVisitor(object):
+class ModelObjectVisitor:
     def visit(self, modelObjectInstance):
         raise NotImplemented('Abstract method')
 

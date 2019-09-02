@@ -41,7 +41,7 @@ class brutexss (core.PluginBase):
         parametro=[]
         found_vuln = False
         for linea in lineas:
-            if (linea.find("is available! Good!")>0):
+            if linea.find("is available! Good!") > 0:
                 print(linea)
                 url = re.findall('(?:[-\w.]|(?:%[\da-fA-F]{2}))+', linea)[0]
                 port = 80
@@ -50,7 +50,7 @@ class brutexss (core.PluginBase):
                 netloc_splitted = urlparse(url).netloc.split(':')
                 if len(netloc_splitted) > 1:
                     port = netloc_splitted[1]
-            if ((linea.find("Vulnerable")>0) and (linea.find("No")<0)):
+            if linea.find("Vulnerable") > 0 and "No" not in linea:
                 vuln_list = re.findall("\w+", linea)
                 if vuln_list[2]=="Vulnerable":
                     parametro.append(vuln_list[1])

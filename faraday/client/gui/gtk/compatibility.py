@@ -62,7 +62,7 @@ class CompatibleScrolledWindow(Gtk.ScrolledWindow):
 
     def set_overlay_scrolling(self, boolean):
         """Return the set_overlay_scrolling method, if it can."""
-        if gi_version == '3.12.0' or gi_version == '3.14.0':
+        if gi_version in ['3.12.0', '3.14.0']:
             return None
         else:
             return Gtk.ScrolledWindow.set_overlay_scrolling(self, boolean)

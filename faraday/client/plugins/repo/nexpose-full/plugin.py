@@ -40,7 +40,7 @@ __email__ = "mranea@infobytesec.com"
 __status__ = "Development"
 
 
-class NexposeFullXmlParser(object):
+class NexposeFullXmlParser:
     """
     The objective of this class is to parse Nexpose's XML 2.0 Report.
 

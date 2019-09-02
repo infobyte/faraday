@@ -62,19 +62,19 @@ merge_conflict_check:
 pylint:
     tags:
         - faradaytests
-    image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base_py3  # I just need an image with python-dev and python-pip
+    image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base_py3  # I just need an image with python3-dev and python3-pip
     stage: pre_testing
     script:
         - apt-get update -qy
-        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" build-essential ipython python-setuptools python-pip python-dev libssl-dev libffi-dev pkg-config libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev
-        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" libpq-dev python-pip python-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 python-gobject zsh curl
-        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libgdk-pixbuf2.0-dev
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" build-essential ipython python3-setuptools python3-pip python3-dev libssl-dev libffi-dev pkg-config libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" libpq-dev python3-pip python3-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 python3-gobject zsh curl
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" gobject-introspection libgirepository1.0-dev libcairo2-dev python3-cairo libgdk-pixbuf2.0-dev
         - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" libcanberra-gtk-module libcanberra-gtk* libxml2-dev libxslt1-dev gir1.2-gtk-3.0 gir1.2-vte-2.91
         - pip install virtualenv
         - virtualenv -p python3 faraday_venv
         - source faraday_venv/bin/activate
         - pip install --upgrade -r requirements.txt
-        - python setup.py install
+        - python3 setup.py install
         # pylint slow issue https://github.com/PyCQA/pylint/issues/2765
         - pip install pylint isort==4.3.4
         - pylint --rcfile=.pylintrc faraday --ignore=faraday_venv | tee pylint.txt
@@ -94,7 +94,7 @@ py3checker:
     stage: testing
     script:
         - pip install pylint
-        - python py3-checker.py -o py3_checker_result.txt
+        - python3 py3-checker.py -o py3_checker_result.txt
     artifacts:
         paths:
             - py3_checker_result.txt
@@ -111,14 +111,15 @@ postgresql_test:
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
         - apt-get update -qy
-        - apt-get install -o dir::cache::archives="$APT_CACHE_DIR" -y gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libpq-dev
+        - apt-get install -o dir::cache::archives="$APT_CACHE_DIR" -y gobject-introspection libgirepository1.0-dev libcairo2-dev python3-cairo libpq-dev
         - pip3 install virtualenv
         - virtualenv -p python3 faraday_venv
         - source faraday_venv/bin/activate
         - pip install pip -U
+        - pip install mock
         #- pip install --upgrade -r requirements_server.txt
         - pip install --upgrade -r requirements.txt
-        - python setup.py install
+        - python3 setup.py install
         - pip install --upgrade responses pytest-xdist pytest-cov
         - pip install --upgrade -r requirements_dev.txt
         - mkdir -p ~/.faraday/config
@@ -142,7 +143,7 @@ sqlite_test:
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
         - apt-get update -qy
-        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" gobject-introspection libgirepository1.0-dev libcairo2-dev python-cairo libpq-dev
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" gobject-introspection libgirepository1.0-dev libcairo2-dev python3-cairo libpq-dev
         - pip3 install virtualenv
         - virtualenv -p python3 faraday_venv
         - source faraday_venv/bin/activate
@@ -150,7 +151,7 @@ sqlite_test:
         - pip install mock
         #- pip install --upgrade -r requirements_server.txt
         - pip install --upgrade -r requirements.txt
-        - python setup.py install
+        - python3 setup.py install
         - pip install --upgrade responses pytest-xdist pytest-cov
         - pip install --upgrade -r requirements_dev.txt
         - mkdir -p ~/.faraday/config
@@ -221,8 +222,8 @@ generate_deb:
         - ssh-keyscan -H gitlab.com >> ~/.ssh/known_hosts
     script:
         - apt-get update -qy
-        - apt-get -y install virtualenv git libcairo2-dev libgirepository1.0-dev gobject-introspection ruby ruby-dev rubygems build-essential build-essential libssl-dev libffi-dev libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev libsasl2-dev libldap2-dev libkrb5-dev pandoc python3 python-dev pkg-config libpq-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 zsh curl pandoc
-        - curl https://bootstrap.pypa.io/get-pip.py | python
+        - apt-get -y install virtualenv git libcairo2-dev libgirepository1.0-dev gobject-introspection ruby ruby-dev rubygems build-essential build-essential libssl-dev libffi-dev libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev libsasl2-dev libldap2-dev libkrb5-dev pandoc python3 python3-dev pkg-config libpq-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 zsh curl pandoc
+        - curl https://bootstrap.pypa.io/get-pip.py | python3
         - pip install virtualenv-tools
         - gem install --no-ri --no-rdoc fpm
         - mkdir build_installer
@@ -262,9 +263,9 @@ generate_rpm:
         - chmod 700 ~/.ssh
         - /usr/bin/ssh-keyscan -H gitlab.com >> ~/.ssh/known_hosts
     script:
-        - yum -y install git ruby ruby-devel rubygems gobject-introspection-devel curl zsh mailcap libffi-devel python-devel openssl-devel openldap-devel libxslt-devel libxml2-devel libxslt-devel freetype-devel libjpeg-devel gtk+-devel gtk3-devel gtk2-devel pandoc
+        - yum -y install git ruby ruby-devel rubygems gobject-introspection-devel curl zsh mailcap libffi-devel python3-devel openssl-devel openldap-devel libxslt-devel libxml2-devel libxslt-devel freetype-devel libjpeg-devel gtk+-devel gtk3-devel gtk2-devel pandoc
         - yum groups -y install "Development Tools"
-        - curl https://bootstrap.pypa.io/get-pip.py | python
+        - curl https://bootstrap.pypa.io/get-pip.py | python3
         - pip install virtualenv
         - pip install virtualenv-tools
         - gem install --no-ri --no-rdoc fpm
@@ -306,7 +307,7 @@ binary_files:
         - source faraday_venv/bin/activate
         - pip install pyinstaller
         - pip install --upgrade -r requirements.txt
-        - python setup.py install
+        - python3 setup.py install
         - pip install .[gtk]
         - pyinstaller -F -w --onefile --icon=faraday/faraday/server/www/favicon.ico start_server.spec
         - pyinstaller -F -w --onefile --icon=faraday/faraday/server/www/favicon.ico manage.spec
@@ -345,7 +346,7 @@ macos_dmg:
         - export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:/usr/local/opt/libffi/lib/pkgconfig"
         - pip install pyinstaller
         - pip install --upgrade -r requirements.txt
-        - python setup.py install
+        - python3 setup.py install
         - pip install .[gtk]
         - pyinstaller -F -w --onefile --onefile --icon=faraday/faraday/server/www/favicon.ico start_server.spec
         - pyinstaller -F -w --onefile --onefile --icon=faraday/faraday/server/www/favicon.ico manage.spec
@@ -403,7 +404,7 @@ test_hypothesis:
         - virtualenv -p python3 faraday_venv
         - source faraday_venv/bin/activate
         #- pip install --upgrade -r requirements_server.txt
-        - python setup.py install
+        - python3 setup.py install
         - pip install --upgrade responses pytest-xdist pytest-cov
         - pip install --upgrade -r requirements_dev.txt
         - mkdir -p ~/.faraday/config

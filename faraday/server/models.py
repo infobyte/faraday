@@ -680,6 +680,7 @@ class VulnerabilityTemplate(VulnerabilityABC):
         creator=_build_associationproxy_creator_non_workspaced('PolicyViolationTemplate')
     )
     custom_fields = Column(JSONType)
+    shipped = Column(Boolean, nullable=False, default=False)
 
 
 class CommandObject(db.Model):

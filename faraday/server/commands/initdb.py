@@ -279,6 +279,18 @@ class InitDB():
         print('Creating tables')
         from faraday.server.models import db
         current_app.config['SQLALCHEMY_DATABASE_URI'] = conn_string
+
+        # Check if the alembic_version exists
+        # Taken from https://stackoverflow.com/a/24089729
+        (result,) = list(db.session.execute("select to_regclass('alembic_version')"))
+        exists = result[0] is not None
+
+        if exists:
+            print("Faraday tables already exist in the database. No tables will "
+                  "be created. If you want to ugprade the schema to the latest "
+                  "version, you should run \"faraday-manage migrate\".")
+            return
+
         try:
             db.create_all()
         except OperationalError as ex:

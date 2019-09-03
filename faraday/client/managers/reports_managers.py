@@ -107,13 +107,10 @@ class ReportProcessor:
         logger.info(
             'The file is %s, %s' % (filename, plugin_id))
 
-        command_id = self.plugin_controller.processReport(
-            plugin_id, filename, ws_name=self.ws_name)
+        command_id = self.plugin_controller.processReport(plugin_id, filename, ws_name=self.ws_name)
 
         if not command_id:
-
-            logger.error(
-                "Faraday doesn't have a plugin for this tool... Processing: ABORT")
+            logger.error("Faraday doesn't have a plugin for this tool... Processing: ABORT")
             return False
 
         return command_id
@@ -238,22 +235,19 @@ class ReportParser:
 
             self.report_type = self.getUserPluginName(report_path)
 
-    def getUserPluginName(self, pathFile):
-
-        if pathFile == None:
+    def getUserPluginName(self, file_path):
+        if not file_path:
             return None
-
-        rname = pathFile[pathFile.rfind('/') + 1:]
-        ext = rname.rfind('.')
-        if ext < 0:
-            ext = len(rname) + 1
-        rname = rname[0:ext]
-        faraday_index = rname.rfind('_faraday_')
-        if faraday_index > -1:
-            plugin = rname[faraday_index + 9:]
-            return plugin
-
-        return None
+        file_name = os.path.basename(file_path)
+        file_name_base, file_extension = os.path.splitext(file_name)
+        plugin_name_regex = r".*_faraday_(?P<plugin_name>.+)$"
+        match = re.match(plugin_name_regex, file_name_base)
+        if match:
+            plugin_name = match.groupdict()['plugin_name']
+            logger.debug("Plugin name match: %s", plugin_name)
+            return plugin_name
+        else:
+            return None
 
     def open_file(self, file_path):
         """

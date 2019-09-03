@@ -213,9 +213,7 @@ class RetinaPlugin(core.PluginBase):
                 self.createAndAddNoteToHost(
                     h_id, "netBIOSDomain", item.netbiosdomain)
 
-            a = {}
-            a.iteritems
-            for k, vulns in item.ports.iteritems():
+            for k, vulns in item.ports.items():
                 if k:
                     for v in vulns:
                         web = False

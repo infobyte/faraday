@@ -7,10 +7,6 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from __future__ import absolute_import
-from __future__ import print_function
-
-from __future__ import with_statement
 import re
 import os
 import socket
@@ -56,9 +52,7 @@ class WapitiXmlParser:
     """
 
     def __init__(self, xml_output):
-
         tree = self.parse_xml(xml_output)
-
         if tree:
             self.items = [data for data in self.get_items(tree)]
         else:
@@ -100,7 +94,6 @@ def get_attrib_from_subnode(xml_node, subnode_xpath_expr, attrib_name):
     node = None
 
     if ETREE_VERSION[0] <= 1 and ETREE_VERSION[1] < 3:
-
         match_obj = re.search(
             "([^\@]+?)\[\@([^=]*?)=\'([^\']*?)\'", subnode_xpath_expr)
         if match_obj is not None:
@@ -113,13 +106,10 @@ def get_attrib_from_subnode(xml_node, subnode_xpath_expr, attrib_name):
                     break
         else:
             node = xml_node.find(subnode_xpath_expr)
-
     else:
         node = xml_node.find(subnode_xpath_expr)
-
     if node is not None:
         return node.get(attrib_name)
-
     return None
 
 
@@ -242,7 +232,7 @@ class WapitiPlugin(core.PluginBase):
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "Wapiti"
         self.name = "Wapiti XML Output Plugin"
         self.plugin_version = "0.0.1"
@@ -252,6 +242,7 @@ class WapitiPlugin(core.PluginBase):
         self.protocol = None
         self.host = None
         self.port = "80"
+        self.xml_arg_re = re.compile(r"^.*(-oX\s*[^\s]+).*$")
         self._command_regex = re.compile(
             r'^(python wapiti|wapiti|sudo wapiti|sudo wapiti\.py|wapiti\.py|python wapiti\.py|\.\/wapiti\.py|wapiti|\.\/wapiti|python wapiti|python \.\/wapiti).*?')
         self._completition = {
@@ -320,12 +311,6 @@ class WapitiPlugin(core.PluginBase):
                         request=entry['http_request'],
                         method=entry['method'], 
                         params=entry['parameter'])
-           
-
-            
-    xml_arg_re = re.compile(r"^.*(-oX\s*[^\s]+).*$")
- 
-
 
     def processCommandString(self, username, current_path, command_string):
         """
@@ -334,18 +319,14 @@ class WapitiPlugin(core.PluginBase):
         """
         host = re.search(
             "(http|https|ftp)\://([a-zA-Z0-9\.\-]+(\:[a-zA-Z0-9\.&amp;%\$\-]+)*@)*((25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9])\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[0-9])|localhost|([a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\.(com|edu|gov|int|mil|net|org|biz|arpa|info|name|pro|aero|coop|museum|[a-zA-Z]{2}))[\:]*([0-9]+)*([/]*($|[a-zA-Z0-9\.\,\?\'\\\+&amp;%\$#\=~_\-]+)).*?$", command_string)
-
         self.protocol = host.group(1)
         self.host = host.group(4)
         if host.group(11) is not None:
             self.port = host.group(11)
         if self.protocol == 'https':
             self.port = 443
-
-        print("host = %s, port = %s" % (self.host, self.port))
-
+        self.logger.debug("host = %s, port = %s",self.host, self.port)
         arg_match = self.xml_arg_re.match(command_string)
-
         return "%s -o %s -f xml \n" % (command_string, self._output_file_path)
 
     def setHost(self):

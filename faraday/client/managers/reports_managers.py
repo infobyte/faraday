@@ -339,6 +339,8 @@ class ReportParser:
                 return "Arachni"
             elif re.search("OpenVAS", output) is not None or re.search('<omp>', output) is not None:
                 return "Openvas"
+            elif re.search("Wapiti", output):
+                return "Wapiti"
             else:
                 return "Zap"
         elif tag == "xml-report":

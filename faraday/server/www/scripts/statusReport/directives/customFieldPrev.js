@@ -33,7 +33,7 @@ angular.module('faradayApp')
                                 <div class="input-group margin-bottom-sm"> \n\
                                     <label class="sr-only" for="vuln-refs-create">{{cf.field_display_name}}</label> \n\
                                     <input type="text" class="form-control" id="vuln-refs-create" placeholder="{{cf.field_display_name}}" \n\
-                                           ng-model="item.value" \n\
+                                           ng-model="item" \n\
                                            role="button" readonly/> \n\
                                     <span class="input-group-addon cursor" ng-click="removeValueField($index)"> \n\
                                     <i class="fa fa-minus-circle"></i></span>                                \n\

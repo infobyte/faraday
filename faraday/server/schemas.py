@@ -54,6 +54,10 @@ class FaradayCustomField(fields.Field):
 
         for custom_field in custom_fields:
             serialized_value = value.get(custom_field.field_name)
+            if type(serialized_value) == list:
+                res[custom_field.field_name] = [element['value'] for element in serialized_value]
+            else:
+                res[custom_field.field_name] = serialized_value
             res[custom_field.field_name] = serialized_value
 
         return res

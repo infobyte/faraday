@@ -265,21 +265,15 @@ class ReportParser:
             b"\x3C\x3F\x78\x6D\x6C": "xml",
             b"# Lynis Re": "dat",
         }
-
         try:
-
-            if file_path == None:
+            if file_path is None:
                 return None, None
-
             f = open(file_path, 'rb')
             file_signature = f.read(10)
-
             for key in signatures:
                 if file_signature.find(key) == 0:
-
                     result = signatures[key]
                     break
-
             if not result:
                 # try json loads to detect a json file.
                 try:
@@ -288,13 +282,10 @@ class ReportParser:
                     result = 'json'
                 except ValueError:
                     pass
-
         except IOError as err:
             self.report_type = None
-            logger.error(
-                "Error while opening file.\n%s. %s" % (err, file_path))
-
-        logger.debug("Report type detected: %s" % result)
+            logger.error("Error while opening file.\n%s. %s", err, file_path)
+        logger.info("Report type detected: %s" % result)
         f.seek(0)
         return f, result
 
@@ -319,21 +310,19 @@ class ReportParser:
             # we need to add json detection here!
             result = 'reconng'
         else:
-
+            logger.info("Unknown Report Type...force XML")
             try:
                 for event, elem in ET.iterparse(f, ('start', )):
                     result = elem.tag
                     break
-
             except SyntaxError as err:
                 self.report_type = None
-                logger.error("Not an xml file.\n %s" % (err))
-
+                logger.error("Not an xml file.\n %s", err)
         f.seek(0)
         output = f.read().decode()
         if f:
             f.close()
-
+        logger.debug("Report Root Tag: %s", result)
         return result, output
 
     def rType(self, tag, output):
@@ -345,17 +334,13 @@ class ReportParser:
         elif tag == "NessusClientData_v2":
             return "Nessus"
         elif tag == "report":
-
             if re.search(
                     "https://raw.githubusercontent.com/Arachni/arachni/", output) is not None:
                 return "Arachni"
-
-            elif re.search("OpenVAS", output) is not None or re.search('<omp><version>', output) is not None:
+            elif re.search("OpenVAS", output) is not None or re.search('<omp>', output) is not None:
                 return "Openvas"
-
             else:
                 return "Zap"
-
         elif tag == "xml-report":
             if re.search("AppScan", output) is not None:
                 return "Appscan"

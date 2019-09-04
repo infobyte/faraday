@@ -6,15 +6,12 @@ Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
-from __future__ import absolute_import
-from __future__ import print_function
-
-from __future__ import with_statement
 from faraday.client.plugins import core
 import re
 import os
 import sys
 import random
+from collections import defaultdict
 
 current_path = os.path.abspath(os.getcwd())
 
@@ -42,7 +39,7 @@ class DnsmapParser:
     """
 
     def __init__(self, output):
-        self.items = []
+        self.items = defaultdict(list)
         if "\n\n" in output:
             self.parse_txt(output)
         else:
@@ -88,7 +85,6 @@ class DnsmapParser:
                 continue
             else:
                 aux_list.append(splitted[i])
-
         return hosts_list
 
     def clean_ip(self, item):
@@ -96,17 +92,7 @@ class DnsmapParser:
         return ip[1].strip()
 
     def add_host_info_to_items(self, ip_address, hostname):
-        data = {}
-        exists = False
-        for item in self.items:
-            if ip_address in item['ip']:
-                item['hosts'].append(hostname)
-                exists = True
-
-        if not exists:
-            data['ip'] = ip_address
-            data['hosts'] = [hostname]
-            self.items.append(data)
+        self.items[ip_address].append(hostname)
 
 
 class DnsmapPlugin(core.PluginBase):
@@ -114,7 +100,7 @@ class DnsmapPlugin(core.PluginBase):
 
     def __init__(self):
 
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "Dnsmap"
         self.name = "Dnsmap Output Plugin"
         self.plugin_version = "0.3"
@@ -122,9 +108,7 @@ class DnsmapPlugin(core.PluginBase):
         self.options = None
         self._current_output = None
         self.current_path = None
-        self._command_regex = re.compile(
-            r'^(sudo dnsmap|dnsmap|\.\/dnsmap).*?')
-
+        self._command_regex = re.compile(r'^(sudo dnsmap|dnsmap|\.\/dnsmap).*?')
         self.xml_arg_re = re.compile(r"^.*(-r\s*[^\s]+).*$")
 
         global current_path
@@ -150,11 +134,8 @@ class DnsmapPlugin(core.PluginBase):
         from the xml where it expects it to be present.
         """
         parser = DnsmapParser(output)
-        for item in parser.items:
-            h_id = self.createAndAddHost(
-                        item['ip'],
-                        hostnames=item['hosts'])
-
+        for ip_address, hostnames in parser.items.items():
+            h_id = self.createAndAddHost(ip_address, hostnames=hostnames)
         return True
 
     def processCommandString(self, username, current_path, command_string):

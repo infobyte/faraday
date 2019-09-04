@@ -64,6 +64,7 @@ class PluginBase:
         self._new_elems = []
         self._settings = {}
         self.command_id = None
+        self.logger = logger.getChild(self.__class__.__name__)
 
     def has_custom_output(self):
         return bool(self._output_file_path)
@@ -170,12 +171,11 @@ class PluginBase:
         if self.command_id:
             args = args + (self.command_id, )
         else:
-            logger.warn('Warning command id not set for action {0}'.format(args))
+            logger.warning('Warning command id not set for action {0}'.format(args))
         logger.debug('AddPendingAction %s', args)
         self._pending_actions.put(args)
 
     def createAndAddHost(self, name, os="unknown", hostnames=None, mac=None):
-
         host_obj = factory.createModelObject(
             Host.class_signature,
             name,
@@ -184,7 +184,6 @@ class PluginBase:
             workspace_name=self.workspace,
             hostnames=hostnames,
             mac=mac)
-
         host_obj._metadata.creatoserverr = self.id
         self.__addPendingAction(Modelactions.ADDHOST, host_obj)
         return host_obj.getID()
@@ -367,15 +366,18 @@ class PluginBase:
 
 class PluginTerminalOutput(PluginBase):
     def __init__(self):
-        super(PluginTerminalOutput, self).__init__()
+        super().__init__()
 
     def processOutput(self, term_output):
-        self.parseOutputString(term_output)
+        try:
+            self.parseOutputString(term_output)
+        except Exception as e:
+            self.logger.error(e)
 
 
 class PluginCustomOutput(PluginBase):
     def __init__(self):
-        super(PluginCustomOutput, self).__init__()
+        super().__init__()
 
     def processOutput(self, term_output):
         # we discard the term_output since it's not necessary
@@ -397,7 +399,7 @@ class PluginProcess(Thread):
         self.plugin = plugin_instance
         self.isReport = isReport
         self.setDaemon(True)
-        self.stop = False
+        self._must_stop = False
 
     def run(self):
         proc_name = self.name
@@ -408,7 +410,7 @@ class PluginProcess(Thread):
         faraday.client.model.api.devlog(f"process id: {os.getpid()}")
         faraday.client.model.api.devlog("-" * 40)
         done = False
-        while not done and not self.stop:
+        while not done and not self._must_stop:
             output, command_id = self.output_queue.get()
             self.plugin.setCommandID(command_id)
             if output is not None:
@@ -428,6 +430,6 @@ class PluginProcess(Thread):
             time.sleep(0.1)
 
     def stop(self):
-        self.stop = True
+        self._must_stop = True
 
 # I'm Py3

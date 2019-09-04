@@ -104,8 +104,7 @@ class ReportProcessor:
     def sendReport(self, plugin_id, filename):
         """Sends a report to the appropiate plugin specified by plugin_id"""
 
-        logger.info(
-            'The file is %s, %s' % (filename, plugin_id))
+        logger.info('The file is %s, %s', filename, plugin_id)
 
         command_id = self.plugin_controller.processReport(plugin_id, filename, ws_name=self.ws_name)
 
@@ -358,7 +357,7 @@ class ReportParser:
                 return "Zap"
 
         elif tag == "xml-report":
-            if re.search("Appscan", output) is not None:
+            if re.search("AppScan", output) is not None:
                 return "Appscan"
         elif tag == "niktoscan":
             return "Nikto"
@@ -398,6 +397,7 @@ class ReportParser:
             if re.search("SSLyzeVersion", output) is not None:
                 return "Sslyze"
         else:
+            logger.debug("Unknown Tag: %s", tag)
             return None
 
 

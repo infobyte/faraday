@@ -169,14 +169,8 @@ class PluginController(Thread):
         """
         output_queue = JoinableQueue()
         plugin.set_actions_queue(self.pending_actions)
-
-        self.plugin_process = PluginProcess(
-            plugin, output_queue, isReport)
-
-        logger.debug(
-            "Created plugin_process (%d) for plugin instance (%d)" %
-            (id(self.plugin_process), id(plugin)))
-
+        self.plugin_process = PluginProcess(plugin, output_queue, isReport)
+        logger.debug("Created plugin_process (%d) for plugin instance (%d)", id(self.plugin_process), id(plugin))
         self.pending_actions.put((Modelactions.PLUGINSTART, plugin.id, command.getID()))
         output_queue.put((output, command.getID()))
         plugin_commiter = PluginCommiter(

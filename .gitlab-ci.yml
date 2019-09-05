@@ -101,9 +101,9 @@ py3checker:
         paths:
             - py3_checker_result.txt
         expire_in: 1 week
-    except:
+    only:
         variables:
-            - $BUILD_TEST
+            - $PY3_FULL_CHECK
 
 postgresql_test:
     image: registry.gitlab.com/faradaysec/faraday/faraday_testing_base_py3

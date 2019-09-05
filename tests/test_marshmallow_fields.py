@@ -182,7 +182,7 @@ class TestMutableField:
         class PlaceSchema(Schema):
             name = fields.String()
             x = MutableField(fields.Method('get_x'),
-                             fields.String)
+                             fields.String())
 
             def get_x(self, obj):
                 return 5

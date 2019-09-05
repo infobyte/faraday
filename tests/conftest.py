@@ -291,7 +291,7 @@ def ignore_nplusone(app):
 
 
 @pytest.fixture(autouse=True)
-def skip_by_sql_dialect(request):
+def skip_by_sql_dialect(app, request):
     dialect = db.session.bind.dialect.name
     if request.node.get_closest_marker('skip_sql_dialect'):
         if request.node.get_closest_marker('skip_sql_dialect').args[0] == dialect:

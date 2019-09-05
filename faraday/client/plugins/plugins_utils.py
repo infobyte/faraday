@@ -4,6 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 import os
 import logging
 
@@ -20,7 +22,7 @@ def filter_services():
         logger.debug("Load service mappers")
         filename = os.path.join(FARADAY_CLIENT_BASE, 'plugins/port_mapper.txt')
         with open(filename, encoding='utf-8') as fp:
-            SERVICE_MAPPER = list(map(lambda x: x.strip().split('\t'), filter(len, fp.readlines())))
+            SERVICE_MAPPER = list(map(lambda x: x.strip().split('\t'), list(filter(len, fp.readlines()))))
     return SERVICE_MAPPER
 
 

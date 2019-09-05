@@ -7,13 +7,13 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 import re
 import os
 import socket
-try:
-    from urlparse import urlparse
-except ImportError:
-    from urllib.parse import urlparse
+
+from urllib.parse import urlparse
 
 from faraday.client.plugins import core
 

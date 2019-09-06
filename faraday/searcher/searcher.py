@@ -733,7 +733,7 @@ def main(workspace, server_address, user, password, output, email, email_passwor
         if not server_address.endswith('/_api'):
             server_address += '_api'
 
-        api = Api(requests, workspace, user, password, base=server_address)
+        api = Api(requests=requests, workspace=workspace, username=user, password=password, base=server_address)
         searcher = Searcher(api, mail_notification)
         searcher.process(rules)
 

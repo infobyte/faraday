@@ -4,6 +4,8 @@ import socket
 import sqlalchemy
 from datetime import datetime
 
+from sqlalchemy.orm.attributes import flag_modified
+
 from faraday.searcher.api import ApiError
 from faraday.server.api.modules.vulns import VulnerabilitySchema, VulnerabilityWebSchema
 from faraday.server.models import Workspace, Vulnerability, VulnerabilityWeb, Service, Host, Command, \
@@ -170,6 +172,7 @@ class SqlApi:
     def update_vulnerability(self, vulnerability):
         try:
             self.session.add(vulnerability)
+            flag_modified(vulnerability, "custom_fields")
             self.session.commit()
             cmd_object_relation = CommandObject(
                 workspace_id=self.workspace.id,

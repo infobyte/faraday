@@ -155,42 +155,50 @@ def get_field(obj, field):
 
 
 def evaluate_condition(model, condition):
-    key, value = condition.split('=')
-    value = value.replace('%', ' ')
-    if key == 'regex':
-        if re.match(value, model.name) is None:
-            return False
-        return True
-
-    temp_value = getattr(model, key, None)
-    #  fixme
-    # if key in model.getMetadata():
-    #     temp_value = model.getMetadata()[key]
-
-    if temp_value is None:
-        return False
-
-    if isinstance(temp_value, list):
-        if value not in temp_value and str(value) not in temp_value:
-            if not isinstance(value, int):
+    try:
+        key, value = condition.split('=')
+        if value == 'informational':
+            value = 'info'
+        if value == 'medium':
+            value = 'med'
+        value = value.replace('%', ' ')
+        if key == 'regex':
+            if re.match(value, model.name) is None:
                 return False
-            elif int(value) not in temp_value:
+            return True
+
+        temp_value = getattr(model, key, None)
+        #  fixme
+        # if key in model.getMetadata():
+        #     temp_value = model.getMetadata()[key]
+
+        if temp_value is None:
+            return False
+
+        if isinstance(temp_value, list):
+            if value not in temp_value and str(value) not in temp_value:
+                if not isinstance(value, int):
+                    return False
+                elif int(value) not in temp_value:
+                    return False
+            return True
+
+        if isinstance(temp_value, bool):
+            if value == 'True' and not temp_value:
                 return False
-        return True
+            if value == 'False' and temp_value:
+                return False
+            return True
 
-    if isinstance(temp_value, bool):
-        if value == 'True' and not temp_value:
+        if isinstance(temp_value, int):
+            return value == str(temp_value)
+
+        if value.encode("utf-8") != temp_value.encode("utf-8"):
             return False
-        if value == 'False' and temp_value:
-            return False
         return True
-
-    if isinstance(temp_value, int):
-        return value == str(temp_value)
-
-    if value.encode("utf-8") != temp_value.encode("utf-8"):
+    except Exception as error:
+        logger.error(str(error))
         return False
-    return True
 
 
 def get_object(_models, obj):
@@ -277,7 +285,7 @@ class Searcher:
         logger.debug("--> Start Process vulnerabilities")
         for rule_item in rules:
             logger.debug('Processing rule {}'.format(rule_item['id']))
-            if rule_item['model'] == 'Vulnerability':
+            if rule_item['model'].lower() == 'vulnerability':
                 count_values = 1
                 values = [None]
                 if 'values' in rule_item and len(rule_item['values']) > 0:
@@ -302,7 +310,7 @@ class Searcher:
         logger.debug("--> Start Process services")
         for rule_item in rules:
             logger.debug('Processing rule {}'.format(rule_item['id']))
-            if rule_item['model'] == 'Service':
+            if rule_item['model'].lower() == 'service':
                 count_values = 1
                 values = [None]
                 if 'values' in rule_item and len(rule_item['values']) > 0:
@@ -327,7 +335,7 @@ class Searcher:
         logger.debug("--> Start Process Hosts")
         for rule_item in rules:
             logger.debug('Processing rule {}'.format(rule_item['id']))
-            if rule_item['model'] == 'Host':
+            if rule_item['model'].lower() == 'host':
                 count_values = 1
                 values = [None]
                 if 'values' in rule_item and len(rule_item['values']) > 0:
@@ -349,19 +357,19 @@ class Searcher:
         logger.debug("<-- Finish Process Hosts")
 
     def _fetch_objects(self, rule_model):
-        if rule_model == 'Vulnerability':
+        if rule_model.lower() == 'vulnerability':
             return self.api.fetch_vulnerabilities()
-        if rule_model == 'Service':
+        if rule_model.lower() == 'service':
             return self.api.fetch_services()
-        if rule_model == 'Host':
+        if rule_model.lower() == 'host':
             return self.api.fetch_hosts()
 
     def _filter_objects(self, rule_model, **kwargs):
-        if rule_model == 'Vulnerability':
+        if rule_model.lower() == 'vulnerability':
             return self.api.filter_vulnerabilities(**kwargs)
-        if rule_model == 'Service':
+        if rule_model.lower() == 'service':
             return self.api.filter_services(**kwargs)
-        if rule_model == 'Host':
+        if rule_model.lower() == 'host':
             return self.api.filter_hosts(**kwargs)
 
     def _get_models(self, rule):
@@ -398,6 +406,7 @@ class Searcher:
         kwargs = {}
         for item in items:
             key, value = item.split('=')
+            value = parse_value(value)
             kwargs[key] = value
 
         objects = self._filter_objects(rule['model'], **kwargs)
@@ -406,18 +415,18 @@ class Searcher:
         return objects
 
     def _get_objects_by_parent(self, parent, objects_type):
-        if isinstance(parent, Service) and objects_type == 'Vulnerability':
+        if isinstance(parent, Service) and objects_type.lower() == 'vulnerability':
             return parent.vulnerabilities + parent.web_vulnerabilities
-        elif isinstance(parent, Host) and objects_type == 'Vulnerability':
+        elif isinstance(parent, Host) and objects_type.lower() == 'vulnerability':
             return parent.vulnerabilities
-        elif isinstance(parent, Host) and objects_type == 'Service':
+        elif isinstance(parent, Host) and objects_type.lower() == 'service':
             return parent.services
         else:
-            if parent.type == 'Service' and objects_type == 'Vulnerability':
+            if parent.type.lower() == 'service' and objects_type.lower() == 'vulnerability':
                 return self.api.filter_vulnerabilities(service_id=parent.id)
-            elif parent.type == 'Host' and objects_type == 'Vulnerability':
+            elif parent.type.lower() == 'host' and objects_type.lower() == 'vulnerability':
                 return self.api.filter_vulnerabilities(host_id=parent.id)
-            elif parent.type == 'Host' and objects_type == 'Service':
+            elif parent.type.lower() == 'host' and objects_type.lower() == 'service':
                 return self.api.filter_services(host_id=parent.id)
             else:
                 return None
@@ -436,6 +445,7 @@ class Searcher:
         conditions = rule['conditions']
         for condition in conditions:
             key, value = condition.split('=')
+            value = parse_value(value)
             kwargs[key] = value
 
         return len(self._filter_objects(rule['model'], **kwargs)) > 0
@@ -446,7 +456,13 @@ class Searcher:
         _objs_value = None
         if 'object' in rule:
             _objs_value = rule['object']
-
+        command_start = datetime.now()
+        command_id = self.api.create_command(
+            itime=time.mktime(command_start.timetuple()),
+            params=self.rules,
+            tool_name=self.tool_name
+        )
+        self.api.command_id = command_id
         for obj in objects:
             if hasattr(obj, 'type'):
                 object_type = obj.type.capitalize()
@@ -454,14 +470,6 @@ class Searcher:
                 object_type = type(obj).__name__
 
             for action in actions:
-                command_start = datetime.now()
-                command_id = self.api.create_command(
-                    itime=time.mktime(command_start.timetuple()),
-                    params=self.rules,
-                    tool_name=self.tool_name
-                )
-                self.api.command_id = command_id
-
                 action = action.strip('--')
                 array = action.split(':')
                 command = array[0]
@@ -471,7 +479,7 @@ class Searcher:
                     array_exp = expression.split('=')
                     key = array_exp[0]
                     value = str('=').join(array_exp[1:])
-                    if object_type == 'VulnerabilityWeb' or object_type == 'Vulnerability':
+                    if object_type == 'Vulnerabilityweb' or object_type == 'Vulnerability_web' or object_type == 'Vulnerability':
                         self._update_vulnerability(obj, key, value)
 
                     if object_type == 'Service':
@@ -481,7 +489,7 @@ class Searcher:
                         self._update_host(obj, key, value)
 
                 elif command == 'DELETE':
-                    if object_type == 'VulnerabilityWeb' or object_type == 'Vulnerability':
+                    if object_type == 'Vulnerabilityweb' or object_type == 'Vulnerability_web' or object_type == 'Vulnerability':
                         self.api.delete_vulnerability(obj.id)
                         logger.info("Deleting vulnerability '%s' with id '%s':" % (obj.name, obj.id))
 
@@ -499,8 +507,8 @@ class Searcher:
                     self.mail_notification.send_mail(expression, subject, body)
                     logger.info("Sending mail to: '%s'" % expression)
 
-                duration = (datetime.now() - command_start).seconds
-                self.api.close_command(self.api.command_id, duration)
+        duration = (datetime.now() - command_start).seconds
+        self.api.close_command(self.api.command_id, duration)
         return True
 
     def _update_vulnerability(self, vuln, key, value):
@@ -555,7 +563,8 @@ class Searcher:
                                 key, value, vuln.name, vuln.id))
                     else:
                         self.api.set_array(field, value, add=to_add, key=key, object=vuln)
-                        action = 'Adding %s to %s list in vulnerability %s with id %s' % (value, key, vuln.name, vuln.id)
+                        action = 'Adding %s to %s list in vulnerability %s with id %s' % (
+                        value, key, vuln.name, vuln.id)
                         if not to_add:
                             action = 'Removing %s from %s list in vulnerability %s with id %s' % (
                                 value, key, vuln.name, vuln.id)

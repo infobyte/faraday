@@ -1,15 +1,14 @@
 import json
 import logging
 import socket
-import sqlalchemy
 from datetime import datetime
 
 from sqlalchemy.orm.attributes import flag_modified
 
 from faraday.searcher.api import ApiError
-from faraday.server.api.modules.vulns import VulnerabilitySchema, VulnerabilityWebSchema
 from faraday.server.models import Workspace, Vulnerability, VulnerabilityWeb, Service, Host, Command, \
     VulnerabilityTemplate, CommandObject, Reference, ReferenceVulnerabilityAssociation, Tag, TagObject
+from faraday.server.utils.database import get_or_create
 
 logger = logging.getLogger('Faraday searcher')
 
@@ -69,7 +68,7 @@ class SqlApi:
         vulnerabilities = [vulnerability for vulnerability, pos in
                            vulnerabilities.distinct(Vulnerability.id)]
 
-        web_vulnerabilities = self.session.query(Vulnerability, Workspace.id).join(Workspace).filter(
+        web_vulnerabilities = self.session.query(VulnerabilityWeb, Workspace.id).join(Workspace).filter(
             Workspace.name == self.workspace.name)
 
         web_vulnerabilities = [web_vulnerability for web_vulnerability, pos in
@@ -112,7 +111,7 @@ class SqlApi:
                                    vulnerabilities_query.distinct(Vulnerability.id)]
 
         web_vulnerabilities = []
-        web_vulnerabilities_query = self.session.query(Vulnerability, Workspace.id).join(Workspace).filter(
+        web_vulnerabilities_query = self.session.query(VulnerabilityWeb, Workspace.id).join(Workspace).filter(
             Workspace.name == self.workspace.name)
         for attr, value in kwargs.iteritems():
             if attr == 'regex':
@@ -122,7 +121,7 @@ class SqlApi:
             elif hasattr(VulnerabilityWeb, attr):
                 web_vulnerabilities_query = web_vulnerabilities_query.filter(getattr(VulnerabilityWeb, attr) == str(value))
                 web_vulnerabilities = [web_vulnerability for web_vulnerability, pos in
-                                       web_vulnerabilities_query.distinct(Vulnerability.id)]
+                                       web_vulnerabilities_query.distinct(VulnerabilityWeb.id)]
 
         return list(set(vulnerabilities + web_vulnerabilities))
 
@@ -169,63 +168,35 @@ class SqlApi:
 
         return templates
 
-    def update_vulnerability(self, vulnerability):
-        try:
-            self.session.add(vulnerability)
-            flag_modified(vulnerability, "custom_fields")
-            self.session.commit()
-            cmd_object_relation = CommandObject(
-                workspace_id=self.workspace.id,
-                command_id=self.command_id,
-                object_type='vulnerability',
-                object_id=vulnerability.id,
-                created_persistent=False
-            )
+    def _get_create_command_object(self, object, object_type):
+        cmd_object_relation, created = get_or_create(
+            self.session,
+            CommandObject,
+            workspace_id=self.workspace.id,
+            command_id=self.command_id,
+            object_type=object_type,
+            object_id=object.id,
+        )
+        cmd_object_relation.created_persistent = False
+        if created:
             self.session.add(cmd_object_relation)
             self.session.commit()
-        except Exception as error:
-            logger.warning(str(error))
-            return False
 
-        return vulnerability
+    def update_vulnerability(self, vulnerability):
+        self.session.add(vulnerability)
+        flag_modified(vulnerability, "custom_fields")
+        self.session.commit()
+        return self._get_create_command_object(vulnerability, 'vulnerability')
 
     def update_service(self, service):
-        try:
-            self.session.add(service)
-            self.session.commit()
-            cmd_object_relation = CommandObject(
-                workspace_id=self.workspace.id,
-                command_id=self.command_id,
-                object_type='service',
-                object_id=service.id,
-                created_persistent=False
-            )
-            self.session.add(cmd_object_relation)
-            self.session.commit()
-        except Exception as error:
-            logger.warning(str(error))
-            return False
-
-        return service
+        self.session.add(service)
+        self.session.commit()
+        return self._get_create_command_object(service, 'service')
 
     def update_host(self, host):
-        try:
-            self.session.add(host)
-            self.session.commit()
-            cmd_object_relation = CommandObject(
-                workspace_id=self.workspace.id,
-                command_id=self.command_id,
-                object_type='host',
-                object_id=host.id,
-                created_persistent=False
-            )
-            self.session.add(cmd_object_relation)
-            self.session.commit()
-        except Exception as error:
-            logger.warning(str(error))
-            return False
-
-        return host
+        self.session.add(host)
+        self.session.commit()
+        return self._get_create_command_object(host, 'host')
 
     def delete_vulnerability(self, vulnerability_id):
         vuln = Vulnerability.query.get(vulnerability_id)

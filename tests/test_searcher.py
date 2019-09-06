@@ -4,9 +4,10 @@ from faraday.searcher.api import Api
 from faraday.searcher.searcher import Searcher, MailNotification
 from faraday.searcher.sqlapi import SqlApi
 from faraday.server.models import Service, Host
+from faraday.server.models import Service, Host, VulnerabilityWeb
 from faraday.server.models import Vulnerability, CommandObject
 from tests.factories import VulnerabilityTemplateFactory, ServiceFactory, \
-    HostFactory, CustomFieldsSchemaFactory
+    HostFactory, CustomFieldsSchemaFactory, VulnerabilityWebFactory
 from tests.factories import WorkspaceFactory, VulnerabilityFactory
 
 
@@ -134,6 +135,93 @@ class TestSearcherRules():
         assert vulns_count == 1
         vuln = session.query(Vulnerability).filter_by(workspace=workspace).first()
         assert vuln.confirmed is True
+
+    @pytest.mark.parametrize("api", [
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+                                                    password='test', base=''),
+        lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+    ])
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_change_severity_webvuln(self, api, session, test_client):
+        workspace = WorkspaceFactory.create()
+        vuln = VulnerabilityWebFactory.create(workspace=workspace, severity='high')
+        session.add(workspace)
+        session.add(vuln)
+        session.commit()
+
+        assert vuln.severity == 'high'
+
+        searcher = Searcher(api(workspace, test_client, session))
+        rules = [{
+            'id': 'CONFIRM_VULN',
+            'model': 'Vulnerability',
+            'object': "severity=high",
+            'actions': ["--UPDATE:severity=informational"]
+        }]
+
+        searcher.process(rules)
+        vulns_count = session.query(VulnerabilityWeb).filter_by(workspace=workspace).count()
+        assert vulns_count == 1
+        vuln = session.query(VulnerabilityWeb).filter_by(workspace=workspace).first()
+        assert vuln.severity == 'informational'
+
+    @pytest.mark.parametrize("api", [
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+                                                    password='test', base=''),
+        lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+    ])
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_severity_info_med(self, api, session, test_client):
+        workspace = WorkspaceFactory.create()
+        vuln = VulnerabilityWebFactory.create(workspace=workspace, severity='medium')
+        session.add(workspace)
+        session.add(vuln)
+        session.commit()
+
+        assert vuln.severity == 'medium'
+
+        searcher = Searcher(api(workspace, test_client, session))
+        rules = [{
+            'id': 'CONFIRM_VULN',
+            'model': 'Vulnerability',
+            'object': "severity=med",
+            'actions': ["--UPDATE:severity=info"]
+        }]
+
+        searcher.process(rules)
+        vulns_count = session.query(VulnerabilityWeb).filter_by(workspace=workspace).count()
+        assert vulns_count == 1
+        vuln = session.query(VulnerabilityWeb).filter_by(workspace=workspace).first()
+        assert vuln.severity == 'informational'
+
+    @pytest.mark.parametrize("api", [
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+                                                    password='test', base=''),
+        lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+    ])
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_severity_info_med_2(self, api, session, test_client):
+        workspace = WorkspaceFactory.create()
+        vuln = VulnerabilityWebFactory.create(workspace=workspace, severity='informational')
+        session.add(workspace)
+        session.add(vuln)
+        session.commit()
+
+        assert vuln.severity == 'informational'
+
+        searcher = Searcher(api(workspace, test_client, session))
+        rules = [{
+            'id': 'CONFIRM_VULN',
+            'model': 'Vulnerability',
+            'object': "severity=info",
+            'actions': ["--UPDATE:severity=med"]
+        }]
+
+        searcher.process(rules)
+        vulns_count = session.query(VulnerabilityWeb).filter_by(workspace=workspace).count()
+        assert vulns_count == 1
+        vuln = session.query(VulnerabilityWeb).filter_by(workspace=workspace).first()
+        assert vuln.severity == 'medium'
 
     @pytest.mark.parametrize("api", [
         lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
@@ -513,4 +601,81 @@ class TestSearcherRules():
         searcher.process(rules)
 
         host = session.query(Host).filter_by(workspace=workspace).first()
+        assert host.owned is True
+
+    @pytest.mark.parametrize("api", [
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+                                                    password='test', base=''),
+        lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+    ])
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_update_host_with_all_fields(self, api, session, test_client):
+        workspace = WorkspaceFactory.create()
+        host = HostFactory.create(workspace=workspace,
+                                  os='Unix',
+                                  ip="10.25.86.39",
+                                  owned=False,
+                                  description='HDesc',
+                                  mac='MAC')
+        session.add(workspace)
+        session.add(host)
+        session.commit()
+
+        assert host.owned is False
+        assert host.os == 'Unix'
+        assert host.ip == "10.25.86.39"
+        assert host.description == 'HDesc'
+        assert host.mac == 'MAC'
+
+        searcher = Searcher(api(workspace, test_client, session))
+        rules = [{
+            'id': 'UPDATE_HOST',
+            'model': 'Host',
+            'object': "ip=10.25.86.39 owned=False os=Unix",
+            'actions': ["--UPDATE:description=HDescUp", "--UPDATE:mac=MAC2"]
+        }]
+
+        searcher.process(rules)
+
+        host = session.query(Host).filter_by(workspace=workspace).first()
+        assert host.description == 'HDescUp'
+        assert host.mac == 'MAC2'
+
+    @pytest.mark.parametrize("api", [
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+                                                    password='test', base=''),
+        lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+    ])
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_update_host_with_all_fields_2(self, api, session, test_client):
+        workspace = WorkspaceFactory.create()
+        host = HostFactory.create(workspace=workspace,
+                                  os='Unix',
+                                  ip="10.25.86.39",
+                                  owned=False,
+                                  description='HDesc',
+                                  mac='MAC')
+        session.add(workspace)
+        session.add(host)
+        session.commit()
+
+        assert host.owned is False
+        assert host.os == 'Unix'
+        assert host.ip == "10.25.86.39"
+        assert host.description == 'HDesc'
+        assert host.mac == 'MAC'
+
+        searcher = Searcher(api(workspace, test_client, session))
+        rules = [{
+            'id': 'UPDATE_HOST',
+            'model': 'Host',
+            'object': "description=HDesc mac=MAC",
+            'actions': ["--UPDATE:ip=10.25.50.47", "--UPDATE:owned=True", "--UPDATE:os=Windows"]
+        }]
+
+        searcher.process(rules)
+
+        host = session.query(Host).filter_by(workspace=workspace).first()
+        assert host.ip == '10.25.50.47'
+        assert host.os == 'Windows'
         assert host.owned is True

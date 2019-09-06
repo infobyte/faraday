@@ -147,7 +147,7 @@ def get_field(obj, field):
         if field in obj.__dict__ or hasattr(obj, field):
             return getattr(obj, field)
         if field == 'refs':
-            return getattr(obj, 'reference_instances')
+            return getattr(obj, 'references')
         return None
     except AttributeError:
         logger.error("ERROR: Field %s is invalid" % field)
@@ -541,26 +541,32 @@ class Searcher:
             else:
                 field = get_field(vuln, key)
 
-            if field is not None and is_custom_field is False:
-                if isinstance(field, (str, unicode)):
-                    setattr(vuln, key, value)
-                    logger.info(
-                        "Changing property %s to %s in vulnerability '%s' with id %s" % (
-                            key, value, vuln.name, vuln.id))
+            if key == 'refs':
+                try:
+                    vuln.references.add(value)
+                except AttributeError:
+                    vuln.refs.append(value)
+            elif field:
+                if not is_custom_field:
+                    if isinstance(field, (str, unicode)):
+                        setattr(vuln, key, value)
+                        logger.info(
+                            "Changing property %s to %s in vulnerability '%s' with id %s" % (
+                                key, value, vuln.name, vuln.id))
+                    else:
+                        self.api.set_array(field, value, add=to_add, key=key, object=vuln)
+                        action = 'Adding %s to %s list in vulnerability %s with id %s' % (value, key, vuln.name, vuln.id)
+                        if not to_add:
+                            action = 'Removing %s from %s list in vulnerability %s with id %s' % (
+                                value, key, vuln.name, vuln.id)
+
+                        logger.info(action)
+
                 else:
-                    self.api.set_array(field, value, add=to_add, key=key, object=vuln)
-                    action = 'Adding %s to %s list in vulnerability %s with id %s' % (value, key, vuln.name, vuln.id)
-                    if not to_add:
-                        action = 'Removing %s from %s list in vulnerability %s with id %s' % (
-                            value, key, vuln.name, vuln.id)
-
-                    logger.info(action)
-
-            if field is not None and is_custom_field is True:
-                vuln.custom_fields[key] = value
-                logger.info(
-                    "Changing custom field %s to %s in vulnerability '%s' with id %s" % (
-                        key, value, vuln.name, vuln.id))
+                    vuln.custom_fields[key] = value
+                    logger.info(
+                        "Changing custom field %s to %s in vulnerability '%s' with id %s" % (
+                            key, value, vuln.name, vuln.id))
 
         result = self.api.update_vulnerability(vuln)
         if result is False:

@@ -315,7 +315,7 @@ angular.module("faradayApp")
             }
             else {
                 $scope.columnsWidths = {
-                    "name":             "120",
+                    "name":             "180",
                     "service":          "110",
                     "hostnames":        "130",
                     "target":           "100",
@@ -768,7 +768,7 @@ angular.module("faradayApp")
             });
         }
         var resizeGrid = function() {
-            $scope.gridHeight = getGridHeight('grid', 'right-main', 15);
+            $scope.gridHeight = getGridHeight('grid', 'left-main', 15);
         };
 
         var recalculateLastVisibleColSize = function () {

@@ -7,9 +7,8 @@ import json
 import flask
 from flask import Blueprint
 from flask_classful import route
-from marshmallow import Schema, fields, post_load, validate
+from marshmallow import Schema, fields, post_load, validate, ValidationError
 from sqlalchemy.orm import (
-    query_expression,
     with_expression
 )
 from sqlalchemy.orm.exc import NoResultFound
@@ -51,7 +50,7 @@ class WorkspaceDurationSchema(Schema):
 class WorkspaceSchema(AutoSchema):
 
     name = fields.String(required=True,
-                         validate=validate.Regexp(r"^[a-z0-9][a-z0-9\_\$\(\)\+\-\/]*$",0,"ERORROROR"))
+                         validate=validate.Regexp(r"^[a-z0-9][a-z0-9\_\$\(\)\+\-\/]*$", 0, "ERORROROR"))
     stats = SelfNestedField(WorkspaceSummarySchema())
     duration = SelfNestedField(WorkspaceDurationSchema())
     _id = fields.Integer(dump_only=True, attribute='id')
@@ -80,6 +79,9 @@ class WorkspaceSchema(AutoSchema):
         duration = data.pop('duration', None)
         if duration:
             data.update(duration)
+        if 'start_date' in data and 'end_date' in data and data['start_date'] and data['end_date']:
+            if data['start_date'] > data['end_date']:
+                raise ValidationError("start_date is bigger than end_date.")
         return data
 
 
@@ -176,8 +178,7 @@ class WorkspaceView(ReadWriteView):
         scope = data.pop('scope', [])
         workspace = super(WorkspaceView, self)._perform_create(data, **kwargs)
         workspace.set_scope(scope)
-        if workspace.start_date > workspace.end_date:
-            flask.abort(400, "start_date or end_date not valid")
+
         db.session.commit()
         return workspace
 

@@ -23,13 +23,13 @@ angular.module('faradayApp')
                                            placeholder="{{cf.field_display_name}}" \n\
                                            ng-model="valueField" \n\
                                            uib-tooltip="Input type list"/> \n\
-                                    <span class="input-group-addon cursor"><i class="fa fa-plus-circle" ng-click="newValueField(valueField)"></i></span> \n\
+                                    <span class="input-group-addon cursor" ng-click="newValueField(valueField)"><i class="fa fa-plus-circle"></i></span> \n\
                                 </div> \n\
                             </div> \n\
-                            <div class="col-md-12 reference last-item-field" ng-repeat="item in modal.data.custom_fields[cf.field_name] track by $index" ng-class="{\'last-item-field\':$last}" ng-if="cf.field_type === \'list\'"> \n\
+                            <div class="reference" ng-repeat="item in modal.data.custom_fields[cf.field_name] track by $index" ng-class="{\'last-item-field\':$last}" ng-if="cf.field_type === \'list\'"> \n\
                                 <div class="input-group margin-bottom-sm"> \n\
                                     <label class="sr-only" for="vuln-refs-create">{{cf.field_display_name}}</label> \n\
-                                    <input type="text" class="form-control" id="vuln-refs-create" placeholder="{{cf.field_display_name}}" \n\
+                                    <input type="text" class="form-control input-sm" id="vuln-refs-create" placeholder="{{cf.field_display_name}}" \n\
                                            ng-model="item.value" \n\
                                            role="button" readonly/> \n\
                                     <span class="input-group-addon cursor" ng-click="modal.data.custom_fields[cf.field_name].splice($index, 1)"> \n\

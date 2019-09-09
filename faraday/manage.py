@@ -20,7 +20,7 @@ if platform.system() == "Linux":
         faraday_group = grp.getgrnam(FARADAY_GROUP)
         #The current user may be different from the logged user
         current_user = getuser()
-        if system_user != 'root' and faraday_group.gr_gid not in os.getgroups():
+        if current_user != 'root' and faraday_group.gr_gid not in os.getgroups():
             print("\n\nUser (%s) must be in the '%s' group." % (os.getlogin(), FARADAY_GROUP))
             print("After adding the user to the group, please logout and login again.")
             sys.exit(1)
@@ -46,6 +46,7 @@ from faraday.server.commands import status_check as status_check_functions
 from faraday.server.commands import change_password as change_pass
 from faraday.server.commands.custom_fields import add_custom_field_main, delete_custom_field_main
 from faraday.server.commands import support as support_zip
+from faraday.server.commands import change_username
 from faraday.server.models import db, User
 from faraday.server.importer import ImportCouchDB
 from faraday.server.web import app
@@ -269,6 +270,17 @@ def delete_custom_field():
     delete_custom_field_main()
 
 
+@click.command(help="Change username")
+@click.option('--current_username', required=True, prompt=True)
+@click.option('--new_username', required=True, prompt=True)
+def rename_user(current_username, new_username):
+    if(current_username == new_username):
+        print("\nERROR: Usernames must be different.")
+        sys.exit(1)
+    else:
+        change_username.change_username(current_username, new_username)
+
+
 cli.add_command(process_reports)
 cli.add_command(show_urls)
 cli.add_command(initdb)
@@ -284,6 +296,7 @@ cli.add_command(add_custom_field)
 cli.add_command(delete_custom_field)
 cli.add_command(support)
 cli.add_command(list_plugins)
+cli.add_command(rename_user)
 
 if __name__ == '__main__':
     cli()

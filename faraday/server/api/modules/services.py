@@ -96,7 +96,7 @@ class ServiceSchema(AutoSchema):
 class ServiceFilterSet(FilterSet):
     class Meta(FilterSetMeta):
         model = Service
-        fields = ('host_id', 'protocol', 'name', 'port')
+        fields = ('id', 'host_id', 'protocol', 'name', 'port')
         default_operator = operators.Equal
         operators = (operators.Equal,)
 

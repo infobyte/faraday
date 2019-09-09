@@ -107,7 +107,7 @@ class ServicePortFilter(Filter):
 class HostFilterSet(FilterSet):
     class Meta(FilterSetMeta):
         model = Host
-        fields = ('ip', 'name', 'os', 'service', 'port')
+        fields = ('id', 'ip', 'name', 'os', 'service', 'port')
         operators = (operators.Equal, operators.Like, operators.ILike)
     service = ServiceNameFilter(fields.Str())
     port = ServicePortFilter(fields.Str())

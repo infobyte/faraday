@@ -655,7 +655,7 @@ class Searcher:
                     array_exp = expression.split('=')
                     key = array_exp[0]
                     value = str('=').join(array_exp[1:])
-                    if object_type == 'Vulnerabilityweb' or object_type == 'Vulnerability_web' or object_type == 'Vulnerability':
+                    if object_type in ['Vulnerabilityweb', 'Vulnerability_web', 'Vulnerability']:
                         self._update_vulnerability(obj, key, value)
 
                     if object_type == 'Service':
@@ -665,7 +665,7 @@ class Searcher:
                         self._update_host(obj, key, value)
 
                 elif command == 'DELETE':
-                    if object_type == 'Vulnerabilityweb' or object_type == 'Vulnerability_web' or object_type == 'Vulnerability':
+                    if object_type in ['Vulnerabilityweb', 'Vulnerability_web', 'Vulnerability']:
                         self.api.delete_vulnerability(obj.id)
                         logger.info("Deleting vulnerability '%s' with id '%s':" % (obj.name, obj.id))
 

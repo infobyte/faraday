@@ -16,7 +16,7 @@ angular.module('faradayApp')
                                        ng-model="modal.data.custom_fields[cf.field_name]" check-custom-type="{{cf.field_type}}" \n\
                                        uib-tooltip="{{(cf.field_type === \'int\') ? \'Type only numbers\' : \'Input type text\'}}"/> \n\
                             </div> \n\
-                            <div class="form-group " ng-if="cf.field_type === \'list\'">\n\
+                            <div class="form-group " ng-if="cf.field_type === \'list\'" ng-class="modal.data.custom_fields[cf.field_name].length > 0 ? \'no-margin-bottom\' : \'\'">\n\
                                 <div class="input-group"> \n\
                                     <label class="sr-only" for="{{cf.field_name}}">{{cf.field_display_name}}</label> \n\
                                     <input type="text" class="form-control input-sm" id="{{cf.field_name}}_list" name="{{cf.field_name}}" \n\

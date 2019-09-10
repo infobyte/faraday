@@ -316,7 +316,7 @@ def create_app(db_connection_string=None, testing=None):
 
     storage_path = faraday.server.config.storage.path
     if not storage_path:
-        logger.warn('No storage section or path in the .faraday/server.ini. Setting the default value to .faraday/storage')
+        logger.warn('No storage section or path in the .faraday/config/server.ini. Setting the default value to .faraday/storage')
         storage_path = setup_storage_path()
 
     if not DepotManager.get('default'):

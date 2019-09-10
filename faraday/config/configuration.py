@@ -8,6 +8,7 @@ import os
 import json
 import shutil
 
+from faraday.config.constant import CONST_FARADAY_HOME_PATH
 
 try:
     import xml.etree.cElementTree as ET
@@ -647,25 +648,26 @@ class Configuration:
 
 
 def getInstanceConfiguration():
+    # TODO: move this to the client and stop using this on the server.
     global the_config
     if the_config is None:
-        faraday_dir = os.path.expanduser("~/.faraday")
+        faraday_dir = CONST_FARADAY_HOME_PATH
         if not os.path.exists(faraday_dir):
             os.mkdir(faraday_dir)
-        config_dir = os.path.expanduser("~/.faraday/config")
+        config_dir = os.path.join(faraday_dir, 'config')
         if not os.path.exists(config_dir):
             os.mkdir(config_dir)
 
-        faraday_server_config = os.path.expanduser("~/.faraday/config/server.ini")
+        faraday_server_config = os.path.join(config_dir, "/server.ini")
         if not os.path.isfile(faraday_server_config):
             shutil.copy(DEFAULT_SERVER_INI, faraday_server_config)
 
-        faraday_user_config = os.path.expanduser("~/.faraday/config/user.xml")
+        faraday_user_config = os.path.expanduser(config_dir, "user.xml")
         if not os.path.isfile(faraday_user_config):
             shutil.copy(DEFAULT_XML, faraday_user_config)
 
-        if os.path.exists(os.path.expanduser("~/.faraday/config/user.xml")):
-            the_config = Configuration(os.path.expanduser("~/.faraday/config/user.xml"))
+        if os.path.exists(os.path.join(config_dir, "/user.xml")):
+            the_config = Configuration(os.path.join(config_dir, "/user.xml"))
         else:
-            the_config = Configuration(os.path.expanduser("~/.faraday/config/config.xml"))
+            the_config = Configuration(os.path.join(config_dir, "config.xml"))
     return the_config

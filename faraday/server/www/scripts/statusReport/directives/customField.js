@@ -19,7 +19,7 @@ angular.module('faradayApp')
                             <div class="form-group " ng-if="cf.field_type === \'list\'">\n\
                                 <div class="input-group"> \n\
                                     <label class="sr-only" for="{{cf.field_name}}">{{cf.field_display_name}}</label> \n\
-                                    <input type="text" class="form-control input-sm" id="{{cf.field_name}}" name="{{cf.field_name}}" \n\
+                                    <input type="text" class="form-control input-sm" id="{{cf.field_name}}_list" name="{{cf.field_name}}" \n\
                                            placeholder="{{cf.field_display_name}}" \n\
                                            ng-model="valueField" \n\
                                            uib-tooltip="Input type list"/> \n\
@@ -52,7 +52,7 @@ angular.module('faradayApp')
                             scope.modal.data.custom_fields[scope.cf.field_name].push({value: valueField});
                             scope.valueField = "";
                         }
-                        angular.element('#'+scope.cf.field_name).val("");
+                        angular.element('#'+scope.cf.field_name+'_list').val("");
                     }
                 }
             }

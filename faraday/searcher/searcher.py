@@ -805,7 +805,7 @@ class Searcher:
 
             field = get_field(host, key)
             if field is not None:
-                if isinstance(field, (str, unicode)):
+                if isinstance(field, str):
                     setattr(host, key, value)
                     logger.info("Changing property %s to %s in host '%s' with id %s" % (key, value, host.ip, host.id))
                 else:

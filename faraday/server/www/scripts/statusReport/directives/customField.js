@@ -29,8 +29,11 @@ angular.module('faradayApp')
                             <div class="reference" ng-repeat="item in modal.data.custom_fields[cf.field_name] track by $index" ng-class="{\'last-item-field\':$last}" ng-if="cf.field_type === \'list\'"> \n\
                                 <div class="input-group margin-bottom-sm"> \n\
                                     <label class="sr-only" for="vuln-refs-create">{{cf.field_display_name}}</label> \n\
-                                    <input type="text" class="form-control input-sm" id="vuln-refs-create" placeholder="{{cf.field_display_name}}" \n\
+                                    <input ng-if="item.value" type="text" class="form-control input-sm" id="vuln-refs-create" placeholder="{{cf.field_display_name}}" \n\
                                            ng-model="item.value" \n\
+                                           role="button" readonly/> \n\
+                                    <input ng-if="!item.value" type="text" class="form-control input-sm" id="vuln-refs-create" placeholder="{{cf.field_display_name}}" \n\
+                                           ng-model="item" \n\
                                            role="button" readonly/> \n\
                                     <span class="input-group-addon cursor" ng-click="modal.data.custom_fields[cf.field_name].splice($index, 1)"> \n\
                                     <i class="fa fa-minus-circle"></i></span>                                \n\

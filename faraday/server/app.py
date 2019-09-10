@@ -46,14 +46,14 @@ import faraday.server.config
 # Load SQLAlchemy Events
 import faraday.server.events
 from faraday.server.utils.logger import LOGGING_HANDLERS
-
+from faraday.config.constant import CONST_FARADAY_HOME_PATH
 
 
 logger = logging.getLogger(__name__)
 
 
 def setup_storage_path():
-    default_path = join(expanduser("~"), '.faraday/storage')
+    default_path = join(CONST_FARADAY_HOME_PATH, '.faraday/storage')
     if not os.path.exists(default_path):
         logger.info('Creating directory {0}'.format(default_path))
         os.mkdir(default_path)

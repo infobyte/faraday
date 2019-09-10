@@ -773,7 +773,7 @@ class Searcher:
 
             field = get_field(service, key)
             if field is not None:
-                if isinstance(field, (str, unicode)):
+                if isinstance(field, str):
                     setattr(service, key, value)
                     logger.info(
                         "Changing property %s to %s in service '%s' with id %s" % (
@@ -823,8 +823,8 @@ class Searcher:
 
     def _process_models_by_similarity(self, _models, rule):
         logger.debug("--> Start Process models by similarity")
-        for index_m1, m1 in zip(range(len(_models) - 1), _models):
-            for index_m2, m2 in zip(range(index_m1 + 1, len(_models)), _models[index_m1 + 1:]):
+        for index_m1, m1 in zip(list(range(len(_models) - 1)), _models):
+            for index_m2, m2 in zip(list(range(index_m1 + 1, len(_models))), _models[index_m1 + 1:]):
                 if m1.id != m2.id and is_same_level(m1, m2):
                     if equals(m1, m2, rule):
                         environment = [m1, m2]

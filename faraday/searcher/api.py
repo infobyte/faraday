@@ -192,7 +192,7 @@ class Api:
                 self._get(self._url('vulnerability_template/', True), 'templates')['rows']]
 
     def filter_vulnerabilities(self, **kwargs):
-        if len(kwargs.keys()) > 1:
+        if len(list(kwargs.keys())) > 1:
             params = urlencode(kwargs)
             url = self._url('ws/{}/vulns/?{}'.format(self.workspace, params))
         else:
@@ -250,7 +250,7 @@ class Api:
 
     @staticmethod
     def parse_args(**kwargs):
-        if len(kwargs.keys()) > 0:
+        if len(list(kwargs.keys())) > 0:
             key = list(kwargs.keys())[0]
             value = kwargs.get(key, '')
             item = '"name":"{}","op":"eq","val":"{}"'.format(key, value)

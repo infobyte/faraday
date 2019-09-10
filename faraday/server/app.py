@@ -53,7 +53,7 @@ logger = logging.getLogger(__name__)
 
 
 def setup_storage_path():
-    default_path = join(CONST_FARADAY_HOME_PATH, '.faraday/storage')
+    default_path = join(CONST_FARADAY_HOME_PATH, 'storage')
     if not os.path.exists(default_path):
         logger.info('Creating directory {0}'.format(default_path))
         os.mkdir(default_path)

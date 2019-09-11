@@ -9,7 +9,7 @@ See the file 'doc/LICENSE' for the license information
 import webbrowser
 import gi
 import os
-
+from faraday.client.start_client import FARADAY_CLIENT_BASE
 gi.require_version('Gtk', '3.0')
 
 from faraday.client.persistence.server.server import ResourceDoesNotExist

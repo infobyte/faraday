@@ -11,6 +11,7 @@ import os
 import json
 import shutil
 
+from faraday.config.constant import CONST_FARADAY_HOME_PATH
 
 try:
     import xml.etree.cElementTree as ET
@@ -214,10 +215,14 @@ class Configuration:
         return self._auto_share_workspace
 
     def getConfigPath(self):
-        return os.path.expanduser(self._config_path)
+        if not self._config_path:
+            self._config_path = CONST_FARADAY_HOME_PATH
+        return self._config_path
 
     def getDataPath(self):
-        return os.path.expanduser(self._data_path)
+        if not self._data_path:
+            self._data_path = os.path.join(CONST_FARADAY_HOME_PATH,'data')
+        return self._data_path
 
     def getDebugStatus(self):
         return int(self._debug_status)
@@ -226,25 +231,35 @@ class Configuration:
         return self._default_category
 
     def getDefaultTempPath(self):
-        return os.path.expanduser(self._default_temp_path)
+        if not self._default_temp_path:
+            self._default_temp_path = os.path.join(CONST_FARADAY_HOME_PATH,'temp')
+        return self._default_temp_path
 
     def getFont(self):
         return self._font
 
     def getHomePath(self):
-        return os.path.expanduser(self._home_path)
+        if not self._home_path:
+            self._home_path = CONST_FARADAY_HOME_PATH
+        return self._home_path
 
     def getHostTreeToggle(self):
         return self._host_tree_toggle
 
     def getHsactionsPath(self):
-        return os.path.expanduser(self._hsactions_path)
+        if not self._hsactions_path:
+            self._hsactions_path = os.path.join(CONST_FARADAY_HOME_PATH, 'hstactions.dat')
+        return self._hsactions_path
 
     def getIconsPath(self):
-        return os.path.expanduser(self._icons_path)
+        if not self._icons_path:
+            self._icons_path = os.path.join(CONST_FARADAY_HOME_PATH, 'images', 'icons')
+        return self._icons_path
 
     def getImagePath(self):
-        return os.path.expanduser(self._image_path)
+        if not self._image_path:
+            self._image_path = os.path.join(CONST_FARADAY_HOME_PATH,'images')
+        return self._image_path
 
     def getLogConsoleToggle(self):
         return self._log_console_toggle
@@ -253,7 +268,9 @@ class Configuration:
         return self._network_location
 
     def getPersistencePath(self):
-        return os.path.expanduser(self._persistence_path)
+        if not self._persistence_path:
+            self._persistence_path =  os.path.join(CONST_FARADAY_HOME_PATH,'persistence')
+        return self._persistence_path
 
     def getPerspectiveView(self):
         return self._perspective_view
@@ -277,7 +294,9 @@ class Configuration:
         return self._repo_user
 
     def getReportPath(self):
-        return os.path.expanduser(self._report_path)
+        if not self._report_path:
+            self._report_path = os.path.join(CONST_FARADAY_HOME_PATH,"report")
+        return self._report_path
 
     def getShellMaximized(self):
         return self._shell_maximized
@@ -474,7 +493,7 @@ class Configuration:
             if level and (not elem.tail or not elem.tail.strip()):
                 elem.tail = i
 
-    def saveConfig(self, xml_file="~/.faraday/config/user.xml"):
+    def saveConfig(self, xml_file=None):
         """ Saves XML config on new file. """
 
         ROOT = Element("faraday")
@@ -645,32 +664,39 @@ class Configuration:
         ROOT.append(TKT_TEMPLATE)
 
         self.indent(ROOT, 0)
-        xml_file = os.path.expanduser(xml_file)
+
+        if not xml_file:
+            xml_file = os.path.expanduser('~/.faraday/config/user.xml')
+
+        if xml_file.startswith('~'):
+            xml_file = os.path.expanduser(xml_file)
+
         ElementTree(ROOT).write(xml_file)
 
 
 def getInstanceConfiguration():
+    # TODO: move this to the client and stop using this on the server.
     global the_config
     if the_config is None:
-        faraday_dir = os.path.expanduser("~/.faraday")
+        faraday_dir = CONST_FARADAY_HOME_PATH
         if not os.path.exists(faraday_dir):
             os.mkdir(faraday_dir)
-        config_dir = os.path.expanduser("~/.faraday/config")
+        config_dir = os.path.join(faraday_dir, 'config')
         if not os.path.exists(config_dir):
             os.mkdir(config_dir)
 
-        faraday_server_config = os.path.expanduser("~/.faraday/config/server.ini")
+        faraday_server_config = os.path.join(config_dir, "server.ini")
         if not os.path.isfile(faraday_server_config):
             shutil.copy(DEFAULT_SERVER_INI, faraday_server_config)
 
-        faraday_user_config = os.path.expanduser("~/.faraday/config/user.xml")
+        faraday_user_config = os.path.join(config_dir, "user.xml")
         if not os.path.isfile(faraday_user_config):
             shutil.copy(DEFAULT_XML, faraday_user_config)
 
-        if os.path.exists(os.path.expanduser("~/.faraday/config/user.xml")):
-            the_config = Configuration(os.path.expanduser("~/.faraday/config/user.xml"))
+        if os.path.exists(os.path.join(config_dir, "user.xml")):
+            the_config = Configuration(os.path.join(config_dir, "user.xml"))
         else:
-            the_config = Configuration(os.path.expanduser("~/.faraday/config/config.xml"))
+            the_config = Configuration(os.path.join(config_dir, "config.xml"))
     return the_config
 
 

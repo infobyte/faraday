@@ -105,6 +105,9 @@ def validate_action(actions):
         return False
 
     for action in actions:
+        if action is None:
+            return False
+
         if not action.startswith('--UPDATE:') and not action.startswith('--ALERT:') and not action.startswith(
                 '--EXECUTE:') and not action.startswith('--DELETE:'):
             return False

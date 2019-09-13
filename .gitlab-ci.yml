@@ -239,14 +239,17 @@ generate_deb:
         - ls
         - cd faraday_copy
         - git clone git@gitlab.com:faradaysec/faraday-linux-installers-builder.git
-        - sh faraday-linux-installers-builder/build-deb.sh $(eval $IMAGE_TAG)
+        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server deb
         - mv faraday-server_amd64.deb ../../faraday-server_amd64.deb
+        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) client deb
+        - mv faraday-client_amd64.deb ../../faraday-client_amd64.deb
     dependencies:
         - generate_build_file
     artifacts:
         name: 'faraday_$CI_COMMIT_REF_NAME.deb'
         paths:
             - "faraday-server_amd64.deb"
+            - "faraday-client_amd64.deb"
         expire_in: 15 days
     only:
         variables:
@@ -282,14 +285,17 @@ generate_rpm:
         - ls
         - cd faraday_copy
         - git clone git@gitlab.com:faradaysec/faraday-linux-installers-builder.git
-        - sh faraday-linux-installers-builder/build-rpm.sh $(eval $IMAGE_TAG)
+        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm
         - mv faraday-server_amd64.rpm ../../faraday-server_amd64.rpm
+        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) client rpm
+        - mv faraday-client_amd64.rpm ../../faraday-client_amd64.rpm
     dependencies:
         - generate_build_file
     artifacts:
         name: 'faraday_$CI_COMMIT_REF_NAME.rpm'
         paths:
             - "faraday-server_amd64.rpm"
+            - "faraday-client_amd64.rpm"
         expire_in: 15 days
     only:
         variables:

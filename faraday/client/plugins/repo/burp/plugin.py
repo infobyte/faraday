@@ -1,21 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import with_statement
+"""
 import re
 import os
 import sys
 import base64
 from bs4 import BeautifulSoup, Comment
-from faraday.client.plugins import core
+from faraday.client.plugins.plugin import PluginXMLFormat
 try:
     from urlparse import urlsplit
 except ImportError:
@@ -216,14 +213,14 @@ class Item:
         return None
 
 
-class BurpPlugin(core.PluginBase):
+class BurpPlugin(PluginXMLFormat):
     """
     Example plugin to parse burp output.
     """
 
     def __init__(self):
-
-        core.PluginBase.__init__(self)
+        super().__init__()
+        self.identifier_tag = "issues"
         self.id = "Burp"
         self.name = "Burp XML Output Plugin"
         self.plugin_version = "0.0.2"

@@ -1,13 +1,8 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-from __future__ import absolute_import
-
+"""
 import re
 import os
 import json
@@ -15,11 +10,7 @@ import shlex
 import socket
 import argparse
 import tempfile
-
-try:
-    import urlparse
-except ImportError:
-    import urllib.parse as urlparse
+import urllib.parse as urlparse
 
 
 from faraday.client.plugins.plugin import PluginTerminalOutput
@@ -67,7 +58,7 @@ status_codes = {
 
 class DirsearchPlugin(PluginTerminalOutput):
     def __init__(self):
-        super(DirsearchPlugin, self).__init__()
+        super().__init__()
         self.id = "dirsearch"
         self.name = "dirsearch"
         self.plugin_version = "0.0.1"

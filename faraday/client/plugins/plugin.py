@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
 
 from __future__ import absolute_import
 
@@ -45,7 +45,6 @@ class PluginBase:
     class_signature = "PluginBase"
 
     def __init__(self):
-
         self.data_path = CONF.getDataPath()
         self.persistence_path = CONF.getPersistencePath()
         self.workspace = CONF.getLastWorkspace()
@@ -65,6 +64,9 @@ class PluginBase:
         self._settings = {}
         self.command_id = None
         self.logger = logger.getChild(self.__class__.__name__)
+
+    def report_belongs_to(self, **kwargs):
+        return False
 
     def has_custom_output(self):
         return bool(self._output_file_path)
@@ -383,6 +385,54 @@ class PluginCustomOutput(PluginBase):
         # we discard the term_output since it's not necessary
         # for this type of plugins
         self.processReport(self._output_file_path)
+
+
+class PluginByExtension(PluginBase):
+    def __init__(self):
+        super().__init__()
+        self.extension = []
+
+    def report_belongs_to(self, extension="", **kwargs):
+        match = False
+        if type(self.extension) == str:
+            match = (self.extension == extension)
+        elif type(self.extension) == list:
+            match = (extension in self.extension)
+        self.logger.debug("Extension Match: [%s =/in %s] -> %s", extension, self.extension, match)
+        return match
+
+class PluginXMLFormat(PluginByExtension):
+
+    def __init__(self):
+        super().__init__()
+        self.identifier_tag = []
+        self.extension = ".xml"
+
+    def report_belongs_to(self, **kwargs):
+        match = False
+        main_tag = kwargs.get("main_tag", "")
+        if super().report_belongs_to(**kwargs):
+            if type(self.identifier_tag) == str:
+                match = (main_tag == self.identifier_tag)
+            elif type(self.identifier_tag) == list:
+                match = (main_tag in self.identifier_tag)
+        self.logger.debug("Tag Match: [%s =/in %s] -> %s", main_tag, self.identifier_tag, match)
+        self.logger.debug(f"{type(main_tag)}")
+        return match
+
+
+class PluginJsonFormat(PluginByExtension):
+
+    def __init__(self):
+        super().__init__()
+        self.json_keys = set()
+        self.extension = ".json"
+
+    def report_belongs_to(self, **kwargs):
+        if super().report_belongs_to(**kwargs):
+            pass
+        else:
+            return False
 
 
 class PluginProcess(Thread):

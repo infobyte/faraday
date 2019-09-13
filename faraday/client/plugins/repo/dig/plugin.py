@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Updated by Mike Zhong, 25 Oct 2017.
 
@@ -6,9 +5,6 @@ Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 """
-from __future__ import absolute_import
-from __future__ import print_function
-
 import re
 import socket
 
@@ -30,7 +26,7 @@ class DigPlugin(core.PluginBase):
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = u"dig"
         self.name = u"DiG"
         self.plugin_version = u"0.0.1"

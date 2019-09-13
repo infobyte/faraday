@@ -1,20 +1,13 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import with_statement
-from faraday.client.plugins import core
+"""
+from faraday.client.plugins.plugin import PluginXMLFormat
 from faraday.client.model import api
 import re
 import os
-import pprint
 import sys
 
 try:
@@ -251,13 +244,14 @@ class NexposeFullXmlParser:
         return hosts
 
 
-class NexposeFullPlugin(core.PluginBase):
+class NexposeFullPlugin(PluginXMLFormat):
     """
     Example plugin to parse nexpose output.
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
+        self.identifier_tag = "NexposeReport"
         self.id = "NexposeFull"
         self.name = "Nexpose XML 2.0 Report Plugin"
         self.plugin_version = "0.0.1"
@@ -342,19 +336,5 @@ class NexposeFullPlugin(core.PluginBase):
 def createPlugin():
     return NexposeFullPlugin()
 
-if __name__ == '__main__':
-    if len(sys.argv) == 2:
-        xml_file = sys.argv[1]
-        if os.path.isfile(xml_file):
-            with open(xml_file, 'rb') as f:
-                parser = NexposeFullXmlParser(f.read())
-                for item in parser.items:
-                    print("* {0} ({1}) - Vulns: {2}".format(item['name'], item['os'], len(item['vulns'])))
-                    for vuln in item['vulns']:
-                        print("- {0} (Severity: {1})".format(vuln['name'], vuln['severity']))
-        else:
-            print("File (%s) not found" % xml_file)
-    else:
-        print("Usage: {0} XML_FILE".format(sys.argv[0]))
 
 # I'm Py3

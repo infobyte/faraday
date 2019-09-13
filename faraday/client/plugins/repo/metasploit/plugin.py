@@ -1,16 +1,9 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-from __future__ import absolute_import
-from __future__ import print_function
-
-from __future__ import with_statement
-from faraday.client.plugins import core
+"""
+from faraday.client.plugins.plugin import PluginXMLFormat
 from faraday.client.model import api
 import re
 import os
@@ -51,14 +44,10 @@ class MetasploitXmlParser:
 
     def __init__(self, xml_output):
         tree = self.parse_xml(xml_output)
-
         if tree:
             servicesByWebsite = {}
             for site in tree.findall('web_sites/web_site'):
-
-                servicesByWebsite[site.find('id').text] = site.find(
-                    'service-id').text
-
+                servicesByWebsite[site.find('id').text] = site.find('service-id').text
             webVulnsByService = {}
             for v in [data for data in self.get_vulns(tree, servicesByWebsite)]:
                 if v.service_id not in webVulnsByService:
@@ -169,8 +158,7 @@ class Host:
             self.vulnsByService[service['id']] = []
             self.notesByService[service['id']] = []
             if service['id'] in webVulnsByService:
-                self.vulnsByService[service['id']
-                                    ] += webVulnsByService[service['id']]
+                self.vulnsByService[service['id']] += webVulnsByService[service['id']]
 
         for v in self.node.findall('vulns/vuln'):
             vuln = HostVuln(v)
@@ -336,13 +324,14 @@ class HostVuln:
         return ""
 
 
-class MetasploitPlugin(core.PluginBase):
+class MetasploitPlugin(PluginXMLFormat):
     """
     Example plugin to parse metasploit output.
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
+        self.identifier_tag = ["MetasploitV4", "MetasploitV5"]
         self.id = "Metasploit"
         self.name = "Metasploit XML Output Plugin"
         self.plugin_version = "0.0.1"
@@ -351,12 +340,10 @@ class MetasploitPlugin(core.PluginBase):
         self.options = None
         self._current_output = None
         self.target = None
-        self._command_regex = re.compile(
-            r'^(metasploit|sudo metasploit|\.\/metasploit).*?')
+        self._command_regex = re.compile(r'^(metasploit|sudo metasploit|\.\/metasploit).*?')
 
         global current_path
-        self._output_file_path = os.path.join(self.data_path,
-                                              "metasploit_output-%s.xml" % self._rid)
+        self._output_file_path = os.path.join(self.data_path, "metasploit_output-%s.xml" % self._rid)
 
     def parseOutputString(self, output, debug=False):
         """
@@ -431,12 +418,6 @@ class MetasploitPlugin(core.PluginBase):
 
 def createPlugin():
     return MetasploitPlugin()
-
-if __name__ == '__main__':
-    parser = MetasploitXmlParser(sys.argv[1])
-    for item in parser.items:
-        if item.status == 'up':
-            print(item)
 
 
 # I'm Py3

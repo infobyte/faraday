@@ -1,17 +1,10 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-from __future__ import absolute_import
-from __future__ import print_function
-
-from __future__ import with_statement
-from faraday.client.plugins import core
+"""
+from faraday.client.plugins.plugin import PluginXMLFormat
 import re
 import os
 import sys
@@ -176,13 +169,14 @@ class Results():
         return None
 
 
-class RetinaPlugin(core.PluginBase):
+class RetinaPlugin(PluginXMLFormat):
     """
     Example plugin to parse retina output.
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
+        self.identifier_tag = "scanJob"
         self.id = "Retina"
         self.name = "Retina XML Output Plugin"
         self.plugin_version = "0.0.1"
@@ -248,12 +242,6 @@ class RetinaPlugin(core.PluginBase):
 
 def createPlugin():
     return RetinaPlugin()
-
-if __name__ == '__main__':
-    parser = RetinaXmlParser(sys.argv[1])
-    for item in parser.items:
-        if item.status == 'up':
-            print(item)
 
 
 # I'm Py3

@@ -1,15 +1,8 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-from __future__ import absolute_import
-from __future__ import print_function
-
-from __future__ import with_statement
+"""
 from faraday.client.plugins import core
 import re
 import os
@@ -72,7 +65,7 @@ class SslcheckPlugin(core.PluginBase):
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "Sslcheck"
         self.name = "Sslcheck XML Output Plugin"
         self.plugin_version = "0.0.2"
@@ -206,12 +199,5 @@ class SslcheckPlugin(core.PluginBase):
 
 def createPlugin():
     return SslcheckPlugin()
-
-if __name__ == '__main__':
-    parser = SslcheckParser(sys.argv[1])
-    for item in parser.items:
-        if item.status == 'up':
-            print(item)
-
 
 # I'm Py3

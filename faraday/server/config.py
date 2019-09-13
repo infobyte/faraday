@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
@@ -6,7 +5,7 @@ from __future__ import absolute_import
 import os
 import shutil
 import errno
-from configparser import SafeConfigParser
+from configparser import ConfigParser
 
 from logging import (
     DEBUG,
@@ -68,7 +67,7 @@ def parse_and_bind_configuration():
     """Load configuration from files declared in this module and put them
     on this module's namespace for convenient access"""
 
-    __parser = SafeConfigParser()
+    __parser = ConfigParser()
     __parser.read(CONFIG_FILES)
 
     for section_name in __parser.sections():

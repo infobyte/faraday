@@ -1,15 +1,11 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
 
 # Author: @EzequielTBH
-from __future__ import absolute_import
-from __future__ import print_function
 from builtins import str
 
 from faraday.client.plugins import core
@@ -26,7 +22,7 @@ __version__ = "1.0.0"
 class pasteAnalyzerPlugin(core.PluginBase):
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "pasteAnalyzer"
         self.name = "pasteAnalyzer JSON Output Plugin"
         self.plugin_version = "1.0.0"

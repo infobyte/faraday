@@ -1,10 +1,7 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-from __future__ import absolute_import
-
 import time
-
 import datetime
 from flask import Blueprint
 from flask_classful import route

@@ -1,12 +1,6 @@
-from __future__ import absolute_import
-
 import re
-import sys
 import string
-try:
-    from urlparse import urljoin, urlparse
-except ImportError:
-    from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse
 
 from faraday.client.plugins import core
 
@@ -14,7 +8,7 @@ from faraday.client.plugins import core
 class WfuzzPlugin(core.PluginBase):
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "Wfuzz"
         self.name = "Wfuzz Plugin"
         self.plugin_version = "0.0.1"

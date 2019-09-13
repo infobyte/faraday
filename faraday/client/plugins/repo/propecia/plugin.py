@@ -1,14 +1,9 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-from __future__ import absolute_import
-
+"""
 from faraday.client.plugins import core
 from faraday.client.model import api
 import re
@@ -31,7 +26,7 @@ class CmdPropeciaPlugin(core.PluginBase):
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "propecia"
         self.name = "propecia port scanner"
         self.plugin_version = "0.0.1"

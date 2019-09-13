@@ -1,23 +1,15 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-from __future__ import absolute_import
-
+"""
 import re
 import os
 import socket
 
 from urllib.parse import urlparse
-
-from faraday.client.plugins import core
-
-
+from faraday.client.plugins.plugin import PluginXMLFormat
 try:
     import xml.etree.cElementTree as ET
     import xml.etree.ElementTree as ET_ORIG
@@ -226,13 +218,14 @@ class Item:
             return 'low'
 
 
-class WapitiPlugin(core.PluginBase):
+class WapitiPlugin(PluginXMLFormat):
     """
     Example plugin to parse wapiti output.
     """
 
     def __init__(self):
         super().__init__()
+        self.identifier_tag = "report"
         self.id = "Wapiti"
         self.name = "Wapiti XML Output Plugin"
         self.plugin_version = "0.0.1"
@@ -284,8 +277,16 @@ class WapitiPlugin(core.PluginBase):
         }
 
         global current_path
-        self._output_file_path = os.path.join(self.data_path,
-                                              "wapiti_output-%s.xml" % self._rid)
+        self._output_file_path = os.path.join(self.data_path, "wapiti_output-%s.xml" % self._rid)
+
+    def report_belongs_to(self, **kwargs):
+        if super().report_belongs_to(**kwargs):
+            report_path = kwargs.get("report_path", "")
+            with open(report_path) as f:
+                output = f.read()
+            return re.search("Wapiti", output) is not None
+        return False
+
 
     def parseOutputString(self, output):
         """
@@ -335,11 +336,6 @@ class WapitiPlugin(core.PluginBase):
 
 def createPlugin():
     return WapitiPlugin()
-
-if __name__ == '__main__':
-    parser = WapitiPlugin()
-    with open('/home/javier/Reports_Testing/wapiti3.0.1.xml') as report:
-        parser.parseOutputString(report.read())
 
 
 # I'm Py3

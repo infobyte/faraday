@@ -1,22 +1,12 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-from __future__ import absolute_import
-from __future__ import print_function
-
-from __future__ import with_statement
+"""
 from faraday.client.plugins import core
 from faraday.client.model import api
-import re
 import os
-import pprint
-import sys
 from lxml import etree
 
 try:
@@ -38,7 +28,7 @@ __maintainer__ = "Thierry Beauquier"
 __email__ = "thierry.beauquier@ericsson.com"
 __status__ = "Development"
 
-'''
+"""
 This plugin has been designed to be used with python-unittest2/paramiko script to perform security compliancy verification. It enables to have displayed both security scans results (nmap,
 nessus, ..) and security verification compliancy (CIS-CAT, compagny's product security requirement) by Faraday-IPE
 
@@ -60,7 +50,7 @@ AssertionError: SSH for root account is not disabled: '' matches '' in ''
   </testsuite>
 
 
-'''
+"""
 
 
 class JunitXmlParser:
@@ -126,14 +116,15 @@ class Testsuite:
             return sub_node
 
         return None
- 
+
+
 class JunitPlugin(core.PluginBase):
     """
     Example plugin to parse junit output.
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "Junit"
         self.name = "Junit XML Output Plugin"
         self.plugin_version = "0.0.1"
@@ -155,11 +146,6 @@ class JunitPlugin(core.PluginBase):
 def createPlugin():
     return JunitPlugin()
 
-if __name__ == '__main__':
-    parser = JunitXmlParser(sys.argv[1])
-    for item in parser.items:
-        if item.status == 'up':
-            print(item)
 
 
 # I'm Py3

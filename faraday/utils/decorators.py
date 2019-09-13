@@ -1,13 +1,13 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
 
 
 def simple_decorator(decorator):
-    '''this decorator can be used to turn simple functions
+    """this decorator can be used to turn simple functions
     into well-behaved decorators, so long as the decorators
     are fairly simple. If a decorator expects a function and
     returns a function (no descriptors), and if it doesn't
@@ -15,7 +15,7 @@ def simple_decorator(decorator):
     eligible to use this. Simply apply @simple_decorator to
     your decorator and it will automatically preserve the
     docstring and function attributes of functions to which
-    it is applied.'''
+    it is applied."""
     def new_decorator(f):
         g = decorator(f)
         g.__name__ = f.__name__

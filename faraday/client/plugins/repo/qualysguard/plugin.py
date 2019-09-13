@@ -1,22 +1,15 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-from __future__ import absolute_import
-from __future__ import print_function
-
-from __future__ import with_statement
-from faraday.client.plugins import core
+"""
+from faraday.client.plugins.plugin import PluginXMLFormat
 import re
 import os
 import sys
 import logging
 
 try:
-
     import xml.etree.cElementTree as ET
     import xml.etree.ElementTree as ET_ORIG
     ETREE_VERSION = ET_ORIG.VERSION
@@ -353,14 +346,14 @@ class ResultsScanReport():
         return None
 
 
-class QualysguardPlugin(core.PluginBase):
+class QualysguardPlugin(PluginXMLFormat):
     """
     Example plugin to parse qualysguard output.
     """
 
     def __init__(self):
-
-        core.PluginBase.__init__(self)
+        super().__init__()
+        self.identifier_tag = ["ASSET_DATA_REPORT", "SCAN"]
         self.id = 'Qualysguard'
         self.name = 'Qualysguard XML Output Plugin'
         self.plugin_version = '0.0.2'
@@ -446,12 +439,6 @@ class QualysguardPlugin(core.PluginBase):
 
 def createPlugin():
     return QualysguardPlugin()
-
-if __name__ == '__main__':
-    parser = QualysguardXmlParser(sys.argv[1])
-    for item in parser.items:
-        if item.status == 'up':
-            print(item)
 
 
 # I'm Py3

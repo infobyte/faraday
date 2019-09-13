@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 
-'''
+"""
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 Author: Ezequiel Tavella
 See the file 'doc/LICENSE' for the license information
@@ -8,7 +8,7 @@ See the file 'doc/LICENSE' for the license information
 This script generate a CSV file with information about the cfdb database.
 CSV Format:
 cwe,name,description,resolution,exploitation,references
-'''
+"""
 from __future__ import absolute_import
 from __future__ import print_function
 

@@ -1,16 +1,15 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-from __future__ import absolute_import
-from past.builtins import basestring
+"""
 from builtins import chr #In py3 this is unicode!
 
 import re
 import sys
 import binascii
+
 
 def clean_dict(d):
     if not isinstance(d, dict):
@@ -35,7 +34,7 @@ def clean_list(l):
     else:
         new_list = list()
         for item in l:
-            if isinstance(item, basestring):
+            if isinstance(item, str):
                 new_list.append(clean_string(item))
             elif isinstance(item, dict):
                 new_list.append(clean_dict(item))

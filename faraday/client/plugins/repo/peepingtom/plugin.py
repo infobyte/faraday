@@ -1,20 +1,13 @@
-# -*- coding: utf-8 -*-
 """
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 """
-from __future__ import absolute_import
-from __future__ import print_function
-
 import re
 import socket
 from os import path
 from faraday.client.plugins import core
-try:
-    from urlparse import urlparse
-except ImportError:
-    from urllib.parse import urlparse
+from urllib.parse import urlparse
 
 __author__ = "Andres Tarantini"
 __copyright__ = "Copyright (c) 2015 Andres Tarantini"
@@ -32,7 +25,7 @@ class PeepingTomPlugin(core.PluginBase):
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "peepingtom"
         self.name = "PeepingTom"
         self.plugin_version = "0.0.1"

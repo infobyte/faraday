@@ -2,9 +2,6 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 from builtins import str
 
 import string
@@ -17,7 +14,6 @@ import json
 import logging
 import datetime
 import multiprocessing
-from future.builtins import range # __future__
 
 import requests
 from requests.exceptions import HTTPError, RequestException
@@ -582,9 +578,7 @@ class ServiceImporter:
 
 def get_or_create_user(session, username):
     rng = SystemRandom()
-    password =  "".join(
-        [rng.choice(string.ascii_letters + string.digits) for _ in
-            range(12)])
+    password = "".join([rng.choice(string.ascii_letters + string.digits) for _ in range(12)])
     creator, created = get_or_create(session, User, username=username)
     if created:
         creator.active = False

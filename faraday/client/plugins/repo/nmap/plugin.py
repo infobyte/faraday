@@ -1,24 +1,16 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-from __future__ import absolute_import
-from __future__ import print_function
+"""
 
-from __future__ import with_statement
-from faraday.client.plugins import core
+from faraday.client.plugins.plugin import PluginXMLFormat
 import re
 import os
 import sys
 import random
-import logging
 
-logger = logging.getLogger(__name__)
 
 try:
     import xml.etree.cElementTree as ET
@@ -67,7 +59,7 @@ class NmapXmlParser:
         try:
             return ET.fromstring(xml_output)
         except SyntaxError as err:
-            logger.error("SyntaxError: %s." % (err))
+            #logger.error("SyntaxError: %s." % (err))
             return None
 
     def get_hosts(self, tree):
@@ -424,13 +416,14 @@ class Service:
         return "%s, %s, %s" % (self.name, self.product, self.version)
 
 
-class NmapPlugin(core.PluginBase):
+class NmapPlugin(PluginXMLFormat):
     """
     Example plugin to parse nmap output.
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
+        self.identifier_tag = "nmaprun"
         self.id = "Nmap"
         self.name = "Nmap XML Output Plugin"
         self.plugin_version = "0.0.3"
@@ -581,12 +574,6 @@ class NmapPlugin(core.PluginBase):
 
 def createPlugin():
     return NmapPlugin()
-
-if __name__ == '__main__':
-    parser = NmapXmlParser(sys.argv[1])
-    for host in parser.hosts:
-        if host.status == 'up':
-            print(host)
 
 
 # I'm Py3

@@ -1,14 +1,9 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-from __future__ import absolute_import
-
+"""
 from faraday.client.plugins import core
 import re
 import os
@@ -35,7 +30,7 @@ class WPScanPlugin(core.PluginBase):
         Right now the plugin doesnt support being executed from another folder,
         like /dir/wpscan.rb
         """
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "wpscan"
         self.name = "WPscan"
         self.plugin_version = "0.2"

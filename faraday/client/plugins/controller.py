@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-from __future__ import absolute_import
+"""
 from past.builtins import basestring
 from builtins import range
 
@@ -56,7 +55,7 @@ class PluginCommiter(Thread):
         self.stop = True
 
     def commit(self):
-        logger.debug('Plugin end. Commiting to faraday server.')
+        logger.info('Plugin end. Commiting to faraday server.')
         self.pending_actions.put(
             (Modelactions.PLUGINEND, self.plugin.id, self.command.getID()))
         self.command.duration = time.time() - self.command.itime
@@ -76,9 +75,8 @@ class PluginCommiter(Thread):
                     os.path.join(self._report_ppath, name))
         except Exception as ex:
             logger.exception(ex)
-            logger.info('Something failed, moving file to unprocessed')
-            os.rename(self.output,
-                      os.path.join(self._report_upath, name))
+            logger.warning('Something failed, moving file to unprocessed')
+            os.rename(self.output, os.path.join(self._report_upath, name))
 
 
 
@@ -113,7 +111,7 @@ class PluginController(Thread):
         block list defined by the user. Returns False if the modified
         command is ok, True if otherwise.
         """
-        block_chars = set(["|", "$", "#"])
+        block_chars = {"|", "$", "#"}
 
         if original_command == modified_command:
             return False
@@ -170,7 +168,7 @@ class PluginController(Thread):
         output_queue = JoinableQueue()
         plugin.set_actions_queue(self.pending_actions)
         self.plugin_process = PluginProcess(plugin, output_queue, isReport)
-        logger.debug("Created plugin_process (%d) for plugin instance (%d)", id(self.plugin_process), id(plugin))
+        logger.info("Created plugin_process (%d) for plugin instance (%d)", id(self.plugin_process), id(plugin))
         self.pending_actions.put((Modelactions.PLUGINSTART, plugin.id, command.getID()))
         output_queue.put((output, command.getID()))
         plugin_commiter = PluginCommiter(
@@ -191,9 +189,7 @@ class PluginController(Thread):
         decodes and performs the action given
         It works kind of a dispatcher
         """
-        logger.debug(
-            "_processAction - %s - parameters = %s" %
-            (action, str(parameters)))
+        logger.debug("_processAction - %s - parameters = %s", action, parameters)
         self._actionDispatcher[action](*parameters)
 
     def _setupActionDispatcher(self):
@@ -273,8 +269,10 @@ class PluginController(Thread):
         del self._active_plugins[pid]
         return True
 
-    def processReport(self, plugin, filepath, ws_name=None):
-
+    def processReport(self, plugin_id, filepath, ws_name=None):
+        if plugin_id not in self._plugins:
+            logger.warning("Unknown Plugin ID: %s", plugin_id)
+            return False
         if not ws_name:
             ws_name = faraday.client.model.api.getActiveWorkspace().name
 
@@ -282,7 +280,7 @@ class PluginController(Thread):
             **{'workspace': ws_name,
                'itime': time.time(),
                'import_source': 'report',
-               'command': plugin,
+               'command': plugin_id,
                'params': filepath,
             })
 
@@ -290,11 +288,11 @@ class PluginController(Thread):
         command_id = self._mapper_manager.save(cmd_info)
         cmd_info.setID(command_id)
 
-        if plugin in self._plugins:
-            logger.info('Processing report with plugin {0}'.format(plugin))
-            self._plugins[plugin].workspace = ws_name
+        if plugin_id in self._plugins:
+            logger.info('Processing report with plugin {0}'.format(plugin_id))
+            self._plugins[plugin_id].workspace = ws_name
             with open(filepath, 'rb') as output:
-                self.processOutput(self._plugins[plugin], output.read(), cmd_info, True)
+                self.processOutput(self._plugins[plugin_id], output.read(), cmd_info, True)
             return command_id
 
         # Plugin to process this report not found, update duration of plugin process

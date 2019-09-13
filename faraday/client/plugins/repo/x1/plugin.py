@@ -1,21 +1,13 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-from __future__ import absolute_import
-from __future__ import print_function
-
-from __future__ import with_statement
-from faraday.client.plugins import core
+"""
+from faraday.client.plugins.plugin import PluginXMLFormat
 from faraday.client.model import api
 import re
 import os
-import pprint
 import sys
 
 try:
@@ -159,13 +151,14 @@ class Results():
         return None
 
 
-class X1Plugin(core.PluginBase):
+class X1Plugin(PluginXMLFormat):
     """
     Example plugin to parse x1 output.
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
+        self.identifier_tag = ["session", "landscapePolicy"]
         self.id = "X1"
         self.name = "Onapsis X1 XML Output Plugin"
         self.plugin_version = "0.0.1"
@@ -176,8 +169,7 @@ class X1Plugin(core.PluginBase):
         self._command_regex = re.compile(r'^(sudo x1|\.\/x1).*?')
 
         global current_path
-        self._output_file_path = os.path.join(self.data_path,
-                                              "x1_output-%s.xml" % self._rid)
+        self._output_file_path = os.path.join(self.data_path, "x1_output-%s.xml" % self._rid)
 
     def parseOutputString(self, output, debug=False):
 
@@ -211,12 +203,6 @@ class X1Plugin(core.PluginBase):
 
 def createPlugin():
     return X1Plugin()
-
-if __name__ == '__main__':
-    parser = X1XmlParser(sys.argv[1])
-    for item in parser.items:
-        if item.status == 'up':
-            print(item)
 
 
 # I'm Py3

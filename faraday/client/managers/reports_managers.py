@@ -170,178 +170,6 @@ class ReportManager(Thread):
         """Sends a report to be processed by the specified plugin_id"""
         self.processor.sendReport(plugin_id, filename)
 
-# TODO Borrar
-# class ReportParser:
-#     """
-#     Class that handles reports files.
-#     :param filepath: report file.
-#     :class:`.LoadReport`
-#     """
-#
-#     def __init__(self, report_path):
-#         self.report_type = None
-#         root_tag, output = self.getRootTag(report_path)
-#
-#         if root_tag:
-#             self.report_type = self.rType(root_tag, output)
-#
-#         if self.report_type is None:
-#             logger.debug('Automatical detection FAILED... Trying manual...')
-#             self.report_type = self.getUserPluginName(report_path)
-#
-#     def getUserPluginName(self, file_path):
-#         if not file_path:
-#             return None
-#         file_name = os.path.basename(file_path)
-#         file_name_base, file_extension = os.path.splitext(file_name)
-#         plugin_name_regex = r".*_faraday_(?P<plugin_name>.+)$"
-#         match = re.match(plugin_name_regex, file_name_base)
-#         if match:
-#             plugin_name = match.groupdict()['plugin_name']
-#             logger.debug("Plugin name match: %s", plugin_name)
-#             return plugin_name
-#         else:
-#             return None
-#
-#     def open_file(self, file_path):
-#         """
-#         This method uses file signatures to recognize file types
-#
-#         :param file_path: report file.
-#
-#         If you need add support to a new report type
-#         add the file signature here
-#         and add the code in self.getRootTag() for get the root tag.
-#         """
-#         f = result = None
-#
-#         signatures = {
-#             b"\x50\x4B": "zip",
-#             b"\x3C\x3F\x78\x6D\x6C": "xml",
-#             b"# Lynis Re": "dat",
-#         }
-#         try:
-#             if file_path is None:
-#                 return None, None
-#             f = open(file_path, 'rb')
-#             file_signature = f.read(10)
-#             for key in signatures:
-#                 if file_signature.find(key) == 0:
-#                     result = signatures[key]
-#                     break
-#             if not result:
-#                 # try json loads to detect a json file.
-#                 try:
-#                     f.seek(0)
-#                     json.loads(f.read())
-#                     result = 'json'
-#                 except ValueError:
-#                     pass
-#         except IOError as err:
-#             self.report_type = None
-#             logger.error("Error while opening file.\n%s. %s", err, file_path)
-#         logger.info("Report type detected: %s" % result)
-#         f.seek(0)
-#         return f, result
-#
-#     def getRootTag(self, file_path):
-#
-#         report_type = result = f = None
-#
-#         f, report_type = self.open_file(file_path)
-#
-#         # Check error in open_file()
-#         if f is None and report_type is None:
-#             self.report_type = None
-#             return None, None
-#
-#         # Find root tag based in report_type
-#         if report_type == "zip":
-#             result = "maltego"
-#         elif report_type == "dat":
-#             result = 'lynis'
-#         elif report_type == 'json':
-#             # this will work since recon-ng is the first plugin to use json.
-#             # we need to add json detection here!
-#             result = 'reconng'
-#         else:
-#             logger.info("Unknown Report Type...force XML")
-#             try:
-#                 for event, elem in ET.iterparse(f, ('start', )):
-#                     result = elem.tag
-#                     break
-#             except SyntaxError as err:
-#                 self.report_type = None
-#                 logger.error("Not an xml file.\n %s", err)
-#         f.seek(0)
-#         output = f.read().decode()
-#         if f:
-#             f.close()
-#         logger.debug("Report Root Tag: %s", result)
-#         return result, output
-#
-#     def rType(self, tag, output):
-#         """ Compares report root tag with known root tags """
-#         if tag == "nmaprun":
-#             return "Nmap"
-#         elif tag == "w3af-run":
-#             return "W3af"
-#         elif tag == "NessusClientData_v2":
-#             return "Nessus"
-#         elif tag == "report":
-#             if re.search(
-#                     "https://raw.githubusercontent.com/Arachni/arachni/", output) is not None:
-#                 return "Arachni"
-#             elif re.search("OpenVAS", output) is not None or re.search('<omp>', output) is not None:
-#                 return "Openvas"
-#             elif re.search("Wapiti", output):
-#                 return "Wapiti"
-#             else:
-#                 return "Zap"
-#         elif tag == "xml-report":
-#             if re.search("AppScan", output) is not None:
-#                 return "Appscan"
-#         elif tag == "niktoscan":
-#             return "Nikto"
-#         elif tag == "MetasploitV4":
-#             return "Metasploit"
-#         elif tag == "MetasploitV5":
-#             return "Metasploit"
-#         elif tag == "issues":
-#             return "Burp"
-#         elif tag == "OWASPZAPReport":
-#             return "Zap"
-#         elif tag == "ScanGroup":
-#             return "Acunetix"
-#         elif tag == "session":
-#             return "X1"
-#         elif tag == "landscapePolicy":
-#             return "X1"
-#         elif tag == "entities":
-#             return "Core Impact"
-#         elif tag == "NexposeReport":
-#             return "NexposeFull"
-#         elif tag in ("ASSET_DATA_REPORT", "SCAN"):
-#             return "Qualysguard"
-#         elif tag == "scanJob":
-#             return "Retina"
-#         elif tag == "netsparker":
-#             return "Netsparker"
-#         elif tag == "netsparker-cloud":
-#             return "NetsparkerCloud"
-#         elif tag == "maltego":
-#             return "Maltego"
-#         elif tag == "lynis":
-#             return "Lynis"
-#         elif tag == "reconng":
-#             return "Reconng"
-#         elif tag == "document":
-#             if re.search("SSLyzeVersion", output) is not None:
-#                 return "Sslyze"
-#         else:
-#             logger.debug("Unknown Tag: %s", tag)
-#             return None
-
 
 class ReportAnalyzer:
 
@@ -351,16 +179,16 @@ class ReportAnalyzer:
 
     def get_plugin_id(self):
         if not os.path.isfile(self.report_path):
-            logger.error(f"Report [{self.report_path}] don't exists")
+            logger.error("Report [%s] don't exists", self.report_path)
             return None
         else:
             file_name = os.path.basename(self.report_path)
             plugin_id = self._get_plugin_by_name(file_name)
             if not plugin_id:   # Was unable to detect plugin from report file name
-                logger.debug(f"Plugin by name not found")
+                logger.debug("Plugin by name not found")
                 plugin_id = self._get_plugin_by_file_type(self.report_path)
                 if not plugin_id:
-                    logger.debug(f"Plugin by file not found")
+                    logger.debug("Plugin by file not found")
             return plugin_id
 
     def _get_plugin_by_file_type(self, report_path):
@@ -382,12 +210,13 @@ class ReportAnalyzer:
                     break
                 logger.debug("Found XML content on file: %s - Main tag: %s", report_path, main_tag)
             except Exception as e:
-                logger.info(f"Non XML content [{report_path}] - {e}")
+                logger.info("Non XML content [%s] - %s", report_path, e)
             finally:
                 report_file.close()
                 for _plugin_id, _plugin in self.plugin_controller.getAvailablePlugins().items():
                     if _plugin.report_belongs_to(main_tag=main_tag, report_path=report_path, extension=file_extension):
                         plugin_id = _plugin_id
+                        break
         return plugin_id
 
     def _get_plugin_by_name(self, file_name_base):

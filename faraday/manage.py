@@ -5,9 +5,6 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 """
-from __future__ import absolute_import
-from __future__ import print_function
-
 import os
 import re
 import sys
@@ -32,10 +29,7 @@ if platform.system() == "Linux":
 import click
 import requests
 import alembic.command
-try:
-    from urlparse import urlparse
-except ImportError:
-    from urllib.parse import urlparse
+from urllib.parse import urlparse
 from alembic.config import Config
 from sqlalchemy.exc import ProgrammingError
 

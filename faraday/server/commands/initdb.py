@@ -4,8 +4,6 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 """
-from __future__ import absolute_import
-from __future__ import print_function
 from builtins import input
 
 import getpass
@@ -16,7 +14,6 @@ import os
 import sys
 import click
 import psycopg2
-from future.builtins import range # __future__
 from random import SystemRandom
 from tempfile import TemporaryFile
 from subprocess import Popen

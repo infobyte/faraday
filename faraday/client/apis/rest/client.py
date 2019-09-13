@@ -5,8 +5,6 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 """
-from __future__ import absolute_import
-
 import requests
 import json
 import base64
@@ -16,7 +14,7 @@ class RestApiClient:
     def __init__(self, hostname, port):
         self.hostname = hostname
         self.port = port
-        self.url = "http://%s:%d/" % (self.hostname, self.port)
+        self.url = f"http://{self.hostname}:{self.port}/"
         self.headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
 
 
@@ -25,7 +23,7 @@ class ModelRestApiClient(RestApiClient):
         super(ModelRestApiClient, self).__init__(hostname, port)
 
     def _create(self, obj_class_url, **kwargs):
-        url = self.url + ('model/%s' % obj_class_url)
+        url = f"{self.url}model/{obj_class_url}"
         data = {}
         for k, v in kwargs.items():
             data[k] = v

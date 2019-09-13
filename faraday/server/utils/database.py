@@ -1,8 +1,6 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-from __future__ import absolute_import
-from past.builtins import basestring
 from functools import reduce
 
 import operator
@@ -82,7 +80,7 @@ def apply_search_filter(query, field_to_col_map, free_text_search=None, field_fi
             # currently we are not supporting searches on this
             # kind of fields since they are usually referred to
             # query built values (like counts)
-            if isinstance(column, basestring):
+            if isinstance(column, str):
                 continue
 
             # Prepare a SQL search term according to the columns type.

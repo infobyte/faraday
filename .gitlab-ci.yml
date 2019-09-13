@@ -55,6 +55,23 @@ merge_conflict_check:
         - git config --global user.email "you@example.com"
         - git config --global user.name "Mergerbot"
         - python3 merge-conflict-detector.py
+    only:
+        variables:
+            - $FULL_DOC
+            - $DOC
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/
+
+
+merge_conflict_check3:
+    tags:
+        - faradaytests
+    image: python:3
+    stage: pre_testing
+    allow_failure: true
+    script:
+        - git config --global user.email "you@example.com"
+        - git config --global user.name "Mergerbot"
+        - python3 merge-conflict-detector3.py
     except:
         variables:
             - $BUILD_TEST

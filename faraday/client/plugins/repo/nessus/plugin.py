@@ -1,26 +1,18 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import with_statement
-import logging
-from faraday.client.plugins import core
-from faraday.client.model import api
+"""
+
+from faraday.client.plugins.plugin import PluginXMLFormat
 import re
 import os
 import socket
-import pprint
-import sys
+
 import faraday.client.plugins.repo.nessus.dotnessus_v2 as dotnessus_v2
 
-logger = logging.getLogger(__name__)
+
 
 current_path = os.path.abspath(os.getcwd())
 
@@ -60,13 +52,15 @@ class NessusParser:
             i = i + 1
 
 
-class NessusPlugin(core.PluginBase):
+class NessusPlugin(PluginXMLFormat):
     """
     Example plugin to parse nessus output.
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
+        self.extension = ".nessus"
+        self.identifier_tag = "NessusClientData_v2"
         self.id = "Nessus"
         self.name = "Nessus XML Output Plugin"
         self.plugin_version = "0.0.1"
@@ -83,8 +77,7 @@ class NessusPlugin(core.PluginBase):
         self.fail = None
 
         global current_path
-        self.output_path = os.path.join(self.data_path,
-                                        "nessus_output-%s.txt" % self._rid)
+        self.output_path = os.path.join(self.data_path, "nessus_output-%s.txt" % self._rid)
 
     def canParseCommandString(self, current_input):
         if self._command_regex.match(current_input.strip()):
@@ -104,7 +97,7 @@ class NessusPlugin(core.PluginBase):
         try:
             p.parse(output, from_string=True)
         except Exception as e:
-            logger.error("Exception - %s", str(e))
+            self.logger.error("Exception - %s", e)
 
         for t in p.targets:
             mac = ""
@@ -150,12 +143,12 @@ class NessusPlugin(core.PluginBase):
                 if v.get('cve'):
                     cves = v.get('cve')
                     for cve in cves:
-                        logger.debug('Appending %s', cve.encode("utf-8"))
+                        #logger.debug('Appending %s', cve.encode("utf-8"))
                         ref.append(cve.encode("utf-8").strip())
                 if v.get('bid'):
                     bids = v.get('bid')
                     for bid in bids:
-                        logger.debug('Appending %s', bid.encode("utf-8"))
+                        #logger.debug('Appending %s', bid.encode("utf-8"))
                         ref.append("BID-%s" % bid.encode("utf-8").strip() )
                 if v.get('cvss_base_score'):
                     ref.append("CVSS: " + ", ".join(v.get('cvss_base_score')))
@@ -209,11 +202,4 @@ class NessusPlugin(core.PluginBase):
 def createPlugin():
     return NessusPlugin()
 
-if __name__ == '__main__':
-    parser = NessusPlugin()
-    with open('/home/dnadares/report-collection/latest_reports/DNS_publicos_hlnn77.nessus', 'r') as report:
-        parser.parseOutputString(report.read())
-        for item in parser.items:
-            if item.status == 'up':
-                print(item)
 # I'm Py3

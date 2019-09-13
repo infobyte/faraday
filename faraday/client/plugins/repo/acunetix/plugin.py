@@ -1,24 +1,11 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-from __future__ import absolute_import
-
-from faraday.client.plugins import core
-from faraday.client.model import api
-
-try:
-    from urlparse import urlsplit
-except ImportError:
-    from urllib.parse import urlsplit
-
+"""
+from urllib.parse import urlsplit
 import socket
-import sys
 import re
 import os
 
@@ -29,6 +16,9 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ET
     ETREE_VERSION = ET.VERSION
+
+from faraday.client.plugins.plugin import PluginXMLFormat
+from faraday.client.model import api
 
 ETREE_VERSION = [int(i) for i in ETREE_VERSION.split(".")]
 
@@ -230,13 +220,14 @@ class Item:
         return None
 
 
-class AcunetixPlugin(core.PluginBase):
+class AcunetixPlugin(PluginXMLFormat):
     """
     Example plugin to parse acunetix output.
     """
 
     def __init__(self):
         super().__init__()
+        self.identifier_tag = "ScanGroup"
         self.id = "Acunetix"
         self.name = "Acunetix XML Output Plugin"
         self.plugin_version = "0.0.1"
@@ -245,8 +236,7 @@ class AcunetixPlugin(core.PluginBase):
         self.options = None
         self._current_output = None
         self.target = None
-        self._command_regex = re.compile(
-            r'^(acunetix|sudo acunetix|\.\/acunetix).*?')
+        self._command_regex = re.compile(r'^(acunetix|sudo acunetix|\.\/acunetix).*?')
 
         global current_path
         self._output_file_path = os.path.join(
@@ -265,21 +255,17 @@ class AcunetixPlugin(core.PluginBase):
         parser = AcunetixXmlParser(output)
 
         for site in parser.sites:
-
             if site.ip is None:
                 continue
-
             host = []
             if site.host != site.ip:
                 host = [site.host]
-
             h_id = self.createAndAddHost(site.ip, site.os)
             i_id = self.createAndAddInterface(
                 h_id,
                 site.ip,
                 ipv4_address=site.ip,
                 hostname_resolution=host)
-
             s_id = self.createAndAddServiceToInterface(
                 h_id,
                 i_id,
@@ -288,7 +274,6 @@ class AcunetixPlugin(core.PluginBase):
                 ports=[site.port],
                 version=site.banner,
                 status='open')
-
             for item in site.items:
                 self.createAndAddVulnWebToService(
                     h_id,
@@ -303,7 +288,6 @@ class AcunetixPlugin(core.PluginBase):
                     request=item.request,
                     response=item.response,
                     ref=item.ref)
-
         del parser
 
     def processCommandString(self, username, current_path, command_string):
@@ -315,10 +299,3 @@ class AcunetixPlugin(core.PluginBase):
 
 def createPlugin():
     return AcunetixPlugin()
-
-if __name__ == '__main__':
-    parser = AcunetixXmlParser(sys.argv[1])
-    for item in parser.items:
-        if item.status == 'up':
-            print(item)
-# I'm Py3

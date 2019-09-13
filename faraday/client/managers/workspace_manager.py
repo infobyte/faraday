@@ -1,13 +1,9 @@
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-from __future__ import absolute_import
-
+"""
 import re
 import time
 
@@ -65,8 +61,7 @@ class WorkspaceManager:
         WorkspaceException if something went wrong along the way.
         """
         if name not in get_workspaces_names():
-            raise WorkspaceException(
-                "Workspace %s wasn't found" % name)
+            raise WorkspaceException("Workspace %s wasn't found" % name)
 
         try:
             workspace = get_workspace(name)

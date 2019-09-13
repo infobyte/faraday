@@ -1,14 +1,8 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-from __future__ import absolute_import
-
-from __future__ import with_statement
+"""
 from faraday.client.plugins import core
 import argparse
 import shlex
@@ -24,7 +18,7 @@ class AmapPlugin(core.PluginBase):
     """ Example plugin to parse amap output."""
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "Amap"
         self.name = "Amap Output Plugin"
         self.plugin_version = "0.0.3"

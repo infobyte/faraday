@@ -1,14 +1,8 @@
-#!/usr/bin/env python
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import with_statement
-
+"""
 import argparse
 import base64
 import hashlib
@@ -19,10 +13,7 @@ import shlex
 import socket
 import sqlite3
 import sys
-try:
-    from urlparse import urlparse
-except ImportError:
-    from urllib.parse import urlparse
+from urllib.parse import urlparse
 from io import StringIO
 from http.server import BaseHTTPRequestHandler
 
@@ -138,6 +129,7 @@ class SqlmapPlugin(PluginTerminalOutput):
     class HTTPRequest(BaseHTTPRequestHandler):
 
         def __init__(self, request_text):
+            super().__init__()
             self.rfile = StringIO(request_text)
             self.raw_requestline = self.rfile.readline()
             self.error_code = self.error_message = None

@@ -1,16 +1,10 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import with_statement
-from faraday.client.plugins import core
+"""
+from faraday.client.plugins.plugin import PluginXMLFormat
 from faraday.client.model import api
 import re
 import os
@@ -192,13 +186,14 @@ class Item:
         return None
 
 
-class NetsparkerPlugin(core.PluginBase):
+class NetsparkerPlugin(PluginXMLFormat):
     """
     Example plugin to parse netsparker output.
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
+        self.identifier_tag = "netsparker"
         self.id = "Netsparker"
         self.name = "Netsparker XML Output Plugin"
         self.plugin_version = "0.0.1"
@@ -210,8 +205,7 @@ class NetsparkerPlugin(core.PluginBase):
             r'^(sudo netsparker|\.\/netsparker).*?')
 
         global current_path
-        self._output_file_path = os.path.join(self.data_path,
-                                              "netsparker_output-%s.xml" % self._rid)
+        self._output_file_path = os.path.join(self.data_path, "netsparker_output-%s.xml" % self._rid)
 
     def resolve(self, host):
         try:
@@ -245,14 +239,10 @@ class NetsparkerPlugin(core.PluginBase):
     def processCommandString(self, username, current_path, command_string):
         return None
 
+
 def createPlugin():
     return NetsparkerPlugin()
 
-if __name__ == '__main__':
-    parser = NetsparkerXmlParser(sys.argv[1])
-    for item in parser.items:
-        if item.status == 'up':
-            print(item)
 
 
 # I'm Py3

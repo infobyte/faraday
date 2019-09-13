@@ -1,14 +1,8 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 """
 Faraday Penetration Test IDE
 Copyright (C) 2018 Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 """
-
-from __future__ import absolute_import
-from __future__ import with_statement
 from faraday.client.plugins import core
 from faraday.client.plugins.plugin_utils import get_vulnweb_url_fields
 import re
@@ -123,7 +117,7 @@ class WebInspectPlugin(core.PluginBase):
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "Webinspect"
         self.name = "Webinspect"
         self.plugin_version = "0.0.1"

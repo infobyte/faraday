@@ -1,13 +1,13 @@
 #!/usr/bin/env python2.7
 
-'''
+"""
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 Author: Ezequiel Tavella
 
 This script generate a CSV file with information about the vulndb database.
 CSV Format:
 cwe,name,desc_summary,description,resolution,exploitation,references
-'''
+"""
 from __future__ import  absolute_import
 from __future__ import  print_function
 

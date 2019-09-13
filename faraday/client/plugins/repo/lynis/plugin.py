@@ -1,21 +1,13 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2017  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-from __future__ import absolute_import
-
-from __future__ import with_statement
+"""
 import re
 import os
-import random
-import socket
 from collections import defaultdict
 
-from faraday.client.plugins import core
+from faraday.client.plugins.plugin import PluginByExtension
 from faraday.client.plugins.plugins_utils import filter_services, get_all_protocols
 
 
@@ -241,11 +233,12 @@ class LynisLogDataExtracter():
         return(warns)
 
 
-class LynisPlugin(core.PluginBase):
+class LynisPlugin(PluginByExtension):
     """ Simple example plugin to parse lynis' lynis-report.dat file."""
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
+        self.extension = [".dat", ".log"]
         self.id = "Lynis"
         self.name = "Lynis DAT Output Plugin"
         self.plugin_version = "0.4"
@@ -257,6 +250,14 @@ class LynisPlugin(core.PluginBase):
         self._hosts = []
 
         global current_path
+
+    def report_belongs_to(self, **kwargs):
+        if super().report_belongs_to(**kwargs):
+            report_path = kwargs.get("report_path", "")
+            with open(report_path) as f:
+                output = f.read()
+            return output.startswith("# Lynis Report")
+        return False
 
     def parseOutputString(self, output, debug=False):
         datpath = self.getDatPath(output)

@@ -1,19 +1,13 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-from __future__ import absolute_import
-from __future__ import print_function
-
-from __future__ import with_statement
+"""
 import re
 import os
 import socket
 import sys
-from faraday.client.plugins import core
+from faraday.client.plugins.plugin import PluginXMLFormat
 
 
 try:
@@ -261,14 +255,14 @@ class Item:
         return None
 
 
-class ZapPlugin(core.PluginBase):
+class ZapPlugin(PluginXMLFormat):
     """
     Example plugin to parse zap output.
     """
 
     def __init__(self):
-
-        core.PluginBase.__init__(self)
+        super().__init__()
+        self.identifier_tag = "OWASPZAPReport"
         self.id = "Zap"
         self.name = "Zap XML Output Plugin"
         self.plugin_version = "0.0.3"
@@ -281,10 +275,7 @@ class ZapPlugin(core.PluginBase):
 
         global current_path
 
-        self._output_file_path = os.path.join(
-            self.data_path,
-            "zap_output-%s.xml" % self._rid
-        )
+        self._output_file_path = os.path.join(self.data_path, "zap_output-%s.xml" % self._rid)
 
     def parseOutputString(self, output, debug=False):
         """
@@ -348,11 +339,6 @@ class ZapPlugin(core.PluginBase):
 def createPlugin():
     return ZapPlugin()
 
-if __name__ == '__main__':
-    parser = ZapXmlParser(sys.argv[1])
-    for item in parser.items:
-        if item.status == 'up':
-            print(item)
 
 
 # I'm Py3

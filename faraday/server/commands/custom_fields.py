@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
-
 import sys
 import click
 
@@ -15,6 +12,7 @@ from faraday.server.utils.database import get_or_create
 def add_custom_field_main():
     with app.app_context():
         add_custom_field_wizard()
+
 
 def delete_custom_field_main():
     with app.app_context():
@@ -34,6 +32,7 @@ def delete_custom_field_wizard():
         db.session.commit()
     else:
         print('Custom field not found')
+
 
 def add_custom_field_wizard():
     print('This wizard will guide you to ADD custom field to the vulneraiblity model.')

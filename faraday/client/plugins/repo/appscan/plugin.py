@@ -1,17 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2017  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-from __future__ import absolute_import
+"""
 
-import pprint
 import socket
-from faraday.client.plugins import core
-from faraday.server.utils.logger import get_logger
+from faraday.client.plugins.plugin import PluginXMLFormat
 from lxml import objectify
 try:
     from urlparse import urlparse
@@ -138,11 +135,12 @@ class AppscanParser():
         return scan_information
 
 
-class AppscanPlugin(core.PluginBase):
+class AppscanPlugin(PluginXMLFormat):
     """ Example plugin to parse Appscan XML report"""
 
     def __init__(self):
         super().__init__()
+        self.identifier_tag = "xml-report"
         self.id = "Appscan"
         self.name = "Appscan XML Plugin"
         self.plugin_version = "0.0.1"

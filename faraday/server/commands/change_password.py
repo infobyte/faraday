@@ -1,8 +1,6 @@
-from __future__ import absolute_import
-from __future__ import print_function
-
 from faraday.server.web import app
 from faraday.server.models import User, db
+
 
 def changes_password(username, password):
     with app.app_context():

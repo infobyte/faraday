@@ -1,15 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-from __future__ import absolute_import
-from __future__ import print_function
-
-from __future__ import with_statement
+"""
 from faraday.client.plugins import core
 from faraday.client.model import api
 import re
@@ -168,7 +164,7 @@ class DnsreconPlugin(core.PluginBase):
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "Dnsrecon"
         self.name = "Dnsrecon XML Output Plugin"
         self.plugin_version = "0.0.2"
@@ -274,12 +270,5 @@ class DnsreconPlugin(core.PluginBase):
 
 def createPlugin():
     return DnsreconPlugin()
-
-if __name__ == '__main__':
-    parser = DnsreconXmlParser(sys.argv[1])
-    for item in parser.items:
-        if item.status == 'up':
-            print(item)
-
 
 # I'm Py3

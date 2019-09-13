@@ -1,20 +1,12 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-from __future__ import absolute_import
-from __future__ import print_function
-
-from __future__ import with_statement
+"""
 from faraday.client.plugins import core
 from faraday.client.model import api
 import re
 import os
-import sys
 
 current_path = os.path.abspath(os.getcwd())
 
@@ -25,6 +17,7 @@ __version__ = "1.0.0"
 __maintainer__ = "Francisco Amato"
 __email__ = "famato@infobytesec.com"
 __status__ = "Development"
+
 
 class ListurlsParser:
     """
@@ -61,7 +54,7 @@ class ListurlsPlugin(core.PluginBase):
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "Listurls"
         self.name = "Listurls XML Output Plugin"
         self.plugin_version = "0.0.1"
@@ -110,12 +103,6 @@ class ListurlsPlugin(core.PluginBase):
 
 def createPlugin():
     return ListurlsPlugin()
-
-if __name__ == '__main__':
-    parser = ListurlsParser(sys.argv[1])
-    for item in parser.items:
-        if item.status == 'up':
-            print(item)
 
 
 # I'm Py3

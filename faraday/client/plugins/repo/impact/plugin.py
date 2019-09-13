@@ -1,24 +1,15 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-from __future__ import absolute_import
-from __future__ import print_function
-
-from __future__ import with_statement
+"""
 import re
 import os
 import sys
-import logging
 
-from faraday.client.plugins import core
+from faraday.client.plugins.plugin import PluginXMLFormat
 
-logger = logging.getLogger(__name__)
 
 try:
     import xml.etree.cElementTree as ET
@@ -72,7 +63,7 @@ class ImpactXmlParser:
         try:
             tree = ET.fromstring(xml_output)
         except SyntaxError as err:
-            logger.error("SyntaxError: %s. %s" % (err, xml_output))
+            #logger.error("SyntaxError: %s. %s" % (err, xml_output))
             return None
 
         return tree
@@ -223,14 +214,15 @@ class Results():
         return None
 
 
-class ImpactPlugin(core.PluginBase):
+class ImpactPlugin(PluginXMLFormat):
     """
     Example plugin to parse impact output.
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
-        self.id = "Core Impact"
+        super().__init__()
+        self.identifier_tag = "entities"
+        self.id = "CoreImpact"
         self.name = "Core Impact XML Output Plugin"
         self.plugin_version = "0.0.2"
         self.version = "Core Impact 2013R1/2017R2"
@@ -322,13 +314,6 @@ class ImpactPlugin(core.PluginBase):
 
 def createPlugin():
     return ImpactPlugin()
-
-
-if __name__ == '__main__':
-    parser = ImpactXmlParser(sys.argv[1])
-    for item in parser.items:
-        if item.status == 'up':
-            print(item)
 
 
 # I'm Py3

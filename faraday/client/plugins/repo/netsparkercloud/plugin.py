@@ -1,23 +1,15 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import with_statement
-
-from faraday.client.plugins import core
+"""
+from faraday.client.plugins.plugin import PluginXMLFormat
 from faraday.client.model import api
 import re
 import os
 import sys
 import socket
-import urllib
 
 try:
     import xml.etree.cElementTree as ET
@@ -219,13 +211,14 @@ class Item:
         return ""
 
 
-class NetsparkerCloudPlugin(core.PluginBase):
+class NetsparkerCloudPlugin(PluginXMLFormat):
     """
     Example plugin to parse netsparkercloud output.
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
+        self.identifier_tag = "netsparker-cloud"
         self.id = "NetsparkerCloud"
         self.name = "NetsparkerCloud XML Output Plugin"
         self.plugin_version = "0.0.1"
@@ -280,12 +273,6 @@ class NetsparkerCloudPlugin(core.PluginBase):
 
 def createPlugin():
     return NetsparkerCloudPlugin()
-
-if __name__ == '__main__':
-    parser = NetsparkerCloudXmlParser(sys.argv[1])
-    for item in parser.items:
-        if item.status == 'up':
-            print(item)
 
 
 # I'm Py3

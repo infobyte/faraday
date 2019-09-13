@@ -5,8 +5,6 @@
 # Copyright (C) 2005 Chad J. Schroeder
 # Modified version of a script created by Chad J. Schroeder, obtained from
 # http://code.activestate.com/recipes/278731-creating-a-daemon-the-python-way/
-from __future__ import absolute_import
-
 import os
 import re
 import sys

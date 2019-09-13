@@ -1,15 +1,9 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-
-from __future__ import absolute_import
-
+"""
 import os
 import re
 import time
@@ -23,7 +17,7 @@ import faraday.client.model.api
 import faraday.client.model.common
 from faraday import __license_version__ as license_version
 from faraday.client.model.common import factory
-from faraday.client.persistence.server.models import get_host , update_host
+from faraday.client.persistence.server.models import get_host, update_host
 from faraday.client.persistence.server.models import (
     Host,
     Service,
@@ -45,7 +39,6 @@ class PluginBase:
     class_signature = "PluginBase"
 
     def __init__(self):
-
         self.data_path = CONF.getDataPath()
         self.persistence_path = CONF.getPersistencePath()
         self.workspace = CONF.getLastWorkspace()
@@ -65,6 +58,9 @@ class PluginBase:
         self._settings = {}
         self.command_id = None
         self.logger = logger.getChild(self.__class__.__name__)
+
+    def report_belongs_to(self, **kwargs):
+        return False
 
     def has_custom_output(self):
         return bool(self._output_file_path)
@@ -120,12 +116,10 @@ class PluginBase:
         """
         words = current_input.split(" ")
         cword = words[len(words) - 1]
-
         options = {}
         for k, v in self._completition.items():
             if re.search(str("^" + cword), k, flags=re.IGNORECASE):
                 options[k] = v
-
         return options
 
     def processOutput(self, term_output):
@@ -167,11 +161,10 @@ class PluginBase:
         The caller of this function has to build the action in the right
         way since no checks are preformed over args
         """
-
         if self.command_id:
             args = args + (self.command_id, )
         else:
-            logger.warning('Warning command id not set for action {0}'.format(args))
+            logger.warning('Warning command id not set for action {%s}', args)
         logger.debug('AddPendingAction %s', args)
         self._pending_actions.put(args)
 
@@ -224,9 +217,11 @@ class PluginBase:
                             current_version=VERSION,
                             details="Interface object removed. Use host or service instead. Service will be attached to Host!")
     def createAndAddServiceToInterface(self, host_id, interface_id, name,
-                                       protocol="tcp?", ports=[],
+                                       protocol="tcp?", ports=None,
                                        status="open", version="unknown",
                                        description=""):
+        if not ports:
+            ports = []
         if status not in ("open", "closed", "filtered"):
             self.log(
                 'Unknown service status %s. Using "open" instead' % status,
@@ -246,9 +241,11 @@ class PluginBase:
         return serv_obj.getID()
 
     def createAndAddServiceToHost(self, host_id, name,
-                                       protocol="tcp?", ports=[],
+                                       protocol="tcp?", ports=None,
                                        status="open", version="unknown",
                                        description=""):
+        if not ports:
+            ports = []
         if status not in ("open", "closed", "filtered"):
             self.log(
                 'Unknown service status %s. Using "open" instead' % status,
@@ -267,9 +264,10 @@ class PluginBase:
         self.__addPendingAction(Modelactions.ADDSERVICEHOST, serv_obj)
         return serv_obj.getID()
 
-    def createAndAddVulnToHost(self, host_id, name, desc="", ref=[],
+    def createAndAddVulnToHost(self, host_id, name, desc="", ref=None,
                                severity="", resolution="", data="", external_id=None):
-
+        if not ref:
+            ref = []
         vuln_obj = faraday.client.model.common.factory.createModelObject(
             Vuln.class_signature,
             name, data=data, desc=desc, refs=ref, severity=severity,
@@ -285,9 +283,10 @@ class PluginBase:
                             current_version=VERSION,
                             details="Interface object removed. Use host or service instead. Vuln will be added to Host")
     def createAndAddVulnToInterface(self, host_id, interface_id, name,
-                                    desc="", ref=[], severity="",
+                                    desc="", ref=None, severity="",
                                     resolution="", data=""):
-
+        if not ref:
+            ref = []
         vuln_obj = faraday.client.model.common.factory.createModelObject(
             Vuln.class_signature,
             name, data=data, desc=desc, refs=ref, severity=severity,
@@ -300,8 +299,9 @@ class PluginBase:
         return vuln_obj.getID()
 
     def createAndAddVulnToService(self, host_id, service_id, name, desc="",
-                                  ref=[], severity="", resolution="", data="", external_id=None):
-
+                                  ref=None, severity="", resolution="", data="", external_id=None):
+        if not ref:
+            ref = []
         vuln_obj = faraday.client.model.common.factory.createModelObject(
             Vuln.class_signature,
             name, data=data, desc=desc, refs=ref, severity=severity,
@@ -315,10 +315,12 @@ class PluginBase:
         return vuln_obj.getID()
 
     def createAndAddVulnWebToService(self, host_id, service_id, name, desc="",
-                                     ref=[], severity="", resolution="",
+                                     ref=None, severity="", resolution="",
                                      website="", path="", request="",
                                      response="", method="", pname="",
                                      params="", query="", category="", data="", external_id=None):
+        if not ref:
+            ref = []
         vulnweb_obj = faraday.client.model.common.factory.createModelObject(
             VulnWeb.class_signature,
             name, data=data, desc=desc, refs=ref, severity=severity,
@@ -385,6 +387,53 @@ class PluginCustomOutput(PluginBase):
         self.processReport(self._output_file_path)
 
 
+class PluginByExtension(PluginBase):
+    def __init__(self):
+        super().__init__()
+        self.extension = []
+
+    def report_belongs_to(self, extension="", **kwargs):
+        match = False
+        if type(self.extension) == str:
+            match = (self.extension == extension)
+        elif type(self.extension) == list:
+            match = (extension in self.extension)
+        self.logger.debug("Extension Match: [%s =/in %s] -> %s", extension, self.extension, match)
+        return match
+
+
+class PluginXMLFormat(PluginByExtension):
+
+    def __init__(self):
+        super().__init__()
+        self.identifier_tag = []
+        self.extension = ".xml"
+
+    def report_belongs_to(self, main_tag="", **kwargs):
+        match = False
+        if super().report_belongs_to(**kwargs):
+            if type(self.identifier_tag) == str:
+                match = (main_tag == self.identifier_tag)
+            elif type(self.identifier_tag) == list:
+                match = (main_tag in self.identifier_tag)
+        self.logger.debug("Tag Match: [%s =/in %s] -> %s", main_tag, self.identifier_tag, match)
+        return match
+
+
+class PluginJsonFormat(PluginByExtension):
+
+    def __init__(self):
+        super().__init__()
+        self.json_keys = set()
+        self.extension = ".json"
+
+    def report_belongs_to(self, **kwargs):
+        match = False
+        if super().report_belongs_to(**kwargs):
+            pass
+        return match
+
+
 class PluginProcess(Thread):
     def __init__(self, plugin_instance, output_queue, isReport=False):
         """
@@ -425,7 +474,6 @@ class PluginProcess(Thread):
             else:
                 done = True
                 faraday.client.model.api.devlog(f"{proc_name}: Exiting")
-
             self.output_queue.task_done()
             time.sleep(0.1)
 

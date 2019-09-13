@@ -1,14 +1,9 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''from __future__ import print_function
+"""from __future__ import print_function
 
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-from __future__ import absolute_import
-
+"""
 from faraday.client.plugins import core
 import re
 import os
@@ -102,7 +97,6 @@ class DnsmapPlugin(core.PluginBase):
     """Example plugin to parse dnsmap output."""
 
     def __init__(self):
-
         super().__init__()
         self.id = "Dnsmap"
         self.name = "Dnsmap Output Plugin"
@@ -158,12 +152,5 @@ class DnsmapPlugin(core.PluginBase):
 
 def createPlugin():
     return DnsmapPlugin()
-
-if __name__ == '__main__':
-    parser = DnsmapParser(sys.argv[1])
-    for item in parser.items:
-        if item.status == 'up':
-            print(item)
-
 
 # I'm Py3

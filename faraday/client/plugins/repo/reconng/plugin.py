@@ -1,13 +1,8 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2017  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-from __future__ import absolute_import
-from __future__ import print_function
-
+"""
 import re
 import json
 import socket
@@ -17,7 +12,7 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ET
 
-from faraday.client.plugins.core import PluginBase
+from faraday.client.plugins.plugin import PluginXMLFormat
 
 __author__ = 'Leonardo Lazzaro'
 __copyright__ = 'Copyright (c) 2017, Infobyte LLC'
@@ -127,14 +122,14 @@ class ReconngParser:
         return info
 
 
-class ReconngPlugin(PluginBase):
+class ReconngPlugin(PluginXMLFormat):
     """
     Example plugin to parse qualysguard output.
     """
 
     def __init__(self):
-
-        PluginBase.__init__(self)
+        super().__init__()
+        self.identifier_tag = "reconng"
         self.id = 'Reconng'
         self.name = 'Reconng XML Output Plugin'
         self.plugin_version = '0.0.3'
@@ -189,13 +184,6 @@ class ReconngPlugin(PluginBase):
 
 def createPlugin():
     return ReconngPlugin()
-
-if __name__ == '__main__':
-    with open("~/results_hosts_vulns.xml", "r") as report:
-        parser = ReconngParser(report.read())
-        # for item in parser.items:
-        # if item.status == 'up':
-        # print item
 
 
 # I'm Py3

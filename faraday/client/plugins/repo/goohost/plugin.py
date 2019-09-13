@@ -1,18 +1,10 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-from __future__ import absolute_import
-from __future__ import print_function
-
-from __future__ import with_statement
+"""
 from faraday.client.plugins import core
 import socket
-import sys
 import re
 import os
 
@@ -82,7 +74,7 @@ class GoohostPlugin(core.PluginBase):
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "Goohost"
         self.name = "Goohost XML Output Plugin"
         self.plugin_version = "0.0.1"
@@ -174,15 +166,5 @@ class GoohostPlugin(core.PluginBase):
 
 def createPlugin():
     return GoohostPlugin()
-
-if __name__ == '__main__':
-    with open('/home/javier/Plugins/goohost/report-10071-google.com.txt','r') as report:
-        output = report.read()
-    parser = GoohostPlugin()
-    parser.parseOutputString(output)
-    for item in parser.items:
-        if item.status == 'up':
-            print(item)
-
 
 # I'm Py3

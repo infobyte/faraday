@@ -1,6 +1,6 @@
 #!/usr/bin/python2.7
 # -*- coding: utf-8 -*-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
@@ -9,7 +9,7 @@ This module is intended to function as a compatibility layer to support both
 GObject Instrospection 3.12, 3.16 and 3.20 (Ubuntu 14.04, Brew on Mac OS and
 Arch, respectively) and VTE API 2.90 and 2.91 (Ubuntu 14.04 has 2.90, last one
 is 2.91)
-'''
+"""
 from __future__ import absolute_import
 
 import gi

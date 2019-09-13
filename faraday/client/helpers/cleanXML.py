@@ -1,11 +1,11 @@
 #!/usr/bin/env python2.7
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2014  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 This script fixes invalid XMLs.
-'''
+"""
 from __future__ import absolute_import
 
 import argparse

@@ -55,6 +55,7 @@ confidence=
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
 disable=blacklisted-name,
+        no-absolute-import,
         invalid-name,
         missing-docstring,
         empty-docstring,
@@ -327,7 +328,6 @@ enable=print-statement,
        delslice-method,
        getslice-method,
        setslice-method,
-       no-absolute-import,
        old-division,
        dict-iter-method,
        dict-view-method,

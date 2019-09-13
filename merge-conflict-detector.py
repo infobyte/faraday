@@ -117,7 +117,7 @@ def main(branch):
         if target_version != version and \
                 branch_exists(overriden_branch):
             branches_to_test.append(overriden_branch)
-            break  # Don't test merge to black if has overriden pink branch
+            # break  # Uncomment if want to cut the checker on merging to black if has overridden pink branch
         else:
             branches_to_test.append(BRANCH_FORMAT.format(target_version))
 

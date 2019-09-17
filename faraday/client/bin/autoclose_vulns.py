@@ -1,12 +1,8 @@
-#!/usr/bin/env python2.7
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-
+"""
 import requests
 from tqdm import tqdm
 from dateutil import parser
@@ -72,5 +68,8 @@ def main(workspace='', args=None, parser=None):
     vulns = get_vulns_from_workspace(s, url, workspace)
     vulns_closed = close_vulns(s, url, workspace, vulns, float(vuln_duration))
 
-    print "[+] {count} vulnerabilities closed in workspace '{ws}'".format(count=vulns_closed, ws=workspace)
+    print("[+] {count} vulnerabilities closed in workspace '{ws}'".format(count=vulns_closed, ws=workspace))
     return 0, None
+
+
+# I'm Py3

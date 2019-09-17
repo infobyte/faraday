@@ -1,17 +1,11 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 """
 Faraday Penetration Test IDE
 Copyright (C) 2015  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 """
-
-from __future__ import with_statement
-from faraday.client.plugins import core
+from faraday.client.plugins.plugin import PluginXMLFormat
 
 import zipfile
-import sys
 import re
 import os
 
@@ -43,7 +37,7 @@ def openMtgx(mtgx_file):
         xml = ET.parse(file.open('Graphs/Graph1.graphml'))
 
     except:
-        print "Bad report format"
+        print("Bad report format")
         return None
 
     file.close()
@@ -304,11 +298,11 @@ class MaltegoMtgxParser():
         return self.list_hosts
 
 
-class MaltegoPlugin(core.PluginBase):
+class MaltegoPlugin(PluginXMLFormat):
 
     def __init__(self):
-
-        core.PluginBase.__init__(self)
+        super().__init__()
+        self.identifier_tag = "maltego"
         self.id = "Maltego"
         self.name = "Maltego MTGX Output Plugin"
         self.plugin_version = "1.0.1"
@@ -446,3 +440,6 @@ class MaltegoPlugin(core.PluginBase):
 
 def createPlugin():
     return MaltegoPlugin()
+
+
+# I'm Py3

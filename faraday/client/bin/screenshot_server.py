@@ -5,6 +5,7 @@ Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 """
+from __future__ import absolute_import
 from __future__ import print_function
 import os
 import sys
@@ -69,3 +70,4 @@ def main(workspace='', args=None, parser=None):
                 print(protocol + "://" + ip + ":" + port)
                 screenshot(path, protocol, ip, port)
     return 0, None
+# I'm Py3

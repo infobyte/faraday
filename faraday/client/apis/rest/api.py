@@ -1,11 +1,9 @@
-#!/usr/bin/env python
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-
+"""
 import socket
 import threading
 import logging
@@ -82,7 +80,7 @@ def startAPIs(plugin_controller, model_controller, hostname, port):
     threading.Thread(target=startServer).start()
 
 
-class RESTApi(object):
+class RESTApi:
     """ Abstract class for REST Controllers
     All REST Controllers should extend this class
     in order to get published"""
@@ -355,9 +353,12 @@ class PluginControllerAPI(RESTApi):
         return self.ok("active plugins cleared")
 
 
-class Route(object):
+class Route:
     """ Route class, abstracts information about:
     path, handler and methods """
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
+
+
+# I'm Py3

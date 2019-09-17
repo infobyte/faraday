@@ -1,13 +1,9 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-from __future__ import with_statement
+"""
 from faraday.client.plugins import core
 from faraday.client.model import api
 import re
@@ -39,8 +35,7 @@ class MetasploitOnPlugin(core.PluginBase):
     """
 
     def __init__(self):
-
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "MetasploitOn"
         self.name = "Metasploit Online Service Plugin"
         self.plugin_version = "0.0.3"
@@ -85,16 +80,16 @@ class MetasploitOnPlugin(core.PluginBase):
 
             cur = conn.cursor()
         except Exception as e:
-            print "[Faraday - MetasplotiOn] Error Connecting to the database"
-            print "[Faraday - MetasplotiOn]Check your metasploit postgresql credentials and server IP/Port"
-            print e
+            print("[Faraday - MetasplotiOn] Error Connecting to the database")
+            print("[Faraday - MetasplotiOn]Check your metasploit postgresql credentials and server IP/Port")
+            print(e)
             return
 
         cur = self._doSql(
             cur,
             "select * from hosts inner join workspaces ON (hosts.workspace_id=workspaces.id) where workspaces.name like '" + self.getSetting("Workspace") + "';")
         if cur is None:
-            print "Error getting database data\n"
+            print("Error getting database data\n")
             return
 
         self.path = self.data_path + "/" + api.getActiveWorkspace().name + \
@@ -312,21 +307,7 @@ class MetasploitOnPlugin(core.PluginBase):
                     "select * from web_sites where service_id=" + str(s[0]) + self._mwhere)
 
                 for w in cur.fetchall():
-
                     self._checkDate(str(w[3]))
-
-                    n_id = self.createAndAddNoteToService(
-                        h_id,
-                        s_id,
-                        "website",
-                        "")
-
-                    n2_id = self.createAndAddNoteToNote(
-                        h_id,
-                        s_id,
-                        n_id,
-                        str(w[4]),
-                        "")
 
         cur.close()
         conn.close()
@@ -335,7 +316,7 @@ class MetasploitOnPlugin(core.PluginBase):
         try:
             api.devlog("SQL:" + sql)
             db.execute(sql)
-        except Exception, e:
+        except Exception as e:
             print ("Error SQL[" + e.pgcode + "] - " + e.pgerror)
             return None
 
@@ -398,8 +379,4 @@ class MetasploitOnPlugin(core.PluginBase):
 def createPlugin():
     return MetasploitOnPlugin()
 
-if __name__ == '__main__':
-    parser = MetasploitOnXmlParser(sys.argv[1])
-    for item in parser.items:
-        if item.status == 'up':
-            print item
+# I'm Py3

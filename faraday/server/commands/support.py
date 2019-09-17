@@ -68,4 +68,4 @@ def all_for_support():
         pbar.update(1)
 
     print('[{green}+{white}] Process Completed. A {bright}faraday_support.zip{normal} was generated'
-            .format(green=Fore.GREEN, white=Fore.WHITE, bright=Style.BRIGHT, normal=Style.NORMAL))
+            .format(green=Fore.GREEN, white=Fore.WHITE, bright=Style.BRIGHT, normal=Style.NORMAL))# I'm Py3

@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-
-from __future__ import with_statement
-from faraday.client.plugins import core
+"""
+from faraday.client.plugins.plugin import PluginXMLFormat
 from faraday.client.model import api
 import socket
 import os
@@ -31,25 +29,21 @@ __status__ = 'Development'
 class ArachniXmlParser():
 
     def __init__(self, xml_output):
-
         self.tree = self.parse_xml(xml_output)
-
         if self.tree:
             self.issues = self.getIssues(self.tree)
             self.plugins = self.getPlugins(self.tree)
             self.system = self.getSystem(self.tree)
-
         else:
             self.system = None
             self.issues = None
             self.plugins = None
 
     def parse_xml(self, xml_output):
-
         try:
             tree = ET.fromstring(xml_output)
-        except SyntaxError, err:
-            print 'SyntaxError In xml: %s. %s' % (err, xml_output)
+        except SyntaxError as err:
+            print('SyntaxError In xml: %s. %s' % (err, xml_output))
             return None
 
         return tree
@@ -353,28 +347,32 @@ class Plugins():
             return 'None'
 
 
-class ArachniPlugin(core.PluginBase):
+class ArachniPlugin(PluginXMLFormat):
 
     # Plugin that parses Arachni's XML report files.
 
     def __init__(self):
-
-        core.PluginBase.__init__(self)
+        super().__init__()
+        self.identifier_tag = "report"
         self.id = 'Arachni'
         self.name = 'Arachni XML Output Plugin'
         self.plugin_version = '1.0.1'
         self.version = '1.3.2'
         self.framework_version = '1.0.0'
         self.options = None
-
-        self._command_regex = re.compile(
-            r'^(arachni |\.\/arachni).*?')
-
+        self._command_regex = re.compile(r'^(arachni |\.\/arachni).*?')
         self.protocol = None
         self.hostname = None
         self.port = '80'
-
         self.address = None
+
+    def report_belongs_to(self, **kwargs):
+        if super().report_belongs_to(**kwargs):
+            report_path = kwargs.get("report_path", "")
+            with open(report_path) as f:
+                output = f.read()
+            return re.search("https://raw.githubusercontent.com/Arachni/arachni/", output) is not None
+        return False
 
     def parseOutputString(self, output, debug=False):
         """
@@ -386,7 +384,7 @@ class ArachniPlugin(core.PluginBase):
 
         # Check xml parsed ok...
         if not parser.system:
-            print 'Error in xml report... Exiting...'
+            print('Error in xml report... Exiting...')
             return
 
         self.hostname = self.getHostname(parser.system.url)
@@ -412,37 +410,6 @@ class ArachniPlugin(core.PluginBase):
             version='',
             description='')
 
-        # Scan Note.
-        noteScan_id = self.createAndAddNoteToService(
-            host_id,
-            service_id,
-            'Scan Information',
-            parser.system.note)
-
-        # Plugins Notes
-        note_id = self.createAndAddNoteToService(
-            host_id,
-            service_id,
-            'Plugins arachni',
-            'Plugins used by arachni and results of this.')
-
-        if parser.plugins.waf != 'None':
-
-            note2_id = self.createAndAddNoteToNote(
-                host_id,
-                service_id,
-                note_id,
-                'Waf Plugin',
-                parser.plugins.waf)
-
-        if parser.plugins.healthmap != 'None':
-
-            note3_id = self.createAndAddNoteToNote(
-                host_id,
-                service_id,
-                note_id,
-                'Healthmap Plugin',
-                parser.plugins.healthmap)
 
         # Create issues.
         for issue in parser.issues:
@@ -541,9 +508,12 @@ class ArachniPlugin(core.PluginBase):
         # Returns remote IP address from hostname.
         try:
             return socket.gethostbyname(hostname)
-        except socket.error, msg:
+        except socket.error as msg:
             return self.hostname
 
 
 def createPlugin():
     return ArachniPlugin()
+
+
+# I'm Py3

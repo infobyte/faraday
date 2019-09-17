@@ -1,8 +1,7 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-
-from Queue import Empty, Queue
+from queue import Empty, Queue
 from multiprocessing import Queue as MultiProcessingQueue
 from threading import Thread, Event
 
@@ -59,10 +58,11 @@ class RawReportProcessor(Thread):
 
         try:
             plugin_manager = PluginManager(os.path.join(CONF.getConfigPath(), "plugins"))
-        except AttributeError:
+        except AttributeError as e:
+            logger.info("%s", e)
             logger.warning(
                 "Upload reports in WEB-UI not configurated, run Faraday client and try again...")
-            self._stop = True
+            self._must_stop = True
             return
 
         mappers_manager = MapperManager()
@@ -79,15 +79,16 @@ class RawReportProcessor(Thread):
             self.end_event)
 
         self.processor = ReportProcessor(plugin_controller, None)
-        self._stop = False
+        self._must_stop = False
 
     def stop(self):
-        self.model_controller.stop()
-        self._stop = True
+        if self.model_controller.isAlive():
+            self.model_controller.stop()
+        self._must_stop = True
 
     def run(self):
         logger.info('Tool report processor started')
-        while not self._stop:
+        while not self._must_stop:
             try:
 
                 workspace, file_path, cookie = UPLOAD_REPORTS_QUEUE.get(False, timeout=0.1)
@@ -155,13 +156,14 @@ def file_upload(workspace=None):
             file_path = os.path.join(
                 CONF.getConfigPath(),
                 'uploaded_reports/{0}'.format(raw_report_filename))
+            with open(file_path, 'wb') as output:
+                output.write(report_file.read())
         except AttributeError:
             logger.warning(
                 "Upload reports in WEB-UI not configurated, run Faraday client and try again...")
             abort(make_response(jsonify(message="Upload reports not configurated: Run faraday client and start Faraday server again"), 500))
 
-        with open(file_path, 'w') as output:
-            output.write(report_file.read())
 
     UPLOAD_REPORTS_QUEUE.put((workspace, file_path, request.cookies))
     return make_response(jsonify(message="ok"), 200)
+# I'm Py3

@@ -4,6 +4,8 @@
 ## Copyright (C) 2015  Infobyte LLC (http://www.infobytesec.com/)
 ## See the file 'doc/LICENSE' for the license information
 ###
+from __future__ import absolute_import
+from __future__ import print_function
 import requests
 import json
 import time
@@ -56,7 +58,7 @@ def connect(method, resource, data=None):
     # Exit if there is an error.
     if r.status_code != 200:
         e = r.json()
-        print e['error']
+        print(e['error'])
         sys.exit()
 
     # When downloading a scan we need the raw contents not the JSON data. 
@@ -317,21 +319,21 @@ if __name__ == "__main__":
     args = parser.parse_args()
     # Review de Command input
     if args.target is None or args.output is None:
-        print "Argument errors check -h"
+        print("Argument errors check -h")
         exit(0)
 
     print('Login')
     try:
         token = login(username, password)
     except:
-        print "Unexpected error:", sys.exc_info()[0]
+        print("Unexpected error:", sys.exc_info()[0])
         raise
 
     version = get_version()
     if version < 7 :
         #For Nessus <7
         print('Adding new scan.' + token)
-        print args.target
+        print(args.target)
 
         policies = get_policies()
         policy_id = policies[profile]
@@ -368,4 +370,4 @@ if __name__ == "__main__":
                 print('Scan up to date. Id: {0}'.format(scan['id']))
 
     print('Logout')
-    logout()
+    logout()# I'm Py3

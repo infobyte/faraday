@@ -1,12 +1,8 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-
+"""
 import re
 import os
 import shlex
@@ -28,7 +24,7 @@ __status__ = "Development"
 
 class Sublist3rPlugin(PluginTerminalOutput):
     def __init__(self):
-        super(Sublist3rPlugin, self).__init__()
+        super().__init__()
         self.id = "sublist3r"
         self.name = "sublist3r"
         self.plugin_version = "0.0.1"
@@ -107,3 +103,6 @@ class Sublist3rPlugin(PluginTerminalOutput):
 
 def createPlugin():
     return Sublist3rPlugin()
+
+
+# I'm Py3

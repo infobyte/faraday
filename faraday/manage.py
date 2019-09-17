@@ -1,11 +1,10 @@
 #!/usr/bin/env python
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-
+"""
 import os
 import re
 import sys
@@ -30,7 +29,7 @@ if platform.system() == "Linux":
 import click
 import requests
 import alembic.command
-from urlparse import urlparse
+from urllib.parse import urlparse
 from alembic.config import Config
 from sqlalchemy.exc import ProgrammingError
 
@@ -197,7 +196,7 @@ def validate_email(ctx, param, value):
 def list_plugins():
     plugins_list = [name for name in os.listdir(FARADAY_PLUGINS_BASEPATH)
            if os.path.isdir(os.path.join(FARADAY_PLUGINS_BASEPATH, name))]
-    print '\n'.join(sorted(plugins_list))
+    print('\n'.join(sorted(plugins_list)))
 
 @click.command(help="Create ADMIN user for Faraday application")
 @click.option('--username', prompt=True, callback=validate_user_unique_field)
@@ -300,3 +299,6 @@ cli.add_command(rename_user)
 
 if __name__ == '__main__':
     cli()
+
+
+# I'm Py3

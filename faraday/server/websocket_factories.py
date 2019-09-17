@@ -1,16 +1,16 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
 import json
 import logging
 import itsdangerous
 
-import Cookie
+import http.cookies
 from collections import defaultdict
-from Queue import Empty
+from queue import Queue, Empty
 
 import txaio
 
@@ -44,9 +44,9 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
         logger.debug('Websocket request {0}'.format(request))
         if 'cookie' in request.headers:
             try:
-                cookie = Cookie.SimpleCookie()
+                cookie = http.cookies.SimpleCookie()
                 cookie.load(str(request.headers['cookie']))
-            except Cookie.CookieError:
+            except http.cookies.CookieError:
                 pass
         return (protocol, headers)
 
@@ -202,14 +202,16 @@ class WorkspaceServerFactory(WebSocketServerFactory):
                 del connected_agents[key]
 
     def broadcast(self, msg):
+        if isinstance(msg, str):
+            msg = msg.encode('utf-8')
         logger.debug("broadcasting prepared message '{}' ..".format(msg))
         prepared_msg = json.loads(self.prepareMessage(msg).payload)
-        if 'agent_id' not in msg:
+        if b'agent_id' not in msg:
             for client in self.workspace_clients[prepared_msg['workspace']]:
                 reactor.callFromThread(client.sendPreparedMessage, self.prepareMessage(msg))
                 logger.debug("prepared message sent to {}".format(client.peer))
 
-        if 'agent_id' in msg:
+        if b'agent_id' in msg:
             agent_id = prepared_msg['agent_id']
             try:
                 agent_connection = connected_agents[agent_id]
@@ -219,3 +221,5 @@ class WorkspaceServerFactory(WebSocketServerFactory):
             reactor.callFromThread(agent_connection.sendPreparedMessage, self.prepareMessage(msg))
             logger.debug("prepared message sent to agent id: {}".format(
                 agent_id))
+
+# I'm Py3

@@ -1,9 +1,9 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
 import json
 import logging
 
@@ -29,12 +29,14 @@ from faraday.server.utils.database import (
     is_unique_constraint_violation
     )
 
+from faraday.server.utils.py3 import BytesJSONEncoder
+
 logger = logging.getLogger(__name__)
 
 
 def output_json(data, code, headers=None):
     content_type = 'application/json'
-    dumped = json.dumps(data)
+    dumped = json.dumps(data, cls=BytesJSONEncoder)
     if headers:
         headers.update({'Content-Type': content_type})
     else:
@@ -386,7 +388,7 @@ class GenericWorkspacedView(GenericView):
             flask.abort(403, "Altering a readonly workspace is not allowed")
 
 
-class ListMixin(object):
+class ListMixin:
     """Add GET / route"""
 
     #: If set (to a SQLAlchemy attribute instance) use this field to order the
@@ -436,7 +438,7 @@ class ListMixin(object):
                                    pagination_metadata)
 
 
-class SortableMixin(object):
+class SortableMixin:
     """Enables custom sorting by a field specified by the user
 
     See the example of :ref:`pagination-and-sorting-recipe` to learn
@@ -525,7 +527,7 @@ class SortableMixin(object):
             ))
 
 
-class PaginatedMixin(object):
+class PaginatedMixin:
     """Add pagination for list route"""
     per_page_parameter_name = 'page_size'
     page_number_parameter_name = 'page'
@@ -550,7 +552,7 @@ class PaginatedMixin(object):
         return super(PaginatedMixin, self)._paginate(query)
 
 
-class FilterAlchemyMixin(object):
+class FilterAlchemyMixin:
     """Add querystring parameter filtering to list route
 
     It is done by setting the ViewClass.filterset_class class
@@ -568,10 +570,9 @@ class ListWorkspacedMixin(ListMixin):
     """Add GET /<workspace_name>/<route_base>/ route"""
     # There are no differences with the non-workspaced implementations. The code
     # inside the view generic methods is enough
-    pass
 
 
-class RetrieveMixin(object):
+class RetrieveMixin:
     """Add GET /<id>/ route"""
 
     def get(self, object_id, **kwargs):
@@ -583,7 +584,6 @@ class RetrieveWorkspacedMixin(RetrieveMixin):
     """Add GET /<workspace_name>/<route_base>/<id>/ route"""
     # There are no differences with the non-workspaced implementations. The code
     # inside the view generic methods is enough
-    pass
 
 
 class ReadOnlyView(SortableMixin,
@@ -595,7 +595,6 @@ class ReadOnlyView(SortableMixin,
     It is just a GenericView inheriting also from ListMixin,
     RetrieveMixin and SortableMixin.
     """
-    pass
 
 
 class ReadOnlyWorkspacedView(SortableMixin,
@@ -606,10 +605,9 @@ class ReadOnlyWorkspacedView(SortableMixin,
 
     It is just a GenericWorkspacedView inheriting also from
     ListWorkspacedMixin, RetrieveWorkspacedMixin and SortableMixin"""
-    pass
 
 
-class CreateMixin(object):
+class CreateMixin:
     """Add POST / route"""
 
     def post(self, **kwargs):
@@ -733,7 +731,7 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
         return obj
 
 
-class UpdateMixin(object):
+class UpdateMixin:
     """Add PUT /<id>/ route"""
 
     def put(self, object_id, **kwargs):
@@ -807,7 +805,7 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
             object_id, obj, data, workspace_name)
 
 
-class DeleteMixin(object):
+class DeleteMixin:
     """Add DELETE /<id>/ route"""
     def delete(self, object_id, **kwargs):
         obj = self._get_object(object_id, **kwargs)
@@ -830,7 +828,7 @@ class DeleteWorkspacedMixin(DeleteMixin):
             obj, workspace_name)
 
 
-class CountWorkspacedMixin(object):
+class CountWorkspacedMixin:
     """Add GET /<workspace_name>/<route_base>/count/ route
 
     Group objects by the field set in the group_by GET parameter. If it
@@ -893,7 +891,6 @@ class ReadWriteView(CreateMixin,
     RetrieveMixin, SortableMixin, CreateMixin, UpdateMixin and
     DeleteMixin.
     """
-    pass
 
 
 class ReadWriteWorkspacedView(CreateWorkspacedMixin,
@@ -909,7 +906,6 @@ class ReadWriteWorkspacedView(CreateWorkspacedMixin,
     CreateWorkspacedMixin, DeleteWorkspacedMixin and
     CountWorkspacedMixin.
     """
-    pass
 
 
 class CustomModelConverter(ModelConverter):
@@ -958,3 +954,4 @@ class FilterSetMeta:
     """Base Meta class of FilterSet objects"""
     parser = parser
     converter = FilterAlchemyModelConverter()
+# I'm Py3

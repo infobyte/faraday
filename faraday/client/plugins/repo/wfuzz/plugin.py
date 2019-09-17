@@ -1,7 +1,6 @@
 import re
-import sys
 import string
-from urlparse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse
 
 from faraday.client.plugins import core
 
@@ -9,7 +8,7 @@ from faraday.client.plugins import core
 class WfuzzPlugin(core.PluginBase):
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "Wfuzz"
         self.name = "Wfuzz Plugin"
         self.plugin_version = "0.0.1"
@@ -105,3 +104,6 @@ if __name__ == '__main__':
     parser = WfuzzPlugin()
     with open("/home/javier/salida", "r") as report:
         parser.parseOutputString(report.read())
+
+
+# I'm Py3

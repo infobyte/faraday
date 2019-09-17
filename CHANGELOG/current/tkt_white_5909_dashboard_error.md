@@ -1,1 +1,1 @@
-* tkt_white_5909_dashboard_error
+* Fix dashboard tooltips for vulnerability

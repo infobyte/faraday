@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
+from __future__ import absolute_import
 
 from faraday.client.managers.reports_managers import ReportManager
 
@@ -12,7 +13,7 @@ from faraday.config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
 
-class UiFactory(object):
+class UiFactory:
     @staticmethod
     def create(model_controller, plugin_manager, workspace_manager, plugin_controller, gui="gtk"):
         if gui == "gtk":
@@ -23,7 +24,7 @@ class UiFactory(object):
         return GuiApp(model_controller, plugin_manager, workspace_manager, plugin_controller)
 
 
-class FaradayUi(object):
+class FaradayUi:
     def __init__(self, model_controller, plugin_manager,
                  workspace_manager, plugin_controller, gui="gtk"):
         self.model_controller = model_controller
@@ -86,3 +87,6 @@ class FaradayUi(object):
         except Exception as e:
             raise e
         return ws
+
+
+# I'm Py3

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import faraday.server.config
 from faraday.server.models import (
     Host,
@@ -23,10 +25,10 @@ def change_vulns(affected_vulns, workspace):
         vulns_id.append(vuln.id)
         session.commit()
 
-    print ("[+] {vulns_length} vulnerabilities changed in workspace named {ws_name}"
+    print("[+] {vulns_length} vulnerabilities changed in workspace named {ws_name}"
            .format(vulns_length=len(affected_vulns),
                    ws_name=workspace.name))
-    print "    Vulnerabilities ID: {ids}".format(ids=vulns_id)
+    print("    Vulnerabilities ID: {ids}".format(ids=vulns_id))
 
 
 conn_string = faraday.server.config.database.connection_string
@@ -50,12 +52,13 @@ with open(log_file, 'a') as log:
         if vulns_web.all():
             change_vulns(vulns_web.all(), ws)
         else:
-            print "[-] No vulnerabilities to change in workspace named {ws_name}".format(ws_name=ws.name)
+            print("[-] No vulnerabilities to change in workspace named {ws_name}".format(ws_name=ws.name))
 
     sys.stdout = orig_stdout
 
 # Print log file
 with open(log_file, 'r') as log:
-    print log.read()
+    print(log.read())
 
-print "Logs saved in file named {}".format(log_file)
+print("Logs saved in file named {}".format(log_file))
+# I'm Py3

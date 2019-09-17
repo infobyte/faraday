@@ -1,9 +1,9 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
 import os
 import socket
 
@@ -193,6 +193,7 @@ def print_postgresql_status():
     exit_code = 0
     result = check_postgres()
 
+
     if result == False:
         print('[{red}-{white}] Could not connect to PostgreSQL, please check if database is running'\
             .format(red=Fore.RED, white=Fore.WHITE))
@@ -203,7 +204,7 @@ def print_postgresql_status():
             .format(red=Fore.RED, white=Fore.WHITE))
         exit_code = 1
         return exit_code
-    elif result[1]<90400:
+    elif int(result[1][0])<90400:
         print('[{red}-{white}] PostgreSQL is running, but needs to be 9.4 or newer, please update PostgreSQL'.\
             format(red=Fore.RED, white=Fore.WHITE))
     elif result:
@@ -259,30 +260,27 @@ def print_depencencies_status():
     """Prints Status of the dependencies using check_server_dependencies() and check_client_dependencies()"""
 
     status, server_dep = check_server_dependencies()
+    red = Fore.RED
+    white = Fore.WHITE
+    green = Fore.GREEN
     if status == True:
-        print('[{red}-{white}] Some server dependencies are old: [' + ', '.join(server_dep) + ']. Update them with \"pip install -r requirements_server.txt -U\"') \
-            .format(red=Fore.RED, white=Fore.WHITE)
+        print(f"[{red}-{white}] Some server dependencies are old: [{', '.join(server_dep)}']. Update them with \"pip install -r requirements_server.txt -U\"")
 
     elif status == 0:
-        print('[{red}-{white}] Client dependencies not met: [' + ', '.join(server_dep) + '] Install them with \"pip install -r requirements_server.txt -U\"')\
-            .format(red=Fore.RED, white=Fore.WHITE)
+        print(f"[{red}-{white}] Client dependencies not met: [{', '.join(server_dep)}'] Install them with \"pip install -r requirements_server.txt -U\"")
 
     else:
-        print('[{green}+{white}] Server dependencies met' \
-            .format(green=Fore.GREEN, white=Fore.WHITE))
+        print(f'[{green}+{white}] Server dependencies met')
 
     status, client_dep = check_client_dependencies()
     if status == True:
-        print('[{red}-{white}] Some client dependencies are old: [' + ', '.join(client_dep) + ']. Update them with \"pip install -r requirements.txt -U\"') \
-            .format(red=Fore.RED, white=Fore.WHITE)
+        print(f"[{red}-{white}] Some client dependencies are old: [{', '.join(client_dep)}]. Update them with \"pip install -r requirements.txt -U\"")
 
     elif status == 0:
-        print('[{red}-{white}] Client dependencies not met: [' + ', '.join(client_dep) + ']. Install them with \"pip install -r requirements.txt -U\"')\
-            .format(red=Fore.RED, white=Fore.WHITE)
+        print(f"[{red}-{white}] Client dependencies not met: [{', '.join(client_dep)}]. Install them with \"pip install -r requirements.txt -U\"")
 
     else:
-        print('[{green}+{white}] Client dependencies met'\
-            .format(green=Fore.GREEN, white=Fore.WHITE))
+        print(f'[{green}+{white}] Client dependencies met')
 
 
 def print_config_status():
@@ -308,11 +306,11 @@ def print_config_status():
             .format(red=Fore.RED, white=Fore.WHITE))
 
     if check_open_ports():
-        print "[{green}+{white}] Port {PORT} in {ad} is open"\
-            .format(PORT=faraday.server.config.faraday_server.port, green=Fore.GREEN,white=Fore.WHITE,ad=faraday.server.config.faraday_server.bind_address)
+        print("[{green}+{white}] Port {PORT} in {ad} is open"\
+            .format(PORT=faraday.server.config.faraday_server.port, green=Fore.GREEN,white=Fore.WHITE,ad=faraday.server.config.faraday_server.bind_address))
     else:
-        print "[{red}-{white}] Port {PORT} in {ad} is not open"\
-            .format(PORT=faraday.server.config.faraday_server.port,red=Fore.RED,white=Fore.WHITE,ad =faraday.server.config.faraday_server.bind_address)
+        print("[{red}-{white}] Port {PORT} in {ad} is not open"\
+            .format(PORT=faraday.server.config.faraday_server.port,red=Fore.RED,white=Fore.WHITE,ad =faraday.server.config.faraday_server.bind_address))
 
 
 def full_status_check():
@@ -328,3 +326,4 @@ def full_status_check():
 
     print('\n{white}Checking Faraday config...{white}'.format(white=Fore.WHITE))
     print_config_status()
+# I'm Py3

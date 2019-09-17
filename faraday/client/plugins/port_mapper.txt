@@ -660,8 +660,8 @@
 1935/tcp	Macromedia Flash Communications Server MX, the precursor to Adobe Flash Media Server before Macromedia's acquisition by Adobe on December 3, 2005
 1970/udp	Netop Remote Control
 1970/tcp	Netop Remote Control
-1972/udp	InterSystems Caché
-1972/tcp	InterSystems Caché
+1972/udp	InterSystems Cache
+1972/tcp	InterSystems Cache
 1984/udp	Big Brother
 1984/tcp	Big Brother
 1985/udp 	Cisco Hot Standby Router Protocol (HSRP)
@@ -712,8 +712,8 @@
 2404/tcp	IEC 60870-5-104, used to send electric power telecontrol messages between two systems via directly connected data circuits
 2427/udp	Media Gateway Control Protocol (MGCP) media gateway
 2427/tcp	Media Gateway Control Protocol (MGCP) media gateway
-2447/udp	ovwdb—OpenView Network Node Manager (NNM) daemon
-2447/tcp	ovwdb—OpenView Network Node Manager (NNM) daemon
+2447/udp	ovwdb OpenView Network Node Manager (NNM) daemon
+2447/tcp	ovwdb OpenView Network Node Manager (NNM) daemon
 2483/udp	Oracle database listening for insecure client connections to the listener, replaces port 1521
 2483/tcp	Oracle database listening for insecure client connections to the listener, replaces port 1521
 2484/udp	Oracle database listening for SSL client connections to the listener
@@ -754,8 +754,8 @@
 3050/tcp	gds-db (Interbase/Firebird databases)
 3052/udp	APC PowerChute Network
 3052/tcp	APC PowerChute Network
-3074/udp	Xbox LIVE and Games for Windows – Live
-3074/tcp	Xbox LIVE and Games for Windows – Live
+3074/udp	Xbox LIVE and Games for Windows Live
+3074/tcp	Xbox LIVE and Games for Windows Live
 3225/udp	Fibre Channel over IP (FCIP)
 3225/tcp	Fibre Channel over IP (FCIP)
 3233/udp	WhiskerControl research control protocol
@@ -1140,18 +1140,18 @@
 11112/tcp	ACR/NEMA Digital Imaging and Communications in Medicine (DICOM)
 11371/udp	OpenPGP HTTP key server
 11371/tcp	OpenPGP HTTP key server
-13720/udp	Symantec NetBackup—bprd (formerly VERITAS)
-13720/tcp	Symantec NetBackup—bprd (formerly VERITAS)
-13721/udp	Symantec NetBackup—bpdbm (formerly VERITAS)
-13721/tcp	Symantec NetBackup—bpdbm (formerly VERITAS)
-13724/udp	Symantec Network Utility—vnetd (formerly VERITAS)
-13724/tcp	Symantec Network Utility—vnetd (formerly VERITAS)
-13782/udp	Symantec NetBackup—bpcd (formerly VERITAS)
-13782/tcp	Symantec NetBackup—bpcd (formerly VERITAS)
+13720/udp	Symantec NetBackup-bprd (formerly VERITAS)
+13720/tcp	Symantec NetBackup-bprd (formerly VERITAS)
+13721/udp	Symantec NetBackup-bpdbm (formerly VERITAS)
+13721/tcp	Symantec NetBackup-bpdbm (formerly VERITAS)
+13724/udp	Symantec Network Utility-vnetd (formerly VERITAS)
+13724/tcp	Symantec Network Utility-vnetd (formerly VERITAS)
+13782/udp	Symantec NetBackup-bpcd (formerly VERITAS)
+13782/tcp	Symantec NetBackup-bpcd (formerly VERITAS)
 13783/udp	Symantec VOPIED protocol (formerly VERITAS)
 13783/tcp	Symantec VOPIED protocol (formerly VERITAS)
-13785/udp	Symantec NetBackup Database—nbdb (formerly VERITAS)
-13785/tcp	Symantec NetBackup Database—nbdb (formerly VERITAS)
+13785/udp	Symantec NetBackup Database-nbdb (formerly VERITAS)
+13785/tcp	Symantec NetBackup Database-nbdb (formerly VERITAS)
 13786/udp	Symantec nomdb (formerly VERITAS)
 13786/tcp	Symantec nomdb (formerly VERITAS)
 15345/udp	XPilot Contact
@@ -1188,8 +1188,8 @@
 27009/tcp	FlexNet Publisher's License server (from the range of default ports)
 33434/udp	traceroute
 33434/tcp	traceroute
-40000/udp	SafetyNET p – a real-time Industrial Ethernet protocol
-40000/tcp	SafetyNET p – a real-time Industrial Ethernet protocol
+40000/udp	SafetyNET p a real-time Industrial Ethernet protocol
+40000/tcp	SafetyNET p a real-time Industrial Ethernet protocol
 44818/udp	EtherNet/IP explicit messaging
 44818/tcp	EtherNet/IP explicit messaging
 47808/udp	BACnet Building Automation and Control Networks (4780810 = BAC016)

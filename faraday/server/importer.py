@@ -2,6 +2,8 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+from builtins import str
+
 import string
 from random import SystemRandom
 
@@ -12,7 +14,6 @@ import json
 import logging
 import datetime
 import multiprocessing
-from future.builtins import range # __future__
 
 import requests
 from requests.exceptions import HTTPError, RequestException
@@ -267,7 +268,7 @@ def create_tags(raw_tags, parent_id, parent_type):
 
 def set_metadata(document, obj):
     if 'metadata' in document:
-        for key, value in document['metadata'].iteritems():
+        for key, value in document['metadata'].items():
             if not value:
                 continue
             try:
@@ -280,7 +281,7 @@ def set_metadata(document, obj):
                     obj.creator = creator
             except ValueError:
                 if key == 'create_time':
-                    obj.create_date = datetime.datetime.fromtimestamp(document['metadata']['create_time'] / 1000)
+                    obj.create_date = datetime.datetime.fromtimestamp(document['metadata']['create_time'] // 1000)
             except TypeError:
                 print('')
 
@@ -298,13 +299,9 @@ def map_tool_with_command_id(command_tool_map, document):
         return
     old_tool = command_tool_map.get(command_id)
     if old_tool is not None and old_tool != tool:
-        logger.warn('Conflicting tool names for command {}: "{}" and "{}". '
-                    'Using "{}"'.format(
-                        command_id,
-                        old_tool,
-                        tool,
-                        tool
-                    ))
+        logger.warn('Conflicting tool names for command {0}: "{1}" and "{2}". Using "{2}"'.format(command_id,
+                                                                                                  old_tool,
+                                                                                                  tool))
     command_tool_map[command_id] = tool
 
 
@@ -355,7 +352,7 @@ class EntityNotFound(Exception):
         super(EntityNotFound, self).__init__("Entity (%s) wasn't found" % entity_id)
 
 
-class EntityMetadataImporter(object):
+class EntityMetadataImporter:
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         return
@@ -365,7 +362,7 @@ class EntityMetadataImporter(object):
         epoch timestamps expressed in milliseconds to seconds"""
         limit = 32503680000  # 01 Jan 3000 00:00:00 GMT
         if timestamp > limit:
-            return timestamp / 1000
+            return timestamp // 1000
         else:
             return timestamp
 
@@ -384,7 +381,7 @@ def check_ip_address(ip_str):
     return True
 
 
-class HostImporter(object):
+class HostImporter:
     """
         Class interface was removed in the new model.
         We will merge the interface data with the host.
@@ -487,7 +484,7 @@ class HostImporter(object):
             if not host.description:
                 host.description = ''
             host.description += '\n Interface data: {0}'.format(interface['description'])
-        if type(interface['hostnames']) in (str, unicode):
+        if isinstance(type(interface['hostnames']), str):
             interface['hostnames'] = [interface['hostnames']]
 
         for hostname_str in interface['hostnames'] or []:
@@ -505,7 +502,7 @@ class HostImporter(object):
         return host
 
 
-class ServiceImporter(object):
+class ServiceImporter:
     DOC_TYPE = 'Service'
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
@@ -581,9 +578,7 @@ class ServiceImporter(object):
 
 def get_or_create_user(session, username):
     rng = SystemRandom()
-    password =  "".join(
-        [rng.choice(string.ascii_letters + string.digits) for _ in
-            range(12)])
+    password = "".join([rng.choice(string.ascii_letters + string.digits) for _ in range(12)])
     creator, created = get_or_create(session, User, username=username)
     if created:
         creator.active = False
@@ -593,7 +588,7 @@ def get_or_create_user(session, username):
     return creator
 
 
-class VulnerabilityImporter(object):
+class VulnerabilityImporter:
     DOC_TYPE = ['Vulnerability', 'VulnerabilityWeb']
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
@@ -764,7 +759,7 @@ class VulnerabilityImporter(object):
                 workspace=workspace
             )
             session.flush()
-            if created and pv.name not in map(lambda pva: pva.name, policy_violations):
+            if created and pv.name not in list(map(lambda pva: pva.name, policy_violations)):
                 policy_violations.add(pv)
         return policy_violations
 
@@ -780,12 +775,12 @@ class VulnerabilityImporter(object):
                 workspace=workspace
             )
             session.flush()
-            if created and reference not in map(lambda ref: ref.name, references):
+            if created and reference not in list(map(lambda ref: ref.name, references)):
                 references.add(reference)
         return references
 
 
-class CommandImporter(object):
+class CommandImporter:
 
     DOC_TYPE = 'CommandRunInformation'
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
@@ -822,7 +817,7 @@ class CommandImporter(object):
         yield command
 
 
-class NoteImporter(object):
+class NoteImporter:
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         couch_parent_id = '.'.join(document['_id'].split('.')[:-1])
@@ -837,7 +832,7 @@ class NoteImporter(object):
         yield comment
 
 
-class CredentialImporter(object):
+class CredentialImporter:
 
     DOC_TYPE = 'Cred'
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
@@ -882,15 +877,15 @@ class CredentialImporter(object):
             yield credential
 
 
-class WorkspaceImporter(object):
+class WorkspaceImporter:
 
     DOC_TYPE = 'Workspace'
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         workspace.description = document.get('description')
         if document.get('duration') and document.get('duration')['start']:
-            workspace.start_date = datetime.datetime.fromtimestamp(float(document.get('duration')['start'])/1000)
+            workspace.start_date = datetime.datetime.fromtimestamp(float(document.get('duration')['start'])//1000)
         if document.get('duration') and document.get('duration')['end']:
-            workspace.end_date = datetime.datetime.fromtimestamp(float(document.get('duration')['end'])/1000)
+            workspace.end_date = datetime.datetime.fromtimestamp(float(document.get('duration')['end'])//1000)
         for scope in [x.strip() for x in document.get('scope', '').split('\n') if x.strip()]:
             scope_obj, created = get_or_create(session, Scope, name=scope, workspace=workspace)
             session.flush()  # This fixes integrity errors for duplicate scope elements
@@ -909,7 +904,7 @@ class WorkspaceImporter(object):
         yield workspace
 
 
-class MethodologyImporter(object):
+class MethodologyImporter:
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         if document.get('group_type') == 'template':
             methodology, created = get_or_create(session, MethodologyTemplate, name=document.get('name'))
@@ -920,7 +915,7 @@ class MethodologyImporter(object):
             yield methodology
 
 
-class TaskImporter(object):
+class TaskImporter:
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         try:
@@ -978,7 +973,7 @@ class TaskImporter(object):
 
 
 
-class ReportsImporter(object):
+class ReportsImporter:
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         report, created = get_or_create(session, ExecutiveReport, name=document.get('name'))
@@ -1033,7 +1028,7 @@ class ReportsImporter(object):
         yield report
 
 
-class CommunicationImporter(object):
+class CommunicationImporter:
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         comment, created = get_or_create(
             session,
@@ -1045,7 +1040,7 @@ class CommunicationImporter(object):
         yield comment
 
 
-class FaradayEntityImporter(object):
+class FaradayEntityImporter:
     # Document Types: [u'Service', u'Communication', u'Vulnerability', u'CommandRunInformation', u'Reports', u'Host', u'Workspace']
 
     def __init__(self, workspace_name):
@@ -1057,7 +1052,7 @@ class FaradayEntityImporter(object):
         if importer_class is not None:
             importer = importer_class()
             entity = importer.update_from_document(document)
-            metadata = EntityMetadataImporter().update_from_document(document)
+            metadata = None  # EntityMetadataImporter().update_from_document(document) this always None
             entity.entity_metadata = metadata
             return importer, entity
         return None, None
@@ -1087,14 +1082,16 @@ class FaradayEntityImporter(object):
 
 class ImportCouchDBUsers():
 
-    def modular_crypt_pbkdf2_sha1(self, checksum, salt, iterations=1000):
+    def modular_crypt_pbkdf2_sha1(self, checksum: str, salt: str, iterations=1000):
         return '$pbkdf2${iterations}${salt}${checksum}'.format(
             iterations=iterations,
-            salt=ab64_encode(salt),
-            checksum=ab64_encode(unhexlify(checksum)),
+            salt=ab64_encode(salt.encode()).decode(),
+            checksum=ab64_encode(unhexlify(checksum.encode())).decode(),
         )
 
-    def convert_couchdb_hash(self, original_hash):
+    def convert_couchdb_hash(self, original_hash) -> str:
+        if isinstance(original_hash, bytes):
+            original_hash = original_hash.decode()
         if not original_hash.startswith(COUCHDB_PASSWORD_PREFIX):
             # Should be a plaintext password
             return original_hash
@@ -1236,7 +1233,7 @@ class ImportVulnerabilityTemplates():
 
             if isinstance(document.get('references'), list):
                 references = document.get('references')
-            elif isinstance(document.get('references'), (str, unicode)):
+            elif isinstance(document.get('references'), str):
                 references = [x.strip()
                               for x in document.get('references').split(',')
                               if x.strip()]
@@ -1412,11 +1409,11 @@ class ImportCouchDB():
                     port=faraday.server.config.couchdb.port,
                     workspace_name=workspace.name
         )
-        all_ids = map(lambda x: x['doc']['_id'], requests.get(all_docs_url).json()['rows'])
+        all_ids = list(map(lambda x: x['doc']['_id'], requests.get(all_docs_url).json()['rows']))
         if len(all_ids) != len(couchdb_relational_map.keys()):
             missing_objs_filename = os.path.join(os.path.expanduser('~/.faraday'), 'logs', 'import_missing_objects_{0}.json'.format(workspace.name))
             missing_ids = set(all_ids) - set(couchdb_relational_map.keys())
-            missing_ids = set([x for x in missing_ids if not re.match(r'^\_design', x)])
+            missing_ids = {x for x in missing_ids if not re.match(r'^\_design', x)}
             objs_diff = []
             if missing_ids:
                 logger.debug('Downloading missing couchdb docs')
@@ -1503,3 +1500,4 @@ class ImportCouchDB():
             session.expunge_all()
             session.close()
             return created
+# I'm Py3

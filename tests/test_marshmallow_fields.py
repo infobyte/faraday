@@ -4,6 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 import time
 import datetime
 import pytest
@@ -180,7 +182,7 @@ class TestMutableField:
         class PlaceSchema(Schema):
             name = fields.String()
             x = MutableField(fields.Method('get_x'),
-                             fields.String)
+                             fields.String())
 
             def get_x(self, obj):
                 return 5
@@ -188,3 +190,6 @@ class TestMutableField:
             "name": "test",
             "x": 5,
         }
+
+
+# I'm Py3

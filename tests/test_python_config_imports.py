@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import unittest
 
 
@@ -46,3 +48,6 @@ class ImportTests(unittest.TestCase):
         from faraday.server.config import storage
         self.path = storage.path
 
+
+
+# I'm Py3

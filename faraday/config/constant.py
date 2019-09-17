@@ -1,10 +1,9 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2014  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-
+"""
 import os
 
 CONST_REQUIREMENTS_FILE = 'requirements.txt'
@@ -30,3 +29,6 @@ CONST_BLACKDBS = ('cwe','reports', CONST_LICENSES_DB)
 CONST_USER_HOME = "~"
 CONST_USER_ZSHRC = "~/.zshrc"
 CONST_ZSH_PATH = "zsh"
+
+
+# I'm Py3

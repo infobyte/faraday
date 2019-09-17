@@ -2,7 +2,6 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 import time
-
 import datetime
 from flask import Blueprint
 from flask_classful import route
@@ -90,3 +89,4 @@ class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
         return res
 
 CommandView.register(commandsrun_api)
+# I'm Py3

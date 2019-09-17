@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
 """
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 """
-
 from faraday.client.plugins import core
 import re
 
@@ -25,7 +23,7 @@ class SSHDefaultScanPlugin(core.PluginBase):
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "sshdefaultscan"
         self.name = "sshdefaultscan"
         self.plugin_version = "0.0.1"
@@ -74,3 +72,6 @@ class SSHDefaultScanPlugin(core.PluginBase):
 
 def createPlugin():
     return SSHDefaultScanPlugin()
+
+
+# I'm Py3

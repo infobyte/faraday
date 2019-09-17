@@ -5,6 +5,7 @@ Revises:
 Create Date: 2018-10-23 15:43:52.612619+00:00
 
 """
+from __future__ import absolute_import
 from alembic import op
 import sqlalchemy as sa
 
@@ -34,3 +35,4 @@ def downgrade():
     conn.execute('ALTER TABLE vulnerability DROP COLUMN custom_fields')
     conn.execute('ALTER TABLE vulnerability_template DROP COLUMN custom_fields')
     conn.execute('DROP TABLE custom_fields_schema')
+# I'm Py3

@@ -1,8 +1,7 @@
-#coding=utf-8
 import re
 import os
 import random
-from faraday.client.plugins import core
+from faraday.client.plugins.plugin import PluginXMLFormat
 
 try:
     from lxml import etree as ET
@@ -24,7 +23,7 @@ WEAK_CIPHER_LIST = [
 ]
 
 
-class SslyzeXmlParser(object):
+class SslyzeXmlParser:
 
     def __init__(self, xml_output):
         self.parser = self.parse_xml(xml_output)
@@ -39,7 +38,7 @@ class SslyzeXmlParser(object):
             tree = ET.fromstring(xml_output)
             return tree
         except IndexError:
-            print "Syntax error"
+            print("Syntax error")
             return None
 
     def get_target(self, tree):
@@ -86,10 +85,11 @@ class SslyzeXmlParser(object):
         return tree.xpath('//openssl_ccs')
 
 
-class SslyzePlugin(core.PluginBase):
+class SslyzePlugin(PluginXMLFormat):
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
+        self.identifier_tag = "document"
         self.id = "Sslyze"
         self.name = "Sslyze Plugin"
         self.plugin_version = "0.0.1"
@@ -99,6 +99,14 @@ class SslyzePlugin(core.PluginBase):
         self._current_output = None
         self._command_regex = re.compile(r'^(sudo sslyze|sslyze|\.\/sslyze).*?')
         self.xml_arg_re = re.compile(r"^.*(--xml_output\s*[^\s]+).*$")
+
+    def report_belongs_to(self, **kwargs):
+        if super().report_belongs_to(**kwargs):
+            report_path = kwargs.get("report_path", "")
+            with open(report_path) as f:
+                output = f.read()
+            return re.search("SSLyzeVersion", output) is not None
+        return False
 
     def parseOutputString(self, output, debug=False):
         parser = SslyzeXmlParser(output)
@@ -186,7 +194,5 @@ class SslyzePlugin(core.PluginBase):
 def createPlugin():
     return SslyzePlugin()
 
-if __name__ == '__main__':
-    parser = SslyzePlugin()
-    with open("/home/javier/expired.xml","r") as report:
-        parser.parseOutputString(report.read())
+
+# I'm Py3

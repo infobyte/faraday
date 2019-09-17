@@ -919,7 +919,7 @@ span.input-group-addon.button-radius{
 .centrado {
   position: absolute;
   width: 300px;
-  background: #dd3b3c;
+  background: #00a8e1;
   left: 50%;
   margin-left: -150px;
   top: 150px;
@@ -1389,3 +1389,8 @@ a {
 }
 .ui-grid-row:nth-child(odd):hover .ui-grid-cell{background:#ecebea}
 .ui-grid-row:nth-child(even):hover .ui-grid-cell{background:#ecebea}
+
+.change-padding-to-margin {
+    padding-bottom: 0px !important;
+    margin-bottom: 15px;
+}

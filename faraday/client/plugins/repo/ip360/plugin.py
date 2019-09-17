@@ -1,35 +1,30 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-
+"""
 import csv
-import StringIO
+from io import StringIO
 from faraday.client.plugins import core
 
-def calculate_severity(number):
 
+def calculate_severity(number):
     if number is None:
         return "info"
-
     number = float(number)
-
     # Based in CVSS V2
-    if number >= 0 and number <= 3.9:
+    if 0 <= number < 4.0:
         return "low"
-    elif number >= 4.0 and number <= 6.9:
+    elif 4.0 <= number < 7.0:
         return "med"
-    elif number >= 7.0 and number <= 10:
+    elif 7.0 <= number <= 10:
         return "high"
+
 
 class Ip360Parser:
 
     def __init__(self, csv_content):
-        self.csv_content = StringIO.StringIO(csv_content.decode('ascii', 'ignore'))
+        self.csv_content = StringIO(csv_content.decode('ascii', 'ignore'))
         self.csv_reader = csv.DictReader(self.csv_content, delimiter=',', quotechar='"')
 
     def parse(self):
@@ -74,7 +69,7 @@ class Ip360Plugin(core.PluginBase):
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "Ip360"
         self.name = "Ip360 CSV Output Plugin"
         self.plugin_version = "0.0.1"
@@ -120,3 +115,5 @@ class Ip360Plugin(core.PluginBase):
 
 def createPlugin():
     return Ip360Plugin()
+
+# I'm Py3

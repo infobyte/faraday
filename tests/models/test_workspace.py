@@ -4,6 +4,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
 from faraday.server.models import db, Workspace
 from tests.factories import (
     HostFactory,
@@ -119,3 +120,4 @@ def test_vuln_no_count(workspace, second_workspace, database):
     assert workspace.vulnerability_code_count is None
     assert workspace.vulnerability_standard_count is None
     assert workspace.vulnerability_total_count is None
+# I'm Py3

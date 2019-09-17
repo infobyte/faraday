@@ -1,12 +1,9 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-
+"""
 from faraday.client.plugins import core
 import re
 
@@ -20,7 +17,7 @@ __version__ = "1.0.0"
 class traceroutePlugin(core.PluginBase):
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "Traceroute"
         self.name = "Traceroute"
         self.plugin_version = "1.0.0"
@@ -63,3 +60,6 @@ class traceroutePlugin(core.PluginBase):
 
 def createPlugin():
     return traceroutePlugin()
+
+
+# I'm Py3

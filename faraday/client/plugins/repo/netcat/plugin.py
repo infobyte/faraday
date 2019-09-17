@@ -1,12 +1,9 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
 from faraday.client.plugins import core
 from faraday.client.model import api
 import re
@@ -30,7 +27,7 @@ class CmdNetcatPlugin(core.PluginBase):
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "netcat"
         self.name = "Netcat"
         self.plugin_version = "0.0.1"
@@ -109,9 +106,8 @@ class CmdNetcatPlugin(core.PluginBase):
         We take a split & filter approach to matching our regexps to the
         command output
         """
-        mapped_list = map(lambda s: re.search(regexp, s),
-                          re.split(r'(\r|\n)', output))
-        filtered_list = filter(lambda s: s is not None, mapped_list)
+        mapped_list = list(map(lambda s: re.search(regexp, s), re.split(r'(\r|\n)', output)))
+        filtered_list = list(filter(lambda s: s is not None, mapped_list))
 
         if len(filtered_list) > 0:
             return filtered_list[0]
@@ -124,7 +120,7 @@ class CmdNetcatPlugin(core.PluginBase):
         'traditional' version. The verbose output differs between them, so we
         will try to cover both cases.
         """
-        print output
+        print(output)
         nc_bsd_rx = re.compile(
             r'^Connection\s+to\s+(?P<host>\S+)\s+(?P<port>\d+)\s+port\s+\[(?P<protocol>tcp|udp)/(?P<service>[^\]]+)\]\s+succeeded.*')
         nc_sys_rx = re.compile(
@@ -155,3 +151,6 @@ class CmdNetcatPlugin(core.PluginBase):
 
 def createPlugin():
     return CmdNetcatPlugin()
+
+
+# I'm Py3

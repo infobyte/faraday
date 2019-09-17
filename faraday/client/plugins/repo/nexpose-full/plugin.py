@@ -1,18 +1,13 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-from __future__ import with_statement
-from faraday.client.plugins import core
+"""
+from faraday.client.plugins.plugin import PluginXMLFormat
 from faraday.client.model import api
 import re
 import os
-import pprint
 import sys
 
 try:
@@ -38,7 +33,7 @@ __email__ = "mranea@infobytesec.com"
 __status__ = "Development"
 
 
-class NexposeFullXmlParser(object):
+class NexposeFullXmlParser:
     """
     The objective of this class is to parse Nexpose's XML 2.0 Report.
 
@@ -69,34 +64,32 @@ class NexposeFullXmlParser(object):
         """
         try:
             tree = ET.fromstring(xml_output)
-        except SyntaxError, err:
-            print "SyntaxError: %s. %s" % (err, xml_output)
+        except SyntaxError as err:
+            print("SyntaxError: %s. %s" % (err, xml_output))
             return None
 
         return tree
 
-    def parse_html_type(self, node):
+    def parse_html_type(self, node: ET.Element) -> str:
         """
         Parse XML element of type HtmlType
 
         @return ret A string containing the parsed element
         """
         ret = ""
-        tag = node.tag.lower()
+        tag: str = node.tag.lower()
         if tag == 'containerblockelement':
             if len(list(node)) > 0:
                 for child in list(node):
                     ret += self.parse_html_type(child)
             else:
-                ret += node.text.encode(
-                    "ascii", errors="backslashreplace").strip() if node.text else ""
+                ret += node.text.strip() if node.text else ""
         if tag == 'listitem':
             if len(list(node)) > 0:
                 for child in list(node):
                     ret += self.parse_html_type(child)
             else:
-                ret = node.text.encode(
-                    "ascii", errors="backslashreplace").strip() if node.text else ""
+                ret = node.text.strip() if node.text else ""
         if tag == 'orderedlist':
             i = 1
             for item in list(node):
@@ -107,20 +100,17 @@ class NexposeFullXmlParser(object):
                 for child in list(node):
                     ret += self.parse_html_type(child)
             else:
-                ret += node.text.encode("ascii",
-                                        errors="backslashreplace") if node.text else ""
+                ret += node.text.strip() if node.text else ""
         if tag == 'unorderedlist':
             for item in list(node):
                 ret += "\t" + "* " + self.parse_html_type(item) + "\n"
         if tag == 'urllink':
             if node.get('text'):
-                ret += node.text.encode("ascii",
-                                        errors="backslashreplace").strip() + " "
+                ret += node.text.strip() + " "
             last = ""
             for attr in node.attrib:
                 if node.get(attr) and node.get(attr) != node.get(last):
-                    ret += node.get(attr).encode("ascii",
-                                                 errors="backslashreplace") + " "
+                    ret += node.get(attr) + " "
                 last = attr
 
         return ret
@@ -183,7 +173,7 @@ class NexposeFullXmlParser(object):
                                     "ascii", errors="backslashreplace").strip()
                                 link = exploit.get('link').encode(
                                     "ascii", errors="backslashreplace").strip()
-                                vuln['refs'].append(title + ' ' + link)
+                                vuln['refs'].append(title + b' ' + link)
                     if item.tag == 'references':
                         for ref in list(item):
                             if ref.text:
@@ -254,13 +244,14 @@ class NexposeFullXmlParser(object):
         return hosts
 
 
-class NexposeFullPlugin(core.PluginBase):
+class NexposeFullPlugin(PluginXMLFormat):
     """
     Example plugin to parse nexpose output.
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
+        self.identifier_tag = "NexposeReport"
         self.id = "NexposeFull"
         self.name = "Nexpose XML 2.0 Report Plugin"
         self.plugin_version = "0.0.1"
@@ -345,17 +336,5 @@ class NexposeFullPlugin(core.PluginBase):
 def createPlugin():
     return NexposeFullPlugin()
 
-if __name__ == '__main__':
-    if len(sys.argv) == 2:
-        xml_file = sys.argv[1]
-        if os.path.isfile(xml_file):
-            with open(xml_file) as f:
-                parser = NexposeFullXmlParser(f.read())
-                for item in parser.items:
-                    print "* {0} ({1}) - Vulns: {2}".format(item['name'], item['os'], len(item['vulns']))
-                    for vuln in item['vulns']:
-                        print "- {0} (Severity: {1})".format(vuln['name'], vuln['severity'])
-        else:
-            print "File (%s) not found" % xml_file
-    else:
-        print "Usage: {0} XML_FILE".format(sys.argv[0])
+
+# I'm Py3

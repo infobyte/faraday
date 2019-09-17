@@ -1,13 +1,13 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
 import sys
 import logging
 import inspect
-from Queue import Queue
+from queue import Queue
 
 from sqlalchemy import event
 
@@ -121,3 +121,4 @@ event.listen(Service, 'after_delete', delete_object_event)
 # Update object bindings
 event.listen(Host, 'after_update', update_object_event)
 event.listen(Service, 'after_update', update_object_event)
+# I'm Py3

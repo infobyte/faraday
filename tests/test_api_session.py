@@ -4,6 +4,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
 
 import pytest
 
@@ -17,3 +18,6 @@ class TestSessionNotLogged():
     def test_session_when_user_is_not_logged(self, test_client):
         res = test_client.get('/session')
         assert res.status_code == 401
+
+
+# I'm Py3

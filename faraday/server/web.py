@@ -23,13 +23,13 @@ import faraday.server.config
 from faraday.config.constant import CONST_FARADAY_HOME_PATH
 from faraday.server import TimerClass
 from faraday.server.utils import logger
-
+from faraday.server.threads.upload_reports import ReportsManager, REPORTS_QUEUE
 from faraday.server.app import create_app
 from faraday.server.websocket_factories import (
     WorkspaceServerFactory,
     BroadcastServerProtocol
 )
-from faraday.server.api.modules.upload_reports import RawReportProcessor
+#from faraday.server.api.modules.upload_reports import RawReportProcessor
 
 app = create_app()  # creates a Flask(__name__) app
 logger = logging.getLogger(__name__)
@@ -159,7 +159,7 @@ class WebServer:
         try:
             self.install_signal()
             # start threads and processes
-            self.raw_report_processor = RawReportProcessor()
+            self.raw_report_processor = ReportsManager(REPORTS_QUEUE, name="ReportsManager-Thread", daemon=True)
             self.raw_report_processor.start()
             self.timer = TimerClass()
             self.timer.start()

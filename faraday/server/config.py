@@ -153,6 +153,7 @@ class FaradayServerConfigObject(ConfigSection):
         self.api_token_expiration = 2592000
         self.agent_token = None
         self.debug = False
+        self.custom_plugins_folder = None
 
 class LDAPConfigObject(ConfigSection):
     def __init__(self):

@@ -11,7 +11,7 @@ import string
 import random
 import logging
 import faraday.server.config as FaradayServerConfig
-
+from faraday.server.threads.upload_reports import REPORTS_QUEUE
 from flask import (
     request,
     abort,
@@ -26,100 +26,100 @@ from wtforms import ValidationError
 
 from faraday.server.utils.web import gzipped
 
-from faraday.client.model.controller import ModelController
+#from faraday.client.model.controller import ModelController
 
-from faraday.client.plugins.controller import PluginController
-from faraday.client.plugins.manager import PluginManager
+#from faraday.client.plugins.controller import PluginController
+#from faraday.client.plugins.manager import PluginManager
 
-from faraday.client.managers.mapper_manager import MapperManager
-from faraday.client.managers.reports_managers import ReportProcessor
+#from faraday.client.managers.mapper_manager import MapperManager
+#from faraday.client.managers.reports_managers import ReportProcessor
 
 from faraday.server.models import Workspace
-from faraday.client.persistence.server import server
+#from faraday.client.persistence.server import server
 
 from faraday.config.configuration import getInstanceConfiguration
 
 CONF = getInstanceConfiguration()
 logger = logging.getLogger(__name__)
-UPLOAD_REPORTS_QUEUE = MultiProcessingQueue()
+#UPLOAD_REPORTS_QUEUE = MultiProcessingQueue()
 UPLOAD_REPORTS_CMD_QUEUE = MultiProcessingQueue()
 upload_api = Blueprint('upload_reports', __name__)
 
 logger = logging.getLogger(__name__)
-
-class RawReportProcessor(Thread):
-    def __init__(self):
-
-        super(RawReportProcessor, self).__init__()
-        from faraday.client.start_client import setupPlugins
-        setupPlugins()
-
-        self.pending_actions = Queue()
-
-        try:
-            plugin_manager = PluginManager(os.path.join(CONF.getConfigPath(), "plugins"))
-        except AttributeError as e:
-            logger.info("%s", e)
-            logger.warning(
-                "Upload reports in WEB-UI not configurated, run Faraday client and try again...")
-            self._must_stop = True
-            return
-
-        mappers_manager = MapperManager()
-
-        self.model_controller = ModelController(mappers_manager, self.pending_actions)
-        self.model_controller.start()
-        self.end_event = Event()
-
-        plugin_controller = PluginController(
-            'PluginController',
-            plugin_manager,
-            mappers_manager,
-            self.pending_actions,
-            self.end_event)
-
-        self.processor = ReportProcessor(plugin_controller, None)
-        self._must_stop = False
-
-    def stop(self):
-        if self.model_controller.isAlive():
-            self.model_controller.stop()
-        self._must_stop = True
-
-    def run(self):
-        logger.info('Tool report processor started')
-        while not self._must_stop:
-            try:
-
-                workspace, file_path, cookie = UPLOAD_REPORTS_QUEUE.get(False, timeout=0.1)
-                logger.info('Processing raw report {0}'.format(file_path))
-
-                # Cookie of user, used to create objects in server with the right owner.
-                server.FARADAY_UPLOAD_REPORTS_WEB_COOKIE = cookie
-                server.FARADAY_UPLOAD_REPORTS_OVERWRITE_SERVER_URL = "http://{0}:{1}".format(
-                    FaradayServerConfig.faraday_server.bind_address, FaradayServerConfig.faraday_server.port)
-
-                self.processor.ws_name = workspace
-
-                command_id = self.processor.processReport(file_path)
-                UPLOAD_REPORTS_CMD_QUEUE.put(command_id)
-                if not command_id:
-                    continue
-
-                self.end_event.wait()
-                logger.info('Report processing of report {0} finished'.format(file_path))
-                self.end_event.clear()
-
-            except Empty:
-                time.sleep(0.1)
-
-            except KeyboardInterrupt as ex:
-                logger.info('Keyboard interrupt, stopping report processing thread')
-                self.stop()
-
-            except Exception as ex:
-                logger.exception(ex)
-                continue
+#
+# class RawReportProcessor(Thread):
+#     def __init__(self):
+#
+#         super(RawReportProcessor, self).__init__()
+#         from faraday.client.start_client import setupPlugins
+#         setupPlugins()
+#
+#         self.pending_actions = Queue()
+#
+#         try:
+#             plugin_manager = PluginManager(os.path.join(CONF.getConfigPath(), "plugins"))
+#         except AttributeError as e:
+#             logger.info("%s", e)
+#             logger.warning(
+#                 "Upload reports in WEB-UI not configurated, run Faraday client and try again...")
+#             self._must_stop = True
+#             return
+#
+#         mappers_manager = MapperManager()
+#
+#         self.model_controller = ModelController(mappers_manager, self.pending_actions)
+#         self.model_controller.start()
+#         self.end_event = Event()
+#
+#         plugin_controller = PluginController(
+#             'PluginController',
+#             plugin_manager,
+#             mappers_manager,
+#             self.pending_actions,
+#             self.end_event)
+#
+#         self.processor = ReportProcessor(plugin_controller, None)
+#         self._must_stop = False
+#
+#     def stop(self):
+#         if self.model_controller.isAlive():
+#             self.model_controller.stop()
+#         self._must_stop = True
+#
+#     def run(self):
+#         logger.info('Tool report processor started')
+#         while not self._must_stop:
+#             try:
+#
+#                 workspace, file_path, cookie = REPORTS_QUEUE.get(False, timeout=0.1)
+#                 logger.info('Processing raw report {0}'.format(file_path))
+#
+#                 # Cookie of user, used to create objects in server with the right owner.
+#                 server.FARADAY_UPLOAD_REPORTS_WEB_COOKIE = cookie
+#                 server.FARADAY_UPLOAD_REPORTS_OVERWRITE_SERVER_URL = "http://{0}:{1}".format(
+#                     FaradayServerConfig.faraday_server.bind_address, FaradayServerConfig.faraday_server.port)
+#
+#                 self.processor.ws_name = workspace
+#
+#                 command_id = self.processor.processReport(file_path)
+#                 UPLOAD_REPORTS_CMD_QUEUE.put(command_id)
+#                 if not command_id:
+#                     continue
+#
+#                 self.end_event.wait()
+#                 logger.info('Report processing of report {0} finished'.format(file_path))
+#                 self.end_event.clear()
+#
+#             except Empty:
+#                 time.sleep(0.1)
+#
+#             except KeyboardInterrupt as ex:
+#                 logger.info('Keyboard interrupt, stopping report processing thread')
+#                 self.stop()
+#
+#             except Exception as ex:
+#                 logger.exception(ex)
+#                 continue
 
 
 @gzipped
@@ -164,6 +164,6 @@ def file_upload(workspace=None):
             abort(make_response(jsonify(message="Upload reports not configurated: Run faraday client and start Faraday server again"), 500))
 
 
-    UPLOAD_REPORTS_QUEUE.put((workspace, file_path, request.cookies))
+    REPORTS_QUEUE.put((workspace, file_path, request.cookies))
     return make_response(jsonify(message="ok"), 200)
 # I'm Py3

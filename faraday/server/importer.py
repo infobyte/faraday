@@ -248,7 +248,7 @@ def get_children_from_couch(workspace, parent_couchdb_id, child_type):
 
 
 def create_tags(raw_tags, parent_id, parent_type):
-    from slugify import slugify
+    from slugify import slugify   # pylint: disable=import-error
     for tag_name in [x.strip() for x in raw_tags if x.strip()]:
         tag, tag_created = get_or_create(session, Tag, slug=slugify(tag_name))
         tag.name = tag_name

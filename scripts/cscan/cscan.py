@@ -5,6 +5,8 @@
 ## See the file 'doc/LICENSE' for the license information
 ###
 
+from __future__ import absolute_import
+from  __future__ import print_function
 import subprocess
 import os
 import argparse
@@ -66,7 +68,7 @@ def target_list(script, categories):
 def main():
     lockf = ".lock.pod"
     if not lockFile(lockf):
-        print "You can run only one instance of cscan (%s)" % lockf
+        print("You can run only one instance of cscan (%s)" % lockf)
         exit(0)
 
     config = init_config()
@@ -114,7 +116,7 @@ def main():
             targets = target_list(script, categories)
 
         cmd = "%s %s %s %s" % (script, targets, output, logdir)
-        print "\n\nRunning: %s" % cmd
+        print("\n\nRunning: %s" % cmd)
         proc = subprocess.call(cmd, shell=True, stdin=None, env=dict(env))
 
     #Remove lockfile
@@ -122,3 +124,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+# I'm Py3

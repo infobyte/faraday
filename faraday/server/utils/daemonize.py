@@ -5,7 +5,6 @@
 # Copyright (C) 2005 Chad J. Schroeder
 # Modified version of a script created by Chad J. Schroeder, obtained from
 # http://code.activestate.com/recipes/278731-creating-a-daemon-the-python-way/
-
 import os
 import re
 import sys
@@ -122,7 +121,7 @@ def createDaemon():
     # don't close them off after successfully forking the process
 
     # Close and redirect std file descriptors to /dev/null
-    std_fileno = map(lambda s: s.fileno(), [sys.stdin, sys.stdout, sys.stderr])
+    std_fileno = list(map(lambda s: s.fileno(), [sys.stdin, sys.stdout, sys.stderr]))
     null = os.open(REDIRECT_TO, os.O_RDWR)
 
     for fd in std_fileno:
@@ -229,3 +228,4 @@ def get_ports_running():
             ports.append(int(port))
 
     return ports
+# I'm Py3

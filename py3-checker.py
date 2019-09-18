@@ -66,8 +66,13 @@ class Analyser:
             self.logger.error("The auto-claimed python file {path} as python is not python3".format(path=path))
             error_list.append(path)
         if not find_py3_ok_result and lint_ok_result:
-            self.logger.info("The file {path} is python3".format(path=path))
-        return 0 if lint_ok_result else 1, 1, [], error_list
+            self.logger.info("The file {path} is python3, adding the signature comment in the last line".format(path=path))
+            with open(path,"a+") as py3_file:
+                py3_file.writelines(["\n\n", PY3_MSG, "\n"])
+
+        if not lint_ok_result:
+            self.logger.info("The file {path} is python2".format(path=path))
+        return 1 if lint_ok_result else 0, 1, [], error_list
 
     def analyse_folder(self, parent_path):
         are3, total, strs, error_files = 0, 0, [], []
@@ -82,27 +87,36 @@ class Analyser:
                 total += s_total
                 strs.extend(s_strs)
                 error_files.extend(s_error_files)
-        if total > 0:
+        if are3 != total and total > 0:
+            prtg = 100.0*are3/total
             strs.append('Analysed {path}, {are3}/{total} {prtg}%'
-                        .format(path=parent_path, are3=are3, total=total, prtg=100.0*are3/total))
+                        .format(path=parent_path, are3=are3, total=total, prtg=prtg))
         return are3, total, strs, error_files
 
     def run(self):
-        _, _, strs, error_files = self.analyse_folder(os.getcwd())
+        are3, total, strs, error_files = self.analyse_folder(os.getcwd())
         for s in strs:
             self.logger.info(s)
         if len(error_files) > 0:
             for error_file in error_files:
                 self.logger.error("The auto-claimed python file {path} as python is not python3".format(path=error_file))
             raise Exception("One or more auto-claimed python file(s) as python is(are) not python3")
+        if are3 == total:
+            print("100% coverage")
 
 
 def main(filename):
+    PYTLINT = ".pylintrc"
+    RENAMED = ".to_be_renamed"
+    os.rename(PYTLINT, RENAMED)
+
     if filename:
         import sys
         sys.stdout = open(filename, 'w')
-    Analyser().run()
-
+    try:
+        Analyser().run()
+    finally:
+        os.rename(RENAMED, PYTLINT)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

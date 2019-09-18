@@ -5,9 +5,8 @@
 <div class="modal-header" hotkey="{enter:ok}">
     <h5>{{msg}}</h5>
 </div>
-<div class="modal-body">
-	<div class="form-group">
-	    <div class="col-md-12 form-group severities">
+<div class="modal-body change-padding-to-margin">
+	    <div class="severities">
 	        <button type="button" class="btn btn-default dropdown-toggle color-{{data.property}}" data-toggle="dropdown" title="Change severity">
 	        {{data.property || 'Edit property'}} <span class="caret"></span>
 	        </button>
@@ -15,7 +14,6 @@
 	            <li ng-repeat="o in options"><a href="" class="ws color-{{o}}" ng-click="data.property = o">{{o}}</a></li>
 	        </ul><!-- WS navigation -->
 	    </div>
-	</div>
 </div>
 <div class="modal-footer">
     <button class="btn btn-danger" ng-click="cancel()">Cancel</button>

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import os
 import packaging.version
 
@@ -68,3 +70,4 @@ if __name__ == '__main__':
     level = LEVEL # if not level_passed else level_pased
     main(level)
 
+# I'm Py3

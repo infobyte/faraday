@@ -1,8 +1,6 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-
-
 import logging
 import flask
 from flask import Blueprint
@@ -24,7 +22,7 @@ class WebsocketWorkspaceAuthView(GenericWorkspacedView):
     def post(self, workspace_name):
         workspace = self._get_workspace(workspace_name)
         signer = TimestampSigner(app.config['SECRET_KEY'], salt="websocket")
-        token = signer.sign(str(workspace.id))
+        token = signer.sign(str(workspace.id)).decode('utf-8')
         return {"token": token}
 
 
@@ -51,7 +49,7 @@ def decode_agent_websocket_token(token):
     signer = TimestampSigner(app.config['SECRET_KEY'],
                              salt="websocket_agent")
     try:
-        agent_id = signer.unsign(token, max_age=60)
+        agent_id = signer.unsign(token, max_age=60).decode('utf-8')
     except BadData as e:
         raise ValueError("Invalid Token")
     agent = Agent.query.get(agent_id)
@@ -80,3 +78,5 @@ def require_agent_token():
     except NoResultFound:
         flask.abort(403)
     return agent
+
+# I'm Py3

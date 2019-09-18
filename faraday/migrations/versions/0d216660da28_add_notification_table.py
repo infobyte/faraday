@@ -5,6 +5,7 @@ Revises: 1b2533cc16fe
 Create Date: 2019-04-26 20:17:48.639684+00:00
 
 """
+from __future__ import absolute_import
 from alembic import op
 import sqlalchemy as sa
 
@@ -69,3 +70,4 @@ def downgrade():
     op.drop_table('notification')
     #op.drop_constraint(None, 'notification_user_id_fkey', type_='foreignkey')
     #op.drop_constraint(None, 'notification_workspace_id_fkey', type_='foreignkey')
+# I'm Py3

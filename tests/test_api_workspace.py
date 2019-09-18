@@ -4,6 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 import time
 import pytest
 
@@ -243,3 +245,5 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         res = test_client.post('/v2/ws/', data=raw_data)
         assert res.status_code == 400
         assert workspace_count_previous == session.query(Workspace).count()
+
+# I'm Py3

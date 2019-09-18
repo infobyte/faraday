@@ -680,6 +680,7 @@ class VulnerabilityTemplate(VulnerabilityABC):
         creator=_build_associationproxy_creator_non_workspaced('PolicyViolationTemplate')
     )
     custom_fields = Column(JSONType)
+    shipped = Column(Boolean, nullable=False, default=False)
 
 
 class CommandObject(db.Model):
@@ -830,10 +831,32 @@ class VulnerabilityGeneric(VulnerabilityABC):
     ]
 
     __tablename__ = 'vulnerability'
+    id = Column(Integer, primary_key=True)
     confirmed = Column(Boolean, nullable=False, default=False)
     status = Column(Enum(*STATUSES, name='vulnerability_statuses'), nullable=False, default="open")
     type = Column(Enum(*VULN_TYPES, name='vulnerability_types'), nullable=False)
     issuetracker = BlankColumn(Text)
+    association_date = Column(DateTime, nullable=True)
+    disassociated_manually = Column(Boolean, nullable=False, default=False)
+
+    vulnerability_duplicate_id =  Column(
+                        Integer,
+                        ForeignKey('vulnerability.id'),
+                        index=True,
+                        nullable=True,
+                        )
+    duplicate_childs = relationship("VulnerabilityGeneric", cascade="all, delete-orphan",
+                backref=backref('vulnerability_duplicate', remote_side=[id])
+            )
+
+    vulnerability_template_id =  Column(
+                        Integer,
+                        ForeignKey('vulnerability_template.id'),
+                        index=True,
+                        nullable=True,
+                        )
+
+    vulnerability_template = relationship('VulnerabilityTemplate', backref=backref('duplicate_vulnerabilities', passive_deletes='all'))
 
     workspace_id = Column(
                         Integer,
@@ -958,6 +981,10 @@ class VulnerabilityGeneric(VulnerabilityABC):
     @hybrid_property
     def target(self):
         return self.target_host_ip
+
+    @property
+    def has_duplicate(self):
+        return self.vulnerability_duplicate_id == None
 
 
 class Vulnerability(VulnerabilityGeneric):
@@ -1850,6 +1877,32 @@ class Notification(db.Model):
         return
 
 
+class KnowledgeBase(db.Model):
+    __tablename__ = 'knowledge_base'
+    id = Column(Integer, primary_key=True)
+
+    vulnerability_template_id =  Column(
+                        Integer,
+                        ForeignKey('vulnerability_template.id'),
+                        index=True,
+                        nullable=True,
+                        )
+    vulnerability_template = relationship('VulnerabilityTemplate',
+        backref=backref('knowledge', cascade="all, delete-orphan"),
+    )
+
+    faraday_kb_id = Column(Text, nullable=False)
+    reference_id = Column(Integer, nullable=False)
+
+    script_name = Column(Text, nullable=False)
+    external_identifier = Column(Text, nullable=False)
+    tool_name = Column(Text, nullable=False)
+    false_positive = Column(Integer, nullable=False, default=0)
+    verified = Column(Integer, nullable=False, default=0)
+
+    __table_args__ = (UniqueConstraint('external_identifier', 'tool_name', 'reference_id', name='uix_externalidentifier_toolname_referenceid'),)
+
+
 class Rule(Metadata):
     __tablename__ = 'rule'
 
@@ -2020,3 +2073,4 @@ event.listen(
 
 # We have to import this after all models are defined
 import faraday.server.events
+# I'm Py3

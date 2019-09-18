@@ -4,6 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 import unittest
 import json
 from faraday.client.persistence.server import models
@@ -79,3 +81,6 @@ class ModelsTest(unittest.TestCase):
         self.assertTrue(all([isinstance(s, models.Service) for s in services]))
         self.assertTrue(all([isinstance(v, models.Vuln) for v in vulns]))
         self.assertTrue(all([isinstance(v, models.VulnWeb) for v in vulns_web]))
+
+
+# I'm Py3

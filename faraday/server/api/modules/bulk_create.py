@@ -141,7 +141,7 @@ class CommandSchema(AutoSchema):
 
     I don't need that here, so I'll write a schema from scratch."""
 
-    duration = fields.TimeDelta('seconds', required=True)
+    duration = fields.TimeDelta('microseconds', required=True)
 
     class Meta:
         model = Command
@@ -222,7 +222,7 @@ def _create_host(ws, host_data, command=None):
             db.session.add(Hostname(name=name, host=host, workspace=ws))
     db.session.commit()
 
-    if command is not None:
+    if command is not None and created:
         _create_command_object_for(ws, created, host, command)
 
     for service_data in services:
@@ -253,7 +253,7 @@ def _create_service(ws, host, service_data, command=None):
     (created, service) = get_or_create(ws, Service, service_data)
     db.session.commit()
 
-    if command is not None:
+    if command is not None and created:
         _create_command_object_for(ws, created, service, command)
 
     for vuln_data in vulns:
@@ -286,7 +286,7 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
     (created, vuln) = get_or_create(ws, model_class, vuln_data)
     db.session.commit()
 
-    if command is not None:
+    if command is not None and created:
         _create_command_object_for(ws, created, vuln, command)
 
     if created:

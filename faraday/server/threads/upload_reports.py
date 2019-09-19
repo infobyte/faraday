@@ -172,6 +172,7 @@ class ReportsManager(Thread):
         self._must_stop = True
 
     def send_report_request(self, workspace, report_json, session_cookie):
+        logger.debug("Send Report to api")
         cookies = {'session': session_cookie}
         headers = {'Accept': 'application/json'}
         url = f"http://localhost:5985/_api/v2/ws/{workspace}/bulk_create/"
@@ -179,7 +180,7 @@ class ReportsManager(Thread):
         if r.status_code != requests.codes.CREATED:
             logger.warning("Bulk Create Response: %s", r.status_code)
             logger.warning("Bulk Create Response Text: %s", r.text)
-            logger.info("Data sended: %s", report_json)
+            logger.debug("Data sended: %s", report_json)
         else:
             logger.info("Bulk Create Response: %s", r.status_code)
 
@@ -188,27 +189,34 @@ class ReportsManager(Thread):
         report_analyzer = ReportAnalyzer(self.plugins_manager)
         plugin = report_analyzer.get_plugin(file_path)
         if plugin:
-            with open(file_path, encoding="utf-8") as f:
+            try:
+                plugin.processReport(file_path)
+                vulns_data = plugin.get_data()
+            except Exception as e:
+                logger.error("Parse Error: %s", e)
+                logger.exception(e)
+            else:
                 try:
-                    plugin.parseOutputString(f.read())
-                    vulns_data = plugin.get_data()
-                    vulns_data["command"]["command"] = os.path.basename(file_path)
-                    vulns_data["command"]["user"] = "faraday"
-                    #vulns_data["command"]["start_date"] = datetime(2019, 9, 17, 13, 18, 48, 933097)
-                    #vulns_data["command"]["end_date"] = datetime(2019, 9, 17, 13, 18, 49, 933097)
-                    #vulns_data["command"]["creator"] = 1
-                    #duration = vulns_data["command"].pop("duration")
-                    del plugin
-                    #logger.info("Vulns Data: %s", json.loads(vulns_data))
+                    self.send_report_request(workspace, vulns_data, session)
                 except Exception as e:
-                    logger.error("Parse Error: %s", e)
-                    logger.exception(e)
-                else:
-                    try:
-                        #bc.bulk_create(workspace, vulns_data, True)
-                        self.send_report_request(workspace, vulns_data, session)
-                    except Exception as e:
-                        logger.error("Save Error: %s", e)
+                    logger.error("Save Error: %s", e)
+
+            # with open(file_path, **plugin.open_options) as f:
+            #     try:
+            #         plugin.parseOutputString(f.read())
+            #         vulns_data = plugin.get_data()
+            #         vulns_data["command"]["params"] = file_path
+            #         vulns_data["command"]["user"] = "faraday"
+            #         del plugin
+            #     except Exception as e:
+            #         logger.error("Parse Error: %s", e)
+            #         logger.exception(e)
+            #     else:
+            #         try:
+            #             #bc.bulk_create(workspace, vulns_data, True)
+            #             self.send_report_request(workspace, vulns_data, session)
+            #         except Exception as e:
+            #             logger.error("Save Error: %s", e)
 
     def run(self):
         logger.debug("Start Reports Manager")

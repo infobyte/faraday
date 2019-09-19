@@ -4,6 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 from tempfile import NamedTemporaryFile
 
 import os
@@ -21,6 +23,8 @@ sys.path.append(os.path.abspath(os.getcwd()))
 from faraday.server.app import create_app
 from faraday.server.models import db
 from tests import factories
+
+from faraday.server.utils.py3 import BytesJSONEncoder
 
 TEST_BASE = os.path.abspath(os.path.dirname(__file__))
 TEST_DATA = os.path.join(TEST_BASE, 'data')
@@ -51,7 +55,7 @@ class CustomClient(FlaskClient):
     def open(self, *args, **kwargs):
         if kwargs.pop('use_json_data', True) and 'data' in kwargs:
             # JSON-encode data by default
-            kwargs['data'] = json.dumps(kwargs['data'])
+            kwargs['data'] = json.dumps(kwargs['data'], cls=BytesJSONEncoder)
             kwargs['headers'] = kwargs.get('headers', []) + [
                 ('Content-Type', 'application/json'),
             ]
@@ -68,6 +72,10 @@ class CustomClient(FlaskClient):
         #    except ValueError:
         #        ret.json = None
         return ret
+
+    @property
+    def cookies(self):
+        return self.cookie_jar
 
 
 def pytest_addoption(parser):
@@ -282,7 +290,18 @@ def ignore_nplusone(app):
     app.config['NPLUSONE_RAISE'] = old
 
 
+@pytest.fixture(autouse=True)
+def skip_by_sql_dialect(app, request):
+    dialect = db.session.bind.dialect.name
+    if request.node.get_closest_marker('skip_sql_dialect'):
+        if request.node.get_closest_marker('skip_sql_dialect').args[0] == dialect:
+            pytest.skip('Skipped dialect is {}'.format(dialect))
+
+
 @pytest.fixture
 def csrf_token(logged_user, test_client):
     session_response = test_client.get('/session')
     return session_response.json.get('csrf_token')
+
+
+# I'm Py3

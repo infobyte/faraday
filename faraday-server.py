@@ -5,6 +5,7 @@
 # See the file 'doc/LICENSE' for the license information
 
 # Developers: the code for faraday-server is located in faraday/start_server.py
+from __future__ import absolute_import
 
 from __future__ import print_function
 import sys
@@ -21,3 +22,6 @@ print(
 )
 
 sys.exit(1)
+
+
+# I'm Py3

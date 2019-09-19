@@ -1,17 +1,12 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-
+"""
 from faraday.client.plugins import core
 from faraday.config.configuration import getInstanceConfiguration
-from urlparse import urlparse
 import requests
-import xmlrpclib
+import xmlrpc.client
 import json
 import uuid
 import re
@@ -32,7 +27,7 @@ class SentinelPlugin(core.PluginBase):
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "Sentinel"
         self.name = "Sentinel Online Plugin"
         self.plugin_version = "0.0.1"
@@ -44,7 +39,7 @@ class SentinelPlugin(core.PluginBase):
         self.addSetting("Enable", str, "0")
 
         self.faraday_config = 'http://' + getInstanceConfiguration().getApiConInfoHost() + ':' + str(getInstanceConfiguration().getApiConInfoPort()) + '/'
-        self.faraday_api = xmlrpclib.ServerProxy(self.faraday_config)
+        self.faraday_api = xmlrpc.client.ServerProxy(self.faraday_config)
         self.format = "?format=json&display_all=1&key="
         self._command_regex = re.compile(
             r'^(sudo sentinel|sentinel).*?')
@@ -185,3 +180,4 @@ class SentinelPlugin(core.PluginBase):
 
 def createPlugin():
     return SentinelPlugin()
+# I'm Py3

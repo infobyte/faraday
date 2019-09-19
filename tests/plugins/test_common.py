@@ -7,3 +7,4 @@ See the file 'doc/LICENSE' for the license information
 def skip(self, n):
     for x in range(n):
         action = self.plugin._pending_actions.get(block=True)
+# I'm Py3

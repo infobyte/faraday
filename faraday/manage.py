@@ -1,11 +1,10 @@
 #!/usr/bin/env python
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-
+"""
 import os
 import re
 import sys
@@ -14,11 +13,15 @@ import platform
 # If is linux and its installed with deb or rpm, it must run with a user in the faraday group
 if platform.system() == "Linux":
     import grp
+    from getpass import getuser
     try:
         FARADAY_GROUP = "faraday"
         faraday_group = grp.getgrnam(FARADAY_GROUP)
-        if faraday_group.gr_gid not in os.getgroups():
-            print("User (%s) must be in the '%s' group." % (os.getlogin(), FARADAY_GROUP))
+        #The current user may be different from the logged user
+        current_user = getuser()
+        if current_user != 'root' and faraday_group.gr_gid not in os.getgroups():
+            print("\n\nUser (%s) must be in the '%s' group." % (os.getlogin(), FARADAY_GROUP))
+            print("After adding the user to the group, please logout and login again.")
             sys.exit(1)
     except KeyError:
         pass
@@ -26,7 +29,7 @@ if platform.system() == "Linux":
 import click
 import requests
 import alembic.command
-from urlparse import urlparse
+from urllib.parse import urlparse
 from alembic.config import Config
 from sqlalchemy.exc import ProgrammingError
 
@@ -42,6 +45,7 @@ from faraday.server.commands import status_check as status_check_functions
 from faraday.server.commands import change_password as change_pass
 from faraday.server.commands.custom_fields import add_custom_field_main, delete_custom_field_main
 from faraday.server.commands import support as support_zip
+from faraday.server.commands import change_username
 from faraday.server.models import db, User
 from faraday.server.importer import ImportCouchDB
 from faraday.server.web import app
@@ -192,7 +196,7 @@ def validate_email(ctx, param, value):
 def list_plugins():
     plugins_list = [name for name in os.listdir(FARADAY_PLUGINS_BASEPATH)
            if os.path.isdir(os.path.join(FARADAY_PLUGINS_BASEPATH, name))]
-    print '\n'.join(sorted(plugins_list))
+    print('\n'.join(sorted(plugins_list)))
 
 @click.command(help="Create ADMIN user for Faraday application")
 @click.option('--username', prompt=True, callback=validate_user_unique_field)
@@ -265,6 +269,17 @@ def delete_custom_field():
     delete_custom_field_main()
 
 
+@click.command(help="Change username")
+@click.option('--current_username', required=True, prompt=True)
+@click.option('--new_username', required=True, prompt=True)
+def rename_user(current_username, new_username):
+    if(current_username == new_username):
+        print("\nERROR: Usernames must be different.")
+        sys.exit(1)
+    else:
+        change_username.change_username(current_username, new_username)
+
+
 cli.add_command(process_reports)
 cli.add_command(show_urls)
 cli.add_command(initdb)
@@ -280,6 +295,10 @@ cli.add_command(add_custom_field)
 cli.add_command(delete_custom_field)
 cli.add_command(support)
 cli.add_command(list_plugins)
+cli.add_command(rename_user)
 
 if __name__ == '__main__':
     cli()
+
+
+# I'm Py3

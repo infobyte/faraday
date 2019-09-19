@@ -23,7 +23,7 @@
                     <b><p uib-tooltip="{{cmd.ip}}">{{cmd.creator}}</p></b>
                 </td>
                 <td class="wrapword">
-                    <span ng-if="cmd.import_source == 'report'">Import {{(cmd.tool == 'unknown' ? cmd.command : cmd.tool) + ': ' + cmd.params}}</span>
+                    <span ng-if="cmd.import_source == 'report'">Import {{(cmd.tool == 'unknown' ? cmd.command : cmd.tool)}}</span>
                     <span ng-if="cmd.import_source == 'shell'">{{cmd.command + ' ' + cmd.params}}</span>
                 </td>
                 <td am-time-ago="cmd.date" am-preprocess="utc"></td>

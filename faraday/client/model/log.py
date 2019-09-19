@@ -1,10 +1,12 @@
 #!/usr/bin/env python
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
+from __future__ import absolute_import
+
 import logging
 from faraday.client.gui.customevents import (ShowPopupCustomEvent,
                               ShowDialogCustomEvent)
@@ -26,7 +28,7 @@ def getNotifier(singleton=True):
         return Notifier()
 
 
-class Notifier(object):
+class Notifier:
     """
     This class is used to show information to the user using dialog boxes or
     little pop ups (like tooltips).
@@ -49,3 +51,6 @@ class Notifier(object):
 
     def showPopup(self, text, level="Information"):
         self._postCustomEvent(text, level, ShowPopupCustomEvent)
+
+
+# I'm Py3

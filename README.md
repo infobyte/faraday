@@ -1,3 +1,7 @@
+## Download
+
+Refer to the [releases page](https://github.com/infobyte/faraday/releases) for the latest pre-made installers for all supported operating systems.
+
 ## About
 
 Faraday introduces a new concept - IPE (Integrated Penetration-Test Environment) a multiuser Penetration test IDE. Designed for distributing, indexing, and analyzing the data generated during a security audit.
@@ -94,6 +98,7 @@ Faraday supports CSV Exporting from its WEB UI.
 * IRC: [ircs://irc.freenode.net/faraday-dev](ircs://irc.freenode.net/faraday-dev) [WebClient](https://webchat.freenode.net/?nick=wikiuser&channels=faraday-dev&prompt=1&uio=d4)
 * Screenshots: https://github.com/infobyte/faraday/wiki/Screenshots
 * Send your ideas and suggestions here: [https://www.faradaysec.com/ideas](https://www.faradaysec.com/ideas)
+* Releases: [Faraday Releases](https://github.com/infobyte/faraday/releases/)
 
 ## Presentations
 

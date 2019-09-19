@@ -30,8 +30,8 @@ var faradayApp = angular.module('faradayApp', [
                                                     'angularSimplePagination',
                                                     'dndLists',
                                                     'angularFileUploadLib',
-                                                    'ui',
-                                                    'rzTable'
+                                                    'rzTable',
+                                                    'ui'
                                              ])
     .constant("BASEURL", (function() {
         var url = window.location.origin + "/";
@@ -289,6 +289,16 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             templateUrl: 'scripts/commons/partials/commercial.html',
             controller: 'commercialCtrl',
             title: 'Executive Report | '
+        }).
+        when('/workflows', {
+            templateUrl: 'scripts/commons/partials/commercial.html',
+            controller: 'commercialCtrl',
+            title: 'Workflows | '
+        }).
+        when('/scheduling', {
+            templateUrl: 'scripts/commons/partials/commercial.html',
+            controller: 'commercialCtrl',
+            title: 'Scheduling | '
         }).
         when('/login', {
             templateUrl: 'scripts/auth/partials/login.html',

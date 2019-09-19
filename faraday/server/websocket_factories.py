@@ -1,17 +1,23 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
 import json
 import logging
 import itsdangerous
 
-import Cookie
+import http.cookies
 from collections import defaultdict
-from Queue import Queue, Empty
+from queue import Queue, Empty
 
+import txaio
+
+
+txaio.use_twisted()
+
+from autobahn.websocket.protocol import WebSocketProtocol
 from twisted.internet import reactor
 
 from autobahn.twisted.websocket import (
@@ -19,10 +25,15 @@ from autobahn.twisted.websocket import (
     WebSocketServerProtocol
 )
 
-from faraday.server.models import Workspace
+from faraday.server.models import Workspace, Agent
+from faraday.server.api.modules.websocket_auth import decode_agent_websocket_token
+from faraday.server.events import changes_queue
+
 
 logger = logging.getLogger(__name__)
-changes_queue = Queue()
+
+
+connected_agents = {}
 
 
 class BroadcastServerProtocol(WebSocketServerProtocol):
@@ -33,9 +44,9 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
         logger.debug('Websocket request {0}'.format(request))
         if 'cookie' in request.headers:
             try:
-                cookie = Cookie.SimpleCookie()
+                cookie = http.cookies.SimpleCookie()
                 cookie.load(str(request.headers['cookie']))
-            except Cookie.CookieError:
+            except http.cookies.CookieError:
                 pass
         return (protocol, headers)
 
@@ -80,10 +91,41 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                             self, message['workspace'])
             if message['action'] == 'LEAVE_WORKSPACE':
                 self.factory.leave_workspace(self, message['workspace'])
+            if message['action'] == 'JOIN_AGENT':
+                if 'token' not in message:
+                    logger.warn("Invalid agent join message")
+                    self.state = WebSocketProtocol.STATE_CLOSING
+                    self.sendClose()
+                    return False
+                with app.app_context():
+                    try:
+                        agent = decode_agent_websocket_token(message['token'])
+                    except ValueError:
+                        logger.warn('Invalid agent token!')
+                        self.state = WebSocketProtocol.STATE_CLOSING
+                        self.sendClose()
+                        return False
+                # factory will now send broadcast messages to the agent
+                return self.factory.join_agent(self, agent)
+            if message['action'] == 'LEAVE_AGENT':
+                with app.app_context():
+                    (agent_id,) = [
+                        k
+                        for (k, v) in connected_agents.items()
+                        if v == self
+                    ]
+                    agent = Agent.query.get(agent_id)
+                    assert agent is not None  # TODO the agent could be deleted here
+                self.factory.leave_agent(self, agent)
+                self.state = WebSocketProtocol.STATE_CLOSING
+                self.sendClose()
+                return False
+
 
     def connectionLost(self, reason):
         WebSocketServerProtocol.connectionLost(self, reason)
         self.factory.unregister(self)
+        self.factory.unregister_agent(self)
 
     def sendServerStatus(self, redirectUrl=None, redirectAfter=0):
         self.sendHtml('This is a websocket port.')
@@ -102,6 +144,8 @@ class WorkspaceServerFactory(WebSocketServerFactory):
 
         The message in the queue must contain the workspace.
     """
+    protocol = BroadcastServerProtocol
+
     def __init__(self, url):
         WebSocketServerFactory.__init__(self, url)
         # this dict has a key for each channel
@@ -131,6 +175,16 @@ class WorkspaceServerFactory(WebSocketServerFactory):
         logger.debug('Leave workspace {0}'.format(workspace_name))
         self.workspace_clients[workspace_name].remove(client)
 
+    def join_agent(self, agent_connection, agent):
+        logger.info("Agent {} joined!".format(agent.id))
+        connected_agents[agent.id] = agent_connection
+        return True
+
+    def leave_agent(self, agent_connection, agent):
+        logger.info("Agent {} leaved".format(agent.id))
+        connected_agents.pop(agent.id)
+        return True
+
     def unregister(self, client_to_unregister):
         """
             Search for the client_to_unregister in all workspaces
@@ -142,9 +196,30 @@ class WorkspaceServerFactory(WebSocketServerFactory):
                     self.leave_workspace(client, workspace_name)
                     return
 
+    def unregister_agent(self, protocol):
+        for (key, value) in connected_agents.items():
+            if value == protocol:
+                del connected_agents[key]
+
     def broadcast(self, msg):
+        if isinstance(msg, str):
+            msg = msg.encode('utf-8')
         logger.debug("broadcasting prepared message '{}' ..".format(msg))
         prepared_msg = json.loads(self.prepareMessage(msg).payload)
-        for client in self.workspace_clients[prepared_msg['workspace']]:
-            reactor.callFromThread(client.sendPreparedMessage, self.prepareMessage(msg))
-            logger.debug("prepared message sent to {}".format(client.peer))
+        if b'agent_id' not in msg:
+            for client in self.workspace_clients[prepared_msg['workspace']]:
+                reactor.callFromThread(client.sendPreparedMessage, self.prepareMessage(msg))
+                logger.debug("prepared message sent to {}".format(client.peer))
+
+        if b'agent_id' in msg:
+            agent_id = prepared_msg['agent_id']
+            try:
+                agent_connection = connected_agents[agent_id]
+            except KeyError:
+                # The agent is offline
+                return
+            reactor.callFromThread(agent_connection.sendPreparedMessage, self.prepareMessage(msg))
+            logger.debug("prepared message sent to agent id: {}".format(
+                agent_id))
+
+# I'm Py3

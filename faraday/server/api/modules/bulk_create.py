@@ -29,6 +29,7 @@ from faraday.server.api.modules import (
     vulns,
 )
 from faraday.server.api.base import AutoSchema, GenericWorkspacedView
+from faraday.server.api.modules.websocket_auth import require_agent_token
 
 bulk_create_api = flask.Blueprint('bulk_create_api', __name__)
 
@@ -113,6 +114,7 @@ class ServiceSchema(services.ServiceSchema):
 
 
 class HostSchema(hosts.HostSchema):
+    ip = fields.String(required=True)
     services = fields.Nested(
         ServiceSchema(many=True, context={'updating': False}),
         many=True,
@@ -318,8 +320,21 @@ class BulkCreateView(GenericWorkspacedView):
     schema_class = BulkCreateSchema
 
     def post(self, workspace_name):
+        if flask.g.user is None:
+            agent = require_agent_token()
+            workspace = agent.workspace
+            assert workspace.name
+            if workspace_name != workspace.name:
+                flask.abort(404, "No such workspace: %s" % workspace_name)
+        else:
+            workspace = self._get_workspace(workspace_name)
         data = self._parse_data(self._get_schema_instance({}), flask.request)
-        bulk_create(self._get_workspace(workspace_name), data, True)
+        bulk_create(workspace, data, True)
         return "Created", 201
 
+    post.is_public = True
+
 BulkCreateView.register(bulk_create_api)
+
+
+# I'm Py3

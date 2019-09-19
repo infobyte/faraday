@@ -1,9 +1,9 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2014  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
 import sys
 try:
     from pip import main
@@ -42,3 +42,6 @@ def install_packages(packages):
         if not hasattr(sys, 'real_prefix'):
             pip_cmd.append('--user')
         main(pip_cmd)
+
+
+# I'm Py3

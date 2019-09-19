@@ -7,12 +7,13 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
+from __future__ import absolute_import
+from __future__ import print_function
 import subprocess                                   
 import argparse                                                                                         
 from lxml import etree as ET    
 import os.path
 from os.path import basename
-import __builtin__
 import re
 
 from wcscans import phpini, webconfig
@@ -72,15 +73,15 @@ parser.add_argument('--version', "-v", action='version',
                     version='%(prog)s v1.0 by Morgan Lemarechal')
 args = parser.parse_args()  
 
-print basename("/a/b/c.txt")
-print """\033[0;33m                  
+print (basename("/a/b/c.txt"))
+print ("""\033[0;33m                  
      __        __                      
      \ \  /\  / /__ ___  ___ __ _ _ __  
       \ \/  \/ / __/ __|/ __/ _` | '_ \ 
        \  /\  / (__\__ \ (_| (_| | | | |
         \/  \/ \___|___/\___\__,_|_| |_|
          Version v1.0: November 2014    
-              Morgan Lemarechal\033[0m"""
+              Morgan Lemarechal\033[0m""")
     
 if args.xmloutput:
     root = ET.Element("wcscan")
@@ -89,7 +90,7 @@ else:
     
 for file in args.files:
     try:
-        print "\n[+]Perfoming the scan of \033[1;30m{}\033[0m...".format(file)
+        print("\n[+]Perfoming the scan of \033[1;30m{}\033[0m...".format(file))
         
         #------------------------------XML_Export------------------------------#    
         if args.xmloutput:
@@ -128,4 +129,5 @@ for file in args.files:
         #------------------------------XML_Export------------------------------#        
         
     except KeyboardInterrupt:       
-        print "\n[+]Interrupting the checking of \033[1;30m{}\033[0m...".format(file)
+        print("\n[+]Interrupting the checking of \033[1;30m{}\033[0m...".format(file))
+# I'm Py3

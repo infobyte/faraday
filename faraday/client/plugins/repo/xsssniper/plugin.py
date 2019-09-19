@@ -1,12 +1,8 @@
-#!/usr/bin/python2.7
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2017  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-
+"""
 import re
 import socket
 from faraday.client.plugins import core
@@ -20,7 +16,7 @@ __version__ = "1.0.0"
 class xsssniper (core.PluginBase):
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "xsssniper"
         self.name = "xsssniper"
         self.plugin_version = "0.0.1"
@@ -62,7 +58,4 @@ def createPlugin():
     return xsssniper()
 
 
-if __name__ == '__main__':
-    plugin_xss = xsssniper()
-    with open('xsssniper_out', 'r') as xsssniper_file:
-        plugin_xss.parseOutputString(xsssniper_file.read())
+# I'm Py3

@@ -1,7 +1,6 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-
 from flask import Blueprint, abort, make_response, jsonify
 from filteralchemy import FilterSet, operators
 from marshmallow import fields, post_load, ValidationError
@@ -95,7 +94,7 @@ class ServiceSchema(AutoSchema):
 class ServiceFilterSet(FilterSet):
     class Meta(FilterSetMeta):
         model = Service
-        fields = ('host_id', 'protocol', 'name', 'port')
+        fields = ('id', 'host_id', 'protocol', 'name', 'port')
         default_operator = operators.Equal
         operators = (operators.Equal,)
 
@@ -132,3 +131,4 @@ class ServiceView(FilterAlchemyMixin, ReadWriteWorkspacedView):
         return super(ServiceView, self)._perform_create( data, **kwargs)
 
 ServiceView.register(services_api)
+# I'm Py3

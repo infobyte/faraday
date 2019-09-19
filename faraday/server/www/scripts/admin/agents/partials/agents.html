@@ -1,0 +1,120 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2019  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+<div class="row" style="overflow-x: hidden; padding: 10px; height: 675px">
+    <div class="panel panel-default custom-panel">
+        <div class="panel-body custom-panel-body">
+                <span class="agent-token-container"><code>{{agentToken.token}}</code> &nbsp;<span class="cursor"
+                                                                                                  title="Copy token to clipboard"
+                                                                                                  ng-click="copyToClipboard()"><i
+                        class="fa fa-copy"></i></span></span>
+            <span class="glyphicon glyphicon-question-sign margin-right-15px"
+                  title="To register a new agent you should enter the current token"></span>
+
+            <button type="button" class="btn btn-success"
+                    title="A new token will be shown and the current token will be lost"
+                    ng-click="refreshToken()">
+                <i class="fa fa-refresh"></i> New Token
+            </button>
+
+            <span class="control-wrapper" ng-if="">
+                <button type="button" class="btn btn-default"
+                        title="{{workspaceData.readonly == false ? 'Tags' : 'Read-only. Workspace disabled'}}"
+                        ng-click="agentsTags()"
+                        ng-disabled="user.roles[0] === 'client' || workspaceData.readonly == true">
+                    <span class="glyphicon glyphicon-tags"></span>
+                </button>
+            </span>
+
+
+            <span class="col-md-3">
+                <div ng-if="workspace" class="workspace-selector-wrapper inside-admin workflow-workspace-switcher">
+                    <div class="switcher-wrapper inside-admin">
+                        <div class="dropdown">
+                            <button id="workspaceSwitcher" type="button"
+                                    class="btn btn-default dropdown-toggle workspace-switcher"
+                                    data-toggle="dropdown" title="Change current workspace">
+                                <div class="img-wrapper">
+                                    <img src="images/ico-status-menu.svg" class="icon" alt="Workspace"/>
+                                </div>
+                                <div class="workspace-switcher-title-wrapper">
+                                    <div class="workspace-switcher-title">
+                                        <span class="title">
+                                            {{ workspace }}
+                                        </span>
+                                        <span class="caret-container">
+                                            <span class="caret"></span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </button>
+                            <ul class="dropdown-menu" role="menu" aria-labelledby="workspaceSwitcher" style="width: 100%;">
+                                <li ng-repeat="ws in workspaces"><a href="javascript:;" class="ws"
+                                                                    ng-click="switchWorkspace(ws.name)">{{ws.name}}</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <table id="agent-table" class="status-report-grid hosts-list table table-responsive">
+        <thead>
+        <tr class="ui-grid-header">
+            <th class="ui-grid-cell-contents ui-grid-header-cell">Name</th>
+            <th class="ui-grid-cell-contents ui-grid-header-cell">Status</th>
+            <th class="ui-grid-cell-contents ui-grid-header-cell">Token</th>
+            <th class="ui-grid-cell-contents ui-grid-header-cell"></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="agent in agents">
+             <td class="ui-grid-cell-contents active-toggle">
+                {{agent.name}}
+            </td>
+            <td class="ui-grid-cell-contents active-toggle">
+                                <span class="preview-tag" ng-class="{
+                                'tag-green':agent.status == 'online',
+                                'tag-yellow':agent.status=='offline',
+                                'tag-red': agent.status=='paused'}">
+                                    {{agent.status |uppercase}}
+                                </span>
+            </td>
+
+            <td class="ui-grid-cell-contents active-toggle">
+                {{agent.token}}
+            </td>
+
+            <td class="ui-grid-cell-contents active-toggle" selection-model-ignore="">
+                <button type="button" class="btn btn-info"
+                        title="Run Agent"
+                        ng-click="runAgent(agent.id)" ng-disabled="!agent.active || disableExecute">
+                    Execute
+                </button>
+                <button type="button" class="btn"
+                        ng-class="{'btn-danger': agent.active, 'btn-success': !agent.active}"
+                        title="{{agent.active?'Pause Agent': 'Unpause Agent'}}"
+                        ng-click="changeStatusAgent(agent)">
+                    <span ng-bind="agent.active ?'Pause': 'Unpause'"></span>
+                </button>
+                <button type="button" class="btn btn-danger" title="Remove Agent" ng-click="removeAgent(agent.id)">
+                    Remove
+                </button>
+            </td>
+        </tr>
+        </tbody>
+    </table><!-- #hosts -->
+
+    <div class="no-info-overlay" ng-if="agents.length === 0" style="margin-bottom: 15px;top: -8px;">
+        <p class="no-info-text">
+            No registered agents
+        </p>
+    </div>
+
+</div>
+

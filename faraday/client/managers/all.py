@@ -1,18 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
+from __future__ import absolute_import
 
 import os
 
 # TODO: remove this in next versions
 
-class ViewsManager(object):
+
+class ViewsManager:
     """docstring for ViewsWrapper"""
     def __init__(self):
         self.vw = ViewsListObject()
@@ -42,18 +44,21 @@ class ViewsManager(object):
                 self.addView(v, workspaceDB)
 
 
-class ViewsListObject(object):
+class ViewsListObject:
     """ Representation of the FS Views """
     def __init__(self):
         self.views_path = os.path.join(os.getcwd(), "views")
         self.designs_path = os.path.join(self.views_path, "reports", "_attachments", "views")
 
     def _listPath(self, path):
-        flist = filter(lambda x: not x.startswith('.'), os.listdir(path))
-        return map(lambda x: os.path.join(path, x), flist)
+        flist = list(filter(lambda x: not x.startswith('.'), os.listdir(path)))
+        return [os.path.join(path, x) for x in flist]
 
     def get_fs_designs(self):
         return self._listPath(self.designs_path)
 
     def get_all_views(self):
         return self.get_fs_designs()
+
+
+# I'm Py3

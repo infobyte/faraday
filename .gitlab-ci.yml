@@ -447,7 +447,7 @@ test_hypothesis:
             - $DAILY_TEST
 
 agent_integration:
-    stage: pre_testing
+    stage: post_testing
     script:
         - apt-get update -qy
         - apt-get install curl -y

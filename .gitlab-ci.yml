@@ -447,6 +447,7 @@ test_hypothesis:
             - $DAILY_TEST
 
 agent_integration:
-    stage: post_testing
+    stage: pre_testing
     script:
+      - apt-get curl
       - "curl -X POST -F token=$WHITE_AGENT_TOKEN -F ref=master -F \"variables[INTEGRATION]=true\" https://gitlab.com/api/v4/projects/12825225/trigger/pipeline"

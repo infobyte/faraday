@@ -856,19 +856,24 @@ class VulnerabilityView(PaginatedMixin,
         workspace = self._get_workspace(workspace_name)
         json_quest = request.get_json()
         vulnerability_ids = json_quest.get('vulnerability_ids', [])
-        vulns_severities = json_quest.get('severities', [])
+        vulnerability_severities = json_quest.get('severities', [])
+        deleted_vulns = 0
+        vulns = []
         if vulnerability_ids:
-            deleted_vulns = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.id.in_(vulnerability_ids),
-                                                              VulnerabilityGeneric.workspace_id == workspace.id).delete(
-                synchronize_session='fetch')
-        elif vulns_severities:
-            deleted_vulns = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.severity.in_(vulns_severities),
-                                                              VulnerabilityGeneric.workspace_id == workspace.id).delete(
-                synchronize_session='fetch')
+            logger.info("Delete Vuln IDs: %s", vulnerability_ids)
+            vulns = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.id.in_(vulnerability_ids),
+                                              VulnerabilityGeneric.workspace_id == workspace.id)
+        elif vulnerability_severities:
+            logger.info("Delete Vuln Severities: %s", vulnerability_severities)
+            vulns = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.severity.in_(vulnerability_severities),
+                                                      VulnerabilityGeneric.workspace_id == workspace.id)
         else:
             flask.abort(400, "Invalid Request")
-        response = {'deleted_vulns': deleted_vulns}
+        for vuln in vulns:
+            db.session.delete(vuln)
+            deleted_vulns += 1
         db.session.commit()
+        response = {'deleted_vulns': deleted_vulns}
         return flask.jsonify(response)
 
 VulnerabilityView.register(vulns_api)

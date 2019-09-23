@@ -1392,3 +1392,8 @@ a {
 }
 .ui-grid-row:nth-child(odd):hover .ui-grid-cell{background:#ecebea}
 .ui-grid-row:nth-child(even):hover .ui-grid-cell{background:#ecebea}
+
+.change-padding-to-margin {
+    padding-bottom: 0px !important;
+    margin-bottom: 15px;
+}

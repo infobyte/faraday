@@ -1,7 +1,6 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-
 import os
 import logging
 import logging.handlers
@@ -30,7 +29,7 @@ def setup_logging():
         formatter = RFC5424Formatter()
     else:
         formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s {%(threadName)s} [%(filename)s:%(lineno)s - %(funcName)s() ]  %(message)s')
+            '%(asctime)s - %(name)s - %(levelname)s {%(threadName)s} [%(filename)s:%(lineno)s - %(funcName)s()]  %(message)s')
     setup_console_logging(formatter)
     setup_file_logging(formatter)
 
@@ -64,7 +63,7 @@ def get_logger(obj=None):
      for non-class loggings."""
     if obj is None:
         logger = logging.getLogger(ROOT_LOGGER)
-    elif isinstance(obj, basestring):
+    elif isinstance(obj, str):
         if obj != ROOT_LOGGER:
             logger = logging.getLogger(u'{}.{}'.format(ROOT_LOGGER, obj))
         else:
@@ -91,3 +90,4 @@ def create_logging_path():
 setup_logging()
 
 
+# I'm Py3

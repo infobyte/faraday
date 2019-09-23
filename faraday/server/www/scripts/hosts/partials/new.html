@@ -3,9 +3,7 @@
 <!-- See the file 'doc/LICENSE' for the license information -->
 
             <section id="main" class="seccion clearfix">
-
-                <div class="faraday-header-border-fix"></div>
-                <div class="right-main">
+                <div class="faraday-header-border-fix">
                     <div ng-controller="headerCtrl" ng-include="'scripts/commons/partials/header.html'"></div>
                     <div id="reports-main" class="fila clearfix">
                     <div class="reports col-md-8 col-sm-8 col-xs-8 pr" style="border-right: 1px solid #CCC">
@@ -78,7 +76,7 @@
                         <h3>
                             Hostnames
                             <span style="float:right">
-                                <button class="btn btn-success" ng-click="newHostnames($event)">Add Hostname</button>
+                                <button class="btn btn-success background-blue" ng-click="newHostnames($event)">Add Hostname</button>
                             </span>
                         </h3>
                         <h5 ng-if="editing" style="min-height: 1.1em"></h5>

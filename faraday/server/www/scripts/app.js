@@ -290,6 +290,16 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             controller: 'commercialCtrl',
             title: 'Executive Report | '
         }).
+        when('/workflows', {
+            templateUrl: 'scripts/commons/partials/commercial.html',
+            controller: 'commercialCtrl',
+            title: 'Workflows | '
+        }).
+        when('/scheduling', {
+            templateUrl: 'scripts/commons/partials/commercial.html',
+            controller: 'commercialCtrl',
+            title: 'Scheduling | '
+        }).
         when('/login', {
             templateUrl: 'scripts/auth/partials/login.html',
             controller: 'loginCtrl',

@@ -1,5 +1,5 @@
 <div class="header-btns row">
-    <button class="btn btn-success pull-right" ng-click="new()">New</button>
+    <button class="btn btn-success pull-right background-blue" ng-click="new()">New</button>
 </div>
 
 <div class="row" style="overflow-x: hidden">
@@ -99,7 +99,7 @@
                 <button type="reset" class="btn btn-default" ng-click="hideSidePanel()">Cancel</button>
                 <button class="btn btn-success" ng-if="isEditable == true"
                         ng-click="updateCustomCustomField()"
-                        ng-disabled="form.$invalid || selected_cf.field_type == null">Edit
+                        ng-disabled="form.$invalid || selected_cf.field_type == null">Save
                 </button>
                 <button class="btn btn-success" ng-if="isEditable == false"
                         ng-click="createCustomCustomField()"

@@ -5,6 +5,8 @@ Revises: 0d216660da28
 Create Date: 2019-05-22 19:17:31.444968+00:00
 
 """
+from __future__ import absolute_import
+
 import uuid
 from alembic import op
 import sqlalchemy as sa
@@ -64,6 +66,7 @@ def upgrade():
         sa.Column('update_date', sa.DateTime),
         sa.Column('workspace_id', sa.Integer, nullable=False),
         sa.Column('agent_id', sa.Integer, nullable=False),
+        sa.Column('last_run', sa.DateTime),
     )
 
     op.create_foreign_key(
@@ -82,3 +85,6 @@ def upgrade():
 def downgrade():
     op.drop_table('agent_schedule')
     op.drop_table('agent')
+
+
+# I'm Py3

@@ -1,9 +1,9 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
 import hashlib
 import uuid
 import socket
@@ -63,3 +63,6 @@ def checkSSL(uri):
         return res.ok
     except Exception:
         return False
+
+
+# I'm Py3

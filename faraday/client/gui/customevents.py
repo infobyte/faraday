@@ -1,9 +1,11 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
+from __future__ import absolute_import
+
 """
 This module contains the definition of all the CustomEvent's used
 in the application.
@@ -35,7 +37,7 @@ ADDOBJECT = 7777
 DELETEOBJECT = 8888
 UPDATEOBJECT = 9999
 
-class CustomEvent(object):
+class CustomEvent:
     def __init__(self, type):
         self._type = type
         self._time = time.time()
@@ -176,3 +178,6 @@ class UpdateObjectCustomEvent(CustomEvent):
     def __init__(self, obj):
         CustomEvent.__init__(self, UPDATEOBJECT)
         self.obj = obj
+
+
+# I'm Py3

@@ -18,3 +18,4 @@ def cached(timeout=5 * 60, key='view/%s'):
             return rv
         return decorated_function
     return decorator
+# I'm Py3

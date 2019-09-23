@@ -1,3 +1,6 @@
+from __future__ import absolute_import
+from builtins import bytes
+
 import pytest
 from marshmallow import ValidationError
 from faraday.server.models import (
@@ -493,6 +496,15 @@ def test_bulk_create_endpoint(session, workspace, test_client):
     assert set({hn.name for hn in host.hostnames}) == {"test.com", "test2.org"}
 
 
+@pytest.mark.usefixtures('logged_user')
+def test_bulk_create_endpoint_without_host_ip(session, workspace, test_client):
+    url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
+    host_data_ = host_data.copy()
+    host_data_.pop('ip')
+    res = test_client.post(url, data=dict(hosts=[host_data_]))
+    assert res.status_code == 400
+
+
 def test_bulk_create_endpoints_fails_without_auth(session, workspace, test_client):
     url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
     res = test_client.post(url, data=dict(hosts=[host_data]))
@@ -532,7 +544,7 @@ def test_bulk_create_with_agent_token_in_different_workspace_fails(
         headers=[("authorization", "agent {}".format(agent.token))]
     )
     assert res.status_code == 404
-    assert 'No such workspace' in res.data
+    assert b'No such workspace' in res.data
     assert count(Host, second_workspace) == 0
 
 
@@ -578,3 +590,6 @@ def test_bulk_create_endpoint_with_agent_token_disabled_workspace(
         headers=[("authorization", "agent {}".format(agent.token))]
     )
     assert res.status_code == 403
+
+
+# I'm Py3

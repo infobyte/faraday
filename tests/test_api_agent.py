@@ -3,6 +3,10 @@ Faraday Penetration Test IDE
 Copyright (C) 2019  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 """
+from __future__ import absolute_import
+
+from builtins import str
+
 import mock
 import pytest
 
@@ -174,3 +178,6 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
         res = test_client.delete(self.url(agent.id))
         assert res.status_code == 204
         assert len(session.query(Agent).all()) == initial_agent_count
+
+
+# I'm Py3

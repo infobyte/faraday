@@ -1,16 +1,12 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2019  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-import random
-import string
 import wtforms
 
 from flask import Blueprint, abort, request
 from flask_classful import route
 from flask_wtf.csrf import validate_csrf
 from marshmallow import fields, Schema
-from marshmallow.validate import OneOf
-from sqlalchemy.orm.exc import NoResultFound
 
 from faraday.server.api.base import (AutoSchema, UpdateWorkspacedMixin, DeleteWorkspacedMixin,
                                      CountWorkspacedMixin, ReadOnlyWorkspacedView, CreateWorkspacedMixin,
@@ -18,7 +14,7 @@ from faraday.server.api.base import (AutoSchema, UpdateWorkspacedMixin, DeleteWo
 from faraday.server.models import Agent
 from faraday.server.schemas import PrimaryKeyRelatedField
 from faraday.server.config import faraday_server
-from faraday.server.websocket_factories import changes_queue
+from faraday.server.events import changes_queue
 
 agent_api = Blueprint('agent_api', __name__)
 
@@ -97,3 +93,6 @@ class AgentView(UpdateWorkspacedMixin,
 
 AgentView.register(agent_api)
 AgentCreationView.register(agent_api)
+
+
+# I'm Py3

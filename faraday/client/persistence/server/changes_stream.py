@@ -1,11 +1,15 @@
 #!/usr/bin/python2.7
 # -*- coding: utf-8 -*-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
+from __future__ import absolute_import
+from __future__ import print_function
+from past.builtins import basestring
+
 import json
 import logging
 import threading
@@ -22,7 +26,7 @@ from faraday.client.persistence.server.server_io_exceptions import (
 logger = logging.getLogger(__name__)
 
 
-class ChangesStream(object):
+class ChangesStream:
 
     def __enter__(self):
         return self
@@ -131,7 +135,7 @@ class WebsocketsChangesStream(ChangesStream):
         try:
             data = json.loads(self.changes_queue.get_nowait())
         except Empty:
-            raise StopIteration
+            return
         yield data
 
     def _get_object_type_and_name_from_change(self, change):
@@ -179,3 +183,6 @@ class CouchChangesStream(ChangesStream):
             raise ChangesStreamStoppedAbruptly
         except Exception as e:
             self.stop()
+
+
+# I'm Py3

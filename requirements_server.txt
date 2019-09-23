@@ -17,7 +17,6 @@ psycopg2==2.7.7
 pyasn1-modules>=0.0.11
 pyopenssl>=17.2.0
 python-dateutil>=2.6.0
-python-slugify>=1.2.4
 requests>=2.18.4
 service_identity>=17.0.0
 SQLAlchemy>=1.2.0b2
@@ -37,3 +36,5 @@ simplejson>=3.16.0
 syslog-rfc5424-formatter==1.1.1
 typing==3.6.6
 beautifulsoup4==4.7.1
+Flask-KVSession==0.6.2
+simplekv==0.13.0

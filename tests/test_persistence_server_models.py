@@ -4,6 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 import faraday.client.persistence.server.models as models
 import pytest
 import responses
@@ -12,7 +14,7 @@ from mock import Mock, patch
 
 import faraday.server.config
 
-from test_api_workspaced_base import GenericAPITest
+from tests.test_api_workspaced_base import GenericAPITest
 
 from tests.factories import VulnerabilityWebFactory, VulnerabilityFactory
 
@@ -171,3 +173,6 @@ class TestVulnWebPersistanceModelsFuncions(GenericAPITest):
         a = requests.put('http://localhost:{0}/_api/v2/ws/{1}/vulns/{2}/'.format(port,self.workspace.name, v.id))
 
         models.update_vuln_web(self.workspace.name, v)
+
+
+# I'm Py3

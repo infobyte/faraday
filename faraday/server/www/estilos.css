@@ -564,6 +564,9 @@ div.modal-footer button.btn-footer{position: absolute;}
     width: 60%;
 }
 
+#buttonAtRight {
+    right: 0;
+}
 /* Table Status Report */
 table.status-report {
 	/* background-color: #CDCDCD; */

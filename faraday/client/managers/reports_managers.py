@@ -323,6 +323,8 @@ class ReportParser(object):
             # this will work since recon-ng is the first plugin to use json.
             # we need to add json detection here!
             result = 'reconng'
+        elif report_type == 'fpr':
+            result = 'fortify'
         else:
 
             try:
@@ -398,6 +400,8 @@ class ReportParser(object):
             return "Lynis"
         elif tag == "reconng":
             return "Reconng"
+        elif tag == "fortify":
+            return "Fortify"
         elif tag == "document":
             if re.search("SSLyzeVersion", output) is not None:
                 return "Sslyze"

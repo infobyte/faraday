@@ -49,7 +49,7 @@ class NiktoXmlParser:
         tree = self.parse_xml(xml_output)
 
         if tree:
-            self.hosts = [host for host in self.get_hosts(tree)]
+            self.hosts = list(self.get_hosts(tree))
         else:
             self.hosts = []
 
@@ -225,7 +225,7 @@ class Host:
         self.starttime = self.node.get('starttime')
         self.sitename = self.node.get('sitename')
         self.siteip = self.node.get('hostheader')
-        self.items = [item for item in self.get_items()]
+        self.items = list(self.get_items())
 
     def get_items(self):
         """

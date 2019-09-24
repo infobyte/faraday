@@ -51,7 +51,7 @@ class NetsparkerXmlParser:
 
         tree = self.parse_xml(xml_output)
         if tree:
-            self.items = [data for data in self.get_items(tree)]
+            self.items = list(self.get_items(tree))
         else:
             self.items = []
 

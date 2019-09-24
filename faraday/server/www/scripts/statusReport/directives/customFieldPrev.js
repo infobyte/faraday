@@ -9,16 +9,17 @@ angular.module('faradayApp')
             scope: false,
             replace: true,
             template: '<div> \n\
-                            <div ng-if="cf.field_type === \'str\'"> \n\
-                                <div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === cf.field_name"></i>    {{cf.field_display_name}}</div> \n\
+                            <div ng-if="cf.field_type === \'str\'" ng-init="isEditable = true"> \n\
+                                <div class="tab-pane-header" ng-dblclick="isEditable = true" title="Double click to edit"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === cf.field_name"></i>    {{cf.field_display_name}}  <span class="glyphicon glyphicon-question-sign" title="Edit using markdown code"></span></div> \n\
                                 <div class="form-group"> \n\
                                     <label class="sr-only" for="{{cf.field_name}}">{{cf.field_display_name}}</label> \n\
-                                    <input type="text" class="form-control input-sm" id="{{cf.field_name}}" name="{{cf.field_name}}" \n\
-                                           placeholder="{{cf.field_display_name}}" \n\
-                                           ng-focus="activeEditPreview(cf.field_name)" \
-                                           ng-blur="processToEditPreview(false)"\
-                                           ng-model="lastClickedVuln.custom_fields[cf.field_name]" check-custom-type="{{cf.field_type}}" \n\
-                                           uib-tooltip="Input type text"/> \n\
+                                    <textarea class="form-control" placeholder="{{cf.field_display_name}}" rows="5" id="vuln-desc" name="desc" ng-show="isEditable === true" \n\
+                                        ng-focus="activeEditPreview(cf.field_name)" ng-blur="processToEditPreview(false); isEditable = isEditable.length==0 || !lastClickedVuln.custom_fields[cf.field_name]" ng-model="lastClickedVuln.custom_fields[cf.field_name]" ng-bind-html="lastClickedVuln.custom_fields[cf.field_name] | markdown" \n\
+                                        style="margin: 0 2px 0 0;"  autofocus> \n\
+                                    </textarea> \n\
+                                    <div class="col-md-12" ng-cloak ng-show="lastClickedVuln.custom_fields[cf.field_name].length > 0 && isEditable === false"> \n\
+                                        <div class="markdown-preview" style="height: 100px;!important;" ng-bind-html="lastClickedVuln.custom_fields[cf.field_name] | markdown" ng-dblclick="isEditable = true">{{lastClickedVuln.custom_fields[cf.field_name] | markdown}}</div> \n\
+                                    </div> \n\
                                 </div> \n\
                             </div> \n\
                             <div ng-if="cf.field_type === \'int\'"> \n\

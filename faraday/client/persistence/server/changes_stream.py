@@ -165,9 +165,7 @@ class CouchChangesStream(ChangesStream):
                 for raw_line in self._response.iter_lines():
                     line = self._sanitize(raw_line)
                     if not line:
-                        if self._stop:
-                            break
-                        else:
+                        if not self._stop:
                             continue
                     change = self._parse_change(line)
                     if not change:

@@ -35,7 +35,7 @@ angular.module('faradayApp')
                                     </div> \n\
                             </div> \n\
                             <div ng-if="cf.field_type === \'list\'"> \n\
-                                <div className="tab-pane-header"><i className="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === cf.field_name"></i>  {{cf.field_display_name}}</div> \n\
+                                <div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === cf.field_name"></i>  {{cf.field_display_name}}</div> \n\
                                 <div class="form-group" ng-class="lastClickedVuln.custom_fields[cf.field_name].length > 0 ? \'no-margin-bottom\' : \'\'">\n\
                                     <div class="input-group"> \n\
                                         <label class="sr-only" for="{{cf.field_name}}">{{cf.field_display_name}}</label> \n\

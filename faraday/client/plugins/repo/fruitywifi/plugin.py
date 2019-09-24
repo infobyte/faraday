@@ -93,8 +93,7 @@ class FruityWiFiPlugin(core.PluginBase):
                         macaddress = item[1]
                         hostname = item[2]
                         vuln_name = "FruityWiFi"
-                        severity = severity
-            
+
                         desc = "Client ip: " + ip_address + \
                                " has been connected to FruityWiFi\n"
                         desc += "More information:"

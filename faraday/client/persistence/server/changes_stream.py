@@ -13,10 +13,7 @@ from past.builtins import basestring
 import json
 import logging
 import threading
-try:
-    from Queue import Queue, Empty
-except ImportError:
-    from queue import Queue, Empty
+from queue import Queue, Empty
 import requests
 import websocket
 
@@ -168,8 +165,10 @@ class CouchChangesStream(ChangesStream):
                 for raw_line in self._response.iter_lines():
                     line = self._sanitize(raw_line)
                     if not line:
-                        if self._stop: break
-                        else: continue
+                        if self._stop:
+                            break
+                        else:
+                            continue
                     change = self._parse_change(line)
                     if not change:
                         continue

@@ -8,28 +8,45 @@ angular.module('faradayApp')
             restrict: 'E',
             scope: false,
             replace: true,
-            template: '<div><div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === cf.field_name"></i>    {{cf.field_display_name}}</div> \n\
-                            <div class="form-group" ng-if="cf.field_type !== \'list\'"> \n\
-                                <label class="sr-only" for="{{cf.field_name}}">{{cf.field_display_name}}</label> \n\
-                                <input type="text" class="form-control input-sm" id="{{cf.field_name}}" name="{{cf.field_name}}" \n\
-                                       placeholder="{{cf.field_display_name}}" \n\
-                                       ng-focus="activeEditPreview(cf.field_name)" \
-                                       ng-blur="processToEditPreview(false)"\
-                                       ng-model="lastClickedVuln.custom_fields[cf.field_name]" check-custom-type="{{cf.field_type}}" \n\
-                                       uib-tooltip="{{(cf.field_type === \'int\') ? \'Type only numbers\' : \'Input type text\'}}"/> \n\
-                            </div> \n\
-                            <div class="form-group " ng-if="cf.field_type === \'list\'" ng-class="lastClickedVuln.custom_fields[cf.field_name].length > 0 ? \'no-margin-bottom\' : \'\'">\n\
-                                <div class="input-group"> \n\
+            template: '<div> \n\
+                            <div ng-if="cf.field_type === \'str\'"> \n\
+                                <div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === cf.field_name"></i>    {{cf.field_display_name}}</div> \n\
+                                <div class="form-group"> \n\
                                     <label class="sr-only" for="{{cf.field_name}}">{{cf.field_display_name}}</label> \n\
                                     <input type="text" class="form-control input-sm" id="{{cf.field_name}}" name="{{cf.field_name}}" \n\
                                            placeholder="{{cf.field_display_name}}" \n\
                                            ng-focus="activeEditPreview(cf.field_name)" \
-                                           ng-model="valueField" \n\
-                                           uib-tooltip="Input type list"/> \n\
-                                    <span class="input-group-addon cursor" ng-click="newValueField(valueField)"><i class="fa fa-plus-circle"></i></span> \n\
+                                           ng-blur="processToEditPreview(false)"\
+                                           ng-model="lastClickedVuln.custom_fields[cf.field_name]" check-custom-type="{{cf.field_type}}" \n\
+                                           uib-tooltip="Input type text"/> \n\
                                 </div> \n\
                             </div> \n\
-                            <div class="reference" ng-repeat="item in lastClickedVuln.custom_fields[cf.field_name] track by $index" ng-class="{\'last-item-field\':$last}" ng-if="cf.field_type === \'list\'"> \n\
+                            <div ng-if="cf.field_type === \'int\'"> \n\
+                                <div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === cf.field_name"></i>  {{cf.field_display_name}}</div> \n\
+                                    <div class="form-group">\n\
+                                        <label class="sr-only" for="{{cf.field_name}}">{{cf.field_display_name}}</label> \n\
+                                        <input type="text" class="form-control input-sm" id="{{cf.field_name}}" name="{{cf.field_name}}" \n\
+                                               placeholder="{{cf.field_display_name}}" \n\
+                                               ng-focus="activeEditPreview(cf.field_name)" \
+                                               ng-blur="processToEditPreview(false)"\
+                                               ng-model="lastClickedVuln.custom_fields[cf.field_name]" check-custom-type="{{cf.field_type}}" \n\
+                                               uib-tooltip="Type only numbers"/> \n\
+                                    </div> \n\
+                            </div> \n\
+                            <div ng-if="cf.field_type === \'list\'"> \n\
+                                <div className="tab-pane-header"><i className="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === cf.field_name"></i>  {{cf.field_display_name}}</div> \n\
+                                <div class="form-group" ng-class="lastClickedVuln.custom_fields[cf.field_name].length > 0 ? \'no-margin-bottom\' : \'\'">\n\
+                                    <div class="input-group"> \n\
+                                        <label class="sr-only" for="{{cf.field_name}}">{{cf.field_display_name}}</label> \n\
+                                        <input type="text" class="form-control input-sm" id="{{cf.field_name}}" name="{{cf.field_name}}" \n\
+                                               placeholder="{{cf.field_display_name}}" \n\
+                                               ng-focus="activeEditPreview(cf.field_name)" \
+                                               ng-model="valueField" \n\
+                                               uib-tooltip="Input type list"/> \n\
+                                        <span class="input-group-addon cursor" ng-click="newValueField(valueField)"><i class="fa fa-plus-circle"></i></span> \n\
+                                    </div> \n\
+                                </div> \n\
+                                <div class="reference" ng-repeat="item in lastClickedVuln.custom_fields[cf.field_name] track by $index" ng-class="{\'last-item-field\':$last}" ng-if="cf.field_type === \'list\'"> \n\
                                 <div class="input-group margin-bottom-sm"> \n\
                                     <label class="sr-only" for="vuln-refs-create">{{cf.field_display_name}}</label> \n\
                                     <input ng-if="item.value" type="text" class="form-control input-sm" id="vuln-refs-create" placeholder="{{cf.field_display_name}}" \n\
@@ -42,7 +59,8 @@ angular.module('faradayApp')
                                     <i class="fa fa-minus-circle"></i></span>                                \n\
                                     </div> \n\
                             </div> \n\
-                        </div></div>',
+                                </div>\n\
+                      </div>',
             link: function (scope, element, attrs) {
                 scope.newValueField = function (valueField) {
                     if (valueField !== "" && valueField !== undefined) {

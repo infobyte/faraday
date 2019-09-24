@@ -1,9 +1,8 @@
 import io
 import re
-import string
 from HTMLParser import HTMLParser
 from zipfile import ZipFile
-from lxml import objectify, etree
+from lxml import objectify
 from faraday.client.plugins import core
 
 
@@ -17,20 +16,14 @@ class FortifyPlugin(core.PluginBase):
         self.id = "Fortify"
         self.name = "Fortify XML Output Plugin"
         self.plugin_version = "0.0.1"
-        #self.version = "6.40"
-        #self.framework_version = "1.0.0"
-        #self.options = None
-        #self._current_output = None
 
     def parseOutputString(self, output, debug=False):
-        #import pdb; pdb.set_trace()
         fp = FortifyParser(output)
 
         for host in fp.hosts.keys():
             fp.hosts[host] = self.createAndAddHost(host)
 
         for vuln in fp.vulns.keys():
-            #import pdb; pdb.set_trace()
             self.createAndAddVulnToHost(
                 host_id=fp.hosts[fp.vulns[vuln]['host']],
                 name=str(vuln),
@@ -44,10 +37,7 @@ class FortifyPlugin(core.PluginBase):
         return True
 
 
-
 class FortifyParser():
-
-
     remove_extra_chars = re.compile(r'&amp;(\w*);')
     replacements_fmt = re.compile(r'<Replace key="(.*?)"[\s\/].*?>')
 
@@ -69,13 +59,9 @@ class FortifyParser():
             self.audit = objectify.fromstring(fprcontent.read('audit.xml'))
 
     def _extract_vulns(self):
-
-
-        #make list of false positives
         for issue in self.audit.IssueList.iterchildren():
             if issue.get('suppressed') == 'true':
                 self.suppressed.append(issue.get('instanceId'))
-
 
         for vuln in self.fvdl.Vulnerabilities.iterchildren():
 
@@ -110,36 +96,30 @@ class FortifyParser():
             for repl in vuln.AnalysisInfo.Unified.ReplacementDefinitions.Def.iterchildren():
                 self.vulns[vulnID]['replacements'][repl.get('key')] = repl.get('value')            
 
-
-            #self._format_description(description.Explanation)
-
-
     def _prepare_description_templates(self):
+        for description in self.fvdl.Description:
 
-            for description in self.fvdl.Description:
+            tips = ""
+            if hasattr(description, 'Tips'):
+                for tip in description.Tips.getchildren():
+                    tips += "\n" + tip.text
 
-                tips = ""
-                if hasattr(description, 'Tips'):
-                    for tip in description.Tips.getchildren():
-                        tips += "\n" + tip.text
+            #group vuln references
+            references = ""
+            for reference in description.References.getchildren():
 
-                #group vuln references
-                references = ""
-                for reference in description.References.getchildren():
+                for attr in dir(reference):
+                    if attr == '__class__':
+                        break
 
-                    for attr in dir(reference):
-                        if attr == '__class__':
-                            break
+                    references += "{}:{}\n".format(attr, getattr(reference, attr))
 
-                        references += "{}:{}\n".format(attr, getattr(reference, attr))
-                    
-                    references += "\n"
-                
-                htmlparser = HTMLParser()
-                self.descriptions[description.get("classID")] = htmlparser.unescape(
-                "Summary:\n{}\n\nExplanation:\n{}\n\nRecommendations:\n{}\n\nTips:{}\n\nReferences:\n{}".format(
-                    description.Abstract, description.Explanation, description.Recommendations, tips, references))
+                references += "\n"
 
+            htmlparser = HTMLParser()
+            self.descriptions[description.get("classID")] = htmlparser.unescape(
+            "Summary:\n{}\n\nExplanation:\n{}\n\nRecommendations:\n{}\n\nTips:{}\n\nReferences:\n{}".format(
+                description.Abstract, description.Explanation, description.Recommendations, tips, references))
 
     def _format_description(self, vulnID):
                
@@ -183,5 +163,3 @@ if __name__ == '__main__':
             fp._format_description(vulnID)
 
         print(fp.descriptions)
-
-            

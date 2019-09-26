@@ -50,7 +50,7 @@ class DnsreconXmlParser:
         tree = self.parse_xml(xml_output)
 
         if tree:
-            self.hosts = [host for host in self.get_hosts(tree)]
+            self.hosts = list(self.get_hosts(tree))
         else:
             self.hosts = []
 

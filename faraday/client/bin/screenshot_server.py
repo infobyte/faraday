@@ -49,7 +49,7 @@ def main(workspace='', args=None, parser=None):
 
         if not os.path.exists(path):
             print("Invalid Path")
-            exit()
+            sys.exit()
 
         try:
             services = models.get_services(workspace)

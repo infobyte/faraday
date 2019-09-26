@@ -80,7 +80,6 @@ class DnsmapParser:
             if not splitted[i]:
                 hosts_list.append(aux_list)
                 aux_list = []
-                continue
             else:
                 aux_list.append(splitted[i])
         return hosts_list

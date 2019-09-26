@@ -49,14 +49,14 @@ class MetasploitXmlParser:
             for site in tree.findall('web_sites/web_site'):
                 servicesByWebsite[site.find('id').text] = site.find('service-id').text
             webVulnsByService = {}
-            for v in [data for data in self.get_vulns(tree, servicesByWebsite)]:
+            for v in self.get_vulns(tree, servicesByWebsite):
                 if v.service_id not in webVulnsByService:
                     webVulnsByService[v.service_id] = []
                 webVulnsByService[v.service_id].append(v)
 
-            self.hosts = [data for data in self.get_items(
+            self.hosts = list(self.get_items(
                 tree,
-                webVulnsByService)]
+                webVulnsByService))
         else:
             self.hosts = []
 

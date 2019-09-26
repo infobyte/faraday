@@ -15,6 +15,7 @@ try:
     import sqlalchemy
     import faraday.server.config
     import faraday.server.utils.logger
+    import faraday.server.web
     from faraday.server.models import db, Workspace
     from faraday.server.utils import daemonize
     from faraday.server.web import app
@@ -66,7 +67,6 @@ def is_server_running(port):
 
 
 def run_server(args):
-    import faraday.server.web
     web_server = faraday.server.web.WebServer(enable_ssl=args.ssl)
     daemonize.create_pid_file(args.port)
     web_server.run()

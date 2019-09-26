@@ -105,7 +105,6 @@ class Report:
             # Grab the report name from the Report element
             if event == 'end' and elem.tag == 'Report':
                 self.name = elem.attrib.get('name')
-                continue
 
             # Only process ReportHost elements
             elif event == 'end' and elem.tag != 'ReportHost':

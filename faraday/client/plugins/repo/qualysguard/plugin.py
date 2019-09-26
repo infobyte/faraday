@@ -74,9 +74,9 @@ class QualysguardXmlParser():
             return
 
         if type_report is 'ASSET_DATA_REPORT':
-            self.items = [data for data in self.get_items_asset_report(tree)]
+            self.items = list(self.get_items_asset_report(tree))
         elif type_report is 'SCAN':
-            self.items = [data for data in self.get_items_scan_report(tree)]
+            self.items = list(self.get_items_scan_report(tree))
 
     def parse_xml(self, xml_output):
         """

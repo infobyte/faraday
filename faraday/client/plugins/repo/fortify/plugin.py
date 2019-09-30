@@ -1,10 +1,16 @@
 import io
 import re
 import string
+import ntpath
 from HTMLParser import HTMLParser
 from zipfile import ZipFile
 from lxml import objectify, etree
 from faraday.client.plugins import core
+
+
+def path_leaf(path):
+    head, tail = ntpath.split(path)
+    return tail or ntpath.basename(head)
 
 
 class FortifyPlugin(core.PluginBase):
@@ -17,36 +23,29 @@ class FortifyPlugin(core.PluginBase):
         self.id = "Fortify"
         self.name = "Fortify XML Output Plugin"
         self.plugin_version = "0.0.1"
-        #self.version = "6.40"
-        #self.framework_version = "1.0.0"
-        #self.options = None
-        #self._current_output = None
 
     def parseOutputString(self, output, debug=False):
-        #import pdb; pdb.set_trace()
         fp = FortifyParser(output)
 
         for host in fp.hosts.keys():
             fp.hosts[host] = self.createAndAddHost(host)
 
         for vuln in fp.vulns.keys():
-            #import pdb; pdb.set_trace()
-            self.createAndAddVulnToHost(
+            self.createAndAddVulnToHost(    
                 host_id=fp.hosts[fp.vulns[vuln]['host']],
-                name=str(vuln),
-                desc="", 
-                ref=[],
-                severity="", 
+                name=vuln.text + ' ' + fp.vulns[vuln]['name'],
+                desc=fp.descriptions[fp.vulns[vuln]['class']]['text'], 
+                ref=fp.descriptions[fp.vulns[vuln]['class']]['references'],
+                severity=fp.vulns[vuln]['severity'], 
                 resolution="", 
                 data="", 
-                external_id=None
-            )
+                external_id=vuln.text
+                )
+        
         return True
 
 
-
 class FortifyParser():
-
 
     remove_extra_chars = re.compile(r'&amp;(\w*);')
     replacements_fmt = re.compile(r'<Replace key="(.*?)"[\s\/].*?>')
@@ -57,6 +56,7 @@ class FortifyParser():
         self.fvdl = None
         self.audit = None
         self.suppressed = []
+        self.vuln_classes = []
         self.descriptions = {}
 
         self._uncompress_fpr(output)
@@ -69,13 +69,10 @@ class FortifyParser():
             self.audit = objectify.fromstring(fprcontent.read('audit.xml'))
 
     def _extract_vulns(self):
-
-
         #make list of false positives
         for issue in self.audit.IssueList.iterchildren():
             if issue.get('suppressed') == 'true':
                 self.suppressed.append(issue.get('instanceId'))
-
 
         for vuln in self.fvdl.Vulnerabilities.iterchildren():
 
@@ -84,90 +81,147 @@ class FortifyParser():
             if vulnID in self.suppressed:
                 continue
 
-            self.vulns[vulnID] = {}   
+            self.vulns[vulnID] = {}
 
-            # the last children of Primary (Entry tags) always contains vuln filename and path
+            # the last children of Primary (Entry tags) always contains vuln filename ,path and line
             _last_entry = None
             for _last_entry in vuln.AnalysisInfo.Unified.Trace.Primary.iterchildren():
                 pass
 
-            filename = _last_entry.Node.SourceLocation.get('path')
+            path = _last_entry.Node.SourceLocation.get('path')
 
-            self.vulns[vulnID]['host'] = filename
-            self.vulns[vulnID]['rule'] = vuln.ClassInfo.ClassID
+
+            self.vulns[vulnID]['host'] = path
+            self.vulns[vulnID]['name'] = "{} {} {}:{}".format(vuln.ClassInfo.Type, 
+                                                        getattr(vuln.ClassInfo, "Subtype", ""),
+                                                        path_leaf(path), 
+                                                        _last_entry.Node.SourceLocation.get('line'))
+            self.vulns[vulnID]['class'] = vuln.ClassInfo.ClassID
             self.vulns[vulnID]['replacements'] = {}
             
+            self.vulns[vulnID]['severity'] = self.calculate_severity(vuln)
+
             #placeholder for storing hosts ids when created in main plugin method                    
-            if filename not in self.hosts.keys():
-                self.hosts[filename] = None
-        
+            if path not in self.hosts.keys():
+                self.hosts[path] = None
+
+            if vuln.ClassInfo.ClassID not in self.vuln_classes:
+                self.vuln_classes.append(vuln.ClassInfo.ClassID)
+
             # fortify bug that has no replacements, it shows blank in fortify dashboard
             if not hasattr(vuln.AnalysisInfo.Unified, "ReplacementDefinitions"):
-                self.vulns[vulnID]['replacements'] = None 
+                self.vulns[vulnID]['replacements'] = None
                 continue
 
+            for repl in vuln.AnalysisInfo.Unified.ReplacementDefinitions.iterchildren(
+                tag="{xmlns://www.fortifysoftware.com/schema/fvdl}Def"):
+                self.vulns[vulnID]['replacements'][repl.get('key')] = repl.get('value')
+            
+            #dseverities = ("unclassified", "low", "medium", "high", "critical")
+            #print("{}: {}".format(vulnID, self.vulns[vulnID]['replacements']))
 
-            for repl in vuln.AnalysisInfo.Unified.ReplacementDefinitions.Def.iterchildren():
-                self.vulns[vulnID]['replacements'][repl.get('key')] = repl.get('value')            
 
+    def calculate_severity(self, vuln):
 
-            #self._format_description(description.Explanation)
+        severity = None #["critical", "high", "medium", "low", "informational", "unclassified"]
+        rulepath = objectify.ObjectPath("FVDL.EngineData.RuleInfo.Rule")
+        likelihood = None
+        impact = None
+        probability = None
+        accuracy = None
 
+        #XML path /FVDL/EngineData/RuleInfo/Rule (many)/MetaInfo/Group (many) the attribute "name"
+        #are keys for vuln properties 
+
+        for rule in rulepath(self.fvdl):
+            if rule.get('id') == vuln.ClassInfo.ClassID:
+                for group in rule.MetaInfo.iterchildren():
+                    if group.get('name') == "Probability":
+                        probability = group
+                    if group.get('name') == "Impact":
+                        impact = group
+                    if group.get('name') == "Accuracy":
+                        accuracy = group
+
+        likelihood = (accuracy * vuln.InstanceInfo.Confidence * probability) / 25        
+
+        if impact and probability:
+
+            if impact >= 2.5 and likelihood >= 2.5:
+                # print "Rule ID [%s] Critical:  impact [%d], likelihood [%d], accuracy [%d], confidence [%d], probability[%d]" %
+                #    (self.id, impact, self._likelihood(), self.metadata['accuracy'], self.metadata['confidence'], self.metadata['probability'])
+                severity = 'critical'
+            elif impact >= 2.5 > likelihood:
+                severity = 'high'
+            elif impact < 2.5 <= likelihood:
+                severity = 'medium'
+            elif impact < 2.5 and likelihood < 2.5:
+                severity = 'low'
+        else:
+            print("missing severity")
+
+        #print("{}:{}:{}".format(vuln.InstanceInfo.InstanceID, vuln.InstanceInfo.InstanceSeverity, severity))
+        return severity
+
+    def concat_vuln_name(self, vuln):
+        return "{} {} {}:{}".format(vuln.ClassInfo.Type, vuln.ClassInfo.Subtype,
+                                    self.vulns[vuln.InstanceInfo.InstanceID]['filename'],
+                                    self.vulns[vuln.InstanceInfo.InstanceID]['line'] )
 
     def _prepare_description_templates(self):
 
             for description in self.fvdl.Description:
 
+                self.descriptions[description.get("classID")] = {}
+
+                if description.get('classID') not in self.vuln_classes:
+                    continue
+
                 tips = ""
                 if hasattr(description, 'Tips'):
                     for tip in description.Tips.getchildren():
                         tips += "\n" + tip.text
+                
+                htmlparser = HTMLParser()
+                self.descriptions[description.get("classID")]['text'] = htmlparser.unescape(
+                "Summary:\n{}\n\nExplanation:\n{}\n\nRecommendations:\n{}\n\nTips:{}".format(
+                    description.Abstract, description.Explanation, description.Recommendations, tips))
 
                 #group vuln references
-                references = ""
+                references = []
                 for reference in description.References.getchildren():
 
                     for attr in dir(reference):
                         if attr == '__class__':
                             break
 
-                        references += "{}:{}\n".format(attr, getattr(reference, attr))
-                    
-                    references += "\n"
-                
-                htmlparser = HTMLParser()
-                self.descriptions[description.get("classID")] = htmlparser.unescape(
-                "Summary:\n{}\n\nExplanation:\n{}\n\nRecommendations:\n{}\n\nTips:{}\n\nReferences:\n{}".format(
-                    description.Abstract, description.Explanation, description.Recommendations, tips, references))
+                        references.append("{}:{}\n".format(attr, getattr(reference, attr)))
 
+                self.descriptions[description.get("classID")]['references'] = references
 
     def _format_description(self, vulnID):
                
-        text = self.descriptions[self.vulns[vulnID]['rule']]
+        text = self.descriptions[self.vulns[vulnID]['class']]
         replacements = self.vulns[vulnID]['replacements']
         
         #special chars that must shown as-is, have the hmtlentity value duplicated    
         text = self.remove_extra_chars.sub(r"&\1;", text)
 
-
-        #attemp to make replacements generic, not working yet
+        #attempt to make replacements generic, not working yet
         for match in self.replacements_fmt.finditer(text):
+
             replace_with = ""
             if replacements:
-                replace_with = replacements[match.group(1)]
+                try:
+                    replace_with = replacements[match.group(1)]
+                except Exception as e:
+                    if match.group(1) == 'SourceFunction':
+                        replace_with = 'function'
+                    else:
+                        replace_with = 'REVISAR'
 
-            self.replacements_fmt.sub(match.group(0), replace_with)
-            text.replace('<Replace key="{}"/>'.format(match.group(1)), replace_with )
+            text.replace(match.group(0), replace_with)
 
-
-        #import pdb;pdb.set_trace();
-        #text = text.replace('<Replace key="PrimaryCall.name"/>', repl['PrimaryCall.name'])
-        #text = text.replace('<Replace key="SourceLocation.file"/>', repl['PrimaryCall.name'])
-        #text = text.replace('<Replace key="SourceLocation.line"/>', repl['PrimaryCall.name'])
-        #text = text.replace('<Replace key="SinkFunction" link="SinkLocation"/>', repl['PrimaryCall.name'])
-        #text = text.replace('<Replace key="SinkLocation.file"/>', repl['PrimaryCall.name'])
-
-        #print(text)
         return text
 
 
@@ -180,8 +234,10 @@ if __name__ == '__main__':
     with open('/home/mariano/xtras/fortify/jeopardySAST.fpr', 'r') as f:
         fp = FortifyParser(f.read())
         for vulnID in fp.vulns.keys():
-            fp._format_description(vulnID)
-
-        print(fp.descriptions)
-
-            
+            #fp._format_description(vulnID)
+            print("{}|{}|{}").format(vulnID, fp.vulns[vulnID].get('name'), fp.vulns[vulnID].get('severity'))
+            print(type(fp.hosts[fp.vulns[vulnID]['host']]))
+            print(type(fp.vulns[vulnID]['name']))
+            print(type(fp.descriptions[fp.vulns[vulnID]['class']]['text']))
+            print(type(fp.vulns[vulnID]['severity']))
+            print(type(fp.descriptions[fp.vulns[vulnID]['class']]['references']))

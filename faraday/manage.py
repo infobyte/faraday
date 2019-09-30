@@ -72,11 +72,6 @@ def process_reports(debug, workspace, polling):
     except ImportError:
         print('Python requests was not found. Please install it with: pip install requests')
         sys.exit(1)
-    try:
-        from sqlalchemy.exc import OperationalError
-    except ImportError:
-        print('SQLAlchemy was not found please install it with: pip install sqlalchemy')
-        sys.exit(1)
     configuration = _conf()
     url = '{0}/_api/v2/info'.format(configuration.getServerURI() if FARADAY_UP else SERVER_URL)
     with app.app_context():

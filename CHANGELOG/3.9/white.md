@@ -4,6 +4,7 @@
    of API requests to upload data. Now one request should be enough
  * Major style and color changes to the Web UI
  * Add API token authentication method
+ * Use server side stored sessions to properly invalidate cookies of logged out users
  * Add "New" button to create credentials without host or service assigned yet
  * Allow filtering hosts by its service's ports in the Web UI
  * Performance improvements in vulnerabilities and vulnerability templates API (they

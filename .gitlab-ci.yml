@@ -245,17 +245,21 @@ generate_deb:
         - ssh-keyscan -H gitlab.com >> ~/.ssh/known_hosts
     script:
         - apt-get update -qy
-        - apt-get -y install virtualenv git libcairo2-dev libgirepository1.0-dev gobject-introspection ruby ruby-dev rubygems build-essential build-essential libssl-dev libffi-dev libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev libsasl2-dev libldap2-dev libkrb5-dev pandoc python3 python3-dev pkg-config libpq-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 zsh curl pandoc
-        - curl https://bootstrap.pypa.io/get-pip.py | python3
-        - pip install virtualenv-tools
-        - gem install --no-ri --no-rdoc fpm
+        - apt-get -y install virtualenv git libcairo2-dev libgirepository1.0-dev gobject-introspection ruby ruby-dev rubygems build-essential build-essential libssl-dev libffi-dev libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev libsasl2-dev libldap2-dev libkrb5-dev pandoc python3 python3-dev python3-pip pkg-config libpq-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 zsh curl
+        - pip install virtualenv-tools3
         - mkdir build_installer
         - cp -a faraday.tar.gz build_installer/.
         - cd build_installer
         - /bin/tar zxf faraday.tar.gz
-        - ls
         - cd faraday_copy
         - git clone git@gitlab.com:faradaysec/faraday-linux-installers-builder.git
+        - cd faraday-linux-installers-builder
+        - git clone https://github.com/jordansissel/fpm.git
+        - cd fpm
+        - git apply ../fpm-patchs/fpm.python3.patch
+        - make gem
+        - gem install --no-ri --no-rdoc fpm-1.11.0.gem
+        - cd ../../
         - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server deb
         - mv faraday-server_amd64.deb ../../faraday-server_amd64.deb
         - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) client deb
@@ -289,19 +293,26 @@ generate_rpm:
         - chmod 700 ~/.ssh
         - /usr/bin/ssh-keyscan -H gitlab.com >> ~/.ssh/known_hosts
     script:
-        - yum -y install git ruby ruby-devel rubygems gobject-introspection-devel curl zsh mailcap libffi-devel python3-devel openssl-devel openldap-devel libxslt-devel libxml2-devel libxslt-devel freetype-devel libjpeg-devel gtk+-devel gtk3-devel gtk2-devel pandoc
+        - yum -y install git ruby ruby-devel rubygems gobject-introspection-devel curl zsh mailcap libffi-devel openssl-devel openldap-devel libxslt-devel libxml2-devel libxslt-devel freetype-devel libjpeg-devel gtk+-devel gtk3-devel gtk2-devel
         - yum groups -y install "Development Tools"
-        - curl https://bootstrap.pypa.io/get-pip.py | python3
+        - yum -y install centos-release-scl
+        - yum -y install rh-python36
+        - scl enable rh-python36 bash
         - pip install virtualenv
-        - pip install virtualenv-tools
-        - gem install --no-ri --no-rdoc fpm
+        - pip install virtualenv-tools3
         - mkdir build_installer
         - cp -a faraday.tar.gz build_installer/.
         - cd build_installer
         - /bin/tar zxf faraday.tar.gz
-        - ls
         - cd faraday_copy
         - git clone git@gitlab.com:faradaysec/faraday-linux-installers-builder.git
+        - cd faraday-linux-installers-builder
+        - git clone https://github.com/jordansissel/fpm.git
+        - cd fpm
+        - git apply ../fpm-patchs/fpm.python3.patch
+        - make gem
+        - gem install --no-ri --no-rdoc fpm-1.11.0.gem
+        - cd ../../
         - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm
         - mv faraday-server_amd64.rpm ../../faraday-server_amd64.rpm
         - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) client rpm

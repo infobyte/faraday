@@ -295,7 +295,7 @@ generate_rpm:
         - chmod 700 ~/.ssh
         - /usr/bin/ssh-keyscan -H gitlab.com >> ~/.ssh/known_hosts
     script:
-        - yum -y install git ruby ruby-devel rubygems gobject-introspection-devel curl zsh mailcap libffi-devel openssl-devel openldap-devel libxslt-devel libxml2-devel libxslt-devel freetype-devel libjpeg-devel gtk+-devel gtk3-devel gtk2-devel
+        - yum -y install git ruby ruby-devel rubygems gobject-introspection-devel curl zsh mailcap libffi-devel openssl-devel openldap-devel libxslt-devel libxml2-devel libxslt-devel freetype-devel libjpeg-devel gtk+-devel gtk3-devel gtk2-devel postgresql-devel
         - yum groups -y install "Development Tools"
         - yum -y install centos-release-scl
         - yum -y install rh-python36

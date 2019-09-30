@@ -30,6 +30,8 @@ problem, which was much slower
  * Add active filter in workspaces view. Only show active workspaces
    in other parts of the Web UI
  * Enforce end date to be greater than start date in workspaces API
+ * Fix bug in `faraday-manage create-tables` that incorrectly marked schema
+   migrations as applied
  * Fix bug in many plugins that loaded hostnames incorrectly (one hostname per chararcter)
  * Improve references parsing in OpenVAS plugin
  * Fix bug hostname search is now working in status-report

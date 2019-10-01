@@ -176,7 +176,7 @@ term
  }
 
 expression
-  = name: token ':' '"' mandatory: token optional: (":" / "." / ws / "'" / "-" / token)*  '"'
+  = name: token ':' '"' mandatory: token optional: (":" / "." / ws / "'" / "-" / "/" /token)*  '"'
   {
        return {
            name: processName(name),

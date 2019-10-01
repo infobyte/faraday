@@ -8,10 +8,6 @@ from lxml import objectify, etree
 from faraday.client.plugins import core
 
 
-def path_leaf(path):
-    head, tail = ntpath.split(path)
-    return tail or ntpath.basename(head)
-
 
 class FortifyPlugin(core.PluginBase):
     """
@@ -33,8 +29,8 @@ class FortifyPlugin(core.PluginBase):
         for vuln in fp.vulns.keys():
             self.createAndAddVulnToHost(    
                 host_id=fp.hosts[fp.vulns[vuln]['host']],
-                name=vuln.text + ' ' + fp.vulns[vuln]['name'],
-                desc=fp.descriptions[fp.vulns[vuln]['class']]['text'], 
+                name=fp.vulns[vuln]['name'],
+                desc=fp.format_description(vuln), 
                 ref=fp.descriptions[fp.vulns[vuln]['class']]['references'],
                 severity=fp.vulns[vuln]['severity'], 
                 resolution="", 
@@ -90,12 +86,9 @@ class FortifyParser():
 
             path = _last_entry.Node.SourceLocation.get('path')
 
-
             self.vulns[vulnID]['host'] = path
-            self.vulns[vulnID]['name'] = "{} {} {}:{}".format(vuln.ClassInfo.Type, 
-                                                        getattr(vuln.ClassInfo, "Subtype", ""),
-                                                        path_leaf(path), 
-                                                        _last_entry.Node.SourceLocation.get('line'))
+            self.vulns[vulnID]['name'] = "{} {}".format(vuln.ClassInfo.Type, 
+                                                        getattr(vuln.ClassInfo, "Subtype", ""))
             self.vulns[vulnID]['class'] = vuln.ClassInfo.ClassID
             self.vulns[vulnID]['replacements'] = {}
             
@@ -117,7 +110,6 @@ class FortifyParser():
                 tag="{xmlns://www.fortifysoftware.com/schema/fvdl}Def"):
                 self.vulns[vulnID]['replacements'][repl.get('key')] = repl.get('value')
             
-            #dseverities = ("unclassified", "low", "medium", "high", "critical")
             #print("{}: {}".format(vulnID, self.vulns[vulnID]['replacements']))
 
 
@@ -148,8 +140,6 @@ class FortifyParser():
         if impact and probability:
 
             if impact >= 2.5 and likelihood >= 2.5:
-                # print "Rule ID [%s] Critical:  impact [%d], likelihood [%d], accuracy [%d], confidence [%d], probability[%d]" %
-                #    (self.id, impact, self._likelihood(), self.metadata['accuracy'], self.metadata['confidence'], self.metadata['probability'])
                 severity = 'critical'
             elif impact >= 2.5 > likelihood:
                 severity = 'high'
@@ -199,9 +189,9 @@ class FortifyParser():
 
                 self.descriptions[description.get("classID")]['references'] = references
 
-    def _format_description(self, vulnID):
+    def format_description(self, vulnID):
                
-        text = self.descriptions[self.vulns[vulnID]['class']]
+        text = self.descriptions[self.vulns[vulnID]['class']]['text']
         replacements = self.vulns[vulnID]['replacements']
         
         #special chars that must shown as-is, have the hmtlentity value duplicated    
@@ -228,16 +218,11 @@ class FortifyParser():
 def createPlugin():
     return FortifyPlugin()
 
-
 if __name__ == '__main__':
     
     with open('/home/mariano/xtras/fortify/jeopardySAST.fpr', 'r') as f:
         fp = FortifyParser(f.read())
         for vulnID in fp.vulns.keys():
-            #fp._format_description(vulnID)
-            print("{}|{}|{}").format(vulnID, fp.vulns[vulnID].get('name'), fp.vulns[vulnID].get('severity'))
-            print(type(fp.hosts[fp.vulns[vulnID]['host']]))
-            print(type(fp.vulns[vulnID]['name']))
-            print(type(fp.descriptions[fp.vulns[vulnID]['class']]['text']))
-            print(type(fp.vulns[vulnID]['severity']))
-            print(type(fp.descriptions[fp.vulns[vulnID]['class']]['references']))
+            print("{}{}{}".format("="*50, vulnID, "="*50))
+            print(fp.format_description(vulnID))
+            # print("{}|{}|{}").format(vulnID, fp.vulns[vulnID].get('name'), fp.vulns[vulnID].get('severity'))

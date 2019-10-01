@@ -4,6 +4,7 @@
    of API requests to upload data. Now one request should be enough
  * Major style and color changes to the Web UI
  * Add API token authentication method
+ * Use server side stored sessions to properly invalidate cookies of logged out users
  * Add "New" button to create credentials without host or service assigned yet
  * Allow filtering hosts by its service's ports in the Web UI
  * Performance improvements in vulnerabilities and vulnerability templates API (they
@@ -30,6 +31,8 @@ problem, which was much slower
  * Add active filter in workspaces view. Only show active workspaces
    in other parts of the Web UI
  * Enforce end date to be greater than start date in workspaces API
+ * Fix bug in `faraday-manage create-tables` that incorrectly marked schema
+   migrations as applied
  * Fix bug in many plugins that loaded hostnames incorrectly (one hostname per chararcter)
  * Improve references parsing in OpenVAS plugin
  * Fix bug hostname search is now working in status-report

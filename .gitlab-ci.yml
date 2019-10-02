@@ -230,6 +230,7 @@ generate_deb:
         - ls
         - cd faraday_copy
         - git clone git@gitlab.com:faradaysec/faraday-linux-installers-builder.git
+        - cd faraday-linux-installers-builder
         - git clone https://github.com/jordansissel/fpm.git
         - cd fpm
         - git apply ../fpm-patchs/fpm.virtualenv_compile.patch
@@ -281,6 +282,7 @@ generate_rpm:
         - ls
         - cd faraday_copy
         - git clone git@gitlab.com:faradaysec/faraday-linux-installers-builder.git
+        - cd faraday-linux-installers-builder
         - git clone https://github.com/jordansissel/fpm.git
         - cd fpm
         - git apply ../fpm-patchs/fpm.virtualenv_compile.patch

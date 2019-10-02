@@ -40,7 +40,9 @@ class FortifyPlugin(core.PluginBase):
 
 
 class FortifyParser():
-    """         """
+    """  
+    Parser for fortify on demand
+    """
     def __init__(self, output):
         self.vulns = {}
         self.hosts = {}

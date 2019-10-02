@@ -43,9 +43,6 @@ class FortifyPlugin(core.PluginBase):
 
 class FortifyParser():
 
-    remove_extra_chars = re.compile(r'&amp;(\w*);')
-    replacements_fmt = re.compile(r'<Replace key="(.*?)"[\s\/].*?>')
-
     def __init__(self, output):
         self.vulns = {}
         self.hosts = {}
@@ -58,6 +55,12 @@ class FortifyParser():
         self._uncompress_fpr(output)
         self._extract_vulns()
         self._prepare_description_templates()
+
+        #regexes used in format_description
+        self.remove_extra_chars = re.compile(r'&amp;(\w*);')
+        self.replacements_idx = re.compile(r'<Replace key="(.*?)"[\s\/].*?>')
+        self.replacements_holders = re.compile(r'<Replace key=".*?"[\s\/].*?>')
+
 
     def _uncompress_fpr(self, output):
         with ZipFile(io.BytesIO(output)) as fprcontent:
@@ -101,7 +104,7 @@ class FortifyParser():
             if vuln.ClassInfo.ClassID not in self.vuln_classes:
                 self.vuln_classes.append(vuln.ClassInfo.ClassID)
 
-            # fortify bug that has no replacements, it shows blank in fortify dashboard
+            # fortify bug that when it has no replacements, shows blank in fortify dashboard
             if not hasattr(vuln.AnalysisInfo.Unified, "ReplacementDefinitions"):
                 self.vulns[vulnID]['replacements'] = None
                 continue
@@ -109,8 +112,9 @@ class FortifyParser():
             for repl in vuln.AnalysisInfo.Unified.ReplacementDefinitions.iterchildren(
                 tag="{xmlns://www.fortifysoftware.com/schema/fvdl}Def"):
                 self.vulns[vulnID]['replacements'][repl.get('key')] = repl.get('value')
-            
-            #print("{}: {}".format(vulnID, self.vulns[vulnID]['replacements']))
+
+
+
 
 
     def calculate_severity(self, vuln):
@@ -193,26 +197,48 @@ class FortifyParser():
                
         text = self.descriptions[self.vulns[vulnID]['class']]['text']
         replacements = self.vulns[vulnID]['replacements']
-        
+
         #special chars that must shown as-is, have the hmtlentity value duplicated    
         text = self.remove_extra_chars.sub(r"&\1;", text)
 
         #attempt to make replacements generic, not working yet
-        for match in self.replacements_fmt.finditer(text):
-
+        for placeholder in self.replacements_holders.findall(text, re.MULTILINE):
+            idx = self.replacements_idx.search(placeholder).group(1)
             replace_with = ""
             if replacements:
                 try:
-                    replace_with = replacements[match.group(1)]
+                    replace_with = replacements[idx]
                 except Exception as e:
-                    if match.group(1) == 'SourceFunction':
+                    if idx == 'SourceFunction':
                         replace_with = 'function'
                     else:
                         replace_with = 'REVISAR'
 
-            text.replace(match.group(0), replace_with)
+            text = text.replace(placeholder, replace_with)
 
         return text
+
+
+    def search_for_keyreplacements(self, key, skip_supressed=False):
+        
+        for vuln in self.fvdl.Vulnerabilities.iterchildren():
+            vulnid = vuln.InstanceInfo.InstanceID
+            _supressed = False
+            _haskey = False
+            if vulnid in self.suppressed:
+                if skip_supressed:
+                    continue
+                _supressed = True
+
+            try:
+                for repl in vuln.AnalysisInfo.Unified.ReplacementDefinitions.iterchildren(
+                    tag="{xmlns://www.fortifysoftware.com/schema/fvdl}Def"):
+                    if [repl.get('key')] == key:
+                        _haskey = True
+            except AttributeError:
+                _haskey = False
+
+            yield (vulnid, _haskey, _supressed, vuln.ClassInfo.ClassID)   
 
 
 def createPlugin():
@@ -222,7 +248,13 @@ if __name__ == '__main__':
     
     with open('/home/mariano/xtras/fortify/jeopardySAST.fpr', 'r') as f:
         fp = FortifyParser(f.read())
+        for vuln in fp.search_for_keyreplacements('SourceFunction'):
+            print(vuln)
+
         for vulnID in fp.vulns.keys():
-            print("{}{}{}".format("="*50, vulnID, "="*50))
-            print(fp.format_description(vulnID))
+            pass
+            #print("{}{}{}".format("="*50, vulnID, "="*50))
+            #print(fp.vulns[vulnID]['replacements'])
+            #print("{}{}{}".format("="*50, vulnID, "="*50))
+            #print(fp.format_description(vulnID))
             # print("{}|{}|{}").format(vulnID, fp.vulns[vulnID].get('name'), fp.vulns[vulnID].get('severity'))

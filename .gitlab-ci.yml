@@ -259,7 +259,7 @@ generate_deb:
 
 generate_rpm:
     stage: build
-    image: centos
+    image: centos:latest
     before_script:
         - yum -y upgrade
         - yum -y install which

@@ -261,6 +261,7 @@ generate_rpm:
     stage: build
     image: centos
     before_script:
+        - yum -y upgrade
         - yum -y install which
         - yum -y install epel-release
         - 'which ssh-agent || (yum -y update && yum -y install openssh-clients)'

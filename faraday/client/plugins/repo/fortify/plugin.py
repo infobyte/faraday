@@ -2,6 +2,8 @@ import io
 import re
 import string
 import ntpath
+import random
+import string
 from HTMLParser import HTMLParser
 from zipfile import ZipFile
 from lxml import objectify, etree
@@ -28,7 +30,7 @@ class FortifyPlugin(core.PluginBase):
             self.createAndAddVulnToHost(    
                 host_id=fp.hosts[fp.vulns[vuln]['host']],
                 name=fp.vulns[vuln]['name'],
-                desc=fp.format_description(vuln), 
+                desc=fp.format_description(vuln),
                 ref=fp.descriptions[fp.vulns[vuln]['class']]['references'],
                 severity=fp.vulns[vuln]['severity'], 
                 resolution="", 
@@ -60,6 +62,7 @@ class FortifyParser():
         self.remove_extra_chars = re.compile(r'&amp;(\w*);')
         self.replacements_idx = re.compile(r'<Replace key="(.*?)"[\s\/].*?>')
         self.replacements_holders = re.compile(r'<Replace key=".*?"[\s\/].*?>')
+        self.replacements_idx2 = re.compile(r'<Replace key="(.*?)"(\slink="(.*?)")?[\s\/].*?>')
 
 
     def _uncompress_fpr(self, output):
@@ -109,9 +112,19 @@ class FortifyParser():
                 self.vulns[vulnID]['replacements'] = None
                 continue
 
-            for repl in vuln.AnalysisInfo.Unified.ReplacementDefinitions.iterchildren(
-                tag="{xmlns://www.fortifysoftware.com/schema/fvdl}Def"):
-                self.vulns[vulnID]['replacements'][repl.get('key')] = repl.get('value')
+            try:
+                getattr(vuln.AnalysisInfo.Unified, "ReplacementDefinitions") 
+
+                for repl in vuln.AnalysisInfo.Unified.ReplacementDefinitions.iterchildren(
+                    tag="{xmlns://www.fortifysoftware.com/schema/fvdl}Def"):
+
+                    repl_val = repl.get('key') 
+                    if repl.get('link'):
+                        repl_val = repl.get('link')
+
+                    self.vulns[vulnID]['replacements'][repl_val] = repl.get('value')
+            except AttributeError:
+                self.vulns[vulnID]['replacements'] = None
 
 
     def calculate_severity(self, vuln):
@@ -194,25 +207,38 @@ class FortifyParser():
                
         text = self.descriptions[self.vulns[vulnID]['class']]['text']
         replacements = self.vulns[vulnID]['replacements']
+        if not replacements:
+            return text
 
         #special chars that must shown as-is, have the hmtlentity value duplicated    
         text = self.remove_extra_chars.sub(r"&\1;", text)
-
+        previous_key = None
         #attempt to make replacements generic, not working yet
         for placeholder in self.replacements_holders.findall(text, re.MULTILINE):
-            idx = self.replacements_idx.search(placeholder).group(1)
+
+            match = self.replacements_idx2.search(placeholder)
+
             replace_with = ""
-            if replacements:
+            if match:
+                idx = match.group(1)
+                previous_key = idx
+                if match.group(3):
+                    idx = match.group(3)
+
+                # idx = self.replacements_idx.search(placeholder).group(1)
+                # if replacements:
                 try:
                     replace_with = replacements[idx]
-                except Exception as e:
-                    if idx == 'SourceFunction':
-                        replace_with = 'function'
-                    else:
-                        replace_with = 'REVISAR'
-
+                except KeyError as e:
+                    replace_with = ''
+                    # if idx == 'SourceFunction':
+                    #     replace_with = 'function'
+                    # else:
+                    #     #import pdb; pdb.set_trace()
+                    #     replace_with = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
             text = text.replace(placeholder, replace_with)
 
+        text += '{}\n Instance ID: {} \n'.format(text, vulnID)
         return text
 
 
@@ -227,15 +253,23 @@ class FortifyParser():
                     continue
                 _supressed = True
 
+            repls = []
             try:
                 for repl in vuln.AnalysisInfo.Unified.ReplacementDefinitions.iterchildren(
                     tag="{xmlns://www.fortifysoftware.com/schema/fvdl}Def"):
-                    if [repl.get('key')] == key:
+                    #print("{}:{}".format(repl.get('key'),repl.get("value")))                  
+                    repls.append(repl.get('value'))
+                    _last_entry = None
+                    for _last_entry in vuln.AnalysisInfo.Unified.Trace.Primary.iterchildren():
+                        pass
+                    path = _last_entry.Node.SourceLocation.get('path')
+                    if repl.get('key') == key:
                         _haskey = True
             except AttributeError:
                 _haskey = False
 
-            yield (vulnid, _haskey, _supressed, vuln.ClassInfo.ClassID)   
+            yield (vulnid, vuln.ClassInfo.ClassID.text, repls, path)
+            #yield (vulnid, _haskey, _supressed, vuln.ClassInfo.ClassID)   
 
 
 def createPlugin():
@@ -245,13 +279,14 @@ if __name__ == '__main__':
     
     with open('/home/mariano/xtras/fortify/jeopardySAST.fpr', 'r') as f:
         fp = FortifyParser(f.read())
-        for vuln in fp.search_for_keyreplacements('SourceFunction'):
-            print(vuln)
+        for vuln in fp.search_for_keyreplacements('SourceFunction', skip_supressed=True):
+            pass
+            #print(vuln)
 
         for vulnID in fp.vulns.keys():
             pass
-            #print("{}{}{}".format("="*50, vulnID, "="*50))
-            #print(fp.vulns[vulnID]['replacements'])
-            #print("{}{}{}".format("="*50, vulnID, "="*50))
-            #print(fp.format_description(vulnID))
+            # print("{}{}{}".format("="*50, vulnID, "="*50))
+            # print(fp.vulns[vulnID]['replacements'])
+            # print("{}{}{}".format("="*50, vulnID, "="*50))
+            fp.format_description(vulnID)
             # print("{}|{}|{}").format(vulnID, fp.vulns[vulnID].get('name'), fp.vulns[vulnID].get('severity'))

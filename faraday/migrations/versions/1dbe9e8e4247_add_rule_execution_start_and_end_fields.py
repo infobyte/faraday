@@ -1,4 +1,4 @@
-"""empty message
+"""Add missing start and end columns to rule_execution
 
 Revision ID: 1dbe9e8e4247
 Revises: 526aa91cac98
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '1dbe9e8e4247'
-down_revision = '526aa91cac98'
+down_revision = 'f8a44acd0e41'
 branch_labels = None
 depends_on = None
 

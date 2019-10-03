@@ -20,7 +20,7 @@ from marshmallow.compat import with_metaclass
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
-from webargs.flaskparser import FlaskParser, parser
+from webargs.flaskparser import FlaskParser, parser as parser_imported
 from webargs.core import ValidationError
 from faraday.server.models import Workspace, db, Command, CommandObject
 from faraday.server.schemas import NullToBlankString
@@ -952,6 +952,5 @@ class FilterAlchemyModelConverter(ModelConverter):
 
 class FilterSetMeta:
     """Base Meta class of FilterSet objects"""
-    parser = parser
+    parser = parser_imported
     converter = FilterAlchemyModelConverter()
-# I'm Py3

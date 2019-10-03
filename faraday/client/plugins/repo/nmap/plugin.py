@@ -42,7 +42,7 @@ class NmapXmlParser:
         tree = self.parse_xml(xml_output)
 
         if tree:
-            self.hosts = [host for host in self.get_hosts(tree)]
+            self.hosts = list(self.get_hosts(tree))
         else:
             self.hosts = []
 
@@ -132,10 +132,10 @@ class Host:
         self.ipv4_address = self.get_ipv4_address()
         self.ipv6_address = self.get_ipv6_address()
         self.mac_address = self.get_mac_address()
-        self.os_guesses = [os_guess for os_guess in self.get_os_guesses()]
+        self.os_guesses = list(self.get_os_guesses())
         self.os = self.top_os_guess()
-        self.ports = [port for port in self.get_ports()]
-        self.vulns = [vuln for vuln in self.get_scripts()]
+        self.ports = list(self.get_ports())
+        self.vulns = list(self.get_scripts())
         if self.os != 'unknown':
             for p in self.ports:
                 if p.service is not None:
@@ -301,7 +301,7 @@ class Port:
         self.number = self.node.get("portid")
         self.state, self.reason, self.reason_ttl = self.get_state()
         self.service = self.get_service()
-        self.vulns = [vuln for vuln in self.get_scripts()]
+        self.vulns = list(self.get_scripts())
 
     def get_attrib_from_subnode(self, subnode_xpath_expr, attrib_name):
         """

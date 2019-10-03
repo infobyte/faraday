@@ -13,6 +13,9 @@ a crash or bug
 import sys
 import traceback
 import threading
+import requests
+import hashlib
+import platform
 import faraday.client.model.guiapi
 from io import StringIO
 from faraday.client.gui.customevents import ShowExceptionCustomEvent
@@ -20,8 +23,12 @@ from faraday.config.configuration import getInstanceConfiguration
 import json
 import time
 
-CONF = getInstanceConfiguration()
+try:
+    import pip
+except ImportError:
+    pass
 
+CONF = getInstanceConfiguration()
 
 
 def get_crash_log():
@@ -40,8 +47,6 @@ def exception_handler(type, value, tb):
     Since this handler may be called from threads, the dialog must be created
     using gtk idle_add or signals to avoid issues.
     """
-    import hashlib
-    import platform
 
     text = StringIO()
     traceback.print_exception(type, value, tb, file=text)
@@ -58,7 +63,6 @@ def exception_handler(type, value, tb):
 
     modules_info = ""
     try:
-        import pip
         modules_info = ",".join([ "%s=%s" % (x.key, x.version)
                             for x in pip.get_installed_distributions()])
     except (ImportError, AttributeError):
@@ -86,9 +90,6 @@ def exception_handler(type, value, tb):
 
 def reportToDevelopers(name=None, *description):
     try:
-        import requests
-        import hashlib
-        import platform
 
         uri = CONF.getTktPostUri()
         headers = json.loads(CONF.getApiParams())

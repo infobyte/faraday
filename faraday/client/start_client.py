@@ -16,6 +16,7 @@ import imp
 import shutil
 import getpass
 import argparse
+import requests
 import requests.exceptions
 import logging
 
@@ -416,7 +417,6 @@ _/ ____\_____  ____________     __| _/_____   ___.__.
 
 
 def checkUpdates():
-    import requests
     uri = getInstanceConfiguration().getUpdatesUri()
     resp = u"OK"
     try:

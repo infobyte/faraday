@@ -123,9 +123,7 @@ def input_index(text, leng):
 
             if int(stdin) > leng-1 or int(stdin) < 0:
                 continue
-
-            else:
-                return stdin
+            return stdin
 
         elif stdin == "q":
             sys.exit(1)

@@ -445,3 +445,14 @@ test_hypothesis:
             - $FULL_TEST
             - $HYPO_TEST
             - $DAILY_TEST
+
+agent_integration:
+    stage: post_testing
+    script:
+        - apt-get update -qy
+        - apt-get install curl -y
+        - "curl -X POST -F token=$AGENT_TOKEN -F ref=master -F \"variables[INTEGRATION]=true\" -F \"variables[FARADAY_REF]=$CI_COMMIT_REF_NAME\" https://gitlab.com/api/v4/projects/12825225/trigger/pipeline"
+    only:
+        variables:
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/
+            - $INTEGRATION

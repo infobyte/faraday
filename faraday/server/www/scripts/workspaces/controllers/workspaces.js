@@ -89,7 +89,7 @@ angular.module('faradayApp')
                             if (error.status == 409) {
                                 return "A workspace with that name already exists"
                             }
-                            return error;
+                            return error.data.message;
                         }
                     }
                 });

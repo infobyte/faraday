@@ -8,7 +8,7 @@ import json
 import logging
 
 import flask
-from flask import Blueprint
+from flask import Blueprint, abort, make_response, jsonify
 from flask_classful import route
 from marshmallow import Schema, fields, post_load, validate, ValidationError
 from sqlalchemy.orm import (
@@ -180,6 +180,11 @@ class WorkspaceView(ReadWriteView):
         return obj
 
     def _perform_create(self, data, **kwargs):
+        start_date = data.get("start_date", None)
+        end_date = data.get("end_date", None)
+        if start_date and end_date:
+            if start_date > end_date:
+                abort(make_response(jsonify(message="Workspace start date can't be greater than the end date"), 400))
 
         scope = data.pop('scope', [])
         workspace = super(WorkspaceView, self)._perform_create(data, **kwargs)

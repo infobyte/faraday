@@ -79,27 +79,6 @@ def run_server(args):
     daemonize.create_pid_file(args.port)
     web_server.run()
 
-def restart_server(args_port):
-    devnull = open('/dev/null', 'w')
-
-    if args_port:
-        ports = [args_port]
-    else:
-        ports = daemonize.get_ports_running()
-
-    if not ports:
-        logger.error('Faraday Server is not running')
-        sys.exit(1)
-
-    for port in ports:
-        stop_server(port)
-        params = ['/usr/bin/env', 'python2.7',\
-            os.path.join(faraday.server.config.FARADAY_BASE, __file__), '--no-setup', '--port', str(port)]
-
-        logger.info('Restarting Faraday Server...')
-        subprocess.Popen(params, stdout=devnull, stderr=devnull)
-        logger.info('Faraday Server is running as a daemon in port {}'.format(port))
-
 
 def check_postgresql():
     with app.app_context():
@@ -180,10 +159,6 @@ def main():
     if args.debug or faraday.server.config.faraday_server.debug:
         faraday.server.utils.logger.set_logging_level(faraday.server.config.DEBUG)
 
-    if args.restart:
-        restart_server(args.port)
-        sys.exit()
-
     if args.stop:
         if args.port:
             sys.exit(0 if stop_server(args.port) else 1)
@@ -227,22 +202,7 @@ def main():
     if args.websocket_port:
         faraday.server.config.faraday_server.websocket_port = args.websocket_port
 
-    if args.start:
-        # Starts a new process on background with --ignore-setup
-        # and without --start nor --stop
-        devnull = open('/dev/null', 'w')
-        params = ['/usr/bin/env', 'python2.7', os.path.join(faraday.server.config.FARADAY_BASE, __file__), '--no-setup']
-        arg_dict = vars(args)
-        for arg in arg_dict:
-            if arg not in ["start", "stop"] and arg_dict[arg]:
-                params.append('--'+arg)
-                if arg_dict[arg] != True:
-                    params.append(arg_dict[arg])
-        logger.info('Faraday Server is running as a daemon')
-        subprocess.Popen(params, stdout=devnull, stderr=devnull)
-
-    elif not args.start:
-        run_server(args)
+    run_server(args)
 
 
 if __name__ == '__main__':

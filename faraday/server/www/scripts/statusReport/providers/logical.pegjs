@@ -200,7 +200,7 @@ expression
   }
 
 token
-  = token:[a-zA-Z0-9_.-]+ { return token.join(""); }
+  = token:[a-zA-Z0-9_.-/]+ { return token.join(""); }
 
 ws
   = [ \t]

@@ -32,7 +32,9 @@ class ReportsManager(Thread):
         web_server_ip = config.faraday_server.bind_address
         if web_server_ip == "0.0.0.0":
             web_server_ip = "localhost"
-        url = f"http://{web_server_ip}:{config.faraday_server.port}/_api/v2/ws/{workspace}/bulk_create/"
+        protocol = "https" if config.ssl.enabled else "http"
+        url = f"{protocol}://{web_server_ip}:{config.faraday_server.port}/_api/v2/ws/{workspace}/bulk_create/"
+        logger.debug("Report url [%s]", url)
         r = requests.post(url, headers=headers, cookies=cookies, json=report_json)
         if r.status_code != requests.codes.CREATED:
             logger.warning("Bulk Create Response: %s", r.status_code)

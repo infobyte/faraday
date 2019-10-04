@@ -65,7 +65,7 @@ class PluginCommiter(Thread):
         try:
             self.output_queue.join()
             self.commit()
-            if os.path.isfile(self.output):
+            if '\0' not in self.output and os.path.isfile(self.output):
                 # sometimes output is a filepath
                 name = os.path.basename(self.output)
                 os.rename(self.output,

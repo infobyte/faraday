@@ -308,6 +308,8 @@ class ReportParser(object):
         report_type = result = f = None
 
         f, report_type = self.open_file(file_path)
+        if file_path.endswith('fpr'):
+            report_type = 'fpr'
 
         # Check error in open_file()
         if f is None and report_type is None:

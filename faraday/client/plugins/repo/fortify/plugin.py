@@ -1,3 +1,4 @@
+import base64
 import io
 import re
 from HTMLParser import HTMLParser
@@ -17,8 +18,7 @@ class FortifyPlugin(core.PluginBase):
         self.name = "Fortify XML Output Plugin"
         self.plugin_version = "0.0.1"
 
-    def parseOutputString(self, output, debug=False):
-        fp = FortifyParser(output)
+    def _process_fvdl_vulns(self, fp):
 
         for host in fp.hosts.keys():
             fp.hosts[host] = self.createAndAddHost(host)
@@ -35,6 +35,44 @@ class FortifyPlugin(core.PluginBase):
                 external_id=vuln.text
             )
 
+    def _process_webinspect_vulns(self, fp):
+        for vuln_data in fp.sast_vulns:
+            host_id = self.createAndAddHost(
+                vuln_data['host'])
+
+            service_name = 'unknown'
+            if vuln_data['port'] == '443':
+                service_name = 'https'
+            if vuln_data['port'] == '80':
+                service_name = 'http'
+
+            service_id = self.createAndAddServiceToHost(
+                host_id,
+                service_name,
+                protocol='tcp',
+                ports=[vuln_data['port']])
+
+            self.createAndAddVulnWebToService(
+                host_id, service_id,
+                vuln_data['name'],
+                website=vuln_data['website'],
+                path=vuln_data['path'],
+                query=vuln_data['query'] or '',
+                method=vuln_data['method'],
+                request=vuln_data['request'],
+                ref=vuln_data['references'],
+                response=vuln_data['response'],
+                desc=vuln_data['description'],
+                #resolution=vuln_data[''],
+                severity=vuln_data['severity']
+            )
+
+    def parseOutputString(self, output, debug=False):
+        fp = FortifyParser(output)
+        if fp.fvdl:
+            self._process_fvdl_vulns(fp)
+        if fp.webinpect is not None:
+            self._process_webinspect_vulns(fp)
 
         return True
 
@@ -46,8 +84,10 @@ class FortifyParser:
 
     def __init__(self, output):
         self.vulns = {}
+        self.sast_vulns = []
         self.hosts = {}
         self.fvdl = None
+        self.webinpect = None
         self.audit = None
         self.suppressed = []
         self.vuln_classes = []
@@ -65,15 +105,13 @@ class FortifyParser:
 
     def _uncompress_fpr(self, output):
         with ZipFile(io.BytesIO(output)) as fprcontent:
-            self.fvdl = objectify.fromstring(fprcontent.read('audit.fvdl'))
+            try:
+                self.fvdl = objectify.fromstring(fprcontent.read('audit.fvdl'))
+            except KeyError:
+                self.webinpect = objectify.fromstring(fprcontent.read('webinspect.xml'))
             self.audit = objectify.fromstring(fprcontent.read('audit.xml'))
 
-    def _extract_vulns(self):
-        # make list of false positives
-        for issue in self.audit.IssueList.iterchildren():
-            if issue.get('suppressed') == 'true':
-                self.suppressed.append(issue.get('instanceId'))
-
+    def _process_fvdl(self):
         for vuln in self.fvdl.Vulnerabilities.iterchildren():
 
             vulnID = vuln.InstanceInfo.InstanceID
@@ -124,6 +162,88 @@ class FortifyParser:
             except AttributeError:
                 self.vulns[vulnID]['replacements'] = None
 
+    def _process_webinpect(self):
+        for session in self.webinpect.getchildren():
+            hostname = session.Host.text
+            port = session.Port.text
+            service_data = {}
+            if port:
+                service_data['port'] = port
+
+            path = session.Request.Path.text
+            query = session.Request.FullQuery.text
+            method = session.Request.Method.text
+            request = ''
+            if session.RawRequest.text:
+                request = base64.b64decode(session.RawRequest.text)
+            response = ''
+            if session.RawResponse.text:
+                response = base64.b64decode(session.RawResponse.text)
+            status_code = session.Response.StatusCode.text
+
+            for issues in session.Issues:
+                for issue_data in issues.getchildren():
+                    params = ''
+                    check_type = issue_data.CheckTypeID
+                    if check_type.text.lower() != 'vulnerability':
+                        # TODO: when plugins accept tags, we shoudl this as a tag.
+                        pass
+                    name = issue_data.Name.text
+                    external_id = issue_data.VulnerabilityID.text
+                    faraday_severities = {
+                        0: 'info',
+                        1: 'low',
+                        2: 'med',
+                        3: 'high',
+                        4: 'critical'
+                    }
+                    severity = faraday_severities[issue_data.Severity]
+                    references = []
+                    for classification in issue_data.Classifications.getchildren():
+                        references.append(classification.text)
+
+                    # Build description
+                    description = u''
+                    for report_section in issue_data.findall('./ReportSection'):
+                        description += u'{} \n'.format(report_section.Name.text)
+                        description += u'{} \n'.format(report_section.SectionText.text)
+
+                    for repro_step in issue_data.findall('./ReproSteps'):
+                        step = repro_step.ReproStep
+                        if step is not None:
+                            params = step.PostParams.text
+
+                    self.sast_vulns.append({
+                        "host": hostname,
+                        "port": port,
+                        "severity": severity,
+                        "service": service_data,
+                        "name": name,
+                        "description": description,
+                        "external_id": external_id,
+                        "references": references,
+                        "method": method,
+                        "query": query,
+                        "response": response,
+                        "request": request,
+                        "path": path,
+                        "params": params,
+                        "status_code": status_code,
+                        "website": session.URL.text
+                    })
+
+    def _extract_vulns(self):
+        # make list of false positives
+        for issue in self.audit.IssueList.iterchildren():
+            if issue.get('suppressed', 'false').lower() == 'true':
+                self.suppressed.append(issue.get('instanceId'))
+
+        if self.fvdl:
+            self._process_fvdl()
+
+        if self.webinpect is not None:
+            self._process_webinpect()
+
     def calculate_severity(self, vuln):
 
         severity = None  # ["critical", "high", "medium", "low", "informational", "unclassified"]
@@ -169,6 +289,8 @@ class FortifyParser:
                                     self.vulns[vuln.InstanceInfo.InstanceID]['line'])
 
     def _prepare_description_templates(self):
+        if not self.fvdl:
+            return
         for description in self.fvdl.Description:
 
             self.descriptions[description.get("classID")] = {}
@@ -188,7 +310,12 @@ class FortifyParser:
 
             # group vuln references
             references = []
-            for reference in description.References.getchildren():
+            try:
+                children = description.References.getchildren()
+            except AttributeError:
+                children = []
+
+            for reference in children:
 
                 for attr in dir(reference):
                     if attr == '__class__':
@@ -227,8 +354,8 @@ class FortifyParser:
 
                 try:
                     replace_with = replacements[idx]
-                except KeyError as e:
-                    # TODO inpect this cases
+                except KeyError:
+                    # Nothing to replace, use empty string
                     text = text.replace(placeholder, "")
 
             text = text.replace(placeholder, replace_with)
@@ -243,7 +370,7 @@ def createPlugin():
 
 if __name__ == '__main__':
 
-    with open('/home/mariano/xtras/fortify/jeopardySAST.fpr', 'r') as f:
+    with open('/Users/lcubo/workspace/faraday/tests/data/fortify/webgoatnetSAST.fpr', 'r') as f:
         fp = FortifyParser(f.read())
         for vulnID in fp.vulns.keys():
             print("{}{}{}".format("="*50, vulnID, "="*50))

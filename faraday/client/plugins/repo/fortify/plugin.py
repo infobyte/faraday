@@ -69,7 +69,7 @@ class FortifyPlugin(core.PluginBase):
 
     def parseOutputString(self, output, debug=False):
         fp = FortifyParser(output)
-        if fp.fvdl:
+        if fp.fvdl is not None:
             self._process_fvdl_vulns(fp)
         if fp.webinpect is not None:
             self._process_webinspect_vulns(fp)
@@ -207,6 +207,7 @@ class FortifyParser:
                     for report_section in issue_data.findall('./ReportSection'):
                         description += u'{} \n'.format(report_section.Name.text)
                         description += u'{} \n'.format(report_section.SectionText.text)
+                        description += u'{} \n'.format(issue_data.get('id'))
 
                     for repro_step in issue_data.findall('./ReproSteps'):
                         step = repro_step.ReproStep

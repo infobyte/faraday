@@ -397,6 +397,8 @@ class FortifyParser:
             text = text.replace(placeholder, replace_with)
 
         text += '{}\n Instance ID: {} \n'.format(text, vulnID)
+        h = html2text.HTML2Text()
+        description = h.handle(text)
         return text
 
 

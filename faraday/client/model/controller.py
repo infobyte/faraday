@@ -34,7 +34,7 @@ class ModelController(Thread):
 
     def __init__(self, mappers_manager, pending_actions):
         #Thread.__init__(self)
-        super().__init__()
+        super().__init__(name="ModelControllerThread")
 
         self.mappers_manager = mappers_manager
 

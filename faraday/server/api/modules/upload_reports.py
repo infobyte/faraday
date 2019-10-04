@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 class RawReportProcessor(Thread):
     def __init__(self):
 
-        super(RawReportProcessor, self).__init__()
+        super(RawReportProcessor, self).__init__(name="RawReportProcessorThread")
         from faraday.client.start_client import setupPlugins
         setupPlugins()
 

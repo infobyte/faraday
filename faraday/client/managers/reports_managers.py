@@ -29,7 +29,7 @@ class OnlinePlugins(Thread):
 
     def __init__(self, plugin_controller):
 
-        Thread.__init__(self)
+        Thread.__init__(self, name="OnlinePluginsThreads")
         self.setDaemon(True)
         self._must_stop = False
 

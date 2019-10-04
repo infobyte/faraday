@@ -38,30 +38,33 @@ class FortifyPlugin(core.PluginBase):
     def _process_webinspect_vulns(self, fp):
         for vuln_data in fp.sast_vulns:
             host_id = self.createAndAddHost(
-                vuln_data['host'])
+                vuln_data['host'] or vuln_data['website'])
 
-            service_name = 'unknown'
-            if vuln_data['port'] == '443':
+            service_name = vuln_data['service'].get('name', 'unknown')
+            protocol_name = 'line number'
+            if vuln_data['service']['port'] == '443':
                 service_name = 'https'
-            if vuln_data['port'] == '80':
+                protocol_name = 'tcp'
+            if vuln_data['service']['port'] == '80':
                 service_name = 'http'
+                protocol_name = 'tcp'
 
             service_id = self.createAndAddServiceToHost(
                 host_id,
                 service_name,
-                protocol='tcp',
-                ports=[vuln_data['port']])
+                protocol=protocol_name,
+                ports=[vuln_data['service']['port']])
 
             self.createAndAddVulnWebToService(
                 host_id, service_id,
                 vuln_data['name'],
-                website=vuln_data['website'],
-                path=vuln_data['path'],
+                website=vuln_data['website'] or '',
+                path=vuln_data['path'] or '',
                 query=vuln_data['query'] or '',
-                method=vuln_data['method'],
-                request=vuln_data['request'],
+                method=vuln_data['method'] or '',
+                request=vuln_data['request'] or '',
                 ref=vuln_data['references'],
-                response=vuln_data['response'],
+                response=vuln_data['response'] or '',
                 desc=vuln_data['description'],
                 #resolution=vuln_data[''],
                 severity=vuln_data['severity']
@@ -71,7 +74,7 @@ class FortifyPlugin(core.PluginBase):
         fp = FortifyParser(output)
         if fp.fvdl is not None:
             self._process_fvdl_vulns(fp)
-        if fp.webinpect is not None:
+        if fp.webinspect is not None:
             self._process_webinspect_vulns(fp)
 
         return True
@@ -87,7 +90,7 @@ class FortifyParser:
         self.sast_vulns = []
         self.hosts = {}
         self.fvdl = None
-        self.webinpect = None
+        self.webinspect = None
         self.audit = None
         self.suppressed = []
         self.vuln_classes = []
@@ -108,8 +111,15 @@ class FortifyParser:
             try:
                 self.fvdl = objectify.fromstring(fprcontent.read('audit.fvdl'))
             except KeyError:
-                self.webinpect = objectify.fromstring(fprcontent.read('webinspect.xml'))
-            self.audit = objectify.fromstring(fprcontent.read('audit.xml'))
+                pass
+            try:
+                self.webinspect = objectify.fromstring(fprcontent.read('webinspect.xml'))
+            except KeyError:
+                pass
+            try:
+                self.audit = objectify.fromstring(fprcontent.read('audit.xml'))
+            except KeyError:
+                pass
 
     def _process_fvdl(self):
         for vuln in self.fvdl.Vulnerabilities.iterchildren():
@@ -162,8 +172,8 @@ class FortifyParser:
             except AttributeError:
                 self.vulns[vulnID]['replacements'] = None
 
-    def _process_webinpect(self):
-        for session in self.webinpect.getchildren():
+    def _process_webinspect(self):
+        for session in self.webinspect.getchildren():
             hostname = session.Host.text
             port = session.Port.text
             service_data = {}
@@ -199,7 +209,12 @@ class FortifyParser:
                     }
                     severity = faraday_severities[issue_data.Severity]
                     references = []
-                    for classification in issue_data.Classifications.getchildren():
+                    try:
+                        classifications = issue_data.Classifications.getchildren()
+                    except AttributeError:
+                        classifications = []
+
+                    for classification in classifications:
                         references.append(classification.text)
 
                     # Build description
@@ -207,16 +222,26 @@ class FortifyParser:
                     for report_section in issue_data.findall('./ReportSection'):
                         description += u'{} \n'.format(report_section.Name.text)
                         description += u'{} \n'.format(report_section.SectionText.text)
-                        description += u'{} \n'.format(issue_data.get('id'))
+                    description += u'{} \n'.format(issue_data.get('id'))
 
                     for repro_step in issue_data.findall('./ReproSteps'):
                         step = repro_step.ReproStep
                         if step is not None:
-                            params = step.PostParams.text
+                            try:
+                                params = step.PostParams.text
+                            except AttributeError:
+                                pass
+
+                    if not hostname:
+                        # This seems to be a mobile app
+                        hostname = session.URL.text
+
+                    if not port:
+                        service_data['name'] = step.Url.text
+                        service_data['port'] = step.sourceline
 
                     self.sast_vulns.append({
                         "host": hostname,
-                        "port": port,
                         "severity": severity,
                         "service": service_data,
                         "name": name,
@@ -235,15 +260,20 @@ class FortifyParser:
 
     def _extract_vulns(self):
         # make list of false positives
-        for issue in self.audit.IssueList.iterchildren():
+        try:
+            issue_list = self.audit.IssueList.iterchildren()
+        except AttributeError:
+            issue_list = []
+
+        for issue in issue_list:
             if issue.get('suppressed', 'false').lower() == 'true':
                 self.suppressed.append(issue.get('instanceId'))
 
         if self.fvdl:
             self._process_fvdl()
 
-        if self.webinpect is not None:
-            self._process_webinpect()
+        if self.webinspect is not None:
+            self._process_webinspect()
 
     def calculate_severity(self, vuln):
 

@@ -3,6 +3,8 @@ import io
 import re
 from HTMLParser import HTMLParser
 from zipfile import ZipFile
+
+import html2text
 from lxml import objectify
 from faraday.client.plugins import core
 
@@ -223,6 +225,9 @@ class FortifyParser:
                         description += u'{} \n'.format(report_section.Name.text)
                         description += u'{} \n'.format(report_section.SectionText.text)
                     description += u'{} \n'.format(issue_data.get('id'))
+
+                    h = html2text.HTML2Text()
+                    description = h.handle(description)
 
                     for repro_step in issue_data.findall('./ReproSteps'):
                         step = repro_step.ReproStep

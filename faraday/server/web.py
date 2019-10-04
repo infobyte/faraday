@@ -23,7 +23,7 @@ import faraday.server.config
 from faraday.config.constant import CONST_FARADAY_HOME_PATH
 from faraday.server import TimerClass
 from faraday.server.utils import logger
-from faraday.server.threads.upload_reports import ReportsManager, REPORTS_QUEUE
+from faraday.server.threads.reports_processor import ReportsManager, REPORTS_QUEUE
 from faraday.server.app import create_app
 from faraday.server.websocket_factories import (
     WorkspaceServerFactory,

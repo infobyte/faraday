@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 class PluginCommiter(Thread):
 
     def __init__(self, output_queue, output, pending_actions, plugin, command, mapper_manager, end_event=None):
-        super(PluginCommiter, self).__init__()
+        super(PluginCommiter, self).__init__(name="PluginCommiterThread")
         self.output_queue = output_queue
         self.pending_actions = pending_actions
         self.stop = False
@@ -85,7 +85,7 @@ class PluginController(Thread):
     TODO: Doc string.
     """
     def __init__(self, id, plugin_manager, mapper_manager, pending_actions, end_event=None):
-        super(PluginController, self).__init__()
+        super(PluginController, self).__init__(name="PluginControllerThread")
         self.plugin_manager = plugin_manager
         self._plugins = plugin_manager.getPlugins()
         self.id = id

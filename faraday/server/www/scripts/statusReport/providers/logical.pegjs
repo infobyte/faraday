@@ -88,6 +88,10 @@
            case 'severity':
            case 'target':
            case 'hostnames':
+           case 'policy_violations__name':
+           case 'references__name':
+           case 'status':
+           case 'status_code':
                processedOperator = operator !== 'not' ? 'eq' : '!=';
                break;
            case 'service__name':
@@ -96,8 +100,6 @@
            case 'host__os':
                processedOperator = operator !== 'not' ? 'has' : '!=';
                break;
-           case 'policy_violations__name':
-           case 'references__name':
            case 'evidence__filename':
            case 'tags__name':
                processedOperator = operator !== 'not' ? 'any' : '!=';
@@ -146,7 +148,19 @@
 
 
 start
-  = logical_or / token:token { return {name:'name', op:'ilike', val: '%'+ token + '%'}}
+  = logical_or /
+  free_exp /
+  token:token { return {name:'name', op:'ilike', val: '%'+ token + '%'}}
+
+free_exp
+  = exp : token optional: (":" / "." / ws / "'" / "-" / "/" / token)*
+  {
+         return {
+             name: 'name',
+             op: 'ilike' ,
+             val: processValue(name, null, exp += optional.join(""))
+         }
+    }
 
 logical_or
   = left:logical_and ws+ "or" ws+ right:logical_or { return {"or": [left, right]} }
@@ -176,7 +190,7 @@ term
  }
 
 expression
-  = name: token ':' '"' mandatory: token optional: (":" / "." / ws / "'" / "-" / token)*  '"'
+  = name: token ':' '"' mandatory: token optional: (":" / "." / ws / "'" / "-" / "/" / token)*  '"'
   {
        return {
            name: processName(name),

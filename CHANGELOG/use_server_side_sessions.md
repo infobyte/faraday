@@ -1,1 +1,0 @@
-Ue server side stored sessions

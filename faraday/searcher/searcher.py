@@ -501,11 +501,14 @@ class Searcher:
                         self.api.delete_host(obj.id)
                         logger.info("Deleting host '%s' with id '%s':" % (obj.ip, obj.id))
                 else:
-                    subject = 'Faraday searcher alert'
-                    body = '%s %s have been modified by rule %s at %s' % (
-                        object_type, obj.name, rule['id'], str(datetime.now()))
-                    self.mail_notification.send_mail(expression, subject, body)
-                    logger.info("Sending mail to: '%s'" % expression)
+                    if self.mail_notification:
+                        subject = 'Faraday searcher alert'
+                        body = '%s %s have been modified by rule %s at %s' % (
+                            object_type, obj.name, rule['id'], str(datetime.now()))
+                        self.mail_notification.send_mail(expression, subject, body)
+                        logger.info("Sending mail to: '%s'" % expression)
+                    else:
+                        logger.warn("Searcher needs SMTP configuration to send mails")
 
         duration = (datetime.now() - command_start).seconds
         self.api.close_command(self.api.command_id, duration)

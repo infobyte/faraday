@@ -292,7 +292,9 @@ class TestListServiceView(ReadOnlyAPITests):
         res = test_client.post(self.url(), data=data)
         assert res.status_code == 400
 
-    def test_load_ports_with_negative_value(self, test_client):
+    def test_load_ports_with_negative_value(self, test_client, session):
+        host = HostFactory.create(workspace=self.workspace)
+        session.commit()
         data = {
             "name": "ports",
             "description": "testing ports load",
@@ -300,11 +302,14 @@ class TestListServiceView(ReadOnlyAPITests):
             "ports": [-1],
             "protocol": "tcp",
             "status": "open",
+            "parent": host.id
         }
         res = test_client.post(self.url(), data=data)
         assert res.status_code == 400
 
-    def test_load_invalid_port(self, test_client):
+    def test_load_invalid_port(self, test_client, session):
+        host = HostFactory.create(workspace=self.workspace)
+        session.commit()
         data = {
             "name": "ports",
             "description": "testing ports load",
@@ -312,8 +317,10 @@ class TestListServiceView(ReadOnlyAPITests):
             "ports": [65536],
             "protocol": "tcp",
             "status": "open",
+            "parent": host.id
         }
         res = test_client.post(self.url(), data=data)
+        print(res.data)
         assert res.status_code == 400
 
 

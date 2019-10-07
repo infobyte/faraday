@@ -51,8 +51,8 @@ class ServiceSchema(AutoSchema):
             raise ValidationError('ports must be a list with exactly one'
                                   'element')
         port = value.pop()
-        if port < 0:
-            raise ValidationError('The value must be greater than or equal to 0')
+        if port > 65535 or port < 1:
+            raise ValidationError('The value must be in the range [1-65535]')
 
         return str(port)
 
@@ -122,13 +122,9 @@ class ServiceView(FilterAlchemyMixin, ReadWriteWorkspacedView):
 
     def _perform_create(self, data, **kwargs):
         port_number = data.get("port", "1")
-        if port_number.isdigit():
-            port_number_int = int(port_number)
-            if port_number_int > 65535 or port_number_int < 1:
-                abort(make_response(jsonify(message="Invalid Port number"), 400))
-        else:
+        if not port_number.isdigit():
             abort(make_response(jsonify(message="Invalid Port number"), 400))
-        return super(ServiceView, self)._perform_create( data, **kwargs)
+        return super(ServiceView, self)._perform_create(data, **kwargs)
 
 ServiceView.register(services_api)
 # I'm Py3

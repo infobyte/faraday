@@ -51,6 +51,11 @@ class ServiceSchema(AutoSchema):
             raise ValidationError('ports must be a list with exactly one'
                                   'element')
         port = value.pop()
+        if isinstance(port, str):
+            try:
+                port = int(port)
+            except ValueError:
+                raise ValidationError('The value must be a number')
         if port > 65535 or port < 1:
             raise ValidationError('The value must be in the range [1-65535]')
 

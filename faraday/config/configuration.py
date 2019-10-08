@@ -663,7 +663,7 @@ class Configuration:
         self.indent(ROOT, 0)
 
         if not xml_file:
-            xml_file = os.path.expanduser('~/.faraday/config/user.xml')
+            xml_file = os.path.expanduser(os.path.join(CONST_FARADAY_HOME_PATH, 'config/user.xml'))
 
         if xml_file.startswith('~'):
             xml_file = os.path.expanduser(xml_file)

@@ -58,7 +58,7 @@ class ZapXmlParser:
         tree = self.parse_xml(xml_output)
 
         if tree is not None:
-            self.sites = [data for data in self.get_items(tree)]
+            self.sites = list(self.get_items(tree))
         else:
             self.sites = []
 

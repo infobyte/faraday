@@ -249,7 +249,7 @@ def get_children_from_couch(workspace, parent_couchdb_id, child_type):
 
 
 def create_tags(raw_tags, parent_id, parent_type):
-    from slugify import slugify  # pylint: disable=import-error
+    from slugify import slugify   # pylint: disable=import-error
     for tag_name in [x.strip() for x in raw_tags if x.strip()]:
         tag, tag_created = get_or_create(session, Tag, slug=slugify(tag_name))
         tag.name = tag_name
@@ -416,7 +416,7 @@ class HostImporter:
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         hosts = []
-        host_ips = [name_or_ip for name_or_ip in self.retrieve_ips_from_host_document(document)]
+        host_ips = list(self.retrieve_ips_from_host_document(document))
         interfaces = get_children_from_couch(workspace, document.get('_id'), 'Interface')
         command = None
         try:

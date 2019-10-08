@@ -61,21 +61,6 @@ merge_conflict_check:
             - $DOC
             - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/
 
-
-merge_conflict_check3:
-    tags:
-        - faradaytests
-    image: python:3
-    stage: pre_testing
-    allow_failure: true
-    script:
-        - git config --global user.email "you@example.com"
-        - git config --global user.name "Mergerbot"
-        - python3 merge-conflict-detector3.py
-    except:
-        variables:
-            - $BUILD_TEST
-
 pylint:
     tags:
         - faradaytests
@@ -248,7 +233,6 @@ generate_deb:
         - apt-get -y install virtualenv git libcairo2-dev libgirepository1.0-dev gobject-introspection ruby ruby-dev rubygems build-essential build-essential libssl-dev libffi-dev libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev libsasl2-dev libldap2-dev libkrb5-dev pandoc python3 python3-dev pkg-config libpq-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 zsh curl pandoc
         - curl https://bootstrap.pypa.io/get-pip.py | python3
         - pip install virtualenv-tools
-        - gem install --no-ri --no-rdoc fpm
         - mkdir build_installer
         - cp -a faraday.tar.gz build_installer/.
         - cd build_installer
@@ -256,6 +240,13 @@ generate_deb:
         - ls
         - cd faraday_copy
         - git clone git@gitlab.com:faradaysec/faraday-linux-installers-builder.git
+        - cd faraday-linux-installers-builder
+        - git clone https://github.com/jordansissel/fpm.git
+        - cd fpm
+        - git apply ../fpm-patchs/fpm.virtualenv_compile.patch
+        - make gem
+        - gem install --no-ri --no-rdoc fpm-1.11.0.gem
+        - cd ../../
         - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server deb
         - mv faraday-server_amd64.deb ../../faraday-server_amd64.deb
         - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) client deb
@@ -278,8 +269,9 @@ generate_deb:
 
 generate_rpm:
     stage: build
-    image: centos
+    image: centos:7
     before_script:
+        - yum -y upgrade
         - yum -y install which
         - yum -y install epel-release
         - 'which ssh-agent || (yum -y update && yum -y install openssh-clients)'
@@ -294,7 +286,6 @@ generate_rpm:
         - curl https://bootstrap.pypa.io/get-pip.py | python3
         - pip install virtualenv
         - pip install virtualenv-tools
-        - gem install --no-ri --no-rdoc fpm
         - mkdir build_installer
         - cp -a faraday.tar.gz build_installer/.
         - cd build_installer
@@ -302,6 +293,13 @@ generate_rpm:
         - ls
         - cd faraday_copy
         - git clone git@gitlab.com:faradaysec/faraday-linux-installers-builder.git
+        - cd faraday-linux-installers-builder
+        - git clone https://github.com/jordansissel/fpm.git
+        - cd fpm
+        - git apply ../fpm-patchs/fpm.virtualenv_compile.patch
+        - make gem
+        - gem install --no-ri --no-rdoc fpm-1.11.0.gem
+        - cd ../../
         - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm
         - mv faraday-server_amd64.rpm ../../faraday-server_amd64.rpm
         - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) client rpm
@@ -445,3 +443,14 @@ test_hypothesis:
             - $FULL_TEST
             - $HYPO_TEST
             - $DAILY_TEST
+
+agent_integration:
+    stage: post_testing
+    script:
+        - apt-get update -qy
+        - apt-get install curl -y
+        - "curl -X POST -F token=$AGENT_TOKEN -F ref=master -F \"variables[INTEGRATION]=true\" -F \"variables[FARADAY_REF]=$CI_COMMIT_REF_NAME\" https://gitlab.com/api/v4/projects/12825225/trigger/pipeline"
+    only:
+        variables:
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/
+            - $INTEGRATION

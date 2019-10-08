@@ -5,6 +5,8 @@ See the file 'doc/LICENSE' for the license information
 """
 from past.builtins import cmp
 
+import functools
+
 from colorama import Fore
 import sys
 
@@ -105,7 +107,6 @@ def main(workspace='', args=None, parser=None):
         print('-' * (col_width * len(columns)))
 
     if parsed_args.sorted:
-        import functools
         # Compare lines using the first column (IP)
         for row in sorted(lines, key=functools.cmp_to_key(lambda l1, l2: cmp(l1[0], l2[0]))): # passed from py2 to py2/3, TODO check
             print("".join(word.ljust(col_width) for word in row))

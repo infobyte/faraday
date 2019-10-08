@@ -5,6 +5,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
 """Tests for many API endpoints that do not depend on workspace_name"""
 
 import pytest
@@ -12,7 +13,7 @@ import pytz
 from hypothesis import given, strategies as st
 
 from tests import factories
-from test_api_non_workspaced_base import ReadWriteAPITests, API_PREFIX
+from tests.test_api_non_workspaced_base import ReadWriteAPITests, API_PREFIX
 from faraday.server.models import (
     License,
 )
@@ -87,3 +88,6 @@ def test_hypothesis_license(test_client, session):
         assert res.status_code in [201, 400, 409]
 
     send_api_request()
+
+
+# I'm Py3

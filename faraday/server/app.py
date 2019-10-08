@@ -2,24 +2,16 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 import logging
-
 import os
 import string
 import datetime
-from future.builtins import range # __future__
 from itsdangerous import TimedJSONWebSignatureSerializer, SignatureExpired, BadSignature
 from os.path import join, expanduser
 from random import SystemRandom
 
 from faraday.server.config import LOCAL_CONFIG_FILE, copy_default_config_to_local
 from faraday.server.models import User
-
-try:
-    # py2.7
-    from faraday.client.configparser import ConfigParser, NoSectionError, NoOptionError, DuplicateSectionError
-except ImportError:
-    # py3
-    from ConfigParser import ConfigParser, NoSectionError, NoOptionError, DuplicateSectionError
+from configparser import ConfigParser, NoSectionError, NoOptionError, DuplicateSectionError
 
 import flask
 from flask import Flask, session, g
@@ -409,3 +401,4 @@ class CustomLoginForm(LoginForm):
             self.email.errors.append(get_message('DISABLED_ACCOUNT')[0])
             return False
         return True
+# I'm Py3

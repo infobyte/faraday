@@ -5,6 +5,7 @@ Revises:
 Create Date: 2018-11-29 16:34:44.081899+00:00
 
 """
+from __future__ import absolute_import
 from alembic import op
 import sqlalchemy as sa
 
@@ -30,3 +31,4 @@ def downgrade():
     op.drop_column('faraday_user', 'otp_secret')
     op.drop_column('faraday_user', 'state_otp')
     op.execute('DROP TYPE user_otp_states')
+# I'm Py3

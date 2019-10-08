@@ -2,11 +2,10 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 import time
-
 import datetime
 from flask import Blueprint
 from flask_classful import route
-from marshmallow import fields, post_load
+from marshmallow import fields, post_load, ValidationError
 
 from faraday.server.api.base import AutoSchema, ReadWriteWorkspacedView, PaginatedMixin
 from faraday.server.models import Command, Workspace
@@ -23,7 +22,10 @@ class CommandSchema(AutoSchema):
     creator = PrimaryKeyRelatedField('username', dump_only=True)
 
     def load_itime(self, value):
-        return datetime.datetime.fromtimestamp(value)
+        try:
+            return datetime.datetime.fromtimestamp(value)
+        except ValueError:
+            raise ValidationError('Invalid Itime Value')
 
     def get_itime(self, obj):
         return time.mktime(obj.start_date.utctimetuple()) * 1000
@@ -90,3 +92,4 @@ class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
         return res
 
 CommandView.register(commandsrun_api)
+# I'm Py3

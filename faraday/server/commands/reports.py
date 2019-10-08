@@ -1,12 +1,12 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
 import os
 import logging
-from Queue import Queue
+from queue import Queue
 
 from faraday.client.managers.mapper_manager import MapperManager
 from faraday.client.managers.reports_managers import ReportManager, CONF
@@ -67,3 +67,4 @@ def process_workspaces(mappers_manager, plugin_manager, query, disable_polling):
 
     for controller in controllers:
         controller.stop()
+# I'm Py3

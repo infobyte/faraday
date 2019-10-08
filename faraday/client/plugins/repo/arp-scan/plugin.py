@@ -1,12 +1,8 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-
+"""
 from faraday.client.plugins import core
 from faraday.client.model import api
 import re
@@ -28,7 +24,7 @@ class CmdArpScanPlugin(core.PluginBase):
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "arp-scan"
         self.name = "arp-scan network scanner"
         self.plugin_version = "0.0.2"
@@ -62,7 +58,6 @@ class CmdArpScanPlugin(core.PluginBase):
                         host = vals[0]
                         h_id = self.createAndAddHost(host)
                         i_id = self.createAndAddInterface(h_id, host, ipv4_address=host, mac=vals[1])
-                        n_id = self.createAndAddNoteToHost(h_id, "NIC VENDOR:", vals[2])
 
         return True
 
@@ -72,3 +67,4 @@ class CmdArpScanPlugin(core.PluginBase):
 
 def createPlugin():
     return CmdArpScanPlugin()
+# I'm Py3

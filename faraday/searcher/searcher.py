@@ -6,6 +6,11 @@
 ## Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
 ## See the file 'doc/LICENSE' for the license information
 ###
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
+from builtins import str
+from imp import reload
 
 import ast
 import json
@@ -100,14 +105,13 @@ def equals(m1, m2, rule):
         f_m2 = getattr(m2, field, None)
 
         if f_m1 is not None and f_m2 is not None:
-            if field == 'severity' or field == 'owner' or field == 'status':
+            if field in ['severity', 'owner', 'status']:
                 if f_m1 == f_m2:
                     ratio = 1.0
                 else:
                     ratio = min_weight
 
-            elif isinstance(f_m1, str) or isinstance(f_m1, unicode) and isinstance(f_m2, str) or isinstance(f_m2,
-                                                                                                            unicode):
+            elif isinstance(f_m1, str) or isinstance(f_m2, str):
                 ratio = compare(f_m1.lower().replace('\n', ' '), f_m2.lower().replace('\n', ' '))
 
             elif isinstance(f_m1, bool) and isinstance(f_m2, bool):
@@ -123,7 +127,7 @@ def equals(m1, m2, rule):
             count_fields += 1
 
     if total_ratio != 0:
-        percent = (total_ratio * 100) / count_fields
+        percent = (total_ratio * 100.0) / count_fields
     else:
         percent = 0.0
     logger.debug("Verify result with %.2f %% evaluating rule %s:" % (percent, rule['id']))
@@ -142,6 +146,27 @@ def get_model_environment(model, _models):
     return environment
 
 
+def process_models_by_similarity(api, _models, rule, mail_notificacion):
+    logger.debug("--> Start Process models by similarity")
+    for index_m1, m1 in zip(list(range(len(_models) - 1)), _models):
+        for index_m2, m2 in zip(list(range(index_m1 + 1, len(_models))), _models[index_m1 + 1:]):
+            if m1.id != m2.id and is_same_level(m1, m2):
+                if equals(m1, m2, rule):
+                    environment = [m1, m2]
+                    _objs_value = None
+                    if 'object' in rule:
+                        _objs_value = rule['object']
+                    _object = get_object(environment, _objs_value)
+                    if _object is not None:
+                        if 'conditions' in rule:
+                            environment = get_model_environment(m2, _models)
+                            if can_execute_action(environment, rule['conditions']):
+                                execute_action(api, _object, rule, mail_notificacion)
+                        else:
+                            execute_action(api, _object, rule, mail_notificacion)
+    logger.debug("<-- Finish Process models by similarity")
+
+
 def get_field(obj, field):
     try:
         if field in obj.__dict__ or hasattr(obj, field):
@@ -152,6 +177,158 @@ def get_field(obj, field):
     except AttributeError:
         logger.error("ERROR: Field %s is invalid" % field)
         return None
+
+
+def set_array(field, value, add=True):
+    if isinstance(field, list):
+        if add:
+            if value not in field:
+                field.append(value)
+        else:
+            if value in field:
+                field.remove(value)
+
+
+def update_vulnerability(api, vuln, key, value):
+    if key == 'template':
+        cwe = get_cwe(api, value)
+        if cwe is None:
+            logger.error("%s: cwe not found" % value)
+            return False
+
+        vuln.name = cwe.name
+        vuln.description = cwe.description
+        vuln.desc = cwe.description
+        vuln.resolution = cwe.resolution
+
+        logger.info("Applying template '%s' to vulnerability '%s' with id '%s'" % (value, vuln.name, vuln.id))
+
+    elif key == 'confirmed':
+        value = value == 'True'
+        vuln.confirmed = value
+        logger.info("Changing property %s to %s in vulnerability '%s' with id %s" % (key, value, vuln.name, vuln.id))
+    elif key == 'owned':
+        value = value == 'True'
+        vuln.owned = value
+        logger.info("Changing property %s to %s in vulnerability '%s' with id %s" % (key, value, vuln.name, vuln.id))
+    else:
+        to_add = True
+        if key.startswith('-'):
+            key = key.strip('-')
+            to_add = False
+
+        is_custom_field = False
+        if key in vuln.custom_fields:
+            field = vuln.custom_fields
+            is_custom_field = True
+        else:
+            field = get_field(vuln, key)
+
+        if field is not None and is_custom_field is False:
+            if isinstance(field, str):
+                setattr(vuln, key, value)
+                logger.info(
+                    "Changing property %s to %s in vulnerability '%s' with id %s" % (key, value, vuln.name, vuln.id))
+            else:
+                set_array(field, value, add=to_add)
+                action = 'Adding %s to %s list in vulnerability %s with id %s' % (value, key, vuln.name, vuln.id)
+                if not to_add:
+                    action = 'Removing %s from %s list in vulnerability %s with id %s' % (
+                        value, key, vuln.name, vuln.id)
+
+                logger.info(action)
+
+        if field is not None and is_custom_field is True:
+            vuln.custom_fields[key] = value
+            logger.info(
+                "Changing custom field %s to %s in vulnerability '%s' with id %s" % (key, value, vuln.name, vuln.id))
+
+    api.update_vulnerability(vuln)
+
+    logger.info("Done")
+    return True
+
+
+def update_service(api, service, key, value):
+    if key == 'owned':
+        value = value == 'True'
+        service.owned = value
+        logger.info("Changing property %s to %s in service '%s' with id %s" % (key, value, service.name, service.id))
+    else:
+        to_add = True
+        if key.startswith('-'):
+            key = key.strip('-')
+            to_add = False
+
+        field = get_field(service, key)
+        if field is not None:
+            if isinstance(field, str):
+                setattr(service, key, value)
+                logger.info(
+                    "Changing property %s to %s in service '%s' with id %s" % (key, value, service.name, service.id))
+            else:
+                set_array(field, value, add=to_add)
+                action = 'Adding %s to %s list in service %s with id %s' % (value, key, service.name, service.id)
+                if not to_add:
+                    action = 'Removing %s from %s list in service %s with id %s' % (
+                        value, key, service.name, service.id)
+
+                logger.info(action)
+
+    api.update_service(service)
+
+    logger.info("Done")
+    return True
+
+
+def update_host(api, host, key, value):
+    if key == 'owned':
+        value = value == 'True'
+        host.owned = value
+        logger.info("Changing property %s to %s in host '%s' with id %s" % (key, value, host.name, host.id))
+    else:
+        to_add = True
+        if key.startswith('-'):
+            key = key.strip('-')
+            to_add = False
+
+        field = get_field(host, key)
+        if field is not None:
+            if isinstance(field, str):
+                setattr(host, key, value)
+                logger.info("Changing property %s to %s in host '%s' with id %s" % (key, value, host.name, host.id))
+            else:
+                set_array(field, value, add=to_add)
+                action = 'Adding %s to %s list in host %s with id %s' % (value, key, host.name, host.id)
+                if not to_add:
+                    action = 'Removing %s from %s list in host %s with id %s' % (
+                        value, key, host.name, host.id)
+
+                logger.info(action)
+    api.update_host(host)
+
+    logger.info("Done")
+    return True
+
+
+def get_parent(api, parent_tag):
+    logger.debug("Getting parent")
+    return api.get_filtered_services(id=parent_tag, name=parent_tag) or \
+           api.get_filtered_hosts(id=parent_tag, name=parent_tag)
+
+
+def filter_objects_by_parent(_objects, parent):
+    objects = []
+    parents = []
+    if isinstance(parent, list):
+        parents.extend(parent)
+    else:
+        parents.append(parent)
+    for obj in _objects:
+        for p in parents:
+            if p.id == obj.parent_id:
+                objects.append(obj)
+    return objects
 
 
 def evaluate_condition(model, condition):
@@ -264,7 +441,6 @@ def signal_handler(signal, frame):
     os.remove(".lock.pod")
     logger.info('Killed')
     sys.exit(0)
-
 
 class Searcher:
     def __init__(self, api, mail_notification=None, tool_name='Searcher'):
@@ -479,7 +655,7 @@ class Searcher:
                     array_exp = expression.split('=')
                     key = array_exp[0]
                     value = str('=').join(array_exp[1:])
-                    if object_type == 'Vulnerabilityweb' or object_type == 'Vulnerability_web' or object_type == 'Vulnerability':
+                    if object_type in ['Vulnerabilityweb', 'Vulnerability_web', 'Vulnerability']:
                         self._update_vulnerability(obj, key, value)
 
                     if object_type == 'Service':
@@ -489,7 +665,7 @@ class Searcher:
                         self._update_host(obj, key, value)
 
                 elif command == 'DELETE':
-                    if object_type == 'Vulnerabilityweb' or object_type == 'Vulnerability_web' or object_type == 'Vulnerability':
+                    if object_type in ['Vulnerabilityweb', 'Vulnerability_web', 'Vulnerability']:
                         self.api.delete_vulnerability(obj.id)
                         logger.info("Deleting vulnerability '%s' with id '%s':" % (obj.name, obj.id))
 
@@ -559,7 +735,7 @@ class Searcher:
                     vuln.refs.append(value)
             elif field:
                 if not is_custom_field:
-                    if isinstance(field, (str, unicode)):
+                    if isinstance(field, str):
                         setattr(vuln, key, value)
                         logger.info(
                             "Changing property %s to %s in vulnerability '%s' with id %s" % (
@@ -600,7 +776,7 @@ class Searcher:
 
             field = get_field(service, key)
             if field is not None:
-                if isinstance(field, (str, unicode)):
+                if isinstance(field, str):
                     setattr(service, key, value)
                     logger.info(
                         "Changing property %s to %s in service '%s' with id %s" % (
@@ -632,7 +808,7 @@ class Searcher:
 
             field = get_field(host, key)
             if field is not None:
-                if isinstance(field, (str, unicode)):
+                if isinstance(field, str):
                     setattr(host, key, value)
                     logger.info("Changing property %s to %s in host '%s' with id %s" % (key, value, host.ip, host.id))
                 else:
@@ -650,8 +826,8 @@ class Searcher:
 
     def _process_models_by_similarity(self, _models, rule):
         logger.debug("--> Start Process models by similarity")
-        for index_m1, m1 in zip(range(len(_models) - 1), _models):
-            for index_m2, m2 in zip(range(index_m1 + 1, len(_models)), _models[index_m1 + 1:]):
+        for index_m1, m1 in zip(list(range(len(_models) - 1)), _models):
+            for index_m2, m2 in zip(list(range(index_m1 + 1, len(_models))), _models[index_m1 + 1:]):
                 if m1.id != m2.id and is_same_level(m1, m2):
                     if equals(m1, m2, rule):
                         environment = [m1, m2]
@@ -747,3 +923,4 @@ def main(workspace, server_address, user, password, output, email, email_passwor
 
 if __name__ == "__main__":
     main()
+# I'm Py3

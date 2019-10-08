@@ -1,3 +1,6 @@
+from __future__ import absolute_import
+from builtins import bytes
+
 import pytest
 from marshmallow import ValidationError
 from faraday.server.models import (
@@ -541,7 +544,7 @@ def test_bulk_create_with_agent_token_in_different_workspace_fails(
         headers=[("authorization", "agent {}".format(agent.token))]
     )
     assert res.status_code == 404
-    assert 'No such workspace' in res.data
+    assert b'No such workspace' in res.data
     assert count(Host, second_workspace) == 0
 
 
@@ -587,3 +590,6 @@ def test_bulk_create_endpoint_with_agent_token_disabled_workspace(
         headers=[("authorization", "agent {}".format(agent.token))]
     )
     assert res.status_code == 403
+
+
+# I'm Py3

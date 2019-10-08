@@ -1,7 +1,7 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-from collections import defaultdict
+from io import StringIO
 
 import logging
 import csv
@@ -158,9 +158,10 @@ class HostsView(PaginatedMixin,
         if 'file' not in flask.request.files:
             abort(400, "Missing File in request")
         hosts_file = flask.request.files['file']
+        stream = StringIO(hosts_file.stream.read().decode("utf-8"), newline=None)
         FILE_HEADERS = {'description', 'hostnames', 'ip', 'os'}
         try:
-            hosts_reader = csv.DictReader(hosts_file, skipinitialspace=True)
+            hosts_reader = csv.DictReader(stream)
             if set(hosts_reader.fieldnames) != FILE_HEADERS:
                 logger.error("Missing Required headers in CSV (%s)", FILE_HEADERS)
                 abort(400, "Missing Required headers in CSV (%s)" % FILE_HEADERS)
@@ -281,3 +282,4 @@ class HostsView(PaginatedMixin,
 
 
 HostsView.register(host_api)
+# I'm Py3

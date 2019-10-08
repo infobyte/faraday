@@ -20,11 +20,13 @@
 # Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # 2011-03-12:	0.1.1: Initial version.
+from __future__ import absolute_import
+
 import sys
 import re
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from StringIO import StringIO
+from io import StringIO, BytesIO
 
 
 # List all nodes in a ReportItem object that can have multiple values
@@ -75,7 +77,7 @@ LOCAL_IP_LIST = [
 ]
 
 
-class Report(object):
+class Report:
 
     def __init__(self):
         self.name = None
@@ -88,7 +90,13 @@ class Report(object):
         # Parse XML file
         #getLogger(self).debug("Parsing report start")
         if from_string:
-            xml_file = StringIO(xml_file)
+            try:
+                xml_file = BytesIO(xml_file)
+            except Exception as e1:
+                try:
+                    xml_file = StringIO(xml_file)
+                except Exception as e2:
+                    raise Exception(str(e1) + "\n" + str(e2))
 
         # Iterate through each host scanned and create objects for each
         for event, elem in ET.iterparse(xml_file):
@@ -97,7 +105,6 @@ class Report(object):
             # Grab the report name from the Report element
             if event == 'end' and elem.tag == 'Report':
                 self.name = elem.attrib.get('name')
-                continue
 
             # Only process ReportHost elements
             elif event == 'end' and elem.tag != 'ReportHost':
@@ -128,7 +135,7 @@ class Report(object):
                 return t
 
 
-class ReportHost(object):
+class ReportHost:
 
     def __init__(self, xml_report_host):
         self.name = None
@@ -197,7 +204,7 @@ class ReportHost(object):
                     # Check to see if named fields were given
                     if res.groupdict():
                         # Store each named field as an attribute
-                        for k, v in res.groupdict().iteritems():
+                        for k, v in res.groupdict().items():
                             setattr(self, k, v)
 
                     # No named fields, just grab whatever matched
@@ -278,7 +285,7 @@ class ReportHost(object):
             return self.name
 
 
-class ReportItem(object):
+class ReportItem:
 
     def __init__(self, xml_report_item):
         # Make sure object is well formed
@@ -321,3 +328,4 @@ class ReportItem(object):
             return getattr(self, attr)
         except AttributeError:
             return None
+# I'm Py3

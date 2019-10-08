@@ -149,7 +149,7 @@ class FortifyParser:
             self.vulns[vulnID]['severity'] = self.calculate_severity(vuln)
 
             # placeholder for storing hosts ids when created in main plugin method
-            if path not in self.hosts.keys():
+            if path not in self.hosts:
                 self.hosts[path] = None
 
             if vuln.ClassInfo.ClassID not in self.vuln_classes:
@@ -301,7 +301,7 @@ class FortifyParser:
                     if group.get('name') == "Accuracy":
                         accuracy = group
 
-        likelihood = (accuracy * vuln.InstanceInfo.Confidence * probability) / 25
+        likelihood = (accuracy * vuln.InstanceInfo.Confidence * probability) / 25.0
 
         if impact and probability:
 

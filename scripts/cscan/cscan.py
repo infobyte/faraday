@@ -13,12 +13,7 @@ import argparse
 import time
 import shutil
 from pprint import pprint
-try:
-    # py2.7
-    from faraday.client.configparser import ConfigParser, NoSectionError, NoOptionError
-except ImportError:
-    # py3
-    from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+from configparser import ConfigParser, NoSectionError, NoOptionError
 #from config import config
 
 def setup_config_path():

@@ -1,7 +1,7 @@
 import base64
 import io
 import re
-from HTMLParser import HTMLParser
+from html.parser import HTMLParser
 from zipfile import ZipFile
 
 import html2text
@@ -415,4 +415,4 @@ if __name__ == '__main__':
             print(fp.vulns[vulnID]['replacements'])
             print("{}{}{}".format("="*50, vulnID, "="*50))
             print(fp.format_description(vulnID))
-            print("{}|{}|{}").format(vulnID, fp.vulns[vulnID].get('name'), fp.vulns[vulnID].get('severity'))
+            print("{}|{}|{}".format(vulnID, fp.vulns[vulnID].get('name'), fp.vulns[vulnID].get('severity')))

@@ -55,11 +55,6 @@ merge_conflict_check:
         - git config --global user.email "you@example.com"
         - git config --global user.name "Mergerbot"
         - python3 merge-conflict-detector.py
-    only:
-        variables:
-            - $FULL_DOC
-            - $DOC
-            - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/
 
 pylint:
     tags:

@@ -38,6 +38,7 @@ import faraday.server.config
 # Load SQLAlchemy Events
 import faraday.server.events
 from faraday.server.utils.logger import LOGGING_HANDLERS
+from faraday.server.utils.invalid_chars import remove_null_caracters
 from faraday.config.constant import CONST_FARADAY_HOME_PATH
 
 
@@ -383,14 +384,19 @@ class CustomLoginForm(LoginForm):
         # want to skip the LoginForm validate logic
         if not super(LoginForm, self).validate():
             return False
+        self.email.data = remove_null_caracters(self.email.data)
+
         self.user = _datastore.get_user(self.email.data)
 
         if self.user is None:
             self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
             return False
+
+        self.user.password = remove_null_caracters(self.user.password)
         if not self.user.password:
             self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
             return False
+        self.password.data = remove_null_caracters(self.password.data)
         if not verify_and_update_password(self.password.data, self.user):
             self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
             return False
@@ -401,4 +407,4 @@ class CustomLoginForm(LoginForm):
             self.email.errors.append(get_message('DISABLED_ACCOUNT')[0])
             return False
         return True
-# I'm Py3
+

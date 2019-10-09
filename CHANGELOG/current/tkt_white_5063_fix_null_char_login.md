@@ -1,1 +1,1 @@
-* tkt_white_5063_fix_null_char_login
+Cleanup null chars in username and password to avoid error 500

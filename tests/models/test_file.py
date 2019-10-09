@@ -4,6 +4,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
 import os
 import pytest
 from faraday.server.models import File
@@ -16,7 +17,7 @@ CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
 def depotfile():
     depot = DepotManager.get('default')
     path = os.path.join(CURRENT_PATH, '../data', 'faraday.png')
-    with open(path) as fp:
+    with open(path, 'rb') as fp:
         fileid = depot.create(fp, 'faraday.png', 'image/png')
     return fileid
 
@@ -56,3 +57,4 @@ def test_add_vulnweb_evidence(vulnerability_web, depotfile, session):
     assert len(vulnerability_web.evidence) == 1
     assert vulnerability_web.evidence[0].object_type == 'vulnerability'
     assert vulnerability_web.evidence[0].object_id == vulnerability_web.id
+# I'm Py3

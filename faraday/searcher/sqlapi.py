@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import json
 import logging
 import socket
@@ -57,7 +59,7 @@ class SqlApi:
         data = self._command_info(duration)
         command = Command.query.get(command_id)
         if command:
-            for (key, value) in data.iteritems():
+            for (key, value) in data.items():
                 setattr(command, key, value)
             self.session.commit()
 
@@ -100,7 +102,7 @@ class SqlApi:
         vulnerabilities = []
         vulnerabilities_query = self.session.query(Vulnerability, Workspace.id).join(Workspace).filter(
             Workspace.name == self.workspace.name)
-        for attr, value in kwargs.iteritems():
+        for attr, value in kwargs.items():
             if attr == 'regex':
                 vulnerabilities_query = vulnerabilities_query.filter(Vulnerability.name.op('~')(value))
                 vulnerabilities = [vulnerability for vulnerability, pos in
@@ -113,7 +115,7 @@ class SqlApi:
         web_vulnerabilities = []
         web_vulnerabilities_query = self.session.query(VulnerabilityWeb, Workspace.id).join(Workspace).filter(
             Workspace.name == self.workspace.name)
-        for attr, value in kwargs.iteritems():
+        for attr, value in kwargs.items():
             if attr == 'regex':
                 web_vulnerabilities_query = web_vulnerabilities_query.filter(VulnerabilityWeb.name.op('~')(value))
                 web_vulnerabilities = [web_vulnerability for web_vulnerability, pos in
@@ -129,7 +131,7 @@ class SqlApi:
         services = []
         services_query = self.session.query(Service, Workspace.id).join(Workspace).filter(
             Workspace.name == self.workspace.name)
-        for attr, value in kwargs.iteritems():
+        for attr, value in kwargs.items():
             if attr == 'regex':
                 services_query = services_query.filter(Service.name.op('~')(value))
                 services = [service for service, pos in
@@ -145,7 +147,7 @@ class SqlApi:
         hosts = []
         hosts_query = self.session.query(Host, Workspace.id).join(Workspace).filter(
             Workspace.name == self.workspace.name)
-        for attr, value in kwargs.iteritems():
+        for attr, value in kwargs.items():
             if attr == 'regex':
                 hosts_query = hosts_query.filter(Host.ip.op('~')(value))
                 hosts = [host for host, pos in
@@ -160,11 +162,10 @@ class SqlApi:
     def filter_templates(self, **kwargs):
         templates = []
         templates_query = self.session.query(VulnerabilityTemplate)
-        for attr, value in kwargs.iteritems():
+        for attr, value in kwargs.items():
             if hasattr(VulnerabilityTemplate, attr):
                 templates_query = templates_query.filter(getattr(VulnerabilityTemplate, attr) == str(value))
-                templates = [template for template in
-                             templates_query.distinct(VulnerabilityTemplate.id)]
+                templates = list(templates_query.distinct(VulnerabilityTemplate.id))
 
         return templates
 

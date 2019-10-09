@@ -5,9 +5,10 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
-import xmlrpclib
+import xmlrpc.client
 import argparse
 import base64
 
@@ -30,12 +31,12 @@ def send_faraday(results):
 
 
 def send_faraday_device(result):
-    print 'IP: %s' % result['ip_address']
+    print('IP: %s' % result['ip_address'])
 
     if args.debug == "1":
-    	print '==============='
+        print('===============')
         for key in result.keys():
-           print "kname:" + key + ", value:" + str(result[key])
+           print("kname:" + key + ", value:" + str(result[key]))
 
     h_id = api.createAndAddHost(str(result['ip_address']))
     i_id = api.createAndAddInterface(h_id,str(result['ip_address']),"00:00:00:00:00:00", str(result['ip_address']), "0.0.0.0", "0.0.0.0",[],
@@ -49,7 +50,7 @@ def send_faraday_device(result):
             service['banner'] = base64.b64encode(strip_non_ascii(str(service['banner']))) #fix: to avoid non ascii caracters
 
         if service['banner'] is not None:
-        	n_id = api.createAndAddNoteToService(h_id,s_id,"banner",str(service['banner']))
+            n_id = api.createAndAddNoteToService(h_id,s_id,"banner",str(service['banner']))
 
     #Notes - Information geo/shadon
     n_id = api.createAndAddNoteToHost(h_id,"geo_country",result['location']['country_name'] if result['location']['country_name']  is not None else "" )
@@ -75,10 +76,10 @@ args = parser.parse_args()
 
 try:
     # Setup the apis
-    api = xmlrpclib.ServerProxy(args.faradayapi)    
+    api = xmlrpc.client.ServerProxy(args.faradayapi)
 
     results = reposify_search(args.skey, args.reposify_banner, args.reposify_filters, 1)
-    print 'Results found: %s, banner "%s", filters "%s' % (results['total_count'], args.reposify_banner, args.reposify_filters)
+    print('Results found: %s, banner "%s", filters "%s' % (results['total_count'], args.reposify_banner, args.reposify_filters))
     send_faraday(results)
     
     if results['pagination']['has_more'] == True:        
@@ -88,19 +89,20 @@ try:
             if results['pagination']['has_more'] != True:
                 break;
 
-except xmlrpclib.ProtocolError as e:
+except xmlrpc.client.ProtocolError as e:
     if e.errcode == 500:
-    	print "[ERROR] Faraday Api error:", sys.exc_info()[0]
+        print("[ERROR] Faraday Api error:", sys.exc_info()[0])
         pass
     else:
-        print "[ERROR] Unexpected error:", sys.exc_info()[0]
-        print e.__dict__
+        print("[ERROR] Unexpected error:", sys.exc_info()[0])
+        print(e.__dict__)
         raise
 
 except Exception as e:
-    print "Unexpected error:", sys.exc_info()[0]
-    print e.__dict__
+    print("Unexpected error:", sys.exc_info()[0])
+    print(e.__dict__)
     raise
 
 
 
+# I'm Py3

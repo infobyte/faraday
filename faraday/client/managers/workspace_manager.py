@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
 import re
 import time
 
@@ -23,7 +21,7 @@ class WorkspaceException(Exception):
     pass
 
 
-class WorkspaceManager(object):
+class WorkspaceManager:
     """
     This class is in charge of creating, deleting and opening workspaces
     """
@@ -63,8 +61,7 @@ class WorkspaceManager(object):
         WorkspaceException if something went wrong along the way.
         """
         if name not in get_workspaces_names():
-            raise WorkspaceException(
-                "Workspace %s wasn't found" % name)
+            raise WorkspaceException("Workspace %s wasn't found" % name)
 
         try:
             workspace = get_workspace(name)
@@ -111,3 +108,6 @@ class WorkspaceManager(object):
             return True
         else:
             return False
+
+
+# I'm Py3

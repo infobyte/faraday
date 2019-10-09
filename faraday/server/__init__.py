@@ -48,3 +48,5 @@ class TimerClass(threading.Thread):
 
     def stop(self):
         self.__event.set()
+
+# I'm Py3

@@ -1,14 +1,16 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
+from __future__ import absolute_import
+
 import datetime
 import hashlib
 
 
-class Session(object):
+class Session:
     """
     It will handle a Faraday session, that contains:
         - current user logged in
@@ -29,3 +31,6 @@ class Session(object):
 
     def get_token():
         return self.__token
+
+
+# I'm Py3

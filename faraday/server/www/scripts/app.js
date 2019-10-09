@@ -227,7 +227,7 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
                 }
             }
         }).
-        when('/status/ws/:wsId/search/:search', {
+        when('/status/ws/:wsId/search/:search*\/', {
             templateUrl: 'scripts/statusReport/partials/statusReport.html',
             controller: 'statusReportCtrl',
             title: 'Status Report | ',

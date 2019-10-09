@@ -1,6 +1,6 @@
 with (import <nixpkgs> {});
   mkShell {
-    buildInputs = [pandoc] ++ (with python27Packages;
+    buildInputs = [pandoc] ++ (with python3Packages;
       [virtualenv pyopenssl psycopg2 pillow pygobject3 pynacl matplotlib lxml ldap autobahn
       gobjectIntrospection gtk3 gnome3.vte gssapi
       ]);

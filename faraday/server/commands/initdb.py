@@ -150,14 +150,14 @@ class InitDB():
             print("{yellow}WARNING{white}: If you are going to execute couchdb importer you must use the couchdb password for faraday user.".format(white=Fore.WHITE, yellow=Fore.YELLOW))
 
     def _save_user_xml(self, random_password):
-        user_xml = os.path.expanduser("~/.faraday/config/user.xml")
+        user_xml = os.path.join(CONST_FARADAY_HOME_PATH, "config", "user.xml")
         if not os.path.exists(user_xml):
             shutil.copy(FARADAY_BASE_CONFIG_XML, user_xml)
         conf = Configuration(user_xml)
         conf.setAPIUrl('http://localhost:5985')
         conf.setAPIUsername('faraday')
         conf.setAPIPassword(random_password)
-        conf.saveConfig()
+        conf.saveConfig(user_xml)
 
     def _configure_existing_postgres_user(self):
         username = raw_input('Please enter the postgresql username: ')
@@ -279,6 +279,18 @@ class InitDB():
         print('Creating tables')
         from faraday.server.models import db
         current_app.config['SQLALCHEMY_DATABASE_URI'] = conn_string
+
+        # Check if the alembic_version exists
+        # Taken from https://stackoverflow.com/a/24089729
+        (result,) = list(db.session.execute("select to_regclass('alembic_version')"))
+        exists = result[0] is not None
+
+        if exists:
+            print("Faraday tables already exist in the database. No tables will "
+                  "be created. If you want to ugprade the schema to the latest "
+                  "version, you should run \"faraday-manage migrate\".")
+            return
+
         try:
             db.create_all()
         except OperationalError as ex:

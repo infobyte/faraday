@@ -8,6 +8,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 from __future__ import with_statement
+import logging
 from faraday.client.plugins import core
 from faraday.client.model import api
 import re
@@ -17,6 +18,7 @@ import pprint
 import sys
 import dotnessus_v2
 
+logger = logging.getLogger(__name__)
 
 current_path = os.path.abspath(os.getcwd())
 
@@ -100,7 +102,7 @@ class NessusPlugin(core.PluginBase):
         try:
             p.parse(output, from_string=True)
         except Exception as e:
-            print "Exception - %s" % e
+            logger.error("Exception - %s", e)
 
         for t in p.targets:
             mac = ""
@@ -147,11 +149,17 @@ class NessusPlugin(core.PluginBase):
 
                 ref = []
                 if v.get('cve'):
-                    ref.append(", ".join(v.get('cve')))
+                    cves = v.get('cve')
+                    for cve in cves:
+                        logger.debug('Appending %s', cve.encode("utf-8"))
+                        ref.append(cve.encode("utf-8").strip())
+                if v.get('bid'):
+                    bids = v.get('bid')
+                    for bid in bids:
+                        logger.debug('Appending %s', bid.encode("utf-8"))
+                        ref.append("BID-%s" % bid.encode("utf-8").strip() )
                 if v.get('cvss_base_score'):
                     ref.append("CVSS: " + ", ".join(v.get('cvss_base_score')))
-                if v.get('bid'):
-                    ref.append(", ".join(v.get('bid')))
                 if v.get('xref'):
                     ref.append(", ".join(v.get('xref')))
                 if v.get('svc_name') == "general":

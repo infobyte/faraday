@@ -18,7 +18,7 @@ angular.module('faradayApp')
                 commonsFact.showMessage(e.message || e);
             }
 
-            return JSON.stringify(outputJson);
+            return escape(JSON.stringify(outputJson));
         };
 
         var testParenthesisPairs = function (string) {

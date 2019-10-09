@@ -114,6 +114,7 @@ class ServiceSchema(services.ServiceSchema):
 
 
 class HostSchema(hosts.HostSchema):
+    ip = fields.String(required=True)
     services = fields.Nested(
         ServiceSchema(many=True, context={'updating': False}),
         many=True,
@@ -159,7 +160,7 @@ class BulkCreateSchema(Schema):
     hosts = fields.Nested(
         HostSchema(many=True),
         many=True,
-        missing=[],
+        required=True,
     )
     command = fields.Nested(
         CommandSchema(),
@@ -334,3 +335,6 @@ class BulkCreateView(GenericWorkspacedView):
     post.is_public = True
 
 BulkCreateView.register(bulk_create_api)
+
+
+# I'm Py3

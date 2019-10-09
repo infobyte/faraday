@@ -1,10 +1,13 @@
 #!/usr/bin/env python
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
+from __future__ import absolute_import
+from __future__ import print_function
+
 import os
 import sys
 import signal
@@ -42,7 +45,7 @@ CONF = getInstanceConfiguration()
 logger = logging.getLogger(__name__)
 
 
-class MainApplication(object):
+class MainApplication:
 
     def __init__(self, args):
         self._original_excepthook = sys.excepthook
@@ -182,3 +185,6 @@ class MainApplication(object):
     def ctrlC(self, signal, frame):
         logger.info("Exiting...")
         self.app.quit()
+
+
+# I'm Py3

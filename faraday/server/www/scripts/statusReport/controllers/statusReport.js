@@ -315,7 +315,7 @@ angular.module("faradayApp")
             }
             else {
                 $scope.columnsWidths = {
-                    "name":             "120",
+                    "name":             "180",
                     "service":          "110",
                     "hostnames":        "130",
                     "target":           "100",
@@ -768,7 +768,7 @@ angular.module("faradayApp")
             });
         }
         var resizeGrid = function() {
-            $scope.gridHeight = getGridHeight('grid', 'right-main', 15);
+            $scope.gridHeight = getGridHeight('grid', 'left-main', 15);
         };
 
         var recalculateLastVisibleColSize = function () {
@@ -1693,6 +1693,7 @@ angular.module("faradayApp")
                   function(d) {
                     $scope.csrf_token = d.data.csrf_token;
                     fileItem.formData.push({'csrf_token': $scope.csrf_token});
+                    fileItem.file.name = fileItem.file.name.replace(/ /g, '_');
                     fileItem.url = '_api/v2/ws/' + $routeParams.wsId + '/vulns/' + $scope.lastClickedVuln._id + '/attachment/';
                     $scope.uploader.uploadAll();
                   }

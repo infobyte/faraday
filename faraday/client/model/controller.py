@@ -1,15 +1,17 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
+from __future__ import absolute_import
+
 import time
 import logging
 import traceback
 import faraday.client.model.common  # this is to make sure the factory is created
 from multiprocessing import Lock
-from Queue import Empty
+from queue import Empty
 from threading import Thread
 
 from faraday.config.configuration import getInstanceConfiguration
@@ -31,15 +33,16 @@ logger = logging.getLogger(__name__)
 class ModelController(Thread):
 
     def __init__(self, mappers_manager, pending_actions):
-        Thread.__init__(self)
+        #Thread.__init__(self)
+        super().__init__()
 
         self.mappers_manager = mappers_manager
 
         # set as daemon
 #        self.setDaemon(True)
+        # sets the flag to stop the thread when it has finished processing
+        self._must_stop = False
 
-        # flag to stop daemon thread
-        self._stop = False
         # locks needed to make model thread-safe
         self._hosts_lock = Lock()
 
@@ -171,7 +174,7 @@ class ModelController(Thread):
         """
         Sets the flag to stop daemon
         """
-        self._stop = True
+        self._must_stop = True
 
     def _dispatchActionWithLock(self, action_callback, *args):
         res = False
@@ -257,11 +260,10 @@ class ModelController(Thread):
         This will make host addition and removal "thread-safe" and will
         avoid locking components that need to interact with the model
         """
-
-        while not self._stop or self.processing:
+        while not self._must_stop or self.processing:
             # check if thread must finish
             # no plugin should be active to stop the controller
-            if self._stop and self.active_plugins_count == 0:
+            if self._must_stop and self.active_plugins_count == 0:
                 break
             # first we check if there is a sync api request
             # or if the model is being saved/sync'ed
@@ -549,3 +551,6 @@ class ModelController(Thread):
                 "Couldn't get vulnerabilities count: assuming it is zero.")
             count = 0
         return count
+
+
+# I'm Py3

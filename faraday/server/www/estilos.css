@@ -6,6 +6,9 @@ html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abb
 .clearfix{display:inline-block}html[xmlns] .clearfix{display:block}* html .clearfix{height:1%}
 /**/
 html#no-overflow{overflow-x:hidden;}
+html{
+    zoom: 0.8;
+}
 body {
     font-family: "Open Sans" !important;
     color: #2D2F31;
@@ -57,6 +60,12 @@ p {margin-bottom: 1em;}
         .uncuarto {width: 200px;}
         .unquinto {width: 85px;}
         .unsexto {width: 85px;}
+.head{
+    background-color: #00a8e1;
+    width: 50px;
+    border-radius: 10px;
+    margin-bottom: 5px;
+}
 
 header.head {
     margin-top: 9px;
@@ -64,7 +73,7 @@ header.head {
     text-align: left;
     position: fixed;
     z-index:1000;
-    background-color: #de4456;
+    background-color: #00a8e1;
 }
     header.head .logo {
         margin: 7px 12px;
@@ -96,7 +105,7 @@ header.head {
                     -webkit-transition: all .3s ease;
             }
                 header.head nav .menu li a.activo, header.head nav .menu li a:hover {
-                    background: #DF3936;
+                    background: #00a8e1;
                 }
 
 .left-nav {
@@ -142,7 +151,7 @@ header.head {
             height: 72px;
             text-align: left;
             z-index:1000;
-            background-color: #de4456;
+            background-color: #00a8e1;
             padding: 12px;
             display: flex;
             justify-content: center;
@@ -176,6 +185,29 @@ header.head {
     -moz-border-radius-topleft: 10px;
     border-top-left-radius: 10px;
 }
+
+.left-main {
+    position: absolute;
+    top: 0px;
+    border-top: 3px solid #464646;
+    right: 0;
+    bottom: 0;
+    background-color: #F4F3F4;
+    -webkit-border-top-left-radius: 10px;
+    -moz-border-radius-topleft: 10px;
+    border-top-left-radius: 10px;
+}
+
+.left-main-without-pagination {
+    top: 0px;
+    right: 0;
+    bottom: 0;
+    background-color: #F4F3F4;
+    -webkit-border-top-left-radius: 10px;
+    -moz-border-radius-topleft: 10px;
+    border-top-left-radius: 10px;
+}
+
 .seccion {
     padding: 0px;
     width: 100%;
@@ -887,7 +919,7 @@ span.input-group-addon.button-radius{
 .centrado {
   position: absolute;
   width: 300px;
-  background: #dd3b3c;
+  background: #00a8e1;
   left: 50%;
   margin-left: -150px;
   top: 150px;
@@ -1340,4 +1372,25 @@ cursor: pointer !important;
 
 .visible-overflow {
     overflow-y: visible !important;
+}
+.navigation-active{
+    border-bottom: 1px solid #00a8e1 !important;
+}
+a {
+    text-decoration: none !important;
+}
+.background-blue{
+    background-color: #00a8e1 !important;
+    border-color: #00a8e1 !important;
+    color: white !important;
+}
+.col-s-1{
+    padding-right: 15px;
+}
+.ui-grid-row:nth-child(odd):hover .ui-grid-cell{background:#ecebea}
+.ui-grid-row:nth-child(even):hover .ui-grid-cell{background:#ecebea}
+
+.change-padding-to-margin {
+    padding-bottom: 0px !important;
+    margin-bottom: 15px;
 }

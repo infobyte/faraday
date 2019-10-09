@@ -4,6 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 from functools import partial
 
 import pytest
@@ -897,3 +899,6 @@ class TestMapperManager():
         if obj_class not in [Command]:
             metadata = serialized_obj.pop('metadata')
         assert serialized_obj == test_data['serialized_expected_results']
+
+
+# I'm Py3

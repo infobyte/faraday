@@ -5,6 +5,8 @@ Revises: 0d216660da28
 Create Date: 2019-05-14 18:12:52.724079+00:00
 
 """
+from __future__ import absolute_import
+
 from alembic import op
 import sqlalchemy as sa
 
@@ -25,3 +27,6 @@ def upgrade():
 def downgrade():
     conn = op.get_bind()
     conn.execute('ALTER TABLE executive_report DROP COLUMN filter')
+
+
+# I'm Py3

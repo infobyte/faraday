@@ -4,6 +4,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
 
 try:
     from lxml import etree as ET
@@ -29,3 +30,6 @@ def parse_element_from_xml(tag_name):
     default_element = tree.find(tag_name).text
 
     return default_element
+
+
+# I'm Py3

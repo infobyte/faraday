@@ -2,24 +2,16 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 import logging
-
 import os
 import string
 import datetime
-from future.builtins import range # __future__
 from itsdangerous import TimedJSONWebSignatureSerializer, SignatureExpired, BadSignature
 from os.path import join, expanduser
 from random import SystemRandom
 
 from faraday.server.config import LOCAL_CONFIG_FILE, copy_default_config_to_local
 from faraday.server.models import User
-
-try:
-    # py2.7
-    from faraday.client.configparser import ConfigParser, NoSectionError, NoOptionError, DuplicateSectionError
-except ImportError:
-    # py3
-    from ConfigParser import ConfigParser, NoSectionError, NoOptionError, DuplicateSectionError
+from configparser import ConfigParser, NoSectionError, NoOptionError, DuplicateSectionError
 
 import flask
 from flask import Flask, session, g
@@ -35,6 +27,10 @@ from flask_security.utils import (
     get_message,
     verify_and_update_password,
     verify_hash)
+from flask_kvsession import KVSessionExtension
+from simplekv.fs import FilesystemStore
+from simplekv.decorator import PrefixDecorator
+from flask_login import user_logged_out
 from nplusone.ext.flask_sqlalchemy import NPlusOne
 from depot.manager import DepotManager
 
@@ -42,12 +38,14 @@ import faraday.server.config
 # Load SQLAlchemy Events
 import faraday.server.events
 from faraday.server.utils.logger import LOGGING_HANDLERS
+from faraday.config.constant import CONST_FARADAY_HOME_PATH
+
 
 logger = logging.getLogger(__name__)
 
 
 def setup_storage_path():
-    default_path = join(expanduser("~"), '.faraday/storage')
+    default_path = join(CONST_FARADAY_HOME_PATH, 'storage')
     if not os.path.exists(default_path):
         logger.info('Creating directory {0}'.format(default_path))
         os.mkdir(default_path)
@@ -189,6 +187,10 @@ def register_handlers(app):
                 flask.abort(401)  # 403 would be better but breaks the web ui
                 return
 
+    @app.before_request
+    def load_g_custom_fields():
+        g.custom_fields = {}
+
     @app.after_request
     def log_queries_count(response):
         if flask.request.method not in ['GET', 'HEAD']:
@@ -234,6 +236,12 @@ def save_new_agent_creation_token():
     with open(LOCAL_CONFIG_FILE, 'w') as configfile:
         config.write(configfile)
     faraday.server.config.faraday_server.agent_token = agent_token
+
+
+def expire_session(app, user):
+    logger.debug("Cleanup sessions")
+    session.destroy()
+    KVSessionExtension(app=app).cleanup_sessions(app)
 
 
 def create_app(db_connection_string=None, testing=None):
@@ -293,9 +301,14 @@ def create_app(db_connection_string=None, testing=None):
         'PERMANENT_SESSION_LIFETIME': datetime.timedelta(hours=12),
     })
 
+    store = FilesystemStore(app.config['SESSION_FILE_DIR'])
+    prefixed_store = PrefixDecorator('sessions_', store)
+    KVSessionExtension(prefixed_store, app)
+    user_logged_out.connect(expire_session, app)
+
     storage_path = faraday.server.config.storage.path
     if not storage_path:
-        logger.warn('No storage section or path in the .faraday/server.ini. Setting the default value to .faraday/storage')
+        logger.warn('No storage section or path in the .faraday/config/server.ini. Setting the default value to .faraday/storage')
         storage_path = setup_storage_path()
 
     if not DepotManager.get('default'):
@@ -388,3 +401,4 @@ class CustomLoginForm(LoginForm):
             self.email.errors.append(get_message('DISABLED_ACCOUNT')[0])
             return False
         return True
+# I'm Py3

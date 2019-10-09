@@ -1,0 +1,35 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-light" style="margin-top: 20px; margin-bottom: 0px;" ng-if="showNavigation()">
+    <div class="collapse navbar-collapse">
+        <ul class="navbar-nav mr-auto">
+        <li class="nav-item">
+            <a href="#/dashboard/ws/{{workspace}}" class="ws-dashboard"  ng-class="{'navigation-active' : component == 'dashboard'}" style="color: black !important; font-weight: bold; font-size: 15px;">
+                DASHBOARD
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#/status/ws/{{workspace}}" class="status-report" ng-class="{'navigation-active' : component == 'status' || component == 'hosts' || component == 'credentials' || component =='taskgroup' || component =='host'}" style="color: black !important; font-weight: bold; font-size: 15px;">
+                MANAGE
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#/executive" class="executive-report" ng-class="{'navigation-active' : component == 'executive' || component == 'comparison' || component == 'data_analysis'}" style="color: black !important; font-weight: bold; font-size: 15px;">
+                INSIGHT
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#/scheduling" class="executive-report" ng-class="{'navigation-active' : component == 'scheduling' || component == 'vulndb'}" style="color: black !important; font-weight: bold; font-size: 15px;">
+                OPERATIONS
+            </a>
+        </li>
+        <!--<li class="nav-item">
+            <a href="#/taskgroup" class="executive-report" ng-class="{'navigation-active' : component == 'taskgroup'}" style="color: black !important; font-weight: bold; font-size: 15px;">
+                TASKS
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#/vulndb" class="status-report" ng-class="{'navigation-active' : component == 'vulndb'}" style="color: black !important; font-weight: bold; font-size: 15px;">
+                KB
+            </a>
+        </li>-->
+    </div>
+</nav>

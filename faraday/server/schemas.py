@@ -1,12 +1,13 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
 import time
 import json
 import datetime
+from flask import g
 from marshmallow import fields, Schema
 from marshmallow.exceptions import ValidationError
 from dateutil.tz import tzutc
@@ -34,7 +35,6 @@ class JSTimestampField(fields.Integer):
 class FaradayCustomField(fields.Field):
     def __init__(self, table_name='vulnerability', *args, **kwargs):
         self.table_name = table_name
-        self.custom_fields = None
         super(FaradayCustomField, self).__init__(*args, **kwargs)
 
     def _serialize(self, value, attr, obj, **kwargs):
@@ -42,20 +42,29 @@ class FaradayCustomField(fields.Field):
             value = {}
         res = {}
 
-        # Try to use self.custom_fields to avoid duplicating the query
-        custom_fields = self.custom_fields or db.session.query(
-                CustomFieldsSchema).filter_by(table_name=self.table_name)
+        try:
+            custom_fields = g.custom_fields[self.table_name]
+        except KeyError:
+            custom_fields = db.session.query(CustomFieldsSchema).filter_by(
+                    table_name=self.table_name).all()
+            g.custom_fields[self.table_name] = custom_fields
+        except AttributeError:
+            custom_fields = db.session.query(CustomFieldsSchema).filter_by(
+                table_name=self.table_name).all()
 
         for custom_field in custom_fields:
             serialized_value = value.get(custom_field.field_name)
-            res[custom_field.field_name] = serialized_value
+            if type(serialized_value) == list:
+                res[custom_field.field_name] = [element['value'] if type(element) == dict else element for element in serialized_value]
+            else:
+                res[custom_field.field_name] = serialized_value
 
         return res
 
     def _deserialize(self, value, attr, data, **kwargs):
         serialized = {}
         if value is not None and value:
-            for key, raw_data in value.iteritems():
+            for key, raw_data in value.items():
                 if not raw_data:
                     continue
                 field_schema = db.session.query(CustomFieldsSchema).filter_by(
@@ -268,3 +277,4 @@ class StrictDateTimeField(fields.DateTime):
                 date.astimezone(tzutc())
             date = date.replace(tzinfo=None)
         return date
+# I'm Py3

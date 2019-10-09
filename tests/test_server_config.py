@@ -4,6 +4,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
 import random
 import string
 import mock
@@ -79,3 +80,6 @@ def isPEP440(arg):
 
 def test_exists_and_content():
     assert isPEP440(__version__)
+
+
+# I'm Py3

@@ -4,6 +4,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
 import time
 import operator
 from io import BytesIO
@@ -22,7 +23,7 @@ from hypothesis import given, assume, settings, strategies as st
 import pytest
 
 from tests import factories
-from test_api_workspaced_base import (
+from tests.test_api_workspaced_base import (
     API_PREFIX,
     ReadWriteAPITests,
     PaginationTestsMixin,
@@ -390,7 +391,7 @@ class TestHostAPI:
 
         res = test_client.get(self.url())
         assert res.status_code == 200
-        json_host = filter(lambda json_host: json_host['value']['id'] == host.id, res.json['rows'])[0]
+        json_host = list(filter(lambda json_host: json_host['value']['id'] == host.id, res.json['rows']))[0]
         # the host has one vuln associated. another one via service.
         assert json_host['value']['vulns'] == 2
 
@@ -520,10 +521,10 @@ class TestHostAPI:
         session.add(ws)
         session.commit()
         expected_created_hosts = 2
-        file_contents = """ip, description, os, hostnames\n
-        10.10.10.10, test_host, linux, \"['localhost', 'test_host']\"\n
-        10.10.10.11, test_host, linux, \"['localhost', 'test_host_1']\"
-        """
+        file_contents = b"""ip,description,os,hostnames\n
+10.10.10.10,test_host,linux,\"['localhost','test_host']\"\n
+10.10.10.11,test_host,linux,\"['localhost','test_host_1']"
+"""
         data = {
             'file': (BytesIO(file_contents), 'hosts.csv'),
             'csrf_token': csrf_token
@@ -533,6 +534,7 @@ class TestHostAPI:
                                data=data, headers=headers, use_json_data=False)
         assert res.status_code == 200
         assert res.json['hosts_created'] == expected_created_hosts
+        assert res.json['hosts_with_errors'] == 0
         assert session.query(Host).filter_by(description="test_host").count() == expected_created_hosts
 
 
@@ -772,3 +774,6 @@ def test_hypothesis(host_with_hostnames, test_client, session):
         assert res.status_code in [201, 400, 409]
 
     send_api_request()
+
+
+# I'm Py3

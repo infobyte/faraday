@@ -1,6 +1,7 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+from functools import reduce
 
 import operator
 from sqlalchemy import distinct, Boolean
@@ -35,7 +36,7 @@ def sort_results(query, field_to_col_map, order_field, order_dir, default=None):
         # Apply the proper sqlalchemy function for sorting direction over every
         # column declared on field_to_col_map[order_field]
         dir_func = asc if order_dir == ORDER_DIRECTIONS.ASCENDING else desc
-        order_cols = map(dir_func, order_cols)
+        order_cols = list(map(dir_func, order_cols))
     else:
         # Use default ordering if declared if any parameter didn't met the requirements
         order_cols = [default] if default is not None else None
@@ -79,7 +80,7 @@ def apply_search_filter(query, field_to_col_map, free_text_search=None, field_fi
             # currently we are not supporting searches on this
             # kind of fields since they are usually referred to
             # query built values (like counts)
-            if isinstance(column, basestring):
+            if isinstance(column, str):
                 continue
 
             # Prepare a SQL search term according to the columns type.
@@ -253,12 +254,12 @@ def get_unique_fields(session, instance):
 def get_conflict_object(session, obj, data, workspace=None):
     unique_fields_gen = get_unique_fields(session, obj)
     for unique_fields in unique_fields_gen:
-        relations_fields = filter(
+        relations_fields = list(filter(
             lambda unique_field: unique_field.endswith('_id'),
-            unique_fields)
-        unique_fields = filter(
+            unique_fields))
+        unique_fields = list(filter(
             lambda unique_field: not unique_field.endswith('_id'),
-            unique_fields)
+            unique_fields))
 
         if get_object_type_for(obj) == 'vulnerability':
             # This is a special key due to model inheritance
@@ -316,3 +317,4 @@ def is_unique_constraint_violation(exception):
         return True
     assert isinstance(exception.orig.pgcode, str)
     return exception.orig.pgcode == UNIQUE_VIOLATION
+# I'm Py3

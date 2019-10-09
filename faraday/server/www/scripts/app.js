@@ -227,7 +227,7 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
                 }
             }
         }).
-        when('/status/ws/:wsId/search/:search', {
+        when('/status/ws/:wsId/search/:search*\/', {
             templateUrl: 'scripts/statusReport/partials/statusReport.html',
             controller: 'statusReportCtrl',
             title: 'Status Report | ',
@@ -289,6 +289,16 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             templateUrl: 'scripts/commons/partials/commercial.html',
             controller: 'commercialCtrl',
             title: 'Executive Report | '
+        }).
+        when('/workflows', {
+            templateUrl: 'scripts/commons/partials/commercial.html',
+            controller: 'commercialCtrl',
+            title: 'Workflows | '
+        }).
+        when('/scheduling', {
+            templateUrl: 'scripts/commons/partials/commercial.html',
+            controller: 'commercialCtrl',
+            title: 'Scheduling | '
         }).
         when('/login', {
             templateUrl: 'scripts/auth/partials/login.html',

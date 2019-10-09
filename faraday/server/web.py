@@ -1,7 +1,6 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-
 import os
 import sys
 import functools
@@ -36,8 +35,7 @@ app = create_app()  # creates a Flask(__name__) app
 logger = logging.getLogger(__name__)
 
 
-
-class CleanHttpHeadersResource(Resource, object):
+class CleanHttpHeadersResource(Resource):
     def render(self, request):
         request.responseHeaders.removeHeader('Server')
         return super(CleanHttpHeadersResource, self).render(request)
@@ -56,21 +54,21 @@ class FileWithoutDirectoryListing(File, CleanHttpHeadersResource):
         return ret
 
 
-class FaradayWSGIResource(WSGIResource, object):
+class FaradayWSGIResource(WSGIResource):
     def render(self, request):
         request.responseHeaders.removeHeader('Server')
         return super(FaradayWSGIResource, self).render(request)
 
 
-class FaradayRedirectResource(Redirect, object):
+class FaradayRedirectResource(Redirect):
     def render(self, request):
         request.responseHeaders.removeHeader('Server')
         return super(FaradayRedirectResource, self).render(request)
 
 
-class WebServer(object):
-    UI_URL_PATH = '_ui'
-    API_URL_PATH = '_api'
+class WebServer:
+    UI_URL_PATH = b'_ui'
+    API_URL_PATH = b'_api'
     WEB_UI_LOCAL_PATH = os.path.join(faraday.server.config.FARADAY_BASE, 'server/www')
 
     def __init__(self, enable_ssl=False):
@@ -94,7 +92,7 @@ class WebServer(object):
         certs = (faraday.server.config.ssl.keyfile, faraday.server.config.ssl.certificate)
         if not all(certs):
             logger.critical("HTTPS request but SSL certificates are not configured")
-            exit(1) # Abort web-server startup
+            sys.exit(1) # Abort web-server startup
         return ssl.DefaultOpenSSLContextFactory(*certs)
 
     def __build_server_tree(self):
@@ -141,7 +139,8 @@ class WebServer(object):
             logger.info('Received SIGTERM, shutting down.')
             logger.info("Stopping threads, please wait...")
             # teardown()
-            self.raw_report_processor.stop()
+            if self.raw_report_processor.isAlive():
+                self.raw_report_processor.stop()
             self.timer.stop()
 
         log_path = os.path.join(CONST_FARADAY_HOME_PATH, 'logs', 'access-logging.log')
@@ -198,3 +197,4 @@ class WebServer(object):
             logger.error('Something went wrong when trying to setup the Web UI')
             logger.exception(e)
             sys.exit(1)
+# I'm Py3

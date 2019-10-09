@@ -1,15 +1,16 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+from builtins import str
+
 import os
-import re
 import io
-import csv
 import json
 import logging
-import cStringIO
 from base64 import b64encode, b64decode
-
+import csv
+import re
+from io import StringIO, BytesIO
 
 import flask
 import wtforms
@@ -17,7 +18,7 @@ from filteralchemy import Filter, FilterSet, operators
 from flask import request, send_file
 from flask import Blueprint
 from flask_classful import route
-from flask_restless.search import search
+from flask_restless.search import search, Filter as RestlessFilter
 from flask_wtf.csrf import validate_csrf
 from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
@@ -303,7 +304,7 @@ class StatusCodeFilter(Filter):
 
 class TargetFilter(Filter):
     def filter(self, query, model, attr, value):
-        return query.filter(model.target_host_ip.ilike("%" + value + "%"))
+        return query.filter(model.target_host_ip == value)
 
 
 class TypeFilter(Filter):
@@ -459,14 +460,6 @@ class VulnerabilityView(PaginatedMixin,
     def _get_schema_instance(self, route_kwargs, **kwargs):
         schema = super(VulnerabilityView, self)._get_schema_instance(
             route_kwargs, **kwargs)
-
-        # This is an optimization to avoid to do many repeated SQL queries.
-        # If you delete this, the vuln templates endpoint will work the same
-        # way, but it will be much slower
-        custom_fields = CustomFieldsSchema.query.filter_by(
-                # use the same table as in the schema
-                table_name='vulnerability').all()
-        schema.fields['custom_fields'].custom_fields = custom_fields
 
         return schema
 
@@ -656,17 +649,49 @@ class VulnerabilityView(PaginatedMixin,
         filters = request.args.get('q')
         return self._envelope_list(self._filter(filters, workspace_name))
 
+    def _hostname_filters(self, filters):
+        res_filters = []
+        hostname_filters = []
+        for search_filter in filters:
+            if 'or' not in search_filter and 'and' not in search_filter:
+                fieldname = search_filter.get('name')
+                operator = search_filter.get('op')
+                argument = search_filter.get('val')
+                otherfield = search_filter.get('field')
+                field_filter = {
+                    "name": fieldname,
+                    "op": operator,
+                    "val": argument,
+
+                }
+                if otherfield:
+                    field_filter.update({"field": otherfield})
+                if fieldname == 'hostnames':
+                    hostname_filters.append(field_filter)
+                else:
+                    res_filters.append(field_filter)
+            elif 'or' in search_filter:
+                or_filters, deep_hostname_filters = self._hostname_filters(search_filter['or'])
+                if or_filters:
+                    res_filters.append({"or": or_filters})
+                hostname_filters += deep_hostname_filters
+            elif 'and' in search_filter:
+                and_filters, deep_hostname_filters = self._hostname_filters(search_filter['and'])
+                if and_filters:
+                    res_filters.append({"and": and_filters})
+                hostname_filters += deep_hostname_filters
+
+        return res_filters, hostname_filters
+
     def _filter(self, filters, workspace_name, confirmed=False):
         try:
             filters = json.loads(filters)
-            hostname_filters = [hostname_filter for hostname_filter in filters.get('filters', [])
-                                if hostname_filter['name'] == 'hostnames']
-            filters['filters'] = [vuln_filter for vuln_filter in filters.get('filters', [])
-                                  if hostname_filter['name'] != 'hostnames']
+            filters, hostname_filters = self._hostname_filters(filters.get('filters', []))
         except ValueError as ex:
             flask.abort(400, "Invalid filters")
         if confirmed:
             if 'filters' not in filters:
+                filters = {}
                 filters['filters'] = []
             filters['filters'].append({
                 "name": "confirmed",
@@ -679,7 +704,7 @@ class VulnerabilityView(PaginatedMixin,
         try:
             normal_vulns = search(db.session,
                                   Vulnerability,
-                                  filters)
+                                  {'filters': filters})
             normal_vulns = normal_vulns.filter_by(workspace_id=workspace.id)
             if hostname_filters:
                 or_filters = []
@@ -696,7 +721,7 @@ class VulnerabilityView(PaginatedMixin,
         try:
             web_vulns = search(db.session,
                            VulnerabilityWeb,
-                           filters)
+                           {'filters': filters})
             web_vulns = web_vulns.filter_by(workspace_id=workspace.id)
             if hostname_filters:
                 or_filters = []
@@ -787,13 +812,13 @@ class VulnerabilityView(PaginatedMixin,
         confirmed = bool(request.args.get('confirmed'))
         filters = request.args.get('q') or '{}'
         workspace = self._get_workspace(workspace_name)
-        memory_file = cStringIO.StringIO()
+        buffer = StringIO()
         custom_fields_columns = []
         for custom_field in db.session.query(CustomFieldsSchema).order_by(CustomFieldsSchema.field_order):
             custom_fields_columns.append(custom_field.field_name)
         headers = ["confirmed", "id", "date", "name", "severity", "service", "target", "desc", "status", "hostnames"]
         headers += custom_fields_columns
-        writer = csv.DictWriter(memory_file, fieldnames=headers)
+        writer = csv.DictWriter(buffer, fieldnames=headers)
         writer.writeheader()
         vulns_query = self._filter(filters, workspace_name, confirmed)
         for vuln in vulns_query:
@@ -801,12 +826,11 @@ class VulnerabilityView(PaginatedMixin,
             vuln_date = vuln['metadata']['create_time']
             if vuln['service']:
                 service_fields = ["status", "protocol", "name", "summary", "version", "ports"]
-                service_fields_values = map(lambda field: "%s:%s" % (field, vuln['service'][field]), service_fields)
+                service_fields_values = ["%s:%s" % (field, vuln['service'][field]) for field in service_fields]
                 vuln_service = " - ".join(service_fields_values)
             else:
                 vuln_service = ""
-
-            if all(isinstance(hostname, (str, unicode)) for hostname in vuln['hostnames']):
+            if all(isinstance(hostname, str) for hostname in vuln['hostnames']):
                 vuln_hostnames = vuln['hostnames']
             else:
                 vuln_hostnames = [str(hostname['name']) for hostname in vuln['hostnames']]
@@ -819,6 +843,8 @@ class VulnerabilityView(PaginatedMixin,
                     if field_name in custom_fields_columns:
                         vuln_dict.update({field_name: value})
             writer.writerow(vuln_dict)
+        memory_file = BytesIO()
+        memory_file.write(buffer.getvalue().encode('utf-8'))
         memory_file.seek(0)
         return send_file(memory_file,
                          attachment_filename="Faraday-SR-%s.csv" % workspace_name,
@@ -826,3 +852,5 @@ class VulnerabilityView(PaginatedMixin,
                          cache_timeout=-1)
 
 VulnerabilityView.register(vulns_api)
+
+# I'm Py3

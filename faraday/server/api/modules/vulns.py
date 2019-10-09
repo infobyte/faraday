@@ -304,7 +304,7 @@ class StatusCodeFilter(Filter):
 
 class TargetFilter(Filter):
     def filter(self, query, model, attr, value):
-        return query.filter(model.target_host_ip.ilike("%" + value + "%"))
+        return query.filter(model.target_host_ip == value)
 
 
 class TypeFilter(Filter):

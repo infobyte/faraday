@@ -163,6 +163,7 @@ class ReportHost:
             #self.host_start = datetime.strptime(self.get('HOST_START'), HOST_DATE_FORMAT)
         else:
             self.dead = True
+            self.host_start = None
         self.host_end = self.get('HOST_END')
         #self.host_end = datetime.strptime(self.get('HOST_END'), HOST_DATE_FORMAT)
 

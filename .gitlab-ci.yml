@@ -55,26 +55,6 @@ merge_conflict_check:
         - git config --global user.email "you@example.com"
         - git config --global user.name "Mergerbot"
         - python3 merge-conflict-detector.py
-    only:
-        variables:
-            - $FULL_DOC
-            - $DOC
-            - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/
-
-
-merge_conflict_check3:
-    tags:
-        - faradaytests
-    image: python:3
-    stage: pre_testing
-    allow_failure: true
-    script:
-        - git config --global user.email "you@example.com"
-        - git config --global user.name "Mergerbot"
-        - python3 merge-conflict-detector3.py
-    except:
-        variables:
-            - $BUILD_TEST
 
 pylint:
     tags:
@@ -259,6 +239,7 @@ generate_deb:
         - git clone https://github.com/jordansissel/fpm.git
         - cd fpm
         - git apply ../fpm-patchs/fpm.python3.patch
+        - git apply ../fpm-patchs/fpm.virtualenv_compile.patch
         - make gem
         - gem install --no-ri --no-rdoc fpm-1.11.0.gem
         - cd ../../
@@ -284,8 +265,9 @@ generate_deb:
 
 generate_rpm:
     stage: build
-    image: centos
+    image: centos:7
     before_script:
+        - yum -y upgrade
         - yum -y install which
         - yum -y install epel-release
         - 'which ssh-agent || (yum -y update && yum -y install openssh-clients)'
@@ -312,6 +294,7 @@ generate_rpm:
         - git clone https://github.com/jordansissel/fpm.git
         - cd fpm
         - git apply ../fpm-patchs/fpm.python3.patch
+        - git apply ../fpm-patchs/fpm.virtualenv_compile.patch
         - make gem
         - gem install --no-ri --no-rdoc fpm-1.11.0.gem
         - cd ../../

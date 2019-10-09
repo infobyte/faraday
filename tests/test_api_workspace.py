@@ -236,5 +236,14 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         active_query = session.query(Workspace).filter_by(id=workspace.id).first().active
         assert active_query == False
 
+    def test_create_fails_with_start_date_greater_than_end_date(self,
+                                                           session,
+                                                           test_client):
+        workspace_count_previous = session.query(Workspace).count()
+        duration = {'start_date': 1563638577, 'end_date': 1563538577}
+        raw_data = {'name': 'somethingdarkside', 'duration': duration}
+        res = test_client.post('/v2/ws/', data=raw_data)
+        assert res.status_code == 400
+        assert workspace_count_previous == session.query(Workspace).count()
 
 # I'm Py3

@@ -92,7 +92,7 @@ class WebServer:
         certs = (faraday.server.config.ssl.keyfile, faraday.server.config.ssl.certificate)
         if not all(certs):
             logger.critical("HTTPS request but SSL certificates are not configured")
-            exit(1) # Abort web-server startup
+            sys.exit(1) # Abort web-server startup
         return ssl.DefaultOpenSSLContextFactory(*certs)
 
     def __build_server_tree(self):

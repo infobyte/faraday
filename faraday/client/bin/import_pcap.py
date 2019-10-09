@@ -6,19 +6,31 @@ Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 """
-from __future__ import absolute_import
-from __future__ import print_function
-
 import os
 
 from faraday.client.model.common import factory
 from faraday.client.persistence.server import models
+
+PCAP_IMPORTED = False
+
+try:
+    from pcapfile import savefile
+    import pcapfile
+    PCAP_IMPORTED = True
+except ImportError:
+    pass
+
 
 __description__ = 'Import every host found in a PCAP file for further scanning'
 __prettyname__ = 'Import PCAP'
 
 
 def main(workspace='', args=None, parser=None):
+
+    if not PCAP_IMPORTED:
+        print('capfile not found, please install it to use this plugin.'
+              ' You can do it executing pip2 install pcapfile in a shell.')
+        return 1, None
 
     parser.add_argument('-s', '--source', nargs='*', help='Filter packets by source')
     parser.add_argument('-d', '--dest', nargs='*', help='Filter packets by destination')
@@ -29,14 +41,6 @@ def main(workspace='', args=None, parser=None):
     parser.add_argument('pcap', help='Path to the PCAP file')
 
     parsed_args = parser.parse_args(args)
-
-    try:
-        from pcapfile import savefile
-        import pcapfile
-    except ImportError:
-        print('capfile not found, please install it to use this plugin.' \
-              ' You can do it executing pip2 install pcapfile in a shell.')
-        return 1, None
 
     if not os.path.isfile(parsed_args.pcap):
         print("pcap file not found: " % parsed_args.pcap)

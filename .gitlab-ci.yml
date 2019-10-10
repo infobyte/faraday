@@ -125,7 +125,7 @@ postgresql_test:
         - pip install --upgrade -r requirements_dev.txt
         - mkdir -p ~/.faraday/config
         - cp tests/data/server.ini ~/.faraday/config
-        #- sed -i 's/mapped_table/persist_selectable/' faraday_venv/lib/python2.7/site-packages/flask_sqlalchemy/__init__.py  # TODO remove when flask_sqlalchemy fixes the issue
+        #- sed -i 's/mapped_table/persist_selectable/' faraday_venv/lib/python3/site-packages/flask_sqlalchemy/__init__.py  # TODO remove when flask_sqlalchemy fixes the issue
         - mkdir run_from
         - cd run_from && pytest ../tests -v --capture=sys --cov=../faraday/server --color=yes --disable-warnings --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB
     artifacts:
@@ -434,7 +434,7 @@ test_hypothesis:
         - pip install --upgrade -r requirements_dev.txt
         - mkdir -p ~/.faraday/config
         - cp tests/data/server.ini ~/.faraday/config
-        #- sed -i 's/mapped_table/persist_selectable/' faraday_venv/lib/python2.7/site-packages/flask_sqlalchemy/__init__.py  # TODO remove when flask_sqlalchemy fixes the issue
+        #- sed -i 's/mapped_table/persist_selectable/' faraday_venv/lib/python3/site-packages/flask_sqlalchemy/__init__.py  # TODO remove when flask_sqlalchemy fixes the issue
         - pytest tests -v --cov=faraday/server/api --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB -m hypothesis
     only:
         variables:

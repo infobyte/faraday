@@ -28,7 +28,7 @@ from faraday.client.start_client import (  # TODO load this from other place
 )
 from faraday.server.utils.database import is_unique_constraint_violation
 
-from configparser import ConfigParser, NoSectionError, NoOptionError
+from configparser import ConfigParser, NoSectionError
 
 from flask import current_app
 from colorama import init

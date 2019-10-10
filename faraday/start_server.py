@@ -20,7 +20,6 @@ try:
     from faraday.server.utils import daemonize
     from faraday.server.web import app
     from faraday.utils import dependencies
-    from faraday.utils.user_input import query_yes_no
     from faraday.server.config import FARADAY_BASE
     from alembic.script import ScriptDirectory
     from alembic.config import Config

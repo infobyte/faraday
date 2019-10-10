@@ -189,8 +189,8 @@ function peg$parse(input, options) {
                  val: processValue(name, null, mandatory += optional.join(""))
              }
         },
-      peg$c30 = /^[a-zA-Z0-9_.\-]/,
-      peg$c31 = peg$classExpectation([["a", "z"], ["A", "Z"], ["0", "9"], "_", ".", "-"], false, false),
+      peg$c30 = /^[a-zA-Z0-9_.-\/]/,
+      peg$c31 = peg$classExpectation([["a", "z"], ["A", "Z"], ["0", "9"], "_", [".", "/"]], false, false),
       peg$c32 = function(token) { return token.join(""); },
       peg$c33 = /^[ \t]/,
       peg$c34 = peg$classExpectation([" ", "\t"], false, false),

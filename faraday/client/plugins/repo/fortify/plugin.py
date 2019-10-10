@@ -1,7 +1,7 @@
 import base64
 import io
 import re
-from HTMLParser import HTMLParser
+from html.parser import HTMLParser
 from zipfile import ZipFile
 
 import html2text
@@ -149,7 +149,7 @@ class FortifyParser:
             self.vulns[vulnID]['severity'] = self.calculate_severity(vuln)
 
             # placeholder for storing hosts ids when created in main plugin method
-            if path not in self.hosts.keys():
+            if path not in self.hosts:
                 self.hosts[path] = None
 
             if vuln.ClassInfo.ClassID not in self.vuln_classes:
@@ -301,7 +301,7 @@ class FortifyParser:
                     if group.get('name') == "Accuracy":
                         accuracy = group
 
-        likelihood = (accuracy * vuln.InstanceInfo.Confidence * probability) / 25
+        likelihood = (accuracy * vuln.InstanceInfo.Confidence * probability) / 25.0
 
         if impact and probability:
 
@@ -415,4 +415,4 @@ if __name__ == '__main__':
             print(fp.vulns[vulnID]['replacements'])
             print("{}{}{}".format("="*50, vulnID, "="*50))
             print(fp.format_description(vulnID))
-            print("{}|{}|{}").format(vulnID, fp.vulns[vulnID].get('name'), fp.vulns[vulnID].get('severity'))
+            print("{}|{}|{}".format(vulnID, fp.vulns[vulnID].get('name'), fp.vulns[vulnID].get('severity')))

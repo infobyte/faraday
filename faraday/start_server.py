@@ -83,7 +83,7 @@ def restart_server(args_port):
         sys.exit(1)
     for port in ports:
         stop_server(port)
-        params = ['/usr/bin/env', 'python2.7',  # TODO que hacemos con esto???
+        params = ['/usr/bin/env', 'python3',  # TODO que hacemos con esto???
             os.path.join(faraday.server.config.FARADAY_BASE, __file__), '--no-setup', '--port', str(port)]
         logger.info('Restarting Faraday Server...')
         subprocess.Popen(params, stdout=devnull, stderr=devnull)
@@ -205,7 +205,7 @@ def main():
         # Starts a new process on background with --ignore-setup
         # and without --start nor --stop
         devnull = open('/dev/null', 'w')
-        params = ['/usr/bin/env', 'python2.7', os.path.join(faraday.server.config.FARADAY_BASE, __file__), '--no-setup']
+        params = ['/usr/bin/env', 'python3', os.path.join(faraday.server.config.FARADAY_BASE, __file__), '--no-setup']
         arg_dict = vars(args)
         for arg in arg_dict:
             if arg not in ["start", "stop"] and arg_dict[arg]:

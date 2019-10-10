@@ -15,7 +15,7 @@ import requests
 sys.path.append(os.path.abspath(os.getcwd()))
 from faraday.client.persistence.server import server
 from faraday.client.persistence.server import server_io_exceptions
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 server.FARADAY_UP = False
 server.SERVER_URL = "http://localhost:5985"

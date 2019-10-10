@@ -1,1 +1,0 @@
-Add agents feature for distributed plugin execution

@@ -1,9 +1,11 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
+from __future__ import absolute_import
+
 import imp
 import os
 import sys
@@ -88,3 +90,6 @@ def build_faraday_plugin_command(plugin, workspace_name, absolute_path=False):
         url=CONF.getServerURI(),
         workspace=workspace_name
     )
+
+
+# I'm Py3

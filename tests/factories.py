@@ -4,6 +4,9 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+from builtins import chr, range
+
 import random
 import string
 import factory
@@ -57,7 +60,7 @@ FuzzyEndTime = lambda: (
     )
 )
 
-all_unicode = ''.join(unichr(i) for i in xrange(65536))
+all_unicode = ''.join(chr(i) for i in range(65536))
 UNICODE_LETTERS = ''.join(c for c in all_unicode if unicodedata.category(c) == 'Lu' or unicodedata.category(c) == 'Ll')
 
 
@@ -85,7 +88,7 @@ class UserFactory(FaradayFactory):
 
 class WorkspaceFactory(FaradayFactory):
 
-    name = FuzzyText(chars=string.lowercase+string.digits)
+    name = FuzzyText(chars=string.ascii_lowercase+string.digits)
     creator = factory.SubFactory(UserFactory)
 
     class Meta:
@@ -151,7 +154,7 @@ class ReferenceTemplateFactory(FaradayFactory):
 class ServiceFactory(WorkspaceObjectFactory):
     name = FuzzyText()
     description = FuzzyText()
-    port = FuzzyInteger(1, 2**31)  # Using 2**16 it generates many collisions
+    port = FuzzyInteger(1, 65535)
     protocol = FuzzyChoice(['TCP', 'UDP'])
     host = factory.SubFactory(HostFactory, workspace=factory.SelfAttribute('..workspace'))
     status = FuzzyChoice(Service.STATUSES)
@@ -184,7 +187,7 @@ class VulnerabilityGenericFactory(WorkspaceObjectFactory):
     severity = FuzzyChoice(['critical', 'high'])
 
 
-class HasParentHostOrService(object):
+class HasParentHostOrService:
     """
     Mixins for objects that must have either a host or a service,
     but ont both, as a parent.
@@ -436,3 +439,6 @@ class AgentFactory(WorkspaceObjectFactory):
         sqlalchemy_session = db.session
 
 
+
+
+# I'm Py3

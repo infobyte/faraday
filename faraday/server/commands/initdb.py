@@ -1,9 +1,11 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
+from builtins import input
+
 import getpass
 import shutil
 import string
@@ -12,7 +14,6 @@ import os
 import sys
 import click
 import psycopg2
-from future.builtins import range # __future__
 from random import SystemRandom
 from tempfile import TemporaryFile
 from subprocess import Popen
@@ -27,12 +28,7 @@ from faraday.client.start_client import (  # TODO load this from other place
 )
 from faraday.server.utils.database import is_unique_constraint_violation
 
-try:
-    # py2.7
-    from faraday.client.configparser import ConfigParser, NoSectionError, NoOptionError
-except ImportError:
-    # py3
-    from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+from configparser import ConfigParser, NoSectionError, NoOptionError
 
 from flask import current_app
 from colorama import init
@@ -52,7 +48,7 @@ class InitDB():
             config.get('database', 'connection_string')
             reconfigure = None
             while not reconfigure:
-                reconfigure = raw_input('Database section {yellow} already found{white}. Do you want to reconfigure database? (yes/no) '.format(yellow=Fore.YELLOW, white=Fore.WHITE))
+                reconfigure = input('Database section {yellow} already found{white}. Do you want to reconfigure database? (yes/no) '.format(yellow=Fore.YELLOW, white=Fore.WHITE))
                 if reconfigure.lower() == 'no':
                     return False
                 elif reconfigure.lower() == 'yes':
@@ -82,7 +78,7 @@ class InitDB():
             # current_psql_output is for checking psql command already known errors for each execution.
             psql_log_filename = os.path.join(faraday_path_conf, 'logs', 'psql_log.log')
             current_psql_output = TemporaryFile()
-            with open(psql_log_filename, 'a+') as psql_log_file:
+            with open(psql_log_filename, 'ab+') as psql_log_file:
                 hostname = 'localhost'
                 username, password, process_status = self._configure_new_postgres_user(current_psql_output)
                 current_psql_output.seek(0)
@@ -150,24 +146,24 @@ class InitDB():
             print("{yellow}WARNING{white}: If you are going to execute couchdb importer you must use the couchdb password for faraday user.".format(white=Fore.WHITE, yellow=Fore.YELLOW))
 
     def _save_user_xml(self, random_password):
-        user_xml = os.path.expanduser("~/.faraday/config/user.xml")
+        user_xml = os.path.join(CONST_FARADAY_HOME_PATH, "config", "user.xml")
         if not os.path.exists(user_xml):
             shutil.copy(FARADAY_BASE_CONFIG_XML, user_xml)
         conf = Configuration(user_xml)
         conf.setAPIUrl('http://localhost:5985')
         conf.setAPIUsername('faraday')
         conf.setAPIPassword(random_password)
-        conf.saveConfig()
+        conf.saveConfig(user_xml)
 
     def _configure_existing_postgres_user(self):
-        username = raw_input('Please enter the postgresql username: ')
+        username = input('Please enter the postgresql username: ')
         password = getpass.getpass('Please enter the postgresql password: ')
 
         return username, password
 
     def _check_psql_output(self, current_psql_output_file, process_status):
         current_psql_output_file.seek(0)
-        psql_output = current_psql_output_file.read()
+        psql_output = current_psql_output_file.read().decode('utf-8')
         if 'unknown user: postgres' in psql_output:
             print('ERROR: Postgres user not found. Did you install package {blue}postgresql{white}?'.format(blue=Fore.BLUE, white=Fore.WHITE))
         elif 'could not connect to server' in psql_output:
@@ -201,6 +197,8 @@ class InitDB():
         p.wait()
         psql_log_file.seek(0)
         output = psql_log_file.read()
+        if isinstance(output, bytes):
+            output = output.decode('utf-8')
         already_exists_error = 'role "{0}" already exists'.format(username)
         return_code = p.returncode
         if already_exists_error in output:
@@ -251,7 +249,7 @@ class InitDB():
         p.wait()
         return_code = p.returncode
         psql_log_file.seek(0)
-        output = psql_log_file.read()
+        output = psql_log_file.read().decode('utf-8')
         already_exists_error = 'database creation failed: ERROR:  database "{0}" already exists'.format(database_name)
         if already_exists_error in output:
             print('{yellow}WARNING{white}: Database already exists.'.format(yellow=Fore.YELLOW, white=Fore.WHITE))
@@ -279,13 +277,25 @@ class InitDB():
         print('Creating tables')
         from faraday.server.models import db
         current_app.config['SQLALCHEMY_DATABASE_URI'] = conn_string
+
+        # Check if the alembic_version exists
+        # Taken from https://stackoverflow.com/a/24089729
+        (result,) = list(db.session.execute("select to_regclass('alembic_version')"))
+        exists = result[0] is not None
+
+        if exists:
+            print("Faraday tables already exist in the database. No tables will "
+                  "be created. If you want to ugprade the schema to the latest "
+                  "version, you should run \"faraday-manage migrate\".")
+            return
+
         try:
             db.create_all()
         except OperationalError as ex:
-            if 'could not connect to server' in ex.message:
+            if 'could not connect to server' in str(ex):
                 print('ERROR: {red}PostgreSQL service{white} is not running. Please verify that it is running in port 5432 before executing setup script.'.format(red=Fore.RED, white=Fore.WHITE))
                 sys.exit(1)
-            elif 'password authentication failed' in ex.message:
+            elif 'password authentication failed' in str(ex):
                 print('ERROR: ')
                 sys.exit(1)
             else:
@@ -295,7 +305,7 @@ class InitDB():
             print('Please check postgres user permissions.')
             sys.exit(1)
         except ImportError as ex:
-            if 'psycopg2' in ex:
+            if 'psycopg2' in str(ex):
                 print(
                     'ERROR: Missing python depency {red}psycopg2{white}. Please install it with {blue}pip install psycopg2'.format(red=Fore.RED, white=Fore.WHITE, blue=Fore.BLUE))
                 sys.exit(1)
@@ -307,3 +317,4 @@ class InitDB():
             alembic_cfg = Config(os.path.join(FARADAY_BASE, 'alembic.ini'))
             os.chdir(FARADAY_BASE)
             command.stamp(alembic_cfg, "head")
+# I'm Py3

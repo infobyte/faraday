@@ -1,23 +1,25 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
+from __future__ import absolute_import
+
 import sys
 import traceback
 import threading
 import logging
 try:
     import xmlrpclib
-    import SimpleXMLRPCServer
+    from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 except ImportError:
     from xmlrpc import client as xmlrpclib
-    from xmlrpc.server import SimpleXMLRPCServer
+    from xmlrpc.server import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 
 try:
-    import faraday.client.model.api as api
-except AttributeError:
+    from faraday.client.model import api
+except AttributeError as e:
     import api
 
 from faraday.config.configuration import getInstanceConfiguration
@@ -28,7 +30,7 @@ logger = logging.getLogger(__name__)
 # -------------------------------------------------------------------------------
 # TODO: refactor this class to make it generic so this can be used also for plugins
 #  then create a subclass and inherit the generic factory
-class ModelObjectFactory(object):
+class ModelObjectFactory:
     """
     Factory to creat any ModelObject type
     """
@@ -41,7 +43,7 @@ class ModelObjectFactory(object):
 
     def listModelObjectClasses(self):
         """returns a list of registered classes"""
-        return self._registered_objects.values()
+        return list(self._registered_objects.values())
 
     def getModelObjectClass(self, name):
         """get the class for a particular object typename"""
@@ -49,7 +51,7 @@ class ModelObjectFactory(object):
 
     def listModelObjectTypes(self):
         """returns an array with object typenames the factory is able to create"""
-        names = self._registered_objects.keys()
+        names = list(self._registered_objects.keys())
         names.sort()
         return names
 
@@ -119,10 +121,10 @@ factory = ModelObjectFactory()
 
 # -------------------------------------------------------------------------------
 
-class CustomXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
+class CustomXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
 
     def __init__(self, *args, **kwargs):
-        SimpleXMLRPCServer.SimpleXMLRPCRequestHandler.__init__(self, *args, **kwargs)
+        SimpleXMLRPCRequestHandler.__init__(self, *args, **kwargs)
 
     def handle(self):
         try:
@@ -131,7 +133,7 @@ class CustomXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             api.devlog("[XMLRPCHandler] - client_address = %s" % str(self.client_address))
             api.devlog("[XMLRPCHandler] - server = %s" % str(self.server))
             api.devlog("-" * 60)
-            SimpleXMLRPCServer.SimpleXMLRPCRequestHandler.handle(self)
+            SimpleXMLRPCRequestHandler.handle(self)
         except Exception:
             api.devlog("[XMLRPCHandler] - An error ocurred while handling a request\n%s" % traceback.format_exc())
 
@@ -203,34 +205,33 @@ class CustomXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
 # http://epydoc.sourceforge.net/stdlib/BaseHTTPServer.BaseHTTPRequestHandler-class.html#address_string
 #
 
-class XMLRPCServer(SimpleXMLRPCServer.SimpleXMLRPCServer, threading.Thread):
+class XMLRPCServer(SimpleXMLRPCServer, threading.Thread):
     """
     Stoppable XMLRPC Server with custom dispatch to send over complete traceback
     in case of exception.
     """
     def __init__(self, *args, **kwargs):
         threading.Thread.__init__(self)
-        SimpleXMLRPCServer.SimpleXMLRPCServer.__init__(self,
+        SimpleXMLRPCServer.__init__(self,
                                                        requestHandler=CustomXMLRPCRequestHandler,
                                                        allow_none=True, *args, **kwargs)
-        self._stop = False
+        self._must_stop = False
         # set timeout for handle_request. If we don't the server will hang
         self.timeout = 2
 
     def run(self):
         self.serve_forever()
         api.devlog("serve_forever ended")
-        return
 
     # overloaded method to be able to stop server
     def serve_forever(self):
-        while not self._stop:
+        while not self._must_stop:
             self.handle_request()
         api.devlog("server forever stopped by flag")
 
     def stop_server(self):
         api.devlog("server stopping...")
-        self._stop = True
+        self._must_stop = True
 
     # The default dispatcher does not send across the whole stack trace.
     # Only type and value are passed back. The client has no way of knowing
@@ -331,7 +332,7 @@ class XMLRPCServer(SimpleXMLRPCServer.SimpleXMLRPCServer, threading.Thread):
 
         return response
 
-class XMLRPCKeywordProxy(object):
+class XMLRPCKeywordProxy:
     """
     custom XMLRPC Server Proxy capable of receiving keyword arguments
     when calling remote methods
@@ -345,3 +346,6 @@ class XMLRPCKeywordProxy(object):
         def _call(*args, **kwargs):
             return call_proxy(args, kwargs)
         return _call
+
+
+# I'm Py3

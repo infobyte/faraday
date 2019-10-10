@@ -4,6 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 import pytest
 
 from faraday.server.utils.database import get_unique_fields
@@ -45,8 +47,13 @@ def test_vulnerability_ddl_invariant(session):
     statement = vulnerability_uniqueness.statement
     column_part = statement.split('%(fullname)s')[1]
     statements_clean = column_part.strip().strip(')').strip('(').split(',')
-    statements_clean = map(lambda column: column.replace('COALESCE(', '').replace('md5(', '').strip('('), statements_clean)
-    statements_clean = filter(len, map(lambda column: column.strip("'')").strip('-1').strip('-1));').strip(), statements_clean))
+    statements_clean = [column.replace('COALESCE(', '').replace('md5(', '').strip('(') for column in statements_clean]
+    statements_clean = \
+        list(
+            filter(len,
+                   map(lambda column: column.strip("'')").strip('-1').strip('-1));').strip(), statements_clean)
+                   )
+        )
     statements_clean.remove('source_code_id') # we don't support source_code yet
     unique_constraints = get_unique_fields(session, Vulnerability())
     for unique_constraint in unique_constraints:
@@ -57,9 +64,12 @@ def test_vulnerability_ddl_invariant(session):
                 raise Exception('Please check server.utils.database.get_unique_fields. Vulnerability DDL changed?')
 
 
-@pytest.mark.parametrize("obj_class, expected_unique_fields", sorted(UNIQUE_FIELDS.items()))
+@pytest.mark.parametrize("obj_class, expected_unique_fields", list(UNIQUE_FIELDS.items()))
 def test_unique_fields_workspace(obj_class, expected_unique_fields, session):
     object_ = obj_class()
     unique_constraints = get_unique_fields(session, object_)
     for unique_constraint in unique_constraints:
         assert unique_constraint == expected_unique_fields
+
+
+# I'm Py3

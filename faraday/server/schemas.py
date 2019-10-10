@@ -1,9 +1,9 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
 import time
 import json
 import datetime
@@ -54,14 +54,17 @@ class FaradayCustomField(fields.Field):
 
         for custom_field in custom_fields:
             serialized_value = value.get(custom_field.field_name)
-            res[custom_field.field_name] = serialized_value
+            if type(serialized_value) == list:
+                res[custom_field.field_name] = [element['value'] if type(element) == dict else element for element in serialized_value]
+            else:
+                res[custom_field.field_name] = serialized_value
 
         return res
 
     def _deserialize(self, value, attr, data, **kwargs):
         serialized = {}
         if value is not None and value:
-            for key, raw_data in value.iteritems():
+            for key, raw_data in value.items():
                 if not raw_data:
                     continue
                 field_schema = db.session.query(CustomFieldsSchema).filter_by(
@@ -274,3 +277,4 @@ class StrictDateTimeField(fields.DateTime):
                 date.astimezone(tzutc())
             date = date.replace(tzinfo=None)
         return date
+# I'm Py3

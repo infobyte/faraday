@@ -289,7 +289,6 @@ disable=blacklisted-name,
         shallow-copy-environ,
         unused-format-string-argument,
         global-statement,
-        import-error,
         unused-import
 
 # Enable the message, report, category or checker with the given id(s). You can

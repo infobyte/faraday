@@ -10,9 +10,9 @@ import logging
 import base64
 
 from flask import Flask, request, jsonify
-from tornado.wsgi import WSGIContainer
-from tornado.httpserver import HTTPServer
-from tornado.ioloop import IOLoop
+from tornado.wsgi import WSGIContainer  # pylint: disable=import-error
+from tornado.httpserver import HTTPServer  # pylint: disable=import-error
+from tornado.ioloop import IOLoop  # pylint: disable=import-error
 
 from faraday.client.model.visitor import VulnsLookupVisitor
 

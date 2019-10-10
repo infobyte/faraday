@@ -9,7 +9,7 @@ See the file 'doc/LICENSE' for the license information
 from __future__ import absolute_import
 from __future__ import division
 
-import gi
+import gi  # pylint: disable=import-error
 import os
 import math
 import webbrowser
@@ -21,7 +21,7 @@ try:
 except ValueError:
     gi.require_version('Vte', '2.90')
 
-from gi.repository import Gtk, Gdk, GLib, Pango, GdkPixbuf, Vte
+from gi.repository import Gtk, Gdk, GLib, Pango, GdkPixbuf, Vte  # pylint: disable=import-error
 
 from faraday.client.gui.gtk.decorators import scrollable
 from faraday.client.gui.gtk.compatibility import CompatibleVteTerminal as VteTerminal

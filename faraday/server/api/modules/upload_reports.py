@@ -66,7 +66,7 @@ def file_upload(workspace=None):
                 "Upload reports in WEB-UI not configurated, run Faraday client and try again...")
             abort(make_response(jsonify(message="Upload reports not configurated: Run faraday client and start Faraday server again"), 500))
         else:
-            REPORTS_QUEUE.put((workspace, file_path, request.cookies))
+            REPORTS_QUEUE.put((workspace, file_path))
             return make_response(jsonify(message="ok"), 200)
     else:
         abort(make_response(jsonify(message="Missing report file"), 400))

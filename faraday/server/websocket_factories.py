@@ -10,7 +10,7 @@ import itsdangerous
 
 import http.cookies
 from collections import defaultdict
-from queue import Queue, Empty
+from queue import Empty
 
 import txaio
 

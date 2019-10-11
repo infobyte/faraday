@@ -9,10 +9,8 @@ from __future__ import absolute_import
 import os
 import pytest
 from io import BytesIO
-from mock import Mock, patch
 
 from tests.factories import WorkspaceFactory
-from faraday.config.configuration import getInstanceConfiguration
 
 @pytest.mark.usefixtures('logged_user')
 class TestFileUpload():

@@ -75,7 +75,6 @@ pylint:
         # pylint slow issue https://github.com/PyCQA/pylint/issues/2765
         - pip install pylint isort==4.3.4
         - pylint --rcfile=.pylintrc faraday --ignore=faraday_venv | tee pylint.txt
-        - pylint --rcfile=.pylintrc3 --py3k faraday --ignore=faraday_venv | tee pylint3.txt
         - score=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' pylint.txt)
           #- anybadge --label pylint --value=$score --file pylint.svg 4=red 6=orange 8=yellow 10=green
     artifacts:
@@ -117,7 +116,6 @@ postgresql_test:
         - virtualenv -p python3 faraday_venv
         - source faraday_venv/bin/activate
         - pip install pip -U
-        - pip install mock
         #- pip install --upgrade -r requirements_server.txt
         - pip install --upgrade -r requirements.txt
         - python3 setup.py install
@@ -125,7 +123,7 @@ postgresql_test:
         - pip install --upgrade -r requirements_dev.txt
         - mkdir -p ~/.faraday/config
         - cp tests/data/server.ini ~/.faraday/config
-        #- sed -i 's/mapped_table/persist_selectable/' faraday_venv/lib/python2.7/site-packages/flask_sqlalchemy/__init__.py  # TODO remove when flask_sqlalchemy fixes the issue
+        #- sed -i 's/mapped_table/persist_selectable/' faraday_venv/lib/python3/site-packages/flask_sqlalchemy/__init__.py  # TODO remove when flask_sqlalchemy fixes the issue
         - mkdir run_from
         - cd run_from && pytest ../tests -v --capture=sys --cov=../faraday/server --color=yes --disable-warnings --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB
     artifacts:
@@ -151,7 +149,6 @@ sqlite_test:
         - virtualenv -p python3 faraday_venv
         - source faraday_venv/bin/activate
         - pip install pip -U
-        - pip install mock
         #- pip install --upgrade -r requirements_server.txt
         - pip install --upgrade -r requirements.txt
         - python3 setup.py install
@@ -225,19 +222,20 @@ generate_deb:
         - ssh-keyscan -H gitlab.com >> ~/.ssh/known_hosts
     script:
         - apt-get update -qy
-        - apt-get -y install virtualenv git libcairo2-dev libgirepository1.0-dev gobject-introspection ruby ruby-dev rubygems build-essential build-essential libssl-dev libffi-dev libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev libsasl2-dev libldap2-dev libkrb5-dev pandoc python3 python3-dev pkg-config libpq-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 zsh curl pandoc
-        - curl https://bootstrap.pypa.io/get-pip.py | python3
-        - pip install virtualenv-tools
+        - apt-get -y install virtualenv git libcairo2-dev libgirepository1.0-dev gobject-introspection ruby ruby-dev rubygems build-essential build-essential libssl-dev libffi-dev libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev libsasl2-dev libldap2-dev libkrb5-dev pandoc python3 python3-dev python3-pip pkg-config libpq-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 zsh curl
+        - ln -s /usr/bin/pip3 /usr/bin/pip
+        - ln -s /usr/bin/python3 /usr/bin/python
+        - pip install virtualenv-tools3
         - mkdir build_installer
         - cp -a faraday.tar.gz build_installer/.
         - cd build_installer
         - /bin/tar zxf faraday.tar.gz
-        - ls
         - cd faraday_copy
         - git clone git@gitlab.com:faradaysec/faraday-linux-installers-builder.git
         - cd faraday-linux-installers-builder
         - git clone https://github.com/jordansissel/fpm.git
         - cd fpm
+        - git apply ../fpm-patchs/fpm.python3.patch
         - git apply ../fpm-patchs/fpm.virtualenv_compile.patch
         - make gem
         - gem install --no-ri --no-rdoc fpm-1.11.0.gem
@@ -276,21 +274,23 @@ generate_rpm:
         - chmod 700 ~/.ssh
         - /usr/bin/ssh-keyscan -H gitlab.com >> ~/.ssh/known_hosts
     script:
-        - yum -y install git ruby ruby-devel rubygems gobject-introspection-devel curl zsh mailcap libffi-devel python3-devel openssl-devel openldap-devel libxslt-devel libxml2-devel libxslt-devel freetype-devel libjpeg-devel gtk+-devel gtk3-devel gtk2-devel pandoc
+        - yum -y install git ruby ruby-devel rubygems gobject-introspection-devel curl zsh mailcap libffi-devel openssl-devel openldap-devel libxslt-devel libxml2-devel libxslt-devel freetype-devel libjpeg-devel gtk+-devel gtk3-devel gtk2-devel postgresql-devel
         - yum groups -y install "Development Tools"
-        - curl https://bootstrap.pypa.io/get-pip.py | python3
+        - yum -y install centos-release-scl
+        - yum -y install rh-python36
+        - source /opt/rh/rh-python36/enable
         - pip install virtualenv
-        - pip install virtualenv-tools
+        - pip install virtualenv-tools3
         - mkdir build_installer
         - cp -a faraday.tar.gz build_installer/.
         - cd build_installer
         - /bin/tar zxf faraday.tar.gz
-        - ls
         - cd faraday_copy
         - git clone git@gitlab.com:faradaysec/faraday-linux-installers-builder.git
         - cd faraday-linux-installers-builder
         - git clone https://github.com/jordansissel/fpm.git
         - cd fpm
+        - git apply ../fpm-patchs/fpm.python3.patch
         - git apply ../fpm-patchs/fpm.virtualenv_compile.patch
         - make gem
         - gem install --no-ri --no-rdoc fpm-1.11.0.gem
@@ -422,16 +422,19 @@ test_hypothesis:
     allow_failure: true
     script:
         - apt-get update -qy
-        - pip install virtualenv
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" build-essential ipython python3-setuptools python3-pip python3-dev libssl-dev libffi-dev pkg-config libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" libpq-dev python3-pip python3-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 python3-gi python3-gi-cairo zsh curl
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" gobject-introspection libgirepository1.0-dev libcairo2-dev libgdk-pixbuf2.0-dev
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" libcanberra-gtk-module libcanberra-gtk* libxml2-dev libxslt1-dev gir1.2-gtk-3.0 gir1.2-vte-2.91
+        - pip3 install virtualenv
         - virtualenv -p python3 faraday_venv
         - source faraday_venv/bin/activate
-        #- pip install --upgrade -r requirements_server.txt
         - python3 setup.py install
         - pip install --upgrade responses pytest-xdist pytest-cov
         - pip install --upgrade -r requirements_dev.txt
         - mkdir -p ~/.faraday/config
         - cp tests/data/server.ini ~/.faraday/config
-        #- sed -i 's/mapped_table/persist_selectable/' faraday_venv/lib/python2.7/site-packages/flask_sqlalchemy/__init__.py  # TODO remove when flask_sqlalchemy fixes the issue
+        #- sed -i 's/mapped_table/persist_selectable/' faraday_venv/lib/python3/site-packages/flask_sqlalchemy/__init__.py  # TODO remove when flask_sqlalchemy fixes the issue
         - pytest tests -v --cov=faraday/server/api --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB -m hypothesis
     only:
         variables:

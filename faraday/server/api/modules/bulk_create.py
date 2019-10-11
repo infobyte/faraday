@@ -160,7 +160,7 @@ class BulkCreateSchema(Schema):
     hosts = fields.Nested(
         HostSchema(many=True),
         many=True,
-        missing=[],
+        required=True,
     )
     command = fields.Nested(
         CommandSchema(),

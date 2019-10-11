@@ -10,9 +10,8 @@ import faraday.client.persistence.server.models as models
 import pytest
 import responses
 import requests
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 
-import faraday.server.config
 
 from tests.test_api_workspaced_base import GenericAPITest
 

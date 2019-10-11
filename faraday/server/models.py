@@ -1523,7 +1523,7 @@ def get(workspace_name):
 class User(db.Model, UserMixin):
 
     __tablename__ = 'faraday_user'
-    ROLES = ['admin', 'pentester', 'client']
+    ROLES = ['admin', 'pentester', 'client', 'asset_owner']
     OTP_STATES = ["disabled", "requested", "confirmed"]
 
     id = Column(Integer, primary_key=True)
@@ -1832,7 +1832,6 @@ class ExecutiveReport(Metadata):
                     "TagObject.object_type=='executive_report')",
         collection_class=set,
     )
-    severities = Column(JSONType, nullable=True, default=[])
     filter = Column(JSONType, nullable=True, default=[])
     @property
     def parent(self):

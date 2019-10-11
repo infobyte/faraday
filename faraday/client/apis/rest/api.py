@@ -77,7 +77,7 @@ def startAPIs(plugin_controller, model_controller, hostname, port):
 
     logging.getLogger("tornado.access").addHandler(logging.getLogger(__name__))
     logging.getLogger("tornado.access").propagate = False
-    threading.Thread(target=startServer).start()
+    threading.Thread(target=startServer, name='restapi-server').start()
 
 
 class RESTApi:

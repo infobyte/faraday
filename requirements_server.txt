@@ -38,3 +38,5 @@ typing==3.6.6
 beautifulsoup4==4.7.1
 Flask-KVSession==0.6.2
 simplekv==0.13.0
+pypcapfile==0.12.0
+html2text==2019.8.11

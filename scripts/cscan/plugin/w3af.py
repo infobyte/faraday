@@ -1,8 +1,11 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # Faraday Penetration Test IDE
 # Copyright (C) 2015  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+
+from __future__ import absolute_import
+from __future__ import print_function
 
 from w3af_api_client import Connection, Scan
 import subprocess
@@ -37,25 +40,25 @@ def main():
     args = parser.parse_args()
 
     if args.target is None or args.output is None:
-        print "Argument errors check -h"
+        print("Argument errors check -h")
         exit(0)
 
-    print 'Starting w3af api ...'
+    print('Starting w3af api ...')
     global child_pid
     proc = subprocess.Popen([cmd])
     child_pid = proc.pid
 
-    print 'Waiting for W3af to load, 5 seconds ...'
+    print('Waiting for W3af to load, 5 seconds ...')
     time.sleep(5)
 
     # Connect to the REST API and get it's version
     conn = Connection('http://127.0.0.1:5000/')
-    print conn.get_version()
+    print(conn.get_version())
 
     # Define the target and configuration
     # scan_profile = file('/root/tools/w3af/profiles/fast_scan_xml.pw3af').read()
-    scan_profile = file(profile).read()
-    scan_profile = "[output.xml_file]\noutput_file = %s\n%s\n" % (args.output, scan_profile )
+    with open(profile, "r") as scan_profile_file:
+        scan_profile = "[output.xml_file]\noutput_file = %s\n%s\n" % (args.output, scan_profile_file.read())
     # scan_profile = file('/root/tools/w3af/profiles/fast_scan.pw3af').read()
 
     target_urls = [args.target]
@@ -70,8 +73,9 @@ def main():
     scan.get_findings()
 
     while(scan.get_status()['status'] == "Running"):
-        print 'Scan progress: %s' + str(scan.get_status()['rpm'])
+        print('Scan progress: %s' + str(scan.get_status()['rpm']))
         time.sleep(2)
 
 if __name__ == "__main__":
     main()
+# I'm Py3

@@ -1,12 +1,9 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
 from faraday.client.plugins import core
 from faraday.client.model import api
 import re
@@ -46,8 +43,8 @@ class NdiffXmlParser():
 
         try:
             return ET.fromstring(xmlOutput)
-        except SyntaxError, err:
-            print "SyntaxError: %s" % err
+        except SyntaxError as err:
+            print("SyntaxError: %s" % err)
             return None
 
     def getHostsDiffs(self, tree):
@@ -114,7 +111,7 @@ class CmdNdiffPlugin(core.PluginBase):
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "Ndiff"
         self.name = "ndiff"
         self.plugin_version = "0.0.1"
@@ -170,3 +167,6 @@ class CmdNdiffPlugin(core.PluginBase):
 
 def createPlugin():
     return CmdNdiffPlugin()
+
+
+# I'm Py3

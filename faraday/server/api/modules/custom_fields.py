@@ -1,10 +1,9 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-
 from flask import Blueprint
 
-from faraday.server.models import db, CustomFieldsSchema
+from faraday.server.models import CustomFieldsSchema
 from faraday.server.api.base import (
     AutoSchema,
     ReadWriteView,
@@ -42,3 +41,4 @@ class CustomFieldsSchemaView(ReadWriteView):
         return super(CustomFieldsSchemaView, self)._update_object(obj, data)
 
 CustomFieldsSchemaView.register(custom_fields_schema_api)
+# I'm Py3

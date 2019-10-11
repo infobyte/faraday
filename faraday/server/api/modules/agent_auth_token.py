@@ -1,10 +1,6 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2019  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-import random
-import string
-from ConfigParser import ConfigParser
-
 import flask
 from flask import Blueprint
 from flask_wtf.csrf import validate_csrf
@@ -14,7 +10,6 @@ from faraday.server.api.base import (
     GenericView,
 )
 from faraday.server.config import faraday_server
-from faraday.server.config import LOCAL_CONFIG_FILE
 
 
 agent_auth_token_api = Blueprint('agent_auth_token_api', __name__)
@@ -44,3 +39,6 @@ class AgentAuthTokenView(GenericView):
 
 
 AgentAuthTokenView.register(agent_auth_token_api)
+
+
+# I'm Py3

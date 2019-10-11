@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 '''
@@ -7,9 +7,10 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
 import sys
 import unittest
-from Queue import Queue
+from queue import Queue
 from collections import defaultdict
 
 import os
@@ -48,7 +49,7 @@ class TestNessusParser:
             actions[action[0]].append(action[1])
 
         assert actions[2000][0].name == "12.233.108.201"
-        assert actions.keys() == [2000, 2017, 2038, 20008]
+        assert set(actions.keys()) == {2000, 2017, 2038, 20008}
         assert len(actions[20008]) == 1
         assert len(actions[2038]) == 1
 
@@ -62,3 +63,4 @@ class TestNessusParser:
 
 if __name__ == '__main__':
     unittest.main()
+# I'm Py3

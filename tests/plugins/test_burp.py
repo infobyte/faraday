@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 '''
@@ -8,9 +8,10 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
+from __future__ import absolute_import
 import unittest
 import sys
-from Queue import Queue
+from queue import Queue
 from collections import defaultdict
 
 import os
@@ -55,7 +56,7 @@ class TestBurp:
             actions[action[0]].append(action[1])
 
         assert actions[2000][0].name == "200.20.20.201"
-        assert actions.keys() == [2000, 20008, 2038]
+        assert list(actions.keys()) == [2000, 20008, 2038]
         assert len(actions[20008]) == 14
         assert len(actions[2038]) == 14
 
@@ -68,3 +69,4 @@ class TestBurp:
 
 if __name__ == '__main__':
     unittest.main()
+# I'm Py3

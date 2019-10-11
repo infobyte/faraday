@@ -1,25 +1,29 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
+from __future__ import absolute_import
+from past.builtins import basestring
+
+
 import webbrowser
-import gi
+import gi  # pylint: disable=import-error
 import os
 from faraday.client.start_client import FARADAY_CLIENT_BASE
 gi.require_version('Gtk', '3.0')
 
 from faraday.client.persistence.server.server import ResourceDoesNotExist
-from gi.repository import Gtk, GdkPixbuf, Gdk
+from gi.repository import Gtk, GdkPixbuf, Gdk  # pylint: disable=import-error
 from faraday.config.configuration import getInstanceConfiguration
 from faraday.client.persistence.server.server import is_authenticated, login_user, get_user_info, check_server_url
 from faraday.client.model import guiapi
-from decorators import scrollable
+from faraday.client.gui.gtk.decorators import scrollable
 
-from compatibility import CompatibleScrolledWindow as GtkScrolledWindow
+from faraday.client.gui.gtk.compatibility import CompatibleScrolledWindow as GtkScrolledWindow
 from faraday.client.plugins import fplugin_utils
 
 CONF = getInstanceConfiguration()
@@ -219,7 +223,7 @@ class LoginDialog(Gtk.Dialog):
 
                     return True
 
-            if run == Gtk.ResponseType.CANCEL or run == -4:
+            if run in [Gtk.ResponseType.CANCEL, -4]:
                 # run returns -4 when escape key pressed
                 self.exit()
                 return False
@@ -457,7 +461,7 @@ class PluginOptionsDialog(Gtk.Window):
         and plugin version"""
         plugin_info = Gtk.TreeStore(str, str, str, str)
 
-        for plugin_id, params in self.plugin_settings.iteritems():
+        for plugin_id, params in self.plugin_settings.items():
             plugin_info.append(None, [plugin_id,
                                       params["name"],
                                       params["version"],  # tool version
@@ -492,7 +496,7 @@ class PluginOptionsDialog(Gtk.Window):
 
         models = {}
 
-        for plugin_id in self.plugin_settings.iteritems():
+        for plugin_id in self.plugin_settings.items():
             # iter through the plugins
             plugin_info = plugin_id[1]  # get dictionary associated to plugin
             store = Gtk.ListStore(str, str)  # create the store for that plugin
@@ -1096,7 +1100,7 @@ class HostInfoDialog(Gtk.Window):
             def safe_wrapper(*args, **kwargs):
                 try:
                     return func(*args, **kwargs)
-                except IndexError, ValueError:
+                except (IndexError, ValueError):
                     dialog = errorDialog(self, ("There has been a problem. "
                                                 "The object you clicked on "
                                                 "does not exist anymore."))
@@ -1582,7 +1586,7 @@ class ConflictsDialog(Gtk.Window):
         elif original_type == "float":
             raw_prop = float(prop)
 
-        elif original_type == "str" or original_type == "unicode":
+        elif original_type in ["str", "unicode"]:
             raw_prop = prop
         else:
             raw_prop = prop
@@ -1779,3 +1783,6 @@ def strict_key_reactions(window, event):
         return True
     else:
         return False
+
+
+# I'm Py3

@@ -1,12 +1,15 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-import gi
+"""
+from __future__ import absolute_import
+from __future__ import division
+
+import gi  # pylint: disable=import-error
 import os
 import math
 import webbrowser
@@ -18,11 +21,11 @@ try:
 except ValueError:
     gi.require_version('Vte', '2.90')
 
-from gi.repository import Gtk, Gdk, GLib, Pango, GdkPixbuf, Vte
+from gi.repository import Gtk, Gdk, GLib, Pango, GdkPixbuf, Vte  # pylint: disable=import-error
 
-from decorators import scrollable
-from compatibility import CompatibleVteTerminal as VteTerminal
-from compatibility import CompatibleScrolledWindow as GtkScrolledWindow
+from faraday.client.gui.gtk.decorators import scrollable
+from faraday.client.gui.gtk.compatibility import CompatibleVteTerminal as VteTerminal
+from faraday.client.gui.gtk.compatibility import CompatibleScrolledWindow as GtkScrolledWindow
 
 
 class Terminal(VteTerminal):
@@ -150,7 +153,7 @@ class HostsSidebar(Gtk.Widget):
     def number_of_pages(self):
         if self.host_amount_total == 0:
             return 1
-        return int(math.ceil(float(self.host_amount_total) / 20))
+        return int(math.ceil(self.host_amount_total / 20.0))
 
     @scrollable(width=160)
     def scrollable_view(self):
@@ -256,7 +259,7 @@ class HostsSidebar(Gtk.Widget):
         vuln_count = host.getVulnsAmount()
         os_icon, os_str = self.__decide_icon(host.getOS())
         display_str = str(host)
-        if str(host.id) not in map(lambda host_data: host_data[0], self.model):
+        if str(host.id) not in [host_data[0] for host_data in self.model]:
             host_iter = self.model.append([str(host.id), os_icon, os_str, display_str, vuln_count])
             self.host_id_to_iter[host.id] = host_iter
             self.host_amount_in_model += 1
@@ -267,7 +270,7 @@ class HostsSidebar(Gtk.Widget):
         """
         space_left_in_sidebar = 20 - self.host_amount_in_model
         relevant_hosts = hosts[0:space_left_in_sidebar]  # just ignore those coming after
-        map(self._add_single_host_to_model, relevant_hosts)
+        [self._add_single_host_to_model(h) for h in relevant_hosts]
 
     def _update_single_host_name_in_model(self, host_id, host_iter):
         """Take a host_id and a host_iter. Changes the string representation
@@ -287,10 +290,10 @@ class HostsSidebar(Gtk.Widget):
         in the model. Potentially slow, makes len(hosts) requests to the server.
         Return None.
         """
-        hosts_ids = map(lambda h: h.id, hosts)
-        relevant_hosts = filter(self._is_host_in_model_by_host_id, hosts_ids)
-        host_iters = map(lambda h: self.host_id_to_iter[h], relevant_hosts)
-        map(self._update_single_host_name_in_model, relevant_hosts, host_iters)
+        hosts_ids = [h.id for h in hosts]
+        relevant_hosts = list(filter(self._is_host_in_model_by_host_id, hosts_ids))
+        host_iters = [self.host_id_to_iter[h] for h in relevant_hosts]
+        list(map(self._update_single_host_name_in_model, relevant_hosts, host_iters))
 
     def _remove_single_host_from_model(self, host_id):
         """Remove the host of host_id from the model. Return None.
@@ -307,8 +310,8 @@ class HostsSidebar(Gtk.Widget):
     def remove_relevant_hosts_from_model(self, host_ids):
         """Takes a list of host_ids and deletes the one found on the model
         from there. Return None."""
-        relevant_host_ids = filter(self._is_host_in_model_by_host_id, host_ids)
-        map(self._remove_single_host_from_model, relevant_host_ids)
+        relevant_host_ids = list(filter(self._is_host_in_model_by_host_id, host_ids))
+        list(map(self._remove_single_host_from_model, relevant_host_ids))
 
     def _modify_vuln_amount_of_single_host_in_model(self, host_id, new_vuln_amount):
         """Take a host_id and a new_vuln amount and modify the string representation
@@ -338,17 +341,17 @@ class HostsSidebar(Gtk.Widget):
         one vulnerability from them, according to the plus_one_or_minus_one
         function. Return None.
         """
-        relevant_host_ids = filter(self._is_host_in_model_by_host_id, host_ids)
-        host_iters = map(lambda h: self.host_id_to_iter[h], relevant_host_ids)
-        vuln_amount_of_those_hosts = map(self._get_vuln_amount_from_model, host_iters)
-        new_vuln_amounts = map(plus_one_or_minus_one, vuln_amount_of_those_hosts)
-        map(self._modify_vuln_amount_of_single_host_in_model, relevant_host_ids, new_vuln_amounts)
+        relevant_host_ids = list(filter(self._is_host_in_model_by_host_id, host_ids))
+        host_iters = [self.host_id_to_iter[h] for h in relevant_host_ids]
+        vuln_amount_of_those_hosts = [self._get_vuln_amount_from_model(h) for h in host_iters]
+        new_vuln_amounts = [plus_one_or_minus_one(h) for h in vuln_amount_of_those_hosts]
+        list(map(self._modify_vuln_amount_of_single_host_in_model, relevant_host_ids, new_vuln_amounts))
 
     def add_relevant_vulns_to_model(self, vulns):
         """Takes vulns, a list of vulnerability object, and adds them to the
         model by modifying their corresponding hosts in the model. Return None.
         """
-        host_ids = [host_id for host_id in map(self._find_host_id, vulns) if host_id is not None]
+        host_ids = [host_id for host_id in [self._find_host_id(v) for v in vulns] if host_id is not None]
         self._modify_vuln_amounts_of_hosts_in_model(host_ids, lambda x: x + 1)
 
     def remove_relevant_vulns_from_model(self, vulns_ids):
@@ -356,7 +359,7 @@ class HostsSidebar(Gtk.Widget):
         the model by modifying their corresponding hosts in the model.
         Return None.
         """
-        host_ids = map(lambda v: v.getID().split(".")[0], vulns_ids)
+        host_ids = [v.getID().split(".")[0] for v in vulns_ids]
         self._modify_vuln_amounts_of_hosts_in_model(host_ids, lambda x: x - 1)
 
     def add_host(self, host):
@@ -396,7 +399,7 @@ class HostsSidebar(Gtk.Widget):
         object_type = obj.class_signature
         if object_type == 'Host':
             self.add_host_after_initial_load(host=obj)
-        if object_type == "Vulnerability" or object_type == "VulnerabilityWeb":
+        if object_type in ["Vulnerability", "VulnerabilityWeb"]:
             self.add_vuln(vuln=obj)
 
     def remove_object(self, obj_id, obj_type):
@@ -927,3 +930,6 @@ class Statusbar(Gtk.Widget):
         vuln_string = str(vuln_count) + " vulnerabilities."
 
         return host_string, service_string, vuln_string
+
+
+# I'm Py3

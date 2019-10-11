@@ -1,10 +1,13 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
+"""
+from __future__ import absolute_import
+from __future__ import print_function
+
 import json
 
 import requests
@@ -121,3 +124,6 @@ def main(workspace='', args=None, parser=None):
                     checkSeverity(v, cwe, parsed_args.severity, workspace, parsed_args.couchdb)
 
     return 0, None
+
+
+# I'm Py3

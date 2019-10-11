@@ -1,7 +1,7 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-from collections import defaultdict
+from io import StringIO
 
 import logging
 import csv
@@ -12,7 +12,7 @@ import pytz
 from flask_classful import route
 from marshmallow import fields, Schema
 from filteralchemy import Filter, FilterSet, operators
-from sqlalchemy import or_, desc
+from sqlalchemy import desc
 import wtforms
 from flask_wtf.csrf import validate_csrf
 
@@ -38,6 +38,7 @@ from faraday.server.api.modules.services import ServiceSchema
 host_api = Blueprint('host_api', __name__)
 
 logger = logging.getLogger(__name__)
+
 
 class HostSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
@@ -106,7 +107,7 @@ class ServicePortFilter(Filter):
 class HostFilterSet(FilterSet):
     class Meta(FilterSetMeta):
         model = Host
-        fields = ('ip', 'name', 'os', 'service', 'port')
+        fields = ('id', 'ip', 'name', 'os', 'service', 'port')
         operators = (operators.Equal, operators.Like, operators.ILike)
     service = ServiceNameFilter(fields.Str())
     port = ServicePortFilter(fields.Str())
@@ -158,9 +159,10 @@ class HostsView(PaginatedMixin,
         if 'file' not in flask.request.files:
             abort(400, "Missing File in request")
         hosts_file = flask.request.files['file']
+        stream = StringIO(hosts_file.stream.read().decode("utf-8"), newline=None)
         FILE_HEADERS = {'description', 'hostnames', 'ip', 'os'}
         try:
-            hosts_reader = csv.DictReader(hosts_file, skipinitialspace=True)
+            hosts_reader = csv.DictReader(stream)
             if set(hosts_reader.fieldnames) != FILE_HEADERS:
                 logger.error("Missing Required headers in CSV (%s)", FILE_HEADERS)
                 abort(400, "Missing Required headers in CSV (%s)" % FILE_HEADERS)
@@ -281,3 +283,4 @@ class HostsView(PaginatedMixin,
 
 
 HostsView.register(host_api)
+# I'm Py3

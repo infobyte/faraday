@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import pytest
 
 from tests.factories import CustomFieldsSchemaFactory
@@ -58,3 +60,6 @@ class TestVulnerabilityCustomFields(ReadOnlyAPITests):
         assert custom_field_obj.table_name == 'vulnerability'
         assert custom_field_obj.field_type == 'str'
         assert custom_field_obj.field_display_name == 'CVSS new'
+
+
+# I'm Py3

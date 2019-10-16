@@ -49,10 +49,13 @@ from faraday.server.commands import change_username
 from faraday.server.models import db, User
 from faraday.server.importer import ImportCouchDB
 from faraday.server.web import app
+#import faraday.server.utils.logger
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
-
+#logger = faraday.server.utils.logger.get_logger(faraday.server.utils.logger.ROOT_LOGGER)
+import logging
+logger = logging.getLogger(__name__)
 @click.group(context_settings=CONTEXT_SETTINGS)
 def cli():
     pass
@@ -246,6 +249,7 @@ def support():
         required=False,
         )
 def migrate(downgrade, revision):
+    logger.info("Running migrations")
     try:
         revision = revision or ("-1" if downgrade else "head")
         config = Config(os.path.join(FARADAY_BASE,"alembic.ini"))
@@ -255,7 +259,12 @@ def migrate(downgrade, revision):
         else:
             alembic.command.upgrade(config, revision)
     except OperationalError as e:
+        logger.error("Migration Error: %s", e)
         print('Please verify your configuration on server.ini or the hba configuration!')
+    except Exception as e:
+        logger.error("Migration Error: %s", e)
+    else:
+        logger.info("Migrations finished")
 
 
 @click.command(help='Custom field wizard')

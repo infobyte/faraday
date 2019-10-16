@@ -47,6 +47,7 @@ class ReportsManager(Thread):
             else:
                 try:
                     self.send_report_request(workspace, vulns_data)
+                    logger.info("Report processing finished")
                 except Exception as e:
                     logger.exception(e)
                     logger.error("Save Error: %s", e)

@@ -10,7 +10,6 @@ from faraday.server.api.base import (
     GenericView,
 )
 from faraday.server.config import faraday_server
-from faraday.server.config import LOCAL_CONFIG_FILE
 
 
 agent_auth_token_api = Blueprint('agent_auth_token_api', __name__)

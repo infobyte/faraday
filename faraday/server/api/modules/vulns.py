@@ -18,7 +18,7 @@ from filteralchemy import Filter, FilterSet, operators
 from flask import request, send_file
 from flask import Blueprint
 from flask_classful import route
-from flask_restless.search import search, Filter as RestlessFilter
+from flask_restless.search import search
 from flask_wtf.csrf import validate_csrf
 from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
@@ -39,7 +39,6 @@ from faraday.server.models import (
     db,
     File,
     Host,
-    Comment,
     Service,
     Hostname,
     Workspace,

@@ -3,7 +3,7 @@
 # See the file 'doc/LICENSE' for the license information
 from flask import Blueprint
 
-from faraday.server.models import db, CustomFieldsSchema
+from faraday.server.models import CustomFieldsSchema
 from faraday.server.api.base import (
     AutoSchema,
     ReadWriteView,

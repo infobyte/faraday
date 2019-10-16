@@ -6,7 +6,7 @@ import os
 import string
 import datetime
 from itsdangerous import TimedJSONWebSignatureSerializer, SignatureExpired, BadSignature
-from os.path import join, expanduser
+from os.path import join
 from random import SystemRandom
 
 from faraday.server.config import LOCAL_CONFIG_FILE, copy_default_config_to_local
@@ -300,6 +300,7 @@ def create_app(db_connection_string=None, testing=None):
             'plaintext',  # TODO: remove it
         ],
         'PERMANENT_SESSION_LIFETIME': datetime.timedelta(hours=12),
+        'SESSION_COOKIE_NAME': 'faraday_session',
     })
 
     store = FilesystemStore(app.config['SESSION_FILE_DIR'])

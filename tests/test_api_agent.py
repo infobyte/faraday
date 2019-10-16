@@ -5,9 +5,7 @@ See the file 'doc/LICENSE' for the license information
 """
 from __future__ import absolute_import
 
-from builtins import str
-
-import mock
+from unittest import mock
 import pytest
 
 from faraday.server.api.modules.agent import AgentView

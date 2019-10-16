@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """
 Faraday Penetration Test IDE
@@ -11,13 +11,13 @@ from past.builtins import basestring
 
 
 import webbrowser
-import gi
+import gi  # pylint: disable=import-error
 import os
-
+from faraday.client.start_client import FARADAY_CLIENT_BASE
 gi.require_version('Gtk', '3.0')
 
 from faraday.client.persistence.server.server import ResourceDoesNotExist
-from gi.repository import Gtk, GdkPixbuf, Gdk
+from gi.repository import Gtk, GdkPixbuf, Gdk  # pylint: disable=import-error
 from faraday.config.configuration import getInstanceConfiguration
 from faraday.client.persistence.server.server import is_authenticated, login_user, get_user_info, check_server_url
 from faraday.client.model import guiapi

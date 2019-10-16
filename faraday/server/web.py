@@ -29,7 +29,7 @@ from faraday.server.websocket_factories import (
     WorkspaceServerFactory,
     BroadcastServerProtocol
 )
-#from faraday.server.api.modules.upload_reports import RawReportProcessor
+
 
 app = create_app()  # creates a Flask(__name__) app
 logger = logging.getLogger(__name__)

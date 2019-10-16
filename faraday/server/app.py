@@ -300,6 +300,7 @@ def create_app(db_connection_string=None, testing=None):
             'plaintext',  # TODO: remove it
         ],
         'PERMANENT_SESSION_LIFETIME': datetime.timedelta(hours=12),
+        'SESSION_COOKIE_NAME': 'faraday_session',
     })
 
     store = FilesystemStore(app.config['SESSION_FILE_DIR'])

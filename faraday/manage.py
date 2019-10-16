@@ -9,7 +9,7 @@ import os
 import re
 import sys
 import platform
-
+import logging
 # If is linux and its installed with deb or rpm, it must run with a user in the faraday group
 if platform.system() == "Linux":
     import grp
@@ -49,13 +49,11 @@ from faraday.server.commands import change_username
 from faraday.server.models import db, User
 from faraday.server.importer import ImportCouchDB
 from faraday.server.web import app
-#import faraday.server.utils.logger
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
-#logger = faraday.server.utils.logger.get_logger(faraday.server.utils.logger.ROOT_LOGGER)
-import logging
 logger = logging.getLogger(__name__)
+
 @click.group(context_settings=CONTEXT_SETTINGS)
 def cli():
     pass

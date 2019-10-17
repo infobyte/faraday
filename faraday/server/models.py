@@ -2033,6 +2033,15 @@ class RuleExecution(Metadata):
         return
 
 
+class SearchFilter(Metadata):
+
+    __tablename__ = 'search_filter'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    json_query = Column(String, nullable=False)
+    user_query = Column(String, nullable=False)
+
+
 # This constraint uses Columns from different classes
 # Since it applies to the table vulnerability it should be adVulnerability.ded to the Vulnerability class
 # However, since it contains columns from children classes, this cannot be done

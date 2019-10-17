@@ -29,10 +29,8 @@ class SearchFilterView(ReadWriteView):
     schema_class = SearchFilterSchema
 
     def _get_base_query(self):
-
-        super()._get_base_query()
-        query = self.model_class.query.filter(SearchFilter.creator_id == g.user.id)
-        return query
+        query = super()._get_base_query()
+        return query.filter(SearchFilter.creator_id == g.user.id)
 
 
 SearchFilterView.register(searchfilter_api)

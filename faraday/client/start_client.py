@@ -47,6 +47,8 @@ from faraday.client.persistence.server.server import login_user, get_user_info
 
 import faraday
 
+from colorama import Fore, Back, Style
+
 USER_HOME = os.path.expanduser(CONST_USER_HOME)
 # find_module returns if search is successful, the return value is a 3-element tuple (file, pathname, description):
 FARADAY_BASE = os.path.dirname(faraday.__file__)
@@ -255,7 +257,7 @@ def startFaraday():
     Returns application status.
 
     """
-    from faraday.client.model.application import MainApplication
+    from faraday.client.model.application import MainApplication # pylint:import-outside-toplevel
 
     logger.info("All done. Opening environment.")
     # TODO: Handle args in CONF and send only necessary ones.
@@ -269,7 +271,6 @@ def startFaraday():
     logger.info("Starting main application.")
     start = main_app.start
 
-    from colorama import Fore, Back, Style
     serverURL = getInstanceConfiguration().getServerURI()
     if serverURL:
         url = "%s/_ui" % serverURL
@@ -400,7 +401,6 @@ def printBanner():
     """
     Prints Faraday's ascii banner.
     """
-    from colorama import Fore, Back, Style
     print (Fore.RED + """
   _____                           .___
 _/ ____\_____  ____________     __| _/_____   ___.__.

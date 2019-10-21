@@ -1984,7 +1984,7 @@ class Agent(Metadata):
 
     @property
     def is_online(self):
-        from faraday.server.websocket_factories import connected_agents
+        from faraday.server.websocket_factories import connected_agents   # pylint:disable=import-outside-toplevel
         return self.id in connected_agents
 
     @property

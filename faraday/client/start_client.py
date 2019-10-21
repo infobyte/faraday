@@ -257,7 +257,7 @@ def startFaraday():
     Returns application status.
 
     """
-    from faraday.client.model.application import MainApplication # pylint:import-outside-toplevel
+    from faraday.client.model.application import MainApplication  # pylint:disable=import-outside-toplevel
 
     logger.info("All done. Opening environment.")
     # TODO: Handle args in CONF and send only necessary ones.

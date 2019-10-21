@@ -17,9 +17,9 @@ class UiFactory:
     @staticmethod
     def create(model_controller, plugin_manager, workspace_manager, plugin_controller, gui="gtk"):
         if gui == "gtk":
-            from faraday.client.gui.gtk.application import GuiApp
+            from faraday.client.gui.gtk.application import GuiApp  # pylint:disable=import-outside-toplevel
         else:
-            from faraday.client.gui.nogui.application import GuiApp
+            from faraday.client.gui.nogui.application import GuiApp  # pylint:disable=import-outside-toplevel
 
         return GuiApp(model_controller, plugin_manager, workspace_manager, plugin_controller)
 

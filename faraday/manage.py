@@ -29,6 +29,8 @@ if platform.system() == "Linux":
 import click
 import requests
 import alembic.command
+from pgcli.main import PGCli
+from requests import ConnectionError
 from urllib.parse import urlparse
 from alembic.config import Config
 from sqlalchemy.exc import ProgrammingError, OperationalError
@@ -67,11 +69,6 @@ def check_faraday_server(url):
 @click.option('--workspace', default=None)
 @click.option('--polling/--no-polling', default=True)
 def process_reports(debug, workspace, polling):
-    try:
-        from requests import ConnectionError
-    except ImportError:
-        print('Python requests was not found. Please install it with: pip install requests')
-        sys.exit(1)
     configuration = _conf()
     url = '{0}/_api/v2/info'.format(configuration.getServerURI() if FARADAY_UP else SERVER_URL)
     with app.app_context():
@@ -115,11 +112,6 @@ def database_schema():
 
 @click.command(help="Open a SQL Shell connected to postgresql 'Faraday DB'")
 def sql_shell():
-    try:
-        from pgcli.main import PGCli
-    except ImportError:
-        print('PGCli was not found, please install it with: pip install pgcli')
-        sys.exit(1)
     conn_string = faraday.server.config.database.connection_string.strip("'")
     conn_string = urlparse(conn_string)
     parsed_conn_string = ("user={username} password={password} host={hostname} dbname={dbname}"

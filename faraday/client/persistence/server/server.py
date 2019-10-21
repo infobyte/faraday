@@ -77,7 +77,7 @@ OBJECT_TYPE_END_POINT_MAPPER = {
 
 
 def _conf():
-    from faraday.config.configuration import getInstanceConfiguration
+    from faraday.config.configuration import getInstanceConfiguration  # pylint:disable=import-outside-toplevel
     CONF = getInstanceConfiguration()
 
     # If you are running this libs outside of Faraday, cookies are not setted.

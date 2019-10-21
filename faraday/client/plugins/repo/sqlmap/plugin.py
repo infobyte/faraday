@@ -407,9 +407,9 @@ class SqlmapPlugin(PluginTerminalOutput):
         sys.path.append(self.getSetting("Sqlmap path"))
 
         try:
-            from lib.core.settings import HASHDB_MILESTONE_VALUE #pylint: disable=import-error,bad-option-value
-            from lib.core.enums import HASHDB_KEYS #pylint: disable=import-error
-            from lib.core.settings import UNICODE_ENCODING #pylint: disable=import-error
+            from lib.core.settings import HASHDB_MILESTONE_VALUE #pylint: disable=import-error,bad-option-value,import-outside-toplevel
+            from lib.core.enums import HASHDB_KEYS #pylint: disable=import-error,import-outside-toplevel
+            from lib.core.settings import UNICODE_ENCODING #pylint: disable=import-error,import-outside-toplevel
         except:
             self.log('Remember set your Sqlmap Path Setting!... Abort plugin.', 'ERROR')
             return

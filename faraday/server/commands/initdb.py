@@ -14,6 +14,8 @@ import os
 import sys
 import click
 import psycopg2
+from alembic.config import Config
+from alembic import command
 from random import SystemRandom
 from tempfile import TemporaryFile
 from subprocess import Popen
@@ -275,7 +277,7 @@ class InitDB():
 
     def _create_tables(self, conn_string):
         print('Creating tables')
-        from faraday.server.models import db
+        from faraday.server.models import db   # pylint:disable=import-outside-toplevel
         current_app.config['SQLALCHEMY_DATABASE_URI'] = conn_string
 
         # Check if the alembic_version exists
@@ -312,8 +314,6 @@ class InitDB():
             else:
                 raise
         else:
-            from alembic.config import Config
-            from alembic import command
             alembic_cfg = Config(os.path.join(FARADAY_BASE, 'alembic.ini'))
             os.chdir(FARADAY_BASE)
             command.stamp(alembic_cfg, "head")

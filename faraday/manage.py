@@ -49,7 +49,6 @@ from faraday.server.commands.custom_fields import add_custom_field_main, delete_
 from faraday.server.commands import support as support_zip
 from faraday.server.commands import change_username
 from faraday.server.models import db, User
-from faraday.server.importer import ImportCouchDB
 from faraday.server.web import app
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -95,20 +94,12 @@ def show_urls():
 def initdb(choose_password):
     with app.app_context():
         InitDB().run(choose_password=choose_password)
-        couchdb_config_present = faraday.server.config.couchdb
-        if couchdb_config_present and couchdb_config_present.user and couchdb_config_present.password:
-            print('Importing data from CouchDB, please wait...')
-            ImportCouchDB().run()
-            print('All users from CouchDB were imported. You can login with your old username/password to faraday now.')
 
-@click.command(help="Import all your data from Couchdb Faraday databases")
-def import_from_couchdb():
-    with app.app_context():
-        ImportCouchDB().run()
 
 @click.command(help="Create a PNG image with Faraday model object")
 def database_schema():
     DatabaseSchema().run()
+
 
 @click.command(help="Open a SQL Shell connected to postgresql 'Faraday DB'")
 def sql_shell():

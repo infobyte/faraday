@@ -265,7 +265,6 @@ def rename_user(current_username, new_username):
 cli.add_command(process_reports)
 cli.add_command(show_urls)
 cli.add_command(initdb)
-cli.add_command(import_from_couchdb)
 cli.add_command(database_schema)
 cli.add_command(create_superuser)
 cli.add_command(sql_shell)

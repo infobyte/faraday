@@ -97,7 +97,8 @@ class WebsocketsChangesStream(ChangesStream):
         super(WebsocketsChangesStream, self).stop()
 
     def on_open(self):
-        from faraday.client.persistence.server.server import _create_server_api_url, _post
+        from faraday.client.persistence.server.server import _create_server_api_url, _post  # pylint:disable=import-outside-toplevel
+
         response = _post(
             _create_server_api_url() +
             '/ws/{}/websocket_token/'.format(self.workspace_name),

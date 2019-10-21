@@ -34,8 +34,13 @@ def stopServer():
     global _http_server
     global ioloop_instance
     if _http_server is not None:
-        ioloop_instance.stop()
-        _http_server.stop()
+        # Code taken from https://github.com/tornadoweb/tornado/issues/1791#issuecomment-409258371
+        async def shutdown():
+            from tornado import gen
+            _http_server.stop()
+            await gen.sleep(1)
+            ioloop_instance.stop()
+        ioloop_instance.add_callback_from_signal(shutdown)
 
 
 def startAPIs(plugin_controller, model_controller, hostname, port):

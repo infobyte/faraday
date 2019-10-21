@@ -13,6 +13,7 @@ from flask import Flask, request, jsonify
 from tornado.wsgi import WSGIContainer  # pylint: disable=import-error
 from tornado.httpserver import HTTPServer  # pylint: disable=import-error
 from tornado.ioloop import IOLoop  # pylint: disable=import-error
+from tornado import gen # pylint: disable=import-error
 
 from faraday.client.model.visitor import VulnsLookupVisitor
 
@@ -36,7 +37,6 @@ def stopServer():
     if _http_server is not None:
         # Code taken from https://github.com/tornadoweb/tornado/issues/1791#issuecomment-409258371
         async def shutdown():
-            from tornado import gen
             _http_server.stop()
             await gen.sleep(1)
             ioloop_instance.stop()

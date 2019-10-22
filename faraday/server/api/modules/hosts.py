@@ -12,7 +12,7 @@ import pytz
 from flask_classful import route
 from marshmallow import fields, Schema
 from filteralchemy import Filter, FilterSet, operators
-from sqlalchemy import or_, desc
+from sqlalchemy import desc
 import wtforms
 from flask_wtf.csrf import validate_csrf
 
@@ -38,6 +38,7 @@ from faraday.server.api.modules.services import ServiceSchema
 host_api = Blueprint('host_api', __name__)
 
 logger = logging.getLogger(__name__)
+
 
 class HostSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')

@@ -138,6 +138,8 @@ class PluginController(Thread):
 
     def _get_plugins_by_input(self, cmd, plugin_set):
         for plugin in plugin_set.values():
+            if isinstance(cmd, bytes):
+                cmd = cmd.decode()
             if plugin.canParseCommandString(cmd):
                 return plugin
         return None

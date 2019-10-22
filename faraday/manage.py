@@ -29,6 +29,8 @@ if platform.system() == "Linux":
 import click
 import requests
 import alembic.command
+from pgcli.main import PGCli
+from requests import ConnectionError
 from urllib.parse import urlparse
 from alembic.config import Config
 from sqlalchemy.exc import ProgrammingError, OperationalError
@@ -47,7 +49,6 @@ from faraday.server.commands.custom_fields import add_custom_field_main, delete_
 from faraday.server.commands import support as support_zip
 from faraday.server.commands import change_username
 from faraday.server.models import db, User
-from faraday.server.importer import ImportCouchDB
 from faraday.server.web import app
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -67,11 +68,6 @@ def check_faraday_server(url):
 @click.option('--workspace', default=None)
 @click.option('--polling/--no-polling', default=True)
 def process_reports(debug, workspace, polling):
-    try:
-        from requests import ConnectionError
-    except ImportError:
-        print('Python requests was not found. Please install it with: pip install requests')
-        sys.exit(1)
     configuration = _conf()
     url = '{0}/_api/v2/info'.format(configuration.getServerURI() if FARADAY_UP else SERVER_URL)
     with app.app_context():
@@ -98,28 +94,15 @@ def show_urls():
 def initdb(choose_password):
     with app.app_context():
         InitDB().run(choose_password=choose_password)
-        couchdb_config_present = faraday.server.config.couchdb
-        if couchdb_config_present and couchdb_config_present.user and couchdb_config_present.password:
-            print('Importing data from CouchDB, please wait...')
-            ImportCouchDB().run()
-            print('All users from CouchDB were imported. You can login with your old username/password to faraday now.')
 
-@click.command(help="Import all your data from Couchdb Faraday databases")
-def import_from_couchdb():
-    with app.app_context():
-        ImportCouchDB().run()
 
 @click.command(help="Create a PNG image with Faraday model object")
 def database_schema():
     DatabaseSchema().run()
 
+
 @click.command(help="Open a SQL Shell connected to postgresql 'Faraday DB'")
 def sql_shell():
-    try:
-        from pgcli.main import PGCli
-    except ImportError:
-        print('PGCli was not found, please install it with: pip install pgcli')
-        sys.exit(1)
     conn_string = faraday.server.config.database.connection_string.strip("'")
     conn_string = urlparse(conn_string)
     parsed_conn_string = ("user={username} password={password} host={hostname} dbname={dbname}"
@@ -282,7 +265,6 @@ def rename_user(current_username, new_username):
 cli.add_command(process_reports)
 cli.add_command(show_urls)
 cli.add_command(initdb)
-cli.add_command(import_from_couchdb)
 cli.add_command(database_schema)
 cli.add_command(create_superuser)
 cli.add_command(sql_shell)

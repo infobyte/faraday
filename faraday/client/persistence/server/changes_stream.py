@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """
 Faraday Penetration Test IDE
@@ -98,7 +98,8 @@ class WebsocketsChangesStream(ChangesStream):
         super(WebsocketsChangesStream, self).stop()
 
     def on_open(self):
-        from faraday.client.persistence.server.server import _create_server_api_url, _post
+        from faraday.client.persistence.server.server import _create_server_api_url, _post  # pylint:disable=import-outside-toplevel
+
         response = _post(
             _create_server_api_url() +
             '/ws/{}/websocket_token/'.format(self.workspace_name),

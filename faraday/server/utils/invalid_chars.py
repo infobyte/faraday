@@ -103,4 +103,10 @@ def remove_invalid_chars(c):
         return ret
     else:
         return c
-# I'm Py3
+
+
+def remove_null_caracters(string):
+    string = string.replace('\x00', '')
+    string = string.replace('\00', '')
+    string = string.replace('\0', '')
+    return string

@@ -103,7 +103,7 @@ class WebServer:
             WebServer.API_URL_PATH, self.__build_api_resource())
 
     def __build_web_redirect(self):
-        return FaradayRedirectResource('/')
+        return FaradayRedirectResource(b'/')
 
     def __build_web_resource(self):
         return FileWithoutDirectoryListing(WebServer.WEB_UI_LOCAL_PATH)

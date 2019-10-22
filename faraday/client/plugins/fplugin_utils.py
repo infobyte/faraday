@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_available_plugins():
-    from faraday import client
+    from faraday import client  # pylint:disable=import-outside-toplevel
     client_base_path = os.path.dirname(os.path.abspath(client.__file__))
 
     scan_path = os.path.join(client_base_path, "bin")

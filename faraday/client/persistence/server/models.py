@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 def _conf():
     if FARADAY_UP:
-        from faraday.config.configuration import getInstanceConfiguration
+        from faraday.config.configuration import getInstanceConfiguration  # pylint:disable=import-outside-toplevel
         return getInstanceConfiguration()
     else:
         raise CantAccessConfigurationWithoutTheClient

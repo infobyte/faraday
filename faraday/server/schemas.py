@@ -5,7 +5,6 @@ See the file 'doc/LICENSE' for the license information
 
 """
 import time
-import json
 import datetime
 from flask import g
 from marshmallow import fields, Schema

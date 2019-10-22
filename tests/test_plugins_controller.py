@@ -10,7 +10,7 @@ import sys
 sys.path.append('.')
 import unittest
 from queue import Queue
-from mock import MagicMock as mock
+from unittest.mock import MagicMock as mock
 
 import faraday.client.plugins.controller
 

@@ -75,7 +75,6 @@ pylint:
         # pylint slow issue https://github.com/PyCQA/pylint/issues/2765
         - pip install pylint isort==4.3.4
         - pylint --rcfile=.pylintrc faraday --ignore=faraday_venv | tee pylint.txt
-        - pylint --rcfile=.pylintrc3 --py3k faraday --ignore=faraday_venv | tee pylint3.txt
         - score=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' pylint.txt)
           #- anybadge --label pylint --value=$score --file pylint.svg 4=red 6=orange 8=yellow 10=green
     artifacts:
@@ -117,7 +116,6 @@ postgresql_test:
         - virtualenv -p python3 faraday_venv
         - source faraday_venv/bin/activate
         - pip install pip -U
-        - pip install mock
         #- pip install --upgrade -r requirements_server.txt
         - pip install --upgrade -r requirements.txt
         - python3 setup.py install
@@ -151,7 +149,6 @@ sqlite_test:
         - virtualenv -p python3 faraday_venv
         - source faraday_venv/bin/activate
         - pip install pip -U
-        - pip install mock
         #- pip install --upgrade -r requirements_server.txt
         - pip install --upgrade -r requirements.txt
         - python3 setup.py install
@@ -425,10 +422,13 @@ test_hypothesis:
     allow_failure: true
     script:
         - apt-get update -qy
-        - pip install virtualenv
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" build-essential ipython python3-setuptools python3-pip python3-dev libssl-dev libffi-dev pkg-config libxml2-dev libxslt1-dev libfreetype6-dev libpng-dev
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" libpq-dev python3-pip python3-dev gir1.2-gtk-3.0 gir1.2-vte-2.91 python3-gi python3-gi-cairo zsh curl
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" gobject-introspection libgirepository1.0-dev libcairo2-dev libgdk-pixbuf2.0-dev
+        - apt-get install -y -o dir::cache::archives="$APT_CACHE_DIR" libcanberra-gtk-module libcanberra-gtk* libxml2-dev libxslt1-dev gir1.2-gtk-3.0 gir1.2-vte-2.91
+        - pip3 install virtualenv
         - virtualenv -p python3 faraday_venv
         - source faraday_venv/bin/activate
-        #- pip install --upgrade -r requirements_server.txt
         - python3 setup.py install
         - pip install --upgrade responses pytest-xdist pytest-cov
         - pip install --upgrade -r requirements_dev.txt

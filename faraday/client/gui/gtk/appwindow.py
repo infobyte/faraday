@@ -9,14 +9,14 @@ See the file 'doc/LICENSE' for the license information
 from __future__ import absolute_import
 
 import os
-import gi
+import gi  # pylint: disable=import-error
 
 from faraday.config.configuration import getInstanceConfiguration
 from faraday.client.start_client import FARADAY_CLIENT_BASE
 
 gi.require_version('Gtk', '3.0')
 
-from gi.repository import GLib, Gio, Gtk, GObject, Gdk
+from gi.repository import GLib, Gio, Gtk, GObject, Gdk  # pylint: disable=import-error
 from faraday.client.gui.gtk.dialogs import ImportantErrorDialog
 
 CONF = getInstanceConfiguration()

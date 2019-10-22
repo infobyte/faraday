@@ -10,9 +10,10 @@ import logging
 import base64
 
 from flask import Flask, request, jsonify
-from tornado.wsgi import WSGIContainer
-from tornado.httpserver import HTTPServer
-from tornado.ioloop import IOLoop
+from tornado.wsgi import WSGIContainer  # pylint: disable=import-error
+from tornado.httpserver import HTTPServer  # pylint: disable=import-error
+from tornado.ioloop import IOLoop  # pylint: disable=import-error
+from tornado import gen # pylint: disable=import-error
 
 from faraday.client.model.visitor import VulnsLookupVisitor
 
@@ -34,8 +35,12 @@ def stopServer():
     global _http_server
     global ioloop_instance
     if _http_server is not None:
-        ioloop_instance.stop()
-        _http_server.stop()
+        # Code taken from https://github.com/tornadoweb/tornado/issues/1791#issuecomment-409258371
+        async def shutdown():
+            _http_server.stop()
+            await gen.sleep(1)
+            ioloop_instance.stop()
+        ioloop_instance.add_callback_from_signal(shutdown)
 
 
 def startAPIs(plugin_controller, model_controller, hostname, port):

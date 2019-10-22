@@ -77,7 +77,7 @@ def dispatch(args, unknown, user_help, username, password):
         else:
             sys.exit(1)
 
-    from faraday import client
+    from faraday import client # pylint:disable=import-outside-toplevel
     faraday_directory = os.path.dirname(os.path.realpath(os.path.join(client.__file__)))
 
     plugin_path = os.path.join(faraday_directory, "bin/", args.command + '.py')

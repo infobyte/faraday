@@ -10,7 +10,7 @@ import itsdangerous
 
 import http.cookies
 from collections import defaultdict
-from queue import Queue, Empty
+from queue import Empty
 
 import txaio
 
@@ -51,7 +51,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
         return (protocol, headers)
 
     def onMessage(self, payload, is_binary):
-        from faraday.server.web import app
+        from faraday.server.web import app # pylint:disable=import-outside-toplevel
         """
             We only support JOIN and LEAVE workspace messages.
             When authentication is implemented we need to verify

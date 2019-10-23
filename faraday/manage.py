@@ -9,7 +9,7 @@ import os
 import re
 import sys
 import platform
-
+import logging
 # If is linux and its installed with deb or rpm, it must run with a user in the faraday group
 if platform.system() == "Linux":
     import grp
@@ -53,6 +53,7 @@ from faraday.server.web import app
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
+logger = logging.getLogger(__name__)
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 def cli():
@@ -148,6 +149,7 @@ def status_check(check_postgresql, check_faraday, check_dependencies, check_conf
 
     sys.exit(exit_code)
 
+
 @click.command(help="Changes the password of a user")
 @click.option('--username', required=True, prompt=True)
 @click.option('--password', required=True, prompt=True, confirmation_prompt=True, hide_input=True)
@@ -157,6 +159,8 @@ def change_password(username, password):
     except ProgrammingError:
         print('\n\nMissing migrations, please execute: \n\nfaraday-manage migrate')
         sys.exit(1)
+
+
 def validate_user_unique_field(ctx, param, value):
     with app.app_context():
         if User.query.filter_by(**{param.name: value}).count():
@@ -229,6 +233,7 @@ def support():
         required=False,
         )
 def migrate(downgrade, revision):
+    logger.info("Running migrations")
     try:
         revision = revision or ("-1" if downgrade else "head")
         config = Config(os.path.join(FARADAY_BASE,"alembic.ini"))
@@ -238,7 +243,14 @@ def migrate(downgrade, revision):
         else:
             alembic.command.upgrade(config, revision)
     except OperationalError as e:
+        logger.error("Migration Error: %s", e)
         print('Please verify your configuration on server.ini or the hba configuration!')
+    except Exception as e:
+        logger.exception("Migration Error: %s", e)
+        print('Migration failed! Please check the logs')
+        sys.exit(1)
+    else:
+        logger.info("Migrations finished")
 
 
 @click.command(help='Custom field wizard')
@@ -279,6 +291,7 @@ cli.add_command(list_plugins)
 cli.add_command(rename_user)
 
 if __name__ == '__main__':
+
     cli()
 
 

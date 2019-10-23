@@ -149,6 +149,7 @@ def status_check(check_postgresql, check_faraday, check_dependencies, check_conf
 
     sys.exit(exit_code)
 
+
 @click.command(help="Changes the password of a user")
 @click.option('--username', required=True, prompt=True)
 @click.option('--password', required=True, prompt=True, confirmation_prompt=True, hide_input=True)
@@ -158,6 +159,8 @@ def change_password(username, password):
     except ProgrammingError:
         print('\n\nMissing migrations, please execute: \n\nfaraday-manage migrate')
         sys.exit(1)
+
+
 def validate_user_unique_field(ctx, param, value):
     with app.app_context():
         if User.query.filter_by(**{param.name: value}).count():
@@ -244,6 +247,8 @@ def migrate(downgrade, revision):
         print('Please verify your configuration on server.ini or the hba configuration!')
     except Exception as e:
         logger.exception("Migration Error: %s", e)
+        print('Migration failed! Please check the logs')
+        sys.exit(1)
     else:
         logger.info("Migrations finished")
 
@@ -286,6 +291,7 @@ cli.add_command(list_plugins)
 cli.add_command(rename_user)
 
 if __name__ == '__main__':
+
     cli()
 
 

@@ -687,6 +687,12 @@ h3.cf-display-name {
     padding-top: 32px;
 }
 
+.btn-cf-choice {
+    margin-bottom: 30px;
+    padding-left: 0;
+    padding-right: 0;
+}
+
 
 span.cf-icon-action {
     font-size: 10px;

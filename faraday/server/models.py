@@ -489,6 +489,7 @@ class CustomFieldsSchema(db.Model):
     id = Column(Integer, primary_key=True)
     field_name = Column(Text, unique=True)
     field_type = Column(Text)
+    field_metadata = Column(JSONType, nullable=True)
     field_display_name = Column(Text)
     field_order = Column(Integer)
     table_name = Column(Text)

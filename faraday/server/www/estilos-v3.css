@@ -315,7 +315,8 @@
 .tab-pane-container {
     width: 100%;
     overflow-y: auto;
-    max-height: calc(100% - 180px);
+    max-height: calc(100% - 175px);
+    height: 100%;
 }
 
 .btn-primary-white {

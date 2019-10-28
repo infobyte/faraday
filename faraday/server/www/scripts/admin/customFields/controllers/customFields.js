@@ -119,6 +119,14 @@ angular.module('faradayApp')
 
 
             $scope.updateCustomCustomField = function () {
+                 if($scope.selected_cf.field_metadata.length === 0){
+                    $scope.selected_cf.field_metadata = null;
+                }
+
+                if ($scope.selected_cf.field_type === 'choice'){
+                    $scope.selected_cf.field_metadata = JSON.stringify($scope.selected_cf.field_metadata)
+                }
+
                 customFieldFact.updateCustomField($scope.selected_cf).then(
                     function (response) {
                         if (response) {

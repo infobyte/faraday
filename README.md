@@ -33,19 +33,15 @@ You need Python 3.6+ and postgres to run the faraday server.
 
 ### Install OS Dependencies
 
-You need python 3.6+ and postgres. E.g. in debian
+You need python 3.6+ and postgres. E.g. in Ubuntu
 
 ```
 apt install postgresql python3.6
 ```
 
-Make sure postgres is up and running, and initialize the database as the postgres user:
+Make sure postgres is up and running before the next steps.
 
 
-```
-sudo -u postrgres -i
-initdb --locale en_US.UTF-8 -D '/var/lib/postgres/data'"
-```
 
 ### Install Python dependencies
 
@@ -59,9 +55,9 @@ create a virtual environment and install Python dependencies. For example:
 
 ```
 cd faraday
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
-python setup.py develop
+python3 setup.py develop
 
 ```
 
@@ -86,7 +82,7 @@ In your browser, now you can go to localhost:5985 and login with "faraday" as us
 ## New Features!
 
 All of Faraday's latest features and updates are always available on our [blog](http://blog.infobytesec.com/search/label/english).
-There are new entries every few weeks, don't forget to check out our amazing new improvements on it's last entry!
+There are new entries every few weeks, don't forget to check out our amazing new improvements on its latest entry!
 
 
 ## Plugins list
@@ -103,9 +99,11 @@ There are three Plugin types: **console** plugins which intercept and interpret 
 ## Features
 
 ### Workspaces
+
 Information is organized into various **Workspaces**. Each Workspace contains a pentest team's assignments and all the intel that is discovered.
 
 ### Conflicts
+
 If two plugins produce clashing information for an individual element, a conflict that the user will have to resolve is generated.  An example is if **user1** incorporates host *127.0.0.1 OS:Linux* and **user2** incorporates *127.0.0.1 OS: Linux Ubuntu 13.10*.
 
 On our [GTK interface](https://github.com/infobyte/faraday/wiki/Usage#gtk-gui) there's a button on the bottom right corner of the main window displaying the number of conflicts in the current workspace. To resolve them, just click on the button and a window will open where you can edit the conflicting objects and select which one to keep.
@@ -130,6 +128,7 @@ Using our plugin you can perform various actions using the command line, for exa
 Read more about the [Faraday Plugin](https://github.com/infobyte/faraday/wiki/faraday-plugin).
 
 ### Notifications
+
 Updating objects on other Faraday instances result in notifications on your
 Faraday GTK Client.
 
@@ -137,6 +136,7 @@ Faraday GTK Client.
 
 
 ### CSV Exporting
+
 Faraday supports CSV Exporting from its WEB UI.
 [More information](Exporting-the-information)
 

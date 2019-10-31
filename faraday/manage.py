@@ -42,6 +42,7 @@ from faraday.client.start_client import FARADAY_PLUGINS_BASEPATH
 from faraday.server.commands.initdb import InitDB
 from faraday.server.commands.faraday_schema_display import DatabaseSchema
 from faraday.server.commands.app_urls import show_all_urls
+from faraday.server.commands.app_urls import openapi_format
 from faraday.server.commands.reports import import_external_reports
 from faraday.server.commands import status_check as status_check_functions
 from faraday.server.commands import change_password as change_pass
@@ -85,6 +86,12 @@ def process_reports(debug, workspace, polling):
 @click.command(help="Show all URLs in Faraday Server API")
 def show_urls():
     show_all_urls()
+
+
+@click.command(help="Show all URLs in OPENAPI format")
+def openapi_yaml():
+    openapi_format()
+
 
 @click.command(help="Create Faraday DB in Postgresql, also tables and indexes")
 @click.option(
@@ -289,6 +296,7 @@ cli.add_command(delete_custom_field)
 cli.add_command(support)
 cli.add_command(list_plugins)
 cli.add_command(rename_user)
+cli.add_command(openapi_yaml)
 
 if __name__ == '__main__':
 

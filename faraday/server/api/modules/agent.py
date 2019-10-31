@@ -79,6 +79,17 @@ class AgentView(UpdateWorkspacedMixin,
 
     @route('/<int:agent_id>/run/', methods=['POST'])
     def run_agent(self, workspace_name, agent_id):
+        """
+        ASDASDASDASDASDSAD
+        ---
+        get:
+          description: Get a random pet
+          responses:
+            200:
+              content:
+                application/json:
+                  schema: AgentSchema
+        """
         try:
             validate_csrf(request.form.get('csrf_token'))
         except wtforms.ValidationError:

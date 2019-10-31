@@ -200,7 +200,7 @@ def main():
         faraday.server.config.faraday_server.bind_address = args.bind_address
     if args.websocket_port:
         faraday.server.config.faraday_server.websocket_port = args.websocket_port
-    if args.start:
+    if args.start or True:
         # Starts a new process on background with --ignore-setup
         # and without --start nor --stop
         devnull = open('/dev/null', 'w')
@@ -215,6 +215,24 @@ def main():
         subprocess.Popen(params, stdout=devnull, stderr=devnull)
     elif not args.start:
         run_server(args)
+
+    def auxx():
+        from apispec import APISpec
+        from apispec.ext.marshmallow import MarshmallowPlugin
+        from apispec_webframeworks.flask import FlaskPlugin
+
+        spec = APISpec(
+            title="Swagger Petstore",
+            version="1.0.0",
+            openapi_version="3.0.2",
+            plugins=[FlaskPlugin(), MarshmallowPlugin()],
+        )
+
+        with app.test_request_context():
+            for vv in app.view_functions:
+                spec.path(view=app.view_functions[vv])
+            assd = 0
+    auxx()
 
 if __name__ == '__main__': # TODO Borrar???
     main()

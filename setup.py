@@ -7,7 +7,6 @@ https://github.com/pypa/sampleproject
 from __future__ import absolute_import
 
 # Always prefer setuptools over distutils
-import sys
 from setuptools import setup, find_packages
 from os import path
 # io.open is needed for projects that support Python 2.7
@@ -16,11 +15,6 @@ from os import path
 # Python 3 only projects can skip this import
 from io import open
 from re import search
-
-if sys.version_info.major < 3 or sys.version_info.minor < 7:
-    print("Python >=3.7 is required to run the dispatcher.")
-    print("Install a newer Python version to proceed")
-    sys.exit(1)
 
 here = path.abspath(path.dirname(__file__))
 

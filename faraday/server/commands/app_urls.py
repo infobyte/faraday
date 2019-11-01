@@ -22,8 +22,8 @@ def openapi_format(format="yaml"):
     )
 
     with app.test_request_context():
-        for vv in app.view_functions:
-            spec.path(view=app.view_functions[vv])
+        for endpoint in app.view_functions:
+            spec.path(view=app.view_functions[endpoint])
         if format.lower() == "yaml":
             print(spec.to_yaml())
         else:

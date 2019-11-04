@@ -16,15 +16,12 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
     buffer = StringIO()
     headers = [
         "confirmed", "id", "date", "name", "severity", "service",
-        "target", "desc", "status", "hostnames", "comments"
+        "target", "desc", "status", "hostnames"
     ]
     headers += custom_fields_columns
     writer = csv.DictWriter(buffer, fieldnames=headers)
     writer.writeheader()
     for vuln in vulns:
-        comments = []
-        for comment in db.session.query(Comment).filter_by(object_type='vulnerability', object_id=vuln['_id']).all():
-            comments.append(comment.text)
         vuln_description = re.sub(' +', ' ', vuln['description'].strip().replace("\n", ""))
         vuln_date = vuln['metadata']['create_time']
         if vuln['service']:
@@ -41,7 +38,7 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
         vuln_dict = {"confirmed": vuln['confirmed'], "id": vuln['_id'], "date": vuln_date,
                      "severity": vuln['severity'], "target": vuln['target'], "status": vuln['status'],
                      "hostnames": vuln_hostnames,
-                     "desc": vuln_description, "name": vuln['name'], "service": vuln_service, "comments": comments}
+                     "desc": vuln_description, "name": vuln['name'], "service": vuln_service}
         if vuln['custom_fields']:
             for field_name, value in vuln['custom_fields'].items():
                 if field_name in custom_fields_columns:

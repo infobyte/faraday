@@ -48,6 +48,7 @@ from faraday.server.models import (
     VulnerabilityGeneric,
 )
 from faraday.server.utils.database import get_or_create
+from faraday.server.utils.export import export_vulns_to_csv
 
 from faraday.server.api.modules.services import ServiceSchema
 from faraday.server.schemas import (
@@ -809,41 +810,12 @@ class VulnerabilityView(PaginatedMixin,
     @route('export_csv/', methods=['GET'])
     def export_csv(self, workspace_name):
         confirmed = bool(request.args.get('confirmed'))
-        filters = request.args.get('q') or '{}'
-        workspace = self._get_workspace(workspace_name)
-        memory_file = cStringIO.StringIO()
+        filters = request.args.get('filter?q', '{}')
         custom_fields_columns = []
         for custom_field in db.session.query(CustomFieldsSchema).order_by(CustomFieldsSchema.field_order):
             custom_fields_columns.append(custom_field.field_name)
-        headers = ["confirmed", "id", "date", "name", "severity", "service", "target", "desc", "status", "hostnames"]
-        headers += custom_fields_columns
-        writer = csv.DictWriter(memory_file, fieldnames=headers)
-        writer.writeheader()
         vulns_query = self._filter(filters, workspace_name, confirmed)
-        for vuln in vulns_query:
-            vuln_description = re.sub(' +', ' ', vuln['description'].strip().replace("\n", ""))
-            vuln_date = vuln['metadata']['create_time']
-            if vuln['service']:
-                service_fields = ["status", "protocol", "name", "summary", "version", "ports"]
-                service_fields_values = map(lambda field: "%s:%s" % (field, vuln['service'][field]), service_fields)
-                vuln_service = " - ".join(service_fields_values)
-            else:
-                vuln_service = ""
-
-            if all(isinstance(hostname, (str, unicode)) for hostname in vuln['hostnames']):
-                vuln_hostnames = vuln['hostnames']
-            else:
-                vuln_hostnames = [str(hostname['name']) for hostname in vuln['hostnames']]
-
-            vuln_dict = {"confirmed": vuln['confirmed'], "id": vuln['_id'], "date": vuln_date,
-                         "severity": vuln['severity'], "target": vuln['target'], "status": vuln['status'], "hostnames": vuln_hostnames,
-                         "desc": vuln_description, "name": vuln['name'], "service": vuln_service}
-            if vuln['custom_fields']:
-                for field_name, value in vuln['custom_fields'].items():
-                    if field_name in custom_fields_columns:
-                        vuln_dict.update({field_name: value})
-            writer.writerow(vuln_dict)
-        memory_file.seek(0)
+        memory_file = export_vulns_to_csv(vulns_query, custom_fields_columns)
         return send_file(memory_file,
                          attachment_filename="Faraday-SR-%s.csv" % workspace_name,
                          as_attachment=True,

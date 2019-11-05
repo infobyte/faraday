@@ -1927,12 +1927,15 @@ class Action(Metadata):
 class Executor(Metadata):
     __tablename__ = 'executor'
     id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
     agent_id = Column(Integer, ForeignKey('agent.id'), index=True, nullable=False)
     agent = relationship(
         'Agent',
         backref=backref('executors', cascade="all, delete-orphan"),
     )
-    parameters = Column(JSONType, nullable=True, default=[])
+    parameters_metadata = Column(JSONType, nullable=True, default={})
+    # workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    # workspace = relationship('Workspace', backref=backref('executors', cascade="all, delete-orphan"))
 
 
 class AgentsSchedule(Metadata):
@@ -1962,7 +1965,7 @@ class AgentsSchedule(Metadata):
         backref=backref('schedules', cascade="all, delete-orphan"),
     )
 
-    parameters = Column(JSONType, nullable=True, default=[])
+    parameters = Column(JSONType, nullable=True, default={})
 
     @property
     def next_run(self):
@@ -2015,6 +2018,20 @@ class Agent(Metadata):
                 return 'offline'
         else:
             return 'paused'
+
+
+class AgentExecution(Metadata):
+    __tablename__ = 'agent_execution'
+    id = Column(Integer, primary_key=True)
+    moment = Column(DateTime, nullable=True)
+    agent_id = Column(Integer, ForeignKey('agent.id'), index=True, nullable=False)
+    agent = relationship('Agent', foreign_keys=[agent_id], backref=backref('executions', cascade="all, delete-orphan"))
+    command_id = Column(Integer, ForeignKey('command.id'), index=True, nullable=False)
+    command = relationship('Command', foreign_keys=[command_id], backref=backref('agent_executions', cascade="all, delete-orphan"))
+
+    @property
+    def parent(self):
+        return
 
 
 class Condition(Metadata):

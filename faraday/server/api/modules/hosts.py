@@ -144,6 +144,19 @@ class HostsView(PaginatedMixin,
 
     @route('/bulk_create/', methods=['POST'])
     def bulk_create(self, workspace_name):
+        """
+        TEST
+        ---
+        post:
+          tags: ["Vulns"]
+          description: Create hosts in bulk
+          responses:
+            201:
+              content:
+                application/json:
+                  schema: HostSchema
+
+        """
         try:
             validate_csrf(flask.request.form.get('csrf_token'))
         except wtforms.ValidationError:
@@ -197,6 +210,17 @@ class HostsView(PaginatedMixin,
 
     @route('/countVulns/')
     def count_vulns(self, workspace_name):
+        """
+        ---
+        post:
+          tags: ["Hosts"]
+          description: Create an agent
+          responses:
+            200:
+              content:
+                application/json:
+                  schema: HostCountSchema
+        """
         host_ids = flask.request.args.get('hosts', None)
         if host_ids:
             host_id_list = host_ids.split(',')

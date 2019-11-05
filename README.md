@@ -32,6 +32,15 @@ To begin the installation process, check out our [Installation Wiki](https://git
 All of Faraday's latest features and updates are always available on our [blog](http://blog.infobytesec.com/search/label/english).
 There are new entries every few weeks, don't forget to check out our amazing new improvements on it's last entry!
 
+## API
+
+This is a branch for a PoC of automatically generating the API documentation in the [OpenAPI/swagger](https://www.openapis.org/) format.
+To generate the API docs, for example, to use with swagger UI, run:
+
+```
+faraday-manage openapi-yaml
+```
+
 
 ## Plugins list
 

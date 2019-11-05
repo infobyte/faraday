@@ -11,14 +11,31 @@ from faraday.server.web import app
 from faraday import __version__ as f_version
 import json
 
+TAGS = [
+        {'name': 'Agents',
+         'description': 'Run and manage agents',
+         },
+        {'name': 'Vulns',
+         'description': 'Manage vulnerabilities found',
+         },
+        {'name': 'Hosts',
+         'description': 'Manage hosts',
+         },
+        {'name': 'Services',
+         'description': 'Manage services from hosts',
+         },
+        ]
+
 
 def openapi_format(format="yaml"):
 
     spec = APISpec(
-        title="faraday",
-        version="2.0.0",
+        title="Faraday API",
+        version="2",
         openapi_version="3.0.2",
         plugins=[FlaskPlugin(), MarshmallowPlugin()],
+        info={'description': 'The Faraday server API'},
+        tags=TAGS,
     )
 
     with app.test_request_context():

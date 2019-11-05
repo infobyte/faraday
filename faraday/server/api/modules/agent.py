@@ -51,6 +51,17 @@ class AgentCreationSchema(Schema):
 
 
 class AgentCreationView(GenericWorkspacedView, CreateWorkspacedMixin):
+    """
+    ---
+    post:
+      tags: ["Agents"]
+      description: Create an agent
+      responses:
+        200:
+          content:
+            application/json:
+              schema: AgentCreationSchema
+    """
     route_base = 'agent_registration'
     model_class = Agent
     schema_class = AgentCreationSchema
@@ -80,10 +91,10 @@ class AgentView(UpdateWorkspacedMixin,
     @route('/<int:agent_id>/run/', methods=['POST'])
     def run_agent(self, workspace_name, agent_id):
         """
-        ASDASDASDASDASDSAD
         ---
-        get:
-          description: Get a random pet
+        post:
+          tags: ["Agents"]
+          description: Run an agent
           responses:
             200:
               content:
@@ -104,6 +115,3 @@ class AgentView(UpdateWorkspacedMixin,
 
 AgentView.register(agent_api)
 AgentCreationView.register(agent_api)
-
-
-# I'm Py3

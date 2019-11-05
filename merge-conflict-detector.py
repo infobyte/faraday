@@ -9,6 +9,8 @@ Internal script used to detect merge conflicts to branch with
 our propiertary code. Not useful if you don't have access to
 the code of Faraday Professional or Faraday Corporate
 '''
+from __future__ import absolute_import
+from __future__ import print_function
 
 import os
 import re
@@ -115,7 +117,7 @@ def main(branch):
         if target_version != version and \
                 branch_exists(overriden_branch):
             branches_to_test.append(overriden_branch)
-            break  # Don't test merge to black if has overriden pink branch
+            # break  # Uncomment if want to cut the checker on merging to black if has overridden pink branch
         else:
             branches_to_test.append(BRANCH_FORMAT.format(target_version))
 
@@ -143,3 +145,6 @@ if __name__ == "__main__":
     parser.add_argument('-l', '--log-level', default='debug')
     args = parser.parse_args()
     main(args.branch)
+
+
+# I'm Py3

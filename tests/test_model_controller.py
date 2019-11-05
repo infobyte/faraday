@@ -4,11 +4,14 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from Queue import Queue
+from __future__ import absolute_import
+from __future__ import print_function
+
+from queue import Queue
 
 import time
 
-import mock
+from unittest import mock
 import pytest
 
 from faraday.client.managers.mapper_manager import MapperManager
@@ -78,13 +81,13 @@ def test_controller_stop_when_is_not_processing():
     pending_actions = Queue()
     controller = ModelController(mappers_manager, pending_actions)
     assert controller.processing is False
-    assert controller._stop is False
+    assert controller._must_stop is False
     controller.start()
-    assert controller.isAlive()
+    assert controller.is_alive()
     controller.stop()
-    assert controller._stop is True
     controller.join()
-    assert controller.isAlive() is False
+    assert controller._must_stop is True
+    assert controller.is_alive() is False
 
 
 def test_controller_cant_be_stopped_when_is_processing():
@@ -97,19 +100,19 @@ def test_controller_cant_be_stopped_when_is_processing():
     pending_actions = Queue()
     controller = ModelController(mappers_manager, pending_actions)
     assert controller.processing is False
-    assert controller._stop is False
+    assert controller._must_stop is False
     controller.start()
     controller.processing = True
     controller.active_plugins_count = 1
-    assert controller.isAlive()
+    assert controller.is_alive()
     controller.stop()
-    assert controller._stop
+    assert controller._must_stop is True
     assert controller.processing
     controller.join(timeout=2)
-    assert controller.isAlive()
+    assert controller.is_alive()
     controller.processing = False
     controller.join()
-    assert controller.isAlive() is False
+    assert controller.is_alive() is False
 
 
 def test_controller_plugin_start_action_updates_internal_state():
@@ -127,7 +130,7 @@ def test_controller_plugin_start_action_updates_internal_state():
     assert controller.processing is False
     controller.stop()
     controller.join()
-    assert controller.isAlive() is False
+    assert controller.is_alive() is False
 
 def test_only_start_plugin():
     mappers_manager = MapperManager()
@@ -159,7 +162,7 @@ def test_end_pluging_multiple_times():
 
 
 
-@pytest.mark.parametrize("url_endpoint, test_data", TEST_CASES.items())
+@pytest.mark.parametrize("url_endpoint, test_data", list(TEST_CASES.items()))
 @mock.patch('faraday.client.persistence.server.server._get')
 def test_find(get, url_endpoint, test_data, session):
     if 'api_result' in test_data:
@@ -177,3 +180,6 @@ def test_find(get, url_endpoint, test_data, session):
     print(get.mock_calls[0][1][0])
     assert get.mock_calls[0][1][0].endswith(
         '/_api/v2/ws/{0}/{1}/{2}/'.format(workspace.name, url_endpoint, obj.id))
+
+
+# I'm Py3

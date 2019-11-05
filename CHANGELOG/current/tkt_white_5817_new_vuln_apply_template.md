@@ -1,0 +1,1 @@
+* tkt_white_5817_new_vuln_apply_template

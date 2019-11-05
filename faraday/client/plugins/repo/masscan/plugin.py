@@ -1,9 +1,8 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2015  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-
+"""
 from faraday.client.plugins.repo.nmap.plugin import NmapPlugin
 import os
 import re
@@ -58,3 +57,5 @@ class CmdMasscanPlugin(NmapPlugin):
 
 def createPlugin():
     return CmdMasscanPlugin()
+
+# I'm Py3

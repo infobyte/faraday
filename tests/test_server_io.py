@@ -4,6 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 import os
 import sys
 import unittest
@@ -13,7 +15,7 @@ import requests
 sys.path.append(os.path.abspath(os.getcwd()))
 from faraday.client.persistence.server import server
 from faraday.client.persistence.server import server_io_exceptions
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 server.FARADAY_UP = False
 server.SERVER_URL = "http://localhost:5985"
@@ -165,3 +167,6 @@ class ClientServerAPITests(unittest.TestCase):
             obj_sign_to_mock[obj_sign].assert_called_once_with('a')
         with self.assertRaises(server_io_exceptions.WrongObjectSignature):
             server.get_objects('a', 'not a signature')
+
+
+# I'm Py3

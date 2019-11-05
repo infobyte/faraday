@@ -1,19 +1,13 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-
-from __future__ import with_statement
+"""
 from faraday.client.plugins import core
 from faraday.client.model import api
 import re
-import os
 import sys
-import urllib2
+from urllib.request import urlopen
 import json
 
 __author__ = "Francisco Amato"
@@ -32,7 +26,7 @@ class BeefPlugin(core.PluginBase):
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "Beef"
         self.name = "BeEF Online Service Plugin"
         self.plugin_version = "0.0.1"
@@ -57,7 +51,7 @@ class BeefPlugin(core.PluginBase):
         output being sent is valid.
         """
         try:
-            f = urllib2.urlopen(self.getSetting(
+            f = urlopen(self.getSetting(
                 "Host") + "/api/hooks?token=" + self.getSetting("Authkey"))
             data = json.loads(f.read())
         except:
@@ -112,8 +106,4 @@ class BeefPlugin(core.PluginBase):
 def createPlugin():
     return BeefPlugin()
 
-if __name__ == '__main__':
-    parser = BeefXmlParser(sys.argv[1])
-    for item in parser.items:
-        if item.status == 'up':
-            print item
+# I'm Py3

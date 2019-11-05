@@ -1,16 +1,10 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 """
 Faraday Penetration Test IDE
 Copyright (C) 2018 Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 """
-
-from __future__ import with_statement
 from faraday.client.plugins import core
 from faraday.client.plugins.plugin_utils import get_vulnweb_url_fields
-from faraday.client.model import api
 import re
 
 try:
@@ -83,7 +77,7 @@ class WebInspectParser():
                     "reference" : []}
             }
 
-            for tag, obj_property in map_objects_fields.iteritems():
+            for tag, obj_property in map_objects_fields.items():
 
                 value = self.return_text(tag,issue)
 
@@ -123,7 +117,7 @@ class WebInspectPlugin(core.PluginBase):
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "Webinspect"
         self.name = "Webinspect"
         self.plugin_version = "0.0.1"
@@ -156,7 +150,7 @@ class WebInspectPlugin(core.PluginBase):
                 query=get_vulnweb_url_fields(vuln.get("Vuln").get("website")).get("query"),
                 method=vuln.get("Vuln").get("method"),
                 request=vuln.get("Vuln").get("request"),
-                ref=filter(None ,vuln.get("Vuln").get("reference")),
+                ref=list(filter(None ,vuln.get("Vuln").get("reference"))),
                 response=vuln.get("Vuln").get("response"),
                 desc=cleanhtml(vuln.get("Vuln").get("description")),
                 resolution=cleanhtml(vuln.get("Vuln").get("resolution")),
@@ -170,3 +164,4 @@ class WebInspectPlugin(core.PluginBase):
 
 def createPlugin():
     return WebInspectPlugin()
+# I'm Py3

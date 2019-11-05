@@ -1,13 +1,16 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 
-'''
+"""
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 Author: Ezequiel Tavella
 
 This script generate a CSV file with information about the vulndb database.
 CSV Format:
 cwe,name,desc_summary,description,resolution,exploitation,references
-'''
+"""
+from __future__ import  absolute_import
+from __future__ import  print_function
+
 from subprocess import call
 from os import walk, path
 import json
@@ -76,14 +79,14 @@ class JsonToCsv():
 def main():
 
     #Get DB of vulndb
-    print '[*]Execute git clone...'
+    print('[*]Execute git clone...')
     return_code = call(['git', 'clone', URL_PROYECT])
 
     if return_code != 0 and return_code != 128:
-        print '[!]Error:\n Git return code: ' + str(return_code)
+        print('[!]Error:\n Git return code: ' + str(return_code))
 
     #Get DB names...
-    print '[*]Looking for DBs...'
+    print('[*]Looking for DBs...')
 
     with open('vulndb.csv', mode='w') as file_csv:
         file_csv.write(
@@ -115,7 +118,7 @@ def main():
 
         for file_db in vulndb_files:
 
-            print '[*]Parsing ' + file_db
+            print('[*]Parsing ' + file_db)
             with open(path.join(vulndb_path, file_db), 'r') as file_object:
                 csv_content = JsonToCsv(file_object)
                 description = get_data_from_file(csv_content.description, desc_files)
@@ -131,8 +134,7 @@ def main():
 
                 writer.writerow(result)
 
-        print '[*]Parse finished...'
-
+        print('[*]Parse finished...')
 
 def parse_filenames(files):
     # Parse filenames from description or fix folders
@@ -162,6 +164,7 @@ def get_data_from_file(csv_content, files):
 
     return data
 
-
 if __name__ == '__main__':
     main()
+
+# I'm Py3

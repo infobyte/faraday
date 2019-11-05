@@ -72,3 +72,30 @@ class TestSearchFilterAPI(ReadOnlyAPITests):
 
         res = test_client.get(self.url(user_filter))
         assert res.status_code == 404
+
+    def test_retrieve_filter_list_is_empty_from_another_user(self, test_client, session, logged_user):
+        user_filter = SearchFilterFactory.create(creator=logged_user)
+        another_user = UserFactory.create() 
+        session.add(user_filter)
+        session.add(another_user)
+        session.commit()
+
+        logout(test_client, [302])
+        login_as(test_client, another_user)
+
+        res = test_client.get(self.url())
+        assert res.status_code == 200
+        assert res.json == []
+
+    def test_delete_filter_from_another_user(self, test_client, session, logged_user):
+        user_filter = SearchFilterFactory.create(creator=logged_user)
+        another_user = UserFactory.create() 
+        session.add(user_filter)
+        session.add(another_user)
+        session.commit()
+
+        logout(test_client, [302])
+        login_as(test_client, another_user)
+
+        res = test_client.delete(self.url(user_filter))
+        assert res.status_code == 404

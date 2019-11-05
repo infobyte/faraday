@@ -9,7 +9,7 @@ angular.module('faradayApp')
             scope: false,
             replace: true,
             template: '<div><div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === cf.field_name"></i>    {{cf.field_display_name}}</div> \n\
-                            <div class="form-group" ng-if="cf.field_type !== \'list\'"> \n\
+                            <div class="form-group" ng-if="cf.field_type !== \'list\' && cf.field_type !== \'choice\'"> \n\
                                 <label class="sr-only" for="{{cf.field_name}}">{{cf.field_display_name}}</label> \n\
                                 <input type="text" class="form-control input-sm" id="{{cf.field_name}}" name="{{cf.field_name}}" \n\
                                        placeholder="{{cf.field_display_name}}" \n\
@@ -18,7 +18,21 @@ angular.module('faradayApp')
                                        ng-model="lastClickedVuln.custom_fields[cf.field_name]" check-custom-type="{{cf.field_type}}" \n\
                                        uib-tooltip="{{(cf.field_type === \'int\') ? \'Type only numbers\' : \'Input type text\'}}"/> \n\
                             </div> \n\
-                            <div class="form-group " ng-if="cf.field_type === \'list\'" ng-class="lastClickedVuln.custom_fields[cf.field_name].length > 0 ? \'no-margin-bottom\' : \'\'">\n\
+                            <div class="btn-group col-md-6 col-sm-6 col-xs-6 btn-cf-choice" ng-if="cf.field_type === \'choice\'"> \n\
+                            <button type="button" class="dropdown-toggle btn-change-property primary-btn btn-primary-white"  data-toggle = "dropdown" id = "btn-chg-choice" title = "Choices">\n\
+                                <span ng-if="lastClickedVuln.custom_fields[cf.field_name] !== null" > {{lastClickedVuln.custom_fields[cf.field_name]}}</span>\n\
+                                <span ng-if="lastClickedVuln.custom_fields[cf.field_name] === null">Select {{cf.field_display_name}}</span> \n\
+                            </button> \n\
+                            <button type="button" class="dropdown-toggle secondary-btn btn-change-property btn-secondary-white" data-toggle="dropdown" id="caret-choice" title="Choices"> \n\
+                                <span><i class="fa fa-angle-down fa-lg" aria-hidden="true"></i> </span> \n\
+                            </button> \n\
+                            <ul class="dropdown-menu dropdown-menu-right col-md-12 dropd-cf-choice" role="menu"> \n\
+                                <li ng-repeat="choice in  parserOptions(cf.field_metadata)"> \n\
+                                <a class="ws" href="javascript:;" ng-click="onChangeChoiceCf(choice)">{{choice}}</a> \n\
+                                </li> \n\
+                            </ul> \n\
+                           </div> \n\
+                           <div class="form-group " ng-if="cf.field_type === \'list\'" ng-class="lastClickedVuln.custom_fields[cf.field_name].length > 0 ? \'no-margin-bottom\' : \'\'">\n\
                                 <div class="input-group"> \n\
                                     <label class="sr-only" for="{{cf.field_name}}">{{cf.field_display_name}}</label> \n\
                                     <input type="text" class="form-control input-sm" id="{{cf.field_name}}" name="{{cf.field_name}}" \n\
@@ -46,15 +60,17 @@ angular.module('faradayApp')
             link: function (scope, element, attrs) {
                 scope.newValueField = function (valueField) {
                     if (valueField !== "" && valueField !== undefined) {
-                        if(scope.lastClickedVuln.custom_fields[scope.cf.field_name] === null )
+                        if (scope.lastClickedVuln.custom_fields[scope.cf.field_name] === null)
                             scope.lastClickedVuln.custom_fields[scope.cf.field_name] = [];
 
                         // we need to check if the ref already exists
-                        if (scope.lastClickedVuln.custom_fields[scope.cf.field_name].filter(function(field) {return field.value === valueField}).length === 0) {
+                        if (scope.lastClickedVuln.custom_fields[scope.cf.field_name].filter(function (field) {
+                            return field.value === valueField
+                        }).length === 0) {
                             scope.lastClickedVuln.custom_fields[scope.cf.field_name].push({value: valueField});
                             scope.valueField = "";
                         }
-                        angular.element('#'+scope.cf.field_name).val("");
+                        angular.element('#' + scope.cf.field_name).val("");
 
                         scope.fieldToEdit = scope.cf.field_name;
                         scope.processToEditPreview(false);
@@ -70,14 +86,24 @@ angular.module('faradayApp')
                     vulnsManager.updateVuln(scope.realVuln, scope.lastClickedVuln).then(function () {
                         scope.isUpdatingVuln = false;
                         scope.fieldToEdit = undefined;
-                        }, function (data) {
-                            scope.hideVulnPreview();
-                            commonsFact.showMessage("Error updating vuln " + scope.realVuln.name + " (" + scope.realVuln._id + "): " + (data.message || JSON.stringify(data.messages)));
-                            scope.fieldToEdit = undefined;
-                            scope.isUpdatingVuln = false;
+                    }, function (data) {
+                        scope.hideVulnPreview();
+                        commonsFact.showMessage("Error updating vuln " + scope.realVuln.name + " (" + scope.realVuln._id + "): " + (data.message || JSON.stringify(data.messages)));
+                        scope.fieldToEdit = undefined;
+                        scope.isUpdatingVuln = false;
 
-                });
-          };
-            }
-        }
+                    });
+                };
+
+                scope.onChangeChoiceCf = function (value) {
+                    scope.fieldToEdit = scope.cf.field_name;
+                    scope.activeEditPreview(scope.cf.field_name);
+                    scope.lastClickedVuln.custom_fields[scope.cf.field_name] = value;
+                    scope.processToEditPreview(false);
+                };
+
+                scope.parserOptions = function (rawOptions) {
+                    return JSON.parse(rawOptions)
+                };
+            }}
     }]);

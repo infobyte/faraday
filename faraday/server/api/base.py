@@ -867,6 +867,7 @@ class CountWorkspacedMixin:
             db.session.query(self.model_class)
             .join(Workspace)
             .group_by(group_by)
+            .order_by(group_by)
             .filter(Workspace.name == workspace_name,
                     *self.count_extra_filters))
         for key, count in count.values(group_by, func.count(group_by)):

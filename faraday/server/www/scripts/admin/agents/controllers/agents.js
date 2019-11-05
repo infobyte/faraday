@@ -23,6 +23,7 @@ angular.module('faradayApp')
             $scope.selectAll = false;
             $scope.options = [];
             $scope.disableExecute = false;
+            $scope.parameters_metadata = {};
 
             $scope.init = function () {
                 getWorkspaces();

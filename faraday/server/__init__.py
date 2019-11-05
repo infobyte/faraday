@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 class TimerClass(threading.Thread):
     def __init__(self):
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, name="TimerClassThread")
         self.__event = threading.Event()
 
     def sendNewstoLogGTK(self, json_response):

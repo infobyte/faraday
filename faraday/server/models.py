@@ -1924,6 +1924,17 @@ class Action(Metadata):
     value = Column(String, nullable=True)
 
 
+class Executor(Metadata):
+    __tablename__ = 'executor'
+    id = Column(Integer, primary_key=True)
+    agent_id = Column(Integer, ForeignKey('agent.id'), index=True, nullable=False)
+    agent = relationship(
+        'Agent',
+        backref=backref('executors', cascade="all, delete-orphan"),
+    )
+    parameters = Column(JSONType, nullable=True, default=[])
+
+
 class AgentsSchedule(Metadata):
     __tablename__ = 'agent_schedule'
     id = Column(Integer, primary_key=True)
@@ -1944,6 +1955,14 @@ class AgentsSchedule(Metadata):
         'Agent',
         backref=backref('schedules', cascade="all, delete-orphan"),
     )
+
+    executor_id = Column(Integer, ForeignKey('executor.id'), index=True, nullable=True)
+    executor = relationship(
+        'Executor',
+        backref=backref('schedules', cascade="all, delete-orphan"),
+    )
+
+    parameters = Column(JSONType, nullable=True, default=[])
 
     @property
     def next_run(self):

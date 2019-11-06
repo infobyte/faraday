@@ -28,7 +28,7 @@ class ReportsManager(Thread):
 
     def send_report_request(self, workspace_name, report_json):
         logger.info("Send Report data to workspace [%s]", workspace_name)
-        from faraday.server.web import app
+        from faraday.server.web import app  # pylint:disable=import-outside-toplevel
         with app.app_context():
             ws = Workspace.query.filter_by(name=workspace_name).one()
             bulk_create(ws, report_json, False)

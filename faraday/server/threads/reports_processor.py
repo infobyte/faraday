@@ -61,8 +61,7 @@ class ReportsManager(Thread):
                 workspace, file_path = self.upload_reports_queue.get(False, timeout=0.1)
                 logger.info("Processing raw report %s", file_path)
                 if os.path.isfile(file_path):
-                    try:
-                        self.process_report(workspace, file_path)
+                    self.process_report(workspace, file_path)
                 else:
                     logger.warning("Report file [%s] don't exists", file_path)
             except Empty:

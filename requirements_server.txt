@@ -40,3 +40,4 @@ Flask-KVSession==0.6.2
 simplekv==0.13.0
 pypcapfile==0.12.0
 html2text==2019.8.11
+faraday-plugins==1.0rc1

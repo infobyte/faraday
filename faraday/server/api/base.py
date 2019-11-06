@@ -14,7 +14,7 @@ from flask_classful import FlaskView
 from sqlalchemy.orm import joinedload, undefer
 from sqlalchemy.orm.exc import NoResultFound, ObjectDeletedError
 from sqlalchemy.inspection import inspect
-from sqlalchemy import func
+from sqlalchemy import func, text
 from marshmallow import Schema
 from marshmallow.compat import with_metaclass
 from marshmallow.validate import Length
@@ -849,25 +849,26 @@ class CountWorkspacedMixin:
             'total_count': 0
         }
         group_by = flask.request.args.get('group_by', None)
+        sort_order = flask.request.args.get('order', "asc")
         # TODO migration: whitelist fields to avoid leaking a confidential
         # field's value.
         # Example: /users/count/?group_by=password
         # Also we should check that the field exists in the db and isn't, for
         # example, a relationship
         if not group_by or group_by not in inspect(self.model_class).attrs:
-            flask.abort(404)
+            flask.abort(400, message="group_by is a required parameter")
 
         workspace_name = kwargs.pop('workspace_name')
         # using format is not a great practice.
         # the user input is group_by, however it's filtered by column name.
         table_name = inspect(self.model_class).tables[0].name
-        group_by = '{0}.{1}'.format(table_name, group_by)
+        group_by = order_by = '{0}.{1}'.format(table_name, group_by)
 
         count = self._filter_query(
             db.session.query(self.model_class)
             .join(Workspace)
             .group_by(group_by)
-            .order_by(group_by)
+            .order_by(text(f"{group_by} {sort_order}"))
             .filter(Workspace.name == workspace_name,
                     *self.count_extra_filters))
         for key, count in count.values(group_by, func.count(group_by)):

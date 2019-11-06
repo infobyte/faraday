@@ -21,8 +21,8 @@ from faraday.server.models import (
 )
 from faraday.server.utils.database import (
     get_conflict_object,
-    is_unique_constraint_violation
-    )
+    is_unique_constraint_violation,
+    get_object_type_for)
 from faraday.server.api.modules import (
     hosts,
     services,
@@ -222,7 +222,7 @@ def _create_host(ws, host_data, command=None):
             db.session.add(Hostname(name=name, host=host, workspace=ws))
     db.session.commit()
 
-    if command is not None and created:
+    if command is not None:
         _create_command_object_for(ws, created, host, command)
 
     for service_data in services:
@@ -237,11 +237,14 @@ def _create_host(ws, host_data, command=None):
 
 def _create_command_object_for(ws, created, obj, command):
     assert command is not None
-    db.session.add(CommandObject(
-        obj,
-        command=command,
-        created_persistent=created,
-        workspace=ws))
+    data = {
+        'object_id': obj.id,
+        'object_type': get_object_type_for(obj),
+        'command': command,
+        'created_persistent': created,
+        'workspace': ws,
+    }
+    get_or_create(ws, CommandObject, data)
     db.session.commit()
 
 
@@ -253,7 +256,7 @@ def _create_service(ws, host, service_data, command=None):
     (created, service) = get_or_create(ws, Service, service_data)
     db.session.commit()
 
-    if command is not None and created:
+    if command is not None:
         _create_command_object_for(ws, created, service, command)
 
     for vuln_data in vulns:
@@ -286,7 +289,7 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
     (created, vuln) = get_or_create(ws, model_class, vuln_data)
     db.session.commit()
 
-    if command is not None and created:
+    if command is not None:
         _create_command_object_for(ws, created, vuln, command)
 
     if created:

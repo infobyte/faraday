@@ -63,9 +63,6 @@ class ReportsManager(Thread):
                 if os.path.isfile(file_path):
                     try:
                         self.process_report(workspace, file_path)
-                    finally:
-                        logger.debug("Remove report file [%s]", file_path)
-                        os.remove(file_path)
                 else:
                     logger.warning("Report file [%s] don't exists", file_path)
             except Empty:

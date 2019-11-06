@@ -5,6 +5,8 @@ from tqdm import tqdm
 from colorama import init
 from colorama import Fore, Style
 
+import distro
+
 try:
     from pip._internal.operations import freeze
 except ImportError:  # pip < 10.0
@@ -53,14 +55,20 @@ def end_config(path):
     #Deletes recursively the directory created on the init_config
     shutil.rmtree(path)
 
+def revise_os(path):
+    with open(path + '/os_distro.txt','wt') as os_file:
+        os_file.write("{}".format(distro.linux_distribution()))
+
 def all_for_support():
-    with tqdm(total=5) as pbar:
+    with tqdm(total=6) as pbar:
         path = init_config()
         get_status_check(path)
         pbar.update(1)
         get_logs(path)
         pbar.update(1)
         get_pip_freeze(path)
+        pbar.update(1)
+        revise_os(path)
         pbar.update(1)
         make_zip(path)
         pbar.update(1)

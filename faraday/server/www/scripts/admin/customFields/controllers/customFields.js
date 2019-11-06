@@ -10,12 +10,15 @@ angular.module('faradayApp')
             $scope.selected_cf = {
                 field_display_name: "",
                 field_name: "",
+                field_metadata: [],
                 field_order: null,
                 field_type: null,
                 table_name: 'vulnerability'
             };
             $scope.isEditable = false;
-
+            $scope.data = {
+                newOption : ''
+            };
 
             $scope.models = {
                 selected: null
@@ -87,12 +90,26 @@ angular.module('faradayApp')
                 }
             };
 
+            $scope.addOption = function(){
+                if ( $scope.data.newOption !== ''){
+                    $scope.selected_cf.field_metadata.push($scope.data.newOption);
+                    $scope.data.newOption = '';
+                }
+            };
+
             $scope.createCustomCustomField = function () {
                 $scope.selected_cf.table_name = 'vulnerability';
 
                 if ($scope.selected_cf.field_order === null)
                     $scope.selected_cf.field_order = getMaxOrder() + 1;
 
+                if($scope.selected_cf.field_metadata.length === 0){
+                    $scope.selected_cf.field_metadata = null;
+                }
+
+                if ($scope.selected_cf.field_type === 'choice'){
+                    $scope.selected_cf.field_metadata = JSON.stringify($scope.selected_cf.field_metadata)
+                }
                 customFieldFact.createCustomField($scope.selected_cf).then(
                     function (response) {
                         $scope.customFields.push(response.data);
@@ -102,6 +119,14 @@ angular.module('faradayApp')
 
 
             $scope.updateCustomCustomField = function () {
+                 if($scope.selected_cf.field_metadata.length === 0){
+                    $scope.selected_cf.field_metadata = null;
+                }
+
+                if ($scope.selected_cf.field_type === 'choice'){
+                    $scope.selected_cf.field_metadata = JSON.stringify($scope.selected_cf.field_metadata)
+                }
+
                 customFieldFact.updateCustomField($scope.selected_cf).then(
                     function (response) {
                         if (response) {
@@ -149,6 +174,9 @@ angular.module('faradayApp')
 
             $scope.setCustomField = function (cf) {
                 $scope.selected_cf = angular.copy(cf);
+                if (cf.field_type === 'choice'){
+                    $scope.selected_cf.field_metadata = JSON.parse(cf.field_metadata);
+                }
                 $scope.isEditable = true;
                 $scope.changeType(cf.field_type);
 
@@ -167,6 +195,9 @@ angular.module('faradayApp')
                     case "int":
                         color = '#932ebe';
                         break;
+                    case "choice":
+                        color = '#be2743';
+                        break;
                     default:
                         color = '#AAAAAA';
                         break;
@@ -184,6 +215,7 @@ angular.module('faradayApp')
             $scope.clearSelection = function () {
                 $scope.selected_cf = {
                     field_display_name: "",
+                    field_metadata: [],
                     field_name: "",
                     field_order: null,
                     field_type: null

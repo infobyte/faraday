@@ -591,5 +591,17 @@ def test_bulk_create_endpoint_with_agent_token_disabled_workspace(
     )
     assert res.status_code == 403
 
+@pytest.mark.usefixtures('logged_user')
+def test_bulk_create_endpoint_raises_400_with_no_data(
+        session, test_client, workspace):
+    url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
+    res = test_client.post(
+        url,
+        data="",
+        use_json_data=False,
+        headers=[("Content-Type", "application/json")]
+    )
+    assert res.status_code == 400
+
 
 # I'm Py3

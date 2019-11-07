@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Faraday Penetration Test IDE
@@ -12,13 +12,15 @@ import sys
 from faraday.client.persistence.server.server_io_exceptions import ResourceDoesNotExist
 from faraday.client.persistence.server import models
 
+from selenium import webdriver
+
 __description__ = 'Takes a Screenshot of the ip:ports of a given protocol'
 __prettyname__ = 'Screenshot_server'
 
 
 def screenshot(path, protocol, ip, port):
     try:
-        from selenium import webdriver
+
     except ImportError:
         print("Missing dependencies: (selenium). "
               "Install it with pip install selenium. ")

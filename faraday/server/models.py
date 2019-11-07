@@ -489,6 +489,7 @@ class CustomFieldsSchema(db.Model):
     id = Column(Integer, primary_key=True)
     field_name = Column(Text, unique=True)
     field_type = Column(Text)
+    field_metadata = Column(JSONType, nullable=True)
     field_display_name = Column(Text)
     field_order = Column(Integer)
     table_name = Column(Text)
@@ -1523,7 +1524,7 @@ def get(workspace_name):
 class User(db.Model, UserMixin):
 
     __tablename__ = 'faraday_user'
-    ROLES = ['admin', 'pentester', 'client']
+    ROLES = ['admin', 'pentester', 'client', 'asset_owner']
     OTP_STATES = ["disabled", "requested", "confirmed"]
 
     id = Column(Integer, primary_key=True)
@@ -1832,7 +1833,6 @@ class ExecutiveReport(Metadata):
                     "TagObject.object_type=='executive_report')",
         collection_class=set,
     )
-    severities = Column(JSONType, nullable=True, default=[])
     filter = Column(JSONType, nullable=True, default=[])
     @property
     def parent(self):
@@ -1985,7 +1985,7 @@ class Agent(Metadata):
 
     @property
     def is_online(self):
-        from faraday.server.websocket_factories import connected_agents
+        from faraday.server.websocket_factories import connected_agents   # pylint:disable=import-outside-toplevel
         return self.id in connected_agents
 
     @property
@@ -2032,6 +2032,15 @@ class RuleExecution(Metadata):
     @property
     def parent(self):
         return
+
+
+class SearchFilter(Metadata):
+
+    __tablename__ = 'search_filter'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    json_query = Column(String, nullable=False) # meant to store json but just readonly
+    user_query = Column(String, nullable=False)
 
 
 # This constraint uses Columns from different classes

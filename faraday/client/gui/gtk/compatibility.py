@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """
 Faraday Penetration Test IDE
@@ -12,7 +12,7 @@ is 2.91)
 """
 from __future__ import absolute_import
 
-import gi
+import gi  # pylint: disable=import-error
 gi_version = gi.__version__
 
 gi.require_version('Gtk', '3.0')
@@ -23,7 +23,7 @@ except ValueError:
     gi.require_version('Vte', '2.90')
     vte_version = '2.90'
 
-from gi.repository import Vte, Gtk
+from gi.repository import Vte, Gtk  # pylint: disable=import-error
 
 
 class CompatibleVteTerminal(Vte.Terminal):

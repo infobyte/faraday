@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """
 Faraday Penetration Test IDE
@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 def _conf():
     if FARADAY_UP:
-        from faraday.config.configuration import getInstanceConfiguration
+        from faraday.config.configuration import getInstanceConfiguration  # pylint:disable=import-outside-toplevel
         return getInstanceConfiguration()
     else:
         raise CantAccessConfigurationWithoutTheClient

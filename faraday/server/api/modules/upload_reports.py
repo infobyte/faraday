@@ -50,8 +50,8 @@ logger = logging.getLogger(__name__)
 class RawReportProcessor(Thread):
     def __init__(self):
 
-        super(RawReportProcessor, self).__init__()
-        from faraday.client.start_client import setupPlugins
+        super(RawReportProcessor, self).__init__(name="RawReportProcessorThread")
+        from faraday.client.start_client import setupPlugins  # pylint:disable=import-outside-toplevel
         setupPlugins()
 
         self.pending_actions = Queue()

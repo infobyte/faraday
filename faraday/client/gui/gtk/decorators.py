@@ -4,7 +4,7 @@
 from __future__ import absolute_import
 
 import requests
-from gi.repository import Gtk
+from gi.repository import Gtk  # pylint: disable=import-error
 from faraday.server.utils.logger import get_logger
 from functools import wraps
 from faraday.client.gui.gtk.compatibility import CompatibleScrolledWindow as GtkScrolledWindow

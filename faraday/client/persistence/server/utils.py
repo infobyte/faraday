@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """
 Faraday Penetration Test IDE
@@ -74,7 +74,7 @@ def get_host_properties(host):
                 #In case of dup hostnames
                 host_dict['hostnames'] = list(set(host_dict['hostnames']))
             except socket.gaierror as e:
-                logger.error('Couldn\'t resolve hostname %s', ip)
+                logger.warning('Couldn\'t resolve hostname %s', ip)
         host_dict['ip'] = ip
     return host_dict
 

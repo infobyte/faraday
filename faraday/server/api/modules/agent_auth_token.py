@@ -10,7 +10,6 @@ from faraday.server.api.base import (
     GenericView,
 )
 from faraday.server.config import faraday_server
-from faraday.server.config import LOCAL_CONFIG_FILE
 
 
 agent_auth_token_api = Blueprint('agent_auth_token_api', __name__)
@@ -29,7 +28,7 @@ class AgentAuthTokenView(GenericView):
             {'token': faraday_server.agent_token}).data
 
     def post(self):
-        from faraday.server.app import save_new_agent_creation_token
+        from faraday.server.app import save_new_agent_creation_token  # pylint:disable=import-outside-toplevel
         try:
             validate_csrf(flask.request.form.get('csrf_token'))
         except ValidationError:

@@ -6,7 +6,7 @@ import os
 import string
 import datetime
 from itsdangerous import TimedJSONWebSignatureSerializer, SignatureExpired, BadSignature
-from os.path import join, expanduser
+from os.path import join
 from random import SystemRandom
 
 from faraday.server.config import LOCAL_CONFIG_FILE, copy_default_config_to_local
@@ -38,6 +38,7 @@ import faraday.server.config
 # Load SQLAlchemy Events
 import faraday.server.events
 from faraday.server.utils.logger import LOGGING_HANDLERS
+from faraday.server.utils.invalid_chars import remove_null_caracters
 from faraday.config.constant import CONST_FARADAY_HOME_PATH
 
 
@@ -63,27 +64,30 @@ def setup_storage_path():
 
 
 def register_blueprints(app):
-    from faraday.server.api.modules.info import info_api
-    from faraday.server.api.modules.commandsrun import commandsrun_api
-    from faraday.server.api.modules.activity_feed import activityfeed_api
-    from faraday.server.api.modules.credentials import credentials_api
-    from faraday.server.api.modules.hosts import host_api
-    from faraday.server.api.modules.licenses import license_api
-    from faraday.server.api.modules.services import services_api
-    from faraday.server.api.modules.session import session_api
-    from faraday.server.api.modules.vulns import vulns_api
-    from faraday.server.api.modules.vulnerability_template import vulnerability_template_api
-    from faraday.server.api.modules.workspaces import workspace_api
-    from faraday.server.api.modules.handlers import handlers_api
-    from faraday.server.api.modules.comments import comment_api
-    from faraday.server.api.modules.upload_reports import upload_api
-    from faraday.server.api.modules.websocket_auth import websocket_auth_api
-    from faraday.server.api.modules.get_exploits import exploits_api
-    from faraday.server.api.modules.custom_fields import custom_fields_schema_api
-    from faraday.server.api.modules.agent_auth_token import agent_auth_token_api
-    from faraday.server.api.modules.agent import agent_api
-    from faraday.server.api.modules.bulk_create import bulk_create_api
-    from faraday.server.api.modules.token import token_api
+
+    from faraday.server.api.modules.info import info_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.commandsrun import commandsrun_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.activity_feed import activityfeed_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.credentials import credentials_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.hosts import host_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.licenses import license_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.services import services_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.session import session_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.vulns import vulns_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.vulnerability_template import vulnerability_template_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.workspaces import workspace_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.handlers import handlers_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.comments import comment_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.upload_reports import upload_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.websocket_auth import websocket_auth_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.get_exploits import exploits_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.custom_fields import custom_fields_schema_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.agent_auth_token import agent_auth_token_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.agent import agent_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.bulk_create import bulk_create_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.token import token_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.search_filter import searchfilter_api # pylint:disable=import-outside-toplevel
+
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(activityfeed_api)
     app.register_blueprint(credentials_api)
@@ -105,6 +109,7 @@ def register_blueprints(app):
     app.register_blueprint(agent_auth_token_api)
     app.register_blueprint(bulk_create_api)
     app.register_blueprint(token_api)
+    app.register_blueprint(searchfilter_api)
 
 
 def check_testing_configuration(testing, app):
@@ -299,6 +304,7 @@ def create_app(db_connection_string=None, testing=None):
             'plaintext',  # TODO: remove it
         ],
         'PERMANENT_SESSION_LIFETIME': datetime.timedelta(hours=12),
+        'SESSION_COOKIE_NAME': 'faraday_session',
     })
 
     store = FilesystemStore(app.config['SESSION_FILE_DIR'])
@@ -330,7 +336,7 @@ def create_app(db_connection_string=None, testing=None):
     except NoOptionError:
         logger.info('Missing connection_string on [database] section on server.ini. Please configure the database before running the server.')
 
-    from faraday.server.models import db
+    from faraday.server.models import db # pylint:disable=import-outside-toplevel
     db.init_app(app)
     #Session(app)
 
@@ -383,14 +389,19 @@ class CustomLoginForm(LoginForm):
         # want to skip the LoginForm validate logic
         if not super(LoginForm, self).validate():
             return False
+        self.email.data = remove_null_caracters(self.email.data)
+
         self.user = _datastore.get_user(self.email.data)
 
         if self.user is None:
             self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
             return False
+
+        self.user.password = remove_null_caracters(self.user.password)
         if not self.user.password:
             self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
             return False
+        self.password.data = remove_null_caracters(self.password.data)
         if not verify_and_update_password(self.password.data, self.user):
             self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
             return False
@@ -401,4 +412,4 @@ class CustomLoginForm(LoginForm):
             self.email.errors.append(get_message('DISABLED_ACCOUNT')[0])
             return False
         return True
-# I'm Py3
+

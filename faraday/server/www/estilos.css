@@ -6,8 +6,13 @@ html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abb
 .clearfix{display:inline-block}html[xmlns] .clearfix{display:block}* html .clearfix{height:1%}
 /**/
 html#no-overflow{overflow-x:hidden;}
-html{
-    zoom: 0.8;
+.login {
+    background: #3a3a3a !important;
+    position: fixed;
+}
+html {
+    height: 100%;
+    width: 100%;
 }
 body {
     font-family: "Open Sans" !important;
@@ -564,6 +569,9 @@ div.modal-footer button.btn-footer{position: absolute;}
     width: 60%;
 }
 
+#buttonAtRight {
+    right: 0;
+}
 /* Table Status Report */
 table.status-report {
 	/* background-color: #CDCDCD; */

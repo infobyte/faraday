@@ -11,7 +11,7 @@ from queue import Queue
 
 import time
 
-import mock
+from unittest import mock
 import pytest
 
 from faraday.client.managers.mapper_manager import MapperManager

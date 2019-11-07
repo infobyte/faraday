@@ -1,0 +1,1 @@
+`faraday-manage support` now displays os version

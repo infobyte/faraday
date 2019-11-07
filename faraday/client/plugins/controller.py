@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 class PluginCommiter(Thread):
 
     def __init__(self, output_queue, output, pending_actions, plugin, command, mapper_manager, end_event=None):
-        super(PluginCommiter, self).__init__()
+        super(PluginCommiter, self).__init__(name="PluginCommiterThread")
         self.output_queue = output_queue
         self.pending_actions = pending_actions
         self.stop = False
@@ -68,7 +68,7 @@ class PluginCommiter(Thread):
         try:
             self.output_queue.join()
             self.commit()
-            if os.path.isfile(self.output):
+            if '\0' not in self.output and os.path.isfile(self.output):
                 # sometimes output is a filepath
                 name = os.path.basename(self.output)
                 os.rename(self.output,
@@ -85,7 +85,7 @@ class PluginController(Thread):
     TODO: Doc string.
     """
     def __init__(self, id, plugin_manager, mapper_manager, pending_actions, end_event=None):
-        super(PluginController, self).__init__()
+        super(PluginController, self).__init__(name="PluginControllerThread")
         self.plugin_manager = plugin_manager
         self._plugins = plugin_manager.getPlugins()
         self.id = id
@@ -138,6 +138,8 @@ class PluginController(Thread):
 
     def _get_plugins_by_input(self, cmd, plugin_set):
         for plugin in plugin_set.values():
+            if isinstance(cmd, bytes):
+                cmd = cmd.decode()
             if plugin.canParseCommandString(cmd):
                 return plugin
         return None

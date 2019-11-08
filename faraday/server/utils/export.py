@@ -1,5 +1,6 @@
 import csv
-from io import StringIO, BytesIO
+from StringIO import StringIO
+from io import BytesIO
 import re
 import logging
 
@@ -36,7 +37,7 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
             vuln_service = " - ".join(service_fields_values)
         else:
             vuln_service = ""
-        if all(isinstance(hostname, str) for hostname in vuln['hostnames']):
+        if all(isinstance(hostname, (str, unicode)) for hostname in vuln['hostnames']):
             vuln_hostnames = vuln['hostnames']
         else:
             vuln_hostnames = [str(hostname['name']) for hostname in vuln['hostnames']]
@@ -77,9 +78,15 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
             for field_name, value in vuln['custom_fields'].items():
                 if field_name in custom_fields_columns:
                     vuln_dict.update({field_name: value})
-        writer.writerow(vuln_dict)
+        res = {}
+        for key, value in vuln_dict.items():
+            if isinstance(value, (str, unicode)):
+                res[key] = value.encode('utf8')
+            else:
+                res[key] = value
+        writer.writerow(res)
     memory_file = BytesIO()
-    memory_file.write(buffer.getvalue().encode('utf-8'))
+    memory_file.write(buffer.getvalue())
     memory_file.seek(0)
     return memory_file
 

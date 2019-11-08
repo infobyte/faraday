@@ -197,9 +197,10 @@ class WorkspaceServerFactory(WebSocketServerFactory):
                     return
 
     def unregister_agent(self, protocol):
-        for (key, value) in connected_agents.items():
+        for (key, value) in connected_agents.copy().items():
             if value == protocol:
                 del connected_agents[key]
+                logger.info("Agent {} disconnected!".format(key))
 
     def broadcast(self, msg):
         if isinstance(msg, str):

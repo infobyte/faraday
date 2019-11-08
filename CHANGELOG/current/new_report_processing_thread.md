@@ -1,0 +1,1 @@
+The reports now are processed ina new thread with the reports plugins package

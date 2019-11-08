@@ -16,7 +16,10 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
     buffer = StringIO()
     headers = [
         "confirmed", "id", "date", "name", "severity", "service",
-        "target", "desc", "status", "hostnames"
+        "target", "desc", "status", "hostnames", "owner", "os", "resolution", "easeofresolution", "web_vulnerability",
+        "data", "website", "path", "status_code", "request", "method", "params", "pname", "query",
+        "policyviolations", "external_id", "impact_confidentiality", "impact_integrity", "impact_availability",
+        "impact_accountability"
     ]
     headers += custom_fields_columns
     writer = csv.DictWriter(buffer, fieldnames=headers)
@@ -35,10 +38,37 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
         else:
             vuln_hostnames = [str(hostname['name']) for hostname in vuln['hostnames']]
 
-        vuln_dict = {"confirmed": vuln['confirmed'], "id": vuln['_id'], "date": vuln_date,
-                     "severity": vuln['severity'], "target": vuln['target'], "status": vuln['status'],
+        vuln_dict = {"confirmed": vuln['confirmed'],
+                     "id": vuln.get('_id', None),
+                     "date": vuln_date,
+                     "severity": vuln.get('severity', None),
+                     "target": vuln.get('target', None),
+                     "status": vuln.get('status', None),
                      "hostnames": vuln_hostnames,
-                     "desc": vuln_description, "name": vuln['name'], "service": vuln_service}
+                     "desc": vuln_description,
+                     "name": vuln.get('name', None),
+                     "service": vuln_service,
+                     "owner": vuln.get('owner', None),
+                     "os": vuln.get('host_os', None),
+                     "resolution": vuln.get('resolution', None),
+                     "easeofresolution": vuln.get('easeofresolution', None),
+                     "data": vuln.get('data', None),
+                     "website": vuln.get('website', None),
+                     "path": vuln.get('path', None),
+                     "status_code": vuln.get('status_code', None),
+                     "request": vuln.get('request', None),
+                     "method": vuln.get('method', None),
+                     "params": vuln.get('params', None),
+                     "pname": vuln.get('pname', None),
+                     "query": vuln.get('query', None),
+                     "policyviolations": vuln.get('policyviolations', None),
+                     "external_id": vuln.get('external_id', None),
+                     "impact_confidentiality": vuln["impact"]["confidentiality"],
+                     "impact_integrity": vuln["impact"]["integrity"],
+                     "impact_availability": vuln["impact"]["availability"],
+                     "impact_accountability": vuln["impact"]["accountability"],
+                     "web_vulnerability": vuln['type'] == "VulnerabilityWeb"
+        }
         if vuln['custom_fields']:
             for field_name, value in vuln['custom_fields'].items():
                 if field_name in custom_fields_columns:

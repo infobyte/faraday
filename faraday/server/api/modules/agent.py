@@ -11,12 +11,23 @@ from marshmallow import fields, Schema
 from faraday.server.api.base import (AutoSchema, UpdateWorkspacedMixin, DeleteWorkspacedMixin,
                                      CountWorkspacedMixin, ReadOnlyWorkspacedView, CreateWorkspacedMixin,
                                      GenericWorkspacedView)
-from faraday.server.models import Agent
-from faraday.server.schemas import PrimaryKeyRelatedField
+from faraday.server.models import Agent, Executor
+from faraday.server.schemas import PrimaryKeyRelatedField, MutableField, SelfNestedField
 from faraday.server.config import faraday_server
 from faraday.server.events import changes_queue
 
 agent_api = Blueprint('agent_api', __name__)
+
+
+class ExecutorSchema(AutoSchema):
+
+    class Meta:
+        model = Executor
+        fields = (
+            'id',
+            'name',
+            'parameters_metadata',
+        )
 
 
 class AgentSchema(AutoSchema):
@@ -27,6 +38,7 @@ class AgentSchema(AutoSchema):
     create_date = fields.DateTime(dump_only=True)
     update_date = fields.DateTime(dump_only=True)
     is_online = fields.Boolean(dump_only=True)
+    executors = fields.Nested(ExecutorSchema(), dump_only=True, many=True)
 
     class Meta:
         model = Agent
@@ -41,6 +53,7 @@ class AgentSchema(AutoSchema):
             'token',
             'is_online',
             'active',
+            'executors'
         )
 
 

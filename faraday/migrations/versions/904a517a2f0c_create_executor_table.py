@@ -22,13 +22,29 @@ def upgrade():
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('name', sa.String, nullable=False),
         sa.Column('agent_id', sa.Integer, nullable=False),
-        sa.Column('parameters_metadata', sa.JSON, nullable=True, default={})
+        sa.Column('parameters_metadata', sa.JSON, nullable=True, default={}),
+        sa.Column('create_date', sa.DateTime),
+        sa.Column('update_date', sa.DateTime),
+        sa.Column('creator_id', sa.Integer),
+        sa.Column('update_user_id', sa.Integer)
     )
 
     op.create_foreign_key(
         'executor_agent_id_fkey',
         'executor',
         'agent', ['agent_id'], ['id']
+    )
+
+    op.create_foreign_key(
+        'executor_creator_id_fkey',
+        'executor',
+        'faraday_user', ['creator_id'], ['id']
+    )
+
+    op.create_foreign_key(
+        'executor_update_user_id_fkey',
+        'executor',
+        'faraday_user', ['update_user_id'], ['id']
     )
 
     op.add_column('agent_schedule', sa.Column('executor_id', sa.Integer, nullable=True))

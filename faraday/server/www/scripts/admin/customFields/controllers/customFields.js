@@ -175,7 +175,7 @@ angular.module('faradayApp')
             $scope.setCustomField = function (cf) {
                 $scope.selected_cf = angular.copy(cf);
                 if (cf.field_type === 'choice'){
-                    $scope.selected_cf.field_metadata = JSON.parse(cf.field_metadata);
+                    $scope.selected_cf.field_metadata  = cf.field_metadata === null ? [] : JSON.parse(cf.field_metadata);
                 }
                 $scope.isEditable = true;
                 $scope.changeType(cf.field_type);

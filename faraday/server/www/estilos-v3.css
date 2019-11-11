@@ -315,7 +315,8 @@
 .tab-pane-container {
     width: 100%;
     overflow-y: auto;
-    max-height: calc(100% - 180px);
+    max-height: calc(100% - 175px);
+    height: 100%;
 }
 
 .btn-primary-white {
@@ -666,6 +667,11 @@ button[disabled], html input[disabled] {
     background-color: #a1ce31;
 }
 
+.type-choice{
+    border: 1px solid #be2743;
+    background-color: #be2743;
+}
+
 h3.cf-display-name {
     margin-top: 0;
 }
@@ -680,6 +686,12 @@ h3.cf-display-name {
     color: #aaa;
     text-align: center;
     padding-top: 32px;
+}
+
+.btn-cf-choice {
+    margin-bottom: 30px;
+    padding-left: 0;
+    padding-right: 0;
 }
 
 

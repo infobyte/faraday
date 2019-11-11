@@ -4,6 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 import os
 import pytest
 
@@ -30,3 +32,6 @@ class TestAPIInfoEndpoint:
         res = test_client.get('/config')
         assert res.status_code == 200
         assert res.json['lic_db'] == 'faraday_licenses'
+
+
+# I'm Py3

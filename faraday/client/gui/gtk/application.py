@@ -1,11 +1,14 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
+from __future__ import absolute_import
+from __future__ import print_function
+from past.builtins import basestring
 
 import os
 import sys
@@ -88,6 +91,7 @@ from faraday.client.plugins import fplugin_utils
 CONF = getInstanceConfiguration()
 
 logger = logging.getLogger(__name__)
+
 
 class GuiApp(Gtk.Application, FaradayUi):
     """
@@ -481,7 +485,7 @@ class GuiApp(Gtk.Application, FaradayUi):
             """
             GObject.idle_add(loading_workspace, 'show')
             try:
-                ws = super(GuiApp, self).openWorkspace(workspace_name)
+                ws = self.openWorkspace(workspace_name)
                 GObject.idle_add(CONF.setLastWorkspace, ws.name)
                 GObject.idle_add(CONF.saveConfig)
             except Exception as e:
@@ -718,7 +722,7 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         plugins = fplugin_utils.get_available_plugins()
 
-        for plugin in sorted(plugins.iterkeys()):
+        for plugin in sorted(plugins.keys()):
             gio_action = Gio.SimpleAction.new('fplugin_%s' % plugin, None)
             gio_action.connect("activate", self.type_faraday_plugin_command)
             self.add_action(gio_action)
@@ -872,7 +876,7 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         def select_plugin():
             """Creates a simple dialog with a combo box to select a plugin"""
-            plugins_id = [_id for _id in self.plugin_manager.getPlugins()]
+            plugins_id = list(self.plugin_manager.getPlugins())
             plugins_id = sorted(plugins_id, key=lambda s: s.lower())
             dialog = Gtk.Dialog("Select plugin", self.window, 0)
 
@@ -975,3 +979,6 @@ class GuiApp(Gtk.Application, FaradayUi):
             command = fplugin_utils.build_faraday_plugin_command(plugin, active_workspace.getName())
             fd = terminal.get_pty().get_fd()
             os.write(fd, command)
+
+
+# I'm Py3

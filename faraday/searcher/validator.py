@@ -6,7 +6,6 @@
 ## Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
 ## See the file 'doc/LICENSE' for the license information
 ###
-
 import re
 import json
 import logging
@@ -43,7 +42,7 @@ def validate_fields(model, fields):
     if model in vfields and len(fields) != 0:
         for field in fields:
             if field not in vfields[model]:
-                print "ERROR: The field '%s' doesn't exist in model '%s'" % (field, model)
+                print("ERROR: The field '%s' doesn't exist in model '%s'" % (field, model))
                 logger.error("The field '%s' doesn't exist in model '%s'" % (field, model))
                 return False
         return True
@@ -106,6 +105,9 @@ def validate_action(actions):
         return False
 
     for action in actions:
+        if action is None:
+            return False
+
         if not action.startswith('--UPDATE:') and not action.startswith('--ALERT:') and not action.startswith(
                 '--EXECUTE:') and not action.startswith('--DELETE:'):
             return False
@@ -195,3 +197,4 @@ def validate_rules(rules):
 
     logger.info('<-- Rules OK')
     return True
+# I'm Py3

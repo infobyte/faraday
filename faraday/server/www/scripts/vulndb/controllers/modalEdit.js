@@ -17,7 +17,15 @@ angular.module('faradayApp')
             $scope.easeofresolution = EASEOFRESOLUTION;
             $scope.data = new VulnModel;
             $scope.data.set(model);
-            $scope.impact = angular.copy($scope.data.impact);
+            $scope.impact =  {
+                accountability: false,
+                availability: false,
+                confidentiality: false,
+                integrity: false
+            }
+            for (var [key, value] of Object.entries(angular.copy($scope.data.impact))) {
+                $scope.impact[key] = value
+            }
             $scope.policyviolations = clearList(angular.copy($scope.data.policyviolations), EXCLUDED_TOKENS);
             $scope.references = clearList(angular.copy($scope.data.refs), EXCLUDED_TOKENS);
             $scope.new_policyviolation = "";

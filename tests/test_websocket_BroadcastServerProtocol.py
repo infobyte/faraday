@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import pytest
 from faraday.server.models import Agent
 from faraday.server.websocket_factories import WorkspaceServerFactory
@@ -55,3 +57,6 @@ class TestWebsockerBroadcastServerProtocol():
         message = '{{"action": "LEAVE_AGENT"}}'.format(token)
         assert not proto.onMessage(message, False)
         assert not agent.is_online
+
+
+# I'm Py3

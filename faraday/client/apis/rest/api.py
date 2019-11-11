@@ -1,20 +1,19 @@
-#!/usr/bin/env python
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-
+"""
 import socket
 import threading
 import logging
 import base64
 
 from flask import Flask, request, jsonify
-from tornado.wsgi import WSGIContainer
-from tornado.httpserver import HTTPServer
-from tornado.ioloop import IOLoop
+from tornado.wsgi import WSGIContainer  # pylint: disable=import-error
+from tornado.httpserver import HTTPServer  # pylint: disable=import-error
+from tornado.ioloop import IOLoop  # pylint: disable=import-error
+from tornado import gen # pylint: disable=import-error
 
 from faraday.client.model.visitor import VulnsLookupVisitor
 
@@ -36,8 +35,12 @@ def stopServer():
     global _http_server
     global ioloop_instance
     if _http_server is not None:
-        ioloop_instance.stop()
-        _http_server.stop()
+        # Code taken from https://github.com/tornadoweb/tornado/issues/1791#issuecomment-409258371
+        async def shutdown():
+            _http_server.stop()
+            await gen.sleep(1)
+            ioloop_instance.stop()
+        ioloop_instance.add_callback_from_signal(shutdown)
 
 
 def startAPIs(plugin_controller, model_controller, hostname, port):
@@ -82,7 +85,7 @@ def startAPIs(plugin_controller, model_controller, hostname, port):
     threading.Thread(target=startServer).start()
 
 
-class RESTApi(object):
+class RESTApi:
     """ Abstract class for REST Controllers
     All REST Controllers should extend this class
     in order to get published"""
@@ -355,9 +358,12 @@ class PluginControllerAPI(RESTApi):
         return self.ok("active plugins cleared")
 
 
-class Route(object):
+class Route:
     """ Route class, abstracts information about:
     path, handler and methods """
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
+
+
+# I'm Py3

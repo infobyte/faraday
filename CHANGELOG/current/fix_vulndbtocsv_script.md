@@ -1,1 +1,0 @@
-Fix vulndbToCsv.py script

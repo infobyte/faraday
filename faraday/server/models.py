@@ -489,6 +489,7 @@ class CustomFieldsSchema(db.Model):
     id = Column(Integer, primary_key=True)
     field_name = Column(Text, unique=True)
     field_type = Column(Text)
+    field_metadata = Column(JSONType, nullable=True)
     field_display_name = Column(Text)
     field_order = Column(Integer)
     table_name = Column(Text)
@@ -680,6 +681,7 @@ class VulnerabilityTemplate(VulnerabilityABC):
         creator=_build_associationproxy_creator_non_workspaced('PolicyViolationTemplate')
     )
     custom_fields = Column(JSONType)
+    shipped = Column(Boolean, nullable=False, default=False)
 
 
 class CommandObject(db.Model):
@@ -830,10 +832,32 @@ class VulnerabilityGeneric(VulnerabilityABC):
     ]
 
     __tablename__ = 'vulnerability'
+    id = Column(Integer, primary_key=True)
     confirmed = Column(Boolean, nullable=False, default=False)
     status = Column(Enum(*STATUSES, name='vulnerability_statuses'), nullable=False, default="open")
     type = Column(Enum(*VULN_TYPES, name='vulnerability_types'), nullable=False)
     issuetracker = BlankColumn(Text)
+    association_date = Column(DateTime, nullable=True)
+    disassociated_manually = Column(Boolean, nullable=False, default=False)
+
+    vulnerability_duplicate_id =  Column(
+                        Integer,
+                        ForeignKey('vulnerability.id'),
+                        index=True,
+                        nullable=True,
+                        )
+    duplicate_childs = relationship("VulnerabilityGeneric", cascade="all, delete-orphan",
+                backref=backref('vulnerability_duplicate', remote_side=[id])
+            )
+
+    vulnerability_template_id =  Column(
+                        Integer,
+                        ForeignKey('vulnerability_template.id'),
+                        index=True,
+                        nullable=True,
+                        )
+
+    vulnerability_template = relationship('VulnerabilityTemplate', backref=backref('duplicate_vulnerabilities', passive_deletes='all'))
 
     workspace_id = Column(
                         Integer,
@@ -958,6 +982,10 @@ class VulnerabilityGeneric(VulnerabilityABC):
     @hybrid_property
     def target(self):
         return self.target_host_ip
+
+    @property
+    def has_duplicate(self):
+        return self.vulnerability_duplicate_id == None
 
 
 class Vulnerability(VulnerabilityGeneric):
@@ -1496,7 +1524,7 @@ def get(workspace_name):
 class User(db.Model, UserMixin):
 
     __tablename__ = 'faraday_user'
-    ROLES = ['admin', 'pentester', 'client']
+    ROLES = ['admin', 'pentester', 'client', 'asset_owner']
     OTP_STATES = ["disabled", "requested", "confirmed"]
 
     id = Column(Integer, primary_key=True)
@@ -1805,7 +1833,6 @@ class ExecutiveReport(Metadata):
                     "TagObject.object_type=='executive_report')",
         collection_class=set,
     )
-    severities = Column(JSONType, nullable=True, default=[])
     filter = Column(JSONType, nullable=True, default=[])
     @property
     def parent(self):
@@ -1848,6 +1875,32 @@ class Notification(db.Model):
     @property
     def parent(self):
         return
+
+
+class KnowledgeBase(db.Model):
+    __tablename__ = 'knowledge_base'
+    id = Column(Integer, primary_key=True)
+
+    vulnerability_template_id =  Column(
+                        Integer,
+                        ForeignKey('vulnerability_template.id'),
+                        index=True,
+                        nullable=True,
+                        )
+    vulnerability_template = relationship('VulnerabilityTemplate',
+        backref=backref('knowledge', cascade="all, delete-orphan"),
+    )
+
+    faraday_kb_id = Column(Text, nullable=False)
+    reference_id = Column(Integer, nullable=False)
+
+    script_name = Column(Text, nullable=False)
+    external_identifier = Column(Text, nullable=False)
+    tool_name = Column(Text, nullable=False)
+    false_positive = Column(Integer, nullable=False, default=0)
+    verified = Column(Integer, nullable=False, default=0)
+
+    __table_args__ = (UniqueConstraint('external_identifier', 'tool_name', 'reference_id', name='uix_externalidentifier_toolname_referenceid'),)
 
 
 class Rule(Metadata):
@@ -1932,7 +1985,7 @@ class Agent(Metadata):
 
     @property
     def is_online(self):
-        from faraday.server.websocket_factories import connected_agents
+        from faraday.server.websocket_factories import connected_agents   # pylint:disable=import-outside-toplevel
         return self.id in connected_agents
 
     @property
@@ -1981,6 +2034,15 @@ class RuleExecution(Metadata):
         return
 
 
+class SearchFilter(Metadata):
+
+    __tablename__ = 'search_filter'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    json_query = Column(String, nullable=False) # meant to store json but just readonly
+    user_query = Column(String, nullable=False)
+
+
 # This constraint uses Columns from different classes
 # Since it applies to the table vulnerability it should be adVulnerability.ded to the Vulnerability class
 # However, since it contains columns from children classes, this cannot be done
@@ -2020,3 +2082,4 @@ event.listen(
 
 # We have to import this after all models are defined
 import faraday.server.events
+# I'm Py3

@@ -4,11 +4,13 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 import sys
 sys.path.append('.')
 import unittest
-from Queue import Queue
-from mock import MagicMock as mock
+from queue import Queue
+from unittest.mock import MagicMock as mock
 
 import faraday.client.plugins.controller
 
@@ -96,3 +98,6 @@ class PluginControllerUnitTest(unittest.TestCase):
         new_settings = {}
         self.controller.updatePluginSettings(plugin_id, new_settings)
         self.plugin1.updateSettings.assert_called_once_with(new_settings)
+
+
+# I'm Py3

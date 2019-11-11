@@ -1,9 +1,9 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
 """
 This module will help us to retrieve information
 about the app state and system information and
@@ -13,15 +13,22 @@ a crash or bug
 import sys
 import traceback
 import threading
+import requests
+import hashlib
+import platform
 import faraday.client.model.guiapi
-from cStringIO import StringIO
+from io import StringIO
 from faraday.client.gui.customevents import ShowExceptionCustomEvent
 from faraday.config.configuration import getInstanceConfiguration
 import json
 import time
 
-CONF = getInstanceConfiguration()
+try:
+    import pip
+except ImportError:
+    pass
 
+CONF = getInstanceConfiguration()
 
 
 def get_crash_log():
@@ -40,8 +47,6 @@ def exception_handler(type, value, tb):
     Since this handler may be called from threads, the dialog must be created
     using gtk idle_add or signals to avoid issues.
     """
-    import hashlib
-    import platform
 
     text = StringIO()
     traceback.print_exception(type, value, tb, file=text)
@@ -58,7 +63,6 @@ def exception_handler(type, value, tb):
 
     modules_info = ""
     try:
-        import pip
         modules_info = ",".join([ "%s=%s" % (x.key, x.version)
                             for x in pip.get_installed_distributions()])
     except (ImportError, AttributeError):
@@ -86,9 +90,6 @@ def exception_handler(type, value, tb):
 
 def reportToDevelopers(name=None, *description):
     try:
-        import requests
-        import hashlib
-        import platform
 
         uri = CONF.getTktPostUri()
         headers = json.loads(CONF.getApiParams())
@@ -127,9 +128,12 @@ def installThreadExcepthook():
         def run_with_except_hook(*args, **kw):
             try:
                 run_old(*args, **kw)
-            except (KeyboardInterrupt, SystemExit):
-                raise
-            except Exception:
+            except Exception as e:
+                if isinstance(e, (KeyboardInterrupt, SystemExit)):
+                    raise
                 sys.excepthook(*sys.exc_info())
         self.run = run_with_except_hook
     threading.Thread.__init__ = init
+
+
+# I'm Py3

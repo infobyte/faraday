@@ -1,11 +1,11 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
 class ServerRequestException(Exception):
     def __init__(self):
         pass
@@ -87,3 +87,4 @@ class CantAccessConfigurationWithoutTheClient(Exception):
     def __str__(self):
         return ("You're tring to access to the Faraday Configuration without "
                 "having the client up. This is not possible at the moment.")
+# I'm Py3

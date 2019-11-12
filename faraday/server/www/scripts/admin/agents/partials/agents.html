@@ -97,6 +97,7 @@
 <!--                    Execute-->
 <!--                </button>-->
                 <button type="button" class="btn btn-info"
+                        ng-click="selectAgent(agent)"
                         title="Run Agent"
                         data-toggle="modal" data-target="#selectExecutorModal-{{agent.id}}" ng-disabled="!agent.active || disableExecute">
                     Execute
@@ -142,11 +143,11 @@
 
                         <div class="form-group">
                             <label for="executorSelect">Select Executor</label>
-                            <select class="form-control" placeholder="Select" ng-options="executor as executor.name for executor in agent.executors track by executor.id" id="executorSelect"></select>
+                            <select class="form-control" ng-options="executor as executor.name for executor in executors track by executor.id" id="executorSelect" ng-model="executorSelect"></select>
                         </div>
 
-                         <div class="var-item margin-top-37px">
-                            <div class="form-group" ng-repeat="parameter in parameters_metadata">
+                         <div class="var-item margin-top-65px row">
+                            <div class="form-group col-md-6" ng-repeat="parameter in executorSelect.parameters_metadata">
                                 <label for="paramName">{{parameter.name}}</label>
                                 <input type="text" class="form-control" id="paramName" placeholder="{{parameter.name}}" ng-required="parameter.isRequired">
                             </div>

@@ -20,6 +20,8 @@ angular.module('faradayApp')
             $scope.agentToken = {id: null, token: null};
             $scope.workspace = null;
             $scope.agents = [];
+            $scope.executors = [];
+            $scope.executorSelect = undefined;
             $scope.selectAll = false;
             $scope.options = [];
             $scope.disableExecute = false;
@@ -75,6 +77,24 @@ angular.module('faradayApp')
                     }, function (error) {
                         console.log(error);
                     });
+            };
+
+            $scope.selectAgent = function (agent) {
+				$scope.executors = [];
+				agent.executors.forEach((executor) => {
+					let exec = {
+						id: executor.id,
+						name: executor.name,
+						parameters_metadata: []
+					};
+					let params = JSON.parse(executor.parameters_metadata);
+					for (let [key, value] of Object.entries(params)) {
+						let parameter = { name: key, isRequired: value };
+						exec.parameters_metadata.push(parameter);
+					}
+
+					$scope.executors.push(exec);
+				});
             };
 
             var removeAgentFromScope = function (agentId) {

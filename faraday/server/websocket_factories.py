@@ -25,7 +25,7 @@ from autobahn.twisted.websocket import (
     WebSocketServerProtocol
 )
 
-from faraday.server.models import Workspace, Agent
+from faraday.server.models import Workspace, Agent, Executor, db
 from faraday.server.api.modules.websocket_auth import decode_agent_websocket_token
 from faraday.server.events import changes_queue
 
@@ -92,7 +92,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
             if message['action'] == 'LEAVE_WORKSPACE':
                 self.factory.leave_workspace(self, message['workspace'])
             if message['action'] == 'JOIN_AGENT':
-                if 'token' not in message:
+                if 'token' not in message or 'executors' not in message:
                     logger.warn("Invalid agent join message")
                     self.state = WebSocketProtocol.STATE_CLOSING
                     self.sendClose()
@@ -100,6 +100,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                 with app.app_context():
                     try:
                         agent = decode_agent_websocket_token(message['token'])
+                        check_executors(agent, message['executors'])
                     except ValueError:
                         logger.warn('Invalid agent token!')
                         self.state = WebSocketProtocol.STATE_CLOSING
@@ -129,6 +130,21 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
 
     def sendServerStatus(self, redirectUrl=None, redirectAfter=0):
         self.sendHtml('This is a websocket port.')
+
+
+def check_executors(agent, executors):
+    for item in executors:
+        try:
+            executor = Executor(
+                name=item['executor_name'],
+                agent=agent,
+                parameters_metadata=json.dumps(item['args']))
+            db.session.add(executor)
+            db.session.commit()
+        except KeyError:
+            logger.error("Invalid Executor Schema")
+        except Exception as error:
+            logger.error("Something went wrong !!")
 
 
 class WorkspaceServerFactory(WebSocketServerFactory):

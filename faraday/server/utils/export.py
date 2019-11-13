@@ -1,6 +1,5 @@
 import csv
 from io import StringIO, BytesIO
->>>>>>> white/master
 import logging
 
 from faraday.server.models import (

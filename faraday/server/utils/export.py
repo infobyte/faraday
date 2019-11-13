@@ -77,15 +77,9 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
             for field_name, value in vuln['custom_fields'].items():
                 if field_name in custom_fields_columns:
                     vuln_dict.update({field_name: value})
-        res = {}
-        for key, value in vuln_dict.items():
-            if isinstance(value, str):
-                res[key] = value.encode('utf8')
-            else:
-                res[key] = value
-        writer.writerow(res)
+        writer.writerow(vuln_dict)
     memory_file = BytesIO()
-    memory_file.write(buffer.getvalue())
+    memory_file.write(buffer.getvalue().encode('utf8'))
     memory_file.seek(0)
     return memory_file
 

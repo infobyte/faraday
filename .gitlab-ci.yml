@@ -56,6 +56,19 @@ merge_conflict_check:
         - git config --global user.name "Mergerbot"
         - python3 merge-conflict-detector.py
 
+bandit:
+    tags:
+        - faradaytests
+    image: python:3
+    stage: pre_testing
+    allow_failure:
+    script:
+      - pip3 install virtualenv
+      - virtualenv -p python3 faraday_venv
+      - source faraday_venv/bin/activate
+      - pip3 install bandit
+      - bandit -r ${CI_PROJECT_DIR}/faraday
+
 pylint:
     tags:
         - faradaytests

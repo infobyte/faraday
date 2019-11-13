@@ -1,6 +1,8 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2019  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+import json
+
 import wtforms
 
 from flask import Blueprint, abort, request
@@ -97,9 +99,12 @@ class AgentView(UpdateWorkspacedMixin,
         except wtforms.ValidationError:
             abort(403)
         agent = self._get_object(agent_id, workspace_name)
+        executor_data = json.loads(request.form.get('executorData'))
         changes_queue.put({
             'agent_id': agent.id,
             'action': 'RUN',
+            "executor": executor_data['executor'],
+            "args": executor_data['args']
         })
         return 'OK'
 

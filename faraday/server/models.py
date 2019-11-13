@@ -2023,11 +2023,17 @@ class Agent(Metadata):
 class AgentExecution(Metadata):
     __tablename__ = 'agent_execution'
     id = Column(Integer, primary_key=True)
-    moment = Column(DateTime, nullable=True)
-    agent_id = Column(Integer, ForeignKey('agent.id'), index=True, nullable=False)
-    agent = relationship('Agent', foreign_keys=[agent_id], backref=backref('executions', cascade="all, delete-orphan"))
-    command_id = Column(Integer, ForeignKey('command.id'), index=True, nullable=False)
-    command = relationship('Command', foreign_keys=[command_id], backref=backref('agent_executions', cascade="all, delete-orphan"))
+    moment = Column(DateTime, default=datetime.utcnow)
+    running = Column(Boolean, nullable=True)
+    successful = Column(Boolean, nullable=True)
+    message = Column(String, nullable=True)
+    executor_id = Column(Integer, ForeignKey('executor.id'), index=True, nullable=False)
+    executor = relationship('Executor', foreign_keys=[executor_id], backref=backref('executions', cascade="all, delete-orphan"))
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship(
+        'Workspace',
+        backref=backref('agent_executions', cascade="all, delete-orphan"),
+    )
 
     @property
     def parent(self):

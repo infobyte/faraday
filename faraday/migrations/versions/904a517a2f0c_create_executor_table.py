@@ -59,20 +59,40 @@ def upgrade():
         'agent_execution',
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('moment', sa.DateTime, nullable=True),
-        sa.Column('agent_id', sa.Integer, nullable=False),
-        sa.Column('command_id', sa.Integer, nullable=False)
+        sa.Column('running', sa.Boolean, nullable=True),
+        sa.Column('successful', sa.Boolean, nullable=True),
+        sa.Column('message', sa.String, nullable=True),
+        sa.Column('executor_id', sa.Integer, nullable=False),
+        sa.Column('workspace_id', sa.Integer, nullable=False),
+        sa.Column('create_date', sa.DateTime),
+        sa.Column('update_date', sa.DateTime),
+        sa.Column('creator_id', sa.Integer),
+        sa.Column('update_user_id', sa.Integer)
+
     )
 
     op.create_foreign_key(
-        'agent_execution_agent_id_fkey',
+        'agent_execution_executor_id_fkey',
         'agent_execution',
-        'agent', ['agent_id'], ['id']
+        'executor', ['executor_id'], ['id']
     )
 
     op.create_foreign_key(
-        'agent_execution_command_id_fkey',
+        'agent_execution_workspace_id_fkey',
         'agent_execution',
-        'command', ['command_id'], ['id']
+        'workspace', ['workspace_id'], ['id']
+    )
+
+    op.create_foreign_key(
+        'agent_execution_creator_id_fkey',
+        'agent_execution',
+        'faraday_user', ['creator_id'], ['id']
+    )
+
+    op.create_foreign_key(
+        'agent_execution_update_user_id_fkey',
+        'agent_execution',
+        'faraday_user', ['update_user_id'], ['id']
     )
 
 

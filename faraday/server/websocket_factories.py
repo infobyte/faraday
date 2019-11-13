@@ -25,7 +25,7 @@ from autobahn.twisted.websocket import (
     WebSocketServerProtocol
 )
 
-from faraday.server.models import Workspace, Agent, Executor, db
+from faraday.server.models import Workspace, Agent, Executor, db, AgentExecution
 from faraday.server.api.modules.websocket_auth import decode_agent_websocket_token
 from faraday.server.events import changes_queue
 
@@ -49,6 +49,12 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
             except http.cookies.CookieError:
                 pass
         return (protocol, headers)
+
+    # {
+    #     "action": "RUN_STATUS",
+    #     "running": true,
+    #     "message": "todo bien guachin"
+    # }
 
     def onMessage(self, payload, is_binary):
         from faraday.server.web import app # pylint:disable=import-outside-toplevel
@@ -106,8 +112,8 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                         self.state = WebSocketProtocol.STATE_CLOSING
                         self.sendClose()
                         return False
-                # factory will now send broadcast messages to the agent
-                return self.factory.join_agent(self, agent)
+                    # factory will now send broadcast messages to the agent
+                    return self.factory.join_agent(self, agent)
             if message['action'] == 'LEAVE_AGENT':
                 with app.app_context():
                     (agent_id,) = [
@@ -121,7 +127,22 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                 self.state = WebSocketProtocol.STATE_CLOSING
                 self.sendClose()
                 return False
-
+            if message['action'] == 'RUN_STATUS':
+                with app.app_context():
+                    executor = Executor.query.filter(Executor.name == 'test').first()  # TODO: Get name from message
+                    if executor:
+                        successful = message.get('successful', None)
+                        running = message.get('running', None)
+                        msg = message['message']
+                        agent_execution = AgentExecution(
+                            running=running,
+                            successful=successful,
+                            message=msg,
+                            executor=executor,
+                            workspace_id=1  # TODO: Get ID from message
+                        )
+                        db.session.add(agent_execution)
+                        db.session.commit()
 
     def connectionLost(self, reason):
         WebSocketServerProtocol.connectionLost(self, reason)

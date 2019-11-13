@@ -1,3 +1,4 @@
+import re
 import csv
 from io import StringIO, BytesIO
 import logging

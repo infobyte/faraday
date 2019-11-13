@@ -9,7 +9,7 @@ import os
 import re
 import sys
 import platform
-
+import logging
 # If is linux and its installed with deb or rpm, it must run with a user in the faraday group
 if platform.system() == "Linux":
     import grp
@@ -42,7 +42,6 @@ from faraday.client.start_client import FARADAY_PLUGINS_BASEPATH
 from faraday.server.commands.initdb import InitDB
 from faraday.server.commands.faraday_schema_display import DatabaseSchema
 from faraday.server.commands.app_urls import show_all_urls
-from faraday.server.commands.reports import import_external_reports
 from faraday.server.commands import status_check as status_check_functions
 from faraday.server.commands import change_password as change_pass
 from faraday.server.commands.custom_fields import add_custom_field_main, delete_custom_field_main
@@ -53,6 +52,7 @@ from faraday.server.web import app
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
+logger = logging.getLogger(__name__)
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 def cli():
@@ -61,24 +61,6 @@ def cli():
 
 def check_faraday_server(url):
     return requests.get(url)
-
-
-@click.command(help="Enable importation of plugins reports in ~/.faraday folder")
-@click.option('--debug/--no-debug', default=False)
-@click.option('--workspace', default=None)
-@click.option('--polling/--no-polling', default=True)
-def process_reports(debug, workspace, polling):
-    configuration = _conf()
-    url = '{0}/_api/v2/info'.format(configuration.getServerURI() if FARADAY_UP else SERVER_URL)
-    with app.app_context():
-        try:
-            check_faraday_server(url)
-            import_external_reports(workspace, polling)
-        except OperationalError as ex:
-            print('{0}'.format(ex))
-            print('Please verify your configuration on server.ini or the hba configuration!')
-        except ConnectionError:
-            print('Can\'t connect to {0}. Please check if the server is running.'.format(url))
 
 
 @click.command(help="Show all URLs in Faraday Server API")
@@ -115,7 +97,6 @@ def sql_shell():
     pgcli.run_cli()
 
 
-
 @click.command(help='Checks configuration and faraday status.')
 @click.option('--check_postgresql', default=False, is_flag=True)
 @click.option('--check_faraday', default=False, is_flag=True)
@@ -148,6 +129,7 @@ def status_check(check_postgresql, check_faraday, check_dependencies, check_conf
 
     sys.exit(exit_code)
 
+
 @click.command(help="Changes the password of a user")
 @click.option('--username', required=True, prompt=True)
 @click.option('--password', required=True, prompt=True, confirmation_prompt=True, hide_input=True)
@@ -157,6 +139,8 @@ def change_password(username, password):
     except ProgrammingError:
         print('\n\nMissing migrations, please execute: \n\nfaraday-manage migrate')
         sys.exit(1)
+
+
 def validate_user_unique_field(ctx, param, value):
     with app.app_context():
         if User.query.filter_by(**{param.name: value}).count():
@@ -229,6 +213,7 @@ def support():
         required=False,
         )
 def migrate(downgrade, revision):
+    logger.info("Running migrations")
     try:
         revision = revision or ("-1" if downgrade else "head")
         config = Config(os.path.join(FARADAY_BASE,"alembic.ini"))
@@ -238,7 +223,14 @@ def migrate(downgrade, revision):
         else:
             alembic.command.upgrade(config, revision)
     except OperationalError as e:
+        logger.error("Migration Error: %s", e)
         print('Please verify your configuration on server.ini or the hba configuration!')
+    except Exception as e:
+        logger.exception("Migration Error: %s", e)
+        print('Migration failed! Please check the logs')
+        sys.exit(1)
+    else:
+        logger.info("Migrations finished")
 
 
 @click.command(help='Custom field wizard')
@@ -262,7 +254,6 @@ def rename_user(current_username, new_username):
         change_username.change_username(current_username, new_username)
 
 
-cli.add_command(process_reports)
 cli.add_command(show_urls)
 cli.add_command(initdb)
 cli.add_command(database_schema)
@@ -279,6 +270,7 @@ cli.add_command(list_plugins)
 cli.add_command(rename_user)
 
 if __name__ == '__main__':
+
     cli()
 
 

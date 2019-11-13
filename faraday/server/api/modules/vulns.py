@@ -807,7 +807,7 @@ class VulnerabilityView(PaginatedMixin,
     @route('export_csv/', methods=['GET'])
     def export_csv(self, workspace_name):
         confirmed = bool(request.args.get('confirmed'))
-        filters = request.args.get('filter?q', '{}')
+        filters = request.args.get('q', '{}')
         custom_fields_columns = []
         for custom_field in db.session.query(CustomFieldsSchema).order_by(CustomFieldsSchema.field_order):
             custom_fields_columns.append(custom_field.field_name)

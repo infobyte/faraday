@@ -88,7 +88,8 @@ class WebsocketsChangesStream(ChangesStream):
         # ws.run_forever will call on_message, on_error, on_close and on_open
         # see websocket client python docs on:
         # https://github.com/websocket-client/websocket-client
-        thread = threading.Thread(target=self.ws.run_forever, args=())
+        thread = threading.Thread(target=self.ws.run_forever, args=(),
+                                  name='WebsocketsChangesStream')
         thread.daemon = True
         thread.start()
 

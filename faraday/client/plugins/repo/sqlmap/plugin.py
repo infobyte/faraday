@@ -52,6 +52,7 @@ __status__ = "Development"
 SUPPORTED_HASHDB_VERSIONS = {
     "dPHoJRQYvs",  # 1.0.11
     "BZzRotigLX",  # 1.2.8
+    "OdqjeUpBLc",  # 1.3.6..1.3.10
 }
 
 
@@ -141,9 +142,10 @@ class SqlmapPlugin(PluginTerminalOutput):
 
     def hashKey(self, key):
         # from sqlmap/lib/utils/hashdb.py
-        # we don't sanitize key, because we only work
-        # with plain string
-        retVal = int(hashlib.md5(key).hexdigest(), 16) & 0x7fffffffffffffff
+        import six
+        from lib.core.convert import getBytes
+        key = getBytes(key if isinstance(key, six.text_type) else repr(key))
+        retVal = int(hashlib.md5(key).hexdigest(), 16) & 0x7fffffffffffffff  # Reference: http://stackoverflow.com/a/4448400
         return retVal
 
     def hashDBRetrieve(self, key, unserialize=False, db=False):
@@ -644,7 +646,7 @@ class SqlmapPlugin(PluginTerminalOutput):
 
             self._output_path = "%s%s" % (
                 os.path.join(self.data_path, "sqlmap_output-"),
-                re.sub(r'[\n\/]', r'', base64.b64encode(args.u)[:-1]))
+                re.sub(r'[\n\/]', r'', base64.b64encode(args.u.encode()).strip().decode()))
 
         if not args.s:
             return "%s -s %s" % (command_string, self._output_path)

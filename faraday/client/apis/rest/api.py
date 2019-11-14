@@ -315,8 +315,8 @@ class PluginControllerAPI(RESTApi):
             if 'pid' in json_data.keys():
                 if 'pwd' in json_data.keys():
                     try:
-                        cmd = base64.b64decode(json_data.get('cmd'))
-                        pwd = base64.b64decode(json_data.get('pwd'))
+                        cmd = base64.b64decode(json_data.get('cmd')).decode()
+                        pwd = base64.b64decode(json_data.get('pwd')).decode()
                     except:
                         cmd = ''
                         pwd = ''

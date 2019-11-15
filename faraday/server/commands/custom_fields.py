@@ -13,6 +13,7 @@ def add_custom_field_main():
     with app.app_context():
         add_custom_field_wizard()
 
+
 def delete_custom_field_main():
     with app.app_context():
         delete_custom_field_wizard()
@@ -31,6 +32,7 @@ def delete_custom_field_wizard():
         db.session.commit()
     else:
         print('Custom field not found')
+
 
 def add_custom_field_wizard():
     print('This wizard will guide you to ADD custom field to the vulneraiblity model.')
@@ -84,6 +86,7 @@ def add_custom_field_wizard():
     if not created:
         print('Custom field already exists, skipping')
         sys.exit(1)
-    custom_field_data.field_display_name = field_display_name,
+    custom_field_data.field_display_name = field_display_name
     custom_field_data.field_type = field_type
     db.session.commit()
+# I'm Py3

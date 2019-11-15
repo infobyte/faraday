@@ -5,6 +5,7 @@ Revises: 8a10ff3926a5
 Create Date: 2019-01-15 13:02:21.000699+00:00
 
 """
+from __future__ import absolute_import
 from alembic import op
 import sqlalchemy as sa
 
@@ -22,3 +23,4 @@ def upgrade():
 
 def downgrade():
     op.drop_column('workspace', 'readonly')
+# I'm Py3

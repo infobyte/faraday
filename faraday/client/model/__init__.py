@@ -1,9 +1,9 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
              
 class Modelactions:
     ADDHOST = 2000
@@ -76,4 +76,4 @@ class Modelactions:
 
     @staticmethod
     def getDescription(action):
-        return modelactions.__descriptions.get(action, "")
+        return modelactions.__descriptions.get(action, "")# I'm Py3

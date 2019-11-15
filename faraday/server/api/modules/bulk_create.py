@@ -21,8 +21,8 @@ from faraday.server.models import (
 )
 from faraday.server.utils.database import (
     get_conflict_object,
-    is_unique_constraint_violation
-    )
+    is_unique_constraint_violation,
+    get_object_type_for)
 from faraday.server.api.modules import (
     hosts,
     services,
@@ -141,7 +141,7 @@ class CommandSchema(AutoSchema):
 
     I don't need that here, so I'll write a schema from scratch."""
 
-    duration = fields.TimeDelta('seconds', required=True)
+    duration = fields.TimeDelta('microseconds', required=True)
 
     class Meta:
         model = Command
@@ -160,7 +160,7 @@ class BulkCreateSchema(Schema):
     hosts = fields.Nested(
         HostSchema(many=True),
         many=True,
-        missing=[],
+        required=True,
     )
     command = fields.Nested(
         CommandSchema(),
@@ -237,11 +237,14 @@ def _create_host(ws, host_data, command=None):
 
 def _create_command_object_for(ws, created, obj, command):
     assert command is not None
-    db.session.add(CommandObject(
-        obj,
-        command=command,
-        created_persistent=created,
-        workspace=ws))
+    data = {
+        'object_id': obj.id,
+        'object_type': get_object_type_for(obj),
+        'command': command,
+        'created_persistent': created,
+        'workspace': ws,
+    }
+    get_or_create(ws, CommandObject, data)
     db.session.commit()
 
 
@@ -335,3 +338,6 @@ class BulkCreateView(GenericWorkspacedView):
     post.is_public = True
 
 BulkCreateView.register(bulk_create_api)
+
+
+# I'm Py3

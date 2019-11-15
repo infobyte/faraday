@@ -4,6 +4,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
 import pytest
 from contextlib import contextmanager
 from faraday.server.models import (
@@ -81,7 +82,7 @@ class TestCascadeDelete:
         self.attachment = File(
             name='test.png',
             filename='test.png',
-            content='test',
+            content=b'test',
             object_type='vulnerability',
             object_id=self.service_vuln.id,
             creator=user,
@@ -91,7 +92,7 @@ class TestCascadeDelete:
         self.host_attachment = File(
             name='test.png',
             filename='test.png',
-            content='test',
+            content=b'test',
             object_type='host',
             object_id=self.host.id,
             creator=user,
@@ -244,3 +245,4 @@ class TestCascadeDelete:
     def test_delete_user_deletes_assignations(self):
         with self.assert_deletes(self.methodology_task_assigned):
             self.session.delete(self.user)
+# I'm Py3

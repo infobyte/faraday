@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
+"""
+from __future__ import absolute_import
+from __future__ import print_function
 
+from builtins import input
 import os
 import sys
 import base64
@@ -24,7 +27,7 @@ __description__ = 'Script to perform a brute force attack on different services 
 __prettyname__ = 'FBrute'
 
 SUPPORTED_SERVICES = ["asterisk", "cisco", "cisco-enable", "cvs", "firebird", "ftp", "ftps", "http",
-                      "https", "http-proxy", "icq" "imap", "imaps", "irc", "ldap2", "ldap3",
+                      "https", "http-proxy", "icq", "imap", "imaps", "irc", "ldap2", "ldap3",
                       "mssql", "mysql", "nntp", "oracle-listener", "oracle-sid", "pcanywhere",
                       "pcnfs", "pop3", "pop3s", "postgres", "rdp", "redis", "rexec", "rlogin",
                       "rsh", "rtsp", "s7-300", "sip", "smb", "smtp", "smtps", "smtp-enum", "snmp",
@@ -114,15 +117,13 @@ def show_table_services(workspace):
 def input_index(text, leng):
     while 1:
 
-        stdin = raw_input(text+"[0-"+str(leng-1)+"/q]: ")
+        stdin = input(text+"[0-"+str(leng-1)+"/q]: ")
 
         if re.search("[0-9]", stdin) is not None:
 
             if int(stdin) > leng-1 or int(stdin) < 0:
                 continue
-
-            else:
-                return stdin
+            return stdin
 
         elif stdin == "q":
             sys.exit(1)
@@ -154,8 +155,8 @@ def show_options(workspace):
 
     #Le pido el path de el user dic y el password dic
     if dictionary == 0:
-        usernames_dic_path = raw_input("Usernames file: ")
-        passwords_dic_path = raw_input("Passwords file: ")
+        usernames_dic_path = input("Usernames file: ")
+        passwords_dic_path = input("Passwords file: ")
         user_define_dictionary = True
 
     else:
@@ -235,3 +236,6 @@ def main(workspace='', args=None, parser=None):
     else:
         sys.exit("Hydra is not installed on the system. Install hydra to continue execution")
         return None, None
+
+
+# I'm Py3

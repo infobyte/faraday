@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
@@ -6,10 +5,7 @@ from __future__ import absolute_import
 import os
 import shutil
 import errno
-try:
-    import ConfigParser
-except ImportError:
-    import faraday.client.configparser as ConfigParser
+from configparser import ConfigParser
 
 from logging import (
     DEBUG,
@@ -63,7 +59,7 @@ def copy_default_config_to_local():
     # Copy default config file into faraday local config
     shutil.copyfile(DEFAULT_CONFIG_FILE, LOCAL_CONFIG_FILE)
 
-    from faraday.server.utils.logger import get_logger
+    from faraday.server.utils.logger import get_logger # pylint:disable=import-outside-toplevel
     get_logger(__name__).info(u"Local faraday-server configuration created at {}".format(LOCAL_CONFIG_FILE))
 
 
@@ -71,7 +67,7 @@ def parse_and_bind_configuration():
     """Load configuration from files declared in this module and put them
     on this module's namespace for convenient access"""
 
-    __parser = ConfigParser.SafeConfigParser()
+    __parser = ConfigParser()
     __parser.read(CONFIG_FILES)
 
     for section_name in __parser.sections():
@@ -89,7 +85,7 @@ def is_debug_mode():
     return LOGGING_LEVEL is DEBUG
 
 
-class ConfigSection(object):
+class ConfigSection:
     def parse(self, __parser):
         for att in self.__dict__:
             if isinstance(self.__dict__[att], bool):
@@ -157,6 +153,7 @@ class FaradayServerConfigObject(ConfigSection):
         self.api_token_expiration = 2592000
         self.agent_token = None
         self.debug = False
+        self.custom_plugins_folder = None
 
 class LDAPConfigObject(ConfigSection):
     def __init__(self):
@@ -224,3 +221,4 @@ def gen_web_config():
     return doc
 
 
+# I'm Py3

@@ -1,10 +1,12 @@
-#!/usr/bin/env python2.7
-'''
+#!/usr/bin/env python3
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
+from __future__ import absolute_import
+from __future__ import print_function
 
 import json
 import requests
@@ -54,11 +56,11 @@ def send_cmd(pid, cmd):
     except:
         response = ''
     finally:
-        print response
+        print(response)
         return 0
 
 def gen_output(pid):
-    print "%s/%s.%s.output" % (output_folder, pid, uuid.uuid4())
+    print("%s/%s.%s.output" % (output_folder, pid, uuid.uuid4()))
     return 0
 
 def send_output(pid, exit_code, output_file):
@@ -75,7 +77,7 @@ def send_output(pid, exit_code, output_file):
                              data=json.dumps(data),
                              headers=headers)
     if response.status_code != 200:
-        print response.json()
+        print(response.json())
         return -1
     return 0
 
@@ -105,3 +107,4 @@ def main(argv):
 
 if __name__ == '__main__':
     main(sys.argv)
+# I'm Py3

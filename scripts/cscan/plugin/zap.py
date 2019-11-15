@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 ###
 ## Faraday Penetration Test IDE
 ## Copyright (C) 2015  Infobyte LLC (http://www.infobytesec.com/)
@@ -8,6 +8,11 @@
 '''
 By tartamar
 '''
+
+from __future__ import absolute_import
+from __future__ import print_function
+from builtins import input
+
 import argparse
 import time
 import re
@@ -43,7 +48,7 @@ def is_http_url(page):
 def exportfile(filename,zap):
 
     #Output for XML Report
-    print 'Generating XML Report...'
+    print('Generating XML Report...')
     filex = open(filename, 'w')
     filex.write(zap.core.xmlreport)
     filex.close()
@@ -66,72 +71,73 @@ def main():
     if args.target is None:
         # Do nothing
         # Input data for test
-        target = raw_input('[+] Enter your target: ')
+        target = input('[+] Enter your target: ')
         if is_http_url(target) is True:
-            print '[-] Target selected: ', target
+            print('[-] Target selected: ', target)
         else:
-            print '[w] Please type a correct URL address'
+            print('[w] Please type a correct URL address')
             quit()
     else:
         # Check for valid URL addres
         if is_http_url(args.target) is True:
             target = args.target
-            print '[-] Target selected: ', target
+            print('[-] Target selected: ', target)
         else:
-            print '[w] Please type a correct URL Address'
+            print('[w] Please type a correct URL Address')
             quit()
-    print 'Starting ZAP ...'
+    print('Starting ZAP ...')
 
     global child_pid
     proc = subprocess.Popen([cmd, '-daemon'])
     child_pid = proc.pid
 
-    print 'Waiting for ZAP to load, 10 seconds ...'
+    print('Waiting for ZAP to load, 10 seconds ...')
     time.sleep(10)
     zap = ZAPv2()
     # Use the line below if ZAP is not listening on 8090
     zap = ZAPv2(proxies={'http': 'http://127.0.0.1:8080', 'https': 'http://127.0.0.1:8080'})
 
     # do stuff
-    print 'Accessing target %s' % target
+    print('Accessing target %s' % target)
     # try have a unique enough session...
     zap.urlopen(target)
     # Give the sites tree a chance to get updated
     time.sleep(2)
 
-    print 'Spidering target %s' % target
-    print target
+    print('Spidering target %s' % target)
+    print(target)
     zap.spider.scan(target)
     # Give the Spider a chance to start
     time.sleep(2)
     # print 'Status %s' % zap.spider.status
     while(int(zap.spider.status) < 100):
-        print 'Spider progress %: ' + zap.spider.status
+        print('Spider progress %: ' + zap.spider.status)
         time.sleep(2)
 
-    print 'Spider completed'
+    print('Spider completed')
     # Give the passive scanner a chance to finish
     time.sleep(5)
 
-    print 'Scanning target %s' % target
+    print('Scanning target %s' % target)
     zap.ascan.scan(target)
     while(int(zap.ascan.status) < 100):
-        print 'Scan progress %: ' + zap.ascan.status
+        print('Scan progress %: ' + zap.ascan.status)
         time.sleep(5)
 
-    print 'Scan completed'
+    print('Scan completed')
 
     # Report the results
 
-    print 'Hosts: ' + ', '.join(zap.core.hosts)
+    print('Hosts: ' + ', '.join(zap.core.hosts))
     # print 'Alerts: '
     # pprint (zap.core.alerts())
     # pprint (zap.core.xmlreport())
     exportfile(args.output,zap)
 
-    print 'Shutting down ZAP ...'
+    print('Shutting down ZAP ...')
     zap.core.shutdown
     #EOF
 
 if __name__ == "__main__":
     main()
+# I'm Py3

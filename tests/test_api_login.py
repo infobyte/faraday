@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import pytest
 from itsdangerous import TimedJSONWebSignatureSerializer
 
@@ -54,7 +56,7 @@ class TestLogin():
         res = test_client.post('/login', data=login_payload)
         assert res.status_code == 200
         assert 'authentication_token' in res.json['response']['user']
-        
+
         headers = {'Authentication-Token': res.json['response']['user']['authentication_token']}
 
         ws = test_client.get('/v2/ws/wonderland/', headers=headers)
@@ -82,7 +84,7 @@ class TestLogin():
         serializer = TimedJSONWebSignatureSerializer(app.config['SECRET_KEY'], expires_in=500, salt="token")
         token = serializer.dumps({ 'user_id': alice.id})
 
-        headers = {'Authorization': 'Token ' + token}
+        headers = {'Authorization': b'Token ' + token}
 
         ws = test_client.get('/v2/ws/wonderland/', headers=headers)
         assert ws.status_code == 401
@@ -125,3 +127,34 @@ class TestLogin():
         test_client.cookie_jar.clear()
         res = test_client.get('/v2/ws/', headers=headers)
         assert res.status_code == 401
+
+    def test_null_caracters(self, test_client, session):
+        """
+            Use of a valid auth token
+        """
+
+        alice = factories.UserFactory.create(
+                active=True,
+                username='asdasd',
+                password='asdasd',
+                role='pentester')
+        session.add(alice)
+        session.commit()
+
+        ws = factories.WorkspaceFactory.create(name='wonderland')
+        session.add(ws)
+        session.commit()
+
+        login_payload = {
+            'email': "\x00asd\00asd\0",
+            'password': "\x00asd\00asd\0",
+        }
+        res = test_client.post('/login', data=login_payload)
+        # import ipdb; ipdb.set_trace()
+        assert res.status_code == 200
+        assert 'authentication_token' in res.json['response']['user']
+
+        headers = {'Authentication-Token': res.json['response']['user']['authentication_token']}
+
+        ws = test_client.get('/v2/ws/wonderland/', headers=headers)
+        assert ws.status_code == 200

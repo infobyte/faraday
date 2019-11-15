@@ -1,13 +1,10 @@
-#!/usr/bin/env python
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-from __future__ import with_statement
-
+"""
 import argparse
+import base64
 import hashlib
 import os
 import pickle
@@ -16,9 +13,10 @@ import shlex
 import socket
 import sqlite3
 import sys
-from BaseHTTPServer import BaseHTTPRequestHandler
-from StringIO import StringIO
-from urlparse import urlparse
+from urllib.parse import urlparse
+from io import StringIO
+from http.server import BaseHTTPRequestHandler
+
 from collections import defaultdict
 
 from faraday.client.plugins.plugin import PluginTerminalOutput
@@ -57,7 +55,7 @@ SUPPORTED_HASHDB_VERSIONS = {
 }
 
 
-class Database(object):
+class Database:
 
     def __init__(self, database):
         self.database = database
@@ -131,6 +129,7 @@ class SqlmapPlugin(PluginTerminalOutput):
     class HTTPRequest(BaseHTTPRequestHandler):
 
         def __init__(self, request_text):
+            super().__init__()
             self.rfile = StringIO(request_text)
             self.raw_requestline = self.rfile.readline()
             self.error_code = self.error_message = None
@@ -173,7 +172,7 @@ class SqlmapPlugin(PluginTerminalOutput):
                 try:
                     for row in db.execute("SELECT value FROM storage WHERE id=?", (hash_,)):
                         retVal = row[0]
-                except sqlite3.OperationalError, ex:
+                except sqlite3.OperationalError as ex:
                     if not 'locked' in ex.message:
                         raise
                 else:
@@ -188,7 +187,7 @@ class SqlmapPlugin(PluginTerminalOutput):
         'foobar'
         """
 
-        return value.decode("base64")
+        return base64.b64decode(value)
 
     def base64encode(self, value):
         """
@@ -197,8 +196,7 @@ class SqlmapPlugin(PluginTerminalOutput):
         >>> base64encode('foobar')
         'Zm9vYmFy'
         """
-
-        return value.encode("base64")[:-1].replace("\n", "")
+        return base64.b64encode(value)[:-1].replace("\n", "")
 
     def base64unpickle(self, value):
         """
@@ -217,7 +215,7 @@ class SqlmapPlugin(PluginTerminalOutput):
         with open(filepath, "r") as f:
             try:
                 tree = ET.fromstring(f.read())
-            except SyntaxError, err:
+            except SyntaxError as err:
                 self.log("SyntaxError: %s. %s" % (err, filepath), "ERROR")
                 return None
 
@@ -231,7 +229,7 @@ class SqlmapPlugin(PluginTerminalOutput):
             data)
 
         if users:
-            return map((lambda x: x.replace("[*] ", "")), users.group(1).split("\n"))
+            return [x.replace("[*] ", "") for x in users.group(1).split("\n")]
 
     def getdbs(self, data):
 
@@ -240,7 +238,7 @@ class SqlmapPlugin(PluginTerminalOutput):
             data)
 
         if dbs:
-            return map((lambda x: x.replace("[*] ", "")), dbs.group(1).split("\n"))
+            return [x.replace("[*] ", "") for x in dbs.group(1).split("\n")]
 
     def getpassword(self, data):
 
@@ -409,9 +407,9 @@ class SqlmapPlugin(PluginTerminalOutput):
         sys.path.append(self.getSetting("Sqlmap path"))
 
         try:
-            from lib.core.settings import HASHDB_MILESTONE_VALUE #pylint: disable=import-error,bad-option-value
-            from lib.core.enums import HASHDB_KEYS #pylint: disable=import-error
-            from lib.core.settings import UNICODE_ENCODING #pylint: disable=import-error
+            from lib.core.settings import HASHDB_MILESTONE_VALUE #pylint: disable=import-error,bad-option-value,import-outside-toplevel
+            from lib.core.enums import HASHDB_KEYS #pylint: disable=import-error,import-outside-toplevel
+            from lib.core.settings import UNICODE_ENCODING #pylint: disable=import-error,import-outside-toplevel
         except:
             self.log('Remember set your Sqlmap Path Setting!... Abort plugin.', 'ERROR')
             return
@@ -476,19 +474,6 @@ class SqlmapPlugin(PluginTerminalOutput):
             status="open",
             version=webserver)
 
-        n_id = self.createAndAddNoteToService(
-            h_id,
-            s_id,
-            "website",
-            '')
-
-        self.createAndAddNoteToNote(
-            h_id,
-            s_id,
-            n_id,
-            self.hostname,
-            '')
-
         db_port = 0
         for item in self.db_port.keys():
             if dbms_version.find(item) >= 0:
@@ -512,7 +497,7 @@ class SqlmapPlugin(PluginTerminalOutput):
 
         # sqlmap.py --passwords
         if password:
-            for k, v in password.iteritems():
+            for k, v in password.items():
                 self.createAndAddCredToService(h_id, s_id2, k, v)
 
         # sqlmap.py --file-dest
@@ -659,8 +644,7 @@ class SqlmapPlugin(PluginTerminalOutput):
 
             self._output_path = "%s%s" % (
                 os.path.join(self.data_path, "sqlmap_output-"),
-                re.sub(r'[\n\/]', r'',
-                args.u.encode("base64")[:-1]))
+                re.sub(r'[\n\/]', r'', base64.b64encode(args.u)[:-1]))
 
         if not args.s:
             return "%s -s %s" % (command_string, self._output_path)
@@ -671,3 +655,6 @@ class SqlmapPlugin(PluginTerminalOutput):
 
 def createPlugin():
     return SqlmapPlugin()
+
+
+# I'm Py3

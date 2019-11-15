@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 from __future__ import with_statement
 
+import logging
 import sys
 import os
 sys.path.append(os.getcwd())
@@ -23,6 +25,14 @@ fileConfig(config.config_file_name)
 # for 'autogenerate' support
 # from myapp import mymodel
 target_metadata = db.metadata
+alembic_logger = logging.getLogger('alembic.runtime.migration')
+LOG_FILE = os.path.expanduser(os.path.join(
+    faraday.server.config.CONSTANTS.CONST_FARADAY_HOME_PATH,
+    faraday.server.config.CONSTANTS.CONST_FARADAY_LOGS_PATH, 'alembic.log'))
+fh = logging.FileHandler(LOG_FILE)
+fh.setLevel(logging.INFO)
+alembic_logger.addHandler(fh)
+
 # target_metadata = None
 
 # other values from the config, defined by the needs of env.py,
@@ -74,3 +84,4 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
+# I'm Py3

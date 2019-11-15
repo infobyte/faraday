@@ -1,10 +1,11 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 """
+from __future__ import absolute_import
 from __future__ import print_function
 import os
 import sys
@@ -17,7 +18,7 @@ __prettyname__ = 'Screenshot_server'
 
 def screenshot(path, protocol, ip, port):
     try:
-        from selenium import webdriver
+        from selenium import webdriver  # pylint:disable=import-outside-toplevel
     except ImportError:
         print("Missing dependencies: (selenium). "
               "Install it with pip install selenium. ")
@@ -48,7 +49,7 @@ def main(workspace='', args=None, parser=None):
 
         if not os.path.exists(path):
             print("Invalid Path")
-            exit()
+            sys.exit()
 
         try:
             services = models.get_services(workspace)
@@ -69,3 +70,4 @@ def main(workspace='', args=None, parser=None):
                 print(protocol + "://" + ip + ":" + port)
                 screenshot(path, protocol, ip, port)
     return 0, None
+# I'm Py3

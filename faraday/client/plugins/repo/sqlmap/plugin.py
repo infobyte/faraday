@@ -142,8 +142,8 @@ class SqlmapPlugin(PluginTerminalOutput):
 
     def hashKey(self, key):
         # from sqlmap/lib/utils/hashdb.py
-        import six
-        from lib.core.convert import getBytes
+        import six #pylint: disable=import-error,bad-option-value,import-outside-toplevel
+        from lib.core.convert import getBytes #pylint: disable=import-error,bad-option-value,import-outside-toplevel
         key = getBytes(key if isinstance(key, six.text_type) else repr(key))
         retVal = int(hashlib.md5(key).hexdigest(), 16) & 0x7fffffffffffffff  # Reference: http://stackoverflow.com/a/4448400
         return retVal

@@ -158,6 +158,8 @@ class SqlmapPlugin(PluginTerminalOutput):
             key = "%s%s%s" % (self.url or "%s%s" % (
                 self.hostname, self.port), key, self.HASHDB_MILESTONE_VALUE)
         else:
+            if not self.url:
+                self.log('No URL found while running sqlmap', 'ERROR')
             url = urlparse(self.url)
             key = '|'.join([
                 url.hostname,

@@ -154,18 +154,37 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
 
 
 def check_executors(agent, executors):
-    for item in executors:
-        try:
-            executor = Executor(
-                name=item['executor_name'],
-                agent=agent,
-                parameters_metadata=json.dumps(item['args']))
-            db.session.add(executor)
+    current_executors = Executor.query.filter(Executor.agent == agent)
+    for exc in executors:
+        if exc['executor_name'] not in [ex.name for ex in current_executors]:
+            try:
+                executor = Executor(
+                    name=exc['executor_name'],
+                    agent=agent,
+                    parameters_metadata=json.dumps(exc['args']))
+                db.session.add(executor)
+                db.session.commit()
+            except KeyError:
+                logger.error("Invalid Executor Schema")
+            except Exception as error:
+                logger.error("Something went wrong !!")
+        else:
+            current_exc = Executor.query.filter(Executor.agent == agent, Executor.name == exc['executor_name']).first()
+            if current_exc:
+                current_args = set(json.loads(current_exc.parameters_metadata).keys())
+                incoming_args = set(exc['args'].keys())
+                if len(incoming_args.difference(current_args)) > 0:
+                    # TODO: Remove pending schedule
+                    agent.active = False
+                    current_exc.parameters_metadata = exc['args']
+                    db.session.commit()
+
+    for current_executor in current_executors:
+        if current_executor.name not in [ex['executor_name'] for ex in executors]:
+            current_executor.delete()
+            agent.active = False
             db.session.commit()
-        except KeyError:
-            logger.error("Invalid Executor Schema")
-        except Exception as error:
-            logger.error("Something went wrong !!")
+            # TODO: Remove pending schedule , check cascade FK
 
 
 class WorkspaceServerFactory(WebSocketServerFactory):

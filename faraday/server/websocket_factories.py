@@ -139,7 +139,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                             successful=successful,
                             message=msg,
                             executor=executor,
-                            workspace_id=message['workspace_id']
+                            workspace_id=executor.agent.workspace_id
                         )
                         db.session.add(agent_execution)
                         db.session.commit()

@@ -129,6 +129,10 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                 return False
             if message['action'] == 'RUN_STATUS':
                 with app.app_context():
+                    if 'executor_name' not in message:
+                        logger.warning('Missing executor_name param in message: ''{}'.format(message))
+                        self.sendClose()
+                        return
                     executor = Executor.query.filter(Executor.name == message['executor_name']).first()
                     if executor:
                         successful = message.get('successful', None)

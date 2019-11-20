@@ -90,7 +90,7 @@ class AgentView(UpdateWorkspacedMixin,
     route_base = 'agents'
     model_class = Agent
     schema_class = AgentSchema
-    get_joinedloads = [Agent.creator]
+    get_joinedloads = [Agent.creator, Agent.executors]
 
     @route('/<int:agent_id>/run/', methods=['POST'])
     def run_agent(self, workspace_name, agent_id):

@@ -129,7 +129,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                 return False
             if message['action'] == 'RUN_STATUS':
                 with app.app_context():
-                    executor = Executor.query.filter(Executor.name == 'test').first()  # TODO: Get name from message
+                    executor = Executor.query.filter(Executor.name == message['executor_name']).first()
                     if executor:
                         successful = message.get('successful', None)
                         running = message.get('running', None)
@@ -139,7 +139,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                             successful=successful,
                             message=msg,
                             executor=executor,
-                            workspace_id=1  # TODO: Get ID from message
+                            workspace_id=message['workspace_id']
                         )
                         db.session.add(agent_execution)
                         db.session.commit()
@@ -173,18 +173,14 @@ def check_executors(agent, executors):
             if current_exc:
                 current_args = set(json.loads(current_exc.parameters_metadata).keys())
                 incoming_args = set(exc['args'].keys())
-                if len(incoming_args.difference(current_args)) > 0:
-                    # TODO: Remove pending schedule
-                    agent.active = False
-                    current_exc.parameters_metadata = exc['args']
+                if len(incoming_args.difference(current_args)) > 0 or len(current_args.difference(incoming_args)) > 0:
+                    current_exc.parameters_metadata = json.dumps(exc['args'])
                     db.session.commit()
 
     for current_executor in current_executors:
         if current_executor.name not in [ex['executor_name'] for ex in executors]:
-            current_executor.delete()
-            agent.active = False
+            db.session.delete(current_executor)
             db.session.commit()
-            # TODO: Remove pending schedule , check cascade FK
 
 
 class WorkspaceServerFactory(WebSocketServerFactory):

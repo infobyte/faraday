@@ -489,6 +489,7 @@ class CustomFieldsSchema(db.Model):
     id = Column(Integer, primary_key=True)
     field_name = Column(Text, unique=True)
     field_type = Column(Text)
+    field_metadata = Column(JSONType, nullable=True)
     field_display_name = Column(Text)
     field_order = Column(Integer)
     table_name = Column(Text)
@@ -2073,6 +2074,15 @@ class RuleExecution(Metadata):
     @property
     def parent(self):
         return
+
+
+class SearchFilter(Metadata):
+
+    __tablename__ = 'search_filter'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    json_query = Column(String, nullable=False) # meant to store json but just readonly
+    user_query = Column(String, nullable=False)
 
 
 # This constraint uses Columns from different classes

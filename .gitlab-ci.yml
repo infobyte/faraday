@@ -396,6 +396,44 @@ macos_dmg:
             - $FULL_TEST
             - $DAILY_TEST
 
+macos_pkg:
+    tags:
+        - macos
+    stage: build
+    allow_failure: true
+    script:
+        - pip install virtualenv
+        - pip install virtualenv-tools3
+        - export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:/usr/local/opt/libffi/lib/pkgconfig"
+        - mkdir build_installer
+        - cp -a faraday.tar.gz build_installer/.
+        - cd build_installer
+        - /bin/tar zxf faraday.tar.gz
+        - cd faraday_copy
+        - git clone git@gitlab.com:faradaysec/faraday-linux-installers-builder.git
+        - cd faraday-linux-installers-builder
+        - git clone https://github.com/jordansissel/fpm.git
+        - cd fpm
+        - git apply ../fpm-patchs/fpm.python3.patch
+        - git apply ../fpm-patchs/fpm.virtualenv_compile.patch
+        - make gem
+        - gem install --no-ri --no-rdoc fpm-1.11.0.gem
+        - cd ../../
+        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server osxpkg
+        - mv faraday-server_amd64.pkg ../../Faraday.pkg
+    artifacts:
+        name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME-binaries"
+        paths:
+            - Faraday.pkg
+        expire_in: 1 week
+    only:
+        variables:
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(master)$/
+            - $CI_COMMIT_TAG
+            - $BUILD_TEST
+            - $FULL_TEST
+            - $DAILY_TEST
+
 documentation:
     image: python:3
     stage: post_testing
@@ -447,7 +485,7 @@ agent_integration:
     script:
         - apt-get update -qy
         - apt-get install curl -y
-        - "curl -X POST -F token=$AGENT_TOKEN -F ref=master -F \"variables[INTEGRATION]=true\" -F \"variables[FARADAY_REF]=$CI_COMMIT_REF_NAME\" https://gitlab.com/api/v4/projects/12825225/trigger/pipeline"
+        - "curl -X POST -F token=$INTEGRATION_TOKEN -F ref=master -F \"variables[FARADAY_REF]=$CI_COMMIT_REF_NAME\" https://gitlab.com/api/v4/projects/15311100/trigger/pipeline"
     only:
         variables:
             - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/

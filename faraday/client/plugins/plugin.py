@@ -443,7 +443,7 @@ class PluginProcess(Thread):
         :param output_queue: queue with raw ouput of that the plugin needs.
         :param isReport: output data was read from file.
         """
-        super(PluginProcess, self).__init__()
+        super(PluginProcess, self).__init__(name="PluginProcessThread")
         self.output_queue = output_queue
         self.plugin = plugin_instance
         self.isReport = isReport

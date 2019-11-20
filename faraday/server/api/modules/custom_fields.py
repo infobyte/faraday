@@ -20,6 +20,7 @@ class CustomFieldsSchemaSchema(AutoSchema):
         fields = ('id',
                   'field_name',
                   'field_type',
+                  'field_metadata',
                   'field_display_name',
                   'field_order',
                   'table_name'

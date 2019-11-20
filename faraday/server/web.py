@@ -18,18 +18,21 @@ from twisted.web.wsgi import WSGIResource
 from autobahn.twisted.websocket import (
     listenWS
 )
+
+from OpenSSL.SSL import Error as SSLError
+
 import faraday.server.config
 
 from faraday.config.constant import CONST_FARADAY_HOME_PATH
 from faraday.server import TimerClass
 from faraday.server.utils import logger
-
+from faraday.server.threads.reports_processor import ReportsManager, REPORTS_QUEUE
 from faraday.server.app import create_app
 from faraday.server.websocket_factories import (
     WorkspaceServerFactory,
     BroadcastServerProtocol
 )
-from faraday.server.api.modules.upload_reports import RawReportProcessor
+
 
 app = create_app()  # creates a Flask(__name__) app
 logger = logging.getLogger(__name__)
@@ -159,7 +162,7 @@ class WebServer:
         try:
             self.install_signal()
             # start threads and processes
-            self.raw_report_processor = RawReportProcessor()
+            self.raw_report_processor = ReportsManager(REPORTS_QUEUE, name="ReportsManager-Thread", daemon=True)
             self.raw_report_processor.start()
             self.timer = TimerClass()
             self.timer.start()
@@ -169,12 +172,17 @@ class WebServer:
                 interface=self.__bind_address)
             # websockets
             if faraday.server.config.websocket_ssl.enabled:
-                contextFactory = ssl.DefaultOpenSSLContextFactory(
-                        faraday.server.config.websocket_ssl.keyfile.strip('\''),
-                        faraday.server.config.websocket_ssl.certificate.strip('\'')
-                )
+
                 try:
+                    contextFactory = ssl.DefaultOpenSSLContextFactory(
+                            faraday.server.config.websocket_ssl.keyfile.strip('\''),
+                            faraday.server.config.websocket_ssl.certificate.strip('\'')
+                    )
+
                     listenWS(self.__build_websockets_resource(), interface=self.__bind_address, contextFactory=contextFactory)
+
+                except SSLError as e:
+                    logger.error('Could not start websockets due to a SSL Config error. Some web functionality will not be available')            
                 except error.CannotListenError:
                     logger.warn('Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
                 except Exception as ex:
@@ -191,8 +199,10 @@ class WebServer:
             reactor.run()
 
         except error.CannotListenError as e:
-            logger.error(str(e))
+            logger.error(e)
             sys.exit(1)
+
+
         except Exception as e:
             logger.error('Something went wrong when trying to setup the Web UI')
             logger.exception(e)

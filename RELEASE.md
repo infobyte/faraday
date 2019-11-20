@@ -9,6 +9,12 @@ New features in the latest update
 =====================================
 
 
+3.9.3 [Nov 12th, 2019]:
+---
+ * Fix unicode error when exporting vulns to CSV
+ * Add vuln attributes to CSV
+ * Fix hostname parsing and add external ID to Qualys plugin
+
 3.9 [Oct 3th, 2019]:
 ---
  * Add agents feature for distributed plugin execution

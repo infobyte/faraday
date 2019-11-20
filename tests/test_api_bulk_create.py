@@ -318,7 +318,7 @@ def test_create_command(session, workspace):
     command = workspace.commands[0]
     assert command.tool == 'pytest'
     assert command.user == 'root'
-    assert (command.end_date - command.start_date).seconds == 30
+    assert (command.end_date - command.start_date).microseconds == 30
 
 
 def test_creates_command_object(session, workspace):

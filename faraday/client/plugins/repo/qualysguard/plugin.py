@@ -132,7 +132,7 @@ class ItemAssetReport():
 
         self.node = item_node
         self.ip = self.get_text_from_subnode('IP')
-
+        self.hostname = self.get_text_from_subnode('DNS') or ''
         self.os = self.get_text_from_subnode('OPERATING_SYSTEM')
         self.vulns = self.getResults(tree)
 
@@ -168,6 +168,7 @@ class ResultsAssetReport():
         self.port = self.get_text_from_subnode(self.node, 'PORT')
         self.protocol = self.get_text_from_subnode(self.node, 'PROTOCOL')
         self.name = self.get_text_from_subnode(self.node, 'QID')
+        self.external_id = self.name
         self.result = self.get_text_from_subnode(self.node, 'RESULT')
 
         self.severity_dict = {
@@ -200,7 +201,10 @@ class ResultsAssetReport():
 
         # References
         self.ref = []
-        self.ref.append(self.get_text_from_glossary('CVE_ID_LIST/CVE_ID/ID'))
+
+        cve_id = self.get_text_from_glossary('CVE_ID_LIST/CVE_ID/ID')
+        if cve_id:
+            self.ref.append(cve_id)
 
         if self.cvss:
             self.ref.append('CVSS SCORE: ' + self.cvss)
@@ -303,13 +307,21 @@ class ResultsScanReport():
         self.protocol = parent.get('protocol')
         self.name = self.node.get('number')
         self.external_id = self.node.get('number')
-        self.severity = self.node.get('severity')
         self.title = self.get_text_from_subnode('TITLE')
         self.cvss = self.get_text_from_subnode('CVSS_BASE')
         self.diagnosis = self.get_text_from_subnode('DIAGNOSIS')
         self.solution = self.get_text_from_subnode('SOLUTION')
         self.result = self.get_text_from_subnode('RESULT')
         self.consequence = self.get_text_from_subnode('CONSEQUENCE')
+
+        self.severity_dict = {
+            '1': 'info',
+            '2': 'info',
+            '3': 'med',
+            '4': 'high',
+            '5': 'critical'}
+
+        self.severity = self.severity_dict.get(self.node.get('severity'), 'info')
 
         self.desc = cleaner_results(self.diagnosis)
         if self.result:
@@ -385,7 +397,7 @@ class QualysguardPlugin(PluginXMLFormat):
                         h_id,
                         v.title if v.title else v.name,
                         ref=v.ref,
-                        severity=str(int(v.severity) - 1),
+                        severity=v.severity,
                         resolution=v.solution if v.solution else '',
                         desc=v.desc,
                         external_id=v.external_id)
@@ -412,7 +424,7 @@ class QualysguardPlugin(PluginXMLFormat):
                             v.title if v.title else v.name,
                             ref=v.ref,
                             website=item.ip,
-                            severity=str(int(v.severity) - 1),
+                            severity=v.severity,
                             desc=v.desc,
                             resolution=v.solution if v.solution else '',
                             external_id=v.external_id)
@@ -423,7 +435,7 @@ class QualysguardPlugin(PluginXMLFormat):
                             s_id,
                             v.title if v.title else v.name,
                             ref=v.ref,
-                            severity=str(int(v.severity) - 1),
+                            severity=v.severity,
                             desc=v.desc,
                             resolution=v.solution if v.solution else '',
                             external_id=v.external_id)

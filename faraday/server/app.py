@@ -64,6 +64,7 @@ def setup_storage_path():
 
 
 def register_blueprints(app):
+
     from faraday.server.api.modules.info import info_api # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.commandsrun import commandsrun_api # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.activity_feed import activityfeed_api # pylint:disable=import-outside-toplevel
@@ -85,6 +86,8 @@ def register_blueprints(app):
     from faraday.server.api.modules.agent import agent_api # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.bulk_create import bulk_create_api # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.token import token_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.search_filter import searchfilter_api # pylint:disable=import-outside-toplevel
+
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(activityfeed_api)
     app.register_blueprint(credentials_api)
@@ -106,6 +109,7 @@ def register_blueprints(app):
     app.register_blueprint(agent_auth_token_api)
     app.register_blueprint(bulk_create_api)
     app.register_blueprint(token_api)
+    app.register_blueprint(searchfilter_api)
 
 
 def check_testing_configuration(testing, app):

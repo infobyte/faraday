@@ -33,24 +33,24 @@ class TestWebsockerBroadcastServerProtocol():
         message = '{"action": "JOIN_AGENT"}'
         assert not proto.onMessage(message, False)
 
-    def test_join_agent_message_with_valid_token(self, session, proto, test_client):
+    def test_join_agent_message_with_valid_token(self, session, proto, workspace, test_client):
         token = _join_agent(test_client, session)
-        message = '{{"action": "JOIN_AGENT", "token": "{}" }}'.format(token)
+        message = '{{"action": "JOIN_AGENT", "workspace": "{}", "token": "{}", "executors": [] }}'.format(workspace.name, token)
         assert proto.onMessage(message, False)
 
-    def test_leave_agent_happy_path(self, session, proto, test_client):
+    def test_leave_agent_happy_path(self, session, proto, workspace, test_client):
         token = _join_agent(test_client, session)
-        message = '{{"action": "JOIN_AGENT", "token": "{}" }}'.format(token)
+        message = '{{"action": "JOIN_AGENT", "workspace": "{}", "token": "{}", "executors": [] }}'.format(workspace.name, token)
         assert proto.onMessage(message, False)
 
         message = '{{"action": "LEAVE_AGENT" }}'.format(token)
         assert not proto.onMessage(message, False)
 
-    def test_agent_status(self, session, proto, test_client):
+    def test_agent_status(self, session, proto, workspace, test_client):
         token = _join_agent(test_client, session)
         agent = Agent.query.one()
         assert not agent.is_online
-        message = '{{"action": "JOIN_AGENT", "token": "{}" }}'.format(token)
+        message = '{{"action": "JOIN_AGENT", "workspace": "{}", "token": "{}", "executors": [] }}'.format(workspace.name, token)
         assert proto.onMessage(message, False)
         assert agent.is_online
 

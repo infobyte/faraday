@@ -65,24 +65,6 @@ def check_faraday_server(url):
     return requests.get(url)
 
 
-@click.command(help="Enable importation of plugins reports in ~/.faraday folder")
-@click.option('--debug/--no-debug', default=False)
-@click.option('--workspace', default=None)
-@click.option('--polling/--no-polling', default=True)
-def process_reports(debug, workspace, polling):
-    configuration = _conf()
-    url = '{0}/_api/v2/info'.format(configuration.getServerURI() if FARADAY_UP else SERVER_URL)
-    with app.app_context():
-        try:
-            check_faraday_server(url)
-            import_external_reports(workspace, polling)
-        except OperationalError as ex:
-            print('{0}'.format(ex))
-            print('Please verify your configuration on server.ini or the hba configuration!')
-        except ConnectionError:
-            print('Can\'t connect to {0}. Please check if the server is running.'.format(url))
-
-
 @click.command(help="Show all URLs in Faraday Server API")
 def show_urls():
     show_all_urls()
@@ -121,7 +103,6 @@ def sql_shell():
     pgcli = PGCli()
     pgcli.connect_uri(parsed_conn_string)
     pgcli.run_cli()
-
 
 
 @click.command(help='Checks configuration and faraday status.')
@@ -281,7 +262,6 @@ def rename_user(current_username, new_username):
         change_username.change_username(current_username, new_username)
 
 
-cli.add_command(process_reports)
 cli.add_command(show_urls)
 cli.add_command(initdb)
 cli.add_command(database_schema)

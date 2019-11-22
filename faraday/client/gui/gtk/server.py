@@ -134,7 +134,7 @@ class ServerIO:
                     return False
                 time.sleep(0.5)
 
-        get_changes_thread = threading.Thread(target=get_changes)
+        get_changes_thread = threading.Thread(target=get_changes, name='get_changes')
         get_changes_thread.daemon = True
         get_changes_thread.start()
 

@@ -43,7 +43,6 @@ from faraday.server.commands.initdb import InitDB
 from faraday.server.commands.faraday_schema_display import DatabaseSchema
 from faraday.server.commands.app_urls import show_all_urls
 from faraday.server.commands.app_urls import openapi_format
-from faraday.server.commands.reports import import_external_reports
 from faraday.server.commands import status_check as status_check_functions
 from faraday.server.commands import change_password as change_pass
 from faraday.server.commands.custom_fields import add_custom_field_main, delete_custom_field_main

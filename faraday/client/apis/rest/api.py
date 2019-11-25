@@ -82,7 +82,7 @@ def startAPIs(plugin_controller, model_controller, hostname, port):
 
     logging.getLogger("tornado.access").addHandler(logging.getLogger(__name__))
     logging.getLogger("tornado.access").propagate = False
-    threading.Thread(target=startServer).start()
+    threading.Thread(target=startServer, name='restapi-server').start()
 
 
 class RESTApi:
@@ -315,8 +315,8 @@ class PluginControllerAPI(RESTApi):
             if 'pid' in json_data.keys():
                 if 'pwd' in json_data.keys():
                     try:
-                        cmd = base64.b64decode(json_data.get('cmd'))
-                        pwd = base64.b64decode(json_data.get('pwd'))
+                        cmd = base64.b64decode(json_data.get('cmd')).decode()
+                        pwd = base64.b64decode(json_data.get('pwd')).decode()
                     except:
                         cmd = ''
                         pwd = ''

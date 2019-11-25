@@ -1,9 +1,12 @@
+import os
 import sys
 import shutil
 import tempfile
 from tqdm import tqdm
 from colorama import init
 from colorama import Fore, Style
+
+import distro
 
 try:
     from pip._internal.operations import freeze
@@ -41,9 +44,13 @@ def get_pip_freeze(path):
         pip_file.write('\n')
     pip_file.close()
 
+
 def get_logs(path):
-    #Copies the logs using the logs path saved on constants 
-    shutil.copytree(constants.CONST_FARADAY_HOME_PATH +'/logs', path + '/logs')
+    #Copies the logs using the logs path saved on constants
+    orig_path = os.path.join(constants.CONST_FARADAY_HOME_PATH, 'logs')
+    dst_path = os.path.join(path, 'logs')
+    shutil.copytree(orig_path, dst_path, ignore=shutil.ignore_patterns('access*.*'))
+
 
 def make_zip(path):
     #Makes a zip file of the new folder with all the information obtained inside
@@ -53,14 +60,20 @@ def end_config(path):
     #Deletes recursively the directory created on the init_config
     shutil.rmtree(path)
 
+def revise_os(path):
+    with open(path + '/os_distro.txt','wt') as os_file:
+        os_file.write("{}".format(distro.linux_distribution()))
+
 def all_for_support():
-    with tqdm(total=5) as pbar:
+    with tqdm(total=6) as pbar:
         path = init_config()
         get_status_check(path)
         pbar.update(1)
         get_logs(path)
         pbar.update(1)
         get_pip_freeze(path)
+        pbar.update(1)
+        revise_os(path)
         pbar.update(1)
         make_zip(path)
         pbar.update(1)

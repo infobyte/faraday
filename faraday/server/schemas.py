@@ -83,6 +83,8 @@ class FaradayCustomField(fields.Field):
                         raise ValidationError("Can not convert custom type to int")
                 elif field_schema.field_type == 'list':
                     serialized[key] = raw_data
+                elif field_schema.field_type == 'choice':
+                    serialized[key] = str(raw_data)
                 else:
                     raise ValidationError("Custom Field datatype not supported yet")
 

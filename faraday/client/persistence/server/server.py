@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 # Faraday Penetration Test IDE
@@ -22,6 +22,8 @@ Warning:
     be used with care, specially regarding the ID of objects, which must
     be always unique.
 """
+from __future__ import absolute_import
+
 import urllib
 
 import os
@@ -75,7 +77,7 @@ OBJECT_TYPE_END_POINT_MAPPER = {
 
 
 def _conf():
-    from faraday.config.configuration import getInstanceConfiguration
+    from faraday.config.configuration import getInstanceConfiguration  # pylint:disable=import-outside-toplevel
     CONF = getInstanceConfiguration()
 
     # If you are running this libs outside of Faraday, cookies are not setted.
@@ -98,7 +100,6 @@ def _get_base_server_url():
         server_url = _conf().getAPIUrl()
     else:
         server_url = SERVER_URL
-
     return server_url.rstrip('/')
 
 
@@ -196,7 +197,6 @@ def _unsafe_io_with_server(server_io_function, server_expected_responses,
     Return the response from the server.
     """
     answer = None
-    logger.debug('Sending request to api endpoint {0}'.format(server_url))
     try:
         answer = server_io_function(server_url, **payload)
         if answer.status_code == 409:
@@ -589,6 +589,7 @@ def get_object_before_last_revision(workspace_name, object_id):
         A dictionary with the object's information.
     """
     get_url = _create_couch_get_url(workspace_name, object_id)
+
     response = _unsafe_io_with_server(requests.get, [200], get_url,
                                       params={'revs': 'true', 'open_revs': 'all'})
     try:
@@ -1029,7 +1030,7 @@ def update_service(workspace_name, command_id, id, name, description, ports,
 def create_vuln(workspace_name, command_id, name, description, parent, parent_type,
                 owned=None, owner="", confirmed=False,
                 resolution="", data="", refs=None, severity="info",
-                desc="", metadata=None, status=None, policyviolations=[]):
+                desc="", metadata=None, status=None, policyviolations=[], external_id=None):
     """Creates a vuln.
 
     Args:
@@ -1050,6 +1051,7 @@ def create_vuln(workspace_name, command_id, name, description, parent, parent_ty
         metadata: a collection of metadata. If you don't know the metada. leave
             on None, it will be created automatically.
         policyviolations (lst) :  the policy violations
+	external_id (str) : plugin external id
 
     Returns:
         A dictionary with the server's response.
@@ -1071,12 +1073,13 @@ def create_vuln(workspace_name, command_id, name, description, parent, parent_ty
                            type="Vulnerability",
                            status=status,
                            metadata=metadata,
-                           policyviolations=policyviolations)
+                           policyviolations=policyviolations,
+			   external_id=external_id)
 
 def update_vuln(workspace_name, command_id, id, name, description, parent,
                 parent_type, owned=None, owner="", confirmed=False, data="",
                 refs=None, severity="info", resolution="", desc="",
-                metadata=None, status=None, policyviolations=[]):
+                metadata=None, status=None, policyviolations=[], external_id=None):
     """Updates a vuln.
 
     Args:
@@ -1097,6 +1100,7 @@ def update_vuln(workspace_name, command_id, id, name, description, parent,
         metadata: a collection of metadata. If you don't know the metada. leave
             on None, it will be created automatically.
         policyviolations (lst) :  the policy violations
+	external_id (str) : plugin external id
 
     Returns:
         A dictionary with the server's response.
@@ -1119,8 +1123,8 @@ def update_vuln(workspace_name, command_id, id, name, description, parent,
                              type="Vulnerability",
                              status=status,
                              metadata=metadata,
-                             policyviolations=policyviolations)
-
+                             policyviolations=policyviolations,
+			     external_id=external_id)
 
 def create_vuln_web(workspace_name, command_id, name, description, parent,
                     parent_type, owned=None, owner="", confirmed=False,
@@ -1128,7 +1132,7 @@ def create_vuln_web(workspace_name, command_id, name, description, parent,
                     desc="", metadata=None, method=None, params="",
                     path=None, pname=None, query=None, request=None,
                     response=None, category="", website=None,
-                    status=None, policyviolations=[]):
+                    status=None, policyviolations=[], external_id=None):
     """Creates a vuln web.
 
     Args:
@@ -1156,6 +1160,7 @@ def create_vuln_web(workspace_name, command_id, name, description, parent,
         website (str): the website where the vuln was found
         status (str): the web vulns's status
         policyviolations (lst) :  the policy violations
+	external_id (str) : plugin external id
 
     Returns:
         A dictionary with the server's response.
@@ -1186,14 +1191,15 @@ def create_vuln_web(workspace_name, command_id, name, description, parent,
                            category=category,
                            status=status,
                            type='VulnerabilityWeb',
-                           policyviolations=policyviolations)
+                           policyviolations=policyviolations,
+			   external_id=external_id)
 
 def update_vuln_web(workspace_name, command_id, id, name, description,
                     parent, parent_type, owned=None, owner="",
                     confirmed=False, data="", refs=None, severity="info", resolution="",
                     desc="", metadata=None, method=None, params="", path=None, pname=None,
                     query=None, request=None, response=None, category="", website=None,
-                    status=None, policyviolations=[]):
+                    status=None, policyviolations=[], external_id=None):
     """Creates a vuln web.
 
     Args:
@@ -1221,10 +1227,12 @@ def update_vuln_web(workspace_name, command_id, id, name, description,
         website (str): the website where the vuln was found
         status (str): the web vulns's status
         policyviolations (lst) :  the policy violations
+	external_id (str) : plugin external id
 
     Returns:
         A dictionary with the server's response.
     """
+
     return _update_in_server(workspace_name,
                              id,
                              parent=parent,
@@ -1252,7 +1260,7 @@ def update_vuln_web(workspace_name, command_id, id, name, description,
                              category=category,
                              status=status,
                              type='VulnerabilityWeb',
-                             policyviolations=policyviolations)
+                             policyviolations=policyviolations,                                                                                                                                               external_id=external_id)
 
 def create_note(workspace_name, command_id, object_type, object_id, name, text, owned=None, owner="",
                 description="", metadata=None):
@@ -1575,3 +1583,6 @@ def get_user_info():
         return False
     except requests.adapters.ReadTimeout:
         return False
+
+
+# I'm Py3

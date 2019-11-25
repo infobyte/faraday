@@ -5,11 +5,9 @@
 <form novalidate>
     <div class="faraday-header-border-fix"></div>
     <section id="main" class="seccion clearfix">
-        <div class="right-main">
-
+        <div class="left-main-without-pagination">
             <div ng-controller="headerCtrl" ng-include="'scripts/commons/partials/header.html'"></div>
             <div id="reports-main" class="fila clearfix">
-
             <div class="reports col-md-12 col-sm-12 col-xs-12">
                 <div class="button-control justify-flex-start  col-md-12 col-sm-12 col-xs-12">
                     <div class="control-wrapper control-new">
@@ -40,6 +38,14 @@
                             </div>
                         </form>
                     </div>
+                    <div class="control-wrapper">
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" id="archived" ng-model="archived"/>
+                                <span class="normal-size">Show archived</span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
                 <table class="table-v3 table table-responsive">
                     <thead>
@@ -58,7 +64,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr ng-repeat="ws in workspaces | filter:query | filter:search | orderBy:sortField:reverse"
+                        <tr ng-repeat="ws in workspaces | filter:query | filter:search  | filter:{active:archived == false? true : undefined} | orderBy:sortField:reverse"
                             selection-model selection-model-selected-class="multi-selected">
 
                             <td class="ui-grid-cell-contents active-toggle">

@@ -1,9 +1,11 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
+from builtins import str
+
 import json
 import imghdr
 from tempfile import SpooledTemporaryFile
@@ -15,6 +17,8 @@ from depot.fields.upload import UploadedFile
 from depot.io.utils import file_from_content
 from depot.io.utils import INMEMORY_FILESIZE
 from depot.manager import DepotManager
+from webargs.core import ValidationError
+import flask
 
 
 class FaradayUploadedFile(UploadedFile):
@@ -42,6 +46,8 @@ class FaradayUploadedFile(UploadedFile):
     thumbnail_size = (128, 128)
 
     def process_content(self, content, filename=None, content_type=None):
+        if isinstance(content, str):
+            content = content.encode('utf-8')
         image_format = imghdr.what(None, h=content[:32])
         if image_format:
             content_type = 'image/{0}'.format(image_format)
@@ -51,7 +57,15 @@ class FaradayUploadedFile(UploadedFile):
 
     def generate_thumbnail(self, content):
         content = file_from_content(content)
-        uploaded_image = Image.open(content)
+        try:
+            uploaded_image = Image.open(content)
+        except:
+            flask.abort(400, ValidationError(
+                {
+                    'message': 'File Format',
+                    'object': {"error": "Format Incorrect"},
+                }
+            ))
         if max(uploaded_image.size) >= self.max_size:
             uploaded_image.thumbnail((self.max_size, self.max_size), Image.BILINEAR)
             content = SpooledTemporaryFile(INMEMORY_FILESIZE)
@@ -111,3 +125,4 @@ class JSONType(sa.types.TypeDecorator):
         if value is not None:
             value = json.loads(value)
         return value
+# I'm Py3

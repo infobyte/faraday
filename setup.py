@@ -4,6 +4,7 @@ See:
 https://packaging.python.org/en/latest/distributing.html
 https://github.com/pypa/sampleproject
 """
+from __future__ import absolute_import
 
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
@@ -239,6 +240,7 @@ setup(
             'faraday-client=faraday.client.start_client:main',
             'fplugin=faraday.client.bin.fplugin:main',
             'faraday-manage=faraday.manage:cli',
+            'faraday-searcher=faraday.searcher.searcher:main'
         ],
     },
 
@@ -260,3 +262,6 @@ setup(
     setup_requires=['pytest-runner'],
     tests_require=['pytest', 'flask'] + dev_required,
 )
+
+
+# I'm Py3

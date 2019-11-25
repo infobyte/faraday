@@ -29,7 +29,9 @@ var faradayApp = angular.module('faradayApp', [
                                                     'ui.grid.resizeColumns',
                                                     'angularSimplePagination',
                                                     'dndLists',
-                                                    'angularFileUploadLib'
+                                                    'angularFileUploadLib',
+                                                    'rzTable',
+                                                    'ui'
                                              ])
     .constant("BASEURL", (function() {
         var url = window.location.origin + "/";
@@ -167,8 +169,8 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             controller: 'newHostCtrl',
             title: 'New host | '
         }).
-        when('/host/ws/:wsId/', { 
-            redirectTo: "/hosts/ws/:wsId/" 
+        when('/host/ws/:wsId/', {
+            redirectTo: "/hosts/ws/:wsId/"
         }).
         when('/license/lid/:lidId', {
             templateUrl: 'scripts/licenses/partials/license.html',
@@ -225,7 +227,7 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
                 }
             }
         }).
-        when('/status/ws/:wsId/search/:search', {
+        when('/status/ws/:wsId/search/:search*\/', {
             templateUrl: 'scripts/statusReport/partials/statusReport.html',
             controller: 'statusReportCtrl',
             title: 'Status Report | ',
@@ -288,6 +290,16 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             controller: 'commercialCtrl',
             title: 'Executive Report | '
         }).
+        when('/workflows', {
+            templateUrl: 'scripts/commons/partials/commercial.html',
+            controller: 'commercialCtrl',
+            title: 'Workflows | '
+        }).
+        when('/scheduling', {
+            templateUrl: 'scripts/commons/partials/commercial.html',
+            controller: 'commercialCtrl',
+            title: 'Scheduling | '
+        }).
         when('/login', {
             templateUrl: 'scripts/auth/partials/login.html',
             controller: 'loginCtrl',
@@ -304,8 +316,8 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             title: 'Credentials | '
         }).
         when('/credentials/ws', {
-            templateUrl: 'scripts/credentials/partials/list.html',
-            controller: 'credentialsCtrl',
+            templateUrl: 'scripts/commons/partials/workspaces.html',
+            controller: 'workspacesCtrl',
             title: 'Credentials | '
         }).
         when('/credentials/ws/:wsId', {

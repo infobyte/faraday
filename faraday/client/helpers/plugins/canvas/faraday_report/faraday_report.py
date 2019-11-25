@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2015  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
 
 """
 Create a report using the libs.reports package.
@@ -461,3 +461,4 @@ if __name__ == '__main__':
 
     app = theexploit()
     ret = standard_callback_commandline(app)
+# I'm Py3

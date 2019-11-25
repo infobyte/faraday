@@ -1,15 +1,17 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
+from __future__ import absolute_import
+
 import time
 import logging
 import traceback
 import faraday.client.model.common  # this is to make sure the factory is created
 from multiprocessing import Lock
-from Queue import Empty
+from queue import Empty
 from threading import Thread
 
 from faraday.config.configuration import getInstanceConfiguration
@@ -31,15 +33,16 @@ logger = logging.getLogger(__name__)
 class ModelController(Thread):
 
     def __init__(self, mappers_manager, pending_actions):
-        Thread.__init__(self)
+        #Thread.__init__(self)
+        super().__init__(name="ModelControllerThread")
 
         self.mappers_manager = mappers_manager
 
         # set as daemon
 #        self.setDaemon(True)
+        # sets the flag to stop the thread when it has finished processing
+        self._must_stop = False
 
-        # flag to stop daemon thread
-        self._stop = False
         # locks needed to make model thread-safe
         self._hosts_lock = Lock()
 
@@ -74,9 +77,9 @@ class ModelController(Thread):
         self.processing = False
 
         # Fix for using PyDev in DEBUG
-        self.is_pydev_daemon_thread = False
-        self.__pydevd_id__ = False
-        self.pydev_do_not_trace = False
+        self.is_pydev_daemon_thread = ""
+        self.__pydevd_id__ = ""
+        self.pydev_do_not_trace = ""
 
     def __getattr__(self, name):
         logger.debug("ModelObject attribute to refactor: %s",  name)
@@ -171,7 +174,7 @@ class ModelController(Thread):
         """
         Sets the flag to stop daemon
         """
-        self._stop = True
+        self._must_stop = True
 
     def _dispatchActionWithLock(self, action_callback, *args):
         res = False
@@ -257,11 +260,10 @@ class ModelController(Thread):
         This will make host addition and removal "thread-safe" and will
         avoid locking components that need to interact with the model
         """
-
-        while not self._stop or self.processing:
+        while not self._must_stop or self.processing:
             # check if thread must finish
             # no plugin should be active to stop the controller
-            if self._stop and self.active_plugins_count == 0:
+            if self._must_stop and self.active_plugins_count == 0:
                 break
             # first we check if there is a sync api request
             # or if the model is being saved/sync'ed
@@ -466,22 +468,22 @@ class ModelController(Thread):
             version=version, description=description, parent_id=parent_id)
 
     def newVuln(self, name, desc="", ref=None, severity="", resolution="",
-                confirmed=False, parent_id=None):
+                confirmed=False, parent_id=None, external_id=None):
         return faraday.client.model.common.factory.createModelObject(
             models.Vuln.class_signature, name,
             workspace_name=self.mappers_manager.workspace_name, desc=desc, ref=ref, severity=severity, resolution=resolution,
-            confirmed=confirmed, parent_id=parent_id)
+            confirmed=confirmed, parent_id=parent_id, external_id=external_id)
 
     def newVulnWeb(self, name, desc="", ref=None, severity="", resolution="",
                    website="", path="", request="", response="", method="",
                    pname="", params="", query="", category="", confirmed=False,
-                   parent_id=None):
+                   parent_id=None, external_id=None):
         return faraday.client.model.common.factory.createModelObject(
             models.VulnWeb.class_signature, name,
             workspace_name=self.mappers_manager.workspace_name, desc=desc, ref=ref, severity=severity, resolution=resolution,
             website=website, path=path, request=request, response=response,
             method=method, pname=pname, params=params, query=query,
-            category=category, confirmed=confirmed, parent_id=parent_id)
+            category=category, confirmed=confirmed, parent_id=parent_id, external_id=external_id)
 
     def newNote(self, name, text, parent_id=None, parent_type=None):
         return faraday.client.model.common.factory.createModelObject(
@@ -549,3 +551,6 @@ class ModelController(Thread):
                 "Couldn't get vulnerabilities count: assuming it is zero.")
             count = 0
         return count
+
+
+# I'm Py3

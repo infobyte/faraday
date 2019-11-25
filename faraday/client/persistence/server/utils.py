@@ -1,13 +1,16 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
+from __future__ import absolute_import
+
 import re
 import logging
+import socket
 
 logger = logging.getLogger(__name__)
 
@@ -56,8 +59,22 @@ def get_host_properties(host):
     # name was removed from host and changed to ip
     ip = host_dict.pop('name')
     if 'ip' not in host_dict and ip:
+        #TODO: check ip v6
         if re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", ip) is None:
             logger.warn('Host with invalid IP address detected.')
+            logger.warn('Let\'s try to resolve %s', ip)
+            try:
+                #This is not perfect. Could resolve to different ip addr depending on the dns registry.
+                hostname = ip
+                ip = socket.gethostbyname(ip)
+                logger.warn('Resolved to %s', ip)
+                #Adding to hostnames list
+                logger.debug('Adding host %s to hostnames list', ip)
+                host_dict['hostnames'].append(hostname)
+                #In case of dup hostnames
+                host_dict['hostnames'] = list(set(host_dict['hostnames']))
+            except socket.gaierror as e:
+                logger.warning('Couldn\'t resolve hostname %s', ip)
         host_dict['ip'] = ip
     return host_dict
 
@@ -86,6 +103,7 @@ def get_vuln_properties(vuln):
         'policyviolations': vuln.getPolicyViolations(),
         'parent': vuln.getParent(),
         'parent_type': vuln.getParentType(),
+        'external_id': vuln.getExternalID()
     }
     vuln_dict.update(get_object_properties(vuln))
     return vuln_dict
@@ -104,6 +122,7 @@ def get_vuln_web_properties(vuln_web):
         'status': vuln_web.getStatus(),
         'parent': vuln_web.getParent(),
         'parent_type': vuln_web.getParentType(),
+	'external_id': vuln_web.getExternalID()
     }
     vuln_web_dict.update(get_object_properties(vuln_web))
     vuln_web_dict.update(get_vuln_properties(vuln_web))
@@ -146,3 +165,6 @@ def get_command_properties(command):
         'params': command.params,
         'import_source': command.import_source,
     }
+
+
+# I'm Py3

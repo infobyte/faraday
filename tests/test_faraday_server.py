@@ -1,15 +1,14 @@
+from __future__ import absolute_import
+from __future__ import print_function
+
 import os
 import time
 import signal
 import subprocess
 from datetime import datetime
 from faraday.server.utils import daemonize
-from faraday.server.config import FARADAY_BASE
 
-try:
-    import ConfigParser
-except ImportError:
-    import faraday.client.configparser as ConfigParser
+from configparser import SafeConfigParser, DuplicateSectionError
 
 
 def test_start_and_kill_faraday_server():
@@ -20,7 +19,6 @@ def test_start_and_kill_faraday_server():
         After sending the signal we wait for 15 seconds and
         if the server didn't stop we fail the test also.
     """
-    current_path = os.path.dirname(os.path.abspath(__file__))
     server_port = 5988
     while daemonize.is_server_running(server_port) and server_port < 6500:
         server_port += 1
@@ -36,12 +34,12 @@ def test_start_and_kill_faraday_server():
             password=os.environ['POSTGRES_PASSWORD'],
             database=os.environ['POSTGRES_DB'],
         )
-        faraday_config = ConfigParser.SafeConfigParser()
+        faraday_config = SafeConfigParser()
         config_path = os.path.expanduser('~/.faraday/config/server.ini')
         faraday_config.read(config_path)
         try:
             faraday_config.add_section('database')
-        except ConfigParser.DuplicateSectionError:
+        except DuplicateSectionError:
             pass
         faraday_config.set('database', 'connection_string', connection_string)
         with open(config_path, 'w') as faraday_config_file:
@@ -66,7 +64,6 @@ def test_start_and_kill_faraday_server():
             subproc.send_signal(signal.SIGTERM)
             subproc.wait()
         subproc.poll()
-        delta = now - start
         subproc.poll()
         time.sleep(0.1)
     out, err = subproc.communicate()
@@ -75,3 +72,6 @@ def test_start_and_kill_faraday_server():
         with open(log_path, 'r') as log_file:
             print(log_file.read())
     assert subproc.returncode == 0, (out, err, command)
+
+
+# I'm Py3

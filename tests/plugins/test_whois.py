@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 '''
@@ -8,13 +8,13 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
+from __future__ import absolute_import
 import unittest
 import sys
-from Queue import Queue
+from queue import Queue
 from collections import defaultdict
 
 import os
-sys.path.append(os.path.abspath(os.getcwd()))
 from faraday.client.plugins.repo.whois.plugin import CmdWhoisPlugin
 from faraday.client.model.common import factory
 from faraday.client.persistence.server.models import (
@@ -44,6 +44,12 @@ class TestCmdPingPlugin:
         pending_actions = Queue()
         self.plugin.set_actions_queue(pending_actions)
         monkeypatch.setattr(ModelBase, 'getID', lambda _: 1)
+
+        # Disable deprecation warnings
+        import deprecation
+        monkeypatch.setattr(
+                deprecation.warnings, 'warn', lambda *a, **kw: None)
+
         self.plugin.parseOutputString(self.outputWhoisInfobyte)
 
         actions = defaultdict(list)
@@ -52,6 +58,7 @@ class TestCmdPingPlugin:
             actions[action[0]].append(action[1])
 
         assert actions[2000][0].name == "205.251.196.172"
-        assert actions.keys() == [2000]
+        assert list(actions.keys()) == [2000]
 
         assert len(actions[2000]) == 8
+# I'm Py3

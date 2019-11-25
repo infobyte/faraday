@@ -1,0 +1,32 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+<form name="uploadForm" >
+    <div class="modal-header">
+        <h3 class="modal-title">Import CSV</h3>
+    </div>
+    <div class="modal-body">
+        <span class="help-block">
+            <p> <strong>CSV File Example (must contain the headers)</strong></p>
+            <p> ip,description,os,hostnames</p>
+            <p> 10.10.10.10,test_host,linux,"['localhost','test_host']"</p>
+        </span>
+        <div class="pl">
+            <span class="file-container">
+                <button type="button" class="btn btn-success btn-labeled no-border-radius">
+                    <span class="btn-label"><i class="fa fa-upload"></i>
+                </span>Select file</button>
+                <input type="file" file-model="fileToUpload" ng-class="{'file-selected': fileToUpload !== undefined}">
+                <p class="file-name">{{fileToUpload.name}}</p>
+            </span>
+        </div>
+    </div><!-- .modal-body -->
+    <div class="modal-footer">
+        <div class="modal-button btn-toolbar">
+            <button class="btn btn-success" ng-disabled="uploadForm.$invalid" ng-click="_import()">OK</button>
+            <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+        </div>
+    </div>
+</form>
+    

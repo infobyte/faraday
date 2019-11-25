@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
+from __future__ import absolute_import
+
 import socket
 import subprocess
 import getpass
@@ -33,7 +35,7 @@ def get_private_ip():
     if ip:
         if not ip.startswith('127'):
             return ip
-    if _platform == "linux" or _platform == "linux2": # linux
+    if _platform in ["linux", "linux2"]: # linux
         ip = subprocess.check_output(["ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1 -d'/'"], shell=True)
     elif _platform == "darwin": # MAC OS X
         ip = subprocess.check_output(["ifconfig | grep 'inet ' | grep -Fv 127.0.0.1 | awk '{print $2}' "], shell=True)
@@ -48,7 +50,7 @@ def get_user():
     return getpass.getuser()
 
 
-class CommandRunInformation(object):
+class CommandRunInformation:
     """Command Run information object containing:
         command, parameters, time, workspace, etc."""
     class_signature = "CommandRunInformation"
@@ -85,3 +87,6 @@ class CommandRunInformation(object):
         for k, v in dictt.items():
             setattr(self, k, v)
         return self
+
+
+# I'm Py3

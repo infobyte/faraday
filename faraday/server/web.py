@@ -1,7 +1,6 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-
 import os
 import sys
 import functools
@@ -11,29 +10,35 @@ from signal import SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM, SIG_DFL, signal
 import twisted.web
 from twisted.web.resource import Resource, ForbiddenResource
 
-import faraday.server.config
-
 from twisted.internet import ssl, reactor, error
 from twisted.web.static import File
 from twisted.web.util import Redirect
+from twisted.web.http import proxiedLogFormatter
 from twisted.web.wsgi import WSGIResource
 from autobahn.twisted.websocket import (
     listenWS
 )
-from faraday.server.utils import logger
 
+from OpenSSL.SSL import Error as SSLError
+
+import faraday.server.config
+
+from faraday.config.constant import CONST_FARADAY_HOME_PATH
+from faraday.server import TimerClass
+from faraday.server.utils import logger
+from faraday.server.threads.reports_processor import ReportsManager, REPORTS_QUEUE
 from faraday.server.app import create_app
 from faraday.server.websocket_factories import (
     WorkspaceServerFactory,
     BroadcastServerProtocol
 )
-from faraday.server.api.modules.upload_reports import RawReportProcessor
+
 
 app = create_app()  # creates a Flask(__name__) app
 logger = logging.getLogger(__name__)
 
 
-class CleanHttpHeadersResource(Resource, object):
+class CleanHttpHeadersResource(Resource):
     def render(self, request):
         request.responseHeaders.removeHeader('Server')
         return super(CleanHttpHeadersResource, self).render(request)
@@ -52,21 +57,21 @@ class FileWithoutDirectoryListing(File, CleanHttpHeadersResource):
         return ret
 
 
-class FaradayWSGIResource(WSGIResource, object):
+class FaradayWSGIResource(WSGIResource):
     def render(self, request):
         request.responseHeaders.removeHeader('Server')
         return super(FaradayWSGIResource, self).render(request)
 
 
-class FaradayRedirectResource(Redirect, object):
+class FaradayRedirectResource(Redirect):
     def render(self, request):
         request.responseHeaders.removeHeader('Server')
         return super(FaradayRedirectResource, self).render(request)
 
 
-class WebServer(object):
-    UI_URL_PATH = '_ui'
-    API_URL_PATH = '_api'
+class WebServer:
+    UI_URL_PATH = b'_ui'
+    API_URL_PATH = b'_api'
     WEB_UI_LOCAL_PATH = os.path.join(faraday.server.config.FARADAY_BASE, 'server/www')
 
     def __init__(self, enable_ssl=False):
@@ -90,7 +95,7 @@ class WebServer(object):
         certs = (faraday.server.config.ssl.keyfile, faraday.server.config.ssl.certificate)
         if not all(certs):
             logger.critical("HTTPS request but SSL certificates are not configured")
-            exit(1) # Abort web-server startup
+            sys.exit(1) # Abort web-server startup
         return ssl.DefaultOpenSSLContextFactory(*certs)
 
     def __build_server_tree(self):
@@ -101,7 +106,7 @@ class WebServer(object):
             WebServer.API_URL_PATH, self.__build_api_resource())
 
     def __build_web_redirect(self):
-        return FaradayRedirectResource('/')
+        return FaradayRedirectResource(b'/')
 
     def __build_web_resource(self):
         return FileWithoutDirectoryListing(WebServer.WEB_UI_LOCAL_PATH)
@@ -137,9 +142,14 @@ class WebServer(object):
             logger.info('Received SIGTERM, shutting down.')
             logger.info("Stopping threads, please wait...")
             # teardown()
-            self.raw_report_processor.stop()
+            if self.raw_report_processor.isAlive():
+                self.raw_report_processor.stop()
+            self.timer.stop()
 
-        site = twisted.web.server.Site(self.__root_resource)
+        log_path = os.path.join(CONST_FARADAY_HOME_PATH, 'logs', 'access-logging.log')
+        site = twisted.web.server.Site(self.__root_resource,
+                                       logPath=log_path,
+                                       logFormatter=proxiedLogFormatter)
         site.displayTracebacks = False
         if self.__ssl_enabled:
             ssl_context = self.__load_ssl_certs()
@@ -152,20 +162,27 @@ class WebServer(object):
         try:
             self.install_signal()
             # start threads and processes
-            self.raw_report_processor = RawReportProcessor()
+            self.raw_report_processor = ReportsManager(REPORTS_QUEUE, name="ReportsManager-Thread", daemon=True)
             self.raw_report_processor.start()
+            self.timer = TimerClass()
+            self.timer.start()
             # web and static content
             self.__listen_func(
                 self.__listen_port, site,
                 interface=self.__bind_address)
             # websockets
             if faraday.server.config.websocket_ssl.enabled:
-                contextFactory = ssl.DefaultOpenSSLContextFactory(
-                        faraday.server.config.websocket_ssl.keyfile.strip('\''),
-                        faraday.server.config.websocket_ssl.certificate.strip('\'')
-                )
+
                 try:
+                    contextFactory = ssl.DefaultOpenSSLContextFactory(
+                            faraday.server.config.websocket_ssl.keyfile.strip('\''),
+                            faraday.server.config.websocket_ssl.certificate.strip('\'')
+                    )
+
                     listenWS(self.__build_websockets_resource(), interface=self.__bind_address, contextFactory=contextFactory)
+
+                except SSLError as e:
+                    logger.error('Could not start websockets due to a SSL Config error. Some web functionality will not be available')            
                 except error.CannotListenError:
                     logger.warn('Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
                 except Exception as ex:
@@ -182,9 +199,12 @@ class WebServer(object):
             reactor.run()
 
         except error.CannotListenError as e:
-            logger.error(str(e))
+            logger.error(e)
             sys.exit(1)
+
+
         except Exception as e:
             logger.error('Something went wrong when trying to setup the Web UI')
             logger.exception(e)
             sys.exit(1)
+# I'm Py3

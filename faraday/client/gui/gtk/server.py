@@ -1,21 +1,22 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
+from __future__ import absolute_import
 
 import time
 import threading
 
 from faraday.client.model.guiapi import notification_center
-from decorators import safe_io_with_server
+from faraday.client.gui.gtk.decorators import safe_io_with_server
 from faraday.client.persistence.server import models, server_io_exceptions
 
 
-class ServerIO(object):
+class ServerIO:
     def __init__(self, active_workspace):
         self.__active_workspace = active_workspace
         self.stream = None  # will be set when active workpsace is set
@@ -133,7 +134,7 @@ class ServerIO(object):
                     return False
                 time.sleep(0.5)
 
-        get_changes_thread = threading.Thread(target=get_changes)
+        get_changes_thread = threading.Thread(target=get_changes, name='get_changes')
         get_changes_thread.daemon = True
         get_changes_thread.start()
 
@@ -156,3 +157,6 @@ class ServerIO(object):
         test_server_thread = threading.Thread(target=test_server_connection)
         test_server_thread.daemon = True
         test_server_thread.start()
+
+
+# I'm Py3

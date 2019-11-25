@@ -1,11 +1,13 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
+from __future__ import absolute_import
+
 import logging
 from time import time
 import traceback
@@ -38,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 def _conf():
     if FARADAY_UP:
-        from faraday.config.configuration import getInstanceConfiguration
+        from faraday.config.configuration import getInstanceConfiguration  # pylint:disable=import-outside-toplevel
         return getInstanceConfiguration()
     else:
         raise CantAccessConfigurationWithoutTheClient
@@ -674,8 +676,8 @@ def delete_workspace(workspace_name):
 
 def get_workspaces_names():
     """Return a list with all the workspace names available."""
-    active_workspaces = filter(lambda ws: ws['active'], server.get_workspaces_names())
-    return map(lambda ws: ws['name'], active_workspaces)
+    active_workspaces = list(filter(lambda ws: ws['active'], server.get_workspaces_names()))
+    return [ws['name'] for ws in active_workspaces]
 
 
 def server_info():
@@ -693,7 +695,7 @@ def check_server_url(url_to_test):
 # I think there are several # discrepancies between the models here,
 # those on the server and the parameters the apis specify,
 # and this leads to potential dissaster. Remember params?
-class ModelBase(object):
+class ModelBase:
     """A model for all the Faraday Objects.
     There should be a one to one correspondance with the jsons the faraday
     server gives through apis and the classes inheriting from this one.
@@ -943,7 +945,7 @@ class Service(ModelBase):
             self.ports = [service['ports']]
         else:
             # plugin creates a list of strings with the ports
-            self.ports = map(int, service['ports'])
+            self.ports = list(map(int, service['ports']))
         self.version = service['version']
         self.status = service['status']
         self.vuln_amount = int(service.get('vulns', 0))
@@ -1026,6 +1028,7 @@ class Vuln(ModelBase):
         self.resolution = vuln.get('resolution')
         self.status = vuln.get('status', "opened")
         self.policyviolations = vuln.get('policyviolations', list())
+        self.external_id = vuln.get('external_id')
 
     @staticmethod
     def publicattrsrefs():
@@ -1064,7 +1067,7 @@ class Vuln(ModelBase):
             return True
 
         if key == "status":
-            if prop1 == "closed" or prop1 == "re-opened":
+            if prop1 in ["closed", "re-opened"]:
                 return "re-opened"
             if prop1 == "risk-accepted":
                 return 'risk-accepted'
@@ -1100,7 +1103,7 @@ class Vuln(ModelBase):
         return severity
 
     def updateAttributes(self, name=None, desc=None, data=None,
-                         severity=None, resolution=None, refs=None, status=None, policyviolations=None):
+                         severity=None, resolution=None, refs=None, status=None, policyviolations=None, external_id=None):
         if name is not None:
             self.name = name
         if desc is not None:
@@ -1117,6 +1120,8 @@ class Vuln(ModelBase):
             self.setStatus(status)
         if policyviolations is not None:
             self.policyviolations = policyviolations
+        if external_id is not None:
+            self.external_id = external_id
 
     def getDesc(self):
         return self.desc
@@ -1144,6 +1149,9 @@ class Vuln(ModelBase):
 
     def setStatus(self, status):
         self.status = status
+
+    def getExternalID(self):
+        return self.external_id
 
 
 class VulnWeb(Vuln):
@@ -1173,6 +1181,7 @@ class VulnWeb(Vuln):
         self.target = vuln_web.get('target')
         self.policyviolations = vuln_web.get('policyviolations', list())
         self.parent_type = 'Service'
+        self.external_id = vuln_web.get('external_id')
 
     @staticmethod
     def publicattrsrefs():
@@ -1193,7 +1202,7 @@ class VulnWeb(Vuln):
 
     def updateAttributes(self, name=None, desc=None, data=None, website=None, path=None, refs=None,
                         severity=None, resolution=None, request=None,response=None, method=None,
-                        pname=None, params=None, query=None, category=None, status=None, policyviolations=None):
+                        pname=None, params=None, query=None, category=None, status=None, policyviolations=None, external_id=None):
 
         super(self.__class__, self).updateAttributes(name, desc, data, severity, resolution, refs, status)
 
@@ -1217,6 +1226,8 @@ class VulnWeb(Vuln):
             self.category = category
         if policyviolations is not None:
             self.policyviolations = policyviolations
+        if external_id is not None:
+            self.external_id = external_id
 
     def getDescription(self):
         return self.description
@@ -1275,6 +1286,9 @@ class VulnWeb(Vuln):
     def getPolicyViolations(self):
         return self.policyviolations
 
+    def getExternalID(self):
+        return self.external_id
+
     def tieBreakable(self, key):
         """
         Return true if we can auto resolve this conflict.
@@ -1304,7 +1318,7 @@ class VulnWeb(Vuln):
             return self._resolve_response(prop1, prop2)
 
         if key == "status":
-            if prop1 == "closed" or prop1 == "re-opened":
+            if prop1 in ["closed", "re-opened"]:
                 return "re-opened"
             if prop1 == "risk-accepted":
                 return 'risk-accepted'
@@ -1462,14 +1476,14 @@ class _Workspace:
         return self.end_date
 
 
-class MetadataUpdateActions(object):
+class MetadataUpdateActions:
     """Constants for the actions made on the update"""
     UNDEFINED   = -1
     CREATE      = 0
     UPDATE      = 1
 
 
-class Metadata(object):
+class Metadata:
     """To save information about the modification of ModelObjects.
        All members declared public as this is only a wrapper"""
 
@@ -1512,3 +1526,6 @@ class Metadata(object):
         if controller_funcallnames:
             return "ModelControler." + " ModelControler.".join(controller_funcallnames)
         return "No model controller call"
+
+
+# I'm Py3

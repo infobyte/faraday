@@ -16,7 +16,7 @@ import json
 
 from faraday.server.api.modules.services import ServiceView
 from tests import factories
-from test_api_workspaced_base import ReadOnlyAPITests
+from tests.test_api_workspaced_base import ReadOnlyAPITests
 from faraday.server.models import (
     Service
 )
@@ -88,22 +88,7 @@ class TestListServiceView(ReadOnlyAPITests):
         }
         res = test_client.post(self.url(), data=data)
         assert res.status_code == 400
-        assert 'Not a valid choice' in res.data
-
-    def test_create_fails_with_no_status(self, test_client,
-                                         host, session):
-        session.commit()
-        data = {
-            "name": "ftp",
-            "description": "test. test",
-            "owned": False,
-            "ports": [21],
-            "protocol": "tcp",
-            "parent": host.id
-        }
-        res = test_client.post(self.url(), data=data)
-        assert res.status_code == 400
-        assert 'Missing data' in res.data
+        assert b'Not a valid choice' in res.data
 
     def test_create_fails_with_no_host_id(self, test_client,
                                           host, session):
@@ -118,7 +103,7 @@ class TestListServiceView(ReadOnlyAPITests):
         }
         res = test_client.post(self.url(), data=data)
         assert res.status_code == 400
-        assert 'Parent id is required' in res.data
+        assert b'Parent id is required' in res.data
 
     def test_create_fails_with_host_of_other_workspace(self, test_client,
                                                        host, session,
@@ -136,7 +121,7 @@ class TestListServiceView(ReadOnlyAPITests):
         }
         res = test_client.post(self.url(workspace=second_workspace), data=data)
         assert res.status_code == 400
-        assert 'Host with id' in res.data
+        assert b'Host with id' in res.data
 
     def test_update_fails_with_host_of_other_workspace(self, test_client,
                                                        second_workspace,
@@ -156,7 +141,7 @@ class TestListServiceView(ReadOnlyAPITests):
         }
         res = test_client.put(self.url(self.first_object), data=data)
         assert res.status_code == 400
-        assert 'Can\'t change service parent.' in res.data
+        assert b'Can\'t change service parent.' in res.data
 
     def test_create_service_returns_conflict_if_already_exists(self, test_client, host, session):
         session.commit()
@@ -214,7 +199,7 @@ class TestListServiceView(ReadOnlyAPITests):
         raw_data = self._raw_put_data(service.id, parent=host.id)
         res = test_client.put(self.url(service, workspace=service.workspace), data=raw_data)
         assert res.status_code == 400
-        assert 'Can\'t change service parent.' in res.data
+        assert b'Can\'t change service parent.' in res.data
         updated_service = Service.query.filter_by(id=service.id).first()
         assert updated_service.name == service.name
 
@@ -307,7 +292,9 @@ class TestListServiceView(ReadOnlyAPITests):
         res = test_client.post(self.url(), data=data)
         assert res.status_code == 400
 
-    def test_load_ports_with_negative_value(self, test_client):
+    def test_load_ports_with_negative_value(self, test_client, session):
+        host = HostFactory.create(workspace=self.workspace)
+        session.commit()
         data = {
             "name": "ports",
             "description": "testing ports load",
@@ -315,6 +302,26 @@ class TestListServiceView(ReadOnlyAPITests):
             "ports": [-1],
             "protocol": "tcp",
             "status": "open",
+            "parent": host.id
         }
         res = test_client.post(self.url(), data=data)
         assert res.status_code == 400
+
+    def test_load_invalid_port(self, test_client, session):
+        host = HostFactory.create(workspace=self.workspace)
+        session.commit()
+        data = {
+            "name": "ports",
+            "description": "testing ports load",
+            "owned": False,
+            "ports": [65536],
+            "protocol": "tcp",
+            "status": "open",
+            "parent": host.id
+        }
+        res = test_client.post(self.url(), data=data)
+        print(res.data)
+        assert res.status_code == 400
+
+
+# I'm Py3

@@ -1,12 +1,9 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
 from faraday.client.plugins import core
 import re
 import os, json
@@ -27,7 +24,7 @@ class FruityWiFiPlugin(core.PluginBase):
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "fruitywifi"
         self.name = "FruityWiFi"
         self.plugin_version = "0.0.1"
@@ -96,8 +93,7 @@ class FruityWiFiPlugin(core.PluginBase):
                         macaddress = item[1]
                         hostname = item[2]
                         vuln_name = "FruityWiFi"
-                        severity = severity
-            
+
                         desc = "Client ip: " + ip_address + \
                                " has been connected to FruityWiFi\n"
                         desc += "More information:"
@@ -142,3 +138,6 @@ class FruityWiFiPlugin(core.PluginBase):
 
 def createPlugin():
     return FruityWiFiPlugin()
+
+
+# I'm Py3

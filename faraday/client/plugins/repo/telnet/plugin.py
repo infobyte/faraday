@@ -1,19 +1,15 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-from __future__ import with_statement
+"""
 from faraday.client.plugins import core
 from faraday.client.model import api
 import re
 import os
 import socket
-import pprint
+
 current_path = os.path.abspath(os.getcwd())
 
 __author__ = "Facundo de Guzmán, Esteban Guillardoy"
@@ -33,7 +29,7 @@ class TelnetRouterPlugin(core.PluginBase):
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "Telnet"
         self.name = "Telnet"
         self.plugin_version = "0.0.1"
@@ -81,7 +77,7 @@ class TelnetRouterPlugin(core.PluginBase):
         if host_info is not None:
             h_id = self.createAndAddHost(ip_address)
             i_id = self.createAndAddInterface(
-                h_id, ip_address, ipv4_address=ip_address, hostname_resolution=hostname)
+                h_id, ip_address, ipv4_address=ip_address, hostname_resolution=[hostname])
             s_id = self.createAndAddServiceToInterface(h_id, i_id, self._port,
                                                        "tcp",
                                                        ports=[self._port],
@@ -94,9 +90,12 @@ class TelnetRouterPlugin(core.PluginBase):
 
         c = count_args.__len__()
         self._port = "23"
-        if re.search("[\d]+", count_args[c - 1]):
+        if re.search(r"[\d]+", count_args[c - 1]):
             self._port = count_args[c - 1]
 
 
 def createPlugin():
     return TelnetRouterPlugin()
+
+
+# I'm Py3

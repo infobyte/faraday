@@ -1,21 +1,39 @@
 #!/usr/bin/env python
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-
+"""
 import os
 import re
 import sys
+import platform
+import logging
+# If is linux and its installed with deb or rpm, it must run with a user in the faraday group
+if platform.system() == "Linux":
+    import grp
+    from getpass import getuser
+    try:
+        FARADAY_GROUP = "faraday"
+        faraday_group = grp.getgrnam(FARADAY_GROUP)
+        #The current user may be different from the logged user
+        current_user = getuser()
+        if current_user != 'root' and faraday_group.gr_gid not in os.getgroups():
+            print("\n\nUser (%s) must be in the '%s' group." % (os.getlogin(), FARADAY_GROUP))
+            print("After adding the user to the group, please logout and login again.")
+            sys.exit(1)
+    except KeyError:
+        pass
 
 import click
 import requests
 import alembic.command
-from urlparse import urlparse
+from pgcli.main import PGCli
+from requests import ConnectionError
+from urllib.parse import urlparse
 from alembic.config import Config
-from sqlalchemy.exc import ProgrammingError
+from sqlalchemy.exc import ProgrammingError, OperationalError
 
 import faraday.server.config
 from faraday.server.config import FARADAY_BASE
@@ -24,17 +42,17 @@ from faraday.client.start_client import FARADAY_PLUGINS_BASEPATH
 from faraday.server.commands.initdb import InitDB
 from faraday.server.commands.faraday_schema_display import DatabaseSchema
 from faraday.server.commands.app_urls import show_all_urls
-from faraday.server.commands.reports import import_external_reports
 from faraday.server.commands import status_check as status_check_functions
 from faraday.server.commands import change_password as change_pass
 from faraday.server.commands.custom_fields import add_custom_field_main, delete_custom_field_main
 from faraday.server.commands import support as support_zip
+from faraday.server.commands import change_username
 from faraday.server.models import db, User
-from faraday.server.importer import ImportCouchDB
 from faraday.server.web import app
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
+logger = logging.getLogger(__name__)
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 def cli():
@@ -43,34 +61,6 @@ def cli():
 
 def check_faraday_server(url):
     return requests.get(url)
-
-
-@click.command(help="Enable importation of plugins reports in ~/.faraday folder")
-@click.option('--debug/--no-debug', default=False)
-@click.option('--workspace', default=None)
-@click.option('--polling/--no-polling', default=True)
-def process_reports(debug, workspace, polling):
-    try:
-        from requests import ConnectionError
-    except ImportError:
-        print('Python requests was not found. Please install it with: pip install requests')
-        sys.exit(1)
-    try:
-        from sqlalchemy.exc import OperationalError
-    except ImportError:
-        print('SQLAlchemy was not found please install it with: pip install sqlalchemy')
-        sys.exit(1)
-    configuration = _conf()
-    url = '{0}/_api/v2/info'.format(configuration.getServerURI() if FARADAY_UP else SERVER_URL)
-    with app.app_context():
-        try:
-            check_faraday_server(url)
-            import_external_reports(workspace, polling)
-        except OperationalError as ex:
-            print('{0}'.format(ex))
-            print('Please verify database is running or configuration on server.ini!')
-        except ConnectionError:
-            print('Can\'t connect to {0}. Please check if the server is running.'.format(url))
 
 
 @click.command(help="Show all URLs in Faraday Server API")
@@ -86,28 +76,15 @@ def show_urls():
 def initdb(choose_password):
     with app.app_context():
         InitDB().run(choose_password=choose_password)
-        couchdb_config_present = faraday.server.config.couchdb
-        if couchdb_config_present and couchdb_config_present.user and couchdb_config_present.password:
-            print('Importing data from CouchDB, please wait...')
-            ImportCouchDB().run()
-            print('All users from CouchDB were imported. You can login with your old username/password to faraday now.')
 
-@click.command(help="Import all your data from Couchdb Faraday databases")
-def import_from_couchdb():
-    with app.app_context():
-        ImportCouchDB().run()
 
 @click.command(help="Create a PNG image with Faraday model object")
 def database_schema():
     DatabaseSchema().run()
 
+
 @click.command(help="Open a SQL Shell connected to postgresql 'Faraday DB'")
 def sql_shell():
-    try:
-        from pgcli.main import PGCli
-    except ImportError:
-        print('PGCli was not found, please install it with: pip install pgcli')
-        sys.exit(1)
     conn_string = faraday.server.config.database.connection_string.strip("'")
     conn_string = urlparse(conn_string)
     parsed_conn_string = ("user={username} password={password} host={hostname} dbname={dbname}"
@@ -152,6 +129,7 @@ def status_check(check_postgresql, check_faraday, check_dependencies, check_conf
 
     sys.exit(exit_code)
 
+
 @click.command(help="Changes the password of a user")
 @click.option('--username', required=True, prompt=True)
 @click.option('--password', required=True, prompt=True, confirmation_prompt=True, hide_input=True)
@@ -161,6 +139,8 @@ def change_password(username, password):
     except ProgrammingError:
         print('\n\nMissing migrations, please execute: \n\nfaraday-manage migrate')
         sys.exit(1)
+
+
 def validate_user_unique_field(ctx, param, value):
     with app.app_context():
         if User.query.filter_by(**{param.name: value}).count():
@@ -179,7 +159,7 @@ def validate_email(ctx, param, value):
 def list_plugins():
     plugins_list = [name for name in os.listdir(FARADAY_PLUGINS_BASEPATH)
            if os.path.isdir(os.path.join(FARADAY_PLUGINS_BASEPATH, name))]
-    print '\n'.join(sorted(plugins_list))
+    print('\n'.join(sorted(plugins_list)))
 
 @click.command(help="Create ADMIN user for Faraday application")
 @click.option('--username', prompt=True, callback=validate_user_unique_field)
@@ -233,13 +213,24 @@ def support():
         required=False,
         )
 def migrate(downgrade, revision):
-    revision = revision or ("-1" if downgrade else "head")
-    config = Config(os.path.join(FARADAY_BASE,"alembic.ini"))
-    os.chdir(FARADAY_BASE)
-    if downgrade:
-        alembic.command.downgrade(config, revision)
+    logger.info("Running migrations")
+    try:
+        revision = revision or ("-1" if downgrade else "head")
+        config = Config(os.path.join(FARADAY_BASE,"alembic.ini"))
+        os.chdir(FARADAY_BASE)
+        if downgrade:
+            alembic.command.downgrade(config, revision)
+        else:
+            alembic.command.upgrade(config, revision)
+    except OperationalError as e:
+        logger.error("Migration Error: %s", e)
+        print('Please verify your configuration on server.ini or the hba configuration!')
+    except Exception as e:
+        logger.exception("Migration Error: %s", e)
+        print('Migration failed! Please check the logs')
+        sys.exit(1)
     else:
-        alembic.command.upgrade(config, revision)
+        logger.info("Migrations finished")
 
 
 @click.command(help='Custom field wizard')
@@ -252,10 +243,19 @@ def delete_custom_field():
     delete_custom_field_main()
 
 
-cli.add_command(process_reports)
+@click.command(help="Change username")
+@click.option('--current_username', required=True, prompt=True)
+@click.option('--new_username', required=True, prompt=True)
+def rename_user(current_username, new_username):
+    if(current_username == new_username):
+        print("\nERROR: Usernames must be different.")
+        sys.exit(1)
+    else:
+        change_username.change_username(current_username, new_username)
+
+
 cli.add_command(show_urls)
 cli.add_command(initdb)
-cli.add_command(import_from_couchdb)
 cli.add_command(database_schema)
 cli.add_command(create_superuser)
 cli.add_command(sql_shell)
@@ -267,6 +267,11 @@ cli.add_command(add_custom_field)
 cli.add_command(delete_custom_field)
 cli.add_command(support)
 cli.add_command(list_plugins)
+cli.add_command(rename_user)
 
 if __name__ == '__main__':
+
     cli()
+
+
+# I'm Py3

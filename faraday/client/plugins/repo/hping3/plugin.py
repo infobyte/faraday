@@ -1,12 +1,8 @@
-#!/usr/bin/python2.7
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2017  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-
+"""
 from faraday.client.plugins import core
 import re
 
@@ -19,8 +15,7 @@ __version__ = "1.0.0"
 class hping3 (core.PluginBase):
 
     def __init__(self):
-
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "Hping3"
         self.name = "hping3"
         self.plugin_version = "0.0.1"
@@ -48,7 +43,7 @@ class hping3 (core.PluginBase):
         host_id = self.createAndAddHost(hostname)
 
         i_id = self.createAndAddInterface(
-            host_id, ip_address, ipv4_address=ip_address, hostname_resolution=hostname)
+            host_id, ip_address, ipv4_address=ip_address, hostname_resolution=[hostname])
 
         if re.match("HPING", output):
 
@@ -80,3 +75,6 @@ class hping3 (core.PluginBase):
 
 def createPlugin():
     return hping3()
+
+
+# I'm Py3

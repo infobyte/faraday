@@ -53,6 +53,9 @@
     <link rel="stylesheet" type="text/css" href="scripts/statusReport/styles/status.css" />
     <link rel="stylesheet" type="text/css" href="table-v3.css" />
 
+    <!--table resize-->
+    <link rel="stylesheet" type="text/css" href="script/angular-table-resize.css" />
+
     <!-- Icons -->
     <link href="favicon.ico" rel="shortcut icon">
     <link href="favicon.ico" type="image/vnd.microsoft.icon" rel="icon" />
@@ -73,7 +76,10 @@
     <script type="text/javascript" src="script/ui-bootstrap-tpls-0.14.1.min.js"></script>
     <script type="text/javascript" src="script/cryptojs-sha1.js"></script>
     <script type="text/javascript" src="script/sanitize.js"></script>
+    <script type="text/javascript" src="script/showdown.js"></script>
+    <script type="text/javascript" src="script/showdown-table.js"></script>
     <script type="text/javascript" src="script/angular-ui-notification.min.js"></script>
+    <script type="text/javascript" src="script/angular-ui.js"></script>
     <script type="text/javascript" src="script/angular-clipboard.js"></script>
     <!-- angular chart -->
     <script type="text/javascript" src="script/Chart.js"></script>
@@ -86,12 +92,14 @@
     <script type="text/javascript" src="script/papaparse.min.js"></script>
     <script type="text/javascript" src="script/oui.web.min.js"></script>
     <script type="text/javascript" src="script/angular-drag-and-drop-lists.min.js"></script>
+
+    <!--table resizable-->
+    <script type="text/javascript" src="script/angular-table-resize.js"></script>
 </head>
 
 <body ng-controller="loginBackgroundCtrl" ng-class="{'login': isLogin}">
 <div id="cont">
     <div class="wrapper" ng-controller="indexCtrl">
-        <div ng-controller="navigationCtrl" ng-include="'scripts/navigation/partials/leftBar.html'"></div>
         <div ng-view></div>
     </div><!--!/#wrapper -->
 </div><!--!/#container -->
@@ -114,6 +122,7 @@
     <script type="text/javascript" src="scripts/commons/filters/getByProperty.js"></script>
     <script type="text/javascript" src="scripts/commons/filters/orderObjectBy.js"></script>
     <script type="text/javascript" src="scripts/commons/filters/startFrom.js"></script>
+    <script type="text/javascript" src="scripts/commons/filters/markdown.js"></script>
     <script type="text/javascript" src="scripts/commons/filters/integer.js"></script>
     <script type="text/javascript" src="scripts/commons/filters/removeLinebreaks.js"></script>
     <script type="text/javascript" src="scripts/config/services/config.js"></script>
@@ -126,6 +135,7 @@
     <script type="text/javascript" src="scripts/hosts/controllers/hosts.js"></script>
     <script type="text/javascript" src="scripts/hosts/controllers/hostsModalEdit.js"></script>
     <script type="text/javascript" src="scripts/hosts/controllers/hostsModalNew.js"></script>
+    <script type="text/javascript" src="scripts/hosts/controllers/upload.js"></script>
     <script type="text/javascript" src="scripts/hosts/providers/host.js"></script>
     <script type="text/javascript" src="scripts/hosts/providers/hosts.js"></script>
     <script type="text/javascript" src="scripts/index/controllers/indexCtrl.js"></script>
@@ -192,6 +202,7 @@
     <script type="text/javascript" src="scripts/d3/directives/cake.js"></script>
     <script type="text/javascript" src="scripts/d3/directives/stackedbar.js"></script>
     <script type="text/javascript" src="scripts/credentials/providers/credential.js"></script>
+    <script type="text/javascript" src="scripts/credentials/providers/targetCred.js"></script>
     <script type="text/javascript" src="scripts/credentials/controllers/credentials.js"></script>
     <script type="text/javascript" src="scripts/credentials/controllers/modalNewEditCredentialCtrl.js"></script>
     <script type="text/javascript" src="scripts/vulndb/controllers/vulnModels.js"></script>
@@ -203,5 +214,7 @@
     <script type="text/javascript" src="scripts/admin/admin.js"></script>
     <script type="text/javascript" src="scripts/admin/customFields/controllers/customFields.js"></script>
     <script type="text/javascript" src="scripts/admin/customFields/providers/customFields.js"></script>
+    <script type="text/javascript" src="scripts/admin/agents/controllers/agents.js"></script>
+    <script type="text/javascript" src="scripts/admin/agents/providers/agents.js"></script>
 </body>
 </html>

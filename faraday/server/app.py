@@ -2,23 +2,16 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 import logging
-
 import os
 import string
 import datetime
-from future.builtins import range # __future__
-from os.path import join, expanduser
+from itsdangerous import TimedJSONWebSignatureSerializer, SignatureExpired, BadSignature
+from os.path import join
 from random import SystemRandom
 
 from faraday.server.config import LOCAL_CONFIG_FILE, copy_default_config_to_local
-from faraday.server.models import User, Vulnerability, VulnerabilityWeb, Workspace, VulnerabilityGeneric
-
-try:
-    # py2.7
-    from faraday.client.configparser import ConfigParser, NoSectionError, NoOptionError, DuplicateSectionError
-except ImportError:
-    # py3
-    from ConfigParser import ConfigParser, NoSectionError, NoOptionError, DuplicateSectionError
+from faraday.server.models import User
+from configparser import ConfigParser, NoSectionError, NoOptionError, DuplicateSectionError
 
 import flask
 from flask import Flask, session, g
@@ -28,16 +21,16 @@ from flask_security import (
     Security,
     SQLAlchemyUserDatastore,
 )
-from flask_security.decorators import (
-    auth_token_required,
-)
 from flask_security.forms import LoginForm
 from flask_security.utils import (
     _datastore,
     get_message,
-    verify_and_update_password
-)
-from flask_session import Session
+    verify_and_update_password,
+    verify_hash)
+from flask_kvsession import KVSessionExtension
+from simplekv.fs import FilesystemStore
+from simplekv.decorator import PrefixDecorator
+from flask_login import user_logged_out
 from nplusone.ext.flask_sqlalchemy import NPlusOne
 from depot.manager import DepotManager
 
@@ -45,12 +38,15 @@ import faraday.server.config
 # Load SQLAlchemy Events
 import faraday.server.events
 from faraday.server.utils.logger import LOGGING_HANDLERS
+from faraday.server.utils.invalid_chars import remove_null_caracters
+from faraday.config.constant import CONST_FARADAY_HOME_PATH
+
 
 logger = logging.getLogger(__name__)
 
 
 def setup_storage_path():
-    default_path = join(expanduser("~"), '.faraday/storage')
+    default_path = join(CONST_FARADAY_HOME_PATH, 'storage')
     if not os.path.exists(default_path):
         logger.info('Creating directory {0}'.format(default_path))
         os.mkdir(default_path)
@@ -68,23 +64,30 @@ def setup_storage_path():
 
 
 def register_blueprints(app):
-    from faraday.server.api.modules.info import info_api
-    from faraday.server.api.modules.commandsrun import commandsrun_api
-    from faraday.server.api.modules.activity_feed import activityfeed_api
-    from faraday.server.api.modules.credentials import credentials_api
-    from faraday.server.api.modules.hosts import host_api
-    from faraday.server.api.modules.licenses import license_api
-    from faraday.server.api.modules.services import services_api
-    from faraday.server.api.modules.session import session_api
-    from faraday.server.api.modules.vulns import vulns_api
-    from faraday.server.api.modules.vulnerability_template import vulnerability_template_api
-    from faraday.server.api.modules.workspaces import workspace_api
-    from faraday.server.api.modules.handlers import handlers_api
-    from faraday.server.api.modules.comments import comment_api
-    from faraday.server.api.modules.upload_reports import upload_api
-    from faraday.server.api.modules.websocket_auth import websocket_auth_api
-    from faraday.server.api.modules.get_exploits import exploits_api
-    from faraday.server.api.modules.custom_fields import custom_fields_schema_api
+
+    from faraday.server.api.modules.info import info_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.commandsrun import commandsrun_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.activity_feed import activityfeed_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.credentials import credentials_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.hosts import host_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.licenses import license_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.services import services_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.session import session_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.vulns import vulns_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.vulnerability_template import vulnerability_template_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.workspaces import workspace_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.handlers import handlers_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.comments import comment_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.upload_reports import upload_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.websocket_auth import websocket_auth_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.get_exploits import exploits_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.custom_fields import custom_fields_schema_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.agent_auth_token import agent_auth_token_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.agent import agent_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.bulk_create import bulk_create_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.token import token_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.search_filter import searchfilter_api # pylint:disable=import-outside-toplevel
+
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(activityfeed_api)
     app.register_blueprint(credentials_api)
@@ -102,6 +105,11 @@ def register_blueprints(app):
     app.register_blueprint(websocket_auth_api)
     app.register_blueprint(exploits_api)
     app.register_blueprint(custom_fields_schema_api)
+    app.register_blueprint(agent_api)
+    app.register_blueprint(agent_auth_token_api)
+    app.register_blueprint(bulk_create_api)
+    app.register_blueprint(token_api)
+    app.register_blueprint(searchfilter_api)
 
 
 def check_testing_configuration(testing, app):
@@ -121,33 +129,72 @@ def register_handlers(app):
     def unauthorized():
         flask.abort(403)
 
-    @auth_token_required
-    def verify_token():
-        return True
+    def verify_token(token):
+        serialized = TimedJSONWebSignatureSerializer(app.config['SECRET_KEY'], salt="api_token")
+        try:
+            data = serialized.loads(token)
+            user_id = data["user_id"]
+            user = User.query.filter_by(id=user_id).first()
+            if not user or not verify_hash(data['validation_check'], user.password):
+                logger.warn('Invalid authentication token. token invalid after password change')
+                return None
+            return user
+        except SignatureExpired:
+            return None  # valid token, but expired
+        except BadSignature:
+            return None  # invalid token
+
 
     @app.before_request
     def default_login_required():
         view = app.view_functions.get(flask.request.endpoint)
 
         if app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER'] in flask.request.headers:
-            if verify_token() is not True:
-                logger.warn ('Auth token not valid. Did you change your password recently?')
+            header = flask.request.headers[app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER']]
+            try:
+                (auth_type, token) = header.split(None, 1)
+            except ValueError:
+                logger.warn("Authorization header does not have type")
                 flask.abort(401)
-            logged_in = True
+            auth_type = auth_type.lower()
+            if auth_type == 'token':
+                user = verify_token(token)
+                if not user:
+                    logger.warn('Invalid authentication token.')
+                    flask.abort(401)
+                logged_in = True
+                flask.session['user_id'] = user.id
+            elif auth_type == 'agent':
+                # Don't handle the agent logic here, do it in another
+                # before_request handler
+                logged_in = False
+            else:
+                logger.warn("Invalid authorization type")
+                flask.abort(401)
         else:
             logged_in = 'user_id' in flask.session
-            if (not logged_in and not getattr(view, 'is_public', False)):
-                flask.abort(401)
+            user_id = session.get("user_id")
+            if logged_in:
+                user = User.query.filter_by(id=user_id).first()
+
+        if logged_in:
+            assert user
+
+        if not logged_in and not getattr(view, 'is_public', False):
+            flask.abort(401)
 
         g.user = None
         if logged_in:
-            user = User.query.filter_by(id=session["user_id"]).first()
             g.user = user
             if user is None:
                 logger.warn("Unknown user id {}".format(session["user_id"]))
                 del flask.session['user_id']
                 flask.abort(401)  # 403 would be better but breaks the web ui
                 return
+
+    @app.before_request
+    def load_g_custom_fields():
+        g.custom_fields = {}
 
     @app.after_request
     def log_queries_count(response):
@@ -184,6 +231,24 @@ def save_new_secret_key(app):
         config.write(configfile)
 
 
+def save_new_agent_creation_token():
+    assert os.path.exists(LOCAL_CONFIG_FILE)
+    config = ConfigParser()
+    config.read(LOCAL_CONFIG_FILE)
+    rng = SystemRandom()
+    agent_token = "".join([rng.choice(string.ascii_letters + string.digits) for _ in range(25)])
+    config.set('faraday_server', 'agent_token', agent_token)
+    with open(LOCAL_CONFIG_FILE, 'w') as configfile:
+        config.write(configfile)
+    faraday.server.config.faraday_server.agent_token = agent_token
+
+
+def expire_session(app, user):
+    logger.debug("Cleanup sessions")
+    session.destroy()
+    KVSessionExtension(app=app).cleanup_sessions(app)
+
+
 def create_app(db_connection_string=None, testing=None):
     app = Flask(__name__)
 
@@ -201,6 +266,9 @@ def create_app(db_connection_string=None, testing=None):
         else:
             app.config['SECRET_KEY'] = secret_key
 
+    if faraday.server.config.faraday_server.agent_token is None:
+        save_new_agent_creation_token()
+
     login_failed_message = ("Invalid username or password", 'error')
 
     app.config.update({
@@ -213,7 +281,7 @@ def create_app(db_connection_string=None, testing=None):
         'SECURITY_CHANGEABLE': True,
         'SECURITY_SEND_PASSWORD_CHANGE_EMAIL': False,
         'SECURITY_MSG_USER_DOES_NOT_EXIST': login_failed_message,
-        'SECURITY_TOKEN_AUTHENTICATION_HEADER': 'Authentication-Token',
+        'SECURITY_TOKEN_AUTHENTICATION_HEADER': 'Authorization',
 
         # The line bellow should not be necessary because of the
         # CustomLoginForm, but i'll include it anyway.
@@ -236,11 +304,17 @@ def create_app(db_connection_string=None, testing=None):
             'plaintext',  # TODO: remove it
         ],
         'PERMANENT_SESSION_LIFETIME': datetime.timedelta(hours=12),
+        'SESSION_COOKIE_NAME': 'faraday_session',
     })
+
+    store = FilesystemStore(app.config['SESSION_FILE_DIR'])
+    prefixed_store = PrefixDecorator('sessions_', store)
+    KVSessionExtension(prefixed_store, app)
+    user_logged_out.connect(expire_session, app)
 
     storage_path = faraday.server.config.storage.path
     if not storage_path:
-        logger.warn('No storage section or path in the .faraday/server.ini. Setting the default value to .faraday/storage')
+        logger.warn('No storage section or path in the .faraday/config/server.ini. Setting the default value to .faraday/storage')
         storage_path = setup_storage_path()
 
     if not DepotManager.get('default'):
@@ -262,7 +336,7 @@ def create_app(db_connection_string=None, testing=None):
     except NoOptionError:
         logger.info('Missing connection_string on [database] section on server.ini. Please configure the database before running the server.')
 
-    from faraday.server.models import db
+    from faraday.server.models import db # pylint:disable=import-outside-toplevel
     db.init_app(app)
     #Session(app)
 
@@ -274,6 +348,7 @@ def create_app(db_connection_string=None, testing=None):
     Security(app, app.user_datastore, login_form=CustomLoginForm)
     # Make API endpoints require a login user by default. Based on
     # https://stackoverflow.com/questions/13428708/best-way-to-make-flask-logins-login-required-the-default
+
     app.view_functions['security.login'].is_public = True
     app.view_functions['security.logout'].is_public = True
 
@@ -285,6 +360,8 @@ def create_app(db_connection_string=None, testing=None):
 
     register_blueprints(app)
     register_handlers(app)
+
+    app.view_functions['agent_api.AgentCreationView:post'].is_public = True
 
     return app
 
@@ -312,14 +389,19 @@ class CustomLoginForm(LoginForm):
         # want to skip the LoginForm validate logic
         if not super(LoginForm, self).validate():
             return False
+        self.email.data = remove_null_caracters(self.email.data)
+
         self.user = _datastore.get_user(self.email.data)
 
         if self.user is None:
             self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
             return False
+
+        self.user.password = remove_null_caracters(self.user.password)
         if not self.user.password:
             self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
             return False
+        self.password.data = remove_null_caracters(self.password.data)
         if not verify_and_update_password(self.password.data, self.user):
             self.email.errors.append(get_message('USER_DOES_NOT_EXIST')[0])
             return False
@@ -330,3 +412,4 @@ class CustomLoginForm(LoginForm):
             self.email.errors.append(get_message('DISABLED_ACCOUNT')[0])
             return False
         return True
+

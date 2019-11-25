@@ -1,9 +1,12 @@
 #login-main {
-  background-image: url(images/fondofaraday4k.jpg) !important;
+  background-image: url(images/fondo_faraday.svg) !important;
   width: 100%;
   height: 100%;
   display: inline-block;
-  position: absolute;
+  position: fixed;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center;
 }
 
 #login-container {
@@ -12,6 +15,7 @@
   background-color: #FFF;
   margin-left: auto;
   margin-right: auto;
+  box-shadow: 0 0 1em black;
 }
 
 #form-signin {
@@ -29,7 +33,7 @@
 }
 
 .border-red {
-  border-top-color: #de4456;
+  border-top-color: #00a8e1;
 }
 
 .border-strong {
@@ -55,6 +59,10 @@
 
 .margin-top-37px {
   margin-top: 37px;
+}
+
+.margin-top-65px {
+  margin-top: 65px;
 }
 
 .clear-margin {
@@ -108,8 +116,12 @@
   color: #2c8dee
 }
 
+.fg-white {
+    color: white
+  }
+
 .fg-red {
-  color: #de4456
+  color: #00a8e1;
 }
 
 .font-bold {
@@ -303,7 +315,8 @@
 .tab-pane-container {
     width: 100%;
     overflow-y: auto;
-    max-height: calc(100% - 180px);
+    max-height: calc(100% - 175px);
+    height: 100%;
 }
 
 .btn-primary-white {
@@ -491,7 +504,7 @@ li.nav-item.has-error:not(.active) a {
 }
 
 .nav-item{
-    margin-right: 10px;
+    margin-right: 40px;
 }
 
 .active-toggle{
@@ -606,9 +619,9 @@ button[disabled], html input[disabled] {
 }
 
 .setting-sidebar li.active {
-    border-left: 5px solid #de4456;
+    border-left: 5px solid #00a8e1;
     padding-left: 19px;
-    color: #de4456;
+    color: #00a8e1;
 }
 
 .setting-sidebar li:hover{
@@ -654,6 +667,11 @@ button[disabled], html input[disabled] {
     background-color: #a1ce31;
 }
 
+.type-choice{
+    border: 1px solid #be2743;
+    background-color: #be2743;
+}
+
 h3.cf-display-name {
     margin-top: 0;
 }
@@ -668,6 +686,12 @@ h3.cf-display-name {
     color: #aaa;
     text-align: center;
     padding-top: 32px;
+}
+
+.btn-cf-choice {
+    margin-bottom: 30px;
+    padding-left: 0;
+    padding-right: 0;
 }
 
 
@@ -749,6 +773,10 @@ div[dnd-list] > div{
 
 .right-main{
     overflow-x: hidden;
+}
+
+.left-main{
+  overflow-x: hidden;
 }
 
 #vuln-preview {
@@ -920,10 +948,87 @@ ul#nav-tabs-container {
     overflow-wrap: break-word;
 }
 
+.custom-panel-heading{
+    padding: 15px!important;
+    text-transform: uppercase;
+}
+
+.custom-panel-body{
+    background-color: #f4f3f4;
+}
+
+.agent-token-container {
+    font-size: 1.5em;
+    margin-right: 20px;
+    padding: 12px;
+}
+
+#agent-table td {
+    text-align: left!important;
+}
+
+.tag-blue {
+    background-color: #2e97bd;
+    color: white;
+    text-transform: uppercase;
+}
+
+.tag-green {
+    background-color: #a1ce31;
+    color: white;
+    text-transform: uppercase;
+}
+
+.tag-yellow {
+    background-color: #dfbf35;
+    color: white;
+    text-transform: uppercase;
+}
+
+.tag-red {
+    background-color: #df3936;
+    color: white;
+    text-transform: uppercase;
+}
+
+.tag-gray {
+    background-color: #999999;
+    color: white;
+    text-transform: uppercase;
+}
+
+#agent-table .preview-tag {
+    box-shadow: none;
+    font-size: 0.8em;
+}
+
 #btn_clear_search {
     position: absolute;
     height: 30px;
     border-radius: 2px;
     right: 15px;
     padding-top: 3px;
+}
+
+.panel-default .workspace-selector-wrapper {
+    padding: 0;
+}
+
+.workspace-selector-wrapper.inside-admin:hover {
+     background-color: transparent;
+}
+
+.switcher-wrapper.inside-admin:hover {
+    background-color: #ebebeb;
+}
+
+.workflow-workspace-switcher {
+    display: table !important;
+    margin: auto;
+}
+
+.workflow-workspace-switcher .title {
+    margin-top: 5px;
+    font-size: 16px;
+    font-weight: bold;
 }

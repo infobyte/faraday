@@ -1,9 +1,14 @@
-#!/usr/bin/env python2.7
-'''
+#!/usr/bin/env python3
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
+"""
+
+from __future__ import absolute_import
+from __future__ import print_function
+
+from builtins import input
 
 import os
 import sys
@@ -11,6 +16,7 @@ import imp
 import shutil
 import getpass
 import argparse
+import requests
 import requests.exceptions
 import logging
 
@@ -39,9 +45,13 @@ from faraday import __version__ as f_version
 from faraday.client.persistence.server import server
 from faraday.client.persistence.server.server import login_user, get_user_info
 
+import faraday
+
+from colorama import Fore, Back, Style
+
 USER_HOME = os.path.expanduser(CONST_USER_HOME)
 # find_module returns if search is successful, the return value is a 3-element tuple (file, pathname, description):
-FARADAY_BASE = imp.find_module("faraday")[1]
+FARADAY_BASE = os.path.dirname(faraday.__file__)
 os.path.dirname(os.path.dirname(os.path.realpath(__file__)))  # Use double dirname to obtain parent directory
 FARADAY_CLIENT_BASE = os.path.join(FARADAY_BASE, 'client')
 
@@ -247,7 +257,7 @@ def startFaraday():
     Returns application status.
 
     """
-    from faraday.client.model.application import MainApplication
+    from faraday.client.model.application import MainApplication  # pylint:disable=import-outside-toplevel
 
     logger.info("All done. Opening environment.")
     # TODO: Handle args in CONF and send only necessary ones.
@@ -261,7 +271,6 @@ def startFaraday():
     logger.info("Starting main application.")
     start = main_app.start
 
-    from colorama import Fore, Back, Style
     serverURL = getInstanceConfiguration().getServerURI()
     if serverURL:
         url = "%s/_ui" % serverURL
@@ -392,7 +401,6 @@ def printBanner():
     """
     Prints Faraday's ascii banner.
     """
-    from colorama import Fore, Back, Style
     print (Fore.RED + """
   _____                           .___
 _/ ____\_____  ____________     __| _/_____   ___.__.
@@ -409,7 +417,6 @@ _/ ____\_____  ____________     __| _/_____   ___.__.
 
 
 def checkUpdates():
-    import requests
     uri = getInstanceConfiguration().getUpdatesUri()
     resp = u"OK"
     try:
@@ -468,10 +475,10 @@ def doLoginLoop(force_login=False):
             return
 
         if old_server_url is None:
-            new_server_url = raw_input(
+            new_server_url = input(
             "\nPlease enter the Faraday Server URL (Press enter for http://localhost:5985): ") or "http://localhost:5985"
         else:
-            new_server_url = raw_input(
+            new_server_url = input(
                 "\nPlease enter the Faraday Server URL (Press enter for last used: {}): ".format(old_server_url)) or old_server_url
 
         CONF.setAPIUrl(new_server_url)
@@ -480,7 +487,7 @@ def doLoginLoop(force_login=False):
 
         for attempt in range(1, 4):
 
-            api_username = raw_input("Username (press enter for faraday): ") or "faraday"
+            api_username = input("Username (press enter for faraday): ") or "faraday"
             api_password = getpass.getpass('Password: ')
 
             session_cookie = try_login_user(new_server_url, api_username, api_password)
@@ -554,3 +561,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+# I'm Py3

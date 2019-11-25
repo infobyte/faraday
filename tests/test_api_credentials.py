@@ -4,10 +4,12 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 import pytest
 
 from tests import factories
-from test_api_workspaced_base import (
+from tests.test_api_workspaced_base import (
     ReadWriteAPITests,
 )
 from faraday.server.api.modules.credentials import CredentialView
@@ -105,8 +107,8 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
         session.commit()
         res = test_client.get(self.url(workspace=credential.workspace) + '?host_id={0}'.format(credential.host.id))
         assert res.status_code == 200
-        assert map(lambda cred: cred['value']['parent'],res.json['rows']) == [credential.host.id]
-        assert map(lambda cred: cred['value']['parent_type'], res.json['rows']) == [u'Host']
+        assert [cred['value']['parent'] for cred in res.json['rows']] == [credential.host.id]
+        assert [cred['value']['parent_type'] for cred in res.json['rows']] == [u'Host']
 
     def test_get_credentials_for_a_service_backwards_compatibility(self, session, test_client):
         service = ServiceFactory.create()
@@ -114,8 +116,8 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
         session.commit()
         res = test_client.get(self.url(workspace=credential.workspace) + '?service={0}'.format(credential.service.id))
         assert res.status_code == 200
-        assert map(lambda cred: cred['value']['parent'],res.json['rows']) == [credential.service.id]
-        assert map(lambda cred: cred['value']['parent_type'], res.json['rows']) == [u'Service']
+        assert [cred['value']['parent'] for cred in res.json['rows']] == [credential.service.id]
+        assert [cred['value']['parent_type'] for cred in res.json['rows']] == [u'Service']
 
     def _generate_raw_update_data(self, name, username, password, parent_id):
         return {
@@ -201,7 +203,7 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
         }
         res = test_client.post(self.url(), data=data)
         assert res.status_code == 400
-        assert 'Parent id not found' in res.data
+        assert b'Parent id not found' in res.data
 
     @pytest.mark.parametrize("parent_type, parent_factory", [
         ("Host", HostFactory),
@@ -232,4 +234,7 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
         }
         res = test_client.put(self.url(credential), data=data)
         assert res.status_code == 400
-        assert 'Parent id not found' in res.data
+        assert b'Parent id not found' in res.data
+
+
+# I'm Py3

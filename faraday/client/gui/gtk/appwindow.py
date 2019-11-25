@@ -1,21 +1,23 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
+from __future__ import absolute_import
+
 import os
-import gi
+import gi  # pylint: disable=import-error
 
 from faraday.config.configuration import getInstanceConfiguration
 from faraday.client.start_client import FARADAY_CLIENT_BASE
 
 gi.require_version('Gtk', '3.0')
 
-from gi.repository import GLib, Gio, Gtk, GObject, Gdk
-from dialogs import ImportantErrorDialog
+from gi.repository import GLib, Gio, Gtk, GObject, Gdk  # pylint: disable=import-error
+from faraday.client.gui.gtk.dialogs import ImportantErrorDialog
 
 CONF = getInstanceConfiguration()
 
@@ -49,6 +51,7 @@ class AppWindow(Gtk.ApplicationWindow):
         self.terminal = terminal
         self.log = console_log
         self.statusbar = statusbar
+        self.user_confirmed_quit = False
 
         self.terminal.connect("child_exited", self.on_terminal_exit)
         self.icons = os.path.join(FARADAY_CLIENT_BASE, "data", "images", "icons")
@@ -300,6 +303,9 @@ class AppWindow(Gtk.ApplicationWindow):
     def do_delete_event(self, event=None, status=None, parent=None):
         """Override delete_event signal to show a confirmation dialog first.
         """
+        if self.user_confirmed_quit:
+            return False  # keep on going and destroy
+
         if parent is None:
             parent = self
 
@@ -322,6 +328,7 @@ class AppWindow(Gtk.ApplicationWindow):
         dialog.destroy()
 
         if response == Gtk.ResponseType.YES:
+            self.user_confirmed_quit = True
             return False  # keep on going and destroy
         else:
             # user said "you know what i don't want to exit"
@@ -333,3 +340,6 @@ class AppWindow(Gtk.ApplicationWindow):
         is not sure if he wants to exit"""
         self.delete_tab()
         terminal.start_faraday()
+
+
+# I'm Py3

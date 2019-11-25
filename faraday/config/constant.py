@@ -1,14 +1,13 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2014  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-
+"""
 import os
 
 CONST_REQUIREMENTS_FILE = 'requirements.txt'
-CONST_FARADAY_HOME_PATH = os.path.expanduser('~/.faraday')
+CONST_FARADAY_HOME_PATH = os.path.join(os.getenv('FARADAY_HOME', os.path.expanduser('~/')), '.faraday')
 CONST_FARADAY_PLUGINS_PATH = 'plugins'
 CONST_FARADAY_PLUGINS_REPO_PATH = 'plugins/repo'
 CONST_FARADAY_IMAGES = 'images/'
@@ -30,3 +29,6 @@ CONST_BLACKDBS = ('cwe','reports', CONST_LICENSES_DB)
 CONST_USER_HOME = "~"
 CONST_USER_ZSHRC = "~/.zshrc"
 CONST_ZSH_PATH = "zsh"
+
+
+# I'm Py3

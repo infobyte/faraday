@@ -1,6 +1,8 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+from builtins import str
+
 import os
 import io
 import json
@@ -10,7 +12,7 @@ from base64 import b64encode, b64decode
 import flask
 import wtforms
 from filteralchemy import Filter, FilterSet, operators
-from flask import request
+from flask import request, send_file
 from flask import Blueprint
 from flask_classful import route
 from flask_restless.search import search
@@ -19,6 +21,7 @@ from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy import desc, or_
 
 from depot.manager import DepotManager
 from faraday.server.api.base import (
@@ -38,9 +41,11 @@ from faraday.server.models import (
     Workspace,
     Vulnerability,
     VulnerabilityWeb,
+    CustomFieldsSchema,
     VulnerabilityGeneric,
 )
 from faraday.server.utils.database import get_or_create
+from faraday.server.utils.export import export_vulns_to_csv
 
 from faraday.server.api.modules.services import ServiceSchema
 from faraday.server.schemas import (
@@ -137,6 +142,7 @@ class VulnerabilitySchema(AutoSchema):
     date = fields.DateTime(attribute='create_date',
                            dump_only=True)  # This is only used for sorting
     custom_fields = FaradayCustomField(table_name='vulnerability', attribute='custom_fields')
+    external_id = fields.String(allow_none=True)
 
     class Meta:
         model = Vulnerability
@@ -150,7 +156,7 @@ class VulnerabilitySchema(AutoSchema):
             'service', 'obj_id', 'type', 'policyviolations',
             '_attachments',
             'target', 'host_os', 'resolution', 'metadata',
-            'custom_fields')
+            'custom_fields', 'external_id')
 
     def get_type(self, obj):
         return obj.__class__.__name__
@@ -274,7 +280,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'service', 'obj_id', 'type', 'policyviolations',
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
-            'status_code', 'custom_fields'
+            'status_code', 'custom_fields', 'external_id'
         )
 
 
@@ -295,7 +301,7 @@ class StatusCodeFilter(Filter):
 
 class TargetFilter(Filter):
     def filter(self, query, model, attr, value):
-        return query.filter(model.target_host_ip.ilike("%" + value + "%"))
+        return query.filter(model.target_host_ip == value)
 
 
 class TypeFilter(Filter):
@@ -425,6 +431,8 @@ class VulnerabilityView(PaginatedMixin,
     filterset_class = VulnerabilityFilterSet
     sort_model_class = VulnerabilityWeb  # It has all the fields
     sort_pass_silently = True  # For compatibility with the Web UI
+    order_field = desc(VulnerabilityGeneric.confirmed), VulnerabilityGeneric.severity, VulnerabilityGeneric.create_date
+
     unique_fields_by_class = {
         'Vulnerability': [('name', 'description', 'host_id', 'service_id')],
         'VulnerabilityWeb': [('name', 'description', 'service_id', 'method',
@@ -445,6 +453,12 @@ class VulnerabilityView(PaginatedMixin,
         unique_fields = self.unique_fields_by_class[obj.__class__.__name__]
         super(VulnerabilityView, self)._validate_uniqueness(
             obj, object_id, unique_fields)
+
+    def _get_schema_instance(self, route_kwargs, **kwargs):
+        schema = super(VulnerabilityView, self)._get_schema_instance(
+            route_kwargs, **kwargs)
+
+        return schema
 
     def _perform_create(self, data, **kwargs):
         data = self._parse_data(self._get_schema_instance(kwargs),
@@ -629,42 +643,105 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('/filter')
     def filter(self, workspace_name):
+        filters = request.args.get('q')
+        return self._envelope_list(self._filter(filters, workspace_name))
+
+    def _hostname_filters(self, filters):
+        res_filters = []
+        hostname_filters = []
+        for search_filter in filters:
+            if 'or' not in search_filter and 'and' not in search_filter:
+                fieldname = search_filter.get('name')
+                operator = search_filter.get('op')
+                argument = search_filter.get('val')
+                otherfield = search_filter.get('field')
+                field_filter = {
+                    "name": fieldname,
+                    "op": operator,
+                    "val": argument,
+
+                }
+                if otherfield:
+                    field_filter.update({"field": otherfield})
+                if fieldname == 'hostnames':
+                    hostname_filters.append(field_filter)
+                else:
+                    res_filters.append(field_filter)
+            elif 'or' in search_filter:
+                or_filters, deep_hostname_filters = self._hostname_filters(search_filter['or'])
+                if or_filters:
+                    res_filters.append({"or": or_filters})
+                hostname_filters += deep_hostname_filters
+            elif 'and' in search_filter:
+                and_filters, deep_hostname_filters = self._hostname_filters(search_filter['and'])
+                if and_filters:
+                    res_filters.append({"and": and_filters})
+                hostname_filters += deep_hostname_filters
+
+        return res_filters, hostname_filters
+
+    def _filter(self, filters, workspace_name, confirmed=False):
         try:
-            filters = json.loads(request.args.get('q'))
+            filters = json.loads(filters)
+            filters, hostname_filters = self._hostname_filters(filters.get('filters', []))
         except ValueError as ex:
             flask.abort(400, "Invalid filters")
+        if confirmed:
+            if 'filters' not in filters:
+                filters = {}
+                filters['filters'] = []
+            filters['filters'].append({
+                "name": "confirmed",
+                "op": "==",
+                "val": "true"
+            })
 
         workspace = self._get_workspace(workspace_name)
         marshmallow_params = {'many': True, 'context': {}, 'strict': True}
         try:
             normal_vulns = search(db.session,
                                   Vulnerability,
-                                  filters)
+                                  {'filters': filters})
             normal_vulns = normal_vulns.filter_by(workspace_id=workspace.id)
+            if hostname_filters:
+                or_filters = []
+                for hostname_filter in hostname_filters:
+                    or_filters.append(Hostname.name==hostname_filter['val'])
+
+                normal_vulns_host = normal_vulns.join(Host).join(Hostname).filter(or_(*or_filters))
+                normal_vulns = normal_vulns_host.union(normal_vulns.join(Service).join(Host).join(Hostname).filter(or_(*or_filters)))
+
             normal_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(normal_vulns.all())
             normal_vulns_data = json.loads(normal_vulns.data)
-        except Exception:
+        except Exception as ex:
             normal_vulns_data = []
         try:
             web_vulns = search(db.session,
                            VulnerabilityWeb,
-                           filters)
+                           {'filters': filters})
             web_vulns = web_vulns.filter_by(workspace_id=workspace.id)
+            if hostname_filters:
+                or_filters = []
+                for hostname_filter in hostname_filters:
+                    or_filters.append(Hostname.name == hostname_filter['val'])
+
+                web_vulns = web_vulns.join(Service).join(Host).join(Hostname).filter(or_(*or_filters))
             web_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(web_vulns.all())
             web_vulns_data = json.loads(web_vulns.data)
-        except Exception:
+        except Exception as ex:
             web_vulns_data = []
-        return self._envelope_list(normal_vulns_data + web_vulns_data)
+        return normal_vulns_data + web_vulns_data
 
     @route('/<int:vuln_id>/attachment/<attachment_filename>/', methods=['GET'])
     def get_attachment(self, workspace_name, vuln_id, attachment_filename):
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(VulnerabilityGeneric.id == vuln_id,
                               Workspace.name == workspace_name).first()
+
         if vuln_workspace_check:
             file_obj = db.session.query(File).filter_by(object_type='vulnerability',
                                          object_id=vuln_id,
-                                         filename=attachment_filename).first()
+                                         filename=attachment_filename.replace(" ", "%20")).first()
             if file_obj:
                 depot = DepotManager.get()
                 depot_file = depot.get(file_obj.content.get('file_id'))
@@ -727,5 +804,45 @@ class VulnerabilityView(PaginatedMixin,
         else:
             flask.abort(404, "Vulnerability not found")
 
+    @route('export_csv/', methods=['GET'])
+    def export_csv(self, workspace_name):
+        confirmed = bool(request.args.get('confirmed'))
+        filters = request.args.get('q', '{}')
+        custom_fields_columns = []
+        for custom_field in db.session.query(CustomFieldsSchema).order_by(CustomFieldsSchema.field_order):
+            custom_fields_columns.append(custom_field.field_name)
+        vulns_query = self._filter(filters, workspace_name, confirmed)
+        memory_file = export_vulns_to_csv(vulns_query, custom_fields_columns)
+        return send_file(memory_file,
+                         attachment_filename="Faraday-SR-%s.csv" % workspace_name,
+                         as_attachment=True,
+                         cache_timeout=-1)
+
+    @route('bulk_delete/', methods=['DELETE'])
+    def bulk_delete(self, workspace_name):
+        workspace = self._get_workspace(workspace_name)
+        json_quest = request.get_json()
+        vulnerability_ids = json_quest.get('vulnerability_ids', [])
+        vulnerability_severities = json_quest.get('severities', [])
+        deleted_vulns = 0
+        vulns = []
+        if vulnerability_ids:
+            logger.info("Delete Vuln IDs: %s", vulnerability_ids)
+            vulns = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.id.in_(vulnerability_ids),
+                                              VulnerabilityGeneric.workspace_id == workspace.id)
+        elif vulnerability_severities:
+            logger.info("Delete Vuln Severities: %s", vulnerability_severities)
+            vulns = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.severity.in_(vulnerability_severities),
+                                                      VulnerabilityGeneric.workspace_id == workspace.id)
+        else:
+            flask.abort(400, "Invalid Request")
+        for vuln in vulns:
+            db.session.delete(vuln)
+            deleted_vulns += 1
+        db.session.commit()
+        response = {'deleted_vulns': deleted_vulns}
+        return flask.jsonify(response)
 
 VulnerabilityView.register(vulns_api)
+
+# I'm Py3

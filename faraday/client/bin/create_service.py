@@ -1,11 +1,8 @@
-#!/usr/bin/env python2.7
-# -*- coding: utf-8 -*-
 """
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 """
-
 from faraday.client.model.common import factory
 from faraday.client.persistence.server import models
 
@@ -26,7 +23,7 @@ def main(workspace='', args=None, parser=None):
 
     parsed_args = parser.parse_args(args)
 
-    ports = filter(None, parsed_args.ports.split(','))
+    ports = list(filter(None, parsed_args.ports.split(',')))
     res_ids = []  #new service or old services ids affected by the command
     for port in ports:
         params = {
@@ -59,3 +56,6 @@ def main(workspace='', args=None, parser=None):
         res_ids.append(old.getID())
 
     return 0, res_ids
+
+
+# I'm Py3

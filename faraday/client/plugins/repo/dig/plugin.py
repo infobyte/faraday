@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Updated by Mike Zhong, 25 Oct 2017.
 
@@ -27,7 +26,7 @@ class DigPlugin(core.PluginBase):
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = u"dig"
         self.name = u"DiG"
         self.plugin_version = u"0.0.1"
@@ -158,7 +157,6 @@ class DigPlugin(core.PluginBase):
 
         except Exception as ex:
             print("some part of the dig plug-in caused an error! Please check repo/dig/plugin.py")
-            logger.error("Error from dig plugin: %s" % (ex))
             return False
 
 
@@ -167,3 +165,6 @@ class DigPlugin(core.PluginBase):
 
 def createPlugin():
     return DigPlugin()
+
+
+# I'm Py3

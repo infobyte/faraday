@@ -1,0 +1,1 @@
+Add api for Vuln bulk delete

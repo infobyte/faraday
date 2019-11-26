@@ -1,20 +1,15 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-
-from __future__ import with_statement
-from faraday.client.plugins import core
+"""
+from faraday.client.plugins.plugin import PluginXMLFormat
 import re
 import os
 import sys
 import logging
 
 try:
-
     import xml.etree.cElementTree as ET
     import xml.etree.ElementTree as ET_ORIG
     ETREE_VERSION = ET_ORIG.VERSION
@@ -79,9 +74,9 @@ class QualysguardXmlParser():
             return
 
         if type_report is 'ASSET_DATA_REPORT':
-            self.items = [data for data in self.get_items_asset_report(tree)]
+            self.items = list(self.get_items_asset_report(tree))
         elif type_report is 'SCAN':
-            self.items = [data for data in self.get_items_scan_report(tree)]
+            self.items = list(self.get_items_scan_report(tree))
 
     def parse_xml(self, xml_output):
         """
@@ -106,7 +101,7 @@ class QualysguardXmlParser():
             else:
                 type_report = None
 
-        except SyntaxError, err:
+        except SyntaxError as err:
             logger.error('SyntaxError: %s.' % (err))
             return None, None
 
@@ -137,7 +132,7 @@ class ItemAssetReport():
 
         self.node = item_node
         self.ip = self.get_text_from_subnode('IP')
-
+        self.hostname = self.get_text_from_subnode('DNS') or ''
         self.os = self.get_text_from_subnode('OPERATING_SYSTEM')
         self.vulns = self.getResults(tree)
 
@@ -173,6 +168,7 @@ class ResultsAssetReport():
         self.port = self.get_text_from_subnode(self.node, 'PORT')
         self.protocol = self.get_text_from_subnode(self.node, 'PROTOCOL')
         self.name = self.get_text_from_subnode(self.node, 'QID')
+        self.external_id = self.name
         self.result = self.get_text_from_subnode(self.node, 'RESULT')
 
         self.severity_dict = {
@@ -205,7 +201,10 @@ class ResultsAssetReport():
 
         # References
         self.ref = []
-        self.ref.append(self.get_text_from_glossary('CVE_ID_LIST/CVE_ID/ID'))
+
+        cve_id = self.get_text_from_glossary('CVE_ID_LIST/CVE_ID/ID')
+        if cve_id:
+            self.ref.append(cve_id)
 
         if self.cvss:
             self.ref.append('CVSS SCORE: ' + self.cvss)
@@ -308,13 +307,21 @@ class ResultsScanReport():
         self.protocol = parent.get('protocol')
         self.name = self.node.get('number')
         self.external_id = self.node.get('number')
-        self.severity = self.node.get('severity')
         self.title = self.get_text_from_subnode('TITLE')
         self.cvss = self.get_text_from_subnode('CVSS_BASE')
         self.diagnosis = self.get_text_from_subnode('DIAGNOSIS')
         self.solution = self.get_text_from_subnode('SOLUTION')
         self.result = self.get_text_from_subnode('RESULT')
         self.consequence = self.get_text_from_subnode('CONSEQUENCE')
+
+        self.severity_dict = {
+            '1': 'info',
+            '2': 'info',
+            '3': 'med',
+            '4': 'high',
+            '5': 'critical'}
+
+        self.severity = self.severity_dict.get(self.node.get('severity'), 'info')
 
         self.desc = cleaner_results(self.diagnosis)
         if self.result:
@@ -351,14 +358,14 @@ class ResultsScanReport():
         return None
 
 
-class QualysguardPlugin(core.PluginBase):
+class QualysguardPlugin(PluginXMLFormat):
     """
     Example plugin to parse qualysguard output.
     """
 
     def __init__(self):
-
-        core.PluginBase.__init__(self)
+        super().__init__()
+        self.identifier_tag = ["ASSET_DATA_REPORT", "SCAN"]
         self.id = 'Qualysguard'
         self.name = 'Qualysguard XML Output Plugin'
         self.plugin_version = '0.0.2'
@@ -390,7 +397,7 @@ class QualysguardPlugin(core.PluginBase):
                         h_id,
                         v.title if v.title else v.name,
                         ref=v.ref,
-                        severity=str(int(v.severity) - 1),
+                        severity=v.severity,
                         resolution=v.solution if v.solution else '',
                         desc=v.desc,
                         external_id=v.external_id)
@@ -417,7 +424,7 @@ class QualysguardPlugin(core.PluginBase):
                             v.title if v.title else v.name,
                             ref=v.ref,
                             website=item.ip,
-                            severity=str(int(v.severity) - 1),
+                            severity=v.severity,
                             desc=v.desc,
                             resolution=v.solution if v.solution else '',
                             external_id=v.external_id)
@@ -428,7 +435,7 @@ class QualysguardPlugin(core.PluginBase):
                             s_id,
                             v.title if v.title else v.name,
                             ref=v.ref,
-                            severity=str(int(v.severity) - 1),
+                            severity=v.severity,
                             desc=v.desc,
                             resolution=v.solution if v.solution else '',
                             external_id=v.external_id)
@@ -445,8 +452,5 @@ class QualysguardPlugin(core.PluginBase):
 def createPlugin():
     return QualysguardPlugin()
 
-if __name__ == '__main__':
-    parser = QualysguardXmlParser(sys.argv[1])
-    for item in parser.items:
-        if item.status == 'up':
-            print item
+
+# I'm Py3

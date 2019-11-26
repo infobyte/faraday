@@ -10,7 +10,7 @@ angular.module('faradayApp')
             $scope.osint = osint;
             $scope.sortField = 'name';
             $scope.sortReverse = false;
-            $scope.clipText = "Copy to Clipboard";
+            $scope.clipText = "Copy names to Clipboard";
             $scope.workspace = workspace
 
             // toggles sort field and order
@@ -33,10 +33,13 @@ angular.module('faradayApp')
                 $scope.name = srv_name;
                 $scope.hosts = hosts;
                 $scope.clip = "";
-                $scope.hosts.forEach(function(h, index){
-                    $scope.clip += h.name + "\n";
+                $scope.hosts.forEach(function(h, index, array){
                     let port = $scope.getPort(h.service_summaries);
                     $scope.hosts[index].port = port;
+                    if(index === array.length -1)
+                        $scope.clip += h.name + ":" + port;
+                    else
+                        $scope.clip += h.name + ":" + port + " - ";
                 });
             });
 

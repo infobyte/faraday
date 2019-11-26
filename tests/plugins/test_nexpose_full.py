@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 '''
@@ -8,9 +8,10 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
+from __future__ import absolute_import
 import unittest
 import sys
-from Queue import Queue
+from queue import Queue
 from collections import defaultdict
 
 import os
@@ -52,7 +53,7 @@ class TestNexpose:
             actions[action[0]].append(action[1])
 
         assert actions[2000][0].name == "192.168.1.1"
-        assert actions.keys() == [2000, 2017, 2019, 2038, 20008]
+        assert set(actions.keys()) == {2000, 2017, 2019, 2038, 20008}
 
         assert len(actions[2000]) == 8
         assert len(actions[20008]) == 20
@@ -64,3 +65,4 @@ class TestNexpose:
 
 if __name__ == '__main__':
     unittest.main()
+# I'm Py3

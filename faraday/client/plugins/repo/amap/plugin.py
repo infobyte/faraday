@@ -1,13 +1,8 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-
-from __future__ import with_statement
+"""
 from faraday.client.plugins import core
 import argparse
 import shlex
@@ -23,7 +18,7 @@ class AmapPlugin(core.PluginBase):
     """ Example plugin to parse amap output."""
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "Amap"
         self.name = "Amap Output Plugin"
         self.plugin_version = "0.0.3"
@@ -130,11 +125,11 @@ class AmapPlugin(core.PluginBase):
 
     def get_ip_6(self, host, port=0):
         alladdr = socket.getaddrinfo(host, port)
-        ip6 = filter(
+        ip6 = list(filter(
             lambda x: x[0] == socket.AF_INET6,
-            alladdr)
+            alladdr))
 
-        return list(ip6)[0][4][0]
+        return ip6[0][4][0]
 
     def getAddress(self, hostname):
         """
@@ -142,7 +137,7 @@ class AmapPlugin(core.PluginBase):
         """
         try:
             return socket.gethostbyname(hostname)
-        except socket.error, msg:
+        except socket.error as msg:
             return hostname
 
     def processCommandString(self, username, current_path, command_string):
@@ -195,3 +190,6 @@ class AmapPlugin(core.PluginBase):
 
 def createPlugin():
     return AmapPlugin()
+
+
+# I'm Py3

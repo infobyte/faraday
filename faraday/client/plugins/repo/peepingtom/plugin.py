@@ -1,15 +1,13 @@
-# -*- coding: utf-8 -*-
 """
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 """
-
 import re
 import socket
 from os import path
 from faraday.client.plugins import core
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 __author__ = "Andres Tarantini"
 __copyright__ = "Copyright (c) 2015 Andres Tarantini"
@@ -27,7 +25,7 @@ class PeepingTomPlugin(core.PluginBase):
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "peepingtom"
         self.name = "PeepingTom"
         self.plugin_version = "0.0.1"
@@ -39,7 +37,7 @@ class PeepingTomPlugin(core.PluginBase):
     def parseOutputString(self, output):
         # Find data path
         data_path_search = re.search(r"in '(.*)\/'", output)
-        print data_path_search
+        print(data_path_search)
         if not data_path_search:
             # No data path found
             return True
@@ -71,8 +69,10 @@ class PeepingTomPlugin(core.PluginBase):
 
     def processCommandString(self, username, current_path, command_string):
         self._path = current_path
-        return None
 
 
 def createPlugin():
     return PeepingTomPlugin()
+
+
+# I'm Py3

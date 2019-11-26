@@ -1,10 +1,11 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 """
+from __future__ import absolute_import
 from __future__ import print_function
 from faraday.client.persistence.server.server_io_exceptions  import ResourceDoesNotExist
 from faraday.client.persistence.server import models
@@ -48,3 +49,6 @@ def main(workspace='', args=None, parser=None):
 
     print ("End of process:", count, "vulnerabilities changed to closed")
     return 0, None
+
+
+# I'm Py3

@@ -42,10 +42,10 @@ function add-output() {
     cmd_encoded=$(printf "%s" "$BUFFER"| faraday_b64)
 	json_response=`curl -s -X POST -H "Content-Type: application/json" -d "{\"cmd\": \"$cmd_encoded\", \"pid\": $$, \"pwd\": \"$pwd_actual\"}" http://$FARADAY_ZSH_HOST:$FARADAY_ZSH_RPORT/cmd/input`
     if [[ $? -eq 0 ]]; then
-		code=`echo $json_response|env python2.7 -c "import sys, json;print(json.load(sys.stdin)[\"code\"])"`
+		code=`echo $json_response|env python3 -c "import sys, json;print(json.load(sys.stdin)[\"code\"])"`
 		if [[ "$code" == "200" ]]; then
-			FARADAY_PLUGIN=`echo $json_response | env python2.7 -c "import sys, json; print(json.load(sys.stdin)[\"plugin\"])"`
-			new_cmd=`echo $json_response | env python2.7 -c "import sys, json; print(json.load(sys.stdin)[\"cmd\"])"`
+			FARADAY_PLUGIN=`echo $json_response | env python3 -c "import sys, json; print(json.load(sys.stdin)[\"plugin\"])"`
+			new_cmd=`echo $json_response | env python3 -c "import sys, json; print(json.load(sys.stdin)[\"cmd\"])"`
 	        if [[ "$new_cmd" != "None" ]]; then
 	            BUFFER=" $new_cmd"
 		    fi
@@ -58,7 +58,7 @@ function add-output() {
 
 function send-output() {
     if [ ! -z "$FARADAY_PLUGIN" ]; then
-		output=`env python2.7 -c "import base64; print(base64.b64encode(open(\"$FARADAY_OUTPUT\",'r').read()))"`
+        output=`base64 "$FARADAY_OUTPUT"`
         temp_file=`mktemp tmp.XXXXXXXXXXXXXXXXXXXXXXXXXXXXX`
         echo "{\"exit_code\": $?, \"pid\": $$, \"output\": \"$output\" }" >> $temp_file
         curl=`curl -s -X POST -H "Content-Type: application/json" -d @$temp_file http://$FARADAY_ZSH_HOST:$FARADAY_ZSH_RPORT/cmd/output`

@@ -4,6 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 from faraday.server.api.modules.comments import CommentView
 from faraday.server.models import Comment
 from tests.factories import ServiceFactory
@@ -111,3 +113,6 @@ class TestCredentialsAPIGeneric(ReadOnlyAPITests):
         assert res.status_code == 409
         assert 'object' in res.json
         assert type(res.json) == dict
+
+
+# I'm Py3

@@ -1,6 +1,6 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
@@ -9,9 +9,10 @@ This module is intended to function as a compatibility layer to support both
 GObject Instrospection 3.12, 3.16 and 3.20 (Ubuntu 14.04, Brew on Mac OS and
 Arch, respectively) and VTE API 2.90 and 2.91 (Ubuntu 14.04 has 2.90, last one
 is 2.91)
-'''
+"""
+from __future__ import absolute_import
 
-import gi
+import gi  # pylint: disable=import-error
 gi_version = gi.__version__
 
 gi.require_version('Gtk', '3.0')
@@ -22,7 +23,7 @@ except ValueError:
     gi.require_version('Vte', '2.90')
     vte_version = '2.90'
 
-from gi.repository import Vte, Gtk
+from gi.repository import Vte, Gtk  # pylint: disable=import-error
 
 
 class CompatibleVteTerminal(Vte.Terminal):
@@ -61,7 +62,10 @@ class CompatibleScrolledWindow(Gtk.ScrolledWindow):
 
     def set_overlay_scrolling(self, boolean):
         """Return the set_overlay_scrolling method, if it can."""
-        if gi_version == '3.12.0' or gi_version == '3.14.0':
+        if gi_version in ['3.12.0', '3.14.0']:
             return None
         else:
             return Gtk.ScrolledWindow.set_overlay_scrolling(self, boolean)
+
+
+# I'm Py3

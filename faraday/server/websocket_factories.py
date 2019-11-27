@@ -133,7 +133,16 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                         logger.warning('Missing executor_name param in message: ''{}'.format(message))
                         self.sendClose()
                         return
-                    executor = Executor.query.filter(Executor.name == message['executor_name']).first()
+
+                    (agent_id,) = [
+                        k
+                        for (k, v) in connected_agents.items()
+                        if v == self
+                    ]
+                    agent = Agent.query.get(agent_id)
+                    assert agent is not None  # TODO the agent could be deleted here
+                    executor = Executor.query.filter(Executor.name == message['executor_name'],
+                                                     Executor.agent_id == agent_id).first()
                     if executor:
                         successful = message.get('successful', None)
                         running = message.get('running', None)

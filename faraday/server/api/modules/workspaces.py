@@ -176,7 +176,7 @@ class WorkspaceView(ReadWriteView):
         try:
             obj = query.one()
         except NoResultFound:
-            flask.abort(404, 'Object with id "%s" not found' % object_id)
+            flask.abort(404, 'Object with name "%s" not found' % object_id)
         return obj
 
     def _perform_create(self, data, **kwargs):

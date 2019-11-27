@@ -115,7 +115,8 @@ class WebsocketsChangesStream(ChangesStream):
         logger.debug('New message {0}'.format(message))
         self.changes_queue.put(message)
 
-    def on_error(self, ws, error):
+    def on_error(ws, error):
+        pass
         print(error)
 
     def on_close(self):

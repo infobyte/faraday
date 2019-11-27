@@ -58,9 +58,8 @@ def upgrade():
     op.create_table(
         'agent_execution',
         sa.Column('id', sa.Integer, primary_key=True),
-        sa.Column('moment', sa.DateTime, nullable=True),
-        sa.Column('running', sa.Boolean, nullable=True),
-        sa.Column('successful', sa.Boolean, nullable=True),
+        sa.Column('running', sa.Boolean, nullable=False),
+        sa.Column('successful', sa.Boolean, nullable=False),
         sa.Column('message', sa.String, nullable=True),
         sa.Column('executor_id', sa.Integer, nullable=False),
         sa.Column('workspace_id', sa.Integer, nullable=False),

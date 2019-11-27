@@ -2024,9 +2024,8 @@ class Agent(Metadata):
 class AgentExecution(Metadata):
     __tablename__ = 'agent_execution'
     id = Column(Integer, primary_key=True)
-    moment = Column(DateTime, default=datetime.utcnow)
-    running = Column(Boolean, nullable=True)
-    successful = Column(Boolean, nullable=True)
+    running = Column(Boolean, nullable=False)
+    successful = Column(Boolean, nullable=False)
     message = Column(String, nullable=True)
     executor_id = Column(Integer, ForeignKey('executor.id'), index=True, nullable=False)
     executor = relationship('Executor', foreign_keys=[executor_id], backref=backref('executions', cascade="all, delete-orphan"))

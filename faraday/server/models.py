@@ -1959,7 +1959,7 @@ class AgentsSchedule(Metadata):
         backref=backref('schedules', cascade="all, delete-orphan"),
     )
 
-    parameters = Column(JSONType, nullable=True, default={})
+    parameters = Column(JSONType, nullable=False, default={})
 
     @property
     def next_run(self):

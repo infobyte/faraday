@@ -3,6 +3,7 @@
 # See the file 'doc/LICENSE' for the license information
 import json
 
+import flask
 import wtforms
 
 from flask import Blueprint, abort, request
@@ -83,6 +84,15 @@ class AgentCreationView(GenericWorkspacedView, CreateWorkspacedMixin):
         return agent
 
 
+class ExecutorDataSchema(Schema):
+    executor = fields.String(default=None)
+    args = fields.Dict(default=None)
+
+
+class AgentRunSchema(Schema):
+    executorData = fields.Nested(ExecutorDataSchema(), required=True)
+
+
 class AgentView(UpdateWorkspacedMixin,
                 DeleteWorkspacedMixin,
                 CountWorkspacedMixin,
@@ -94,26 +104,20 @@ class AgentView(UpdateWorkspacedMixin,
 
     @route('/<int:agent_id>/run/', methods=['POST'])
     def run_agent(self, workspace_name, agent_id):
-        data = json.loads(request.data)
-        if 'csrf_token' not in data or 'executorData' not in data:
-            abort(400)
-        try:
-            validate_csrf(data.get('csrf_token'))
-        except wtforms.ValidationError:
-            abort(403)
+        if flask.request.content_type != 'application/json':
+            abort(400, "Only application/json is a valid content-type")
+        data = self._parse_data(AgentRunSchema(strict=True), request)
         agent = self._get_object(agent_id, workspace_name)
-        executor_data = data.get('executorData')
-        if not executor_data:
-            abort(400)
-        executor_data = json.loads(data.get('executorData'))
+        executor_data = data['executorData']
         changes_queue.put({
             'agent_id': agent.id,
             'action': 'RUN',
             "executor": executor_data.get('executor'),
             "args": executor_data.get('args')
         })
-        return 'OK'
-
+        return flask.jsonify({
+            'successful': True,
+        })
 
 
 AgentView.register(agent_api)

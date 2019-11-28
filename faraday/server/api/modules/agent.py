@@ -90,23 +90,30 @@ class AgentView(UpdateWorkspacedMixin,
     route_base = 'agents'
     model_class = Agent
     schema_class = AgentSchema
-    get_joinedloads = [Agent.creator]
+    get_joinedloads = [Agent.creator, Agent.executors]
 
     @route('/<int:agent_id>/run/', methods=['POST'])
     def run_agent(self, workspace_name, agent_id):
+        data = json.loads(request.data)
+        if 'csrf_token' not in data or 'executorData' not in data:
+            abort(400)
         try:
-            validate_csrf(request.form.get('csrf_token'))
+            validate_csrf(data.get('csrf_token'))
         except wtforms.ValidationError:
             abort(403)
         agent = self._get_object(agent_id, workspace_name)
-        executor_data = json.loads(request.form.get('executorData'))
+        executor_data = data.get('executorData')
+        if not executor_data:
+            abort(400)
+        executor_data = json.loads(data.get('executorData'))
         changes_queue.put({
             'agent_id': agent.id,
             'action': 'RUN',
-            "executor": executor_data['executor'],
-            "args": executor_data['args']
+            "executor": executor_data.get('executor'),
+            "args": executor_data.get('args')
         })
         return 'OK'
+
 
 
 AgentView.register(agent_api)

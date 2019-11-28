@@ -2024,7 +2024,6 @@ class Agent(Metadata):
 class AgentExecution(Metadata):
     __tablename__ = 'agent_execution'
     id = Column(Integer, primary_key=True)
-    moment = Column(DateTime, default=datetime.utcnow)
     running = Column(Boolean, nullable=True)
     successful = Column(Boolean, nullable=True)
     message = Column(String, nullable=True)

@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '904a517a2f0c'
-down_revision = '1dbe9e8e4247'
+down_revision = '2a0de6132377'
 branch_labels = None
 depends_on = None
 
@@ -58,7 +58,6 @@ def upgrade():
     op.create_table(
         'agent_execution',
         sa.Column('id', sa.Integer, primary_key=True),
-        sa.Column('moment', sa.DateTime, nullable=True),
         sa.Column('running', sa.Boolean, nullable=True),
         sa.Column('successful', sa.Boolean, nullable=True),
         sa.Column('message', sa.String, nullable=True),

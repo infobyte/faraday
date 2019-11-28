@@ -24,6 +24,12 @@ agent_api = Blueprint('agent_api', __name__)
 
 class ExecutorSchema(AutoSchema):
 
+    parameters_metadata = fields.Dict(
+        dump_only=True
+    )
+    id = fields.Integer(dump_only=True)
+    name = fields.String(dump_only=True)
+
     class Meta:
         model = Executor
         fields = (

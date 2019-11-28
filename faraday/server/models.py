@@ -1953,14 +1953,7 @@ class AgentsSchedule(Metadata):
         'Workspace',
         backref=backref('schedules', cascade="all, delete-orphan"),
     )
-
-    agent_id = Column(Integer, ForeignKey('agent.id'), index=True, nullable=False)
-    agent = relationship(
-        'Agent',
-        backref=backref('schedules', cascade="all, delete-orphan"),
-    )
-
-    executor_id = Column(Integer, ForeignKey('executor.id'), index=True, nullable=True)
+    executor_id = Column(Integer, ForeignKey('executor.id'), index=True, nullable=False)
     executor = relationship(
         'Executor',
         backref=backref('schedules', cascade="all, delete-orphan"),

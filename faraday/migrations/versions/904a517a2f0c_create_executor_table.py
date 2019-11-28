@@ -47,8 +47,10 @@ def upgrade():
         'faraday_user', ['update_user_id'], ['id']
     )
 
-    op.add_column('agent_schedule', sa.Column('executor_id', sa.Integer, nullable=True))
-    op.add_column('agent_schedule', sa.Column('parameters', sa.JSON, nullable=True, default={}))
+    op.drop_column('agent_schedule', 'agent_id')
+    op.execute('DELETE FROM agent_schedule')
+    op.add_column('agent_schedule', sa.Column('executor_id', sa.Integer, nullable=False))
+    op.add_column('agent_schedule', sa.Column('parameters', sa.JSON, nullable=False, default={}))
     op.create_foreign_key(
         'agent_schedule_executor_id_fkey',
         'agent_schedule',
@@ -96,6 +98,13 @@ def upgrade():
 
 
 def downgrade():
+    op.add_column('agent_schedule', sa.Column('agent_id', sa.Integer, nullable=False))
+    op.create_foreign_key(
+        'agent_schedule_agent_id_fkey',
+        'agent_schedule',
+        'agent', ['agent_id'], ['id']
+    )
+
     op.drop_column('agent_schedule', 'executor_id')
     op.drop_column('agent_schedule', 'parameters')
     op.drop_table('agent_execution')

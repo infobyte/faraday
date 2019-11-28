@@ -285,5 +285,3 @@ class WorkspaceServerFactory(WebSocketServerFactory):
             reactor.callFromThread(agent_connection.sendPreparedMessage, self.prepareMessage(msg))
             logger.debug("prepared message sent to agent id: {}".format(
                 agent_id))
-
-# I'm Py3

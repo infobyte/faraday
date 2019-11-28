@@ -122,6 +122,3 @@ class AgentView(UpdateWorkspacedMixin,
 
 AgentView.register(agent_api)
 AgentCreationView.register(agent_api)
-
-
-# I'm Py3

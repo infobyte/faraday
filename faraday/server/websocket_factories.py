@@ -14,6 +14,7 @@ from queue import Empty
 
 import txaio
 
+from faraday.server.utils.database import get_or_create
 
 txaio.use_twisted()
 
@@ -106,7 +107,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                 with app.app_context():
                     try:
                         agent = decode_agent_websocket_token(message['token'])
-                        check_executors(agent, message['executors'])
+                        update_executors(agent, message['executors'])
                     except ValueError:
                         logger.warn('Invalid agent token!')
                         self.state = WebSocketProtocol.STATE_CLOSING
@@ -166,32 +167,32 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
         self.sendHtml('This is a websocket port.')
 
 
-def check_executors(agent, executors):
-    current_executors = Executor.query.filter(Executor.agent == agent)
-    for exc in executors:
-        if exc['executor_name'] not in [ex.name for ex in current_executors]:
-            try:
-                executor = Executor(
-                    name=exc['executor_name'],
-                    agent=agent,
-                    parameters_metadata=json.dumps(exc['args']))
-                db.session.add(executor)
-                db.session.commit()
-            except KeyError:
-                logger.error("Invalid Executor Schema")
-        else:
-            current_exc = Executor.query.filter(Executor.agent == agent, Executor.name == exc['executor_name']).first()
-            if current_exc:
-                current_args = set(json.loads(current_exc.parameters_metadata).keys())
-                incoming_args = set(exc['args'].keys())
-                if len(incoming_args.difference(current_args)) > 0 or len(current_args.difference(incoming_args)) > 0:
-                    current_exc.parameters_metadata = json.dumps(exc['args'])
-                    db.session.commit()
+def update_executors(agent, executors):
+    incoming_executor_names = set()
+    for raw_executor in executors:
+        if 'executor_name' not in raw_executor or 'args' not in raw_executor:
+            continue
+        executor, created = get_or_create(
+            db.session,
+            Executor,
+            **{
+                'name': raw_executor['executor_name'],
+                'agent': agent,
+            }
+        )
 
+        executor.parameters_metadata = raw_executor['args']
+        db.session.add(executor)
+        db.session.commit()
+        incoming_executor_names.add(raw_executor['executor_name'])
+
+    current_executors = Executor.query.filter(Executor.agent == agent)
     for current_executor in current_executors:
-        if current_executor.name not in [ex['executor_name'] for ex in executors]:
+        if current_executor.name not in incoming_executor_names:
             db.session.delete(current_executor)
             db.session.commit()
+
+    return True
 
 
 class WorkspaceServerFactory(WebSocketServerFactory):

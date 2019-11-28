@@ -179,8 +179,6 @@ def check_executors(agent, executors):
                 db.session.commit()
             except KeyError:
                 logger.error("Invalid Executor Schema")
-            except Exception as error:
-                logger.error("Something went wrong !!")
         else:
             current_exc = Executor.query.filter(Executor.agent == agent, Executor.name == exc['executor_name']).first()
             if current_exc:

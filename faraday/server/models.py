@@ -1934,7 +1934,7 @@ class Executor(Metadata):
         'Agent',
         backref=backref('executors', cascade="all, delete-orphan"),
     )
-    parameters_metadata = Column(JSONType, nullable=True, default={})
+    parameters_metadata = Column(JSONType, nullable=False, default={})
     # workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     # workspace = relationship('Workspace', backref=backref('executors', cascade="all, delete-orphan"))
 

@@ -22,7 +22,7 @@ def upgrade():
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('name', sa.String, nullable=False),
         sa.Column('agent_id', sa.Integer, nullable=False),
-        sa.Column('parameters_metadata', sa.JSON, nullable=True, default={}),
+        sa.Column('parameters_metadata', sa.JSON, nullable=False, default={}),
         sa.Column('create_date', sa.DateTime),
         sa.Column('update_date', sa.DateTime),
         sa.Column('creator_id', sa.Integer),

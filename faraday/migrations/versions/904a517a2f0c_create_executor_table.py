@@ -96,6 +96,12 @@ def upgrade():
         'faraday_user', ['update_user_id'], ['id']
     )
 
+    op.create_unique_constraint(
+        "uix_executor_table_agent_id_name",
+        "executor",
+        ["name", "agent_id"]
+    )
+
 
 def downgrade():
     op.add_column('agent_schedule', sa.Column('agent_id', sa.Integer, nullable=False))

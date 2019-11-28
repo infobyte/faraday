@@ -1938,6 +1938,10 @@ class Executor(Metadata):
     # workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     # workspace = relationship('Workspace', backref=backref('executors', cascade="all, delete-orphan"))
 
+    __table_args__ = (
+        UniqueConstraint('name', 'agent_id',
+                         name='uix_executor_table_agent_id_name'),)
+
 
 class AgentsSchedule(Metadata):
     __tablename__ = 'agent_schedule'

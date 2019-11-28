@@ -1934,7 +1934,7 @@ class Executor(Metadata):
         'Agent',
         backref=backref('executors', cascade="all, delete-orphan"),
     )
-    parameters_metadata = Column(JSONType, nullable=True, default={})
+    parameters_metadata = Column(JSONType, nullable=False, default={})
     # workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     # workspace = relationship('Workspace', backref=backref('executors', cascade="all, delete-orphan"))
 
@@ -1953,20 +1953,13 @@ class AgentsSchedule(Metadata):
         'Workspace',
         backref=backref('schedules', cascade="all, delete-orphan"),
     )
-
-    agent_id = Column(Integer, ForeignKey('agent.id'), index=True, nullable=False)
-    agent = relationship(
-        'Agent',
-        backref=backref('schedules', cascade="all, delete-orphan"),
-    )
-
-    executor_id = Column(Integer, ForeignKey('executor.id'), index=True, nullable=True)
+    executor_id = Column(Integer, ForeignKey('executor.id'), index=True, nullable=False)
     executor = relationship(
         'Executor',
         backref=backref('schedules', cascade="all, delete-orphan"),
     )
 
-    parameters = Column(JSONType, nullable=True, default={})
+    parameters = Column(JSONType, nullable=False, default={})
 
     @property
     def next_run(self):

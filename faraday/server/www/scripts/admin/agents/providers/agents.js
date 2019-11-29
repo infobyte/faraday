@@ -40,13 +40,13 @@ angular.module('faradayApp')
             $http.get('/_api/session').then(function(response){
                 let data = {
                     'csrf_token': response.data.csrf_token,
-                    'executorData': JSON.stringify(executorData)
+                    'executorData': executorData
                 };
                 var postUrl = '_api/v2/ws/' + wsName + '/agents/' + agentId + '/run/';
                 $http.post(postUrl, JSON.stringify(data), {
                     transformRequest: angular.identity,
                     withCredentials: false,
-                    headers: {'Content-Type': undefined}
+                    headers: {'Content-Type': 'application/json'}
                 }).then(
                     function(tokenResponse) {
                         deferred.resolve(tokenResponse)

@@ -224,9 +224,10 @@ def migrate(downgrade, revision):
             alembic.command.upgrade(config, revision)
     except OperationalError as e:
         logger.error("Migration Error: %s", e)
+        logger.exception(e)
         print('Please verify your configuration on server.ini or the hba configuration!')
     except Exception as e:
-        logger.exception("Migration Error: %s", e)
+        logger.exception(e)
         print('Migration failed! Please check the logs')
         sys.exit(1)
     else:

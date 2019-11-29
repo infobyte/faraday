@@ -113,6 +113,7 @@ class VulnerabilitySchema(AutoSchema):
                                    attribute='policy_violations')
     refs = fields.List(fields.String(), attribute='references')
     issuetracker = fields.Method(serialize='get_issuetracker', dump_only=True)
+    tool = fields.String(attribute='tool')
     parent = fields.Method(serialize='get_parent', deserialize='load_parent', required=True)
     parent_type = MutableField(fields.Method('get_parent_type'),
                                fields.String(),
@@ -156,7 +157,7 @@ class VulnerabilitySchema(AutoSchema):
             'service', 'obj_id', 'type', 'policyviolations',
             '_attachments',
             'target', 'host_os', 'resolution', 'metadata',
-            'custom_fields', 'external_id')
+            'custom_fields', 'external_id', 'tool')
 
     def get_type(self, obj):
         return obj.__class__.__name__
@@ -280,7 +281,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'service', 'obj_id', 'type', 'policyviolations',
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
-            'status_code', 'custom_fields', 'external_id'
+            'status_code', 'custom_fields', 'external_id', 'tool'
         )
 
 

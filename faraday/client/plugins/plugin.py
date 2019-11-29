@@ -374,7 +374,7 @@ class PluginTerminalOutput(PluginBase):
         try:
             self.parseOutputString(term_output)
         except Exception as e:
-            self.logger.error(e)
+            self.logger.exception(e)
 
 
 class PluginCustomOutput(PluginBase):

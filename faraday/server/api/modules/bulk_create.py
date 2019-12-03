@@ -1,3 +1,4 @@
+import logging
 import flask
 import sqlalchemy
 from marshmallow import (
@@ -32,6 +33,8 @@ from faraday.server.api.base import AutoSchema, GenericWorkspacedView
 from faraday.server.api.modules.websocket_auth import require_agent_token
 
 bulk_create_api = flask.Blueprint('bulk_create_api', __name__)
+
+logger = logging.getLogger(__name__)
 
 class VulnerabilitySchema(vulns.VulnerabilitySchema):
     class Meta(vulns.VulnerabilitySchema.Meta):
@@ -285,6 +288,12 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
         model_class = VulnerabilityWeb
     else:
         raise ValidationError("unknown type")
+    tool = vuln_data.get('tool', '')
+    if not tool:
+        if command:
+            vuln_data['tool'] = command.tool
+        else:
+            vuln_data['tool'] = 'Web UI'
 
     (created, vuln) = get_or_create(ws, model_class, vuln_data)
     db.session.commit()

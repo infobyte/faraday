@@ -96,7 +96,7 @@ class CustomMetadataSchema(MetadataSchema):
     creator = fields.Method('get_creator', dump_only=True)
 
     def get_creator(self, obj):
-        return obj.creator_command_tool or 'Web UI'
+        return obj.tool
 
 
 class VulnerabilitySchema(AutoSchema):
@@ -470,7 +470,6 @@ class VulnerabilityView(PaginatedMixin,
         attachments = data.pop('_attachments', {})
         references = data.pop('references', [])
         policyviolations = data.pop('policy_violations', [])
-
         try:
             obj = super(VulnerabilityView, self)._perform_create(data, **kwargs)
         except TypeError:
@@ -480,6 +479,11 @@ class VulnerabilityView(PaginatedMixin,
 
         obj.references = references
         obj.policy_violations = policyviolations
+        if not obj.tool:
+            if obj.creator_command_tool:
+                obj.tool = obj.creator_command_tool
+            else:
+                obj.tool = "Web UI"
         db.session.commit()
         self._process_attachments(obj, attachments)
         return obj
@@ -505,6 +509,7 @@ class VulnerabilityView(PaginatedMixin,
 
     def _update_object(self, obj, data):
         data.pop('type') # It's forbidden to change vuln type!
+        data.pop('tool', '')
         return super(VulnerabilityView, self)._update_object(obj, data)
 
     def _perform_update(self, object_id, obj, data, workspace_name):

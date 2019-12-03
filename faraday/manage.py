@@ -52,7 +52,7 @@ from faraday.server.web import app
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
-logger = logging.getLogger(__name__)
+#logger = logging.getLogger(__name__)
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 def cli():
@@ -213,7 +213,6 @@ def support():
         required=False,
         )
 def migrate(downgrade, revision):
-    logger.info("Running migrations")
     try:
         revision = revision or ("-1" if downgrade else "head")
         config = Config(os.path.join(FARADAY_BASE,"alembic.ini"))
@@ -223,15 +222,16 @@ def migrate(downgrade, revision):
         else:
             alembic.command.upgrade(config, revision)
     except OperationalError as e:
+        logger = logging.getLogger(__name__)
         logger.error("Migration Error: %s", e)
         logger.exception(e)
         print('Please verify your configuration on server.ini or the hba configuration!')
     except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error("Migration Error: %s", e)
         logger.exception(e)
         print('Migration failed! Please check the logs')
         sys.exit(1)
-    else:
-        logger.info("Migrations finished")
 
 
 @click.command(help='Custom field wizard')

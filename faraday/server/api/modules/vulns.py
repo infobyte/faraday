@@ -96,7 +96,10 @@ class CustomMetadataSchema(MetadataSchema):
     creator = fields.Method('get_creator', dump_only=True)
 
     def get_creator(self, obj):
-        return obj.tool
+        if obj.tool:
+            return obj.tool
+        else:
+            return obj.creator_command_tool or 'Web UI'
 
 
 class VulnerabilitySchema(AutoSchema):
@@ -484,6 +487,7 @@ class VulnerabilityView(PaginatedMixin,
                 obj.tool = obj.creator_command_tool
             else:
                 obj.tool = "Web UI"
+        logger.info("AAA %s", obj.creator_command_tool)
         db.session.commit()
         self._process_attachments(obj, attachments)
         return obj

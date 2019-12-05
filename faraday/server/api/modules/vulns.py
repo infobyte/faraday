@@ -487,7 +487,6 @@ class VulnerabilityView(PaginatedMixin,
                 obj.tool = obj.creator_command_tool
             else:
                 obj.tool = "Web UI"
-        logger.info("AAA %s", obj.creator_command_tool)
         db.session.commit()
         self._process_attachments(obj, attachments)
         return obj

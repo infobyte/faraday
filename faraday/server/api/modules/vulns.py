@@ -716,6 +716,7 @@ class VulnerabilityView(PaginatedMixin,
                                                                                                cls=BytesJSONEncoder)
             normal_vulns_data = json.loads(normal_vulns.data)
         except Exception as ex:
+            logger.exception(ex)
             normal_vulns_data = []
         try:
             web_vulns = search(db.session,
@@ -732,6 +733,7 @@ class VulnerabilityView(PaginatedMixin,
                                                                                                cls=BytesJSONEncoder)
             web_vulns_data = json.loads(web_vulns.data)
         except Exception as ex:
+            logger.exception(ex)
             web_vulns_data = []
         return normal_vulns_data + web_vulns_data
 

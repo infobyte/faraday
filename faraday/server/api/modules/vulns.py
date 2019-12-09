@@ -46,6 +46,7 @@ from faraday.server.models import (
 )
 from faraday.server.utils.database import get_or_create
 from faraday.server.utils.export import export_vulns_to_csv
+from faraday.server.utils.py3 import BytesJSONEncoder
 
 from faraday.server.api.modules.services import ServiceSchema
 from faraday.server.schemas import (
@@ -726,7 +727,8 @@ class VulnerabilityView(PaginatedMixin,
                     or_filters.append(Hostname.name == hostname_filter['val'])
 
                 web_vulns = web_vulns.join(Service).join(Host).join(Hostname).filter(or_(*or_filters))
-            web_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(web_vulns.all())
+            web_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(web_vulns.all(),
+                                                                                               cls=BytesJSONEncoder)
             web_vulns_data = json.loads(web_vulns.data)
         except Exception as ex:
             web_vulns_data = []

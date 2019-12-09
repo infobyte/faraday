@@ -281,6 +281,29 @@ class HostsView(PaginatedMixin,
                            or len(hosts)),
         }
 
+    @route('bulk_delete/', methods=['DELETE'])
+    def bulk_delete(self, workspace_name):
+        workspace = self._get_workspace(workspace_name)
+        json_request = flask.request.get_json()
+        hosts_ids = json_request.get('hosts_ids', [])
+        deleted_hosts = 0
+        hosts = []
+
+        if hosts_ids:
+            logger.info("Deleting hosts with IDs: {}".format(hosts_ids))
+            hosts = db.session.query(Host).filter(
+                        Host.id.in_(hosts_ids),
+                        Host.workspace_id == workspace.id)
+        else:
+            flask.abort(400, "Invalid request")
+
+        for host in hosts:
+            db.session.delete(host)
+            deleted_hosts += 1
+        db.session.commit()
+        response = {'deleted_hosts': deleted_hosts}
+        return flask.jsonify(response)
+
 
 HostsView.register(host_api)
 # I'm Py3

@@ -537,6 +537,40 @@ class TestHostAPI:
         assert res.json['hosts_with_errors'] == 0
         assert session.query(Host).filter_by(description="test_host").count() == expected_created_hosts
 
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_bulk_delete_hosts(self, test_client, session):
+        ws = WorkspaceFactory.create(name="abc")
+        host_1_raw_data = {
+            "ip": "127.0.0.0",
+            "hostnames": [],
+            "mac": "00:00:00:00:00:00",
+            "description": "",
+            "os": "",
+            "owned": False,
+            "owner": ""
+        }
+        host_2_raw_data = {
+            "ip": "127.0.0.1",
+            "hostnames": [],
+            "mac": "00:00:00:00:00:00",
+            "description": "",
+            "os": "",
+            "owned": False,
+            "owner": ""
+        }
+        host_1 = test_client.post('/v2/ws/{0}/hosts/'.format(ws.name), data=host_1_raw_data)
+        host_2 = test_client.post('/v2/ws/{0}/hosts/'.format(ws.name), data=host_2_raw_data)
+        hosts_ids = [host_1.json['id'], host_2.json['id']]
+        request_data = {'hosts_ids': hosts_ids}
+        delete_response = test_client.delete('/v2/ws/{0}/hosts/bulk_delete/'.format(ws.name), data=request_data)
+        deleted_hosts = delete_response.json['deleted_hosts']
+        host_count_after_delete = db.session.query(Host).filter(
+            Host.id.in_(hosts_ids),
+            Host.workspace_id == ws.id).count()
+
+        assert delete_response.status_code == 200
+        assert deleted_hosts == len(hosts_ids)
+        assert host_count_after_delete == 0
 
 
 class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):

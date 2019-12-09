@@ -273,7 +273,7 @@ class PluginBase:
             name, data=data, desc=desc, refs=ref, severity=severity,
             resolution=resolution, confirmed=False,
             parent_id=host_id, parent_type='Host',
-            workspace_name=self.workspace,external_id=external_id)
+            workspace_name=self.workspace,external_id=external_id, tool=self.id)
 
         vuln_obj._metadata.creator = self.id
         self.__addPendingAction(Modelactions.ADDVULNHOST, vuln_obj)
@@ -292,7 +292,7 @@ class PluginBase:
             name, data=data, desc=desc, refs=ref, severity=severity,
             resolution=resolution, confirmed=False,
             parent_type='Host', parent_id=host_id,
-            workspace_name=self.workspace)
+            workspace_name=self.workspace, tool=self.id)
 
         vuln_obj._metadata.creator = self.id
         self.__addPendingAction(Modelactions.ADDVULNHOST, vuln_obj)
@@ -307,7 +307,7 @@ class PluginBase:
             name, data=data, desc=desc, refs=ref, severity=severity,
             resolution=resolution, confirmed=False,
             parent_type='Service', parent_id=service_id,
-            workspace_name=self.workspace, external_id=external_id)
+            workspace_name=self.workspace, external_id=external_id, tool=self.id)
 
         vuln_obj._metadata.creator = self.id
 
@@ -329,7 +329,7 @@ class PluginBase:
             pname=pname, params=params, query=query,
             category=category, confirmed=False, parent_id=service_id,
             parent_type='Service',
-            workspace_name=self.workspace, external_id=external_id)
+            workspace_name=self.workspace, external_id=external_id, tool=self.id)
 
         vulnweb_obj._metadata.creator = self.id
         self.__addPendingAction(Modelactions.ADDVULNWEBSRV, vulnweb_obj)

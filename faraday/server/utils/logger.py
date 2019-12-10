@@ -47,8 +47,9 @@ def setup_file_logging(formatter):
     file_handler = logging.handlers.RotatingFileHandler(
         LOG_FILE, maxBytes=MAX_LOG_FILE_SIZE, backupCount=MAX_LOG_FILE_BACKUP_COUNT)
     file_handler.setFormatter(formatter)
-    file_handler.setLevel(logging.DEBUG)
+    file_handler.setLevel(faraday.server.config.LOGGING_LEVEL)
     add_handler(file_handler)
+    LVL_SETTABLE_HANDLERS.append(file_handler)
 
 
 def add_handler(handler):

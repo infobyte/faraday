@@ -497,7 +497,7 @@ def test_bulk_create_endpoint(session, workspace, test_client):
 
 
 @pytest.mark.usefixtures('logged_user')
-def test_bulk_create_endpoint2(session, workspace, test_client):
+def test_bulk_create_endpoint_run_over_closed_vuln(session, workspace, test_client):
     assert count(Host, workspace) == 0
     assert count(VulnerabilityGeneric, workspace) == 0
     url = f'v2/ws/{workspace.name}/bulk_create/'

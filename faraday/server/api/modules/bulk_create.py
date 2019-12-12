@@ -292,12 +292,18 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
     if command is not None:
         _create_command_object_for(ws, created, vuln, command)
 
-    if created:
+    def update_vuln(policyviolations, references, vuln):
         vuln.references = references
         vuln.policyviolations = policyviolations
         # TODO attachments
         db.session.add(vuln)
         db.session.commit()
+
+    if created:
+        update_vuln(policyviolations, references, vuln)
+    elif vuln.status == "closed":  # Implicit not created
+        vuln.status = "re-opened"
+        update_vuln(policyviolations, references, vuln)
 
 
 def _create_hostvuln(ws, host, vuln_data, command=None):

@@ -481,7 +481,7 @@ def test_creates_command_object_on_duplicates(
 
 
 @pytest.mark.usefixtures('logged_user')
-def test_bulk_create_endpoint(session, workspace, test_client):
+def test_bulk_create_endpoint(session, workspace, test_client, logged_user):
     assert count(Host, workspace) == 0
     assert count(VulnerabilityGeneric, workspace) == 0
     url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
@@ -493,6 +493,8 @@ def test_bulk_create_endpoint(session, workspace, test_client):
     assert count(Vulnerability, workspace) == 1
     host = Host.query.filter(Host.workspace == workspace).one()
     assert host.ip == "127.0.0.1"
+    assert host.owned
+    assert host.creator_id == logged_user.id
     assert set({hn.name for hn in host.hostnames}) == {"test.com", "test2.org"}
 
 

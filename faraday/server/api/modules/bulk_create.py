@@ -193,7 +193,7 @@ def get_or_create(ws, model_class, data):
     return (True, obj)
 
 
-def bulk_create(ws, data, data_already_deserialized=False):
+def bulk_create(ws, data, data_already_deserialized=False, creator_id=None):
     if not data_already_deserialized:
         schema = BulkCreateSchema(strict=True)
         data = schema.load(data).data
@@ -329,6 +329,8 @@ class BulkCreateView(GenericWorkspacedView):
     schema_class = BulkCreateSchema
 
     def post(self, workspace_name):
+        data = self._parse_data(self._get_schema_instance({}), flask.request)
+
         if flask.g.user is None:
             agent = require_agent_token()
             workspace = agent.workspace
@@ -337,7 +339,10 @@ class BulkCreateView(GenericWorkspacedView):
                 flask.abort(404, "No such workspace: %s" % workspace_name)
         else:
             workspace = self._get_workspace(workspace_name)
-        data = self._parse_data(self._get_schema_instance({}), flask.request)
+            for host in data["hosts"]:
+                host["creator"] = flask.g.user.username
+                host["creator_id"] = flask.g.user.id
+
         bulk_create(workspace, data, True)
         return "Created", 201
 

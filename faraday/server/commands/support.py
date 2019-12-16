@@ -1,3 +1,4 @@
+import os
 import sys
 import shutil
 import tempfile
@@ -43,9 +44,13 @@ def get_pip_freeze(path):
         pip_file.write('\n')
     pip_file.close()
 
+
 def get_logs(path):
-    #Copies the logs using the logs path saved on constants 
-    shutil.copytree(constants.CONST_FARADAY_HOME_PATH +'/logs', path + '/logs')
+    #Copies the logs using the logs path saved on constants
+    orig_path = os.path.join(constants.CONST_FARADAY_HOME_PATH, 'logs')
+    dst_path = os.path.join(path, 'logs')
+    shutil.copytree(orig_path, dst_path, ignore=shutil.ignore_patterns('access*.*'))
+
 
 def make_zip(path):
     #Makes a zip file of the new folder with all the information obtained inside

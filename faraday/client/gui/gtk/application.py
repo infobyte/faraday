@@ -502,7 +502,7 @@ class GuiApp(Gtk.Application, FaradayUi):
                 self.select_active_workspace()
                 return False
 
-        thread = threading.Thread(target=background_process)
+        thread = threading.Thread(target=background_process, name='background_process')
         thread.daemon = True
         thread.start()
 

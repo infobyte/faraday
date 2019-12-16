@@ -32,8 +32,8 @@ import faraday.client.apis.rest.api as restapi
 import faraday.client.model.log
 from faraday.client.plugins.manager import PluginManager
 from faraday.client.managers.mapper_manager import MapperManager
-from faraday.utils.error_report import exception_handler
-from faraday.utils.error_report import installThreadExcepthook
+from faraday.client.utils.error_report import exception_handler
+from faraday.client.utils.error_report import installThreadExcepthook
 
 from faraday.client.gui.gui_app import UiFactory
 from faraday.client.model.cli_app import CliApp

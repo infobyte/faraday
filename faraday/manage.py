@@ -37,7 +37,6 @@ from sqlalchemy.exc import ProgrammingError, OperationalError
 
 import faraday.server.config
 from faraday.server.config import FARADAY_BASE
-from faraday.client.start_client import FARADAY_PLUGINS_BASEPATH
 from faraday.server.commands.initdb import InitDB
 from faraday.server.commands.faraday_schema_display import DatabaseSchema
 from faraday.server.commands.app_urls import show_all_urls

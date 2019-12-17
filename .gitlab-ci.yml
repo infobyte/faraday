@@ -268,6 +268,13 @@ smoke_test_deb:
         - faraday-manage status-check
         - kill $(cat ~faraday/.faraday/faraday-server-port-5985.pid)
         - jobs
+    only:
+        variables:
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(master)$/
+            - $CI_COMMIT_TAG
+            - $BUILD_TEST
+            - $FULL_TEST
+            - $DAILY_TEST
 
 generate_rpm:
     stage: build

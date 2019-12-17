@@ -1,1 +1,0 @@
-* tkt_white_5537_websocket_error_on_connection_error

@@ -1,10 +1,12 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 """
+from __future__ import absolute_import
+from __future__ import print_function
 
 from faraday.client.persistence.server import models
 
@@ -13,7 +15,7 @@ __prettyname__ = 'List Hosts'
 
 
 def main(workspace='', args=None, parser=None):
-    parser.add_argument('os_filter', nargs='*', help='List of OSs to filter for', default=[]),
+    parser.add_argument('os_filter', nargs='*', help='List of OSs to filter for', default=[])
 
     parsed_args = parser.parse_args(args)
 
@@ -23,3 +25,6 @@ def main(workspace='', args=None, parser=None):
             print('%s\t%s' % (host.name, host.os))
 
     return 0, None
+
+
+# I'm Py3

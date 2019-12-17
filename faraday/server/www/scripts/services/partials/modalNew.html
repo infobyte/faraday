@@ -15,7 +15,7 @@
             <div class="form-group">
                 <div class="col-md-12">
                     <label class="sr-only" for="service">Name</label>
-                    <input type="text" class="form-control" id="service" name="name" placeholder="Name" ng-model="data.name" />
+                    <input type="text" class="form-control" id="service" required name="name" placeholder="Name" ng-model="data.name" />
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
@@ -39,7 +39,7 @@
                     <h5>Port</h5>
                     <div class="input-margin" ng-class="{'has-error': form.ports.$invalid }">
                         <label class="sr-only" for="ports">Port</label>
-                        <input type="number" min="0" class="form-control" id="ports" name="ports" placeholder="Port" ng-model="data.ports" required/>
+                        <input type="number" min="0" max="65535" class="form-control" id="ports" name="ports" placeholder="Port" ng-model="data.ports" required/>
                     </div>
                 </div>
                 <div class="col-md-3 protocol" ng-class="{'has-error': form.protocol.$invalid }">

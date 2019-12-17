@@ -1,20 +1,13 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2017  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
-
-from __future__ import with_statement
+"""
 import re
 import os
-import random
-import socket
 from collections import defaultdict
 
-from faraday.client.plugins import core
+from faraday.client.plugins.plugin import PluginByExtension
 from faraday.client.plugins.plugins_utils import filter_services, get_all_protocols
 
 
@@ -121,7 +114,7 @@ class LynisLogDataExtracter():
                 # self.aux_items will be an auxiliar list. We will use it...
                 # ...for poping the url and the protocol so that the last element...
                 # ... of the list, will be the name of the service
-                self.aux_items = filter(None, items_service)
+                self.aux_items = list(filter(None, items_service))
                 elements_ip_port, count = self.get_ip_and_port(self.aux_items, remove_from_list=True)
                 protocol = self.get_protocol()
                 name = self.aux_items[0]
@@ -240,11 +233,12 @@ class LynisLogDataExtracter():
         return(warns)
 
 
-class LynisPlugin(core.PluginBase):
+class LynisPlugin(PluginByExtension):
     """ Simple example plugin to parse lynis' lynis-report.dat file."""
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
+        self.extension = [".dat", ".log"]
         self.id = "Lynis"
         self.name = "Lynis DAT Output Plugin"
         self.plugin_version = "0.4"
@@ -256,6 +250,14 @@ class LynisPlugin(core.PluginBase):
         self._hosts = []
 
         global current_path
+
+    def report_belongs_to(self, **kwargs):
+        if super().report_belongs_to(**kwargs):
+            report_path = kwargs.get("report_path", "")
+            with open(report_path) as f:
+                output = f.read()
+            return output.startswith("# Lynis Report")
+        return False
 
     def parseOutputString(self, output, debug=False):
         datpath = self.getDatPath(output)
@@ -307,7 +309,7 @@ class LynisPlugin(core.PluginBase):
                                             ports=[service_data['port']])
 
     def create_vulns_with_kernel(self, host_id, kernel_versions):
-        for kernel, version in kernel_versions.iteritems():
+        for kernel, version in kernel_versions.items():
             self.createAndAddVulnToHost(
                 host_id=host_id,
                 name=kernel,
@@ -351,3 +353,6 @@ class LynisPlugin(core.PluginBase):
 
 def createPlugin():
     return LynisPlugin()
+
+
+# I'm Py3

@@ -1,6 +1,6 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 
-'''
+"""
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 Author: Ezequiel Tavella
 See the file 'doc/LICENSE' for the license information
@@ -8,7 +8,9 @@ See the file 'doc/LICENSE' for the license information
 This script generate a CSV file with information about the cfdb database.
 CSV Format:
 cwe,name,description,resolution,exploitation,references
-'''
+"""
+from __future__ import absolute_import
+from __future__ import print_function
 
 from subprocess import call
 from os import walk
@@ -88,11 +90,11 @@ class parseFile():
 def main():
 
     #Get DB cfdb
-    print '[*]Execute git clone...'
+    print('[*]Execute git clone...')
     return_code = call(['git', 'clone', URL_PROYECT])
 
     if return_code != 0 and return_code != 128:
-        print '[!]Error:\n Git return code: ' + str(return_code)
+        print('[!]Error:\n Git return code: ' + str(return_code))
 
     file_csv = open('cfdb.csv','w')
 
@@ -109,17 +111,17 @@ def main():
     )
 
     #Get DB names...
-    print '[*]Looking for DBs...'
+    print('[*]Looking for DBs...')
     for (root, dirs, files) in walk(DB_PATH):
 
         #Jump dirs without info
         if root.find('.git') < 0 and root.find('.gitignore') < 0:
             if root != './cfdb/':
 
-                print '[*]Parsing folder: ' + root
+                print('[*]Parsing folder: ' + root)
                 for file_db in files:
 
-                    print '[_]File: ' + root + '/' + file_db
+                    print('[_]File: ' + root + '/' + file_db)
                     with open(root + '/' + file_db, 'r') as file_md:
 
                         csv_content = parseFile(file_md)
@@ -135,11 +137,12 @@ def main():
 
                         writer.writerow(result)
 
-                print '[*]Parse folder finished...\n'
+                print('[*]Parse folder finished...\n')
 
-    print '[*]All Finished... OK'
+    print('[*]All Finished... OK')
 
     file_csv.close()
 
 if __name__ == '__main__':
     main()
+# I'm Py3

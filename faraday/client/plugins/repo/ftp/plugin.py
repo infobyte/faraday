@@ -1,12 +1,9 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
 from faraday.client.plugins import core
 from faraday.client.model import api
 import re
@@ -32,7 +29,7 @@ class CmdFtpPlugin(core.PluginBase):
     """
 
     def __init__(self):
-        core.PluginBase.__init__(self)
+        super().__init__()
         self.id = "ftp"
         self.name = "Ftp"
         self.plugin_version = "0.0.1"
@@ -64,7 +61,7 @@ class CmdFtpPlugin(core.PluginBase):
             ip_address = self.resolve(hostname)
             self._version = banner.groups(0) if banner else ""
             if debug:
-                print ip_address
+                print(ip_address)
 
             h_id = self.createAndAddHost(ip_address)
 
@@ -97,8 +94,9 @@ class CmdFtpPlugin(core.PluginBase):
         if re.search("[\d]+", count_args[c - 1]):
             self._port = count_args[c - 1]
 
-        return None
-
 
 def createPlugin():
     return CmdFtpPlugin()
+
+
+# I'm Py3

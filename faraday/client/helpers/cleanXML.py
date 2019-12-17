@@ -1,11 +1,12 @@
-#!/usr/bin/env python2.7
-'''
+#!/usr/bin/env python3
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2014  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 This script fixes invalid XMLs.
-'''
+"""
+from __future__ import absolute_import
 
 import argparse
 from bs4 import BeautifulSoup
@@ -34,3 +35,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+# I'm Py3

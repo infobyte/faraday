@@ -5,6 +5,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+
 from faraday.server.models import Host, Service, Vulnerability
 import random
 def new_random_workspace_name():
@@ -42,3 +44,6 @@ def create_serv_vuln(self, host, service, name, desc, severity):
     self.model_controller.addVulnToServiceSYNC(host.getID(), service.getID(), vuln)
 
     return vuln
+
+
+# I'm Py3

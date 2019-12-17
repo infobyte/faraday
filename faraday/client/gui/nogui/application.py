@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
+from __future__ import absolute_import
 
 import time
 
@@ -41,7 +42,23 @@ class GuiApp(FaradayUi):
                     "You may try and go to ~/.faraday/config/user.xml "
                     "to set a valid api_uri and last_workspace")
             get_logger(self).error(str(e))
-            return -1
+            valid = False
+            for i in range(4):
+                workspace = raw_input("Please write the correct, Workspace): ")
+                try:
+                    ws = super(GuiApp, self).openWorkspace(workspace)
+                    valid = True
+                    break
+                except Exception as err:
+                    get_logger(self).error(
+                        ("Your last workspace %s is not accessible, "
+                         "check configuration.") % workspace)
+                    get_logger(self).error(
+                            "You may try and go to ~/.faraday/config/user.xml "
+                            "to set a valid api_uri and last_workspace")
+                    get_logger(self).error(str(err))
+            if not valid:
+                return -1
         workspace = ws.name
         CONF.setLastWorkspace(workspace)
         CONF.saveConfig()
@@ -56,3 +73,6 @@ class GuiApp(FaradayUi):
 
     def postEvent(self, receiver, event):
         receiver.update(event)
+
+
+# I'm Py3

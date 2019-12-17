@@ -1,9 +1,9 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
 import os
 import json
 import shutil
@@ -695,3 +695,6 @@ def getInstanceConfiguration():
         else:
             the_config = Configuration(os.path.join(config_dir, "config.xml"))
     return the_config
+
+
+# I'm Py3

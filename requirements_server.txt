@@ -12,8 +12,8 @@ future>=0.17.1
 IPy>=0.83
 marshmallow<3.0.0
 Pillow>=4.2.1
-pgcli
-psycopg2==2.7.7
+pgcli==2.1.1
+psycopg2-binary==2.8.4
 pyasn1-modules>=0.0.11
 pyopenssl>=17.2.0
 python-dateutil>=2.6.0
@@ -34,9 +34,10 @@ attrs>=17.4.0
 Flask-Restless==0.17.0
 simplejson>=3.16.0
 syslog-rfc5424-formatter==1.1.1
-typing==3.6.6
 beautifulsoup4==4.7.1
 Flask-KVSession==0.6.2
 simplekv==0.13.0
 pypcapfile==0.12.0
 html2text==2019.8.11
+distro==1.4.0
+faraday-plugins==1.0rc1

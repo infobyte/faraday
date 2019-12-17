@@ -1,15 +1,13 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+from builtins import str
+
 import os
-import re
 import io
-import csv
 import json
 import logging
-import cStringIO
 from base64 import b64encode, b64decode
-
 
 import flask
 import wtforms
@@ -17,7 +15,7 @@ from filteralchemy import Filter, FilterSet, operators
 from flask import request, send_file
 from flask import Blueprint
 from flask_classful import route
-from flask_restless.search import search, Filter as RestlessFilter
+from flask_restless.search import search
 from flask_wtf.csrf import validate_csrf
 from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
@@ -38,7 +36,6 @@ from faraday.server.models import (
     db,
     File,
     Host,
-    Comment,
     Service,
     Hostname,
     Workspace,
@@ -821,4 +818,31 @@ class VulnerabilityView(PaginatedMixin,
                          as_attachment=True,
                          cache_timeout=-1)
 
+    @route('bulk_delete/', methods=['DELETE'])
+    def bulk_delete(self, workspace_name):
+        workspace = self._get_workspace(workspace_name)
+        json_quest = request.get_json()
+        vulnerability_ids = json_quest.get('vulnerability_ids', [])
+        vulnerability_severities = json_quest.get('severities', [])
+        deleted_vulns = 0
+        vulns = []
+        if vulnerability_ids:
+            logger.info("Delete Vuln IDs: %s", vulnerability_ids)
+            vulns = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.id.in_(vulnerability_ids),
+                                              VulnerabilityGeneric.workspace_id == workspace.id)
+        elif vulnerability_severities:
+            logger.info("Delete Vuln Severities: %s", vulnerability_severities)
+            vulns = VulnerabilityGeneric.query.filter(VulnerabilityGeneric.severity.in_(vulnerability_severities),
+                                                      VulnerabilityGeneric.workspace_id == workspace.id)
+        else:
+            flask.abort(400, "Invalid Request")
+        for vuln in vulns:
+            db.session.delete(vuln)
+            deleted_vulns += 1
+        db.session.commit()
+        response = {'deleted_vulns': deleted_vulns}
+        return flask.jsonify(response)
+
 VulnerabilityView.register(vulns_api)
+
+# I'm Py3

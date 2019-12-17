@@ -4,18 +4,16 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
+import re
 import random
 import string
-import mock
-import os
-import re
+from unittest import mock
 
 from faraday import __version__
-from faraday.server.config import FARADAY_BASE
 
 from faraday.server.config import (
     copy_default_config_to_local,
-    gen_web_config
 )
 
 
@@ -79,3 +77,6 @@ def isPEP440(arg):
 
 def test_exists_and_content():
     assert isPEP440(__version__)
+
+
+# I'm Py3

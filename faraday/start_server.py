@@ -20,7 +20,6 @@ try:
     from faraday.server.utils import daemonize
     from faraday.server.web import app
     from faraday.utils import dependencies
-    from faraday.server.config import FARADAY_BASE
     from alembic.script import ScriptDirectory
     from alembic.config import Config
     from alembic.migration import MigrationContext
@@ -130,7 +129,7 @@ def check_alembic_version():
 
         current_revision = context.get_current_revision()
         if head_revision != current_revision:
-            if glob.glob(os.path.join(FARADAY_BASE, 'migrations', 'versions',
+            if glob.glob(os.path.join(faraday.server.config.FARADAY_BASE, 'migrations', 'versions',
                          '{}_*.py'.format(current_revision))):
                 print('--' * 20)
                 print('Missing migrations, please execute: \n\n')
@@ -145,7 +144,7 @@ def check_alembic_version():
                     )
 
 def main():
-    os.chdir(FARADAY_BASE)
+    os.chdir(faraday.server.config.FARADAY_BASE)
     check_alembic_version()
     check_postgresql()
     parser = argparse.ArgumentParser()

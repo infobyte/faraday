@@ -357,14 +357,14 @@ macos_pkg:
         - git clone https://github.com/jordansissel/fpm.git
         - cd fpm
         - git checkout d7b466787d17581bc723e474ecf6e18f48226031
-        - git apply ../fpm-patchs/fpm.virtualenv.patch
+        - git apply ../fpm-patchs/fpm.osx.patch
         - make gem
         - export GEM_HOME="$HOME/.gem"
         - export GEM_PATH=$HOME/.gem
         - export PATH=$PATH:$HOME/.gem/bin
         - gem install fpm-1.11.0.gem
         - cd ../../
-        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server osxpkg
+        - sh faraday-linux-installers-builder/build_osx.sh $(eval $IMAGE_TAG) server osxpkg
         - mv faraday-server_amd64.pkg ../../Faraday.pkg
     artifacts:
         name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME-binaries"

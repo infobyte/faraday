@@ -93,7 +93,7 @@ def check_postgresql():
     with app.app_context():
         try:
             if not db.session.query(Workspace).count():
-                logger.warn('No workspaces found. Remember to execute CouchDB importer')
+                logger.warn('No workspaces found')
         except sqlalchemy.exc.ArgumentError:
             logger.error(
                 '\n\b{RED}Please check your PostgreSQL connection string in the file ~/.faraday/config/server.ini on your home directory.{WHITE} \n'.format(RED=Fore.RED, WHITE=Fore.WHITE)

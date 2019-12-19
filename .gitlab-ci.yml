@@ -152,16 +152,20 @@ build_nix_python3:
     - nix-build '<nixpkgs>' -A gtk3 -o result-gtk
     - tar cf /py3.tar $(nix-store --query --requisites $(readlink result) $(readlink result-vte)) $(readlink result-gtk)
     - mkdir /opt
-    - nix-env -i findutils postgresql
+    - nix-env -i findutils
     - "nix-shell -p python37Packages.virtualenv --command 'virtualenv /opt/faraday'"
+    # - cp result /opt/faraday/lib/python3.7/site-packages/nix.pth  # This doesn't include dependencies of dependencies
+    - 'for dir in $(nix-store -qR result); do if [[ -d "$dir/lib/python3.7/site-packages" ]]; then echo "$dir/lib/python3.7/site-packages" >>recursive.pth; fi; done'
+    - mv recursive.pth /opt/faraday/lib/python3.7/site-packages/nix.pth
     - source /opt/faraday/bin/activate
-    - "nix-shell -p libxml2 libxslt zlib cairo gobject-introspection glib pkgconfig --run 'SOURCE_DATE_EPOCH=$(date +%s) /opt/faraday/bin/pip install -r requirements.txt'"
+    # - "nix-shell -p libxml2 libxslt zlib cairo gobject-introspection glib pkgconfig --run 'SOURCE_DATE_EPOCH=$(date +%s) /opt/faraday/bin/pip install -r requirements.txt'"
     - python setup.py install
-    - cp result /opt/faraday/lib/python3.7/site-packages/nix.pth
+    - pip install -r requirements.txt  # This has to be below setup.py install
+    - pip freeze
     - mv /opt/faraday/bin/faraday-client /opt/faraday/bin/_faraday_client_novte
     - 'nix-shell -p makeWrapper --command "makeWrapper /opt/faraday/bin/_faraday_client_novte /opt/faraday/bin/faraday-client --prefix GI_TYPELIB_PATH : $(find /nix/store -name "girepository-1.0" | tr "\n" ":")"'
     - 'nix-shell -p makeWrapper --command "makeWrapper /opt/faraday/bin/python /opt/faraday/bin/test --prefix GI_TYPELIB_PATH : $(find /nix/store -name "girepository-1.0" | tr "\n" ":")"'
-    - /opt/faraday/bin/test -c "import gi;gi.require_version('Gtk', '3.0');gi.require_version('Vte', '2.91');from gi.repository import Gio, Gtk, GdkPixbuf, Vte, GLib, GObject, Gdk" # Test if GTK will work
+    - nix-collect-garbage && /opt/faraday/bin/test -c "import gi;gi.require_version('Gtk', '3.0');gi.require_version('Vte', '2.91');from gi.repository import Gio, Gtk, GdkPixbuf, Vte, GLib, GObject, Gdk" # Test if GTK will work
     - tar rvf /py3.tar /opt/faraday
     - mv /py3.tar $CI_PROJECT_DIR
   artifacts:

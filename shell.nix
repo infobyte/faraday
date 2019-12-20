@@ -2,7 +2,7 @@ with (import <nixpkgs> {});
   mkShell {
     buildInputs = [pandoc] ++ (with python3Packages;
       [virtualenv pyopenssl psycopg2 pillow pygobject3 pynacl matplotlib lxml ldap autobahn
-      gobjectIntrospection gtk3 gnome3.vte gssapi
+      gobjectIntrospection gtk3 gnome3.vte gssapi pykerberos
       ]);
     shellHook = ''
       unset SOURCE_DATE_EPOCH  # Required to make pip work

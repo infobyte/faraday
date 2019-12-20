@@ -1,1 +1,0 @@
-* tkt_white_5793_fix_gtk_about

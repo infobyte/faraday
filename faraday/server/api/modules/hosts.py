@@ -145,18 +145,20 @@ class HostsView(PaginatedMixin,
     @route('/bulk_create/', methods=['POST'])
     def bulk_create(self, workspace_name):
         """
-        TEST
-        ---
-        post:
-          tags: ["Vulns"]
-          description: Create hosts in bulk
-          responses:
-            201:
-              content:
-                application/json:
-                  schema: HostSchema
-
         """
+        # XXX This fails generating:
+        # ValueError: 'HostSchema' is not a marshmallow.Schema subclass or instance and has not been registered in the marshmallow class registry
+        #TEST
+        #---
+        #post:
+        #  tags: ["Vulns"]
+        #  description: Create hosts in bulk
+        #  responses:
+        #    201:
+        #      content:
+        #        application/json:
+        #          schema: HostSchema
+
         try:
             validate_csrf(flask.request.form.get('csrf_token'))
         except wtforms.ValidationError:

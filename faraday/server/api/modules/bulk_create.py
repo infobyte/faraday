@@ -329,6 +329,17 @@ class BulkCreateView(GenericWorkspacedView):
     schema_class = BulkCreateSchema
 
     def post(self, workspace_name):
+        """
+        ---
+        post:
+          tags: ["Bulk"]
+          description: Create all faraday objects in bulk for a workspace
+          responses:
+            201:
+              content:
+                application/json:
+                  schema: BulkCreateSchema
+        """
         if flask.g.user is None:
             agent = require_agent_token()
             workspace = agent.workspace

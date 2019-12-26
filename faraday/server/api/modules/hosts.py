@@ -145,8 +145,6 @@ class HostsView(PaginatedMixin,
     @route('/bulk_create/', methods=['POST'])
     def bulk_create(self, workspace_name):
         """
-         ValueError: 'HostSchema' is not a marshmallow.Schema subclass or instance and has not been registered in the marshmallow class registry
-        TEST
         ---
         post:
           tags: ["Vulns"]

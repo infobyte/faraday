@@ -113,7 +113,7 @@ class ServiceSchema(services.ServiceSchema):
         ) + ('vulnerabilities',)
 
 
-class HostSchema(hosts.HostSchema):
+class HostBulkSchema(hosts.HostSchema):
     ip = fields.String(required=True)
     services = fields.Nested(
         ServiceSchema(many=True, context={'updating': False}),
@@ -158,7 +158,7 @@ class CommandSchema(AutoSchema):
 
 class BulkCreateSchema(Schema):
     hosts = fields.Nested(
-        HostSchema(many=True),
+        HostBulkSchema(many=True),
         many=True,
         required=True,
     )

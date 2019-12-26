@@ -11,6 +11,8 @@ from faraday.server.web import app
 from faraday import __version__ as f_version
 import json
 
+from faraday.utils.faraday_openapi_plugin import FaradayAPIPlugin
+
 TAGS = [
         {'name': 'Agents',
          'description': 'Run and manage agents',

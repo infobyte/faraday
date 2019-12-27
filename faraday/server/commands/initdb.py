@@ -33,7 +33,7 @@ from colorama import Fore
 from sqlalchemy.exc import OperationalError, ProgrammingError
 
 import faraday.server.config
-from faraday.config.constant import CONST_FARADAY_HOME_PATH
+from faraday.server.config import CONST_FARADAY_HOME_PATH
 from faraday.server.config import LOCAL_CONFIG_FILE, FARADAY_BASE
 
 init()

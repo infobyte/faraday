@@ -5,6 +5,8 @@ import os
 import string
 import random
 import logging
+
+from faraday.server.config import CONST_FARADAY_HOME_PATH
 from faraday.server.threads.reports_processor import REPORTS_QUEUE
 from flask import (
     request,
@@ -20,9 +22,7 @@ from wtforms import ValidationError
 
 from faraday.server.utils.web import gzipped
 from faraday.server.models import Workspace
-from faraday.config.configuration import getInstanceConfiguration
 
-CONF = getInstanceConfiguration()
 upload_api = Blueprint('upload_reports', __name__)
 
 logger = logging.getLogger(__name__)
@@ -58,7 +58,7 @@ def file_upload(workspace=None):
         raw_report_filename = '{0}_{1}'.format(random_prefix, secure_filename(report_file.filename))
 
         try:
-            file_path = os.path.join(CONF.getConfigPath(), 'uploaded_reports', raw_report_filename)
+            file_path = os.path.join(CONST_FARADAY_HOME_PATH, 'uploaded_reports', raw_report_filename)
             with open(file_path, 'wb') as output:
                 output.write(report_file.read())
         except AttributeError:

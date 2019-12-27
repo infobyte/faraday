@@ -7,23 +7,17 @@ See the file 'doc/LICENSE' for the license information
 import os
 import socket
 
-import requests
 import sqlalchemy
 from colorama import init
 from colorama import Fore
-from requests.exceptions import InvalidURL, ConnectionError
 
 import faraday.server.config
-from faraday.config import constant as CONSTANTS
-from faraday.config.configuration import getInstanceConfiguration
 from faraday.server.web import app
 from faraday.server.models import db
-from faraday.server.config import FARADAY_BASE
+from faraday.server.config import FARADAY_BASE, CONST_FARADAY_HOME_PATH
 from faraday.server.utils.daemonize import is_server_running
 from faraday.utils import dependencies
 
-
-CONF = getInstanceConfiguration()
 
 init()
 
@@ -102,21 +96,6 @@ def check_postgresql_encoding():
             return None
 
 
-def check_client():
-
-    port_rest = CONF.getApiRestfulConInfoPort()
-
-    if port_rest is None:
-        port_rest = "9977"
-    try:
-        response_rest = requests.get('http://{}:{}/status/check'.format(faraday.server.config.faraday_server.bind_address,port_rest))
-        return True
-    except ConnectionError:
-        return False
-    except InvalidURL:
-        return False
-
-
 def check_server_dependencies():
 
     requirements_file=os.path.join(FARADAY_BASE,'requirements_server.txt')
@@ -133,52 +112,9 @@ def check_server_dependencies():
         return None, None
 
 
-def check_client_dependencies():
-
-    requirements_file=os.path.join(FARADAY_BASE,'requirements.txt')
-    installed_deps, missing_deps, conflict_deps = dependencies.check_dependencies(
-        requirements_file=requirements_file)
-
-    if 'argparse' in conflict_deps:
-        conflict_deps.remove('argparse')
-
-    if conflict_deps:
-        return True, conflict_deps
-
-    if missing_deps:
-        return 0, missing_deps
-
-    if not conflict_deps and not missing_deps:
-        return None, None
-
-
-def check_credentials():
-
-    api_username = CONF.getAPIUsername()
-    api_password = CONF.getAPIPassword()
-
-    address =  faraday.server.config.faraday_server.bind_address
-    port = int(faraday.server.config.faraday_server.port)
-
-    values = {'email': api_username , 'password': api_password}
-
-    try:
-        r = requests.post('http://{ADDRESS}:{PORT}/_api/login'.format(ADDRESS=address,PORT=port), json=values)
-
-        if r.status_code == 200 and 'user' in r.json()['response']:
-            return 200
-        elif r.status_code == 400:
-            return 400
-        elif r.status_code == 500:
-            return 500
-
-    except ConnectionError:
-        return None
-
-
 def check_storage_permission():
 
-    path = os.path.join(CONSTANTS.CONST_FARADAY_HOME_PATH,'storage/test')
+    path = os.path.join(CONST_FARADAY_HOME_PATH, 'storage', 'test')
 
     try:
         os.mkdir(path)
@@ -236,7 +172,7 @@ def print_postgresql_other_status():
 
 
 def print_faraday_status():
-    """Prints Status of farday using check_server_running() and check_client"""
+    """Prints Status of farday using check_server_running() """
 
     #Prints Status of the server using check_server_running()
     pid = check_server_running()
@@ -247,56 +183,12 @@ def print_faraday_status():
         print('[{red}-{white}] Faraday Server is not running {white} \
         '.format(red=Fore.RED, white=Fore.WHITE))
 
-    #Prints Status of the client using check_client()
-    if check_client():
-        print('[{green}+{white}] Faraday GTK is running'.\
-            format(green=Fore.GREEN, white=Fore.WHITE))
-    else:
-        print('[{yellow}-{white}] Faraday GTK is not running'\
-            .format(yellow=Fore.YELLOW, white=Fore.WHITE))
-
-
-def print_depencencies_status():
-    """Prints Status of the dependencies using check_server_dependencies() and check_client_dependencies()"""
-
-    status, server_dep = check_server_dependencies()
-    red = Fore.RED
-    white = Fore.WHITE
-    green = Fore.GREEN
-    if status == True:
-        print(f"[{red}-{white}] Some server dependencies are old: [{', '.join(server_dep)}']. Update them with \"pip install -r requirements_server.txt -U\"")
-
-    elif status == 0:
-        print(f"[{red}-{white}] Client dependencies not met: [{', '.join(server_dep)}'] Install them with \"pip install -r requirements_server.txt -U\"")
-
-    else:
-        print(f'[{green}+{white}] Server dependencies met')
-
-    status, client_dep = check_client_dependencies()
-    if status == True:
-        print(f"[{red}-{white}] Some client dependencies are old: [{', '.join(client_dep)}]. Update them with \"pip install -r requirements.txt -U\"")
-
-    elif status == 0:
-        print(f"[{red}-{white}] Client dependencies not met: [{', '.join(client_dep)}]. Install them with \"pip install -r requirements.txt -U\"")
-
-    else:
-        print(f'[{green}+{white}] Client dependencies met')
-
 
 def print_config_status():
     """Prints Status of the configuration using check_credentials(), check_storage_permission() and check_open_ports()"""
 
-    pid = check_server_running()
-    result = check_postgres()
-    if pid and result:
-        status_code = check_credentials()
-        if status_code == 200:
-            print('[{green}+{white}] Credentials matched'.format(green=Fore.GREEN, white=Fore.WHITE))
-        elif status_code == 400:
-            print('[{red}-{white}] Error. Credentials does not match' \
-                .format(red=Fore.RED, white=Fore.WHITE))
-    else:
-        print('[{red}-{white}] Credentials can not be checked. Either Faraday Server not running or database not working'.format(red=Fore.RED, white=Fore.WHITE))
+    check_server_running()
+    check_postgres()
 
     if check_storage_permission():
         print('[{green}+{white}] /.faraday/storage -> Permission accepted' \
@@ -321,9 +213,5 @@ def full_status_check():
     print('\n{white}Checking if Faraday is running...'.format(white=Fore.WHITE))
     print_faraday_status()
 
-    print('\n{white}Checking Faraday dependencies...'.format(white=Fore.WHITE))
-    print_depencencies_status()
-
     print('\n{white}Checking Faraday config...{white}'.format(white=Fore.WHITE))
     print_config_status()
-# I'm Py3

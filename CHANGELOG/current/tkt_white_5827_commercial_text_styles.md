@@ -1,1 +1,0 @@
-* tkt_white_5827_commercial_text_styles

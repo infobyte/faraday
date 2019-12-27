@@ -12,16 +12,18 @@ future>=0.17.1
 IPy>=0.83
 marshmallow<3.0.0
 Pillow>=4.2.1
-pgcli
 psycopg2>2.7.7
 pyasn1-modules>=0.0.11
 pyopenssl>=17.2.0
 python-dateutil>=2.6.0
+mockito>=1.0.12
+pgcli==2.1.1
 requests>=2.18.4
 service_identity>=17.0.0
 SQLAlchemy>=1.2.0b2
 sqlalchemy_schemadisplay>=1.3
 tqdm>=4.15.0
+<<<<<<< HEAD
 twisted>=18.9.0
 webargs>=5.1.0
 marshmallow-sqlalchemy==0.15.0
@@ -42,3 +44,8 @@ pypcapfile==0.12.0
 html2text==2019.8.11
 distro==1.4.0
 faraday-plugins==1.0rc1
+whoosh>=2.7.4
+lxml
+Pygobject
+cairocffi
+pycairo

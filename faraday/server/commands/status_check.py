@@ -96,22 +96,6 @@ def check_postgresql_encoding():
             return None
 
 
-def check_server_dependencies():
-
-    requirements_file=os.path.join(FARADAY_BASE,'requirements_server.txt')
-    installed_deps, missing_deps, conflict_deps = dependencies.check_dependencies(
-        requirements_file=requirements_file)
-
-    if conflict_deps:
-        return True, conflict_deps
-
-    if missing_deps:
-        return 0, missing_deps
-
-    if not conflict_deps and not missing_deps:
-        return None, None
-
-
 def check_storage_permission():
 
     path = os.path.join(CONST_FARADAY_HOME_PATH, 'storage', 'test')

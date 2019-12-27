@@ -8,25 +8,20 @@ import socket
 import argparse
 import subprocess
 
+from alembic.runtime.migration import MigrationContext
+
 from faraday.server import TimerClass
 
-try:
-    from colorama import init, Fore
-    import sqlalchemy
-    import faraday.server.config
-    import faraday.server.utils.logger
-    import faraday.server.web
-    from faraday.server.models import db, Workspace
-    from faraday.server.utils import daemonize
-    from faraday.server.web import app
-    from faraday.utils import dependencies
-    from alembic.script import ScriptDirectory
-    from alembic.config import Config
-    from alembic.migration import MigrationContext
-except ImportError as ex:
-    print(ex)
-    print('Missing dependencies.\nPlease execute: pip install -r requirements_server.txt')
-    sys.exit(1)
+from colorama import init, Fore
+import sqlalchemy
+import faraday.server.config
+import faraday.server.utils.logger
+import faraday.server.web
+from faraday.server.models import db, Workspace
+from faraday.server.utils import daemonize
+from faraday.server.web import app
+from alembic.script import ScriptDirectory
+from alembic.config import Config
 logger = faraday.server.utils.logger.get_logger(faraday.server.utils.logger.ROOT_LOGGER)
 
 init()
@@ -35,14 +30,6 @@ init()
 def setup_environment(check_deps=False):
     # Configuration files generation
     faraday.server.config.copy_default_config_to_local()
-    if check_deps:
-        # Check dependencies
-        installed_deps, missing_deps, conflict_deps = dependencies.check_dependencies(
-            requirements_file=faraday.server.config.REQUIREMENTS_FILE)
-        logger.info("Checking dependencies...")
-        if conflict_deps:
-            logger.info("Some dependencies are old. Update them with \"pip install -r requirements_server.txt -U\"")
-        logger.info("Dependencies met")
     # Web configuration file generation
     faraday.server.config.gen_web_config()
 
@@ -215,6 +202,3 @@ def main():
     elif not args.start:
         run_server(args)
 
-if __name__ == '__main__': # TODO Borrar???
-    main()
-# I'm Py3

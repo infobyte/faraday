@@ -26,7 +26,7 @@ if not os.path.exists(FARADAY_SERVER_SESSIONS_DIR):
     os.mkdir(FARADAY_SERVER_SESSIONS_DIR)
 FARADAY_SERVER_PID_FILE = os.path.join(
     CONST_FARADAY_HOME_PATH, 'faraday-server-port-{0}.pid')
-REQUIREMENTS_FILE = os.path.join(FARADAY_BASE, 'requirements_server.txt')
+REQUIREMENTS_FILE = os.path.join(FARADAY_BASE, 'requirements.txt')
 DEFAULT_CONFIG_FILE = os.path.join(FARADAY_BASE, 'server/default.ini')
 REPORTS_VIEWS_DIR = os.path.join(FARADAY_BASE, 'views/reports')
 LOCAL_CONFIG_FILE = os.path.expanduser(

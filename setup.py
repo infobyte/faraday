@@ -211,8 +211,7 @@ setup(
     # MANIFEST.in as well.
     include_package_data=True,
     package_data={  # Optional
-         '': ['requirements.txt',
-              'requirements_server.txt'],
+         '': ['requirements.txt',],
     },
 
     # Although 'package_data' is the preferred approach, in some case you may

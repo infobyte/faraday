@@ -76,6 +76,8 @@ from apispec.exceptions import APISpecError
 
 
 # from flask-restplus
+from flask.views import MethodView
+
 RE_URL = re.compile(r"<(?:[^:<>]+:)?([^<>]+)>")
 
 
@@ -110,14 +112,28 @@ class FaradayAPIPlugin(BasePlugin):
     def path_helper(self, operations, *, view, app=None, **kwargs):
         """Path helper that allows passing a Flask view function."""
         rule = self._rule_for_view(view, app=app)
-        locate(f"faraday.server.api.base.{view.__qualname__.split('.')[0]}")
-        #operations.update(yaml_utils.load_operations_from_docstring(view.__doc__))
-        #if hasattr(view, "view_class") and issubclass(view.view_class, MethodView):
-        #    for method in view.methods:
-        #        if method in rule.methods:
-        #            method_name = method.lower()
-        #            method = getattr(view.view_class, method_name)
-        #            operations[method_name] = yaml_utils.load_yaml_from_docstring(
-        #                method.__doc__
-        #            )
-        #return self.flaskpath2openapi(rule.rule)
+        view_class = None
+        view_name = None
+        try:
+            view_class = view.__qualname__.split('.')[0]
+            view_name = view.__qualname__.split('.')[1]
+        except Exception:
+            pass
+        #print(f"faraday.server.api.modules.{view_class}")
+        #print(locate(f"faraday.server.api.base.{view.__qualname__.split('.')[0]}"))
+        #print('*' * 90)
+        operations.update(yaml_utils.load_operations_from_docstring(view.__doc__))
+        print(view.__doc__)
+        if view_class and view_name:
+            operations[view_name] = yaml_utils.load_yaml_from_docstring(
+                view.__doc__
+            )
+        if hasattr(view, "view_class") and issubclass(view.view_class, MethodView):
+            for method in view.methods:
+                if method in rule.methods:
+                    method_name = method.lower()
+                    method = getattr(view.view_class, method_name)
+                    operations[method_name] = yaml_utils.load_yaml_from_docstring(
+                        method.__doc__
+                    )
+        return self.flaskpath2openapi(rule.rule)

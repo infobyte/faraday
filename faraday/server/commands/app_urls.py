@@ -35,7 +35,7 @@ def openapi_format(format="yaml"):
         title="Faraday API",
         version="2",
         openapi_version="3.0.2",
-        plugins=[FaradayAPIPlugin(), MarshmallowPlugin()],
+        plugins=[FaradayAPIPlugin(), MarshmallowPlugin()], #FaradayAPIPlugin
         info={'description': 'The Faraday server API'},
         tags=TAGS,
     )

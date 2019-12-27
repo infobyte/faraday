@@ -218,14 +218,13 @@ def remove_pid_file(port):
 def get_ports_running():
     ports = []
     re_string = re.escape(faraday.server.config.FARADAY_SERVER_PID_FILE)
-    re_string = re_string.replace("\{0\}","[0-9]+")
-    home_dir = os.listdir(faraday.server.config.CONSTANTS.CONST_FARADAY_HOME_PATH)
+    re_string = re_string.replace("\{0\}", "[0-9]+")
+    home_dir = os.listdir(faraday.server.config.CONST_FARADAY_HOME_PATH)
 
     for path in home_dir:
-        path = faraday.server.config.CONSTANTS.CONST_FARADAY_HOME_PATH + "/" + path
-        if re.match(re_string,path):
+        path = faraday.server.config.CONST_FARADAY_HOME_PATH + "/" + path
+        if re.match(re_string, path):
             port = path.split("-")[-1].split(".")[0]
             ports.append(int(port))
 
     return ports
-# I'm Py3

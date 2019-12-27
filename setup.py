@@ -33,7 +33,7 @@ with open('faraday/__init__.py', 'rt', encoding='utf8') as f:
     version = search(r'__version__ = \'(.*?)\'', f.read()).group(1)
 
 # Taken from https://stackoverflow.com/questions/14399534/reference-requirements-txt-for-the-install-requires-kwarg-in-setuptools-setup-py/14399775#14399775
-with open('requirements_server.txt') as fp:
+with open('requirements.txt') as fp:
     required = fp.read().splitlines()
     required.reverse()
 

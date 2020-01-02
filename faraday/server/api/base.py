@@ -810,14 +810,13 @@ class DeleteMixin:
     def delete(self, object_id, **kwargs):
         """
         ---
-        post:
           tags: ["Delete"]
           description: Create hosts in bulk AAAAAAA
           responses:
             201:
               content:
                 application/json:
-                  schema: {self.schema_class}
+                  schema: {schema_class}
         """
         obj = self._get_object(object_id, **kwargs)
         self._perform_delete(obj, **kwargs)

@@ -1,3 +1,5 @@
+import logging
+from datetime import datetime
 import flask
 import sqlalchemy
 from marshmallow import (
@@ -32,6 +34,8 @@ from faraday.server.api.base import AutoSchema, GenericWorkspacedView
 from faraday.server.api.modules.websocket_auth import require_agent_token
 
 bulk_create_api = flask.Blueprint('bulk_create_api', __name__)
+
+logger = logging.getLogger(__name__)
 
 class VulnerabilitySchema(vulns.VulnerabilitySchema):
     class Meta(vulns.VulnerabilitySchema.Meta):
@@ -285,12 +289,22 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
         model_class = VulnerabilityWeb
     else:
         raise ValidationError("unknown type")
-
+    run_date = vuln_data.pop('run_date', None)
     (created, vuln) = get_or_create(ws, model_class, vuln_data)
     db.session.commit()
 
     if command is not None:
         _create_command_object_for(ws, created, vuln, command)
+
+    if created and run_date:
+        try:
+            run_timestamp = float(run_date)
+            logger.debug("Apply run date to vuln")
+            vuln.create_date = datetime.utcfromtimestamp(run_timestamp)
+        except:
+            logger.error("Error in run_date in vuln")
+        else:
+            db.session.commit()
 
     def update_vuln(policyviolations, references, vuln):
         vuln.references = references

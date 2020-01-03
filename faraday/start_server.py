@@ -66,7 +66,7 @@ def is_server_running(port):
 
 
 def run_server(args):
-    web_server = faraday.server.web.WebServer(enable_ssl=args.ssl)
+    web_server = faraday.server.web.WebServer()
     daemonize.create_pid_file(args.port)
     web_server.run()
 
@@ -149,7 +149,6 @@ def main():
     check_alembic_version()
     check_postgresql()
     parser = argparse.ArgumentParser()
-    parser.add_argument('--ssl', action='store_true', help='enable HTTPS')
     parser.add_argument('--debug', action='store_true', help='run Faraday Server in debug mode')
     parser.add_argument('--start', action='store_true', help='run Faraday Server in background')
     parser.add_argument('--stop', action='store_true', help='stop Faraday Server')
@@ -189,9 +188,6 @@ def main():
     if result == 0:
         logger.error("Faraday Server port in use. Check your processes and run the server again...")
         sys.exit(1)
-    # Overwrites config option if SSL is set by argument
-    if args.ssl:
-        faraday.server.config.ssl.enabled = 'true'
     if not args.no_setup:
         setup_environment(not args.nodeps)
     if args.port:

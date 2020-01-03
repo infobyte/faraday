@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from marshmallow import ValidationError
@@ -641,7 +641,7 @@ def test_bulk_create_endpoint_with_vuln_run_date(session, workspace, test_client
     assert count(Host, workspace) == 0
     assert count(VulnerabilityGeneric, workspace) == 0
     url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
-    run_date = datetime.now() - timedelta(days=30)
+    run_date = datetime.now(timezone.utc) - timedelta(days=30)
     host_data_copy = host_data.copy()
     vuln_data_copy = vuln_data.copy()
     vuln_data_copy['run_date'] = run_date.timestamp()
@@ -651,7 +651,7 @@ def test_bulk_create_endpoint_with_vuln_run_date(session, workspace, test_client
     assert count(Host, workspace) == 1
     assert count(VulnerabilityGeneric, workspace) == 1
     vuln = Vulnerability.query.filter(Vulnerability.workspace == workspace).one()
-    assert vuln.create_date == run_date
+    assert vuln.create_date.date() == run_date.date()
 
 
 # I'm Py3

@@ -1273,6 +1273,29 @@ class Credential(Metadata):
         foreign_keys=[workspace_id],
     )
 
+    _host_ip_query = (
+        select([Host.ip])
+        .where(text('credential.host_id = host.id'))
+    )
+
+    _service_ip_query = (
+        select([text('host_inner.ip || \'/\' || service.name')])
+        .select_from(text('host as host_inner, service'))
+        .where(text('credential.service_id = service.id and '
+                    'host_inner.id = service.host_id'))
+    )
+
+    target_ip = column_property(
+        case([
+            (text('credential.host_id IS NOT null'),
+                _host_ip_query.as_scalar()),
+            (text('credential.service_id IS NOT null'),
+                _service_ip_query.as_scalar())
+        ]),
+        deferred=True
+    )
+
+
     __table_args__ = (
         CheckConstraint('(host_id IS NULL AND service_id IS NOT NULL) OR '
                         '(host_id IS NOT NULL AND service_id IS NULL)',

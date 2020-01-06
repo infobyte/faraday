@@ -38,7 +38,7 @@ class CredentialSchema(AutoSchema):
                             default=None)
     service_name = fields.String(dump_only=True, attribute="service.name",
                                  default=None)
-    target = fields.Method('get_target', dump_only=True)
+    target = fields.String(dump_only=True, attribute="target_ip")
 
     # for filtering
     host_id = fields.Integer(load_only=True)
@@ -63,7 +63,8 @@ class CredentialSchema(AutoSchema):
         fields = ('id', '_id', "_rev", 'parent', 'username', 'description',
                   'name', 'password', 'owner', 'owned', 'couchdbid', 'parent',
                   'parent_type', 'metadata', 'host_ip', 'service_name',
-                  'target')
+                  'target',
+                  )
 
     @post_load
     def set_parent(self, data):
@@ -98,9 +99,9 @@ class CredentialFilterSet(FilterSet):
             'name',
             'username',
             'host_id',
-            'service_id'
+            'service_id',
+            'target'
         )
-
         default_operator = operators.Equal
         operators = (operators.Equal, )
 

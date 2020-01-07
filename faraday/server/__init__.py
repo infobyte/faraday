@@ -25,7 +25,9 @@ class TimerClass(threading.Thread):
                                    params={'version': faraday.__version__, 'key': 'white'},
                                    timeout=1,
                                    verify=True)
-                logger.info('License status {0}'.format(res.json().get('license_status', 'FAILED!')))
+                license_status = res.json().get('license_status', 'FAILED!')
+                update_status = res.json().get('update_status', 'FAILED!')
+                logger.info(f'Update status: {update_status}')
             except Exception as ex:
                 logger.exception(ex)
                 logger.warn(

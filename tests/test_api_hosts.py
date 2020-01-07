@@ -123,6 +123,22 @@ class TestHostAPI:
         assert host.os == ''
         assert host.workspace == self.workspace
 
+    def test_create_a_host_with_rev_succeeds(self, test_client):
+        res = test_client.post(self.url(), data={
+            "ip": "127.0.0.1",
+            "description": "aaaaa",
+            "_rev":"saraza"
+            # os is not required
+        })
+        assert res.status_code == 201
+        assert Host.query.count() == HOSTS_COUNT + 1
+        host_id = res.json['id']
+        host = Host.query.get(host_id)
+        assert host.ip == "127.0.0.1"
+        assert host.description == "aaaaa"
+        assert host.os == ''
+        assert host.workspace == self.workspace    
+    
     def test_create_a_host_fails_with_missing_desc(self, test_client):
         res = test_client.post(self.url(), data={
             "ip": "127.0.0.1",
@@ -774,6 +790,3 @@ def test_hypothesis(host_with_hostnames, test_client, session):
         assert res.status_code in [201, 400, 409]
 
     send_api_request()
-
-
-# I'm Py3

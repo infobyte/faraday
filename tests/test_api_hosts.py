@@ -557,6 +557,14 @@ class TestHostAPI:
         assert deleted_hosts == len(hosts_ids)
         assert host_count_after_delete == 0
 
+    def test_bulk_delete_hosts_without_hosts_ids(self, test_client):
+        ws = WorkspaceFactory.create(name="abc")
+        request_data = {'hosts_ids': []}
+
+        delete_response = test_client.delete('/v2/ws/{0}/hosts/bulk_delete/'.format(ws.name), data=request_data)
+
+        assert delete_response.status_code == 400
+
 
 class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
     model = Host

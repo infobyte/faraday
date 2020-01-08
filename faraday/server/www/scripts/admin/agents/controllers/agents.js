@@ -20,9 +20,14 @@ angular.module('faradayApp')
             $scope.agentToken = {id: null, token: null};
             $scope.workspace = null;
             $scope.agents = [];
+            $scope.executors = [];
             $scope.selectAll = false;
             $scope.options = [];
             $scope.disableExecute = false;
+            $scope.parameters_metadata = {};
+            $scope.data = {
+            	selectedExecutor: null
+            };
 
             $scope.init = function () {
                 getWorkspaces();
@@ -76,7 +81,28 @@ angular.module('faradayApp')
                     });
             };
 
-            var removeAgentFromScope = function (agentId) {
+            $scope.selectAgent = function (agent) {
+				$scope.executors = [];
+				$scope.parameters_values = {};
+				agent.executors.forEach((executor) => {
+					let exec = {
+						id: executor.id,
+						name: executor.name,
+						parameters_metadata: [],
+						parameters_values: {}
+					};
+					let params = executor.parameters_metadata;
+					for (let [key, value] of Object.entries(params)) {
+						let parameter = { name: key, isRequired: value };
+						exec.parameters_metadata.push(parameter);
+						exec.parameters_values[key] = '';
+					}
+
+					$scope.executors.push(exec);
+				});
+            };
+
+            let removeAgentFromScope = function (agentId) {
                 for (var i = 0; i < $scope.agents.length; i++) {
                     if ($scope.agents[i].id === agentId) {
                         $scope.agents.splice(i, 1);
@@ -96,8 +122,17 @@ angular.module('faradayApp')
 
              $scope.runAgent = function (agentId) {
                  $scope.disableExecute = true;
-                 agentFact.runAgent($scope.workspace, agentId).then(
+	             let executorData = {
+		             agent_id: agentId,
+		             executor: $scope.data.selectedExecutor.name,
+		             args: {}
+	             };
+	             for (let [key, value] of Object.entries($scope.data.selectedExecutor.parameters_values)) {
+					 executorData.args[key] = value;
+				 }
+                 agentFact.runAgent($scope.workspace, agentId, executorData).then(
                     function (response) {
+                    	$('#selectExecutorModal-' + agentId).modal('toggle');
                         Notification.success("The Agent is running");
                         setInterval(function () {
                             $scope.disableExecute = false;

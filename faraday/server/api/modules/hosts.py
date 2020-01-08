@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 class HostSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     id = fields.Integer()
-    _rev = fields.String(default='')
+    _rev = fields.String(default='', dump_only=True)
     ip = fields.String(default='')
     description = fields.String(required=True)  # Explicitly set required=True
     default_gateway = NullToBlankString(

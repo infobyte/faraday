@@ -1,1 +1,0 @@
-Send migration errors to log

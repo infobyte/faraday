@@ -578,6 +578,13 @@ class TestHostAPI:
 
         assert delete_response.json['deleted_hosts'] == 0
 
+    def test_bulk_delete_hosts_invalid_characters_in_request(self, test_client):
+        ws = WorkspaceFactory.create(name="abc")
+        request_data = {'hosts_ids': [-1, 'test']}
+        delete_response = test_client.delete('/v2/ws/{0}/hosts/bulk_delete/'.format(ws.name), data=request_data)
+
+        assert delete_response.json['deleted_hosts'] == 0
+
 
 class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
     model = Host

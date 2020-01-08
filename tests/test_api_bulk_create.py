@@ -533,6 +533,39 @@ def test_bulk_create_endpoint(session, workspace, test_client):
 
 
 @pytest.mark.usefixtures('logged_user')
+def test_bulk_create_endpoint_run_over_closed_vuln(session, workspace, test_client):
+    assert count(Host, workspace) == 0
+    assert count(VulnerabilityGeneric, workspace) == 0
+    url = f'v2/ws/{workspace.name}/bulk_create/'
+    host_data_ = host_data.copy()
+    host_data_['vulnerabilities'] = [vuln_data]
+    res = test_client.post(url, data=dict(hosts=[host_data_]))
+    assert res.status_code == 201, res.json
+    assert count(Host, workspace) == 1
+    assert count(Vulnerability, workspace) == 1
+    host = Host.query.filter(Host.workspace == workspace).one()
+    vuln = Vulnerability.query.filter(Vulnerability.workspace == workspace).one()
+    assert host.ip == "127.0.0.1"
+    assert set({hn.name for hn in host.hostnames}) == {"test.com", "test2.org"}
+    assert vuln.status == "open"
+    close_url = f"v2/ws/{workspace.name}/vulns/{vuln.id}/"
+    res = test_client.get(close_url)
+    vuln_data_del = res.json
+    vuln_data_del["status"] = "closed"
+    res = test_client.put(close_url, data=dict(vuln_data_del))
+    assert res.status_code == 200, res.json
+    assert count(Host, workspace) == 1
+    assert count(Vulnerability, workspace) == 1
+    assert vuln.status == "closed"
+    res = test_client.post(url, data=dict(hosts=[host_data_]))
+    assert res.status_code == 201, res.json
+    assert count(Host, workspace) == 1
+    assert count(Vulnerability, workspace) == 1
+    vuln = Vulnerability.query.filter(Vulnerability.workspace == workspace).one()
+    assert vuln.status == "re-opened"
+
+
+@pytest.mark.usefixtures('logged_user')
 def test_bulk_create_endpoint_without_host_ip(session, workspace, test_client):
     url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
     host_data_ = host_data.copy()

@@ -1,6 +1,9 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2019  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+import json
+
+import flask
 import wtforms
 
 from flask import Blueprint, abort, request
@@ -11,12 +14,29 @@ from marshmallow import fields, Schema
 from faraday.server.api.base import (AutoSchema, UpdateWorkspacedMixin, DeleteWorkspacedMixin,
                                      CountWorkspacedMixin, ReadOnlyWorkspacedView, CreateWorkspacedMixin,
                                      GenericWorkspacedView)
-from faraday.server.models import Agent
-from faraday.server.schemas import PrimaryKeyRelatedField
+from faraday.server.models import Agent, Executor
+from faraday.server.schemas import PrimaryKeyRelatedField, MutableField, SelfNestedField
 from faraday.server.config import faraday_server
 from faraday.server.events import changes_queue
 
 agent_api = Blueprint('agent_api', __name__)
+
+
+class ExecutorSchema(AutoSchema):
+
+    parameters_metadata = fields.Dict(
+        dump_only=True
+    )
+    id = fields.Integer(dump_only=True)
+    name = fields.String(dump_only=True)
+
+    class Meta:
+        model = Executor
+        fields = (
+            'id',
+            'name',
+            'parameters_metadata',
+        )
 
 
 class AgentSchema(AutoSchema):
@@ -27,6 +47,7 @@ class AgentSchema(AutoSchema):
     create_date = fields.DateTime(dump_only=True)
     update_date = fields.DateTime(dump_only=True)
     is_online = fields.Boolean(dump_only=True)
+    executors = fields.Nested(ExecutorSchema(), dump_only=True, many=True)
 
     class Meta:
         model = Agent
@@ -41,6 +62,7 @@ class AgentSchema(AutoSchema):
             'token',
             'is_online',
             'active',
+            'executors'
         )
 
 
@@ -68,6 +90,15 @@ class AgentCreationView(GenericWorkspacedView, CreateWorkspacedMixin):
         return agent
 
 
+class ExecutorDataSchema(Schema):
+    executor = fields.String(default=None)
+    args = fields.Dict(default=None)
+
+
+class AgentRunSchema(Schema):
+    executorData = fields.Nested(ExecutorDataSchema(), required=True)
+
+
 class AgentView(UpdateWorkspacedMixin,
                 DeleteWorkspacedMixin,
                 CountWorkspacedMixin,
@@ -75,24 +106,25 @@ class AgentView(UpdateWorkspacedMixin,
     route_base = 'agents'
     model_class = Agent
     schema_class = AgentSchema
-    get_joinedloads = [Agent.creator]
+    get_joinedloads = [Agent.creator, Agent.executors]
 
     @route('/<int:agent_id>/run/', methods=['POST'])
     def run_agent(self, workspace_name, agent_id):
-        try:
-            validate_csrf(request.form.get('csrf_token'))
-        except wtforms.ValidationError:
-            abort(403)
+        if flask.request.content_type != 'application/json':
+            abort(400, "Only application/json is a valid content-type")
+        data = self._parse_data(AgentRunSchema(strict=True), request)
         agent = self._get_object(agent_id, workspace_name)
+        executor_data = data['executorData']
         changes_queue.put({
             'agent_id': agent.id,
             'action': 'RUN',
+            "executor": executor_data.get('executor'),
+            "args": executor_data.get('args')
         })
-        return 'OK'
+        return flask.jsonify({
+            'successful': True,
+        })
 
 
 AgentView.register(agent_api)
 AgentCreationView.register(agent_api)
-
-
-# I'm Py3

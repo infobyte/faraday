@@ -565,6 +565,20 @@ class TestHostAPI:
 
         assert delete_response.status_code == 400
 
+    def test_bulk_delete_hosts_from_another_workspace(self, test_client, session):
+        workspace_1 = WorkspaceFactory.create(name='workspace_1')
+        host_of_ws_1 = HostFactory.create(workspace=workspace_1)
+        workspace_2 = WorkspaceFactory.create(name='workspace_2')
+        host_of_ws_2 = HostFactory.create(workspace=workspace_2)
+        session.commit()
+
+        # Try to delete workspace_2's host from workspace_1
+        request_data = {'hosts_ids': [host_of_ws_2.id]}
+        url = '/v2/ws/{0}/hosts/bulk_delete/'.format(workspace_1.name)
+        delete_response = test_client.delete(url, data=request_data)
+
+        assert delete_response.json['deleted_hosts'] == 0
+
 
 class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
     model = Host

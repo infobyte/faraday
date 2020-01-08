@@ -537,7 +537,6 @@ class TestHostAPI:
         assert res.json['hosts_with_errors'] == 0
         assert session.query(Host).filter_by(description="test_host").count() == expected_created_hosts
 
-    @pytest.mark.usefixtures('ignore_nplusone')
     def test_bulk_delete_hosts(self, test_client, session):
         ws = WorkspaceFactory.create(name="abc")
         host_1 = HostFactory.create(workspace=ws)

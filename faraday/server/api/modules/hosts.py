@@ -288,18 +288,13 @@ class HostsView(PaginatedMixin,
         hosts_ids = json_request.get('hosts_ids', [])
         deleted_hosts = 0
         hosts = []
-
         if hosts_ids:
-            logger.info("Deleting hosts with IDs: {}".format(hosts_ids))
-            hosts = db.session.query(Host).filter(
-                        Host.id.in_(hosts_ids),
-                        Host.workspace_id == workspace.id)
+            deleted_hosts = Host.query.filter(
+                Host.id.in_(hosts_ids),
+                Host.workspace_id==workspace.id).delete(synchronize_session='fetch')
         else:
             flask.abort(400, "Invalid request")
 
-        for host in hosts:
-            db.session.delete(host)
-            deleted_hosts += 1
         db.session.commit()
         response = {'deleted_hosts': deleted_hosts}
         return flask.jsonify(response)

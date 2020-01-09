@@ -286,6 +286,7 @@ class HostsView(PaginatedMixin,
         workspace = self._get_workspace(workspace_name)
         json_request = flask.request.get_json()
         hosts_ids = json_request.get('hosts_ids', [])
+        hosts_ids = [int(host_id) for host_id in hosts_ids if isinstance(host_id, int)]
         deleted_hosts = 0
         hosts = []
         if hosts_ids:

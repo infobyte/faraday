@@ -8,8 +8,6 @@ import socket
 import argparse
 import subprocess
 
-from faraday.server import TimerClass
-
 try:
     from colorama import init, Fore
     import sqlalchemy

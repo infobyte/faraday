@@ -15,6 +15,8 @@ LOG_FILE = os.path.expanduser(os.path.join(
 
 MAX_LOG_FILE_SIZE = 5 * 1024 * 1024     # 5 MB
 MAX_LOG_FILE_BACKUP_COUNT = 5
+LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s {%(threadName)s} [%(filename)s:%(lineno)s - %(funcName)s()]  %(message)s'
+LOG_DATE_FORMAT = '%Y-%m-%dT%H:%M:%S%z'
 ROOT_LOGGER = u'faraday'
 LOGGING_HANDLERS = []
 LVL_SETTABLE_HANDLERS = []
@@ -28,8 +30,8 @@ def setup_logging():
     if faraday.server.config.logger_config.use_rfc5424_formatter:
         formatter = RFC5424Formatter()
     else:
-        formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s {%(threadName)s} [%(filename)s:%(lineno)s - %(funcName)s()]  %(message)s')
+
+        formatter = logging.Formatter(LOG_FORMAT, LOG_DATE_FORMAT)
     setup_console_logging(formatter)
     setup_file_logging(formatter)
 

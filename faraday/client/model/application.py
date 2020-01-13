@@ -13,7 +13,7 @@ import sys
 import signal
 import json
 
-from faraday.server import TimerClass
+from faraday.server.threads.ping_home import PingHomeThread
 
 try:
     from Queue import Queue
@@ -105,8 +105,8 @@ class MainApplication:
                                         self._plugin_controller,
                                         self.args.gui)
 
-        self.timer = TimerClass()
-        self.timer.start()
+        self.ping_home = PingHomeThread()
+        self.ping_home.start()
 
     def on_connection_lost(self):
         """All it does is send a notification to the notification center"""
@@ -172,7 +172,7 @@ class MainApplication:
         if self._model_controller.isAlive():
             # runs only if thread has started, i.e. self._model_controller.start() is run first
             self._model_controller.join()
-        self.timer.stop()
+        self.ping_home.stop()
         faraday.client.model.api.devlog("Waiting for controller threads to end...")
         return exit_code
 

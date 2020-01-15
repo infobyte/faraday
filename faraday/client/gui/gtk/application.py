@@ -978,7 +978,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         if active_workspace:
             command = fplugin_utils.build_faraday_plugin_command(plugin, active_workspace.getName())
             fd = terminal.get_pty().get_fd()
-            os.write(fd, command)
+            os.write(fd, command.encode())
 
 
 # I'm Py3

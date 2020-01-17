@@ -14,9 +14,8 @@ from colorama import Fore
 import faraday.server.config
 from faraday.server.web import app
 from faraday.server.models import db
-from faraday.server.config import FARADAY_BASE, CONST_FARADAY_HOME_PATH
+from faraday.server.config import CONST_FARADAY_HOME_PATH
 from faraday.server.utils.daemonize import is_server_running
-from faraday.utils import dependencies
 
 
 init()

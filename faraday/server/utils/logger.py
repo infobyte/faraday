@@ -10,8 +10,9 @@ import errno
 from syslog_rfc5424_formatter import RFC5424Formatter
 
 LOG_FILE = os.path.expanduser(os.path.join(
-    faraday.server.config.CONSTANTS.CONST_FARADAY_HOME_PATH,
-    faraday.server.config.CONSTANTS.CONST_FARADAY_LOGS_PATH, 'faraday-server.log'))
+    faraday.server.config.CONST_FARADAY_HOME_PATH,
+    'logs',
+    'faraday-server.log'))
 
 MAX_LOG_FILE_SIZE = 5 * 1024 * 1024     # 5 MB
 MAX_LOG_FILE_BACKUP_COUNT = 5

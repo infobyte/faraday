@@ -1,1 +1,1 @@
-Added credential sorting by target field
+Add sorting by target in credential view

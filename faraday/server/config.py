@@ -95,9 +95,7 @@ class ConfigSection:
     @staticmethod
     def parse_section(section_name, __parser):
         section = None
-        if section_name == 'couchdb':
-            section = couchdb
-        elif section_name == 'database':
+        if section_name == 'database':
             section = database
         elif section_name == 'dashboard':
             section = dashboard
@@ -116,16 +114,6 @@ class ConfigSection:
         else:
             return
         section.parse(__parser)
-
-
-class CouchDBConfigObject(ConfigSection):
-    def __init__(self):
-        self.host = None
-        self.password = None
-        self.port = None
-        self.protocol = None
-        self.ssl_port = None
-        self.user = None
 
 
 class DatabaseConfigObject(ConfigSection):
@@ -188,7 +176,6 @@ class LoggerConfig(ConfigSection):
     def __init__(self):
         self.use_rfc5424_formatter = False
 
-couchdb = CouchDBConfigObject()
 database = DatabaseConfigObject()
 dashboard = DashboardConfigObject()
 faraday_server = FaradayServerConfigObject()

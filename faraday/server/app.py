@@ -253,9 +253,9 @@ def expire_session(app, user):
 
 def user_logged_in_succesfull(app, user):
     user_agent = request.headers.get('User-Agent')
-    if user_agent == 'faraday-client':
+    if user_agent.startswith('faraday-client/'):
         HOME_URL = "https://portal.faradaysec.com/api/v1/license_check"
-        params = {'version': faraday.__version__, 'key': 'white', 'client': ''}
+        params = {'version': faraday.__version__, 'key': 'white', 'client': user_agent}
         try:
             logger.debug('Send Faraday-Client stats')
             res = requests.get(HOME_URL, params=params, timeout=1, verify=True)

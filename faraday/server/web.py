@@ -23,10 +23,10 @@ from OpenSSL.SSL import Error as SSLError
 
 import faraday.server.config
 
-from faraday.config.constant import CONST_FARADAY_HOME_PATH
-from faraday.server import TimerClass
+from faraday.server.config import CONST_FARADAY_HOME_PATH
 from faraday.server.utils import logger
 from faraday.server.threads.reports_processor import ReportsManager, REPORTS_QUEUE
+from faraday.server.threads.ping_home import PingHomeThread
 from faraday.server.app import create_app
 from faraday.server.websocket_factories import (
     WorkspaceServerFactory,
@@ -145,7 +145,7 @@ class WebServer:
             # teardown()
             if self.raw_report_processor.isAlive():
                 self.raw_report_processor.stop()
-            self.timer.stop()
+            self.ping_home_thread.stop()
 
         log_path = os.path.join(CONST_FARADAY_HOME_PATH, 'logs', 'access-logging.log')
         site = twisted.web.server.Site(self.__root_resource,
@@ -165,8 +165,8 @@ class WebServer:
             # start threads and processes
             self.raw_report_processor = ReportsManager(REPORTS_QUEUE, name="ReportsManager-Thread", daemon=True)
             self.raw_report_processor.start()
-            self.timer = TimerClass()
-            self.timer.start()
+            self.ping_home_thread = PingHomeThread()
+            self.ping_home_thread.start()
             # web and static content
             self.__listen_func(
                 self.__listen_port, site,
@@ -183,7 +183,7 @@ class WebServer:
                     listenWS(self.__build_websockets_resource(), interface=self.__bind_address, contextFactory=contextFactory)
 
                 except SSLError as e:
-                    logger.error('Could not start websockets due to a SSL Config error. Some web functionality will not be available')            
+                    logger.error('Could not start websockets due to a SSL Config error. Some web functionality will not be available')
                 except error.CannotListenError:
                     logger.warn('Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
                 except Exception as ex:

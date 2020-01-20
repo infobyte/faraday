@@ -210,6 +210,7 @@ def main():
     elif not args.start:
         run_server(args)
 
-if __name__ == '__main__': # TODO Borrar???
+
+if __name__ == "__main__":
     main()
-# I'm Py3
+

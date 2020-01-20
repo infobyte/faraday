@@ -5,6 +5,8 @@ import logging
 import os
 import string
 import datetime
+
+import requests
 from itsdangerous import TimedJSONWebSignatureSerializer, SignatureExpired, BadSignature
 from os.path import join
 from random import SystemRandom
@@ -14,7 +16,7 @@ from faraday.server.models import User
 from configparser import ConfigParser, NoSectionError, NoOptionError, DuplicateSectionError
 
 import flask
-from flask import Flask, session, g
+from flask import Flask, session, g, request
 from flask.json import JSONEncoder
 from flask_sqlalchemy import get_debug_queries
 from flask_security import (
@@ -30,7 +32,7 @@ from flask_security.utils import (
 from flask_kvsession import KVSessionExtension
 from simplekv.fs import FilesystemStore
 from simplekv.decorator import PrefixDecorator
-from flask_login import user_logged_out
+from flask_login import user_logged_out, user_logged_in
 from nplusone.ext.flask_sqlalchemy import NPlusOne
 from depot.manager import DepotManager
 
@@ -249,6 +251,18 @@ def expire_session(app, user):
     KVSessionExtension(app=app).cleanup_sessions(app)
 
 
+def user_logged_in_succesfull(app, user):
+    user_agent = request.headers.get('User-Agent')
+    if user_agent == 'faraday-client':
+        HOME_URL = "https://portal.faradaysec.com/api/v1/license_check"
+        params = {'version': faraday.__version__, 'key': 'white', 'client': ''}
+        try:
+            logger.debug('Send Faraday-Client stats')
+            res = requests.get(HOME_URL, params=params, timeout=1, verify=True)
+            logger.debug("Faraday-Client Stats response: %s", res.text)
+        except Exception as e:
+            logger.warning("Error sending client stats [%s]", e)
+
 def create_app(db_connection_string=None, testing=None):
     app = Flask(__name__)
 
@@ -310,6 +324,7 @@ def create_app(db_connection_string=None, testing=None):
     store = FilesystemStore(app.config['SESSION_FILE_DIR'])
     prefixed_store = PrefixDecorator('sessions_', store)
     KVSessionExtension(prefixed_store, app)
+    user_logged_in.connect(user_logged_in_succesfull, app)
     user_logged_out.connect(expire_session, app)
 
     storage_path = faraday.server.config.storage.path

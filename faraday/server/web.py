@@ -23,7 +23,7 @@ from OpenSSL.SSL import Error as SSLError
 
 import faraday.server.config
 
-from faraday.config.constant import CONST_FARADAY_HOME_PATH
+from faraday.server.config import CONST_FARADAY_HOME_PATH
 from faraday.server.utils import logger
 from faraday.server.threads.reports_processor import ReportsManager, REPORTS_QUEUE
 from faraday.server.threads.ping_home import PingHomeThread
@@ -183,7 +183,7 @@ class WebServer:
                     listenWS(self.__build_websockets_resource(), interface=self.__bind_address, contextFactory=contextFactory)
 
                 except SSLError as e:
-                    logger.error('Could not start websockets due to a SSL Config error. Some web functionality will not be available')            
+                    logger.error('Could not start websockets due to a SSL Config error. Some web functionality will not be available')
                 except error.CannotListenError:
                     logger.warn('Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
                 except Exception as ex:

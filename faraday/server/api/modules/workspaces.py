@@ -25,7 +25,6 @@ from faraday.server.schemas import (
     SelfNestedField,
 )
 from faraday.server.api.base import ReadWriteView, AutoSchema
-from faraday.config.configuration import getInstanceConfiguration
 
 logger = logging.getLogger(__name__)
 
@@ -192,24 +191,6 @@ class WorkspaceView(ReadWriteView):
 
         db.session.commit()
         return workspace
-
-    def _createWorkspaceFolder(self, name):
-        CONF = getInstanceConfiguration()
-        self._report_path = os.path.join(CONF.getReportPath(), name)
-        self._report_ppath = os.path.join(self._report_path, "process")
-        self._report_upath = os.path.join(self._report_path, "unprocessed")
-
-        if not os.path.exists(CONF.getReportPath()):
-            os.mkdir(CONF.getReportPath())
-
-        if not os.path.exists(self._report_path):
-            os.mkdir(self._report_path)
-
-        if not os.path.exists(self._report_ppath):
-            os.mkdir(self._report_ppath)
-
-        if not os.path.exists(self._report_upath):
-            os.mkdir(self._report_upath)
 
     def _update_object(self, obj, data):
         scope = data.pop('scope', [])

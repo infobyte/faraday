@@ -37,8 +37,6 @@ from sqlalchemy.exc import ProgrammingError, OperationalError
 
 import faraday.server.config
 from faraday.server.config import FARADAY_BASE
-from faraday.client.persistence.server.server import _conf, FARADAY_UP, SERVER_URL
-from faraday.client.start_client import FARADAY_PLUGINS_BASEPATH
 from faraday.server.commands.initdb import InitDB
 from faraday.server.commands.faraday_schema_display import DatabaseSchema
 from faraday.server.commands.app_urls import show_all_urls
@@ -49,6 +47,7 @@ from faraday.server.commands import support as support_zip
 from faraday.server.commands import change_username
 from faraday.server.models import db, User
 from faraday.server.web import app
+from faraday_plugins.plugins.manager import PluginsManager
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -157,9 +156,9 @@ def validate_email(ctx, param, value):
 
 @click.command(help="List Available Plugins")
 def list_plugins():
-    plugins_list = [name for name in os.listdir(FARADAY_PLUGINS_BASEPATH)
-           if os.path.isdir(os.path.join(FARADAY_PLUGINS_BASEPATH, name))]
-    print('\n'.join(sorted(plugins_list)))
+    plugins_manager = PluginsManager()
+    for plugin_id, plugin in plugins_manager.get_plugins():
+        click.echo(f"{plugin.id}")
 
 @click.command(help="Create ADMIN user for Faraday application")
 @click.option('--username', prompt=True, callback=validate_user_unique_field)

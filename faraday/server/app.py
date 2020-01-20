@@ -41,7 +41,7 @@ import faraday.server.config
 import faraday.server.events
 from faraday.server.utils.logger import LOGGING_HANDLERS
 from faraday.server.utils.invalid_chars import remove_null_caracters
-from faraday.config.constant import CONST_FARADAY_HOME_PATH
+from faraday.server.config import CONST_FARADAY_HOME_PATH
 
 
 logger = logging.getLogger(__name__)

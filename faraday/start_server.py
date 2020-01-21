@@ -196,3 +196,7 @@ def main():
         subprocess.Popen(params, stdout=devnull, stderr=devnull)
     elif not args.start:
         run_server(args)
+
+
+if __name__ == '__main__':  # Don't delete. this is used for dev
+    main()

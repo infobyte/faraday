@@ -100,7 +100,7 @@ class CustomEngineConnector(_EngineConnector):
         if uri.startswith('sqlite://'):
             with self._lock:
                 @event.listens_for(rv, "connect")
-                def do_connect(dbapi_connection, connection_record):
+                def do_connect(dbapi_connection, connection_record):  # pylint:disable=unused-variable
                     # disable pysqlite's emitting of the BEGIN statement
                     # entirely.  also stops it from emitting COMMIT before any
                     # DDL.
@@ -110,7 +110,7 @@ class CustomEngineConnector(_EngineConnector):
                     cursor.close()
 
                 @event.listens_for(rv, "begin")
-                def do_begin(conn):
+                def do_begin(conn): # pylint:disable=unused-variable
                     # emit our own BEGIN
                     conn.execute("BEGIN")
         return rv
@@ -2119,5 +2119,5 @@ event.listen(
 )
 
 # We have to import this after all models are defined
-import faraday.server.events
+import faraday.server.events # pylint: disable=unused-import
 # I'm Py3

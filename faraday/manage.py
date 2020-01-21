@@ -30,7 +30,6 @@ import click
 import requests
 import alembic.command
 from pgcli.main import PGCli
-from requests import ConnectionError
 from urllib.parse import urlparse
 from alembic.config import Config
 from sqlalchemy.exc import ProgrammingError, OperationalError
@@ -157,7 +156,7 @@ def validate_email(ctx, param, value):
 @click.command(help="List Available Plugins")
 def list_plugins():
     plugins_manager = PluginsManager()
-    for plugin_id, plugin in plugins_manager.get_plugins():
+    for _, plugin in plugins_manager.get_plugins():
         click.echo(f"{plugin.id}")
 
 @click.command(help="Create ADMIN user for Faraday application")

@@ -17,7 +17,7 @@ def export_vulns_to_csv(hosts, services, vulns, custom_fields_columns=None):
     # Hosts
     host_headers = [
         "host_id", "ip", "hostnames", "host_description", "os", "mac",
-        "host_owned", "host_creator_id"
+        "host_owned", "host_creator_id", "obj_type"
     ]
     writer = csv.DictWriter(buffer, fieldnames=host_headers)
     writer.writeheader()
@@ -31,7 +31,8 @@ def export_vulns_to_csv(hosts, services, vulns, custom_fields_columns=None):
             "os": host.os,
             "mac": host.mac,
             "host_owned": host.owned,
-            "host_creator_id": host.creator_id
+            "host_creator_id": host.creator_id,
+            "obj_type": "host"
         }
         writer.writerow(host_data)
     writer.writerow({})
@@ -40,7 +41,7 @@ def export_vulns_to_csv(hosts, services, vulns, custom_fields_columns=None):
     service_headers = [
         "service_id", "service_name", "service_description", "service_owned",
         "port", "protocol", "summary", "version", "service_status",
-        "host_id", "service_creator_id"
+        "service_creator_id", "obj_type", "parent_id"
     ]
     writer = csv.DictWriter(buffer, fieldnames=service_headers)
     writer.writeheader()
@@ -57,7 +58,8 @@ def export_vulns_to_csv(hosts, services, vulns, custom_fields_columns=None):
             "version": service.version,
             "service_status": service.status,
             "service_creator_id": service.creator_id,
-            "host_id": service.host_id
+            "parent_id": service.host_id,
+            "obj_type": "service"
         }
         writer.writerow(service_data)
     writer.writerow({})
@@ -73,7 +75,7 @@ def export_vulns_to_csv(hosts, services, vulns, custom_fields_columns=None):
         "request", "response", "method", "params", "pname", "query",
         "policyviolations", "external_id", "impact_confidentiality",
         "impact_integrity", "impact_availability", "impact_accountability",
-        "vuln_creator", "host_id"
+        "vuln_creator", "obj_type", "parent_id", "parent_type"
     ]
     vuln_headers += custom_fields_columns
     writer = csv.DictWriter(buffer, fieldnames=vuln_headers)
@@ -143,7 +145,9 @@ def _build_vuln_data(vuln, custom_fields_columns):
                     "impact_accountability": vuln["impact"]["accountability"],
                     "web_vulnerability": vuln['type'] == "VulnerabilityWeb",
                     "vuln_creator": vuln["metadata"].get('creator', None),
-                    "host_id": vuln.get('parent', None)
+                    "obj_type": "vulnerability",
+                    "parent_id": vuln.get('parent', None),
+                    "parent_type": vuln.get('parent_type', None)
     }
     if vuln['custom_fields']:
         for field_name, value in vuln['custom_fields'].items():

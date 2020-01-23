@@ -128,7 +128,7 @@ def register_handlers(app):
     # We are exposing a RESTful API, so don't redirect a user to a login page in
     # case of being unauthorized, raise a 403 error instead
     @app.login_manager.unauthorized_handler
-    def unauthorized():
+    def unauthorized():  # pylint:disable=unused-variable
         flask.abort(403)
 
     def verify_token(token):
@@ -148,7 +148,7 @@ def register_handlers(app):
 
 
     @app.before_request
-    def default_login_required():
+    def default_login_required(): # pylint:disable=unused-variable
         view = app.view_functions.get(flask.request.endpoint)
 
         if app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER'] in flask.request.headers:
@@ -195,11 +195,11 @@ def register_handlers(app):
                 return
 
     @app.before_request
-    def load_g_custom_fields():
+    def load_g_custom_fields(): # pylint:disable=unused-variable
         g.custom_fields = {}
 
     @app.after_request
-    def log_queries_count(response):
+    def log_queries_count(response): # pylint:disable=unused-variable
         if flask.request.method not in ['GET', 'HEAD']:
             # We did most optimizations for read only endpoints
             # TODO migrations: improve optimization and remove this if

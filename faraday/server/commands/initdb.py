@@ -7,7 +7,6 @@ See the file 'doc/LICENSE' for the license information
 from builtins import input
 
 import getpass
-import shutil
 import string
 
 import os

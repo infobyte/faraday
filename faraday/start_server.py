@@ -88,9 +88,9 @@ def check_postgresql():
             logger.error(
                     '\n\n{RED}Could not connect to PostgreSQL.\n{WHITE}Please check: \n{YELLOW}  * if database is running \n  * configuration settings are correct. \n\n{WHITE}For first time installations execute{WHITE}: \n\n {GREEN} faraday-manage initdb\n\n'.format(GREEN=Fore.GREEN, YELLOW=Fore.YELLOW, WHITE=Fore.WHITE, RED=Fore.RED))
             sys.exit(1)
-        except sqlalchemy.exc.ProgrammingError as e:
+        except sqlalchemy.exc.ProgrammingError:
             logger.error(
-                    '\n\nn{WHITE}Missing migrations, please execute: \n\nfaraday-manage migrate'.format(WHITE=Fore.WHITE, RED=Fore.RED))
+                    '\n\nn{WHITE}Missing migrations, please execute: \n\nfaraday-manage migrate'.format(WHITE=Fore.WHITE))
             sys.exit(1)
 
 
@@ -103,11 +103,11 @@ def check_alembic_version():
     with app.app_context():
         try:
             conn = db.session.connection()
-        except ImportError as ex:
+        except ImportError:
             if not faraday.server.config.database.connection_string:
                 print("\n\nNo database configuration found. Did you execute \"faraday-manage initdb\"? \n\n")
                 sys.exit(1)
-        except sqlalchemy.exc.OperationalError as ex:
+        except sqlalchemy.exc.OperationalError:
             print("Bad Credentials, please check the .faraday/config/server.ini")
             sys.exit(1)
 
@@ -198,6 +198,5 @@ def main():
         run_server(args)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':  # Don't delete. this is used for dev
     main()
-

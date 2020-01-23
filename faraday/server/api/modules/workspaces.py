@@ -3,7 +3,6 @@
 # See the file 'doc/LICENSE' for the license information
 from builtins import str
 
-import os
 import json
 import logging
 
@@ -103,7 +102,7 @@ class WorkspaceView(ReadWriteView):
         objects = []
         for workspace_stat in query:
             workspace_stat_dict = dict(workspace_stat)
-            for key, value in list(workspace_stat_dict.items()):
+            for key, _ in list(workspace_stat_dict.items()):
                 if key.startswith('workspace_'):
                     new_key = key.replace('workspace_', '')
                     workspace_stat_dict[new_key] = workspace_stat_dict[key]

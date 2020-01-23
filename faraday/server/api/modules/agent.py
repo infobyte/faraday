@@ -1,21 +1,17 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2019  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-import json
-
 import flask
-import wtforms
 
 from flask import Blueprint, abort, request
 from flask_classful import route
-from flask_wtf.csrf import validate_csrf
 from marshmallow import fields, Schema
 
 from faraday.server.api.base import (AutoSchema, UpdateWorkspacedMixin, DeleteWorkspacedMixin,
                                      CountWorkspacedMixin, ReadOnlyWorkspacedView, CreateWorkspacedMixin,
                                      GenericWorkspacedView)
 from faraday.server.models import Agent, Executor
-from faraday.server.schemas import PrimaryKeyRelatedField, MutableField, SelfNestedField
+from faraday.server.schemas import PrimaryKeyRelatedField
 from faraday.server.config import faraday_server
 from faraday.server.events import changes_queue
 

@@ -340,7 +340,7 @@ class GenericView(FlaskView):
 
         @app.errorhandler(500)
         def handle_server_error(err): # pylint: disable=unused-variable
-            response = {'success': False, 'message': f"Exception: {err.original_exception}" if faraday_server.debug else err.name}
+            response = {'success': False, 'message': f"Exception: {err.original_exception}" if faraday_server.debug else 'Internal Server Error'}
             return flask.jsonify(response), 500
 
 class GenericWorkspacedView(GenericView):

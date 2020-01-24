@@ -193,6 +193,7 @@ header.head {
 
 .left-main {
     position: absolute;
+    width: 100%;
     top: 0px;
     border-top: 3px solid #464646;
     right: 0;

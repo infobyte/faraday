@@ -14,6 +14,7 @@ from queue import Empty
 
 import txaio
 
+from faraday.server.utils.database import get_or_create
 
 txaio.use_twisted()
 
@@ -25,7 +26,7 @@ from autobahn.twisted.websocket import (
     WebSocketServerProtocol
 )
 
-from faraday.server.models import Workspace, Agent
+from faraday.server.models import Workspace, Agent, Executor, db, AgentExecution
 from faraday.server.api.modules.websocket_auth import decode_agent_websocket_token
 from faraday.server.events import changes_queue
 
@@ -49,6 +50,12 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
             except http.cookies.CookieError:
                 pass
         return (protocol, headers)
+
+    # {
+    #     "action": "RUN_STATUS",
+    #     "running": true,
+    #     "message": "todo bien guachin"
+    # }
 
     def onMessage(self, payload, is_binary):
         from faraday.server.web import app # pylint:disable=import-outside-toplevel
@@ -92,7 +99,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
             if message['action'] == 'LEAVE_WORKSPACE':
                 self.factory.leave_workspace(self, message['workspace'])
             if message['action'] == 'JOIN_AGENT':
-                if 'token' not in message:
+                if 'token' not in message or 'executors' not in message:
                     logger.warn("Invalid agent join message")
                     self.state = WebSocketProtocol.STATE_CLOSING
                     self.sendClose()
@@ -100,13 +107,14 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                 with app.app_context():
                     try:
                         agent = decode_agent_websocket_token(message['token'])
+                        update_executors(agent, message['executors'])
                     except ValueError:
                         logger.warn('Invalid agent token!')
                         self.state = WebSocketProtocol.STATE_CLOSING
                         self.sendClose()
                         return False
-                # factory will now send broadcast messages to the agent
-                return self.factory.join_agent(self, agent)
+                    # factory will now send broadcast messages to the agent
+                    return self.factory.join_agent(self, agent)
             if message['action'] == 'LEAVE_AGENT':
                 with app.app_context():
                     (agent_id,) = [
@@ -120,7 +128,35 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                 self.state = WebSocketProtocol.STATE_CLOSING
                 self.sendClose()
                 return False
+            if message['action'] == 'RUN_STATUS':
+                with app.app_context():
+                    if 'executor_name' not in message:
+                        logger.warning('Missing executor_name param in message: ''{}'.format(message))
+                        self.sendClose()
+                        return
 
+                    (agent_id,) = [
+                        k
+                        for (k, v) in connected_agents.items()
+                        if v == self
+                    ]
+                    agent = Agent.query.get(agent_id)
+                    assert agent is not None  # TODO the agent could be deleted here
+                    executor = Executor.query.filter(Executor.name == message['executor_name'],
+                                                     Executor.agent_id == agent_id).first()
+                    if executor:
+                        successful = message.get('successful', None)
+                        running = message.get('running', None)
+                        msg = message['message']
+                        agent_execution = AgentExecution(
+                            running=running,
+                            successful=successful,
+                            message=msg,
+                            executor=executor,
+                            workspace_id=executor.agent.workspace_id
+                        )
+                        db.session.add(agent_execution)
+                        db.session.commit()
 
     def connectionLost(self, reason):
         WebSocketServerProtocol.connectionLost(self, reason)
@@ -129,6 +165,34 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
 
     def sendServerStatus(self, redirectUrl=None, redirectAfter=0):
         self.sendHtml('This is a websocket port.')
+
+
+def update_executors(agent, executors):
+    incoming_executor_names = set()
+    for raw_executor in executors:
+        if 'executor_name' not in raw_executor or 'args' not in raw_executor:
+            continue
+        executor, _ = get_or_create(
+            db.session,
+            Executor,
+            **{
+                'name': raw_executor['executor_name'],
+                'agent': agent,
+            }
+        )
+
+        executor.parameters_metadata = raw_executor['args']
+        db.session.add(executor)
+        db.session.commit()
+        incoming_executor_names.add(raw_executor['executor_name'])
+
+    current_executors = Executor.query.filter(Executor.agent == agent)
+    for current_executor in current_executors:
+        if current_executor.name not in incoming_executor_names:
+            db.session.delete(current_executor)
+            db.session.commit()
+
+    return True
 
 
 class WorkspaceServerFactory(WebSocketServerFactory):
@@ -222,5 +286,3 @@ class WorkspaceServerFactory(WebSocketServerFactory):
             reactor.callFromThread(agent_connection.sendPreparedMessage, self.prepareMessage(msg))
             logger.debug("prepared message sent to agent id: {}".format(
                 agent_id))
-
-# I'm Py3

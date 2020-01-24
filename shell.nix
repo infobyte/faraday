@@ -2,7 +2,7 @@ with (import <nixpkgs> {});
   mkShell {
     buildInputs = [pandoc] ++ (with python3Packages;
       [virtualenv pyopenssl psycopg2 pillow pygobject3 pynacl matplotlib lxml ldap autobahn
-      gobjectIntrospection gtk3 gnome3.vte gssapi
+      gobjectIntrospection gtk3 gnome3.vte gssapi pykerberos
       ]);
     shellHook = ''
       unset SOURCE_DATE_EPOCH  # Required to make pip work
@@ -34,6 +34,6 @@ with (import <nixpkgs> {});
 
       # Without this, the import report dialog of the client breaks
       # Taken from https://github.com/NixOS/nixpkgs/pull/26614
-      export XDG_DATA_DIRS=$XDG_ICON_DIRS:$GSETTINGS_SCHEMAS_PATH\''${XDG_DATA_DIRS:+:}\$XDG_DATA_DIRS
+      export XDG_DATA_DIRS=$GSETTINGS_SCHEMAS_PATH:$XDG_DATA_DIRS
     '';
   }

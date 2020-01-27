@@ -301,8 +301,9 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
             run_timestamp = float(run_date)
             logger.debug("Apply run date to vuln")
             vuln.create_date = datetime.utcfromtimestamp(run_timestamp)
-        except:
-            logger.error("Error in run_date in vuln")
+        except ValueError:
+            logger.error("Error converting run_date to a valid date")
+            flask.abort(400, "Invalid run_date")
         else:
             db.session.commit()
 

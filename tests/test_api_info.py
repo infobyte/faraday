@@ -32,6 +32,3 @@ class TestAPIInfoEndpoint:
         res = test_client.get('/config')
         assert res.status_code == 200
         assert res.json['lic_db'] == 'faraday_licenses'
-
-
-# I'm Py3

@@ -17,7 +17,7 @@ down_revision = '526aa91cac98'
 branch_labels = None
 depends_on = None
 
-old_types = User.ROLES.remove('asset_owner')
+old_types = list(set(User.ROLES) - set(['asset_owner']))
 new_types = list(set(User.ROLES + ['asset_owner']))
 new_options = sorted(new_types)
 

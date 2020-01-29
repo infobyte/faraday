@@ -338,6 +338,7 @@ macos_pkg:
     tags:
         - macos
     stage: build
+    allow_failure: true
     before_script:
       - echo 'export PATH="/usr/local/opt/openssl/bin:$PATH"' >> ~/.bash_profile
       - export LDFLAGS="-L/usr/local/opt/openssl/lib"

@@ -257,11 +257,11 @@ def user_logged_in_succesfull(app, user):
         HOME_URL = "https://portal.faradaysec.com/api/v1/license_check"
         params = {'version': faraday.__version__, 'key': 'white', 'client': user_agent}
         try:
-            logger.debug('Send Faraday-Client stats')
+            logger.debug('Send Faraday-Client license_check')
             res = requests.get(HOME_URL, params=params, timeout=1, verify=True)
             logger.debug("Faraday-Client Stats response: %s", res.text)
         except Exception as e:
-            logger.warning("Error sending client stats [%s]", e)
+            logger.warning("Error sending client license_check [%s]", e)
 
 def create_app(db_connection_string=None, testing=None):
     app = Flask(__name__)

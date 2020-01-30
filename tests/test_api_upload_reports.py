@@ -4,14 +4,13 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+from __future__ import absolute_import
 
 import os
 import pytest
 from io import BytesIO
-from mock import Mock, patch
 
 from tests.factories import WorkspaceFactory
-from faraday.config.configuration import getInstanceConfiguration
 
 @pytest.mark.usefixtures('logged_user')
 class TestFileUpload():
@@ -25,7 +24,7 @@ class TestFileUpload():
                 'data',
                 'nmap_plugin_with_api.xml')
 
-        with open(path,'r') as report:
+        with open(path,'rb') as report:
             file_contents = report.read()
         data = {
             'file' : (BytesIO(file_contents), 'nmap_report.xml'),
@@ -61,7 +60,7 @@ class TestFileUpload():
                 'nmap_plugin_with_api.xml')
 
         with open(path,'r') as report:
-            file_contents = report.read()
+            file_contents = report.read().encode('utf-8')
 
         data = {
             'file' : (BytesIO(file_contents), 'nmap_report.xml'),
@@ -86,7 +85,7 @@ class TestFileUpload():
                 'nmap_plugin_with_api.xml')
 
         with open(path,'r') as report:
-            file_contents = report.read()
+            file_contents = report.read().encode('utf-8')
 
         data = {
             'file' : (BytesIO(file_contents), 'nmap_report.xml'),
@@ -98,3 +97,6 @@ class TestFileUpload():
                 use_json_data=False)
 
         assert res.status_code == 404
+
+
+# I'm Py3

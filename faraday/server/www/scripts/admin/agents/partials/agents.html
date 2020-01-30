@@ -6,13 +6,13 @@
     <div class="panel panel-default custom-panel">
         <div class="panel-body custom-panel-body">
                 <span class="agent-token-container"><code>{{agentToken.token}}</code> &nbsp;<span class="cursor"
-                                                                                                  title="Copy token to clipboard"
+                                                                                                  title="Copy registration token to clipboard"
                                                                                                   ng-click="copyToClipboard()"><i
                         class="fa fa-copy"></i></span></span>
             <span class="glyphicon glyphicon-question-sign margin-right-15px"
                   title="To register a new agent you should enter the current token"></span>
 
-            <button type="button" class="btn btn-success"
+            <button type="button" class="btn btn-info"
                     title="A new token will be shown and the current token will be lost"
                     ng-click="refreshToken()">
                 <i class="fa fa-refresh"></i> New Token
@@ -92,20 +92,24 @@
 
             <td class="ui-grid-cell-contents active-toggle" selection-model-ignore="">
                 <button type="button" class="btn btn-info"
+                        ng-click="selectAgent(agent)"
                         title="Run Agent"
-                        ng-click="runAgent(agent.id)" ng-disabled="!agent.active || disableExecute">
+                        data-toggle="modal" data-target="#selectExecutorModal-{{agent.id}}" ng-disabled="!agent.active || disableExecute || agent.status=='offline'">
                     Execute
                 </button>
                 <button type="button" class="btn"
                         ng-class="{'btn-danger': agent.active, 'btn-success': !agent.active}"
                         title="{{agent.active?'Pause Agent': 'Unpause Agent'}}"
-                        ng-click="changeStatusAgent(agent)">
+                        ng-click="changeStatusAgent(agent)"
+                        ng-disabled="agent.status=='offline'">
                     <span ng-bind="agent.active ?'Pause': 'Unpause'"></span>
                 </button>
                 <button type="button" class="btn btn-danger" title="Remove Agent" ng-click="removeAgent(agent.id)">
                     Remove
                 </button>
             </td>
+
+
         </tr>
         </tbody>
     </table><!-- #hosts -->
@@ -118,3 +122,39 @@
 
 </div>
 
+<div ng-repeat="agent in agents">
+    <div class="modal fade" id="selectExecutorModal-{{agent.id}}" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="selectExecutorModalLabel">Agent Executors</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form role="form" name="form">
+                    <div class="modal-body">
+
+                        <div class="form-group">
+                            <label for="selectedExecutor">Select Executor</label>
+                            <select class="form-control" ng-options="executor as executor.name for executor in executors track by executor.id" id="selectedExecutor" ng-model="data.selectedExecutor"></select>
+                        </div>
+
+                         <div class="var-item margin-top-65px row">
+                            <div class="form-group col-md-6" ng-repeat="parameter in data.selectedExecutor.parameters_metadata" ng-class="{'has-error': form[$index].$invalid}">
+                                <label for="paramName" ng-class="{'text-danger': form[$index].$invalid}">{{parameter.name}} <span ng-if="parameter.isRequired">*</span></label>
+                                <input type="text" class="form-control" name="{{$index}}" id="paramName" placeholder="{{parameter.name}}" ng-model="data.selectedExecutor.parameters_values[parameter.name]" ng-required="parameter.isRequired">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button class="btn btn-primary" ng-disabled="form.$invalid" ng-click="runAgent(agent.id)">Run</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -3,7 +3,9 @@ Faraday Penetration Test IDE
 Copyright (C) 2019  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 """
-import mock
+from __future__ import absolute_import
+
+from unittest import mock
 import pytest
 
 from faraday.server.api.modules.agent import AgentView
@@ -174,3 +176,80 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
         res = test_client.delete(self.url(agent.id))
         assert res.status_code == 204
         assert len(session.query(Agent).all()) == initial_agent_count
+
+    def test_run_agent_invalid_missing_executorData(self, csrf_token, session, test_client):
+        agent = AgentFactory.create(workspace=self.workspace)
+        session.add(agent)
+        session.commit()
+        payload = {
+            'csrf_token': csrf_token
+        }
+        res = test_client.post(self.url() + f'{agent.id}/run/', json=payload)
+        assert res.status_code == 400
+
+    def test_invalid_body(self, test_client, session):
+        agent = AgentFactory.create(workspace=self.workspace)
+        session.add(agent)
+        session.commit()
+        res = test_client.post(self.url() + f'{agent.id}/run/', data='[" broken]"{')
+        assert res.status_code == 400
+
+    def test_invalid_content_type(self, test_client, session, csrf_token):
+        agent = AgentFactory.create(workspace=self.workspace)
+        session.add(agent)
+        session.commit()
+        payload = {
+            'csrf_token': csrf_token,
+            'executorData': {
+                "args": {
+                    "param1": True
+                },
+                "executor": "executor_name"
+            },
+        }
+        headers = [
+            ('content-type', 'text/html'),
+        ]
+        res = test_client.post(
+            self.url() + f'{agent.id}/run/',
+            data=payload,
+            headers=headers)
+        assert res.status_code == 400
+
+    def test_happy_path_valid_json(self, test_client, session, csrf_token):
+        agent = AgentFactory.create(workspace=self.workspace)
+        session.add(agent)
+        session.commit()
+        payload = {
+            'csrf_token': csrf_token,
+            'executorData': {
+                "args": {
+                    "param1": True
+                },
+                "executor": "executor_name"
+            },
+        }
+        res = test_client.post(self.url() + f'{agent.id}/run/', json=payload)
+        assert res.status_code == 200
+
+    def test_invalid_json_on_executorData_breaks_the_api(self, csrf_token, session, test_client):
+        agent = AgentFactory.create(workspace=self.workspace)
+        session.add(agent)
+        session.commit()
+        payload = {
+            'csrf_token': csrf_token,
+            'executorData': '[][dassa',
+        }
+        res = test_client.post(self.url() + f'{agent.id}/run/', json=payload)
+        assert res.status_code == 400
+
+    def test_run_agent(self, session, csrf_token, test_client):
+        agent = AgentFactory.create(workspace=self.workspace)
+        session.add(agent)
+        session.commit()
+        payload = {
+            'csrf_token': csrf_token,
+            'executorData': '',
+        }
+        res = test_client.post(self.url() + f'{agent.id}/run/', json=payload)
+        assert res.status_code == 400

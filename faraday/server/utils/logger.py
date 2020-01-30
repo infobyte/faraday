@@ -1,7 +1,6 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-
 import os
 import logging
 import logging.handlers
@@ -11,11 +10,14 @@ import errno
 from syslog_rfc5424_formatter import RFC5424Formatter
 
 LOG_FILE = os.path.expanduser(os.path.join(
-    faraday.server.config.CONSTANTS.CONST_FARADAY_HOME_PATH,
-    faraday.server.config.CONSTANTS.CONST_FARADAY_LOGS_PATH, 'faraday-server.log'))
+    faraday.server.config.CONST_FARADAY_HOME_PATH,
+    'logs',
+    'faraday-server.log'))
 
 MAX_LOG_FILE_SIZE = 5 * 1024 * 1024     # 5 MB
 MAX_LOG_FILE_BACKUP_COUNT = 5
+LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s {%(threadName)s} [%(filename)s:%(lineno)s - %(funcName)s()]  %(message)s'
+LOG_DATE_FORMAT = '%Y-%m-%dT%H:%M:%S%z'
 ROOT_LOGGER = u'faraday'
 LOGGING_HANDLERS = []
 LVL_SETTABLE_HANDLERS = []
@@ -29,8 +31,8 @@ def setup_logging():
     if faraday.server.config.logger_config.use_rfc5424_formatter:
         formatter = RFC5424Formatter()
     else:
-        formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s {%(threadName)s} [%(filename)s:%(lineno)s - %(funcName)s()]  %(message)s')
+
+        formatter = logging.Formatter(LOG_FORMAT, LOG_DATE_FORMAT)
     setup_console_logging(formatter)
     setup_file_logging(formatter)
 
@@ -48,8 +50,9 @@ def setup_file_logging(formatter):
     file_handler = logging.handlers.RotatingFileHandler(
         LOG_FILE, maxBytes=MAX_LOG_FILE_SIZE, backupCount=MAX_LOG_FILE_BACKUP_COUNT)
     file_handler.setFormatter(formatter)
-    file_handler.setLevel(logging.DEBUG)
+    file_handler.setLevel(faraday.server.config.LOGGING_LEVEL)
     add_handler(file_handler)
+    LVL_SETTABLE_HANDLERS.append(file_handler)
 
 
 def add_handler(handler):
@@ -64,7 +67,7 @@ def get_logger(obj=None):
      for non-class loggings."""
     if obj is None:
         logger = logging.getLogger(ROOT_LOGGER)
-    elif isinstance(obj, basestring):
+    elif isinstance(obj, str):
         if obj != ROOT_LOGGER:
             logger = logging.getLogger(u'{}.{}'.format(ROOT_LOGGER, obj))
         else:
@@ -91,3 +94,4 @@ def create_logging_path():
 setup_logging()
 
 
+# I'm Py3

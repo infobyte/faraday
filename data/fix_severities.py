@@ -1,6 +1,7 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+from __future__ import absolute_import
 import csv
 import click
 from collections import OrderedDict
@@ -64,3 +65,4 @@ def fix_row(row):
 
 if __name__ == "__main__":
     fix_severities()
+# I'm Py3

@@ -19,6 +19,7 @@ problem, which was much slower
  * Add `faraday-manage rename-user` command to change a user's username
  * Allow resizing columns in Vulnerability Templates view
  * Avoid copying technical details when a vuln template is generated from the status report
+ * Use exact matches when searching vulns by target
  * Add API endpoint to get which tools impacted in a host
  * Add pagination to activity feed
  * Add ordering for date and creator to vuln templates view
@@ -35,6 +36,7 @@ problem, which was much slower
    migrations as applied
  * Fix bug in many plugins that loaded hostnames incorrectly (one hostname per chararcter)
  * Improve references parsing in OpenVAS plugin
+ * Fix a bug in Nessus plugin when parsing reports without host\_start
  * Fix bug hostname search is now working in status-report
  * Fix showing of services with large names in the Web UI
  * Fix broken select all hosts checkbox

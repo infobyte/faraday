@@ -5,7 +5,6 @@
 # Copyright (C) 2005 Chad J. Schroeder
 # Modified version of a script created by Chad J. Schroeder, obtained from
 # http://code.activestate.com/recipes/278731-creating-a-daemon-the-python-way/
-
 import os
 import re
 import sys
@@ -122,7 +121,7 @@ def createDaemon():
     # don't close them off after successfully forking the process
 
     # Close and redirect std file descriptors to /dev/null
-    std_fileno = map(lambda s: s.fileno(), [sys.stdin, sys.stdout, sys.stderr])
+    std_fileno = list(map(lambda s: s.fileno(), [sys.stdin, sys.stdout, sys.stderr]))
     null = os.open(REDIRECT_TO, os.O_RDWR)
 
     for fd in std_fileno:
@@ -138,7 +137,7 @@ def createDaemon():
 
 def start_server():
     logger.info('Running as a daemon')
-    WORKDIR = faraday.server.config.FARADAY_BASE
+    WORKDIR = faraday.server.config.FARADAY_BASE  # pylint:disable=unused-variable
     createDaemon()
 
 
@@ -219,12 +218,12 @@ def remove_pid_file(port):
 def get_ports_running():
     ports = []
     re_string = re.escape(faraday.server.config.FARADAY_SERVER_PID_FILE)
-    re_string = re_string.replace("\{0\}","[0-9]+")
-    home_dir = os.listdir(faraday.server.config.CONSTANTS.CONST_FARADAY_HOME_PATH)
+    re_string = re_string.replace("\{0\}", "[0-9]+")
+    home_dir = os.listdir(faraday.server.config.CONST_FARADAY_HOME_PATH)
 
     for path in home_dir:
-        path = faraday.server.config.CONSTANTS.CONST_FARADAY_HOME_PATH + "/" + path
-        if re.match(re_string,path):
+        path = faraday.server.config.CONST_FARADAY_HOME_PATH + "/" + path
+        if re.match(re_string, path):
             port = path.split("-")[-1].split(".")[0]
             ports.append(int(port))
 

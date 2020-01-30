@@ -1,7 +1,7 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-from collections import defaultdict
+from io import StringIO
 
 import logging
 import csv
@@ -12,7 +12,7 @@ import pytz
 from flask_classful import route
 from marshmallow import fields, Schema
 from filteralchemy import Filter, FilterSet, operators
-from sqlalchemy import or_, desc
+from sqlalchemy import desc
 import wtforms
 from flask_wtf.csrf import validate_csrf
 
@@ -39,10 +39,11 @@ host_api = Blueprint('host_api', __name__)
 
 logger = logging.getLogger(__name__)
 
+
 class HostSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     id = fields.Integer()
-    _rev = fields.String(default='')
+    _rev = fields.String(default='', dump_only=True)
     ip = fields.String(default='')
     description = fields.String(required=True)  # Explicitly set required=True
     default_gateway = NullToBlankString(
@@ -158,9 +159,10 @@ class HostsView(PaginatedMixin,
         if 'file' not in flask.request.files:
             abort(400, "Missing File in request")
         hosts_file = flask.request.files['file']
+        stream = StringIO(hosts_file.stream.read().decode("utf-8"), newline=None)
         FILE_HEADERS = {'description', 'hostnames', 'ip', 'os'}
         try:
-            hosts_reader = csv.DictReader(hosts_file, skipinitialspace=True)
+            hosts_reader = csv.DictReader(stream)
             if set(hosts_reader.fieldnames) != FILE_HEADERS:
                 logger.error("Missing Required headers in CSV (%s)", FILE_HEADERS)
                 abort(400, "Missing Required headers in CSV (%s)" % FILE_HEADERS)
@@ -223,7 +225,7 @@ class HostsView(PaginatedMixin,
         result = query.all()
         res_dict = {'tools': []}
         for row in result:
-            host, command = row
+            _, command = row
             res_dict['tools'].append({'command': command.tool, 'user': command.user, 'params': command.params, 'command_id': command.id, 'create_date': command.create_date.replace(tzinfo=pytz.utc).strftime("%c")})
         return res_dict
 
@@ -281,3 +283,4 @@ class HostsView(PaginatedMixin,
 
 
 HostsView.register(host_api)
+# I'm Py3

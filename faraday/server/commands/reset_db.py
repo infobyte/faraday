@@ -1,18 +1,20 @@
-#!/usr/bin/env python2.7
-'''
+#!/usr/bin/env python3
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-
+"""
 import sys
 import os
 sys.path.append(os.getcwd())
 
 import click
+
 from faraday.server.models import db
 from faraday.server.web import app
+from faraday.server.commands.initdb import InitDB
+import faraday.server.config
 
 
 def reset_db_all():
@@ -22,15 +24,13 @@ def reset_db_all():
                   'faraday_user'):
         try:
             db.engine.execute('DROP TABLE {} CASCADE'.format(table))
-        except:
-            pass
+        except Exception as ex:
+            print(ex)
     db.drop_all()
 
     # db.create_all()
     # Ugly hack to create tables and also setting alembic revision
-    import faraday.server.config
     conn_string = faraday.server.config.database.connection_string
-    from faraday.server.commands.initdb import InitDB
     InitDB()._create_tables(conn_string)
 
 
@@ -48,3 +48,4 @@ def main(confirm):
 
 if __name__ == '__main__':
     main()
+# I'm Py3

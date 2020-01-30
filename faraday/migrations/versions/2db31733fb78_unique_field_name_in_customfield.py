@@ -5,6 +5,7 @@ Revises: 0d216660da28
 Create Date: 2019-05-15 18:48:41.909650+00:00
 
 """
+from __future__ import absolute_import
 from alembic import op
 import sqlalchemy as sa
 
@@ -24,3 +25,4 @@ def upgrade():
 def downgrade():
     conn = op.get_bind()
     conn.execute('ALTER TABLE custom_fields_schema DROP CONSTRAINT custom_fields_schema_field_name_key;')
+# I'm Py3

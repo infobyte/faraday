@@ -1,7 +1,7 @@
 import json
 import logging
 import socket
-import urllib
+from urllib.parse import urlencode
 
 from requests.adapters import ConnectionError, ReadTimeout
 
@@ -190,8 +190,8 @@ class Api:
                 self._get(self._url('vulnerability_template/', True), 'templates')['rows']]
 
     def filter_vulnerabilities(self, **kwargs):
-        if len(kwargs.keys()) > 1:
-            params = urllib.urlencode(kwargs)
+        if len(list(kwargs.keys())) > 1:
+            params = urlencode(kwargs)
             url = self._url('ws/{}/vulns/?{}'.format(self.workspace, params))
         else:
             params = self.parse_args(**kwargs)
@@ -200,13 +200,13 @@ class Api:
                 self._get(url, 'vulnerabilities')['vulnerabilities']]
 
     def filter_services(self, **kwargs):
-        params = urllib.urlencode(kwargs)
+        params = urlencode(kwargs)
         url = self._url('ws/{}/services/?{}'.format(self.workspace, params), True)
         return [Structure(**item['value']) for item in
                 self._get(url, 'services')['services']]
 
     def filter_hosts(self, **kwargs):
-        params = urllib.urlencode(kwargs)
+        params = urlencode(kwargs)
         url = self._url('ws/{}/hosts/?{}'.format(self.workspace, params), True)
         return [Structure(**item['value']) for item in
                 self._get(url, 'hosts')['rows']]
@@ -248,8 +248,8 @@ class Api:
 
     @staticmethod
     def parse_args(**kwargs):
-        if len(kwargs.keys()) > 0:
-            key = kwargs.keys()[0]
+        if len(list(kwargs.keys())) > 0:
+            key = list(kwargs.keys())[0]
             value = kwargs.get(key, '')
             item = '"name":"{}","op":"eq","val":"{}"'.format(key, value)
             params = 'filter?q={"filters":[{' + item + '}]}'

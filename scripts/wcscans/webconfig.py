@@ -8,6 +8,8 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
+from __future__ import absolute_import
+from __future__ import print_function
 from lxml import etree as ET
 
 rules = {
@@ -74,7 +76,7 @@ class WebConfigScan:
 
 
     def global_check(self):
-        print "[+]\033[0;41mVulnerabilites/Informations\033[0m:"
+        print("[+]\033[0;41mVulnerabilites/Informations\033[0m:")
         countforms = 0
         nameforms = []
         for element in rules:
@@ -83,10 +85,10 @@ class WebConfigScan:
                     countforms += 1
                     nameforms.append(tag.attrib['name'])
                 if element == "user":
-                    print "   \033[1;30m{}\033[0m {}: {} \033[1;30m({})\033[0m".format(element,
+                    print("   \033[1;30m{}\033[0m {}: {} \033[1;30m({})\033[0m".format(element,
                                                                                     tag.attrib['name'],
                                                                                     rules[element][''][0],
-                                                                                    option)
+                                                                                    option))
                     self.recommended += "   Not to store passwords or hashes in web.config\n"
                     self.xml_export(directive=[element, tag.attrib['name'],'hardcoded'],
                                                     rec=rules[element][''][0])
@@ -94,16 +96,16 @@ class WebConfigScan:
 
                 for option in tag.attrib:
                     if element == "customErrors" and rules[element].has_key(option) and not tag.attrib[option].lower() in rules[element][option][1]:
-                        print "   \033[1;30m{}\033[0m: {} \033[1;30m({})\033[0m".format(element,
+                        print("   \033[1;30m{}\033[0m: {} \033[1;30m({})\033[0m".format(element,
                                                                                         rules[element][option][0],
-                                                                                        option)
+                                                                                        option))
                         self.recommended += "   <{} {}=\"{}\"/>\n".format(element,option,rules[element][option][1])
                         self.xml_export(directive=[element,option,'disabled'],
                                                         rec=rules[element][option][0])
                         continue
 
                     elif element == "roleManager" and option == "cookiePath":
-                        print "   \033[1;30mroleManager\033[0m: Liberal path defined ('{}') (\033[1;30mcookiePath\033[0m)".format(tag.attrib[option].lower())
+                        print("   \033[1;30mroleManager\033[0m: Liberal path defined ('{}') (\033[1;30mcookiePath\033[0m)".format(tag.attrib[option].lower()))
                         self.recommended += "   <roleManager cookiePath=\"{abcd1234…}\">\n"
                         self.xml_export(directive=[element,option,'liberal'],
                                                         rec=rules[element][option][0])
@@ -111,17 +113,17 @@ class WebConfigScan:
 
                     if rules[element].has_key(option) and tag.attrib[option].lower() != rules[element][option][1]:
                         if element == "forms":
-                            print "   \033[1;30m{}\033[0m {}: {} \033[1;30m({})\033[0m".format(element,
+                            print("   \033[1;30m{}\033[0m {}: {} \033[1;30m({})\033[0m".format(element,
                                                                                                tag.attrib['name'],
                                                                                                rules[element][option][0],
-                                                                                               option)
+                                                                                               option))
                             self.xml_export(directive=[element,option,tag.attrib[option],tag.attrib['name']],
                                                             rec=rules[element][option][0])
 
                         else:
-                            print "   \033[1;30m{}\033[0m: {} \033[1;30m({})\033[0m".format(element,
+                            print("   \033[1;30m{}\033[0m: {} \033[1;30m({})\033[0m".format(element,
                                                                                             rules[element][option][0],
-                                                                                            option)
+                                                                                            option))
 
                             self.xml_export(directive=[element,option,tag.attrib[option]],
                                                             rec=rules[element][option][0])
@@ -129,7 +131,7 @@ class WebConfigScan:
                         continue
 
         if countforms > 1 and (nameforms.index('.ASPXAUTH') != "-1" or nameforms.index('ASPXAUTH') != "-1"):
-            print "   \033[1;30mforms\033[0m: Non-Unique authentication cookie used\033[1;30m (name)\033[0m"
+            print("   \033[1;30mforms\033[0m: Non-Unique authentication cookie used\033[1;30m (name)\033[0m")
             self.recommended += "   <forms name=\"{abcd1234…}\">\n"
             self.xml_export(directive=['nameforms','name','false'],
                                             rec="Non-Unique authentication cookie used")
@@ -138,5 +140,6 @@ def scanner(file,recmode,xml):
     filetoscan = WebConfigScan(file,xml)
     filetoscan.global_check()
     if recmode:
-        print filetoscan.recommended
+        print(filetoscan.recommended)
 
+# I'm Py3

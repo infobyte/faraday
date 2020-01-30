@@ -1,9 +1,11 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
+"""
+from builtins import str
+
 import json
 import imghdr
 from tempfile import SpooledTemporaryFile
@@ -44,6 +46,8 @@ class FaradayUploadedFile(UploadedFile):
     thumbnail_size = (128, 128)
 
     def process_content(self, content, filename=None, content_type=None):
+        if isinstance(content, str):
+            content = content.encode('utf-8')
         image_format = imghdr.what(None, h=content[:32])
         if image_format:
             content_type = 'image/{0}'.format(image_format)
@@ -55,7 +59,7 @@ class FaradayUploadedFile(UploadedFile):
         content = file_from_content(content)
         try:
             uploaded_image = Image.open(content)
-        except:
+        except Exception:
             flask.abort(400, ValidationError(
                 {
                     'message': 'File Format',
@@ -121,3 +125,4 @@ class JSONType(sa.types.TypeDecorator):
         if value is not None:
             value = json.loads(value)
         return value
+# I'm Py3

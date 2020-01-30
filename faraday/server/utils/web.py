@@ -1,11 +1,10 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-
 import gzip
 import functools
 import requests
-from cStringIO import StringIO as IO
+from io import BytesIO as IO
 
 from flask import after_this_request, request, abort, jsonify
 
@@ -44,7 +43,7 @@ def gzipped(f):
     @functools.wraps(f)
     def view_func(*args, **kwargs):
         @after_this_request
-        def zipper(response):
+        def zipper(response):  # pylint:disable=unused-variable
             accept_encoding = request.headers.get('Accept-Encoding', '')
 
             if 'gzip' not in accept_encoding.lower():
@@ -106,3 +105,4 @@ def validate_admin_perm():
         res = False
     if not res:
         abort(401)
+# I'm Py3

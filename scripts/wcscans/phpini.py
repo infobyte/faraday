@@ -7,7 +7,8 @@ See the file 'doc/LICENSE' for the license information
 
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+from __future__ import absolute_import
+from __future__ import print_function
 import re
 from lxml import etree as ET    
 
@@ -90,24 +91,24 @@ class PhpIniScan:
             newElement.text = directive[1]
             
     def global_check(self):
-        print "[+]\033[0;41mVulnerabilites/Informations\033[0m:"
+        print("[+]\033[0;41mVulnerabilites/Informations\033[0m:")
         for line in self.config.split('\n'):
             directive = ''.join(line.split()).split('=')
     
             if ( rules.has_key(directive[0]) and not equals(rules[directive[0]][1],directive[1])) or directive[0] in bad_default_config:
-                print "   \033[1;30m({})\033[0m {}".format(directive[0],rules[directive[0]][0])
+                print("   \033[1;30m({})\033[0m {}".format(directive[0],rules[directive[0]][0]))
                 self.recommended += "   {} = {}\n".format(directive[0],rules[directive[0]][1])
                 self.xml_export(directive,rules[directive[0]][0])
                 continue
                 
             if rules.has_key(directive[0]) and directive[1] == "": 
-                print "   \033[1;30m({})\033[0m {}".format(directive[0],rules[directive[0]][0])
+                print("   \033[1;30m({})\033[0m {}".format(directive[0],rules[directive[0]][0]))
                 self.recommended += "   {} = {}\n".format(directive[0],rules[directive[0]][1])  
                 self.xml_export(directive,rules[directive[0]][0])
                 continue    
                 
             if directive[0] == "session.hash_function" and directive[1] in weak_functions:
-                print "   \033[1;30m({})\033[0m {}".format(directive[0],rules[directive[0]][0])
+                print("   \033[1;30m({})\033[0m {}".format(directive[0],rules[directive[0]][0]))
                 self.recommended += "   {} = sha256\n".format(directive[0])
                 self.xml_export(directive,rules[directive[0]][0])
                 continue
@@ -115,21 +116,21 @@ class PhpIniScan:
             if directive[0] == "disable_functions":
                 for option in weak_php_functions:
                     if not option in directive[1]:
-                        print "   \033[1;30m(disable_functions)\033[0m {} not listed".format(option)
+                        print("   \033[1;30m(disable_functions)\033[0m {} not listed".format(option))
                         self.recommended += "   disable_functions = ... , {} , ...\n".format(option)
                 self.xml_export(directive,"")
                 continue
                 
         for element in is_set_config:
             if not element in self.config:
-                print "   \033[1;30m({})\033[0m {}".format(element,rules[element][0]) 
+                print("   \033[1;30m({})\033[0m {}".format(element,rules[element][0]))
                 self.recommended += "   {} is not set\n".format(element)
                 directive = [element,'isNotSet']
                 self.xml_export(directive,rules[directive[0]][0])
                 
         for element in bad_default_config:
             if not element in self.config:
-                print "   \033[1;30m({})\033[0m {}".format(element,rules[element][0]) 
+                print("   \033[1;30m({})\033[0m {}".format(element,rules[element][0]))
                 self.recommended += "   {} = {}\n".format(element,rules[element][1])
                 directive = [element,'defaultValue']
                 self.xml_export(directive,rules[directive[0]][0])
@@ -146,4 +147,5 @@ def scanner(file,recmode,xml):
     filetoscan = PhpIniScan(file,xml)
     filetoscan.global_check()
     if recmode:
-        print filetoscan.recommended
+        print(filetoscan.recommended)
+# I'm Py3

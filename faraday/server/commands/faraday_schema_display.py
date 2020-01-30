@@ -1,10 +1,9 @@
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-from __future__ import print_function
+"""
 import sys
 from sqlalchemy import MetaData
 try:
@@ -56,8 +55,8 @@ class DatabaseSchema():
             try:
                 cls = getattr(models, attr)
                 mappers.append(class_mapper(cls))
-            except:
-                pass
+            except Exception as ex:
+                print(ex)
 
         # pass them to the function and set some formatting options
         graph = create_uml_graph(
@@ -68,3 +67,4 @@ class DatabaseSchema():
         )
         graph.write_png('uml_schema.png')  # write out the file
         print("Graph written to fle uml_schema.png")
+# I'm Py3

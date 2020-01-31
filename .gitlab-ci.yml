@@ -159,6 +159,7 @@ build_nix_python3:
     - mv recursive.pth /opt/faraday/lib/python3.7/site-packages/nix.pth
     - source /opt/faraday/bin/activate
     # - "nix-shell -p libxml2 libxslt zlib cairo gobject-introspection glib pkgconfig --run 'SOURCE_DATE_EPOCH=$(date +%s) /opt/faraday/bin/pip install -r requirements.txt'"
+    - pip install Werkzeug==0.16.1
     - python setup.py install
     - pip install -r requirements.txt  # This has to be below setup.py install
     - pip freeze

@@ -506,6 +506,7 @@ class VulnerabilityView(PaginatedMixin,
 
     def _update_object(self, obj, data):
         data.pop('type') # It's forbidden to change vuln type!
+        data.pop('run_date', None)
         return super(VulnerabilityView, self)._update_object(obj, data)
 
     def _perform_update(self, object_id, obj, data, workspace_name):

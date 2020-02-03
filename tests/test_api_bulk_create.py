@@ -577,7 +577,7 @@ def test_bulk_create_with_agent_token_in_different_workspace_fails(
         headers=[("authorization", "agent {}".format(agent.token))]
     )
     assert res.status_code == 404
-    assert b'No such workspace' in res.data
+    assert "Not Found" == res.json['message']
     assert count(Host, second_workspace) == 0
 
 

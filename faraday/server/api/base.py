@@ -30,6 +30,7 @@ from faraday.server.utils.database import (
     )
 
 from faraday.server.utils.py3 import BytesJSONEncoder
+from faraday.server.config import faraday_server
 
 logger = logging.getLogger(__name__)
 
@@ -332,6 +333,15 @@ class GenericView(FlaskView):
             response.status_code = error.status_code
             return response
 
+        @app.errorhandler(404)
+        def handle_not_found(err): # pylint: disable=unused-variable
+            response = {'success': False, 'message': err.description if faraday_server.debug else err.name}
+            return flask.jsonify(response), 404
+
+        @app.errorhandler(500)
+        def handle_server_error(err): # pylint: disable=unused-variable
+            response = {'success': False, 'message': f"Exception: {err.original_exception}" if faraday_server.debug else 'Internal Server Error'}
+            return flask.jsonify(response), 500
 
 class GenericWorkspacedView(GenericView):
     """Abstract class for a view that depends on the workspace, that is

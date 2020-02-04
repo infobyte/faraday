@@ -849,7 +849,7 @@ class CountWorkspacedMixin:
             'total_count': 0
         }
         group_by = flask.request.args.get('group_by', None)
-        sort_dir = flask.request.args.get('order', "asc")
+        sort_dir = flask.request.args.get('order', "asc").lower()
 
         # TODO migration: whitelist fields to avoid leaking a confidential
         # field's value.
@@ -859,7 +859,7 @@ class CountWorkspacedMixin:
         if not group_by or group_by not in inspect(self.model_class).attrs:
             flask.abort(400, {"message": "group_by is a required parameter"})
 
-        if sort_dir and sort_dir.lower() not in ('asc', 'desc'):
+        if sort_dir and sort_dir not in ('asc', 'desc'):
             flask.abort(400, {"message": "order must be 'desc' or 'asc'"})
 
         workspace_name = kwargs.pop('workspace_name')

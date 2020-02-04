@@ -333,7 +333,7 @@ class GenericView(FlaskView):
             response.status_code = error.status_code
             return response
 
-        @app.errorhandler(404)
+        # @app.errorhandler(404)
         def handle_not_found(err): # pylint: disable=unused-variable
             response = {'success': False, 'message': err.description if faraday_server.debug else err.name}
             return flask.jsonify(response), 404

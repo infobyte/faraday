@@ -14,7 +14,7 @@ from flask_classful import FlaskView
 from sqlalchemy.orm import joinedload, undefer
 from sqlalchemy.orm.exc import NoResultFound, ObjectDeletedError
 from sqlalchemy.inspection import inspect
-from sqlalchemy import func, text, desc, asc
+from sqlalchemy import func, desc, asc
 from marshmallow import Schema
 from marshmallow.compat import with_metaclass
 from marshmallow.validate import Length

@@ -100,7 +100,6 @@ class CredentialFilterSet(FilterSet):
             'username',
             'host_id',
             'service_id',
-            'target'
         )
         default_operator = operators.Equal
         operators = (operators.Equal, )

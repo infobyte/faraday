@@ -100,7 +100,7 @@ class CustomEngineConnector(_EngineConnector):
         if uri.startswith('sqlite://'):
             with self._lock:
                 @event.listens_for(rv, "connect")
-                def do_connect(dbapi_connection, connection_record):
+                def do_connect(dbapi_connection, connection_record):  # pylint:disable=unused-variable
                     # disable pysqlite's emitting of the BEGIN statement
                     # entirely.  also stops it from emitting COMMIT before any
                     # DDL.
@@ -110,7 +110,7 @@ class CustomEngineConnector(_EngineConnector):
                     cursor.close()
 
                 @event.listens_for(rv, "begin")
-                def do_begin(conn):
+                def do_begin(conn): # pylint:disable=unused-variable
                     # emit our own BEGIN
                     conn.execute("BEGIN")
         return rv
@@ -489,6 +489,7 @@ class CustomFieldsSchema(db.Model):
     id = Column(Integer, primary_key=True)
     field_name = Column(Text, unique=True)
     field_type = Column(Text)
+    field_metadata = Column(JSONType, nullable=True)
     field_display_name = Column(Text)
     field_order = Column(Integer)
     table_name = Column(Text)
@@ -1924,6 +1925,24 @@ class Action(Metadata):
     value = Column(String, nullable=True)
 
 
+class Executor(Metadata):
+    __tablename__ = 'executor'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    agent_id = Column(Integer, ForeignKey('agent.id'), index=True, nullable=False)
+    agent = relationship(
+        'Agent',
+        backref=backref('executors', cascade="all, delete-orphan"),
+    )
+    parameters_metadata = Column(JSONType, nullable=False, default={})
+    # workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    # workspace = relationship('Workspace', backref=backref('executors', cascade="all, delete-orphan"))
+
+    __table_args__ = (
+        UniqueConstraint('name', 'agent_id',
+                         name='uix_executor_table_agent_id_name'),)
+
+
 class AgentsSchedule(Metadata):
     __tablename__ = 'agent_schedule'
     id = Column(Integer, primary_key=True)
@@ -1938,12 +1957,13 @@ class AgentsSchedule(Metadata):
         'Workspace',
         backref=backref('schedules', cascade="all, delete-orphan"),
     )
-
-    agent_id = Column(Integer, ForeignKey('agent.id'), index=True, nullable=False)
-    agent = relationship(
-        'Agent',
+    executor_id = Column(Integer, ForeignKey('executor.id'), index=True, nullable=False)
+    executor = relationship(
+        'Executor',
         backref=backref('schedules', cascade="all, delete-orphan"),
     )
+
+    parameters = Column(JSONType, nullable=False, default={})
 
     @property
     def next_run(self):
@@ -1998,6 +2018,25 @@ class Agent(Metadata):
             return 'paused'
 
 
+class AgentExecution(Metadata):
+    __tablename__ = 'agent_execution'
+    id = Column(Integer, primary_key=True)
+    running = Column(Boolean, nullable=True)
+    successful = Column(Boolean, nullable=True)
+    message = Column(String, nullable=True)
+    executor_id = Column(Integer, ForeignKey('executor.id'), index=True, nullable=False)
+    executor = relationship('Executor', foreign_keys=[executor_id], backref=backref('executions', cascade="all, delete-orphan"))
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship(
+        'Workspace',
+        backref=backref('agent_executions', cascade="all, delete-orphan"),
+    )
+
+    @property
+    def parent(self):
+        return
+
+
 class Condition(Metadata):
     __tablename__ = 'condition'
 
@@ -2031,6 +2070,15 @@ class RuleExecution(Metadata):
     @property
     def parent(self):
         return
+
+
+class SearchFilter(Metadata):
+
+    __tablename__ = 'search_filter'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    json_query = Column(String, nullable=False) # meant to store json but just readonly
+    user_query = Column(String, nullable=False)
 
 
 # This constraint uses Columns from different classes
@@ -2071,5 +2119,5 @@ event.listen(
 )
 
 # We have to import this after all models are defined
-import faraday.server.events
+import faraday.server.events # pylint: disable=unused-import
 # I'm Py3

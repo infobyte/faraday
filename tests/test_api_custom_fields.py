@@ -32,7 +32,7 @@ class TestVulnerabilityCustomFields(ReadOnlyAPITests):
 
         res = test_client.get(self.url()) # '/v2/custom_fields_schema/')
         assert res.status_code == 200
-        assert {u'table_name': u'vulnerability', u'id': add_text_field.id, u'field_type': u'text', u'field_name': u'cvss', u'field_display_name': u'CVSS', u'field_order': 1} in res.json
+        assert {u'table_name': u'vulnerability', u'id': add_text_field.id, u'field_type': u'text', u'field_name': u'cvss', u'field_display_name': u'CVSS', u'field_metadata': None, u'field_order': 1} in res.json
 
     def test_custom_fields_field_name_cant_be_changed(self, session, test_client):
         add_text_field = CustomFieldsSchemaFactory.create(
@@ -61,5 +61,23 @@ class TestVulnerabilityCustomFields(ReadOnlyAPITests):
         assert custom_field_obj.field_type == 'str'
         assert custom_field_obj.field_display_name == 'CVSS new'
 
+    def test_add_custom_fields_with_metadata(self, session, test_client):
+        add_choice_field = CustomFieldsSchemaFactory.create(
+            table_name='vulnerability',
+            field_name='gender',
+            field_type='choice',
+            field_metadata=['Male', 'Female'],
+            field_order=1,
+            field_display_name='Gender',
+        )
+
+        session.add(add_choice_field)
+        session.commit()
+
+        res = test_client.get(self.url())  # '/v2/custom_fields_schema/')
+        assert res.status_code == 200
+        assert {u'table_name': u'vulnerability', u'id': add_choice_field.id, u'field_type': u'choice',
+                u'field_name': u'gender', u'field_display_name': u'Gender', u'field_metadata': "['Male', 'Female']",
+                u'field_order': 1} in res.json
 
 # I'm Py3

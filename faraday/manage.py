@@ -30,19 +30,15 @@ import click
 import requests
 import alembic.command
 from pgcli.main import PGCli
-from requests import ConnectionError
 from urllib.parse import urlparse
 from alembic.config import Config
 from sqlalchemy.exc import ProgrammingError, OperationalError
 
 import faraday.server.config
 from faraday.server.config import FARADAY_BASE
-from faraday.client.persistence.server.server import _conf, FARADAY_UP, SERVER_URL
-from faraday.client.start_client import FARADAY_PLUGINS_BASEPATH
 from faraday.server.commands.initdb import InitDB
 from faraday.server.commands.faraday_schema_display import DatabaseSchema
 from faraday.server.commands.app_urls import show_all_urls
-from faraday.server.commands.reports import import_external_reports
 from faraday.server.commands import status_check as status_check_functions
 from faraday.server.commands import change_password as change_pass
 from faraday.server.commands.custom_fields import add_custom_field_main, delete_custom_field_main
@@ -50,6 +46,7 @@ from faraday.server.commands import support as support_zip
 from faraday.server.commands import change_username
 from faraday.server.models import db, User
 from faraday.server.web import app
+from faraday_plugins.plugins.manager import PluginsManager
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -62,24 +59,6 @@ def cli():
 
 def check_faraday_server(url):
     return requests.get(url)
-
-
-@click.command(help="Enable importation of plugins reports in ~/.faraday folder")
-@click.option('--debug/--no-debug', default=False)
-@click.option('--workspace', default=None)
-@click.option('--polling/--no-polling', default=True)
-def process_reports(debug, workspace, polling):
-    configuration = _conf()
-    url = '{0}/_api/v2/info'.format(configuration.getServerURI() if FARADAY_UP else SERVER_URL)
-    with app.app_context():
-        try:
-            check_faraday_server(url)
-            import_external_reports(workspace, polling)
-        except OperationalError as ex:
-            print('{0}'.format(ex))
-            print('Please verify your configuration on server.ini or the hba configuration!')
-        except ConnectionError:
-            print('Can\'t connect to {0}. Please check if the server is running.'.format(url))
 
 
 @click.command(help="Show all URLs in Faraday Server API")
@@ -114,7 +93,6 @@ def sql_shell():
     pgcli = PGCli()
     pgcli.connect_uri(parsed_conn_string)
     pgcli.run_cli()
-
 
 
 @click.command(help='Checks configuration and faraday status.')
@@ -177,9 +155,9 @@ def validate_email(ctx, param, value):
 
 @click.command(help="List Available Plugins")
 def list_plugins():
-    plugins_list = [name for name in os.listdir(FARADAY_PLUGINS_BASEPATH)
-           if os.path.isdir(os.path.join(FARADAY_PLUGINS_BASEPATH, name))]
-    print('\n'.join(sorted(plugins_list)))
+    plugins_manager = PluginsManager()
+    for _, plugin in plugins_manager.get_plugins():
+        click.echo(f"{plugin.id}")
 
 @click.command(help="Create ADMIN user for Faraday application")
 @click.option('--username', prompt=True, callback=validate_user_unique_field)
@@ -274,7 +252,6 @@ def rename_user(current_username, new_username):
         change_username.change_username(current_username, new_username)
 
 
-cli.add_command(process_reports)
 cli.add_command(show_urls)
 cli.add_command(initdb)
 cli.add_command(database_schema)

@@ -44,7 +44,8 @@ from faraday.server.models import (
     CommandObject,
     Comment,
     CustomFieldsSchema,
-    Agent)
+    Agent,
+    SearchFilter, Executor)
 
 # Make partials for start and end date. End date must be after start date
 FuzzyStartTime = lambda: (
@@ -272,7 +273,7 @@ class VulnerabilityFactory(HasParentHostOrService,
 
 
 class VulnerabilityWebFactory(VulnerabilityGenericFactory):
-    method = FuzzyChoice(['GET', 'POST', 'PUT', 'PATCH' 'DELETE'])
+    method = FuzzyChoice(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])
     parameter_name = FuzzyText()
     service = factory.SubFactory(ServiceFactory, workspace=factory.SelfAttribute('..workspace'))
 
@@ -439,6 +440,26 @@ class AgentFactory(WorkspaceObjectFactory):
         sqlalchemy_session = db.session
 
 
+class ExecutorFactory(FaradayFactory):
+    name = FuzzyText()
+    agent = factory.SubFactory(AgentFactory)
+
+    class Meta:
+        model = Executor
+        sqlalchemy_session = db.session
+
+
+class SearchFilterFactory(FaradayFactory):
+
+    name = FuzzyText()
+    user_query = FuzzyText()
+    json_query = FuzzyText()
+
+    creator = factory.SubFactory(UserFactory)
+
+    class Meta:
+        model = SearchFilter
+        sqlalchemy_session = db.session
 
 
 # I'm Py3

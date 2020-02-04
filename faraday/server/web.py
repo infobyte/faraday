@@ -18,18 +18,21 @@ from twisted.web.wsgi import WSGIResource
 from autobahn.twisted.websocket import (
     listenWS
 )
+
+from OpenSSL.SSL import Error as SSLError
+
 import faraday.server.config
 
-from faraday.config.constant import CONST_FARADAY_HOME_PATH
-from faraday.server import TimerClass
+from faraday.server.config import CONST_FARADAY_HOME_PATH
 from faraday.server.utils import logger
-
+from faraday.server.threads.reports_processor import ReportsManager, REPORTS_QUEUE
+from faraday.server.threads.ping_home import PingHomeThread
 from faraday.server.app import create_app
 from faraday.server.websocket_factories import (
     WorkspaceServerFactory,
     BroadcastServerProtocol
 )
-from faraday.server.api.modules.upload_reports import RawReportProcessor
+
 
 app = create_app()  # creates a Flask(__name__) app
 logger = logging.getLogger(__name__)
@@ -71,12 +74,12 @@ class WebServer:
     API_URL_PATH = b'_api'
     WEB_UI_LOCAL_PATH = os.path.join(faraday.server.config.FARADAY_BASE, 'server/www')
 
-    def __init__(self, enable_ssl=False):
-        logger.info('Starting web server at {}://{}:{}/'.format(
-            'https' if enable_ssl else 'http',
+    def __init__(self):
+        self.__ssl_enabled = faraday.server.config.ssl.enabled
+        logger.info('Starting web server at %s://%s:%s/',
+            'https' if self.__ssl_enabled else 'http',
             faraday.server.config.faraday_server.bind_address,
-            faraday.server.config.faraday_server.port))
-        self.__ssl_enabled = enable_ssl
+            faraday.server.config.ssl.port if self.__ssl_enabled else faraday.server.config.faraday_server.port)
         self.__websocket_ssl_enabled = faraday.server.config.websocket_ssl.enabled
         self.__websocket_port = faraday.server.config.faraday_server.websocket_port or 9000
         self.__config_server()
@@ -84,9 +87,10 @@ class WebServer:
 
     def __config_server(self):
         self.__bind_address = faraday.server.config.faraday_server.bind_address
-        self.__listen_port = int(faraday.server.config.faraday_server.port)
         if self.__ssl_enabled:
             self.__listen_port = int(faraday.server.config.ssl.port)
+        else:
+            self.__listen_port = int(faraday.server.config.faraday_server.port)
 
     def __load_ssl_certs(self):
         certs = (faraday.server.config.ssl.keyfile, faraday.server.config.ssl.certificate)
@@ -141,7 +145,7 @@ class WebServer:
             # teardown()
             if self.raw_report_processor.isAlive():
                 self.raw_report_processor.stop()
-            self.timer.stop()
+            self.ping_home_thread.stop()
 
         log_path = os.path.join(CONST_FARADAY_HOME_PATH, 'logs', 'access-logging.log')
         site = twisted.web.server.Site(self.__root_resource,
@@ -159,22 +163,27 @@ class WebServer:
         try:
             self.install_signal()
             # start threads and processes
-            self.raw_report_processor = RawReportProcessor()
+            self.raw_report_processor = ReportsManager(REPORTS_QUEUE, name="ReportsManager-Thread", daemon=True)
             self.raw_report_processor.start()
-            self.timer = TimerClass()
-            self.timer.start()
+            self.ping_home_thread = PingHomeThread()
+            self.ping_home_thread.start()
             # web and static content
             self.__listen_func(
                 self.__listen_port, site,
                 interface=self.__bind_address)
             # websockets
             if faraday.server.config.websocket_ssl.enabled:
-                contextFactory = ssl.DefaultOpenSSLContextFactory(
-                        faraday.server.config.websocket_ssl.keyfile.strip('\''),
-                        faraday.server.config.websocket_ssl.certificate.strip('\'')
-                )
+
                 try:
+                    contextFactory = ssl.DefaultOpenSSLContextFactory(
+                            faraday.server.config.websocket_ssl.keyfile.strip('\''),
+                            faraday.server.config.websocket_ssl.certificate.strip('\'')
+                    )
+
                     listenWS(self.__build_websockets_resource(), interface=self.__bind_address, contextFactory=contextFactory)
+
+                except SSLError as e:
+                    logger.error('Could not start websockets due to a SSL Config error. Some web functionality will not be available')
                 except error.CannotListenError:
                     logger.warn('Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
                 except Exception as ex:
@@ -191,8 +200,10 @@ class WebServer:
             reactor.run()
 
         except error.CannotListenError as e:
-            logger.error(str(e))
+            logger.error(e)
             sys.exit(1)
+
+
         except Exception as e:
             logger.error('Something went wrong when trying to setup the Web UI')
             logger.exception(e)

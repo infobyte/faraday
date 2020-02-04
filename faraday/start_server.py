@@ -8,26 +8,19 @@ import socket
 import argparse
 import subprocess
 
-from faraday.server import TimerClass
+from alembic.runtime.migration import MigrationContext
 
-try:
-    from colorama import init, Fore
-    import sqlalchemy
-    import faraday.server.config
-    import faraday.server.utils.logger
-    import faraday.server.web
-    from faraday.server.models import db, Workspace
-    from faraday.server.utils import daemonize
-    from faraday.server.web import app
-    from faraday.utils import dependencies
-    from faraday.server.config import FARADAY_BASE
-    from alembic.script import ScriptDirectory
-    from alembic.config import Config
-    from alembic.migration import MigrationContext
-except ImportError as ex:
-    print(ex)
-    print('Missing dependencies.\nPlease execute: pip install -r requirements_server.txt')
-    sys.exit(1)
+from colorama import init, Fore
+import sqlalchemy
+import faraday.server.config
+import faraday.server.utils.logger
+import faraday.server.web
+from faraday.server.models import db, Workspace
+from faraday.server.utils import daemonize
+from faraday.server.web import app
+from alembic.script import ScriptDirectory
+from alembic.config import Config
+
 logger = faraday.server.utils.logger.get_logger(faraday.server.utils.logger.ROOT_LOGGER)
 
 init()
@@ -36,14 +29,6 @@ init()
 def setup_environment(check_deps=False):
     # Configuration files generation
     faraday.server.config.copy_default_config_to_local()
-    if check_deps:
-        # Check dependencies
-        installed_deps, missing_deps, conflict_deps = dependencies.check_dependencies(
-            requirements_file=faraday.server.config.REQUIREMENTS_FILE)
-        logger.info("Checking dependencies...")
-        if conflict_deps:
-            logger.info("Some dependencies are old. Update them with \"pip install -r requirements_server.txt -U\"")
-        logger.info("Dependencies met")
     # Web configuration file generation
     faraday.server.config.gen_web_config()
 
@@ -66,7 +51,7 @@ def is_server_running(port):
 
 
 def run_server(args):
-    web_server = faraday.server.web.WebServer(enable_ssl=args.ssl)
+    web_server = faraday.server.web.WebServer()
     daemonize.create_pid_file(args.port)
     web_server.run()
 
@@ -93,7 +78,7 @@ def check_postgresql():
     with app.app_context():
         try:
             if not db.session.query(Workspace).count():
-                logger.warn('No workspaces found. Remember to execute CouchDB importer')
+                logger.warn('No workspaces found')
         except sqlalchemy.exc.ArgumentError:
             logger.error(
                 '\n\b{RED}Please check your PostgreSQL connection string in the file ~/.faraday/config/server.ini on your home directory.{WHITE} \n'.format(RED=Fore.RED, WHITE=Fore.WHITE)
@@ -103,9 +88,9 @@ def check_postgresql():
             logger.error(
                     '\n\n{RED}Could not connect to PostgreSQL.\n{WHITE}Please check: \n{YELLOW}  * if database is running \n  * configuration settings are correct. \n\n{WHITE}For first time installations execute{WHITE}: \n\n {GREEN} faraday-manage initdb\n\n'.format(GREEN=Fore.GREEN, YELLOW=Fore.YELLOW, WHITE=Fore.WHITE, RED=Fore.RED))
             sys.exit(1)
-        except sqlalchemy.exc.ProgrammingError as e:
+        except sqlalchemy.exc.ProgrammingError:
             logger.error(
-                    '\n\nn{WHITE}Missing migrations, please execute: \n\nfaraday-manage migrate'.format(WHITE=Fore.WHITE, RED=Fore.RED))
+                    '\n\nn{WHITE}Missing migrations, please execute: \n\nfaraday-manage migrate'.format(WHITE=Fore.WHITE))
             sys.exit(1)
 
 
@@ -118,11 +103,11 @@ def check_alembic_version():
     with app.app_context():
         try:
             conn = db.session.connection()
-        except ImportError as ex:
+        except ImportError:
             if not faraday.server.config.database.connection_string:
                 print("\n\nNo database configuration found. Did you execute \"faraday-manage initdb\"? \n\n")
                 sys.exit(1)
-        except sqlalchemy.exc.OperationalError as ex:
+        except sqlalchemy.exc.OperationalError:
             print("Bad Credentials, please check the .faraday/config/server.ini")
             sys.exit(1)
 
@@ -130,7 +115,7 @@ def check_alembic_version():
 
         current_revision = context.get_current_revision()
         if head_revision != current_revision:
-            if glob.glob(os.path.join(FARADAY_BASE, 'migrations', 'versions',
+            if glob.glob(os.path.join(faraday.server.config.FARADAY_BASE, 'migrations', 'versions',
                          '{}_*.py'.format(current_revision))):
                 print('--' * 20)
                 print('Missing migrations, please execute: \n\n')
@@ -145,11 +130,10 @@ def check_alembic_version():
                     )
 
 def main():
-    os.chdir(FARADAY_BASE)
+    os.chdir(faraday.server.config.FARADAY_BASE)
     check_alembic_version()
     check_postgresql()
     parser = argparse.ArgumentParser()
-    parser.add_argument('--ssl', action='store_true', help='enable HTTPS')
     parser.add_argument('--debug', action='store_true', help='run Faraday Server in debug mode')
     parser.add_argument('--start', action='store_true', help='run Faraday Server in background')
     parser.add_argument('--stop', action='store_true', help='stop Faraday Server')
@@ -189,9 +173,6 @@ def main():
     if result == 0:
         logger.error("Faraday Server port in use. Check your processes and run the server again...")
         sys.exit(1)
-    # Overwrites config option if SSL is set by argument
-    if args.ssl:
-        faraday.server.config.ssl.enabled = 'true'
     if not args.no_setup:
         setup_environment(not args.nodeps)
     if args.port:
@@ -216,6 +197,6 @@ def main():
     elif not args.start:
         run_server(args)
 
-if __name__ == '__main__': # TODO Borrar???
+
+if __name__ == '__main__':  # Don't delete. this is used for dev
     main()
-# I'm Py3

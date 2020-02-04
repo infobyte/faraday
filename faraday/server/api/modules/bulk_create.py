@@ -21,8 +21,8 @@ from faraday.server.models import (
 )
 from faraday.server.utils.database import (
     get_conflict_object,
-    is_unique_constraint_violation
-    )
+    is_unique_constraint_violation,
+    get_object_type_for)
 from faraday.server.api.modules import (
     hosts,
     services,
@@ -141,7 +141,7 @@ class CommandSchema(AutoSchema):
 
     I don't need that here, so I'll write a schema from scratch."""
 
-    duration = fields.TimeDelta('seconds', required=True)
+    duration = fields.TimeDelta('microseconds', required=True)
 
     class Meta:
         model = Command
@@ -237,11 +237,14 @@ def _create_host(ws, host_data, command=None):
 
 def _create_command_object_for(ws, created, obj, command):
     assert command is not None
-    db.session.add(CommandObject(
-        obj,
-        command=command,
-        created_persistent=created,
-        workspace=ws))
+    data = {
+        'object_id': obj.id,
+        'object_type': get_object_type_for(obj),
+        'command': command,
+        'created_persistent': created,
+        'workspace': ws,
+    }
+    get_or_create(ws, CommandObject, data)
     db.session.commit()
 
 
@@ -289,12 +292,18 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
     if command is not None:
         _create_command_object_for(ws, created, vuln, command)
 
-    if created:
+    def update_vuln(policyviolations, references, vuln):
         vuln.references = references
         vuln.policyviolations = policyviolations
         # TODO attachments
         db.session.add(vuln)
         db.session.commit()
+
+    if created:
+        update_vuln(policyviolations, references, vuln)
+    elif vuln.status == "closed":  # Implicit not created
+        vuln.status = "re-opened"
+        update_vuln(policyviolations, references, vuln)
 
 
 def _create_hostvuln(ws, host, vuln_data, command=None):

@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 import flask
 import sqlalchemy
 from marshmallow import (
@@ -299,8 +299,12 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
     if created and run_date:
         try:
             run_timestamp = float(run_date)
-            logger.debug("Apply run date to vuln")
-            vuln.create_date = datetime.utcfromtimestamp(run_timestamp)
+            run_date = datetime.utcfromtimestamp(run_timestamp)
+            if run_date < datetime.now() + timedelta(hours=24):
+                vuln.create_date = run_date
+                logger.debug("Apply run date to vuln")
+            else:
+                logger.debug("Run date (%s) is greater than allowed", run_date)
         except ValueError:
             logger.error("Error converting run_date to a valid date")
             flask.abort(400, "Invalid run_date")

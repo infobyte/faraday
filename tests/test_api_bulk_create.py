@@ -654,6 +654,24 @@ def test_bulk_create_endpoint_with_vuln_run_date(session, workspace, test_client
     assert vuln.create_date.date() == run_date.date()
 
 @pytest.mark.usefixtures('logged_user')
+def test_bulk_create_endpoint_with_vuln_future_run_date(session, workspace, test_client):
+    assert count(Host, workspace) == 0
+    assert count(VulnerabilityGeneric, workspace) == 0
+    url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
+    run_date = datetime.now(timezone.utc) + timedelta(days=10)
+    host_data_copy = host_data.copy()
+    vuln_data_copy = vuln_data.copy()
+    vuln_data_copy['run_date'] = run_date.timestamp()
+    host_data_copy['vulnerabilities'] = [vuln_data_copy]
+    res = test_client.post(url, data=dict(hosts=[host_data_copy]))
+    assert res.status_code == 201, res.json
+    assert count(Host, workspace) == 1
+    assert count(VulnerabilityGeneric, workspace) == 1
+    vuln = Vulnerability.query.filter(Vulnerability.workspace == workspace).one()
+    print(vuln.create_date)
+    assert vuln.create_date.date()  < run_date.date()
+
+@pytest.mark.usefixtures('logged_user')
 def test_bulk_create_endpoint_with_invalid_vuln_run_date(session, workspace, test_client):
     assert count(Host, workspace) == 0
     assert count(VulnerabilityGeneric, workspace) == 0

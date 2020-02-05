@@ -13,7 +13,13 @@ class TestPreferences(GenericAPITest):
     view_class = PreferencesView
 
     def test_add_preference(self, test_client):
-        data = {'id': 1}
+        data = {'preferences': {'field1': 1, 'field2': 'str1'}}
         response = test_client.post(self.url(), data=data)
 
         assert response.status_code == 201
+
+        response = test_client.get(self.url())
+
+        assert response.status_code == 200
+        print("GET ", response.json)
+

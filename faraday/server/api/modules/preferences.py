@@ -1,6 +1,6 @@
 from faraday.server.api.base import GenericView
 from faraday.server.models import User
-from flask import Blueprint, request, session, abort, jsonify, g
+from flask import Blueprint, request, jsonify, g
 
 preferences_api = Blueprint('preferences_api', __name__)
 

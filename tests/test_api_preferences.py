@@ -35,3 +35,18 @@ class TestPreferences(GenericAPITest):
 
         assert response.status_code == 200
         assert response.json['preferences'] == preferences
+
+
+
+    def test_add_invalid_preference(self, test_client):
+        preferences = {'field1': 1, 'field2': 'str1'}
+        data = {'preferens': preferences}
+        response = test_client.post(self.url(), data=data)
+
+        assert response.status_code == 201
+
+        response = test_client.get(self.url())
+
+        assert response.status_code == 200
+        print(response.json)
+        assert response.json['preferences'] == {}

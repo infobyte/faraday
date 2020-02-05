@@ -1,5 +1,5 @@
 from faraday.server.api.base import GenericView
-from faraday.server.models import User
+from faraday.server.models import User, db
 from flask import Blueprint, request, jsonify, g
 
 preferences_api = Blueprint('preferences_api', __name__)
@@ -13,6 +13,8 @@ class PreferencesView(GenericView):
         user = g.user
         preferences = request.json.get('preferences', {})
         user.preferences = preferences
+
+        db.session.commit()
 
         return jsonify(''), 201
 

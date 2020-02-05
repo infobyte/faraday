@@ -199,6 +199,7 @@ build_nix_python3:
     - mv recursive.pth /opt/faraday/lib/python3.7/site-packages/nix.pth
     - source /opt/faraday/bin/activate
     # - "nix-shell -p libxml2 libxslt zlib cairo gobject-introspection glib pkgconfig --run 'SOURCE_DATE_EPOCH=$(date +%s) /opt/faraday/bin/pip install -r requirements.txt'"
+    - pip install Werkzeug==0.16.1
     - python setup.py install
     - pip install -r requirements.txt  # This has to be below setup.py install
     - pip freeze
@@ -406,11 +407,15 @@ macos_pkg:
         - gem install fpm-1.11.0.gem
         - cd ../../
         - sh faraday-linux-installers-builder/build_osx.sh $(eval $IMAGE_TAG) server osxpkg
+        - mv faraday-server_amd64.pkg ../../Faraday-server.pkg
+        - sh faraday-linux-installers-builder/build_osx.sh $(eval $IMAGE_TAG) client osxpkg
+        - mv faraday-client_amd64.pkg ../../Faraday-client.pkg
         - mv faraday-server_amd64.pkg ../../Faraday.pkg
     artifacts:
         name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME-binaries"
         paths:
-            - Faraday.pkg
+            - Faraday-server.pkg
+            - Faraday-client.pkg
         expire_in: 1 week
     only:
         variables:

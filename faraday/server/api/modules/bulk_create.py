@@ -37,18 +37,23 @@ bulk_create_api = flask.Blueprint('bulk_create_api', __name__)
 
 logger = logging.getLogger(__name__)
 
+
 class VulnerabilitySchema(vulns.VulnerabilitySchema):
+
     class Meta(vulns.VulnerabilitySchema.Meta):
+        extra_fields = ('run_date',)
         fields = tuple(
-            field_name for field_name in vulns.VulnerabilitySchema.Meta.fields
+            field_name for field_name in (vulns.VulnerabilitySchema.Meta.fields + extra_fields)
             if field_name not in ('parent', 'parent_type')
         )
 
 
 class VulnerabilityWebSchema(vulns.VulnerabilityWebSchema):
+
     class Meta(vulns.VulnerabilityWebSchema.Meta):
+        extra_fields = ('run_date',)
         fields = tuple(
-            field_name for field_name in vulns.VulnerabilityWebSchema.Meta.fields
+            field_name for field_name in (vulns.VulnerabilityWebSchema.Meta.fields + extra_fields)
             if field_name not in ('parent', 'parent_type')
         )
 

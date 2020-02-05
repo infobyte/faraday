@@ -13,7 +13,8 @@ class TestPreferences(GenericAPITest):
     view_class = PreferencesView
 
     def test_add_preference(self, test_client):
-        data = {'preferences': {'field1': 1, 'field2': 'str1'}}
+        preferences = {'field1': 1, 'field2': 'str1'}
+        data = {'preferences': preferences}
         response = test_client.post(self.url(), data=data)
 
         assert response.status_code == 201
@@ -21,5 +22,16 @@ class TestPreferences(GenericAPITest):
         response = test_client.get(self.url())
 
         assert response.status_code == 200
-        print("GET ", response.json)
+        assert response.json['preferences'] == preferences
 
+    def test_list_preferences_from_session(self, test_client):
+        preferences = {'field1': 1, 'field2': 'str1'}
+        data = {'preferences': preferences}
+        response = test_client.post(self.url(), data=data)
+
+        assert response.status_code == 201
+
+        response = test_client.get('/session')
+
+        assert response.status_code == 200
+        assert response.json['preferences'] == preferences

@@ -268,7 +268,6 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
     website = fields.String(default='')
     query = fields.String(attribute='query_string', default='')
     status_code = fields.Integer(allow_none=True)
-    run_date = fields.Float(allow_none=True)
 
     class Meta:
         model = VulnerabilityWeb
@@ -282,7 +281,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'service', 'obj_id', 'type', 'policyviolations',
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
-            'status_code', 'custom_fields', 'external_id', 'run_date'
+            'status_code', 'custom_fields', 'external_id'
         )
 
 
@@ -506,7 +505,6 @@ class VulnerabilityView(PaginatedMixin,
 
     def _update_object(self, obj, data):
         data.pop('type') # It's forbidden to change vuln type!
-        data.pop('run_date', None)
         return super(VulnerabilityView, self)._update_object(obj, data)
 
     def _perform_update(self, object_id, obj, data, workspace_name):

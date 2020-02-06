@@ -17,7 +17,7 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    conn.execute('ALTER TABLE faraday_user ADD COLUMN preferences jsonb not null default "{}"::jsonb')
+    conn.execute("ALTER TABLE faraday_user ADD COLUMN preferences jsonb not null default '{}'::jsonb")
 
 
 def downgrade():

@@ -4,7 +4,7 @@ from flask import Blueprint, request, jsonify, g
 
 preferences_api = Blueprint('preferences_api', __name__)
 
-# TODO: login?
+
 class PreferencesView(GenericView):
     model_class = User
     route_base = 'preferences'

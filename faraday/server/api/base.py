@@ -81,7 +81,6 @@ class GenericView(FlaskView):
 
     #: **Required**. The class of the SQLAlchemy model this view will handle
     model_class = None
-
     #: **Required** (unless _get_schema_class is overwritten).
     #: A subclass of `marshmallow.Schema` to serialize and deserialize the
     #: data provided by the user

@@ -14,5 +14,6 @@ def session_info():
     user = current_app.user_datastore.get_user(session['user_id'])
     data = user.get_security_payload()
     data['csrf_token'] = generate_csrf()
+    data['preferences'] = user.preferences
     return jsonify(data)
 # I'm Py3

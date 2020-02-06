@@ -227,8 +227,7 @@ def migrate(downgrade, revision):
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("Migration Error: %s", e)
-        logger.exception(e)
-        print('Migration failed! Please check the logs')
+        print('Migration failed!', e)
         sys.exit(1)
 
 

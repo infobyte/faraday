@@ -1547,6 +1547,7 @@ class User(db.Model, UserMixin):
             String(16),
             name="otp_secret", nullable=True)
     state_otp = Column(Enum(*OTP_STATES, name='user_otp_states'), nullable=False, default="disabled")
+    preferences = Column(JSONType, nullable=True, default={})
 
     # TODO: add  many to many relationship to add permission to workspace
 

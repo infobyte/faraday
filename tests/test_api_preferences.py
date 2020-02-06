@@ -17,7 +17,7 @@ class TestPreferences(GenericAPITest):
         data = {'preferences': preferences}
         response = test_client.post(self.url(), data=data)
 
-        assert response.status_code == 201
+        assert response.status_code == 200
 
         response = test_client.get(self.url())
 
@@ -29,7 +29,7 @@ class TestPreferences(GenericAPITest):
         data = {'preferences': preferences}
         response = test_client.post(self.url(), data=data)
 
-        assert response.status_code == 201
+        assert response.status_code == 200
 
         response = test_client.get('/session')
 
@@ -37,16 +37,9 @@ class TestPreferences(GenericAPITest):
         assert response.json['preferences'] == preferences
 
 
-
     def test_add_invalid_preference(self, test_client):
         preferences = {'field1': 1, 'field2': 'str1'}
-        data = {'preferens': preferences}
+        data = {'p': preferences}
         response = test_client.post(self.url(), data=data)
 
-        assert response.status_code == 201
-
-        response = test_client.get(self.url())
-
-        assert response.status_code == 200
-        print(response.json)
-        assert response.json['preferences'] == {}
+        assert response.status_code == 400

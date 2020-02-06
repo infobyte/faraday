@@ -10,7 +10,6 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import division
 from builtins import str
-from imp import reload
 
 import ast
 import json
@@ -149,7 +148,7 @@ def get_model_environment(model, _models):
 def process_models_by_similarity(api, _models, rule, mail_notificacion):
     logger.debug("--> Start Process models by similarity")
     for index_m1, m1 in zip(list(range(len(_models) - 1)), _models):
-        for index_m2, m2 in zip(list(range(index_m1 + 1, len(_models))), _models[index_m1 + 1:]):
+        for _, m2 in zip(list(range(index_m1 + 1, len(_models))), _models[index_m1 + 1:]):
             if m1.id != m2.id and is_same_level(m1, m2):
                 if equals(m1, m2, rule):
                     environment = [m1, m2]
@@ -827,7 +826,7 @@ class Searcher:
     def _process_models_by_similarity(self, _models, rule):
         logger.debug("--> Start Process models by similarity")
         for index_m1, m1 in zip(list(range(len(_models) - 1)), _models):
-            for index_m2, m2 in zip(list(range(index_m1 + 1, len(_models))), _models[index_m1 + 1:]):
+            for _, m2 in zip(list(range(index_m1 + 1, len(_models))), _models[index_m1 + 1:]):
                 if m1.id != m2.id and is_same_level(m1, m2):
                     if equals(m1, m2, rule):
                         environment = [m1, m2]

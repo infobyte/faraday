@@ -7,7 +7,6 @@ See the file 'doc/LICENSE' for the license information
 from builtins import input
 
 import getpass
-import shutil
 import string
 
 import os
@@ -23,11 +22,6 @@ from subprocess import Popen
 import sqlalchemy
 from sqlalchemy import create_engine
 
-from faraday.config.configuration import Configuration
-from faraday.client.start_client import (  # TODO load this from other place
-    FARADAY_BASE_CONFIG_XML,
-    FARADAY_BASE,
-)
 from faraday.server.utils.database import is_unique_constraint_violation
 
 from configparser import ConfigParser, NoSectionError
@@ -38,8 +32,9 @@ from colorama import Fore
 from sqlalchemy.exc import OperationalError, ProgrammingError
 
 import faraday.server.config
-from faraday.config.constant import CONST_FARADAY_HOME_PATH
-from faraday.server.config import LOCAL_CONFIG_FILE
+from faraday.server.config import CONST_FARADAY_HOME_PATH
+from faraday.server.config import LOCAL_CONFIG_FILE, FARADAY_BASE
+
 init()
 
 
@@ -138,24 +133,6 @@ class InitDB():
                     "{yellow}WARNING{white}: Can't create administrator user.".format(
                         yellow=Fore.YELLOW, white=Fore.WHITE))
                 raise 
-        if not already_created:
-
-            self._save_user_xml(random_password)
-            print("Admin user created with \n\n{red}username: {white}faraday \n"
-                  "{red}password:{white} {"
-                  "random_password} \n".format(random_password=random_password,
-                                            white=Fore.WHITE, red=Fore.RED))
-            print("{yellow}WARNING{white}: If you are going to execute couchdb importer you must use the couchdb password for faraday user.".format(white=Fore.WHITE, yellow=Fore.YELLOW))
-
-    def _save_user_xml(self, random_password):
-        user_xml = os.path.join(CONST_FARADAY_HOME_PATH, "config", "user.xml")
-        if not os.path.exists(user_xml):
-            shutil.copy(FARADAY_BASE_CONFIG_XML, user_xml)
-        conf = Configuration(user_xml)
-        conf.setAPIUrl('http://localhost:5985')
-        conf.setAPIUsername('faraday')
-        conf.setAPIPassword(random_password)
-        conf.saveConfig(user_xml)
 
     def _configure_existing_postgres_user(self):
         username = input('Please enter the postgresql username: ')

@@ -19,7 +19,7 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
         "target", "desc", "status", "hostnames", "comments", "owner", "os", "resolution", "easeofresolution", "web_vulnerability",
         "data", "website", "path", "status_code", "request", "method", "params", "pname", "query",
         "policyviolations", "external_id", "impact_confidentiality", "impact_integrity", "impact_availability",
-        "impact_accountability"
+        "impact_accountability", "update_date"
     ]
     headers += custom_fields_columns
     writer = csv.DictWriter(buffer, fieldnames=headers)
@@ -44,6 +44,7 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
         vuln_dict = {"confirmed": vuln['confirmed'],
                      "id": vuln.get('_id', None),
                      "date": vuln_date,
+                     "update_date": vuln['metadata']['update_time'],
                      "severity": vuln.get('severity', None),
                      "target": vuln.get('target', None),
                      "status": vuln.get('status', None),

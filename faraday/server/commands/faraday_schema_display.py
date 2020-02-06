@@ -55,8 +55,8 @@ class DatabaseSchema():
             try:
                 cls = getattr(models, attr)
                 mappers.append(class_mapper(cls))
-            except:
-                pass
+            except Exception as ex:
+                print(ex)
 
         # pass them to the function and set some formatting options
         graph = create_uml_graph(

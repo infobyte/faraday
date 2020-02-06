@@ -312,6 +312,7 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
                 logger.debug("Run date (%s) is greater than allowed", run_date)
         except ValueError:
             logger.error("Error converting run_date to a valid date")
+            db.session.rollback()
             flask.abort(400, "Invalid run_date")
         else:
             db.session.commit()

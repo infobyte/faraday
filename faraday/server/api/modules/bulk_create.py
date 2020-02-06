@@ -294,7 +294,7 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
 
     def update_vuln(policyviolations, references, vuln):
         vuln.references = references
-        vuln.policyviolations = policyviolations
+        vuln.policy_violations = policyviolations
         # TODO attachments
         db.session.add(vuln)
         db.session.commit()

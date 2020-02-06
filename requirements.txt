@@ -1,4 +1,4 @@
-websocket-client>=0.54.0
+werkzeug<1.0.0
 autobahn>=17.10.1
 colorama>=0.3.9
 deprecation>=1.0.1

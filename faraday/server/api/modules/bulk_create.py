@@ -294,28 +294,29 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
         model_class = VulnerabilityWeb
     else:
         raise ValidationError("unknown type")
-    run_date = vuln_data.pop('run_date', None)
-    (created, vuln) = get_or_create(ws, model_class, vuln_data)
-    db.session.commit()
-
-    if command is not None:
-        _create_command_object_for(ws, created, vuln, command)
-
-    if created and run_date:
+    run_date_string = vuln_data.pop('run_date', None)
+    if run_date_string:
         try:
-            run_timestamp = float(run_date)
+            run_timestamp = float(run_date_string)
             run_date = datetime.utcfromtimestamp(run_timestamp)
             if run_date < datetime.now() + timedelta(hours=24):
-                vuln.create_date = run_date
-                logger.debug("Apply run date to vuln")
+                logger.debug("Valid run date")
             else:
+                run_date = None
                 logger.debug("Run date (%s) is greater than allowed", run_date)
         except ValueError:
             logger.error("Error converting run_date to a valid date")
-            db.session.rollback()
             flask.abort(400, "Invalid run_date")
-        else:
-            db.session.commit()
+    else:
+        run_date = None
+    (created, vuln) = get_or_create(ws, model_class, vuln_data)
+    if created and run_date:
+        logger.debug("Apply run date to vuln")
+        vuln.create_date = run_date
+        db.session.commit()
+
+    if command is not None:
+        _create_command_object_for(ws, created, vuln, command)
 
     def update_vuln(policyviolations, references, vuln):
         vuln.references = references

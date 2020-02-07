@@ -406,11 +406,15 @@ macos_pkg:
         - gem install fpm-1.11.0.gem
         - cd ../../
         - sh faraday-linux-installers-builder/build_osx.sh $(eval $IMAGE_TAG) server osxpkg
+        - mv faraday-server_amd64.pkg ../../Faraday-server.pkg
+        - sh faraday-linux-installers-builder/build_osx.sh $(eval $IMAGE_TAG) client osxpkg
+        - mv faraday-client_amd64.pkg ../../Faraday-client.pkg
         - mv faraday-server_amd64.pkg ../../Faraday.pkg
     artifacts:
         name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME-binaries"
         paths:
-            - Faraday.pkg
+            - Faraday-server.pkg
+            - Faraday-client.pkg
         expire_in: 1 week
     only:
         variables:

@@ -225,7 +225,7 @@ class HostsView(PaginatedMixin,
         result = query.all()
         res_dict = {'tools': []}
         for row in result:
-            host, command = row
+            _, command = row
             res_dict['tools'].append({'command': command.tool, 'user': command.user, 'params': command.params, 'command_id': command.id, 'create_date': command.create_date.replace(tzinfo=pytz.utc).strftime("%c")})
         return res_dict
 

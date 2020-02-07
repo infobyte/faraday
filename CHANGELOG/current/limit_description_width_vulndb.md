@@ -1,0 +1,1 @@
+Limit description width in knowledge base

@@ -3,7 +3,7 @@
 # See the file 'doc/LICENSE' for the license information
 from flask import Blueprint
 from marshmallow import fields, post_load, ValidationError, validate
-from filteralchemy import FilterSet, operators
+from filteralchemy import FilterSet, operators  # pylint:disable=unused-import
 from sqlalchemy.orm.exc import NoResultFound
 
 from faraday.server.api.base import (

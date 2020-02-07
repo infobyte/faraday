@@ -87,6 +87,7 @@ def register_blueprints(app):
     from faraday.server.api.modules.bulk_create import bulk_create_api # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.token import token_api # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.search_filter import searchfilter_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.preferences import preferences_api  # pylint:disable=import-outside-toplevel
 
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(activityfeed_api)
@@ -110,6 +111,7 @@ def register_blueprints(app):
     app.register_blueprint(bulk_create_api)
     app.register_blueprint(token_api)
     app.register_blueprint(searchfilter_api)
+    app.register_blueprint(preferences_api)
 
 
 def check_testing_configuration(testing, app):
@@ -304,7 +306,8 @@ def create_app(db_connection_string=None, testing=None):
             'plaintext',  # TODO: remove it
         ],
         'PERMANENT_SESSION_LIFETIME': datetime.timedelta(hours=12),
-        'SESSION_COOKIE_NAME': 'faraday_session',
+        'SESSION_COOKIE_NAME': 'faraday_session_2',
+        'SESSION_COOKIE_SAMESITE': 'Lax',
     })
 
     store = FilesystemStore(app.config['SESSION_FILE_DIR'])

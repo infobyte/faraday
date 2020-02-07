@@ -225,7 +225,7 @@ def migrate(downgrade, revision):
         print('Please verify your configuration on server.ini or the hba configuration!')
     except Exception as e:
         logger.exception("Migration Error: %s", e)
-        print('Migration failed! Please check the logs')
+        print('Migration failed!', e)
         sys.exit(1)
     else:
         logger.info("Migrations finished")

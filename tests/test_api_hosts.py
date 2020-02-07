@@ -601,6 +601,23 @@ class TestHostAPI:
 
         assert delete_response.json['deleted_hosts'] == 0
 
+    def test_bulk_delete_hosts_wrong_content_type(self, test_client, session):
+        ws = WorkspaceFactory.create(name="abc")
+        host_1 = HostFactory.create(workspace=ws)
+        host_2 = HostFactory.create(workspace=ws)
+        session.commit()
+        hosts_ids = [host_1.id, host_2.id]
+
+        request_data = {'hosts_ids': hosts_ids}
+        headers = [('content-type', 'text/xml')]
+
+        delete_response = test_client.delete(
+            '/v2/ws/{0}/hosts/bulk_delete/'.format(ws.name),
+            data=request_data,
+            headers=headers)
+
+        assert delete_response.status_code == 400
+
 
 class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
     model = Host

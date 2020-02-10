@@ -839,6 +839,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
     issuetracker = BlankColumn(Text)
     association_date = Column(DateTime, nullable=True)
     disassociated_manually = Column(Boolean, nullable=False, default=False)
+    tool = BlankColumn(Text, nullable=False)
 
     vulnerability_duplicate_id =  Column(
                         Integer,

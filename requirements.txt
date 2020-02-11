@@ -16,6 +16,7 @@ psycopg2
 pyopenssl>=17.2.0
 python-dateutil>=2.6.0
 requests>=2.18.4
+pyasn1
 service_identity>=17.0.0
 SQLAlchemy>=1.2.0b2
 tqdm>=4.15.0

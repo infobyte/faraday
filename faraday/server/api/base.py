@@ -14,7 +14,7 @@ from flask_classful import FlaskView
 from sqlalchemy.orm import joinedload, undefer
 from sqlalchemy.orm.exc import NoResultFound, ObjectDeletedError
 from sqlalchemy.inspection import inspect
-from sqlalchemy import func
+from sqlalchemy import func, desc, asc
 from marshmallow import Schema
 from marshmallow.compat import with_metaclass
 from marshmallow.validate import Length
@@ -858,13 +858,18 @@ class CountWorkspacedMixin:
             'total_count': 0
         }
         group_by = flask.request.args.get('group_by', None)
+        sort_dir = flask.request.args.get('order', "asc").lower()
+
         # TODO migration: whitelist fields to avoid leaking a confidential
         # field's value.
         # Example: /users/count/?group_by=password
         # Also we should check that the field exists in the db and isn't, for
         # example, a relationship
         if not group_by or group_by not in inspect(self.model_class).attrs:
-            flask.abort(404)
+            flask.abort(400, {"message": "group_by is a required parameter"})
+
+        if sort_dir and sort_dir not in ('asc', 'desc'):
+            flask.abort(400, {"message": "order must be 'desc' or 'asc'"})
 
         workspace_name = kwargs.pop('workspace_name')
         # using format is not a great practice.
@@ -878,6 +883,14 @@ class CountWorkspacedMixin:
             .group_by(group_by)
             .filter(Workspace.name == workspace_name,
                     *self.count_extra_filters))
+
+        #order
+        order_by = group_by
+        if sort_dir == 'desc':
+            count = count.order_by(desc(order_by))
+        else:
+            count = count.order_by(asc(order_by))
+
         for key, count in count.values(group_by, func.count(group_by)):
             res['groups'].append(
                 {'count': count,

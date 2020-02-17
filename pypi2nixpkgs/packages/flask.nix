@@ -1,5 +1,5 @@
 
-    { click, werkzeug, fetchPypi, buildPythonPackage, lib, itsdangerous, jinja2 }:
+    { itsdangerous, jinja2, click, fetchPypi, werkzeug, lib, buildPythonPackage }:
     buildPythonPackage rec {
         pname = "flask";
         version = "1.1.1";

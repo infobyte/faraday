@@ -83,6 +83,10 @@
                 self.callPackage ./packages/faraday-plugins.nix { };
         
 
+            pytest-factoryboy =
+                self.callPackage ./packages/pytest-factoryboy.nix { };
+        
+
         };
     in import nixpkgs (args // { overlays = [ pypi2nixOverlay ] ++ overlays; })
     

@@ -61,17 +61,11 @@ merge_conflict_check:
 pylint:
     tags:
         - faradaytests
-    image: registry.gitlab.com/faradaysec/integrationrepo
+    image: nixorg/nix
     stage: pre_testing
     script:
-        - pip3 install virtualenv
-        - virtualenv -p python3 faraday_venv
-        - source faraday_venv/bin/activate
-        - pip install --upgrade -r requirements.txt
-        - python3 setup.py install
-        # pylint slow issue https://github.com/PyCQA/pylint/issues/2765
-        - pip install pylint isort==4.3.4
-        - pylint --rcfile=.pylintrc faraday --ignore=faraday_venv | tee pylint.txt
+        - nix-shell --command "pylint --rcfile=.pylintrc faraday" | tee pylint.txt
+        - nix-env -if pypi2nixpkgs/nixpkgs.nix -A gnused
         - score=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' pylint.txt)
           #- anybadge --label pylint --value=$score --file pylint.svg 4=red 6=orange 8=yellow 10=green
     artifacts:
@@ -88,21 +82,13 @@ pylint:
     stage: testing
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
+        - "echo 'hosts: files dns' >/etc/nsswitch.conf"
         - export LC_ALL=C.UTF-8
         - export LANG=C.UTF-8
-        - pip3 install virtualenv
-        - python3 -V
-        - virtualenv -p $PY_VERSION faraday_venv
-        - source faraday_venv/bin/activate
-        - pip install pip -U
-        - pip install --upgrade -r requirements.txt
-        - python3 setup.py install
-        - pip install --upgrade responses pytest-xdist pytest-cov
-        - pip install --upgrade -r requirements_dev.txt
         - mkdir -p ~/.faraday/config
         - cp tests/data/server.ini ~/.faraday/config
         - mkdir run_from
-        - cd run_from && pytest ../tests -v --capture=sys --cov=../faraday/server --color=yes --disable-warnings --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB
+        - nix-shell --command "cd run_from && pytest ../tests -v --capture=sys --cov=../faraday/server --color=yes --disable-warnings --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB"
     artifacts:
         when: on_failure
         paths:
@@ -117,20 +103,13 @@ pylint:
     stage: testing
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
+        - "echo 'hosts: files dns' >/etc/nsswitch.conf"
         - export LC_ALL=C.UTF-8
         - export LANG=C.UTF-8
-        - pip3 install virtualenv
-        - virtualenv -p python3 faraday_venv
-        - source faraday_venv/bin/activate
-        - pip install pip -U
-        - pip install --upgrade -r requirements.txt
-        - python3 setup.py install
-        - pip install --upgrade responses pytest-xdist pytest-cov
-        - pip install --upgrade -r requirements_dev.txt
         - mkdir -p ~/.faraday/config
         - cp tests/data/server.ini ~/.faraday/config
         - mkdir run_from
-        - cd run_from && pytest ../tests --capture=sys -v --cov=../faraday/server --color=yes --disable-warnings
+        - nix-shell --command "cd run_from && pytest ../tests --capture=sys -v --cov=../faraday/server --color=yes --disable-warnings"
     artifacts:
         when: on_failure
         paths:
@@ -141,28 +120,28 @@ pylint:
 
 sqlite_test_3_7:
     extends: .sqlite_test_base
-    image: registry.gitlab.com/faradaysec/integrationrepo:latest-3-7
+    image: nixorg/nix
     variables:
       PY_VERSION: python3.7
 
 
 .sqlite_test_3_8:
     extends: .sqlite_test_base
-    image: registry.gitlab.com/faradaysec/integrationrepo:latest-3-8
+    image: nixorg/nix
     variables:
       PY_VERSION: python3.8
 
 
 postgresql_test_3_7:
     extends: .postgresql_test_base
-    image: registry.gitlab.com/faradaysec/integrationrepo:latest-3-7
+    image: nixorg/nix
     variables:
       PY_VERSION: python3.7
 
 
 .postgresql_test_3_8:
     extends: .postgresql_test_base
-    image: registry.gitlab.com/faradaysec/integrationrepo:latest-3-8
+    image: nixorg/nix
     variables:
       PY_VERSION: python3.8
 

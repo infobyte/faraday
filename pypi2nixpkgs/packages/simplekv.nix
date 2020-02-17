@@ -1,5 +1,5 @@
 
-    { lib, fetchPypi, buildPythonPackage }:
+    { lib, buildPythonPackage, fetchPypi }:
     buildPythonPackage rec {
         pname = "simplekv";
         version = "0.13.0";

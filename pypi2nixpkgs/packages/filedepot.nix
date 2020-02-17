@@ -1,5 +1,5 @@
 
-    { lib, fetchPypi, unidecode, buildPythonPackage }:
+    { lib, buildPythonPackage, unidecode, fetchPypi }:
     buildPythonPackage rec {
         pname = "filedepot";
         version = "0.7.1";

@@ -1,5 +1,5 @@
 
-    { flask, simplekv, werkzeug, fetchPypi, buildPythonPackage, six, lib, itsdangerous }:
+    { simplekv, itsdangerous, flask, fetchPypi, werkzeug, six, lib, buildPythonPackage }:
     buildPythonPackage rec {
         pname = "flask-kvsession-fork";
         version = "0.6.3";

@@ -1,5 +1,5 @@
 
-    { flask, lib, fetchPypi, buildPythonPackage }:
+    { lib, buildPythonPackage, flask, fetchPypi }:
     buildPythonPackage rec {
         pname = "flask-classful";
         version = "0.14.2";

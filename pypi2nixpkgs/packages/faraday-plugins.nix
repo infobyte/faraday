@@ -1,5 +1,5 @@
 
-    { click, simplejson, requests, fetchPypi, buildPythonPackage, beautifulsoup4, lxml, lib, html2text }:
+    { simplejson, html2text, click, fetchPypi, beautifulsoup4, lxml, lib, buildPythonPackage, requests }:
     buildPythonPackage rec {
         pname = "faraday-plugins";
         version = "1.0.2";

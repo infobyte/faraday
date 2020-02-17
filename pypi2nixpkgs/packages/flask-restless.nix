@@ -1,5 +1,5 @@
 
-    { mimerender, flask, dateutil, fetchPypi, buildPythonPackage, sqlalchemy, lib }:
+    { flask, fetchPypi, mimerender, dateutil, lib, buildPythonPackage, sqlalchemy }:
     buildPythonPackage rec {
         pname = "flask-restless";
         version = "0.17.0";

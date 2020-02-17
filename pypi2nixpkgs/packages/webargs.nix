@@ -1,5 +1,5 @@
 
-    { lib, marshmallow, fetchPypi, buildPythonPackage }:
+    { lib, buildPythonPackage, marshmallow, fetchPypi }:
     buildPythonPackage rec {
         pname = "webargs";
         version = "5.5.3";

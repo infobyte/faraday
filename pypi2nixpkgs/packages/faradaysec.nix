@@ -1,5 +1,5 @@
 
-    { flask_login, colorama, flask, flask-restless, tqdm, lib, webargs, psycopg2, pytestrunner, marshmallow, pgcli, faraday-plugins, filedepot, werkzeug, service-identity, flask_sqlalchemy, filteralchemy-fork, pillow, pyopenssl, simplejson, fetchPypi, nplusone, distro, twisted, autobahn, pyasn1, marshmallow-sqlalchemy, bcrypt, click, flask-classful, flask-kvsession-fork, alembic, dateutil, buildPythonPackage, flask-security, requests, syslog-rfc5424-formatter, sqlalchemy, simplekv }:
+    { simplejson, flask_sqlalchemy, flask-kvsession-fork, click, fetchPypi, werkzeug, flask-classful, pytestrunner, colorama, flask, tqdm, psycopg2, filedepot, pyopenssl, marshmallow, flask-restless, buildPythonPackage, sqlalchemy, distro, filteralchemy-fork, dateutil, flask_login, simplekv, service-identity, twisted, autobahn, syslog-rfc5424-formatter, marshmallow-sqlalchemy, pyasn1, webargs, flask-security, bcrypt, faraday-plugins, pillow, alembic, lib, nplusone, pgcli, requests }:
     buildPythonPackage rec {
         pname = "faradaysec";
         version = "0.1dev";

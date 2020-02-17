@@ -1,5 +1,5 @@
 
-    { flask, jinja2, Babel, fetchPypi, buildPythonPackage, lib, speaklater }:
+    { flask, jinja2, Babel, fetchPypi, speaklater, lib, buildPythonPackage }:
     buildPythonPackage rec {
         pname = "flask-babelex";
         version = "0.9.4";

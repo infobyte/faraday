@@ -116,7 +116,6 @@ class InitDB():
             )
         else:
             random_password = self.generate_random_pw(12)
-        already_created = False
         try:
             engine.execute("INSERT INTO \"faraday_user\" (username, name, password, "
                        "is_ldap, active, last_login_ip, current_login_ip, role, state_otp) VALUES ('faraday', 'Administrator', "
@@ -124,7 +123,6 @@ class InitDB():
         except sqlalchemy.exc.IntegrityError as ex:
             if is_unique_constraint_violation(ex):
                 # when re using database user could be created previously
-                already_created = True
                 print(
                 "{yellow}WARNING{white}: Faraday administrator user already exists.".format(
                     yellow=Fore.YELLOW, white=Fore.WHITE))

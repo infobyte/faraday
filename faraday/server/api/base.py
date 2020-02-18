@@ -978,6 +978,7 @@ def get_user_permissions(user):
         'vulnerability_template', 'workspaces',
         'agents', 'agents_schedules', 'commands', 'comments', 'hosts',
         'executive_reports', 'services', 'methodologies', 'tasks', 'vulns',
+        'credentials',
     }
 
     for entity in generic_entities:
@@ -994,6 +995,8 @@ def get_user_permissions(user):
         'ticketing.servicenow',
         'bulk_create.bulk_create',
         'agents.run',
+        'workspace_comparison.compare',
+        'data_analysis.view',
     }
 
     for permission in extra_permissions:

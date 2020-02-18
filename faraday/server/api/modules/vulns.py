@@ -96,7 +96,10 @@ class CustomMetadataSchema(MetadataSchema):
     creator = fields.Method('get_creator', dump_only=True)
 
     def get_creator(self, obj):
-        return obj.creator_command_tool or 'Web UI'
+        if obj.tool:
+            return obj.tool
+        else:
+            return obj.creator_command_tool or 'Web UI'
 
 
 class VulnerabilitySchema(AutoSchema):
@@ -113,6 +116,7 @@ class VulnerabilitySchema(AutoSchema):
                                    attribute='policy_violations')
     refs = fields.List(fields.String(), attribute='references')
     issuetracker = fields.Method(serialize='get_issuetracker', dump_only=True)
+    tool = fields.String(attribute='tool')
     parent = fields.Method(serialize='get_parent', deserialize='load_parent', required=True)
     parent_type = MutableField(fields.Method('get_parent_type'),
                                fields.String(),
@@ -156,7 +160,7 @@ class VulnerabilitySchema(AutoSchema):
             'service', 'obj_id', 'type', 'policyviolations',
             '_attachments',
             'target', 'host_os', 'resolution', 'metadata',
-            'custom_fields', 'external_id')
+            'custom_fields', 'external_id', 'tool')
 
     def get_type(self, obj):
         return obj.__class__.__name__
@@ -280,7 +284,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'service', 'obj_id', 'type', 'policyviolations',
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
-            'status_code', 'custom_fields', 'external_id'
+            'status_code', 'custom_fields', 'external_id', 'tool'
         )
 
 
@@ -469,7 +473,6 @@ class VulnerabilityView(PaginatedMixin,
         attachments = data.pop('_attachments', {})
         references = data.pop('references', [])
         policyviolations = data.pop('policy_violations', [])
-
         try:
             obj = super(VulnerabilityView, self)._perform_create(data, **kwargs)
         except TypeError:
@@ -479,6 +482,11 @@ class VulnerabilityView(PaginatedMixin,
 
         obj.references = references
         obj.policy_violations = policyviolations
+        if not obj.tool:
+            if obj.creator_command_tool:
+                obj.tool = obj.creator_command_tool
+            else:
+                obj.tool = "Web UI"
         db.session.commit()
         self._process_attachments(obj, attachments)
         return obj
@@ -504,6 +512,7 @@ class VulnerabilityView(PaginatedMixin,
 
     def _update_object(self, obj, data):
         data.pop('type') # It's forbidden to change vuln type!
+        data.pop('tool', '')
         return super(VulnerabilityView, self)._update_object(obj, data)
 
     def _perform_update(self, object_id, obj, data, workspace_name):

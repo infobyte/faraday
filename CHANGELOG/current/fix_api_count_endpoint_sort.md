@@ -1,0 +1,1 @@
+API count endpoint now sorts results

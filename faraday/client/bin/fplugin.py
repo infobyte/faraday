@@ -174,15 +174,15 @@ def main():
         '-u',
         '--url',
         help='Faraday Server URL. Example: http://localhost:5985',
-        default='http://localhost:5985')
+        default=CONF.getServerURI())
 
     parser.add_argument(
         '--username',
-        required=True)
+        default=CONF.getAPIUsername())
 
     parser.add_argument(
         '--password',
-        required=True)
+        default=CONF.getAPIPassword())
 
     # Only parse known args. Unknown ones will be passed on the the called script
     args, unknown = parser.parse_known_args()

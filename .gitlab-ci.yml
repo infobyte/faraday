@@ -58,12 +58,30 @@ merge_conflict_check:
         - git config --global user.name "Mergerbot"
         - python3 merge-conflict-detector.py
 
-pylint:
+build_and_push_to_cachix:
     tags:
         - faradaytests
     image: nixorg/nix
     stage: pre_testing
     script:
+        - nix-env -if pypi2nixpkgs/nixpkgs.nix -A cachix
+        - mkdir -p ~/.config/cachix
+        - export USER=$(whoami)
+        - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
+        - cachix use faradaysec
+        - nix-build | cachix push faradaysec
+
+pylint:
+    tags:
+        - faradaytests
+    image: nixorg/nix
+    stage: testing  # This should be after build_and_push_to_cachix to improve performance
+    script:
+        - nix-env -if pypi2nixpkgs/nixpkgs.nix -A cachix
+        - mkdir -p ~/.config/cachix
+        - export USER=$(whoami)
+        - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
+        - cachix use faradaysec
         - nix-shell --command "pylint --rcfile=.pylintrc faraday" | tee pylint.txt
         - nix-env -if pypi2nixpkgs/nixpkgs.nix -A gnused
         - score=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' pylint.txt)
@@ -82,6 +100,11 @@ pylint:
     stage: testing
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
+        - nix-env -if pypi2nixpkgs/nixpkgs.nix -A cachix
+        - mkdir -p ~/.config/cachix
+        - export USER=$(whoami)
+        - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
+        - cachix use faradaysec
         - "echo 'hosts: files dns' >/etc/nsswitch.conf"
         - export LC_ALL=C.UTF-8
         - export LANG=C.UTF-8
@@ -103,6 +126,11 @@ pylint:
     stage: testing
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
+        - nix-env -if pypi2nixpkgs/nixpkgs.nix -A cachix
+        - mkdir -p ~/.config/cachix
+        - export USER=$(whoami)
+        - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
+        - cachix use faradaysec
         - "echo 'hosts: files dns' >/etc/nsswitch.conf"
         - export LC_ALL=C.UTF-8
         - export LANG=C.UTF-8
@@ -150,6 +178,11 @@ build_nix_python3:
   image: nixorg/nix
   stage: build_faraday
   script:
+    - nix-env -if pypi2nixpkgs/nixpkgs.nix -A cachix
+    - mkdir -p ~/.config/cachix
+    - export USER=$(whoami)
+    - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
+    - cachix use faradaysec
     - nix-build
     - tar cf /py3.tar $(nix-store --query --requisites $(readlink result))
     - mkdir /opt

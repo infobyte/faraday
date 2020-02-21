@@ -68,7 +68,7 @@ def export_vulns_to_csv(hosts, services, vulns, custom_fields_columns=None):
     if custom_fields_columns is None:
         custom_fields_columns = []
     vuln_headers = [
-        "confirmed", "vuln_id", "date", "vuln_name", "severity", "service",
+        "confirmed", "vuln_id", "date", "update_date", "vuln_name", "severity", "service",
         "target", "vuln_desc", "vuln_status", "hostnames", "comments",
         "vuln_owner", "os", "resolution", "refs", "easeofresolution",
         "web_vulnerability", "data", "website", "path", "status_code",
@@ -114,6 +114,7 @@ def _build_vuln_data(vuln, custom_fields_columns):
     vuln_data = {"confirmed": vuln['confirmed'],
                     "vuln_id": vuln.get('_id', None),
                     "date": vuln_date,
+                    "update_date": vuln['metadata'].get('update_time', None),
                     "severity": vuln.get('severity', None),
                     "target": vuln.get('target', None),
                     "vuln_status": vuln.get('status', None),

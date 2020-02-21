@@ -9,6 +9,7 @@ import logging
 
 import flask
 import sqlalchemy
+from collections import defaultdict
 from flask import g
 from flask_classful import FlaskView
 from sqlalchemy.orm import joinedload, undefer
@@ -976,3 +977,43 @@ class FilterSetMeta:
     """Base Meta class of FilterSet objects"""
     parser = parser_imported
     converter = FilterAlchemyModelConverter()
+
+
+def get_user_permissions(user):
+    permissions = defaultdict(dict)
+
+    # Hardcode all permisions to allowed
+    ALLOWED = {'allowed': True, 'reason': None}
+
+    # TODO schema
+    generic_entities = {
+        'licences', 'methodology_templates', 'task_templates', 'users',
+        'vulnerability_template', 'workspaces',
+        'agents', 'agents_schedules', 'commands', 'comments', 'hosts',
+        'executive_reports', 'services', 'methodologies', 'tasks', 'vulns',
+        'credentials',
+    }
+
+    for entity in generic_entities:
+        permissions[entity]['view'] = ALLOWED
+        permissions[entity]['create'] = ALLOWED
+        permissions[entity]['update'] = ALLOWED
+        permissions[entity]['delete'] = ALLOWED
+
+    extra_permissions = {
+        'vulns.status_change',
+        'settings.view',
+        'settings.update',
+        'ticketing.jira',
+        'ticketing.servicenow',
+        'bulk_create.bulk_create',
+        'agents.run',
+        'workspace_comparison.compare',
+        'data_analysis.view',
+    }
+
+    for permission in extra_permissions:
+        (entity, action) = permission.split('.')
+        permissions[entity][action] = ALLOWED
+
+    return permissions

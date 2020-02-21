@@ -240,6 +240,7 @@ generate_deb:
         - cp -r /nix .
         - mv ../../faraday-linux-installers-builder .
         - cd faraday-linux-installers-builder
+        - git rev-parse HEAD
         - git clone https://github.com/jordansissel/fpm.git
         - cd fpm
         - git checkout d7b466787d17581bc723e474ecf6e18f48226031
@@ -327,6 +328,7 @@ generate_rpm:
         - cp -r /nix .
         - mv ../../faraday-linux-installers-builder .
         - cd faraday-linux-installers-builder
+        - git rev-parse HEAD
         - git clone https://github.com/jordansissel/fpm.git
         - cd fpm
         - git checkout d7b466787d17581bc723e474ecf6e18f48226031

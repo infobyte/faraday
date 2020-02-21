@@ -17,7 +17,7 @@ def export_vulns_to_csv(hosts, services, vulns, custom_fields_columns=None):
     # Hosts
     host_headers = [
         "host_id", "ip", "hostnames", "host_description", "os", "mac",
-        "host_owned", "host_creator_id", "obj_type"
+        "host_owned", "host_creator_id", "date", "update_date", "obj_type"
     ]
     writer = csv.DictWriter(buffer, fieldnames=host_headers)
     writer.writeheader()
@@ -32,6 +32,8 @@ def export_vulns_to_csv(hosts, services, vulns, custom_fields_columns=None):
             "mac": host.mac,
             "host_owned": host.owned,
             "host_creator_id": host.creator_id,
+            "date": host.create_date,
+            "update_date": host.update_date,
             "obj_type": "host"
         }
         writer.writerow(host_data)
@@ -41,7 +43,7 @@ def export_vulns_to_csv(hosts, services, vulns, custom_fields_columns=None):
     service_headers = [
         "service_id", "service_name", "service_description", "service_owned",
         "port", "protocol", "summary", "version", "service_status",
-        "service_creator_id", "obj_type", "parent_id"
+        "service_creator_id", "date", "update_date", "obj_type", "parent_id"
     ]
     writer = csv.DictWriter(buffer, fieldnames=service_headers)
     writer.writeheader()
@@ -58,6 +60,8 @@ def export_vulns_to_csv(hosts, services, vulns, custom_fields_columns=None):
             "version": service.version,
             "service_status": service.status,
             "service_creator_id": service.creator_id,
+            "date": service.create_date,
+            "update_date": service.update_date,
             "parent_id": service.host_id,
             "obj_type": "service"
         }

@@ -827,8 +827,8 @@ class VulnerabilityView(PaginatedMixin,
             custom_fields_columns.append(custom_field.field_name)
         hosts = db.session.query(Host)\
                 .options(joinedload(Host.hostnames))\
-                .filter_by(workspace_id=workspace.id).all() #TODO change to filter
-        services = db.session.query(Service).filter_by(workspace_id=workspace.id).all()
+                .filter(Host.workspace_id == workspace.id).all()
+        services = db.session.query(Service).filter(Service.workspace_id == workspace.id).all()
         vulns_query = self._filter(filters, workspace_name, confirmed)
         memory_file = export_vulns_to_csv(hosts, services, vulns_query, custom_fields_columns)
         return send_file(memory_file,

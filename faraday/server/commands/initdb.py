@@ -132,9 +132,19 @@ class InitDB():
                 print(
                     "{yellow}WARNING{white}: Can't create administrator user.".format(
                         yellow=Fore.YELLOW, white=Fore.WHITE))
-                raise 
+                raise
 
-    def _configure_existing_postgres_user(self):
+        if not already_created:
+            print("Admin user created with \n\n{red}username: {white}faraday \n"
+                  "{red}password:{white} {"
+                  "random_password} \n".format(random_password=random_password,
+                                               white=Fore.WHITE, red=Fore.RED))
+            print(
+                "{yellow}WARNING{white}: If you are going to execute couchdb importer you must use the couchdb password for faraday user.".format(
+                    white=Fore.WHITE, yellow=Fore.YELLOW))
+
+
+def _configure_existing_postgres_user(self):
         username = input('Please enter the postgresql username: ')
         password = getpass.getpass('Please enter the postgresql password: ')
 

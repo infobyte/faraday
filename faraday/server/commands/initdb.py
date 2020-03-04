@@ -133,7 +133,6 @@ class InitDB():
                     "{yellow}WARNING{white}: Can't create administrator user.".format(
                         yellow=Fore.YELLOW, white=Fore.WHITE))
                 raise
-
         if not already_created:
             print("Admin user created with \n\n{red}username: {white}faraday \n"
                   "{red}password:{white} {"
@@ -144,7 +143,7 @@ class InitDB():
                     white=Fore.WHITE, yellow=Fore.YELLOW))
 
 
-def _configure_existing_postgres_user(self):
+    def _configure_existing_postgres_user(self):
         username = input('Please enter the postgresql username: ')
         password = getpass.getpass('Please enter the postgresql password: ')
 

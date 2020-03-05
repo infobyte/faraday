@@ -139,13 +139,6 @@ pylint:
         variables:
             - $BUILD_TEST
 
-sqlite_test_3_6:
-    extends: .sqlite_test_base
-    image: registry.gitlab.com/faradaysec/integrationrepo:latest-3-6
-    variables:
-      PY_VERSION: python3.6
-
-
 sqlite_test_3_7:
     extends: .sqlite_test_base
     image: registry.gitlab.com/faradaysec/integrationrepo:latest-3-7
@@ -158,13 +151,6 @@ sqlite_test_3_7:
     image: registry.gitlab.com/faradaysec/integrationrepo:latest-3-8
     variables:
       PY_VERSION: python3.8
-
-
-postgresql_test_3_6:
-    extends: .postgresql_test_base
-    image: registry.gitlab.com/faradaysec/integrationrepo:latest-3-6
-    variables:
-      PY_VERSION: python3.6
 
 
 postgresql_test_3_7:

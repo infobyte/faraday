@@ -37,9 +37,7 @@ bulk_create_api = flask.Blueprint('bulk_create_api', __name__)
 
 logger = logging.getLogger(__name__)
 
-
 class VulnerabilitySchema(vulns.VulnerabilitySchema):
-
     class Meta(vulns.VulnerabilitySchema.Meta):
         extra_fields = ('run_date',)
         fields = tuple(
@@ -49,7 +47,6 @@ class VulnerabilitySchema(vulns.VulnerabilitySchema):
 
 
 class VulnerabilityWebSchema(vulns.VulnerabilityWebSchema):
-
     class Meta(vulns.VulnerabilityWebSchema.Meta):
         extra_fields = ('run_date',)
         fields = tuple(
@@ -294,6 +291,13 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
         model_class = VulnerabilityWeb
     else:
         raise ValidationError("unknown type")
+    tool = vuln_data.get('tool', '')
+    if not tool:
+        if command:
+            vuln_data['tool'] = command.tool
+        else:
+            vuln_data['tool'] = 'Web UI'
+
     run_date_string = vuln_data.pop('run_date', None)
     if run_date_string:
         try:

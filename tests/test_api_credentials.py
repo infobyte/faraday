@@ -237,4 +237,32 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
         assert b'Parent id not found' in res.data
 
 
+    def test_sort_credentials_target(self, test_client, second_workspace):
+        host = HostFactory(workspace=second_workspace, ip="192.168.1.1")
+        service = ServiceFactory(name="http", workspace=second_workspace, host=host)
+
+        host2 = HostFactory(workspace=second_workspace, ip="192.168.1.2")
+        service2 = ServiceFactory(name="ssh", workspace=second_workspace, host=host2)
+
+        credential = self.factory.create(service=service, host=None, workspace=second_workspace)
+        credential2 = self.factory.create(service=None, host=host2, workspace=second_workspace)
+        credential3 = self.factory.create(service=None, host=host, workspace=second_workspace)
+        credential4 = self.factory.create(service=service2, host=None, workspace=second_workspace)
+
+        credentials_target = [
+            "{}/{}".format(credential.service.host.ip, credential.service.name),
+            "{}".format(credential2.host.ip),
+            "{}".format(credential3.host.ip),
+            "{}/{}".format(credential4.service.host.ip, credential4.service.name),
+        ]
+
+        # Desc order
+        response = test_client.get(self.url(workspace=second_workspace) + "?sort=target&sort_dir=desc")
+        assert response.status_code == 200
+        assert sorted(credentials_target, reverse=True) == [ v['value']['target'] for v in response.json['rows']]
+
+        # Asc order
+        response = test_client.get(self.url(workspace=second_workspace) + "?sort=target&sort_dir=asc")
+        assert response.status_code == 200
+        assert sorted(credentials_target) == [v['value']['target'] for v in response.json['rows']]
 # I'm Py3

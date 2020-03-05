@@ -9,6 +9,24 @@ New features in the latest update
 =====================================
 
 
+3.10.2 [Jan 30th, 2020]:
+---
+ * Fix Cross-Site Request Forgery (CSRF) vulnerability in all JSON API endpoints.
+This was caused because a third-party library doesn't implement proper
+Content-Type header validation. To mitigate the vulnerability, we set the
+session cookie to have the `SameSite: Lax` property.
+ * Fix Faraday Server logs were always in debug
+ * Add update date column when exporting vulnerabilities to CSV
+ * Fix unicode error when exporting vulnerabilities to CSV
+
+3.10.1 [Jan 10th, 2020]:
+---
+ * Fix installation with `pip install --no-binary :all: faradaysec`
+ * Force usage of webargs 5 (webargs 6 broke backwards compatibility)
+ * Use latest version of faraday-plugins
+ * Fix broken "Faraday Plugin" menu entry in the GTK client
+ * Extract export csv to reuse for reports
+
 3.10 [Dec 19th, 2019]:
 ---
  * Use Python 3 instead of Python 2 in the Faraday Server

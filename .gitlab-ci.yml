@@ -82,8 +82,7 @@ pylint:
         variables:
             - $BUILD_TEST
 
-postgresql_test:
-    image: registry.gitlab.com/faradaysec/integrationrepo
+.postgresql_test_base:
     tags:
         - faradaytests
     stage: testing
@@ -92,7 +91,8 @@ postgresql_test:
         - export LC_ALL=C.UTF-8
         - export LANG=C.UTF-8
         - pip3 install virtualenv
-        - virtualenv -p python3 faraday_venv
+        - python3 -V
+        - virtualenv -p $PY_VERSION faraday_venv
         - source faraday_venv/bin/activate
         - pip install pip -U
         - pip install --upgrade -r requirements.txt
@@ -111,8 +111,7 @@ postgresql_test:
         variables:
             - $BUILD_TEST
 
-sqlite_test:
-    image: registry.gitlab.com/faradaysec/integrationrepo
+.sqlite_test_base:
     tags:
         - faradaytests
     stage: testing
@@ -139,6 +138,33 @@ sqlite_test:
     except:
         variables:
             - $BUILD_TEST
+
+sqlite_test_3_7:
+    extends: .sqlite_test_base
+    image: registry.gitlab.com/faradaysec/integrationrepo:latest-3-7
+    variables:
+      PY_VERSION: python3.7
+
+
+.sqlite_test_3_8:
+    extends: .sqlite_test_base
+    image: registry.gitlab.com/faradaysec/integrationrepo:latest-3-8
+    variables:
+      PY_VERSION: python3.8
+
+
+postgresql_test_3_7:
+    extends: .postgresql_test_base
+    image: registry.gitlab.com/faradaysec/integrationrepo:latest-3-7
+    variables:
+      PY_VERSION: python3.7
+
+
+.postgresql_test_3_8:
+    extends: .postgresql_test_base
+    image: registry.gitlab.com/faradaysec/integrationrepo:latest-3-8
+    variables:
+      PY_VERSION: python3.8
 
 
 build_nix_python3:
@@ -338,6 +364,7 @@ macos_pkg:
     tags:
         - macos
     stage: build
+    allow_failure: true
     before_script:
       - echo 'export PATH="/usr/local/opt/openssl/bin:$PATH"' >> ~/.bash_profile
       - export LDFLAGS="-L/usr/local/opt/openssl/lib"
@@ -365,11 +392,15 @@ macos_pkg:
         - gem install fpm-1.11.0.gem
         - cd ../../
         - sh faraday-linux-installers-builder/build_osx.sh $(eval $IMAGE_TAG) server osxpkg
+        - mv faraday-server_amd64.pkg ../../Faraday-server.pkg
+        - sh faraday-linux-installers-builder/build_osx.sh $(eval $IMAGE_TAG) client osxpkg
+        - mv faraday-client_amd64.pkg ../../Faraday-client.pkg
         - mv faraday-server_amd64.pkg ../../Faraday.pkg
     artifacts:
         name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME-binaries"
         paths:
-            - Faraday.pkg
+            - Faraday-server.pkg
+            - Faraday-client.pkg
         expire_in: 1 week
     only:
         variables:

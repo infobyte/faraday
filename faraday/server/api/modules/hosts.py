@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 class HostSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     id = fields.Integer()
-    _rev = fields.String(default='')
+    _rev = fields.String(default='', dump_only=True)
     ip = fields.String(default='')
     description = fields.String(required=True)  # Explicitly set required=True
     default_gateway = NullToBlankString(
@@ -225,7 +225,7 @@ class HostsView(PaginatedMixin,
         result = query.all()
         res_dict = {'tools': []}
         for row in result:
-            host, command = row
+            _, command = row
             res_dict['tools'].append({'command': command.tool, 'user': command.user, 'params': command.params, 'command_id': command.id, 'create_date': command.create_date.replace(tzinfo=pytz.utc).strftime("%c")})
         return res_dict
 

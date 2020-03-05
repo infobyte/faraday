@@ -39,7 +39,7 @@ import faraday.server.config
 import faraday.server.events
 from faraday.server.utils.logger import LOGGING_HANDLERS
 from faraday.server.utils.invalid_chars import remove_null_caracters
-from faraday.config.constant import CONST_FARADAY_HOME_PATH
+from faraday.server.config import CONST_FARADAY_HOME_PATH
 
 
 logger = logging.getLogger(__name__)
@@ -87,6 +87,7 @@ def register_blueprints(app):
     from faraday.server.api.modules.bulk_create import bulk_create_api # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.token import token_api # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.search_filter import searchfilter_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.preferences import preferences_api  # pylint:disable=import-outside-toplevel
 
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(activityfeed_api)
@@ -110,6 +111,7 @@ def register_blueprints(app):
     app.register_blueprint(bulk_create_api)
     app.register_blueprint(token_api)
     app.register_blueprint(searchfilter_api)
+    app.register_blueprint(preferences_api)
 
 
 def check_testing_configuration(testing, app):
@@ -126,7 +128,7 @@ def register_handlers(app):
     # We are exposing a RESTful API, so don't redirect a user to a login page in
     # case of being unauthorized, raise a 403 error instead
     @app.login_manager.unauthorized_handler
-    def unauthorized():
+    def unauthorized():  # pylint:disable=unused-variable
         flask.abort(403)
 
     def verify_token(token):
@@ -146,7 +148,7 @@ def register_handlers(app):
 
 
     @app.before_request
-    def default_login_required():
+    def default_login_required(): # pylint:disable=unused-variable
         view = app.view_functions.get(flask.request.endpoint)
 
         if app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER'] in flask.request.headers:
@@ -193,11 +195,11 @@ def register_handlers(app):
                 return
 
     @app.before_request
-    def load_g_custom_fields():
+    def load_g_custom_fields(): # pylint:disable=unused-variable
         g.custom_fields = {}
 
     @app.after_request
-    def log_queries_count(response):
+    def log_queries_count(response): # pylint:disable=unused-variable
         if flask.request.method not in ['GET', 'HEAD']:
             # We did most optimizations for read only endpoints
             # TODO migrations: improve optimization and remove this if

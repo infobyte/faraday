@@ -3,7 +3,7 @@
 # See the file 'doc/LICENSE' for the license information
 from flask import Blueprint
 from marshmallow import fields, post_load, ValidationError, validate
-from filteralchemy import FilterSet, operators
+from filteralchemy import FilterSet, operators  # pylint:disable=unused-import
 from sqlalchemy.orm.exc import NoResultFound
 
 from faraday.server.api.base import (
@@ -38,7 +38,7 @@ class CredentialSchema(AutoSchema):
                             default=None)
     service_name = fields.String(dump_only=True, attribute="service.name",
                                  default=None)
-    target = fields.Method('get_target', dump_only=True)
+    target = fields.String(dump_only=True, attribute="target_ip")
 
     # for filtering
     host_id = fields.Integer(load_only=True)
@@ -63,7 +63,8 @@ class CredentialSchema(AutoSchema):
         fields = ('id', '_id', "_rev", 'parent', 'username', 'description',
                   'name', 'password', 'owner', 'owned', 'couchdbid', 'parent',
                   'parent_type', 'metadata', 'host_ip', 'service_name',
-                  'target')
+                  'target',
+                  )
 
     @post_load
     def set_parent(self, data):
@@ -98,9 +99,8 @@ class CredentialFilterSet(FilterSet):
             'name',
             'username',
             'host_id',
-            'service_id'
+            'service_id',
         )
-
         default_operator = operators.Equal
         operators = (operators.Equal, )
 

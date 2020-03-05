@@ -34,6 +34,6 @@ with (import <nixpkgs> {});
 
       # Without this, the import report dialog of the client breaks
       # Taken from https://github.com/NixOS/nixpkgs/pull/26614
-      export XDG_DATA_DIRS=$XDG_ICON_DIRS:$GSETTINGS_SCHEMAS_PATH\''${XDG_DATA_DIRS:+:}\$XDG_DATA_DIRS
+      export XDG_DATA_DIRS=$GSETTINGS_SCHEMAS_PATH:$XDG_DATA_DIRS
     '';
   }

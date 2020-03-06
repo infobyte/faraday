@@ -118,8 +118,10 @@ def main():
     args = parser.parse_args()
     if args.debug or faraday.server.config.faraday_server.debug:
         faraday.server.utils.logger.set_logging_level(faraday.server.config.DEBUG)
-    if not args.port:
-        args.port = '5985'
+    faraday.server.config.faraday_server.port = args.port or faraday.server.config.faraday_server.port or '5985'
+    if args.bind_address:
+        faraday.server.config.faraday_server.bind_address = args.bind_address
+
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     result = sock.connect_ex((args.bind_address or faraday.server.config.faraday_server.bind_address,
                               int(args.port or faraday.server.config.faraday_server.port)))
@@ -130,10 +132,6 @@ def main():
         sys.exit(1)
     if not args.no_setup:
         setup_environment(not args.nodeps)
-    if args.port:
-        faraday.server.config.faraday_server.port = args.port
-    if args.bind_address:
-        faraday.server.config.faraday_server.bind_address = args.bind_address
     if args.websocket_port:
         faraday.server.config.faraday_server.websocket_port = args.websocket_port
 

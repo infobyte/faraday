@@ -6,7 +6,6 @@ import sys
 import glob
 import socket
 import argparse
-import subprocess
 
 from alembic.runtime.migration import MigrationContext
 
@@ -33,14 +32,6 @@ def setup_environment(check_deps=False):
     faraday.server.config.gen_web_config()
 
 
-def stop_server(port):
-    if not daemonize.stop_server(port):
-        # Exists with an error if it couldn't close the server
-        return False
-    else:
-        return True
-
-
 def is_server_running(port):
     pid = daemonize.is_server_running(port)
     if pid is not None:
@@ -54,24 +45,6 @@ def run_server(args):
     web_server = faraday.server.web.WebServer()
     daemonize.create_pid_file(args.port)
     web_server.run()
-
-
-def restart_server(args_port):
-    devnull = open('/dev/null', 'w')
-    if args_port:
-        ports = [args_port]
-    else:
-        ports = daemonize.get_ports_running()
-    if not ports:
-        logger.error('Faraday Server is not running')
-        sys.exit(1)
-    for port in ports:
-        stop_server(port)
-        params = ['/usr/bin/env', 'python3',  # TODO que hacemos con esto???
-            os.path.join(faraday.server.config.FARADAY_BASE, __file__), '--no-setup', '--port', str(port)]
-        logger.info('Restarting Faraday Server...')
-        subprocess.Popen(params, stdout=devnull, stderr=devnull)
-        logger.info('Faraday Server is running as a daemon in port {}'.format(port))
 
 
 def check_postgresql():
@@ -135,9 +108,6 @@ def main():
     check_postgresql()
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', action='store_true', help='run Faraday Server in debug mode')
-    parser.add_argument('--start', action='store_true', help='run Faraday Server in background')
-    parser.add_argument('--stop', action='store_true', help='stop Faraday Server')
-    parser.add_argument('--restart', action='store_true', help='Restart Faraday Server')
     parser.add_argument('--nodeps', action='store_true', help='Skip dependency check')
     parser.add_argument('--no-setup', action='store_true', help=argparse.SUPPRESS)
     parser.add_argument('--port', help='Overides server.ini port configuration')
@@ -148,23 +118,10 @@ def main():
     args = parser.parse_args()
     if args.debug or faraday.server.config.faraday_server.debug:
         faraday.server.utils.logger.set_logging_level(faraday.server.config.DEBUG)
-    if args.restart:
-        restart_server(args.port)
-        sys.exit()
-    if args.stop:
-        if args.port:
-            sys.exit(0 if stop_server(args.port) else 1)
-        else:
-            ports = daemonize.get_ports_running()
-            if not ports:
-                logger.info('Faraday Server is not running')
-            exit_code = 0
-            for port in ports:
-                exit_code += 0 if stop_server(port) else 1
-            sys.exit(exit_code)
-    else:
-        if not args.port:
-            args.port = '5985'
+    faraday.server.config.faraday_server.port = args.port or faraday.server.config.faraday_server.port or '5985'
+    if args.bind_address:
+        faraday.server.config.faraday_server.bind_address = args.bind_address
+
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     result = sock.connect_ex((args.bind_address or faraday.server.config.faraday_server.bind_address,
                               int(args.port or faraday.server.config.faraday_server.port)))
@@ -175,27 +132,10 @@ def main():
         sys.exit(1)
     if not args.no_setup:
         setup_environment(not args.nodeps)
-    if args.port:
-        faraday.server.config.faraday_server.port = args.port
-    if args.bind_address:
-        faraday.server.config.faraday_server.bind_address = args.bind_address
     if args.websocket_port:
         faraday.server.config.faraday_server.websocket_port = args.websocket_port
-    if args.start:
-        # Starts a new process on background with --ignore-setup
-        # and without --start nor --stop
-        devnull = open('/dev/null', 'w')
-        params = ['/usr/bin/env', 'python3', os.path.join(faraday.server.config.FARADAY_BASE, __file__), '--no-setup']
-        arg_dict = vars(args)
-        for arg in arg_dict:
-            if arg not in ["start", "stop"] and arg_dict[arg]:
-                params.append('--'+arg)
-                if not arg_dict[arg]:
-                    params.append(arg_dict[arg])
-        logger.info('Faraday Server is running as a daemon')
-        subprocess.Popen(params, stdout=devnull, stderr=devnull)
-    elif not args.start:
-        run_server(args)
+
+    run_server(args)
 
 
 if __name__ == '__main__':  # Don't delete. this is used for dev

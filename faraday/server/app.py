@@ -375,7 +375,7 @@ def create_app(db_connection_string=None, testing=None):
 
     for handler in LOGGING_HANDLERS:
         app.logger.addHandler(handler)
-
+    app.logger.propagate = False
     register_blueprints(app)
     register_handlers(app)
 

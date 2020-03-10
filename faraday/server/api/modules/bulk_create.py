@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timedelta
 import flask
 import sqlalchemy
 from marshmallow import (
@@ -38,16 +39,18 @@ logger = logging.getLogger(__name__)
 
 class VulnerabilitySchema(vulns.VulnerabilitySchema):
     class Meta(vulns.VulnerabilitySchema.Meta):
+        extra_fields = ('run_date',)
         fields = tuple(
-            field_name for field_name in vulns.VulnerabilitySchema.Meta.fields
+            field_name for field_name in (vulns.VulnerabilitySchema.Meta.fields + extra_fields)
             if field_name not in ('parent', 'parent_type')
         )
 
 
 class VulnerabilityWebSchema(vulns.VulnerabilityWebSchema):
     class Meta(vulns.VulnerabilityWebSchema.Meta):
+        extra_fields = ('run_date',)
         fields = tuple(
-            field_name for field_name in vulns.VulnerabilityWebSchema.Meta.fields
+            field_name for field_name in (vulns.VulnerabilityWebSchema.Meta.fields + extra_fields)
             if field_name not in ('parent', 'parent_type')
         )
 
@@ -295,8 +298,26 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
         else:
             vuln_data['tool'] = 'Web UI'
 
+    run_date_string = vuln_data.pop('run_date', None)
+    if run_date_string:
+        try:
+            run_timestamp = float(run_date_string)
+            run_date = datetime.utcfromtimestamp(run_timestamp)
+            if run_date < datetime.now() + timedelta(hours=24):
+                logger.debug("Valid run date")
+            else:
+                run_date = None
+                logger.debug("Run date (%s) is greater than allowed", run_date)
+        except ValueError:
+            logger.error("Error converting run_date to a valid date")
+            flask.abort(400, "Invalid run_date")
+    else:
+        run_date = None
     (created, vuln) = get_or_create(ws, model_class, vuln_data)
-    db.session.commit()
+    if created and run_date:
+        logger.debug("Apply run date to vuln")
+        vuln.create_date = run_date
+        db.session.commit()
 
     if command is not None:
         _create_command_object_for(ws, created, vuln, command)

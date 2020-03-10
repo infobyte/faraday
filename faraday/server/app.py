@@ -261,7 +261,7 @@ def user_logged_in_succesfull(app, user):
         try:
             logger.debug('Send Faraday-Client license_check')
             res = requests.get(HOME_URL, params=params, timeout=1, verify=True)
-            logger.debug("Faraday-Client Stats response: %s", res.text)
+            logger.debug("Faraday-Client license_check response: %s", res.text)
         except Exception as e:
             logger.warning("Error sending client license_check [%s]", e)
 

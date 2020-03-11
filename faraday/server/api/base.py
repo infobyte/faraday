@@ -904,6 +904,83 @@ class CountWorkspacedMixin:
         return res
 
 
+class CountMultiWorkspacedMixin:
+    """Add GET /<workspace_name>/<route_base>/count_multi_workspace/ route
+
+    Receives a list of workspaces separated by comma in the workspaces GET parameter.
+
+    Group objects by the field set in the group_by GET parameter. If it
+    isn't specified, the view will return a 404 error. For each group,
+    show the count of elements and its value.
+
+    This view is often used by some parts of the web UI. It was designed
+    to keep backwards compatibility with the count endpoint of Faraday
+    v2.
+    """
+
+    #: List of SQLAlchemy query filters to apply when counting
+    count_extra_filters = []
+
+    def count(self, **kwargs):
+        res = {
+            'groups': [],
+            'total_count': 0
+        }
+
+        workspace_names_list = flask.request.args.get('workspaces', None)
+
+        if not workspace_name_list:
+            flask.abort(400, {"message": "workspaces is a required parameter"})
+
+        # Enforce workspace permission checking for each workspace
+        for workspace_name in workspace_names_list:
+            self._get_workspace(workspace_name)
+
+        group_by = flask.request.args.get('group_by', None)
+        sort_dir = flask.request.args.get('order', "asc").lower()
+
+        # TODO migration: whitelist fields to avoid leaking a confidential
+        # field's value.
+        # Example: /users/count/?group_by=password
+        # Also we should check that the field exists in the db and isn't, for
+        # example, a relationship
+        if not group_by or group_by not in inspect(self.model_class).attrs:
+            flask.abort(400, {"message": "group_by is a required parameter"})
+
+        if sort_dir and sort_dir not in ('asc', 'desc'):
+            flask.abort(400, {"message": "order must be 'desc' or 'asc'"})
+
+        # using format is not a great practice.
+        # the user input is group_by, however it's filtered by column name.
+        table_name = inspect(self.model_class).tables[0].name
+        group_by = f'{table_name}.{group_by}'
+
+        count = self._filter_query(
+            db.session.query(self.model_class)
+            .join(Workspace)
+            .group_by(group_by)
+            .filter(Workspace.name.in_(workspace_names_list),
+                    *self.count_extra_filters))
+
+        #order
+        order_by = group_by
+        if sort_dir == 'desc':
+            count = count.order_by(desc(order_by))
+        else:
+            count = count.order_by(asc(order_by))
+
+        for key, count in count.values(group_by, func.count(group_by)):
+            res['groups'].append(
+                {'count': count,
+                 'name': key,
+                 # To add compatibility with the web ui
+                 flask.request.args.get('group_by'): key,
+                 }
+            )
+            res['total_count'] += count
+        return res
+
+
 class ReadWriteView(CreateMixin,
                     UpdateMixin,
                     DeleteMixin,

@@ -14,6 +14,28 @@ logger = logging.getLogger(__name__)
 def export_vulns_to_csv(hosts, services, vulns, custom_fields_columns=None):
     buffer = StringIO()
 
+    # Vulnerabilities
+    if custom_fields_columns is None:
+        custom_fields_columns = []
+    vuln_headers = [
+        "confirmed", "vuln_id", "date", "update_date", "vuln_name", "severity", "service",
+        "target", "vuln_desc", "vuln_status", "hostnames", "comments",
+        "vuln_owner", "os", "resolution", "refs", "easeofresolution",
+        "web_vulnerability", "data", "website", "path", "status_code",
+        "request", "response", "method", "params", "pname", "query",
+        "policyviolations", "external_id", "impact_confidentiality",
+        "impact_integrity", "impact_availability", "impact_accountability",
+        "vuln_creator", "obj_type", "parent_id", "parent_type"
+    ]
+    vuln_headers += custom_fields_columns
+    writer = csv.DictWriter(buffer, fieldnames=vuln_headers)
+    writer.writeheader()
+
+    for vuln in vulns:
+        vuln_data = _build_vuln_data(vuln, custom_fields_columns)
+        writer.writerow(vuln_data)
+    writer.writerow({})
+
     # Hosts
     host_headers = [
         "host_id", "ip", "hostnames", "host_description", "os", "mac",
@@ -67,27 +89,6 @@ def export_vulns_to_csv(hosts, services, vulns, custom_fields_columns=None):
         }
         writer.writerow(service_data)
     writer.writerow({})
-
-    # Vulnerabilities
-    if custom_fields_columns is None:
-        custom_fields_columns = []
-    vuln_headers = [
-        "confirmed", "vuln_id", "date", "update_date", "vuln_name", "severity", "service",
-        "target", "vuln_desc", "vuln_status", "hostnames", "comments",
-        "vuln_owner", "os", "resolution", "refs", "easeofresolution",
-        "web_vulnerability", "data", "website", "path", "status_code",
-        "request", "response", "method", "params", "pname", "query",
-        "policyviolations", "external_id", "impact_confidentiality",
-        "impact_integrity", "impact_availability", "impact_accountability",
-        "vuln_creator", "obj_type", "parent_id", "parent_type"
-    ]
-    vuln_headers += custom_fields_columns
-    writer = csv.DictWriter(buffer, fieldnames=vuln_headers)
-    writer.writeheader()
-
-    for vuln in vulns:
-        vuln_data = _build_vuln_data(vuln, custom_fields_columns)
-        writer.writerow(vuln_data)
 
     memory_file = BytesIO()
     memory_file.write(buffer.getvalue().encode('utf8'))

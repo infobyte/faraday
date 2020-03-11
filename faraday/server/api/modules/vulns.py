@@ -29,7 +29,8 @@ from faraday.server.api.base import (
     FilterSetMeta,
     PaginatedMixin,
     ReadWriteWorkspacedView,
-    InvalidUsage)
+    InvalidUsage,
+    CountMultiWorkspacedMixin)
 from faraday.server.fields import FaradayUploadedFile
 from faraday.server.models import (
     db,
@@ -430,7 +431,8 @@ class VulnerabilityFilterSet(FilterSet):
 
 class VulnerabilityView(PaginatedMixin,
                         FilterAlchemyMixin,
-                        ReadWriteWorkspacedView):
+                        ReadWriteWorkspacedView,
+                        CountMultiWorkspacedMixin):
     route_base = 'vulns'
     filterset_class = VulnerabilityFilterSet
     sort_model_class = VulnerabilityWeb  # It has all the fields

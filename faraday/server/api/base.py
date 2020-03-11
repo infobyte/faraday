@@ -921,7 +921,7 @@ class CountMultiWorkspacedMixin:
     #: List of SQLAlchemy query filters to apply when counting
     count_extra_filters = []
 
-    def count(self, **kwargs):
+    def count_multi_workspace(self, **kwargs):
         res = {
             'groups': [],
             'total_count': 0
@@ -929,8 +929,10 @@ class CountMultiWorkspacedMixin:
 
         workspace_names_list = flask.request.args.get('workspaces', None)
 
-        if not workspace_name_list:
+        if not workspace_names_list:
             flask.abort(400, {"message": "workspaces is a required parameter"})
+
+        workspace_names_list = workspace_names_list.split(',')
 
         # Enforce workspace permission checking for each workspace
         for workspace_name in workspace_names_list:
@@ -950,13 +952,16 @@ class CountMultiWorkspacedMixin:
         if sort_dir and sort_dir not in ('asc', 'desc'):
             flask.abort(400, {"message": "order must be 'desc' or 'asc'"})
 
-        # using format is not a great practice.
+        workspace_table = f'{inspect(self.model_class).tables[0].name}.workspace.name'
+        import pdb; pdb.set_trace()
+
         # the user input is group_by, however it's filtered by column name.
         table_name = inspect(self.model_class).tables[0].name
         group_by = f'{table_name}.{group_by}'
-
         count = self._filter_query(
-            db.session.query(self.model_class)
+            db.session.query(
+                self.model_class,
+            )
             .join(Workspace)
             .group_by(group_by)
             .filter(Workspace.name.in_(workspace_names_list),

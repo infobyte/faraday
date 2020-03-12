@@ -185,8 +185,8 @@ build_nix_python3:
     - cachix use faradaysec
     - nix-build
     - tar cf /py3.tar $(nix-store --query --requisites $(readlink result))
-    - mkdir /opt
-    - ln -s $(readlink result) /opt/faraday
+    - mkdir -p /opt/faraday
+    - cp -r $(readlink result)/* /opt/faraday
     - tar rvf /py3.tar /opt/faraday
     - mv /py3.tar $CI_PROJECT_DIR
   artifacts:

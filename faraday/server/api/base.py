@@ -954,20 +954,19 @@ class CountMultiWorkspacedMixin:
         if sort_dir and sort_dir not in ('asc', 'desc'):
             flask.abort(400, {"message": "order must be 'desc' or 'asc'"})
 
-        # the user input is group_by, however it's filtered by column name.
-        table_name = inspect(self.model_class).tables[0].name
-        group_by = f'{table_name}.{group_by}'
+        grouped_attr = getattr(self.model_class, group_by)
 
         q = db.session.query(
                 Workspace.name,
-                group_by,
-                func.count(self.model_class.name)
-            ).join(Workspace).group_by(group_by, Workspace.name)
-
+                grouped_attr,
+                func.count(grouped_attr)
+            )\
+            .join(Workspace)\
+            .group_by(grouped_attr, Workspace.name)\
+            .filter(Workspace.name.in_(workspace_names_list))
 
         #order
-        #TODO: ordenar por ambos campos
-        order_by = group_by
+        order_by = grouped_attr
         if sort_dir == 'desc':
             q = q.order_by(desc(Workspace.name), desc(order_by))
         else:

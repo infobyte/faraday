@@ -952,37 +952,33 @@ class CountMultiWorkspacedMixin:
         if sort_dir and sort_dir not in ('asc', 'desc'):
             flask.abort(400, {"message": "order must be 'desc' or 'asc'"})
 
-        workspace_table = f'{inspect(self.model_class).tables[0].name}.workspace.name'
-        import pdb; pdb.set_trace()
-
         # the user input is group_by, however it's filtered by column name.
         table_name = inspect(self.model_class).tables[0].name
         group_by = f'{table_name}.{group_by}'
-        count = self._filter_query(
-            db.session.query(
-                self.model_class,
-            )
-            .join(Workspace)
-            .group_by(group_by)
-            .filter(Workspace.name.in_(workspace_names_list),
-                    *self.count_extra_filters))
+
+        q = db.session.query(
+                Workspace.name,
+                group_by,
+                func.count(self.model_class.name)
+            ).join(Workspace).group_by(group_by, Workspace.name)
+
 
         #order
+        #TODO: ordenar por ambos campos
         order_by = group_by
         if sort_dir == 'desc':
-            count = count.order_by(desc(order_by))
+            q = q.order_by(desc(Workspace.name))
         else:
-            count = count.order_by(asc(order_by))
+            q = q.order_by(asc(Workspace.name))
 
-        for key, count in count.values(group_by, func.count(group_by)):
-            res['groups'].append(
-                {'count': count,
-                 'name': key,
-                 # To add compatibility with the web ui
-                 flask.request.args.get('group_by'): key,
-                 }
-            )
+        grouped_data = {}
+        for workspace, key, count in q.all():
+            if workspace not in grouped_data:
+                grouped_data.update({workspace: {}})
+            grouped_data[workspace].update({key: count})
             res['total_count'] += count
+        res['groups'].append(grouped_data)
+
         return res
 
 

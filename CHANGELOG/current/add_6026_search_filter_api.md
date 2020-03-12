@@ -1,1 +1,0 @@
-add search filter API to persist used searches and filters in manage panel

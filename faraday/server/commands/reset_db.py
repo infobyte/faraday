@@ -24,8 +24,8 @@ def reset_db_all():
                   'faraday_user'):
         try:
             db.engine.execute('DROP TABLE {} CASCADE'.format(table))
-        except:
-            pass
+        except Exception as ex:
+            print(ex)
     db.drop_all()
 
     # db.create_all()

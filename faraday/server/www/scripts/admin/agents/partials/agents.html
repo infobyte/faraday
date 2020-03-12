@@ -12,7 +12,7 @@
             <span class="glyphicon glyphicon-question-sign margin-right-15px"
                   title="To register a new agent you should enter the current token"></span>
 
-            <button type="button" class="btn btn-success"
+            <button type="button" class="btn btn-info"
                     title="A new token will be shown and the current token will be lost"
                     ng-click="refreshToken()">
                 <i class="fa fa-refresh"></i> New Token
@@ -94,13 +94,14 @@
                 <button type="button" class="btn btn-info"
                         ng-click="selectAgent(agent)"
                         title="Run Agent"
-                        data-toggle="modal" data-target="#selectExecutorModal-{{agent.id}}" ng-disabled="!agent.active || disableExecute">
+                        data-toggle="modal" data-target="#selectExecutorModal-{{agent.id}}" ng-disabled="!agent.active || disableExecute || agent.status=='offline'">
                     Execute
                 </button>
                 <button type="button" class="btn"
                         ng-class="{'btn-danger': agent.active, 'btn-success': !agent.active}"
                         title="{{agent.active?'Pause Agent': 'Unpause Agent'}}"
-                        ng-click="changeStatusAgent(agent)">
+                        ng-click="changeStatusAgent(agent)"
+                        ng-disabled="agent.status=='offline'">
                     <span ng-bind="agent.active ?'Pause': 'Unpause'"></span>
                 </button>
                 <button type="button" class="btn btn-danger" title="Remove Agent" ng-click="removeAgent(agent.id)">
@@ -142,9 +143,9 @@
                         </div>
 
                          <div class="var-item margin-top-65px row">
-                            <div class="form-group col-md-6" ng-repeat="parameter in data.selectedExecutor.parameters_metadata">
-                                <label for="paramName">{{parameter.name}}</label>
-                                <input type="text" class="form-control" id="paramName" placeholder="{{parameter.name}}" ng-model="data.selectedExecutor.parameters_values[parameter.name]" ng-required="parameter.isRequired">
+                            <div class="form-group col-md-6" ng-repeat="parameter in data.selectedExecutor.parameters_metadata" ng-class="{'has-error': form[$index].$invalid}">
+                                <label for="paramName" ng-class="{'text-danger': form[$index].$invalid}">{{parameter.name}} <span ng-if="parameter.isRequired">*</span></label>
+                                <input type="text" class="form-control" name="{{$index}}" id="paramName" placeholder="{{parameter.name}}" ng-model="data.selectedExecutor.parameters_values[parameter.name]" ng-required="parameter.isRequired">
                             </div>
                         </div>
                     </div>

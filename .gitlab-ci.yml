@@ -28,6 +28,7 @@ stages:
     - post_testing
     - build_faraday
     - build
+    - distro_testing
 
 services:
     - postgres:latest
@@ -56,6 +57,9 @@ merge_conflict_check:
         - git config --global user.email "you@example.com"
         - git config --global user.name "Mergerbot"
         - python3 merge-conflict-detector.py
+    except:
+        variables:
+            - $BUILD_TEST
 
 pylint:
     tags:
@@ -81,8 +85,7 @@ pylint:
         variables:
             - $BUILD_TEST
 
-postgresql_test:
-    image: registry.gitlab.com/faradaysec/integrationrepo
+.postgresql_test_base:
     tags:
         - faradaytests
     stage: testing
@@ -91,7 +94,8 @@ postgresql_test:
         - export LC_ALL=C.UTF-8
         - export LANG=C.UTF-8
         - pip3 install virtualenv
-        - virtualenv -p python3 faraday_venv
+        - python3 -V
+        - virtualenv -p $PY_VERSION faraday_venv
         - source faraday_venv/bin/activate
         - pip install pip -U
         - pip install --upgrade -r requirements.txt
@@ -110,8 +114,7 @@ postgresql_test:
         variables:
             - $BUILD_TEST
 
-sqlite_test:
-    image: registry.gitlab.com/faradaysec/integrationrepo
+.sqlite_test_base:
     tags:
         - faradaytests
     stage: testing
@@ -139,6 +142,74 @@ sqlite_test:
         variables:
             - $BUILD_TEST
 
+sqlite_test_3_7:
+    extends: .sqlite_test_base
+    image: registry.gitlab.com/faradaysec/integrationrepo:latest-3-7
+    variables:
+      PY_VERSION: python3.7
+
+
+.sqlite_test_3_8:
+    extends: .sqlite_test_base
+    image: registry.gitlab.com/faradaysec/integrationrepo:latest-3-8
+    variables:
+      PY_VERSION: python3.8
+
+
+postgresql_test_3_7:
+    extends: .postgresql_test_base
+    image: registry.gitlab.com/faradaysec/integrationrepo:latest-3-7
+    variables:
+      PY_VERSION: python3.7
+
+
+.postgresql_test_3_8:
+    extends: .postgresql_test_base
+    image: registry.gitlab.com/faradaysec/integrationrepo:latest-3-8
+    variables:
+      PY_VERSION: python3.8
+
+
+build_nix_python3:
+  image: nixorg/nix
+  stage: build_faraday
+  script:
+    - nix-channel --add https://nixos.org/channels/nixos-19.09 nixpkgs
+    - nix-channel --update
+    - nix-build buildpth.nix
+    - nix-build '<nixpkgs>' -A gnome3.vte -o result-vte
+    - nix-build '<nixpkgs>' -A gtk3 -o result-gtk
+    - tar cf /py3.tar $(nix-store --query --requisites $(readlink result) $(readlink result-vte)) $(readlink result-gtk)
+    - mkdir /opt
+    - nix-env -i findutils
+    - "nix-shell -p python37Packages.virtualenv --command 'virtualenv /opt/faraday'"
+    # - cp result /opt/faraday/lib/python3.7/site-packages/nix.pth  # This doesn't include dependencies of dependencies
+    - 'for dir in $(nix-store -qR result); do if [[ -d "$dir/lib/python3.7/site-packages" ]]; then echo "$dir/lib/python3.7/site-packages" >>recursive.pth; fi; done'
+    - mv recursive.pth /opt/faraday/lib/python3.7/site-packages/nix.pth
+    - source /opt/faraday/bin/activate
+    # - "nix-shell -p libxml2 libxslt zlib cairo gobject-introspection glib pkgconfig --run 'SOURCE_DATE_EPOCH=$(date +%s) /opt/faraday/bin/pip install -r requirements.txt'"
+    - python setup.py install
+    - pip install -r requirements.txt  # This has to be below setup.py install
+    - pip freeze
+    - mv /opt/faraday/bin/faraday-client /opt/faraday/bin/_faraday_client_novte
+    - 'nix-shell -p makeWrapper --command "makeWrapper /opt/faraday/bin/_faraday_client_novte /opt/faraday/bin/faraday-client --prefix GI_TYPELIB_PATH : $(find /nix/store -name "girepository-1.0" | tr "\n" ":")"'
+    - 'nix-shell -p makeWrapper --command "makeWrapper /opt/faraday/bin/python /opt/faraday/bin/test --prefix GI_TYPELIB_PATH : $(find /nix/store -name "girepository-1.0" | tr "\n" ":")"'
+    - nix-collect-garbage && /opt/faraday/bin/test -c "import gi;gi.require_version('Gtk', '3.0');gi.require_version('Vte', '2.91');from gi.repository import Gio, Gtk, GdkPixbuf, Vte, GLib, GObject, Gdk" # Test if GTK will work
+    - tar rvf /py3.tar /opt/faraday
+    - mv /py3.tar $CI_PROJECT_DIR
+  artifacts:
+    name: python3
+    paths:
+      - py3.tar
+    expire_in: 15 days # in the future we don't need to expire this.
+  only:
+    variables:
+      - $CI_COMMIT_REF_NAME =~ /^.*\/(master)$/
+      - $CI_COMMIT_TAG
+      - $BUILD_TEST
+      - $FULL_TEST
+      - $DAILY_TEST
+
 generate_build_file:
     image: registry.gitlab.com/faradaysec/integrationrepo
     stage: build_faraday
@@ -165,20 +236,22 @@ generate_deb:
     stage: build
     before_script:
         - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-linux-installers-builder.git
+        - mv py3.tar /
+        - cd /; tar xf py3.tar; cd -
+
     script:
-        - pip3 install virtualenv-tools3 virtualenv
         - mkdir build_installer
         - cp -a faraday.tar.gz build_installer/.
         - cd build_installer
         - /bin/tar zxf faraday.tar.gz
         - cd faraday_copy
+        - cp -r /nix .
         - mv ../../faraday-linux-installers-builder .
         - cd faraday-linux-installers-builder
         - git clone https://github.com/jordansissel/fpm.git
         - cd fpm
         - git checkout d7b466787d17581bc723e474ecf6e18f48226031
-        - git apply ../fpm-patchs/fpm.python3.patch
-        - git apply ../fpm-patchs/fpm.virtualenv_compile.patch
+        - git apply ../fpm-patchs/fpm.virtualenv.patch
         - make gem
         - gem install --no-ri --no-rdoc fpm-1.11.0.gem
         - cd ../../
@@ -187,13 +260,47 @@ generate_deb:
         - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) client deb
         - mv faraday-client_amd64.deb ../../faraday-client_amd64.deb
     dependencies:
-        - generate_build_file
+      - generate_build_file
+      - build_nix_python3
     artifacts:
         name: 'faraday_$CI_COMMIT_REF_NAME.deb'
         paths:
             - "faraday-server_amd64.deb"
             - "faraday-client_amd64.deb"
         expire_in: 15 days
+    only:
+        variables:
+            - $CI_COMMIT_REF_NAME =~ /^.*\/(master)$/
+            - $CI_COMMIT_TAG
+            - $BUILD_TEST
+            - $FULL_TEST
+            - $DAILY_TEST
+
+
+smoke_test_deb:
+    allow_failure: true
+    stage: distro_testing  # TODO improve
+    image: ubuntu:18.04
+    dependencies:
+        - generate_deb
+    script:
+        - apt-get update -y
+        - apt install -y sudo curl
+        - apt-get install -y ./faraday-server_amd64.deb
+        - which faraday-manage
+        - faraday-manage show-urls
+        - export FARADAY_HOME=/home/faraday
+        - /opt/faraday/bin/faraday-server || true  # create .faraday
+        - "echo '[database]' >>~faraday/.faraday/config/server.ini"
+        - echo "connection_string = postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB" >>~faraday/.faraday/config/server.ini
+        - cat ~faraday/.faraday/config/server.ini
+        - faraday-manage create-tables
+        - /opt/faraday/bin/faraday-server &
+        - sleep 5
+        - curl -v http://localhost:5985/_api/v2/info
+        - faraday-manage status-check
+        - kill $(cat ~faraday/.faraday/faraday-server-port-5985.pid)
+        - jobs
     only:
         variables:
             - $CI_COMMIT_REF_NAME =~ /^.*\/(master)$/
@@ -210,7 +317,8 @@ generate_rpm:
         - yum -y install which git
         - yum -y install epel-release
         - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-linux-installers-builder.git
-    script:
+        - mv py3.tar /
+        - cd /; tar xf py3.tar; cd -
         - yum -y install ruby ruby-devel rubygems gobject-introspection-devel curl zsh mailcap libffi-devel openssl-devel openldap-devel libxslt-devel libxml2-devel libxslt-devel freetype-devel libjpeg-devel gtk+-devel gtk3-devel gtk2-devel postgresql-devel
         - yum groups -y install "Development Tools"
         - yum -y install centos-release-scl
@@ -218,17 +326,19 @@ generate_rpm:
         - source /opt/rh/rh-python36/enable
         - pip install virtualenv
         - pip install virtualenv-tools3
+    script:
         - mkdir build_installer
         - cp -a faraday.tar.gz build_installer/.
         - cd build_installer
         - /bin/tar zxf faraday.tar.gz
         - cd faraday_copy
+        - cp -r /nix .
         - mv ../../faraday-linux-installers-builder .
         - cd faraday-linux-installers-builder
         - git clone https://github.com/jordansissel/fpm.git
         - cd fpm
-        - git apply ../fpm-patchs/fpm.python3.patch
-        - git apply ../fpm-patchs/fpm.virtualenv_compile.patch
+        - git checkout d7b466787d17581bc723e474ecf6e18f48226031
+        - git apply ../fpm-patchs/fpm.virtualenv.patch
         - make gem
         - gem install --no-ri --no-rdoc fpm-1.11.0.gem
         - cd ../../
@@ -238,6 +348,7 @@ generate_rpm:
         - mv faraday-client_amd64.rpm ../../faraday-client_amd64.rpm
     dependencies:
         - generate_build_file
+        - build_nix_python3
     artifacts:
         name: 'faraday_$CI_COMMIT_REF_NAME.rpm'
         paths:
@@ -256,6 +367,7 @@ macos_pkg:
     tags:
         - macos
     stage: build
+    allow_failure: true
     before_script:
       - echo 'export PATH="/usr/local/opt/openssl/bin:$PATH"' >> ~/.bash_profile
       - export LDFLAGS="-L/usr/local/opt/openssl/lib"
@@ -275,20 +387,23 @@ macos_pkg:
         - git clone https://github.com/jordansissel/fpm.git
         - cd fpm
         - git checkout d7b466787d17581bc723e474ecf6e18f48226031
-        - git apply ../fpm-patchs/fpm.python3.patch
-        - git apply ../fpm-patchs/fpm.virtualenv_compile.patch
+        - git apply ../fpm-patchs/fpm.osx.patch
         - make gem
         - export GEM_HOME="$HOME/.gem"
         - export GEM_PATH=$HOME/.gem
         - export PATH=$PATH:$HOME/.gem/bin
         - gem install fpm-1.11.0.gem
         - cd ../../
-        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server osxpkg
+        - sh faraday-linux-installers-builder/build_osx.sh $(eval $IMAGE_TAG) server osxpkg
+        - mv faraday-server_amd64.pkg ../../Faraday-server.pkg
+        - sh faraday-linux-installers-builder/build_osx.sh $(eval $IMAGE_TAG) client osxpkg
+        - mv faraday-client_amd64.pkg ../../Faraday-client.pkg
         - mv faraday-server_amd64.pkg ../../Faraday.pkg
     artifacts:
         name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME-binaries"
         paths:
-            - Faraday.pkg
+            - Faraday-server.pkg
+            - Faraday-client.pkg
         expire_in: 1 week
     only:
         variables:
@@ -330,3 +445,6 @@ agent_integration:
         variables:
             - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/
             - $INTEGRATION
+    except:
+        variables:
+            - $BUILD_TEST

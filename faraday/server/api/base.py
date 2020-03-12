@@ -907,7 +907,9 @@ class CountWorkspacedMixin:
 class CountMultiWorkspacedMixin:
     """Add GET /<workspace_name>/<route_base>/count_multi_workspace/ route
 
-    Receives a list of workspaces separated by comma in the workspaces GET parameter.
+    Receives a list of workspaces separated by comma in the workspaces
+    GET parameter.
+    If no workspace is specified, the view will return a 400 error.
 
     Group objects by the field set in the group_by GET parameter. If it
     isn't specified, the view will return a 404 error. For each group,

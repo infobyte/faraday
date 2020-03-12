@@ -41,7 +41,7 @@ class VulnerabilitySchema(vulns.VulnerabilitySchema):
         )
 
 
-class VulnerabilityWebSchema(vulns.VulnerabilityWebSchema):
+class BulkVulnerabilityWebSchema(vulns.VulnerabilityWebSchema):
     class Meta(vulns.VulnerabilityWebSchema.Meta):
         fields = tuple(
             field_name for field_name in vulns.VulnerabilityWebSchema.Meta.fields
@@ -56,7 +56,7 @@ class PolymorphicVulnerabilityField(fields.Field):
         super(PolymorphicVulnerabilityField, self).__init__(*args, **kwargs)
         self.many = kwargs.get('many', False)
         self.vuln_schema = VulnerabilitySchema(strict=True)
-        self.vulnweb_schema = VulnerabilityWebSchema(strict=True)
+        self.vulnweb_schema = BulkVulnerabilityWebSchema(strict=True)
 
     def _deserialize(self, value, attr, data):
         if self.many and not utils.is_collection(value):
@@ -79,13 +79,13 @@ class PolymorphicVulnerabilityField(fields.Field):
         return schema.load(value).data
 
 
-class CredentialSchema(AutoSchema):
+class BulkCredentialSchema(AutoSchema):
     class Meta:
         model = Credential
         fields = ('username', 'password', 'description', 'name')
 
 
-class ServiceSchema(services.ServiceSchema):
+class BulkServiceSchema(services.ServiceSchema):
     """It's like the original service schema, but now it only uses port
     instead of ports (a single integer array). That field was only used
     to keep backwards compatibility with the Web UI"""
@@ -97,7 +97,7 @@ class ServiceSchema(services.ServiceSchema):
         missing=[],
     )
     credentials = fields.Nested(
-        CredentialSchema(many=True),
+        BulkCredentialSchema(many=True),
         many=True,
         missing=[],
     )
@@ -116,7 +116,7 @@ class ServiceSchema(services.ServiceSchema):
 class HostBulkSchema(hosts.HostSchema):
     ip = fields.String(required=True)
     services = fields.Nested(
-        ServiceSchema(many=True, context={'updating': False}),
+        BulkServiceSchema(many=True, context={'updating': False}),
         many=True,
         missing=[],
     )
@@ -126,7 +126,7 @@ class HostBulkSchema(hosts.HostSchema):
         missing=[],
     )
     credentials = fields.Nested(
-        CredentialSchema(many=True),
+        BulkCredentialSchema(many=True),
         many=True,
         missing=[],
     )
@@ -135,7 +135,7 @@ class HostBulkSchema(hosts.HostSchema):
         fields = hosts.HostSchema.Meta.fields + ('services', 'vulnerabilities')
 
 
-class CommandSchema(AutoSchema):
+class BulkCommandSchema(AutoSchema):
     """The schema of faraday/server/api/modules/commandsrun.py has a lot
     of ugly things because of the Web UI backwards compatibility.
 
@@ -163,7 +163,7 @@ class BulkCreateSchema(Schema):
         required=True,
     )
     command = fields.Nested(
-        CommandSchema(),
+        BulkCommandSchema(),
         required=False,
     )
 

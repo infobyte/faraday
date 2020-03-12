@@ -69,11 +69,11 @@ Passing a method view function::
 import re
 
 from flask import current_app
-from pydoc import locate
 
 from apispec import BasePlugin, yaml_utils
 from apispec.exceptions import APISpecError
-
+from faraday.server.api.modules.commandsrun import CommandSchema
+from marshmallow.class_registry import register
 
 # from flask-restplus
 from flask.views import MethodView

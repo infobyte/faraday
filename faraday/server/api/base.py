@@ -925,7 +925,7 @@ class CountMultiWorkspacedMixin:
 
     def count_multi_workspace(self, **kwargs):
         res = {
-            'groups': [],
+            'groups': defaultdict(dict),
             'total_count': 0
         }
 
@@ -972,13 +972,9 @@ class CountMultiWorkspacedMixin:
         else:
             q = q.order_by(asc(Workspace.name), asc(order_by))
 
-        grouped_data = {}
         for workspace, key, count in q.all():
-            if workspace not in grouped_data:
-                grouped_data.update({workspace: {}})
-            grouped_data[workspace].update({key: count})
+            res['groups'][workspace][key] = count
             res['total_count'] += count
-        res['groups'].append(grouped_data)
 
         return res
 

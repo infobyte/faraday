@@ -72,8 +72,6 @@ from flask import current_app
 
 from apispec import BasePlugin, yaml_utils
 from apispec.exceptions import APISpecError
-from faraday.server.api.modules.commandsrun import CommandSchema
-from marshmallow.class_registry import register
 
 # from flask-restplus
 from flask.views import MethodView
@@ -114,26 +112,17 @@ class FaradayAPIPlugin(BasePlugin):
     def path_helper(self, operations, *, view, app=None, **kwargs):
         """Path helper that allows passing a Flask view function."""
         rule = self._rule_for_view(view, app=app)
-        view_class = None
-        view_name = None
-        #view_class = view.__qualname__.split('.')[0]
         if '.' not in view.__qualname__:
             return self.flaskpath2openapi(rule.rule)
         view_name = view.__qualname__.split('.')[1]
         if view.__closure__ is None:
             return self.flaskpath2openapi(rule.rule)
         view_instance = next(cl.cell_contents for cl in view.__closure__ if isinstance(cl.cell_contents, GenericView))
-        #operations.update(yaml_utils.load_operations_from_docstring(view.__doc__))
         print(view.__doc__)
         if view_name == 'delete':
-            #view.__closure__[1].cell_contents._get_schema_class()
-        #if view_class and view_name and view_name not in ['send_static_file', 'activity_feed', 'count']:
             operations[view_name] = yaml_utils.load_yaml_from_docstring(
                 view.__doc__.format(schema_class=view_instance._get_schema_class().__name__)
             )
-        #print(f"faraday.server.api.modules.{view_class}")
-        #print(locate(f"faraday.server.api.base.{view.__qualname__.split('.')[0]}"))
-        #print('*' * 90)
 
         if hasattr(view, "view_class") and issubclass(view.view_class, MethodView):
             for method in view.methods:

@@ -137,7 +137,7 @@ def createDaemon():
 
 def start_server():
     logger.info('Running as a daemon')
-    WORKDIR = faraday.server.config.FARADAY_BASE
+    WORKDIR = faraday.server.config.FARADAY_BASE  # pylint:disable=unused-variable
     createDaemon()
 
 

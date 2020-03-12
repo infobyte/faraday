@@ -30,7 +30,6 @@ import click
 import requests
 import alembic.command
 from pgcli.main import PGCli
-from requests import ConnectionError
 from urllib.parse import urlparse
 from alembic.config import Config
 from sqlalchemy.exc import ProgrammingError, OperationalError
@@ -51,7 +50,7 @@ from faraday_plugins.plugins.manager import PluginsManager
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
-logger = logging.getLogger(__name__)
+#logger = logging.getLogger(__name__)
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 def cli():
@@ -157,7 +156,7 @@ def validate_email(ctx, param, value):
 @click.command(help="List Available Plugins")
 def list_plugins():
     plugins_manager = PluginsManager()
-    for plugin_id, plugin in plugins_manager.get_plugins():
+    for _, plugin in plugins_manager.get_plugins():
         click.echo(f"{plugin.id}")
 
 @click.command(help="Create ADMIN user for Faraday application")
@@ -212,7 +211,6 @@ def support():
         required=False,
         )
 def migrate(downgrade, revision):
-    logger.info("Running migrations")
     try:
         revision = revision or ("-1" if downgrade else "head")
         config = Config(os.path.join(FARADAY_BASE,"alembic.ini"))
@@ -222,14 +220,15 @@ def migrate(downgrade, revision):
         else:
             alembic.command.upgrade(config, revision)
     except OperationalError as e:
+        logger = logging.getLogger(__name__)
         logger.error("Migration Error: %s", e)
+        logger.exception(e)
         print('Please verify your configuration on server.ini or the hba configuration!')
     except Exception as e:
-        logger.exception("Migration Error: %s", e)
-        print('Migration failed! Please check the logs')
+        logger = logging.getLogger(__name__)
+        logger.error("Migration Error: %s", e)
+        print('Migration failed!', e)
         sys.exit(1)
-    else:
-        logger.info("Migrations finished")
 
 
 @click.command(help='Custom field wizard')

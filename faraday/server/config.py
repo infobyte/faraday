@@ -82,15 +82,15 @@ def is_debug_mode():
 class ConfigSection:
     def parse(self, __parser):
         for att in self.__dict__:
+            value = __parser.get(att)
             if isinstance(self.__dict__[att], bool):
-                value = __parser.get(att)
                 if value in ("yes", "true", "t", "1", "True"):
                     self.__setattr__(att, True)
                 else:
                     self.__setattr__(att, False)
-
             else:
-                self.__setattr__(att, __parser.get(att))
+                if value:
+                    self.__setattr__(att, value)
 
     @staticmethod
     def parse_section(section_name, __parser):

@@ -225,7 +225,7 @@ class HostsView(PaginatedMixin,
         result = query.all()
         res_dict = {'tools': []}
         for row in result:
-            host, command = row
+            _, command = row
             res_dict['tools'].append({'command': command.tool, 'user': command.user, 'params': command.params, 'command_id': command.id, 'create_date': command.create_date.replace(tzinfo=pytz.utc).strftime("%c")})
         return res_dict
 
@@ -280,6 +280,26 @@ class HostsView(PaginatedMixin,
             'total_rows': (pagination_metadata and pagination_metadata.total
                            or len(hosts)),
         }
+
+    @route('bulk_delete/', methods=['DELETE'])
+    def bulk_delete(self, workspace_name):
+        workspace = self._get_workspace(workspace_name)
+        json_request = flask.request.get_json()
+        if not json_request:
+            flask.abort(400, 'Invalid request. Check the request data or the content type of the request')
+        hosts_ids = json_request.get('hosts_ids', [])
+        hosts_ids = [host_id for host_id in hosts_ids if isinstance(host_id, int)]
+        deleted_hosts = 0
+        if hosts_ids:
+            deleted_hosts = Host.query.filter(
+                Host.id.in_(hosts_ids),
+                Host.workspace_id == workspace.id).delete(synchronize_session='fetch')
+        else:
+            flask.abort(400, "Invalid request")
+
+        db.session.commit()
+        response = {'deleted_hosts': deleted_hosts}
+        return flask.jsonify(response)
 
 
 HostsView.register(host_api)

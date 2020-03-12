@@ -172,7 +172,7 @@ def update_executors(agent, executors):
     for raw_executor in executors:
         if 'executor_name' not in raw_executor or 'args' not in raw_executor:
             continue
-        executor, created = get_or_create(
+        executor, _ = get_or_create(
             db.session,
             Executor,
             **{

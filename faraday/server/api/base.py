@@ -967,9 +967,9 @@ class CountMultiWorkspacedMixin:
         #TODO: ordenar por ambos campos
         order_by = group_by
         if sort_dir == 'desc':
-            q = q.order_by(desc(Workspace.name))
+            q = q.order_by(desc(Workspace.name), desc(order_by))
         else:
-            q = q.order_by(asc(Workspace.name))
+            q = q.order_by(asc(Workspace.name), asc(order_by))
 
         grouped_data = {}
         for workspace, key, count in q.all():

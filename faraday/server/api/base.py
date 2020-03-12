@@ -912,7 +912,7 @@ class CountMultiWorkspacedMixin:
     If no workspace is specified, the view will return a 400 error.
 
     Group objects by the field set in the group_by GET parameter. If it
-    isn't specified, the view will return a 404 error. For each group,
+    isn't specified, the view will return a 400 error. For each group,
     show the count of elements and its value.
 
     This view is often used by some parts of the web UI. It was designed

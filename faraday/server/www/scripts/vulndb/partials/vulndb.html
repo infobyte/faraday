@@ -117,7 +117,7 @@
                         <td class="ui-grid-cell-contents no-padding">{{model.name}}</td>
                         <td class="ui-grid-cell-contents no-padding">{{model.description}}</td>
                         <td>{{model.external_id}}</td>
-                        <td><div ng-repeat="ref in model.refs|limitTo:3">{{ref}}</div></td>
+                        <td><div ng-repeat="ref in model.refs|limitTo:3" class="ui-grid-cell-contents no-padding">{{ref}}</div></td>
                         <td class="ui-grid-cell-contents no-padding">{{model.data}}</td>
                         <td class="ui-grid-cell-contents no-padding">{{model.resolution}}</td>
                         <td><div ng-repeat="(key, value) in model.impact|limitTo:3" ng-if="value == true">{{key}}</div></td>

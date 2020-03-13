@@ -118,11 +118,18 @@ class FaradayAPIPlugin(BasePlugin):
         if view.__closure__ is None:
             return self.flaskpath2openapi(rule.rule)
         view_instance = next(cl.cell_contents for cl in view.__closure__ if isinstance(cl.cell_contents, GenericView))
-        print(view.__doc__)
-        if view_name == 'delete':
-            operations[view_name] = yaml_utils.load_yaml_from_docstring(
-                view.__doc__.format(schema_class=view_instance._get_schema_class().__name__)
-            )
+        # print(view.__doc__)
+        #import pdb; pdb.set_trace()
+        #print(view_instance)
+        if view_name in ['get', 'put', 'delete', 'post']:
+            if view.__doc__:
+                if hasattr(view_instance.model_class, "__name__"):
+                    class_model = view_instance.model_class.__name__
+                else:
+                    class_model = 'No name'
+                operations[view_name] = yaml_utils.load_yaml_from_docstring(
+                    view.__doc__.format(schema_class=view_instance._get_schema_class().__name__, class_model=class_model)
+                )
 
         if hasattr(view, "view_class") and issubclass(view.view_class, MethodView):
             for method in view.methods:

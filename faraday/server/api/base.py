@@ -576,6 +576,16 @@ class RetrieveMixin:
     """Add GET /<id>/ route"""
 
     def get(self, object_id, **kwargs):
+        """
+        ---
+          tags: ["Get"]
+          description: Retrieve {class_model}
+          responses:
+            200:
+              content:
+                application/json:
+                  schema: {schema_class}
+        """
         return self._dump(self._get_object(object_id, eagerload=True,
                                            **kwargs), kwargs)
 
@@ -611,6 +621,20 @@ class CreateMixin:
     """Add POST / route"""
 
     def post(self, **kwargs):
+        """
+        ---
+          tags: ["Post"]
+          description: Create {class_model}
+          responses:
+            201:
+              content:
+                application/json:
+                  schema: {schema_class}
+            409:
+              content:
+                application/json:
+                  schema: {schema_class}
+        """
         context = {'updating': False}
 
         data = self._parse_data(self._get_schema_instance(kwargs, context=context),
@@ -735,6 +759,21 @@ class UpdateMixin:
     """Add PUT /<id>/ route"""
 
     def put(self, object_id, **kwargs):
+        """
+        ---
+          tags: ["Put"]
+          description: Update {class_model}
+          responses:
+            200:
+              content:
+                application/json:
+                  schema: {schema_class}
+            409:
+              content:
+                application/json:
+                  schema: {schema_class}
+        """
+
         obj = self._get_object(object_id, **kwargs)
         context = {'updating': True, 'object': obj}
         data = self._parse_data(self._get_schema_instance(kwargs, context=context),
@@ -811,9 +850,9 @@ class DeleteMixin:
         """
         ---
           tags: ["Delete"]
-          description: Create hosts in bulk AAAAAAA
+          description: Delete {class_model}
           responses:
-            201:
+            204:
               content:
                 application/json:
                   schema: {schema_class}

@@ -5,95 +5,116 @@ import logging
 
 from faraday.server.models import (
     db,
-    Comment
+    Comment,
+    Host,
+    Service
 )
 
 logger = logging.getLogger(__name__)
 
 
-def export_vulns_to_csv(hosts, services, vulns, custom_fields_columns=None):
+def export_vulns_to_csv(vulns, custom_fields_columns=None):
     buffer = StringIO()
 
-    # Vulnerabilities
-    if custom_fields_columns is None:
-        custom_fields_columns = []
     vuln_headers = [
         "confirmed", "vuln_id", "date", "update_date", "vuln_name", "severity", "service",
         "target", "vuln_desc", "vuln_status", "hostnames", "comments",
-        "vuln_owner", "os", "resolution", "refs", "easeofresolution",
+        "os", "resolution", "refs", "easeofresolution",
         "web_vulnerability", "data", "website", "path", "status_code",
         "request", "response", "method", "params", "pname", "query",
         "policyviolations", "external_id", "impact_confidentiality",
         "impact_integrity", "impact_availability", "impact_accountability",
-        "vuln_creator", "obj_type", "parent_id", "parent_type"
+        "vuln_creator", "vuln_parent_id", "vuln_parent_type"
     ]
+
+    if custom_fields_columns is None:
+        custom_fields_columns = []
     vuln_headers += custom_fields_columns
-    writer = csv.DictWriter(buffer, fieldnames=vuln_headers)
-    writer.writeheader()
 
-    for vuln in vulns:
-        vuln_data = _build_vuln_data(vuln, custom_fields_columns)
-        writer.writerow(vuln_data)
-    writer.writerow({})
-
-    # Hosts
-    host_headers = [
-        "host_id", "ip", "hostnames", "host_description", "os", "mac",
-        "host_owned", "host_creator_id", "date", "update_date", "obj_type"
-    ]
-    writer = csv.DictWriter(buffer, fieldnames=host_headers)
-    writer.writeheader()
-
-    for host in hosts:
-        host_data = {
-            "host_id": host.id,
-            "ip": host.ip,
-            "hostnames": [hostname.name for hostname in host.hostnames],
-            "host_description": host.description,
-            "os": host.os,
-            "mac": host.mac,
-            "host_owned": host.owned,
-            "host_creator_id": host.creator_id,
-            "date": host.create_date,
-            "update_date": host.update_date,
-            "obj_type": "host"
-        }
-        writer.writerow(host_data)
-    writer.writerow({})
-
-    # Services
-    service_headers = [
+    headers = vuln_headers + [
+        "host_id", "host_description", "os", "mac",
+        "host_owned", "host_creator_id", "host_date", "host_update_date",
         "service_id", "service_name", "service_description", "service_owned",
         "port", "protocol", "summary", "version", "service_status",
-        "service_creator_id", "date", "update_date", "obj_type", "parent_id"
+        "service_creator_id", "service_date", "service_update_date", "service_parent_id"
     ]
-    writer = csv.DictWriter(buffer, fieldnames=service_headers)
+
+    writer = csv.DictWriter(buffer, fieldnames=headers)
     writer.writeheader()
 
-    for service in services:
-        service_data = {
-            "service_id": service.id,
-            "service_name": service.name,
-            "service_description": service.description,
-            "service_owned": service.owned,
-            "port": service.port,
-            "protocol": service.protocol,
-            "summary": service.summary,
-            "version": service.version,
-            "service_status": service.status,
-            "service_creator_id": service.creator_id,
-            "date": service.create_date,
-            "update_date": service.update_date,
-            "parent_id": service.host_id,
-            "obj_type": "service"
-        }
-        writer.writerow(service_data)
-    writer.writerow({})
+    hosts_data = {}
+    services_data = {}
+    for vuln in vulns:
+        vuln_data = _build_vuln_data(vuln, custom_fields_columns)
+        if vuln['parent_type'] == 'Host':
+            host_id = vuln['parent']
+            if host_id in hosts_data:
+                host_data = hosts_data[host_id]
+            else:
+                host_data = _build_host_data(host_id)
+                hosts_data[host_id] = host_data
+            row = {**vuln_data, **host_data}
+        elif vuln['parent_type'] == 'Service':
+            service_id = vuln['parent']
+            if service_id in services_data:
+                service_data = services_data[service_id]
+            else:
+                service_data = _build_service_data(service_id)
+                services_data[service_id] = service_data
+            host_id = service_data['service_parent_id']
+            if host_id in hosts_data:
+                host_data = hosts_data[host_id]
+            else:
+                host_data = _build_host_data(host_id)
+                hosts_data[host_id] = host_data
+            row = {**vuln_data, **host_data, **service_data}
+
+        writer.writerow(row)
 
     memory_file = BytesIO()
     memory_file.write(buffer.getvalue().encode('utf8'))
     memory_file.seek(0)
     return memory_file
+
+
+def _build_host_data(host_id):
+    host = db.session.query(Host)\
+                            .filter(Host.id == host_id).one()
+
+    host_data = {
+        "host_id": host.id,
+        "host_description": host.description,
+        "os": host.os,
+        "mac": host.mac,
+        "host_owned": host.owned,
+        "host_creator_id": host.creator_id,
+        "host_date": host.create_date,
+        "host_update_date": host.update_date,
+    }
+
+    return host_data
+
+
+def _build_service_data(service_id):
+    service = db.session.query(Service)\
+                            .filter(Service.id == service_id).one()
+    service_data = {
+        "service_id": service.id,
+        "service_name": service.name,
+        "service_description": service.description,
+        "service_owned": service.owned,
+        "port": service.port,
+        "protocol": service.protocol,
+        "summary": service.summary,
+        "version": service.version,
+        "service_status": service.status,
+        "service_creator_id": service.creator_id,
+        "service_date": service.create_date,
+        "service_update_date": service.update_date,
+        "service_parent_id": service.host_id,
+    }
+
+    return service_data
 
 
 def _build_vuln_data(vuln, custom_fields_columns):
@@ -111,49 +132,49 @@ def _build_vuln_data(vuln, custom_fields_columns):
         vuln_service = " - ".join(service_fields_values)
     else:
         vuln_service = ""
+
     if all(isinstance(hostname, str) for hostname in vuln['hostnames']):
         vuln_hostnames = vuln['hostnames']
     else:
         vuln_hostnames = [str(hostname['name']) for hostname in vuln['hostnames']]
 
-    vuln_data = {"confirmed": vuln['confirmed'],
-                    "vuln_id": vuln.get('_id', None),
-                    "date": vuln_date,
-                    "update_date": vuln['metadata'].get('update_time', None),
-                    "severity": vuln.get('severity', None),
-                    "target": vuln.get('target', None),
-                    "vuln_status": vuln.get('status', None),
-                    "hostnames": vuln_hostnames,
-                    "vuln_desc": vuln_description,
-                    "vuln_name": vuln.get('name', None),
-                    "service": vuln_service,
-                    "comments": comments_list,
-                    "vuln_owner": vuln.get('owner', None),
-                    "os": vuln.get('host_os', None),
-                    "resolution": vuln.get('resolution', None),
-                    "refs": vuln.get('refs', None),
-                    "easeofresolution": vuln.get('easeofresolution', None),
-                    "data": vuln.get('data', None),
-                    "website": vuln.get('website', None),
-                    "path": vuln.get('path', None),
-                    "status_code": vuln.get('status_code', None),
-                    "request": vuln.get('request', None),
-                    "response": vuln.get('response', None),
-                    "method": vuln.get('method', None),
-                    "params": vuln.get('params', None),
-                    "pname": vuln.get('pname', None),
-                    "query": vuln.get('query', None),
-                    "policyviolations": vuln.get('policyviolations', None),
-                    "external_id": vuln.get('external_id', None),
-                    "impact_confidentiality": vuln["impact"]["confidentiality"],
-                    "impact_integrity": vuln["impact"]["integrity"],
-                    "impact_availability": vuln["impact"]["availability"],
-                    "impact_accountability": vuln["impact"]["accountability"],
-                    "web_vulnerability": vuln['type'] == "VulnerabilityWeb",
-                    "vuln_creator": vuln["metadata"].get('creator', None),
-                    "obj_type": "vulnerability",
-                    "parent_id": vuln.get('parent', None),
-                    "parent_type": vuln.get('parent_type', None)
+    vuln_data = {
+        "confirmed": vuln['confirmed'],
+        "vuln_id": vuln.get('_id', None),
+        "date": vuln_date,
+        "update_date": vuln['metadata'].get('update_time', None),
+        "severity": vuln.get('severity', None),
+        "target": vuln.get('target', None),
+        "vuln_status": vuln.get('status', None),
+        "hostnames": vuln_hostnames,
+        "vuln_desc": vuln_description,
+        "vuln_name": vuln.get('name', None),
+        "service": vuln_service,
+        "comments": comments_list,
+        "os": vuln.get('host_os', None),
+        "resolution": vuln.get('resolution', None),
+        "refs": vuln.get('refs', None),
+        "easeofresolution": vuln.get('easeofresolution', None),
+        "data": vuln.get('data', None),
+        "website": vuln.get('website', None),
+        "path": vuln.get('path', None),
+        "status_code": vuln.get('status_code', None),
+        "request": vuln.get('request', None),
+        "response": vuln.get('response', None),
+        "method": vuln.get('method', None),
+        "params": vuln.get('params', None),
+        "pname": vuln.get('pname', None),
+        "query": vuln.get('query', None),
+        "policyviolations": vuln.get('policyviolations', None),
+        "external_id": vuln.get('external_id', None),
+        "impact_confidentiality": vuln["impact"]["confidentiality"],
+        "impact_integrity": vuln["impact"]["integrity"],
+        "impact_availability": vuln["impact"]["availability"],
+        "impact_accountability": vuln["impact"]["accountability"],
+        "web_vulnerability": vuln['type'] == "VulnerabilityWeb",
+        "vuln_creator": vuln["metadata"].get('creator', None),
+        "vuln_parent_id": vuln.get('parent', None),
+        "vuln_parent_type": vuln.get('parent_type', None)
     }
     if vuln['custom_fields']:
         for field_name, value in vuln['custom_fields'].items():

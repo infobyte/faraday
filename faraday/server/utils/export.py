@@ -19,7 +19,7 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
     vuln_headers = [
         "confirmed", "vuln_id", "date", "update_date", "vuln_name", "severity", "service",
         "target", "vuln_desc", "vuln_status", "hostnames", "comments",
-        "os", "resolution", "refs", "easeofresolution",
+        "resolution", "refs", "easeofresolution",
         "web_vulnerability", "data", "website", "path", "status_code",
         "request", "response", "method", "params", "pname", "query",
         "policyviolations", "external_id", "impact_confidentiality",
@@ -151,7 +151,6 @@ def _build_vuln_data(vuln, custom_fields_columns):
         "vuln_name": vuln.get('name', None),
         "service": vuln_service,
         "comments": comments_list,
-        "os": vuln.get('host_os', None),
         "resolution": vuln.get('resolution', None),
         "refs": vuln.get('refs', None),
         "easeofresolution": vuln.get('easeofresolution', None),

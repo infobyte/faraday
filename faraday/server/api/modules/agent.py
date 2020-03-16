@@ -77,12 +77,15 @@ class AgentCreationView(GenericWorkspacedView, CreateWorkspacedMixin):
     ---
     post:
       tags: ["Agents"]
-      description: Create an agent
+      description: Creates an agent
       responses:
         200:
+          description: Ok
           content:
             application/json:
               schema: AgentCreationSchema
+        401:
+            description: Invalid token
     """
     route_base = 'agent_registration'
     model_class = Agent
@@ -125,9 +128,12 @@ class AgentView(UpdateWorkspacedMixin,
         ---
         post:
           tags: ["Agents"]
-          description: Run an agent
+          description: Runs an agent
           responses:
-            200:
+            400:
+              description: Bad request
+            201:
+              description: Ok
               content:
                 application/json:
                   schema: AgentSchema

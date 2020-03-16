@@ -579,9 +579,10 @@ class RetrieveMixin:
         """
         ---
           tags: ["Get"]
-          description: Retrieve {class_model}
+          summary: Retrieves {class_model}
           responses:
             200:
+              description: Ok
               content:
                 application/json:
                   schema: {schema_class}
@@ -624,13 +625,20 @@ class CreateMixin:
         """
         ---
           tags: ["Post"]
-          description: Create {class_model}
+          summary: Creates {class_model}
+          requestBody:
+            required: true
+            content:
+                application/json:
+                    schema: {schema_class}
           responses:
             201:
+              description: Created
               content:
                 application/json:
                   schema: {schema_class}
             409:
+              description: Duplicated key found
               content:
                 application/json:
                   schema: {schema_class}
@@ -762,13 +770,15 @@ class UpdateMixin:
         """
         ---
           tags: ["Put"]
-          description: Update {class_model}
+          summary: Updates {class_model}
           responses:
             200:
+              description: Ok
               content:
                 application/json:
                   schema: {schema_class}
             409:
+              description: Duplicated key found
               content:
                 application/json:
                   schema: {schema_class}
@@ -850,12 +860,10 @@ class DeleteMixin:
         """
         ---
           tags: ["Delete"]
-          description: Delete {class_model}
+          summary: Deletes {class_model}
           responses:
             204:
-              content:
-                application/json:
-                  schema: {schema_class}
+              description: The resource was deleted successfully
         """
         obj = self._get_object(object_id, **kwargs)
         self._perform_delete(obj, **kwargs)

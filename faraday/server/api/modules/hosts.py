@@ -148,12 +148,17 @@ class HostsView(PaginatedMixin,
         ---
         post:
           tags: ["Vulns"]
-          description: Create hosts in bulk
+          description: Creates hosts in bulk
           responses:
             201:
+              description: Created
               content:
                 application/json:
                   schema: HostSchema
+            400:
+              description: Bad request
+            403:
+              description: Forbidden
         """
         try:
             validate_csrf(flask.request.form.get('csrf_token'))
@@ -210,11 +215,12 @@ class HostsView(PaginatedMixin,
     def count_vulns(self, workspace_name):
         """
         ---
-        post:
+        get:
           tags: ["Hosts"]
-          description: Create an agent
+          description: Counts hosts
           responses:
             200:
+              description: Ok
               content:
                 application/json:
                   schema: HostCountSchema
@@ -225,7 +231,7 @@ class HostsView(PaginatedMixin,
         else:
             host_id_list = None
 
-        res_dict = {'hosts':{}}
+        res_dict = {'hosts': {}}
 
         host_count_schema = HostCountSchema()
         host_count = Host.query_with_count(None, host_id_list, workspace_name)

@@ -79,7 +79,7 @@ class AgentCreationView(GenericWorkspacedView, CreateWorkspacedMixin):
       tags: ["Agents"]
       description: Creates an agent
       responses:
-        200:
+        201:
           description: Ok
           content:
             application/json:

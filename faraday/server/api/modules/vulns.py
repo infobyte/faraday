@@ -770,12 +770,17 @@ class VulnerabilityView(PaginatedMixin,
         ---
         get:
           tags: ["Vulns"]
-          description: Get attachment for a vulnerability
+          description: Gets an attachment for a vulnerability
           responses:
             200:
+              description: Ok
               content:
                 application/json:
                   schema: EvidenceSchema
+            403:
+              description: Workspace disabled
+            404:
+              description: Not Found
         """
         workspace = self._get_workspace(workspace_name)
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(

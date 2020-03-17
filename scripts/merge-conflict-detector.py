@@ -23,7 +23,7 @@ from tempfile import mkdtemp
 from shutil import rmtree
 
 VERSIONS = ['white', 'pink', 'black']
-BRANCH_FORMAT = 'origin/{}3/dev'
+BRANCH_FORMAT = 'origin/{}/dev'
 
 @contextmanager
 def chdir(directory):

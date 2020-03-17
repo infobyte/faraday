@@ -85,7 +85,11 @@ class AgentCreationView(GenericWorkspacedView, CreateWorkspacedMixin):
             application/json:
               schema: AgentCreationSchema
         401:
-            description: Invalid token
+          description: Invalid token
+        403:
+          description: Workspace disabled
+        404:
+          description: Not Found
     """
     route_base = 'agent_registration'
     model_class = Agent

@@ -331,7 +331,6 @@ class BulkCreateView(GenericWorkspacedView):
     def post(self, workspace_name):
         """
         ---
-        post:
           tags: ["Bulk"]
           description: Creates all faraday objects in bulk for a workspace
           requestBody:

@@ -128,7 +128,7 @@ class FaradayAPIPlugin(BasePlugin):
                 else:
                     class_model = 'No name'
                 operations[view_name] = yaml_utils.load_yaml_from_docstring(
-                    view.__doc__.format(schema_class=view_instance._get_schema_class().__name__, class_model=class_model)
+                    view.__doc__.format(schema_class=view_instance._get_schema_class().__name__, class_model=class_model, tag_name=class_model)
                 )
 
         if hasattr(view, "view_class") and issubclass(view.view_class, MethodView):

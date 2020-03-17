@@ -779,7 +779,7 @@ class VulnerabilityView(PaginatedMixin,
                   schema: EvidenceSchema
             403:
               description: Workspace disabled or no permission
-            404:disabled
+            404:
               description: Not Found
         """
         workspace = self._get_workspace(workspace_name)

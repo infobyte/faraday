@@ -13,8 +13,8 @@ import json
 
 from faraday.utils.faraday_openapi_plugin import FaradayAPIPlugin
 
-TAGS = [
-        {'name': 'Agents',
+""" TAGS = [
+        {'name': 'Agent',
          'description': 'Run and manage agents',
          },
         {'name': 'Vulns',
@@ -27,7 +27,7 @@ TAGS = [
          'description': 'Manage services from hosts',
          },
         ]
-
+"""
 
 def openapi_format(format="yaml"):
 
@@ -37,7 +37,7 @@ def openapi_format(format="yaml"):
         openapi_version="3.0.2",
         plugins=[FaradayAPIPlugin(), MarshmallowPlugin()], #FaradayAPIPlugin
         info={'description': 'The Faraday server API'},
-        tags=TAGS,
+#        tags=TAGS,
     )
 
     with app.test_request_context():

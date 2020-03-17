@@ -578,7 +578,7 @@ class RetrieveMixin:
     def get(self, object_id, **kwargs):
         """
         ---
-          tags: ["Get"]
+          tags: ["{tag_name}"]
           summary: Retrieves {class_model}
           responses:
             200:
@@ -624,7 +624,7 @@ class CreateMixin:
     def post(self, **kwargs):
         """
         ---
-          tags: ["Post"]
+          tags: ["{tag_name}"]
           summary: Creates {class_model}
           requestBody:
             required: true
@@ -769,7 +769,7 @@ class UpdateMixin:
     def put(self, object_id, **kwargs):
         """
         ---
-          tags: ["Put"]
+          tags: ["{tag_name}"]
           summary: Updates {class_model}
           responses:
             200:
@@ -859,7 +859,7 @@ class DeleteMixin:
     def delete(self, object_id, **kwargs):
         """
         ---
-          tags: ["Delete"]
+          tags: ["{tag_name}"]
           summary: Deletes {class_model}
           responses:
             204:

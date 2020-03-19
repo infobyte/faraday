@@ -580,6 +580,12 @@ class RetrieveMixin:
         ---
           tags: ["{tag_name}"]
           summary: Retrieves {class_model}
+          parameters:
+          - in: path
+            name: object_id
+            required: true
+            schema:
+              type: integer
           responses:
             200:
               description: Ok
@@ -595,6 +601,30 @@ class RetrieveWorkspacedMixin(RetrieveMixin):
     """Add GET /<workspace_name>/<route_base>/<id>/ route"""
     # There are no differences with the non-workspaced implementations. The code
     # inside the view generic methods is enough
+    def get(self, *args, **kwargs):
+        """
+        ---
+          tags: ["{tag_name}"]
+          summary: Retrieves {class_model}
+          parameters:
+          - in: path
+            name: object_id
+            required: true
+            schema:
+              type: integer
+          - in: path
+            name: workspace_name
+            required: true
+            schema:
+              type: string
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: {schema_class}
+        """
+        return super(RetrieveWorkspacedMixin, self).get(*args, **kwargs)
 
 
 class ReadOnlyView(SortableMixin,
@@ -629,8 +659,8 @@ class CreateMixin:
           requestBody:
             required: true
             content:
-                application/json:
-                    schema: {schema_class}
+              application/json:
+                schema: {schema_class}
           responses:
             201:
               description: Created
@@ -733,6 +763,36 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
     the database.
     """
 
+    def post(self, *args, **kwargs):
+        """
+        ---
+          tags: ["{tag_name}"]
+          summary: Creates {class_model}
+          parameters:
+          - in: path
+            name: workspace_name
+            required: true
+            schema:
+              type: string
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema: {schema_class}
+          responses:
+            201:
+              description: Created
+              content:
+                application/json:
+                  schema: {schema_class}
+            409:
+              description: Duplicated key found
+              content:
+                application/json:
+                  schema: {schema_class}
+        """
+        return super(CreateWorkspacedMixin, self).post(*args, **kwargs)
+
     def _perform_create(self, data, workspace_name):
         assert not db.session.new
         workspace = self._get_workspace(workspace_name)
@@ -771,6 +831,12 @@ class UpdateMixin:
         ---
           tags: ["{tag_name}"]
           summary: Updates {class_model}
+          parameters:
+          - in: path
+            name: object_id
+            required: true
+            schema:
+              type: integer
           responses:
             200:
               description: Ok
@@ -842,6 +908,36 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
     the database.
     """
 
+    def put(self, *args, **kwargs):
+        """
+        ---
+          tags: ["{tag_name}"]
+          summary: Updates {class_model}
+          parameters:
+          - in: path
+            name: object_id
+            required: true
+            schema:
+              type: integer
+          - in: path
+            name: workspace_name
+            required: true
+            schema:
+              type: string
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: {schema_class}
+            409:
+              description: Duplicated key found
+              content:
+                application/json:
+                  schema: {schema_class}
+        """
+        return super(UpdateWorkspacedMixin, self).put(*args, **kwargs)
+
     def _perform_update(self, object_id, obj, data, workspace_name=None):
         # # Make sure that if I created new objects, I had properly commited them
         # assert not db.session.new
@@ -860,6 +956,12 @@ class DeleteMixin:
         """
         ---
           tags: ["{tag_name}"]
+          parameters:
+          - in: path
+            name: object_id
+            required: true
+            schema:
+              type: integer
           summary: Deletes {class_model}
           responses:
             204:
@@ -876,6 +978,28 @@ class DeleteMixin:
 
 class DeleteWorkspacedMixin(DeleteMixin):
     """Add DELETE /<workspace_name>/<route_base>/<id>/ route"""
+    def delete(self, *args, **kwargs):
+
+        """
+          ---
+            tags: ["{tag_name}"]
+            parameters:
+            - in: path
+              name: object_id
+              required: true
+              schema:
+                type: integer
+            - in: path
+                name: workspace_name
+                required: true
+                schema:
+                  type: string
+            summary: Deletes {class_model}
+            responses:
+              204:
+                description: The resource was deleted successfully
+        """
+        return super(DeleteWorkspacedMixin, self).delete(*args, **kwargs)
 
     def _perform_delete(self, obj, workspace_name=None):
         with db.session.no_autoflush:

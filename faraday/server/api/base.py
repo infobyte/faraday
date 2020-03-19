@@ -956,13 +956,13 @@ class DeleteMixin:
         """
         ---
           tags: ["{tag_name}"]
+          summary: Deletes {class_model}
           parameters:
           - in: path
             name: object_id
             required: true
             schema:
-              type: integer
-          summary: Deletes {class_model}
+                type: integer
           responses:
             204:
               description: The resource was deleted successfully
@@ -983,6 +983,7 @@ class DeleteWorkspacedMixin(DeleteMixin):
         """
           ---
             tags: ["{tag_name}"]
+            summary: Deletes {class_model}
             parameters:
             - in: path
               name: object_id
@@ -990,11 +991,10 @@ class DeleteWorkspacedMixin(DeleteMixin):
               schema:
                 type: integer
             - in: path
-                name: workspace_name
-                required: true
-                schema:
-                  type: string
-            summary: Deletes {class_model}
+              name: workspace_name
+              required: true
+              schema:
+                type: string
             responses:
               204:
                 description: The resource was deleted successfully

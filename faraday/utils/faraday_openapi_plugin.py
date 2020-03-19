@@ -118,10 +118,8 @@ class FaradayAPIPlugin(BasePlugin):
         if view.__closure__ is None:
             return self.flaskpath2openapi(rule.rule)
         view_instance = next(cl.cell_contents for cl in view.__closure__ if isinstance(cl.cell_contents, GenericView))
-        # print(view.__doc__)
-        #import pdb; pdb.set_trace()
-        #print(view_instance)
-        if view_name in ['get', 'put', 'delete', 'post']:
+        if view_name in ['get', 'put', 'post', 'delete']:
+
             if view.__doc__:
                 if hasattr(view_instance.model_class, "__name__"):
                     class_model = view_instance.model_class.__name__

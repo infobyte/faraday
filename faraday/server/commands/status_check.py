@@ -20,6 +20,8 @@ from faraday.server.utils.daemonize import is_server_running
 
 init()
 
+config = faraday.server.config
+
 
 def check_server_running():
     port = int(faraday.server.config.faraday_server.port)
@@ -107,6 +109,29 @@ def check_storage_permission():
         return None
 
 
+def print_config_info():
+    print('\n{white}Showing faraday server configuration'.format(white=Fore.WHITE))
+    print('{blue} {KEY}: {white}{VALUE}'.
+          format(KEY='version', VALUE=faraday.__version__, white=Fore.WHITE, blue=Fore.BLUE))
+
+    data_keys = ['bind_address', 'websocket_port', 'debug']
+    for key in data_keys:
+        print('{blue} {KEY}: {white}{VALUE}'.
+              format(KEY=key, VALUE=getattr(config.faraday_server, key), white=Fore.WHITE, blue=Fore.BLUE))
+
+    print('\n{white}Showing dashboard configuration'.format(white=Fore.WHITE))
+    data_keys = ['show_vulns_by_price']
+    for key in data_keys:
+        print('{blue} {KEY}: {white}{VALUE}'.
+              format(KEY=key, VALUE=getattr(config.dashboard, key), white=Fore.WHITE, blue=Fore.BLUE))
+
+    print('\n{white}Showing storage configuration'.format(white=Fore.WHITE))
+    data_keys = ['path']
+    for key in data_keys:
+        print('{blue} {KEY}: {white}{VALUE}'.
+              format(KEY=key, VALUE=getattr(config.storage, key), white=Fore.WHITE, blue=Fore.BLUE))
+
+
 def print_postgresql_status():
     """Prints the status of PostgreSQL using check_postgres()"""
     exit_code = 0
@@ -189,6 +214,8 @@ def print_config_status():
 
 
 def full_status_check():
+    print_config_info()
+
     print('\n{white}Checking if postgreSQL is running...'.format(white=Fore.WHITE))
     print_postgresql_status()
     print_postgresql_other_status()

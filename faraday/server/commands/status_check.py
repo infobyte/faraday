@@ -16,7 +16,7 @@ from faraday.server.web import app
 from faraday.server.models import db
 from faraday.server.config import CONST_FARADAY_HOME_PATH
 from faraday.server.utils.daemonize import is_server_running
-
+import faraday_plugins
 
 init()
 
@@ -118,6 +118,10 @@ def print_config_info():
     for key in data_keys:
         print('{blue} {KEY}: {white}{VALUE}'.
               format(KEY=key, VALUE=getattr(config.faraday_server, key), white=Fore.WHITE, blue=Fore.BLUE))
+
+    print('\n{white}Showing faraday plugins data'.format(white=Fore.WHITE))
+    print('{blue} {KEY}: {white}{VALUE}'.
+          format(KEY='version', VALUE=faraday_plugins.__version__, white=Fore.WHITE, blue=Fore.BLUE))
 
     print('\n{white}Showing dashboard configuration'.format(white=Fore.WHITE))
     data_keys = ['show_vulns_by_price']

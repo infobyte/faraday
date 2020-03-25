@@ -601,7 +601,7 @@ class RetrieveWorkspacedMixin(RetrieveMixin):
     """Add GET /<workspace_name>/<route_base>/<id>/ route"""
     # There are no differences with the non-workspaced implementations. The code
     # inside the view generic methods is enough
-    def get(self, *args, **kwargs):
+    def get(self, object_id, workspace_name=None):
         """
         ---
           tags: ["{tag_name}"]
@@ -624,7 +624,7 @@ class RetrieveWorkspacedMixin(RetrieveMixin):
                 application/json:
                   schema: {schema_class}
         """
-        return super(RetrieveWorkspacedMixin, self).get(*args, **kwargs)
+        return super(RetrieveWorkspacedMixin, self).get(object_id, workspace_name=workspace_name)
 
 
 class ReadOnlyView(SortableMixin,
@@ -763,7 +763,7 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
     the database.
     """
 
-    def post(self, *args, **kwargs):
+    def post(self, workspace_name=None):
         """
         ---
           tags: ["{tag_name}"]
@@ -791,7 +791,7 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
                 application/json:
                   schema: {schema_class}
         """
-        return super(CreateWorkspacedMixin, self).post(*args, **kwargs)
+        return super(CreateWorkspacedMixin, self).post(workspace_name=workspace_name)
 
     def _perform_create(self, data, workspace_name):
         assert not db.session.new
@@ -908,7 +908,7 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
     the database.
     """
 
-    def put(self, *args, **kwargs):
+    def put(self, object_id, workspace_name=None):
         """
         ---
           tags: ["{tag_name}"]
@@ -936,7 +936,7 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
                 application/json:
                   schema: {schema_class}
         """
-        return super(UpdateWorkspacedMixin, self).put(*args, **kwargs)
+        return super(UpdateWorkspacedMixin, self).put(object_id, workspace_name=workspace_name)
 
     def _perform_update(self, object_id, obj, data, workspace_name=None):
         # # Make sure that if I created new objects, I had properly commited them
@@ -978,7 +978,7 @@ class DeleteMixin:
 
 class DeleteWorkspacedMixin(DeleteMixin):
     """Add DELETE /<workspace_name>/<route_base>/<id>/ route"""
-    def delete(self, *args, **kwargs):
+    def delete(self, object_id, workspace_name=None):
 
         """
           ---
@@ -999,7 +999,7 @@ class DeleteWorkspacedMixin(DeleteMixin):
               204:
                 description: The resource was deleted successfully
         """
-        return super(DeleteWorkspacedMixin, self).delete(*args, **kwargs)
+        return super(DeleteWorkspacedMixin, self).delete(object_id, workspace_name=workspace_name)
 
     def _perform_delete(self, obj, workspace_name=None):
         with db.session.no_autoflush:

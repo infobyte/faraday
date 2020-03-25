@@ -199,7 +199,7 @@ def get_or_create(ws, model_class, data):
     return (True, obj)
 
 
-def bulk_create(ws, data, data_already_deserialized=False, creator_id=None):
+def bulk_create(ws, data, data_already_deserialized=False):
     if not data_already_deserialized:
         schema = BulkCreateSchema(strict=True)
         data = schema.load(data).data
@@ -370,8 +370,7 @@ class BulkCreateView(GenericWorkspacedView):
         else:
             workspace = self._get_workspace(workspace_name)
             for host in data["hosts"]:
-                host["creator"] = flask.g.user.username
-                host["creator_id"] = flask.g.user.id
+                host["creator"] = flask.g.user
 
         bulk_create(workspace, data, True)
         return "Created", 201
@@ -381,4 +380,3 @@ class BulkCreateView(GenericWorkspacedView):
 BulkCreateView.register(bulk_create_api)
 
 
-# I'm Py3

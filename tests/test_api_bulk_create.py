@@ -529,7 +529,6 @@ def test_bulk_create_endpoint(session, workspace, test_client, logged_user):
     assert count(Vulnerability, workspace) == 1
     host = Host.query.filter(Host.workspace == workspace).one()
     assert host.ip == "127.0.0.1"
-    assert host.owned
     assert host.creator_id == logged_user.id
     assert set({hn.name for hn in host.hostnames}) == {"test.com", "test2.org"}
 
@@ -631,6 +630,8 @@ def test_bulk_create_endpoint_with_agent_token(session, agent, test_client):
     )
     assert res.status_code == 201
     assert count(Host, agent.workspace) == 1
+    host = Host.query.filter(Host.workspace == agent.workspace).one()
+    assert host.creator_id is None
 
 
 def test_bulk_create_endpoint_with_agent_token_readonly_workspace(

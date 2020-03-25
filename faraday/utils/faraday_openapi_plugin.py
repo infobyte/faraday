@@ -73,7 +73,6 @@ from flask import current_app
 from apispec import BasePlugin, yaml_utils
 from apispec.exceptions import APISpecError
 
-# from flask-restplus
 from flask.views import MethodView
 
 from faraday.server.api.base import GenericView

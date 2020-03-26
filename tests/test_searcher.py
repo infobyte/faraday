@@ -422,6 +422,39 @@ class TestSearcherRules():
         lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
     ])
     @pytest.mark.usefixtures('ignore_nplusone')
+    def test_update_severity_by_tool(self, api, session, test_client):
+        workspace = WorkspaceFactory.create()
+        host = HostFactory.create(workspace=workspace)
+        vuln = VulnerabilityFactory.create(workspace=workspace, tool='Nessus', severity='low',
+                                            host=host, service=None)
+        session.add(workspace)
+        session.add(vuln)
+
+        session.add(host)
+        session.commit()
+
+        vuln_id = vuln.id
+        assert vuln.severity == 'low'
+        searcher = Searcher(api(workspace, test_client, session))
+        rules = [{
+            'id': 'CHANGE_SEVERITY_INSIDE_HOST',
+            'model': 'Vulnerability',
+            'object': "tool=Nessus",  # Without --old param Searcher deletes  all duplicated objects
+            'conditions': ['tool=Nessus'],
+            'actions': ["--UPDATE:severity=info"]
+        }]
+
+        searcher.process(rules)
+        vuln = session.query(Vulnerability).get(vuln_id)
+        assert vuln.severity == 'informational'
+
+
+    @pytest.mark.parametrize("api", [
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+                                                    password='test', base=''),
+        lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+    ])
+    @pytest.mark.usefixtures('ignore_nplusone')
     @pytest.mark.skip_sql_dialect('sqlite')
     def test_delete_vulns_with_dynamic_values(self, api, session, test_client):
         workspace = WorkspaceFactory.create()

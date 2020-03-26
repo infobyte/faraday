@@ -9,12 +9,13 @@ import logging
 
 import flask
 import sqlalchemy
+from collections import defaultdict
 from flask import g
 from flask_classful import FlaskView
 from sqlalchemy.orm import joinedload, undefer
 from sqlalchemy.orm.exc import NoResultFound, ObjectDeletedError
 from sqlalchemy.inspection import inspect
-from sqlalchemy import func
+from sqlalchemy import func, desc, asc
 from marshmallow import Schema
 from marshmallow.compat import with_metaclass
 from marshmallow.validate import Length
@@ -30,6 +31,7 @@ from faraday.server.utils.database import (
     )
 
 from faraday.server.utils.py3 import BytesJSONEncoder
+from faraday.server.config import faraday_server
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +82,6 @@ class GenericView(FlaskView):
 
     #: **Required**. The class of the SQLAlchemy model this view will handle
     model_class = None
-
     #: **Required** (unless _get_schema_class is overwritten).
     #: A subclass of `marshmallow.Schema` to serialize and deserialize the
     #: data provided by the user
@@ -303,7 +304,7 @@ class GenericView(FlaskView):
         super(GenericView, cls).register(app, *args, **kwargs)
 
         @app.errorhandler(422)
-        def handle_error(err):
+        def handle_error(err): # pylint: disable=unused-variable
             # webargs attaches additional metadata to the `data` attribute
             exc = getattr(err, 'exc')
             if exc:
@@ -316,7 +317,7 @@ class GenericView(FlaskView):
             }), 400
 
         @app.errorhandler(409)
-        def handle_conflict(err):
+        def handle_conflict(err): # pylint: disable=unused-variable
             # webargs attaches additional metadata to the `data` attribute
             exc = getattr(err, 'exc', None) or getattr(err, 'description', None)
             if exc:
@@ -327,11 +328,20 @@ class GenericView(FlaskView):
             return flask.jsonify(messages), 409
 
         @app.errorhandler(InvalidUsage)
-        def handle_invalid_usage(error):
+        def handle_invalid_usage(error): # pylint: disable=unused-variable
             response = flask.jsonify(error.to_dict())
             response.status_code = error.status_code
             return response
 
+        # @app.errorhandler(404)
+        def handle_not_found(err): # pylint: disable=unused-variable
+            response = {'success': False, 'message': err.description if faraday_server.debug else err.name}
+            return flask.jsonify(response), 404
+
+        @app.errorhandler(500)
+        def handle_server_error(err): # pylint: disable=unused-variable
+            response = {'success': False, 'message': f"Exception: {err.original_exception}" if faraday_server.debug else 'Internal Server Error'}
+            return flask.jsonify(response), 500
 
 class GenericWorkspacedView(GenericView):
     """Abstract class for a view that depends on the workspace, that is
@@ -1040,13 +1050,18 @@ class CountWorkspacedMixin:
             'total_count': 0
         }
         group_by = flask.request.args.get('group_by', None)
+        sort_dir = flask.request.args.get('order', "asc").lower()
+
         # TODO migration: whitelist fields to avoid leaking a confidential
         # field's value.
         # Example: /users/count/?group_by=password
         # Also we should check that the field exists in the db and isn't, for
         # example, a relationship
         if not group_by or group_by not in inspect(self.model_class).attrs:
-            flask.abort(404)
+            flask.abort(400, {"message": "group_by is a required parameter"})
+
+        if sort_dir and sort_dir not in ('asc', 'desc'):
+            flask.abort(400, {"message": "order must be 'desc' or 'asc'"})
 
         workspace_name = kwargs.pop('workspace_name')
         # using format is not a great practice.
@@ -1060,6 +1075,14 @@ class CountWorkspacedMixin:
             .group_by(group_by)
             .filter(Workspace.name == workspace_name,
                     *self.count_extra_filters))
+
+        #order
+        order_by = group_by
+        if sort_dir == 'desc':
+            count = count.order_by(desc(order_by))
+        else:
+            count = count.order_by(asc(order_by))
+
         for key, count in count.values(group_by, func.count(group_by)):
             res['groups'].append(
                 {'count': count,
@@ -1145,3 +1168,43 @@ class FilterSetMeta:
     """Base Meta class of FilterSet objects"""
     parser = parser_imported
     converter = FilterAlchemyModelConverter()
+
+
+def get_user_permissions(user):
+    permissions = defaultdict(dict)
+
+    # Hardcode all permisions to allowed
+    ALLOWED = {'allowed': True, 'reason': None}
+
+    # TODO schema
+    generic_entities = {
+        'licences', 'methodology_templates', 'task_templates', 'users',
+        'vulnerability_template', 'workspaces',
+        'agents', 'agents_schedules', 'commands', 'comments', 'hosts',
+        'executive_reports', 'services', 'methodologies', 'tasks', 'vulns',
+        'credentials',
+    }
+
+    for entity in generic_entities:
+        permissions[entity]['view'] = ALLOWED
+        permissions[entity]['create'] = ALLOWED
+        permissions[entity]['update'] = ALLOWED
+        permissions[entity]['delete'] = ALLOWED
+
+    extra_permissions = {
+        'vulns.status_change',
+        'settings.view',
+        'settings.update',
+        'ticketing.jira',
+        'ticketing.servicenow',
+        'bulk_create.bulk_create',
+        'agents.run',
+        'workspace_comparison.compare',
+        'data_analysis.view',
+    }
+
+    for permission in extra_permissions:
+        (entity, action) = permission.split('.')
+        permissions[entity][action] = ALLOWED
+
+    return permissions

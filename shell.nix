@@ -1,4 +1,4 @@
-with (import <nixpkgs> {});
+with (builtins.abort ''This Faraday branch doesn't have proper Nix support. Checkout the tkt_{white/pink/black}_pypi2nixpkgs branch instead'');
   mkShell {
     buildInputs = [pandoc] ++ (with python3Packages;
       [virtualenv pyopenssl psycopg2 pillow pygobject3 pynacl matplotlib lxml ldap autobahn
@@ -34,6 +34,6 @@ with (import <nixpkgs> {});
 
       # Without this, the import report dialog of the client breaks
       # Taken from https://github.com/NixOS/nixpkgs/pull/26614
-      export XDG_DATA_DIRS=$XDG_ICON_DIRS:$GSETTINGS_SCHEMAS_PATH\''${XDG_DATA_DIRS:+:}\$XDG_DATA_DIRS
+      export XDG_DATA_DIRS=$GSETTINGS_SCHEMAS_PATH:$XDG_DATA_DIRS
     '';
   }

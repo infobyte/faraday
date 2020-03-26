@@ -123,6 +123,22 @@ class TestHostAPI:
         assert host.os == ''
         assert host.workspace == self.workspace
 
+    def test_create_a_host_with_rev_succeeds(self, test_client):
+        res = test_client.post(self.url(), data={
+            "ip": "127.0.0.1",
+            "description": "aaaaa",
+            "_rev":"saraza"
+            # os is not required
+        })
+        assert res.status_code == 201
+        assert Host.query.count() == HOSTS_COUNT + 1
+        host_id = res.json['id']
+        host = Host.query.get(host_id)
+        assert host.ip == "127.0.0.1"
+        assert host.description == "aaaaa"
+        assert host.os == ''
+        assert host.workspace == self.workspace    
+    
     def test_create_a_host_fails_with_missing_desc(self, test_client):
         res = test_client.post(self.url(), data={
             "ip": "127.0.0.1",
@@ -537,6 +553,70 @@ class TestHostAPI:
         assert res.json['hosts_with_errors'] == 0
         assert session.query(Host).filter_by(description="test_host").count() == expected_created_hosts
 
+    def test_bulk_delete_hosts(self, test_client, session):
+        ws = WorkspaceFactory.create(name="abc")
+        host_1 = HostFactory.create(workspace=ws)
+        host_2 = HostFactory.create(workspace=ws)
+        session.commit()
+        hosts_ids = [host_1.id, host_2.id]
+        request_data = {'hosts_ids': hosts_ids}
+
+        delete_response = test_client.delete('/v2/ws/{0}/hosts/bulk_delete/'.format(ws.name), data=request_data)
+
+        deleted_hosts = delete_response.json['deleted_hosts']
+        host_count_after_delete = db.session.query(Host).filter(
+            Host.id.in_(hosts_ids),
+            Host.workspace_id == ws.id).count()
+
+        assert delete_response.status_code == 200
+        assert deleted_hosts == len(hosts_ids)
+        assert host_count_after_delete == 0
+
+    def test_bulk_delete_hosts_without_hosts_ids(self, test_client):
+        ws = WorkspaceFactory.create(name="abc")
+        request_data = {'hosts_ids': []}
+
+        delete_response = test_client.delete('/v2/ws/{0}/hosts/bulk_delete/'.format(ws.name), data=request_data)
+
+        assert delete_response.status_code == 400
+
+    def test_bulk_delete_hosts_from_another_workspace(self, test_client, session):
+        workspace_1 = WorkspaceFactory.create(name='workspace_1')
+        host_of_ws_1 = HostFactory.create(workspace=workspace_1)
+        workspace_2 = WorkspaceFactory.create(name='workspace_2')
+        host_of_ws_2 = HostFactory.create(workspace=workspace_2)
+        session.commit()
+
+        # Try to delete workspace_2's host from workspace_1
+        request_data = {'hosts_ids': [host_of_ws_2.id]}
+        url = '/v2/ws/{0}/hosts/bulk_delete/'.format(workspace_1.name)
+        delete_response = test_client.delete(url, data=request_data)
+
+        assert delete_response.json['deleted_hosts'] == 0
+
+    def test_bulk_delete_hosts_invalid_characters_in_request(self, test_client):
+        ws = WorkspaceFactory.create(name="abc")
+        request_data = {'hosts_ids': [-1, 'test']}
+        delete_response = test_client.delete('/v2/ws/{0}/hosts/bulk_delete/'.format(ws.name), data=request_data)
+
+        assert delete_response.json['deleted_hosts'] == 0
+
+    def test_bulk_delete_hosts_wrong_content_type(self, test_client, session):
+        ws = WorkspaceFactory.create(name="abc")
+        host_1 = HostFactory.create(workspace=ws)
+        host_2 = HostFactory.create(workspace=ws)
+        session.commit()
+        hosts_ids = [host_1.id, host_2.id]
+
+        request_data = {'hosts_ids': hosts_ids}
+        headers = [('content-type', 'text/xml')]
+
+        delete_response = test_client.delete(
+            '/v2/ws/{0}/hosts/bulk_delete/'.format(ws.name),
+            data=request_data,
+            headers=headers)
+
+        assert delete_response.status_code == 400
 
 
 class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
@@ -774,6 +854,3 @@ def test_hypothesis(host_with_hostnames, test_client, session):
         assert res.status_code in [201, 400, 409]
 
     send_api_request()
-
-
-# I'm Py3

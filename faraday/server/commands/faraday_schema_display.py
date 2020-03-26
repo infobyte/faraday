@@ -6,12 +6,6 @@ See the file 'doc/LICENSE' for the license information
 """
 import sys
 from sqlalchemy import MetaData
-try:
-    from sqlalchemy_schemadisplay import create_schema_graph
-    from sqlalchemy_schemadisplay import create_uml_graph
-except ImportError:
-    print('Please install sqlalchemy_schemadisplay with "pip install sqlalchemy_schemadisplay"')
-    sys.exit(1)
 from sqlalchemy.orm import class_mapper
 
 from faraday.server import models
@@ -30,6 +24,11 @@ class DatabaseSchema():
 
     def _draw_entity_diagrama(self):
         # create the pydot graph object by autoloading all tables via a bound metadata object
+        try:
+            from sqlalchemy_schemadisplay import create_schema_graph # pylint:disable=import-outside-toplevel
+        except ImportError:
+            print('Please install sqlalchemy_schemadisplay with "pip install sqlalchemy_schemadisplay"')
+            sys.exit(1)
         graph = create_schema_graph(
             metadata=MetaData(faraday.server.config.database.connection_string.strip("'")),
             show_datatypes=False,  # The image would get nasty big if we'd show the datatypes
@@ -48,6 +47,11 @@ class DatabaseSchema():
 
     def _draw_uml_class_diagram(self):
         # lets find all the mappers in our model
+        try:
+            from sqlalchemy_schemadisplay import create_uml_graph # pylint:disable=import-outside-toplevel
+        except ImportError:
+            print('Please install sqlalchemy_schemadisplay with "pip install sqlalchemy_schemadisplay"')
+            sys.exit(1)
         mappers = []
         for attr in dir(models):
             if attr[0] == '_':
@@ -55,8 +59,8 @@ class DatabaseSchema():
             try:
                 cls = getattr(models, attr)
                 mappers.append(class_mapper(cls))
-            except:
-                pass
+            except Exception as ex:
+                print(ex)
 
         # pass them to the function and set some formatting options
         graph = create_uml_graph(

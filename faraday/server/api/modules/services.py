@@ -2,7 +2,7 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 from flask import Blueprint, abort, make_response, jsonify
-from filteralchemy import FilterSet, operators
+from filteralchemy import FilterSet, operators  # pylint:disable=unused-import
 from marshmallow import fields, post_load, ValidationError
 from marshmallow.validate import OneOf, Range
 from sqlalchemy.orm.exc import NoResultFound

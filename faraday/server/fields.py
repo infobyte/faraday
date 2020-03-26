@@ -59,7 +59,7 @@ class FaradayUploadedFile(UploadedFile):
         content = file_from_content(content)
         try:
             uploaded_image = Image.open(content)
-        except:
+        except Exception:
             flask.abort(400, ValidationError(
                 {
                     'message': 'File Format',

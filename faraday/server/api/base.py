@@ -837,6 +837,11 @@ class UpdateMixin:
             required: true
             schema:
               type: integer
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema: {schema_class}
           responses:
             200:
               description: Ok
@@ -924,6 +929,11 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
             required: true
             schema:
               type: string
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema: {schema_class}
           responses:
             200:
               description: Ok

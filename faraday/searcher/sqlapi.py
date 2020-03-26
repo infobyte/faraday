@@ -5,7 +5,7 @@ import logging
 import socket
 from datetime import datetime
 
-from sqlalchemy.orm.attributes import flag_modified
+from sqlalchemy.orm.attributes import flag_modified, InstrumentedAttribute
 
 from faraday.searcher.api import ApiError
 from faraday.server.models import Workspace, Vulnerability, VulnerabilityWeb, Service, Host, Command, \
@@ -100,15 +100,24 @@ class SqlApi:
 
     def filter_vulnerabilities(self, **kwargs):
         vulnerabilities = []
-        vulnerabilities_query = self.session.query(Vulnerability, Workspace.id).join(Workspace).filter(
-            Workspace.name == self.workspace.name)
+        vulnerabilities_query = self.session.\
+            query(Vulnerability). \
+            join(Vulnerability.creator, aliased=True). \
+            join(Vulnerability.workspace). \
+            filter(Workspace.name == self.workspace.name)
         for attr, value in kwargs.items():
             if attr == 'regex':
                 vulnerabilities_query = vulnerabilities_query.filter(Vulnerability.name.op('~')(value))
                 vulnerabilities = [vulnerability for vulnerability, pos in
                                    vulnerabilities_query.distinct(Vulnerability.id)]
             elif hasattr(Vulnerability, attr):
-                vulnerabilities_query = vulnerabilities_query.filter(getattr(Vulnerability, attr) == str(value))
+                filter_attr = getattr(Vulnerability, attr)
+                if isinstance(filter_attr, InstrumentedAttribute):
+                    map_attr = {
+                        'creator': 'username'
+                    }
+                    filter_attr = getattr(filter_attr.comparator.entity.class_, map_attr.get(attr, attr))
+                vulnerabilities_query = vulnerabilities_query.filter(filter_attr == str(value))
                 vulnerabilities = [vulnerability for vulnerability, pos in
                                    vulnerabilities_query.distinct(Vulnerability.id)]
 
@@ -121,7 +130,14 @@ class SqlApi:
                 web_vulnerabilities = [web_vulnerability for web_vulnerability, pos in
                                        web_vulnerabilities_query.distinct(VulnerabilityWeb.id)]
             elif hasattr(VulnerabilityWeb, attr):
-                web_vulnerabilities_query = web_vulnerabilities_query.filter(getattr(VulnerabilityWeb, attr) == str(value))
+                filter_attr = getattr(Vulnerability, attr)
+                if isinstance(filter_attr, InstrumentedAttribute):
+                    map_attr = {
+                        'creator': 'username'
+                    }
+                    filter_attr = getattr(filter_attr.comparator.entity.class_, map_attr.get(attr, attr))
+                vulnerabilities_query = vulnerabilities_query.filter(filter_attr == str(value))
+                web_vulnerabilities_query = web_vulnerabilities_query.filter(filter_attr == str(value))
                 web_vulnerabilities = [web_vulnerability for web_vulnerability, pos in
                                        web_vulnerabilities_query.distinct(VulnerabilityWeb.id)]
 

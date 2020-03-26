@@ -6,28 +6,12 @@ See the file 'doc/LICENSE' for the license information
 """
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
-from apispec_webframeworks.flask import FlaskPlugin
 from faraday.server.web import app
 from faraday import __version__ as f_version
 import json
 
 from faraday.utils.faraday_openapi_plugin import FaradayAPIPlugin
 
-""" TAGS = [
-        {'name': 'Agent',
-         'description': 'Run and manage agents',
-         },
-        {'name': 'Vulns',
-         'description': 'Manage vulnerabilities found',
-         },
-        {'name': 'Hosts',
-         'description': 'Manage hosts',
-         },
-        {'name': 'Services',
-         'description': 'Manage services from hosts',
-         },
-        ]
-"""
 
 def openapi_format(format="yaml"):
 
@@ -35,9 +19,8 @@ def openapi_format(format="yaml"):
         title="Faraday API",
         version="2",
         openapi_version="3.0.2",
-        plugins=[FaradayAPIPlugin(), MarshmallowPlugin()], #FaradayAPIPlugin
+        plugins=[FaradayAPIPlugin(), MarshmallowPlugin()],
         info={'description': 'The Faraday server API'},
-#        tags=TAGS,
     )
 
     with app.test_request_context():
@@ -51,5 +34,3 @@ def openapi_format(format="yaml"):
 
 def show_all_urls():
     print(app.url_map)
-
-# I'm Py3

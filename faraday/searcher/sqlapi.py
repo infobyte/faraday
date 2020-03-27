@@ -112,14 +112,13 @@ class SqlApi:
                                    vulnerabilities_query.distinct(Vulnerability.id)]
             elif hasattr(Vulnerability, attr):
                 filter_attr = getattr(Vulnerability, attr)
-                if isinstance(filter_attr, InstrumentedAttribute):
+                if hasattr(getattr(Vulnerability, attr).prop, 'entity'):
                     map_attr = {
                         'creator': 'username'
                     }
                     filter_attr = getattr(filter_attr.comparator.entity.class_, map_attr.get(attr, attr))
                 vulnerabilities_query = vulnerabilities_query.filter(filter_attr == str(value))
-                vulnerabilities = [vulnerability for vulnerability, pos in
-                                   vulnerabilities_query.distinct(Vulnerability.id)]
+                vulnerabilities = vulnerabilities_query.all()
 
         web_vulnerabilities = []
         web_vulnerabilities_query = self.session.query(VulnerabilityWeb, Workspace.id).join(Workspace).filter(
@@ -131,7 +130,7 @@ class SqlApi:
                                        web_vulnerabilities_query.distinct(VulnerabilityWeb.id)]
             elif hasattr(VulnerabilityWeb, attr):
                 filter_attr = getattr(Vulnerability, attr)
-                if isinstance(filter_attr, InstrumentedAttribute):
+                if hasattr(getattr(Vulnerability, attr).prop, 'entity'):
                     map_attr = {
                         'creator': 'username'
                     }

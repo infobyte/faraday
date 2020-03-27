@@ -461,7 +461,7 @@ class TestSearcherRules():
     def test_update_severity_by_creator(self, api, session, test_client):
         workspace = WorkspaceFactory.create()
         host = HostFactory.create(workspace=workspace)
-        user = UserFactory.create('TEST')
+        user = UserFactory.create()
         vuln = VulnerabilityFactory.create(
             workspace=workspace,
             tool='Nessus',
@@ -481,7 +481,7 @@ class TestSearcherRules():
         rules = [{
             'id': 'CHANGE_SEVERITY_INSIDE_HOST',
             'model': 'Vulnerability',
-            'object': f'creator=f{user.username}',  # Without --old param Searcher deletes  all duplicated objects
+            'object': f'creator={user.username}',  # Without --old param Searcher deletes  all duplicated objects
             'conditions': ['tool=Nessus'],
             'actions': ["--UPDATE:severity=info"]
         }]

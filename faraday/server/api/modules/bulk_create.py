@@ -380,14 +380,17 @@ class BulkCreateView(GenericWorkspacedView):
                 'start_date': (data["command"].get("start_date") or now) if "command" in data else now, #Now or when received run
                 'end_date': (data["command"].get("start_date") or now) if "command" in data else now, #Now or when received run
             }
-            # data["command"]["name"] = data["command"]["name"] or f"Agent {agent.name}"
         else:
             workspace = self._get_workspace(workspace_name)
             creator_user = flask.g.user
             for host in data["hosts"]:
                 host["creator"] = creator_user
-
-            # data["command"]["creator"] = creator_user
+                for service in host["services"]:
+                    service["creator"] = creator_user
+                for vuln in host["vulnerabilities"]:
+                    vuln["creator"] = creator_user
+                for cred in host["credentials"]:
+                    cred["creator"] = creator_user
 
         bulk_create(workspace, data, True)
         return "Created", 201

@@ -98,48 +98,32 @@ class SqlApi:
                      templates.distinct(Host.id)]
         return templates
 
-    def filter_vulnerabilities(self, **kwargs):
+    def _filter_vulns(self, vulnerability_object, **kwargs):
         vulnerabilities = []
-        vulnerabilities_query = self.session.\
-            query(Vulnerability). \
-            join(Vulnerability.creator, aliased=True). \
-            join(Vulnerability.workspace). \
+        vulnerabilities_query = self.session. \
+            query(vulnerability_object). \
+            join(vulnerability_object.creator, aliased=True). \
+            join(vulnerability_object.workspace). \
             filter(Workspace.name == self.workspace.name)
         for attr, value in kwargs.items():
             if attr == 'regex':
-                vulnerabilities_query = vulnerabilities_query.filter(Vulnerability.name.op('~')(value))
+                vulnerabilities_query = vulnerabilities_query.filter(vulnerability_object.name.op('~')(value))
                 vulnerabilities = [vulnerability for vulnerability, pos in
-                                   vulnerabilities_query.distinct(Vulnerability.id)]
-            elif hasattr(Vulnerability, attr):
-                filter_attr = getattr(Vulnerability, attr)
-                if hasattr(getattr(Vulnerability, attr).prop, 'entity'):
+                                   vulnerabilities_query.distinct(vulnerability_object.id)]
+            elif hasattr(vulnerability_object, attr):
+                filter_attr = getattr(vulnerability_object, attr)
+                if hasattr(getattr(vulnerability_object, attr).prop, 'entity'):
                     map_attr = {
                         'creator': 'username'
                     }
                     filter_attr = getattr(filter_attr.comparator.entity.class_, map_attr.get(attr, attr))
                 vulnerabilities_query = vulnerabilities_query.filter(filter_attr == str(value))
                 vulnerabilities = vulnerabilities_query.all()
+        return vulnerabilities
 
-        web_vulnerabilities = []
-        web_vulnerabilities_query = self.session.query(VulnerabilityWeb, Workspace.id).join(Workspace).filter(
-            Workspace.name == self.workspace.name)
-        for attr, value in kwargs.items():
-            if attr == 'regex':
-                web_vulnerabilities_query = web_vulnerabilities_query.filter(VulnerabilityWeb.name.op('~')(value))
-                web_vulnerabilities = [web_vulnerability for web_vulnerability, pos in
-                                       web_vulnerabilities_query.distinct(VulnerabilityWeb.id)]
-            elif hasattr(VulnerabilityWeb, attr):
-                filter_attr = getattr(Vulnerability, attr)
-                if hasattr(getattr(Vulnerability, attr).prop, 'entity'):
-                    map_attr = {
-                        'creator': 'username'
-                    }
-                    filter_attr = getattr(filter_attr.comparator.entity.class_, map_attr.get(attr, attr))
-                vulnerabilities_query = vulnerabilities_query.filter(filter_attr == str(value))
-                web_vulnerabilities_query = web_vulnerabilities_query.filter(filter_attr == str(value))
-                web_vulnerabilities = [web_vulnerability for web_vulnerability, pos in
-                                       web_vulnerabilities_query.distinct(VulnerabilityWeb.id)]
-
+    def filter_vulnerabilities(self, **kwargs):
+        vulnerabilities = self._filter_vulns(Vulnerability, **kwargs)
+        web_vulnerabilities = self._filter_vulns(VulnerabilityWeb, **kwargs)
         return list(set(vulnerabilities + web_vulnerabilities))
 
     def filter_services(self, **kwargs):

@@ -25,6 +25,7 @@
                 <td class="wrapword">
                     <span ng-if="cmd.import_source == 'report'">Import {{(cmd.tool == 'unknown' ? cmd.command : cmd.tool)}}</span>
                     <span ng-if="cmd.import_source == 'shell'">{{cmd.command + ' ' + cmd.params}}</span>
+                    <span ng-if="cmd.import_source == 'agent'">{{cmd.tool + ' executor: ' + cmd.command + ' ' + cmd.params}}</span>
                 </td>
                 <td am-time-ago="cmd.date" am-preprocess="utc"></td>
                 <td ng-bind="cmd.duration || 'undefined'"></td>

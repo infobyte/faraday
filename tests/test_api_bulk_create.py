@@ -632,6 +632,9 @@ def test_bulk_create_endpoint_with_agent_token(session, agent, test_client):
     assert count(Host, agent.workspace) == 1
     host = Host.query.filter(Host.workspace == agent.workspace).one()
     assert host.creator_id is None
+    assert count(Command, agent.workspace) == 1
+    command = Command.query.filter(Command.workspace == agent.workspace).one()
+    assert command.tool == agent.name
 
 
 def test_bulk_create_endpoint_with_agent_token_readonly_workspace(

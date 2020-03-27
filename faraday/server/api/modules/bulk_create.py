@@ -367,10 +367,27 @@ class BulkCreateView(GenericWorkspacedView):
             assert workspace.name
             if workspace_name != workspace.name:
                 flask.abort(404, "No such workspace: %s" % workspace_name)
+
+            now = datetime.now()
+
+            data["command"] = {
+                'tool': agent.name, # Agent name
+                'command': agent.name + ' executor', # TODO Executor name
+                'user': '',
+                'hostname': '',
+                'params': ' params_unset', # TODO
+                'import_source': 'agent',
+                'start_date': (data["command"].get("start_date") or now) if "command" in data else now, #Now or when received run
+                'end_date': (data["command"].get("start_date") or now) if "command" in data else now, #Now or when received run
+            }
+            # data["command"]["name"] = data["command"]["name"] or f"Agent {agent.name}"
         else:
             workspace = self._get_workspace(workspace_name)
+            creator_user = flask.g.user
             for host in data["hosts"]:
-                host["creator"] = flask.g.user
+                host["creator"] = creator_user
+
+            # data["command"]["creator"] = creator_user
 
         bulk_create(workspace, data, True)
         return "Created", 201

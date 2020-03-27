@@ -56,7 +56,7 @@ merge_conflict_check:
     script:
         - git config --global user.email "you@example.com"
         - git config --global user.name "Mergerbot"
-        - python3 merge-conflict-detector.py
+        - python3 scripts/merge-conflict-detector.py
     except:
         variables:
             - $BUILD_TEST

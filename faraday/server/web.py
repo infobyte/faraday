@@ -205,7 +205,6 @@ class WebServer:
 
 
         except Exception as e:
-            logger.error('Something went wrong when trying to setup the Web UI')
-            logger.exception(e)
+            logger.exception('Something went wrong when trying to setup the Web UI')
             sys.exit(1)
 # I'm Py3

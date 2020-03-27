@@ -83,7 +83,7 @@ class SQLAlchemy(OriginalSQLAlchemy):
 
 
 class CustomEngineConnector(_EngineConnector):
-    """Used by overrided SQLAlchemy class to fix rollback issues.
+    """Used by overridden SQLAlchemy class to fix rollback issues.
 
     Also set case sensitive likes (in SQLite there are case
     insensitive by default)"""
@@ -2145,4 +2145,3 @@ event.listen(
 
 # We have to import this after all models are defined
 import faraday.server.events # pylint: disable=unused-import
-# I'm Py3

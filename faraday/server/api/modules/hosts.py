@@ -217,7 +217,7 @@ class HostsView(PaginatedMixin,
         ---
         get:
           tags: ["Hosts"]
-          description: Counts hosts
+          summary: Counts Vulnerabilities per host
           responses:
             200:
               description: Ok

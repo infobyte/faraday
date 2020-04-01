@@ -621,7 +621,7 @@ angular.module("faradayApp")
                 visible: $scope.columns["web"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'metadata.creator',
-                displayName : "creator",
+                displayName : "Tool",
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/creatorcolumn.html',
                 headerCellTemplate: header,
                 sort: getColumnSort('metadata.creator'),

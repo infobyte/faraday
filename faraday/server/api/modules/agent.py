@@ -69,6 +69,19 @@ class AgentCreationSchema(Schema):
 
 
 class AgentCreationView(GenericWorkspacedView, CreateWorkspacedMixin):
+    """
+    ---
+      tags: ["Agent"]
+      description: Creates an agent
+      responses:
+        201:
+          description: Ok
+          content:
+            application/json:
+              schema: AgentCreationSchema
+        401:
+            description: Invalid token
+    """
     route_base = 'agent_registration'
     model_class = Agent
     schema_class = AgentCreationSchema
@@ -106,6 +119,19 @@ class AgentView(UpdateWorkspacedMixin,
 
     @route('/<int:agent_id>/run/', methods=['POST'])
     def run_agent(self, workspace_name, agent_id):
+        """
+        ---
+          tags: ["Agent"]
+          description: Runs an agent
+          responses:
+            400:
+              description: Bad request
+            201:
+              description: Ok
+              content:
+                application/json:
+                  schema: AgentSchema
+        """
         if flask.request.content_type != 'application/json':
             abort(400, "Only application/json is a valid content-type")
         data = self._parse_data(AgentRunSchema(strict=True), request)

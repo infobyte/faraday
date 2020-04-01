@@ -27,6 +27,9 @@ def export_data(workspace_name):
             as_attachment=True,
             cache_timeout=-1
         )
+    else:
+        logger.error("Invalid format. Please, specify a valid format.")
+        abort(400, "Invalid format.")
 
 
 def xml_metasploit_format(workspace):

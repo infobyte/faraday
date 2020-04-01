@@ -172,6 +172,7 @@ class BulkCreateSchema(Schema):
         BulkCommandSchema(),
         required=False,
     )
+    execution_id = fields.Integer(attribute='execution_id')
 
 
 def get_or_create(ws, model_class, data):
@@ -375,7 +376,7 @@ class BulkCreateView(GenericWorkspacedView):
                 application/json:
                   schema: BulkCreateSchema
             403:
-              description: Disabled workspace
+               description: Disabled workspace
             404:
                description: Workspace not found
         """
@@ -388,9 +389,13 @@ class BulkCreateView(GenericWorkspacedView):
             if workspace_name != workspace.name:
                 flask.abort(404, "No such workspace: %s" % workspace_name)
 
-            # EDIT
+            if "execution_id" not in data:
+                flask.abort(400, "'execution_id' argument expected")
+
+            execution_id = data["execution_id"]
+
             agent_execution = AgentExecution.query.filter(
-                # AgentExecution.id == execution_id
+                AgentExecution.id == execution_id
             ).first()
 
             now = datetime.now()

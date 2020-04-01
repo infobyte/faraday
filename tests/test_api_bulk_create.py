@@ -517,11 +517,13 @@ def test_creates_command_object_on_duplicates(
 
 
 @pytest.mark.usefixtures('logged_user')
-def test_bulk_create_endpoint(session, workspace, test_client):
+def test_bulk_create_endpoint(session, workspace, test_client, logged_user):
     assert count(Host, workspace) == 0
     assert count(VulnerabilityGeneric, workspace) == 0
     url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
     host_data_ = host_data.copy()
+    host_data_['services'] = [service_data]
+    host_data_['credentials'] = [credential_data]
     host_data_['vulnerabilities'] = [vuln_data]
     res = test_client.post(url, data=dict(hosts=[host_data_]))
     assert res.status_code == 201, res.json
@@ -529,7 +531,12 @@ def test_bulk_create_endpoint(session, workspace, test_client):
     assert count(Vulnerability, workspace) == 1
     host = Host.query.filter(Host.workspace == workspace).one()
     assert host.ip == "127.0.0.1"
+    assert host.creator_id == logged_user.id
     assert set({hn.name for hn in host.hostnames}) == {"test.com", "test2.org"}
+    service = Service.query.filter(Service.workspace == workspace).one()
+    assert service.creator_id == logged_user.id
+    credential = Credential.query.filter(Credential.workspace == workspace).one()
+    assert credential.creator_id == logged_user.id
 
 
 @pytest.mark.usefixtures('logged_user')
@@ -629,6 +636,14 @@ def test_bulk_create_endpoint_with_agent_token(session, agent, test_client):
     )
     assert res.status_code == 201
     assert count(Host, agent.workspace) == 1
+    host = Host.query.filter(Host.workspace == agent.workspace).one()
+    assert host.creator_id is None
+    assert count(Command, agent.workspace) == 1
+    command = Command.query.filter(Command.workspace == agent.workspace).one()
+    assert command.tool == agent.name
+    assert command.command == agent.name + ' executor'# TODO Executor name
+    assert command.params == ' params_unset'
+    assert command.import_source == 'agent'
 
 
 def test_bulk_create_endpoint_with_agent_token_readonly_workspace(
@@ -720,5 +735,3 @@ def test_bulk_create_endpoint_with_invalid_vuln_run_date(session, workspace, tes
     assert res.status_code == 400, res.json
     assert count(VulnerabilityGeneric, workspace) == 0
 
-
-# I'm Py3

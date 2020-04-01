@@ -90,7 +90,7 @@ def _build_host_element(host, host_tag):
 def _build_host_empty_fields(host_tag):
     empty_fields = ["comm", "state", "os-flavor", "os-sp", "os-lang", "purpose"]
     for field in empty_fields:
-        element = SubElement(host_tag, field)
+        SubElement(host_tag, field)
 
 
 def _build_service_element(service, service_tag):

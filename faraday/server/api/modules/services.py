@@ -105,6 +105,7 @@ class ServiceFilterSet(FilterSet):
 
 
 class ServiceView(FilterAlchemyMixin, ReadWriteWorkspacedView):
+
     route_base = 'services'
     model_class = Service
     schema_class = ServiceSchema

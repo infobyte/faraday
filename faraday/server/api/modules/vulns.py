@@ -433,6 +433,7 @@ class VulnerabilityView(PaginatedMixin,
                         FilterAlchemyMixin,
                         ReadWriteWorkspacedView,
                         CountMultiWorkspacedMixin):
+
     route_base = 'vulns'
     filterset_class = VulnerabilityFilterSet
     sort_model_class = VulnerabilityWeb  # It has all the fields
@@ -623,6 +624,7 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('/<int:vuln_id>/attachment/', methods=['POST'])
     def post_attachment(self, workspace_name, vuln_id):
+
         try:
             validate_csrf(request.form.get('csrf_token'))
         except wtforms.ValidationError:
@@ -779,6 +781,22 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('/<int:vuln_id>/attachments/', methods=['GET'])
     def get_attachments_by_vuln(self, workspace_name, vuln_id):
+        """
+        ---
+        get:
+          tags: ["Vulns"]
+          description: Gets an attachment for a vulnerability
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: EvidenceSchema
+            403:
+              description: Workspace disabled or no permission
+            404:
+              description: Not Found
+        """
         workspace = self._get_workspace(workspace_name)
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(VulnerabilityGeneric.id == vuln_id,

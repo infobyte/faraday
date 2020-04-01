@@ -83,7 +83,7 @@ class SQLAlchemy(OriginalSQLAlchemy):
 
 
 class CustomEngineConnector(_EngineConnector):
-    """Used by overrided SQLAlchemy class to fix rollback issues.
+    """Used by overridden SQLAlchemy class to fix rollback issues.
 
     Also set case sensitive likes (in SQLite there are case
     insensitive by default)"""
@@ -782,6 +782,7 @@ class Command(Metadata):
     IMPORT_SOURCE = [
         'report',  # all the files the tools export and faraday imports it from the resports directory, gtk manual import or web import.
         'shell',  # command executed on the shell or webshell with hooks connected to faraday.
+        'agent'
     ]
 
     __tablename__ = 'command'
@@ -2145,4 +2146,3 @@ event.listen(
 
 # We have to import this after all models are defined
 import faraday.server.events # pylint: disable=unused-import
-# I'm Py3

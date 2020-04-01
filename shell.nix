@@ -1,4 +1,4 @@
-with (import <nixpkgs> {});
+with (builtins.abort ''This Faraday branch doesn't have proper Nix support. Checkout the tkt_{white/pink/black}_pypi2nixpkgs branch instead'');
   mkShell {
     buildInputs = [pandoc] ++ (with python3Packages;
       [virtualenv pyopenssl psycopg2 pillow pygobject3 pynacl matplotlib lxml ldap autobahn

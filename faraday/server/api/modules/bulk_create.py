@@ -20,7 +20,7 @@ from faraday.server.models import (
     Service,
     Vulnerability,
     VulnerabilityWeb,
-)
+    AgentExecution)
 from faraday.server.utils.database import (
     get_conflict_object,
     is_unique_constraint_violation,
@@ -388,14 +388,21 @@ class BulkCreateView(GenericWorkspacedView):
             if workspace_name != workspace.name:
                 flask.abort(404, "No such workspace: %s" % workspace_name)
 
+            # EDIT
+            agent_execution = AgentExecution.query.filter(
+                # AgentExecution.id == execution_id
+            ).first()
+
             now = datetime.now()
+
+            parmas_metada = agent_execution.executor.parameters_metadata
 
             data["command"] = {
                 'tool': agent.name, # Agent name
-                'command': agent.name + ' executor', # TODO Executor name
+                'command': agent_execution.executor.name,
                 'user': '',
                 'hostname': '',
-                'params': ' params_unset', # TODO
+                'params': str(parmas_metada) if len(parmas_metada) > 0 else '',
                 'import_source': 'agent',
                 'start_date': (data["command"].get("start_date") or now) if "command" in data else now, #Now or when received run
                 'end_date': (data["command"].get("start_date") or now) if "command" in data else now, #Now or when received run

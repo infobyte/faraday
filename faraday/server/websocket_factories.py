@@ -142,20 +142,14 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                     ]
                     agent = Agent.query.get(agent_id)
                     assert agent is not None  # TODO the agent could be deleted here
-                    executor = Executor.query.filter(Executor.name == message['executor_name'],
-                                                     Executor.agent_id == agent_id).first()
-                    if executor:
-                        successful = message.get('successful', None)
-                        running = message.get('running', None)
-                        msg = message['message']
-                        agent_execution = AgentExecution(
-                            running=running,
-                            successful=successful,
-                            message=msg,
-                            executor=executor,
-                            workspace_id=executor.agent.workspace_id
-                        )
-                        db.session.add(agent_execution)
+
+                    execution_id = message.get('execution_id', None)
+                    assert execution_id is not None
+                    agent_execution = AgentExecution.query.filter(AgentExecution.id == execution_id).first()
+                    if agent_execution:
+                        agent_execution.successful = message.get('successful', None)
+                        agent_execution.running = message.get('running', None)
+                        agent_execution.message = message.get('message','')
                         db.session.commit()
 
     def connectionLost(self, reason):

@@ -10,7 +10,7 @@ from marshmallow import fields, Schema
 from faraday.server.api.base import (AutoSchema, UpdateWorkspacedMixin, DeleteWorkspacedMixin,
                                      CountWorkspacedMixin, ReadOnlyWorkspacedView, CreateWorkspacedMixin,
                                      GenericWorkspacedView)
-from faraday.server.models import Agent, Executor
+from faraday.server.models import Agent, Executor, AgentExecution, db
 from faraday.server.schemas import PrimaryKeyRelatedField
 from faraday.server.config import faraday_server
 from faraday.server.events import changes_queue
@@ -137,7 +137,22 @@ class AgentView(UpdateWorkspacedMixin,
         data = self._parse_data(AgentRunSchema(strict=True), request)
         agent = self._get_object(agent_id, workspace_name)
         executor_data = data['executorData']
+
+        executor = Executor.query.filter(Executor.name == executor_data['executor'],
+                                         Executor.agent_id == agent_id).first()
+        # TODO save executor data
+        agent_execution = AgentExecution(
+            running=None,
+            successful=None,
+            message='',
+            executor=executor,
+            workspace_id=executor.agent.workspace_id
+        )
+        db.session.add(agent_execution)
+        db.session.commit()
+
         changes_queue.put({
+            'execution_id': agent_execution.id,
             'agent_id': agent.id,
             'action': 'RUN',
             "executor": executor_data.get('executor'),

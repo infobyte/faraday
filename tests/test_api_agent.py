@@ -10,7 +10,7 @@ import pytest
 
 from faraday.server.api.modules.agent import AgentView
 from faraday.server.models import Agent
-from tests.factories import AgentFactory, WorkspaceFactory
+from tests.factories import AgentFactory, WorkspaceFactory, ExecutorFactory
 from tests.test_api_workspaced_base import ReadOnlyAPITests
 from tests import factories
 
@@ -218,7 +218,9 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
 
     def test_happy_path_valid_json(self, test_client, session, csrf_token):
         agent = AgentFactory.create(workspace=self.workspace)
-        session.add(agent)
+        executor = ExecutorFactory.create(agent=agent)
+
+        session.add(executor)
         session.commit()
         payload = {
             'csrf_token': csrf_token,
@@ -226,7 +228,7 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
                 "args": {
                     "param1": True
                 },
-                "executor": "executor_name"
+                "executor": executor.name
             },
         }
         res = test_client.post(self.url() + f'{agent.id}/run/', json=payload)

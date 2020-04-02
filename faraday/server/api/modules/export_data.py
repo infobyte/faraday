@@ -11,7 +11,7 @@ export_data_api = Blueprint('export_data_api', __name__)
 logger = logging.getLogger(__name__)
 
 
-@export_data_api.route('/v2/ws/<workspace_name>/export_data/', methods=['GET'])
+@export_data_api.route('/v2/ws/<workspace_name>/export_data', methods=['GET'])
 def export_data(workspace_name):
     workspace = Workspace.query.filter_by(name=workspace_name).one()
     export_format = request.args.get('format', '')

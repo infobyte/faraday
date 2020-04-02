@@ -485,6 +485,39 @@ class TestSearcherRules():
         vuln = session.query(Vulnerability).get(vuln_id)
         assert vuln.severity == 'informational'
 
+    @pytest.mark.parametrize("api", [
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+                                                    password='test', base=''),
+        lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+    ])
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_update_severity_by_values_with_space_2(self, api, session, test_client):
+        workspace = WorkspaceFactory.create()
+        vuln = VulnerabilityFactory.create(
+            workspace=workspace,
+            name='Cross-domain Referer leakage',
+            severity='low',
+            service=None)
+
+        session.add(workspace)
+        session.add(vuln)
+        session.commit()
+
+        vuln_id = vuln.id
+        assert vuln.severity == 'low'
+        searcher = Searcher(api(workspace, test_client, session))
+        rules = [{
+            'id': 'CHANGE_SEVERITY',
+            'model': 'Vulnerability',
+            'object': "name=Cross-domain%Referer%leakage",  # Without --old param Searcher deletes  all duplicated objects
+            'conditions': ['name=Cross-domain%Referer%leakage'],
+            'actions': ["--UPDATE:severity=info"]
+        }]
+
+        searcher.process(rules)
+        vuln = session.query(Vulnerability).get(vuln_id)
+        assert vuln.severity == 'informational'
+
 
     @pytest.mark.parametrize("api", [
         lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',

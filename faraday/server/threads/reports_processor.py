@@ -1,4 +1,5 @@
 import logging
+import threading
 from threading import Thread
 from queue import Queue, Empty
 import time
@@ -21,11 +22,11 @@ class ReportsManager(Thread):
         super().__init__(*args, **kwargs)
         self.upload_reports_queue = upload_reports_queue
         self.plugins_manager = PluginsManager(config.faraday_server.custom_plugins_folder)
-        self._must_stop = False
+        self.__event = threading.Event()
 
     def stop(self):
         logger.debug("Stop Reports Manager")
-        self._must_stop = True
+        self.__event.set()
 
     def send_report_request(self, workspace_name, report_json):
         logger.info("Send Report data to workspace [%s]", workspace_name)
@@ -57,7 +58,7 @@ class ReportsManager(Thread):
 
     def run(self):
         logger.debug("Start Reports Manager")
-        while not self._must_stop:
+        while not self.__event.is_set():
             try:
                 workspace, file_path = self.upload_reports_queue.get(False, timeout=0.1)
                 logger.info("Processing raw report %s", file_path)
@@ -66,8 +67,8 @@ class ReportsManager(Thread):
                 else:
                     logger.warning("Report file [%s] don't exists", file_path)
             except Empty:
-                time.sleep(0.1)
-            except KeyboardInterrupt as ex:
+                self.__event.wait(0.1)
+            except KeyboardInterrupt:
                 logger.info("Keyboard interrupt, stopping report processing thread")
                 self.stop()
             except Exception as ex:

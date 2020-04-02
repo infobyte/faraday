@@ -1,0 +1,64 @@
+<?xml version='1.0' encoding='utf-8'?>
+<MetasploitV4>
+  <hosts>
+    <host>
+      <id>1</id>
+      <created-at>2020-04-01 20:49:31</created-at>
+      <address>127.0.0.1</address>
+      <mac>30-65-EC-6F-C4-58</mac>
+      <name>localhost,test</name>
+      <os-name>Linux</os-name>
+      <updated-at>2020-04-01 20:49:31</updated-at>
+      <comments>Host for test purposes</comments>
+      <vuln-count>2</vuln-count>
+      <service-count>1</service-count>
+      <comm/>
+      <state/>
+      <os-flavor/>
+      <os-sp/>
+      <os-lang/>
+      <purpose/>
+      <services>
+        <service>
+          <id>1</id>
+          <created-at>2020-04-01 20:49:49</created-at>
+          <host-id>1</host-id>
+          <port>8080</port>
+          <proto>tcp</proto>
+          <state>open</state>
+          <name>Test service</name>
+          <updated-at>2020-04-01 20:49:49</updated-at>
+          <info>5.0</info>
+        </service>
+      </services>
+      <vulns>
+        <vuln>
+          <id>2</id>
+          <host-id>1</host-id>
+          <service-id>1</service-id>
+          <name>Vulnerability Web test</name>
+          <info>Desc for testing web vuln</info>
+        </vuln>
+        <vuln>
+          <id>1</id>
+          <host-id>1</host-id>
+          <name>Vulnerability test</name>
+          <info>Desc for testing</info>
+        </vuln>
+      </vulns>
+    </host>
+  </hosts>
+  <services>
+    <service>
+      <id>1</id>
+      <created-at>2020-04-01 20:49:49</created-at>
+      <host-id>1</host-id>
+      <port>8080</port>
+      <proto>tcp</proto>
+      <state>open</state>
+      <name>Test service</name>
+      <updated-at>2020-04-01 20:49:49</updated-at>
+      <info>5.0</info>
+    </service>
+  </services>
+</MetasploitV4>

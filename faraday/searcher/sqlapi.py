@@ -102,7 +102,6 @@ class SqlApi:
         vulnerabilities = []
         vulnerabilities_query = self.session. \
             query(vulnerability_object). \
-            join(vulnerability_object.creator, aliased=True). \
             join(vulnerability_object.workspace). \
             filter(Workspace.name == self.workspace.name)
         for attr, value in kwargs.items():

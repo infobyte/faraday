@@ -5,6 +5,7 @@ import time
 import os
 from faraday_plugins.plugins.manager import PluginsManager, ReportAnalyzer
 from faraday.server.api.modules.bulk_create import bulk_create
+from faraday.server import config
 
 from faraday.server.models import Workspace
 
@@ -19,7 +20,7 @@ class ReportsManager(Thread):
     def __init__(self, upload_reports_queue, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.upload_reports_queue = upload_reports_queue
-        self.plugins_manager = PluginsManager()
+        self.plugins_manager = PluginsManager(config.faraday_server.custom_plugins_folder)
         self._must_stop = False
 
     def stop(self):

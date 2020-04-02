@@ -114,7 +114,7 @@ def print_config_info():
     print('{blue} {KEY}: {white}{VALUE}'.
           format(KEY='version', VALUE=faraday.__version__, white=Fore.WHITE, blue=Fore.BLUE))
 
-    data_keys = ['bind_address', 'websocket_port', 'debug']
+    data_keys = ['bind_address', 'port', 'websocket_port', 'debug']
     for key in data_keys:
         print('{blue} {KEY}: {white}{VALUE}'.
               format(KEY=key, VALUE=getattr(config.faraday_server, key), white=Fore.WHITE, blue=Fore.BLUE))

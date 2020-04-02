@@ -12,6 +12,7 @@ from colorama import init
 from colorama import Fore
 
 import faraday.server.config
+from faraday.server import config
 from faraday.server.web import app
 from faraday.server.models import db
 from faraday.server.config import CONST_FARADAY_HOME_PATH
@@ -19,8 +20,6 @@ from faraday.server.utils.daemonize import is_server_running
 import faraday_plugins
 
 init()
-
-config = faraday.server.config
 
 
 def check_server_running():

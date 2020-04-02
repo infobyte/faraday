@@ -12,7 +12,6 @@ from colorama import init
 from colorama import Fore
 
 import faraday.server.config
-from faraday.server import config
 from faraday.server.web import app
 from faraday.server.models import db
 from faraday.server.config import CONST_FARADAY_HOME_PATH
@@ -116,7 +115,7 @@ def print_config_info():
     data_keys = ['bind_address', 'port', 'websocket_port', 'debug']
     for key in data_keys:
         print('{blue} {KEY}: {white}{VALUE}'.
-              format(KEY=key, VALUE=getattr(config.faraday_server, key), white=Fore.WHITE, blue=Fore.BLUE))
+              format(KEY=key, VALUE=getattr(faraday.server.config.faraday_server, key), white=Fore.WHITE, blue=Fore.BLUE))
 
     print('\n{white}Showing faraday plugins data'.format(white=Fore.WHITE))
     print('{blue} {KEY}: {white}{VALUE}'.
@@ -126,13 +125,13 @@ def print_config_info():
     data_keys = ['show_vulns_by_price']
     for key in data_keys:
         print('{blue} {KEY}: {white}{VALUE}'.
-              format(KEY=key, VALUE=getattr(config.dashboard, key), white=Fore.WHITE, blue=Fore.BLUE))
+              format(KEY=key, VALUE=getattr(faraday.server.config.dashboard, key), white=Fore.WHITE, blue=Fore.BLUE))
 
     print('\n{white}Showing storage configuration'.format(white=Fore.WHITE))
     data_keys = ['path']
     for key in data_keys:
         print('{blue} {KEY}: {white}{VALUE}'.
-              format(KEY=key, VALUE=getattr(config.storage, key), white=Fore.WHITE, blue=Fore.BLUE))
+              format(KEY=key, VALUE=getattr(faraday.server.config.storage, key), white=Fore.WHITE, blue=Fore.BLUE))
 
 
 def print_postgresql_status():

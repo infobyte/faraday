@@ -92,14 +92,53 @@ class TestExportData():
 
         response_tree = fromstring(response_xml)
         xml_file_tree = fromstring(xml_file)
-        # Check hostnames list order
-        # Sometimes host.set_hostnames() switch the order of the hostnames list sent.
-        response_hostnames = response_tree.xpath('//host/name')[0].text
-        xml_file_hostnames = xml_file_tree.xpath('//host/name')[0].text
-        if response_hostnames != xml_file_hostnames:
-            # For testing purposes, response_hostnames list will be reordered.
-            response_hostnames = response_hostnames.split(',')
-            response_hostnames[0], response_hostnames[1] = response_hostnames[1], response_hostnames[0]
-            response_tree.xpath('//host/name')[0].text = ','.join(response_hostnames)
 
-        assert tostring(response_tree) == tostring(xml_file_tree)
+        xpaths = [
+            '//host/address',
+            '//host/mac',
+            '//host/name',
+            '//host/comments',
+            '//host/services/service/port',
+            '//host/services/service/proto',
+            '//host/services/service/state',
+            '//host/services/service/name',
+            '//host/services/service/info',
+            '//MetasploitV4/services/service/port',
+            '//MetasploitV4/services/service/proto',
+            '//MetasploitV4/services/service/state',
+            '//MetasploitV4/services/service/name',
+            '//MetasploitV4/services/service/info',
+            '//host/vulns/vuln',
+        ]
+
+        for xpath in xpaths:
+            if xpath == '//host/vulns/vuln':
+                response_vulns = response_tree.xpath(xpath)
+                xml_file_vulns = xml_file_tree.xpath(xpath)
+                response_vuln1_name = response_vulns[0].xpath('./name')[0].text
+                response_vuln1_desc = response_vulns[0].xpath('./info')[0].text
+                response_vuln2_name = response_vulns[1].xpath('./name')[0].text
+                response_vuln2_desc = response_vulns[1].xpath('./info')[0].text
+
+                xml_file_vuln1_name = xml_file_vulns[0].xpath('./name')[0].text
+                xml_file_vuln1_desc = xml_file_vulns[0].xpath('./info')[0].text
+                xml_file_vuln2_name = xml_file_vulns[1].xpath('./name')[0].text
+                xml_file_vuln2_desc = xml_file_vulns[1].xpath('./info')[0].text
+
+                assert response_vuln1_name == xml_file_vuln1_name
+                assert response_vuln2_name == xml_file_vuln2_name
+                assert response_vuln1_desc == xml_file_vuln1_desc
+                assert response_vuln2_desc == xml_file_vuln2_desc
+            elif xpath == '//host/name':
+                # Check hostnames list order
+                # Sometimes host.set_hostnames() switch the order of the hostnames list sent.
+                response_hostnames = response_tree.xpath('//host/name')[0].text
+                xml_file_hostnames = xml_file_tree.xpath('//host/name')[0].text
+                if response_hostnames != xml_file_hostnames:
+                    # For testing purposes, response_hostnames list will be reordered.
+                    response_hostnames = response_hostnames.split(',')
+                    response_hostnames[0], response_hostnames[1] = response_hostnames[1], response_hostnames[0]
+                    response_tree.xpath('//host/name')[0].text = ','.join(response_hostnames)
+                assert response_tree.xpath('//host/name')[0].text == xml_file_hostnames
+            else:
+                assert response_tree.xpath(xpath)[0].text == xml_file_tree.xpath(xpath)[0].text

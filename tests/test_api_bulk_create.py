@@ -643,6 +643,7 @@ def test_bulk_create_endpoint_with_agent_token_without_execution_id(session, age
 def test_bulk_create_endpoint_with_agent_token(session, agent_execution, test_client):
     agent = agent_execution.executor.agent
     agent_execution.executor.parameters_metadata = {}
+    agent_execution.parameters_data = {}
     session.add(agent_execution)
     session.commit()
     assert count(Host, agent.workspace) == 0
@@ -683,7 +684,7 @@ def test_bulk_create_endpoint_with_agent_token_with_param(session, agent_executi
     command = Command.query.filter(Command.workspace == agent.workspace).one()
     assert command.tool == agent.name
     assert command.command == agent_execution.executor.name
-    assert command.params == str(agent_execution.executor.parameters_metadata)
+    assert command.params == str(agent_execution.parameters_data)
     assert command.import_source == 'agent'
 
 

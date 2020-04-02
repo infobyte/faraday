@@ -400,14 +400,14 @@ class BulkCreateView(GenericWorkspacedView):
 
             now = datetime.now()
 
-            parmas_metada = agent_execution.executor.parameters_metadata
+            params_data = agent_execution.parameters_data
 
             data["command"] = {
                 'tool': agent.name, # Agent name
                 'command': agent_execution.executor.name,
                 'user': '',
                 'hostname': '',
-                'params': str(parmas_metada) if len(parmas_metada) > 0 else '',
+                'params': str(params_data) if len(params_data) > 0 else '',
                 'import_source': 'agent',
                 'start_date': (data["command"].get("start_date") or now) if "command" in data else now, #Now or when received run
                 'end_date': (data["command"].get("start_date") or now) if "command" in data else now, #Now or when received run

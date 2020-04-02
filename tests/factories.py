@@ -445,9 +445,8 @@ class ExecutorFactory(FaradayFactory):
     name = FuzzyText()
     agent = factory.SubFactory(AgentFactory)
     parameters_metadata = factory.LazyAttribute(
-        lambda e: str({"param_name": "param_value"})
+        lambda e: str({"param_name": False})
     )
-
     class Meta:
         model = Executor
         sqlalchemy_session = db.session
@@ -456,6 +455,9 @@ class ExecutorFactory(FaradayFactory):
 class AgentExecutionFactory(WorkspaceObjectFactory):
     executor = factory.SubFactory(
         ExecutorFactory, workspace=factory.SelfAttribute('..workspace')
+    )
+    parameters_data = factory.LazyAttribute(
+        lambda e: str({"param_name": "param_value"})
     )
 
     class Meta:

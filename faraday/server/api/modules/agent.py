@@ -140,13 +140,13 @@ class AgentView(UpdateWorkspacedMixin,
 
         executor = Executor.query.filter(Executor.name == executor_data['executor'],
                                          Executor.agent_id == agent_id).first()
-        # TODO save executor data
         agent_execution = AgentExecution(
             running=None,
             successful=None,
             message='',
             executor=executor,
-            workspace_id=executor.agent.workspace_id
+            workspace_id=executor.agent.workspace_id,
+            parameters_data=executor_data["args"]
         )
         db.session.add(agent_execution)
         db.session.commit()

@@ -2,7 +2,6 @@ import logging
 import threading
 from threading import Thread
 from queue import Queue, Empty
-import time
 import os
 from faraday_plugins.plugins.manager import PluginsManager, ReportAnalyzer
 from faraday.server.api.modules.bulk_create import bulk_create

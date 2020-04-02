@@ -458,6 +458,40 @@ class TestSearcherRules():
         lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
     ])
     @pytest.mark.usefixtures('ignore_nplusone')
+    def test_update_severity_by_values_with_space(self, api, session, test_client):
+        workspace = WorkspaceFactory.create()
+        vuln = VulnerabilityFactory.create(
+            workspace=workspace,
+            tool='Nessus Tool',
+            severity='low',
+            service=None)
+
+        session.add(workspace)
+        session.add(vuln)
+        session.commit()
+
+        vuln_id = vuln.id
+        assert vuln.severity == 'low'
+        searcher = Searcher(api(workspace, test_client, session))
+        rules = [{
+            'id': 'CHANGE_SEVERITY',
+            'model': 'Vulnerability',
+            'object': "tool=Nessus%Tool",  # Without --old param Searcher deletes  all duplicated objects
+            'conditions': ['severity=low'],
+            'actions': ["--UPDATE:severity=info"]
+        }]
+
+        searcher.process(rules)
+        vuln = session.query(Vulnerability).get(vuln_id)
+        assert vuln.severity == 'informational'
+
+
+    @pytest.mark.parametrize("api", [
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+                                                    password='test', base=''),
+        lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+    ])
+    @pytest.mark.usefixtures('ignore_nplusone')
     def test_update_severity_by_creator(self, api, session, test_client):
         workspace = WorkspaceFactory.create()
         host = HostFactory.create(workspace=workspace)

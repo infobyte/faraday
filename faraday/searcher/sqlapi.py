@@ -5,7 +5,7 @@ import logging
 import socket
 from datetime import datetime
 
-from sqlalchemy.orm.attributes import flag_modified, InstrumentedAttribute
+from sqlalchemy.orm.attributes import flag_modified
 
 from faraday.searcher.api import ApiError
 from faraday.server.models import Workspace, Vulnerability, VulnerabilityWeb, Service, Host, Command, \

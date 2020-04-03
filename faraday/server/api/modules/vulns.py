@@ -375,7 +375,7 @@ class VulnerabilityFilterSet(FilterSet):
             "parameters", "params", "resolution", "ease_of_resolution",
             "description", "command_id", "target", "creator", "method",
             "easeofresolution", "query_string", "parameter_name", "service_id",
-            "status_code"
+            "status_code", "tool",
         )
 
         strict_fields = (

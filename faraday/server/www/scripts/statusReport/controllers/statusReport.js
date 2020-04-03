@@ -338,7 +338,7 @@ angular.module("faradayApp")
                     "query":            "100",
                     "response":         "90",
                     "web":              "80",
-                    "metadata.creator": "100",
+                    "tool":             "100",
                     "policyviolations": "100"
                 };
             }
@@ -624,7 +624,7 @@ angular.module("faradayApp")
                 displayName : "tool",
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/creatorcolumn.html',
                 headerCellTemplate: header,
-                sort: getColumnSort('metadata.creator'),
+                sort: getColumnSort('tool'),
                 visible: $scope.columns["tool"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'policyviolations',
@@ -1231,6 +1231,9 @@ angular.module("faradayApp")
             if ($scope.propertyFilterConfirmed === 'Unconfirmed'){
                 searchFilter.confirmed = false;
             }
+
+            if(paginationOptions.sortColumn == "metadata.creator")
+                paginationOptions.sortColumn = "tool";
             // load all vulnerabilities
             vulnsManager.getVulns($scope.workspace,
                                   paginationOptions.page,

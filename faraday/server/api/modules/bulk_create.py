@@ -46,7 +46,7 @@ class VulnerabilitySchema(vulns.VulnerabilitySchema):
         )
 
 
-class VulnerabilityWebSchema(vulns.VulnerabilityWebSchema):
+class BulkVulnerabilityWebSchema(vulns.VulnerabilityWebSchema):
     class Meta(vulns.VulnerabilityWebSchema.Meta):
         extra_fields = ('run_date',)
         fields = tuple(
@@ -62,7 +62,7 @@ class PolymorphicVulnerabilityField(fields.Field):
         super(PolymorphicVulnerabilityField, self).__init__(*args, **kwargs)
         self.many = kwargs.get('many', False)
         self.vuln_schema = VulnerabilitySchema(strict=True)
-        self.vulnweb_schema = VulnerabilityWebSchema(strict=True)
+        self.vulnweb_schema = BulkVulnerabilityWebSchema(strict=True)
 
     def _deserialize(self, value, attr, data):
         if self.many and not utils.is_collection(value):
@@ -85,13 +85,13 @@ class PolymorphicVulnerabilityField(fields.Field):
         return schema.load(value).data
 
 
-class CredentialSchema(AutoSchema):
+class BulkCredentialSchema(AutoSchema):
     class Meta:
         model = Credential
         fields = ('username', 'password', 'description', 'name')
 
 
-class ServiceSchema(services.ServiceSchema):
+class BulkServiceSchema(services.ServiceSchema):
     """It's like the original service schema, but now it only uses port
     instead of ports (a single integer array). That field was only used
     to keep backwards compatibility with the Web UI"""
@@ -103,7 +103,7 @@ class ServiceSchema(services.ServiceSchema):
         missing=[],
     )
     credentials = fields.Nested(
-        CredentialSchema(many=True),
+        BulkCredentialSchema(many=True),
         many=True,
         missing=[],
     )
@@ -119,10 +119,10 @@ class ServiceSchema(services.ServiceSchema):
         ) + ('vulnerabilities',)
 
 
-class HostSchema(hosts.HostSchema):
+class HostBulkSchema(hosts.HostSchema):
     ip = fields.String(required=True)
     services = fields.Nested(
-        ServiceSchema(many=True, context={'updating': False}),
+        BulkServiceSchema(many=True, context={'updating': False}),
         many=True,
         missing=[],
     )
@@ -132,7 +132,7 @@ class HostSchema(hosts.HostSchema):
         missing=[],
     )
     credentials = fields.Nested(
-        CredentialSchema(many=True),
+        BulkCredentialSchema(many=True),
         many=True,
         missing=[],
     )
@@ -141,7 +141,7 @@ class HostSchema(hosts.HostSchema):
         fields = hosts.HostSchema.Meta.fields + ('services', 'vulnerabilities')
 
 
-class CommandSchema(AutoSchema):
+class BulkCommandSchema(AutoSchema):
     """The schema of faraday/server/api/modules/commandsrun.py has a lot
     of ugly things because of the Web UI backwards compatibility.
 
@@ -164,12 +164,12 @@ class CommandSchema(AutoSchema):
 
 class BulkCreateSchema(Schema):
     hosts = fields.Nested(
-        HostSchema(many=True),
+        HostBulkSchema(many=True),
         many=True,
         required=True,
     )
     command = fields.Nested(
-        CommandSchema(),
+        BulkCommandSchema(),
         required=False,
     )
 
@@ -359,15 +359,59 @@ class BulkCreateView(GenericWorkspacedView):
     schema_class = BulkCreateSchema
 
     def post(self, workspace_name):
+        """
+        ---
+          tags: ["Bulk"]
+          description: Creates all faraday objects in bulk for a workspace
+          requestBody:
+            required: true
+            content:
+                application/json:
+                    schema: BulkCreateSchema
+          responses:
+            201:tags:
+              description: Created
+              content:
+                application/json:
+                  schema: BulkCreateSchema
+            403:
+              description: Disabled workspace
+            404:
+               description: Workspace not found
+        """
+        data = self._parse_data(self._get_schema_instance({}), flask.request)
+
         if flask.g.user is None:
             agent = require_agent_token()
             workspace = agent.workspace
             assert workspace.name
             if workspace_name != workspace.name:
                 flask.abort(404, "No such workspace: %s" % workspace_name)
+
+            now = datetime.now()
+
+            data["command"] = {
+                'tool': agent.name, # Agent name
+                'command': agent.name + ' executor', # TODO Executor name
+                'user': '',
+                'hostname': '',
+                'params': ' params_unset', # TODO
+                'import_source': 'agent',
+                'start_date': (data["command"].get("start_date") or now) if "command" in data else now, #Now or when received run
+                'end_date': (data["command"].get("start_date") or now) if "command" in data else now, #Now or when received run
+            }
         else:
             workspace = self._get_workspace(workspace_name)
-        data = self._parse_data(self._get_schema_instance({}), flask.request)
+            creator_user = flask.g.user
+            for host in data["hosts"]:
+                host["creator"] = creator_user
+                for service in host["services"]:
+                    service["creator"] = creator_user
+                for vuln in host["vulnerabilities"]:
+                    vuln["creator"] = creator_user
+                for cred in host["credentials"]:
+                    cred["creator"] = creator_user
+
         bulk_create(workspace, data, True)
         return "Created", 201
 
@@ -376,4 +420,3 @@ class BulkCreateView(GenericWorkspacedView):
 BulkCreateView.register(bulk_create_api)
 
 
-# I'm Py3

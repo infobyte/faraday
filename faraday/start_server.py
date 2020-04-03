@@ -118,7 +118,8 @@ def main():
     args = parser.parse_args()
     if args.debug or faraday.server.config.faraday_server.debug:
         faraday.server.utils.logger.set_logging_level(faraday.server.config.DEBUG)
-    faraday.server.config.faraday_server.port = args.port or faraday.server.config.faraday_server.port or '5985'
+    args.port = faraday.server.config.faraday_server.port = args.port or \
+            faraday.server.config.faraday_server.port or '5985'
     if args.bind_address:
         faraday.server.config.faraday_server.bind_address = args.bind_address
 

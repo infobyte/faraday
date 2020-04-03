@@ -216,18 +216,14 @@ angular.module('faradayApp')
 
             };
 
-            $scope.edit = function (ws) {
+            $scope.edit = function () {
                 var workspace;
-                
-                if(ws)
-                    workspace = ws;
-                else{
-                    $scope.workspaces.forEach(function (w) {
-                        if (w.selected) {
-                            workspace = w;
-                        }
-                    });
-                }
+
+                $scope.workspaces.forEach(function (w) {
+                    if (w.selected) {
+                        workspace = w;
+                    }
+                });
 
                 if (workspace) {
                     var oldName = workspace.name;

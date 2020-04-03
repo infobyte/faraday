@@ -21,7 +21,7 @@ angular.module('faradayApp')
         $scope.login = function(){
             if ($scope.data.user && $scope.data.pass){
                 loginSrv.login($scope.data.user, $scope.data.pass).then(function(user){
-                    var currentUrl = "/dashboard/ws";
+                    var currentUrl = "/workspaces";
                     if($cookies.currentUrl != undefined) {
                         currentUrl = $cookies.currentUrl;
                     }
@@ -67,7 +67,7 @@ angular.module('faradayApp')
         $scope.logout = function(){
             loginSrv.logout().then(function(){
                 $location.path('/login');
-                $cookies.currentUrl = "/dashboard/ws";
+                $cookies.currentUrl = "/workspaces";
             });
         };
 

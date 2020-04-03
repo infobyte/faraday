@@ -304,7 +304,7 @@ angular.module("faradayApp")
                 "query":            false,
                 "response":         false,
                 "web":              false,
-                "creator":          false,
+                "tool":             false,
                 "policyviolations": false,
                 "external_id":      false
             };
@@ -621,11 +621,11 @@ angular.module("faradayApp")
                 visible: $scope.columns["web"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'metadata.creator',
-                displayName : "Tool",
+                displayName : "tool",
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/creatorcolumn.html',
                 headerCellTemplate: header,
                 sort: getColumnSort('metadata.creator'),
-                visible: $scope.columns["creator"]
+                visible: $scope.columns["tool"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'policyviolations',
                 // The following line breaks the remembering of the field (i.e.

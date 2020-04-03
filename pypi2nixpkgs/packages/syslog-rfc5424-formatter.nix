@@ -1,5 +1,5 @@
 
-    { lib, buildPythonPackage, fetchPypi }:
+    { fetchPypi, lib, buildPythonPackage }:
     buildPythonPackage rec {
         pname = "syslog-rfc5424-formatter";
         version = "1.2.2";

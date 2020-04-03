@@ -1,5 +1,5 @@
 
-    { fetchPypi, marshmallow, lib, buildPythonPackage, sqlalchemy }:
+    { sqlalchemy, buildPythonPackage, marshmallow, fetchPypi, lib }:
     buildPythonPackage rec {
         pname = "marshmallow-sqlalchemy";
         version = "0.15.0";

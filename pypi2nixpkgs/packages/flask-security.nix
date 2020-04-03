@@ -1,5 +1,5 @@
 
-    { itsdangerous, flask, flask_wtf, flask_mail, Babel, fetchPypi, passlib, flask-babelex, flask_login, lib, pytestrunner, buildPythonPackage, flask_principal }:
+    { flask_mail, flask-babelex, itsdangerous, pytestrunner, buildPythonPackage, flask_login, Babel, flask_wtf, fetchPypi, lib, passlib, flask, flask_principal }:
     buildPythonPackage rec {
         pname = "flask-security";
         version = "3.0.0";

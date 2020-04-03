@@ -7,8 +7,8 @@
         
             nixpkgs =
                 builtins.fetchTarball {
-                    url = https://github.com/nixos/nixpkgs/archive/f1f5247103494195d00afd0b0f4ae789dedfd0e4.tar.gz;
-                    sha256 = "0xnpbvz48r74xa6amzr18imyb5lfkxpgwsp56rfxn358vdrfq0wx";
+                    url = https://github.com/nixos/nixpkgs/archive/91c43a9dc822da30cf3cd2908891edddcea482f2.tar.gz;
+                    sha256 = "06ikg56ifx57b0n9yqa9szipbsswn98gz5zszi8nsqd7d4p4l3y4";
                 };
         
 
@@ -81,6 +81,10 @@
 
             faraday-plugins =
                 self.callPackage ./packages/faraday-plugins.nix { };
+        
+
+            apispec-webframeworks =
+                self.callPackage ./packages/apispec-webframeworks.nix { };
         
 
             pytest-factoryboy =

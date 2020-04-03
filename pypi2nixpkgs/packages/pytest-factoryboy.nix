@@ -1,5 +1,5 @@
 
-    { inflection, fetchPypi, pytest, lib, buildPythonPackage, factory_boy }:
+    { buildPythonPackage, fetchPypi, lib, factory_boy, inflection, pytest }:
     buildPythonPackage rec {
         pname = "pytest-factoryboy";
         version = "2.0.3";

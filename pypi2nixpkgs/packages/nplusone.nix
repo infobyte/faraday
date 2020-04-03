@@ -1,5 +1,5 @@
 
-    { blinker, fetchPypi, six, lib, buildPythonPackage }:
+    { buildPythonPackage, fetchPypi, lib, blinker, six }:
     buildPythonPackage rec {
         pname = "nplusone";
         version = "1.0.0";

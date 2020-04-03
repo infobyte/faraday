@@ -1,5 +1,5 @@
 
-    { pgspecial, configobj, psycopg2, pygments, click, prompt_toolkit, fetchPypi, cli-helpers, humanize, lib, buildPythonPackage, setproctitle, sqlparse }:
+    { psycopg2, pygments, humanize, click, buildPythonPackage, sqlparse, cli-helpers, setproctitle, fetchPypi, lib, pgspecial, configobj, prompt_toolkit }:
     buildPythonPackage rec {
         pname = "pgcli";
         version = "2.1.0";

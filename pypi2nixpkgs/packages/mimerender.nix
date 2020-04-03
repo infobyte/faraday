@@ -1,5 +1,5 @@
 
-    { lib, python_mimeparse, buildPythonPackage, fetchPypi }:
+    { fetchPypi, lib, buildPythonPackage, python_mimeparse }:
     buildPythonPackage rec {
         pname = "mimerender";
         version = "0.6.0";

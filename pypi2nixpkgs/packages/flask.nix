@@ -1,12 +1,12 @@
 
-    { itsdangerous, jinja2, click, fetchPypi, werkzeug, lib, buildPythonPackage }:
+    { werkzeug, itsdangerous, click, buildPythonPackage, fetchPypi, lib, jinja2 }:
     buildPythonPackage rec {
         pname = "flask";
-        version = "1.1.1";
+        version = "1.1.2";
 
             src = builtins.fetchurl {
-                url = "https://files.pythonhosted.org/packages/2e/80/3726a729de758513fd3dbc64e93098eb009c49305a97c6751de55b20b694/Flask-1.1.1.tar.gz";
-                sha256 = "0ljdjgyjn7vh8ic1n1dc2l1cl421i6pr3kx5sz2w5irhyfbg3y8k";
+                url = "https://files.pythonhosted.org/packages/4e/0b/cb02268c90e67545a0e3a37ea1ca3d45de3aca43ceb7dbf1712fb5127d5d/Flask-1.1.2.tar.gz";
+                sha256 = "0q3h295izcil7lswkzfnyg3k5gq4hpmqmpl6i7s5m1n9szi1myjf";
             };
         
 

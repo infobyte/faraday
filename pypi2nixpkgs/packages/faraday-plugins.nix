@@ -1,12 +1,12 @@
 
-    { simplejson, html2text, click, fetchPypi, beautifulsoup4, lxml, lib, buildPythonPackage, requests }:
+    { requests, beautifulsoup4, click, buildPythonPackage, simplejson, html2text, fetchPypi, lib, lxml }:
     buildPythonPackage rec {
         pname = "faraday-plugins";
-        version = "1.0.2";
+        version = "1.0.3";
 
             src = builtins.fetchurl {
-                url = "https://files.pythonhosted.org/packages/96/09/b7e77009711944000e998219121ebdcb1d2ccc0e9a8930d78d183391477f/faraday-plugins-1.0.2.tar.gz";
-                sha256 = "0mxjfc0lvrlic1hvbs75rsdr6air5i332g3n6hmjk6w0hjmjkrnp";
+                url = "https://files.pythonhosted.org/packages/d1/ac/5e2ac1f72549dceea3a76d098cc23340d916f8dceb5fc5310b6db41e6360/faraday-plugins-1.0.3.tar.gz";
+                sha256 = "00gyqyqxska4mn5f70r3wsc8l9akwhmkb7xmrmh9mcacg3yzqwdh";
             };
         
 

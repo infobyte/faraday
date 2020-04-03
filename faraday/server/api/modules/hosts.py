@@ -144,6 +144,22 @@ class HostsView(PaginatedMixin,
 
     @route('/bulk_create/', methods=['POST'])
     def bulk_create(self, workspace_name):
+        """
+        ---
+        post:
+          tags: ["Vulns"]
+          description: Creates hosts in bulk
+          responses:
+            201:
+              description: Created
+              content:
+                application/json:
+                  schema: HostSchema
+            400:
+              description: Bad request
+            403:
+              description: Forbidden
+        """
         try:
             validate_csrf(flask.request.form.get('csrf_token'))
         except wtforms.ValidationError:
@@ -197,13 +213,25 @@ class HostsView(PaginatedMixin,
 
     @route('/countVulns/')
     def count_vulns(self, workspace_name):
+        """
+        ---
+        get:
+          tags: ["Hosts"]
+          summary: Counts Vulnerabilities per host
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: HostCountSchema
+        """
         host_ids = flask.request.args.get('hosts', None)
         if host_ids:
             host_id_list = host_ids.split(',')
         else:
             host_id_list = None
 
-        res_dict = {'hosts':{}}
+        res_dict = {'hosts': {}}
 
         host_count_schema = HostCountSchema()
         host_count = Host.query_with_count(None, host_id_list, workspace_name)

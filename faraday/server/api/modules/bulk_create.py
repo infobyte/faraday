@@ -32,6 +32,7 @@ from faraday.server.api.modules import (
 )
 from faraday.server.api.base import AutoSchema, GenericWorkspacedView
 from faraday.server.api.modules.websocket_auth import require_agent_token
+from faraday.server.utils.bulk_create import add_creator
 
 bulk_create_api = flask.Blueprint('bulk_create_api', __name__)
 
@@ -403,14 +404,7 @@ class BulkCreateView(GenericWorkspacedView):
         else:
             workspace = self._get_workspace(workspace_name)
             creator_user = flask.g.user
-            for host in data["hosts"]:
-                host["creator"] = creator_user
-                for service in host["services"]:
-                    service["creator"] = creator_user
-                for vuln in host["vulnerabilities"]:
-                    vuln["creator"] = creator_user
-                for cred in host["credentials"]:
-                    cred["creator"] = creator_user
+            data = add_creator(data,creator_user)
 
         bulk_create(workspace, data, True)
         return "Created", 201

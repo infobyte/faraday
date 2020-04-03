@@ -5,8 +5,8 @@ import time
 import os
 from faraday_plugins.plugins.manager import PluginsManager, ReportAnalyzer
 from faraday.server.api.modules.bulk_create import bulk_create
-
 from faraday.server.models import Workspace
+from faraday.server.utils.bulk_create import add_creator
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ class ReportsManager(Thread):
             ws = Workspace.query.filter_by(name=workspace_name).one()
             bulk_create(ws, report_json, False)
 
-    def process_report(self, workspace, file_path):
+    def process_report(self, workspace, file_path, user):
         report_analyzer = ReportAnalyzer(self.plugins_manager)
         plugin = report_analyzer.get_plugin(file_path)
         if plugin:
@@ -41,6 +41,7 @@ class ReportsManager(Thread):
                 logger.info("Processing report [%s] with plugin [%s]", file_path, plugin.id)
                 plugin.processReport(file_path)
                 vulns_data = plugin.get_data()
+                vulns_data = add_creator(vulns_data, user)
             except Exception as e:
                 logger.error("Processing Error: %s", e)
                 logger.exception(e)
@@ -58,10 +59,10 @@ class ReportsManager(Thread):
         logger.debug("Start Reports Manager")
         while not self._must_stop:
             try:
-                workspace, file_path = self.upload_reports_queue.get(False, timeout=0.1)
+                workspace, file_path, user = self.upload_reports_queue.get(False, timeout=0.1)
                 logger.info("Processing raw report %s", file_path)
                 if os.path.isfile(file_path):
-                    self.process_report(workspace, file_path)
+                    self.process_report(workspace, file_path, user)
                 else:
                     logger.warning("Report file [%s] don't exists", file_path)
             except Empty:

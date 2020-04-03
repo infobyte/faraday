@@ -15,6 +15,7 @@ from flask import (
     jsonify,
     Blueprint,
 )
+import flask
 
 from flask_wtf.csrf import validate_csrf
 from werkzeug.utils import secure_filename
@@ -66,7 +67,7 @@ def file_upload(workspace=None):
                 "Upload reports in WEB-UI not configurated, run Faraday client and try again...")
             abort(make_response(jsonify(message="Upload reports not configurated: Run faraday client and start Faraday server again"), 500))
         else:
-            REPORTS_QUEUE.put((workspace, file_path))
+            REPORTS_QUEUE.put((workspace, file_path, flask.g.user))
             return make_response(jsonify(message="ok"), 200)
     else:
         abort(make_response(jsonify(message="Missing report file"), 400))

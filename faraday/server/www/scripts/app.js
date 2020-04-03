@@ -98,7 +98,7 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
     });
     $routeProvider.
         when('/', {
-            redirectTo: "/dashboard/ws/:wsId"
+            redirectTo: "/workspaces"
         }).
         when('/dashboard/ws/:wsId', {
             templateUrl: 'scripts/dashboard/partials/dashboard.html',

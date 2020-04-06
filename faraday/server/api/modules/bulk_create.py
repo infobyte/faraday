@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timedelta
 import flask
 import sqlalchemy
-from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from sqlalchemy.orm.exc import NoResultFound
 from marshmallow import (
     fields,
     post_load,
@@ -404,9 +404,9 @@ class BulkCreateView(GenericWorkspacedView):
                 flask.abort(400, "Can not find an agent execution with that id")
 
             if workspace_name != agent_execution.workspace.name:
-                logger.exception(ValidationError("The {0} agent has permission to workspace {1} and ask to write to "
-                                                 "workspace {2}"
-                                                 .format(agent.name, workspace_name, agent_execution.workspace.name)))
+                logger.exception(ValueError("The {0} agent has permission to workspace {1} and ask to write to "
+                                            "workspace {2}"
+                                            .format(agent.name, workspace_name, agent_execution.workspace.name)))
                 flask.abort(400, "Trying to write to the incorrect workspace")
 
             now = datetime.now()

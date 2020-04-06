@@ -72,7 +72,8 @@ bandit:
       - virtualenv -p python3 faraday_venv
       - source faraday_venv/bin/activate
       - pip3 install bandit
-      - bandit -r ${CI_PROJECT_DIR}/faraday
+      - bandit -r ${CI_PROJECT_DIR}/faraday --format custom --msg-template \
+          "{abspath}:{line}: {test_id}[bandit]: {severity}: {msg}
 
 pylint:
     tags:

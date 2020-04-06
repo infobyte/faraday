@@ -139,7 +139,7 @@ class AgentView(UpdateWorkspacedMixin,
         executor_data = data['executorData']
 
         executor = Executor.query.filter(Executor.name == executor_data['executor'],
-                                         Executor.agent_id == agent_id).first()
+                                         Executor.agent_id == agent_id).one()
         agent_execution = AgentExecution(
             running=None,
             successful=None,

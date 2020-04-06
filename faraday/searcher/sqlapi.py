@@ -107,8 +107,7 @@ class SqlApi:
         for attr, value in kwargs.items():
             if attr == 'regex':
                 vulnerabilities_query = vulnerabilities_query.filter(vulnerability_object.name.op('~')(value))
-                vulnerabilities = [vulnerability for vulnerability, pos in
-                                   vulnerabilities_query.distinct(vulnerability_object.id)]
+                vulnerabilities = vulnerabilities_query.all()
             elif hasattr(vulnerability_object, attr):
                 filter_attr = getattr(vulnerability_object, attr)
                 if hasattr(getattr(vulnerability_object, attr).prop, 'entity'):

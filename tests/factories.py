@@ -454,11 +454,12 @@ class ExecutorFactory(FaradayFactory):
 
 class AgentExecutionFactory(WorkspaceObjectFactory):
     executor = factory.SubFactory(
-        ExecutorFactory, workspace=factory.SelfAttribute('..workspace')
+        ExecutorFactory,
     )
     parameters_data = factory.LazyAttribute(
         lambda e: str({"param_name": "param_value"})
     )
+    workspace = factory.SelfAttribute('executor.agent.workspace')
 
     class Meta:
         model = AgentExecution

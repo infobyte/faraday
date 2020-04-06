@@ -640,14 +640,34 @@ def test_bulk_create_endpoint_with_agent_token_without_execution_id(session, age
     assert count(Command, agent.workspace) == 0
 
 
-def test_bulk_create_endpoint_with_agent_token(session, agent_execution, test_client):
+def test_bulk_create_endpoint_with_agent_token(session, agent_execution, test_client, workspace_factory,
+                                               agent_execution_factory):
     agent = agent_execution.executor.agent
     agent_execution.executor.parameters_metadata = {}
     agent_execution.parameters_data = {}
+    extra_agent_execution = agent_execution_factory.create()
     session.add(agent_execution)
+    session.add(extra_agent_execution)
     session.commit()
     assert count(Host, agent.workspace) == 0
     url = 'v2/ws/{}/bulk_create/'.format(agent.workspace.name)
+    res = test_client.post(
+        url,
+        data=dict(hosts=[host_data], execution_id=-1),
+        headers=[("authorization", "agent {}".format(agent.token))]
+    )
+    assert res.status_code == 400
+
+    assert count(Host, agent.workspace) == 0
+    assert count(Command, agent.workspace) == 0
+    res = test_client.post(
+        url,
+        data=dict(hosts=[host_data], execution_id=extra_agent_execution.id),
+        headers=[("authorization", "agent {}".format(agent.token))]
+    )
+    assert res.status_code == 400
+    assert count(Host, agent.workspace) == 0
+    assert count(Command, agent.workspace) == 0
     res = test_client.post(
         url,
         data=dict(hosts=[host_data], execution_id=agent_execution.id),

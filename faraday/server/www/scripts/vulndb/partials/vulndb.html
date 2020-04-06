@@ -114,16 +114,16 @@
                         selection-model-selected-class="multi-selected"
                         selection-model-on-change="selectedModels()">
                         <td class="checkbox-select"><input type="checkbox" name="{{model._id}}"/></td>
-                        <td>{{model.name}}</td>
-                        <td>{{model.description}}</td>
+                        <td class="ui-grid-cell-contents no-padding">{{model.name}}</td>
+                        <td class="ui-grid-cell-contents no-padding">{{model.description}}</td>
                         <td>{{model.external_id}}</td>
-                        <td><div ng-repeat="ref in model.refs">{{ref}}</div></td>
-                        <td>{{model.data}}</td>
-                        <td>{{model.resolution}}</td>
-                        <td><div ng-repeat="(key, value) in model.impact" ng-if="value == true">{{key}}</div></td>
+                        <td><div ng-repeat="ref in model.refs|limitTo:4" class="ui-grid-cell-contents no-padding">{{ref}}</div></td>
+                        <td class="ui-grid-cell-contents no-padding">{{model.data}}</td>
+                        <td class="ui-grid-cell-contents no-padding">{{model.resolution}}</td>
+                        <td><div ng-repeat="(key, value) in model.impact|limitTo:4" ng-if="value == true">{{key}}</div></td>
                         <td>{{model.exploitation}}</td>
                         <td>{{model.easeofresolution}}</td>
-                        <td><div ng-repeat="policy in model.policyviolations">{{policy}}</div></td>
+                        <td><div ng-repeat="policy in model.policyviolations|limitTo:4" class="ui-grid-cell-contents no-padding">{{policy}}</div></td>
                         <td>{{model.creator}}</td>
                         <td><p ng-bind="model.create_at | date:'MM/dd/yyyy'"></p></td>
                     </tr>

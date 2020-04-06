@@ -1,6 +1,6 @@
+import re
 import csv
 from io import StringIO, BytesIO
-import re
 import logging
 
 from faraday.server.models import (
@@ -16,15 +16,18 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
     buffer = StringIO()
     headers = [
         "confirmed", "id", "date", "name", "severity", "service",
-        "target", "desc", "status", "hostnames", "owner", "os", "resolution", "easeofresolution", "web_vulnerability",
+        "target", "desc", "status", "hostnames", "comments", "owner", "os", "resolution", "easeofresolution", "web_vulnerability",
         "data", "website", "path", "status_code", "request", "method", "params", "pname", "query",
         "policyviolations", "external_id", "impact_confidentiality", "impact_integrity", "impact_availability",
-        "impact_accountability"
+        "impact_accountability", "update_date"
     ]
     headers += custom_fields_columns
     writer = csv.DictWriter(buffer, fieldnames=headers)
     writer.writeheader()
     for vuln in vulns:
+        comments = []
+        for comment in db.session.query(Comment).filter_by(object_type='vulnerability', object_id=vuln['_id']).all():
+            comments.append(comment.text)
         vuln_description = re.sub(' +', ' ', vuln['description'].strip().replace("\n", ""))
         vuln_date = vuln['metadata']['create_time']
         if vuln['service']:
@@ -41,6 +44,7 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
         vuln_dict = {"confirmed": vuln['confirmed'],
                      "id": vuln.get('_id', None),
                      "date": vuln_date,
+                     "update_date": vuln['metadata']['update_time'],
                      "severity": vuln.get('severity', None),
                      "target": vuln.get('target', None),
                      "status": vuln.get('status', None),
@@ -48,6 +52,7 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
                      "desc": vuln_description,
                      "name": vuln.get('name', None),
                      "service": vuln_service,
+                     "comments": comments,
                      "owner": vuln.get('owner', None),
                      "os": vuln.get('host_os', None),
                      "resolution": vuln.get('resolution', None),
@@ -75,8 +80,7 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
                     vuln_dict.update({field_name: value})
         writer.writerow(vuln_dict)
     memory_file = BytesIO()
-    memory_file.write(buffer.getvalue().encode('utf-8'))
+    memory_file.write(buffer.getvalue().encode('utf8'))
     memory_file.seek(0)
     return memory_file
-
 

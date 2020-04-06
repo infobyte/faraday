@@ -193,6 +193,7 @@ header.head {
 
 .left-main {
     position: absolute;
+    width: 100%;
     top: 0px;
     border-top: 3px solid #464646;
     right: 0;
@@ -1401,4 +1402,7 @@ a {
 .change-padding-to-margin {
     padding-bottom: 0px !important;
     margin-bottom: 15px;
+}
+.no-padding{
+    padding: 0 !important;
 }

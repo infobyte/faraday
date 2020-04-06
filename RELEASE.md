@@ -9,6 +9,52 @@ New features in the latest update
 =====================================
 
 
+3.10.2 [Jan 30th, 2020]:
+---
+ * Fix Cross-Site Request Forgery (CSRF) vulnerability in all JSON API endpoints.
+This was caused because a third-party library doesn't implement proper
+Content-Type header validation. To mitigate the vulnerability, we set the
+session cookie to have the `SameSite: Lax` property.
+ * Fix Faraday Server logs were always in debug
+ * Add update date column when exporting vulnerabilities to CSV
+ * Fix unicode error when exporting vulnerabilities to CSV
+
+3.10.1 [Jan 10th, 2020]:
+---
+ * Fix installation with `pip install --no-binary :all: faradaysec`
+ * Force usage of webargs 5 (webargs 6 broke backwards compatibility)
+ * Use latest version of faraday-plugins
+ * Fix broken "Faraday Plugin" menu entry in the GTK client
+ * Extract export csv to reuse for reports
+
+3.10 [Dec 19th, 2019]:
+---
+ * Use Python 3 instead of Python 2 in the Faraday Server
+ * Add ability to manage agents with multiple executors
+ * Agents can be run with custom arguments
+ * Improved processing of uploaded reports. Now it is much faster!
+ * Add custom fields of type `choice`
+ * Fix vuln status transition in bulk create API (mark closed vulns as re-opened when they are triggered again)
+ * Fix bug when using non-existent workspaces in Faraday GTK Client
+ * Set service name as required in the Web UI
+ * Validate the start date of a workspace is not greater than the end date
+ * Fix command API when year is invalid
+ * When SSL misconfigurations cause websockets to fails it doesn't block server from starting
+ * Check for invalid service port number in the Web UI
+ * Fix dashboard tooltips for vulnerability
+ * Fix bug when GTK client lost connection to the server
+ * Fix style issues in "Hosts by Service" modal of the dashboard
+ * Add API for bulk delete of vulnerabilities
+ * Add missing vuln attributes to exported CSV
+ * `faraday-manage support` now displays the Operating System version
+ * Notify when `faraday-manage` can't run becasue of PostgreSQL HBA config error
+
+3.9.3 [Nov 12th, 2019]:
+---
+ * Fix unicode error when exporting vulns to CSV
+ * Add vuln attributes to CSV
+ * Fix hostname parsing and add external ID to Qualys plugin
+
 3.9 [Oct 3th, 2019]:
 ---
  * Add agents feature for distributed plugin execution

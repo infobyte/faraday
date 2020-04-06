@@ -192,6 +192,7 @@ def _group_concat_postgresql(element, compiler, **kw):
     )
     return res
 
+
 class BooleanToIntColumn(expression.FunctionElement):
 
     def __init__(self, expression):
@@ -202,6 +203,7 @@ class BooleanToIntColumn(expression.FunctionElement):
 @compiler.compiles(BooleanToIntColumn, 'postgresql')
 def _integer_to_boolean_postgresql(element, compiler, **kw):
     return '{0}::int'.format(element.expression_str)
+
 
 @compiler.compiles(BooleanToIntColumn, 'sqlite')
 def _integer_to_boolean_sqlite(element, compiler, **kw):
@@ -317,4 +319,3 @@ def is_unique_constraint_violation(exception):
         return True
     assert isinstance(exception.orig.pgcode, str)
     return exception.orig.pgcode == UNIQUE_VIOLATION
-# I'm Py3

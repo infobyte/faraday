@@ -1,3 +1,4 @@
+import os
 import sys
 import shutil
 import tempfile
@@ -7,12 +8,13 @@ from colorama import Fore, Style
 
 import distro
 
+from faraday.server.config import CONST_FARADAY_HOME_PATH
+
 try:
     from pip._internal.operations import freeze
 except ImportError:  # pip < 10.0
     from pip.operations import freeze
 
-import faraday.config.constant as constants
 from faraday.server.commands import status_check
 
 init()
@@ -43,9 +45,13 @@ def get_pip_freeze(path):
         pip_file.write('\n')
     pip_file.close()
 
+
 def get_logs(path):
-    #Copies the logs using the logs path saved on constants 
-    shutil.copytree(constants.CONST_FARADAY_HOME_PATH +'/logs', path + '/logs')
+    #Copies the logs using the logs path saved on constants
+    orig_path = os.path.join(CONST_FARADAY_HOME_PATH, 'logs')
+    dst_path = os.path.join(path, 'logs')
+    shutil.copytree(orig_path, dst_path, ignore=shutil.ignore_patterns('access*.*'))
+
 
 def make_zip(path):
     #Makes a zip file of the new folder with all the information obtained inside

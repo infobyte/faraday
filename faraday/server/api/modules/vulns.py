@@ -1,7 +1,6 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-from builtins import str
 
 import os
 import io
@@ -46,6 +45,7 @@ from faraday.server.models import (
 )
 from faraday.server.utils.database import get_or_create
 from faraday.server.utils.export import export_vulns_to_csv
+from faraday.server.utils.py3 import BytesJSONEncoder
 
 from faraday.server.api.modules.services import ServiceSchema
 from faraday.server.schemas import (
@@ -96,7 +96,10 @@ class CustomMetadataSchema(MetadataSchema):
     creator = fields.Method('get_creator', dump_only=True)
 
     def get_creator(self, obj):
-        return obj.creator_command_tool or 'Web UI'
+        if obj.tool:
+            return obj.tool
+        else:
+            return obj.creator_command_tool or 'Web UI'
 
 
 class VulnerabilitySchema(AutoSchema):
@@ -113,6 +116,7 @@ class VulnerabilitySchema(AutoSchema):
                                    attribute='policy_violations')
     refs = fields.List(fields.String(), attribute='references')
     issuetracker = fields.Method(serialize='get_issuetracker', dump_only=True)
+    tool = fields.String(attribute='tool')
     parent = fields.Method(serialize='get_parent', deserialize='load_parent', required=True)
     parent_type = MutableField(fields.Method('get_parent_type'),
                                fields.String(),
@@ -156,7 +160,7 @@ class VulnerabilitySchema(AutoSchema):
             'service', 'obj_id', 'type', 'policyviolations',
             '_attachments',
             'target', 'host_os', 'resolution', 'metadata',
-            'custom_fields', 'external_id')
+            'custom_fields', 'external_id', 'tool')
 
     def get_type(self, obj):
         return obj.__class__.__name__
@@ -280,7 +284,7 @@ class VulnerabilityWebSchema(VulnerabilitySchema):
             'service', 'obj_id', 'type', 'policyviolations',
             'request', '_attachments', 'params',
             'target', 'host_os', 'resolution', 'method', 'metadata',
-            'status_code', 'custom_fields', 'external_id'
+            'status_code', 'custom_fields', 'external_id', 'tool'
         )
 
 
@@ -427,6 +431,7 @@ class VulnerabilityFilterSet(FilterSet):
 class VulnerabilityView(PaginatedMixin,
                         FilterAlchemyMixin,
                         ReadWriteWorkspacedView):
+
     route_base = 'vulns'
     filterset_class = VulnerabilityFilterSet
     sort_model_class = VulnerabilityWeb  # It has all the fields
@@ -469,7 +474,6 @@ class VulnerabilityView(PaginatedMixin,
         attachments = data.pop('_attachments', {})
         references = data.pop('references', [])
         policyviolations = data.pop('policy_violations', [])
-
         try:
             obj = super(VulnerabilityView, self)._perform_create(data, **kwargs)
         except TypeError:
@@ -479,6 +483,11 @@ class VulnerabilityView(PaginatedMixin,
 
         obj.references = references
         obj.policy_violations = policyviolations
+        if not obj.tool:
+            if obj.creator_command_tool:
+                obj.tool = obj.creator_command_tool
+            else:
+                obj.tool = "Web UI"
         db.session.commit()
         self._process_attachments(obj, attachments)
         return obj
@@ -504,6 +513,7 @@ class VulnerabilityView(PaginatedMixin,
 
     def _update_object(self, obj, data):
         data.pop('type') # It's forbidden to change vuln type!
+        data.pop('tool', '')
         return super(VulnerabilityView, self)._update_object(obj, data)
 
     def _perform_update(self, object_id, obj, data, workspace_name):
@@ -612,6 +622,7 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('/<int:vuln_id>/attachment/', methods=['POST'])
     def post_attachment(self, workspace_name, vuln_id):
+
         try:
             validate_csrf(request.form.get('csrf_token'))
         except wtforms.ValidationError:
@@ -711,9 +722,11 @@ class VulnerabilityView(PaginatedMixin,
                 normal_vulns_host = normal_vulns.join(Host).join(Hostname).filter(or_(*or_filters))
                 normal_vulns = normal_vulns_host.union(normal_vulns.join(Service).join(Host).join(Hostname).filter(or_(*or_filters)))
 
-            normal_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(normal_vulns.all())
+            normal_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(normal_vulns.all(),
+                                                                                               cls=BytesJSONEncoder)
             normal_vulns_data = json.loads(normal_vulns.data)
         except Exception as ex:
+            logger.exception(ex)
             normal_vulns_data = []
         try:
             web_vulns = search(db.session,
@@ -726,9 +739,11 @@ class VulnerabilityView(PaginatedMixin,
                     or_filters.append(Hostname.name == hostname_filter['val'])
 
                 web_vulns = web_vulns.join(Service).join(Host).join(Hostname).filter(or_(*or_filters))
-            web_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(web_vulns.all())
+            web_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(web_vulns.all(),
+                                                                                               cls=BytesJSONEncoder)
             web_vulns_data = json.loads(web_vulns.data)
         except Exception as ex:
+            logger.exception(ex)
             web_vulns_data = []
         return normal_vulns_data + web_vulns_data
 
@@ -764,6 +779,22 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('/<int:vuln_id>/attachments/', methods=['GET'])
     def get_attachments_by_vuln(self, workspace_name, vuln_id):
+        """
+        ---
+        get:
+          tags: ["Vulns"]
+          description: Gets an attachment for a vulnerability
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: EvidenceSchema
+            403:
+              description: Workspace disabled or no permission
+            404:
+              description: Not Found
+        """
         workspace = self._get_workspace(workspace_name)
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(VulnerabilityGeneric.id == vuln_id,
@@ -807,7 +838,7 @@ class VulnerabilityView(PaginatedMixin,
     @route('export_csv/', methods=['GET'])
     def export_csv(self, workspace_name):
         confirmed = bool(request.args.get('confirmed'))
-        filters = request.args.get('filter?q', '{}')
+        filters = request.args.get('q', '{}')
         custom_fields_columns = []
         for custom_field in db.session.query(CustomFieldsSchema).order_by(CustomFieldsSchema.field_order):
             custom_fields_columns.append(custom_field.field_name)

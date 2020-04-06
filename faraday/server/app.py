@@ -5,6 +5,8 @@ import logging
 import os
 import string
 import datetime
+
+import requests
 from itsdangerous import TimedJSONWebSignatureSerializer, SignatureExpired, BadSignature
 from os.path import join
 from random import SystemRandom
@@ -14,7 +16,7 @@ from faraday.server.models import User
 from configparser import ConfigParser, NoSectionError, NoOptionError, DuplicateSectionError
 
 import flask
-from flask import Flask, session, g
+from flask import Flask, session, g, request
 from flask.json import JSONEncoder
 from flask_sqlalchemy import get_debug_queries
 from flask_security import (
@@ -30,7 +32,7 @@ from flask_security.utils import (
 from flask_kvsession import KVSessionExtension
 from simplekv.fs import FilesystemStore
 from simplekv.decorator import PrefixDecorator
-from flask_login import user_logged_out
+from flask_login import user_logged_out, user_logged_in
 from nplusone.ext.flask_sqlalchemy import NPlusOne
 from depot.manager import DepotManager
 
@@ -39,7 +41,7 @@ import faraday.server.config
 import faraday.server.events
 from faraday.server.utils.logger import LOGGING_HANDLERS
 from faraday.server.utils.invalid_chars import remove_null_caracters
-from faraday.config.constant import CONST_FARADAY_HOME_PATH
+from faraday.server.config import CONST_FARADAY_HOME_PATH
 
 
 logger = logging.getLogger(__name__)
@@ -87,6 +89,7 @@ def register_blueprints(app):
     from faraday.server.api.modules.bulk_create import bulk_create_api # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.token import token_api # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.search_filter import searchfilter_api # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.preferences import preferences_api  # pylint:disable=import-outside-toplevel
 
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(activityfeed_api)
@@ -110,6 +113,7 @@ def register_blueprints(app):
     app.register_blueprint(bulk_create_api)
     app.register_blueprint(token_api)
     app.register_blueprint(searchfilter_api)
+    app.register_blueprint(preferences_api)
 
 
 def check_testing_configuration(testing, app):
@@ -126,7 +130,7 @@ def register_handlers(app):
     # We are exposing a RESTful API, so don't redirect a user to a login page in
     # case of being unauthorized, raise a 403 error instead
     @app.login_manager.unauthorized_handler
-    def unauthorized():
+    def unauthorized():  # pylint:disable=unused-variable
         flask.abort(403)
 
     def verify_token(token):
@@ -146,7 +150,7 @@ def register_handlers(app):
 
 
     @app.before_request
-    def default_login_required():
+    def default_login_required(): # pylint:disable=unused-variable
         view = app.view_functions.get(flask.request.endpoint)
 
         if app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER'] in flask.request.headers:
@@ -193,11 +197,11 @@ def register_handlers(app):
                 return
 
     @app.before_request
-    def load_g_custom_fields():
+    def load_g_custom_fields(): # pylint:disable=unused-variable
         g.custom_fields = {}
 
     @app.after_request
-    def log_queries_count(response):
+    def log_queries_count(response): # pylint:disable=unused-variable
         if flask.request.method not in ['GET', 'HEAD']:
             # We did most optimizations for read only endpoints
             # TODO migrations: improve optimization and remove this if
@@ -248,6 +252,18 @@ def expire_session(app, user):
     session.destroy()
     KVSessionExtension(app=app).cleanup_sessions(app)
 
+
+def user_logged_in_succesfull(app, user):
+    user_agent = request.headers.get('User-Agent')
+    if user_agent.startswith('faraday-client/'):
+        HOME_URL = "https://portal.faradaysec.com/api/v1/license_check"
+        params = {'version': faraday.__version__, 'key': 'white', 'client': user_agent}
+        try:
+            logger.debug('Send Faraday-Client license_check')
+            res = requests.get(HOME_URL, params=params, timeout=1, verify=True)
+            logger.debug("Faraday-Client license_check response: %s", res.text)
+        except Exception as e:
+            logger.warning("Error sending client license_check [%s]", e)
 
 def create_app(db_connection_string=None, testing=None):
     app = Flask(__name__)
@@ -304,12 +320,14 @@ def create_app(db_connection_string=None, testing=None):
             'plaintext',  # TODO: remove it
         ],
         'PERMANENT_SESSION_LIFETIME': datetime.timedelta(hours=12),
-        'SESSION_COOKIE_NAME': 'faraday_session',
+        'SESSION_COOKIE_NAME': 'faraday_session_2',
+        'SESSION_COOKIE_SAMESITE': 'Lax',
     })
 
     store = FilesystemStore(app.config['SESSION_FILE_DIR'])
     prefixed_store = PrefixDecorator('sessions_', store)
     KVSessionExtension(prefixed_store, app)
+    user_logged_in.connect(user_logged_in_succesfull, app)
     user_logged_out.connect(expire_session, app)
 
     storage_path = faraday.server.config.storage.path
@@ -357,7 +375,7 @@ def create_app(db_connection_string=None, testing=None):
 
     for handler in LOGGING_HANDLERS:
         app.logger.addHandler(handler)
-
+    app.logger.propagate = False
     register_blueprints(app)
     register_handlers(app)
 

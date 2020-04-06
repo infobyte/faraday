@@ -83,7 +83,7 @@ class SQLAlchemy(OriginalSQLAlchemy):
 
 
 class CustomEngineConnector(_EngineConnector):
-    """Used by overrided SQLAlchemy class to fix rollback issues.
+    """Used by overridden SQLAlchemy class to fix rollback issues.
 
     Also set case sensitive likes (in SQLite there are case
     insensitive by default)"""
@@ -100,7 +100,7 @@ class CustomEngineConnector(_EngineConnector):
         if uri.startswith('sqlite://'):
             with self._lock:
                 @event.listens_for(rv, "connect")
-                def do_connect(dbapi_connection, connection_record):
+                def do_connect(dbapi_connection, connection_record):  # pylint:disable=unused-variable
                     # disable pysqlite's emitting of the BEGIN statement
                     # entirely.  also stops it from emitting COMMIT before any
                     # DDL.
@@ -110,7 +110,7 @@ class CustomEngineConnector(_EngineConnector):
                     cursor.close()
 
                 @event.listens_for(rv, "begin")
-                def do_begin(conn):
+                def do_begin(conn): # pylint:disable=unused-variable
                     # emit our own BEGIN
                     conn.execute("BEGIN")
         return rv
@@ -782,6 +782,7 @@ class Command(Metadata):
     IMPORT_SOURCE = [
         'report',  # all the files the tools export and faraday imports it from the resports directory, gtk manual import or web import.
         'shell',  # command executed on the shell or webshell with hooks connected to faraday.
+        'agent'
     ]
 
     __tablename__ = 'command'
@@ -839,6 +840,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
     issuetracker = BlankColumn(Text)
     association_date = Column(DateTime, nullable=True)
     disassociated_manually = Column(Boolean, nullable=False, default=False)
+    tool = BlankColumn(Text, nullable=False)
 
     vulnerability_duplicate_id =  Column(
                         Integer,
@@ -1273,6 +1275,29 @@ class Credential(Metadata):
         foreign_keys=[workspace_id],
     )
 
+    _host_ip_query = (
+        select([Host.ip])
+        .where(text('credential.host_id = host.id'))
+    )
+
+    _service_ip_query = (
+        select([text('host_inner.ip || \'/\' || service.name')])
+        .select_from(text('host as host_inner, service'))
+        .where(text('credential.service_id = service.id and '
+                    'host_inner.id = service.host_id'))
+    )
+
+    target_ip = column_property(
+        case([
+            (text('credential.host_id IS NOT null'),
+                _host_ip_query.as_scalar()),
+            (text('credential.service_id IS NOT null'),
+                _service_ip_query.as_scalar())
+        ]),
+        deferred=True
+    )
+
+
     __table_args__ = (
         CheckConstraint('(host_id IS NULL AND service_id IS NOT NULL) OR '
                         '(host_id IS NOT NULL AND service_id IS NULL)',
@@ -1546,6 +1571,7 @@ class User(db.Model, UserMixin):
             String(16),
             name="otp_secret", nullable=True)
     state_otp = Column(Enum(*OTP_STATES, name='user_otp_states'), nullable=False, default="disabled")
+    preferences = Column(JSONType, nullable=True, default={})
 
     # TODO: add  many to many relationship to add permission to workspace
 
@@ -1925,6 +1951,24 @@ class Action(Metadata):
     value = Column(String, nullable=True)
 
 
+class Executor(Metadata):
+    __tablename__ = 'executor'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    agent_id = Column(Integer, ForeignKey('agent.id'), index=True, nullable=False)
+    agent = relationship(
+        'Agent',
+        backref=backref('executors', cascade="all, delete-orphan"),
+    )
+    parameters_metadata = Column(JSONType, nullable=False, default={})
+    # workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    # workspace = relationship('Workspace', backref=backref('executors', cascade="all, delete-orphan"))
+
+    __table_args__ = (
+        UniqueConstraint('name', 'agent_id',
+                         name='uix_executor_table_agent_id_name'),)
+
+
 class AgentsSchedule(Metadata):
     __tablename__ = 'agent_schedule'
     id = Column(Integer, primary_key=True)
@@ -1939,12 +1983,13 @@ class AgentsSchedule(Metadata):
         'Workspace',
         backref=backref('schedules', cascade="all, delete-orphan"),
     )
-
-    agent_id = Column(Integer, ForeignKey('agent.id'), index=True, nullable=False)
-    agent = relationship(
-        'Agent',
+    executor_id = Column(Integer, ForeignKey('executor.id'), index=True, nullable=False)
+    executor = relationship(
+        'Executor',
         backref=backref('schedules', cascade="all, delete-orphan"),
     )
+
+    parameters = Column(JSONType, nullable=False, default={})
 
     @property
     def next_run(self):
@@ -1997,6 +2042,25 @@ class Agent(Metadata):
                 return 'offline'
         else:
             return 'paused'
+
+
+class AgentExecution(Metadata):
+    __tablename__ = 'agent_execution'
+    id = Column(Integer, primary_key=True)
+    running = Column(Boolean, nullable=True)
+    successful = Column(Boolean, nullable=True)
+    message = Column(String, nullable=True)
+    executor_id = Column(Integer, ForeignKey('executor.id'), index=True, nullable=False)
+    executor = relationship('Executor', foreign_keys=[executor_id], backref=backref('executions', cascade="all, delete-orphan"))
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship(
+        'Workspace',
+        backref=backref('agent_executions', cascade="all, delete-orphan"),
+    )
+
+    @property
+    def parent(self):
+        return
 
 
 class Condition(Metadata):
@@ -2081,5 +2145,4 @@ event.listen(
 )
 
 # We have to import this after all models are defined
-import faraday.server.events
-# I'm Py3
+import faraday.server.events # pylint: disable=unused-import

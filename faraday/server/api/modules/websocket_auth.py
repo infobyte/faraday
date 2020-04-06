@@ -50,7 +50,7 @@ def decode_agent_websocket_token(token):
                              salt="websocket_agent")
     try:
         agent_id = signer.unsign(token, max_age=60).decode('utf-8')
-    except BadData as e:
+    except BadData:
         raise ValueError("Invalid Token")
     agent = Agent.query.get(agent_id)
     if agent is None:

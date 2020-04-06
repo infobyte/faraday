@@ -1,1 +1,0 @@
-when ssl misconfigurations cause websockets to fails it doesn't block server from starting

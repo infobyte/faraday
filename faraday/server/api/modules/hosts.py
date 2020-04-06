@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 class HostSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     id = fields.Integer()
-    _rev = fields.String(default='')
+    _rev = fields.String(default='', dump_only=True)
     ip = fields.String(default='')
     description = fields.String(required=True)  # Explicitly set required=True
     default_gateway = NullToBlankString(
@@ -144,6 +144,22 @@ class HostsView(PaginatedMixin,
 
     @route('/bulk_create/', methods=['POST'])
     def bulk_create(self, workspace_name):
+        """
+        ---
+        post:
+          tags: ["Vulns"]
+          description: Creates hosts in bulk
+          responses:
+            201:
+              description: Created
+              content:
+                application/json:
+                  schema: HostSchema
+            400:
+              description: Bad request
+            403:
+              description: Forbidden
+        """
         try:
             validate_csrf(flask.request.form.get('csrf_token'))
         except wtforms.ValidationError:
@@ -197,13 +213,25 @@ class HostsView(PaginatedMixin,
 
     @route('/countVulns/')
     def count_vulns(self, workspace_name):
+        """
+        ---
+        get:
+          tags: ["Hosts"]
+          summary: Counts Vulnerabilities per host
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: HostCountSchema
+        """
         host_ids = flask.request.args.get('hosts', None)
         if host_ids:
             host_id_list = host_ids.split(',')
         else:
             host_id_list = None
 
-        res_dict = {'hosts':{}}
+        res_dict = {'hosts': {}}
 
         host_count_schema = HostCountSchema()
         host_count = Host.query_with_count(None, host_id_list, workspace_name)
@@ -225,7 +253,7 @@ class HostsView(PaginatedMixin,
         result = query.all()
         res_dict = {'tools': []}
         for row in result:
-            host, command = row
+            _, command = row
             res_dict['tools'].append({'command': command.tool, 'user': command.user, 'params': command.params, 'command_id': command.id, 'create_date': command.create_date.replace(tzinfo=pytz.utc).strftime("%c")})
         return res_dict
 
@@ -280,6 +308,26 @@ class HostsView(PaginatedMixin,
             'total_rows': (pagination_metadata and pagination_metadata.total
                            or len(hosts)),
         }
+
+    @route('bulk_delete/', methods=['DELETE'])
+    def bulk_delete(self, workspace_name):
+        workspace = self._get_workspace(workspace_name)
+        json_request = flask.request.get_json()
+        if not json_request:
+            flask.abort(400, 'Invalid request. Check the request data or the content type of the request')
+        hosts_ids = json_request.get('hosts_ids', [])
+        hosts_ids = [host_id for host_id in hosts_ids if isinstance(host_id, int)]
+        deleted_hosts = 0
+        if hosts_ids:
+            deleted_hosts = Host.query.filter(
+                Host.id.in_(hosts_ids),
+                Host.workspace_id == workspace.id).delete(synchronize_session='fetch')
+        else:
+            flask.abort(400, "Invalid request")
+
+        db.session.commit()
+        response = {'deleted_hosts': deleted_hosts}
+        return flask.jsonify(response)
 
 
 HostsView.register(host_api)

@@ -1,7 +1,3 @@
-## Download
-
-Refer to the [releases page](https://github.com/infobyte/faraday/releases) for the latest pre-made installers for all supported operating systems.
-
 ## About
 
 Faraday introduces a new concept - IPE (Integrated Penetration-Test Environment) a multiuser Penetration test IDE. Designed for distributing, indexing, and analyzing the data generated during a security audit.
@@ -20,7 +16,10 @@ Faraday crunches the data you load into different visualizations that are useful
 
 To read about the latest features check out the [release notes](https://github.com/infobyte/faraday/blob/master/RELEASE.md)!
 
-## Getting Started!
+
+## Quickstart
+
+Refer to the [releases page](https://github.com/infobyte/faraday/releases) for the latest pre-made installers for all supported operating systems.
 
 Check out our documentation for detailed information on how to install Faraday in all of our supported platforms:
 
@@ -28,9 +27,71 @@ Check out our documentation for detailed information on how to install Faraday i
 
 To begin the installation process, check out our [Installation Wiki](https://github.com/infobyte/faraday/wiki/Installation-Community).
 
+## Development
+
+You need Python 3.6+ and postgres to run the faraday server.
+
+### Install OS Dependencies
+
+You need python 3.6+ and postgres. E.g. in Ubuntu
+
+```
+apt install postgresql python3.6
+```
+
+Make sure postgres is up and running before the next steps.
+
+
+
+### Install Python dependencies
+
+get the latest source
+
+```
+git clone https://github.com/infobyte/faraday
+```
+
+create a virtual environment and install Python dependencies. For example:
+
+```
+cd faraday
+python3 -m venv .venv
+source .venv/bin/activate
+python3 setup.py develop
+
+```
+
+### Run the server
+
+In the virtual environment,  initialize the faraday database:
+
+```
+sudo faraday-manage initdb
+```
+
+This will give you a randomly generated password to log into the web UI.
+Now you can start the server
+
+```
+faraday-server
+```
+
+In your browser, now you can go to localhost:5985 and login with "faraday" as username, and the password generated in the initdb step.
+
+
 ## New Features!
+
 All of Faraday's latest features and updates are always available on our [blog](http://blog.infobytesec.com/search/label/english).
-There are new entries every few weeks, don't forget to check out our amazing new improvements on it's last entry!
+There are new entries every few weeks, don't forget to check out our amazing new improvements on its latest entry!
+
+## API
+
+This is a branch for a PoC of automatically generating the API documentation in the [OpenAPI/swagger](https://www.openapis.org/) format.
+To generate the API docs, for example, to use with swagger UI, run:
+
+```
+faraday-manage openapi-yaml
+```
 
 
 ## Plugins list
@@ -43,12 +104,15 @@ There are three Plugin types: **console** plugins which intercept and interpret 
 
 [Read more about Plugins](http://github.com/infobyte/faraday/wiki/Plugin-List).
 
+
 ## Features
 
 ### Workspaces
+
 Information is organized into various **Workspaces**. Each Workspace contains a pentest team's assignments and all the intel that is discovered.
 
 ### Conflicts
+
 If two plugins produce clashing information for an individual element, a conflict that the user will have to resolve is generated.  An example is if **user1** incorporates host *127.0.0.1 OS:Linux* and **user2** incorporates *127.0.0.1 OS: Linux Ubuntu 13.10*.
 
 On our [GTK interface](https://github.com/infobyte/faraday/wiki/Usage#gtk-gui) there's a button on the bottom right corner of the main window displaying the number of conflicts in the current workspace. To resolve them, just click on the button and a window will open where you can edit the conflicting objects and select which one to keep.
@@ -73,6 +137,7 @@ Using our plugin you can perform various actions using the command line, for exa
 Read more about the [Faraday Plugin](https://github.com/infobyte/faraday/wiki/faraday-plugin).
 
 ### Notifications
+
 Updating objects on other Faraday instances result in notifications on your
 Faraday GTK Client.
 
@@ -80,6 +145,7 @@ Faraday GTK Client.
 
 
 ### CSV Exporting
+
 Faraday supports CSV Exporting from its WEB UI.
 [More information](Exporting-the-information)
 

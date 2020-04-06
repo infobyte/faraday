@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from builtins import bytes
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from marshmallow import ValidationError
@@ -37,7 +37,8 @@ vuln_data = {
         'accountability': True,
         'availability': False,
     },
-    'refs': ['CVE-1234']
+    'refs': ['CVE-1234'],
+    'tool': 'some_tool'
 }
 
 vuln_web_data = {
@@ -113,7 +114,7 @@ def test_create_host_with_services(session, workspace):
 
 
 def test_create_service(session, host):
-    data = bc.ServiceSchema(strict=True).load(service_data).data
+    data = bc.BulkServiceSchema(strict=True).load(service_data).data
     bc._create_service(host.workspace, host, data)
     assert count(Service, host.workspace) == 1
     service = Service.query.filter(Service.workspace == host.workspace).one()
@@ -129,7 +130,7 @@ def test_create_existing_service(session, service):
         "port": service.port,
         "protocol": service.protocol,
     }
-    data = bc.ServiceSchema(strict=True).load(data).data
+    data = bc.BulkServiceSchema(strict=True).load(data).data
     bc._create_service(service.workspace, service.host, data)
     assert count(Service, service.host.workspace) == 1
 
@@ -146,6 +147,7 @@ def test_create_host_vuln(session, host):
     assert not vuln.impact_availability
     assert not vuln.impact_confidentiality
     assert vuln.references == {u'CVE-1234'}
+    assert vuln.tool == "some_tool"
 
 
 def test_create_service_vuln(session, service):
@@ -162,7 +164,41 @@ def test_create_service_vuln(session, service):
     assert not vuln.impact_availability
     assert not vuln.impact_confidentiality
     assert vuln.references == {u'CVE-1234'}
+    assert vuln.tool == "some_tool"
 
+
+def test_create_host_vuln_without_tool(session, host):
+    no_tool_data = vuln_data.copy()
+    no_tool_data.pop('tool')
+    data = bc.VulnerabilitySchema(strict=True).load(no_tool_data).data
+    bc._create_hostvuln(host.workspace, host, data)
+    vuln = host.workspace.vulnerabilities[0]
+    assert vuln.tool == "Web UI"
+
+
+def test_creates_vuln_with_command_object_with_tool(session, service):
+    host_data_ = host_data.copy()
+    service_data_ = service_data.copy()
+    vuln_web_data_ = vuln_data.copy()
+    service_data_['vulnerabilities'] = [vuln_web_data_]
+    host_data_['services'] = [service_data_]
+    bc.bulk_create(service.workspace, dict(command=command_data, hosts=[host_data_]))
+    assert count(Vulnerability, service.workspace) == 1
+    vuln = service.workspace.vulnerabilities[0]
+    assert vuln.tool == vuln_data['tool']
+
+
+def test_creates_vuln_with_command_object_without_tool(session, service):
+    host_data_ = host_data.copy()
+    service_data_ = service_data.copy()
+    vuln_web_data_ = vuln_data.copy()
+    vuln_web_data_.pop('tool')
+    service_data_['vulnerabilities'] = [vuln_web_data_]
+    host_data_['services'] = [service_data_]
+    bc.bulk_create(service.workspace, dict(command=command_data, hosts=[host_data_]))
+    assert count(Vulnerability, service.workspace) == 1
+    vuln = service.workspace.vulnerabilities[0]
+    assert vuln.tool == command_data['tool']
 
 def test_cannot_create_host_vulnweb(session, host):
     data = vuln_data.copy()
@@ -241,7 +277,7 @@ def test_create_host_with_cred(session, workspace):
 def test_create_service_with_vuln(session, host):
     service_data_ = service_data.copy()
     service_data_['vulnerabilities'] = [vuln_data]
-    data = bc.ServiceSchema(strict=True).load(service_data_).data
+    data = bc.BulkServiceSchema(strict=True).load(service_data_).data
     bc._create_service(host.workspace, host, data)
     assert count(Service, host.workspace) == 1
     service = host.workspace.services[0]
@@ -255,7 +291,7 @@ def test_create_service_with_vuln(session, host):
 def test_create_service_with_cred(session, host):
     service_data_ = service_data.copy()
     service_data_['credentials'] = [credential_data]
-    data = bc.ServiceSchema(strict=True).load(service_data_).data
+    data = bc.BulkServiceSchema(strict=True).load(service_data_).data
     bc._create_service(host.workspace, host, data)
     assert count(Service, host.workspace) == 1
     service = host.workspace.services[0]
@@ -274,7 +310,7 @@ def test_create_service_with_invalid_vuln(session, host):
     del vuln_data_['name']
     service_data_['vulnerabilities'] = [vuln_data_]
     with pytest.raises(ValidationError):
-        data = bc.ServiceSchema(strict=True).load(service_data_).data
+        data = bc.BulkServiceSchema(strict=True).load(service_data_).data
         bc._create_service(host.workspace, host, data)
     assert count(Service, host.workspace) == 0
     assert count(Vulnerability, host.workspace) == 0
@@ -286,7 +322,7 @@ def test_create_service_with_invalid_vulns(session, host):
     del vuln_data_['name']
     service_data_['vulnerabilities'] = [1, 2, 3]
     with pytest.raises(ValidationError):
-        data = bc.ServiceSchema(strict=True).load(service_data_).data
+        data = bc.BulkServiceSchema(strict=True).load(service_data_).data
         bc._create_service(host.workspace, host, data)
     assert count(Service, host.workspace) == 0
     assert count(Vulnerability, host.workspace) == 0
@@ -297,7 +333,7 @@ def test_create_service_with_vulnweb(session, host):
     vuln_data_ = vuln_data.copy()
     vuln_data_.update(vuln_web_data)
     service_data_['vulnerabilities'] = [vuln_data_]
-    data = bc.ServiceSchema(strict=True).load(service_data_).data
+    data = bc.BulkServiceSchema(strict=True).load(service_data_).data
     bc._create_service(host.workspace, host, data)
     assert count(Service, host.workspace) == 1
     service = host.workspace.services[0]
@@ -481,11 +517,13 @@ def test_creates_command_object_on_duplicates(
 
 
 @pytest.mark.usefixtures('logged_user')
-def test_bulk_create_endpoint(session, workspace, test_client):
+def test_bulk_create_endpoint(session, workspace, test_client, logged_user):
     assert count(Host, workspace) == 0
     assert count(VulnerabilityGeneric, workspace) == 0
     url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
     host_data_ = host_data.copy()
+    host_data_['services'] = [service_data]
+    host_data_['credentials'] = [credential_data]
     host_data_['vulnerabilities'] = [vuln_data]
     res = test_client.post(url, data=dict(hosts=[host_data_]))
     assert res.status_code == 201, res.json
@@ -493,7 +531,45 @@ def test_bulk_create_endpoint(session, workspace, test_client):
     assert count(Vulnerability, workspace) == 1
     host = Host.query.filter(Host.workspace == workspace).one()
     assert host.ip == "127.0.0.1"
+    assert host.creator_id == logged_user.id
     assert set({hn.name for hn in host.hostnames}) == {"test.com", "test2.org"}
+    service = Service.query.filter(Service.workspace == workspace).one()
+    assert service.creator_id == logged_user.id
+    credential = Credential.query.filter(Credential.workspace == workspace).one()
+    assert credential.creator_id == logged_user.id
+
+
+@pytest.mark.usefixtures('logged_user')
+def test_bulk_create_endpoint_run_over_closed_vuln(session, workspace, test_client):
+    assert count(Host, workspace) == 0
+    assert count(VulnerabilityGeneric, workspace) == 0
+    url = f'v2/ws/{workspace.name}/bulk_create/'
+    host_data_ = host_data.copy()
+    host_data_['vulnerabilities'] = [vuln_data]
+    res = test_client.post(url, data=dict(hosts=[host_data_]))
+    assert res.status_code == 201, res.json
+    assert count(Host, workspace) == 1
+    assert count(Vulnerability, workspace) == 1
+    host = Host.query.filter(Host.workspace == workspace).one()
+    vuln = Vulnerability.query.filter(Vulnerability.workspace == workspace).one()
+    assert host.ip == "127.0.0.1"
+    assert set({hn.name for hn in host.hostnames}) == {"test.com", "test2.org"}
+    assert vuln.status == "open"
+    close_url = f"v2/ws/{workspace.name}/vulns/{vuln.id}/"
+    res = test_client.get(close_url)
+    vuln_data_del = res.json
+    vuln_data_del["status"] = "closed"
+    res = test_client.put(close_url, data=dict(vuln_data_del))
+    assert res.status_code == 200, res.json
+    assert count(Host, workspace) == 1
+    assert count(Vulnerability, workspace) == 1
+    assert vuln.status == "closed"
+    res = test_client.post(url, data=dict(hosts=[host_data_]))
+    assert res.status_code == 201, res.json
+    assert count(Host, workspace) == 1
+    assert count(Vulnerability, workspace) == 1
+    vuln = Vulnerability.query.filter(Vulnerability.workspace == workspace).one()
+    assert vuln.status == "re-opened"
 
 
 @pytest.mark.usefixtures('logged_user')
@@ -560,6 +636,14 @@ def test_bulk_create_endpoint_with_agent_token(session, agent, test_client):
     )
     assert res.status_code == 201
     assert count(Host, agent.workspace) == 1
+    host = Host.query.filter(Host.workspace == agent.workspace).one()
+    assert host.creator_id is None
+    assert count(Command, agent.workspace) == 1
+    command = Command.query.filter(Command.workspace == agent.workspace).one()
+    assert command.tool == agent.name
+    assert command.command == agent.name + ' executor'# TODO Executor name
+    assert command.params == ' params_unset'
+    assert command.import_source == 'agent'
 
 
 def test_bulk_create_endpoint_with_agent_token_readonly_workspace(
@@ -603,5 +687,51 @@ def test_bulk_create_endpoint_raises_400_with_no_data(
     )
     assert res.status_code == 400
 
+@pytest.mark.usefixtures('logged_user')
+def test_bulk_create_endpoint_with_vuln_run_date(session, workspace, test_client):
+    assert count(Host, workspace) == 0
+    assert count(VulnerabilityGeneric, workspace) == 0
+    url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
+    run_date = datetime.now(timezone.utc) - timedelta(days=30)
+    host_data_copy = host_data.copy()
+    vuln_data_copy = vuln_data.copy()
+    vuln_data_copy['run_date'] = run_date.timestamp()
+    host_data_copy['vulnerabilities'] = [vuln_data_copy]
+    res = test_client.post(url, data=dict(hosts=[host_data_copy]))
+    assert res.status_code == 201, res.json
+    assert count(Host, workspace) == 1
+    assert count(VulnerabilityGeneric, workspace) == 1
+    vuln = Vulnerability.query.filter(Vulnerability.workspace == workspace).one()
+    assert vuln.create_date.date() == run_date.date()
 
-# I'm Py3
+@pytest.mark.usefixtures('logged_user')
+def test_bulk_create_endpoint_with_vuln_future_run_date(session, workspace, test_client):
+    assert count(Host, workspace) == 0
+    assert count(VulnerabilityGeneric, workspace) == 0
+    url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
+    run_date = datetime.now(timezone.utc) + timedelta(days=10)
+    host_data_copy = host_data.copy()
+    vuln_data_copy = vuln_data.copy()
+    vuln_data_copy['run_date'] = run_date.timestamp()
+    host_data_copy['vulnerabilities'] = [vuln_data_copy]
+    res = test_client.post(url, data=dict(hosts=[host_data_copy]))
+    assert res.status_code == 201, res.json
+    assert count(Host, workspace) == 1
+    assert count(VulnerabilityGeneric, workspace) == 1
+    vuln = Vulnerability.query.filter(Vulnerability.workspace == workspace).one()
+    print(vuln.create_date)
+    assert vuln.create_date.date() < run_date.date()
+
+@pytest.mark.usefixtures('logged_user')
+def test_bulk_create_endpoint_with_invalid_vuln_run_date(session, workspace, test_client):
+    assert count(Host, workspace) == 0
+    assert count(VulnerabilityGeneric, workspace) == 0
+    url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
+    host_data_copy = host_data.copy()
+    vuln_data_copy = vuln_data.copy()
+    vuln_data_copy['run_date'] = "INVALID_VALUE"
+    host_data_copy['vulnerabilities'] = [vuln_data_copy]
+    res = test_client.post(url, data=dict(hosts=[host_data_copy]))
+    assert res.status_code == 400, res.json
+    assert count(VulnerabilityGeneric, workspace) == 0
+

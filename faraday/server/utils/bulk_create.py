@@ -7,8 +7,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def add_creator(vuln_data, creator_user):
-    for host in vuln_data["hosts"]:
+def add_creator(data, creator_user):
+    hosts_ = []
+    for host in data["hosts"]:
         host["creator_id"] = creator_user.id
         for service in host["services"]:
             service["creator_id"] = creator_user.id
@@ -16,5 +17,12 @@ def add_creator(vuln_data, creator_user):
             vuln["creator_id"] = creator_user.id
         for cred in host["credentials"]:
             cred["creator_id"] = creator_user.id
+        hosts_.append(host)
 
-    return vuln_data
+    response = dict(hosts=hosts_)
+    if "command" in data:
+        command = data['command']
+        command["creator_id"] = creator_user.id
+        response["command"] = command
+
+    return response

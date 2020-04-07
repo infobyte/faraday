@@ -400,13 +400,17 @@ class BulkCreateView(GenericWorkspacedView):
             ).one_or_none()
 
             if agent_execution is None:
-                logger.exception(NoResultFound("No row was found for agent executor id {}".format(execution_id)))
+                logger.exception(
+                    NoResultFound(
+                        f"No row was found for agent executor id {execution_id}")
+                )
                 flask.abort(400, "Can not find an agent execution with that id")
 
             if workspace_name != agent_execution.workspace.name:
-                logger.exception(ValueError("The {0} agent has permission to workspace {1} and ask to write to "
-                                            "workspace {2}"
-                                            .format(agent.name, workspace_name, agent_execution.workspace.name)))
+                logger.exception(
+                    ValueError(f"The {agent.name} agent has permission to workspace {workspace_name} and ask to write "
+                               f"to workspace {agent_execution.workspace.name}")
+                )
                 flask.abort(400, "Trying to write to the incorrect workspace")
 
             now = datetime.now()

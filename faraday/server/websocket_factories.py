@@ -151,16 +151,17 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
 
                         if agent.workspace.name != agent_execution.workspace.name:
                             logger.exception(
-                                ValueError("The {0} agent has permission to workspace {1} and ask to write to "
-                                           "workspace {2}"
-                                           .format(agent.name, agent.workspace.name, agent_execution.workspace.name)))
-                        agent_execution.successful = message.get('successful', None)
-                        agent_execution.running = message.get('running', None)
-                        agent_execution.message = message.get('message','')
-                        db.session.commit()
+                                ValueError(f"The {agent.name} agent has permission to workspace {agent.workspace.name} "
+                                           f"and ask to write to workspace {agent_execution.workspace.name}")
+                            )
+                        else:
+                            agent_execution.successful = message.get('successful', None)
+                            agent_execution.running = message.get('running', None)
+                            agent_execution.message = message.get('message','')
+                            db.session.commit()
                     else:
                         logger.exception(
-                            NoResultFound("No row was found for agent executor id {}".format(execution_id)))
+                            NoResultFound(f"No row was found for agent executor id {execution_id}"))
 
     def connectionLost(self, reason):
         WebSocketServerProtocol.connectionLost(self, reason)

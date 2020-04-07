@@ -457,7 +457,7 @@ class AgentExecutionFactory(WorkspaceObjectFactory):
         ExecutorFactory,
     )
     parameters_data = factory.LazyAttribute(
-        lambda e: str({"param_name": "param_value"})
+        lambda _: {"param_name": "param_value"}
     )
     workspace = factory.SelfAttribute('executor.agent.workspace')
 

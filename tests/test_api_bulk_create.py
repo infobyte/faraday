@@ -704,11 +704,7 @@ def test_bulk_create_endpoint_with_agent_token_with_param(session, agent_executi
     command = Command.query.filter(Command.workspace == agent.workspace).one()
     assert command.tool == agent.name
     assert command.command == agent_execution.executor.name
-    params = str(agent_execution.parameters_data)
-    params = params.replace('{', '[', 1)
-    # Replace last occurence
-    index = params.rfind("}")
-    params = params[:index] + "]" + params[index + 1:]
+    params = ', '.join([f'{key}: {value}' for (key, value) in agent_execution.parameters_data.items()])
     assert command.params == str(params)
     assert command.import_source == 'agent'
 

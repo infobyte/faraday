@@ -416,13 +416,7 @@ class BulkCreateView(GenericWorkspacedView):
             now = datetime.now()
 
             params_data = agent_execution.parameters_data
-            params = ''
-            if len(params_data) > 0:
-                params = str(params_data)
-                params = params.replace('{', '[', 1)
-                # Replace last occurence
-                index = params.rfind("}")
-                params = params[:index] + "]" + params[index + 1:]
+            params = ', '.join([f'{key}: {value}' for (key, value) in params_data.items()])
 
 
             data["command"] = {

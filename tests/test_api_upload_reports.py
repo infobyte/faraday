@@ -11,7 +11,8 @@ import pytest
 from io import BytesIO
 
 from tests.factories import WorkspaceFactory
-from faraday.server.models import Host
+from faraday.server.threads.reports_processor import REPORTS_QUEUE
+
 
 @pytest.mark.usefixtures('logged_user')
 class TestFileUpload():
@@ -37,14 +38,9 @@ class TestFileUpload():
                 data=data,
                 use_json_data=False)
 
-        host = Host.query.filter().first()
-
         assert res.status_code == 200
-        import time
-        time.sleep(3)
-        host = Host.query.filter(Host.workspace_id == ws.id).first()
-        assert host
-        assert host.creator_id == logged_user.id
+        assert REPORTS_QUEUE.queue[0][0] == ws.name
+        assert REPORTS_QUEUE.queue[0][2].id == logged_user.id
 
 
     def test_no_file_in_request(self, test_client, session):

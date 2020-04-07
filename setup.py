@@ -35,7 +35,6 @@ with open('faraday/__init__.py', 'rt', encoding='utf8') as f:
 # Taken from https://stackoverflow.com/questions/14399534/reference-requirements-txt-for-the-install-requires-kwarg-in-setuptools-setup-py/14399775#14399775
 with open('requirements.txt') as fp:
     required = fp.read().splitlines()
-    required.reverse()
 
 with open('requirements_dev.txt') as fp:
     dev_required = fp.read().splitlines()

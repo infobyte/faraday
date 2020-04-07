@@ -277,7 +277,7 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
     assert 'host' in kwargs or 'service' in kwargs
     assert not ('host' in kwargs and 'service' in kwargs)
 
-    attachments = vuln_data.pop('_attachments', {})
+    vuln_data.pop('_attachments', {})
     references = vuln_data.pop('references', [])
     policyviolations = vuln_data.pop('policy_violations', [])
 

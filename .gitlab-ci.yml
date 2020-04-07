@@ -61,20 +61,32 @@ merge_conflict_check:
         variables:
             - $BUILD_TEST
 
+build_and_push_to_cachix:
+    tags:
+        - faradaytests
+    image: nixorg/nix
+    stage: pre_testing
+    script:
+        - nix-env -if pypi2nixpkgs/nixpkgs.nix -A cachix
+        - mkdir -p ~/.config/cachix
+        - export USER=$(whoami)
+        - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
+        - cachix use faradaysec
+        - nix-build | cachix push faradaysec
+
 pylint:
     tags:
         - faradaytests
-    image: registry.gitlab.com/faradaysec/integrationrepo
-    stage: pre_testing
+    image: nixorg/nix
+    stage: testing  # This should be after build_and_push_to_cachix to improve performance
     script:
-        - pip3 install virtualenv
-        - virtualenv -p python3 faraday_venv
-        - source faraday_venv/bin/activate
-        - pip install --upgrade -r requirements.txt
-        - python3 setup.py install
-        # pylint slow issue https://github.com/PyCQA/pylint/issues/2765
-        - pip install pylint isort==4.3.4
-        - pylint --rcfile=.pylintrc faraday --ignore=faraday_venv | tee pylint.txt
+        - nix-env -if pypi2nixpkgs/nixpkgs.nix -A cachix
+        - mkdir -p ~/.config/cachix
+        - export USER=$(whoami)
+        - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
+        - cachix use faradaysec
+        - nix-shell --command "pylint --rcfile=.pylintrc faraday" | tee pylint.txt
+        - nix-env -if pypi2nixpkgs/nixpkgs.nix -A gnused
         - score=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' pylint.txt)
           #- anybadge --label pylint --value=$score --file pylint.svg 4=red 6=orange 8=yellow 10=green
     artifacts:
@@ -91,21 +103,18 @@ pylint:
     stage: testing
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
+        - nix-env -if pypi2nixpkgs/nixpkgs.nix -A cachix
+        - mkdir -p ~/.config/cachix
+        - export USER=$(whoami)
+        - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
+        - cachix use faradaysec
+        - "echo 'hosts: files dns' >/etc/nsswitch.conf"
         - export LC_ALL=C.UTF-8
         - export LANG=C.UTF-8
-        - pip3 install virtualenv
-        - python3 -V
-        - virtualenv -p $PY_VERSION faraday_venv
-        - source faraday_venv/bin/activate
-        - pip install pip -U
-        - pip install --upgrade -r requirements.txt
-        - python3 setup.py install
-        - pip install --upgrade responses pytest-xdist pytest-cov
-        - pip install --upgrade -r requirements_dev.txt
         - mkdir -p ~/.faraday/config
         - cp tests/data/server.ini ~/.faraday/config
         - mkdir run_from
-        - cd run_from && pytest ../tests -v --capture=sys --cov=../faraday/server --color=yes --disable-warnings --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB
+        - nix-shell --command "cd run_from && pytest ../tests -v --capture=sys --cov=../faraday/server --color=yes --disable-warnings --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB"
     artifacts:
         when: on_failure
         paths:
@@ -120,20 +129,18 @@ pylint:
     stage: testing
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
+        - nix-env -if pypi2nixpkgs/nixpkgs.nix -A cachix
+        - mkdir -p ~/.config/cachix
+        - export USER=$(whoami)
+        - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
+        - cachix use faradaysec
+        - "echo 'hosts: files dns' >/etc/nsswitch.conf"
         - export LC_ALL=C.UTF-8
         - export LANG=C.UTF-8
-        - pip3 install virtualenv
-        - virtualenv -p python3 faraday_venv
-        - source faraday_venv/bin/activate
-        - pip install pip -U
-        - pip install --upgrade -r requirements.txt
-        - python3 setup.py install
-        - pip install --upgrade responses pytest-xdist pytest-cov
-        - pip install --upgrade -r requirements_dev.txt
         - mkdir -p ~/.faraday/config
         - cp tests/data/server.ini ~/.faraday/config
         - mkdir run_from
-        - cd run_from && pytest ../tests --capture=sys -v --cov=../faraday/server --color=yes --disable-warnings
+        - nix-shell --command "cd run_from && pytest ../tests --capture=sys -v --cov=../faraday/server --color=yes --disable-warnings"
     artifacts:
         when: on_failure
         paths:
@@ -144,28 +151,28 @@ pylint:
 
 sqlite_test_3_7:
     extends: .sqlite_test_base
-    image: registry.gitlab.com/faradaysec/integrationrepo:latest-3-7
+    image: nixorg/nix
     variables:
       PY_VERSION: python3.7
 
 
 .sqlite_test_3_8:
     extends: .sqlite_test_base
-    image: registry.gitlab.com/faradaysec/integrationrepo:latest-3-8
+    image: nixorg/nix
     variables:
       PY_VERSION: python3.8
 
 
 postgresql_test_3_7:
     extends: .postgresql_test_base
-    image: registry.gitlab.com/faradaysec/integrationrepo:latest-3-7
+    image: nixorg/nix
     variables:
       PY_VERSION: python3.7
 
 
 .postgresql_test_3_8:
     extends: .postgresql_test_base
-    image: registry.gitlab.com/faradaysec/integrationrepo:latest-3-8
+    image: nixorg/nix
     variables:
       PY_VERSION: python3.8
 
@@ -174,27 +181,15 @@ build_nix_python3:
   image: nixorg/nix
   stage: build_faraday
   script:
-    - nix-channel --add https://nixos.org/channels/nixos-19.09 nixpkgs
-    - nix-channel --update
-    - nix-build buildpth.nix
-    - nix-build '<nixpkgs>' -A gnome3.vte -o result-vte
-    - nix-build '<nixpkgs>' -A gtk3 -o result-gtk
-    - tar cf /py3.tar $(nix-store --query --requisites $(readlink result) $(readlink result-vte)) $(readlink result-gtk)
-    - mkdir /opt
-    - nix-env -i findutils
-    - "nix-shell -p python37Packages.virtualenv --command 'virtualenv /opt/faraday'"
-    # - cp result /opt/faraday/lib/python3.7/site-packages/nix.pth  # This doesn't include dependencies of dependencies
-    - 'for dir in $(nix-store -qR result); do if [[ -d "$dir/lib/python3.7/site-packages" ]]; then echo "$dir/lib/python3.7/site-packages" >>recursive.pth; fi; done'
-    - mv recursive.pth /opt/faraday/lib/python3.7/site-packages/nix.pth
-    - source /opt/faraday/bin/activate
-    # - "nix-shell -p libxml2 libxslt zlib cairo gobject-introspection glib pkgconfig --run 'SOURCE_DATE_EPOCH=$(date +%s) /opt/faraday/bin/pip install -r requirements.txt'"
-    - python setup.py install
-    - pip install -r requirements.txt  # This has to be below setup.py install
-    - pip freeze
-    - mv /opt/faraday/bin/faraday-client /opt/faraday/bin/_faraday_client_novte
-    - 'nix-shell -p makeWrapper --command "makeWrapper /opt/faraday/bin/_faraday_client_novte /opt/faraday/bin/faraday-client --prefix GI_TYPELIB_PATH : $(find /nix/store -name "girepository-1.0" | tr "\n" ":")"'
-    - 'nix-shell -p makeWrapper --command "makeWrapper /opt/faraday/bin/python /opt/faraday/bin/test --prefix GI_TYPELIB_PATH : $(find /nix/store -name "girepository-1.0" | tr "\n" ":")"'
-    - nix-collect-garbage && /opt/faraday/bin/test -c "import gi;gi.require_version('Gtk', '3.0');gi.require_version('Vte', '2.91');from gi.repository import Gio, Gtk, GdkPixbuf, Vte, GLib, GObject, Gdk" # Test if GTK will work
+    - nix-env -if pypi2nixpkgs/nixpkgs.nix -A cachix
+    - mkdir -p ~/.config/cachix
+    - export USER=$(whoami)
+    - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
+    - cachix use faradaysec
+    - nix-build
+    - tar cf /py3.tar $(nix-store --query --requisites $(readlink result))
+    - mkdir -p /opt/faraday
+    - cp -r $(readlink result)/* /opt/faraday
     - tar rvf /py3.tar /opt/faraday
     - mv /py3.tar $CI_PROJECT_DIR
   artifacts:
@@ -248,6 +243,7 @@ generate_deb:
         - cp -r /nix .
         - mv ../../faraday-linux-installers-builder .
         - cd faraday-linux-installers-builder
+        - git rev-parse HEAD
         - git clone https://github.com/jordansissel/fpm.git
         - cd fpm
         - git checkout d7b466787d17581bc723e474ecf6e18f48226031
@@ -278,7 +274,7 @@ generate_deb:
 
 
 smoke_test_deb:
-    allow_failure: true
+    allow_failure: false
     stage: distro_testing  # TODO improve
     image: ubuntu:18.04
     dependencies:
@@ -335,6 +331,7 @@ generate_rpm:
         - cp -r /nix .
         - mv ../../faraday-linux-installers-builder .
         - cd faraday-linux-installers-builder
+        - git rev-parse HEAD
         - git clone https://github.com/jordansissel/fpm.git
         - cd fpm
         - git checkout d7b466787d17581bc723e474ecf6e18f48226031
@@ -355,56 +352,6 @@ generate_rpm:
             - "faraday-server_amd64.rpm"
             - "faraday-client_amd64.rpm"
         expire_in: 15 days
-    only:
-        variables:
-            - $CI_COMMIT_REF_NAME =~ /^.*\/(master)$/
-            - $CI_COMMIT_TAG
-            - $BUILD_TEST
-            - $FULL_TEST
-            - $DAILY_TEST
-
-macos_pkg:
-    tags:
-        - macos
-    stage: build
-    allow_failure: true
-    before_script:
-      - echo 'export PATH="/usr/local/opt/openssl/bin:$PATH"' >> ~/.bash_profile
-      - export LDFLAGS="-L/usr/local/opt/openssl/lib"
-      - export CPPFLAGS="-I/usr/local/opt/openssl/include"
-      - export PKG_CONFIG_PATH="/usr/local/opt/openssl/lib/pkgconfig"
-    script:
-        - pip3 install virtualenv
-        - pip3 install virtualenv-tools3
-        - export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:/usr/local/opt/libffi/lib/pkgconfig"
-        - mkdir build_installer
-        - cp -a faraday.tar.gz build_installer/.
-        - cd build_installer
-        - /usr/bin/tar zxf faraday.tar.gz
-        - cd faraday_copy
-        - git clone git@gitlab.com:faradaysec/faraday-linux-installers-builder.git
-        - cd faraday-linux-installers-builder
-        - git clone https://github.com/jordansissel/fpm.git
-        - cd fpm
-        - git checkout d7b466787d17581bc723e474ecf6e18f48226031
-        - git apply ../fpm-patchs/fpm.osx.patch
-        - make gem
-        - export GEM_HOME="$HOME/.gem"
-        - export GEM_PATH=$HOME/.gem
-        - export PATH=$PATH:$HOME/.gem/bin
-        - gem install fpm-1.11.0.gem
-        - cd ../../
-        - sh faraday-linux-installers-builder/build_osx.sh $(eval $IMAGE_TAG) server osxpkg
-        - mv faraday-server_amd64.pkg ../../Faraday-server.pkg
-        - sh faraday-linux-installers-builder/build_osx.sh $(eval $IMAGE_TAG) client osxpkg
-        - mv faraday-client_amd64.pkg ../../Faraday-client.pkg
-        - mv faraday-server_amd64.pkg ../../Faraday.pkg
-    artifacts:
-        name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME-binaries"
-        paths:
-            - Faraday-server.pkg
-            - Faraday-client.pkg
-        expire_in: 1 week
     only:
         variables:
             - $CI_COMMIT_REF_NAME =~ /^.*\/(master)$/

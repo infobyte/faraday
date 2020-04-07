@@ -11,7 +11,10 @@ import pytest
 from io import BytesIO
 
 from tests.factories import WorkspaceFactory
+
 from faraday.server.threads.reports_processor import REPORTS_QUEUE
+
+from faraday.server.models import Host, Workspace, Service, Command
 
 
 @pytest.mark.usefixtures('logged_user')
@@ -39,8 +42,27 @@ class TestFileUpload():
                 use_json_data=False)
 
         assert res.status_code == 200
-        assert REPORTS_QUEUE.queue[0][0] == ws.name
-        assert REPORTS_QUEUE.queue[0][2].id == logged_user.id
+        assert len(REPORTS_QUEUE.queue) == 1
+        queue_elem = REPORTS_QUEUE.queue[0]
+        assert queue_elem[0] == ws.name
+        assert queue_elem[2].id == logged_user.id
+
+        # I'm testing a method which lost referene of workspace and logged_user within the test
+        ws_id = ws.id
+        logged_user_id = logged_user.id
+
+        from faraday.server.threads.reports_processor import ReportsManager
+        false_thread = ReportsManager(None)
+        false_thread.process_report(queue_elem[0], queue_elem[1], queue_elem[2])
+        command = Command.query.filter(Command.workspace_id == ws_id).one()
+        assert command
+        assert command.creator_id == logged_user_id
+        host = Host.query.filter(Host.workspace_id == ws_id).first()
+        assert host
+        assert host.creator_id == logged_user_id
+        service = Service.query.filter(Service.workspace_id == ws_id).one()
+        assert service
+        assert service.creator_id == logged_user_id
 
 
     def test_no_file_in_request(self, test_client, session):

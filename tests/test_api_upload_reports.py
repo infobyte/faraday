@@ -63,9 +63,6 @@ class TestFileUpload():
         service = Service.query.filter(Service.workspace_id == ws_id).first()
         assert service
         assert service.creator_id == logged_user_id
-        vuln = Vulnerability.query.filter(Vulnerability.service_id == service.id).first()
-        assert vuln
-        assert vuln.creator_id == logged_user_id
 
 
     def test_no_file_in_request(self, test_client, session):

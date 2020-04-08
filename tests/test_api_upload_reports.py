@@ -14,7 +14,7 @@ from tests.factories import WorkspaceFactory
 
 from faraday.server.threads.reports_processor import REPORTS_QUEUE
 
-from faraday.server.models import Host, Workspace, Service, Command
+from faraday.server.models import Host, Vulnerability, Service, Command
 
 
 @pytest.mark.usefixtures('logged_user')
@@ -60,9 +60,12 @@ class TestFileUpload():
         host = Host.query.filter(Host.workspace_id == ws_id).first()
         assert host
         assert host.creator_id == logged_user_id
-        service = Service.query.filter(Service.workspace_id == ws_id).one()
+        service = Service.query.filter(Service.workspace_id == ws_id).first()
         assert service
         assert service.creator_id == logged_user_id
+        vuln = Vulnerability.query.filter(Vulnerability.service_id == service.id).first()
+        assert vuln
+        assert vuln.creator_id == logged_user_id
 
 
     def test_no_file_in_request(self, test_client, session):

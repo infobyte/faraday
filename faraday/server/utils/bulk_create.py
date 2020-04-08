@@ -13,6 +13,8 @@ def add_creator(data, creator_user):
         host["creator_id"] = creator_user.id
         for service in host["services"]:
             service["creator_id"] = creator_user.id
+            for vuln in service["vulnerabilities"]:
+                vuln["creator_id"] = creator_user.id
         for vuln in host["vulnerabilities"]:
             vuln["creator_id"] = creator_user.id
         for cred in host["credentials"]:

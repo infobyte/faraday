@@ -216,6 +216,22 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
             headers=headers)
         assert res.status_code == 400
 
+    def test_invalid_executor(self, test_client, session, csrf_token):
+        agent = AgentFactory.create(workspace=self.workspace)
+        session.add(agent)
+        session.commit()
+        payload = {
+            'csrf_token': csrf_token,
+            'executorData': {
+                "args": {
+                    "param1": True
+                },
+                "executor": "executor_name"
+            },
+        }
+        res = test_client.post(self.url() + f'{agent.id}/run/',json=payload)
+        assert res.status_code == 400
+
     def test_happy_path_valid_json(self, test_client, session, csrf_token):
         agent = AgentFactory.create(workspace=self.workspace)
         executor = ExecutorFactory.create(agent=agent)

@@ -102,8 +102,8 @@
                         selection-model-selected-class="multi-selected"
                         selection-model-on-change="selectedModels()">
                         <td class="checkbox-select"><input type="checkbox" name="{{model._id}}"/></td>
-                        <td class="ui-grid-cell-contents no-padding">{{model.name}}</td>
-                        <td class="ui-grid-cell-contents no-padding">{{model.description}}</td>
+                        <td class="ui-grid-cell-contents" style="max-width: 20vw;">{{model.name}}</td>
+                        <td class="ui-grid-cell-contents" style="max-width: 20vw;">{{model.description}}</td>
                         <td><div ng-repeat="ref in model.refs|limitTo:4" class="ui-grid-cell-contents no-padding">{{ref}}</div></td>
                         <td class="ui-grid-cell-contents no-padding">{{model.resolution}}</td>
                         <td>{{model.exploitation}}</td>

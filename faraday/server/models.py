@@ -2057,6 +2057,7 @@ class AgentExecution(Metadata):
         'Workspace',
         backref=backref('agent_executions', cascade="all, delete-orphan"),
     )
+    parameters_data = Column(JSONType, nullable=False)
 
     @property
     def parent(self):

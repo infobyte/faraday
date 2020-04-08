@@ -2,6 +2,7 @@ import logging
 from datetime import datetime, timedelta
 import flask
 import sqlalchemy
+from sqlalchemy.orm.exc import NoResultFound
 from marshmallow import (
     fields,
     post_load,
@@ -20,7 +21,7 @@ from faraday.server.models import (
     Service,
     Vulnerability,
     VulnerabilityWeb,
-)
+    AgentExecution)
 from faraday.server.utils.database import (
     get_conflict_object,
     is_unique_constraint_violation,
@@ -172,6 +173,7 @@ class BulkCreateSchema(Schema):
         BulkCommandSchema(),
         required=False,
     )
+    execution_id = fields.Integer(attribute='execution_id')
 
 
 def get_or_create(ws, model_class, data):
@@ -375,7 +377,7 @@ class BulkCreateView(GenericWorkspacedView):
                 application/json:
                   schema: BulkCreateSchema
             403:
-              description: Disabled workspace
+               description: Disabled workspace
             404:
                description: Workspace not found
         """
@@ -388,14 +390,41 @@ class BulkCreateView(GenericWorkspacedView):
             if workspace_name != workspace.name:
                 flask.abort(404, "No such workspace: %s" % workspace_name)
 
+            if "execution_id" not in data:
+                flask.abort(400, "'execution_id' argument expected")
+
+            execution_id = data["execution_id"]
+
+            agent_execution = AgentExecution.query.filter(
+                AgentExecution.id == execution_id
+            ).one_or_none()
+
+            if agent_execution is None:
+                logger.exception(
+                    NoResultFound(
+                        f"No row was found for agent executor id {execution_id}")
+                )
+                flask.abort(400, "Can not find an agent execution with that id")
+
+            if workspace_name != agent_execution.workspace.name:
+                logger.exception(
+                    ValueError(f"The {agent.name} agent has permission to workspace {workspace_name} and ask to write "
+                               f"to workspace {agent_execution.workspace.name}")
+                )
+                flask.abort(400, "Trying to write to the incorrect workspace")
+
             now = datetime.now()
+
+            params_data = agent_execution.parameters_data
+            params = ', '.join([f'{key}={value}' for (key, value) in params_data.items()])
+
 
             data["command"] = {
                 'tool': agent.name, # Agent name
-                'command': agent.name + ' executor', # TODO Executor name
+                'command': agent_execution.executor.name,
                 'user': '',
                 'hostname': '',
-                'params': ' params_unset', # TODO
+                'params': params,
                 'import_source': 'agent',
                 'start_date': (data["command"].get("start_date") or now) if "command" in data else now, #Now or when received run
                 'end_date': (data["command"].get("start_date") or now) if "command" in data else now, #Now or when received run

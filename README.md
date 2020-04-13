@@ -6,11 +6,11 @@ Faraday introduces a new concept - IPE (Integrated Penetration-Test Environment)
 
 Faraday was made to let you take advantage of the available tools in the community in a truly multiuser way.
 
-Designed for simplicity, users should notice no difference between their own terminal application and the one included in Faraday. Developed with a specialized set of functionalities, users improve their own work. Do you remember the last time you programmed without an IDE? What IDEs are to programming, Faraday is to pentesting.
+Faraday crunches the data you load into different visualizations that are useful to managers and pentesters alike.
 
 ![GUI - Web](https://raw.github.com/wiki/infobyte/faraday/images/dashboard/dashboard.png)
 
-Faraday crunches the data you load into different visualizations that are useful to managers and pentesters alike.
+Designed for simplicity, users should notice no difference between their own terminal application and the one included in Faraday. Developed with a specialized set of functionalities, users improve their own work. Do you remember the last time you programmed without an IDE? What IDEs are to programming, Faraday is to pentesting.
 
 ![GUI - GTK](https://raw.github.com/wiki/infobyte/faraday/images/client/gtk_main_window.png)
 

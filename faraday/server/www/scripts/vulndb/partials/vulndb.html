@@ -104,7 +104,7 @@
                         <td class="checkbox-select"><input type="checkbox" name="{{model._id}}"/></td>
                         <td class="ui-grid-cell-contents" style="max-width: 20vw;">{{model.name}}</td>
                         <td class="ui-grid-cell-contents" style="max-width: 20vw;">{{model.description}}</td>
-                        <td><div ng-repeat="ref in model.refs|limitTo:4" class="ui-grid-cell-contents no-padding" style="max-width: 20vw;">{{ref}}</div></td>
+                        <td><div ng-repeat="ref in model.refs|limitTo:4" class="ui-grid-cell-contents no-padding" style="max-width: 15vw;">{{ref}}</div></td>
                         <td class="ui-grid-cell-contents no-padding" style="max-width: 10vw;">{{model.resolution}}</td>
                         <td>{{model.exploitation}}</td>
                         <td><div ng-repeat="policy in model.policyviolations|limitTo:4" class="ui-grid-cell-contents no-padding" style="max-width: 10vw;">{{policy}}</div></td>

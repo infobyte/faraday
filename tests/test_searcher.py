@@ -9,7 +9,7 @@ from faraday.server.models import Service, Host
 from faraday.server.models import Service, Host, VulnerabilityWeb
 from faraday.server.models import Vulnerability, CommandObject
 from tests.factories import VulnerabilityTemplateFactory, ServiceFactory, \
-    HostFactory, CustomFieldsSchemaFactory, VulnerabilityWebFactory
+    HostFactory, CustomFieldsSchemaFactory, VulnerabilityWebFactory, RuleFactory, ActionFactory, RuleActionFactory
 from tests.factories import WorkspaceFactory, VulnerabilityFactory
 
 
@@ -682,3 +682,43 @@ class TestSearcherRules():
         assert host.ip == '10.25.50.47'
         assert host.os == 'Windows'
         assert host.owned is True
+
+    @pytest.mark.parametrize("api", [
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+                                                    password='test', base=''),
+        lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+    ])
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_disable_rule(self, api, session, test_client, vulnerability_factory):
+        workspace = WorkspaceFactory.create()
+        vulns = vulnerability_factory.create_batch(10, workspace=workspace, severity='low')
+        session.add(workspace)
+        session.add_all(vulns)
+        # session.commit()
+
+        vulns_count = session.query(Vulnerability).filter_by(workspace=workspace).count()
+        assert vulns_count == 10
+
+        searcher = Searcher(api(workspace, test_client, session))
+        rules_disabled = RuleFactory.create_batch(5, object="severity=low", disabled=True, workspace=workspace)
+        rules_enabled = RuleFactory.create_batch(5, object="severity=low", disabled=False, workspace=workspace)
+
+        action = ActionFactory.create(command='DELETE')
+        session.add(action)
+
+        session.add_all(rules_disabled)
+        session.add_all(rules_enabled)
+
+        rules = rules_disabled + rules_enabled
+
+        for rule in rules:
+            rule_action = RuleActionFactory.create(action=action, rule=rule)
+            session.add(rule_action)
+
+        session.commit()
+
+        searcher.process(rules)
+        vulns_count = session.query(Vulnerability).filter_by(workspace=workspace).count()
+        assert vulns_count == 5
+
+

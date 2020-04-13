@@ -1941,6 +1941,10 @@ class Rule(Metadata):
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', backref=backref('rules', cascade="all, delete-orphan"))
 
+    @property
+    def parent(self):
+        return
+
 
 class Action(Metadata):
     __tablename__ = 'action'

@@ -1406,3 +1406,9 @@ a {
 .no-padding{
     padding: 0 !important;
 }
+.responsive_agent_command{
+    width: 30em;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}

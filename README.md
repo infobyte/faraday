@@ -87,7 +87,7 @@ Information is organized into various **Workspaces**. Each Workspace contains a 
 ### Agents
 
 [Faraday Agents Dispatcher](https://github.com/infobyte/faraday_agent_dispatcher) helps user develop integrations with Faraday written in any language.
-Agents collects information from different network location using different tools. You can use FaradaySEC to orchestate tool execution.
+Agents collects information from different network location using different tools. You can use [FaradaySEC](https://www.faradaysec.com) to orchestrate tool execution.
 
 ### Conflicts
 

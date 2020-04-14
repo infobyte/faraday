@@ -106,12 +106,12 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             title: 'Dashboard | '
         }).
         when('/dashboard/ws', {
-            templateUrl: 'scripts/commons/partials/workspaces.html',
+            templateUrl: 'scripts/workspaces/partials/list.html',
             controller: 'workspacesCtrl',
             title: 'Dashboard | '
         }).
         when('/dashboard', {
-            templateUrl: 'scripts/commons/partials/workspaces.html',
+            templateUrl: 'scripts/workspaces/partials/list.html',
             controller: 'workspacesCtrl',
             title: 'Dashboard | '
         }).
@@ -135,7 +135,7 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             title: 'Hosts | '
         }).
         when('/hosts/ws', {
-            templateUrl: 'scripts/commons/partials/workspaces.html',
+            templateUrl: 'scripts/workspaces/partials/list.html',
             controller: 'workspacesCtrl',
             title: 'Hosts | '
         }).
@@ -150,7 +150,7 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             title: 'Host and services | '
         }).
         when('/hosts', {
-            templateUrl: 'scripts/commons/partials/workspaces.html',
+            templateUrl: 'scripts/workspaces/partials/list.html',
             controller: 'workspacesCtrl',
             title: 'Hosts | '
         }).
@@ -258,7 +258,7 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             }
         }).
         when('/status/ws', {
-            templateUrl: 'scripts/commons/partials/workspaces.html',
+            templateUrl: 'scripts/workspaces/partials/list.html',
             controller: 'workspacesCtrl',
             title: 'Status Report | ',
             resolve: {
@@ -268,7 +268,7 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             }
         }).
         when('/status', {
-            templateUrl: 'scripts/commons/partials/workspaces.html',
+            templateUrl: 'scripts/workspaces/partials/list.html',
             controller: 'workspacesCtrl',
             title: 'Status Report | '
         }).
@@ -316,7 +316,7 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider',
             title: 'Credentials | '
         }).
         when('/credentials/ws', {
-            templateUrl: 'scripts/commons/partials/workspaces.html',
+            templateUrl: 'scripts/workspaces/partials/list.html',
             controller: 'workspacesCtrl',
             title: 'Credentials | '
         }).

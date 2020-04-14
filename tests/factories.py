@@ -45,7 +45,12 @@ from faraday.server.models import (
     Comment,
     CustomFieldsSchema,
     Agent,
-    SearchFilter, Executor, Rule, Action, RuleAction)
+    AgentExecution,
+    SearchFilter,
+    Executor
+    Rule,
+    Action,
+    RuleAction)
 
 # Make partials for start and end date. End date must be after start date
 FuzzyStartTime = lambda: (
@@ -443,10 +448,27 @@ class AgentFactory(WorkspaceObjectFactory):
 class ExecutorFactory(FaradayFactory):
     name = FuzzyText()
     agent = factory.SubFactory(AgentFactory)
-
+    parameters_metadata = factory.LazyAttribute(
+        lambda e: str({"param_name": False})
+    )
     class Meta:
         model = Executor
         sqlalchemy_session = db.session
+
+
+class AgentExecutionFactory(WorkspaceObjectFactory):
+    executor = factory.SubFactory(
+        ExecutorFactory,
+    )
+    parameters_data = factory.LazyAttribute(
+        lambda _: {"param_name": "param_value"}
+    )
+    workspace = factory.SelfAttribute('executor.agent.workspace')
+
+    class Meta:
+        model = AgentExecution
+        sqlalchemy_session = db.session
+
 
 
 class SearchFilterFactory(FaradayFactory):

@@ -94,11 +94,7 @@ class InitDB():
             current_psql_output.close()
             conn_string = self._save_config(config, username, password, database_name, hostname)
             self._create_tables(conn_string)
-            couchdb_config_present = faraday.server.config.couchdb
-            if not (couchdb_config_present and couchdb_config_present.user and couchdb_config_present.password):
-                self._create_admin_user(conn_string, choose_password)
-            else:
-                print('Skipping new admin creation since couchdb configuration was found.')
+            self._create_admin_user(conn_string, choose_password)
         except KeyboardInterrupt:
             current_psql_output.close()
             print('User cancelled.')

@@ -4,10 +4,11 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 """
+import json
 import time
 import datetime
 from flask import g
-from marshmallow import fields, Schema
+from marshmallow import fields, Schema, post_dump
 from marshmallow.exceptions import ValidationError
 from dateutil.tz import tzutc
 
@@ -278,4 +279,71 @@ class StrictDateTimeField(fields.DateTime):
                 date.astimezone(tzutc())
             date = date.replace(tzinfo=None)
         return date
+
+
+class WorkerActionSchema(Schema):
+    action = fields.Method('get_command')
+
+    def get_command(self, obj):
+        if obj.command == 'UPDATE':
+            return "--{command}:{field}={value}".format(command=obj.command, field=obj.field, value=obj.value)
+        if obj.command in ['DELETE', 'REMOVE']:
+            return "--DELETE:"
+        if obj.command == 'ALERT':
+            return "--{command}:{value}".format(command=obj.command, value=obj.value)
+
+
+class WorkerConditionSchema(Schema):
+    condition = fields.Method('get_condition')
+
+    def get_condition(self, obj):
+        if obj.operator == "equals":
+            operator = "="
+        else:
+            raise ValidationError("Condition operator {} not support.".format(obj.operator))
+        return '{field}{operator}{value}'.format(field=obj.field, operator=operator, value=obj.value)
+
+
+class WorkerRuleSchema(Schema):
+    id = fields.Integer()
+    model = fields.String()
+    object = fields.Method('get_object')
+    actions = fields.Nested(WorkerActionSchema, attribute='actions', many=True)
+    conditions = fields.Nested(WorkerConditionSchema, attribute='conditions', many=True)
+    parent = fields.String(allow_none=False, attribute='object_parent')
+    disabled = fields.Boolean(allow_none=True, attribute='disabled')
+    fields = fields.String(allow_none=False)
+
+    def get_object(self, rule):
+        try:
+            object_rules = json.loads(rule.object)
+        except ValueError:
+            rule_name, value = rule.object.split('=')
+            object_rules = [{rule_name: value}]
+
+        for object_rule in object_rules:
+            for object_rule_name, value in object_rule.items():
+                if value == 'informational':
+                    value = 'info'
+                if value == 'medium':
+                    value = 'med'
+                return '{}={}'.format(object_rule_name, value)
+
+    @post_dump
+    def remove_none_values(self, data):
+        actions = []
+        conditions = []
+        for action in data['actions']:
+            actions.append(action['action'])
+        for condition in data['conditions']:
+            conditions.append(condition['condition'])
+
+        data['actions'] = actions
+        data['conditions'] = conditions
+
+        return {
+            key: value for key, value in data.items()
+            if value
+        }
+
 # I'm Py3

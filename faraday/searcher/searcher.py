@@ -451,7 +451,7 @@ class Searcher:
 
     def process(self, rules):
         if rules and validate_rules(rules):
-            self.rules = [rule for rule in rules if not hasattr(rule, 'disabled') or rule['disabled'] is False]
+            self.rules = [rule for rule in rules if 'disabled' not in rule or rule['disabled'] is False]
 
             self._process_vulnerabilities(self.rules)
             self._process_services(self.rules)

@@ -78,7 +78,7 @@
                             <td class="ui-grid-cell-contents"><a href="#/status/ws/{{ws.name}}">{{objects[ws.name]['total_vulns']}}</a></td>
                             <td class="ui-grid-cell-contents"><a href="#/hosts/ws/{{ws.name}}">{{objects[ws.name]['hosts']}}</a></td>
                             <td class="ui-grid-cell-contents" ng-bind="objects[ws.name]['services']"></td>
-                            <td class="ui-grid-cell-contents" ng-bind="ws.last_modified | amUtc | amDateFormat:'MM/DD/YYYY' | amTimeAgo"></td>
+                            <td class="ui-grid-cell-contents" ng-bind="ws.update_date | amTimeAgo"></td>
                             <td class="ui-grid-cell-contents active-toggle">
                                 <div class="toogle-img-container">
                                     <span ng-click="activeToggle(ws)" class="active-toggle-container" ng-class="{ disabled:ws.active === false }" uib-tooltip="{{(ws.active === true) ? 'Disable workspace' : 'Enable workspace'}}" tooltip-placement="right">

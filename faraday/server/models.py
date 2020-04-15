@@ -1936,7 +1936,7 @@ class Rule(Metadata):
     object_parent = Column(String, nullable=True)
     fields = Column(JSONType, nullable=True)
     object = Column(JSONType, nullable=False)
-    disabled = Column(Boolean, nullable=True, default=False)
+    enabled = Column(Boolean, nullable=True, default=True)
     actions = relationship("Action", secondary="rule_action", backref=backref("rules"))
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', backref=backref('rules', cascade="all, delete-orphan"))
@@ -1944,6 +1944,14 @@ class Rule(Metadata):
     @property
     def parent(self):
         return
+
+    @property
+    def disabled(self):
+        return not self.enabled
+
+    @disabled.setter
+    def disabled(self, value):
+        self.enabled = not value
 
 
 class Action(Metadata):

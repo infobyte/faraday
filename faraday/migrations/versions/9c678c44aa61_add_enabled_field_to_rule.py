@@ -1,4 +1,4 @@
-"""add disable field to rule
+"""add enabled field to rule
 
 Revision ID: 9c678c44aa61
 Revises: 282ac9b6569f
@@ -17,8 +17,8 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column('rule', sa.Column('disabled', sa.Boolean, default=False, nullable=True))
+    op.add_column('rule', sa.Column('enabled', sa.Boolean, default=True, nullable=True))
 
 
 def downgrade():
-    op.drop_column('rule', 'disabled')
+    op.drop_column('rule', 'enabled')

@@ -9,6 +9,7 @@ import datetime
 from flask import g
 from marshmallow import fields, Schema
 from marshmallow.exceptions import ValidationError
+from marshmallow.utils import missing
 from dateutil.tz import tzutc
 
 from faraday.server.models import (
@@ -224,9 +225,10 @@ class NullToBlankString(fields.String):
     def deserialize(self, value, attr=None, data=None):
         # Validate required fields, deserialize, then validate
         # deserialized value
-        if value:
-            value = value.replace('\0',
-                              '')  # Postgres does not allow nul 0x00 in the strings.
+        if isinstance(value, str):
+            value = value.replace('\0', '')  # Postgres does not allow nul 0x00 in the strings.
+        elif value is not None and value != missing:
+            raise ValidationError("Deserializing a non string field when expected")
         self._validate_missing(value)
         if getattr(self, 'allow_none', False) is True and value is None:
             return ''

@@ -47,7 +47,7 @@ from faraday.server.models import (
     Agent,
     AgentExecution,
     SearchFilter,
-    Executor
+    Executor,
     Rule,
     Action,
     RuleAction)

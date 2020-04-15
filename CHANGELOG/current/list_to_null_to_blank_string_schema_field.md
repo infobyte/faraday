@@ -1,0 +1,1 @@
+If a list (or other unexpected type) passed to NullToBlankString, the raises an Validation error, which cause a 400, not a 5XX

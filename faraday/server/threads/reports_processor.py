@@ -4,9 +4,10 @@ from queue import Queue, Empty
 import time
 import os
 from faraday_plugins.plugins.manager import PluginsManager, ReportAnalyzer
-from faraday.server.api.modules.bulk_create import bulk_create
+from faraday.server.api.modules.bulk_create import bulk_create, BulkCreateSchema
 
 from faraday.server.models import Workspace
+from faraday.server.utils.bulk_create import add_creator
 
 logger = logging.getLogger(__name__)
 
@@ -26,14 +27,17 @@ class ReportsManager(Thread):
         logger.debug("Stop Reports Manager")
         self._must_stop = True
 
-    def send_report_request(self, workspace_name, report_json):
+    def send_report_request(self, workspace_name, report_json, user):
         logger.info("Send Report data to workspace [%s]", workspace_name)
         from faraday.server.web import app  # pylint:disable=import-outside-toplevel
         with app.app_context():
             ws = Workspace.query.filter_by(name=workspace_name).one()
-            bulk_create(ws, report_json, False)
+            schema = BulkCreateSchema(strict=True)
+            data = schema.load(report_json).data
+            data = add_creator(data, user)
+            bulk_create(ws, data, True)
 
-    def process_report(self, workspace, file_path):
+    def process_report(self, workspace, file_path, user):
         report_analyzer = ReportAnalyzer(self.plugins_manager)
         plugin = report_analyzer.get_plugin(file_path)
         if plugin:
@@ -46,7 +50,7 @@ class ReportsManager(Thread):
                 logger.exception(e)
             else:
                 try:
-                    self.send_report_request(workspace, vulns_data)
+                    self.send_report_request(workspace, vulns_data, user)
                     logger.info("Report processing finished")
                 except Exception as e:
                     logger.exception(e)
@@ -58,10 +62,10 @@ class ReportsManager(Thread):
         logger.debug("Start Reports Manager")
         while not self._must_stop:
             try:
-                workspace, file_path = self.upload_reports_queue.get(False, timeout=0.1)
+                workspace, file_path, user = self.upload_reports_queue.get(False, timeout=0.1)
                 logger.info("Processing raw report %s", file_path)
                 if os.path.isfile(file_path):
-                    self.process_report(workspace, file_path)
+                    self.process_report(workspace, file_path, user)
                 else:
                     logger.warning("Report file [%s] don't exists", file_path)
             except Empty:

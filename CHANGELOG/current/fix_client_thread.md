@@ -1,1 +1,0 @@
-Change TimerClass to new threads

@@ -294,6 +294,8 @@ class WorkerActionSchema(Schema):
         if obj.command == 'ALERT':
             return "--{command}:{value}".format(command=obj.command, value=obj.value)
 
+        raise ValidationError("Command {} not supported.".format(obj.command))
+
 
 class WorkerConditionSchema(Schema):
     condition = fields.Method('get_condition')

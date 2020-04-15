@@ -1,1 +1,0 @@
-Send json response when you get a 500 or 404 error

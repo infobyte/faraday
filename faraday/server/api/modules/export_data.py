@@ -32,10 +32,42 @@ def export_data(workspace_name):
         abort(400, "Invalid format.")
 
 
+def _build_websites_element(web_services, websites_tag):
+    web_site_tag = SubElement(websites_tag, 'web_site')
+    for web_service in web_services:
+        website_id = SubElement(web_site_tag, 'id')
+        website_id.text = str(web_service.id)
+        website_service_id = SubElement(web_site_tag, 'service-id')
+        website_service_id.text = str(web_service.id)
+
+        website_vhost = SubElement(web_site_tag, 'vhost')
+        website_vhost.text = str(web_service.host.ip)
+        website_host = SubElement(web_site_tag, 'host')
+        website_host.text = str(web_service.host.ip)
+        website_port = SubElement(web_site_tag, 'port')
+        website_port.text = str(web_service.port)
+
+        create_date = SubElement(web_site_tag, 'created-at')
+        create_date.text = web_site_tag.create_date.strftime("%Y-%m-%d %H:%M:%S")
+        update_date = SubElement(web_site_tag, 'updated-at')
+        update_date.text = web_site_tag.update_date.strftime("%Y-%m-%d %H:%M:%S")
+
+        website_comments = SubElement(web_site_tag, 'comments')
+        website_comments.text = str(web_service.description)
+
+        website_options = SubElement(web_site_tag, 'options')
+        website_options.text = ''
+
+        website_ssl = SubElement(web_site_tag, 'ssl')
+        website_ssl.text = 'true' if web_service.port == 443 else ''
+
+
 def xml_metasploit_format(workspace):
     root = Element('MetasploitV4')
     hosts_tag = SubElement(root, 'hosts')
     services_tag = SubElement(root, 'services')  # Element's parent is root
+    websites_tag = SubElement(root, 'web_sites')
+    web_services = set()
     for host in workspace.hosts:
         host_tag = SubElement(hosts_tag, 'host')
         _build_host_element(host, host_tag)
@@ -54,11 +86,15 @@ def xml_metasploit_format(workspace):
 
             for vuln_web in service.vulnerabilities_web:
                 vuln_tag = SubElement(vulns_tag, 'vuln')
-                _build_vuln_element(vuln_web, vuln_tag)
+                web_services.add(vuln_web.service)
+                _build_vuln_web_element(vuln_web, vuln_tag)
+
 
         for vuln in host.vulnerabilities:
             vuln_tag = SubElement(vulns_tag, 'vuln')
             _build_vuln_element(vuln, vuln_tag)
+
+    _build_websites_element(web_services, websites_tag)
 
     memory_file = BytesIO()
     memory_file.write(tostring(root, xml_declaration=True, encoding="utf-8", pretty_print=True))
@@ -125,6 +161,8 @@ def _build_vuln_element(vuln, vuln_tag):
         host_id.text = str(vuln.service.host_id)
         service_id = SubElement(vuln_tag, 'service-id')
         service_id.text = str(vuln.service_id)
+        website_id = SubElement(vuln_tag, 'web-site-id')
+        website_id.text = str(vuln.service_id)
     else:
         host_id = SubElement(vuln_tag, 'host-id')
         host_id.text = str(vuln.host_id)
@@ -132,3 +170,22 @@ def _build_vuln_element(vuln, vuln_tag):
     vuln_name.text = vuln.name
     vuln_info = SubElement(vuln_tag, 'info')
     vuln_info.text = vuln.description
+
+
+def _build_vuln_web_element(vuln, vuln_tag):
+    vuln_id = SubElement(vuln_tag, 'id')
+    vuln_id.text = str(vuln.id)
+
+    website_id = SubElement(vuln_tag, 'web-site-id')
+    website_id.text = str(vuln.service_id)
+
+    vuln_name = SubElement(vuln_tag, 'name')
+    vuln_name.text = vuln.name
+    vuln_info = SubElement(vuln_tag, 'info')
+    vuln_info.text = vuln.description
+
+    #update_date = SubElement(vuln_tag, 'updated-at')
+    #update_date.text = service.update_date.strftime("%Y-%m-%d %H:%M:%S")
+    #create_date = SubElement(vuln_tag, 'updated-at')
+    #create_date.text = service.update_date.strftime("%Y-%m-%d %H:%M:%S")
+    # ADD all vuln fields

@@ -5,7 +5,7 @@
  */
 
  table.rz-table {
-   table-layout: fixed;
+   /*table-layout: fixed;*/
    border-collapse: collapse;
  }
 

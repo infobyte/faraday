@@ -78,9 +78,19 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
             for field_name, value in vuln['custom_fields'].items():
                 if field_name in custom_fields_columns:
                     vuln_dict.update({field_name: value})
+        vuln_dict = csv_escape(vuln_dict)
         writer.writerow(vuln_dict)
     memory_file = BytesIO()
     memory_file.write(buffer.getvalue().encode('utf8'))
     memory_file.seek(0)
     return memory_file
 
+
+# Patch possible formula injection attacks
+def csv_escape(vuln_dict):
+    for key,value in vuln_dict.items():
+        if str(value).startswith('=') or str(value).startswith('+') or str(value).startswith('-') or str(value).startswith('@'):
+            # Convert value to str just in case is has another type (like a list or
+            # dict). This would be done anyway by the csv writer.
+            vuln_dict[key] = "'" + str(value)
+    return vuln_dict

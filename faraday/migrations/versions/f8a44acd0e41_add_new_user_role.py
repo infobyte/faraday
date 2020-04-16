@@ -17,19 +17,16 @@ down_revision = '526aa91cac98'
 branch_labels = None
 depends_on = None
 
-old_types = User.ROLES.remove('asset_owner')
-new_types = list(set(User.ROLES + ['asset_owner']))
-new_options = sorted(new_types)
-
-old_type = sa.Enum(*User.ROLES, name='user_roles')
-new_type = sa.Enum(*new_options, name='user_roles')
-tmp_type = sa.Enum(*new_options, name='_user_roles')
-
-tcr = sa.sql.table('faraday_user',
-                   sa.Column('role', new_type, nullable=False))
-
 
 def upgrade():
+    old_type = sa.Enum(*User.ROLES, name='user_roles')
+
+    new_types = list(set(User.ROLES + ['asset_owner']))
+    new_options = sorted(new_types)
+    new_type = sa.Enum(*new_options, name='user_roles')
+
+    tmp_type = sa.Enum(*new_options, name='_user_roles')
+
     tmp_type.create(op.get_bind(), checkfirst=False)
     op.execute('ALTER TABLE faraday_user ALTER COLUMN role TYPE _user_roles'
                ' USING role::text::_user_roles')
@@ -42,6 +39,17 @@ def upgrade():
 
 
 def downgrade():
+    new_types = list(set(User.ROLES + ['asset_owner']))
+    new_options = sorted(new_types)
+    new_type = sa.Enum(*new_options, name='user_roles')
+
+    tmp_type = sa.Enum(*new_options, name='_user_roles')
+
+    tcr = sa.sql.table('faraday_user',
+                       sa.Column('role', new_type, nullable=False))
+
+    old_type = sa.Enum(*User.ROLES, name='user_roles')
+
     # Convert 'asset_owner' status into 'client'
     op.execute(tcr.update().where(tcr.c.role == u'asset_owner')
                .values(status='client'))

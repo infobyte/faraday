@@ -815,3 +815,23 @@ def test_bulk_create_endpoint_with_invalid_vuln_run_date(session, workspace, tes
     assert res.status_code == 400, res.json
     assert count(VulnerabilityGeneric, workspace) == 0
 
+
+
+
+@pytest.mark.usefixtures('logged_user')
+def test_bulk_create_endpoint_fails_with_list_in_NullToBlankString(session, workspace, test_client, logged_user):
+    assert count(Host, workspace) == 0
+    assert count(VulnerabilityGeneric, workspace) == 0
+    url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
+    host_data_ = host_data.copy()
+    host_data_['services'] = [service_data]
+    host_data_['credentials'] = [credential_data]
+    host_data_['vulnerabilities'] = [vuln_data]
+    host_data_['default_gateway'] = ["localhost"] # Can not be a list
+    res = test_client.post(url, data=dict(hosts=[host_data_]))
+    assert res.status_code == 400, res.json
+    assert count(Host, workspace) == 0
+    assert count(Service, workspace) == 0
+    assert count(Credential, workspace) == 0
+    assert count(Vulnerability, workspace) == 0
+

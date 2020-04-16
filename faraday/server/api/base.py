@@ -1095,6 +1095,81 @@ class CountWorkspacedMixin:
         return res
 
 
+class CountMultiWorkspacedMixin:
+    """Add GET /<workspace_name>/<route_base>/count_multi_workspace/ route
+
+    Receives a list of workspaces separated by comma in the workspaces
+    GET parameter.
+    If no workspace is specified, the view will return a 400 error.
+
+    Group objects by the field set in the group_by GET parameter. If it
+    isn't specified, the view will return a 400 error. For each group,
+    show the count of elements and its value.
+
+    This view is often used by some parts of the web UI. It was designed
+    to keep backwards compatibility with the count endpoint of Faraday
+    v2.
+    """
+
+    #: List of SQLAlchemy query filters to apply when counting
+    count_extra_filters = []
+
+    def count_multi_workspace(self, **kwargs):
+        res = {
+            'groups': defaultdict(dict),
+            'total_count': 0
+        }
+
+        workspace_names_list = flask.request.args.get('workspaces', None)
+
+        if not workspace_names_list:
+            flask.abort(400, {"message": "workspaces is a required parameter"})
+
+        workspace_names_list = workspace_names_list.split(',')
+
+        # Enforce workspace permission checking for each workspace
+        for workspace_name in workspace_names_list:
+            self._get_workspace(workspace_name)
+
+        group_by = flask.request.args.get('group_by', None)
+        sort_dir = flask.request.args.get('order', "asc").lower()
+
+        # TODO migration: whitelist fields to avoid leaking a confidential
+        # field's value.
+        # Example: /users/count/?group_by=password
+        # Also we should check that the field exists in the db and isn't, for
+        # example, a relationship
+        if not group_by or group_by not in inspect(self.model_class).attrs:
+            flask.abort(400, {"message": "group_by is a required parameter"})
+
+        if sort_dir and sort_dir not in ('asc', 'desc'):
+            flask.abort(400, {"message": "order must be 'desc' or 'asc'"})
+
+        grouped_attr = getattr(self.model_class, group_by)
+
+        q = db.session.query(
+                Workspace.name,
+                grouped_attr,
+                func.count(grouped_attr)
+            )\
+            .join(Workspace)\
+            .group_by(grouped_attr, Workspace.name)\
+            .filter(Workspace.name.in_(workspace_names_list))
+
+        #order
+        order_by = grouped_attr
+        if sort_dir == 'desc':
+            q = q.order_by(desc(Workspace.name), desc(order_by))
+        else:
+            q = q.order_by(asc(Workspace.name), asc(order_by))
+
+        for workspace, key, count in q.all():
+            res['groups'][workspace][key] = count
+            res['total_count'] += count
+
+        return res
+
+
 class ReadWriteView(CreateMixin,
                     UpdateMixin,
                     DeleteMixin,

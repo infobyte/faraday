@@ -176,4 +176,15 @@ def _build_vuln_data(vuln, custom_fields_columns):
             if field_name in custom_fields_columns:
                 vuln_data.update({field_name: value})
 
+    vuln_data = csv_escape(vuln_data)
     return vuln_data
+
+
+# Patch possible formula injection attacks
+def csv_escape(vuln_dict):
+    for key,value in vuln_dict.items():
+        if str(value).startswith('=') or str(value).startswith('+') or str(value).startswith('-') or str(value).startswith('@'):
+            # Convert value to str just in case is has another type (like a list or
+            # dict). This would be done anyway by the csv writer.
+            vuln_dict[key] = "'" + str(value)
+    return vuln_dict

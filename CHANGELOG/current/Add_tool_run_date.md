@@ -1,1 +1,0 @@
-When plugins report has run_date use it as vuln create_date

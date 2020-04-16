@@ -304,7 +304,7 @@ angular.module("faradayApp")
                 "query":            false,
                 "response":         false,
                 "web":              false,
-                "creator":          false,
+                "tool":             false,
                 "policyviolations": false,
                 "external_id":      false
             };
@@ -338,7 +338,7 @@ angular.module("faradayApp")
                     "query":            "100",
                     "response":         "90",
                     "web":              "80",
-                    "metadata.creator": "100",
+                    "tool":             "100",
                     "policyviolations": "100"
                 };
             }
@@ -621,11 +621,11 @@ angular.module("faradayApp")
                 visible: $scope.columns["web"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'metadata.creator',
-                displayName : "creator",
+                displayName : "tool",
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/creatorcolumn.html',
                 headerCellTemplate: header,
-                sort: getColumnSort('metadata.creator'),
-                visible: $scope.columns["creator"]
+                sort: getColumnSort('tool'),
+                visible: $scope.columns["tool"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'policyviolations',
                 // The following line breaks the remembering of the field (i.e.
@@ -1231,6 +1231,9 @@ angular.module("faradayApp")
             if ($scope.propertyFilterConfirmed === 'Unconfirmed'){
                 searchFilter.confirmed = false;
             }
+
+            if(paginationOptions.sortColumn == "metadata.creator")
+                paginationOptions.sortColumn = "tool";
             // load all vulnerabilities
             vulnsManager.getVulns($scope.workspace,
                                   paginationOptions.page,

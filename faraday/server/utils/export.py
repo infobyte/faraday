@@ -17,14 +17,12 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
     buffer = StringIO()
 
     vuln_headers = [
-        "confirmed", "vuln_id", "date", "update_date", "vuln_name", "severity", "service",
-        "target", "vuln_desc", "vuln_status", "hostnames", "comments",
-        "resolution", "refs", "easeofresolution",
-        "web_vulnerability", "data", "website", "path", "status_code",
-        "request", "response", "method", "params", "pname", "query",
-        "policyviolations", "external_id", "impact_confidentiality",
-        "impact_integrity", "impact_availability", "impact_accountability",
-        "vuln_creator", "vuln_parent_id", "vuln_parent_type"
+        "confirmed", "id", "date", "name", "severity", "service",
+        "target", "desc", "status", "hostnames", "comments", "owner",
+        "os", "resolution", "refs", "easeofresolution", "web_vulnerability",
+        "data", "website", "path", "status_code", "request", "response", "method",
+        "params", "pname", "query", "policyviolations", "external_id", "impact_confidentiality",
+        "impact_integrity", "impact_availability", "impact_accountability", "update_date"
     ]
 
     if custom_fields_columns is None:
@@ -32,7 +30,7 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
     vuln_headers += custom_fields_columns
 
     headers = vuln_headers + [
-        "host_id", "host_description", "os", "mac",
+        "host_id", "host_description", "mac",
         "host_owned", "host_creator_id", "host_date", "host_update_date",
         "service_id", "service_name", "service_description", "service_owned",
         "port", "protocol", "summary", "version", "service_status",
@@ -84,7 +82,6 @@ def _build_host_data(host_id):
     host_data = {
         "host_id": host.id,
         "host_description": host.description,
-        "os": host.os,
         "mac": host.mac,
         "host_owned": host.owned,
         "host_creator_id": host.creator_id,
@@ -140,20 +137,22 @@ def _build_vuln_data(vuln, custom_fields_columns):
 
     vuln_data = {
         "confirmed": vuln['confirmed'],
-        "vuln_id": vuln.get('_id', None),
+        "id": vuln.get('_id', None),
         "date": vuln_date,
-        "update_date": vuln['metadata'].get('update_time', None),
+        "name": vuln.get('name', None),
         "severity": vuln.get('severity', None),
-        "target": vuln.get('target', None),
-        "vuln_status": vuln.get('status', None),
-        "hostnames": vuln_hostnames,
-        "vuln_desc": vuln_description,
-        "vuln_name": vuln.get('name', None),
         "service": vuln_service,
+        "target": vuln.get('target', None),
+        "desc": vuln_description,
+        "status": vuln.get('status', None),
+        "hostnames": vuln_hostnames,
         "comments": comments_list,
+        "owner": vuln.get('owner', None),
+        "os": vuln.get('host_os', None),
         "resolution": vuln.get('resolution', None),
         "refs": vuln.get('refs', None),
         "easeofresolution": vuln.get('easeofresolution', None),
+        "web_vulnerability": vuln['type'] == "VulnerabilityWeb",
         "data": vuln.get('data', None),
         "website": vuln.get('website', None),
         "path": vuln.get('path', None),
@@ -170,10 +169,7 @@ def _build_vuln_data(vuln, custom_fields_columns):
         "impact_integrity": vuln["impact"]["integrity"],
         "impact_availability": vuln["impact"]["availability"],
         "impact_accountability": vuln["impact"]["accountability"],
-        "web_vulnerability": vuln['type'] == "VulnerabilityWeb",
-        "vuln_creator": vuln["metadata"].get('creator', None),
-        "vuln_parent_id": vuln.get('parent', None),
-        "vuln_parent_type": vuln.get('parent_type', None)
+        "update_date": vuln['metadata'].get('update_time', None),
     }
     if vuln['custom_fields']:
         for field_name, value in vuln['custom_fields'].items():

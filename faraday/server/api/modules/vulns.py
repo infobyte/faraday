@@ -851,6 +851,7 @@ class VulnerabilityView(PaginatedMixin,
                          as_attachment=True,
                          cache_timeout=-1)
 
+
     @route('bulk_delete/', methods=['DELETE'])
     def bulk_delete(self, workspace_name):
         workspace = self._get_workspace(workspace_name)

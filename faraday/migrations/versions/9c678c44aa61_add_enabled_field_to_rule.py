@@ -17,7 +17,7 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column('rule', sa.Column('enabled', sa.Boolean, default=True, nullable=True))
+    op.add_column('rule', sa.Column('enabled', sa.Boolean, default=True, nullable=False, server_default='True'))
 
 
 def downgrade():

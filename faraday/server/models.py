@@ -1936,7 +1936,7 @@ class Rule(Metadata):
     object_parent = Column(String, nullable=True)
     fields = Column(JSONType, nullable=True)
     object = Column(JSONType, nullable=False)
-    enabled = Column(Boolean, nullable=True, default=True)
+    enabled = Column(Boolean, nullable=False, default=True)
     actions = relationship("Action", secondary="rule_action", backref=backref("rules"))
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', backref=backref('rules', cascade="all, delete-orphan"))

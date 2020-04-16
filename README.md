@@ -140,7 +140,8 @@ Faraday supports CSV Exporting from its WEB UI.
     [2010](http://vimeo.com/16516987) -
     [2014](https://www.youtube.com/watch?v=_j0T2S6Ppfo) -
     [2017](http://blog.infobytesec.com/2017/10/ekoparty-2017-review_23.html) -
-    [2018](http://blog.infobytesec.com/2018/10/ekoparty-2018-review_18.html)
+    [2018](http://blog.infobytesec.com/2018/10/ekoparty-2018-review_18.html) -
+    [2019](https://medium.com/faraday/ekoparty-2019-review-abd1940ac8c6?source=collection_home---4------5-----------------------)
 
 * Black Hat:
     * USA ![](https://raw.github.com/wiki/infobyte/faraday/images/flags/usa.png):
@@ -148,7 +149,8 @@ Faraday supports CSV Exporting from its WEB UI.
         [2015](https://www.blackhat.com/us-15/arsenal.html#faraday) -
         [2016](https://www.blackhat.com/us-16/arsenal.html#faraday) -
         [2017](https://www.blackhat.com/us-17/event-sponsors.html#faraday) -
-        [2018](https://www.blackhat.com/us-18/event-sponsors.html#faraday)
+        [2018](https://www.blackhat.com/us-18/event-sponsors.html#faraday) -
+        [2019](https://medium.com/faraday/another-year-at-las-vegas-with-faraday-21b0edcf8d6?source=collection_home---4------8-----------------------)
 
     * Asia ![](https://raw.github.com/wiki/infobyte/faraday/images/flags/singapore.png):
         [2016](https://www.blackhat.com/asia-16/arsenal.html#faraday) -
@@ -157,7 +159,8 @@ Faraday supports CSV Exporting from its WEB UI.
 
     * Europe ![](https://raw.github.com/wiki/infobyte/faraday/images/flags/europe.png):
         [2015](https://www.blackhat.com/eu-15/arsenal.html#faraday) -
-        [2016](https://www.blackhat.com/eu-16/arsenal.html#faraday)
+        [2016](https://www.blackhat.com/eu-16/arsenal.html#faraday) -
+        [2019](https://medium.com/faraday/the-end-of-the-year-is-always-jam-packed-it-is-a-period-for-looking-back-and-celebrating-the-road-fcf5cb007a3a)
 
 * RSA USA ![](https://raw.github.com/wiki/infobyte/faraday/images/flags/usa.png):
     [2015](https://www.rsaconference.com/events/us15/expo-sponsors/exhibitor-list/1782/infobyte-llc)
@@ -183,7 +186,8 @@ Faraday supports CSV Exporting from its WEB UI.
 
 
 * PyConAr ![](https://raw.github.com/wiki/infobyte/faraday/images/flags/argentina.png):
-   [2018](https://eventos.python.org.ar/events/pyconar2018/activity/75/)
+   [2018](https://eventos.python.org.ar/events/pyconar2018/activity/75/) -
+   [2019](https://eventos.python.org.ar/events/pyconar2019/activity/251/)
 
 * 8.8 Chile ![](https://raw.github.com/wiki/infobyte/faraday/images/flags/chile.png):
    [2018](http://blog.infobytesec.com/2018/11/chronicles-of-trip-to-santiago-88-review.html)

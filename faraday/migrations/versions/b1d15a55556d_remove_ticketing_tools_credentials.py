@@ -7,9 +7,9 @@ Create Date: 2020-04-02 20:41:41.083048+00:00
 """
 from alembic import op
 import sqlalchemy as sa
-from configparser import ConfigParser
 
 from faraday.server.config import LOCAL_CONFIG_FILE
+from configparser import ConfigParser, NoSectionError
 
 
 # revision identifiers, used by Alembic.
@@ -20,13 +20,16 @@ depends_on = None
 
 
 def upgrade():
-    config = ConfigParser()
-    config.read(LOCAL_CONFIG_FILE)
-    config.remove_option('ticketing_tool', 'tool_username')
-    config.remove_option('ticketing_tool', 'tool_password')
+    try:
+        config = ConfigParser()
+        config.read(LOCAL_CONFIG_FILE)
+        config.remove_option('ticketing_tool', 'tool_username')
+        config.remove_option('ticketing_tool', 'tool_password')
 
-    with open(LOCAL_CONFIG_FILE, 'w') as configfile:
-        config.write(configfile)
+        with open(LOCAL_CONFIG_FILE, 'w') as configfile:
+            config.write(configfile)
+    except NoSectionError:
+        pass
 
 
 def downgrade():

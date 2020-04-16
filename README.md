@@ -53,7 +53,7 @@ In your browser, now you can go to localhost:5985 and login with "faraday" as us
 
 ## New Features!
 
-All of Faraday's latest features and updates are always available on our [blog](http://blog.infobytesec.com/search/label/english).
+All of Faraday's latest features and updates are always available on our [blog](https://medium.com/faraday).
 There are new entries every few weeks, don't forget to check out our amazing new improvements on its latest entry!
 
 ## API

@@ -91,7 +91,7 @@ def _build_host_element(host, host_tag):
     host_description = SubElement(host_tag, 'comments')
     host_description.text = host.description
     vuln_count = SubElement(host_tag, 'vuln-count')
-    vuln_count.text = str(host.vulnerability_count)
+    vuln_count.text = str(len(host.vulnerabilities))
     service_count = SubElement(host_tag, 'service-count')
     service_count.text = str(len(host.services))
     _build_host_empty_fields(host_tag)

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 16 16" style="enable-background:new 0 0 16 16;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#DEF1FE;}
+	.st1{fill:#1C87C3;}
+</style>
+<path class="st0" d="M8,15.4c-4.1,0-7.4-3.3-7.4-7.4S3.9,0.6,8,0.6s7.4,3.3,7.4,7.4S12.1,15.4,8,15.4z"/>
+<path class="st1" d="M8,0.8c4,0,7.2,3.2,7.2,7.2S12,15.2,8,15.2S0.8,12,0.8,8S4,0.8,8,0.8 M8,0.4C3.8,0.4,0.4,3.8,0.4,8
+	s3.4,7.6,7.6,7.6s7.6-3.4,7.6-7.6S12.2,0.4,8,0.4L8,0.4z"/>
+</svg>

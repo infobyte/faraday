@@ -624,6 +624,23 @@ def test_bulk_create_with_agent_token_in_different_workspace_fails(
     assert count(Host, second_workspace) == 0
 
 
+def test_bulk_create_with_not_existent_workspace_fails(
+        session, agent, test_client):
+    assert agent.workspace
+    session.add(agent)
+    session.commit()
+    assert agent.token
+    url = 'v2/ws/{}/bulk_create/'.format("im_a_incorrect_ws")
+    res = test_client.post(
+        url,
+        data=dict(hosts=[host_data]),
+        headers=[("authorization", "agent {}".format(agent.token))]
+    )
+    assert res.status_code == 404
+    assert b'No such workspace' in res.data
+    assert count(Host, agent.workspace) == 0
+
+
 def test_bulk_create_endpoint_with_agent_token_without_execution_id(session, agent, test_client):
     session.add(agent)
     session.commit()

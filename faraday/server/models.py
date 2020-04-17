@@ -1931,15 +1931,27 @@ class KnowledgeBase(db.Model):
 
 class Rule(Metadata):
     __tablename__ = 'rule'
-
     id = Column(Integer, primary_key=True)
     model = Column(String, nullable=False)
     object_parent = Column(String, nullable=True)
     fields = Column(JSONType, nullable=True)
     object = Column(JSONType, nullable=False)
+    enabled = Column(Boolean, nullable=False, default=True)
     actions = relationship("Action", secondary="rule_action", backref=backref("rules"))
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', backref=backref('rules', cascade="all, delete-orphan"))
+
+    @property
+    def parent(self):
+        return
+
+    @property
+    def disabled(self):
+        return not self.enabled
+
+    @disabled.setter
+    def disabled(self, value):
+        self.enabled = not value
 
 
 class Action(Metadata):

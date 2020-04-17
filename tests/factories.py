@@ -46,7 +46,11 @@ from faraday.server.models import (
     CustomFieldsSchema,
     Agent,
     AgentExecution,
-    SearchFilter, Executor)
+    SearchFilter,
+    Executor,
+    Rule,
+    Action,
+    RuleAction)
 
 # Make partials for start and end date. End date must be after start date
 FuzzyStartTime = lambda: (
@@ -479,5 +483,35 @@ class SearchFilterFactory(FaradayFactory):
         model = SearchFilter
         sqlalchemy_session = db.session
 
+
+class ActionFactory(FaradayFactory):
+    name = FuzzyText()
+    command = FuzzyChoice(['UPDATE', 'DELETE', 'ALERT'])
+    field = 'severity'
+    value = 'informational'
+
+    class Meta:
+        model = Action
+        sqlalchemy_session = db.session
+
+
+class RuleFactory(WorkspaceObjectFactory):
+    model = 'Vulnerability'
+    object = "severity=low",
+    disabled = FuzzyChoice([True, False])
+    workspace = factory.SubFactory(WorkspaceFactory)
+
+    class Meta:
+        model = Rule
+        # sqlalchemy_session = db.session
+
+
+class RuleActionFactory(FaradayFactory):
+    rule = factory.SubFactory(RuleFactory)
+    action = factory.SubFactory(ActionFactory)
+
+    class Meta:
+        model = RuleAction
+        sqlalchemy_session = db.session
 
 # I'm Py3

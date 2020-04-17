@@ -327,7 +327,7 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
 
     def update_vuln(policyviolations, references, vuln):
         vuln.references = references
-        vuln.policyviolations = policyviolations
+        vuln.policy_violations = policyviolations
         # TODO attachments
         db.session.add(vuln)
         db.session.commit()
@@ -387,8 +387,8 @@ class BulkCreateView(GenericWorkspacedView):
         if flask.g.user is None:
             agent = require_agent_token()
             workspace = agent.workspace
-            assert workspace.name
-            if workspace_name != workspace.name:
+
+            if not workspace or workspace_name != workspace.name:
                 flask.abort(404, "No such workspace: %s" % workspace_name)
 
             if "execution_id" not in data:

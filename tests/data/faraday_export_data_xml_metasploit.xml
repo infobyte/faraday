@@ -80,10 +80,11 @@
       <updated-at>2020-04-17 15:20:57</updated-at>
       <name>Vulnerability Web test</name>
       <description>Desc for testing web vuln</description>
-      <risk>8</risk>
+      <risk>5</risk>
+      <legacy-category>Faraday</legacy-category>
       <path>faraday.com</path>
       <method>GET</method>
-      <params>ABCDEF</params>
+      <params></params>
       <pname>qwerty</pname>
       <query>query for vuln</query>
       <request>GET for vuln</request>
@@ -91,6 +92,7 @@
       <host>127.0.0.1</host>
       <port>8080</port>
       <ssl></ssl>
+      <confidence></confidence>
     </web_vuln>
   </web_vulns>
 </MetasploitV4>

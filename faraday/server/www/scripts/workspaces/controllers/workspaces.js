@@ -218,6 +218,7 @@ angular.module('faradayApp')
 
             $scope.edit = function () {
                 var workspace;
+
                 $scope.workspaces.forEach(function (w) {
                     if (w.selected) {
                         workspace = w;

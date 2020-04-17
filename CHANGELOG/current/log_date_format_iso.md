@@ -1,1 +1,0 @@
-Change log date format to ISO 8601

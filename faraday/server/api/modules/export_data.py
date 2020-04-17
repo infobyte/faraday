@@ -32,41 +32,12 @@ def export_data(workspace_name):
         abort(400, "Invalid format.")
 
 
-def _build_websites_element(web_services, websites_tag):
-    web_site_tag = SubElement(websites_tag, 'web_site')
-    for web_service in web_services:
-        website_id = SubElement(web_site_tag, 'id')
-        website_id.text = str(web_service.id)
-        website_service_id = SubElement(web_site_tag, 'service-id')
-        website_service_id.text = str(web_service.id)
-
-        website_vhost = SubElement(web_site_tag, 'vhost')
-        website_vhost.text = str(web_service.host.ip)
-        website_host = SubElement(web_site_tag, 'host')
-        website_host.text = str(web_service.host.ip)
-        website_port = SubElement(web_site_tag, 'port')
-        website_port.text = str(web_service.port)
-
-        create_date = SubElement(web_site_tag, 'created-at')
-        create_date.text = web_site_tag.create_date.strftime("%Y-%m-%d %H:%M:%S")
-        update_date = SubElement(web_site_tag, 'updated-at')
-        update_date.text = web_site_tag.update_date.strftime("%Y-%m-%d %H:%M:%S")
-
-        website_comments = SubElement(web_site_tag, 'comments')
-        website_comments.text = str(web_service.description)
-
-        website_options = SubElement(web_site_tag, 'options')
-        website_options.text = ''
-
-        website_ssl = SubElement(web_site_tag, 'ssl')
-        website_ssl.text = 'true' if web_service.port == 443 else ''
-
-
 def xml_metasploit_format(workspace):
     root = Element('MetasploitV4')
     hosts_tag = SubElement(root, 'hosts')
     services_tag = SubElement(root, 'services')  # Element's parent is root
     websites_tag = SubElement(root, 'web_sites')
+    web_vulns_tag = SubElement(root, 'web_vulns')
     web_services = set()
     for host in workspace.hosts:
         host_tag = SubElement(hosts_tag, 'host')
@@ -85,9 +56,9 @@ def xml_metasploit_format(workspace):
                 _build_vuln_element(vuln, vuln_tag)
 
             for vuln_web in service.vulnerabilities_web:
-                vuln_tag = SubElement(vulns_tag, 'vuln')
                 web_services.add(vuln_web.service)
-                _build_vuln_web_element(vuln_web, vuln_tag)
+                web_vuln_tag = SubElement(web_vulns_tag, 'web_vuln')
+                _build_vuln_web_element(vuln_web, web_vuln_tag)
 
 
         for vuln in host.vulnerabilities:
@@ -183,13 +154,80 @@ def _build_vuln_web_element(vuln, vuln_tag):
     website_id = SubElement(vuln_tag, 'web-site-id')
     website_id.text = str(vuln.service_id)
 
+    create_date = SubElement(vuln_tag, 'created-at')
+    create_date.text = vuln.update_date.strftime("%Y-%m-%d %H:%M:%S")
+    update_date = SubElement(vuln_tag, 'updated-at')
+    update_date.text = vuln.update_date.strftime("%Y-%m-%d %H:%M:%S")
+
     vuln_name = SubElement(vuln_tag, 'name')
     vuln_name.text = vuln.name
-    vuln_info = SubElement(vuln_tag, 'info')
-    vuln_info.text = vuln.description
+    vuln_desc = SubElement(vuln_tag, 'description')
+    vuln_desc.text = vuln.description
+    risk = SubElement(vuln_tag, 'risk')
+    risk.text = map_severity(vuln.severity)
 
-    #update_date = SubElement(vuln_tag, 'updated-at')
-    #update_date.text = service.update_date.strftime("%Y-%m-%d %H:%M:%S")
-    #create_date = SubElement(vuln_tag, 'updated-at')
-    #create_date.text = service.update_date.strftime("%Y-%m-%d %H:%M:%S")
-    # ADD all vuln fields
+    path = SubElement(vuln_tag, 'path')
+    path.text = vuln.path
+    method = SubElement(vuln_tag, 'method')
+    method.text = vuln.method
+    params = SubElement(vuln_tag, 'params')
+    params.text = vuln.parameters
+    pname = SubElement(vuln_tag, 'pname')
+    pname.text = vuln.parameter_name
+    query = SubElement(vuln_tag, 'query')
+    query.text = vuln.query_string
+    request = SubElement(vuln_tag, 'request')
+    request.text = vuln.request
+
+    vhost = SubElement(vuln_tag, 'vhost')
+    vhost.text = str(vuln.service.host.ip)
+    host = SubElement(vuln_tag, 'host')
+    host.text = str(vuln.service.host.ip)
+    port = SubElement(vuln_tag, 'port')
+    port.text = str(vuln.service.port)
+    ssl = SubElement(vuln_tag, 'ssl')
+    ssl.text = 'true' if vuln.service.port == 443 else ''
+
+
+def map_severity(severity):
+    risk = '1'
+    if severity == 'critical':
+        risk = '10'
+    elif severity == 'high':
+        risk = '8'
+    elif severity == 'medium':
+        risk = '6'
+    elif severity == 'low':
+        risk = '4'
+
+    return risk
+
+
+def _build_websites_element(web_services, websites_tag):
+    for web_service in web_services:
+        web_site_tag = SubElement(websites_tag, 'web_site')
+        website_id = SubElement(web_site_tag, 'id')
+        website_id.text = str(web_service.id)
+        website_service_id = SubElement(web_site_tag, 'service-id')
+        website_service_id.text = str(web_service.id)
+
+        website_vhost = SubElement(web_site_tag, 'vhost')
+        website_vhost.text = str(web_service.host.ip)
+        website_host = SubElement(web_site_tag, 'host')
+        website_host.text = str(web_service.host.ip)
+        website_port = SubElement(web_site_tag, 'port')
+        website_port.text = str(web_service.port)
+
+        create_date = SubElement(web_site_tag, 'created-at')
+        create_date.text = web_service.create_date.strftime("%Y-%m-%d %H:%M:%S")
+        update_date = SubElement(web_site_tag, 'updated-at')
+        update_date.text = web_service.update_date.strftime("%Y-%m-%d %H:%M:%S")
+
+        website_comments = SubElement(web_site_tag, 'comments')
+        website_comments.text = str(web_service.description)
+
+        website_options = SubElement(web_site_tag, 'options')
+        website_options.text = ''
+
+        website_ssl = SubElement(web_site_tag, 'ssl')
+        website_ssl.text = 'true' if web_service.port == 443 else ''

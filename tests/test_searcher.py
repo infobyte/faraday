@@ -7,12 +7,20 @@ import pytest
 from faraday.searcher.api import Api
 from faraday.searcher.searcher import Searcher, MailNotification
 from faraday.searcher.sqlapi import SqlApi
-from faraday.server.models import Service, Host
 from faraday.server.models import Service, Host, VulnerabilityWeb
 from faraday.server.models import Vulnerability, CommandObject
 from faraday.server.schemas import WorkerRuleSchema
-from tests.factories import VulnerabilityTemplateFactory, ServiceFactory, \
-    HostFactory, CustomFieldsSchemaFactory, VulnerabilityWebFactory, RuleFactory, ActionFactory, RuleActionFactory
+from tests.factories import (
+    VulnerabilityTemplateFactory,
+    ServiceFactory,
+    HostFactory,
+    CustomFieldsSchemaFactory,
+    VulnerabilityWebFactory,
+    RuleFactory,
+    ActionFactory,
+    RuleActionFactory,
+    UserFactory,
+)
 from tests.factories import WorkspaceFactory, VulnerabilityFactory
 
 

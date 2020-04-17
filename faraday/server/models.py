@@ -83,7 +83,7 @@ class SQLAlchemy(OriginalSQLAlchemy):
 
 
 class CustomEngineConnector(_EngineConnector):
-    """Used by overrided SQLAlchemy class to fix rollback issues.
+    """Used by overridden SQLAlchemy class to fix rollback issues.
 
     Also set case sensitive likes (in SQLite there are case
     insensitive by default)"""
@@ -782,6 +782,7 @@ class Command(Metadata):
     IMPORT_SOURCE = [
         'report',  # all the files the tools export and faraday imports it from the resports directory, gtk manual import or web import.
         'shell',  # command executed on the shell or webshell with hooks connected to faraday.
+        'agent'
     ]
 
     __tablename__ = 'command'
@@ -1930,15 +1931,27 @@ class KnowledgeBase(db.Model):
 
 class Rule(Metadata):
     __tablename__ = 'rule'
-
     id = Column(Integer, primary_key=True)
     model = Column(String, nullable=False)
     object_parent = Column(String, nullable=True)
     fields = Column(JSONType, nullable=True)
     object = Column(JSONType, nullable=False)
+    enabled = Column(Boolean, nullable=False, default=True)
     actions = relationship("Action", secondary="rule_action", backref=backref("rules"))
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', backref=backref('rules', cascade="all, delete-orphan"))
+
+    @property
+    def parent(self):
+        return
+
+    @property
+    def disabled(self):
+        return not self.enabled
+
+    @disabled.setter
+    def disabled(self, value):
+        self.enabled = not value
 
 
 class Action(Metadata):
@@ -2056,6 +2069,7 @@ class AgentExecution(Metadata):
         'Workspace',
         backref=backref('agent_executions', cascade="all, delete-orphan"),
     )
+    parameters_data = Column(JSONType, nullable=False)
 
     @property
     def parent(self):
@@ -2145,4 +2159,3 @@ event.listen(
 
 # We have to import this after all models are defined
 import faraday.server.events # pylint: disable=unused-import
-# I'm Py3

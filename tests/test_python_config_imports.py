@@ -5,15 +5,6 @@ import unittest
 
 class ImportTests(unittest.TestCase):
 
-    def test_couchdb(self):
-        from faraday.server.config import couchdb
-        self.host = couchdb.host
-        self.password = couchdb.password
-        self.protocol = couchdb.protocol
-        self.port = couchdb.port
-        self.ssl_port = couchdb.ssl_port
-        self.user = couchdb.user
-
     def test_database(self):
         from faraday.server.config import database
         self.connection_string = database.connection_string

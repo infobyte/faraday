@@ -117,7 +117,7 @@ class WebServer:
 
     def __build_websockets_resource(self):
         websocket_port = int(faraday.server.config.faraday_server.websocket_port)
-        url = '{0}:{1}'.format(self.__bind_address, websocket_port)
+        url = '{0}:{1}/websockets'.format(self.__bind_address, websocket_port)
         if self.__websocket_ssl_enabled:
             url = 'wss://' + url
         else:
@@ -205,7 +205,6 @@ class WebServer:
 
 
         except Exception as e:
-            logger.error('Something went wrong when trying to setup the Web UI')
-            logger.exception(e)
+            logger.exception('Something went wrong when trying to setup the Web UI')
             sys.exit(1)
 # I'm Py3

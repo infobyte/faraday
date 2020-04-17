@@ -35,7 +35,6 @@ with open('faraday/__init__.py', 'rt', encoding='utf8') as f:
 # Taken from https://stackoverflow.com/questions/14399534/reference-requirements-txt-for-the-install-requires-kwarg-in-setuptools-setup-py/14399775#14399775
 with open('requirements.txt') as fp:
     required = fp.read().splitlines()
-    required.reverse()
 
 with open('requirements_dev.txt') as fp:
     dev_required = fp.read().splitlines()
@@ -232,8 +231,6 @@ setup(
     entry_points={  # Optional
         'console_scripts': [
             'faraday-server=faraday.start_server:main',
-            'faraday-client=faraday.client.start_client:main',
-            'fplugin=faraday.client.bin.fplugin:main',
             'faraday-manage=faraday.manage:cli',
             'faraday-searcher=faraday.searcher.searcher:main'
         ],

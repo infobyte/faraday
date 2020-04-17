@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+import json
+
 import pytest
 
 from faraday.searcher.api import Api
@@ -8,8 +10,9 @@ from faraday.searcher.sqlapi import SqlApi
 from faraday.server.models import Service, Host
 from faraday.server.models import Service, Host, VulnerabilityWeb
 from faraday.server.models import Vulnerability, CommandObject
+from faraday.server.schemas import WorkerRuleSchema
 from tests.factories import VulnerabilityTemplateFactory, ServiceFactory, \
-    HostFactory, CustomFieldsSchemaFactory, VulnerabilityWebFactory, UserFactory
+    HostFactory, CustomFieldsSchemaFactory, VulnerabilityWebFactory, RuleFactory, ActionFactory, RuleActionFactory
 from tests.factories import WorkspaceFactory, VulnerabilityFactory
 
 
@@ -823,3 +826,48 @@ class TestSearcherRules():
         assert host.ip == '10.25.50.47'
         assert host.os == 'Windows'
         assert host.owned is True
+
+    @pytest.mark.parametrize("api", [
+        lambda workspace, test_client, session: Api(workspace.name, test_client, session, username='test',
+                                                    password='test', base=''),
+        lambda workspace, test_client, session: SqlApi(workspace.name, test_client, session),
+    ])
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_disable_rule(self, api, session, test_client, vulnerability_factory):
+        workspace = WorkspaceFactory.create()
+        vulns = vulnerability_factory.create_batch(5, workspace=workspace, severity='low')
+        vulns2 = vulnerability_factory.create_batch(5, workspace=workspace, severity='medium')
+        session.add(workspace)
+        session.add_all(vulns)
+        session.add_all(vulns2)
+        session.commit()
+
+        vulns_count = session.query(Vulnerability).filter_by(workspace=workspace).count()
+        assert vulns_count == 10
+
+        searcher = Searcher(api(workspace, test_client, session))
+        rule_disabled = RuleFactory.create(object="severity=low", disabled=True, workspace=workspace)
+        rule_enabled = RuleFactory.create(object="severity=medium", disabled=False, workspace=workspace)
+
+        action = ActionFactory.create(command='DELETE')
+        session.add(action)
+
+        session.add(rule_disabled)
+        session.add(rule_enabled)
+
+        rules = [rule_disabled, rule_enabled]
+
+        for rule in rules:
+            rule_action = RuleActionFactory.create(action=action, rule=rule)
+            session.add(rule_action)
+
+        session.commit()
+        rules_data = []
+        for rule in rules:
+            rule_data = WorkerRuleSchema().dumps(rule).data
+            rules_data.append(json.loads(rule_data))
+        searcher.process(rules_data)
+        vulns_count = session.query(Vulnerability).filter_by(workspace=workspace).count()
+        assert vulns_count == 5
+
+

@@ -586,6 +586,23 @@ class RetrieveMixin:
     """Add GET /<id>/ route"""
 
     def get(self, object_id, **kwargs):
+        """
+        ---
+          tags: ["{tag_name}"]
+          summary: Retrieves {class_model}
+          parameters:
+          - in: path
+            name: object_id
+            required: true
+            schema:
+              type: integer
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: {schema_class}
+        """
         return self._dump(self._get_object(object_id, eagerload=True,
                                            **kwargs), kwargs)
 
@@ -594,6 +611,30 @@ class RetrieveWorkspacedMixin(RetrieveMixin):
     """Add GET /<workspace_name>/<route_base>/<id>/ route"""
     # There are no differences with the non-workspaced implementations. The code
     # inside the view generic methods is enough
+    def get(self, object_id, workspace_name=None):
+        """
+        ---
+          tags: ["{tag_name}"]
+          summary: Retrieves {class_model}
+          parameters:
+          - in: path
+            name: object_id
+            required: true
+            schema:
+              type: integer
+          - in: path
+            name: workspace_name
+            required: true
+            schema:
+              type: string
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: {schema_class}
+        """
+        return super(RetrieveWorkspacedMixin, self).get(object_id, workspace_name=workspace_name)
 
 
 class ReadOnlyView(SortableMixin,
@@ -621,6 +662,27 @@ class CreateMixin:
     """Add POST / route"""
 
     def post(self, **kwargs):
+        """
+        ---
+          tags: ["{tag_name}"]
+          summary: Creates {class_model}
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema: {schema_class}
+          responses:
+            201:
+              description: Created
+              content:
+                application/json:
+                  schema: {schema_class}
+            409:
+              description: Duplicated key found
+              content:
+                application/json:
+                  schema: {schema_class}
+        """
         context = {'updating': False}
 
         data = self._parse_data(self._get_schema_instance(kwargs, context=context),
@@ -711,6 +773,36 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
     the database.
     """
 
+    def post(self, workspace_name=None):
+        """
+        ---
+          tags: ["{tag_name}"]
+          summary: Creates {class_model}
+          parameters:
+          - in: path
+            name: workspace_name
+            required: true
+            schema:
+              type: string
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema: {schema_class}
+          responses:
+            201:
+              description: Created
+              content:
+                application/json:
+                  schema: {schema_class}
+            409:
+              description: Duplicated key found
+              content:
+                application/json:
+                  schema: {schema_class}
+        """
+        return super(CreateWorkspacedMixin, self).post(workspace_name=workspace_name)
+
     def _perform_create(self, data, workspace_name):
         assert not db.session.new
         workspace = self._get_workspace(workspace_name)
@@ -745,6 +837,34 @@ class UpdateMixin:
     """Add PUT /<id>/ route"""
 
     def put(self, object_id, **kwargs):
+        """
+        ---
+          tags: ["{tag_name}"]
+          summary: Updates {class_model}
+          parameters:
+          - in: path
+            name: object_id
+            required: true
+            schema:
+              type: integer
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema: {schema_class}
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: {schema_class}
+            409:
+              description: Duplicated key found
+              content:
+                application/json:
+                  schema: {schema_class}
+        """
+
         obj = self._get_object(object_id, **kwargs)
         context = {'updating': True, 'object': obj}
         data = self._parse_data(self._get_schema_instance(kwargs, context=context),
@@ -803,6 +923,41 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
     the database.
     """
 
+    def put(self, object_id, workspace_name=None):
+        """
+        ---
+          tags: ["{tag_name}"]
+          summary: Updates {class_model}
+          parameters:
+          - in: path
+            name: object_id
+            required: true
+            schema:
+              type: integer
+          - in: path
+            name: workspace_name
+            required: true
+            schema:
+              type: string
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema: {schema_class}
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: {schema_class}
+            409:
+              description: Duplicated key found
+              content:
+                application/json:
+                  schema: {schema_class}
+        """
+        return super(UpdateWorkspacedMixin, self).put(object_id, workspace_name=workspace_name)
+
     def _perform_update(self, object_id, obj, data, workspace_name=None):
         # # Make sure that if I created new objects, I had properly commited them
         # assert not db.session.new
@@ -818,6 +973,20 @@ class UpdateWorkspacedMixin(UpdateMixin, CommandMixin):
 class DeleteMixin:
     """Add DELETE /<id>/ route"""
     def delete(self, object_id, **kwargs):
+        """
+        ---
+          tags: ["{tag_name}"]
+          summary: Deletes {class_model}
+          parameters:
+          - in: path
+            name: object_id
+            required: true
+            schema:
+                type: integer
+          responses:
+            204:
+              description: The resource was deleted successfully
+        """
         obj = self._get_object(object_id, **kwargs)
         self._perform_delete(obj, **kwargs)
         return None, 204
@@ -829,6 +998,28 @@ class DeleteMixin:
 
 class DeleteWorkspacedMixin(DeleteMixin):
     """Add DELETE /<workspace_name>/<route_base>/<id>/ route"""
+    def delete(self, object_id, workspace_name=None):
+
+        """
+          ---
+            tags: ["{tag_name}"]
+            summary: Deletes {class_model}
+            parameters:
+            - in: path
+              name: object_id
+              required: true
+              schema:
+                type: integer
+            - in: path
+              name: workspace_name
+              required: true
+              schema:
+                type: string
+            responses:
+              204:
+                description: The resource was deleted successfully
+        """
+        return super(DeleteWorkspacedMixin, self).delete(object_id, workspace_name=workspace_name)
 
     def _perform_delete(self, obj, workspace_name=None):
         with db.session.no_autoflush:
@@ -901,6 +1092,81 @@ class CountWorkspacedMixin:
                  }
             )
             res['total_count'] += count
+        return res
+
+
+class CountMultiWorkspacedMixin:
+    """Add GET /<workspace_name>/<route_base>/count_multi_workspace/ route
+
+    Receives a list of workspaces separated by comma in the workspaces
+    GET parameter.
+    If no workspace is specified, the view will return a 400 error.
+
+    Group objects by the field set in the group_by GET parameter. If it
+    isn't specified, the view will return a 400 error. For each group,
+    show the count of elements and its value.
+
+    This view is often used by some parts of the web UI. It was designed
+    to keep backwards compatibility with the count endpoint of Faraday
+    v2.
+    """
+
+    #: List of SQLAlchemy query filters to apply when counting
+    count_extra_filters = []
+
+    def count_multi_workspace(self, **kwargs):
+        res = {
+            'groups': defaultdict(dict),
+            'total_count': 0
+        }
+
+        workspace_names_list = flask.request.args.get('workspaces', None)
+
+        if not workspace_names_list:
+            flask.abort(400, {"message": "workspaces is a required parameter"})
+
+        workspace_names_list = workspace_names_list.split(',')
+
+        # Enforce workspace permission checking for each workspace
+        for workspace_name in workspace_names_list:
+            self._get_workspace(workspace_name)
+
+        group_by = flask.request.args.get('group_by', None)
+        sort_dir = flask.request.args.get('order', "asc").lower()
+
+        # TODO migration: whitelist fields to avoid leaking a confidential
+        # field's value.
+        # Example: /users/count/?group_by=password
+        # Also we should check that the field exists in the db and isn't, for
+        # example, a relationship
+        if not group_by or group_by not in inspect(self.model_class).attrs:
+            flask.abort(400, {"message": "group_by is a required parameter"})
+
+        if sort_dir and sort_dir not in ('asc', 'desc'):
+            flask.abort(400, {"message": "order must be 'desc' or 'asc'"})
+
+        grouped_attr = getattr(self.model_class, group_by)
+
+        q = db.session.query(
+                Workspace.name,
+                grouped_attr,
+                func.count(grouped_attr)
+            )\
+            .join(Workspace)\
+            .group_by(grouped_attr, Workspace.name)\
+            .filter(Workspace.name.in_(workspace_names_list))
+
+        #order
+        order_by = grouped_attr
+        if sort_dir == 'desc':
+            q = q.order_by(desc(Workspace.name), desc(order_by))
+        else:
+            q = q.order_by(asc(Workspace.name), asc(order_by))
+
+        for workspace, key, count in q.all():
+            res['groups'][workspace][key] = count
+            res['total_count'] += count
+
         return res
 
 

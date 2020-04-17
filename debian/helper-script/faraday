@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-
-cd /opt/faraday/client/ && ./faraday.py --nodeps "$@"

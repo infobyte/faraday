@@ -72,6 +72,3 @@ def test_start_and_kill_faraday_server():
         with open(log_path, 'r') as log_file:
             print(log_file.read())
     assert subproc.returncode == 0, (out, err, command)
-
-
-# I'm Py3

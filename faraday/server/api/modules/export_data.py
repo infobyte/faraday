@@ -13,7 +13,11 @@ logger = logging.getLogger(__name__)
 
 @export_data_api.route('/v2/ws/<workspace_name>/export_data', methods=['GET'])
 def export_data(workspace_name):
-    workspace = Workspace.query.filter_by(name=workspace_name).one()
+    workspace = Workspace.query.filter_by(name=workspace_name).first()
+    if not workspace:
+        logger.error("No such workspace. Please, specify a valid workspace.")
+        abort(404, "No such workspace: %s" % workspace_name)
+
     export_format = request.args.get('format', '')
     if not export_format:
         logger.error("No format specified. Please, specify the format to export the data.")

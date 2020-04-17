@@ -191,14 +191,14 @@ def _build_vuln_web_element(vuln, vuln_tag):
 
 def map_severity(severity):
     risk = '1'
-    if severity == 'critical':
-        risk = '10'
-    elif severity == 'high':
-        risk = '8'
+    if severity == 'critical' or severity == 'high':
+        risk = '5'
     elif severity == 'medium':
-        risk = '6'
-    elif severity == 'low':
         risk = '4'
+    elif severity == 'low':
+        risk = '3'
+    elif severity == 'informational':
+        risk = '2'
 
     return risk
 

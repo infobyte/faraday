@@ -433,6 +433,7 @@ def parse_value(value):
         return 'informational'
     if value == 'med':
         return 'medium'
+    value = value.replace('%', ' ')
     return value
 
 

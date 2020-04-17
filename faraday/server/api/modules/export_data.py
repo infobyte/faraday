@@ -165,13 +165,15 @@ def _build_vuln_web_element(vuln, vuln_tag):
     vuln_desc.text = vuln.description
     risk = SubElement(vuln_tag, 'risk')
     risk.text = map_severity(vuln.severity)
+    legacy_category = SubElement(vuln_tag, 'legacy-category')
+    legacy_category.text = "Faraday"
 
     path = SubElement(vuln_tag, 'path')
-    path.text = vuln.path
+    path.text = vuln.path or "/"
     method = SubElement(vuln_tag, 'method')
-    method.text = vuln.method
+    method.text = vuln.method or "GET"
     params = SubElement(vuln_tag, 'params')
-    params.text = vuln.parameters
+    params.text = ''
     pname = SubElement(vuln_tag, 'pname')
     pname.text = vuln.parameter_name
     query = SubElement(vuln_tag, 'query')
@@ -187,6 +189,9 @@ def _build_vuln_web_element(vuln, vuln_tag):
     port.text = str(vuln.service.port)
     ssl = SubElement(vuln_tag, 'ssl')
     ssl.text = 'true' if vuln.service.port == 443 else ''
+
+    confidence = SubElement(vuln_tag, 'confidence')
+    confidence.text = ''
 
 
 def map_severity(severity):

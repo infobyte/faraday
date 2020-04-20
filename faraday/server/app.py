@@ -90,6 +90,7 @@ def register_blueprints(app):
     from faraday.server.api.modules.token import token_api # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.search_filter import searchfilter_api # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.preferences import preferences_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.export_data import export_data_api  # pylint:disable=import-outside-toplevel
 
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(activityfeed_api)
@@ -114,6 +115,7 @@ def register_blueprints(app):
     app.register_blueprint(token_api)
     app.register_blueprint(searchfilter_api)
     app.register_blueprint(preferences_api)
+    app.register_blueprint(export_data_api)
 
 
 def check_testing_configuration(testing, app):

@@ -8,12 +8,42 @@
  * Add tool attribute to vulnerability to avoid incorrectly showing "Web UI" as creator tool
  * Add sorting by target in credentials view
  * Add creator information when uploading reports or using de bulk create api
+ * Add feature to disable rules in the searcher
+ * Add API endpoint to export Faraday data to Metasploit XML format
  * Use run date instead of creation date when plugins report specifies it
  * Improve knowledge base UX
+ * Improve workspace table and status report table UX.
+ * Improve format of exported CSV to include more fields
  * Sort results in count API endpoint
  * Limit description width in knowledge base
  * Change log date format to ISO 8601
  * Fix parsing server port config in server.ini
- * Fix bug when _rev was send to the hosts API
+ * Fix bug when \_rev was send to the hosts API
  * Send JSON response when you get a 500 or 404 error
  * Fix bug parsing invalid data in NullToBlankString
+
+Changes in plugins (only available through Web UI, not in GTK client yet):
+
+New plugins:
+
+* Checkmarx
+* Faraday\_csv (output of exported Faraday csv)
+* Qualyswebapp
+* Whitesource
+
+Updated plugins:
+
+* Acunetix
+* AppScan
+* Arachni
+* Nessus
+* Netspaker
+* Netspaker cloud
+* Nexpose
+* Openvas
+* QualysGuard
+* Retina
+* W3af
+* WPScan
+* Webinspect
+* Zap

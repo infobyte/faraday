@@ -6,23 +6,19 @@ let
 
   nixpkgs = builtins.fetchTarball {
     url =
-      "https://github.com/nixos/nixpkgs/archive/91c43a9dc822da30cf3cd2908891edddcea482f2.tar.gz";
-    sha256 = "06ikg56ifx57b0n9yqa9szipbsswn98gz5zszi8nsqd7d4p4l3y4";
+      "https://github.com/infobyte/nixpkgs/archive/1cd5022ecb35f81d22fd343013eea70f85c0a118.tar.gz";
+    sha256 = "05hv06n3rgd82x7076bw287cv3bix79crhdivhwq75vs2sp9ildy";
   };
 
   packageOverrides = self: super: {
 
     faradaysec = self.callPackage ./packages/faradaysec.nix { };
 
-    flask = self.callPackage ./packages/flask.nix { };
-
     flask-classful = self.callPackage ./packages/flask-classful.nix { };
 
     flask-security = self.callPackage ./packages/flask-security.nix { };
 
-    flask-babelex = self.callPackage ./packages/flask-babelex.nix { };
-
-    pgcli = self.callPackage ./packages/pgcli.nix { };
+    marshmallow = self.callPackage ./packages/marshmallow.nix { };
 
     webargs = self.callPackage ./packages/webargs.nix { };
 

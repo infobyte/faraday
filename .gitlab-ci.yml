@@ -359,19 +359,22 @@ generate_rpm:
 test_hypothesis:
     tags:
         - hypothesis
-    image: registry.gitlab.com/faradaysec/integrationrepo
+    image: nixorg/nix
     stage: testing
     allow_failure: true
     script:
-        - pip3 install virtualenv
-        - virtualenv -p python3 faraday_venv
-        - source faraday_venv/bin/activate
-        - python3 setup.py install
-        - pip install --upgrade responses pytest-xdist pytest-cov
-        - pip install --upgrade -r requirements_dev.txt
+        - nix-env -if pypi2nixpkgs/nixpkgs.nix -A cachix
+        - mkdir -p ~/.config/cachix
+        - export USER=$(whoami)
+        - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
+        - cachix use faradaysec
+        - "echo 'hosts: files dns' >/etc/nsswitch.conf"
+        - export LC_ALL=C.UTF-8
+        - export LANG=C.UTF-8
         - mkdir -p ~/.faraday/config
         - cp tests/data/server.ini ~/.faraday/config
-        - pytest tests -v --cov=faraday/server/api --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB -m hypothesis
+        - mkdir run_from
+        - nix-shell --command "pytest tests -v --cov=faraday/server/api --disable-warnings --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB -m hypothesis"
     only:
         variables:
             - $FULL_TEST

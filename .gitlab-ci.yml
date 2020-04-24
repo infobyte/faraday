@@ -33,20 +33,6 @@ stages:
 services:
     - postgres:latest
 
-closure_compiler:
-    tags:
-        - faradaytests
-    image:
-        name: jborza/closure-compiler
-        entrypoint: ["/bin/sh", "-c"]
-
-    stage: pre_testing
-    script:
-        - /opt/cc.sh faraday/server/www/scripts
-    except:
-        variables:
-            - $BUILD_TEST
-
 merge_conflict_check:
     tags:
         - faradaytests

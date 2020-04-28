@@ -37,7 +37,7 @@ in { dockerName ? "registry.gitlab.com/faradaysec/faraday", dockerTag ? version
     tag = dockerTag;
     created = "now";
     fromImage = null;
-    contents = [ python3.pkgs.faradaysec bash gnused coreutils ];
+    contents = [ faraday-server bash gnused coreutils ];
     config = {
       Cmd = [ ./scripts/docker-entrypoint.sh ];
       ExposedPorts."5985/tcp" = { };
@@ -54,7 +54,7 @@ in { dockerName ? "registry.gitlab.com/faradaysec/faraday", dockerTag ? version
         ./scripts/docker-entrypoint.sh
       } .  # Not required, but useful for debug
       cp ${coreutils}/bin/env usr/bin/env
-      ln -s ${python3.pkgs.faradaysec} opt/faraday
+      ln -s ${faraday-server} opt/faraday
         ${
           lib.optionalString (product != "community")
           "ln -s /home/faraday/.faraday/doc faraday-license"

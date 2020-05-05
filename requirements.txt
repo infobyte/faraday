@@ -12,8 +12,8 @@ flask-login<0.5.0
 Flask-Security>=3.0.0
 marshmallow<3.0.0
 Pillow>=4.2.1
-psycopg2==2.7.7
-pgcli==2.1.0
+psycopg2
+pgcli
 pyopenssl>=17.2.0
 python-dateutil>=2.6.0
 requests>=2.18.4

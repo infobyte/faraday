@@ -7,8 +7,6 @@ See the file 'doc/LICENSE' for the license information
 
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import print_function
 import re
 from lxml import etree as ET    
 

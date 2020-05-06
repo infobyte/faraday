@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import with_statement
 
 import logging
 import sys

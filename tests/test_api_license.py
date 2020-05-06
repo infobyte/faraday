@@ -5,7 +5,6 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from __future__ import absolute_import
 """Tests for many API endpoints that do not depend on workspace_name"""
 
 import pytest

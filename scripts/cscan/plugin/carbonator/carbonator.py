@@ -6,8 +6,6 @@
 # 
 # For more information contact us at carbonator at integrissecurity dot com
 # Or visit us at https://www.integrissecurity.com/
-from __future__ import absolute_import
-from __future__ import print_function
 
 from burp import IBurpExtender
 from burp import IHttpListener

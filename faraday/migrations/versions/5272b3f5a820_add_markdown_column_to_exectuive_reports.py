@@ -5,7 +5,6 @@ Revises: 2ca03a8feef5
 Create Date: 2019-03-27 19:26:28.354078+00:00
 
 """
-from __future__ import absolute_import
 from alembic import op
 import sqlalchemy as sa
 

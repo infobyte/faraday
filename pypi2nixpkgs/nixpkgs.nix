@@ -22,6 +22,8 @@ let
 
     flask-babelex = self.callPackage ./packages/flask-babelex.nix { };
 
+    marshmallow = self.callPackage ./packages/marshmallow.nix { };
+
     pgcli = self.callPackage ./packages/pgcli.nix { };
 
     webargs = self.callPackage ./packages/webargs.nix { };

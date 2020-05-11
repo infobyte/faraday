@@ -388,7 +388,7 @@ class TestListCommandView(ReadOnlyAPITests):
                               data=raw_data)
         assert res.status_code == 200
         updated_command = self.model.query.get(command.id)
-        print updated_command.end_date
+        print(updated_command.end_date)
         assert updated_command.end_date == datetime.datetime.fromtimestamp(
             1511387720.048548) + datetime.timedelta(seconds=120)
 

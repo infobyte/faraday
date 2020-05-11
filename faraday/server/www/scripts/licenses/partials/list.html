@@ -1,0 +1,87 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+<section id="main" class="seccion ">
+    <div class="faraday-header-border-fix">
+        <div ng-controller="headerCtrl" ng-include="'scripts/commons/partials/header.html'"></div>
+      <div id="reports-main" class="fila ">
+        <div class="reports col-md-12 col-sm-12 col-xs-12">
+            <div class="button-control justify-flex-start col-md-12 col-sm-12 col-xs-12">
+                <div class="control-wrapper control-new">
+                    <button type="button" class="btn btn-success btn-new" title="New license" ng-click="new()">
+                        New
+                    </button>
+                </div>
+                <div class="control-wrapper control-edit">
+                    <button type="button" class="btn btn-default edit" title="Edit selected licenses" ng-disabled="selectedLicenses().length > 1" ng-click="edit()">
+                        <img src="images/icon-toolbar-edit.svg" class="edit-icon" />
+                    </button>
+                </div>
+                <div class="control-wrapper">
+                    <button type="button" class="btn btn-default " title="Delete selected licenses" ng-click="delete()">
+                        <img src="images/icon-toolbar-delete.svg" class="delete-icon" />
+                    </button>
+                </div>
+                <div class="control-wrapper search-wrapper">
+                    <form role="form">
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-if="search" ng-click="clearSearch()"></span>
+                                <input type="text" class="form-control" placeholder="Enter keywords" ng-change="currentPage = 1" ng-model="search" />
+                                <span class="input-group-addon glyphicon-btn">
+                                    <img src="images/icon-toolbar-searchbar-loupe.svg" class="search-icon" />
+                                </span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="reports col-md-12 col-sm-12 cols-xs-12" ng-if="expiration_month == true">
+                <h4><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> The licenses marked in dark red are about to expire</h4>
+            </div>
+            <table class="table-v3 licenses-list table table-responsive">
+                <thead>
+                    <tr class="ui-grid-header">
+                        <th class="ui-grid-cell-contents ui-grid-header-cell hosts-list-checkall"><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('product')">Product</span>
+                        </th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('lictype')">Type</span>
+                        </th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('notes')">Notes</span>
+                        </th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('start')">Start date</span>
+                        </th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('end')">End date</span>
+                        </th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="license in licenses | filter:search | orderBy:sort_field:reverse"
+                        selection-model selection-model-type="checkbox"
+                        selection-model-mode="multiple-additive"
+                        selection-model-selected-class="multi-selected"
+                        selection-model-on-change="selectedLicenses()"
+                        ng-class="{'almost-expired': almostExpired(license.end)}">
+                        <td class="ui-grid-cell-contents checkbox-select"><input type="checkbox" name="{{license._id}}"/></td>
+                        <td class="ui-grid-cell-contents">{{license.product}}</td>
+                        <td class="ui-grid-cell-contents">{{license.lictype}}</td>
+                        <td class="ui-grid-cell-contents">{{license.notes}}</td>
+                        <td class="ui-grid-cell-contents">{{license.start | date:'MM/dd/yyyy'}}</td>
+                        <td class="ui-grid-cell-contents">{{license.end|date:'MM/dd/yyyy'}}</td>
+                        <td class="ui-grid-cell-contents"><i class="fa fa-history" aria-hidden="true">
+                            <a ng-href="{{store}}{{license.product}}" target="_blank">renew</a>
+                        </i></td>
+                    </tr>
+                </tbody>
+            </table><!-- #licenses -->
+        </div><!-- .reports -->
+    </div><!-- #reports-main -->
+  </div><!-- .right-main -->
+</section><!-- #main -->

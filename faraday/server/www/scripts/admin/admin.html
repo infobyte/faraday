@@ -1,0 +1,48 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+<section id="main" class="seccion">
+    <div class="faraday-header-border-fix">
+        <div ng-controller="headerCtrl" ng-include="'scripts/commons/partials/header.html'"></div>
+        <div id="reports-main" class="fila">
+            <div class="settings">
+                <div class="setting-header">
+                    <div><h2>Settings</h2></div>
+                </div>
+                <div class="setting-body">
+                    <div class="setting-sidebar col-sm-2">
+                        <ul>
+                            <li href="javascript:;" ng-class="{'active':on=='custom_fields'}"
+                                ng-click="setItemPanel('custom_fields')">Custom fields
+                            </li>
+                             <li href="javascript:;" ng-class="{'active':on=='agents'}"
+                                ng-click="setItemPanel('agents')">Agents (Beta)
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="setting-container col-sm-10">
+                        <div ng-switch="on">
+                            <div ng-switch-when="custom_fields">
+                                <div ng-controller="customFieldsCtrl" ng-include="'scripts/admin/customFields/partials/customFields.html'"></div>
+                            </div>
+                             <div ng-switch-when="agents">
+                                <div ng-controller="agentsCtrl" ng-include="'scripts/admin/agents/partials/agents.html'"></div>
+                            </div>
+
+
+                            <div ng-switch-default>
+                                <h1>Switch</h1>
+                                <p>There's something wrong !</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+    </div>
+</section><!-- #main -->

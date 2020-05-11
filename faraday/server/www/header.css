@@ -1,0 +1,138 @@
+.faraday-page-header {
+    margin-top: 0px;
+    padding-top: 9px;
+    padding-left: 13px;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    height: 70px;
+}
+
+.faraday-page-header h3 {
+    margin: 0px;
+}
+
+.faraday-page-header .icon {
+    width: 28px;
+    height: 28px;
+}
+
+.faraday-page-header .title {
+    font-size: 16px;
+    font-weight: bold;
+    display: inline-flex;
+}
+
+.faraday-page-header .subtitle {
+    font-size: 12px;
+    font-weight: 300;
+    color: #a3a3a3;
+    float: left;
+}
+
+.faraday-header-border-fix {
+    border-top: 3px solid #464646;
+    /*background-color: #464646;*/
+}
+
+.workspace-selector-wrapper, .icon-wrapper {
+    border-radius: 5px;
+    /*margin-right: 20px;*/
+    padding: 10px;
+}
+
+.icon-wrapper {
+    padding-top: 15px;
+}
+
+.workspace-selector-wrapper, .workspace-switcher {
+    display: flex;
+}
+
+.workspace-selector-wrapper:hover {
+    background-color: #ebebeb
+}
+
+.img-wrapper {
+    width: 36px;
+}
+
+.img-wrapper img {
+    float: left;
+}
+
+.switcher-wrapper {
+    min-width: 200px;
+    line-height: 1;
+}
+
+.switcher-wrapper .dropdown {
+    border: none;
+    background: none;
+}
+
+.switcher-wrapper .dropdown .open {
+    border: none;
+    background: none;
+}
+
+#workspaceSwitcher {
+    padding: 0px;
+    border: none;
+    background: none;
+}
+
+.controls-wrapper {
+    padding-top: 10px;
+}
+
+.controls-wrapper button, .user-dropdown{
+    padding: 6px;
+    font-size: 18px;
+    padding-left: 10px;
+    padding-right: 10px;
+    border: none;
+    background: none;
+    color: #7c7c7c;
+}
+
+.controls-wrapper button {
+    border-left: solid 1px #dddddd;
+    border-radius: 0px;
+    width:55px;
+}
+
+.workspace-switcher-title {
+    display: flex;
+    width: 190px;
+}
+
+.workspace-switcher-title .title{
+    width: 90%;
+    overflow: hidden;
+}
+
+.workspace-switcher-title .caret-container{
+    width: 10%;
+    position: relative;
+    top:8px;
+    color: #7c7c7c;
+}
+
+.workspace-switcher :hover{
+    background: none;
+}
+
+.user-menu-wrapper {
+    align-self: center;
+    margin-right: 30px;
+}
+
+.flex-spacer {
+    flex: 1;
+}
+
+.ws-label{
+    margin-bottom: 25px;
+}

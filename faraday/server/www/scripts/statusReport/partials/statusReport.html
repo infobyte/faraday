@@ -1,0 +1,618 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+<section id="main" class="status-report seccion clearfix">
+  <div class="faraday-header-border-fix"></div>
+    <div class="left-main">
+		<div ng-controller="headerCtrl" ng-include="'scripts/commons/partials/header.html'"></div>
+        <div id="reports-main" class="fila clearfix">
+            <div class="button-control col-md-12 col-sm-12 col-xs-12" id="btn_bar">                
+                <div class="control-wrapper control-new">
+                    <button type="button" class="btn btn-success btn-new" title="{{workspaceData.readonly == true ? 'Read-only. Workspace disabled': 'New Vulns'}}"  ng-click="new()" ng-disabled="workspaceData.readonly == true">
+                        New
+                    </button>
+                </div>
+                <table>
+                        <thead>
+                            <tr>
+                                <th class="col-md-2" style="border-left: 1px solid rgb(221, 221, 221); padding-left: 12px;">
+                                        <a href="#/status/ws/{{workspace}}" class="status-report" ng-class="{'navigation-active' : component == 'status'}" style="color: black !important; font-weight: bold; font-size: 15px;" uib-tooltip="Vulns" tooltip-placement="right">
+                                            Vulns
+                                        </a>
+                                    </th>
+                                <th class="col-md-2">
+                                    <a href="#/hosts/ws/{{workspace}}" class="workspaces" ng-class="{'navigation-active' : component == 'hosts'}" style="color: black !important; font-weight: bold; font-size: 15px;" uib-tooltip="Hosts" tooltip-placement="right">
+                                        Hosts
+                                    </a>
+                                    <div class="flex-spacer"></div>
+                                </th>
+                                <th class="col-md-2">
+                                    <a href="#/credentials/ws/{{workspace}}" class="workspaces" ng-class="{'navigation-active' : component == 'credentials'}" style="color: black !important; font-weight: bold; font-size: 15px;" uib-tooltip="Credentials" tooltip-placement="right">
+                                        Credentials
+                                    </a>
+                                    <div class="flex-spacer"></div>
+                                </th>
+                                <th class="col-md-2" style = "border-right: 1px solid rgb(221, 221, 221); padding-right: 12px">
+                                    <a href="#/taskgroup" class="executive-report" ng-class="{'navigation-active' : component == 'taskgroup'}" style="color: black !important; font-weight: bold; font-size: 15px;">
+                                        Tasks
+                                    </a>
+                                    <div class="flex-spacer"></div>
+                                </th>
+                            </tr>
+                        </thead>
+                    </table>
+                <div class="control-wrapper control-edit">
+                    <button type="button" class="btn btn-default edit" title="{{workspaceData.readonly == true ? 'Read-only. Workspace disabled': 'Edit selected vulns'}}" ng-click="edit()" ng-disabled="getCurrentSelection().length != 1">
+                        <img src="images/icon-toolbar-edit.svg" class="edit-icon" />
+                    </button>
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="SingleActions" ng-show="getCurrentSelection().length === 1"  ng-disabled="workspaceData.readonly == true">
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                        <li><a class="ws" ng-click="saveAsModel()">Create template</a></li>
+                        <li><a class="ws" ng-click="showExploits()">Search exploits</a></li>
+                    </ul>
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Actions" ng-hide="getCurrentSelection().length < 2" ng-disabled="workspaceData.readonly == true">
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-right" role="menu" ng-show="getCurrentSelection().length >= 2">
+                        <li><a class="ws" ng-click="editString('name')">Edit name</a></li>
+                        <li><a class="ws" ng-click="editText('desc', 'description')">Edit description</a></li>
+                        <li><a class="ws" ng-click="editText('data')">Edit data</a></li>
+                        <li><a class="ws" ng-click="editText('resolution')">Edit resolution</a></li>
+                        <li><a class="ws" ng-click="editSeverity()">Edit severity</a></li>
+                        <li><a class="ws" ng-click="editEaseofresolution()">Edit ease of resolution</a></li>
+                        <li><a class="ws" ng-click="editReferences()">Add references</a></li>
+                        <li><a class="ws" ng-click="editImpact()">Edit impact</a></li>
+                        <li><a class="ws" ng-click="editStatus()">Edit status</a></li>
+                        <li><a class="ws" ng-click="editPolicyviolations()">Edit policy violations</a></li>
+                        <li><a class="ws" ng-click="editConfirm()">Confirm/Change to false positive</a></li>
+                        <li ng-show="vulnWebSelected" role="separator" class="divider"></li>
+                        <li ng-show="vulnWebSelected"><a class="ws" ng-click="editString('method')">Edit method</a></li>
+                        <li ng-show="vulnWebSelected"><a class="ws" ng-click="editString('pname', 'param name')">Edit param name</a></li>
+                        <li ng-show="vulnWebSelected"><a class="ws" ng-click="editString('params', 'parameters')">Edit parameters</a></li>
+                        <li ng-show="vulnWebSelected"><a class="ws" ng-click="editString('path')">Edit path</a></li>
+                        <li ng-show="vulnWebSelected"><a class="ws" ng-click="editString('query')">Edit query</a></li>
+                        <li ng-show="vulnWebSelected"><a class="ws" ng-click="editString('website')">Edit website</a></li>
+                        <li ng-show="vulnWebSelected"><a class="ws" ng-click="editText('request')">Edit request</a></li>
+                        <li ng-show="vulnWebSelected"><a class="ws" ng-click="editText('response')">Edit response</a></li>
+                        <li role="separator" class="divider"></li>
+                        <li><a class="ws" ng-click="editCWE()">From vulnerability template</a></li>
+                        <li><a class="ws" ng-click="saveAsModel()">Create vulnerability templates</a></li>
+                        <li role="separator" class="divider"></li>
+                        <li><a class="ws" ng-click="showExploits()">Search exploits</a></li>
+                    </ul>
+                </div>
+                <div class="control-wrapper">
+                    <button type="button" class="btn btn-default" title="{{workspaceData.readonly == true? 'Read-only. Workspace disabled': 'Delete selected items'}}" ng-click="delete()" ng-disabled="workspaceData.readonly == true">
+                        <img src="images/icon-toolbar-delete.svg" class="delete-icon" />
+                    </button>
+                </div>
+                <div class="control-wrapper search-wrapper">
+                    <form role="form" ng-submit="searchFor(searchParams, false, true)" title="The search expression can't contain parentheses that are not closed, double quotes that are not closed, or double spaces.">
+                        <div class="form-group" ng-class="{'has-error':!isValidExpression(searchParams)}">
+                            <div class="input-group">
+                                <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(null, true, false)" ng-if="searchParams !== '' || (search && search != 'confirmed=true')"></span>
+                                <input type="text" class="form-control" placeholder="Enter keywords" ng-change="currentPage = 1" ng-model="searchParams" />
+                                <span class="input-group-addon glyphicon-btn" ng-click="searchFor(searchParams, false, true)" ng-disabled="!isValidExpression(searchParams)">
+                                    <img src="images/icon-toolbar-searchbar-loupe.svg" class="search-icon" />
+                                </span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="control-wrapper download-wrapper">
+                    <button file-exporter="csv()" type="button" class="btn btn-default" title="Download CSV for current workspace">
+                        <img src="images/icon-toolbar-download.svg" class="download-icon" />
+                    </button>
+                </div>
+                <div class="control-wrapper download-wrapper" ng-hide="fileUploadEnabled === true">
+                    <button ng-click="enableFileUpload()" type="button" class="btn btn-default" title="{{workspaceData.readonly == true ? 'Read-only. Workspace disabled': 'Upload a report'}}" ng-disabled="workspaceData.readonly == true">
+                        <img src="images/icon-toolbar-upload.svg"/>
+                    </button>
+                </div>
+                <div class="pl" ng-show="fileUploadEnabled === true">
+                    <span class="file-container">
+                        <button ng-if="fileToUpload === undefined" type="button" class="btn btn-success btn-labeled no-border-radius background-blue">
+                            <span class="btn-label"><i class="fa fa-upload"></i>
+                        </span>Select file</button>
+                        <input type="file" file-model="fileToUpload" ng-class="{'file-selected': fileToUpload !== undefined}">
+                    </span>
+                    <span ng-if="fileToUpload !== undefined">
+                        <button type="button" class="btn btn-success btn-labeled no-border-radius background-blue" title="Upload selected file" ng-click="uploadFile()">
+                            <span class="btn-label"><i class="fa fa-upload"></i>
+                        </span>Upload file</button>
+                        <p class="file-name">{{fileToUpload.name}}</p>
+                    </span>
+                </div>
+                <div class="space-wrapper"></div>
+                <div class="control-wrapper control-wrap-right">
+                    <div class="btn-group">
+                        <button type="button" ng-if="propertyGroupBy" class="btn btn-danger" title="Clear" ng-click="clearGroupBy()">
+                            <i class="fa fa-times"></i>
+                        </button>
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="{{propertyGroupBy || 'Group By'}}">
+                            {{ (propertyGroupBy | uppercase) || "Group By"}}
+                        </button>
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Group By">
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                            <li ng-repeat="(column, show) in columns">
+                                <a class="ws" ng-show="show && (column !== 'evidence' && column !== 'impact' && column !== 'web' && column !== 'easeofresolution' && column !== 'date')" ng-click="groupBy(column)">{{column}}</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="{{propertyFilterConfirmed}}">
+                            {{ (propertyFilterConfirmed) }}
+                        </button>
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Filter confirmed vulns">
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                            <li>
+                                <a class="ws" ng-if="propertyFilterConfirmed !== 'All'" ng-click="filterConfirmed('All')">All</a>
+                                <a class="ws" ng-if="propertyFilterConfirmed !== 'Confirmed'"  ng-click="filterConfirmed('Confirmed')">Confirmed</a>
+                                <a class="ws" ng-if="propertyFilterConfirmed !== 'Unconfirmed'" ng-click="filterConfirmed('Unconfirmed')">Unconfirmed</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Add columns">
+                            Add columns
+                        </button>
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Add Columns">
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                            <li ng-repeat="(column, show) in columns">
+                                <a class="ws" ng-click="toggleShow(column, show)" ng-show="!show">{{column}}</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="reports col-md-12 col-sm-12 col-xs-12">
+                <i ng-if="loading" class="fa fa-spinner fa-spin loading-spinner"></i>
+                <div ui-grid="gridOptions" ui-grid-grouping ui-grid-selection ui-grid-pagination ui-grid-pinning ui-grid-resize-columns class="grid status-report-grid" ng-style="{'height' : gridHeight }"></div>
+
+                <div id="counter">
+                    <span>Total</span>
+                    <span class="counterNum">{{gridOptions.totalItems}}</span>
+                    <div ng-if="search">
+                        <span>Viewing</span>
+                        <span class="counterNum">{{gridOptions.data.length}}</span>
+                    </div>
+                    <p style="margin:0px" ng-if="!search"></p>
+                    <span>Selected</span>
+                    <span class="counterNum">{{getCurrentSelection().length}}</span>
+                </div>
+            </div>
+            <!-- .reports -->
+        </div>
+        <!-- #reports-main -->
+
+        <div id="vuln-preview">
+            <div class="preview-header">
+                <button type="button" class="close" ng-click="hideVulnPreview()" data-dismiss="alert"><span area-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="mt-3 height-100 ">
+                <div class="margin-left-0 edit-vulns-dropdowns row" ng-init="updateBtnSeverityColor(lastClickedVuln.severity);updateBtnStatusColor(lastClickedVuln.status)">
+
+                <div class="margin-left-0 btn-group col-md-2 col-sm-4 col-xs-4">
+                    <button type="button" class="dropdown-toggle btn-change-property primary-btn"
+                            data-toggle="dropdown"
+                            id="btn-chg-severity-prev"
+                            title="{{lastClickedVuln.severity}}">
+                        <i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'severity'"></i>{{lastClickedVuln.severity | uppercase}}
+                    </button>
+                    <button type="button" class="dropdown-toggle secondary-btn btn-change-property"
+                            data-toggle="dropdown"
+                            id="caret-chg-severity-prev"
+                            title="Change severity-prev">
+                        <span> <i class="fa fa-angle-down fa-lg" aria-hidden="true"></i> </span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                        <li>
+                            <a class="ws text-unclassified"
+                               ng-click="changeSeverity('unclassified')">UNCLASSIFIED</a>
+                            <a class="ws text-info"
+                               ng-click="changeSeverity('info')">INFO</a>
+                            <a class="ws text-low"
+                               ng-click="changeSeverity('low')">LOW</a>
+                            <a class="ws text-med"
+                               ng-click="changeSeverity('med')">MEDIUM</a>
+                            <a class="ws text-high"
+                               ng-click="changeSeverity('high')">HIGH</a>
+                            <a class="ws text-critical"
+                               ng-click="changeSeverity('critical')">CRITICAL</a>
+                        </li>
+                    </ul>
+                </div>
+
+
+                <div class="btn-group col-md-2 col-sm-4 col-xs-4">
+                    <button type="button" class="dropdown-toggle btn-change-property primary-btn btn-primary-white"
+                            data-toggle="dropdown"
+                            id="btn-chg-ease_resolution"
+                            title="{{lastClickedVuln.easeofresolution}}">
+                        <i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'easeofresolution'"></i>{{lastClickedVuln.easeofresolution || "Fix Effort"}}
+                    </button>
+                    <button type="button" class="dropdown-toggle secondary-btn btn-change-property btn-secondary-white"
+                            data-toggle="dropdown"
+                            id="caret-ease_resolution"
+                            title="Change Ease of Resolution">
+                        <span> <i class="fa fa-angle-down fa-lg" aria-hidden="true"></i> </span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                        <li>
+                             <a class="ws"
+                               ng-click="changeEaseOfResolution(null)">Undetermined</a>
+                            <a class="ws"
+                               ng-click="changeEaseOfResolution('trivial')">Trivial</a>
+                            <a class="ws"
+                               ng-click="changeEaseOfResolution('simple')">Simple</a>
+                            <a class="ws"
+                               ng-click="changeEaseOfResolution('moderate')">Moderate</a>
+                            <a class="ws"
+                               ng-click="changeEaseOfResolution('difficult')">Difficult</a>
+                            <a class="ws"
+                               ng-click="changeEaseOfResolution('infeasible')">Infeasible</a>
+                        </li>
+                    </ul>
+                </div>
+
+
+                <div class="btn-group col-md-2 col-sm-4 col-xs-4">
+                    <button type="button" class="dropdown-toggle btn-change-property primary-btn text-capitalize"
+                            data-toggle="dropdown"
+                            id="btn-chg-status-prev"
+                            title="{{lastClickedVuln.status}}">
+                        <i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'status'"></i>{{lastClickedVuln.status  || "Status"}}
+                    </button>
+                    <button type="button" class="dropdown-toggle secondary-btn btn-change-property"
+                            data-toggle="dropdown"
+                            id="caret-chg-status-prev"
+                            title="Change Status">
+                        <span> <i class="fa fa-angle-down fa-lg" aria-hidden="true"></i> </span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                        <li>
+                            <a class="ws"
+                               ng-click="changeStatus('opened')">Opened</a>
+                            <a class="ws"
+                               ng-click="changeStatus('closed')">Closed</a>
+                            <a class="ws"
+                               ng-click="changeStatus('re-opened')">Re-opened</a>
+                            <a class="ws"
+                               ng-click="changeStatus('risk-accepted')">Risk-accepted</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="col-md-2 col-sm-4 col-xs-4">
+                    <label class="chbox-container">
+                        <div class="tab-pane-header"><h4>Confirmed</h4></div>
+                        <input type="checkbox"  ng-checked="lastClickedVuln.confirmed === true"  ng-model="lastClickedVuln.confirmed" ng-change="changeConfirmed(lastClickedVuln.confirmed)">
+                        <span class="checkmark"></span>
+                    </label>
+                </div>
+
+            </div>
+
+                <div class="margin-left-0 row">
+                    <div ng-if="fieldToEdit !== 'name'">
+                        <div class="margin-left-0 col-md-12">
+                            <div class="tab-pane-header" ng-dblclick="activeEditPreview('name')" title="Double click to edit">
+                                {{lastClickedVuln.name}}    <span>({{lastClickedVuln.target}})</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group col-md-12" ng-if="fieldToEdit === 'name'" style="margin-bottom: 24px">
+                        <label for="inp-edit-name"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true"></i>    Vulnerability name</label>
+                        <input type="text" class="form-control" id="inp-edit-name"
+                                   ng-model="lastClickedVuln.name" name="name" placeholder="Vulnerability name"
+                                   ng-blur="processToEditPreview()"
+                                   autofocus required>
+                    </div>
+                </div>
+
+            <!-- Nav tabs -->
+            <ul class="nav nav-tabs" id="nav-tabs-container">
+                <li class="nav-item active" ng-class="{'has-error': formEdit.desc.$invalid}">
+                    <a class="nav-link active" data-toggle="tab" data-target="#general_prev"
+                       href="javascript:;">General</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" data-target="#technical_details_prev" href="javascript:;">Technical
+                        Details</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" data-target="#tab-evidence_prev" href="javascript:;">Evidence</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" data-target="#hosts_prev" href="javascript:;">Host</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" data-target="#tab-custom-fields_prev" href="javascript:;">Custom Fields</a>
+                </li>
+            </ul>
+
+            <!-- Tab panes -->
+            <div class="tab-content height-100 ">
+                <div id="general_prev" class="container tab-pane-container tab-pane active"><br>
+
+                    <div class="row margin-left-0">
+                        <div class="height-100 padding-left-0 col-md-7">
+                        <div class="height-100 padding-left-0 col-md-12">
+                            <div ng-if="fieldToEdit !== 'desc'" class="height-100">
+                                <div class="height-100 padding-left-0  col-md-12 margin-bottom-24">
+                                    <div ng-if="lastClickedVuln.desc === '' || lastClickedVuln.desc === undefined"  style="margin-bottom: 15px;color: #aaa;">
+                                        <p>
+                                            No Description was found.
+                                        </p>
+                                    </div>
+
+                                    <div class="tab-pane-header" ng-dblclick="activeEditPreview('desc')" title="Double click to edit">
+                                        <i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'desc'"></i>
+                                        Description
+                                    </div>
+
+                                    <div>
+                                        <div class="tab-pane-header pretty-text" id="desc-prev" ng-dblclick="activeEditPreview('desc')" title="Double click to edit">
+                                            <span class="line-breaks">{{lastClickedVuln.desc}}</span>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                            <div class="form-group" ng-if="fieldToEdit === 'desc'">
+                                <label for="inp-edit-desc"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true"></i>    Description</label>
+                                <textarea type="text" class="form-control" id="inp-edit-desc" rows="18"
+                                          ng-model="lastClickedVuln.desc" name="desc" placeholder="Description"
+                                          ng-blur="processToEditPreview()"
+                                          autofocus>
+                                </textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-5">
+                        <div class="row">
+                            <div ng-if="fieldToEdit !== 'resolution'">
+                                <div class="col-md-12 margin-bottom-24">
+                                    <div class="tab-pane-header" ng-dblclick="activeEditPreview('resolution')" title="Double click to edit">
+                                        <i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'resolution'"></i>
+                                        Resolution
+                                    </div>
+                                    <div ng-if="lastClickedVuln.resolution === '' || lastClickedVuln.resolution === undefined"  style="margin-bottom: 15px;color: #aaa;">
+                                        <p>
+                                            No Resolution was found.
+                                        </p>
+                                    </div>
+                                    <div class="tab-pane-header pretty-text" id="resolution-prev"  ng-dblclick="activeEditPreview('resolution')" title="Double click to edit">
+                                        <span class="line-breaks">{{lastClickedVuln.resolution}}</span>
+                                    </div>
+
+                                </div>
+                            </div>
+                            <div class="form-group" ng-if="fieldToEdit === 'resolution'">
+                                <label for="inp-edit-desc"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true"></i>    Resolution</label>
+                                <textarea type="text" class="form-control" id="inp-edit-res" rows="18"
+                                          ng-model="lastClickedVuln.resolution" name="desc" placeholder="Resolution"
+                                          ng-blur="processToEditPreview(false)"
+                                          autofocus>
+                                </textarea>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+
+                    <div class="row margin-top-30px small-size">
+                        <div class="tab-pane-header col-md-2">
+                            Owner
+                            <div class="text-gray">{{lastClickedVuln.metadata['owner']}}</div>
+                        </div>
+                        <div class="tab-pane-header col-md-3">
+                            Created
+                            <div class="text-gray"><span am-time-ago="lastClickedVuln.metadata['create_time']"></span></div>
+                        </div>
+                        <div class="tab-pane-header col-md-4 ">
+                            Updated
+                            <div class="text-gray"><span am-time-ago="lastClickedVuln.metadata['update_time']"></span></div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div id="technical_details_prev" class="container tab-pane-container tab-pane fade"><br>
+                    <div class="padding-left-0 col-md-12">
+                        <div class="padding-left-0 col-md-12">
+                            <div class="tab-pane-header" ng-dblclick="activeEditPreview('data')" title="Double click to edit">
+                                <i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'data'"></i>    Data
+                            </div>
+                            <div ng-if="fieldToEdit !== 'data'">
+                                <div class="padding-left-0 col-md-12 margin-bottom-24">
+                                    <div ng-if="lastClickedVuln.data === '' || lastClickedVuln.data === undefined"  style="margin-bottom: 15px;color: #aaa;">
+                                        <p>
+                                            No Data was found.
+                                        </p>
+                                    </div>
+                                    <div class="tab-pane-header pretty-text" id="data-prev" ng-dblclick="activeEditPreview('data')" title="Double click to edit">
+                                        <span class="line-breaks">{{lastClickedVuln.data}} </span>
+                                    </div>
+
+                                </div>
+                            </div>
+                            <div class="form-group" ng-if="fieldToEdit === 'data'">
+                                <textarea type="text" class="form-control" id="inp-edit-data" rows="18"
+                                          ng-model="lastClickedVuln.data" name="desc" placeholder="Data"
+                                          ng-blur="processToEditPreview(false)"
+                                          autofocus>
+                                </textarea>
+                            </div>
+                        </div>
+
+                        <div class="padding-left-0 row" style="margin-left: 0; margin-right: 0">
+                            <div class="padding-left-0 col-md-6 col-sm-12 col-xs-12" ng-show="lastClickedVuln.type === 'VulnerabilityWeb'">
+                            <div class="tab-pane-header" ng-dblclick="activeEditPreview('request')" title="Double click to edit"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'request'"></i>    Request
+                            </div>
+                            <div ng-if="fieldToEdit !== 'request'" >
+                                <div class="col-md-12 margin-bottom-24">
+                                    <div class="tab-pane-header pretty-text text-code" id="request-prev">
+                                        <div ng-if="lastClickedVuln.request === '' || lastClickedVuln.request === undefined"
+                                             style="margin-bottom: 15px;color: #aaa;">
+                                            <p>
+                                                No Request was found.
+                                            </p>
+                                        </div>
+                                        <span class="line-breaks" ng-dblclick="activeEditPreview('request')" title="Double click to edit"> {{lastClickedVuln.request}} </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group" ng-if="fieldToEdit === 'request'">
+                                <textarea type="text" class="form-control" id="inp-edit-request" rows="18"
+                                          ng-model="lastClickedVuln.request" name="desc" placeholder="Request"
+                                          ng-blur="processToEditPreview(false)"
+                                          autofocus>
+                                </textarea>
+                            </div>
+
+                        </div>
+                            <div class="col-md-6 col-sm-12 col-xs-12" ng-show="lastClickedVuln.type === 'VulnerabilityWeb'">
+                                <div class="tab-pane-header" ng-dblclick="activeEditPreview('response')" title="Double click to edit"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === 'response'"></i>    Response
+                                </div>
+                                <div ng-if="fieldToEdit !== 'response'">
+                                    <div class="col-md-12 margin-bottom-24">
+                                        <div class="tab-pane-header pretty-text text-code" id="response-prev" >
+                                            <div ng-if="lastClickedVuln.response === '' || lastClickedVuln.response === undefined"  style="margin-bottom: 15px;color: #aaa;">
+                                            <p>
+                                                No Response was found.
+                                            </p>
+                                        </div>
+                                            <span class="line-breaks"  ng-dblclick="activeEditPreview('response')" title="Double click to edit"> {{lastClickedVuln.response}} </span>
+
+                                        </div>
+
+                                    </div>
+                                </div>
+                                <div class="form-group" ng-if="fieldToEdit === 'response'">
+                                <textarea type="text" class="form-control" id="inp-edit-response" rows="18"
+                                          ng-model="lastClickedVuln.response" name="desc" placeholder="Response"
+                                          ng-blur="processToEditPreview(false)"
+                                          autofocus>
+                                </textarea>
+                            </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-evidence_prev" class="container tab-pane-container tab-pane fade"><br>
+                    <div class="padding-left-0 col-md-12 margin-bottom-15px">
+
+                        <div class="col-md-4">
+
+                            <div class="tab-pane-header padding-left-0 col-md-8">Attachments</div>
+                            <div class="padding-left-0 form-group col-md-4">
+                                <div class="upload-plus">
+                                    <div class="icon-evidence">
+                                        <button type="button" class="btn btn-success col-md-12">
+                                        <i class="fa fa-plus"></i> New
+                                    </button>
+
+                                    </div>
+                                    <input type="file" class="input-evidence" nv-file-select="" uploader="uploader"  multiple/>
+                                </div>
+                            </div>
+
+
+
+                            <table class="table">
+                                <thead>
+                                <tr>
+                                    <th width="50%">Name</th>
+                                    <th>Actions</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                    <tr ng-repeat="(name, file) in lastClickedVuln._attachments">
+                                        <td>
+                                            <strong><a href="javascript:;" ng-click="selectItemToPrev(name)">{{ name }}</a></strong>
+                                            <div ng-show="uploader.isHTML5" ng-thumb="{ file: file, height: 100 }"></div>
+                                        </td>
+                                        <td nowrap>
+                                            <button type="button" class="btn btn-danger btn-xs" ng-click="removeEvidence(name)">
+                                                <span class="glyphicon glyphicon-trash"></span> Remove
+                                            </button>
+                                            <button type="button" class="btn btn-info btn-xs" ng-click="copyToClipboard(name)">
+                                                <span class="fa fa-copy"></span> Copy link
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+
+                        <div class="col-md-8 attachment-prev">
+                            <div ng-if="selectedAtachment.url === ''" class="no-info-overlay" style="margin-bottom: 15px;top: -8px;">
+                                <p class="no-info-text">
+                                    No attachment selected
+                                </p>
+                            </div>
+
+                            <div class="tab-pane-header">{{selectedAtachment.name}}</div>
+                            <img ng-if="selectedAtachment.url !== '' && selectedAtachment.imgPrevFail === false" src="{{selectedAtachment.url}}" id="attachment-img">
+                            <div  class="no-info-overlay" ng-if="selectedAtachment.imgPrevFail === true" style="margin-bottom: 15px;top: -8px;">
+                                <p class="no-info-text">
+                                    No available preview to this attachment
+                                </p>
+                            </div>
+                        </div>
+
+
+
+                    </div>
+
+                </div>
+
+                <div id="hosts_prev" class="container tab-pane-container tab-pane fade"><br>
+                     <div class="padding-left-0 col-md-12">
+                            <div class="padding-left-0 col-md-3">
+                                <div class="tab-pane-header">Host</div>
+                                <div class="tab-pane-header"><i class="fa fa-desktop"></i>&nbsp;&nbsp;{{lastClickedVuln.target}}:{{lastClickedVuln.service.ports}}</div>
+                            </div>
+
+                            <div class="padding-left-0 col-md-3">
+                                <div class="tab-pane-header">Hostnames</div>
+                                <div class="tab-pane-header" ng-repeat="hostname in lastClickedVuln.hostnames"><i class="fa fa-desktop"></i>&nbsp;&nbsp;{{hostname}}</div>
+                            </div>
+                     </div>
+                </div>
+
+                <div id="tab-custom-fields_prev" class="container tab-pane-container tab-pane fade"><br>
+                    <div ng-if="customFields.length === 0" class="no-info-overlay" style="margin-bottom: 15px;">
+                            <p class="no-info-text">
+                                No custom fields were found. To create one refer to our
+                                <a href="https://github.com/infobyte/faraday/wiki/Custom-Fields" target="_blank">wiki page</a>.
+                            </p>
+                    </div>
+                    <div class="padding-left-0 col-md-5 margin-bottom-15px">
+                        <div class="padding-left-0 col-md-12" ng-repeat="cf in customFields | orderBy : 'field_order'">
+                            <custom-field-prev field="{{cf}}"></custom-field-prev>
+                        </div>
+                    </div>
+            </div>
+        </div>
+
+
+
+        </div>
+    </div>
+    </div>
+    <!-- .right-main -->
+</section>
+<!-- #main -->

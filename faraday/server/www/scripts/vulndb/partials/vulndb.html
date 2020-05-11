@@ -1,0 +1,134 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+<section id="main" class="seccion clearfix">
+    <div class="faraday-header-border-fix"></div>
+    <div class="left-main">
+        <div ng-controller="headerCtrl" ng-include="'scripts/commons/partials/header.html'"></div>
+        <div id="reports-main" class="fila clearfix">
+          <div class="reports col-md-12 col-sm-12 col-xs-12">
+            <div class="button-control justify-flex-start  col-md-12 col-sm-12 col-xs-12">
+                <div class="control-wrapper control-new">
+                    <button id="import" type="button" class="btn btn-success btn-new" title="New vuln template" ng-click="disabledClick || new()">
+                        New
+                    </button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="col-md-2">
+                                <a href="#/scheduling" class="workspaces" ng-class="{'navigation-active' : component == 'scheduling'}" style="color: black !important; font-weight: bold; font-size: 15px;">
+                                    Scheduling
+                                </a>
+                                <div class="flex-spacer"></div>
+                            </th>
+                            <th class="col-md-2" style = "border-right: 1px solid rgb(221, 221, 221); padding-right: 12px">
+                                <a href="#/vulndb" class="workspaces" ng-class="{'navigation-active' : component == 'vulndb'}" style="color: black !important; font-weight: bold; font-size: 15px;">
+                                    KB
+                                </a>
+                                <div class="flex-spacer"></div>
+                            </th>
+                        </tr>
+                    </thead>
+                </table>
+                <div class="control-wrapper control-edit">
+                    <button type="button" class="btn btn-default edit" title="Edit selected vulns" ng-click="disabledClick || edit()">
+                        <img src="images/icon-toolbar-edit.svg" class="edit-icon" />
+                    </button>
+                </div>
+                <div class="control-wrapper">
+                    <button  id="delete" type="button" class="btn btn-default" title="Delete selected items" ng-click="disabledClick || delete()">
+                        <img src="images/icon-toolbar-delete.svg" class="delete-icon" />
+                    </button>
+                </div>
+                <div class="control-wrapper search-wrapper">
+                    <form role="form">
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-if="search && search != 'confirmed=true'" ng-click="clearSearch()"></span>
+                                <input type="text" class="form-control" placeholder="Enter keywords" ng-model="search" />
+                                <span class="input-group-addon glyphicon-btn">
+                                    <img src="images/icon-toolbar-searchbar-loupe.svg" class="search-icon" />
+                                </span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="space-wrapper"></div>
+                <div class="control-wrapper control-wrap-right">
+                    <span class="ui-grid-cell-contents" ng-show="loading"> Importing templates...</span>
+                    <button id="import" type="button" class="btn btn-success btn-new" title="Import from CSV" ng-click="disabledClick || importCSV()">
+                        Import
+                    </button>
+                </div>
+            </div>
+            <table rz-table class="table-v3 licenses-list table table-responsive">
+                <thead>
+                    <tr class="ui-grid-header">
+                        <th class="ui-grid-cell-contents checkbox-select ui-grid-header-cell">
+                          <input type="checkbox" ng-model="selectall" ng-click="disabledClick || checkAll()"/>
+                        </th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('name')">Template Name</span>
+                        </th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('description')">Description</span>
+                        </th>
+                         <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('references')">References</span>
+                        </th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('resolution')">Resolution</span>
+                        </th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('exploitation')">Severity</span>
+                        </th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('policyviolations')">Policy Violations</span>
+                        </th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('creator')">Creator</span>
+                        </th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">
+                            <span ng-click="toggleSort('create_at')">Create Date</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="model in models | filter:search | orderBy:sort_field: reverse | startFrom:(currentPage*pageSize)-20 | limitTo:pageSize"
+                        selection-model selection-model-type="checkbox"
+                        selection-model-mode="multiple-additive"
+                        selection-model-selected-class="multi-selected"
+                        selection-model-on-change="selectedModels()">
+                        <td class="checkbox-select"><input type="checkbox" name="{{model._id}}"/></td>
+                        <td class="ui-grid-cell-contents" style="max-width: 20vw;">{{model.name}}</td>
+                        <td class="ui-grid-cell-contents" style="max-width: 20vw;">{{model.description}}</td>
+                        <td><div ng-repeat="ref in model.refs|limitTo:4" class="ui-grid-cell-contents no-padding" style="max-width: 15vw;">{{ref}}</div></td>
+                        <td class="ui-grid-cell-contents no-padding" style="max-width: 10vw;">{{model.resolution}}</td>
+                        <td>{{model.exploitation}}</td>
+                        <td><div ng-repeat="policy in model.policyviolations|limitTo:4" class="ui-grid-cell-contents no-padding" style="max-width: 10vw;">{{policy}}</div></td>
+                        <td style="max-width: 10vw;">{{model.creator}}</td>
+                        <td><p ng-bind="model.create_at | date:'MM/dd/yyyy'"></p></td>
+                    </tr>
+                </tbody>
+            </table>
+            <i ng-if="loading" class="fa fa-spinner fa-spin loading-spinner"></i>
+            <div class="showPagination">
+                    <div class="form-group">
+                        <ul class="pagination">
+                            <li><a ng-hide="prevPageDisabled()" ng-click="disabledClick || prevPage()"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
+                            <li><a>{{currentPage}}/{{pageCount()}}</a></li>
+                            <li><a ng-hide="nextPageDisabled()" ng-click="disabledClick || nextPage()"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
+                        </ul>
+                        <form name="goToPage" id="goToPageStatus">
+                            <div class="col-md-2">
+                                <input type="number" min="1" max="{{pageCount()}}" class="form-control" ng-model="newCurrentPage" placeholder="Go to page"/>
+                            </div>
+                            <button class="btn btn-default" ng-click="disabledClick || go()">GO</button>
+                        </form>
+                    </div>
+            </div><!-- .showPagination -->
+        </div><!-- #reports-main -->
+    </div><!-- .right-main -->
+</section><!-- #main -->

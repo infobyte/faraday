@@ -1,0 +1,70 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+<form name="form" novalidate>
+    <div class="modal-header">
+        <div class="modal-button">
+            <button class="btn btn-success" ng-click="ok()" ng-disabled="form.$invalid">OK</button>
+            <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+        </div>
+        <h3 class="modal-title">New service</h3>
+    </div>
+    <div class="modal-body">
+        <div class="form-horizontal">
+            <div class="form-group">
+                <div class="col-md-12">
+                    <label class="sr-only" for="service">Name</label>
+                    <input type="text" class="form-control" id="service" required name="name" placeholder="Name" ng-model="data.name" />
+                </div>
+            </div><!-- .form-group -->
+            <div class="form-group">
+                <div class="col-md-12">
+                    <label class="sr-only" for="description">Description</label>
+                    <textarea class="form-control" id="description" placeholder="Description" ng-model="data.description"></textarea>
+                </div>
+            </div><!-- .form-group -->
+            <div class="form-group">
+                <div class="col-md-12">
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" id="owned" ng-model="data.owned"/>
+                            <span class="normal-size">Owned</span>
+                        </label>
+                    </div><!-- .checkbox -->
+                </div>
+            </div><!-- .form-group -->
+            <div class="form-group">
+                <div class="col-md-3">
+                    <h5>Port</h5>
+                    <div class="input-margin" ng-class="{'has-error': form.ports.$invalid }">
+                        <label class="sr-only" for="ports">Port</label>
+                        <input type="number" min="0" max="65535" class="form-control" id="ports" name="ports" placeholder="Port" ng-model="data.ports" required/>
+                    </div>
+                </div>
+                <div class="col-md-3 protocol" ng-class="{'has-error': form.protocol.$invalid }">
+                    <h5>Protocol</h5>
+                    <label class="sr-only" for="protocol">Protocol</label>
+                    <input type="text" class="form-control" id="protocol" name="protocol" placeholder="Protocol" ng-model="data.protocol" required/>
+                </div>
+                <div class="col-md-3">
+                    <h5>Version</h5>
+                    <label class="sr-only" for="version">Version</label>
+                    <input type="text" class="form-control" id="version" placeholder="Version" ng-model="data.version"/>
+                </div>
+                <div class="col-md-3">
+                    <h5>Status</h5>
+                    <label class="sr-only" for="status">Status</label>
+                    <select class="form-control" ng-model="data.status" ng-options="e for e in statuses">
+                    </select>
+                </div>
+            </div><!-- .form-group -->
+        </div>
+    </div><!-- .modal-body -->
+    <div class="modal-footer">
+        <div class="modal-button">
+            <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()">OK</button>
+            <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+        </div>
+    </div>
+</form>

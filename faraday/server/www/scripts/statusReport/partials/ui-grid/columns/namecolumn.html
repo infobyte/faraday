@@ -1,0 +1,5 @@
+<div ng-if="row.entity._id != undefined">
+    <div ng-keyup="grid.appScope.changeVulnPrevByEventKey($event)" ng-if="!col.grouping || col.grouping.groupPriority === undefined || col.grouping.groupPriority === null || ( row.groupHeader && col.grouping.groupPriority === row.treeLevel )" class="ui-grid-cell-contents white-space"><a href="javascript:;" ng-click="grid.appScope.toggleVulnPreview($event, row.entity)" style="color:#555555; font-weight:bold;">{{COL_FIELD CUSTOM_FILTERS}}</a> &nbsp; &nbsp; <span style="color: #337ab7" ng-if="row.entity._id === grid.appScope.lastClickedVuln._id"><i class="fa fa-check"></i></span>
+    </div>
+</div>
+<div ng-keyup="grid.appScope.changeVulnPrevByEventKey($event)" ng-if="row.groupHeader && col.grouping.groupPriority !== undefined" class="ui-grid-cell-contents white-space">{{COL_FIELD CUSTOM_FILTERS}}</div>

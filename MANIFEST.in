@@ -1,0 +1,6 @@
+recursive-include faraday/server/www *
+recursive-include faraday/migrations *
+include faraday/alembic.ini
+include faraday/config/default.xml
+include faraday/server/default.ini
+include requirements.txt

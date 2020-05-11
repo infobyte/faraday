@@ -1,0 +1,149 @@
+.dashboard .filter-wrapper .confirm-button {
+    position: relative;
+    bottom: 4px;
+}
+
+.dashboard .faraday-page-header {
+  margin-bottom: 0px;
+}
+
+.bg-white {
+  background-color: #FFF;
+}
+
+.border-right {
+  border-right: 1px solid #e7e7e7;
+}
+
+.small-widget-height {
+  height: 195px;
+}
+
+.dashboard-label-wrapper {
+  text-align: left;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.dashboard-label-wrapper > .label {
+  padding: 5px;
+  width: 100%;
+  display: block;
+}
+
+.label-gray {
+  background-color: #a1a1a1;
+}
+
+.m0 {
+  margin: 0px !important;
+}
+
+.mt-md {
+  margin-top: 10px;
+}
+
+.p0 {
+  padding: 0px !important;
+}
+
+.pl0 {
+  padding-left: 0px !important;
+}
+
+.p-md {
+  padding: 10px;
+}
+
+.ph-sm {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.ph-md {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.ph-xl {
+  padding-left: 30px;
+  padding-right: 30px;
+}
+
+.ph-xxl {
+  padding-left: 45px;
+  padding-right: 45px;
+}
+
+.pl-xs{
+  padding-left: 3px;
+}
+
+.pl-sm {
+  padding-left: 5px;
+}
+
+.pl {
+  padding-left: 15px;
+}
+
+.pr-sm {
+  padding-right: 5px;
+}
+
+.pr {
+  padding-right: 15px !important;
+}
+
+.progress-bar-tall {
+  height: 57px;
+}
+
+.progress-bar-tall > .progress-bar > span {
+  top: 20px;
+  position: relative;
+}
+
+.progress-bar-light-blue > .progress-bar {
+  background-color: #00a8e1;
+}
+
+.panel {
+  -webkit-box-shadow: none;
+  box-shadow: none;
+  border-radius: 0px;
+}
+
+.text-left {
+  text-align: left !important;
+}
+
+.dashboard .progress-bar span {
+  font-weight: bold;
+}
+
+.dashboard table thead th span {
+  color: #3393d4;
+}
+
+.fg-blue {
+  color: #3393d4;
+}
+
+.fg-light-gray {
+  color: #d2d2d2;
+}
+
+.seccion.dashboard article header h2{
+  margin: 0px;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+@media (min-width:991px) and (max-width:1380px) {
+  .dashboard h2 {
+    font-size: 10px !important;
+    line-height: 20px !important;
+    padding-top: 5px !important;
+  }
+}

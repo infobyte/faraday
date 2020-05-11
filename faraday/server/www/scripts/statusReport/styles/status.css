@@ -1,0 +1,300 @@
+.status-report-grid .ui-grid-header{
+    border-top: solid #E5E5E5 5px;
+    border-bottom: 1px solid #d8d8d8;
+    background: none;
+    color: #E9E9E9;
+    padding: 0px;
+    height: 45px;
+}
+
+.status-report-grid .ui-grid-header .ui-grid-cell-contents {
+    color: #7c7c7c;
+    padding: 9px 3px 9px 5px !important;
+    text-align: left;
+}
+
+.status-report-grid .ui-grid-cell-contents {
+    text-align: left;
+    font-size: 11px;
+}
+
+.status-report-grid .ui-grid-cell-contents.confirm-toggle{
+    text-align: center;
+}
+
+.status-report-grid .ui-grid-header-cell{
+    border-right: solid #E9E9E9 1px;
+    text-align: center;
+}
+
+.status-report-grid .ui-grid-header-cell i, .status-report-grid .grid_id{
+    padding: 11px 9px 9px 5px !important
+}
+
+.status-report-grid .ui-grid-row {
+    height: 45px;
+}
+
+.status-report-grid .date-cell {
+    opacity: 0.5;
+}
+
+.status-report-grid .grid_id .ui-grid-cell-contents{
+    position: relative;
+    top: 3px;
+}
+
+.status-report-grid .ui-grid-row-selected .ui-grid-cell{
+    background-color: #8DA2B7 !important;
+    color: #FFFFFF;
+}
+
+.status-report-grid .ui-grid-row-selected a{
+    color: #FFFFFF;
+}
+
+.status-report-grid .no-background{
+    background: none;
+}
+
+.control-edit {
+    width:44px;
+}
+
+.status-report-grid .ui-grid-row:last-child .ui-grid-cell{
+    border:none;
+}
+
+.checkbox-select{
+    text-align: center !important;
+}
+
+.hosts-list .ui-grid-header .ui-grid-cell-contents{
+    padding: 8px 3px 11px 5px !important
+}
+
+.hosts-list .ui-grid-header .ui-grid-cell-contents span{
+    color: #7c7c7c;
+}
+
+.hosts-list .ui-grid-header .hosts-list-checkall{
+    position: relative;
+    text-align: center;
+}
+
+.status-report-grid .ui-grid-pager-panel {
+    background-color: #f1f1f1;
+}
+
+
+.status-report-grid .status.opened {
+    background-color: #F6E6E9 !important;
+    text-align: center;
+}
+
+.status-report-grid .status-wrapper {
+    height: 100%;
+}
+
+.status-report-grid .status.opened span {
+    color: #DB3130;
+    font-size: 11px;
+}
+
+.status-report-grid .status.risk-accepted {
+    background-color: #288DB4 !important;
+    text-align: center;
+}
+
+.status-report-grid .status.re-opened span {
+    color: #DBB72F;
+    font-size: 11px;
+}
+
+.status-report-grid .status.re-opened {
+    background-color: #F5F2E5 !important;
+    text-align: center;
+}
+
+.status-report-grid .status.risk-accepted span {
+    color: #DBEBF1;
+    font-size: 11px;
+}
+
+.status-report-grid .status.closed {
+    background-color: #E5F5D6 !important;
+    text-align: center;
+}
+
+.status-report-grid .status.closed span {
+    color: #97F72C;
+    font-size: 11px;
+}
+
+.control-edit .edit-icon, .download-wrapper .download-icon, .control-wrapper .delete-icon, .search-wrapper .search-icon {
+    height: 20px;
+    color: #000;
+    position: relative;
+    bottom: 2px;
+}
+
+.search-wrapper .search-icon {
+    bottom: 0px;
+}
+
+.status-report-grid .confirm-icon {
+    width: 50%;
+}
+
+.status-report-grid .ui-grid-header-cell{
+    text-align: center;
+}
+
+.download-wrapper {
+    bottom: 5px;
+}
+
+.status-report-grid .ui-grid-header-cell .glyphicon-remove{
+    color: #ccc;
+    font-size: 8px;
+    font-weight: lighter;
+    top: 0px;
+    left: 4px;
+}
+
+.search-wrapper .form-group{
+    margin: 0px;
+}
+
+.status-report-grid .ui-grid-contents-wrapper{
+    clear: both;
+}
+
+.status-report-grid .ui-grid-cell {
+    border: none ;
+}
+
+.button-control {
+    display:flex;
+    flex-direction: row;
+    padding-right: 20px;
+    padding-left: 0px;
+    padding-bottom: 17px;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#reports-main {
+    padding: 0px 0 0 24px;
+}
+
+#reports-main .reports{
+    padding: 0px;
+}
+
+.search-wrapper {
+    width: 385px;
+    padding: 0px;
+    margin-right: 16px;
+    margin-left: 16px;
+}
+
+.search-wrapper input{
+    height: 40px !important;
+    font-size: 14px;
+    box-shadow: none;
+}
+
+.search-wrapper .input-group input, .search-wrapper .input-group span {
+    border: none;
+    border-radius: 0px;
+    background-color: #FFFFFF
+}
+
+.control-wrapper {
+    font-size: 14px;
+}
+
+.control-wrapper button:focus {outline:0;}
+
+.filter-wrapper .confirm-button{
+    position: relative;
+    bottom: 1px;
+}
+
+.space-wrapper{
+    flex:1;
+}
+
+.control-wrapper button{
+    border-radius: 0px;
+}
+
+.control-wrapper > button{
+    border: none;
+    background: none;
+    width: 47px;
+    height: 33px;
+}
+
+.control-edit {
+    padding-right: 0px;
+    position: relative;
+}
+
+.control-edit .dropdown-menu-right{
+    left: 0px !important;
+    width: 245px;
+}
+
+.control-edit .edit {
+    width: 30px;
+}
+
+.control-edit .dropdown-toggle {
+    padding-right: 0px;
+    padding-left: 0px;
+    width: 10px;
+}
+
+button.btn-new {
+    width:95px;
+    height:33px;
+    background-color: #00a8e1;
+}
+
+button.btn-new:focus {
+    background-color: #00a8e1 !important;
+}
+
+button.btn-new:hover {
+    background-color: #0097ca !important;
+}
+
+.control-wrap-right {
+    justify-self: flex-end;
+}
+
+.control-wrap-right button{
+    font-size: 12px;
+}
+
+.control-new{
+    margin-right: 16px;
+}
+
+
+.status-report-grid .ui-grid-row-selected .ui-grid-cell .status {
+    color: white !important;
+    background-color:transparent !important;
+}
+
+
+.status-report-grid .ui-grid-row-selected .ui-grid-cell .status span {
+    color: white !important;
+    background-color:transparent !important;
+}
+
+.status-report-grid .ui-grid-pager-panel {
+    bottom: -18px;
+}

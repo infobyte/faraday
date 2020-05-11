@@ -1,0 +1,55 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+<div class="modal-header" hotkey="{enter:ok}">
+    <h3 ng-style="{'word-wrap': 'break-word'}">Hosts for {{name}} ({{hosts.length}} total)</h3>
+</div>
+
+<div class="modal-body">
+    <table class="table-v3 services-list table table-responsive">
+        <thead>
+            <tr class="ui-grid-header">
+                <th class="ui-grid-cell-contents ui-grid-header-cell">
+                    <span href="" ng-click="toggleSort('name')">Name</span>
+                </th>
+                <th class="ui-grid-cell-contents ui-grid-header-cell">
+                    <span href="" ng-click="toggleSort('hostnames')">Hostnames</span>
+                </th>
+                <th class="ui-grid-cell-contents ui-grid-header-cell">
+                    <span href="" ng-click="toggleSort('os')">OS</span>
+                </th>
+                <th class="ui-grid-cell-contents ui-grid-header-cell">
+                    <span href="" ng-click="toggleSort('versions')">Versions</span>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="ui-grid-row" ng-repeat="host in hosts | orderBy:sortField:sortReverse">
+                <td class="ui-grid-cell-contents">
+                    <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}" class="ng-binding"  ng-click="ok()">{{host.name}}:{{host.port}}</a>
+                </td>
+                <td class="ui-grid-cell-contents" ng-if="host.hostnames.length > 0">
+                        <span ng-repeat="hostname in host.hostnames">{{hostname}}&nbsp;<br></span>
+                </td>
+                <td class="ui-grid-cell-contents" ng-if="host.hostnames.length == 0">
+                        <span>-</span>
+                </td>
+                <td class="ui-grid-cell-contents">
+                    {{host.os}}
+                </td>
+                <td class="ui-grid-cell-contents">
+                    <span ng-repeat="version in host.versions | unique">{{version}}&nbsp;</span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="modal-footer">
+        <div class="col-md-6" style="padding: 0px">
+            <button class="btn btn-danger pull-left" clipboard supported="supported" text="clip" on-copied="messageCopied()" ng-disabled="clipText === 'Copied!'">{{clipText}}</button>
+        </div>
+        <div class="col-md-6 btn-group" style="padding: 0px">
+            <button class="btn btn-success pull-right" ng-click="ok()" id="buttonAtRight">OK</button>
+        </div>
+    </div>
+</div>

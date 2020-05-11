@@ -1,0 +1,48 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+<section id="main" class="seccion clearfix">
+    <div class="faraday-header-border-fix">
+        <div ng-controller="headerCtrl" ng-include="'scripts/commons/partials/header.html'"></div>
+        <div id="reports-main" class="fila clearfix">
+        <div class="jumbotron">
+            <h1><b>Welcome!</b></h1>
+            <p ng-if="workspaces.length > 0">These are your available workspaces</p>
+        </div><!-- .jumbotron -->
+        <div class="reports normal-size">
+            <table ng-if="workspaces.length > 0" class="table-v3 licenses-list table table-responsive">
+                <thead>
+                    <tr class="ui-grid-header">
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">Read only</th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">Name</th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">Vulns</th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">Hosts</th>
+                        <th class="ui-grid-cell-contents ui-grid-header-cell">Services</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="ws in workspaces | filter:{active:true}">
+                        <td class="ui-grid-cell-contents active-toggle">
+                            <div class="toogle-img-container">
+                                <span ng-click="readonlyToggle(ws)" class="active-toggle-container" ng-class="{ disabled:ws.readonly === false }" uib-tooltip="{{(ws.readonly === false) ? 'Workspace with all permissions' : 'Workspace read only'}}" tooltip-placement="right">
+                                    <img ng-src="{{ (ws.readonly == true) ? 'images/icon-list-confirmed.svg' : 'images/icon-list-notconfirmed.svg'}}" class="confirm-icon" ng-style="{ 'opacity': (ws.readonly === true) ? '1' : '0.7' }" />
+                                </span>
+                            </div>
+                        </td>
+                        <td class="ui-grid-cell-contents">
+                            <span class="onhover upsize" ng-click="redirect(ws.name)">
+                                <b>{{ws.name}}</b>
+                            </span>
+                        </td>
+                        <td ng-bind="objects[ws.name]['total_vulns']" class="ui-grid-cell-contents"></td>
+                        <td ng-bind="objects[ws.name]['hosts']" class="ui-grid-cell-contents"></td>
+                        <td ng-bind="objects[ws.name]['services']" class="ui-grid-cell-contents"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <div ng-if="workspaces.length == 0">
+                No workspaces found, please create a new one <a href="#/workspaces" class="ws" >here</a>
+            </div>
+        </div><!-- .reports -->
+    </div><!-- #reports-main --></div><!-- .right-main -->
+</section>

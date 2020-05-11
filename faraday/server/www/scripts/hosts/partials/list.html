@@ -1,0 +1,296 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+<section id="main" class="seccion clearfix">
+  <div class="faraday-header-border-fix"></div>
+    <div class="left-main-without-pagination">
+        <div ng-controller="headerCtrl" ng-include="'scripts/commons/partials/header.html'"></div>
+        <div id="reports-main" class="fila clearfix">
+            <div class="button-control col-md-12 col-sm-12 col-xs-12">
+                <div class="control-wrapper control-new">
+                    <button type="button" class="btn btn-success btn-new" title="{{workspaceData.readonly == true ? 'Read-only. Workspace disabled': 'New hosts'}}" ng-click="new()" ng-disabled="workspaceData.readonly === true">
+                        New
+                    </button>
+                </div>
+                <table>
+                <thead>
+                    <tr>
+                        <th class="col-s-1" style="border-left: 1px solid rgb(221, 221, 221); padding-left: 12px;">
+                                <a href="#/status/ws/{{workspace}}" class="status-report" ng-class="{'navigation-active' : component == 'status'}" style="color: black !important; font-weight: bold; font-size: 15px;" uib-tooltip="Vulns" tooltip-placement="right">
+                                    Vulns
+                                </a>
+                            </th>
+                        <th class="col-s-1">
+                            <a href="#/hosts/ws/{{workspace}}" class="workspaces" ng-class="{'navigation-active' : component == 'hosts'}" style="color: black !important; font-weight: bold; font-size: 15px;" uib-tooltip="Hosts" tooltip-placement="right">
+                                Hosts
+                            </a>
+                            <div class="flex-spacer"></div>
+                        </th>
+                        <th class="col-s-1">
+                            <a href="#/credentials/ws/{{workspace}}" class="workspaces" ng-class="{'navigation-active' : component == 'credentials'}" style="color: black !important; font-weight: bold; font-size: 15px;" uib-tooltip="Credentials" tooltip-placement="right">
+                                Credentials
+                            </a>
+                            <div class="flex-spacer"></div>
+                        </th>
+                        <th class="col-md-1" style = "border-right: 1px solid rgb(221, 221, 221); padding-right: 12px">
+                            <a href="#/taskgroup" class="executive-report" ng-class="{'navigation-active' : component == 'taskgroup'}" style="color: black !important; font-weight: bold; font-size: 15px;">
+                                Tasks
+                            </a>
+                            <div class="flex-spacer"></div>
+                        </th>
+                    </tr>
+                </thead>
+            </table>
+                <div class="control-wrapper control-edit">
+                    <button type="button" class="btn btn-default edit" title="{{workspaceData.readonly == true ? 'Read-only. Workspace disabled': 'Edit selected hosts'}}" ng-disabled="selectedHosts().length > 1" ng-click="edit()">
+                        <img src="images/icon-toolbar-edit.svg" class="edit-icon" />
+                    </button>
+                </div>
+                <div class="control-wrapper">
+                    <button type="button" class="btn btn-default" title="{{workspaceData.readonly == true ? 'Read-only. Workspace disabled': 'Delete selected items'}}" ng-click="delete()" ng-disabled="workspaceData.readonly === true">
+                        <img src="images/icon-toolbar-delete.svg" class="delete-icon" />
+                    </button>
+                </div>
+                <div class="control-wrapper search-wrapper">
+                    <form role="form" ng-submit="searchFor(true, searchParams)">
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search && search != 'confirmed=true'"></span>
+                                <input type="text" class="form-control" placeholder="Enter keywords" ng-change="currentPage = 1" ng-model="searchParams" />
+                                <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
+                                    <img src="images/icon-toolbar-searchbar-loupe.svg" class="search-icon" />
+                                </span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="control-wrapper download-wrapper">
+                    <button ng-click="enableFileUpload()" type="button" class="btn btn-default" title="{{workspaceData.readonly == true ? 'Read-only. Workspace disabled': 'Upload CSV with hosts'}}" ng-disabled="workspaceData.readonly == true">
+                        <img src="images/icon-toolbar-upload.svg"/>
+                    </button>
+                </div>
+                <div class="space-wrapper"></div>
+                <div class="control-wrapper control-wrap-right">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Add columns">
+                            Add columns
+                        </button>
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Add Columns">
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                            <li ng-repeat="(column, show) in columns">
+                                <a class="ws" ng-click="toggleShow(column, show)" ng-show="!show">{{column}}</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="reports">
+                <table class="status-report-grid hosts-list table table-responsive">
+                    <thead>
+                        <tr class="ui-grid-header ">
+                            <th class="ui-grid-cell-contents ui-grid-header-cell hosts-list-checkall">
+                                <input type="checkbox" ng-model="selectall" ng-click="checkAll()"/>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell" ng-show="columns['id']">
+                                <span ng-click="toggleSort('id')">ID</span>
+                                <a ng-click="toggleShow('id')"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell" ng-show="columns['ip']">
+                                <span ng-click="toggleSort('ip')">IP</span>
+                                <a ng-click="toggleShow('ip')"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell" ng-show="columns['search_in_shodan']">
+                                <span ng-click="toggleSort('search_in_shodan')">SEARCH</span>
+                                <a ng-click="toggleShow('search_in_shodan')"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell" ng-show="columns['os']">
+                                <span ng-click="toggleSort('os')">OS</span>
+                                <a ng-click="toggleShow('os')"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell" ng-if="columns['services']">
+                                <span>SERVICES</span>
+                                <a ng-click="toggleShow('services')"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell" ng-if="columns['hostnames']">
+                                <span>HOSTNAMES</span>
+                                <a ng-click="toggleShow('hostnames')"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell" ng-if="columns['mac']">
+                                <span ng-click="toggleSort('mac')">MAC</span>
+                                <a ng-click="toggleShow('mac')"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell" ng-if="columns['vendor']">
+                                <span ng-click="toggleSort('vendor')">Vendor</a>
+                                <a ng-click="toggleShow('vendor')"><span style="glyphicon glyphicon-remove" class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell" ng-show="columns['service_count']">
+                                <span ng-click="toggleSort('services')">OPEN SERVICES</span>
+                                <a ng-click="toggleShow('service_count')"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell" ng-show="columns['vuln_count']">
+                                <span ng-click="toggleSort('vulns')">VULNS</span>
+                                <a ng-click="toggleShow('vuln_count')"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell" ng-show="columns['credential_count']">
+                                <span ng-click="toggleSort('credentials')">CREDENTIALS</span>
+                                <a ng-click="toggleShow('credential_count')"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell" ng-show="columns['owned']">
+                                <span ng-click="toggleSort('owned')">OWNED</span>
+                                <a ng-click="toggleShow('owned')"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell" ng-show="columns['owner']">
+                                <span ng-click="toggleSort('owner')">OWNER</span>
+                                <a ng-click="toggleShow('owner')"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell" ng-show="columns['description']">
+                                <span ng-click="toggleSort('description')">DESCRIPTION</span>
+                                <a ng-click="toggleShow('description')"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell" ng-show="columns['create_time']">
+                                <span ng-click="toggleSort('metadata.create_time')">CREATION TIME</span>
+                                <a ng-click="toggleShow('create_time')"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell" ng-show="columns['last_modified']">
+                                <span ng-click="toggleSort('metadata.update_time')">LAST MODIFIED</span>
+                                <a ng-click="toggleShow('last_modified')"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="host in hosts" class="ui-grid-row "
+                            selection-model selection-model-mode="multiple-additive"
+                                            selection-model-on-change="selectedHosts()">
+                            <td class="ui-grid-cell-contents checkbox-select">
+                                <div class="">
+                                    <input type="checkbox" ng-model="host.selected" ng-click="host.selected = !host.selected" name="{{host._id}}"/>
+                                </div>
+                            </td>
+                            <td class="ui-grid-cell-contents" ng-show="columns['id']">
+                                <div class="">
+                                    <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}">{{host.id}}</a>
+                                </div>
+                            </td>
+                            <td class="ui-grid-cell-contents"
+                                ng-show="columns['ip']">
+                                <div class="">
+                                    <a name="{{ 'ip-' + host._id }}" ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}">{{host.ip}}</a>
+                                    <a  ng-href="" ng-click="copyToClipboard('ip-'+host._id)" tooltip="Copy as clipboard"><i ng-style="{'font-size':'14px'}" class="fa">&#xf0c5;</i></a>
+                                </div>
+                            </td>
+                            <td class="ui-grid-cell-contents"
+                                ng-show="columns['search_in_shodan']">
+                                <div class="">
+                                    <osint-link query="host.ip" osint="osint"></osint-link>
+                                </div>
+                            </td>
+                            <td class="ui-grid-cell-contents"
+                                ng-show="columns['os']">
+                                <div class="">
+                                    <a ng-href="#/hosts/ws/{{workspace}}/search/os={{host.os}}">
+                                        <img ng-if="host.icon != undefined" ng-src="images/{{host.icon}}.png" uib-tooltip="{{host.os}}"/>
+                                        <span ng-if="host.icon == undefined" class="fa fa-laptop" uib-tooltip="{{host.os}}"></span>
+                                    </a>
+                                </div>
+                            </td>
+                            <td class="ui-grid-cell-contents"
+                                ng-if="columns['services']">
+                                <div class="">
+                                    <span ng-repeat="summary in host.service_summaries">
+                                        {{summary}} <br>
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="ui-grid-cell-contents"
+                                ng-if="columns['hostnames']">
+                                <div class="">
+                                    <span ng-repeat="hostname in host.hostnames">
+                                        {{hostname}} <br>
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="ui-grid-cell-contents"
+                                ng-show="columns['mac']">
+                                <div class="">
+                                    {{host.mac}}
+                                </div>
+                            </td>
+                            <td class="ui-grid-cell-contents" ng-show="columns['vendor']">
+                                <div>{{host.mac_vendor | limitTo:20}}</div>
+                            </td>
+                            <td class="ui-grid-cell-contents"
+                                ng-show="columns['service_count']">
+                                <div class="">
+                                    <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-bind="host.services || '-'"></a>
+                                </div>
+                            </td>
+                            <td class="ui-grid-cell-contents"
+                                ng-show="columns['vuln_count']">
+                                <div class="">
+                                    <a ng-href="#/status/ws/{{workspace}}/search/target={{host.name}}" ng-bind="host.vulns"></a>
+                                </div>
+                            </td>
+                            <td class="ui-grid-cell-contents"
+                                ng-show="columns['credential_count']">
+                                <a ng-href="#/credentials/ws/{{workspace}}/hid/{{host._id}}">{{host.credentials}}</a>
+                            </td>
+                            <td class="ui-grid-cell-contents"
+                                ng-show="columns['owned']">
+                                <div class="">
+                                    <span class="fa fa-exclamation-triangle" aria-hidden="true" ng-if="host.owned"></span>
+                                    <span ng-if="host.owned">owned</span>
+                                    <span ng-if="!host.owned">not yet</span>
+                                </div>
+                            </td>
+                            <td class="ui-grid-cell-contents"
+                                ng-show="columns['owner']">
+                                <div class="">
+                                    <span>{{host.owner}}</span>
+                                </div>
+                            </td>
+                            <td class="ui-grid-cell-contents"
+                                ng-show="columns['description']">
+                                <div class="">
+                                    {{host.description}}
+                                </div>
+                            </td>
+                            <td class="ui-grid-cell-contents date-cell"
+                                ng-show="columns['create_time']">
+                                <div class="">
+                                    <span ng-style="{'display': 'inline-block'}" am-time-ago="host.metadata.create_time" am-preprocess="utc"></span><p ng-style="{'display': 'inline-block'}">&nbsp; {{host.metadata.creator ? (' by ' + host.metadata.creator) : ''}}</p>
+                                </div>
+                            </td>
+                            <td
+                                class="ui-grid-cell-contents date-cell"
+                                ng-show="columns['last_modified']">
+                                <div class="">
+                                    <span am-time-ago="host.metadata.update_time" am-preprocess="utc"></span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table><!-- #hosts -->
+                <div class="showPagination">
+                    <div class="form-group">
+                        <ul class="pagination">
+                            <li><a ng-hide="prevPageDisabled()" ng-click="prevPage()"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
+                            <li><a>{{currentPage}}/{{pageCount()}}</a></li>
+                            <li><a ng-hide="nextPageDisabled()" ng-click="nextPage()"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
+                        </ul>
+                        <form name="goToPage" id="goToPageStatus">
+                            <div class="col-md-2">
+                                <input type="number" min="1" max="{{pageCount()}}" class="form-control" ng-model="newCurrentPage" placeholder="Go to page"/>
+                            </div>
+                            <button class="btn btn-default" ng-click="go()">GO</button>
+                            <input type="number" min="1" class="form-control vuln_per_page" ng-model=newPageSize placeholder="Number page" />
+                        </form>
+                    </div>
+                </div><!-- .showPagination -->
+                <i ng-if="loading" class="fa fa-spinner fa-spin loading-spinner"></i>
+            </div><!-- .reports -->
+        </div><!-- #reports-main -->
+    </div><!-- .right-main -->
+</section><!-- #main -->

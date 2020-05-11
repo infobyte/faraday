@@ -1,0 +1,134 @@
+<div class="header-btns row">
+    <button class="btn btn-success pull-right background-blue" ng-click="new()">New</button>
+</div>
+
+<div class="row" style="overflow-x: hidden">
+    <div id="main-panel" class="cf-container col-md-8" dnd-list="customFields"
+         dnd-effect-allowed="all"
+         dnd-inserted="insertCallback()">
+
+        <div class="alert alert-info" style="text-align: center" ng-if="customFields.length === 0">There isn't any
+            custom field created
+        </div>
+
+        <div class="row cf-item" ng-repeat="cf in customFields | orderBy:'field_order'"
+             dnd-draggable="cf"
+             dnd-moved="customFields.splice($index, 1)"
+             ng-class="{'selected': models.selected === item}">
+            <div class="col-md-10">
+                <h3 class="cf-display-name"> {{cf.field_display_name}}</h3>
+                <div class="cf-name"> {{cf.field_name}}</div>
+                <div class="cf-type type-int" ng-if="cf.field_type == 'int'">INTEGER</div>
+                <div class="cf-type type-list" ng-if="cf.field_type == 'list'">LIST</div>
+                <div class="cf-type type-str" ng-if="cf.field_type == 'str'">STRING</div>
+                <div class="cf-type type-choice" ng-if="cf.field_type == 'choice'">CHOICE</div>
+            </div>
+            <div class="cf-actions col-md-2">
+                <span class="cf-icon-action" ng-click="_delete(cf)"><i
+                        class="fa fa-trash-o fa-2x"></i></span>
+                <span class="cf-icon-action" ng-click="setCustomField(cf)"><i class="fa fa-pencil fa-2x"></i></span>
+                <span class="cf-icon-action handle-move" style="cursor: move"><i
+                        class="fa fa-arrows-alt fa-2x"
+                        title="You can drag and drop each custom field to reorder"></i></span>
+            </div>
+        </div>
+    </div>
+
+    <div id="slide" class="col-md-4 cf-detail">
+        <h3><span ng-if="isEditable == true">Edit</span>
+            <span ng-if="isEditable == false">Create</span>
+            custom field
+        </h3><br>
+        <form name="form" role="form">
+            <div class="tab-pane-header">Display Name</div>
+            <div class="form-group">
+                <label class="sr-only control-label" for="cf_display_name">Display Name</label>
+                <input type="text" class="form-control" id="cf_display_name" placeholder="Display Name"
+                       ng-model="selected_cf.field_display_name" required/>
+            </div><!-- .form-group -->
+
+            <div class="tab-pane-header">Name</div>
+            <div class="form-group">
+                <label class="sr-only control-label" for="cf_name">Name</label>
+                <input type="text" class="form-control" id="cf_name" placeholder="Name" ng-readonly="isEditable == true"
+                       ng-model="selected_cf.field_name" ng-change="normalizeName()" required/>
+            </div><!-- .form-group -->
+
+            <div class="row" style="margin-top: 32px;">
+                <div class="btn-group col-md-6">
+                    <div class="tab-pane-header">Type</div>
+                    <button type="button" class="dropdown-toggle btn-change-property primary-btn"
+                            data-toggle="dropdown"
+                            id="btn-chg-type"
+                            ng-disabled="isEditable == true">
+                        <span ng-if="selected_cf.field_type == null">UNDEFINED</span>
+                        <span ng-if="selected_cf.field_type == 'int'">INTEGER</span>
+                        <span ng-if="selected_cf.field_type == 'list'">LIST</span>
+                        <span ng-if="selected_cf.field_type == 'str'">STRING</span>
+                        <span ng-if="selected_cf.field_type == 'choice'">CHOICE</span>
+                    </button>
+                    <button type="button" class="dropdown-toggle secondary-btn btn-change-property"
+                            data-toggle="dropdown"
+                            id="caret-chg-type"
+                            title="Change type"
+                            ng-disabled="isEditable == true">
+                        <span> <i class="fa fa-angle-down fa-lg" aria-hidden="true"></i> </span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                        <li>
+                            <a class="ws"
+                               ng-click="changeType(null)">UNDEFINED</a>
+                            <a class="ws"
+                               ng-click="changeType('str')">STRING</a>
+                            <a class="ws"
+                               ng-click="changeType('int')">INTEGER</a>
+                            <a class="ws"
+                               ng-click="changeType('list')">LIST</a>
+                            <a class="ws"
+                               ng-click="changeType('choice')">CHOICE</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="add-options col-md-12 margin-top-30px" ng-if="selected_cf.field_type == 'choice'">
+                    <div class="form-group">
+                        <div class="col-md-12">
+                            <div class="tab-pane-header">Options</div>
+                            <div class="input-group margin-bottom-sm">
+                                <label class="sr-only" for="option">Options</label>
+                                <input type="text" class="form-control" id="option" placeholder="Option"
+                                       ng-model="data.newOption"/>
+                                <span class="input-group-addon cursor" ng-click="addOption()">
+                                    <i class="fa fa-plus-circle"></i>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-12 reference" ng-repeat="option in selected_cf.field_metadata">
+                            <div class="input-group margin-bottom-sm">
+                                <label class="sr-only" for="vuln-refs-create">Options</label>
+                                <input type="text" class="form-control" id="vuln-refs-create" placeholder="Option"
+                                       ng-model="option"
+                                       role="button"
+                                       readonly/>
+                                <span class="input-group-addon cursor" ng-click="selected_cf.field_metadata.splice($index, 1)"><i
+                                        class="fa fa-minus-circle"></i></span>
+                            </div>
+                        </div>
+                    </div><!-- .form-group -->
+                </div>
+            </div>
+
+            <div class="btn-tools">
+                <button type="reset" class="btn btn-default" ng-click="hideSidePanel()">Cancel</button>
+                <button class="btn btn-success" ng-if="isEditable == true"
+                        ng-click="updateCustomCustomField()"
+                        ng-disabled="form.$invalid || selected_cf.field_type == null">Save
+                </button>
+                <button class="btn btn-success" ng-if="isEditable == false"
+                        ng-click="createCustomCustomField()"
+                        ng-disabled="form.$invalid || selected_cf.field_type == null">Save
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,49 @@
+<article class='panel' ng-controller="commandsCtrl">
+    <header>
+        <h2>Commands History
+            <span class="glyphicon glyphicon-info-sign" uib-tooltip="Shows current WS executed commands"></span>
+        </h2>
+    </header>
+    <div ng-if="commands.length === 0" class="no-info-overlay">
+        <p class="no-info-text">No commands found yet.</p>
+    </div>
+    <div class="ph-xl">
+        <table id="" ng-if="commands.length > 0" class="tablesorter table table-striped last-vuln text-left">
+            <thead>
+            <tr>
+                <th class="text-left"><span ng-click="cmdToggleSort('creator')">By</span></th>
+                <th class="text-left"><span ng-click="cmdToggleSort('command')">Command</span></th>
+                <th class="text-left"><span ng-click="cmdToggleSort('date')">Start Date</span></th>
+                <th class="text-left"><span ng-click="cmdToggleSort('duration')">Duration</span></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ng-repeat="cmd in commands | limitTo:settings.pageLimit:settings.offset | orderObjectBy:cmdSortField:cmdSortReverse track by $index ">
+                <td>
+                    <b><p uib-tooltip="{{cmd.ip}}">{{cmd.creator}}</p></b>
+                </td>
+                <td class="wrapword">
+                    <span ng-if="cmd.import_source == 'report'">Import {{(cmd.tool == 'unknown' ? cmd.command : cmd.tool)}}</span>
+                    <span ng-if="cmd.import_source == 'shell'">{{cmd.command + ' ' + cmd.params}}</span>
+                    <span ng-if="cmd.import_source == 'agent'">
+                        <p class="responsive_agent_command">
+                        {{cmd.tool + ' executor: ' + cmd.command + ' ' + cmd.params}}
+                        </p>
+                    </span>
+                </td>
+                <td am-time-ago="cmd.date" am-preprocess="utc"></td>
+                <td ng-bind="cmd.duration || 'undefined'"></td>
+            </tr>
+            </tbody>
+        </table>
+
+        <simple-pagination
+            current-page="settings.currentPage"
+            offset="settings.offset"
+            page-limit="settings.pageLimit"
+            page-limits="settings.pageLimits"
+            total="commands.length">
+        </simple-pagination>
+
+    </div>
+</article>

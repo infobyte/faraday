@@ -1,0 +1,310 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+<section id="main" class="seccion clearfix">
+  <div class="faraday-header-border-fix">
+      <div ng-controller="headerCtrl" ng-include="'scripts/commons/partials/header.html'"></div>
+      <div id="reports-main" class="fila clearfix">
+      <div class="col-md-8" style="padding-left: 0px !important;">
+        <span ng-hide="!showServices" class="reports">
+            <div class="button-control col-md-12 col-sm-12 col-xs-12">
+                <div class="control-wrapper control-new">
+                <button type="button" class="btn btn-success btn-new"  title="{{workspaceData.readonly == true ? 'Read-only. Workspace disabled': 'New service'}}"  ng-click="new()" style="padding:0px 0px" ng-disabled="workspaceData.readonly === true">
+                    New service
+                </button>
+                </div>
+                <table>
+                        <thead>
+                            <tr>
+                                <th class="col-s-1" style="border-left: 1px solid rgb(221, 221, 221); padding-left: 12px;">
+                                        <a href="#/status/ws/{{workspace}}" class="status-report" ng-class="{'navigation-active' : component == 'status'}" style="color: black !important; font-weight: bold; font-size: 15px;" uib-tooltip="Vulns" tooltip-placement="right">
+                                            Vulns
+                                        </a>
+                                    </th>
+                                <th class="col-s-1">
+                                    <a href="#/hosts/ws/{{workspace}}" class="workspaces" ng-class="{'navigation-active' : true}" style="color: black !important; font-weight: bold; font-size: 15px;" uib-tooltip="Hosts" tooltip-placement="right">
+                                        Hosts
+                                    </a>
+                                    <div class="flex-spacer"></div>
+                                </th>
+                                <th class="col-s-1">
+                                    <a href="#/credentials/ws/{{workspace}}" class="workspaces" ng-class="{'navigation-active' : component == 'credentials'}" style="color: black !important; font-weight: bold; font-size: 15px;" uib-tooltip="Credentials" tooltip-placement="right">
+                                        Credentials
+                                    </a>
+                                    <div class="flex-spacer"></div>
+                                </th>
+                                <th class="col-md-1" style = "border-right: 1px solid rgb(221, 221, 221); padding-right: 12px">
+                                    <a href="#/taskgroup" class="executive-report" ng-class="{'navigation-active' : component == 'taskgroup'}" style="color: black !important; font-weight: bold; font-size: 15px;">
+                                        Tasks
+                                    </a>
+                                    <div class="flex-spacer"></div>
+                                </th>
+                            </tr>
+                        </thead>
+                    </table>
+                <div class="control-wrapper control-edit">
+                <button type="button" class="btn"  title="{{workspaceData.readonly == true ? 'Read-only. Workspace disabled': 'Edit selected services'}}" ng-click="edit()" ng-disabled="services.length == 0">
+                    <img src="images/icon-toolbar-edit.svg" class="edit-icon" />
+                </button>
+                </div>
+                <div class="control-wrapper">
+                <button type="button" class="btn"  title="{{workspaceData.readonly == true ? 'Read-only. Workspace disabled': 'Delete selected services'}}"  ng-click="delete()" ng-disabled="services.length == 0 || workspaceData.readonly === true">
+                    <img src="images/icon-toolbar-delete.svg" class="delete-icon" />
+                </button>
+                </div>
+                <div class="space-wrapper"></div>
+                    <div class="control-wrapper search-wrapper">
+                        <form role="form" ng-submit="searchFor(true, searchParams)" class="ng-pristine ng-valid">
+                            <div class="form-group">
+                                <div class="input-group">
+                                    <!-- ngIf: search && search != 'confirmed=true' -->
+                                    <input type="text" class="form-control ng-pristine ng-valid ng-touched" placeholder="Enter keywords" ng-change="currentPage = 1" ng-model="searchParams">
+                                    <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
+                                        <img src="images/icon-toolbar-searchbar-loupe.svg" class="search-icon">
+                                    </span>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+            </div>
+            <div ng-if="loadedServices && services.length > 0">
+                <h3>Services for host {{hostName}}</h3>
+            </div>
+            <div ng-if="loadedServices && services.length == 0">
+                <h4>No services found for {{host.ip}}</h4>
+            </div>
+            <div ng-show="loadedServices && services.length > 0">
+                <table class="table-v3 services-list table table-responsive" style="margin-top: 15px">
+                    <thead>
+                        <tr class="ui-grid-header">
+                            <th class="ui-grid-cell-contents ui-grid-header-cell hosts-list-checkall" >
+                                <input type="checkbox" ng-model="selectall" ng-click="checkAllServices()" class="ng-pristine ng-untouched ng-valid" />
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell">
+                                <span ng-click="toggleSort('name')">Name</span>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell">
+                                <span ng-click="toggleSort('version')">Version</span>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell">
+                                <span ng-click="toggleSort('ports')">Port</span>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell">
+                                <span ng-click="toggleSort('protocol')">Protocol</span>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell">
+                                <span ng-click="toggleSort('status')">Status</span>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell">
+                                <span ng-click="toggleSort('vulns')">Vulns</span>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell">
+                                <span ng-click="toggleSort('credentials')">Credentials</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="service in filtered = (services | filter:expression) | orderBy:sortField:reverse | startFrom:(currentPage-1)*pageSize | limitTo:pageSize"
+                            selection-model selection-model-type="checkbox"
+                                            selection-model-mode="multiple-additive"
+                                            selection-model-selected-class="multi-selected">
+                            <td class="ui-grid-cell-contents checkbox-select">
+                                <input type="checkbox" name="{{s._id}}"/>
+                            </td>
+                            <td class="ui-grid-cell-contents">
+                                <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}/search/name={{service.name}}">
+                                    <span title="{{service.name.length > 60 ? service.name : ''}}">
+                                        {{service.name | limitTo: 60}}
+                                        <span ng-if="service.name.length > 60">...</span>
+                                    </span>
+                                </a>
+                            </td>
+                            <td ng-bind="service.version || '-'" class="ui-grid-cell-contents"></td>
+                            <td class="ui-grid-cell-contents">
+                                <span ng-bind="service.ports"></span>
+                            </td>
+                            <td class="ui-grid-cell-contents">
+                                <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}/search/protocol={{service.protocol}}">
+                                    <span ng-bind="service.protocol"></span>
+                                </a>
+                            </td>
+                            <td ng-bind="service.status || '-'" class="ui-grid-cell-contents"></td>
+                            <td class="ui-grid-cell-contents">
+                                <a ng-href="#/status/ws/{{workspace}}/search/service_id={{service.id}}">
+                                    <span ng-bind="service.vulns"></span>
+                                </a>
+                            </td>
+                            <td class="ui-grid-cell-contents">
+                                <a ng-href="#/credentials/ws/{{workspace}}/sid/{{service.id}}">{{service.credentials}}</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table><!-- #hosts -->
+                <div class="showPagination">
+                    <div class="form-group">
+                        <ul class="pagination">
+                            <li><a ng-hide="prevPageDisabled()" ng-click="prevPage()"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
+                            <li><a>{{currentPage}}/{{pageCount()}}</a></li>
+                            <li><a ng-hide="nextPageDisabled()" ng-click="nextPage()"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
+                        </ul>
+                        <form name="goToPage" id="goToPageStatus">
+                            <div class="col-md-2">
+                                <input type="number" min="0" max="{{pageCount()}}" class="form-control" ng-model="newCurrentPage" placeholder="Go to page"/>
+                            </div>
+                            <button class="btn btn-default" ng-click="go()">GO</button>
+                            <input type="number" min="1" class="form-control vuln_per_page" ng-model=newPageSize placeholder="Number page" />
+                        </form>
+                    </div>
+                </div><!-- .showPagination -->
+            </div><!-- .reports -->
+        </span>
+        <span ng-hide="host.tools.length == 0" class="reports">
+            <h3>Tools for host {{hostName}}</h3>
+            <div>
+                <table class="table-v3 services-list table table-responsive" style="margin-top: 15px">
+                    <thead>
+                        <tr class="ui-grid-header">
+                            <th class="ui-grid-cell-contents ui-grid-header-cell">
+                                <span ng-click="toggleSort('command')">Command</span>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell">
+                                <span ng-click="toggleSort('user')">User</span>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell">
+                                <span>Parameters</span>
+                            </th>
+                            <th class="ui-grid-cell-contents ui-grid-header-cell">
+                                <span ng-click="toggleSort('create_date')">Create Date</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="tool in host.tools | startFrom:(currentToolPage-1)*toolPageSize | limitTo:toolPageSize">
+                            <td class="ui-grid-cell-contents"><a href="#/status/ws/{{workspace}}/search/command_id={{tool.command_id}}">{{tool.command}}</a></td>
+                            <td ng-bind="tool.user" class="ui-grid-cell-contents"></td>
+                            <td class="ui-grid-cell-contents">{{tool.params.substring(tool.params.lastIndexOf('/') + 1, tool.params.length)}}</td>
+                            <td ng-bind="tool.create_date | amTimeAgo" class="ui-grid-cell-contents"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="showPagination">
+                    <div class="form-group">
+                        <ul class="pagination">
+                            <li><a ng-hide="prevToolPageDisabled()" ng-click="prevToolPage()"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
+                            <li><a>{{currentToolPage}}/{{toolPageCount()}}</a></li>
+                            <li><a ng-hide="nextToolPageDisabled()" ng-click="nextToolPage()"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
+                        </ul>
+                        <form name="goToPage" id="goToPageStatus">
+                            <div class="col-md-2">
+                                <input type="number" min="0" max="{{toolPageCount()}}" class="form-control" ng-model="newCurrentToolPage" placeholder="Go to page"/>
+                            </div>
+                            <button class="btn btn-default" ng-click="goTools()">GO</button>
+                            <input type="number" min="1" class="form-control vuln_per_page" ng-model=newToolPageSize placeholder="Number page" />
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </span>
+    </div>
+    <div class ="col-md-4">
+        <div style="border-left: 1px solid #CCC">
+                <form name="form" style="margin-left: 5px">
+                    <h3>
+                        Host details
+                        <span style="float:right">
+                            <a class="btn btn-sm btn-default" href="#/host/ws/{{workspace}}/hid/{{host.id}}/edit" ng-if="!editing">
+                                <span class="glyphicon glyphicon-pencil"></span>
+                                Edit
+                            </a>
+                            <button type="button" class="btn btn-sm btn-default"  title="{{workspaceData.readonly == true ? 'Read-only. Workspace disabled': 'Delete host'}}"  ng-click="deleteHost()" ng-if="!editing" ng-disabled="workspaceData.readonly === true">
+                                <span class="glyphicon glyphicon-trash"></span>
+                                Delete
+                            </button>
+                            <a class="btn btn-danger" href="#/host/ws/{{workspace}}/hid/{{host.id}}" ng-click="loadHosts()" ng-if="editing && !creating">Cancel</a>
+                            <button class="btn btn-success" ng-disabled="form.$invalid || workspaceData.readonly == true" ng-click="ok()" ng-if="editing">OK</button>
+                        </span>
+                    </h3>
+                    <div class="form-horizontal">
+                        <div class="form-group" ng-class="{'has-error': !host.ip }">
+                            <div class="col-md-12">
+                                <strong ng-if="!editing">IP</strong>
+                                <h5 ng-if="editing">IP v4 or v6</h5>
+                                <label class="sr-only" for="name">IP</label>
+                                <input type="text" class="form-control" id="ip" placeholder="IP" ng-model="host.ip" ng-if="editing" required/>
+                                <br ng-if="!editing">
+                                <span ng-if="!editing">{{host.ip}}</span>
+                                <span class="help-block normal-size" ng-if="editing">
+                                    Example: 192.168.0.1
+                                </span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-md-6" style="margin-bottom: 15px">
+                                <span>Owned:</span>
+                                <input class="form-check-input" type="checkbox" id="owned" ng-model="host.owned" ng-disabled="!editing"></input>
+                            </div>
+                            <div class="col-md-12">
+                                <strong ng-if="!editing">Operating System</strong>
+                                <h5 ng-if="editing">Operating System</h5>
+                                <label class="sr-only" for="os">Operating System</label>
+                                <input type="text" class="form-control" id="os" placeholder="Operating System" ng-model="host.os" ng-if="editing"/>
+                                <p ng-if="!editing">
+                                <img ng-if="host.icon && host.icon != 'unknown'" ng-src="images/{{host.icon}}.png" uib-tooltip="{{host.os}}"/>
+                                {{host.os}}
+                                </p>
+                            </div>
+                            <div class="col-md-12">
+                                <strong ng-if="!editing">Hostnames</strong>
+                                <h5 ng-if="editing">Hostnames</h5>
+                                <span class="input-group-addon button-radius background-blue" ng-click="newHostnames($event)" ng-if="editing">Add Hostname</span>
+                            </div>
+                            <span ng-if="editing">
+                                <div class="col-md-12 input-margin" ng-repeat="hostname in host.hostnames">
+                                    <div class="input-group margin-bottom-sm col-md-12">
+                                        <label class="sr-only" for="hostsnames">Hostname</label>
+                                        <input type="text" class="form-control" id="hostsnames" placeholder="Hostname" ng-model="hostname.key" />
+                                        <span class="input-group-addon" ng-click="host.hostnames.splice($index, 1)" ng-hide="host.hostnames.length == 1" ng-if="editing"><i class="fa fa-minus-circle"></i></span>
+                                    </div>
+                                </div>
+                            </span>
+                            <span ng-if="!editing">
+                                <div class="col-md-12 input-margin">
+                                    <ul>
+                                        <li ng-repeat="hostname in host.hostnames">{{hostname.key}}</li>
+                                    </ul>
+                                </div>
+                            </span>
+                            <div class="col-md-12">
+                                <strong ng-if="!editing">MAC</strong>
+                                <h5 ng-if="editing">MAC</h5>
+                                <input type="text" class="form-control" id="ipv4" placeholder="MAC" ng-model="host.mac" ng-if="editing"/>
+                                <p ng-if="!editing">{{host.mac}} ({{host.mac_vendor}})</p>
+                            </div>
+                            <div class="col-md-12">
+                                <strong ng-if="!editing">Description</strong>
+                                <h5 ng-if="editing">Description</h5>
+                                <label class="sr-only" for="description">Description</label>
+                                <textarea class="form-control" id="description" placeholder="Description" ng-model="host.description" ng-if="editing"></textarea>
+                                <p ng-if="!editing">{{host.description}}</p>
+                            </div>
+                            <div class="col-md-12">
+                                <i ng-if="!editing">
+                                    </br>
+                                    <span class="fa fa-clock-o"></span>
+                                    <span> Created</span>
+                                    <span am-time-ago="host.metadata.create_time" am-preprocess="utc"></span>
+                                </i>
+                            </div>
+                        </div><!-- .form-group -->
+                    </div>
+                    <div style="float: right">
+                        <a class="btn btn-danger" href="#/host/ws/{{workspace}}/hid/{{host.id}}" ng-click="loadHosts()" ng-if="editing && !creating">Cancel</a>
+                        <a class="btn btn-danger" href="#/hosts/ws/{{workspace}}" ng-if="editing && creating">Cancel</a>
+                        <button class="btn btn-success" ng-disabled="form.$invalid || workspaceData.readonly == true" ng-click="ok()" ng-if="editing">OK</button>
+                    </div>
+                </form>
+            </div>
+    </div>
+  </div><!-- #reports-main --></div><!-- .right-main -->
+</section><!-- #main -->

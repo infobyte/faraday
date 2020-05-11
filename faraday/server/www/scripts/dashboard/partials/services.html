@@ -1,0 +1,30 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+<div id='byservices' ng-controller="servicesCtrl">
+    <article class='panel m0'>
+        <header>
+            <h2>Services report
+                <span class="glyphicon glyphicon-info-sign" uib-tooltip="All services for current WS ordered by host amount"></span>
+            </h2>
+        </header>
+        <div ng-if="servicesCount.length === 0" class="no-info-overlay">
+            <p class="no-info-text">No services found yet.</p>
+        </div>
+        <div class='main' ng-class="{'height-auto': servicesCount.length === 0}">
+            <div class='box'>
+                <div ng-repeat="srv in servicesCount" class="columna unquinto services">
+                    <article class="dato2">
+                        <span href="" ng-click="showHosts(srv.name)">
+                            <section>
+                                <div class="nro">{{srv.count}}</div>
+                                <div class="txt texto-blanco" ng-style="{'word-wrap': 'break-word'}">{{srv.name}}</div>
+                            </section>
+                        </span>
+                    </article>
+                </div>
+            </div>
+        </div>
+    </article>
+</div>

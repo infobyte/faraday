@@ -1,0 +1,64 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+<section id="main" class="seccion clearfix dashboard">
+  <div class="faraday-header-border-fix">
+        <div ng-controller="headerCtrl" ng-include="'scripts/commons/partials/header.html'"></div>
+        <div class="row ph-xl m0">
+          <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12 ">
+            <div class="row" id="first-row-panel">
+              <div class="col-lg-4 col-md-4 col-sm-12 col-xs-12 pl0 pr-sm">
+                <div ng-include="'scripts/dashboard/partials/workspace-progress.html'"></div>
+              </div>
+              <div class="col-lg-4 col-md-4 col-sm-12 col-xs-12 ph-sm">
+                <div ng-include="'scripts/dashboard/partials/vulns-piechart.html'"></div>
+              </div>
+              <div class="col-lg-4 col-md-4 col-sm-12 col-xs-12 ph-sm">
+                <div ng-include="'scripts/dashboard/partials/vulns-by-status.html'"></div>
+              </div>
+            </div>
+            <div class="row mt-md" id="activities-container-row" ng-if="showVulnCost">
+              <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 pl0 pr-sm">
+                <div ng-include="'scripts/dashboard/partials/vulns-by-price.html'"></div>
+              </div>
+            </div>
+            <div class="row mt-md" id="activities-container-row">
+              <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 pl0 pr-sm">
+                <div ng-include="'scripts/dashboard/partials/activityFeed.html'"></div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 pl0 pr-sm">
+                <div ng-include="'scripts/dashboard/partials/last-vulns.html'"></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12 ">
+            <div class="row">
+              <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 ph-sm">
+                <div ng-include="'scripts/dashboard/partials/vulns-by-severity.html'"></div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12 ph-sm">
+                <div ng-include="'scripts/dashboard/partials/services.html'"></div>
+              </div>
+              <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12 ph-sm">
+                <div ng-include="'scripts/dashboard/partials/summarized.html'"></div>
+              </div>
+            </div>
+            <div class="row mt-md">
+              <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 ph-sm">
+                <div ng-include="'scripts/dashboard/partials/compound.html'"></div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 ph-sm">
+                <div ng-include="'scripts/dashboard/partials/commands-list.html'"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+    </div><!-- .right-main -->
+</section>

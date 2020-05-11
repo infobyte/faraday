@@ -149,6 +149,30 @@ def _make_command_created_related_object():
     )
 
 
+def _make_vuln_generic_count_by_severity(severity):
+    vuln_count = (
+        select([func.count(text('vulnerability.id'))]).
+        select_from(text('vulnerability')).
+        where(text(f'vulnerability.host_id = host.id and vulnerability.severity = \'{severity}\'')).
+        as_scalar()
+    )
+
+    vuln_web_count = (
+        select([func.count(text('vulnerability.id'))]).
+        select_from(text('vulnerability, service')).
+        where(text('(vulnerability.service_id = service.id and '
+                   f'service.host_id = host.id) and vulnerability.severity = \'{severity}\'')).
+        as_scalar()
+    )
+
+    vulnerability_generic_count = column_property(
+        vuln_count + vuln_web_count,
+        deferred=True
+    )
+
+    return vulnerability_generic_count
+
+
 class DatabaseMetadata(db.Model):
     __tablename__ = 'db_metadata'
     id = Column(Integer, primary_key=True)

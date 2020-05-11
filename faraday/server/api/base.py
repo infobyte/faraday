@@ -1226,13 +1226,18 @@ class AutoSchema(with_metaclass(ModelSchemaMeta, Schema)):
     TYPE_MAPPING = Schema.TYPE_MAPPING.copy()
     TYPE_MAPPING[str] = NullToBlankString
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, strict=None, *args, **kwargs):
         # assert kwargs.get('unknown') == EXCLUDE, (
         #     "This schema was initiatized without unknown=EXCLUDE. This means "
         #     "that it will fail if you pass it fields that do not exist in the "
         #     "schema, instead of ignoring them. I suppose this isn't what you "
         #     "want. If you do want this behavior, consider removing this assert."
         #     )
+
+        # TODO: remove strict argument. This was introduced during the
+        # migration to marshmallow 3. Once all occurences of strict=True are
+        # removed, this is not required anymore
+
         super(AutoSchema, self).__init__(*args, **kwargs)
         self.unknown = EXCLUDE
 

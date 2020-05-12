@@ -5,7 +5,6 @@ Revises: 0d216660da28
 Create Date: 2019-05-22 19:17:31.444968+00:00
 
 """
-from __future__ import absolute_import
 
 import uuid
 from alembic import op

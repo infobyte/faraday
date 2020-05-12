@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import faraday.server.config
 from faraday.server.models import (
     Host,

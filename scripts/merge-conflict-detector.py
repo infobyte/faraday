@@ -9,8 +9,6 @@ Internal script used to detect merge conflicts to branch with
 our propiertary code. Not useful if you don't have access to
 the code of Faraday Professional or Faraday Corporate
 '''
-from __future__ import absolute_import
-from __future__ import print_function
 
 import os
 import re

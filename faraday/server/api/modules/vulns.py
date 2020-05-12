@@ -372,7 +372,7 @@ class VulnerabilityFilterSet(FilterSet):
             "data", "severity", "confirmed", "name", "request", "response",
             "params", "resolution",
             "description", "command_id", "target", "creator", "method",
-            "query_string", "service_id",
+            "service_id",
             "status_code", "tool",
         )
 

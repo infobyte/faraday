@@ -88,7 +88,7 @@ class TestListServiceView(ReadOnlyAPITests):
         }
         res = test_client.post(self.url(), data=data)
         assert res.status_code == 400
-        assert 'Must be one of' in res.data
+        assert b'Must be one of' in res.data
 
     def test_create_fails_with_no_host_id(self, test_client,
                                           host, session):

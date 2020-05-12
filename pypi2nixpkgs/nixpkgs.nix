@@ -28,9 +28,6 @@ let
 
     webargs = self.callPackage ./packages/webargs.nix { };
 
-    marshmallow-sqlalchemy =
-      self.callPackage ./packages/marshmallow-sqlalchemy.nix { };
-
     filteralchemy-fork = self.callPackage ./packages/filteralchemy-fork.nix { };
 
     filedepot = self.callPackage ./packages/filedepot.nix { };

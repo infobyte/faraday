@@ -218,7 +218,7 @@ class VulnerabilitySchema(AutoSchema):
         return value
 
     @post_load
-    def post_load_impact(self, data):
+    def post_load_impact(self, data, **kwargs):
         # Unflatten impact (move data[impact][*] to data[*])
         impact = data.pop('impact', None)
         if impact:
@@ -226,7 +226,7 @@ class VulnerabilitySchema(AutoSchema):
         return data
 
     @post_load
-    def post_load_parent(self, data):
+    def post_load_parent(self, data, **kwargs):
         # schema guarantees that parent_type exists.
         parent_class = None
         parent_type = data.pop('parent_type', None)

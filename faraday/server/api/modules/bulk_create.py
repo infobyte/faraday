@@ -66,7 +66,7 @@ class PolymorphicVulnerabilityField(fields.Field):
         self.vuln_schema = VulnerabilitySchema()
         self.vulnweb_schema = BulkVulnerabilityWebSchema()
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
         if self.many and not utils.is_collection(value):
             self.fail('type', input=value, type=value.__class__.__name__)
         if self.many:
@@ -100,7 +100,7 @@ class BulkServiceSchema(services.ServiceSchema):
     port = fields.Integer(required=True,
                           validate=[Range(min=0, error="The value must be greater than or equal to 0")])
     vulnerabilities = PolymorphicVulnerabilityField(
-        VulnerabilitySchema(many=True),
+        # VulnerabilitySchema(many=True),  # I have no idea what this line does, but breaks with marshmallow 3
         many=True,
         missing=[],
     )
@@ -159,7 +159,7 @@ class BulkCommandSchema(AutoSchema):
         )
 
     @post_load
-    def load_end_date(self, data):
+    def load_end_date(self, data, **kwargs):
         duration = data.pop('duration')
         data['end_date'] = data['start_date'] + duration
         return data

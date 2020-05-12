@@ -43,7 +43,7 @@ class CommandSchema(AutoSchema):
             return 'In progress'
 
     @post_load
-    def post_load_set_end_date_with_duration(self, data):
+    def post_load_set_end_date_with_duration(self, data, **kwargs):
         # there is a potential bug when updating, the start_date can be changed.
         duration = data.pop('duration', None)
         if duration:

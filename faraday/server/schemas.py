@@ -28,7 +28,7 @@ class JSTimestampField(fields.Integer):
         if value is not None:
             return int(time.mktime(value.timetuple()) * 1000)
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
         if value is not None and value:
             return datetime.datetime.fromtimestamp(self._validated(value)/1e3)
 
@@ -113,7 +113,7 @@ class PrimaryKeyRelatedField(fields.Field):
                 return None
             return getattr(value, self.field_name)
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
         raise NotImplementedError("Only dump is implemented for now")
 
 
@@ -132,7 +132,7 @@ class SelfNestedField(fields.Field):
     def _serialize(self, value, attr, obj):
         return self.target_schema.dump(obj)
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
         """
         It would be awesome if this method could also flatten the dict keys into the parent
         """
@@ -171,12 +171,12 @@ class MutableField(fields.Field):
 
         return self.read_field._serialize(value, attr, obj)
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
 
         # TODO: see root cause of the bug that required this line to be added
         self.write_field.parent = self.parent
 
-        return self.write_field._deserialize(value, attr, data)
+        return self.write_field._deserialize(value, attr, data, **kwargs)
 
     def _add_to_schema(self, field_name, schema):
         # Propagate to child fields
@@ -199,7 +199,7 @@ class SeverityField(fields.String):
             return 'info'
         return ret
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
         ret = super(SeverityField, self)._serialize(value, attr, data)
         if ret == 'med':
             return 'medium'
@@ -224,7 +224,7 @@ class NullToBlankString(fields.String):
         self.allow_none = True
         self.default = ''
 
-    def deserialize(self, value, attr=None, data=None):
+    def deserialize(self, value, attr=None, data=None, **kwargs):
         # Validate required fields, deserialize, then validate
         # deserialized value
         self._validate_missing(value)
@@ -237,7 +237,7 @@ class NullToBlankString(fields.String):
             raise ValidationError("Deserializing a non string field when expected")
         if getattr(self, 'allow_none', False) is True and value is None:
             return ''
-        output = self._deserialize(value, attr, data)
+        output = self._deserialize(value, attr, data, **kwargs)
         self._validate(output)
         return output
 
@@ -273,7 +273,7 @@ class StrictDateTimeField(fields.DateTime):
         super(StrictDateTimeField, self).__init__(*args, **kwargs)
         self.load_as_tz_aware = load_as_tz_aware
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
         if isinstance(value, datetime.datetime):
             date = value
         else:
@@ -341,7 +341,7 @@ class WorkerRuleSchema(Schema):
                 return '{}={}'.format(object_rule_name, value)
 
     @post_dump
-    def remove_none_values(self, data):
+    def remove_none_values(self, data, **kwargs):
         actions = []
         conditions = []
         for action in data['actions']:

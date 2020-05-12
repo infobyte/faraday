@@ -62,7 +62,7 @@ class ServiceSchema(AutoSchema):
         return str(port)
 
     @post_load
-    def post_load_parent(self, data):
+    def post_load_parent(self, data, **kwargs):
         """Gets the host_id from parent attribute. Pops it and tries to
         get a Host with that id in the corresponding workspace.
         """

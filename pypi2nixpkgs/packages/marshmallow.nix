@@ -1,12 +1,12 @@
 { buildPythonPackage, fetchPypi, lib }:
 buildPythonPackage rec {
   pname = "marshmallow";
-  version = "3.0.0rc5";
+  version = "3.0.0rc7";
 
   src = builtins.fetchurl {
     url =
-      "https://files.pythonhosted.org/packages/71/78/b27626d937534d513b7de5a3210c071bc2de0721bdc72594e7d9d42beea2/marshmallow-3.0.0rc5.tar.gz";
-    sha256 = "0s3hvp4kfq4h6l0rdffmnvc7sbg2m03vj01c7y3b16x65qgj8apa";
+      "https://files.pythonhosted.org/packages/9c/f0/05282a6745086e4918f6b364e0da83b6347c7f66a97205003223c8ab28ac/marshmallow-3.0.0rc7.tar.gz";
+    sha256 = "0hdbw8xxgyavjlhilq90jl3kr6i25brph669xnr2dgcyzgqv3p7q";
   };
 
   # TODO FIXME

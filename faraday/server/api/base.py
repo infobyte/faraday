@@ -17,7 +17,6 @@ from sqlalchemy.orm.exc import NoResultFound, ObjectDeletedError
 from sqlalchemy.inspection import inspect
 from sqlalchemy import func, desc, asc
 from marshmallow import Schema, EXCLUDE
-from marshmallow.compat import with_metaclass
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
@@ -1231,7 +1230,7 @@ class DictWithData(dict):
         return self
 
 
-class AutoSchema(with_metaclass(ModelSchemaMeta, Schema)):
+class AutoSchema(Schema, metaclass=ModelSchemaMeta):
     """
     A Marshmallow schema that does field introspection based on
     the SQLAlchemy model specified in Meta.model.

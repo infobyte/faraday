@@ -17,6 +17,7 @@ try:
 except: # For Python 3
     import urllib.parse as urlparse
     from urllib.parse import urlencode
+from random import choice
 from sqlalchemy.orm.util import was_deleted
 from hypothesis import given, assume, settings, strategies as st
 
@@ -806,6 +807,63 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
         assert session.query(Hostname).filter_by(host=host).count() == 1
         assert session.query(Hostname).all()[0].name == 'dasdas'
 
+    def test_hosts_ordered_by_vulns_severity(self, session, test_client, service_factory,
+                                             vulnerability_factory, vulnerability_web_factory):
+        ws = WorkspaceFactory.create()
+        session.add(ws)
+        hosts_list = []
+        for i in range(0, 10):
+            host = HostFactory.create(workspace=ws)
+            session.add(host)
+            service = service_factory.create(workspace=ws, host=host)
+            session.add(service)
+            hosts_list.append(host)
+        session.commit()
+
+        severities = ['critical', 'high', 'medium', 'low', 'informational', 'unclassified']
+        # Vulns counter by severity in host
+        vulns_by_severity = {host.id: [0, 0, 0, 0, 0, 0] for host in hosts_list}
+
+        for host in hosts_list:
+            # Each host has 10 vulns
+            for i in range(0, 10):
+                vuln_web = choice([True, False])
+                severity = choice(severities)
+
+                if vuln_web:
+                    vuln = vulnerability_web_factory.create(
+                        workspace=ws, service=host.services[0], severity=severity
+                    )
+                else:
+                    vuln = vulnerability_factory.create(
+                        host=host, service=host.services[0],
+                        workspace=host.workspace, severity=severity
+                    )
+                session.add(vuln)
+
+                # Increase 1 to number of vulns by severity in the host
+                vulns_by_severity[host.id][severities.index(severity)] += 1
+        session.commit()
+
+        # Sort vulns_by_severity by number of vulns by severity in every host
+        sorted_hosts = sorted(
+            vulns_by_severity.items(),
+            key=lambda host: [vuln_count for vuln_count in host[1]],
+            reverse=True
+        )
+
+        res = test_client.get(f'/v2/ws/{ws.name}/hosts/')
+        assert res.status_code == 200
+
+        response_hosts = res.json['rows']
+        for host in response_hosts:
+            # sorted_hosts and response_hosts have the same order so the index
+            # of host in sorted_host is the same as the
+            # index of host in response_hosts
+            index_in_sorted_host = [host_tuple[0] for host_tuple in sorted_hosts].index(host['id'])
+            index_in_response_hosts = response_hosts.index(host)
+
+            assert index_in_sorted_host == index_in_response_hosts
 
 
 def host_json():

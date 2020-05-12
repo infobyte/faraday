@@ -162,6 +162,7 @@ class BulkCommandSchema(AutoSchema):
     def load_end_date(self, data):
         duration = data.pop('duration')
         data['end_date'] = data['start_date'] + duration
+        return data
 
 
 class BulkCreateSchema(Schema):

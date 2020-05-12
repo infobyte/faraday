@@ -723,7 +723,7 @@ class VulnerabilityView(PaginatedMixin,
 
             normal_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(normal_vulns.all(),
                                                                                                cls=BytesJSONEncoder)
-            normal_vulns_data = json.loads(normal_vulns.data)
+            normal_vulns_data = json.loads(normal_vulns)
         except Exception as ex:
             logger.exception(ex)
             normal_vulns_data = []
@@ -740,7 +740,7 @@ class VulnerabilityView(PaginatedMixin,
                 web_vulns = web_vulns.join(Service).join(Host).join(Hostname).filter(or_(*or_filters))
             web_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(web_vulns.all(),
                                                                                                cls=BytesJSONEncoder)
-            web_vulns_data = json.loads(web_vulns.data)
+            web_vulns_data = json.loads(web_vulns)
         except Exception as ex:
             logger.exception(ex)
             web_vulns_data = []

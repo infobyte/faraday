@@ -1213,6 +1213,24 @@ class CustomModelSchemaOpts(ModelSchemaOpts):
         self.model_converter = CustomModelConverter
 
 
+class DictWithData(dict):
+    """Like a dict, but with a data attribute pointing to itself.
+
+    This was designed to make code marshmallow 2/3 compatible:
+
+        Schema().load and Schema().dump don’t return a (data, errors)
+        [named]tuple any more. Only data is returned.
+
+    This class will avoid a lot of AttributeErrors with old marshmallow code
+    using `Schema().dump().data`.
+
+    """
+    # TODO remove this class
+    @property
+    def data(self):
+        return self
+
+
 class AutoSchema(with_metaclass(ModelSchemaMeta, Schema)):
     """
     A Marshmallow schema that does field introspection based on
@@ -1240,6 +1258,25 @@ class AutoSchema(with_metaclass(ModelSchemaMeta, Schema)):
 
         super(AutoSchema, self).__init__(*args, **kwargs)
         self.unknown = EXCLUDE
+
+    def load(self, *args, **kwargs):
+        # TODO remove this marshmallow 2/3 compatibility hack
+        ret = super(AutoSchema, self).load(*args, **kwargs)
+        if isinstance(ret, list) and all(isinstance(e, dict) for e in ret):
+            ret = [DictWithData(e) for e in ret]
+        elif isinstance(ret, dict):
+            ret = DictWithData(ret)
+        return ret
+
+    def dump(self, *args, **kwargs):
+        # TODO remove this marshmallow 2/3 compatibility hack
+        ret = super(AutoSchema, self).dump(*args, **kwargs)
+        if isinstance(ret, list) and all(isinstance(e, dict) for e in ret):
+            ret = [DictWithData(e) for e in ret]
+        elif isinstance(ret, dict):
+            ret = DictWithData(ret)
+        return ret
+
 
 
 class FilterAlchemyModelConverter(ModelConverter):

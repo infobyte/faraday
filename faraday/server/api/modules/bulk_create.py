@@ -205,7 +205,7 @@ def get_or_create(ws, model_class, data):
 def bulk_create(ws, data, data_already_deserialized=False):
     if not data_already_deserialized:
         schema = BulkCreateSchema()
-        data = schema.load(data).data
+        data = schema.load(data)
     if 'command' in data:
         command = _create_command(ws, data['command'])
     else:

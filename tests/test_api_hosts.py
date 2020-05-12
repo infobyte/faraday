@@ -865,6 +865,30 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
 
             assert index_in_sorted_host == index_in_response_hosts
 
+    def test_hosts_order_without_vulns(self, session, test_client):
+        # If a host has no vulns, it should be ordered by IP in ascending order
+        ws = WorkspaceFactory.create()
+        session.add(ws)
+        hosts_ids = []
+        for i in range(0, 10):
+            host = HostFactory.create(workspace=ws, ip=f'127.0.0.{i}')
+            session.add(host)
+            session.commit()
+            hosts_ids.append(host.id)
+
+        res = test_client.get(f'/v2/ws/{ws.name}/hosts/')
+        assert res.status_code == 200
+
+        response_hosts = res.json['rows']
+        for host in response_hosts:
+            # hosts_ids and response_hosts have the same order so the index
+            # of host in hosts_ids is the same as the
+            # index of host in response_hosts
+            index_in_hosts_ids = hosts_ids.index(host['id'])
+            index_in_response_hosts = response_hosts.index(host)
+
+            assert index_in_hosts_ids == index_in_response_hosts
+
 
 def host_json():
     return st.fixed_dictionaries(

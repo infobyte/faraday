@@ -21,6 +21,7 @@ from marshmallow.validate import OneOf
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy import desc, or_
+from werkzeug.datastructures import ImmutableMultiDict
 
 from depot.manager import DepotManager
 from faraday.server.api.base import (
@@ -367,18 +368,19 @@ class VulnerabilityFilterSet(FilterSet):
         # TODO migration: Check if we should add fields owner,
         # command, impact, issuetracker, tags, date, host
         # evidence, policy violations, hostnames
+
         fields = (
-            "id", "status", "website", "pname", "query", "path", "service",
+            "id", "status", "website", "parameter_name", "query_string", "path", "service",
             "data", "severity", "confirmed", "name", "request", "response",
-            "params", "resolution",
+            "parameters", "resolution",
             "description", "command_id", "target", "creator", "method",
-            "service_id",
+            "ease_of_resolution", "service_id",
             "status_code", "tool",
         )
 
         strict_fields = (
-            "severity", "confirmed", "method", "status", "easeofresolution",
-            "ease_of_resolution", "service_id",
+            "severity", "confirmed", "method", "status", "ease_of_resolution",
+            "service_id",
         )
 
         default_operator = CustomILike
@@ -394,14 +396,10 @@ class VulnerabilityFilterSet(FilterSet):
     creator = CreatorFilter(fields.Str())
     service = ServiceFilter(fields.Str())
     severity = Filter(SeverityField())
-    easeofresolution = Filter(fields.String(
-        attribute='ease_of_resolution',
+    ease_of_resolution = Filter(fields.String(
         validate=OneOf(Vulnerability.EASE_OF_RESOLUTIONS),
         allow_none=True))
-    pname = Filter(fields.String(attribute='parameter_name'))
-    query = Filter(fields.String(attribute='query_string'))
     status_code = StatusCodeFilter(fields.Int())
-    params = Filter(fields.String(attribute='parameters'))
     status = Filter(fields.Function(
         deserialize=lambda val: 'open' if val == 'opened' else val,
         validate=OneOf(Vulnerability.STATUSES + ['opened'])
@@ -417,6 +415,23 @@ class VulnerabilityFilterSet(FilterSet):
         # TODO migration: this can became a normal filter instead of a custom
         # one, since now we can use creator_command_id
         command_id = request.args.get('command_id')
+
+        # The web UI uses old field names. Translate them into the new field
+        # names to maintain backwards compatiblity
+        param_mapping = {
+            'query': 'query_string',
+            'pname': 'parameter_name',
+            'params': 'parameters',
+            'easeofresolution': 'ease_of_resolution',
+        }
+        new_args = request.args.copy()
+        for (old_param, real_param) in param_mapping.items():
+            try:
+                new_args[real_param] = request.args[old_param]
+            except KeyError:
+                pass
+        request.args = ImmutableMultiDict(new_args)
+
         query = super(VulnerabilityFilterSet, self).filter()
 
         if command_id:

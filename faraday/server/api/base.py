@@ -9,6 +9,7 @@ import logging
 
 import flask
 import sqlalchemy
+import datetime
 from collections import defaultdict
 from flask import g
 from flask_classful import FlaskView
@@ -16,7 +17,7 @@ from sqlalchemy.orm import joinedload, undefer
 from sqlalchemy.orm.exc import NoResultFound, ObjectDeletedError
 from sqlalchemy.inspection import inspect
 from sqlalchemy import func, desc, asc
-from marshmallow import Schema, EXCLUDE
+from marshmallow import Schema, EXCLUDE, fields
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
@@ -1228,6 +1229,23 @@ class DictWithData(dict):
     @property
     def data(self):
         return self
+
+
+# Restore marshmallow's DateTime field behavior of marshmallow 2 so it adds
+# "+00:00" to the serialized date. This ugly hack was done to keep our API
+# backwards-compatible. Yes, it's horrible.
+# Also, I'm putting it here because this file will be always imported in a very
+# early stage, before defining any schemas.
+# This commit broke backwards compatibility: https://github.com/marshmallow-code/marshmallow/commit/610ec20ea3be89684f7e4df8035d163c3561c904
+# TODO check if we can remove this
+def old_isoformat(dt, *args, **kwargs):
+    """Return the ISO8601-formatted UTC representation of a datetime object."""
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=datetime.timezone.utc)
+    else:
+        dt = dt.astimezone(datetime.timezone.utc)
+    return dt.isoformat(*args, **kwargs)
+fields.DateTime.SERIALIZATION_FUNCS['iso'] = old_isoformat
 
 
 class AutoSchema(Schema, metaclass=ModelSchemaMeta):

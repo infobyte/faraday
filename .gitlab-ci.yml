@@ -14,6 +14,13 @@ variables:
     # BUILD_TEST = Test default and build jobs
     # DAILY_TEST = Run every night at 03 am
 
+workflow:
+  rules:
+    - if: $FULL_TEST
+      when: always
+    - if: $DAILY_TEST
+      when: always
+
 cache:
   paths:
     - "$CI_PROJECT_DIR/.cache/pip"
@@ -43,9 +50,10 @@ merge_conflict_check:
         - git config --global user.email "you@example.com"
         - git config --global user.name "Mergerbot"
         - python3 scripts/merge-conflict-detector.py
-    except:
-        variables:
-            - $BUILD_TEST
+    rules:
+        - if: $BUILD_TEST
+          when: never
+        - when: always
 
 build_and_push_to_cachix:
     tags:
@@ -79,9 +87,10 @@ pylint:
         paths:
             - pylint.svg
             - pylint3.svg
-    except:
-        variables:
-            - $BUILD_TEST
+    rules:
+        - if: $BUILD_TEST
+          when: never
+        - when: always
 
 .postgresql_test_base:
     tags:
@@ -105,9 +114,10 @@ pylint:
         when: on_failure
         paths:
             - ~/.faraday/logs/faraday-server.log
-    except:
-        variables:
-            - $BUILD_TEST
+    rules:
+      - if: $BUILD_TEST
+        when: never
+      - when: always
 
 .sqlite_test_base:
     tags:
@@ -131,9 +141,10 @@ pylint:
         when: on_failure
         paths:
             - dist/*
-    except:
-        variables:
-            - $BUILD_TEST
+    rules:
+        - if: $BUILD_TEST
+          when: never
+        - when: always
 
 sqlite_test_3_7:
     extends: .sqlite_test_base
@@ -183,13 +194,14 @@ build_nix_python3:
     paths:
       - py3.tar
     expire_in: 15 days # in the future we don't need to expire this.
-  only:
-    variables:
-      - $CI_COMMIT_REF_NAME =~ /^.*\/(master)$/
-      - $CI_COMMIT_TAG
-      - $BUILD_TEST
-      - $FULL_TEST
-      - $DAILY_TEST
+  rules:
+    - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
+      when: always
+    - if: $CI_COMMIT_TAG
+      when: always
+    - if: $BUILD_TEST
+      when: always
+    - when: never
 
 generate_build_file:
     image: registry.gitlab.com/faradaysec/integrationrepo
@@ -198,13 +210,14 @@ generate_build_file:
         - "/bin/mkdir faraday_copy"
         - "/usr/bin/rsync -aq --exclude 'faraday_copy' --exclude '.cache' . faraday_copy"
         - "/bin/tar -zcf faraday.tar.gz faraday_copy"
-    only:
-        variables:
-            - $CI_COMMIT_REF_NAME =~ /^.*\/(master)$/
-            - $CI_COMMIT_TAG
-            - $BUILD_TEST
-            - $FULL_TEST
-            - $DAILY_TEST
+    rules:
+      - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
+        when: always
+      - if: $CI_COMMIT_TAG
+        when: always
+      - if: $BUILD_TEST
+        when: always
+      - when: never
     artifacts:
         name: 'faraday'
         paths:
@@ -248,13 +261,14 @@ generate_deb:
         paths:
             - "faraday-server_amd64.deb"
         expire_in: 15 days
-    only:
-        variables:
-            - $CI_COMMIT_REF_NAME =~ /^.*\/(master)$/
-            - $CI_COMMIT_TAG
-            - $BUILD_TEST
-            - $FULL_TEST
-            - $DAILY_TEST
+    rules:
+      - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
+        when: always
+      - if: $CI_COMMIT_TAG
+        when: always
+      - if: $BUILD_TEST
+        when: always
+      - when: never
 
 
 smoke_test_deb:
@@ -281,13 +295,14 @@ smoke_test_deb:
         - faraday-manage status-check
         - kill $(cat ~faraday/.faraday/faraday-server-port-5985.pid)
         - jobs
-    only:
-        variables:
-            - $CI_COMMIT_REF_NAME =~ /^.*\/(master)$/
-            - $CI_COMMIT_TAG
-            - $BUILD_TEST
-            - $FULL_TEST
-            - $DAILY_TEST
+    rules:
+      - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
+        when: always
+      - if: $CI_COMMIT_TAG
+        when: always
+      - if: $BUILD_TEST
+        when: always
+      - when: never
 
 generate_rpm:
     stage: build
@@ -334,13 +349,14 @@ generate_rpm:
         paths:
             - "faraday-server_amd64.rpm"
         expire_in: 15 days
-    only:
-        variables:
-            - $CI_COMMIT_REF_NAME =~ /^.*\/(master)$/
-            - $CI_COMMIT_TAG
-            - $BUILD_TEST
-            - $FULL_TEST
-            - $DAILY_TEST
+    rules:
+      - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
+        when: always
+      - if: $CI_COMMIT_TAG
+        when: always
+      - if: $BUILD_TEST
+        when: always
+      - when: never
 
 test_hypothesis:
     tags:
@@ -361,22 +377,21 @@ test_hypothesis:
         - cp tests/data/server.ini ~/.faraday/config
         - mkdir run_from
         - nix-shell --command "pytest tests -v --cov=faraday/server/api --disable-warnings --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB -m hypothesis"
-    only:
-        variables:
-            - $FULL_TEST
-            - $HYPO_TEST
-            - $DAILY_TEST
+    rules:
+      - if: $HYPO_TEST
+        when: always
+      - when: never
 
 agent_integration:
     stage: post_testing
-    script:
-        - apt-get update -qy
-        - apt-get install curl -y
-        - "curl -X POST -F token=$INTEGRATION_TOKEN -F ref=master -F \"variables[FARADAY_REF]=$CI_COMMIT_REF_NAME\" https://gitlab.com/api/v4/projects/15311100/trigger/pipeline"
-    only:
-        variables:
-            - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/
-            - $INTEGRATION
-    except:
-        variables:
-            - $BUILD_TEST
+    variables:
+      FARADAY_REF: $CI_COMMIT_REF_NAME
+    trigger:
+      project: faradaysec/integrationrepo
+      strategy: depend
+    rules:
+      - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
+        when: always
+      - if: $INTEGRATION
+        when: always
+      - when: never

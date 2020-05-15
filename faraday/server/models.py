@@ -200,6 +200,8 @@ def _make_vuln_count_property(type_=None, confirmed=None,
 
 
 def _make_vuln_generic_count_by_severity(severity):
+    assert severity in ['critical', 'high', 'medium', 'low', 'informational', 'unclassified']
+
     return _make_vuln_count_property(
         extra_query=f"vulnerability.severity='{severity}'",
         get_hosts_vulns=True

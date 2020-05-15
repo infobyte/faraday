@@ -13,6 +13,12 @@ variables:
     # FULL_TEST = Test all jobs
     # BUILD_TEST = Test default and build jobs
     # DAILY_TEST = Run every night at 03 am
+workflow:
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+      when: never
+    - when: always
+
 
 
 cache:
@@ -189,7 +195,7 @@ postgresql_test_3_7:
     variables:
       PY_VERSION: python3.8
 
- 
+
 build_nix_python3:
   image: nixorg/nix
   stage: build_faraday

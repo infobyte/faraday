@@ -851,7 +851,7 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
             reverse=True
         )
 
-        res = test_client.get(f'/v2/ws/{ws.name}/hosts/')
+        res = test_client.get(self.url(workspace=ws))
         assert res.status_code == 200
 
         response_hosts = res.json['rows']
@@ -875,7 +875,7 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
             session.commit()
             hosts_ids.append(host.id)
 
-        res = test_client.get(f'/v2/ws/{ws.name}/hosts/')
+        res = test_client.get(self.url(workspace=ws))
         assert res.status_code == 200
 
         response_hosts = res.json['rows']

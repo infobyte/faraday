@@ -250,7 +250,7 @@ class WorkspaceServerFactory(WebSocketServerFactory):
         return True
 
     def leave_agent(self, agent_connection, agent):
-        logger.info("Agent {} leaved".format(agent.id))
+        logger.info("Agent {} left".format(agent.id))
         connected_agents.pop(agent.id)
         return True
 

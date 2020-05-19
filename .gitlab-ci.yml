@@ -53,11 +53,9 @@ merge_conflict_check:
     rules:
         - if: $BUILD_TEST
           when: never
-        - if: $FULL_TEST
-          when: always
-        - if: $DAILY_TEST
-          when: always
-        - when: always
+        - if: '$FULL_TEST || $DAILY_TEST'
+          when: on_success
+        - when: on_success
 
 build_and_push_to_cachix:
     tags:
@@ -72,10 +70,8 @@ build_and_push_to_cachix:
         - cachix use faradaysec
         - nix-build | cachix push faradaysec
     rules:
-      - if: $FULL_TEST
-        when: always
-      - if: $DAILY_TEST
-        when: always
+      - if: '$FULL_TEST || $DAILY_TEST'
+        when: on_success
       - when: always
 
 pylint:
@@ -100,11 +96,9 @@ pylint:
     rules:
         - if: $BUILD_TEST
           when: never
-        - if: $FULL_TEST
-          when: always
-        - if: $DAILY_TEST
-          when: always
-        - when: always
+        - if: '$FULL_TEST || $DAILY_TEST'
+          when: on_success
+        - when: on_success
 
 .postgresql_test_base:
     tags:
@@ -131,11 +125,9 @@ pylint:
     rules:
       - if: $BUILD_TEST
         when: never
-      - if: $FULL_TEST
-        when: always
-      - if: $DAILY_TEST
-        when: always
-      - when: always
+      - if: '$FULL_TEST || $DAILY_TEST'
+        when: on_success
+      - when: on_success
 
 .sqlite_test_base:
     tags:
@@ -162,11 +154,9 @@ pylint:
     rules:
         - if: $BUILD_TEST
           when: never
-        - if: $FULL_TEST
-          when: always
-        - if: $DAILY_TEST
-          when: always
-        - when: always
+        - if: '$FULL_TEST || $DAILY_TEST'
+          when: on_success
+        - when: on_success
 
 sqlite_test_3_7:
     extends: .sqlite_test_base
@@ -218,15 +208,9 @@ build_nix_python3:
     expire_in: 15 days # in the future we don't need to expire this.
   rules:
     - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
-      when: always
-    - if: $CI_COMMIT_TAG
-      when: always
-    - if: $BUILD_TEST
-      when: always
-    - if: $FULL_TEST
-      when: always
-    - if: $DAILY_TEST
-      when: always
+      when: on_success
+    - if: '$CI_COMMIT_TAG || BUILD_TEST || $FULL_TEST || $DAILY_TEST'
+      when: on_success
     - when: never
 
 generate_build_file:
@@ -238,15 +222,9 @@ generate_build_file:
         - "/bin/tar -zcf faraday.tar.gz faraday_copy"
     rules:
       - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
-        when: always
-      - if: $CI_COMMIT_TAG
-        when: always
-      - if: $BUILD_TEST
-        when: always
-      - if: $FULL_TEST
-        when: always
-      - if: $DAILY_TEST
-        when: always
+        when: on_success
+      - if: '$CI_COMMIT_TAG || BUILD_TEST || $FULL_TEST || $DAILY_TEST'
+        when: on_success
       - when: never
     artifacts:
         name: 'faraday'
@@ -293,15 +271,9 @@ generate_deb:
         expire_in: 15 days
     rules:
       - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
-        when: always
-      - if: $CI_COMMIT_TAG
-        when: always
-      - if: $BUILD_TEST
-        when: always
-      - if: $FULL_TEST
-        when: always
-      - if: $DAILY_TEST
-        when: always
+        when: on_success
+      - if: '$CI_COMMIT_TAG || BUILD_TEST || $FULL_TEST || $DAILY_TEST'
+        when: on_success
       - when: never
 
 
@@ -331,15 +303,9 @@ smoke_test_deb:
         - jobs
     rules:
       - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
-        when: always
-      - if: $CI_COMMIT_TAG
-        when: always
-      - if: $BUILD_TEST
-        when: always
-      - if: $FULL_TEST
-        when: always
-      - if: $DAILY_TEST
-        when: always
+        when: on_success
+      - if: '$CI_COMMIT_TAG || BUILD_TEST || $FULL_TEST || $DAILY_TEST'
+        when: on_success
       - when: never
 
 generate_rpm:
@@ -389,15 +355,9 @@ generate_rpm:
         expire_in: 15 days
     rules:
       - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
-        when: always
-      - if: $CI_COMMIT_TAG
-        when: always
-      - if: $BUILD_TEST
-        when: always
-      - if: $FULL_TEST
-        when: always
-      - if: $DAILY_TEST
-        when: always
+        when: on_success
+      - if: '$CI_COMMIT_TAG || BUILD_TEST || $FULL_TEST || $DAILY_TEST'
+        when: on_success
       - when: never
 
 test_hypothesis:
@@ -420,12 +380,8 @@ test_hypothesis:
         - mkdir run_from
         - nix-shell --command "pytest tests -v --cov=faraday/server/api --disable-warnings --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB -m hypothesis"
     rules:
-      - if: $HYPO_TEST
-        when: always
-      - if: $FULL_TEST
-        when: always
-      - if: $DAILY_TEST
-        when: always
+      - if: '$HYPO_TEST || $FULL_TEST || $DAILY_TEST'
+        when: on_success
       - when: never
 
 agent_integration:
@@ -437,11 +393,7 @@ agent_integration:
       strategy: depend
     rules:
       - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
-        when: always
-      - if: $INTEGRATION
-        when: always
-      - if: $FULL_TEST
-        when: always
-      - if: $DAILY_TEST
-        when: always
+        when: on_success
+      - if: '$INTEGRATION || $FULL_TEST || $DAILY_TEST'
+        when: on_success
       - when: never

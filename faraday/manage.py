@@ -148,8 +148,17 @@ def change_password(username, password):
 
 def validate_user_unique_field(ctx, param, value):
     with app.app_context():
-        if User.query.filter_by(**{param.name: value}).count():
-            raise click.ClickException("User already exists")
+        try:
+            if User.query.filter_by(**{param.name: value}).count():
+                raise click.ClickException("User already exists")
+        except OperationalError:
+            logger = logging.getLogger(__name__)
+            logger.error(
+                ('Could not connect to PostgreSQL. Please check: '
+                 'if database is running or if the configuration settings are correct.')
+            )
+            sys.exit(1)
+
     return value
 
 

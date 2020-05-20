@@ -194,6 +194,14 @@ def create_tables():
     with app.app_context():
         # Ugly hack to create tables and also setting alembic revision
         conn_string = faraday.server.config.database.connection_string
+        if not conn_string:
+            logger = logging.getLogger(__name__)
+            logger.error(
+                ('No database configuration found. Please check: '
+                 'if the database is running or if the configuration settings are correct. '
+                 'For first time installations execute: faraday-manage initdb')
+            )
+            sys.exit(1)
         InitDB()._create_tables(conn_string)
         click.echo(click.style(
             'Tables created successfully!',

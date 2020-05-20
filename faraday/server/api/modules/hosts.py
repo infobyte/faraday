@@ -134,7 +134,13 @@ class HostsView(PaginatedMixin,
                 ReadWriteWorkspacedView):
     route_base = 'hosts'
     model_class = Host
-    order_field = Host.ip.asc()
+    order_field = desc(Host.vulnerability_critical_generic_count),\
+        desc(Host.vulnerability_high_generic_count),\
+        desc(Host.vulnerability_medium_generic_count),\
+        desc(Host.vulnerability_low_generic_count),\
+        desc(Host.vulnerability_info_generic_count),\
+        desc(Host.vulnerability_unclassified_generic_count), Host.ip.asc()
+
     schema_class = HostSchema
     filterset_class = HostFilterSet
     get_undefer = [Host.credentials_count,

@@ -25,7 +25,7 @@ class AgentAuthTokenView(GenericView):
 
     def index(self):
         return AgentAuthTokenSchema().dump(
-            {'token': faraday_server.agent_token}).data
+            {'token': faraday_server.agent_token})
 
     def post(self):
         from faraday.server.app import save_new_agent_creation_token  # pylint:disable=import-outside-toplevel
@@ -35,7 +35,7 @@ class AgentAuthTokenView(GenericView):
             flask.abort(403)
         save_new_agent_creation_token()
         return AgentAuthTokenSchema().dump(
-            {'token': faraday_server.agent_token}).data
+            {'token': faraday_server.agent_token})
 
 
 AgentAuthTokenView.register(agent_auth_token_api)

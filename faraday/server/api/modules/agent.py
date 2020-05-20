@@ -138,7 +138,7 @@ class AgentView(UpdateWorkspacedMixin,
         """
         if flask.request.content_type != 'application/json':
             abort(400, "Only application/json is a valid content-type")
-        data = self._parse_data(AgentRunSchema(strict=True), request)
+        data = self._parse_data(AgentRunSchema(), request)
         agent = self._get_object(agent_id, workspace_name)
         executor_data = data['executorData']
 

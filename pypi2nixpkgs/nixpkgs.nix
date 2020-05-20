@@ -18,12 +18,7 @@ let
 
     flask-security = self.callPackage ./packages/flask-security.nix { };
 
-    marshmallow = self.callPackage ./packages/marshmallow.nix { };
-
     webargs = self.callPackage ./packages/webargs.nix { };
-
-    marshmallow-sqlalchemy =
-      self.callPackage ./packages/marshmallow-sqlalchemy.nix { };
 
     filteralchemy-fork = self.callPackage ./packages/filteralchemy-fork.nix { };
 

@@ -13,6 +13,7 @@ from collections import namedtuple
 from marshmallow import Schema, fields, ValidationError
 from faraday.server.schemas import (
     JSTimestampField,
+    NullToBlankString,
     MutableField,
     PrimaryKeyRelatedField,
     SelfNestedField,
@@ -34,16 +35,16 @@ class PlaceSchema(Schema):
 class TestSelfNestedField:
 
     def load(self, data, schema=PlaceSchema):
-        return schema(strict=True).load(data).data
+        return schema().load(data)
 
     def test_field_serialization(self):
         point = Place('home', 123, 456.1)
         schema = PlaceSchema()
-        dumped = schema.dump(point).data
+        dumped = schema.dump(point)
         assert dumped == {"name": "home", "coords": {"x": 123.0, "y": 456.1}}
 
     def test_deserialization_success(self):
-        load = PlaceSchema().load({"coords": {"x": 123.0, "y": 456.1}}).data
+        load = PlaceSchema().load({"coords": {"x": 123.0, "y": 456.1}})
         assert load == {"coords": {"x": 123.0, "y": 456.1}}
 
     @pytest.mark.parametrize('data', [
@@ -104,7 +105,7 @@ class TestPrimaryKeyRelatedField:
         self.profile = Profile(self.user, 'david')
 
     def serialize(self, obj=None, schema=UserSchema):
-        return schema(strict=True).dump(obj or self.user).data
+        return schema().dump(obj or self.user)
 
     def test_many_id(self):
         assert self.serialize() == {"username": "test",
@@ -155,10 +156,10 @@ class TestMutableField:
         self.blogpost = Blogpost2(1, 'test', self.user)
 
     def serialize(self, obj=None, schema=Blogpost2Schema):
-        return schema(strict=True).dump(obj or self.blogpost).data
+        return schema().dump(obj or self.blogpost)
 
     def load(self, data, schema=Blogpost2Schema):
-        return schema(strict=True).load(data).data
+        return schema().load(data)
 
     def test_serialize(self):
         assert self.serialize() == self.serialized_data
@@ -186,10 +187,30 @@ class TestMutableField:
 
             def get_x(self, obj):
                 return 5
+
         assert self.serialize(Place('test', 1, 1), PlaceSchema) == {
             "name": "test",
             "x": 5,
         }
 
 
-# I'm Py3
+class TestNullToBlankString:
+
+    class NullToBlankSchema(Schema):
+        string = NullToBlankString(missing='test')
+
+    def test_load_simple_string(self):
+        data = self.NullToBlankSchema().load({'string': 'hello'})
+        assert data['string'] == 'hello'
+
+    def test_load_string_with_null_bytes(self):
+        data = self.NullToBlankSchema().load({'string': 'hello\0world'})
+        assert data['string'] == 'helloworld'
+
+    def test_load_default_string(self):
+        data = self.NullToBlankSchema().load({})
+        assert data['string'] == 'test'
+
+    def test_translate_none_to_empty_string(self):
+        data = self.NullToBlankSchema().load({'string': None})
+        assert data['string'] == ''

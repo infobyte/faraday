@@ -72,7 +72,7 @@ class UniqueCommentView(GenericWorkspacedView, CommentCreateMixing):
             abort(409, ValidationError(
                 {
                     'message': 'Comment already exists',
-                    'object': self.schema_class().dump(comment).data,
+                    'object': self.schema_class().dump(comment),
                 }
             ))
         res = super(UniqueCommentView, self)._perform_create(data, workspace_name)

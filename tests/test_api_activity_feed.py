@@ -58,11 +58,9 @@ class TestActivityFeed():
                 .format(ws_name=ws.name, id=command.id),
                 data=data,
             )
+        assert res.status_code == 200
 
         # Changing res.json['itime'] to timestamp format of itime
         res_itime = res.json['itime'] / 1000.0
         assert res.status_code == 200
         assert res_itime == itime
-
-
-# I'm Py3

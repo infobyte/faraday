@@ -149,6 +149,65 @@ def _make_command_created_related_object():
     )
 
 
+def _make_vuln_count_property(type_=None, confirmed=None,
+                              use_column_property=True, extra_query=None, get_hosts_vulns=False):
+    from_clause = table('vulnerability')
+
+    if get_hosts_vulns:
+        from_clause = from_clause.join(
+            table("service"), text("vulnerability.service_id = service.id"),
+            isouter=True
+        )
+
+    query = (select([func.count(text('distinct(vulnerability.id)'))]).
+             select_from(from_clause)
+             )
+    if get_hosts_vulns:
+        query = query.where(text('(vulnerability.host_id = host.id OR host.id = service.host_id)'))
+    else:
+        query = query.where(text('vulnerability.workspace_id = workspace.id'))
+
+    if type_:
+        # Don't do queries using this style!
+        # This can cause SQL injection vulnerabilities
+        # In this case type_ is supplied from a whitelist so this is safe
+        query = query.where(text("vulnerability.type = '%s'" % type_))
+    if confirmed:
+        if db.session.bind.dialect.name == 'sqlite':
+            # SQLite has no "true" expression, we have to use the integer 1
+            # instead
+            query = query.where(text("vulnerability.confirmed = 1"))
+        elif db.session.bind.dialect.name == 'postgresql':
+            # I suppose that we're using PostgreSQL, that can't compare
+            # booleans with integers
+            query = query.where(text("vulnerability.confirmed = true"))
+    elif confirmed == False:
+        if db.session.bind.dialect.name == 'sqlite':
+            # SQLite has no "true" expression, we have to use the integer 1
+            # instead
+            query = query.where(text("vulnerability.confirmed = 0"))
+        elif db.session.bind.dialect.name == 'postgresql':
+            # I suppose that we're using PostgreSQL, that can't compare
+            # booleans with integers
+            query = query.where(text("vulnerability.confirmed = false"))
+
+    if extra_query:
+        query = query.where(text(extra_query))
+    if use_column_property:
+        return column_property(query, deferred=True)
+    else:
+        return query
+
+
+def _make_vuln_generic_count_by_severity(severity):
+    assert severity in ['critical', 'high', 'medium', 'low', 'informational', 'unclassified']
+
+    return _make_vuln_count_property(
+        extra_query=f"vulnerability.severity='{severity}'",
+        get_hosts_vulns=True
+    )
+
+
 class DatabaseMetadata(db.Model):
     __tablename__ = 'db_metadata'
     id = Column(Integer, primary_key=True)
@@ -268,6 +327,13 @@ class Host(Metadata):
     vulnerability_low_count = query_expression()
     vulnerability_unclassified_count = query_expression()
     vulnerability_total_count = query_expression()
+
+    vulnerability_critical_generic_count = _make_vuln_generic_count_by_severity('critical')
+    vulnerability_high_generic_count = _make_vuln_generic_count_by_severity('high')
+    vulnerability_medium_generic_count = _make_vuln_generic_count_by_severity('medium')
+    vulnerability_low_generic_count = _make_vuln_generic_count_by_severity('low')
+    vulnerability_info_generic_count = _make_vuln_generic_count_by_severity('informational')
+    vulnerability_unclassified_generic_count = _make_vuln_generic_count_by_severity('unclassified')
 
     @classmethod
     def query_with_count(cls, confirmed, host_ids, workspace_name):
@@ -1315,55 +1381,6 @@ class Credential(Metadata):
     def parent(self):
         return self.host or self.service
 
-
-def _make_vuln_count_property(type_=None, confirmed=None,
-                              use_column_property=True, extra_query=None, get_hosts_vulns=False):
-    from_clause = table('vulnerability')
-
-    if get_hosts_vulns:
-        from_clause = from_clause.join(
-            Service, Vulnerability.service_id == Service.id,
-            isouter=True
-        )
-
-    query = (select([func.count(text('distinct(vulnerability.id)'))]).
-             select_from(from_clause)
-             )
-    if get_hosts_vulns:
-        query = query.where(text('(vulnerability.host_id = host.id OR host.id = service.host_id)'))
-    else:
-        query = query.where(text('vulnerability.workspace_id = workspace.id'))
-
-    if type_:
-        # Don't do queries using this style!
-        # This can cause SQL injection vulnerabilities
-        # In this case type_ is supplied from a whitelist so this is safe
-        query = query.where(text("vulnerability.type = '%s'" % type_))
-    if confirmed:
-        if db.session.bind.dialect.name == 'sqlite':
-            # SQLite has no "true" expression, we have to use the integer 1
-            # instead
-            query = query.where(text("vulnerability.confirmed = 1"))
-        elif db.session.bind.dialect.name == 'postgresql':
-            # I suppose that we're using PostgreSQL, that can't compare
-            # booleans with integers
-            query = query.where(text("vulnerability.confirmed = true"))
-    elif confirmed == False:
-        if db.session.bind.dialect.name == 'sqlite':
-            # SQLite has no "true" expression, we have to use the integer 1
-            # instead
-            query = query.where(text("vulnerability.confirmed = 0"))
-        elif db.session.bind.dialect.name == 'postgresql':
-            # I suppose that we're using PostgreSQL, that can't compare
-            # booleans with integers
-            query = query.where(text("vulnerability.confirmed = false"))
-
-    if extra_query:
-        query = query.where(text(extra_query))
-    if use_column_property:
-        return column_property(query, deferred=True)
-    else:
-        return query
 
 
 class Workspace(Metadata):

@@ -84,7 +84,7 @@ class PolymorphicVulnerabilityField(fields.Field):
             schema = self.vulnweb_schema
         else:
             raise ValidationError('type must be "Vulnerability" or "VulnerabilityWeb"')
-        return schema.load(value).data
+        return schema.load(value)
 
 
 class BulkCredentialSchema(AutoSchema):

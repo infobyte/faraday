@@ -1,4 +1,4 @@
-werkzeug<1.0.0
+werkzeug>=1.0.0
 autobahn>=17.10.1
 alembic>=0.9.9
 bcrypt>=3.1.4

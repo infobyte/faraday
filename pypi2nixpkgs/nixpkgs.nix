@@ -18,6 +18,8 @@ let
 
     flask-classful = self.callPackage ./packages/flask-classful.nix { };
 
+    flask-login = self.callPackage ./packages/flask-login.nix { };
+
     flask-security = self.callPackage ./packages/flask-security.nix { };
 
     webargs = self.callPackage ./packages/webargs.nix { };

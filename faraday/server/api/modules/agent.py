@@ -6,7 +6,7 @@ import logging
 
 from flask import Blueprint, abort, request
 from flask_classful import route
-from marshmallow import fields, Schema
+from marshmallow import fields, Schema, EXCLUDE
 from sqlalchemy.orm.exc import NoResultFound
 
 
@@ -109,7 +109,10 @@ class ExecutorDataSchema(Schema):
 
 
 class AgentRunSchema(Schema):
-    executorData = fields.Nested(ExecutorDataSchema(), required=True)
+    executorData = fields.Nested(
+        ExecutorDataSchema(unknown=EXCLUDE),
+        required=True
+    )
 
 
 class AgentView(UpdateWorkspacedMixin,

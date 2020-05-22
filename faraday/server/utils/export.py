@@ -27,6 +27,9 @@ def export_vulns_to_csv(vulns, custom_fields_columns=None):
 
     if custom_fields_columns is None:
         custom_fields_columns = []
+    else:
+        # Add 'cf_' prefix to custom fields name
+        custom_fields_columns = ['cf_' + cf for cf in custom_fields_columns]
     vuln_headers += custom_fields_columns
 
     headers = vuln_headers + [

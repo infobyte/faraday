@@ -872,7 +872,7 @@ class TestSearcherRules():
         session.commit()
         rules_data = []
         for rule in rules:
-            rule_data = WorkerRuleSchema().dumps(rule).data
+            rule_data = WorkerRuleSchema().dumps(rule)
             rules_data.append(json.loads(rule_data))
         searcher.process(rules_data)
         vulns_count = session.query(Vulnerability).filter_by(workspace=workspace).count()

@@ -38,7 +38,8 @@ vuln_data = {
         'availability': False,
     },
     'refs': ['CVE-1234'],
-    'tool': 'some_tool'
+    'tool': 'some_tool',
+    'data': 'test data',
 }
 
 vuln_web_data = {
@@ -114,7 +115,7 @@ def test_create_host_with_services(session, workspace):
 
 
 def test_create_service(session, host):
-    data = bc.BulkServiceSchema(strict=True).load(service_data).data
+    data = bc.BulkServiceSchema(strict=True).load(service_data)
     bc._create_service(host.workspace, host, data)
     assert count(Service, host.workspace) == 1
     service = Service.query.filter(Service.workspace == host.workspace).one()
@@ -130,12 +131,12 @@ def test_create_existing_service(session, service):
         "port": service.port,
         "protocol": service.protocol,
     }
-    data = bc.BulkServiceSchema(strict=True).load(data).data
+    data = bc.BulkServiceSchema(strict=True).load(data)
     bc._create_service(service.workspace, service.host, data)
     assert count(Service, service.host.workspace) == 1
 
 def test_create_host_vuln(session, host):
-    data = bc.VulnerabilitySchema(strict=True).load(vuln_data).data
+    data = bc.VulnerabilitySchema(strict=True).load(vuln_data)
     bc._create_hostvuln(host.workspace, host, data)
     assert count(VulnerabilityGeneric, host.workspace) == 1
     assert count(Vulnerability, host.workspace) == 1
@@ -151,7 +152,7 @@ def test_create_host_vuln(session, host):
 
 
 def test_create_service_vuln(session, service):
-    data = bc.VulnerabilitySchema(strict=True).load(vuln_data).data
+    data = bc.VulnerabilitySchema(strict=True).load(vuln_data)
     bc._create_servicevuln(service.workspace, service, data)
     assert count(VulnerabilityGeneric, service.workspace) == 1
     assert count(Vulnerability, service.workspace) == 1
@@ -170,7 +171,7 @@ def test_create_service_vuln(session, service):
 def test_create_host_vuln_without_tool(session, host):
     no_tool_data = vuln_data.copy()
     no_tool_data.pop('tool')
-    data = bc.VulnerabilitySchema(strict=True).load(no_tool_data).data
+    data = bc.VulnerabilitySchema(strict=True).load(no_tool_data)
     bc._create_hostvuln(host.workspace, host, data)
     vuln = host.workspace.vulnerabilities[0]
     assert vuln.tool == "Web UI"
@@ -223,7 +224,7 @@ def test_create_existing_host_vuln(session, host, vulnerability_factory):
         'type': 'Vulnerability',
         'refs': ['new']
     }
-    data = bc.VulnerabilitySchema(strict=True).load(data).data
+    data = bc.VulnerabilitySchema(strict=True).load(data)
     bc._create_hostvuln(host.workspace, host, data)
     session.commit()
     assert count(Vulnerability, host.workspace) == 1
@@ -277,7 +278,7 @@ def test_create_host_with_cred(session, workspace):
 def test_create_service_with_vuln(session, host):
     service_data_ = service_data.copy()
     service_data_['vulnerabilities'] = [vuln_data]
-    data = bc.BulkServiceSchema(strict=True).load(service_data_).data
+    data = bc.BulkServiceSchema(strict=True).load(service_data_)
     bc._create_service(host.workspace, host, data)
     assert count(Service, host.workspace) == 1
     service = host.workspace.services[0]
@@ -291,7 +292,7 @@ def test_create_service_with_vuln(session, host):
 def test_create_service_with_cred(session, host):
     service_data_ = service_data.copy()
     service_data_['credentials'] = [credential_data]
-    data = bc.BulkServiceSchema(strict=True).load(service_data_).data
+    data = bc.BulkServiceSchema(strict=True).load(service_data_)
     bc._create_service(host.workspace, host, data)
     assert count(Service, host.workspace) == 1
     service = host.workspace.services[0]
@@ -310,7 +311,7 @@ def test_create_service_with_invalid_vuln(session, host):
     del vuln_data_['name']
     service_data_['vulnerabilities'] = [vuln_data_]
     with pytest.raises(ValidationError):
-        data = bc.BulkServiceSchema(strict=True).load(service_data_).data
+        data = bc.BulkServiceSchema(strict=True).load(service_data_)
         bc._create_service(host.workspace, host, data)
     assert count(Service, host.workspace) == 0
     assert count(Vulnerability, host.workspace) == 0
@@ -322,7 +323,7 @@ def test_create_service_with_invalid_vulns(session, host):
     del vuln_data_['name']
     service_data_['vulnerabilities'] = [1, 2, 3]
     with pytest.raises(ValidationError):
-        data = bc.BulkServiceSchema(strict=True).load(service_data_).data
+        data = bc.BulkServiceSchema(strict=True).load(service_data_)
         bc._create_service(host.workspace, host, data)
     assert count(Service, host.workspace) == 0
     assert count(Vulnerability, host.workspace) == 0
@@ -333,7 +334,7 @@ def test_create_service_with_vulnweb(session, host):
     vuln_data_ = vuln_data.copy()
     vuln_data_.update(vuln_web_data)
     service_data_['vulnerabilities'] = [vuln_data_]
-    data = bc.BulkServiceSchema(strict=True).load(service_data_).data
+    data = bc.BulkServiceSchema(strict=True).load(service_data_)
     bc._create_service(host.workspace, host, data)
     assert count(Service, host.workspace) == 1
     service = host.workspace.services[0]

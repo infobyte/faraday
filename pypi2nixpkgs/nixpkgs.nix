@@ -22,12 +22,11 @@ let
 
     flask-babelex = self.callPackage ./packages/flask-babelex.nix { };
 
+    marshmallow = self.callPackage ./packages/marshmallow.nix { };
+
     pgcli = self.callPackage ./packages/pgcli.nix { };
 
     webargs = self.callPackage ./packages/webargs.nix { };
-
-    marshmallow-sqlalchemy =
-      self.callPackage ./packages/marshmallow-sqlalchemy.nix { };
 
     filteralchemy-fork = self.callPackage ./packages/filteralchemy-fork.nix { };
 

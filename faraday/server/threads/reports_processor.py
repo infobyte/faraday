@@ -32,8 +32,8 @@ class ReportsManager(Thread):
         from faraday.server.web import app  # pylint:disable=import-outside-toplevel
         with app.app_context():
             ws = Workspace.query.filter_by(name=workspace_name).one()
-            schema = BulkCreateSchema(strict=True)
-            data = schema.load(report_json).data
+            schema = BulkCreateSchema()
+            data = schema.load(report_json)
             data = add_creator(data, user)
             bulk_create(ws, data, True)
 

@@ -176,6 +176,7 @@ def _build_vuln_data(vuln, custom_fields_columns):
     }
     if vuln['custom_fields']:
         for field_name, value in vuln['custom_fields'].items():
+            field_name = 'cf_' + field_name
             if field_name in custom_fields_columns:
                 vuln_data.update({field_name: value})
 

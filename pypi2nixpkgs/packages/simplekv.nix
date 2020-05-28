@@ -1,12 +1,12 @@
 { buildPythonPackage, fetchPypi, lib }:
 buildPythonPackage rec {
   pname = "simplekv";
-  version = "0.13.0";
+  version = "0.14.1";
 
   src = builtins.fetchurl {
     url =
-      "https://files.pythonhosted.org/packages/42/8e/4f96c4038d966bafbe020c36770599ce4e0f0ccbb7b93437d7742a952e03/simplekv-0.13.0.tar.gz";
-    sha256 = "01iw920m8aaak3dp0y61ny7vin5yizm55h9i2vwgkv0qhvsfhlmf";
+      "https://files.pythonhosted.org/packages/30/6f/a6cafd4e87757e316468bf56287806b8df8ad4505f6da449a507e8cbacee/simplekv-0.14.1.tar.gz";
+    sha256 = "1xnh5k7bhvi6almfsv3zj8dzxxiv66sn46fyr4hsh7klndna6lw9";
   };
 
   # TODO FIXME

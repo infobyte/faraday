@@ -521,17 +521,23 @@ def test_bulk_create_endpoint(session, workspace, test_client, logged_user):
     assert count(VulnerabilityGeneric, workspace) == 0
     url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
     host_data_ = host_data.copy()
-    host_data_['services'] = [service_data]
+    service_data_ = service_data.copy()
+    service_data_['vulnerabilities'] = [vuln_data]
+    host_data_['services'] = [service_data_]
     host_data_['credentials'] = [credential_data]
     host_data_['vulnerabilities'] = [vuln_data]
     res = test_client.post(url, data=dict(hosts=[host_data_]))
     assert res.status_code == 201, res.json
     assert count(Host, workspace) == 1
-    assert count(Vulnerability, workspace) == 1
+    assert count(Service, workspace) == 1
+    assert count(Vulnerability, workspace) == 2
     host = Host.query.filter(Host.workspace == workspace).one()
     assert host.ip == "127.0.0.1"
     assert host.creator_id == logged_user.id
     assert set({hn.name for hn in host.hostnames}) == {"test.com", "test2.org"}
+    assert len(host.services) == 1
+    assert len(host.vulnerabilities) == 1
+    assert len(host.services[0].vulnerabilities) == 1
     service = Service.query.filter(Service.workspace == workspace).one()
     assert service.creator_id == logged_user.id
     credential = Credential.query.filter(Credential.workspace == workspace).one()

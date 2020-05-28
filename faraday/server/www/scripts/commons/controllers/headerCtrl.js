@@ -36,6 +36,11 @@ angular.module('faradayApp')
             // Ugly, ugly, ugly hack
             $scope.vulnsNum = vulnsManager.getVulnsNum($routeParams.wsId);
             $scope.totalVulns = vulnsManager.getTotalVulns($routeParams.wsId);
+            if (typeof $scope.baseurl == 'undefined'){
+                $scope.logo_url = "../../../images/logo-faraday-blanco.svg";
+            }else{
+                $scope.logo_url = $scope.baseurl + "/images/logo-faraday-blanco.svg";
+            }
             setInterval(function(){
                 $scope.vulnsNum = vulnsManager.getVulnsNum($routeParams.wsId);
                 $scope.totalVulns = vulnsManager.getTotalVulns($routeParams.wsId);

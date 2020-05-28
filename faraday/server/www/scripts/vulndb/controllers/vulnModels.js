@@ -145,7 +145,7 @@ angular.module('faradayApp')
 
                     var loadCSV = function(data) {
 
-                        $http.get('/_api/session').then(
+                        $http.get($scope.baseurl + '_api/session').then(
                             function(d) {
                               $scope.csrf_token = d.data.csrf_token;
 

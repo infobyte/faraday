@@ -34,11 +34,21 @@ var faradayApp = angular.module('faradayApp', [
                                                     'ui'
                                              ])
     .constant("BASEURL", (function() {
-        var url = window.location.origin + "/";
+        if (window.location.pathname === "/"){
+            var url = window.location.origin + "/";
+        } else {
+            var client_url_id = window.location.pathname;
+            var url = window.location.origin + client_url_id;
+        }
         return url;
     })())
     .constant("APIURL", (function() {
-        var url = window.location.origin + "/_api/v2/";
+        if (window.location.pathname === "/"){
+            var url = window.location.origin + "/";
+        } else {
+            var client_url_id = window.location.pathname;
+            var url = window.location.origin + client_url_id;
+        }
         return url;
     })())
     .constant("EASEOFRESOLUTION", (function() {

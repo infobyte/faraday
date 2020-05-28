@@ -85,7 +85,7 @@ class InitDB():
                 self._check_psql_output(current_psql_output, process_status)
 
                 if hostname.lower() in ['localhost', '127.0.0.1']:
-                    database_name = 'faraday'
+                    database_name = os.environ.get("FARADAY_DATABASE_NAME", "faraday")
                     current_psql_output = TemporaryFile()
                     database_name, process_status = self._create_database(database_name, username, current_psql_output)
                     current_psql_output.seek(0)
@@ -166,7 +166,7 @@ class InitDB():
             we return username and password and those values will be saved in the config file.
         """
         print('This script will {blue} create a new postgres user {white} and {blue} save faraday-server settings {white}(server.ini). '.format(blue=Fore.BLUE, white=Fore.WHITE))
-        username = 'faraday_postgresql'
+        username =  os.environ.get("FARADAY_DATABASE_USER", 'faraday_postgresql')
         postgres_command = ['sudo', '-u', 'postgres', 'psql']
         if sys.platform == 'darwin':
             print('{blue}MAC OS detected{white}'.format(blue=Fore.BLUE, white=Fore.WHITE))

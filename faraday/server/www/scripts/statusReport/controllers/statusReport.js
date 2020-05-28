@@ -1420,7 +1420,7 @@ angular.module("faradayApp")
 
         $scope.enableFileUpload = function() {
             if($scope.fileUploadEnabled === undefined) {
-                $http.get('/_api/session').then(
+                $http.get($scope.baseurl + '_api/session').then(
                   function(d) {
                     $scope.csrf_token = d.data.csrf_token;
                     $scope.fileUploadEnabled = true;
@@ -1482,7 +1482,7 @@ angular.module("faradayApp")
 
 
         var updateSelectedVulnAtachments = function () {
-            var url = '/_api/v2/ws/' + $routeParams.wsId + '/vulns/' + $scope.lastClickedVuln._id + '/attachments/';
+            var url = $scope.baseurl + '_api/v2/ws/' + $routeParams.wsId + '/vulns/' + $scope.lastClickedVuln._id + '/attachments/';
             $http.get(url).then(
                 function (response) {
                     $scope.lastClickedVuln._attachments = response.data
@@ -1692,12 +1692,12 @@ angular.module("faradayApp")
                    return;
                }
 
-               $http.get('/_api/session').then(
+               $http.get($scope.baseurl + '_api/session').then(
                   function(d) {
                     $scope.csrf_token = d.data.csrf_token;
                     fileItem.formData.push({'csrf_token': $scope.csrf_token});
                     fileItem.file.name = fileItem.file.name.replace(/ /g, '_');
-                    fileItem.url = '_api/v2/ws/' + $routeParams.wsId + '/vulns/' + $scope.lastClickedVuln._id + '/attachment/';
+                    fileItem.url = $scope.baseurl + '_api/v2/ws/' + $routeParams.wsId + '/vulns/' + $scope.lastClickedVuln._id + '/attachment/';
                     $scope.uploader.uploadAll();
                   }
                 );
@@ -1711,7 +1711,7 @@ angular.module("faradayApp")
            };
 
             $scope.removeEvidence = function (name) {
-                var url = '/_api/v2/ws/'+ $routeParams.wsId +'/vulns/'+ $scope.lastClickedVuln._id +'/attachment/' + name + '/'
+                var url = $scope.baseurl + '_api/v2/ws/'+ $routeParams.wsId +'/vulns/'+ $scope.lastClickedVuln._id +'/attachment/' + name + '/'
                 $http.delete(url).then(
                       function(response) {
                           if (response && response.status === 200){

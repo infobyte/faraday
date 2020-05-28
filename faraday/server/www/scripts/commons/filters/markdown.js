@@ -18,7 +18,7 @@ var evidenceRender = function () {
       var filename;
       for (var evidence_index in matches) {
         filename = escape(matches[evidence_index].split(':')[3].slice(0, -1));
-        evidence = matches[evidence_index].replace(regex, '![$1 With Id $2 Evidence ](' + window.location.origin + '/_api/v2/ws/' + workspace + '/vulns/$2/attachment/' + filename + ' =500x281)');
+        evidence = matches[evidence_index].replace(regex, '![$1 With Id $2 Evidence ](' + $scope.baseurl + '_api/v2/ws/' + workspace + '/vulns/$2/attachment/' + filename + ' =500x281)');
         console.log(evidence);
         markdown = markdown.replace(matches[evidence_index], evidence);
       }

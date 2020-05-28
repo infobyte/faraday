@@ -167,7 +167,7 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
         }
         res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 400
-        assert res.json['messages']['_schema'] == ['Unknown parent type: Vulnerability']
+        assert res.json['messages']['json']['_schema'] == ['Unknown parent type: Vulnerability']
 
 
     def test_update_credentials(self, test_client, session, host):

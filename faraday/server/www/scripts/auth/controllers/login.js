@@ -3,8 +3,8 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('loginCtrl', ['$scope', '$location', '$cookies', 'loginSrv',
-        function($scope, $location, $cookies, loginSrv) {
+    .controller('loginCtrl', ['$scope', '$location', '$cookies', 'loginSrv', 'BASEURL',
+        function($scope, $location, $cookies, loginSrv, BASEURL) {
 
         $scope.data = {
             "user": null,
@@ -45,7 +45,7 @@ angular.module('faradayApp')
     }]);
 
 angular.module('faradayApp')
-    .controller('loginBarCtrl', ['$scope', '$location', '$cookies','loginSrv', '$uibModal', function($scope, $location, $cookies,loginSrv,$uibModal) {
+    .controller('loginBarCtrl', ['$scope', '$location', '$cookies','loginSrv', '$uibModal', 'BASEURL', function($scope, $location, $cookies,loginSrv,$uibModal, BASEURL) {
         $scope.user = null;
         $scope.auth = loginSrv.isAuth();
 
@@ -72,6 +72,7 @@ angular.module('faradayApp')
         };
 
         $scope.changePasswordModal = function(){
+            $scope.base_url = BASEURL;
             $scope.modal = $uibModal.open({
                 templateUrl: 'scripts/auth/partials/changePassword.html',
                 controller: 'resetPassword',

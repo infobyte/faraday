@@ -31,6 +31,7 @@ angular.module("faradayApp")
         'FileUploader',
         "workspaceData",
         "$templateCache",
+        "BASEURL",
         function ($scope,
                   $filter,
                   $routeParams,
@@ -57,7 +58,8 @@ angular.module("faradayApp")
                   uiCommonFact,
                   FileUploader,
                   workspaceData,
-                  $templateCache
+                  $templateCache,
+                  BASEURL
         ) {
         $scope.baseurl;
         $scope.columns;
@@ -1723,7 +1725,7 @@ angular.module("faradayApp")
 
             $scope.selectItemToPrev = function (name) {
                 $scope.selectedAtachment.name = name;
-                $scope.selectedAtachment.url = BASEURL + '_api/v2/ws/' + $routeParams.wsId + /vulns/ + $scope.lastClickedVuln._id + /attachment/ + name
+                $scope.selectedAtachment.url = BASEURL + '_api/v2/ws/' + $routeParams.wsId + '/vulns/' + $scope.lastClickedVuln._id + '/attachment/' + name + '/';
                 $scope.selectedAtachment.imgPrevFail = false;
                 var format = $scope.selectedAtachment.name.split('.').pop();
                 var imagesFormat = ['png','jpg', 'jpeg', 'gif'];
@@ -1734,7 +1736,7 @@ angular.module("faradayApp")
 
 
             $scope.copyToClipboard = function (name) {
-                var url = BASEURL + '_api/v2/ws/' + $routeParams.wsId + /vulns/ + $scope.lastClickedVuln._id + /attachment/ + name;
+                var url = BASEURL + '_api/v2/ws/' + $routeParams.wsId + '/vulns/' + $scope.lastClickedVuln._id + '/attachment/' + name + '/';
                 var copyElement = document.createElement("textarea");
                 copyElement.style.position = 'fixed';
                 copyElement.style.opacity = '0';

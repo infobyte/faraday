@@ -6,10 +6,9 @@
 
 // TODO: handle errors
 angular.module("faradayApp")
-    .factory("ServerAPI", ["BASEURL", "$http", "$q",
-        function (BASEURL, $http, $q) {
+    .factory("ServerAPI", ["BASEURL", "$http", "$q", "APIURL",
+        function (BASEURL, $http, $q, APIURL) {
             var ServerAPI = {};
-            var APIURL = BASEURL + "_api/v2/";
             var FILTER_URL = BASEURL + "_api/filter/";
 
             var createGetRelatedUrl = function (wsName, objectType, objectId, relatedObjectType) {

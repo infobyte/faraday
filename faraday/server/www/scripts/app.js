@@ -44,10 +44,10 @@ var faradayApp = angular.module('faradayApp', [
     })())
     .constant("APIURL", (function() {
         if (window.location.pathname === "/"){
-            var url = window.location.origin + "/";
+            var url = window.location.origin + "/_api/v2/";
         } else {
             var client_url_id = window.location.pathname;
-            var url = window.location.origin + client_url_id;
+            var url = window.location.origin + client_url_id + "_api/v2/";
         }
         return url;
     })())
@@ -101,8 +101,8 @@ var faradayApp = angular.module('faradayApp', [
         return statuses;
     })());
 
-faradayApp.config(['$routeProvider', '$uibTooltipProvider',
-                   function($routeProvider, $uibTooltipProvider) {
+faradayApp.config(['$routeProvider', '$uibTooltipProvider', 'BASEURL',
+                   function($routeProvider, $uibTooltipProvider, BASEURL) {
     $uibTooltipProvider.options({
         appendToBody: true
     });

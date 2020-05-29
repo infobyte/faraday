@@ -835,7 +835,7 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
                     )
                 else:
                     vuln = vulnerability_factory.create(
-                        host=host, service=host.services[0],
+                        host=None, service=host.services[0],
                         workspace=host.workspace, severity=severity
                     )
                 session.add(vuln)

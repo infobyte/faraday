@@ -184,7 +184,9 @@
                             <td class="ui-grid-cell-contents"
                                 ng-show="columns['search_in_shodan']">
                                 <div class="">
-                                    <osint-link query="host.ip" osint="osint"></osint-link>
+                                    <a href="//www.shodan.io/search?query={{host.ip}}" uib-tooltip="Search in shodan" target="_blank">
+                                        <img ng-src="/images/shodan.png" height="15px" width="15px" />
+                                    </a>
                                 </div>
                             </td>
                             <td class="ui-grid-cell-contents"

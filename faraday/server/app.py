@@ -169,7 +169,7 @@ def register_handlers(app):
                     logger.warn('Invalid authentication token.')
                     flask.abort(401)
                 logged_in = True
-                flask.session['user_id'] = user.id
+                flask.session['_user_id'] = user.id  # TODO use public flask_login functions
             elif auth_type == 'agent':
                 # Don't handle the agent logic here, do it in another
                 # before_request handler
@@ -178,8 +178,9 @@ def register_handlers(app):
                 logger.warn("Invalid authorization type")
                 flask.abort(401)
         else:
-            logged_in = 'user_id' in flask.session
-            user_id = session.get("user_id")
+            # TODO use public flask_login functions
+            logged_in = '_user_id' in flask.session
+            user_id = session.get("_user_id")
             if logged_in:
                 user = User.query.filter_by(id=user_id).first()
 
@@ -193,8 +194,8 @@ def register_handlers(app):
         if logged_in:
             g.user = user
             if user is None:
-                logger.warn("Unknown user id {}".format(session["user_id"]))
-                del flask.session['user_id']
+                logger.warn("Unknown user id {}".format(session["_user_id"]))
+                del flask.session['_user_id']
                 flask.abort(401)  # 403 would be better but breaks the web ui
                 return
 

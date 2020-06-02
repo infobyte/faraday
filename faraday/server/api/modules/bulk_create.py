@@ -63,10 +63,10 @@ class PolymorphicVulnerabilityField(fields.Field):
     def __init__(self, *args, **kwargs):
         super(PolymorphicVulnerabilityField, self).__init__(*args, **kwargs)
         self.many = kwargs.get('many', False)
-        self.vuln_schema = VulnerabilitySchema(strict=True)
-        self.vulnweb_schema = BulkVulnerabilityWebSchema(strict=True)
+        self.vuln_schema = VulnerabilitySchema()
+        self.vulnweb_schema = BulkVulnerabilityWebSchema()
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
         if self.many and not utils.is_collection(value):
             self.fail('type', input=value, type=value.__class__.__name__)
         if self.many:
@@ -84,7 +84,7 @@ class PolymorphicVulnerabilityField(fields.Field):
             schema = self.vulnweb_schema
         else:
             raise ValidationError('type must be "Vulnerability" or "VulnerabilityWeb"')
-        return schema.load(value).data
+        return schema.load(value)
 
 
 class BulkCredentialSchema(AutoSchema):
@@ -97,10 +97,10 @@ class BulkServiceSchema(services.ServiceSchema):
     """It's like the original service schema, but now it only uses port
     instead of ports (a single integer array). That field was only used
     to keep backwards compatibility with the Web UI"""
-    port = fields.Integer(strict=True, required=True,
+    port = fields.Integer(required=True,
                           validate=[Range(min=0, error="The value must be greater than or equal to 0")])
     vulnerabilities = PolymorphicVulnerabilityField(
-        VulnerabilitySchema(many=True),
+        # VulnerabilitySchema(many=True),  # I have no idea what this line does, but breaks with marshmallow 3
         many=True,
         missing=[],
     )
@@ -159,9 +159,10 @@ class BulkCommandSchema(AutoSchema):
         )
 
     @post_load
-    def load_end_date(self, data):
+    def load_end_date(self, data, **kwargs):
         duration = data.pop('duration')
         data['end_date'] = data['start_date'] + duration
+        return data
 
 
 class BulkCreateSchema(Schema):
@@ -204,8 +205,8 @@ def get_or_create(ws, model_class, data):
 
 def bulk_create(ws, data, data_already_deserialized=False):
     if not data_already_deserialized:
-        schema = BulkCreateSchema(strict=True)
-        data = schema.load(data).data
+        schema = BulkCreateSchema()
+        data = schema.load(data)
     if 'command' in data:
         command = _create_command(ws, data['command'])
     else:

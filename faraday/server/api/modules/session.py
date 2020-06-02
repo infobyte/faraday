@@ -12,7 +12,7 @@ session_api = Blueprint('session_api', __name__)
 
 @session_api.route('/session')
 def session_info():
-    user = current_app.user_datastore.get_user(session['user_id'])
+    user = current_app.user_datastore.get_user(session['_user_id'])  # TODO use public flask_login functions
     data = user.get_security_payload()
     data['csrf_token'] = generate_csrf()
     data['preferences'] = user.preferences

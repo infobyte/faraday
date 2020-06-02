@@ -21,6 +21,7 @@ from marshmallow.validate import OneOf
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy import desc, or_
+from werkzeug.datastructures import ImmutableMultiDict
 
 from depot.manager import DepotManager
 from faraday.server.api.base import (
@@ -171,10 +172,7 @@ class VulnerabilitySchema(AutoSchema):
 
         for file_obj in obj.evidence:
             try:
-                ret, errors = EvidenceSchema().dump(file_obj)
-                if errors:
-                    raise ValidationError(errors, data=ret)
-                res[file_obj.filename] = ret
+                res[file_obj.filename] = EvidenceSchema().dump(file_obj)
             except IOError:
                 logger.warning("File not found. Did you move your server?")
 
@@ -221,7 +219,7 @@ class VulnerabilitySchema(AutoSchema):
         return value
 
     @post_load
-    def post_load_impact(self, data):
+    def post_load_impact(self, data, **kwargs):
         # Unflatten impact (move data[impact][*] to data[*])
         impact = data.pop('impact', None)
         if impact:
@@ -229,14 +227,14 @@ class VulnerabilitySchema(AutoSchema):
         return data
 
     @post_load
-    def post_load_parent(self, data):
+    def post_load_parent(self, data, **kwargs):
         # schema guarantees that parent_type exists.
         parent_class = None
         parent_type = data.pop('parent_type', None)
         parent_id = data.pop('parent', None)
         if not (parent_type and parent_id):
             # Probably a partial load, since they are required
-            return
+            return data
         if parent_type == 'Host':
             parent_class = Host
             parent_field = 'host_id'
@@ -370,18 +368,19 @@ class VulnerabilityFilterSet(FilterSet):
         # TODO migration: Check if we should add fields owner,
         # command, impact, issuetracker, tags, date, host
         # evidence, policy violations, hostnames
+
         fields = (
-            "id", "status", "website", "pname", "query", "path", "service",
+            "id", "status", "website", "parameter_name", "query_string", "path", "service",
             "data", "severity", "confirmed", "name", "request", "response",
-            "parameters", "params", "resolution", "ease_of_resolution",
+            "parameters", "resolution",
             "description", "command_id", "target", "creator", "method",
-            "easeofresolution", "query_string", "parameter_name", "service_id",
+            "ease_of_resolution", "service_id",
             "status_code", "tool",
         )
 
         strict_fields = (
-            "severity", "confirmed", "method", "status", "easeofresolution",
-            "ease_of_resolution", "service_id",
+            "severity", "confirmed", "method", "status", "ease_of_resolution",
+            "service_id",
         )
 
         default_operator = CustomILike
@@ -397,14 +396,10 @@ class VulnerabilityFilterSet(FilterSet):
     creator = CreatorFilter(fields.Str())
     service = ServiceFilter(fields.Str())
     severity = Filter(SeverityField())
-    easeofresolution = Filter(fields.String(
-        attribute='ease_of_resolution',
+    ease_of_resolution = Filter(fields.String(
         validate=OneOf(Vulnerability.EASE_OF_RESOLUTIONS),
         allow_none=True))
-    pname = Filter(fields.String(attribute='parameter_name'))
-    query = Filter(fields.String(attribute='query_string'))
     status_code = StatusCodeFilter(fields.Int())
-    params = Filter(fields.String(attribute='parameters'))
     status = Filter(fields.Function(
         deserialize=lambda val: 'open' if val == 'opened' else val,
         validate=OneOf(Vulnerability.STATUSES + ['opened'])
@@ -420,6 +415,23 @@ class VulnerabilityFilterSet(FilterSet):
         # TODO migration: this can became a normal filter instead of a custom
         # one, since now we can use creator_command_id
         command_id = request.args.get('command_id')
+
+        # The web UI uses old field names. Translate them into the new field
+        # names to maintain backwards compatiblity
+        param_mapping = {
+            'query': 'query_string',
+            'pname': 'parameter_name',
+            'params': 'parameters',
+            'easeofresolution': 'ease_of_resolution',
+        }
+        new_args = request.args.copy()
+        for (old_param, real_param) in param_mapping.items():
+            try:
+                new_args[real_param] = request.args[old_param]
+            except KeyError:
+                pass
+        request.args = ImmutableMultiDict(new_args)
+
         query = super(VulnerabilityFilterSet, self).filter()
 
         if command_id:
@@ -726,7 +738,7 @@ class VulnerabilityView(PaginatedMixin,
 
             normal_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(normal_vulns.all(),
                                                                                                cls=BytesJSONEncoder)
-            normal_vulns_data = json.loads(normal_vulns.data)
+            normal_vulns_data = json.loads(normal_vulns)
         except Exception as ex:
             logger.exception(ex)
             normal_vulns_data = []
@@ -743,7 +755,7 @@ class VulnerabilityView(PaginatedMixin,
                 web_vulns = web_vulns.join(Service).join(Host).join(Hostname).filter(or_(*or_filters))
             web_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(web_vulns.all(),
                                                                                                cls=BytesJSONEncoder)
-            web_vulns_data = json.loads(web_vulns.data)
+            web_vulns_data = json.loads(web_vulns)
         except Exception as ex:
             logger.exception(ex)
             web_vulns_data = []
@@ -806,9 +818,7 @@ class VulnerabilityView(PaginatedMixin,
                                                         object_id=vuln_id).all()
             res = {}
             for file_obj in files:
-                ret, errors = EvidenceSchema().dump(file_obj)
-                if errors:
-                    raise ValidationError(errors, data=ret)
+                ret = EvidenceSchema().dump(file_obj)
                 res[file_obj.filename] = ret
 
             return flask.jsonify(res)

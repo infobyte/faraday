@@ -1,4 +1,4 @@
-{ Babel, buildPythonPackage, fetchPypi, flask, flask-babelex, flask_login
+{ Babel, buildPythonPackage, fetchPypi, flask, flask-babelex, flask-login
 , flask_mail, flask_principal, flask_wtf, itsdangerous, lib, passlib
 , pytestrunner }:
 buildPythonPackage rec {
@@ -17,7 +17,7 @@ buildPythonPackage rec {
   buildInputs = [ Babel pytestrunner ];
   propagatedBuildInputs = [
     flask
-    flask_login
+    flask-login
     flask_mail
     flask_principal
     flask_wtf

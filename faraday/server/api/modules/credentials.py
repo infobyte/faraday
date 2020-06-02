@@ -67,7 +67,7 @@ class CredentialSchema(AutoSchema):
                   )
 
     @post_load
-    def set_parent(self, data):
+    def set_parent(self, data, **kwargs):
         parent_type = data.pop('parent_type', None)
         parent_id = data.pop('parent', None)
         if parent_type == 'Host':

@@ -319,7 +319,7 @@ def create_app(db_connection_string=None, testing=None):
             # 'sha256_crypt',
             # 'sha512_crypt',
         ],
-        'PERMANENT_SESSION_LIFETIME': datetime.timedelta(hours=12),
+        'PERMANENT_SESSION_LIFETIME': datetime.timedelta(hours=int(faraday.server.config.faraday_server.session_timeout or 12)),
         'SESSION_COOKIE_NAME': 'faraday_session_2',
         'SESSION_COOKIE_SAMESITE': 'Lax',
     })

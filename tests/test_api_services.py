@@ -266,7 +266,6 @@ class TestListServiceView(ReadOnlyAPITests):
         }
         res = test_client.post(self.url(), data=data)
         assert res.status_code == 400
-        assert res.json['messages']['_schema'] == res.json['messages']['_schema']
 
     def test_load_ports_without_list(self, test_client):
         data = {

@@ -307,19 +307,19 @@ generate_rpm:
     stage: build
     image: centos:7
     before_script:
-        - yum -y upgrade
-        - yum -y install which git
-        - yum -y install epel-release
-        - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-linux-installers-builder.git
-        - mv py3.tar /
-        - cd /; tar xf py3.tar; cd -
-        - yum -y install ruby ruby-devel rubygems gobject-introspection-devel curl zsh mailcap libffi-devel openssl-devel openldap-devel libxslt-devel libxml2-devel libxslt-devel freetype-devel libjpeg-devel gtk+-devel gtk3-devel gtk2-devel postgresql-devel
-        - yum groups -y install "Development Tools"
-        - yum -y install centos-release-scl
-        - yum -y install rh-python36
-        - source /opt/rh/rh-python36/enable
-        - pip install virtualenv
-        - pip install virtualenv-tools3
+      - yum -y upgrade
+      - yum -y install which git epel-release centos-release-scl
+      - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-linux-installers-builder.git
+      - mv py3.tar /
+      - cd /; tar xf py3.tar; cd -
+      - yum -y install curl zsh mailcap libffi-devel openssl-devel openldap-devel libjpeg-devel postgresql-devel
+      - yum groups -y install "Development Tools"
+      - yum -y install rh-python36 rh-ruby23 rh-ruby23-ruby-devel
+      - source /opt/rh/rh-ruby23/enable
+      - export X_SCLS="`scl enable rh-ruby23 'echo $X_SCLS'`"
+      - source /opt/rh/rh-python36/enable
+      - pip install virtualenv
+      - pip install virtualenv-tools3
     script:
         - mkdir build_installer
         - cp -a faraday.tar.gz build_installer/.

@@ -722,7 +722,7 @@ class VulnerabilityView(PaginatedMixin,
             })
 
         workspace = self._get_workspace(workspace_name)
-        marshmallow_params = {'many': True, 'context': {}, 'strict': True}
+        marshmallow_params = {'many': True, 'context': {}}
         try:
             normal_vulns = search(db.session,
                                   Vulnerability,

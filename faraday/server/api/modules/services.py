@@ -27,9 +27,9 @@ class ServiceSchema(AutoSchema):
     owned = fields.Boolean(default=False)
     owner = PrimaryKeyRelatedField('username', dump_only=True,
                                    attribute='creator')
-    port = fields.Integer(dump_only=True, strict=True, required=True,
+    port = fields.Integer(dump_only=True, required=True,
                           validate=[Range(min=0, error="The value must be greater than or equal to 0")])  # Port is loaded via ports
-    ports = MutableField(fields.Integer(strict=True, required=True,
+    ports = MutableField(fields.Integer(required=True,
                           validate=[Range(min=0, error="The value must be greater than or equal to 0")]),
                          fields.Method(deserialize='load_ports'),
                          required=True,

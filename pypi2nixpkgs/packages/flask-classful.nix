@@ -14,4 +14,9 @@ buildPythonPackage rec {
 
   buildInputs = [ ];
   propagatedBuildInputs = [ flask ];
+
+  meta = {
+    description = "Class based views for Flask";
+    homepage = "https://github.com/teracyhq/flask-classful";
+  };
 }

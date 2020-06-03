@@ -1,19 +1,30 @@
-{ beautifulsoup4, buildPythonPackage, click, dateutil, fetchPypi, html2text, lib
-, lxml, pytz, requests, simplejson }:
+{ beautifulsoup4, buildPythonPackage, click, colorama, dateutil, fetchPypi
+, html2text, lib, lxml, pytz, requests, simplejson }:
 buildPythonPackage rec {
   pname = "faraday-plugins";
-  version = "1.1";
+  version = "1.2";
 
   src = builtins.fetchurl {
     url =
-      "https://files.pythonhosted.org/packages/3f/63/59fdcf2f6bc0f309fcc46b8ca58990ad84ef37d1db1b78f8a04523d52369/faraday-plugins-1.1.tar.gz";
-    sha256 = "0hzlymg318j78fpfrscszsfxrs21ikxy49bx91yc77b42vf73y4f";
+      "https://files.pythonhosted.org/packages/ff/c1/28c1dfc768842bf2ca69ec4b6d73066de60136ad19521404c128626601a9/faraday-plugins-1.2.tar.gz";
+    sha256 = "0jdswkvlhnn1fdvj2b2mbyql00mzl71vig8nzcjkb8bd9kfy06y4";
   };
 
   # TODO FIXME
   doCheck = false;
 
   buildInputs = [ ];
-  propagatedBuildInputs =
-    [ click simplejson requests lxml html2text beautifulsoup4 pytz dateutil ];
+  propagatedBuildInputs = [
+    click
+    simplejson
+    requests
+    lxml
+    html2text
+    beautifulsoup4
+    pytz
+    dateutil
+    colorama
+  ];
+
+  meta = { description = "Faraday plugins package"; };
 }

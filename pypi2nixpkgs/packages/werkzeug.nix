@@ -14,4 +14,9 @@ buildPythonPackage rec {
 
   buildInputs = [ ];
   propagatedBuildInputs = [ ];
+
+  meta = {
+    description = "The comprehensive WSGI web application library.";
+    homepage = "https://palletsprojects.com/p/werkzeug/";
+  };
 }

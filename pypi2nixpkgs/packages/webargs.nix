@@ -14,4 +14,10 @@ buildPythonPackage rec {
 
   buildInputs = [ ];
   propagatedBuildInputs = [ marshmallow ];
+
+  meta = {
+    description =
+      "Declarative parsing and validation of HTTP request objects, with built-in support for popular web frameworks, including Flask, Django, Bottle, Tornado, Pyramid, webapp2, Falcon, and aiohttp.";
+    homepage = "https://github.com/marshmallow-code/webargs";
+  };
 }

@@ -14,4 +14,9 @@ buildPythonPackage rec {
 
   buildInputs = [ ];
   propagatedBuildInputs = [ flask ];
+
+  meta = {
+    description = "User session management for Flask";
+    homepage = "https://github.com/maxcountryman/flask-login";
+  };
 }

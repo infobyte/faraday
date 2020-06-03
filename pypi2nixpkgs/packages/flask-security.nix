@@ -25,4 +25,9 @@ buildPythonPackage rec {
     itsdangerous
     passlib
   ];
+
+  meta = {
+    description = "Simple security for Flask apps.";
+    homepage = "https://github.com/mattupstate/flask-security";
+  };
 }

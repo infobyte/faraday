@@ -15,4 +15,9 @@ buildPythonPackage rec {
 
   buildInputs = [ ];
   propagatedBuildInputs = [ flask simplekv werkzeug itsdangerous six ];
+
+  meta = {
+    description = "Transparent server-side session support for flask";
+    homepage = "https://github.com/mbr/flask-kvsession";
+  };
 }

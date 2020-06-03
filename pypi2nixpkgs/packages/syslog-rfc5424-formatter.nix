@@ -14,4 +14,10 @@ buildPythonPackage rec {
 
   buildInputs = [ ];
   propagatedBuildInputs = [ ];
+
+  meta = {
+    description =
+      "Logging formatter which produces well-formatted RFC5424 Syslog Protocol messages";
+    homepage = "https://github.com/easypost/syslog-rfc5424-formatter";
+  };
 }

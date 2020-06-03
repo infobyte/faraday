@@ -14,4 +14,10 @@ buildPythonPackage rec {
 
   buildInputs = [ ];
   propagatedBuildInputs = [ python_mimeparse ];
+
+  meta = {
+    description =
+      "RESTful HTTP Content Negotiation for Flask, Bottle, web.py and webapp2 (Google App Engine)";
+    homepage = "https://github.com/martinblech/mimerender";
+  };
 }

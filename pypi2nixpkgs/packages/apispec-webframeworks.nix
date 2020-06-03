@@ -14,4 +14,9 @@ buildPythonPackage rec {
 
   buildInputs = [ ];
   propagatedBuildInputs = [ apispec ];
+
+  meta = {
+    description = "Web framework plugins for apispec.";
+    homepage = "https://github.com/marshmallow-code/apispec-webframeworks";
+  };
 }

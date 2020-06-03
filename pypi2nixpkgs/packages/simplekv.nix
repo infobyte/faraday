@@ -14,4 +14,9 @@ buildPythonPackage rec {
 
   buildInputs = [ ];
   propagatedBuildInputs = [ ];
+
+  meta = {
+    description = "A key-value storage for binary data, support many backends.";
+    homepage = "http://github.com/mbr/simplekv";
+  };
 }

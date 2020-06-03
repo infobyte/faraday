@@ -57,4 +57,10 @@ buildPythonPackage rec {
     apispec
     apispec-webframeworks
   ];
+
+  meta = {
+    description =
+      "Collaborative Penetration Test and Vulnerability Management Platform https://www.faradaysec.com";
+    homepage = "https://github.com/infobyte/faraday";
+  };
 }

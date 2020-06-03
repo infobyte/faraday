@@ -1213,24 +1213,6 @@ class CustomModelSchemaOpts(ModelSchemaOpts):
         self.model_converter = CustomModelConverter
 
 
-class DictWithData(dict):
-    """Like a dict, but with a data attribute pointing to itself.
-
-    This was designed to make code marshmallow 2/3 compatible:
-
-        Schema().load and Schema().dump don’t return a (data, errors)
-        [named]tuple any more. Only data is returned.
-
-    This class will avoid a lot of AttributeErrors with old marshmallow code
-    using `Schema().dump().data`.
-
-    """
-    # TODO remove this class
-    @property
-    def data(self):
-        return self
-
-
 # Restore marshmallow's DateTime field behavior of marshmallow 2 so it adds
 # "+00:00" to the serialized date. This ugly hack was done to keep our API
 # backwards-compatible. Yes, it's horrible.
@@ -1261,40 +1243,9 @@ class AutoSchema(Schema, metaclass=ModelSchemaMeta):
     TYPE_MAPPING = Schema.TYPE_MAPPING.copy()
     TYPE_MAPPING[str] = NullToBlankString
 
-    def __init__(self, strict=None, *args, **kwargs):
-        # assert kwargs.get('unknown') == EXCLUDE, (
-        #     "This schema was initiatized without unknown=EXCLUDE. This means "
-        #     "that it will fail if you pass it fields that do not exist in the "
-        #     "schema, instead of ignoring them. I suppose this isn't what you "
-        #     "want. If you do want this behavior, consider removing this assert."
-        #     )
-
-        # TODO: remove strict argument. This was introduced during the
-        # migration to marshmallow 3. Once all occurences of strict=True are
-        # removed, this is not required anymore
-
+    def __init__(self, *args, **kwargs):
         super(AutoSchema, self).__init__(*args, **kwargs)
         self.unknown = EXCLUDE
-
-    def load(self, *args, **kwargs):
-        # TODO remove this marshmallow 2/3 compatibility hack
-        ret = super(AutoSchema, self).load(*args, **kwargs)
-        if isinstance(ret, list) and all(isinstance(e, dict) for e in ret):
-            ret = [DictWithData(e) for e in ret]
-        elif isinstance(ret, dict):
-            ret = DictWithData(ret)
-        return ret
-
-    def dump(self, *args, **kwargs):
-        # TODO remove this marshmallow 2/3 compatibility hack
-        ret = super(AutoSchema, self).dump(*args, **kwargs)
-        if isinstance(ret, list) and all(isinstance(e, dict) for e in ret):
-            ret = [DictWithData(e) for e in ret]
-        elif isinstance(ret, dict):
-            ret = DictWithData(ret)
-        return ret
-
-
 
 class FilterAlchemyModelConverter(ModelConverter):
     """Use this to make all fields of a model not required.

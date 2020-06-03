@@ -9,6 +9,12 @@ New features in the latest update
 =====================================
 
 
+3.11.1 [Jun 3rd, 2020]:
+---
+ * Fix missing shodan icon and invalid link in dashboard and hosts list
+ * Upgrade marshmallow, webargs, werkzeug and flask-login dependencies to
+   latest versions in order to make packaging for distros easier
+
 3.11 [Apr 22nd, 2020]:
 ---
  * Move GTK client to [another repository](https://github.com/infobyte/faraday-client) to improve release times.

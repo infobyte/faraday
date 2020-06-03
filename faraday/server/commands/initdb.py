@@ -21,12 +21,15 @@ from subprocess import Popen
 
 import sqlalchemy
 from sqlalchemy import create_engine
+from sqlalchemy.sql import text
 
 from faraday.server.utils.database import is_unique_constraint_violation
 
 from configparser import ConfigParser, NoSectionError
 
 from flask import current_app
+from flask_security.utils import hash_password
+
 from colorama import init
 from colorama import Fore
 from sqlalchemy.exc import OperationalError, ProgrammingError
@@ -114,9 +117,23 @@ class InitDB():
             random_password = self.generate_random_pw(12)
         already_created = False
         try:
-            engine.execute("INSERT INTO \"faraday_user\" (username, name, password, "
-                       "is_ldap, active, last_login_ip, current_login_ip, role, state_otp) VALUES ('faraday', 'Administrator', "
-                       "'{0}', false, true, '127.0.0.1', '127.0.0.1', 'admin', 'disabled');".format(random_password))
+
+            statement = text("""
+                INSERT INTO faraday_user (
+                            username, name, password, 
+                            is_ldap, active, last_login_ip, 
+                            current_login_ip, role, state_otp
+                        ) VALUES (
+                            'faraday', 'Administrator', :password,
+                            false, true, '127.0.0.1',
+                            '127.0.0.1', 'admin', 'disabled'
+                        )
+            """)
+            params = {
+                'password': hash_password(random_password)
+            }
+            connection = engine.connect()
+            connection.execute(statement, **params)
         except sqlalchemy.exc.IntegrityError as ex:
             if is_unique_constraint_violation(ex):
                 # when re using database user could be created previously

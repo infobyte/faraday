@@ -137,7 +137,7 @@ setup(
         'Topic :: System :: Networking :: Monitoring',
 
         # Pick your license as you wish
-        'License :: OSI Approved :: GNU General Public License version 3 (GPL-3.0)',
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
 
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.

@@ -31,6 +31,9 @@ upload_api = Blueprint('upload_reports', __name__)
 
 logger = logging.getLogger(__name__)
 
+plugins_manager = PluginsManager(config.faraday_server.custom_plugins_folder)
+report_analyzer = ReportAnalyzer(plugins_manager)
+
 @gzipped
 @upload_api.route('/v2/ws/<workspace>/upload_report', methods=['POST'])
 def file_upload(workspace=None):
@@ -38,8 +41,6 @@ def file_upload(workspace=None):
     Upload a report file to Server and process that report with Faraday client plugins.
     """
     logger.info("Importing new plugin report in server...")
-    plugins_manager = PluginsManager(config.faraday_server.custom_plugins_folder)
-    report_analyzer = ReportAnalyzer(plugins_manager)
     # Authorization code copy-pasted from server/api/base.py
     ws = Workspace.query.filter_by(name=workspace).first()
     if not ws or not ws.active:

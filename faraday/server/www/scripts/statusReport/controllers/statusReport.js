@@ -1449,6 +1449,10 @@ angular.module("faradayApp")
             );
         };
 
+        $scope.cancelFile = function() {
+            $scope.fileToUpload = undefined;
+        }
+
         $scope.concatForTooltip = function (items, isArray, useDoubleLinebreak) {
             var elements = [];
             for (var property in items) {

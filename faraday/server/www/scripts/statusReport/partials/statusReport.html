@@ -123,7 +123,11 @@
                         <button type="button" class="btn btn-success btn-labeled no-border-radius background-blue" title="Upload selected file" ng-click="uploadFile()">
                             <span class="btn-label"><i class="fa fa-upload"></i>
                         </span>Upload file</button>
-                        <p class="file-name">{{fileToUpload.name}}</p>
+                        <span class="file-name">{{fileToUpload.name}}</span>
+                        <span class='remove-uploaded-file'
+                              ng-click="cancelFile()">
+                            <i class="fa fa-remove"></i>
+                        </span>
                     </span>
                 </div>
                 <div class="space-wrapper"></div>

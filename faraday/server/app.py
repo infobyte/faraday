@@ -315,12 +315,10 @@ def create_app(db_connection_string=None, testing=None):
         'SECURITY_PASSWORD_SCHEMES': [
             'bcrypt',  # This should be the default value
             # 'des_crypt',
-            'pbkdf2_sha1',  # Used by CouchDB passwords
             # 'pbkdf2_sha256',
             # 'pbkdf2_sha512',
             # 'sha256_crypt',
             # 'sha512_crypt',
-            'plaintext',  # TODO: remove it
         ],
         'PERMANENT_SESSION_LIFETIME': datetime.timedelta(hours=int(faraday.server.config.faraday_server.session_timeout or 12)),
         'SESSION_COOKIE_NAME': 'faraday_session_2',

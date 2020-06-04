@@ -48,6 +48,8 @@ from faraday.server.commands import change_username
 from faraday.server.models import db, User
 from faraday.server.web import app
 from faraday_plugins.plugins.manager import PluginsManager
+from flask_security.utils import hash_password
+
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -188,7 +190,7 @@ def create_superuser(username, email, password):
 
         app.user_datastore.create_user(username=username,
                                        email=email,
-                                       password=password,
+                                       password=hash_password(password),
                                        role='admin',
                                        is_ldap=False)
         db.session.commit()

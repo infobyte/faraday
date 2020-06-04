@@ -10,11 +10,13 @@ import random
 import string
 import factory
 import datetime
+import itertools
 import unicodedata
 
 import pytz
 from factory import SubFactory
 from factory.fuzzy import (
+    BaseFuzzyAttribute,
     FuzzyChoice,
     FuzzyNaiveDateTime,
     FuzzyInteger,
@@ -156,10 +158,22 @@ class ReferenceTemplateFactory(FaradayFactory):
         sqlalchemy_session = db.session
 
 
+class FuzzyIncrementalInteger(BaseFuzzyAttribute):
+    """Like a FuzzyInteger, but tries to prevent generating duplicated
+    values"""
+
+    def __init__(self, low, high, **kwargs):
+        self.iterator = itertools.cycle(range(low, high - 1))
+        super(FuzzyIncrementalInteger, self).__init__(**kwargs)
+
+    def fuzz(self):
+        return next(self.iterator)
+
+
 class ServiceFactory(WorkspaceObjectFactory):
     name = FuzzyText()
     description = FuzzyText()
-    port = FuzzyInteger(1, 65535)
+    port = FuzzyIncrementalInteger(1, 65535)
     protocol = FuzzyChoice(['TCP', 'UDP'])
     host = factory.SubFactory(HostFactory, workspace=factory.SelfAttribute('..workspace'))
     status = FuzzyChoice(Service.STATUSES)

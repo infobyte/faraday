@@ -3,7 +3,7 @@ import threading
 from threading import Thread
 from queue import Queue, Empty
 import os
-from faraday_plugins.plugins.manager import PluginsManager, ReportAnalyzer
+from faraday_plugins.plugins.manager import PluginsManager
 from faraday.server.api.modules.bulk_create import bulk_create, BulkCreateSchema
 from faraday.server import config
 
@@ -39,7 +39,6 @@ class ReportsManager(Thread):
             bulk_create(ws, data, True)
 
     def process_report(self, workspace, file_path, plugin_id, user):
-        #report_analyzer = ReportAnalyzer(self.plugins_manager)
         plugin = self.plugins_manager.get_plugin(plugin_id)
         if plugin:
             try:

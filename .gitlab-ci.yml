@@ -51,11 +51,9 @@ merge_conflict_check:
         - git config --global user.name "Mergerbot"
         - python3 scripts/merge-conflict-detector.py
     rules:
-        - if: $BUILD_TEST
-          when: never
-        - if: '$FULL_TEST || $DAILY_TEST'
+        - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master|dev)$/'
           when: on_success
-        - when: on_success
+        - when: never
 
 build_and_push_to_cachix:
     tags:

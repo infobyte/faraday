@@ -21,7 +21,7 @@ from marshmallow import Schema, EXCLUDE, fields
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
-from webargs.flaskparser import FlaskParser, parser as parser_imported
+from webargs.flaskparser import FlaskParser
 from webargs.core import ValidationError
 from faraday.server.models import Workspace, db, Command, CommandObject
 from faraday.server.schemas import NullToBlankString
@@ -293,7 +293,7 @@ class GenericView(FlaskView):
         data. It a ``Marshmallow.Schema`` instance to perform the
         deserialization
         """
-        return FlaskParser().parse(schema, request, locations=('json',),
+        return FlaskParser().parse(schema, request, location="json",
                                    *args, **kwargs)
 
     @classmethod
@@ -1258,9 +1258,16 @@ class FilterAlchemyModelConverter(ModelConverter):
         kwargs['required'] = False
 
 
+class AutoSchemaFlaskParser(FlaskParser):
+    # It is required to use a schema class that has unknown=EXCLUDE by default.
+    # Otherwise, requests would fail if a not defined query parameter is sent
+    # (like group_by)
+    DEFAULT_SCHEMA_CLASS = AutoSchema
+
+
 class FilterSetMeta:
     """Base Meta class of FilterSet objects"""
-    parser = parser_imported
+    parser = AutoSchemaFlaskParser(location='query')
     converter = FilterAlchemyModelConverter()
 
 

@@ -1,12 +1,12 @@
 { buildPythonPackage, fetchPypi, lib, marshmallow }:
 buildPythonPackage rec {
   pname = "webargs";
-  version = "5.5.3";
+  version = "6.1.0";
 
   src = builtins.fetchurl {
     url =
-      "https://files.pythonhosted.org/packages/5a/46/72d3c7e0acbdb9c79caf7e03835cd7f77163026811855b59a1eaf6c0c2e5/webargs-5.5.3.tar.gz";
-    sha256 = "16pjzc265yx579ijz5scffyfd1vsmi87fdcgnzaj2by6w2i445l7";
+      "https://files.pythonhosted.org/packages/c0/05/787ada84c00f52636327b09368ff0212861ebf44365e799126cedca20303/webargs-6.1.0.tar.gz";
+    sha256 = "0gxvd1k5czch2l3jpvgbb53wbzl2drld25rs45jcfkrwbjrpzd7b";
   };
 
   # TODO FIXME

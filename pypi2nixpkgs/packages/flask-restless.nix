@@ -14,4 +14,9 @@ buildPythonPackage rec {
 
   buildInputs = [ ];
   propagatedBuildInputs = [ flask sqlalchemy dateutil mimerender ];
+
+  meta = {
+    description = "A Flask extension for easy ReSTful API generation";
+    homepage = "http://github.com/jfinkels/flask-restless";
+  };
 }

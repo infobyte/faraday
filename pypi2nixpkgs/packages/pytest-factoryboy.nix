@@ -14,4 +14,9 @@ buildPythonPackage rec {
 
   buildInputs = [ ];
   propagatedBuildInputs = [ inflection factory_boy pytest ];
+
+  meta = {
+    description = "Factory Boy support for pytest.";
+    homepage = "https://github.com/pytest-dev/pytest-factoryboy";
+  };
 }

@@ -29,6 +29,8 @@ in { dockerName ? "registry.gitlab.com/faradaysec/faraday", dockerTag ? version
         hypothesis
         sphinx
         pytestcov
+        flask
+        twine
       ];
     } // lib.optionalAttrs useLastCommit { src = builtins.fetchGit ./.; });
 

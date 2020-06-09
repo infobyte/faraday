@@ -20,7 +20,9 @@
               <tr ng-repeat="host in hosts | limitTo:5">
                   <td class="">
                       <a href="" class="host" ng-click="showServices(host)">{{host.name}}</a>
-                      <osint-link query="host.name" osint="osint"></osint-link>
+                      <a href="//www.shodan.io/search?query={{host.ip}}" uib-tooltip="Search in shodan" target="_blank">
+                          <img ng-src="/images/shodan.png" height="15px" width="15px" />
+                      </a>
                   </td>
                   <td class="">{{host.services}}</td>
                   <td class="">

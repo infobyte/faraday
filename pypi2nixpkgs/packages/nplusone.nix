@@ -14,4 +14,9 @@ buildPythonPackage rec {
 
   buildInputs = [ ];
   propagatedBuildInputs = [ six blinker ];
+
+  meta = {
+    description = "Detecting the n+1 queries problem in Python";
+    homepage = "https://github.com/jmcarp/nplusone";
+  };
 }

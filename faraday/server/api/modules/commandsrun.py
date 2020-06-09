@@ -9,7 +9,7 @@ from marshmallow import fields, post_load, ValidationError
 
 from faraday.server.api.base import AutoSchema, ReadWriteWorkspacedView, PaginatedMixin
 from faraday.server.models import Command, Workspace
-from faraday.server.schemas import PrimaryKeyRelatedField
+from faraday.server.schemas import MutableField, PrimaryKeyRelatedField
 
 commandsrun_api = Blueprint('commandsrun_api', __name__)
 
@@ -17,7 +17,10 @@ commandsrun_api = Blueprint('commandsrun_api', __name__)
 class CommandSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     itime = fields.Method(serialize='get_itime', deserialize='load_itime', required=True, attribute='start_date')
-    duration = fields.Method(serialize='get_duration', allow_none=True)
+    duration = MutableField(
+        fields.Method(serialize='get_duration'),
+        fields.Integer(),
+        allow_none=True)
     workspace = PrimaryKeyRelatedField('name', dump_only=True)
     creator = PrimaryKeyRelatedField('username', dump_only=True)
 
@@ -40,11 +43,13 @@ class CommandSchema(AutoSchema):
             return 'In progress'
 
     @post_load
-    def post_load_set_end_date_with_duration(self, data):
+    def post_load_set_end_date_with_duration(self, data, **kwargs):
         # there is a potential bug when updating, the start_date can be changed.
         duration = data.pop('duration', None)
         if duration:
-            data['end_date'] = data['start_date'] + datetime.timedelta(seconds=duration)
+            data['end_date'] = data['start_date'] + datetime.timedelta(
+                seconds=duration)
+        return data
 
     class Meta:
         model = Command

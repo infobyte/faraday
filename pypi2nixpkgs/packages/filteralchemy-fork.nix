@@ -14,4 +14,10 @@ buildPythonPackage rec {
 
   buildInputs = [ ];
   propagatedBuildInputs = [ six webargs marshmallow-sqlalchemy ];
+
+  meta = {
+    description =
+      "Declarative query builder for SQLAlchemy. This is a fork of the original project with the changes of https://github.com/jmcarp/filteralchemy/pull/2 applied";
+    homepage = "https://github.com/infobyte/filteralchemy";
+  };
 }

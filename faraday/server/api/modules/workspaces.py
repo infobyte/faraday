@@ -54,7 +54,7 @@ class WorkspaceDurationSchema(Schema):
 class WorkspaceSchema(AutoSchema):
 
     name = fields.String(required=True,
-                         validate=validate.Regexp(r"^[a-z0-9][a-z0-9\_\$\(\)\+\-\/]*$", 0, "ERORROROR"))
+                         validate=validate.Regexp(r"^[a-z0-9][a-z0-9\_\$\(\)\+\-\/]*$", 0, error="ERORROROR"))
     stats = SelfNestedField(WorkspaceSummarySchema())
     duration = SelfNestedField(WorkspaceDurationSchema())
     _id = fields.Integer(dump_only=True, attribute='id')
@@ -78,7 +78,7 @@ class WorkspaceSchema(AutoSchema):
                   'create_date', 'update_date', 'readonly')
 
     @post_load
-    def post_load_duration(self, data):
+    def post_load_duration(self, data, **kwargs):
         # Unflatten duration (move data[duration][*] to data[*])
         duration = data.pop('duration', None)
         if duration:

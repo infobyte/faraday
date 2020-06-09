@@ -88,7 +88,7 @@ class TestListServiceView(ReadOnlyAPITests):
         }
         res = test_client.post(self.url(), data=data)
         assert res.status_code == 400
-        assert b'Not a valid choice' in res.data
+        assert b'Must be one of' in res.data
 
     def test_create_fails_with_no_host_id(self, test_client,
                                           host, session):
@@ -208,7 +208,7 @@ class TestListServiceView(ReadOnlyAPITests):
         session.commit()
         raw_data = self._raw_put_data(service.id, parent=service.host.id, status='closed')
         res = test_client.put(self.url(service, workspace=service.workspace), data=raw_data)
-        assert res.status_code == 200
+        assert res.status_code == 200, res.json
         updated_service = Service.query.filter_by(id=service.id).first()
         assert updated_service.status == 'closed'
 
@@ -217,7 +217,7 @@ class TestListServiceView(ReadOnlyAPITests):
         session.commit()
         raw_data = self._raw_put_data(service.id, parent=service.host.id, ports=[221])
         res = test_client.put(self.url(service, workspace=service.workspace), data=raw_data)
-        assert res.status_code == 200
+        assert res.status_code == 200, res.json
         updated_service = Service.query.filter_by(id=service.id).first()
         assert updated_service.port == 221
 
@@ -227,7 +227,7 @@ class TestListServiceView(ReadOnlyAPITests):
         session.commit()
         raw_data = self._raw_put_data(service.id)
         res = test_client.put(self.url(service, workspace=service.workspace), data=raw_data)
-        assert res.status_code == 200
+        assert res.status_code == 200, res.json
         assert res.json['id'] == service.id
 
     def test_create_service_from_command(self, test_client, session):
@@ -266,7 +266,6 @@ class TestListServiceView(ReadOnlyAPITests):
         }
         res = test_client.post(self.url(), data=data)
         assert res.status_code == 400
-        assert res.json['messages']['_schema'] == res.json['messages']['_schema']
 
     def test_load_ports_without_list(self, test_client):
         data = {

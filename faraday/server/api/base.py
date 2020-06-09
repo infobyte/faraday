@@ -9,6 +9,7 @@ import logging
 
 import flask
 import sqlalchemy
+import datetime
 from collections import defaultdict
 from flask import g
 from flask_classful import FlaskView
@@ -16,12 +17,11 @@ from sqlalchemy.orm import joinedload, undefer
 from sqlalchemy.orm.exc import NoResultFound, ObjectDeletedError
 from sqlalchemy.inspection import inspect
 from sqlalchemy import func, desc, asc
-from marshmallow import Schema
-from marshmallow.compat import with_metaclass
+from marshmallow import Schema, EXCLUDE, fields
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
-from webargs.flaskparser import FlaskParser, parser as parser_imported
+from webargs.flaskparser import FlaskParser
 from webargs.core import ValidationError
 from faraday.server.models import Workspace, db, Command, CommandObject
 from faraday.server.schemas import NullToBlankString
@@ -162,17 +162,16 @@ class GenericView(FlaskView):
     def _get_schema_instance(self, route_kwargs, **kwargs):
         """Instances a model schema.
 
-        By default it uses sets strict to True
-        but this can be overriden as well as any other parameters in
-        the function's kwargs.
-
         It also uses _set_schema_context to set the context of the
         schema.
         """
-        if 'strict' not in kwargs:
-            kwargs['strict'] = True
         kwargs['context'] = self._set_schema_context(
             kwargs.get('context', {}), **route_kwargs)
+
+        # If the client send us fields that are not in the schema, ignore them
+        # This is the default in marshmallow 2, but not in marshmallow 3
+        kwargs['unknown'] = EXCLUDE
+
         return self._get_schema_class()(**kwargs)
 
     def _set_schema_context(self, context, **kwargs):
@@ -285,7 +284,7 @@ class GenericView(FlaskView):
         TODO migration: document route_kwargs
         """
         try:
-            return self._get_schema_instance(route_kwargs, **kwargs).dump(obj).data
+            return self._get_schema_instance(route_kwargs, **kwargs).dump(obj)
         except ObjectDeletedError:
             return []
 
@@ -294,7 +293,7 @@ class GenericView(FlaskView):
         data. It a ``Marshmallow.Schema`` instance to perform the
         deserialization
         """
-        return FlaskParser().parse(schema, request, locations=('json',),
+        return FlaskParser().parse(schema, request, location="json",
                                    *args, **kwargs)
 
     @classmethod
@@ -714,7 +713,7 @@ class CreateMixin:
                     {
                         'message': 'Existing value',
                         'object': self._get_schema_class()().dump(
-                            conflict_obj).data,
+                            conflict_obj),
                     }
                 ))
             else:
@@ -823,7 +822,7 @@ class CreateWorkspacedMixin(CreateMixin, CommandMixin):
                     {
                         'message': 'Existing value',
                         'object': self._get_schema_class()().dump(
-                            conflict_obj).data,
+                            conflict_obj),
                     }
                 ))
             else:
@@ -907,7 +906,7 @@ class UpdateMixin:
                     {
                         'message': 'Existing value',
                         'object': self._get_schema_class()().dump(
-                            conflict_obj).data,
+                            conflict_obj),
                     }
                 ))
             else:
@@ -1214,7 +1213,24 @@ class CustomModelSchemaOpts(ModelSchemaOpts):
         self.model_converter = CustomModelConverter
 
 
-class AutoSchema(with_metaclass(ModelSchemaMeta, Schema)):
+# Restore marshmallow's DateTime field behavior of marshmallow 2 so it adds
+# "+00:00" to the serialized date. This ugly hack was done to keep our API
+# backwards-compatible. Yes, it's horrible.
+# Also, I'm putting it here because this file will be always imported in a very
+# early stage, before defining any schemas.
+# This commit broke backwards compatibility: https://github.com/marshmallow-code/marshmallow/commit/610ec20ea3be89684f7e4df8035d163c3561c904
+# TODO check if we can remove this
+def old_isoformat(dt, *args, **kwargs):
+    """Return the ISO8601-formatted UTC representation of a datetime object."""
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=datetime.timezone.utc)
+    else:
+        dt = dt.astimezone(datetime.timezone.utc)
+    return dt.isoformat(*args, **kwargs)
+fields.DateTime.SERIALIZATION_FUNCS['iso'] = old_isoformat
+
+
+class AutoSchema(Schema, metaclass=ModelSchemaMeta):
     """
     A Marshmallow schema that does field introspection based on
     the SQLAlchemy model specified in Meta.model.
@@ -1227,6 +1243,9 @@ class AutoSchema(with_metaclass(ModelSchemaMeta, Schema)):
     TYPE_MAPPING = Schema.TYPE_MAPPING.copy()
     TYPE_MAPPING[str] = NullToBlankString
 
+    def __init__(self, *args, **kwargs):
+        super(AutoSchema, self).__init__(*args, **kwargs)
+        self.unknown = EXCLUDE
 
 class FilterAlchemyModelConverter(ModelConverter):
     """Use this to make all fields of a model not required.
@@ -1239,9 +1258,16 @@ class FilterAlchemyModelConverter(ModelConverter):
         kwargs['required'] = False
 
 
+class AutoSchemaFlaskParser(FlaskParser):
+    # It is required to use a schema class that has unknown=EXCLUDE by default.
+    # Otherwise, requests would fail if a not defined query parameter is sent
+    # (like group_by)
+    DEFAULT_SCHEMA_CLASS = AutoSchema
+
+
 class FilterSetMeta:
     """Base Meta class of FilterSet objects"""
-    parser = parser_imported
+    parser = AutoSchemaFlaskParser(location='query')
     converter = FilterAlchemyModelConverter()
 
 

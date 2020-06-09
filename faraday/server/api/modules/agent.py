@@ -6,7 +6,7 @@ import logging
 
 from flask import Blueprint, abort, request
 from flask_classful import route
-from marshmallow import fields, Schema
+from marshmallow import fields, Schema, EXCLUDE
 from sqlalchemy.orm.exc import NoResultFound
 
 
@@ -109,7 +109,10 @@ class ExecutorDataSchema(Schema):
 
 
 class AgentRunSchema(Schema):
-    executorData = fields.Nested(ExecutorDataSchema(), required=True)
+    executorData = fields.Nested(
+        ExecutorDataSchema(unknown=EXCLUDE),
+        required=True
+    )
 
 
 class AgentView(UpdateWorkspacedMixin,
@@ -138,7 +141,7 @@ class AgentView(UpdateWorkspacedMixin,
         """
         if flask.request.content_type != 'application/json':
             abort(400, "Only application/json is a valid content-type")
-        data = self._parse_data(AgentRunSchema(strict=True), request)
+        data = self._parse_data(AgentRunSchema(unknown=EXCLUDE), request)
         agent = self._get_object(agent_id, workspace_name)
         executor_data = data['executorData']
 

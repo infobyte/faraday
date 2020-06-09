@@ -14,4 +14,10 @@ buildPythonPackage rec {
 
   buildInputs = [ ];
   propagatedBuildInputs = [ unidecode ];
+
+  meta = {
+    description =
+      "Toolkit for storing files and attachments in web applications";
+    homepage = "https://github.com/amol-/depot";
+  };
 }

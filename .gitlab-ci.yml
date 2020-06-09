@@ -383,7 +383,7 @@ agent_integration:
     script:
         - apt-get update -qy
         - apt-get install curl -y
-        - "curl -X POST -F token=$INTEGRATION_TOKEN -F ref=master -F \"variables[FARADAY_REF]=$CI_COMMIT_REF_NAME\" https://gitlab.com/api/v4/projects/15311100/trigger/pipeline"
+        - "curl -X POST -F token=$CI_JOB_TOKEN -F ref=master -F \"variables[FARADAY_REF]=$CI_COMMIT_REF_NAME\" https://gitlab.com/api/v4/projects/15311100/trigger/pipeline" # Dear future self: drop this line if it causes conflicts with /dev
     only:
         variables:
             - $CI_COMMIT_REF_NAME =~ /^.*\/(dev|master)$/

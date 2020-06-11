@@ -202,10 +202,27 @@ def _make_vuln_count_property(type_=None, confirmed=None,
 def _make_vuln_generic_count_by_severity(severity):
     assert severity in ['critical', 'high', 'medium', 'low', 'informational', 'unclassified']
 
-    return _make_vuln_count_property(
-        extra_query=f"vulnerability.severity='{severity}'",
-        get_hosts_vulns=True
+    vuln_count = (
+        select([func.count(text('vulnerability.id'))]).
+        select_from(text('vulnerability')).
+        where(text(f'vulnerability.host_id = host.id and vulnerability.severity = \'{severity}\'')).
+        as_scalar()
     )
+
+    vuln_web_count = (
+        select([func.count(text('vulnerability.id'))]).
+        select_from(text('vulnerability, service')).
+        where(text('(vulnerability.service_id = service.id and '
+                   f'service.host_id = host.id) and vulnerability.severity = \'{severity}\'')).
+        as_scalar()
+    )
+
+    vulnerability_generic_count = column_property(
+        vuln_count + vuln_web_count,
+        deferred=True
+    )
+
+    return vulnerability_generic_count
 
 
 class DatabaseMetadata(db.Model):

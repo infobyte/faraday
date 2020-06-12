@@ -258,7 +258,6 @@ generate_deb:
         - cd ../../
         - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server deb
         - mv faraday-server_amd64.deb ../../faraday-server_amd64.deb
-        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) client deb
     dependencies:
       - generate_build_file
       - build_nix_python3

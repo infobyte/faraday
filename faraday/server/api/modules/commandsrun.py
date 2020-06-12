@@ -1,8 +1,11 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+import json
 import time
 import datetime
+
+import flask
 from flask import Blueprint
 from flask_classful import route
 from marshmallow import fields, post_load, ValidationError
@@ -95,5 +98,26 @@ class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
                 'date': time.mktime(command.start_date.timetuple()) * 1000,
             })
         return res
+
+    @route('/last/')
+    def last_command(self, workspace_name):
+        command = Command.query.join(Workspace).filter_by(name=workspace_name).order_by(Command.start_date.desc()).first()
+        command_obj = {}
+        if command:
+            command_obj = {
+                '_id': command.id,
+                'user': command.user,
+                'import_source': command.import_source,
+                'command': command.command,
+                'tool': command.tool,
+                'params': command.params,
+                'vulnerabilities_count': (command.sum_created_vulnerabilities or 0),
+                'hosts_count': command.sum_created_hosts or 0,
+                'services_count': command.sum_created_services or 0,
+                'criticalIssue': command.sum_created_vulnerability_critical or 0,
+                'date': time.mktime(command.start_date.timetuple()) * 1000,
+            }
+        return flask.jsonify(command_obj)
+
 
 CommandView.register(commandsrun_api)

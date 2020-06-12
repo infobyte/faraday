@@ -341,7 +341,6 @@ generate_rpm:
         - cd ../../
         - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm
         - mv faraday-server_amd64.rpm ../../faraday-server_amd64.rpm
-        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) client rpm
     dependencies:
         - generate_build_file
         - build_nix_python3

@@ -11,6 +11,8 @@ let
     "community";
 
 in { dockerName ? "registry.gitlab.com/faradaysec/faraday", dockerTag ? version
+, systemUser ? "faraday", systemGroup ? "faraday", systemHome ? null
+, port ? 5985, websocketPort ? 9000, bindAddress ? "localhost"
 
   # If true, will ignore the contents of the last commit as source, ignoring
   # uncommited changes. Recommended to improve reproducibility
@@ -65,4 +67,27 @@ in { dockerName ? "registry.gitlab.com/faradaysec/faraday", dockerTag ? version
       ln -s /home/faraday/.faraday/config faraday-config
     '';
   };
+
+  systemdUnit =
+    let home = if isNull systemHome then "/home/${systemUser}" else systemHome;
+    in writeText "faraday-server.service" ''
+      [Unit]
+      Description=Faraday Server
+      After=network.target
+
+      [Service]
+      Type=exec
+      UMask=2002
+      User=${systemUser}
+      Group=${systemGroup}
+      Environment=FARADAY_HOME=${home}
+      ExecStart=${faraday-server}/bin/faraday-server \
+        --port ${builtins.toString port} \
+        --websocket_port ${builtins.toString websocketPort} \
+        --bind_address ${bindAddress}
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+    '';
 }

@@ -890,6 +890,16 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('top_users/<int:limit>/', methods=['GET'])
     def top_users(self, workspace_name, limit):
+        """
+        ---
+        get:
+          tags: ["Vulns"]
+          params: limit
+          description: Gets a list of top users having account its uploaded vulns
+          responses:
+            200:
+              description: List of top users
+        """
         workspace = self._get_workspace(workspace_name)
         data = db.session.query(User, func.count(VulnerabilityGeneric.id)).join(VulnerabilityGeneric.creator)\
             .filter(VulnerabilityGeneric.workspace_id == workspace.id).group_by(User.id)\

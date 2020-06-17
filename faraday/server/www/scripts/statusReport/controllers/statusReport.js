@@ -31,7 +31,6 @@ angular.module("faradayApp")
         'FileUploader',
         "workspaceData",
         "$templateCache",
-        "BASEURL",
         function ($scope,
                   $filter,
                   $routeParams,
@@ -58,8 +57,7 @@ angular.module("faradayApp")
                   uiCommonFact,
                   FileUploader,
                   workspaceData,
-                  $templateCache,
-                  BASEURL
+                  $templateCache
         ) {
         $scope.baseurl;
         $scope.columns;

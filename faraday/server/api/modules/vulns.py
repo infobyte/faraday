@@ -888,8 +888,8 @@ class VulnerabilityView(PaginatedMixin,
         response = {'deleted_vulns': deleted_vulns}
         return flask.jsonify(response)
 
-    @route('top_users/<int:limit>/', methods=['GET'])
-    def top_users(self, workspace_name, limit):
+    @route('top_users/', methods=['GET'])
+    def top_users(self, workspace_name):
         """
         ---
         get:
@@ -900,10 +900,11 @@ class VulnerabilityView(PaginatedMixin,
             200:
               description: List of top users
         """
+        limit = flask.request.args.get('limit', 1)
         workspace = self._get_workspace(workspace_name)
         data = db.session.query(User, func.count(VulnerabilityGeneric.id)).join(VulnerabilityGeneric.creator)\
             .filter(VulnerabilityGeneric.workspace_id == workspace.id).group_by(User.id)\
-            .order_by(desc(func.count(VulnerabilityGeneric.id))).limit(limit).all()
+            .order_by(desc(func.count(VulnerabilityGeneric.id))).limit(int(limit)).all()
         users = []
         for item in data:
             user = {

@@ -58,7 +58,6 @@ from faraday.server.schemas import (
     FaradayCustomField,
     PrimaryKeyRelatedField,
 )
-from tests.test_marshmallow_fields import UserSchema
 
 vulns_api = Blueprint('vulns_api', __name__)
 logger = logging.getLogger(__name__)

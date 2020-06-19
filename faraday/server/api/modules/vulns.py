@@ -7,6 +7,7 @@ import io
 import json
 import logging
 from base64 import b64encode, b64decode
+from json.decoder import JSONDecodeError
 
 import flask
 import wtforms
@@ -14,7 +15,6 @@ from filteralchemy import Filter, FilterSet, operators
 from flask import request, send_file
 from flask import Blueprint
 from flask_classful import route
-from flask_restless.search import search
 from flask_wtf.csrf import validate_csrf
 from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
@@ -22,8 +22,9 @@ from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy import desc, or_
 from werkzeug.datastructures import ImmutableMultiDict
-
 from depot.manager import DepotManager
+
+from faraday.server.utils.search import search, QueryBuilder, Filter as RestLessFilter
 from faraday.server.api.base import (
     AutoSchema,
     FilterAlchemyMixin,
@@ -47,8 +48,9 @@ from faraday.server.models import (
 )
 from faraday.server.utils.database import get_or_create
 from faraday.server.utils.export import export_vulns_to_csv
+from faraday.server.utils.filters import is_valid_filter
 from faraday.server.utils.py3 import BytesJSONEncoder
-
+from faraday.server.utils.filters import FlaskRestlessSchema
 from faraday.server.api.modules.services import ServiceSchema
 from faraday.server.schemas import (
     MutableField,
@@ -705,11 +707,55 @@ class VulnerabilityView(PaginatedMixin,
 
         return res_filters, hostname_filters
 
+    def _filter_vulns(self, vulnerability_class, filters, hostname_filters, workspace, marshmallow_params, is_web):
+        hosts_os_filter = [host_os_filter for host_os_filter in filters.get('filters', []) if host_os_filter.get('name') == 'host__os']
+
+        if hosts_os_filter:
+            # remove host__os filters from filters due to a bug
+            hosts_os_filter = hosts_os_filter[0]
+            filters['filters'] = [host_os_filter for host_os_filter in filters.get('filters', []) if host_os_filter.get('name') != 'host__os']
+
+        vulns = search(db.session,
+                       vulnerability_class,
+                       filters)
+        vulns = vulns.filter_by(workspace_id=workspace.id)
+
+        if hostname_filters:
+            or_filters = []
+            for hostname_filter in hostname_filters:
+                or_filters.append(Hostname.name == hostname_filter['val'])
+
+            vulns_host = vulns.join(Host).join(Hostname).filter(or_(*or_filters))
+            vulns = vulns_host.union(
+                vulns.join(Service).join(Host).join(Hostname).filter(or_(*or_filters)))
+
+        if hosts_os_filter:
+            os_value = hosts_os_filter['val']
+            if is_web:
+                exists_part = vulnerability_class.query.join(Service).join(Host).filter(Host.os == os_value).exists()
+            else:
+                filt = RestLessFilter('host__os', 'has', os_value)
+                exists_part = QueryBuilder._create_filter(vulnerability_class, filt)
+            vulns = vulns.filter(exists_part)
+
+        if is_web:
+            _type = 'VulnerabilityWeb'
+
+        else:
+            _type = 'Vulnerability'
+
+        vulns = self.schema_class_dict[_type](**marshmallow_params).dumps(
+            vulns.all(),
+            cls=BytesJSONEncoder)
+        vulns_data = json.loads(vulns)
+        return vulns_data
+
     def _filter(self, filters, workspace_name, confirmed=False):
         try:
-            filters = json.loads(filters)
-            filters, hostname_filters = self._hostname_filters(filters.get('filters', []))
-        except ValueError as ex:
+            filters = FlaskRestlessSchema().load(json.loads(filters))
+            _, hostname_filters = self._hostname_filters(filters.get('filters', []))
+        except (ValidationError, JSONDecodeError) as ex:
+            logger.exception(ex)
             flask.abort(400, "Invalid filters")
         if confirmed:
             if 'filters' not in filters:
@@ -723,42 +769,8 @@ class VulnerabilityView(PaginatedMixin,
 
         workspace = self._get_workspace(workspace_name)
         marshmallow_params = {'many': True, 'context': {}}
-        try:
-            normal_vulns = search(db.session,
-                                  Vulnerability,
-                                  {'filters': filters})
-            normal_vulns = normal_vulns.filter_by(workspace_id=workspace.id)
-            if hostname_filters:
-                or_filters = []
-                for hostname_filter in hostname_filters:
-                    or_filters.append(Hostname.name==hostname_filter['val'])
-
-                normal_vulns_host = normal_vulns.join(Host).join(Hostname).filter(or_(*or_filters))
-                normal_vulns = normal_vulns_host.union(normal_vulns.join(Service).join(Host).join(Hostname).filter(or_(*or_filters)))
-
-            normal_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(normal_vulns.all(),
-                                                                                               cls=BytesJSONEncoder)
-            normal_vulns_data = json.loads(normal_vulns)
-        except Exception as ex:
-            logger.exception(ex)
-            normal_vulns_data = []
-        try:
-            web_vulns = search(db.session,
-                           VulnerabilityWeb,
-                           {'filters': filters})
-            web_vulns = web_vulns.filter_by(workspace_id=workspace.id)
-            if hostname_filters:
-                or_filters = []
-                for hostname_filter in hostname_filters:
-                    or_filters.append(Hostname.name == hostname_filter['val'])
-
-                web_vulns = web_vulns.join(Service).join(Host).join(Hostname).filter(or_(*or_filters))
-            web_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(web_vulns.all(),
-                                                                                               cls=BytesJSONEncoder)
-            web_vulns_data = json.loads(web_vulns)
-        except Exception as ex:
-            logger.exception(ex)
-            web_vulns_data = []
+        normal_vulns_data = self._filter_vulns(Vulnerability, filters, hostname_filters, workspace, marshmallow_params, False)
+        web_vulns_data = self._filter_vulns(VulnerabilityWeb, filters, hostname_filters, workspace, marshmallow_params, True)
         return normal_vulns_data + web_vulns_data
 
     @route('/<int:vuln_id>/attachment/<attachment_filename>/', methods=['GET'])

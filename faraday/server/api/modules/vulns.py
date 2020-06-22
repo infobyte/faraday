@@ -20,7 +20,7 @@ from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy import desc, or_
+from sqlalchemy import desc, or_, func
 from werkzeug.datastructures import ImmutableMultiDict
 
 from depot.manager import DepotManager
@@ -43,7 +43,7 @@ from faraday.server.models import (
     Vulnerability,
     VulnerabilityWeb,
     CustomFieldsSchema,
-    VulnerabilityGeneric,
+    VulnerabilityGeneric, User,
 )
 from faraday.server.utils.database import get_or_create
 from faraday.server.utils.export import export_vulns_to_csv
@@ -886,6 +886,35 @@ class VulnerabilityView(PaginatedMixin,
         db.session.commit()
         response = {'deleted_vulns': deleted_vulns}
         return flask.jsonify(response)
+
+    @route('top_users/', methods=['GET'])
+    def top_users(self, workspace_name):
+        """
+        ---
+        get:
+          tags: ["Vulns"]
+          params: limit
+          description: Gets a list of top users having account its uploaded vulns
+          responses:
+            200:
+              description: List of top users
+        """
+        limit = flask.request.args.get('limit', 1)
+        workspace = self._get_workspace(workspace_name)
+        data = db.session.query(User, func.count(VulnerabilityGeneric.id)).join(VulnerabilityGeneric.creator)\
+            .filter(VulnerabilityGeneric.workspace_id == workspace.id).group_by(User.id)\
+            .order_by(desc(func.count(VulnerabilityGeneric.id))).limit(int(limit)).all()
+        users = []
+        for item in data:
+            user = {
+                'id': item[0].id,
+                'username': item[0].username,
+                'count': item[1]
+            }
+            users.append(user)
+        response = {'users': users}
+        return flask.jsonify(response)
+
 
 VulnerabilityView.register(vulns_api)
 

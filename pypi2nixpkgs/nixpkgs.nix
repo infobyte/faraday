@@ -1,54 +1,63 @@
+# WARNING: This file was automatically generated. You should avoid editing it.
+# If you run pynixify again, the file will be either overwritten or
+# deleted, and you will lose the changes you made to it.
+
 { overlays ? [ ], ... }@args:
 let
   pypi2nixOverlay = self: super: {
+    python2 = super.python2.override { inherit packageOverrides; };
+    python27 = super.python27.override { inherit packageOverrides; };
     python3 = super.python3.override { inherit packageOverrides; };
+    python35 = super.python35.override { inherit packageOverrides; };
+    python36 = super.python36.override { inherit packageOverrides; };
+    python37 = super.python37.override { inherit packageOverrides; };
+    python38 = super.python38.override { inherit packageOverrides; };
   };
 
   nixpkgs =
 
     builtins.fetchTarball {
       url =
-        "https://github.com/infobyte/nixpkgs/archive/3b9c8522a0c61980f03f0e120f628755af720f3c.tar.gz";
-      sha256 = "1iq1mzikhfn8sjh2a9gx8sy7z4ncf0m9n0k6w9yxzh48ygfpca16";
+        "https://github.com/infobyte/nixpkgs/archive/acd94facb9aaf3d463f985e57f89f5b397155153.tar.gz";
+      sha256 = "1bz1blwqsnmcrrhb3rfpav6wczkr6jz4756ypf8xnw6ww4z9vk0v";
     };
 
   packageOverrides = self: super: {
     apispec-webframeworks =
-      self.callPackage ./packages/apispec-webframeworks.nix { };
+      self.callPackage ./packages/apispec-webframeworks { };
 
-    faraday-plugins = self.callPackage ./packages/faraday-plugins.nix { };
+    faraday-plugins = self.callPackage ./packages/faraday-plugins { };
 
-    faradaysec = self.callPackage ./packages/faradaysec.nix { };
+    faradaysec = self.callPackage ./packages/faradaysec { };
 
-    filedepot = self.callPackage ./packages/filedepot.nix { };
+    filedepot = self.callPackage ./packages/filedepot { };
 
-    filteralchemy-fork = self.callPackage ./packages/filteralchemy-fork.nix { };
+    filteralchemy-fork = self.callPackage ./packages/filteralchemy-fork { };
 
-    flask-classful = self.callPackage ./packages/flask-classful.nix { };
+    flask-classful = self.callPackage ./packages/flask-classful { };
 
-    flask-kvsession-fork =
-      self.callPackage ./packages/flask-kvsession-fork.nix { };
+    flask-kvsession-fork = self.callPackage ./packages/flask-kvsession-fork { };
 
-    flask-login = self.callPackage ./packages/flask-login.nix { };
+    flask-login = self.callPackage ./packages/flask-login { };
 
-    flask-restless = self.callPackage ./packages/flask-restless.nix { };
+    flask-restless = self.callPackage ./packages/flask-restless { };
 
-    flask-security = self.callPackage ./packages/flask-security.nix { };
+    flask-security = self.callPackage ./packages/flask-security { };
 
-    mimerender = self.callPackage ./packages/mimerender.nix { };
+    mimerender = self.callPackage ./packages/mimerender { };
 
-    nplusone = self.callPackage ./packages/nplusone.nix { };
+    nplusone = self.callPackage ./packages/nplusone { };
 
-    pytest-factoryboy = self.callPackage ./packages/pytest-factoryboy.nix { };
+    pytest-factoryboy = self.callPackage ./packages/pytest-factoryboy { };
 
-    simplekv = self.callPackage ./packages/simplekv.nix { };
+    simplekv = self.callPackage ./packages/simplekv { };
 
     syslog-rfc5424-formatter =
-      self.callPackage ./packages/syslog-rfc5424-formatter.nix { };
+      self.callPackage ./packages/syslog-rfc5424-formatter { };
 
-    webargs = self.callPackage ./packages/webargs.nix { };
+    webargs = self.callPackage ./packages/webargs { };
 
-    werkzeug = self.callPackage ./packages/werkzeug.nix { };
+    werkzeug = self.callPackage ./packages/werkzeug { };
 
   };
 

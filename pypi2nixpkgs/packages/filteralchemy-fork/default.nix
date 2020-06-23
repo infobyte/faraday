@@ -1,18 +1,20 @@
+# WARNING: This file was automatically generated. You should avoid editing it.
+# If you run pynixify again, the file will be either overwritten or
+# deleted, and you will lose the changes you made to it.
+
 { buildPythonPackage, fetchPypi, lib, marshmallow-sqlalchemy, six, webargs }:
 buildPythonPackage rec {
   pname = "filteralchemy-fork";
   version = "0.1.0";
 
-  src = builtins.fetchurl {
-    url =
-      "https://files.pythonhosted.org/packages/ba/79/4b39ef7e32e610e789aa987a4ae1723a937cd1cbf16a0ac5865b37dd6ca3/filteralchemy-fork-0.1.0.tar.gz";
+  src = fetchPypi {
+    inherit pname version;
     sha256 = "1lssfgz7vlsvyl9kpcmdjndfklyb3nkxyyqwf2jwzd8zpv9cbwvs";
   };
 
   # TODO FIXME
   doCheck = false;
 
-  buildInputs = [ ];
   propagatedBuildInputs = [ six webargs marshmallow-sqlalchemy ];
 
   meta = {

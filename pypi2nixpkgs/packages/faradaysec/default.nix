@@ -1,3 +1,7 @@
+# WARNING: This file was automatically generated. You should avoid editing it.
+# If you run pynixify again, the file will be either overwritten or
+# deleted, and you will lose the changes you made to it.
+
 { alembic, apispec, apispec-webframeworks, autobahn, bcrypt, buildPythonPackage
 , click, colorama, dateutil, distro, email_validator, faraday-plugins, fetchPypi
 , filedepot, filteralchemy-fork, flask, flask-classful, flask-kvsession-fork
@@ -10,7 +14,7 @@ buildPythonPackage rec {
   pname = "faradaysec";
   version = "0.1dev";
 
-  src = lib.cleanSource ../..;
+  src = lib.cleanSource ../../..;
 
   # TODO FIXME
   doCheck = false;

@@ -1,3 +1,7 @@
+# WARNING: This file was automatically generated. You should avoid editing it.
+# If you run pynixify again, the file will be either overwritten or
+# deleted, and you will lose the changes you made to it.
+
 { Babel, buildPythonPackage, fetchPypi, flask, flask-babelex, flask-login
 , flask_mail, flask_principal, flask_wtf, itsdangerous, lib, passlib
 , pytestrunner }:
@@ -5,9 +9,9 @@ buildPythonPackage rec {
   pname = "flask-security";
   version = "3.0.0";
 
-  src = builtins.fetchurl {
-    url =
-      "https://files.pythonhosted.org/packages/ba/c1/16e460fec7961509b10aaf8cc986fa7a1df5dced2844f42cd46732621211/Flask-Security-3.0.0.tar.gz";
+  src = fetchPypi {
+    inherit version;
+    pname = "Flask-Security";
     sha256 = "0ck4ybpppka56cqv0s26h1jjq6sqvwmqfm85ylq9zy28b9gsl7fn";
   };
 

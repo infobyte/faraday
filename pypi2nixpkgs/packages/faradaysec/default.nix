@@ -3,21 +3,22 @@
 # deleted, and you will lose the changes you made to it.
 
 { alembic, apispec, apispec-webframeworks, autobahn, bcrypt, buildPythonPackage
-, click, colorama, dateutil, distro, email_validator, faraday-plugins, fetchPypi
-, filedepot, filteralchemy-fork, flask, flask-classful, flask-kvsession-fork
-, flask-login, flask-restless, flask-security, flask_sqlalchemy, lib
-, marshmallow, marshmallow-sqlalchemy, nplusone, pgcli, pillow, psycopg2, pyasn1
-, pyopenssl, pytestrunner, requests, service-identity, simplejson, simplekv
-, sqlalchemy, syslog-rfc5424-formatter, tqdm, twisted, webargs, werkzeug
-, wtforms }:
+, click, colorama, dateutil, distro, email_validator, factory_boy
+, faraday-plugins, fetchPypi, filedepot, filteralchemy-fork, flask
+, flask-classful, flask-kvsession-fork, flask-login, flask-restless
+, flask-security, flask_sqlalchemy, hypothesis, lib, marshmallow
+, marshmallow-sqlalchemy, nplusone, pgcli, pillow, psycopg2, pyasn1, pylint
+, pyopenssl, pytest, pytest-factoryboy, pytestcov, pytestrunner, requests
+, responses, service-identity, simplejson, simplekv, sphinx, sqlalchemy
+, syslog-rfc5424-formatter, tqdm, twine, twisted, webargs, werkzeug, wtforms }:
 buildPythonPackage rec {
   pname = "faradaysec";
   version = "0.1dev";
 
   src = lib.cleanSource ../../..;
 
-  # TODO FIXME
-  doCheck = false;
+  doCheck = true;
+  checkPhase = "true  # TODO fill with the real command for testing";
 
   buildInputs = [ pytestrunner ];
   propagatedBuildInputs = [
@@ -60,6 +61,20 @@ buildPythonPackage rec {
     faraday-plugins
     apispec
     apispec-webframeworks
+  ];
+  checkInputs = [
+    pytest
+    flask
+    flask
+    factory_boy
+    pylint
+    pytest
+    pytestcov
+    pytest-factoryboy
+    responses
+    hypothesis
+    sphinx
+    twine
   ];
 
   meta = {

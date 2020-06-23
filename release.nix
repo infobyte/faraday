@@ -1,4 +1,4 @@
-with (import ./pypi2nixpkgs/nixpkgs.nix) { };
+with (import ./pynixify/nixpkgs.nix) { };
 let
   version = builtins.head (builtins.match ".*'([0-9]+.[0-9]+(.[0-9]+)?)'.*"
     (builtins.readFile ./faraday/__init__.py));

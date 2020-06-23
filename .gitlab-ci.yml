@@ -61,7 +61,7 @@ build_and_push_to_cachix:
     image: nixorg/nix
     stage: pre_testing
     script:
-        - nix-env -if pypi2nixpkgs/nixpkgs.nix -A cachix
+        - nix-env -if pynixify/nixpkgs.nix -A cachix
         - mkdir -p ~/.config/cachix
         - export USER=$(whoami)
         - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
@@ -78,13 +78,13 @@ pylint:
     image: nixorg/nix
     stage: testing  # This should be after build_and_push_to_cachix to improve performance
     script:
-        - nix-env -if pypi2nixpkgs/nixpkgs.nix -A cachix
+        - nix-env -if pynixify/nixpkgs.nix -A cachix
         - mkdir -p ~/.config/cachix
         - export USER=$(whoami)
         - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
         - cachix use faradaysec
         - nix-shell --command "pylint --rcfile=.pylintrc faraday" | tee pylint.txt
-        - nix-env -if pypi2nixpkgs/nixpkgs.nix -A gnused
+        - nix-env -if pynixify/nixpkgs.nix -A gnused
         - score=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' pylint.txt)
           #- anybadge --label pylint --value=$score --file pylint.svg 4=red 6=orange 8=yellow 10=green
     artifacts:
@@ -104,7 +104,7 @@ pylint:
     stage: testing
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
-        - nix-env -if pypi2nixpkgs/nixpkgs.nix -A cachix
+        - nix-env -if pynixify/nixpkgs.nix -A cachix
         - mkdir -p ~/.config/cachix
         - export USER=$(whoami)
         - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
@@ -133,7 +133,7 @@ pylint:
     stage: testing
     coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
     script:
-        - nix-env -if pypi2nixpkgs/nixpkgs.nix -A cachix
+        - nix-env -if pynixify/nixpkgs.nix -A cachix
         - mkdir -p ~/.config/cachix
         - export USER=$(whoami)
         - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
@@ -188,7 +188,7 @@ build_nix_python3:
   image: nixorg/nix
   stage: build_faraday
   script:
-    - nix-env -if pypi2nixpkgs/nixpkgs.nix -A cachix
+    - nix-env -if pynixify/nixpkgs.nix -A cachix
     - mkdir -p ~/.config/cachix
     - export USER=$(whoami)
     - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
@@ -363,7 +363,7 @@ test_hypothesis:
     stage: testing
     allow_failure: true
     script:
-        - nix-env -if pypi2nixpkgs/nixpkgs.nix -A cachix
+        - nix-env -if pynixify/nixpkgs.nix -A cachix
         - mkdir -p ~/.config/cachix
         - export USER=$(whoami)
         - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall

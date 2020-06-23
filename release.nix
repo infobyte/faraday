@@ -11,7 +11,7 @@ in { dockerName ? "registry.gitlab.com/faradaysec/faraday", dockerTag ? version
   # uncommited changes. Recommended to improve reproducibility
 , useLastCommit ? true }: rec {
 
-  faraday-server = python3.pkgs.faradaysec.overrideAttrs (old:
+  faraday-server = python38.pkgs.faradaysec.overrideAttrs (old:
     {
       doCheck = true;
       checkPhase = "true";

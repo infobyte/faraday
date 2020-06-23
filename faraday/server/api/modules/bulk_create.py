@@ -227,9 +227,8 @@ def _create_host(ws, host_data, command=None):
     credentials = host_data.pop('credentials')
     vulns = host_data.pop('vulnerabilities')
     (created, host) = get_or_create(ws, Host, host_data)
-    if created:
-        for name in hostnames:
-            db.session.add(Hostname(name=name, host=host, workspace=ws))
+    for name in set(hostnames).difference(set(map(lambda x: x.name, host.hostnames))):
+        db.session.add(Hostname(name=name, host=host, workspace=ws))
     db.session.commit()
 
     if command is not None:

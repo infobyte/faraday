@@ -89,6 +89,18 @@ def test_create_duplicated_hosts(session, workspace):
     assert count(Host, workspace) == 1
 
 
+def test_create_host_add_hostnames(session, workspace):
+    assert count(Host, workspace) == 0
+    bc.bulk_create(workspace, dict(hosts=[host_data]))
+    db.session.commit()
+    host_copy = host_data.copy()
+    host_copy['hostnames'] = ["test3.org"]
+    bc.bulk_create(workspace, dict(hosts=[host_copy]))
+    db.session.commit()
+    host = Host.query.filter(Host.workspace == workspace).one()
+    assert host.ip == "127.0.0.1"
+    assert set({hn.name for hn in host.hostnames}) == {"test.com", "test2.org", "test3.org"}
+
 def test_create_existing_host(session, host):
     session.add(host)
     session.commit()

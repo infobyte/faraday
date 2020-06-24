@@ -16,8 +16,7 @@
 """
 import inspect
 
-from sqlalchemy import and_
-from sqlalchemy import or_
+from sqlalchemy import and_, or_, func
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.orm.attributes import QueryableAttribute
@@ -510,9 +509,9 @@ class QueryBuilder(object):
 
         """
         if search_params.group_by:
-            select_fields = []
+            select_fields = [func.count()]
             for groupby in search_params.group_by:
-                select_fields.append(str(getattr(model, groupby.field)))
+                select_fields.append(getattr(model, groupby.field))
 
             query = session.query(*select_fields)
         else:
@@ -548,9 +547,10 @@ class QueryBuilder(object):
                         direction = getattr(field, val.direction)
                         query = query.order_by(direction())
             else:
-                pks = primary_key_names(model)
-                pk_order = (getattr(model, field).asc() for field in pks)
-                query = query.order_by(*pk_order)
+                if not search_params.group_by:
+                    pks = primary_key_names(model)
+                    pk_order = (getattr(model, field).asc() for field in pks)
+                    query = query.order_by(*pk_order)
 
         # Group the query.
         if search_params.group_by:

@@ -605,10 +605,12 @@ class VulnerabilityView(PaginatedMixin,
 
     def _envelope_list(self, objects, pagination_metadata=None):
         vulns = []
-        for vuln in objects:
+        for index, vuln in enumerate(objects):
+            # we use index when the filter endpoint uses group by and
+            # the _id was not used in the group by
             vulns.append({
-                'id': vuln['_id'],
-                'key': vuln['_id'],
+                'id': vuln.get('_id', index),
+                'key': vuln.get('_id', index),
                 'value': vuln
             })
         return {
@@ -718,7 +720,7 @@ class VulnerabilityView(PaginatedMixin,
         vulns = search(db.session,
                        vulnerability_class,
                        filters)
-        vulns = vulns.filter_by(workspace_id=workspace.id)
+        vulns = vulns.filter(VulnerabilityGeneric.workspace==workspace)
 
         if hostname_filters:
             or_filters = []
@@ -744,10 +746,18 @@ class VulnerabilityView(PaginatedMixin,
         else:
             _type = 'Vulnerability'
 
-        vulns = self.schema_class_dict[_type](**marshmallow_params).dumps(
-            vulns.all(),
-            cls=BytesJSONEncoder)
-        vulns_data = json.loads(vulns)
+        if 'group_by' not in filters:
+            vulns = self.schema_class_dict[_type](**marshmallow_params).dumps(
+                vulns.all(),
+                cls=BytesJSONEncoder)
+            vulns_data = json.loads(vulns)
+        else:
+            column_names = ['count'] + [field['field'] for field in filters.get('group_by',[])]
+            rows = [list(zip(column_names, row)) for row in vulns.all()]
+            vulns_data = []
+            for row in rows:
+                vulns_data.append({field[0]:field[1] for field in row})
+
         return vulns_data
 
     def _filter(self, filters, workspace_name, confirmed=False):

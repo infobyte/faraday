@@ -46,6 +46,7 @@ for attr_name in dir(factories):
 for factory in enabled_factories:
     register(factory)
 
+register(factories.WorkspaceFactory, "workspace")
 register(factories.WorkspaceFactory, "second_workspace")
 
 

@@ -130,12 +130,18 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
     view_class = AgentView
     api_endpoint = 'agents'
 
-    def create_raw_agent(self, _type='shared', active=False, token="TOKEN"):
-        return {
+    def create_raw_agent(self, _type='shared', active=False, token="TOKEN",
+                         workspaces=None):
+        raw_agent = {
             "token": token,
             "active": active,
             "name": "My agent"
         }
+        if workspaces:
+            raw_agent["workspaces"] = [
+                workspace.id for workspace in workspaces
+            ]
+        return raw_agent
 
     def test_create_agent_invalid(self, test_client, session):
         """
@@ -157,6 +163,45 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
         res = test_client.put(self.url(agent.id), data=raw_agent)
         assert res.status_code == 200
         assert not res.json['active']
+
+    def test_update_agent_add_a_workspace(self, test_client, session):
+        workspace = WorkspaceFactory.create()
+        session.add(workspace)
+        other_workspace = WorkspaceFactory.create()
+        session.add(other_workspace)
+        agent = AgentFactory.create(workspaces=[workspace],
+                                    active=True)
+        session.commit()
+        raw_agent = self.create_raw_agent(
+            workspaces=[workspace, other_workspace]
+        )
+        res = test_client.put(self.url(agent.id), data=raw_agent)
+        assert res.status_code == 200
+        assert other_workspace.name in res.json['workspaces']
+        assert workspace.name in res.json['workspaces']
+        assert len(res.json['workspaces']) == 2
+        workspaces = Agent.query.get(agent.id).workspaces
+        assert len(workspaces) == 2
+        assert workspace in workspaces
+        assert other_workspace in workspaces
+
+    def test_update_agent_delete_a_workspace(self, test_client, session):
+        workspace = WorkspaceFactory.create()
+        session.add(workspace)
+        other_workspace = WorkspaceFactory.create()
+        session.add(other_workspace)
+        agent = AgentFactory.create(workspaces=[workspace, other_workspace],
+                                    active=True)
+        session.commit()
+        raw_agent = self.create_raw_agent(workspaces=[workspace])
+        res = test_client.put(self.url(agent.id), data=raw_agent)
+        assert res.status_code == 200
+        assert other_workspace not in res.json['workspaces']
+        assert workspace in res.json['workspaces']
+        assert len(res.json['workspaces']) == 1
+        workspaces = Agent.query.get(agent.id).workspaces
+        assert len(workspaces) == 1
+        assert workspaces[0] == workspace
 
     def test_update_bug_case(self, test_client, session):
         workspace = WorkspaceFactory.create()

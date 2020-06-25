@@ -19,7 +19,8 @@ WHITE_LIST = [
     'references__name',
     'evidence__filename',
     'service__port',
-    'hostnames'
+    'hostnames',
+    'creator'
 ]
 
 

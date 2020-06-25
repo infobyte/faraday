@@ -442,6 +442,12 @@ class QueryBuilder(object):
                    'operators.')
             raise TypeError(msg)
         if numargs == 2:
+            map_attr = {
+                'creator': 'username',
+            }
+            if hasattr(getattr(field, 'prop'), 'entity'):
+                field = getattr(field.comparator.entity.class_, map_attr.get(field.prop.key, field.prop.key))
+
             return opfunc(field, argument)
         return opfunc(field, argument, fieldname)
 

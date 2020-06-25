@@ -11,7 +11,7 @@ import pytest
 from faraday.server.api.modules.agent import AgentView
 from faraday.server.models import Agent
 from tests.factories import AgentFactory, WorkspaceFactory, ExecutorFactory
-from tests.test_api_workspaced_base import ReadOnlyAPITests
+from tests.test_api_non_workspaced_base import ReadOnlyAPITests
 from tests import factories
 
 

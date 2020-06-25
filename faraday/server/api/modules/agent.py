@@ -10,9 +10,14 @@ from marshmallow import fields, Schema, EXCLUDE
 from sqlalchemy.orm.exc import NoResultFound
 
 
-from faraday.server.api.base import (AutoSchema, UpdateWorkspacedMixin, DeleteWorkspacedMixin,
-                                     CountWorkspacedMixin, ReadOnlyWorkspacedView, CreateWorkspacedMixin,
-                                     GenericWorkspacedView)
+from faraday.server.api.base import (
+    AutoSchema,
+    UpdateMixin,
+    DeleteMixin,
+    ReadOnlyView,
+    CreateMixin,
+    GenericView
+)
 from faraday.server.models import Agent, Executor, AgentExecution, db
 from faraday.server.schemas import PrimaryKeyRelatedField
 from faraday.server.config import faraday_server
@@ -72,7 +77,7 @@ class AgentCreationSchema(Schema):
     name = fields.String(required=True)
 
 
-class AgentCreationView(GenericWorkspacedView, CreateWorkspacedMixin):
+class AgentCreationView(GenericView, CreateMixin):
     """
     ---
       tags: ["Agent"]
@@ -115,16 +120,15 @@ class AgentRunSchema(Schema):
     )
 
 
-class AgentView(UpdateWorkspacedMixin,
-                DeleteWorkspacedMixin,
-                CountWorkspacedMixin,
-                ReadOnlyWorkspacedView):
+class AgentView(UpdateMixin,
+                DeleteMixin,
+                ReadOnlyView):
     route_base = 'agents'
     model_class = Agent
     schema_class = AgentSchema
     get_joinedloads = [Agent.creator, Agent.executors]
 
-    @route('/<int:agent_id>/run/', methods=['POST'])
+    @route('/agents/<int:agent_id>/run/', methods=['POST'])
     def run_agent(self, workspace_name, agent_id):
         """
         ---

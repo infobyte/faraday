@@ -436,7 +436,7 @@ class NoteFactory(FaradayFactory):
         model = Comment
 
 
-class AgentFactory(WorkspaceObjectFactory):
+class AgentFactory(FaradayFactory):
     name = FuzzyText()
     active = True
 

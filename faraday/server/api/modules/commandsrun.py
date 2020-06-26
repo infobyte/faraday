@@ -100,6 +100,15 @@ class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
 
     @route('/last/')
     def last_command(self, workspace_name):
+        """
+        ---
+        get:
+          tags: ["Commands"]
+          description: Gets the last executed command
+          responses:
+            200:
+              description: Last executed command or an empty json
+        """
         command = Command.query.join(Workspace).filter_by(name=workspace_name).order_by(Command.start_date.desc()).first()
         command_obj = {}
         if command:

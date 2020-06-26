@@ -12,6 +12,7 @@ from faraday.server.api.modules.agent import AgentView
 from faraday.server.models import Agent
 from tests.factories import AgentFactory, WorkspaceFactory, ExecutorFactory
 from tests.test_api_non_workspaced_base import ReadOnlyAPITests
+from tests.test_api_workspaced_base import ReadOnlyMultiWorkspacedAPITests
 from tests import factories
 from tests.test_api_workspaced_base import API_PREFIX
 
@@ -322,152 +323,7 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
         assert res.status_code == 204
         assert len(session.query(Agent).all()) == initial_agent_count
 
-    def test_run_agent_invalid_missing_executorData(self, csrf_token, session,
-                                                    test_client):
-        workspace = WorkspaceFactory.create()
-        session.add(workspace)
-        other_workspace = WorkspaceFactory.create()
-        session.add(other_workspace)
-        session.commit()
-        agent = AgentFactory.create(
-            workspaces=[workspace, other_workspace]
-        )
-        session.add(agent)
-        session.commit()
-        payload = {
-            'csrf_token': csrf_token
-        }
-        res = test_client.post(
-            self.workspaced_url(workspace, agent) + 'run/',
-            json=payload
-        )
-        assert res.status_code == 400
-        res = test_client.post(
-            self.workspaced_url(workspace, agent) + 'run/',
-            json=payload
-        )
-        assert res.status_code == 400
-
-    def test_invalid_body(self, test_client, session):
-        workspace = WorkspaceFactory.create()
-        session.add(workspace)
-        other_workspace = WorkspaceFactory.create()
-        session.add(other_workspace)
-        session.commit()
-        agent = AgentFactory.create(
-            workspaces=[workspace, other_workspace]
-        )
-        session.add(agent)
-        session.commit()
-        res = test_client.post(
-            self.workspaced_url(workspace, agent) + 'run/',
-            data='[" broken]"{'
-        )
-        assert res.status_code == 400
-
-    def test_invalid_content_type(self, test_client, session, csrf_token):
-        workspace = WorkspaceFactory.create()
-        session.add(workspace)
-        other_workspace = WorkspaceFactory.create()
-        session.add(other_workspace)
-        session.commit()
-        agent = AgentFactory.create(
-            workspaces=[workspace, other_workspace]
-        )
-        session.add(agent)
-        session.commit()
-        payload = {
-            'csrf_token': csrf_token,
-            'executorData': {
-                "args": {
-                    "param1": True
-                },
-                "executor": "executor_name"
-            },
-        }
-        headers = [
-            ('content-type', 'text/html'),
-        ]
-        res = test_client.post(
-            self.workspaced_url(workspace, agent) + 'run/',
-            data=payload,
-            headers=headers
-        )
-        assert res.status_code == 400
-        res = test_client.post(
-            self.workspaced_url(other_workspace, agent) + 'run/',
-            json=payload,
-            headers=headers
-        )
-        assert res.status_code == 400
-
-    def test_invalid_executor(self, test_client, session, csrf_token):
-        workspace = WorkspaceFactory.create()
-        session.add(workspace)
-        other_workspace = WorkspaceFactory.create()
-        session.add(other_workspace)
-        session.commit()
-        agent = AgentFactory.create(
-            workspaces=[workspace, other_workspace]
-        )
-        session.add(agent)
-        session.commit()
-        payload = {
-            'csrf_token': csrf_token,
-            'executorData': {
-                "args": {
-                    "param1": True
-                },
-                "executor": "executor_name"
-            },
-        }
-        res = test_client.post(
-            self.workspaced_url(workspace, agent) + 'run/',
-            json=payload
-        )
-        assert res.status_code == 400
-        res = test_client.post(
-            self.workspaced_url(other_workspace, agent) + 'run/',
-            json=payload
-        )
-        assert res.status_code == 400
-
-    def test_happy_path_valid_json(self, test_client, session, csrf_token):
-        workspace = WorkspaceFactory.create()
-        session.add(workspace)
-        other_workspace = WorkspaceFactory.create()
-        session.add(other_workspace)
-        session.commit()
-        agent = AgentFactory.create(
-            workspaces=[workspace, other_workspace]
-        )
-        executor = ExecutorFactory.create(agent=agent)
-
-        session.add(executor)
-        session.commit()
-        payload = {
-            'csrf_token': csrf_token,
-            'executorData': {
-                "args": {
-                    "param1": True
-                },
-                "executor": executor.name
-            },
-        }
-        res = test_client.post(
-            self.workspaced_url(workspace, agent) + 'run/',
-            json=payload
-        )
-        assert res.status_code == 200
-        res = test_client.post(
-            self.workspaced_url(other_workspace, agent) + 'run/',
-            json=payload
-        )
-        assert res.status_code == 200
-
-
-    def test_happy_path_valid_json_bad_route(self, test_client, session,
-                                             csrf_token):
+    def test_run_fails(self, test_client, session,csrf_token):
         workspace = WorkspaceFactory.create()
         session.add(workspace)
         other_workspace = WorkspaceFactory.create()
@@ -495,15 +351,128 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
         )
         assert res.status_code == 404
 
-    def test_invalid_json_on_executorData_breaks_the_api(self, csrf_token, session, test_client):
+class TestAgentWorkspacedAPI(ReadOnlyMultiWorkspacedAPITests):
+    model = Agent
+    factory = factories.AgentFactory
+    view_class = AgentView #TODO CHANGE
+    api_endpoint = 'agents'
+
+    def test_get_workspaced(self, test_client, session):
         workspace = WorkspaceFactory.create()
         session.add(workspace)
+        agent = AgentFactory.create(workspaces=[workspace], active=True)
+        session.commit()
+        res = test_client.get(self.url(agent))
+        assert res.status_code == 200
+        assert 'workspaces' not in res.json
+
+    def test_workspaced_delete(self, session, test_client):
+        initial_agent_count = len(session.query(Agent).all())
         other_workspace = WorkspaceFactory.create()
         session.add(other_workspace)
-        session.commit()
         agent = AgentFactory.create(
-            workspaces=[workspace, other_workspace]
+            workspaces=[self.workspace, other_workspace]
         )
+        session.commit()
+        assert len(session.query(Agent).all()) == initial_agent_count + 1
+        res = test_client.delete(self.url(agent.id))
+        assert res.status_code == 204
+        assert len(session.query(Agent).all()) == initial_agent_count + 1
+        res = test_client.delete(self.url(agent.id))
+        assert res.status_code == 404
+        workspaces = Agent.query.get(agent.id).workspaces
+        assert len(workspaces) == 1
+        assert other_workspace in workspaces
+
+    def test_run_agent_invalid_missing_executorData(self, csrf_token, session,
+                                                    test_client):
+        agent = AgentFactory.create(workspaces=[self.workspace])
+        session.add(agent)
+        session.commit()
+        payload = {
+            'csrf_token': csrf_token
+        }
+        res = test_client.post(
+            self.url(agent) + 'run/',
+            json=payload
+        )
+        assert res.status_code == 400
+
+    def test_invalid_body(self, test_client, session):
+        agent = AgentFactory.create(workspaces=[self.workspace])
+        session.add(agent)
+        session.commit()
+        res = test_client.post(
+            self.url(agent) + 'run/',
+            data='[" broken]"{'
+        )
+        assert res.status_code == 400
+
+    def test_invalid_content_type(self, test_client, session, csrf_token):
+        agent = AgentFactory.create(workspaces=[self.workspace])
+        session.add(agent)
+        session.commit()
+        payload = {
+            'csrf_token': csrf_token,
+            'executorData': {
+                "args": {
+                    "param1": True
+                },
+                "executor": "executor_name"
+            },
+        }
+        headers = [
+            ('content-type', 'text/html'),
+        ]
+        res = test_client.post(
+            self.url(agent) + 'run/',
+            data=payload,
+            headers=headers)
+        assert res.status_code == 400
+
+    def test_invalid_executor(self, test_client, session, csrf_token):
+        agent = AgentFactory.create(workspaces=[self.workspace])
+        session.add(agent)
+        session.commit()
+        payload = {
+            'csrf_token': csrf_token,
+            'executorData': {
+                "args": {
+                    "param1": True
+                },
+                "executor": "executor_name"
+            },
+        }
+        res = test_client.post(
+            self.url(agent) + 'run/',
+            json=payload
+        )
+        assert res.status_code == 400
+
+    def test_happy_path_valid_json(self, test_client, session, csrf_token):
+        agent = AgentFactory.create(workspaces=[self.workspace])
+        executor = ExecutorFactory.create(agent=agent)
+
+        session.add(executor)
+        session.commit()
+        payload = {
+            'csrf_token': csrf_token,
+            'executorData': {
+                "args": {
+                    "param1": True
+                },
+                "executor": executor.name
+            },
+        }
+        res = test_client.post(
+            self.url(agent.id) + 'run/',
+            json=payload
+        )
+        assert res.status_code == 200
+
+    def test_invalid_json_on_executorData_breaks_the_api(self, csrf_token,
+                                                         session, test_client):
+        agent = AgentFactory.create(workspaces=[self.workspace])
         session.add(agent)
         session.commit()
         payload = {
@@ -511,25 +480,13 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
             'executorData': '[][dassa',
         }
         res = test_client.post(
-            self.workspaced_url(workspace, agent) + 'run/',
-            json=payload
-        )
-        assert res.status_code == 400
-        res = test_client.post(
-            self.workspaced_url(other_workspace, agent) + 'run/',
+            self.url(agent) + 'run/',
             json=payload
         )
         assert res.status_code == 400
 
     def test_run_agent(self, session, csrf_token, test_client):
-        workspace = WorkspaceFactory.create()
-        session.add(workspace)
-        other_workspace = WorkspaceFactory.create()
-        session.add(other_workspace)
-        session.commit()
-        agent = AgentFactory.create(
-            workspaces=[workspace, other_workspace]
-        )
+        agent = AgentFactory.create(workspaces=[self.workspace])
         session.add(agent)
         session.commit()
         payload = {
@@ -537,12 +494,7 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
             'executorData': '',
         }
         res = test_client.post(
-            self.workspaced_url(workspace, agent) + 'run/',
-            json=payload
-        )
-        assert res.status_code == 400
-        res = test_client.post(
-            self.workspaced_url(other_workspace, agent) + 'run/',
+            self.url(agent) + 'run/',
             json=payload
         )
         assert res.status_code == 400

@@ -138,14 +138,3 @@ class FlaskRestlessSchema(Schema):
             except ValidationError:
                 continue
         raise ValidationError('No valid schema found. data {}'.format(data))
-
-
-def is_valid_filter(restless_filters):
-    if not restless_filters:
-        return False
-    try:
-        FilterSchema().load(restless_filters)
-        return True
-    except ValidationError as ex:
-        #logger.info('Invalid search filters ')
-        return False

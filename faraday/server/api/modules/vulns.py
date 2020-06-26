@@ -48,7 +48,6 @@ from faraday.server.models import (
 )
 from faraday.server.utils.database import get_or_create
 from faraday.server.utils.export import export_vulns_to_csv
-from faraday.server.utils.filters import is_valid_filter
 from faraday.server.utils.py3 import BytesJSONEncoder
 from faraday.server.utils.filters import FlaskRestlessSchema
 from faraday.server.api.modules.services import ServiceSchema

@@ -143,7 +143,7 @@ OPERATORS = {
 }
 
 
-class OrderBy(object):
+class OrderBy:
     """Represents an "order by" in a SQL query expression."""
 
     def __init__(self, field, direction='asc'):
@@ -163,7 +163,7 @@ class OrderBy(object):
         return '<OrderBy {0}, {1}>'.format(self.field, self.direction)
 
 
-class GroupBy(object):
+class GroupBy:
     """Represents a "group by" in a SQL query expression."""
 
     def __init__(self, field):
@@ -179,7 +179,7 @@ class GroupBy(object):
         return '<GroupBy {0}>'.format(self.field)
 
 
-class Filter(object):
+class Filter:
     """Represents a filter to apply to a SQL query.
 
     A filter can be, for example, a comparison operator applied to a field of a
@@ -289,7 +289,7 @@ class DisjunctionFilter(JunctionFilter):
         return 'or_{0}'.format(tuple(repr(f) for f in self))
 
 
-class SearchParameters(object):
+class SearchParameters:
     """Aggregates the parameters for a search, including filters, search type,
     limit, offset, and order by directives.
 
@@ -374,7 +374,7 @@ class SearchParameters(object):
                                 order_by=order_by, group_by=group_by)
 
 
-class QueryBuilder(object):
+class QueryBuilder:
     """Provides a static function for building a SQLAlchemy query object based
     on a :class:`SearchParameters` instance.
 

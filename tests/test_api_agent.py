@@ -36,6 +36,21 @@ def logout(client, expected_status_codes):
     return res
 
 
+def get_raw_agent(name="My agent", active=None, token=None, workspaces=None):
+    raw_agent = {
+        "name": name
+    }
+    if active is not None:
+        raw_agent["active"] = active
+    if token:
+        raw_agent["token"] = token
+    if workspaces:
+        raw_agent["workspaces"] = [
+            workspace.name for workspace in workspaces
+        ]
+    return raw_agent
+
+
 @pytest.mark.usefixtures('logged_user')
 class TestAgentAuthTokenAPIGeneric():
 
@@ -69,22 +84,44 @@ class TestAgentCreationAPI():
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
     def test_create_agent_valid_token(self, faraday_server_config, test_client,
                                       session):
+        workspace = WorkspaceFactory.create()
+        session.add(workspace)
+        other_workspace = WorkspaceFactory.create()
+        session.add(other_workspace)
+        session.commit()
         faraday_server_config.agent_token = 'sarasa'
         logout(test_client, [302])
         initial_agent_count = len(session.query(Agent).all())
-        raw_data = {"token": 'sarasa', 'name': 'new_agent'}
+        raw_data = get_raw_agent(
+            name='new_agent',
+            token='sarasa',
+            workspaces=[workspace]
+        )
         # /v2/agent_registration/
         res = test_client.post('/v2/agent_registration/', data=raw_data)
         assert res.status_code == 201
         assert len(session.query(Agent).all()) == initial_agent_count + 1
+        assert workspace.name in res.json['workspaces']
+        assert other_workspace.name in res.json['workspaces']
+        assert len(res.json['workspaces']) == 2
+        workspaces = Agent.query.get(res.json['id']).workspaces
+        assert len(workspaces) == 2
+        assert workspace in workspaces
+        assert other_workspace in workspaces
 
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
     def test_create_agent_without_name_fails(self, faraday_server_config,
                                              test_client, session):
+        workspace = WorkspaceFactory.create()
+        session.add(workspace)
+        session.commit()
         faraday_server_config.agent_token = 'sarasa'
         logout(test_client, [302])
         initial_agent_count = len(session.query(Agent).all())
-        raw_data = {"token": 'sarasa'}
+        raw_data = get_raw_agent(
+            token='sarasa',
+            workspaces=[workspace]
+        )
         # /v2/agent_registration/
         res = test_client.post(
             '/v2/agent_registration/',
@@ -96,9 +133,16 @@ class TestAgentCreationAPI():
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
     def test_create_agent_invalid_token(self, faraday_server_config,
                                         test_client, session):
+        workspace = WorkspaceFactory.create()
+        session.add(workspace)
+        session.commit()
         faraday_server_config.agent_token = 'sarasa'
         logout(test_client, [302])
-        raw_data = {"token": 'INVALID', "name": "test agent"}
+        raw_data = get_raw_agent(
+            token="INVALID",
+            name="test agent",
+            workspaces=[workspace]
+        )
         # /v2/agent_registration/
         res = test_client.post('/v2/agent_registration/', data=raw_data)
         assert res.status_code == 401
@@ -106,9 +150,15 @@ class TestAgentCreationAPI():
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
     def test_create_agent_agent_token_not_set(self, faraday_server_config,
                                               test_client, session):
+        workspace = WorkspaceFactory.create()
+        session.add(workspace)
+        session.commit()
         faraday_server_config.agent_token = None
         logout(test_client, [302])
-        raw_data = {"name": "test agent"}
+        raw_data = get_raw_agent(
+            name="test agent",
+            workspaces=[workspace],
+        )
         # /v2/agent_registration/
         res = test_client.post('/v2/agent_registration/', data=raw_data)
         assert res.status_code == 400
@@ -123,6 +173,39 @@ class TestAgentCreationAPI():
         res = test_client.post('/v2/agent_registration/', data=raw_data)
         assert res.status_code == 400
 
+    @mock.patch('faraday.server.api.modules.agent.faraday_server')
+    def test_create_agent_empty_workspaces(self, faraday_server_config,
+                                           test_client, session):
+        workspace = WorkspaceFactory.create()
+        session.add(workspace)
+        session.commit()
+        faraday_server_config.agent_token = 'sarasa'
+        logout(test_client, [302])
+        raw_data = get_raw_agent(
+            token="sarasa",
+            name="test agent",
+            workspaces=[]
+        )
+        # /v2/agent_registration/
+        res = test_client.post('/v2/agent_registration/', data=raw_data)
+        assert res.status_code == 401
+
+    @mock.patch('faraday.server.api.modules.agent.faraday_server')
+    def test_create_agent_workspaces_not_set(self, faraday_server_config,
+                                             test_client, session):
+        workspace = WorkspaceFactory.create()
+        session.add(workspace)
+        session.commit()
+        faraday_server_config.agent_token = 'sarasa'
+        logout(test_client, [302])
+        raw_data = get_raw_agent(
+            name="test agent",
+            token='sarasa'
+        )
+        # /v2/agent_registration/
+        res = test_client.post('/v2/agent_registration/', data=raw_data)
+        assert res.status_code == 400
+
 
 class TestAgentAPIGeneric(ReadOnlyAPITests):
     model = Agent
@@ -130,18 +213,10 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
     view_class = AgentView
     api_endpoint = 'agents'
 
-    def create_raw_agent(self, _type='shared', active=False, token="TOKEN",
+    def create_raw_agent(self, active=False, token="TOKEN",
                          workspaces=None):
-        raw_agent = {
-            "token": token,
-            "active": active,
-            "name": "My agent"
-        }
-        if workspaces:
-            raw_agent["workspaces"] = [
-                workspace.id for workspace in workspaces
-            ]
-        return raw_agent
+        return get_raw_agent(name="My agent", token=token, active=active,
+                             workspaces=workspaces)
 
     def test_create_agent_invalid(self, test_client, session):
         """

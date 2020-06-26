@@ -1,5 +1,9 @@
+import pytest
+
+from marshmallow.exceptions import ValidationError
+
 from faraday.server.utils.filters import FilterSchema
-from faraday.server.utils.filters import is_valid_filter, find_item, FlaskRestlessSchema
+from faraday.server.utils.filters import FlaskRestlessSchema
 
 
 class TestFilters:
@@ -62,11 +66,11 @@ class TestFilters:
 
     def test_filters(self):
         _filter = {"filters": [{"name": "severity", "op": "eq", "val": "low"}]}
-        assert is_valid_filter(_filter) is True
+        assert FlaskRestlessSchema().load(_filter) == _filter
 
     def test_filters_fail(self):
         _filter = {"name": "host_id", "op": "eq", "val": "1"}
-        assert is_valid_filter(_filter) is False
+        assert FlaskRestlessSchema().load(_filter) == _filter
 
     def test_nested_filters(self):
         _filter = {"filters": [
@@ -92,7 +96,7 @@ class TestFilters:
                 }
             ]}
         ]}
-        assert is_valid_filter(_filter) is True
+        assert FlaskRestlessSchema().load(_filter) == _filter
 
     def test_nested_filters_fail(self):
         _filter = {"filters": [{
@@ -118,15 +122,16 @@ class TestFilters:
                 }
             ]
         }]}
-        assert is_valid_filter(_filter) is False
+        with pytest.raises(ValidationError):
+            FlaskRestlessSchema().load(_filter)
 
     def test_full_filters(self):
         _filter = {"filters": [{"name": "severity", "op": "eq", "val": "low"}]}
-        assert is_valid_filter(_filter) is True
+        assert FlaskRestlessSchema().load(_filter) == _filter
 
     def test_find_item_function(self):
         _filter = {"name": "severity", "op": "eq", "val": "low"}
-        assert find_item(_filter) == ['severity']
+        assert FlaskRestlessSchema().load(_filter) == _filter
 
     def test_nested_find_item_function(self):
         _filter = {
@@ -139,7 +144,7 @@ class TestFilters:
                             "val": "%hola mundo%"
                         },
                         {
-                            "name": "desc",
+                            "name": "description",
                             "op": "ilike",
                             "val": "%prueba%"
                         }
@@ -152,7 +157,20 @@ class TestFilters:
                 }
             ]
         }
-        assert find_item(_filter) == ['name', 'desc', 'severity']
+        res = FlaskRestlessSchema().load(_filter)[0]
+        assert 'and' in res
+        for and_op in res['and']:
+            if 'or' in and_op:
+                for or_op in and_op['or']:
+                    if or_op['name'] == 'name':
+                        assert or_op == {"name": "name", "op": "ilike", "val": "%hola mundo%"}
+                    elif or_op['name'] == 'description':
+                        assert or_op == {"name": "description", "op": "ilike", "val": "%prueba%"}
+                    else:
+                        raise Exception('Invalid result')
+            else:
+                assert and_op == {"name": "severity", "op": "eq", "val": "high"}
+
 
     def test_case_1(self):
         filter_schema = FilterSchema()

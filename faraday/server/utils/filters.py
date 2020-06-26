@@ -35,28 +35,6 @@ COUNT_FIELDS = [
 VULNERABILITY_FIELDS = [col.name for col in VulnerabilityWeb.__table__.columns] + WHITE_LIST + COUNT_FIELDS
 
 
-def find_item(_filter):
-    """
-    :param _filter: json from user input with the following format
-                    {"name": "<FIELD>", "op": "<OPERATOR>", "val": "<VALUE>"} or recursive
-    :return: A list of names/attributes within the filter
-    """
-    key = 'name'
-    attributes = []
-    if not _filter:
-        return []
-    if key in _filter:
-        attributes = [_filter[key]]
-    for v in _filter.values():
-        if isinstance(v, dict):
-            attributes = attributes + find_item(v)
-        if isinstance(v, list):
-            for item in v:
-                attributes = attributes + find_item(item)
-
-    return attributes
-
-
 class FlaskRestlessFilterSchema(Schema):
     name = fields.String(validate=validate.OneOf(VULNERABILITY_FIELDS), required=True)
     val = fields.Raw(required=True)

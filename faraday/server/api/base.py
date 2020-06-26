@@ -397,6 +397,26 @@ class GenericWorkspacedView(GenericView):
             flask.abort(403, "Altering a readonly workspace is not allowed")
 
 
+class GenericMultiWorkspacedView(GenericWorkspacedView):
+    """Abstract class for a view that depends on the workspace, that is
+    passed in the URL
+
+    .. note::
+        This view inherits from GenericView, so make sure you understand
+        that first by checking the docs above, or just by looking at the
+        source code of server/api/base.py.
+
+    """
+
+    # Default attributes
+    route_prefix = '/v2/ws/<workspace_name>/'
+    base_args = ['workspace_name']  # Required to prevent double usage of <workspace_name>
+
+    def _get_base_query(self, workspace_name):
+        base = super(GenericWorkspacedView, self)._get_base_query()
+        return base.filter(
+            Workspace.id == self._get_workspace(workspace_name).id)
+
 class ListMixin:
     """Add GET / route"""
 
@@ -654,6 +674,16 @@ class ReadOnlyWorkspacedView(SortableMixin,
     """A workspaced generic view with list and retrieve endpoints
 
     It is just a GenericWorkspacedView inheriting also from
+    ListWorkspacedMixin, RetrieveWorkspacedMixin and SortableMixin"""
+
+
+class ReadOnlyMultiWorkspacedView(SortableMixin,
+                                  ListWorkspacedMixin,
+                                  RetrieveWorkspacedMixin,
+                                  GenericMultiWorkspacedView):
+    """A multi workspaced generic view with list and retrieve endpoints
+
+    It is just a GenericMultiWorkspacedView inheriting also from
     ListWorkspacedMixin, RetrieveWorkspacedMixin and SortableMixin"""
 
 

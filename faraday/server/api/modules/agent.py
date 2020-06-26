@@ -16,7 +16,8 @@ from faraday.server.api.base import (
     DeleteMixin,
     ReadOnlyView,
     CreateMixin,
-    GenericView
+    GenericView,
+    ReadOnlyWorkspacedView, ReadOnlyMultiWorkspacedView
 )
 from faraday.server.models import Agent, Executor, AgentExecution, db
 from faraday.server.schemas import PrimaryKeyRelatedField
@@ -128,7 +129,14 @@ class AgentView(UpdateMixin,
     schema_class = AgentSchema
     get_joinedloads = [Agent.creator, Agent.executors]
 
-    @route('/agents/<int:agent_id>/run/', methods=['POST'])
+
+class AgentWorkspacedView(ReadOnlyMultiWorkspacedView):
+    route_base = 'agents'
+    model_class = Agent
+    schema_class = AgentSchema
+    get_joinedloads = [Agent.creator, Agent.executors]
+
+    @route('/<int:agent_id>/run/', methods=['POST'])
     def run_agent(self, workspace_name, agent_id):
         """
         ---
@@ -182,3 +190,4 @@ class AgentView(UpdateMixin,
 
 AgentView.register(agent_api)
 AgentCreationView.register(agent_api)
+AgentWorkspacedView.register(agent_api)

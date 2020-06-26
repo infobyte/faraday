@@ -238,6 +238,16 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
         assert res.status_code == 405  # the only way to create agents is by using the token!
         assert len(session.query(Agent).all()) == initial_agent_count
 
+    def test_get_not_workspaced(self, test_client, session):
+        workspace = WorkspaceFactory.create()
+        session.add(workspace)
+        agent = AgentFactory.create(workspaces=[workspace], active=True)
+        session.commit()
+        res = test_client.get(self.url(agent))
+        assert res.status_code == 200
+        assert workspace.name in res.json['workspaces']
+        assert len(res.json['workspaces']) == 1
+
     def test_update_agent(self, test_client, session):
         workspace = WorkspaceFactory.create()
         session.add(workspace)

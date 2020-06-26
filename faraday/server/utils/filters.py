@@ -38,7 +38,7 @@ VULNERABILITY_FIELDS = [col.name for col in VulnerabilityWeb.__table__.columns] 
 class FlaskRestlessFilterSchema(Schema):
     name = fields.String(validate=validate.OneOf(VULNERABILITY_FIELDS), required=True)
     val = fields.Raw(required=True)
-    op = fields.String(validate=validate.OneOf(OPERATORS.keys()), required=True)
+    op = fields.String(validate=validate.OneOf(list(OPERATORS.keys())), required=True)
 
 
 class FlaskRestlessOperator(Schema):

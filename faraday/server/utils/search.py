@@ -17,6 +17,7 @@
 import inspect
 
 from sqlalchemy import and_, or_, func
+from sqlalchemy import inspect as sqlalchemy_inspect
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.orm.attributes import QueryableAttribute
@@ -73,6 +74,7 @@ def _sub_operator(model, argument, fieldname):
     elif isinstance(model, AssociationProxy):
         submodel = get_related_association_proxy_model(model)
     else:  # TODO what to do here?
+        logger.warning('Case not handled {0} {1} {2}', model, argument, fieldname)
         pass
     if isinstance(argument, dict):
         fieldname = argument['name']
@@ -108,7 +110,6 @@ OPERATORS = {
     # Operators which accept a single argument.
     'is_null': lambda f: f == None,
     'is_not_null': lambda f: f != None,
-    # TODO what are these?
     'desc': lambda f: f.desc,
     'asc': lambda f: f.asc,
     # Operators which accept two arguments.
@@ -525,7 +526,8 @@ class QueryBuilder:
         # For the sake of brevity, rename this method.
         create_filt = QueryBuilder._create_filter
         # This function call may raise an exception.
-        filters = [create_filt(model, filt) for filt in search_params.filters]
+        valid_model_fields = [str(algo).split('.')[1] for algo in sqlalchemy_inspect(model).attrs]
+        filters = [create_filt(model, filt) for filt in search_params.filters if not getattr(filt, 'fieldname', False) or filt.fieldname in valid_model_fields]
         # Multiple filter criteria at the top level of the provided search
         # parameters are interpreted as a conjunction (AND).
         query = query.filter(*filters)

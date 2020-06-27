@@ -5,6 +5,7 @@ See the file 'doc/LICENSE' for the license information
 
 """
 import typing
+from sqlalchemy import inspect
 from marshmallow import Schema, fields, ValidationError, types, validate
 
 from faraday.server.models import VulnerabilityWeb
@@ -32,7 +33,10 @@ COUNT_FIELDS = [
     'host__vulnerability_info_generic_count',
 ]
 
-VULNERABILITY_FIELDS = [col.name for col in VulnerabilityWeb.__table__.columns] + WHITE_LIST + COUNT_FIELDS
+VULNERABILITY_FIELDS = [str(algo).split('.')[1] for algo in inspect(VulnerabilityWeb).attrs] + WHITE_LIST + COUNT_FIELDS
+
+
+VALID_OPERATORS = set(OPERATORS.keys()) - set(['desc', 'asc'])
 
 
 class FlaskRestlessFilterSchema(Schema):

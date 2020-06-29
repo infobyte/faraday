@@ -360,11 +360,19 @@ class TestAgentWorkspacedAPI(ReadOnlyMultiWorkspacedAPITests):
     def test_get_workspaced(self, test_client, session):
         workspace = WorkspaceFactory.create()
         session.add(workspace)
-        agent = AgentFactory.create(workspaces=[workspace], active=True)
+        agent = AgentFactory.create(workspaces=[self.workspace], active=True)
         session.commit()
         res = test_client.get(self.url(agent))
         assert res.status_code == 200
         assert 'workspaces' not in res.json
+
+    def test_get_workspaced_other_fails(self, test_client, session):
+        other_workspace = WorkspaceFactory.create()
+        session.add(other_workspace)
+        agent = AgentFactory.create(workspaces=[other_workspace], active=True)
+        session.commit()
+        res = test_client.get(self.url(agent))
+        assert res.status_code == 404
 
     def test_workspaced_delete(self, session, test_client):
         initial_agent_count = len(session.query(Agent).all())
@@ -379,6 +387,8 @@ class TestAgentWorkspacedAPI(ReadOnlyMultiWorkspacedAPITests):
         assert res.status_code == 204
         assert len(session.query(Agent).all()) == initial_agent_count + 1
         res = test_client.delete(self.url(agent.id))
+        assert res.status_code == 404
+        res = test_client.get(self.url(agent.id))
         assert res.status_code == 404
         workspaces = Agent.query.get(agent.id).workspaces
         assert len(workspaces) == 1

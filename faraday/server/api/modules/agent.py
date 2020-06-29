@@ -4,7 +4,7 @@
 import flask
 import logging
 
-from flask import Blueprint, abort, request
+from flask import Blueprint, abort, request, make_response
 from flask_classful import route
 from marshmallow import fields, Schema, EXCLUDE
 from sqlalchemy.orm.exc import NoResultFound
@@ -135,6 +135,28 @@ class AgentWorkspacedView(ReadOnlyMultiWorkspacedView):
     model_class = Agent
     schema_class = AgentSchema
     get_joinedloads = [Agent.creator, Agent.executors]
+
+    @route('/<int:agent_id>/', methods=['DELETE'])
+    def remove_workspace(self, workspace_name, agent_id):
+        """
+        ---
+          tags: ["Agent"]
+          description: Removes a workspace from an agent
+          responses:
+            400:
+              description: Bad request
+            204:
+              description: Ok
+        """
+        agent = self._get_object(agent_id, workspace_name)
+        agent.workspaces.remove([
+                                    workspace
+                                    for workspace in agent.workspaces
+                                    if workspace.name == workspace_name
+                                ][0])
+        db.session.add(agent)
+        db.session.commit()
+        return make_response({"description": "ok"}, 204)
 
     @route('/<int:agent_id>/run/', methods=['POST'])
     def run_agent(self, workspace_name, agent_id):

@@ -80,9 +80,14 @@ def openapi_yaml():
         help=('Instead of using a random password for the user "faraday", '
               'ask for the desired one')
         )
-def initdb(choose_password):
+@click.option(
+        '--password', type=str, default=False,
+        help=('Instead of using a random password for the user "faraday", '
+              'use the one provided')
+        )
+def initdb(choose_password, password):
     with app.app_context():
-        InitDB().run(choose_password=choose_password)
+        InitDB().run(choose_password=choose_password, faraday_user_password=password)
 
 
 @click.command(help="Create a PNG image with Faraday model object")

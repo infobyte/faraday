@@ -60,7 +60,7 @@ class InitDB():
 
         return True
 
-    def run(self, choose_password):
+    def run(self, choose_password, faraday_user_password):
         """
              Main entry point that executes these steps:
                  * creates role in database.
@@ -97,24 +97,27 @@ class InitDB():
             current_psql_output.close()
             conn_string = self._save_config(config, username, password, database_name, hostname)
             self._create_tables(conn_string)
-            self._create_admin_user(conn_string, choose_password)
+            self._create_admin_user(conn_string, choose_password, faraday_user_password)
         except KeyboardInterrupt:
             current_psql_output.close()
             print('User cancelled.')
             sys.exit(1)
 
-    def _create_admin_user(self, conn_string, choose_password):
+    def _create_admin_user(self, conn_string, choose_password, faraday_user_password):
         engine = create_engine(conn_string)
         # TODO change the random_password variable name, it is not always
         # random anymore
         if choose_password:
-            random_password = click.prompt(
+            user_password = click.prompt(
                 'Enter the desired password for the "faraday" user',
                 confirmation_prompt=True,
                 hide_input=True
             )
         else:
-            random_password = self.generate_random_pw(12)
+            if faraday_user_password:
+                user_password = faraday_user_password
+            else:
+                user_password = self.generate_random_pw(12)
         already_created = False
         try:
 
@@ -130,7 +133,7 @@ class InitDB():
                         )
             """)
             params = {
-                'password': hash_password(random_password)
+                'password': hash_password(user_password)
             }
             connection = engine.connect()
             connection.execute(statement, **params)
@@ -149,7 +152,7 @@ class InitDB():
         if not already_created:
             print("Admin user created with \n\n{red}username: {white}faraday \n"
                   "{red}password:{white} {"
-                  "random_password} \n".format(random_password=random_password,
+                  "user_password} \n".format(user_password=user_password,
                                                white=Fore.WHITE, red=Fore.RED))
 
     def _configure_existing_postgres_user(self):

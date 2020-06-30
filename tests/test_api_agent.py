@@ -246,8 +246,8 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
         session.commit()
         res = test_client.get(self.url(agent))
         assert res.status_code == 200
-        assert workspace.name in res.json['workspaces']
         assert len(res.json['workspaces']) == 1
+        assert workspace.name in res.json['workspaces'][0]['name']
 
     def test_update_agent(self, test_client, session):
         workspace = WorkspaceFactory.create()
@@ -258,8 +258,8 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
         res = test_client.put(self.url(agent.id), data=raw_agent)
         assert res.status_code == 200
         assert not res.json['active']
-        assert workspace.name in res.json['workspaces']
         assert len(res.json['workspaces']) == 1
+        assert workspace.name in res.json['workspaces'][0]['name']
 
     def test_update_agent_add_a_workspace(self, test_client, session):
         workspace = WorkspaceFactory.create()
@@ -274,8 +274,9 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
         )
         res = test_client.put(self.url(agent.id), data=raw_agent)
         assert res.status_code == 200
-        assert other_workspace.name in res.json['workspaces']
-        assert workspace.name in res.json['workspaces']
+        names = [workspace['name'] for workspace in res.json['workspaces']]
+        assert other_workspace.name in names
+        assert workspace.name in names
         assert len(res.json['workspaces']) == 2
         workspaces = Agent.query.get(agent.id).workspaces
         assert len(workspaces) == 2
@@ -293,9 +294,9 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
         raw_agent = self.create_raw_agent(workspaces=[workspace])
         res = test_client.put(self.url(agent.id), data=raw_agent)
         assert res.status_code == 200
-        assert other_workspace not in res.json['workspaces']
-        assert workspace in res.json['workspaces']
         assert len(res.json['workspaces']) == 1
+        assert other_workspace.name != res.json['workspaces'][0]['name']
+        assert workspace.name == res.json['workspaces'][0]['name']
         workspaces = Agent.query.get(agent.id).workspaces
         assert len(workspaces) == 1
         assert workspaces[0] == workspace
@@ -309,7 +310,7 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
         update_data = {"id": 1, "name": "Agent test", "is_online": True}
         res = test_client.put(self.url(agent.id), data=update_data)
         assert res.status_code == 200
-        assert workspace.name in res.json['workspaces']
+        assert workspace.name in res.json['workspaces'][0]['name']
         assert len(res.json['workspaces']) == 1
 
     def test_delete_agent(self, test_client, session):

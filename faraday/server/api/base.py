@@ -415,7 +415,9 @@ class GenericMultiWorkspacedView(GenericWorkspacedView):
     def _get_base_query(self, workspace_name):
         base = super(GenericWorkspacedView, self)._get_base_query()
         return base.filter(
-            self.model_class.workspaces.any(name=workspace_name)
+            self.model_class.workspaces.any(
+                name=self._get_workspace(workspace_name).name
+            )
         )
 
     def _get_object(self, object_id, workspace_name, eagerload=False):

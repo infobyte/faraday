@@ -97,7 +97,7 @@ class TestAgentCreationAPI():
         raw_data = get_raw_agent(
             name='new_agent',
             token='sarasa',
-            workspaces=[workspace]
+            workspaces=[workspace, other_workspace]
         )
         # /v2/agent_registration/
         res = test_client.post('/v2/agent_registration/', data=raw_data)

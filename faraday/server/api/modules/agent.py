@@ -20,7 +20,8 @@ from faraday.server.api.base import (
     ReadOnlyWorkspacedView, ReadOnlyMultiWorkspacedView
 )
 from faraday.server.api.modules.workspaces import WorkspaceSchema
-from faraday.server.models import Agent, Executor, AgentExecution, db
+from faraday.server.models import Agent, Executor, AgentExecution, db, \
+    Workspace
 from faraday.server.schemas import PrimaryKeyRelatedField
 from faraday.server.config import faraday_server
 from faraday.server.events import changes_queue
@@ -84,7 +85,15 @@ class AgentCreationSchema(Schema):
     id = fields.Integer(dump_only=True)
     token = fields.String(dump_only=False, required=True)
     name = fields.String(required=True)
+    workspaces = fields.Nested(WorkspaceSchema(many=True), only=("name",))
 
+    class Meta:
+        fields = (
+            'id',
+            'name',
+            'token',
+            'workspaces',
+        )
 
 class AgentCreationView(GenericView, CreateMixin):
     """
@@ -103,6 +112,7 @@ class AgentCreationView(GenericView, CreateMixin):
     route_base = 'agent_registration'
     model_class = Agent
     schema_class = AgentCreationSchema
+    get_joinedloads = [Agent.workspaces, Workspace.agents]
 
     def _perform_create(self,  data, **kwargs):
         token = data.pop('token')
@@ -112,7 +122,21 @@ class AgentCreationView(GenericView, CreateMixin):
         if token != faraday_server.agent_token:
             abort(401, "Invalid Token")
 
+        workspace_names = data.pop('workspaces')
+        workspace_names = [
+            dict_["name"] for dict_ in workspace_names
+        ]
+
         agent = super(AgentCreationView, self)._perform_create(data, **kwargs)
+
+        workspaces = list(Workspace.query.filter(
+            Workspace.name.in_(workspace_names)
+        ))
+
+        agent.workspaces = workspaces
+
+        db.session.add(agent)
+        db.session.commit()
 
         return agent
 

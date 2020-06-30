@@ -48,7 +48,7 @@ def get_raw_agent(name="My agent", active=None, token=None, workspaces=None):
         raw_agent["token"] = token
     if workspaces:
         raw_agent["workspaces"] = [
-            workspace.name for workspace in workspaces
+            {"name": workspace.name} for workspace in workspaces
         ]
     return raw_agent
 
@@ -84,6 +84,7 @@ class TestAgentAuthTokenAPIGeneric():
 class TestAgentCreationAPI():
 
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
+    @pytest.mark.usefixtures('ignore_nplusone')
     def test_create_agent_valid_token(self, faraday_server_config, test_client,
                                       session):
         workspace = WorkspaceFactory.create()
@@ -101,7 +102,7 @@ class TestAgentCreationAPI():
         )
         # /v2/agent_registration/
         res = test_client.post('/v2/agent_registration/', data=raw_data)
-        assert res.status_code == 201
+        assert res.status_code == 201, (res.json, raw_data)
         assert len(session.query(Agent).all()) == initial_agent_count + 1
         assert workspace.name in res.json['workspaces']
         assert other_workspace.name in res.json['workspaces']
@@ -191,7 +192,7 @@ class TestAgentCreationAPI():
         )
         # /v2/agent_registration/
         res = test_client.post('/v2/agent_registration/', data=raw_data)
-        assert res.status_code == 401
+        assert res.status_code == 400
 
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
     def test_create_agent_workspaces_not_set(self, faraday_server_config,

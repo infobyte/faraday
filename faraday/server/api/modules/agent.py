@@ -19,6 +19,7 @@ from faraday.server.api.base import (
     GenericView,
     ReadOnlyWorkspacedView, ReadOnlyMultiWorkspacedView
 )
+from faraday.server.api.modules.workspaces import WorkspaceSchema
 from faraday.server.models import Agent, Executor, AgentExecution, db
 from faraday.server.schemas import PrimaryKeyRelatedField
 from faraday.server.config import faraday_server
@@ -45,7 +46,7 @@ class ExecutorSchema(AutoSchema):
         )
 
 
-class AgentSchema(AutoSchema):
+class AgentWorkspacedSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     status = fields.String(dump_only=True)
     creator = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
@@ -70,6 +71,13 @@ class AgentSchema(AutoSchema):
             'active',
             'executors'
         )
+
+
+class AgentNotWorkspacedSchema(AgentWorkspacedSchema):
+    workspaces = fields.Nested(WorkspaceSchema(), dump_only=True, many=True)
+
+    class Meta(AgentWorkspacedSchema.Meta):
+        fields = AgentWorkspacedSchema.Meta.fields + ('workspaces',)
 
 
 class AgentCreationSchema(Schema):
@@ -126,15 +134,15 @@ class AgentView(UpdateMixin,
                 ReadOnlyView):
     route_base = 'agents'
     model_class = Agent
-    schema_class = AgentSchema
-    get_joinedloads = [Agent.creator, Agent.executors]
+    schema_class = AgentNotWorkspacedSchema
+    get_joinedloads = [Agent.creator, Agent.executors, Agent.workspaces]
 
 
 class AgentWorkspacedView(ReadOnlyMultiWorkspacedView):
     route_base = 'agents'
     model_class = Agent
-    schema_class = AgentSchema
-    get_joinedloads = [Agent.creator, Agent.executors]
+    schema_class = AgentWorkspacedSchema
+    get_joinedloads = [Agent.creator, Agent.executors, Agent.workspaces]
 
     @route('/<int:agent_id>/', methods=['DELETE'])
     def remove_workspace(self, workspace_name, agent_id):

@@ -415,7 +415,8 @@ class GenericMultiWorkspacedView(GenericWorkspacedView):
     def _get_base_query(self, workspace_name):
         base = super(GenericWorkspacedView, self)._get_base_query()
         return base.filter(
-            Workspace.id == self._get_workspace(workspace_name).id)
+            self.model_class.workspaces.any(name=workspace_name)
+        )
 
     def _get_object(self, object_id, workspace_name, eagerload=False):
         obj = super()._get_object(object_id, workspace_name, eagerload)
@@ -610,6 +611,9 @@ class ListWorkspacedMixin(ListMixin):
     # inside the view generic methods is enough
 
 
+class ListMultiWorkspacedMixin(ListWorkspacedMixin):
+    """Control GET /<workspace_name>/<route_base>/ route"""
+
 class RetrieveMixin:
     """Add GET /<id>/ route"""
 
@@ -665,6 +669,10 @@ class RetrieveWorkspacedMixin(RetrieveMixin):
         return super(RetrieveWorkspacedMixin, self).get(object_id, workspace_name=workspace_name)
 
 
+class RetrieveMultiWorkspacedMixin(RetrieveWorkspacedMixin):
+    """Control GET /<workspace_name>/<route_base>/<id>/ route"""
+
+
 class ReadOnlyView(SortableMixin,
                    ListMixin,
                    RetrieveMixin,
@@ -687,13 +695,13 @@ class ReadOnlyWorkspacedView(SortableMixin,
 
 
 class ReadOnlyMultiWorkspacedView(SortableMixin,
-                                  ListWorkspacedMixin,
-                                  RetrieveWorkspacedMixin,
+                                  ListMultiWorkspacedMixin,
+                                  RetrieveMultiWorkspacedMixin,
                                   GenericMultiWorkspacedView):
     """A multi workspaced generic view with list and retrieve endpoints
 
     It is just a GenericMultiWorkspacedView inheriting also from
-    ListWorkspacedMixin, RetrieveWorkspacedMixin and SortableMixin"""
+    ListMultiWorkspacedMixin, RetrieveMultiWorkspacedMixin and SortableMixin"""
 
 
 class CreateMixin:

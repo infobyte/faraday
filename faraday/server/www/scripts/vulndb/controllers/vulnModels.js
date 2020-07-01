@@ -180,26 +180,6 @@ angular.module('faradayApp')
                         var reader = new FileReader();
                         reader.readAsText(data);
                         reader.onload = function(e) {
-                            var text = reader.result;
-                            var expected_header = ["cwe", "description", "exploitation", "name", "references", "resolution"];
-                            var actual_header = text.split('\n').shift().trim().toLowerCase().split(",");
-
-                            if(!equalAsSets(expected_header, actual_header)) {
-                                document.body.style.cursor = "default";
-                                $scope.disabledClick = false;
-                                $uibModal.open({
-                                    templateUrl: "scripts/commons/partials/modalKO.html",
-                                    controller: "commonsModalKoCtrl",
-                                    resolve: {
-                                        msg: function() {
-                                            return "It appears your CSV has the wrong headers. Headers MUST be present."+
-                                                    " Expected headers: " + expected_header.join(', ')+
-                                                    " Actual file headers: " + actual_header.join(', ');
-                                        }
-                                    }
-                                });
-                                return;
-                            };
                             loadCSV(data);
                         };
                     });

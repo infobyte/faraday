@@ -4,7 +4,7 @@
 import flask
 import logging
 
-from flask import Blueprint, abort, request, make_response
+from flask import Blueprint, abort, request, make_response, jsonify
 from flask_classful import route
 from marshmallow import fields, Schema, EXCLUDE
 from sqlalchemy.orm.exc import NoResultFound
@@ -85,7 +85,7 @@ class AgentCreationSchema(Schema):
     id = fields.Integer(dump_only=True)
     token = fields.String(dump_only=False, required=True)
     name = fields.String(required=True)
-    workspaces = fields.Nested(WorkspaceSchema(many=True), only=("name",))
+    workspaces = fields.Pluck(WorkspaceSchema, "name", many=True, required=True)
 
     class Meta:
         fields = (
@@ -114,6 +114,15 @@ class AgentCreationView(GenericView, CreateMixin):
     schema_class = AgentCreationSchema
     get_joinedloads = [Agent.workspaces, Workspace.agents]
 
+    def _get_workspace(self, workspace_name):
+        try:
+            ws = Workspace.query.filter_by(name=workspace_name).one()
+            if not ws.active:
+                flask.abort(403, "Disabled workspace: %s" % workspace_name)
+        except NoResultFound:
+            flask.abort(404, "No such workspace: %s" % workspace_name)
+        return ws
+
     def _perform_create(self,  data, **kwargs):
         token = data.pop('token')
         if not faraday_server.agent_token:
@@ -123,15 +132,28 @@ class AgentCreationView(GenericView, CreateMixin):
             abort(401, "Invalid Token")
 
         workspace_names = data.pop('workspaces')
+
+        if len(workspace_names) == 0:
+            abort(
+                make_response(
+                    jsonify(messages={
+                        "json": {
+                            "workspaces": "Must include one workspace at least"
+                        }
+                    }),
+                    400
+                )
+            )
         workspace_names = [
             dict_["name"] for dict_ in workspace_names
         ]
 
         agent = super(AgentCreationView, self)._perform_create(data, **kwargs)
 
-        workspaces = list(Workspace.query.filter(
-            Workspace.name.in_(workspace_names)
-        ))
+        workspaces = list(
+            self._get_workspace(workspace_name)
+            for workspace_name in workspace_names
+        )
 
         agent.workspaces = workspaces
 

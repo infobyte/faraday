@@ -46,9 +46,9 @@ def get_raw_agent(name="My agent", active=None, token=None, workspaces=None):
         raw_agent["active"] = active
     if token:
         raw_agent["token"] = token
-    if workspaces:
+    if workspaces is not None:
         raw_agent["workspaces"] = [
-            {"name": workspace.name} for workspace in workspaces
+            workspace.name for workspace in workspaces
         ]
     return raw_agent
 
@@ -193,6 +193,24 @@ class TestAgentCreationAPI():
         # /v2/agent_registration/
         res = test_client.post('/v2/agent_registration/', data=raw_data)
         assert res.status_code == 400
+
+    @mock.patch('faraday.server.api.modules.agent.faraday_server')
+    def test_create_agent_inexistent_workspaces(self, faraday_server_config,
+                                                test_client, session):
+        workspace = WorkspaceFactory.create()
+        session.add(workspace)
+        session.commit()
+        faraday_server_config.agent_token = 'sarasa'
+        logout(test_client, [302])
+        raw_data = get_raw_agent(
+            token="sarasa",
+            name="test agent",
+            workspaces=[]
+        )
+        raw_data["workspaces"] = ["donotexist"]
+        # /v2/agent_registration/
+        res = test_client.post('/v2/agent_registration/', data=raw_data)
+        assert res.status_code == 404
 
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
     def test_create_agent_workspaces_not_set(self, faraday_server_config,

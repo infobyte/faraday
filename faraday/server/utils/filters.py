@@ -108,6 +108,8 @@ class FlaskRestlessFilterSchema(Schema):
                 raise ValidationError('Can\'t perfom ilike/like against numbers')
             if isinstance(column.type, JSONType):
                 raise ValidationError('Can\'t perfom ilike/like against JSON Type column')
+            if isinstance(field, fields.Boolean):
+                raise ValidationError('Can\'t perfom ilike/like against boolean type column')
 
         valid_date = False
         try:

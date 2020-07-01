@@ -7,6 +7,7 @@ See the file 'doc/LICENSE' for the license information
 import typing
 import numbers
 import datetime
+from distutils.util import strtobool
 
 from dateutil.parser import parse
 from sqlalchemy import inspect
@@ -17,6 +18,7 @@ from marshmallow_sqlalchemy.schema import ModelConverter
 
 from faraday.server.models import VulnerabilityWeb, Host, Service
 from faraday.server.utils.search import OPERATORS
+from faraday.server.fields import JSONType
 
 WHITE_LIST = [
     'tags__name',
@@ -75,6 +77,8 @@ class FlaskRestlessFilterSchema(Schema):
         return data
 
     def _validate_filter_types(self, filter_):
+        if isinstance(filter_['val'], str) and '\x00' in filter_['val']:
+            raise ValidationError('Value can\'t containt null chars')
         converter = ModelConverter()
         column_name = filter_['name']
         if '__' in column_name:
@@ -88,6 +92,8 @@ class FlaskRestlessFilterSchema(Schema):
         if not getattr(column, 'type', None) and filter_['op'].lower():
             if filter_['op'].lower() in ['eq', '==']:
                 if filter_['name'] in ['creator', 'hostnames']:
+                    if not isinstance(filter_['val'], str):
+                        raise ValidationError('Relationship attribute to compare to must be a string')
                     return
             else:
                 raise ValidationError('Field does not support in operator')
@@ -96,8 +102,12 @@ class FlaskRestlessFilterSchema(Schema):
             if not isinstance(filter_['val'], Iterable):
                 filter_['val'] = [filter_['val']]
 
-        if filter_['op'].lower() in ['ilike', 'like'] and isinstance(filter_['val'], numbers.Number):
-            raise ValidationError('Can\'t perfom ilike/like against numbers')
+        field = converter.column2field(column)
+        if filter_['op'].lower() in ['ilike', 'like']:
+            if isinstance(filter_['val'], numbers.Number) or isinstance(field, fields.Number):
+                raise ValidationError('Can\'t perfom ilike/like against numbers')
+            if isinstance(column.type, JSONType):
+                raise ValidationError('Can\'t perfom ilike/like against JSON Type column')
 
         valid_date = False
         try:
@@ -105,11 +115,20 @@ class FlaskRestlessFilterSchema(Schema):
         except (ParserError, TypeError):
             valid_date = False
 
-        if filter_['op'].lower() in ['<', '>']:
-           if not valid_date and not isinstance(filter_['val'], numbers.Number):
+
+        if filter_['op'].lower() in ['<', '>', 'ge', 'geq']:
+            if not valid_date and not isinstance(filter_['val'], numbers.Number):
                 raise ValidationError('Operators <,> can be used only with numbers or dates')
 
-        field = converter.column2field(column)
+            if not isinstance(field, (fields.Date, fields.DateTime, fields.Number)):
+                raise ValidationError('Using comparison operator against a field that does not supports it')
+
+        if isinstance(field, fields.Boolean) and not isinstance(filter_['val'], bool):
+            try:
+                strtobool(filter_['val'])
+            except (AttributeError, ValueError):
+                raise ValidationError('Can\'t compare Boolean field against a non boolean value. Please use True or False')
+
         if isinstance(field, (fields.Date, fields.DateTime)) and valid_date:
             return
 

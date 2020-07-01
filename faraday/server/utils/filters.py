@@ -14,7 +14,7 @@ from sqlalchemy import inspect
 from collections.abc import Iterable
 from dateutil.parser._parser import ParserError
 from marshmallow import Schema, fields, ValidationError, types, validate
-from marshmallow_sqlalchemy.schema import ModelConverter
+from marshmallow_sqlalchemy.convert import ModelConverter
 
 from faraday.server.models import VulnerabilityWeb, Host, Service
 from faraday.server.utils.search import OPERATORS

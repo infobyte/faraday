@@ -284,6 +284,7 @@ class AgentWorkspacedView(ReadOnlyMultiWorkspacedView):
             abort(400, "Only application/json is a valid content-type")
         data = self._parse_data(AgentRunSchema(unknown=EXCLUDE), request)
         agent = self._get_object(agent_id, workspace_name)
+        workspace = self._get_workspace(workspace_name)
         executor_data = data['executorData']
 
         try:
@@ -295,7 +296,7 @@ class AgentWorkspacedView(ReadOnlyMultiWorkspacedView):
                 successful=None,
                 message='',
                 executor=executor,
-                workspace_id=executor.agent.workspace_id,
+                workspace_id=workspace.id,
                 parameters_data=executor_data["args"]
             )
             db.session.add(agent_execution)

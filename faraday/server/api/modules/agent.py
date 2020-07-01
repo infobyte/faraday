@@ -17,7 +17,7 @@ from faraday.server.api.base import (
     ReadOnlyView,
     CreateMixin,
     GenericView,
-    ReadOnlyWorkspacedView, ReadOnlyMultiWorkspacedView
+    ReadOnlyMultiWorkspacedView
 )
 from faraday.server.api.modules.workspaces import WorkspaceSchema
 from faraday.server.models import Agent, Executor, AgentExecution, db, \
@@ -95,7 +95,7 @@ class AgentCreationSchema(Schema):
             'workspaces',
         )
 
-class AgentCreationView(GenericView, CreateMixin):
+class AgentCreationView(CreateMixin, GenericView):
     """
     ---
       tags: ["Agent"]

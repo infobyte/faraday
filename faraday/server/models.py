@@ -36,7 +36,7 @@ from sqlalchemy.orm import (
 )
 from sqlalchemy.schema import DDL
 from sqlalchemy.ext.associationproxy import association_proxy, _AssociationSet
-from sqlalchemy.ext.declarative import declared_attr, declarative_base
+from sqlalchemy.ext.declarative import declared_attr
 from flask_sqlalchemy import (
     SQLAlchemy as OriginalSQLAlchemy,
     _EngineConnector

@@ -5,10 +5,17 @@ See the file 'doc/LICENSE' for the license information
 
 """
 import typing
-from sqlalchemy import inspect
-from marshmallow import Schema, fields, ValidationError, types, validate
+import numbers
+import datetime
 
-from faraday.server.models import VulnerabilityWeb
+from dateutil.parser import parse
+from sqlalchemy import inspect
+from collections.abc import Iterable
+from dateutil.parser._parser import ParserError
+from marshmallow import Schema, fields, ValidationError, types, validate
+from marshmallow_sqlalchemy.schema import ModelConverter
+
+from faraday.server.models import VulnerabilityWeb, Host, Service
 from faraday.server.utils.search import OPERATORS
 
 WHITE_LIST = [
@@ -43,6 +50,73 @@ class FlaskRestlessFilterSchema(Schema):
     name = fields.String(validate=validate.OneOf(VULNERABILITY_FIELDS), required=True)
     val = fields.Raw(required=True)
     op = fields.String(validate=validate.OneOf(list(OPERATORS.keys())), required=True)
+    valid_relationship = {
+        'host': Host,
+        'service': Service
+    }
+
+    def load(
+        self,
+        data: typing.Union[
+            typing.Mapping[str, typing.Any],
+            typing.Iterable[typing.Mapping[str, typing.Any]],
+        ],
+        *,
+        many: bool = None,
+        partial: typing.Union[bool, types.StrSequenceOrSet] = None,
+        unknown: str = None
+    ):
+        data = super().load(data, many=many, partial=partial, unknown=unknown)
+        if not isinstance(data, list):
+            self._validate_filter_types(data)
+        else:
+            for filter_ in data:
+                self._validate_filter_types(filter_)
+        return data
+
+    def _validate_filter_types(self, filter_):
+        converter = ModelConverter()
+        column_name = filter_['name']
+        if '__' in column_name:
+            model_name, column_name = column_name.split('__')
+            model = self.valid_relationship.get(model_name, None)
+            if not model:
+                raise ValidationError('Invalid Relationship')
+            column = getattr(model, column_name)
+        else:
+            column = getattr(VulnerabilityWeb, column_name)
+        if not getattr(column, 'type', None) and filter_['op'].lower():
+            if filter_['op'].lower() in ['eq', '==']:
+                if filter_['name'] in ['creator', 'hostnames']:
+                    return
+            else:
+                raise ValidationError('Field does not support in operator')
+
+        if filter_['op'].lower() in ['in', 'not_in']:
+            if not isinstance(filter_['val'], Iterable):
+                filter_['val'] = [filter_['val']]
+
+        if filter_['op'].lower() in ['ilike', 'like'] and isinstance(filter_['val'], numbers.Number):
+            raise ValidationError('Can\'t perfom ilike/like against numbers')
+
+        valid_date = False
+        try:
+            valid_date = isinstance(parse(filter_['val']), datetime.datetime)
+        except (ParserError, TypeError):
+            valid_date = False
+
+        if filter_['op'].lower() in ['<', '>']:
+           if not valid_date and not isinstance(filter_['val'], numbers.Number):
+                raise ValidationError('Operators <,> can be used only with numbers or dates')
+
+        field = converter.column2field(column)
+        if isinstance(field, (fields.Date, fields.DateTime)) and valid_date:
+            return
+
+        try:
+            field.deserialize(filter_['val'])
+        except TypeError:
+            raise ValidationError('Invalid value type')
 
 
 class FlaskRestlessOperator(Schema):

@@ -75,7 +75,6 @@ def _sub_operator(model, argument, fieldname):
         submodel = get_related_association_proxy_model(model)
     else:  # TODO what to do here?
         logger.warning('Case not handled {0} {1} {2}', model, argument, fieldname)
-        pass
     if isinstance(argument, dict):
         fieldname = argument['name']
         operator = argument['op']
@@ -527,7 +526,16 @@ class QueryBuilder:
         create_filt = QueryBuilder._create_filter
         # This function call may raise an exception.
         valid_model_fields = [str(algo).split('.')[1] for algo in sqlalchemy_inspect(model).attrs]
-        filters = [create_filt(model, filt) for filt in search_params.filters if not getattr(filt, 'fieldname', False) or filt.fieldname in valid_model_fields]
+
+        filters = []
+        for filt in search_params.filters:
+            if not getattr(filt, 'fieldname', False) or filt.fieldname in valid_model_fields:
+                try:
+                    filters.append(create_filt(model, filt))
+                except AttributeError:
+                    # Can't create the filter since the model or submodel does not have the attribute (usually mapper)
+                    pass
+
         # Multiple filter criteria at the top level of the provided search
         # parameters are interpreted as a conjunction (AND).
         query = query.filter(*filters)

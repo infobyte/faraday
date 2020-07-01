@@ -301,6 +301,25 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
         assert workspace in workspaces
         assert other_workspace in workspaces
 
+    def test_update_agent_add_a_inexistent_workspace(self, test_client,
+                                                     session):
+        workspace = WorkspaceFactory.create()
+        session.add(workspace)
+        other_workspace = WorkspaceFactory.create()
+        session.add(other_workspace)
+        agent = AgentFactory.create(workspaces=[workspace],
+                                    active=True)
+        session.commit()
+        raw_agent = self.create_raw_agent(
+            workspaces=[workspace, other_workspace]
+        )
+        raw_agent["workspaces"] = ["donotexist"]
+        res = test_client.put(self.url(agent.id), data=raw_agent)
+        assert res.status_code == 404
+        workspaces = Agent.query.get(agent.id).workspaces
+        assert len(workspaces) == 1
+        assert workspace in workspaces
+
     def test_update_agent_delete_a_workspace(self, test_client, session):
         workspace = WorkspaceFactory.create()
         session.add(workspace)

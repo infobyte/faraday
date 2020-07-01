@@ -440,6 +440,21 @@ class AgentFactory(FaradayFactory):
     name = FuzzyText()
     active = True
 
+    @factory.post_generation
+    def workspaces(self, create, extracted, **kwargs):
+        if not create:
+            # Simple build, do nothing.
+            return
+
+        if extracted:
+            # A list of groups were passed in, use them
+            for workspace in extracted:
+                self.workspaces.add(workspace)
+        else:
+            self.workspaces.append(WorkspaceFactory())
+            self.workspaces.append(WorkspaceFactory())
+
+
     class Meta:
         model = Agent
         sqlalchemy_session = db.session

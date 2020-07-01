@@ -118,7 +118,7 @@ class FlaskRestlessFilterSchema(Schema):
             valid_date = False
 
 
-        if filter_['op'].lower() in ['<', '>', 'ge', 'geq']:
+        if filter_['op'].lower() in ['<', '>', 'ge', 'geq', 'lt']:
             if not valid_date and not isinstance(filter_['val'], numbers.Number):
                 raise ValidationError('Operators <,> can be used only with numbers or dates')
 

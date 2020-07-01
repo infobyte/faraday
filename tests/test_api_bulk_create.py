@@ -660,16 +660,20 @@ def test_bulk_create_endpoint_with_agent_token_without_execution_id(session, age
         assert count(Command, workspace) == 0
 
 
-def test_bulk_create_endpoint_with_agent_token(session, agent_execution, test_client, workspace_factory,
+def test_bulk_create_endpoint_with_agent_token(session, agent_execution,
+                                               test_client,
                                                agent_execution_factory):
     agent = agent_execution.executor.agent
-    agent_execution.executor.parameters_metadata = {}
-    agent_execution.parameters_data = {}
     extra_agent_execution = agent_execution_factory.create()
-    session.add(agent_execution)
-    session.add(extra_agent_execution)
-    session.commit()
+
     for workspace in agent.workspaces:
+        agent_execution.executor.parameters_metadata = {}
+        agent_execution.parameters_data = {}
+        agent_execution.workspace = workspace
+        session.add(agent_execution)
+        session.add(extra_agent_execution)
+        session.commit()
+
         assert count(Host, workspace) == 0
         url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
         res = test_client.post(
@@ -694,7 +698,7 @@ def test_bulk_create_endpoint_with_agent_token(session, agent_execution, test_cl
             data=dict(hosts=[host_data], execution_id=agent_execution.id),
             headers=[("authorization", "agent {}".format(agent.token))]
         )
-        assert res.status_code == 201
+        assert res.status_code == 201, res.json
         assert count(Host, workspace) == 1
         host = Host.query.filter(Host.workspace == workspace).one()
         assert host.creator_id is None
@@ -711,6 +715,9 @@ def test_bulk_create_endpoint_with_agent_token_with_param(session, agent_executi
     session.add(agent_execution)
     session.commit()
     for workspace in agent.workspaces:
+        agent_execution.workspace = workspace
+        session.add(agent_execution)
+        session.commit()
         assert count(Host, workspace) == 0
         url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
         res = test_client.post(

@@ -449,7 +449,7 @@ class AgentFactory(FaradayFactory):
         if extracted:
             # A list of groups were passed in, use them
             for workspace in extracted:
-                self.workspaces.add(workspace)
+                self.workspaces.append(workspace)
         else:
             self.workspaces.append(WorkspaceFactory())
             self.workspaces.append(WorkspaceFactory())
@@ -478,7 +478,9 @@ class AgentExecutionFactory(WorkspaceObjectFactory):
     parameters_data = factory.LazyAttribute(
         lambda _: {"param_name": "param_value"}
     )
-    workspace = factory.SelfAttribute('executor.agent.workspace')
+    workspace = factory.LazyAttribute(
+        lambda agent_execution: agent_execution.executor.agent.workspaces[0]
+    )
 
     class Meta:
         model = AgentExecution

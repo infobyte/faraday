@@ -75,7 +75,7 @@ class AgentWorkspacedSchema(AutoSchema):
 
 
 class AgentNotWorkspacedSchema(AgentWorkspacedSchema):
-    workspaces = fields.Nested(WorkspaceSchema(), dump_only=True, many=True)
+    workspaces = fields.Pluck(WorkspaceSchema, "name", many=True, required=True)
 
     class Meta(AgentWorkspacedSchema.Meta):
         fields = AgentWorkspacedSchema.Meta.fields + ('workspaces',)
@@ -119,9 +119,9 @@ class AgentCreationView(GenericView, CreateMixin):
             ws = Workspace.query.filter_by(name=workspace_name).one()
             if not ws.active:
                 flask.abort(403, "Disabled workspace: %s" % workspace_name)
+            return ws
         except NoResultFound:
             flask.abort(404, "No such workspace: %s" % workspace_name)
-        return ws
 
     def _perform_create(self,  data, **kwargs):
         token = data.pop('token')
@@ -136,11 +136,14 @@ class AgentCreationView(GenericView, CreateMixin):
         if len(workspace_names) == 0:
             abort(
                 make_response(
-                    jsonify(messages={
-                        "json": {
-                            "workspaces": "Must include one workspace at least"
+                    jsonify(
+                        messages={
+                            "json": {
+                                "workspaces":
+                                    "Must include one workspace at least"
+                            }
                         }
-                    }),
+                    ),
                     400
                 )
             )
@@ -148,13 +151,13 @@ class AgentCreationView(GenericView, CreateMixin):
             dict_["name"] for dict_ in workspace_names
         ]
 
-        agent = super(AgentCreationView, self)._perform_create(data, **kwargs)
 
         workspaces = list(
             self._get_workspace(workspace_name)
             for workspace_name in workspace_names
         )
 
+        agent = super(AgentCreationView, self)._perform_create(data, **kwargs)
         agent.workspaces = workspaces
 
         db.session.add(agent)
@@ -182,6 +185,56 @@ class AgentView(UpdateMixin,
     model_class = Agent
     schema_class = AgentNotWorkspacedSchema
     get_joinedloads = [Agent.creator, Agent.executors, Agent.workspaces]
+
+    def _get_workspace(self, workspace_name):
+        try:
+            ws = Workspace.query.filter_by(name=workspace_name).one()
+            if not ws.active:
+                flask.abort(403, "Disabled workspace: %s" % workspace_name)
+            return ws
+        except NoResultFound:
+            flask.abort(404, "No such workspace: %s" % workspace_name)
+
+    def _update_object(self, obj, data):
+        """Perform changes in the selected object
+
+        It modifies the attributes of the SQLAlchemy model to match
+        the data passed by the Marshmallow schema.
+
+        It is common to overwrite this method to do something strange
+        with some specific field. Typically the new method should call
+        this one to handle the update of the rest of the fields.
+        """
+        workspace_names = data.pop('workspaces')
+
+        if len(workspace_names) == 0:
+            abort(
+                make_response(
+                    jsonify(
+                        messages={
+                            "json": {
+                                "workspaces":
+                                    "Must include one workspace at least"
+                            }
+                        }
+                    ),
+                    400
+                )
+            )
+
+        workspace_names = [
+            dict_["name"] for dict_ in workspace_names
+        ]
+
+        workspaces = list(
+            self._get_workspace(workspace_name)
+            for workspace_name in workspace_names
+        )
+
+        super()._update_object(obj, data)
+        obj.workspaces = workspaces
+
+        return obj
 
 
 class AgentWorkspacedView(ReadOnlyMultiWorkspacedView):

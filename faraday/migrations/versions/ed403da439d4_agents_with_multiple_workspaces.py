@@ -49,7 +49,7 @@ def downgrade():
         'workspace', ['workspace_id'], ['id']
     )
 
-    # MIGRATE DATA
+    # MIGRATE DATA (PICK THE WORKSPACE OF LOWEST ID)
 
     conn = op.get_bind()
     conn.execute("""
@@ -58,10 +58,34 @@ def downgrade():
     FROM agent as a
          INNER JOIN association_workspace_and_agents_table wa 
              ON wa.agent_id = a.id
-    WHERE 
-      agent.id=a.id;
+    WHERE agent.id=a.id
+      AND NOT EXISTS (
+        SELECT *
+        FROM agent as aa
+          INNER JOIN association_workspace_and_agents_table waa 
+          ON waa.agent_id = aa.id
+        WHERE aa.id = a.id
+        AND waa.workspace_id > wa.workspace_id
+        );
     """)
 
+    # DROP EXECUTORS FROM AGENTS WITHOUT WORKSPACE
+    conn.execute("""
+    DELETE FROM executor
+    WHERE agent_id IN (
+        SELECT id 
+        FROM agent
+        WHERE workspace_id IS NULL 
+    )
+    """)
+
+    # DROP AGENTS WITHOUT WORKSPACE
+    conn.execute("""
+    DELETE FROM agent
+    WHERE workspace_id IS NULL
+    """)
+
+    # SET WORKSPACE NOT NULLABLE
     op.alter_column(
         'agent',
         'workspace_id',

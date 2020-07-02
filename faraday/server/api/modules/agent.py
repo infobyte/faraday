@@ -305,6 +305,7 @@ class AgentWorkspacedView(ReadOnlyMultiWorkspacedView):
             changes_queue.put({
                 'execution_id': agent_execution.id,
                 'agent_id': agent.id,
+                'workspace': agent_execution.workspace,
                 'action': 'RUN',
                 "executor": executor_data.get('executor'),
                 "args": executor_data.get('args')

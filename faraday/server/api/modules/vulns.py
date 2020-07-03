@@ -671,6 +671,23 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('/filter')
     def filter(self, workspace_name):
+        """
+        ---
+            tags: ["vulnerability", "filter"]
+            summary: Filters, sorts and groups vulnerabilities using a json with parameters.
+            parameters:
+            - q: recursive json with filters that supports operators. The json could also contain sort and group
+
+            responses:
+              200:
+                description: return filtered, sorted and grouped vulnerabilities
+                content:
+                  application/json:
+                    schema: FlaskRestlessSchema
+              400:
+                description: invalid q was sent to the server
+
+        """
         filters = request.args.get('q')
         return self._envelope_list(self._filter(filters, workspace_name))
 

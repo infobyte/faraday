@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('indexCtrl', 
-        ['$scope', '$uibModal', 'indexFact',
-        function($scope, $uibModal, indexFact) {
+        ['$scope', '$uibModal', 'indexFact', 'BASEURL',
+        function($scope, $uibModal, indexFact, BASEURL) {
         	indexFact.getConf().then(function(conf) {
                 $scope.version = conf.data.ver;
 
@@ -18,6 +18,7 @@ angular.module('faradayApp')
         	});
 
             $scope.about = function() {
+                $scope.base_url = BASEURL;
                 var modal = $uibModal.open({
                     templateUrl: 'scripts/commons/partials/modalAbout.html',
                     scope: $scope

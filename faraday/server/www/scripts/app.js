@@ -34,11 +34,21 @@ var faradayApp = angular.module('faradayApp', [
                                                     'ui'
                                              ])
     .constant("BASEURL", (function() {
-        var url = window.location.origin + "/";
+        if (window.location.pathname === "/"){
+            var url = window.location.origin + "/";
+        } else {
+            var client_url_id = window.location.pathname;
+            var url = window.location.origin + client_url_id;
+        }
         return url;
     })())
     .constant("APIURL", (function() {
-        var url = window.location.origin + "/_api/v2/";
+        if (window.location.pathname === "/"){
+            var url = window.location.origin + "/_api/v2/";
+        } else {
+            var client_url_id = window.location.pathname;
+            var url = window.location.origin + client_url_id + "_api/v2/";
+        }
         return url;
     })())
     .constant("EASEOFRESOLUTION", (function() {
@@ -91,8 +101,8 @@ var faradayApp = angular.module('faradayApp', [
         return statuses;
     })());
 
-faradayApp.config(['$routeProvider', '$uibTooltipProvider',
-                   function($routeProvider, $uibTooltipProvider) {
+faradayApp.config(['$routeProvider', '$uibTooltipProvider', 'BASEURL',
+                   function($routeProvider, $uibTooltipProvider, BASEURL) {
     $uibTooltipProvider.options({
         appendToBody: true
     });

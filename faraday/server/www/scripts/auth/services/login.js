@@ -87,10 +87,8 @@ angular.module('faradayApp')
                 $.ajax({
                     url: BASEURL + '_api/logout',
                     type: 'GET',
-                    success: callback
-                })
-                .fail(function(){
-                    deferred.reject();
+                    success: callback,
+                    error: callback
                 });
                 return deferred.promise;
             }

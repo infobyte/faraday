@@ -4,6 +4,7 @@ Copyright (C) 2020  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 """
+import re
 import typing
 import numbers
 import datetime
@@ -125,6 +126,21 @@ class FlaskRestlessFilterSchema(Schema):
             valid_date = isinstance(parse(filter_['val']), datetime.datetime)
         except (ParserError, TypeError):
             valid_date = False
+
+        if valid_date and isinstance(field, fields.DateTime):
+            if re.match(r'^\d{4}-\d{1,2}-\d{1,2}$', filter_['val']):
+                # If que have a valid date (not datetime)
+                # then we must search by range to avoid matching with datetime
+                start = parse(filter_['val'])
+                end = (start + datetime.timedelta(hours=23, minutes=59, seconds=59)).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
+                start = start.strftime('%Y-%m-%dT%H:%M:%S.%f%z')
+                # here we transform the original filter and we add a range
+                # we could try to change search.py generated query, however changing the query will use
+                # postgresql syntax only (type cast)
+                return [
+                        {'name': filter_['name'], 'op': '>=', 'val': start},
+                        {'name': filter_['name'], 'op': '<=', 'val': end},
+                ]
 
 
         if filter_['op'].lower() in ['<', '>', 'ge', 'geq', 'lt']:

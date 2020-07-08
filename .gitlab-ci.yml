@@ -22,6 +22,9 @@ cache:
 before_script:
     - mkdir -pv $APT_CACHE_DIR
 
+include:
+  - local: .gitlab/ci/.storage-gitlab-ci.yml
+
 stages:
     - pre_testing
     - testing
@@ -29,6 +32,7 @@ stages:
     - build_faraday
     - build
     - distro_testing
+    - deploy
 
 services:
     - postgres:latest

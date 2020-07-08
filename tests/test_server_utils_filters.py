@@ -37,7 +37,7 @@ class TestFilters:
 
 
     def test_FlaskRestlessSchema_(self):
-        test_filter = {"name": "severity", "op": "eq", "val": "low"}
+        test_filter = [{"name": "severity", "op": "eq", "val": "low"}]
         res = FlaskRestlessSchema().load(test_filter)
         assert res == test_filter
 
@@ -69,7 +69,7 @@ class TestFilters:
         assert FlaskRestlessSchema().load(_filter) == _filter
 
     def test_filters_fail(self):
-        _filter = {"name": "host_id", "op": "eq", "val": "1"}
+        _filter = [{"name": "host_id", "op": "eq", "val": "1"}]
         assert FlaskRestlessSchema().load(_filter) == _filter
 
     def test_nested_filters(self):
@@ -130,7 +130,7 @@ class TestFilters:
         assert FlaskRestlessSchema().load(_filter) == _filter
 
     def test_find_item_function(self):
-        _filter = {"name": "severity", "op": "eq", "val": "low"}
+        _filter = [{"name": "severity", "op": "eq", "val": "low"}]
         assert FlaskRestlessSchema().load(_filter) == _filter
 
     def test_nested_find_item_function(self):

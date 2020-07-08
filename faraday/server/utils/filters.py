@@ -70,11 +70,12 @@ class FlaskRestlessFilterSchema(Schema):
     ):
         data = super().load(data, many=many, partial=partial, unknown=unknown)
         if not isinstance(data, list):
-            self._validate_filter_types(data)
+            res = self._validate_filter_types(data)
         else:
+            res = []
             for filter_ in data:
-                self._validate_filter_types(filter_)
-        return data
+                res += self._validate_filter_types(filter_)
+        return res
 
     def _validate_filter_types(self, filter_):
         if isinstance(filter_['val'], str) and '\x00' in filter_['val']:
@@ -82,6 +83,7 @@ class FlaskRestlessFilterSchema(Schema):
         converter = ModelConverter()
         column_name = filter_['name']
         if '__' in column_name:
+            # relation attribute search, example service__port:80
             model_name, column_name = column_name.split('__')
             model = self.valid_relationship.get(model_name, None)
             if not model:
@@ -89,21 +91,26 @@ class FlaskRestlessFilterSchema(Schema):
             column = getattr(model, column_name)
         else:
             column = getattr(VulnerabilityWeb, column_name)
+
+
         if not getattr(column, 'type', None) and filter_['op'].lower():
             if filter_['op'].lower() in ['eq', '==']:
                 if filter_['name'] in ['creator', 'hostnames']:
+                    # make sure that creator and hostname are compared against a string
                     if not isinstance(filter_['val'], str):
                         raise ValidationError('Relationship attribute to compare to must be a string')
-                    return
+                    return [filter_]
             else:
                 raise ValidationError('Field does not support in operator')
 
         if filter_['op'].lower() in ['in', 'not_in']:
+            # in and not_in must be used with Iterable
             if not isinstance(filter_['val'], Iterable):
                 filter_['val'] = [filter_['val']]
 
         field = converter.column2field(column)
         if filter_['op'].lower() in ['ilike', 'like']:
+            # like muse be used with string
             if isinstance(filter_['val'], numbers.Number) or isinstance(field, fields.Number):
                 raise ValidationError('Can\'t perfom ilike/like against numbers')
             if isinstance(column.type, JSONType):
@@ -111,6 +118,8 @@ class FlaskRestlessFilterSchema(Schema):
             if isinstance(field, fields.Boolean):
                 raise ValidationError('Can\'t perfom ilike/like against boolean type column')
 
+        # somes field are date/datime.
+        # we use dateutil parse to validate the string value which contains a date or datetime
         valid_date = False
         try:
             valid_date = isinstance(parse(filter_['val']), datetime.datetime)
@@ -119,12 +128,14 @@ class FlaskRestlessFilterSchema(Schema):
 
 
         if filter_['op'].lower() in ['<', '>', 'ge', 'geq', 'lt']:
+            # we check that operators can be only used against date or numbers
             if not valid_date and not isinstance(filter_['val'], numbers.Number):
                 raise ValidationError('Operators <,> can be used only with numbers or dates')
 
             if not isinstance(field, (fields.Date, fields.DateTime, fields.Number)):
                 raise ValidationError('Using comparison operator against a field that does not supports it')
 
+        # if the field is boolean, the value must be valid otherwise postgresql will raise an error
         if isinstance(field, fields.Boolean) and not isinstance(filter_['val'], bool):
             try:
                 strtobool(filter_['val'])
@@ -132,12 +143,16 @@ class FlaskRestlessFilterSchema(Schema):
                 raise ValidationError('Can\'t compare Boolean field against a non boolean value. Please use True or False')
 
         if isinstance(field, (fields.Date, fields.DateTime)) and valid_date:
-            return
+            return [filter_]
 
+        # we try to deserialize the value, any error means that the value was not valid for the field typ3
+        # previous checks were added since postgresql is very strict with operators.
         try:
             field.deserialize(filter_['val'])
         except TypeError:
             raise ValidationError('Invalid value type')
+
+        return [filter_]
 
 
 class FlaskRestlessOperator(Schema):
@@ -161,8 +176,10 @@ class FlaskRestlessOperator(Schema):
         res = []
         # the next iteration is required for allow polymorphism in the list of filters
         for search_filter in data:
+            # we try to validate against filter schema since the list could contain
+            # operatores mixed with filters in the list
             try:
-                res.append(FlaskRestlessFilterSchema(many=False).load(search_filter))
+                res += FlaskRestlessFilterSchema(many=False).load(search_filter)
             except ValidationError:
                 res.append(self._do_load(
                     search_filter, many=False, partial=partial, unknown=unknown, postprocess=True

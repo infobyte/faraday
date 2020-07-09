@@ -6,7 +6,7 @@ PINK_COMMIT=da7a869e186f61f1b138392734be4eae62cb2e31  # Always redirect to login
 BLACK_COMMIT=ec3dcfbe8955d41125944e82aa084b441c0b9e77  # Fix msg in webshell
 PINK_FILE=faraday/server/api/modules/reports.py
 BLACK_FILE=faraday/server/api/modules/jira.py
-FILES=$*
+FILES=$(git diff --cached --name-status | awk '$1 != "D" { print $2 }')
 
 if [ $CI_COMMIT_REF_NAME ]; then
    BRANCH_NAME=$CI_COMMIT_REF_NAME

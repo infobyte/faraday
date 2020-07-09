@@ -1,0 +1,17 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.1.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-json
+    -   id: check-yaml
+    -   id: debug-statements
+-   repo: local
+    hooks:
+    -   id: sanity-check
+        name: sanity-check
+        entry: bash scripts/sanity_test.sh
+        language: system
+        pass_filenames: false
+        verbose: true

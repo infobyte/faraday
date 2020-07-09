@@ -13,5 +13,4 @@ repos:
         name: sanity-check
         entry: bash scripts/sanity_test.sh
         language: system
-        pass_filenames: false
         verbose: true

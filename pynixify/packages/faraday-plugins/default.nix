@@ -6,11 +6,11 @@
 , html2text, lib, lxml, pytz, requests, simplejson }:
 buildPythonPackage rec {
   pname = "faraday-plugins";
-  version = "1.2.1";
+  version = "1.2.3";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "0mpak420k5phl0c32vcgi017r6snmm4pp3y33xzw4jivkkfji5vk";
+    sha256 = "08h40pix7jfqjz59d7g01scp5sjcwsk0jdlag1gj61mc51rjlzw5";
   };
 
   # TODO FIXME

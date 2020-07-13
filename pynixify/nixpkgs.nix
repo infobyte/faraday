@@ -18,8 +18,8 @@ let
 
     builtins.fetchTarball {
       url =
-        "https://github.com/infobyte/nixpkgs/archive/140fa98c5d0d8bd08c98d26750890d4eeaf4e098.tar.gz";
-      sha256 = "0p57scj756y2v5p4p83lxrp5ch3qbv1bp0q8s0afff1fhcnp21vw";
+        "https://github.com/infobyte/nixpkgs/archive/08171b150735d24a7c47673ee3d0f364fd723360.tar.gz";
+      sha256 = "0hv1sjwqsz44p8mpxwyjhy3n3791302gz1iv0ms0mbs19jpvf5hh";
     };
 
   packageOverrides = self: super: {

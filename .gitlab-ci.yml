@@ -59,6 +59,20 @@ merge_conflict_check:
           when: on_success
         - when: never
 
+bandit:
+    tags:
+        - faradaytests
+    image: python:3
+    stage: pre_testing
+    allow_failure:
+    script:
+      - pip3 install virtualenv
+      - virtualenv -p python3 faraday_venv
+      - source faraday_venv/bin/activate
+      - pip3 install bandit
+      - "bandit -r ${CI_PROJECT_DIR}/faraday --format custom --skip B101 --msg-template \
+          \"{abspath}:{line}: {test_id}[bandit]: {severity}: {msg}\""
+
 build_and_push_to_cachix:
     tags:
         - faradaytests

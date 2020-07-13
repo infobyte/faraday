@@ -17,7 +17,7 @@ from alembic.config import Config
 from alembic import command
 from random import SystemRandom
 from tempfile import TemporaryFile
-from subprocess import Popen
+from subprocess import Popen # nosec
 
 import sqlalchemy
 from sqlalchemy import create_engine
@@ -193,7 +193,7 @@ class InitDB():
             postgres_command = ['psql', 'postgres']
         password = self.generate_random_pw(25)
         command = postgres_command + [ '-c', 'CREATE ROLE {0} WITH LOGIN PASSWORD \'{1}\';'.format(username, password)]
-        p = Popen(command, stderr=psql_log_file, stdout=psql_log_file)
+        p = Popen(command, stderr=psql_log_file, stdout=psql_log_file) # nosec
         p.wait()
         psql_log_file.seek(0)
         output = psql_log_file.read()
@@ -245,7 +245,7 @@ class InitDB():
 
         print('Creating database {0}'.format(database_name))
         command = postgres_command + ['createdb', '-E', 'utf8', '-O', username, database_name]
-        p = Popen(command, stderr=psql_log_file, stdout=psql_log_file, cwd='/tmp')
+        p = Popen(command, stderr=psql_log_file, stdout=psql_log_file, cwd='/tmp') # nosec
         p.wait()
         return_code = p.returncode
         psql_log_file.seek(0)

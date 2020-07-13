@@ -23,7 +23,6 @@ from faraday.server.app import create_app
 from faraday.server.models import db
 from tests import factories
 
-from faraday.server.utils.py3 import BytesJSONEncoder
 
 TEST_BASE = os.path.abspath(os.path.dirname(__file__))
 TEST_DATA = os.path.join(TEST_BASE, 'data')
@@ -54,7 +53,7 @@ class CustomClient(FlaskClient):
     def open(self, *args, **kwargs):
         if kwargs.pop('use_json_data', True) and 'data' in kwargs:
             # JSON-encode data by default
-            kwargs['data'] = json.dumps(kwargs['data'], cls=BytesJSONEncoder)
+            kwargs['data'] = json.dumps(kwargs['data'])
             kwargs['headers'] = kwargs.get('headers', []) + [
                 ('Content-Type', 'application/json'),
             ]

@@ -80,7 +80,7 @@ class EvidenceSchema(AutoSchema):
 
     def get_data(self, file_obj):
         depot = DepotManager.get()
-        return b64encode(depot.get(file_obj.content.get('file_id')).read())
+        return b64encode(depot.get(file_obj.content.get('file_id')).read()).decode()
 
 
 class ImpactSchema(Schema):

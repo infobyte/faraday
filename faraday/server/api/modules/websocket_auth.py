@@ -42,7 +42,7 @@ def generate_agent_websocket_token(agent):
     signer = TimestampSigner(app.config['SECRET_KEY'], salt="websocket_agent")
     assert agent.id is not None
     token = signer.sign(str(agent.id))
-    return token
+    return token.decode()
 
 
 def decode_agent_websocket_token(token):

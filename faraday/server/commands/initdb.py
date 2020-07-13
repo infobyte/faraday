@@ -172,7 +172,7 @@ class InitDB():
             current_psql_output_file.seek(0)
             print('ERROR: ' + psql_output)
 
-        if process_status is not 0:
+        if process_status != 0:
             current_psql_output_file.close() # delete temp file
             sys.exit(process_status)
 

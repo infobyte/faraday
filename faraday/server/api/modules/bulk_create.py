@@ -2,6 +2,7 @@ import logging
 from datetime import datetime, timedelta
 import flask
 import sqlalchemy
+from sqlalchemy.orm.exc import NoResultFound
 from marshmallow import (
     fields,
     post_load,
@@ -20,7 +21,7 @@ from faraday.server.models import (
     Service,
     Vulnerability,
     VulnerabilityWeb,
-)
+    AgentExecution)
 from faraday.server.utils.database import (
     get_conflict_object,
     is_unique_constraint_violation,
@@ -32,6 +33,7 @@ from faraday.server.api.modules import (
 )
 from faraday.server.api.base import AutoSchema, GenericWorkspacedView
 from faraday.server.api.modules.websocket_auth import require_agent_token
+from faraday.server.utils.bulk_create import add_creator
 
 bulk_create_api = flask.Blueprint('bulk_create_api', __name__)
 
@@ -61,10 +63,10 @@ class PolymorphicVulnerabilityField(fields.Field):
     def __init__(self, *args, **kwargs):
         super(PolymorphicVulnerabilityField, self).__init__(*args, **kwargs)
         self.many = kwargs.get('many', False)
-        self.vuln_schema = VulnerabilitySchema(strict=True)
-        self.vulnweb_schema = BulkVulnerabilityWebSchema(strict=True)
+        self.vuln_schema = VulnerabilitySchema()
+        self.vulnweb_schema = BulkVulnerabilityWebSchema()
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
         if self.many and not utils.is_collection(value):
             self.fail('type', input=value, type=value.__class__.__name__)
         if self.many:
@@ -82,7 +84,7 @@ class PolymorphicVulnerabilityField(fields.Field):
             schema = self.vulnweb_schema
         else:
             raise ValidationError('type must be "Vulnerability" or "VulnerabilityWeb"')
-        return schema.load(value).data
+        return schema.load(value)
 
 
 class BulkCredentialSchema(AutoSchema):
@@ -95,10 +97,10 @@ class BulkServiceSchema(services.ServiceSchema):
     """It's like the original service schema, but now it only uses port
     instead of ports (a single integer array). That field was only used
     to keep backwards compatibility with the Web UI"""
-    port = fields.Integer(strict=True, required=True,
+    port = fields.Integer(required=True,
                           validate=[Range(min=0, error="The value must be greater than or equal to 0")])
     vulnerabilities = PolymorphicVulnerabilityField(
-        VulnerabilitySchema(many=True),
+        # VulnerabilitySchema(many=True),  # I have no idea what this line does, but breaks with marshmallow 3
         many=True,
         missing=[],
     )
@@ -157,9 +159,10 @@ class BulkCommandSchema(AutoSchema):
         )
 
     @post_load
-    def load_end_date(self, data):
+    def load_end_date(self, data, **kwargs):
         duration = data.pop('duration')
         data['end_date'] = data['start_date'] + duration
+        return data
 
 
 class BulkCreateSchema(Schema):
@@ -172,6 +175,7 @@ class BulkCreateSchema(Schema):
         BulkCommandSchema(),
         required=False,
     )
+    execution_id = fields.Integer(attribute='execution_id')
 
 
 def get_or_create(ws, model_class, data):
@@ -201,8 +205,8 @@ def get_or_create(ws, model_class, data):
 
 def bulk_create(ws, data, data_already_deserialized=False):
     if not data_already_deserialized:
-        schema = BulkCreateSchema(strict=True)
-        data = schema.load(data).data
+        schema = BulkCreateSchema()
+        data = schema.load(data)
     if 'command' in data:
         command = _create_command(ws, data['command'])
     else:
@@ -223,9 +227,8 @@ def _create_host(ws, host_data, command=None):
     credentials = host_data.pop('credentials')
     vulns = host_data.pop('vulnerabilities')
     (created, host) = get_or_create(ws, Host, host_data)
-    if created:
-        for name in hostnames:
-            db.session.add(Hostname(name=name, host=host, workspace=ws))
+    for name in set(hostnames).difference(set(map(lambda x: x.name, host.hostnames))):
+        db.session.add(Hostname(name=name, host=host, workspace=ws))
     db.session.commit()
 
     if command is not None:
@@ -277,7 +280,7 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
     assert 'host' in kwargs or 'service' in kwargs
     assert not ('host' in kwargs and 'service' in kwargs)
 
-    attachments = vuln_data.pop('_attachments', {})
+    vuln_data.pop('_attachments', {})
     references = vuln_data.pop('references', [])
     policyviolations = vuln_data.pop('policy_violations', [])
 
@@ -324,7 +327,7 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
 
     def update_vuln(policyviolations, references, vuln):
         vuln.references = references
-        vuln.policyviolations = policyviolations
+        vuln.policy_violations = policyviolations
         # TODO attachments
         db.session.add(vuln)
         db.session.commit()
@@ -375,7 +378,7 @@ class BulkCreateView(GenericWorkspacedView):
                 application/json:
                   schema: BulkCreateSchema
             403:
-              description: Disabled workspace
+               description: Disabled workspace
             404:
                description: Workspace not found
         """
@@ -384,18 +387,45 @@ class BulkCreateView(GenericWorkspacedView):
         if flask.g.user is None:
             agent = require_agent_token()
             workspace = agent.workspace
-            assert workspace.name
-            if workspace_name != workspace.name:
+
+            if not workspace or workspace_name != workspace.name:
                 flask.abort(404, "No such workspace: %s" % workspace_name)
+
+            if "execution_id" not in data:
+                flask.abort(400, "'execution_id' argument expected")
+
+            execution_id = data["execution_id"]
+
+            agent_execution = AgentExecution.query.filter(
+                AgentExecution.id == execution_id
+            ).one_or_none()
+
+            if agent_execution is None:
+                logger.exception(
+                    NoResultFound(
+                        f"No row was found for agent executor id {execution_id}")
+                )
+                flask.abort(400, "Can not find an agent execution with that id")
+
+            if workspace_name != agent_execution.workspace.name:
+                logger.exception(
+                    ValueError(f"The {agent.name} agent has permission to workspace {workspace_name} and ask to write "
+                               f"to workspace {agent_execution.workspace.name}")
+                )
+                flask.abort(400, "Trying to write to the incorrect workspace")
 
             now = datetime.now()
 
+            params_data = agent_execution.parameters_data
+            params = ', '.join([f'{key}={value}' for (key, value) in params_data.items()])
+
+
             data["command"] = {
                 'tool': agent.name, # Agent name
-                'command': agent.name + ' executor', # TODO Executor name
+                'command': agent_execution.executor.name,
                 'user': '',
                 'hostname': '',
-                'params': ' params_unset', # TODO
+                'params': params,
                 'import_source': 'agent',
                 'start_date': (data["command"].get("start_date") or now) if "command" in data else now, #Now or when received run
                 'end_date': (data["command"].get("start_date") or now) if "command" in data else now, #Now or when received run
@@ -403,14 +433,7 @@ class BulkCreateView(GenericWorkspacedView):
         else:
             workspace = self._get_workspace(workspace_name)
             creator_user = flask.g.user
-            for host in data["hosts"]:
-                host["creator"] = creator_user
-                for service in host["services"]:
-                    service["creator"] = creator_user
-                for vuln in host["vulnerabilities"]:
-                    vuln["creator"] = creator_user
-                for cred in host["credentials"]:
-                    cred["creator"] = creator_user
+            data = add_creator(data,creator_user)
 
         bulk_create(workspace, data, True)
         return "Created", 201

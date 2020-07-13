@@ -4,8 +4,6 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from __future__ import absolute_import
-from __future__ import division
 
 import os
 import pytest
@@ -58,11 +56,9 @@ class TestActivityFeed():
                 .format(ws_name=ws.name, id=command.id),
                 data=data,
             )
+        assert res.status_code == 200
 
         # Changing res.json['itime'] to timestamp format of itime
         res_itime = res.json['itime'] / 1000.0
         assert res.status_code == 200
         assert res_itime == itime
-
-
-# I'm Py3

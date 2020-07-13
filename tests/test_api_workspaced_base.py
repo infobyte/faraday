@@ -5,7 +5,6 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from __future__ import absolute_import
 from builtins import str
 
 """Generic tests for APIs prefixed with a workspace_name"""
@@ -234,7 +233,9 @@ class CountTestsMixin:
                                         workspace=self.first_object.workspace))
 
         session.commit()
-        res = test_client.get(self.url() + "count/?group_by=creator_id").get_json()
+        res = test_client.get(self.url() + "count/?group_by=creator_id")
+        assert res.status_code == 200, res.json
+        res = res.get_json()
 
         creators = []
         grouped = 0
@@ -252,7 +253,9 @@ class CountTestsMixin:
                                         workspace=self.first_object.workspace))
 
         session.commit()
-        res = test_client.get(self.url() + "count/?group_by=creator_id&order=desc").get_json()
+        res = test_client.get(self.url() + "count/?group_by=creator_id&order=desc")
+        assert res.status_code == 200, res.json
+        res = res.get_json()
 
         creators = []
         grouped = 0

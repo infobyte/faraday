@@ -134,7 +134,13 @@ class HostsView(PaginatedMixin,
                 ReadWriteWorkspacedView):
     route_base = 'hosts'
     model_class = Host
-    order_field = Host.ip.asc()
+    order_field = desc(Host.vulnerability_critical_generic_count),\
+        desc(Host.vulnerability_high_generic_count),\
+        desc(Host.vulnerability_medium_generic_count),\
+        desc(Host.vulnerability_low_generic_count),\
+        desc(Host.vulnerability_info_generic_count),\
+        desc(Host.vulnerability_unclassified_generic_count), Host.ip.asc()
+
     schema_class = HostSchema
     filterset_class = HostFilterSet
     get_undefer = [Host.credentials_count,
@@ -209,7 +215,7 @@ class HostsView(PaginatedMixin,
     @route('/<host_id>/services/')
     def service_list(self, workspace_name, host_id):
         services = self._get_object(host_id, workspace_name).services
-        return ServiceSchema(many=True).dump(services).data
+        return ServiceSchema(many=True).dump(services)
 
     @route('/countVulns/')
     def count_vulns(self, workspace_name):
@@ -237,7 +243,7 @@ class HostsView(PaginatedMixin,
         host_count = Host.query_with_count(None, host_id_list, workspace_name)
 
         for host in host_count.all():
-            res_dict["hosts"][host.id] = host_count_schema.dump(host).data
+            res_dict["hosts"][host.id] = host_count_schema.dump(host)
         # return counts.data
 
         return res_dict

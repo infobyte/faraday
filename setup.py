@@ -4,7 +4,6 @@ See:
 https://packaging.python.org/en/latest/distributing.html
 https://github.com/pypa/sampleproject
 """
-from __future__ import absolute_import
 
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
@@ -35,7 +34,6 @@ with open('faraday/__init__.py', 'rt', encoding='utf8') as f:
 # Taken from https://stackoverflow.com/questions/14399534/reference-requirements-txt-for-the-install-requires-kwarg-in-setuptools-setup-py/14399775#14399775
 with open('requirements.txt') as fp:
     required = fp.read().splitlines()
-    required.reverse()
 
 with open('requirements_dev.txt') as fp:
     dev_required = fp.read().splitlines()
@@ -138,7 +136,7 @@ setup(
         'Topic :: System :: Networking :: Monitoring',
 
         # Pick your license as you wish
-        'License :: OSI Approved :: GNU General Public License version 3 (GPL-3.0)',
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
 
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
@@ -232,8 +230,6 @@ setup(
     entry_points={  # Optional
         'console_scripts': [
             'faraday-server=faraday.start_server:main',
-            'faraday-client=faraday.client.start_client:main',
-            'fplugin=faraday.client.bin.fplugin:main',
             'faraday-manage=faraday.manage:cli',
             'faraday-searcher=faraday.searcher.searcher:main'
         ],

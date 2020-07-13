@@ -304,7 +304,7 @@ angular.module("faradayApp")
                 "query":            false,
                 "response":         false,
                 "web":              false,
-                "creator":          false,
+                "tool":             false,
                 "policyviolations": false,
                 "external_id":      false
             };
@@ -338,7 +338,7 @@ angular.module("faradayApp")
                     "query":            "100",
                     "response":         "90",
                     "web":              "80",
-                    "metadata.creator": "100",
+                    "tool":             "100",
                     "policyviolations": "100"
                 };
             }
@@ -621,11 +621,11 @@ angular.module("faradayApp")
                 visible: $scope.columns["web"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'metadata.creator',
-                displayName : "creator",
+                displayName : "tool",
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/creatorcolumn.html',
                 headerCellTemplate: header,
-                sort: getColumnSort('metadata.creator'),
-                visible: $scope.columns["creator"]
+                sort: getColumnSort('tool'),
+                visible: $scope.columns["tool"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'policyviolations',
                 // The following line breaks the remembering of the field (i.e.
@@ -1231,6 +1231,9 @@ angular.module("faradayApp")
             if ($scope.propertyFilterConfirmed === 'Unconfirmed'){
                 searchFilter.confirmed = false;
             }
+
+            if(paginationOptions.sortColumn == "metadata.creator")
+                paginationOptions.sortColumn = "tool";
             // load all vulnerabilities
             vulnsManager.getVulns($scope.workspace,
                                   paginationOptions.page,
@@ -1417,7 +1420,7 @@ angular.module("faradayApp")
 
         $scope.enableFileUpload = function() {
             if($scope.fileUploadEnabled === undefined) {
-                $http.get('/_api/session').then(
+                $http.get($scope.baseurl + '_api/session').then(
                   function(d) {
                     $scope.csrf_token = d.data.csrf_token;
                     $scope.fileUploadEnabled = true;
@@ -1445,6 +1448,11 @@ angular.module("faradayApp")
                 }
             );
         };
+
+        $scope.cancelFile = function() {
+            $scope.fileToUpload = undefined;
+            $('#upload_report_input_file').prop("value", "")
+        }
 
         $scope.concatForTooltip = function (items, isArray, useDoubleLinebreak) {
             var elements = [];
@@ -1479,7 +1487,7 @@ angular.module("faradayApp")
 
 
         var updateSelectedVulnAtachments = function () {
-            var url = '/_api/v2/ws/' + $routeParams.wsId + '/vulns/' + $scope.lastClickedVuln._id + '/attachments/';
+            var url = $scope.baseurl + '_api/v2/ws/' + $routeParams.wsId + '/vulns/' + $scope.lastClickedVuln._id + '/attachments/';
             $http.get(url).then(
                 function (response) {
                     $scope.lastClickedVuln._attachments = response.data
@@ -1689,12 +1697,12 @@ angular.module("faradayApp")
                    return;
                }
 
-               $http.get('/_api/session').then(
+               $http.get($scope.baseurl + '_api/session').then(
                   function(d) {
                     $scope.csrf_token = d.data.csrf_token;
                     fileItem.formData.push({'csrf_token': $scope.csrf_token});
                     fileItem.file.name = fileItem.file.name.replace(/ /g, '_');
-                    fileItem.url = '_api/v2/ws/' + $routeParams.wsId + '/vulns/' + $scope.lastClickedVuln._id + '/attachment/';
+                    fileItem.url = $scope.baseurl + '_api/v2/ws/' + $routeParams.wsId + '/vulns/' + $scope.lastClickedVuln._id + '/attachment/';
                     $scope.uploader.uploadAll();
                   }
                 );
@@ -1708,7 +1716,7 @@ angular.module("faradayApp")
            };
 
             $scope.removeEvidence = function (name) {
-                var url = '/_api/v2/ws/'+ $routeParams.wsId +'/vulns/'+ $scope.lastClickedVuln._id +'/attachment/' + name + '/'
+                var url = $scope.baseurl + '_api/v2/ws/'+ $routeParams.wsId +'/vulns/'+ $scope.lastClickedVuln._id +'/attachment/' + name + '/'
                 $http.delete(url).then(
                       function(response) {
                           if (response && response.status === 200){
@@ -1720,7 +1728,7 @@ angular.module("faradayApp")
 
             $scope.selectItemToPrev = function (name) {
                 $scope.selectedAtachment.name = name;
-                $scope.selectedAtachment.url = BASEURL + '_api/v2/ws/' + $routeParams.wsId + /vulns/ + $scope.lastClickedVuln._id + /attachment/ + name
+                $scope.selectedAtachment.url = BASEURL + '_api/v2/ws/' + $routeParams.wsId + '/vulns/' + $scope.lastClickedVuln._id + '/attachment/' + name + '/';
                 $scope.selectedAtachment.imgPrevFail = false;
                 var format = $scope.selectedAtachment.name.split('.').pop();
                 var imagesFormat = ['png','jpg', 'jpeg', 'gif'];
@@ -1731,7 +1739,7 @@ angular.module("faradayApp")
 
 
             $scope.copyToClipboard = function (name) {
-                var url = BASEURL + '_api/v2/ws/' + $routeParams.wsId + /vulns/ + $scope.lastClickedVuln._id + /attachment/ + name;
+                var url = BASEURL + '_api/v2/ws/' + $routeParams.wsId + '/vulns/' + $scope.lastClickedVuln._id + '/attachment/' + name + '/';
                 var copyElement = document.createElement("textarea");
                 copyElement.style.position = 'fixed';
                 copyElement.style.opacity = '0';

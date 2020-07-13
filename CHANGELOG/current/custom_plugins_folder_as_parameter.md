@@ -1,0 +1,1 @@
+Pass custom plugins folder as parameter to Plugins Manager

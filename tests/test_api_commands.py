@@ -5,7 +5,6 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from __future__ import absolute_import
 
 """Tests for many API endpoints that do not depend on workspace_name"""
 import datetime
@@ -373,7 +372,7 @@ class TestListCommandView(ReadOnlyAPITests):
     def test_update_command(self, test_client, session):
         command = self.factory()
         session.commit()
-        raw_data ={
+        raw_data = {
             'command': 'Import Nessus:',
             'tool': 'nessus',
             'duration': 120,
@@ -384,10 +383,13 @@ class TestListCommandView(ReadOnlyAPITests):
             'user': 'lcubo'
         }
 
-        res = test_client.put(self.url(command, workspace=command.workspace), data=raw_data)
+        res = test_client.put(self.url(command, workspace=command.workspace),
+                              data=raw_data)
         assert res.status_code == 200
         updated_command = self.model.query.get(command.id)
-        assert updated_command.end_date == datetime.datetime.fromtimestamp(1511387720.048548) + datetime.timedelta(seconds=120)
+        print(updated_command.end_date)
+        assert updated_command.end_date == datetime.datetime.fromtimestamp(
+            1511387720.048548) + datetime.timedelta(seconds=120)
 
     def test_delete_objects_preserve_history(self, session, test_client):
 

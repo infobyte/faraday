@@ -4,8 +4,4 @@ include faraday/alembic.ini
 include faraday/config/default.xml
 include faraday/server/default.ini
 include requirements.txt
-include faraday/client/zsh/faraday.zsh
-include faraday/client/zsh/faraday-terminal.zsh
-include faraday/client/gui/gtk/menubar.xml
-recursive-include faraday/client/data *
-include faraday/client/plugins/port_mapper.txt
+include requirements_dev.txt

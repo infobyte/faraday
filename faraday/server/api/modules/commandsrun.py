@@ -3,13 +3,15 @@
 # See the file 'doc/LICENSE' for the license information
 import time
 import datetime
+
+import flask
 from flask import Blueprint
 from flask_classful import route
 from marshmallow import fields, post_load, ValidationError
 
 from faraday.server.api.base import AutoSchema, ReadWriteWorkspacedView, PaginatedMixin
 from faraday.server.models import Command, Workspace
-from faraday.server.schemas import PrimaryKeyRelatedField
+from faraday.server.schemas import MutableField, PrimaryKeyRelatedField
 
 commandsrun_api = Blueprint('commandsrun_api', __name__)
 
@@ -17,7 +19,10 @@ commandsrun_api = Blueprint('commandsrun_api', __name__)
 class CommandSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     itime = fields.Method(serialize='get_itime', deserialize='load_itime', required=True, attribute='start_date')
-    duration = fields.Method(serialize='get_duration', allow_none=True)
+    duration = MutableField(
+        fields.Method(serialize='get_duration'),
+        fields.Integer(),
+        allow_none=True)
     workspace = PrimaryKeyRelatedField('name', dump_only=True)
     creator = PrimaryKeyRelatedField('username', dump_only=True)
 
@@ -40,11 +45,13 @@ class CommandSchema(AutoSchema):
             return 'In progress'
 
     @post_load
-    def post_load_set_end_date_with_duration(self, data):
+    def post_load_set_end_date_with_duration(self, data, **kwargs):
         # there is a potential bug when updating, the start_date can be changed.
         duration = data.pop('duration', None)
         if duration:
-            data['end_date'] = data['start_date'] + datetime.timedelta(seconds=duration)
+            data['end_date'] = data['start_date'] + datetime.timedelta(
+                seconds=duration)
+        return data
 
     class Meta:
         model = Command
@@ -90,5 +97,35 @@ class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
                 'date': time.mktime(command.start_date.timetuple()) * 1000,
             })
         return res
+
+    @route('/last/')
+    def last_command(self, workspace_name):
+        """
+        ---
+        get:
+          tags: ["Commands"]
+          description: Gets the last executed command
+          responses:
+            200:
+              description: Last executed command or an empty json
+        """
+        command = Command.query.join(Workspace).filter_by(name=workspace_name).order_by(Command.start_date.desc()).first()
+        command_obj = {}
+        if command:
+            command_obj = {
+                '_id': command.id,
+                'user': command.user,
+                'import_source': command.import_source,
+                'command': command.command,
+                'tool': command.tool,
+                'params': command.params,
+                'vulnerabilities_count': (command.sum_created_vulnerabilities or 0),
+                'hosts_count': command.sum_created_hosts or 0,
+                'services_count': command.sum_created_services or 0,
+                'criticalIssue': command.sum_created_vulnerability_critical or 0,
+                'date': time.mktime(command.start_date.timetuple()) * 1000,
+            }
+        return flask.jsonify(command_obj)
+
 
 CommandView.register(commandsrun_api)

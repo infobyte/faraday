@@ -4,10 +4,12 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 """
+import json
 import time
 import datetime
 from flask import g
-from marshmallow import fields, Schema
+from marshmallow import fields, Schema, post_dump, EXCLUDE
+from marshmallow.utils import missing as missing_
 from marshmallow.exceptions import ValidationError
 from dateutil.tz import tzutc
 
@@ -26,7 +28,7 @@ class JSTimestampField(fields.Integer):
         if value is not None:
             return int(time.mktime(value.timetuple()) * 1000)
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
         if value is not None and value:
             return datetime.datetime.fromtimestamp(self._validated(value)/1e3)
 
@@ -111,7 +113,7 @@ class PrimaryKeyRelatedField(fields.Field):
                 return None
             return getattr(value, self.field_name)
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
         raise NotImplementedError("Only dump is implemented for now")
 
 
@@ -128,20 +130,13 @@ class SelfNestedField(fields.Field):
         super(SelfNestedField, self).__init__(*args, **kwargs)
 
     def _serialize(self, value, attr, obj):
-        ret, errors = self.target_schema.dump(obj)
-        if errors:
-            raise ValidationError(errors, data=ret)
-        return ret
+        return self.target_schema.dump(obj)
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
         """
         It would be awesome if this method could also flatten the dict keys into the parent
         """
-        load = self.target_schema.load(value)
-        if load.errors:
-            raise ValidationError(load.errors)
-
-        return load.data
+        return self.target_schema.load(value)
 
 
 class MutableField(fields.Field):
@@ -170,10 +165,18 @@ class MutableField(fields.Field):
         super(MutableField, self).__init__(**kwargs)
 
     def _serialize(self, value, attr, obj):
+
+        # TODO: see root cause of the bug that required this line to be added
+        self.read_field.parent = self.parent
+
         return self.read_field._serialize(value, attr, obj)
 
-    def _deserialize(self, value, attr, data):
-        return self.write_field._deserialize(value, attr, data)
+    def _deserialize(self, value, attr, data, **kwargs):
+
+        # TODO: see root cause of the bug that required this line to be added
+        self.write_field.parent = self.parent
+
+        return self.write_field._deserialize(value, attr, data, **kwargs)
 
     def _add_to_schema(self, field_name, schema):
         # Propagate to child fields
@@ -196,7 +199,7 @@ class SeverityField(fields.String):
             return 'info'
         return ret
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
         ret = super(SeverityField, self)._serialize(value, attr, data)
         if ret == 'med':
             return 'medium'
@@ -221,16 +224,20 @@ class NullToBlankString(fields.String):
         self.allow_none = True
         self.default = ''
 
-    def deserialize(self, value, attr=None, data=None):
+    def deserialize(self, value, attr=None, data=None, **kwargs):
         # Validate required fields, deserialize, then validate
         # deserialized value
-        if value:
-            value = value.replace('\0',
-                              '')  # Postgres does not allow nul 0x00 in the strings.
         self._validate_missing(value)
+        if value is missing_:
+            _miss = self.missing
+            return _miss() if callable(_miss) else _miss
+        if isinstance(value, str):
+            value = value.replace('\0', '')  # Postgres does not allow nul 0x00 in the strings.
+        elif value is not None:
+            raise ValidationError("Deserializing a non string field when expected")
         if getattr(self, 'allow_none', False) is True and value is None:
             return ''
-        output = self._deserialize(value, attr, data)
+        output = self._deserialize(value, attr, data, **kwargs)
         self._validate(output)
         return output
 
@@ -248,6 +255,9 @@ class MetadataSchema(Schema):
     update_action = fields.Integer(default=0, dump_only=True)
     update_controller_action = fields.String(default='', dump_only=True)
 
+    class Meta:
+        unknown = EXCLUDE
+
 
 class StrictDateTimeField(fields.DateTime):
     """
@@ -263,7 +273,7 @@ class StrictDateTimeField(fields.DateTime):
         super(StrictDateTimeField, self).__init__(*args, **kwargs)
         self.load_as_tz_aware = load_as_tz_aware
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
         if isinstance(value, datetime.datetime):
             date = value
         else:
@@ -278,4 +288,73 @@ class StrictDateTimeField(fields.DateTime):
                 date.astimezone(tzutc())
             date = date.replace(tzinfo=None)
         return date
+
+
+class WorkerActionSchema(Schema):
+    action = fields.Method('get_command')
+
+    def get_command(self, obj):
+        if obj.command == 'UPDATE':
+            return "--{command}:{field}={value}".format(command=obj.command, field=obj.field, value=obj.value)
+        if obj.command in ['DELETE', 'REMOVE']:
+            return "--DELETE:"
+        if obj.command == 'ALERT':
+            return "--{command}:{value}".format(command=obj.command, value=obj.value)
+
+        raise ValidationError("Command {} not supported.".format(obj.command))
+
+
+class WorkerConditionSchema(Schema):
+    condition = fields.Method('get_condition')
+
+    def get_condition(self, obj):
+        if obj.operator == "equals":
+            operator = "="
+        else:
+            raise ValidationError("Condition operator {} not support.".format(obj.operator))
+        return '{field}{operator}{value}'.format(field=obj.field, operator=operator, value=obj.value)
+
+
+class WorkerRuleSchema(Schema):
+    id = fields.Integer()
+    model = fields.String()
+    object = fields.Method('get_object')
+    actions = fields.Nested(WorkerActionSchema, attribute='actions', many=True)
+    conditions = fields.Nested(WorkerConditionSchema, attribute='conditions', many=True)
+    parent = fields.String(allow_none=False, attribute='object_parent')
+    disabled = fields.Boolean(allow_none=True, attribute='disabled')
+    fields = fields.String(allow_none=False)
+
+    def get_object(self, rule):
+        try:
+            object_rules = json.loads(rule.object)
+        except ValueError:
+            rule_name, value = rule.object.split('=')
+            object_rules = [{rule_name: value}]
+
+        for object_rule in object_rules:
+            for object_rule_name, value in object_rule.items():
+                if value == 'informational':
+                    value = 'info'
+                if value == 'medium':
+                    value = 'med'
+                return '{}={}'.format(object_rule_name, value)
+
+    @post_dump
+    def remove_none_values(self, data, **kwargs):
+        actions = []
+        conditions = []
+        for action in data['actions']:
+            actions.append(action['action'])
+        for condition in data['conditions']:
+            conditions.append(condition['condition'])
+
+        data['actions'] = actions
+        data['conditions'] = conditions
+
+        return {
+            key: value for key, value in data.items()
+            if value
+        }
+
 # I'm Py3

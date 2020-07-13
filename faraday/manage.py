@@ -48,6 +48,8 @@ from faraday.server.commands import change_username
 from faraday.server.models import db, User
 from faraday.server.web import app
 from faraday_plugins.plugins.manager import PluginsManager
+from flask_security.utils import hash_password
+
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -78,9 +80,14 @@ def openapi_yaml():
         help=('Instead of using a random password for the user "faraday", '
               'ask for the desired one')
         )
-def initdb(choose_password):
+@click.option(
+        '--password', type=str, default=False,
+        help=('Instead of using a random password for the user "faraday", '
+              'use the one provided')
+        )
+def initdb(choose_password, password):
     with app.app_context():
-        InitDB().run(choose_password=choose_password)
+        InitDB().run(choose_password=choose_password, faraday_user_password=password)
 
 
 @click.command(help="Create a PNG image with Faraday model object")
@@ -148,8 +155,17 @@ def change_password(username, password):
 
 def validate_user_unique_field(ctx, param, value):
     with app.app_context():
-        if User.query.filter_by(**{param.name: value}).count():
-            raise click.ClickException("User already exists")
+        try:
+            if User.query.filter_by(**{param.name: value}).count():
+                raise click.ClickException("User already exists")
+        except OperationalError:
+            logger = logging.getLogger(__name__)
+            logger.error(
+                ('Could not connect to PostgreSQL. Please check: '
+                 'if database is running or if the configuration settings are correct.')
+            )
+            sys.exit(1)
+
     return value
 
 
@@ -179,7 +195,7 @@ def create_superuser(username, email, password):
 
         app.user_datastore.create_user(username=username,
                                        email=email,
-                                       password=password,
+                                       password=hash_password(password),
                                        role='admin',
                                        is_ldap=False)
         db.session.commit()
@@ -194,6 +210,14 @@ def create_tables():
     with app.app_context():
         # Ugly hack to create tables and also setting alembic revision
         conn_string = faraday.server.config.database.connection_string
+        if not conn_string:
+            logger = logging.getLogger(__name__)
+            logger.error(
+                ('No database configuration found. Please check: '
+                 'if the database is running or if the configuration settings are correct. '
+                 'For first time installations execute: faraday-manage initdb')
+            )
+            sys.exit(1)
         InitDB()._create_tables(conn_string)
         click.echo(click.style(
             'Tables created successfully!',

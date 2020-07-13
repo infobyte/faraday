@@ -90,6 +90,7 @@ def register_blueprints(app):
     from faraday.server.api.modules.token import token_api # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.search_filter import searchfilter_api # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.preferences import preferences_api  # pylint:disable=import-outside-toplevel
+    from faraday.server.api.modules.export_data import export_data_api  # pylint:disable=import-outside-toplevel
 
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(activityfeed_api)
@@ -114,6 +115,7 @@ def register_blueprints(app):
     app.register_blueprint(token_api)
     app.register_blueprint(searchfilter_api)
     app.register_blueprint(preferences_api)
+    app.register_blueprint(export_data_api)
 
 
 def check_testing_configuration(testing, app):
@@ -167,7 +169,7 @@ def register_handlers(app):
                     logger.warn('Invalid authentication token.')
                     flask.abort(401)
                 logged_in = True
-                flask.session['user_id'] = user.id
+                flask.session['_user_id'] = user.id  # TODO use public flask_login functions
             elif auth_type == 'agent':
                 # Don't handle the agent logic here, do it in another
                 # before_request handler
@@ -176,8 +178,9 @@ def register_handlers(app):
                 logger.warn("Invalid authorization type")
                 flask.abort(401)
         else:
-            logged_in = 'user_id' in flask.session
-            user_id = session.get("user_id")
+            # TODO use public flask_login functions
+            logged_in = '_user_id' in flask.session
+            user_id = session.get("_user_id")
             if logged_in:
                 user = User.query.filter_by(id=user_id).first()
 
@@ -191,8 +194,8 @@ def register_handlers(app):
         if logged_in:
             g.user = user
             if user is None:
-                logger.warn("Unknown user id {}".format(session["user_id"]))
-                del flask.session['user_id']
+                logger.warn("Unknown user id {}".format(session["_user_id"]))
+                del flask.session['_user_id']
                 flask.abort(401)  # 403 would be better but breaks the web ui
                 return
 
@@ -312,14 +315,12 @@ def create_app(db_connection_string=None, testing=None):
         'SECURITY_PASSWORD_SCHEMES': [
             'bcrypt',  # This should be the default value
             # 'des_crypt',
-            'pbkdf2_sha1',  # Used by CouchDB passwords
             # 'pbkdf2_sha256',
             # 'pbkdf2_sha512',
             # 'sha256_crypt',
             # 'sha512_crypt',
-            'plaintext',  # TODO: remove it
         ],
-        'PERMANENT_SESSION_LIFETIME': datetime.timedelta(hours=12),
+        'PERMANENT_SESSION_LIFETIME': datetime.timedelta(hours=int(faraday.server.config.faraday_server.session_timeout or 12)),
         'SESSION_COOKIE_NAME': 'faraday_session_2',
         'SESSION_COOKIE_SAMESITE': 'Lax',
     })

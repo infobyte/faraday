@@ -1,12 +1,13 @@
 from faraday.server.web import app
 from faraday.server.models import User, db
+from flask_security.utils import hash_password
 
 
 def changes_password(username, password):
     with app.app_context():
         user = User.query.filter_by(username=username).first()
         if user:
-            user.password = password
+            user.password = hash_password(password)
             db.session.add(user)
             db.session.commit()
             print("Password changed succesfully")

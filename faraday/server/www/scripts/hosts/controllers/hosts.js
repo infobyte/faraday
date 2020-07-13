@@ -428,7 +428,7 @@ angular.module('faradayApp')
         $scope.enableFileUpload = function() {
 
             if($scope.fileUploadEnabled === undefined) {
-                $http.get('/_api/session').then(
+                $http.get(BASEURL + '_api/session').then(
                   function(d) {
                     $scope.csrf_token = d.data.csrf_token;
                     $scope.fileUploadEnabled = true;

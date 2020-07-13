@@ -20,7 +20,8 @@ from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy import desc, or_
+from sqlalchemy import desc, or_, func
+from werkzeug.datastructures import ImmutableMultiDict
 
 from depot.manager import DepotManager
 from faraday.server.api.base import (
@@ -29,7 +30,8 @@ from faraday.server.api.base import (
     FilterSetMeta,
     PaginatedMixin,
     ReadWriteWorkspacedView,
-    InvalidUsage)
+    InvalidUsage,
+    CountMultiWorkspacedMixin)
 from faraday.server.fields import FaradayUploadedFile
 from faraday.server.models import (
     db,
@@ -41,7 +43,7 @@ from faraday.server.models import (
     Vulnerability,
     VulnerabilityWeb,
     CustomFieldsSchema,
-    VulnerabilityGeneric,
+    VulnerabilityGeneric, User,
 )
 from faraday.server.utils.database import get_or_create
 from faraday.server.utils.export import export_vulns_to_csv
@@ -170,10 +172,7 @@ class VulnerabilitySchema(AutoSchema):
 
         for file_obj in obj.evidence:
             try:
-                ret, errors = EvidenceSchema().dump(file_obj)
-                if errors:
-                    raise ValidationError(errors, data=ret)
-                res[file_obj.filename] = ret
+                res[file_obj.filename] = EvidenceSchema().dump(file_obj)
             except IOError:
                 logger.warning("File not found. Did you move your server?")
 
@@ -220,7 +219,7 @@ class VulnerabilitySchema(AutoSchema):
         return value
 
     @post_load
-    def post_load_impact(self, data):
+    def post_load_impact(self, data, **kwargs):
         # Unflatten impact (move data[impact][*] to data[*])
         impact = data.pop('impact', None)
         if impact:
@@ -228,14 +227,14 @@ class VulnerabilitySchema(AutoSchema):
         return data
 
     @post_load
-    def post_load_parent(self, data):
+    def post_load_parent(self, data, **kwargs):
         # schema guarantees that parent_type exists.
         parent_class = None
         parent_type = data.pop('parent_type', None)
         parent_id = data.pop('parent', None)
         if not (parent_type and parent_id):
             # Probably a partial load, since they are required
-            return
+            return data
         if parent_type == 'Host':
             parent_class = Host
             parent_field = 'host_id'
@@ -369,18 +368,19 @@ class VulnerabilityFilterSet(FilterSet):
         # TODO migration: Check if we should add fields owner,
         # command, impact, issuetracker, tags, date, host
         # evidence, policy violations, hostnames
+
         fields = (
-            "id", "status", "website", "pname", "query", "path", "service",
+            "id", "status", "website", "parameter_name", "query_string", "path", "service",
             "data", "severity", "confirmed", "name", "request", "response",
-            "parameters", "params", "resolution", "ease_of_resolution",
+            "parameters", "resolution",
             "description", "command_id", "target", "creator", "method",
-            "easeofresolution", "query_string", "parameter_name", "service_id",
-            "status_code"
+            "ease_of_resolution", "service_id",
+            "status_code", "tool",
         )
 
         strict_fields = (
-            "severity", "confirmed", "method", "status", "easeofresolution",
-            "ease_of_resolution", "service_id",
+            "severity", "confirmed", "method", "status", "ease_of_resolution",
+            "service_id",
         )
 
         default_operator = CustomILike
@@ -396,14 +396,10 @@ class VulnerabilityFilterSet(FilterSet):
     creator = CreatorFilter(fields.Str())
     service = ServiceFilter(fields.Str())
     severity = Filter(SeverityField())
-    easeofresolution = Filter(fields.String(
-        attribute='ease_of_resolution',
+    ease_of_resolution = Filter(fields.String(
         validate=OneOf(Vulnerability.EASE_OF_RESOLUTIONS),
         allow_none=True))
-    pname = Filter(fields.String(attribute='parameter_name'))
-    query = Filter(fields.String(attribute='query_string'))
     status_code = StatusCodeFilter(fields.Int())
-    params = Filter(fields.String(attribute='parameters'))
     status = Filter(fields.Function(
         deserialize=lambda val: 'open' if val == 'opened' else val,
         validate=OneOf(Vulnerability.STATUSES + ['opened'])
@@ -419,6 +415,23 @@ class VulnerabilityFilterSet(FilterSet):
         # TODO migration: this can became a normal filter instead of a custom
         # one, since now we can use creator_command_id
         command_id = request.args.get('command_id')
+
+        # The web UI uses old field names. Translate them into the new field
+        # names to maintain backwards compatiblity
+        param_mapping = {
+            'query': 'query_string',
+            'pname': 'parameter_name',
+            'params': 'parameters',
+            'easeofresolution': 'ease_of_resolution',
+        }
+        new_args = request.args.copy()
+        for (old_param, real_param) in param_mapping.items():
+            try:
+                new_args[real_param] = request.args[old_param]
+            except KeyError:
+                pass
+        request.args = ImmutableMultiDict(new_args)
+
         query = super(VulnerabilityFilterSet, self).filter()
 
         if command_id:
@@ -430,7 +443,8 @@ class VulnerabilityFilterSet(FilterSet):
 
 class VulnerabilityView(PaginatedMixin,
                         FilterAlchemyMixin,
-                        ReadWriteWorkspacedView):
+                        ReadWriteWorkspacedView,
+                        CountMultiWorkspacedMixin):
 
     route_base = 'vulns'
     filterset_class = VulnerabilityFilterSet
@@ -708,7 +722,7 @@ class VulnerabilityView(PaginatedMixin,
             })
 
         workspace = self._get_workspace(workspace_name)
-        marshmallow_params = {'many': True, 'context': {}, 'strict': True}
+        marshmallow_params = {'many': True, 'context': {}}
         try:
             normal_vulns = search(db.session,
                                   Vulnerability,
@@ -724,7 +738,7 @@ class VulnerabilityView(PaginatedMixin,
 
             normal_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(normal_vulns.all(),
                                                                                                cls=BytesJSONEncoder)
-            normal_vulns_data = json.loads(normal_vulns.data)
+            normal_vulns_data = json.loads(normal_vulns)
         except Exception as ex:
             logger.exception(ex)
             normal_vulns_data = []
@@ -741,7 +755,7 @@ class VulnerabilityView(PaginatedMixin,
                 web_vulns = web_vulns.join(Service).join(Host).join(Hostname).filter(or_(*or_filters))
             web_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(web_vulns.all(),
                                                                                                cls=BytesJSONEncoder)
-            web_vulns_data = json.loads(web_vulns.data)
+            web_vulns_data = json.loads(web_vulns)
         except Exception as ex:
             logger.exception(ex)
             web_vulns_data = []
@@ -804,9 +818,7 @@ class VulnerabilityView(PaginatedMixin,
                                                         object_id=vuln_id).all()
             res = {}
             for file_obj in files:
-                ret, errors = EvidenceSchema().dump(file_obj)
-                if errors:
-                    raise ValidationError(errors, data=ret)
+                ret = EvidenceSchema().dump(file_obj)
                 res[file_obj.filename] = ret
 
             return flask.jsonify(res)
@@ -849,6 +861,7 @@ class VulnerabilityView(PaginatedMixin,
                          as_attachment=True,
                          cache_timeout=-1)
 
+
     @route('bulk_delete/', methods=['DELETE'])
     def bulk_delete(self, workspace_name):
         workspace = self._get_workspace(workspace_name)
@@ -873,6 +886,35 @@ class VulnerabilityView(PaginatedMixin,
         db.session.commit()
         response = {'deleted_vulns': deleted_vulns}
         return flask.jsonify(response)
+
+    @route('top_users/', methods=['GET'])
+    def top_users(self, workspace_name):
+        """
+        ---
+        get:
+          tags: ["Vulns"]
+          params: limit
+          description: Gets a list of top users having account its uploaded vulns
+          responses:
+            200:
+              description: List of top users
+        """
+        limit = flask.request.args.get('limit', 1)
+        workspace = self._get_workspace(workspace_name)
+        data = db.session.query(User, func.count(VulnerabilityGeneric.id)).join(VulnerabilityGeneric.creator)\
+            .filter(VulnerabilityGeneric.workspace_id == workspace.id).group_by(User.id)\
+            .order_by(desc(func.count(VulnerabilityGeneric.id))).limit(int(limit)).all()
+        users = []
+        for item in data:
+            user = {
+                'id': item[0].id,
+                'username': item[0].username,
+                'count': item[1]
+            }
+            users.append(user)
+        response = {'users': users}
+        return flask.jsonify(response)
+
 
 VulnerabilityView.register(vulns_api)
 

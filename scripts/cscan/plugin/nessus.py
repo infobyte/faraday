@@ -4,8 +4,6 @@
 ## Copyright (C) 2015  Infobyte LLC (http://www.infobytesec.com/)
 ## See the file 'doc/LICENSE' for the license information
 ###
-from __future__ import absolute_import
-from __future__ import print_function
 import requests
 import json
 import time

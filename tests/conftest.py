@@ -4,7 +4,6 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from __future__ import absolute_import
 
 from tempfile import NamedTemporaryFile
 
@@ -271,7 +270,7 @@ def login_as(test_client, user):
         # http://pythonhosted.org/Flask-Testing/#testing-with-sqlalchemy
         assert user.id is not None
         db.session.add(user)
-        sess['user_id'] = user.id
+        sess['_user_id'] = user.id  # TODO use public flask_login functions
         identity_changed.send(test_client.application,
                               identity=Identity(user.id))
 

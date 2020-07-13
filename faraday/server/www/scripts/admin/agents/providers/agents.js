@@ -18,10 +18,10 @@ angular.module('faradayApp')
 
         agentFact.getNewAgentToken = function() {
             var deferred = $q.defer();
-            $http.get('/_api/session').then(function(response){
+            $http.get(BASEURL + '_api/session').then(function(response){
                 var fd = new FormData();
                 fd.append('csrf_token', response.data.csrf_token);
-                $http.post('_api/v2/agent_token/', fd, {
+                $http.post(BASEURL + '_api/v2/agent_token/', fd, {
                     transformRequest: angular.identity,
                     withCredentials: false,
                     headers: {'Content-Type': undefined},
@@ -37,12 +37,12 @@ angular.module('faradayApp')
 
         agentFact.runAgent = function(wsName, agentId, executorData) {
             var deferred = $q.defer();
-            $http.get('/_api/session').then(function(response){
+            $http.get(BASEURL +'_api/session').then(function(response){
                 let data = {
                     'csrf_token': response.data.csrf_token,
                     'executorData': executorData
                 };
-                var postUrl = '_api/v2/ws/' + wsName + '/agents/' + agentId + '/run/';
+                var postUrl = BASEURL + '_api/v2/ws/' + wsName + '/agents/' + agentId + '/run/';
                 $http.post(postUrl, JSON.stringify(data), {
                     transformRequest: angular.identity,
                     withCredentials: false,

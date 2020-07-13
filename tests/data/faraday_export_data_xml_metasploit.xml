@@ -1,0 +1,98 @@
+<?xml version='1.0' encoding='utf-8'?>
+<MetasploitV4>
+  <hosts>
+    <host>
+      <id>44155</id>
+      <created-at>2020-04-17 15:18:07</created-at>
+      <address>127.0.0.1</address>
+      <mac>30-65-EC-6F-C4-58</mac>
+      <name>test,localhost</name>
+      <os-name>Linux</os-name>
+      <updated-at>2020-04-17 15:28:08</updated-at>
+      <comments>Host for test purposes</comments>
+      <vuln-count>1</vuln-count>
+      <service-count>1</service-count>
+      <comm/>
+      <state/>
+      <os-flavor/>
+      <os-sp/>
+      <os-lang/>
+      <purpose/>
+      <services>
+        <service>
+          <id>23547</id>
+          <created-at>2020-04-17 15:18:07</created-at>
+          <host-id>44155</host-id>
+          <port>8080</port>
+          <proto>tcp</proto>
+          <state>open</state>
+          <name>Test service</name>
+          <updated-at>2020-04-17 15:28:38</updated-at>
+          <info>5.0</info>
+        </service>
+      </services>
+      <vulns>
+        <vuln>
+          <id>24713</id>
+          <host-id>44155</host-id>
+          <name>Vulnerability test</name>
+          <info>Desc for testing</info>
+          <refs>
+            <ref>ref1</ref>
+            <ref>ref2</ref>
+          </refs>
+        </vuln>
+      </vulns>
+    </host>
+  </hosts>
+  <services>
+    <service>
+      <id>23547</id>
+      <created-at>2020-04-17 15:18:07</created-at>
+      <host-id>44155</host-id>
+      <port>8080</port>
+      <proto>tcp</proto>
+      <state>open</state>
+      <name>Test service</name>
+      <updated-at>2020-04-17 15:28:38</updated-at>
+      <info>5.0</info>
+    </service>
+  </services>
+  <web_sites>
+    <web_site>
+      <id>23547</id>
+      <service-id>23547</service-id>
+      <vhost>127.0.0.1</vhost>
+      <host>127.0.0.1</host>
+      <port>8080</port>
+      <created-at>2020-04-17 15:18:07</created-at>
+      <updated-at>2020-04-17 15:28:38</updated-at>
+      <comments>Description for service</comments>
+      <options></options>
+      <ssl></ssl>
+    </web_site>
+  </web_sites>
+  <web_vulns>
+    <web_vuln>
+      <id>24714</id>
+      <web-site-id>23547</web-site-id>
+      <created-at>2020-04-17 15:20:57</created-at>
+      <updated-at>2020-04-17 15:20:57</updated-at>
+      <name>Vulnerability Web test</name>
+      <description>Desc for testing web vuln</description>
+      <risk>5</risk>
+      <legacy-category>Faraday</legacy-category>
+      <path>faraday.com</path>
+      <method>GET</method>
+      <params></params>
+      <pname>qwerty</pname>
+      <query>query for vuln</query>
+      <request>GET for vuln</request>
+      <vhost>127.0.0.1</vhost>
+      <host>127.0.0.1</host>
+      <port>8080</port>
+      <ssl></ssl>
+      <confidence></confidence>
+    </web_vuln>
+  </web_vulns>
+</MetasploitV4>

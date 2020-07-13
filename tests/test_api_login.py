@@ -1,6 +1,6 @@
-from __future__ import absolute_import
 
 import pytest
+from flask_security.utils import hash_password
 from itsdangerous import TimedJSONWebSignatureSerializer
 
 from faraday.server.models import User
@@ -19,7 +19,7 @@ class TestLogin():
         susan = factories.UserFactory.create(
                 active=True,
                 username='Susan',
-                password='pepito',
+                password=hash_password('pepito'),
                 role='pentester')
         session.add(susan)
         session.commit()
@@ -40,7 +40,7 @@ class TestLogin():
         alice = factories.UserFactory.create(
                 active=True,
                 username='alice',
-                password='passguord',
+                password=hash_password('passguord'),
                 role='pentester')
         session.add(alice)
         session.commit()
@@ -72,7 +72,7 @@ class TestLogin():
         alice = factories.UserFactory.create(
                 active=True,
                 username='alice',
-                password='passguord',
+                password=hash_password('passguord'),
                 role='pentester')
         session.add(alice)
         session.commit()
@@ -136,7 +136,7 @@ class TestLogin():
         alice = factories.UserFactory.create(
                 active=True,
                 username='asdasd',
-                password='asdasd',
+                password=hash_password('asdasd'),
                 role='pentester')
         session.add(alice)
         session.commit()

@@ -4,7 +4,6 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from __future__ import absolute_import
 
 import pytest
 
@@ -167,7 +166,7 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
         }
         res = test_client.post(self.url(), data=raw_data)
         assert res.status_code == 400
-        assert res.json['messages']['_schema'] == ['Unknown parent type: Vulnerability']
+        assert res.json['messages']['json']['_schema'] == ['Unknown parent type: Vulnerability']
 
 
     def test_update_credentials(self, test_client, session, host):

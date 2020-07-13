@@ -1,1 +1,0 @@
-When the faraday client logins, send a notification to the portal

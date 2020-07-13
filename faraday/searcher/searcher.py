@@ -6,9 +6,6 @@
 ## Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
 ## See the file 'doc/LICENSE' for the license information
 ###
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import division
 from builtins import str
 
 import ast
@@ -433,6 +430,7 @@ def parse_value(value):
         return 'informational'
     if value == 'med':
         return 'medium'
+    value = value.replace('%', ' ')
     return value
 
 
@@ -441,19 +439,21 @@ def signal_handler(signal, frame):
     logger.info('Killed')
     sys.exit(0)
 
+
 class Searcher:
     def __init__(self, api, mail_notification=None, tool_name='Searcher'):
         self.tool_name = tool_name
         self.api = api
         self.mail_notification = mail_notification
+        self.rules = []
 
     def process(self, rules):
         if rules and validate_rules(rules):
-            self.rules = rules
+            self.rules = [rule for rule in rules if 'disabled' not in rule or not rule['disabled']]
 
-            self._process_vulnerabilities(rules)
-            self._process_services(rules)
-            self._process_hosts(rules)
+            self._process_vulnerabilities(self.rules)
+            self._process_services(self.rules)
+            self._process_hosts(self.rules)
             # TODO: FIX THIS
 
     def _process_vulnerabilities(self, rules):

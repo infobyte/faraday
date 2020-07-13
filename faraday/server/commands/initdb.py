@@ -21,12 +21,15 @@ from subprocess import Popen
 
 import sqlalchemy
 from sqlalchemy import create_engine
+from sqlalchemy.sql import text
 
 from faraday.server.utils.database import is_unique_constraint_violation
 
 from configparser import ConfigParser, NoSectionError
 
 from flask import current_app
+from flask_security.utils import hash_password
+
 from colorama import init
 from colorama import Fore
 from sqlalchemy.exc import OperationalError, ProgrammingError
@@ -57,7 +60,7 @@ class InitDB():
 
         return True
 
-    def run(self, choose_password):
+    def run(self, choose_password, faraday_user_password):
         """
              Main entry point that executes these steps:
                  * creates role in database.
@@ -85,7 +88,7 @@ class InitDB():
                 self._check_psql_output(current_psql_output, process_status)
 
                 if hostname.lower() in ['localhost', '127.0.0.1']:
-                    database_name = 'faraday'
+                    database_name = os.environ.get("FARADAY_DATABASE_NAME", "faraday")
                     current_psql_output = TemporaryFile()
                     database_name, process_status = self._create_database(database_name, username, current_psql_output)
                     current_psql_output.seek(0)
@@ -94,33 +97,46 @@ class InitDB():
             current_psql_output.close()
             conn_string = self._save_config(config, username, password, database_name, hostname)
             self._create_tables(conn_string)
-            couchdb_config_present = faraday.server.config.couchdb
-            if not (couchdb_config_present and couchdb_config_present.user and couchdb_config_present.password):
-                self._create_admin_user(conn_string, choose_password)
-            else:
-                print('Skipping new admin creation since couchdb configuration was found.')
+            self._create_admin_user(conn_string, choose_password, faraday_user_password)
         except KeyboardInterrupt:
             current_psql_output.close()
             print('User cancelled.')
             sys.exit(1)
 
-    def _create_admin_user(self, conn_string, choose_password):
+    def _create_admin_user(self, conn_string, choose_password, faraday_user_password):
         engine = create_engine(conn_string)
         # TODO change the random_password variable name, it is not always
         # random anymore
         if choose_password:
-            random_password = click.prompt(
+            user_password = click.prompt(
                 'Enter the desired password for the "faraday" user',
                 confirmation_prompt=True,
                 hide_input=True
             )
         else:
-            random_password = self.generate_random_pw(12)
+            if faraday_user_password:
+                user_password = faraday_user_password
+            else:
+                user_password = self.generate_random_pw(12)
         already_created = False
         try:
-            engine.execute("INSERT INTO \"faraday_user\" (username, name, password, "
-                       "is_ldap, active, last_login_ip, current_login_ip, role, state_otp) VALUES ('faraday', 'Administrator', "
-                       "'{0}', false, true, '127.0.0.1', '127.0.0.1', 'admin', 'disabled');".format(random_password))
+
+            statement = text("""
+                INSERT INTO faraday_user (
+                            username, name, password, 
+                            is_ldap, active, last_login_ip, 
+                            current_login_ip, role, state_otp
+                        ) VALUES (
+                            'faraday', 'Administrator', :password,
+                            false, true, '127.0.0.1',
+                            '127.0.0.1', 'admin', 'disabled'
+                        )
+            """)
+            params = {
+                'password': hash_password(user_password)
+            }
+            connection = engine.connect()
+            connection.execute(statement, **params)
         except sqlalchemy.exc.IntegrityError as ex:
             if is_unique_constraint_violation(ex):
                 # when re using database user could be created previously
@@ -136,7 +152,7 @@ class InitDB():
         if not already_created:
             print("Admin user created with \n\n{red}username: {white}faraday \n"
                   "{red}password:{white} {"
-                  "random_password} \n".format(random_password=random_password,
+                  "user_password} \n".format(user_password=user_password,
                                                white=Fore.WHITE, red=Fore.RED))
 
     def _configure_existing_postgres_user(self):
@@ -170,7 +186,7 @@ class InitDB():
             we return username and password and those values will be saved in the config file.
         """
         print('This script will {blue} create a new postgres user {white} and {blue} save faraday-server settings {white}(server.ini). '.format(blue=Fore.BLUE, white=Fore.WHITE))
-        username = 'faraday_postgresql'
+        username =  os.environ.get("FARADAY_DATABASE_USER", 'faraday_postgresql')
         postgres_command = ['sudo', '-u', 'postgres', 'psql']
         if sys.platform == 'darwin':
             print('{blue}MAC OS detected{white}'.format(blue=Fore.BLUE, white=Fore.WHITE))

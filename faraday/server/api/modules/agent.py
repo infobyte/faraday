@@ -2,21 +2,25 @@
 # Copyright (C) 2019  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 import flask
+import logging
 
 from flask import Blueprint, abort, request
 from flask_classful import route
-from marshmallow import fields, Schema
+from marshmallow import fields, Schema, EXCLUDE
+from sqlalchemy.orm.exc import NoResultFound
+
 
 from faraday.server.api.base import (AutoSchema, UpdateWorkspacedMixin, DeleteWorkspacedMixin,
                                      CountWorkspacedMixin, ReadOnlyWorkspacedView, CreateWorkspacedMixin,
                                      GenericWorkspacedView)
-from faraday.server.models import Agent, Executor
+from faraday.server.models import Agent, Executor, AgentExecution, db
 from faraday.server.schemas import PrimaryKeyRelatedField
 from faraday.server.config import faraday_server
 from faraday.server.events import changes_queue
 
 agent_api = Blueprint('agent_api', __name__)
 
+logger = logging.getLogger(__name__)
 
 class ExecutorSchema(AutoSchema):
 
@@ -105,7 +109,10 @@ class ExecutorDataSchema(Schema):
 
 
 class AgentRunSchema(Schema):
-    executorData = fields.Nested(ExecutorDataSchema(), required=True)
+    executorData = fields.Nested(
+        ExecutorDataSchema(unknown=EXCLUDE),
+        required=True
+    )
 
 
 class AgentView(UpdateWorkspacedMixin,
@@ -134,15 +141,36 @@ class AgentView(UpdateWorkspacedMixin,
         """
         if flask.request.content_type != 'application/json':
             abort(400, "Only application/json is a valid content-type")
-        data = self._parse_data(AgentRunSchema(strict=True), request)
+        data = self._parse_data(AgentRunSchema(unknown=EXCLUDE), request)
         agent = self._get_object(agent_id, workspace_name)
         executor_data = data['executorData']
-        changes_queue.put({
-            'agent_id': agent.id,
-            'action': 'RUN',
-            "executor": executor_data.get('executor'),
-            "args": executor_data.get('args')
-        })
+
+        try:
+            executor = Executor.query.filter(Executor.name == executor_data['executor'],
+                                         Executor.agent_id == agent_id).one()
+
+            agent_execution = AgentExecution(
+                running=None,
+                successful=None,
+                message='',
+                executor=executor,
+                workspace_id=executor.agent.workspace_id,
+                parameters_data=executor_data["args"]
+            )
+            db.session.add(agent_execution)
+            db.session.commit()
+
+            changes_queue.put({
+                'execution_id': agent_execution.id,
+                'agent_id': agent.id,
+                'action': 'RUN',
+                "executor": executor_data.get('executor'),
+                "args": executor_data.get('args')
+            })
+        except NoResultFound as e:
+            logger.exception(e)
+            abort(400, "Can not find an agent execution with that id")
+
         return flask.jsonify({
             'successful': True,
         })

@@ -3,8 +3,8 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('loginCtrl', ['$scope', '$location', '$cookies', 'loginSrv',
-        function($scope, $location, $cookies, loginSrv) {
+    .controller('loginCtrl', ['$scope', '$location', '$cookies', 'loginSrv', 'BASEURL',
+        function($scope, $location, $cookies, loginSrv, BASEURL) {
 
         $scope.data = {
             "user": null,
@@ -21,7 +21,7 @@ angular.module('faradayApp')
         $scope.login = function(){
             if ($scope.data.user && $scope.data.pass){
                 loginSrv.login($scope.data.user, $scope.data.pass).then(function(user){
-                    var currentUrl = "/dashboard/ws";
+                    var currentUrl = "/workspaces";
                     if($cookies.currentUrl != undefined) {
                         currentUrl = $cookies.currentUrl;
                     }
@@ -45,7 +45,7 @@ angular.module('faradayApp')
     }]);
 
 angular.module('faradayApp')
-    .controller('loginBarCtrl', ['$scope', '$location', '$cookies','loginSrv', '$uibModal', function($scope, $location, $cookies,loginSrv,$uibModal) {
+    .controller('loginBarCtrl', ['$scope', '$location', '$cookies','loginSrv', '$uibModal', 'BASEURL', function($scope, $location, $cookies,loginSrv,$uibModal, BASEURL) {
         $scope.user = null;
         $scope.auth = loginSrv.isAuth();
 
@@ -67,11 +67,12 @@ angular.module('faradayApp')
         $scope.logout = function(){
             loginSrv.logout().then(function(){
                 $location.path('/login');
-                $cookies.currentUrl = "/dashboard/ws";
+                $cookies.currentUrl = "/workspaces";
             });
         };
 
         $scope.changePasswordModal = function(){
+            $scope.base_url = BASEURL;
             $scope.modal = $uibModal.open({
                 templateUrl: 'scripts/auth/partials/changePassword.html',
                 controller: 'resetPassword',

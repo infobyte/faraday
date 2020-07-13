@@ -15,6 +15,7 @@ from flask import (
     jsonify,
     Blueprint,
 )
+import flask
 
 from flask_wtf.csrf import validate_csrf
 from werkzeug.utils import secure_filename
@@ -22,10 +23,16 @@ from wtforms import ValidationError
 
 from faraday.server.utils.web import gzipped
 from faraday.server.models import Workspace
+from faraday.server import config
+
+from faraday_plugins.plugins.manager import PluginsManager, ReportAnalyzer
 
 upload_api = Blueprint('upload_reports', __name__)
 
 logger = logging.getLogger(__name__)
+
+plugins_manager = PluginsManager(config.faraday_server.custom_plugins_folder)
+report_analyzer = ReportAnalyzer(plugins_manager)
 
 @gzipped
 @upload_api.route('/v2/ws/<workspace>/upload_report', methods=['POST'])
@@ -33,8 +40,7 @@ def file_upload(workspace=None):
     """
     Upload a report file to Server and process that report with Faraday client plugins.
     """
-    logger.debug("Importing new plugin report in server...")
-
+    logger.info("Importing new plugin report in server...")
     # Authorization code copy-pasted from server/api/base.py
     ws = Workspace.query.filter_by(name=workspace).first()
     if not ws or not ws.active:
@@ -66,8 +72,15 @@ def file_upload(workspace=None):
                 "Upload reports in WEB-UI not configurated, run Faraday client and try again...")
             abort(make_response(jsonify(message="Upload reports not configurated: Run faraday client and start Faraday server again"), 500))
         else:
-            REPORTS_QUEUE.put((workspace, file_path))
-            return make_response(jsonify(message="ok"), 200)
+            logger.info("Get plugin for file: %s", file_path)
+            plugin = report_analyzer.get_plugin(file_path)
+            if not plugin:
+                logger.info("Could not get plugin for file")
+                abort(make_response(jsonify(message="Invalid report file"), 400))
+            else:
+                logger.info("Plugin for file: %s Plugin: %s", file_path, plugin.id)
+                REPORTS_QUEUE.put((workspace, file_path, plugin.id, flask.g.user))
+                return make_response(jsonify(message="ok"), 200)
     else:
         abort(make_response(jsonify(message="Missing report file"), 400))
 # I'm Py3

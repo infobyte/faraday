@@ -36,7 +36,6 @@ def git_diff_intersection(files: set):
 
 if __name__ == '__main__':
     print(f"Current branch {ACTUAL_BRANCH} should be equal to {BRANCH_NAME}")
-    assert BRANCH_NAME == ACTUAL_BRANCH, (BRANCH_NAME, ACTUAL_BRANCH)
     intersection = set()
     if "white" in BRANCH_NAME:
         intersection = git_diff_intersection({PINK_FILE, BLACK_FILE})

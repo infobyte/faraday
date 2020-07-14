@@ -22,6 +22,7 @@ function check_no_files(){
     # If it does contain at least one of then, quit the script with a non-zero exit code
     for file in $*
     do
+        git diff --cached --name-status | awk '$1 != "D" { print $2 }'
         echo trying $file
         "! test -f $file"
     done

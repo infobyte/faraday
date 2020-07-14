@@ -12,13 +12,13 @@ repos:
     hooks:
     -   id: sanity-check
         name: sanity-check
-        entry: bash scripts/sanity_test.sh
+        entry: bash scripts/sanity_check_commit.sh
         language: system
         verbose: true
         stages: [merge-commit, commit, push]
     -   id: sanity-check-file
         name: sanity-check-file
-        entry: scripts/sanity_check.py
+        entry: scripts/sanity_check_file.py
         language: python
         verbose: true
         pass_filenames: false

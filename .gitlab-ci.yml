@@ -63,12 +63,11 @@ merge_conflict_check:
 sanity_check:
     tags:
         - faradaytests
-    image: ubuntu:20.04
+    image: python:3
     stage: pre_testing
     script:
-        - apt-get update -y
-        - apt install -y git
-        - bash scripts/sanity_test.sh
+        - bash scripts/sanity_check_commit.sh
+        - scripts/sanity_check_file.py --mode=ls
     rules:
         - when: on_success
 

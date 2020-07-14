@@ -118,7 +118,7 @@ def equals(m1, m2, rule):
             else:
                 ratio = -1
 
-        if ratio is not -1:
+        if ratio != -1:
             total_ratio += ratio
             count_fields += 1
 

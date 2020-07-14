@@ -15,4 +15,10 @@ repos:
         entry: bash scripts/sanity_test.sh
         language: system
         verbose: true
-        stages: [commit-msg, push]
+        stages: [merge-commit, commit, push]
+    -   id: sanity-check-file
+        name: sanity-check-file
+        entry: bash scripts/sanity_test_file.sh
+        language: system
+        verbose: true
+        stages: [merge-commit, commit, push]

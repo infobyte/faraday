@@ -6,7 +6,6 @@ import subprocess
 parser = argparse.ArgumentParser()
 parser.add_argument('--mode', choices=['diff', 'ls'], default='diff')
 args = parser.parse_args()
-print(args)
 
 ACTUAL_BRANCH = subprocess.run(
     ["git", "rev-parse", "--abbrev-ref", "HEAD"],
@@ -17,7 +16,7 @@ BRANCH_NAME = os.environ.get("CI_COMMIT_REF_NAME", ACTUAL_BRANCH)
 PINK_FILE = "faraday/server/api/modules/reports.py"
 BLACK_FILE = "faraday/server/api/modules/jira.py"
 
-mode="diff"
+mode = args.mode
 if mode == "diff":
     child = subprocess.run(
         "git diff --cached --name-status | awk '$1 != \"D\" {print $2 }'",
@@ -37,7 +36,7 @@ def git_diff_intersection(files: set):
 
 if __name__ == '__main__':
     print(f"Current branch {ACTUAL_BRANCH} should be equal to {BRANCH_NAME}")
-    assert BRANCH_NAME == ACTUAL_BRANCH
+    assert BRANCH_NAME == ACTUAL_BRANCH, (BRANCH_NAME, ACTUAL_BRANCH)
     intersection = set()
     if "white" in BRANCH_NAME:
         intersection = git_diff_intersection({PINK_FILE, BLACK_FILE})

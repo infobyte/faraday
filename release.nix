@@ -1,4 +1,4 @@
-with (import ./pynixify/nixpkgs.nix) { };
+with import ./pynixify/nixpkgs.nix { };
 let
   version = builtins.head (builtins.match ".*'([0-9]+.[0-9]+(.[0-9]+)?)'.*"
     (builtins.readFile ./faraday/__init__.py));
@@ -15,7 +15,12 @@ in { dockerName ? "registry.gitlab.com/faradaysec/faraday", dockerTag ? version
     {
       doCheck = true;
       checkPhase = "true";
-    } // lib.optionalAttrs useLastCommit { src = builtins.fetchGit ./.; });
+    } // lib.optionalAttrs useLastCommit {
+      src = builtins.fetchGit {
+        url = ./.;
+        ref = "HEAD";
+      };
+    });
 
   dockerImage = dockerTools.buildImage {
     name = dockerName;

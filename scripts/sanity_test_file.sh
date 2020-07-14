@@ -12,7 +12,8 @@ else
 fi
 
 function fail(){
-    echo "Branch $BRANCH_NAME contains commit of another version ($1). You shouldn't do that!!!!!!"
+    echo "Branch $BRANCH_NAME contains file of another version ($1). You
+    shouldn't do that!!!!!!"
     exit 1
 }
 
@@ -22,9 +23,12 @@ function check_no_files(){
     # If it does contain at least one of then, quit the script with a non-zero exit code
     for file in $*
     do
-        git diff --cached --name-status | awk '$1 != "D" { print $2 }'
-        echo trying $file
-        "! test -f $file"
+        for new_file in $(git diff --cached --name-status | awk '$1 != "D" {
+        print $2 }')
+        do
+          echo trying $file and $new_file
+          test $file == $new_file && fail $file
+        done
     done
 }
 

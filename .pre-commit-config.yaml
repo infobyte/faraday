@@ -18,7 +18,9 @@ repos:
         stages: [merge-commit, commit, push]
     -   id: sanity-check-file
         name: sanity-check-file
-        entry: bash scripts/sanity_test_file.sh
-        language: system
+        entry: scripts/sanity_check.py
+        language: python
         verbose: true
+        pass_filenames: false
+        args: [--mode=diff]
         stages: [merge-commit, commit, push]

@@ -11,16 +11,24 @@ repos:
 -   repo: local
     hooks:
     -   id: sanity-check
-        name: sanity-check
+        name: Commit SanityCheck
         entry: bash scripts/sanity_check_commit.sh
         language: system
         verbose: true
         stages: [merge-commit, commit, push]
     -   id: sanity-check-file
-        name: sanity-check-file
+        name: File SanityCheck
         entry: scripts/sanity_check_file.py
         language: python
         verbose: true
         pass_filenames: false
         args: [--mode=diff]
-        stages: [merge-commit, commit, push]
+        stages: [merge-commit, commit]
+    -   id: sanity-check-file-push
+        name: File Push SanityCheck
+        entry: scripts/sanity_check_file.py
+        language: python
+        verbose: true
+        pass_filenames: false
+        args: [--mode=ls]
+        stages: [push]

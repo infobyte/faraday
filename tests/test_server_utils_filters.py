@@ -53,6 +53,16 @@ class TestFilters:
         res = FlaskRestlessSchema().load(test_filter)
         assert res == test_filter
 
+    def test_equals_by_date(self):
+        test_filter = {"filters": [
+            {"name": "create_date", "op": "eq", "val": '2020-01-10'}
+        ]}
+        res = FlaskRestlessSchema().load(test_filter)
+        assert res == {"filters": [
+            {'name': 'create_date', 'op': '>=', 'val': '2020-01-10T00:00:00.000000'},
+            {'name': 'create_date', 'op': '<=', 'val': '2020-01-10T23:59:59.000000'}
+        ]}
+
     def test_simple_or_operator(self):
         test_filter = {"filters": [
             {"or": [

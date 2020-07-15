@@ -1,13 +1,13 @@
 { beautifulsoup4, buildPythonPackage, click, dateutil, fetchPypi, html2text, lib
-, lxml, pytz, requests, simplejson }:
+, lxml, pytz, requests, simplejson, colorama }:
 buildPythonPackage rec {
   pname = "faraday-plugins";
-  version = "1.1";
+  version = "1.2.3";
 
   src = builtins.fetchurl {
     url =
-      "https://files.pythonhosted.org/packages/3f/63/59fdcf2f6bc0f309fcc46b8ca58990ad84ef37d1db1b78f8a04523d52369/faraday-plugins-1.1.tar.gz";
-    sha256 = "0hzlymg318j78fpfrscszsfxrs21ikxy49bx91yc77b42vf73y4f";
+      "https://files.pythonhosted.org/packages/8a/f6/eebecbde889df283531142088ddd0f31ccec13f40bf3c5132719c26de124/faraday-plugins-1.2.3.tar.gz";
+    sha256 = "857f2a7328ac06235f788a3609a6e64cea72990ee09d96ca97d8c9d3e3050422";
   };
 
   # TODO FIXME
@@ -15,5 +15,5 @@ buildPythonPackage rec {
 
   buildInputs = [ ];
   propagatedBuildInputs =
-    [ click simplejson requests lxml html2text beautifulsoup4 pytz dateutil ];
+    [ click simplejson requests lxml html2text beautifulsoup4 pytz dateutil colorama ];
 }

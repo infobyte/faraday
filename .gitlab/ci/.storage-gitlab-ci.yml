@@ -1,0 +1,32 @@
+.google_storage_deb_rpm_base: &google_storage_deb_rpm_base
+- check_not_skipped(){ grep -v 'Skipping'; }
+- gcloud auth activate-service-account --key-file auth_file.json
+- "gsutil cp faraday-server_amd64.deb ${GCLOUD_FILE_PATH}.deb 2>&1 | check_not_skipped"
+- "gsutil cp faraday-server_amd64.rpm ${GCLOUD_FILE_PATH}.rpm 2>&1 | check_not_skipped"
+- "gsutil setmeta -h x-goog-meta-commit:${CI_COMMIT_SHA} ${GCLOUD_FILE_PATH}.*"
+
+
+.google_storage_deb_rpm:
+    stage: deploy
+    image: 'google/cloud-sdk:latest'
+    variables:
+      FILE_BASENAME: faraday-server-community_amd64
+      GCLOUD_FILE_PATH: ${STORAGE_SPACE_BASE}${STORAGE_SPACE_ROUTE}/${FILE_BASENAME}
+    dependencies:
+        - generate_deb
+        - generate_rpm
+
+google_storage_deb_rpm_dev:
+  extends: .google_storage_deb_rpm
+  variables:
+    STORAGE_SPACE_BASE: gs://faraday-dev
+  script:
+    - cp $GCLOUD_STORAGE_KEY_FILE auth_file.json
+    - *google_storage_deb_rpm_base
+    - "gsutil setmeta -h x-goog-meta-branch:${CI_COMMIT_BRANCH} ${GCLOUD_FILE_PATH}.*"
+  rules:
+    - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
+      when: on_success
+    - if: '$BUILD_TEST || $FULL_TEST || $DAILY_TEST'
+      when: on_success
+    - when: never

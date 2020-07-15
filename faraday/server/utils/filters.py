@@ -93,7 +93,6 @@ class FlaskRestlessFilterSchema(Schema):
         else:
             column = getattr(VulnerabilityWeb, column_name)
 
-
         if not getattr(column, 'type', None) and filter_['op'].lower():
             if filter_['op'].lower() in ['eq', '==']:
                 if filter_['name'] in ['creator', 'hostnames']:
@@ -119,7 +118,7 @@ class FlaskRestlessFilterSchema(Schema):
             if isinstance(field, fields.Boolean):
                 raise ValidationError('Can\'t perfom ilike/like against boolean type column')
 
-        # somes field are date/datime.
+        # somes field are date/datetime.
         # we use dateutil parse to validate the string value which contains a date or datetime
         valid_date = False
         try:
@@ -142,7 +141,6 @@ class FlaskRestlessFilterSchema(Schema):
                         {'name': filter_['name'], 'op': '<=', 'val': end},
                 ]
 
-
         if filter_['op'].lower() in ['<', '>', 'ge', 'geq', 'lt']:
             # we check that operators can be only used against date or numbers
             if not valid_date and not isinstance(filter_['val'], numbers.Number):
@@ -159,6 +157,7 @@ class FlaskRestlessFilterSchema(Schema):
                 raise ValidationError('Can\'t compare Boolean field against a non boolean value. Please use True or False')
 
         if isinstance(field, (fields.Date, fields.DateTime)) and valid_date:
+            filter_['val'] = parse(filter_['val']).isoformat()  # bugfix: when user sends string like: 1/1/2020
             return [filter_]
 
         # we try to deserialize the value, any error means that the value was not valid for the field typ3

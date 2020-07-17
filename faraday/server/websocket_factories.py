@@ -143,8 +143,11 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                     agent_execution = AgentExecution.query.filter(AgentExecution.id == execution_id).first()
                     if agent_execution:
 
-                        if agent_execution.workspace.name \
-                                not in agent.workspaces:
+                        if agent_execution.workspace.name not in \
+                                [
+                                    workspace.name
+                                    for workspace in agent.workspaces
+                                ]:
                             logger.exception(
                                 ValueError(
                                     f"The {agent.name} agent has permission "

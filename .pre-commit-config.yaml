@@ -1,0 +1,34 @@
+default_stages: [commit]
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.1.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-json
+    -   id: check-yaml
+    -   id: debug-statements
+-   repo: local
+    hooks:
+    -   id: sanity-check
+        name: Commit SanityCheck
+        entry: bash scripts/sanity_check_commit.sh
+        language: system
+        verbose: true
+        stages: [merge-commit, commit, push]
+    -   id: sanity-check-file
+        name: File SanityCheck
+        entry: scripts/sanity_check_file.py
+        language: python
+        verbose: true
+        pass_filenames: false
+        args: [--mode=diff]
+        stages: [merge-commit, commit]
+    -   id: sanity-check-file-push
+        name: File Push SanityCheck
+        entry: scripts/sanity_check_file.py
+        language: python
+        verbose: true
+        pass_filenames: false
+        args: [--mode=ls]
+        stages: [push]

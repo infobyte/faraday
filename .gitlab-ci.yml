@@ -59,12 +59,22 @@ merge_conflict_check:
           when: on_success
         - when: never
 
+sanity_check:
+    tags:
+        - faradaytests
+    image: python:3
+    stage: pre_testing
+    script:
+        - bash scripts/sanity_check_commit.sh
+        - scripts/sanity_check_file.py --mode=ls
+    rules:
+        - when: on_success
+
 bandit:
     tags:
         - faradaytests
     image: python:3
     stage: pre_testing
-    allow_failure:
     script:
       - pip3 install virtualenv
       - virtualenv -p python3 faraday_venv

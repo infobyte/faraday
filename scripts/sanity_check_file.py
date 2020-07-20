@@ -41,5 +41,5 @@ if __name__ == '__main__':
         intersection = git_diff_intersection({PINK_FILE, BLACK_FILE})
     elif "pink" in BRANCH_NAME:
         intersection = git_diff_intersection({BLACK_FILE})
-    assert len(intersection) == 0, f"The {intersection} should be in " \
+    assert len(intersection) == 0, f"The {intersection} should not be in " \
                                    f"{BRANCH_NAME}"

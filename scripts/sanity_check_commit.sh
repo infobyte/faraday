@@ -21,7 +21,6 @@ function check_no_commits(){
     # If it does contain at least one of then, quit the script with a non-zero exit code
     for commit in $*
     do
-        echo trying $commit
         git branch --all --contains "$commit" | grep "$BRANCH_NAME" && fail $commit
     done
 }

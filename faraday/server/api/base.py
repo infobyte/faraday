@@ -601,9 +601,6 @@ class ListWorkspacedMixin(ListMixin):
     # inside the view generic methods is enough
 
 
-class ListMultiWorkspacedMixin(ListWorkspacedMixin):
-    """Control GET /<workspace_name>/<route_base>/ route"""
-
 class RetrieveMixin:
     """Add GET /<id>/ route"""
 
@@ -685,13 +682,13 @@ class ReadOnlyWorkspacedView(SortableMixin,
 
 
 class ReadOnlyMultiWorkspacedView(SortableMixin,
-                                  ListMultiWorkspacedMixin,
+                                  ListWorkspacedMixin,
                                   RetrieveMultiWorkspacedMixin,
                                   GenericMultiWorkspacedView):
     """A multi workspaced generic view with list and retrieve endpoints
 
     It is just a GenericMultiWorkspacedView inheriting also from
-    ListMultiWorkspacedMixin, RetrieveMultiWorkspacedMixin and SortableMixin"""
+    ListWorkspacedMixin, RetrieveMultiWorkspacedMixin and SortableMixin"""
 
 
 class CreateMixin:

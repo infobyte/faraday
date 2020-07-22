@@ -399,18 +399,14 @@ class GenericWorkspacedView(GenericView):
 
 class GenericMultiWorkspacedView(GenericWorkspacedView):
     """Abstract class for a view that depends on the workspace, that is
-    passed in the URL
+    passed in the URL. The object can be accessed from more than one workspace.
 
     .. note::
-        This view inherits from GenericView, so make sure you understand
-        that first by checking the docs above, or just by looking at the
-        source code of server/api/base.py.
+        This view inherits from GenericWorkspacedView and GenericView, so make
+        sure you understand those first by checking the docs above, or just
+        by looking at the source code of server/api/base.py.
 
     """
-
-    # Default attributes
-    route_prefix = '/v2/ws/<workspace_name>/'
-    base_args = ['workspace_name']  # Required to prevent double usage of <workspace_name>
 
     def _get_base_query(self, workspace_name):
         base = super(GenericWorkspacedView, self)._get_base_query()

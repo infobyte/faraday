@@ -416,14 +416,6 @@ class GenericMultiWorkspacedView(GenericWorkspacedView):
             )
         )
 
-    def _get_object(self, object_id, workspace_name, eagerload=False):
-        obj = super()._get_object(object_id, workspace_name, eagerload)
-        if len([workspace
-                for workspace in obj.workspaces
-                if workspace.name == workspace_name
-                ]) == 0:
-            flask.abort(404, 'Object with id "%s" not found' % object_id)
-        return obj
 
 class ListMixin:
     """Add GET / route"""

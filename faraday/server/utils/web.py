@@ -3,12 +3,9 @@
 # See the file 'doc/LICENSE' for the license information
 import gzip
 import functools
-import requests
 from io import BytesIO as IO
 
 from flask import after_this_request, request, abort, jsonify
-
-from faraday.server import config
 
 
 def get_integer_parameter(query_parameter, default=None):

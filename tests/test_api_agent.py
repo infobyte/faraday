@@ -8,7 +8,7 @@ from __future__ import absolute_import
 from unittest import mock
 import pytest
 
-from faraday.server.api.modules.agent import AgentView, AgentWorkspacedView
+from faraday.server.api.modules.agent import AgentWithWorkspacesView, AgentView
 from faraday.server.models import Agent
 from tests.factories import AgentFactory, WorkspaceFactory, ExecutorFactory
 from tests.test_api_non_workspaced_base import ReadOnlyAPITests
@@ -229,10 +229,10 @@ class TestAgentCreationAPI():
         assert res.status_code == 400
 
 
-class TestAgentAPIGeneric(ReadOnlyAPITests):
+class TestAgentWithWorkspacesAPIGeneric(ReadOnlyAPITests):
     model = Agent
     factory = factories.AgentFactory
-    view_class = AgentView
+    view_class = AgentWithWorkspacesView
     api_endpoint = 'agents'
 
     def workspaced_url(self, workspace, obj= None):
@@ -394,10 +394,10 @@ class TestAgentAPIGeneric(ReadOnlyAPITests):
         )
         assert res.status_code == 404
 
-class TestAgentWorkspacedAPI(ReadOnlyMultiWorkspacedAPITests):
+class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
     model = Agent
     factory = factories.AgentFactory
-    view_class = AgentWorkspacedView
+    view_class = AgentView
     api_endpoint = 'agents'
 
     def test_get_workspaced(self, test_client, session):

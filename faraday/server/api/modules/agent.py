@@ -47,7 +47,7 @@ class ExecutorSchema(AutoSchema):
         )
 
 
-class AgentWorkspacedSchema(AutoSchema):
+class AgentSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     status = fields.String(dump_only=True)
     creator = PrimaryKeyRelatedField('username', dump_only=True, attribute='creator')
@@ -74,11 +74,11 @@ class AgentWorkspacedSchema(AutoSchema):
         )
 
 
-class AgentNotWorkspacedSchema(AgentWorkspacedSchema):
+class AgentWithWorkspacesSchema(AgentSchema):
     workspaces = fields.Pluck(WorkspaceSchema, "name", many=True, required=True)
 
-    class Meta(AgentWorkspacedSchema.Meta):
-        fields = AgentWorkspacedSchema.Meta.fields + ('workspaces',)
+    class Meta(AgentSchema.Meta):
+        fields = AgentSchema.Meta.fields + ('workspaces',)
 
 
 class AgentCreationSchema(Schema):
@@ -178,12 +178,12 @@ class AgentRunSchema(Schema):
     )
 
 
-class AgentView(UpdateMixin,
-                DeleteMixin,
-                ReadOnlyView):
+class AgentWithWorkspacesView(UpdateMixin,
+                              DeleteMixin,
+                              ReadOnlyView):
     route_base = 'agents'
     model_class = Agent
-    schema_class = AgentNotWorkspacedSchema
+    schema_class = AgentWithWorkspacesSchema
     get_joinedloads = [Agent.creator, Agent.executors, Agent.workspaces]
 
     def _get_workspace(self, workspace_name):
@@ -237,10 +237,10 @@ class AgentView(UpdateMixin,
         return obj
 
 
-class AgentWorkspacedView(ReadOnlyMultiWorkspacedView):
+class AgentView(ReadOnlyMultiWorkspacedView):
     route_base = 'agents'
     model_class = Agent
-    schema_class = AgentWorkspacedSchema
+    schema_class = AgentSchema
     get_joinedloads = [Agent.creator, Agent.executors, Agent.workspaces]
 
     @route('/<int:agent_id>/', methods=['DELETE'])
@@ -319,6 +319,6 @@ class AgentWorkspacedView(ReadOnlyMultiWorkspacedView):
         })
 
 
-AgentView.register(agent_api)
+AgentWithWorkspacesView.register(agent_api)
 AgentCreationView.register(agent_api)
-AgentWorkspacedView.register(agent_api)
+AgentView.register(agent_api)

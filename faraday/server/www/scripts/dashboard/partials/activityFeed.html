@@ -54,7 +54,7 @@
                     <span ng-if="cmd.import_source == 'agent'">
                         <b class="fg-blue">{{cmd.tool}}</b>
                         agent ran
-                        <span uib-tooltip="{{ cmd.params }}"><strong>{{cmd.command}}</strong></span>
+                        <span uib-tooltip="{{ fitStringInTooltip(cmd.params) }}"><strong>{{cmd.command}}</strong></span>
                         executor
                     </span>
                     <span class="little-gray"> and found</span>

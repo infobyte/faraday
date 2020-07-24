@@ -1,1 +1,1 @@
-Add agent and executor data in Activity Feed
+Add agent and executor data to Activity Feed

@@ -160,6 +160,3 @@ class ReadOnlyAPITests(ListTestsMixin,
                        RetrieveTestsMixin,
                        GenericAPITest):
     pass
-
-
-# I'm Py3

@@ -436,9 +436,24 @@ class NoteFactory(FaradayFactory):
         model = Comment
 
 
-class AgentFactory(WorkspaceObjectFactory):
+class AgentFactory(FaradayFactory):
     name = FuzzyText()
     active = True
+
+    @factory.post_generation
+    def workspaces(self, create, extracted, **kwargs):
+        if not create:
+            # Simple build, do nothing.
+            return
+
+        if extracted:
+            # A list of groups were passed in, use them
+            for workspace in extracted:
+                self.workspaces.append(workspace)
+        else:
+            self.workspaces.append(WorkspaceFactory())
+            self.workspaces.append(WorkspaceFactory())
+
 
     class Meta:
         model = Agent
@@ -463,7 +478,9 @@ class AgentExecutionFactory(WorkspaceObjectFactory):
     parameters_data = factory.LazyAttribute(
         lambda _: {"param_name": "param_value"}
     )
-    workspace = factory.SelfAttribute('executor.agent.workspace')
+    workspace = factory.LazyAttribute(
+        lambda agent_execution: agent_execution.executor.agent.workspaces[0]
+    )
 
     class Meta:
         model = AgentExecution

@@ -397,6 +397,26 @@ class GenericWorkspacedView(GenericView):
             flask.abort(403, "Altering a readonly workspace is not allowed")
 
 
+class GenericMultiWorkspacedView(GenericWorkspacedView):
+    """Abstract class for a view that depends on the workspace, that is
+    passed in the URL. The object can be accessed from more than one workspace.
+
+    .. note::
+        This view inherits from GenericWorkspacedView and GenericView, so make
+        sure you understand those first by checking the docs above, or just
+        by looking at the source code of server/api/base.py.
+
+    """
+
+    def _get_base_query(self, workspace_name):
+        base = super(GenericWorkspacedView, self)._get_base_query()
+        return base.filter(
+            self.model_class.workspaces.any(
+                name=self._get_workspace(workspace_name).name
+            )
+        )
+
+
 class ListMixin:
     """Add GET / route"""
 
@@ -636,6 +656,10 @@ class RetrieveWorkspacedMixin(RetrieveMixin):
         return super(RetrieveWorkspacedMixin, self).get(object_id, workspace_name=workspace_name)
 
 
+class RetrieveMultiWorkspacedMixin(RetrieveWorkspacedMixin):
+    """Control GET /<workspace_name>/<route_base>/<id>/ route"""
+
+
 class ReadOnlyView(SortableMixin,
                    ListMixin,
                    RetrieveMixin,
@@ -655,6 +679,16 @@ class ReadOnlyWorkspacedView(SortableMixin,
 
     It is just a GenericWorkspacedView inheriting also from
     ListWorkspacedMixin, RetrieveWorkspacedMixin and SortableMixin"""
+
+
+class ReadOnlyMultiWorkspacedView(SortableMixin,
+                                  ListWorkspacedMixin,
+                                  RetrieveMultiWorkspacedMixin,
+                                  GenericMultiWorkspacedView):
+    """A multi workspaced generic view with list and retrieve endpoints
+
+    It is just a GenericMultiWorkspacedView inheriting also from
+    ListWorkspacedMixin, RetrieveMultiWorkspacedMixin and SortableMixin"""
 
 
 class CreateMixin:

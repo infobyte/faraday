@@ -1130,6 +1130,17 @@ class VulnerabilityWeb(VulnerabilityGeneric):
     def service(cls):
         return relationship('Service', backref=backref("vulnerabilities_web", cascade="all, delete-orphan"))
 
+    @declared_attr
+    def host_id(cls):
+        return VulnerabilityGeneric.__table__.c.get(
+            'host_id', Column(Integer, db.ForeignKey('host.id'),
+                                 nullable=False))
+
+    @declared_attr
+    def host(cls):
+        return relationship('Host', backref=backref("vulnerabilities_web", cascade="all, delete-orphan"))
+
+
     @property
     def parent(self):
         return self.service

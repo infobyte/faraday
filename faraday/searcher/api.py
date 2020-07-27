@@ -76,7 +76,7 @@ class Api:
         if response.status_code == 401:
             raise ApiError('Unauthorized operation trying to get {}'.format(object_name))
         if response.status_code != 200:
-            raise ApiError('Cannot fetch {}'.format(object_name))
+            raise ApiError('Cannot fetch {}. Url {}'.format(object_name, url))
         if isinstance(response.json, dict):
             return response.json
         return json.loads(response.content)

@@ -2,20 +2,20 @@
 # If you run pynixify again, the file will be either overwritten or
 # deleted, and you will lose the changes you made to it.
 
-{ buildPythonPackage, fetchPypi, lib, unidecode }:
+{ anyascii, buildPythonPackage, fetchPypi, lib }:
 buildPythonPackage rec {
   pname = "filedepot";
-  version = "0.7.1";
+  version = "0.8.0";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "1rhyhr9d4ypb7qai8rgi7h2ikyiwmx7ib6xlqid1kbg0l22j1g4k";
+    sha256 = "0j8q05fyrnhjscz7yi75blymdswviv8bl79j9m5m45if6p6nwc95";
   };
 
   # TODO FIXME
   doCheck = false;
 
-  propagatedBuildInputs = [ unidecode ];
+  propagatedBuildInputs = [ anyascii ];
 
   meta = {
     description =

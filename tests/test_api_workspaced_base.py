@@ -229,7 +229,7 @@ class UpdateTestsMixin:
 class CountTestsMixin:
     def test_count(self, test_client, session, user_factory):
 
-        session.add(self.factory.create(creator=self.first_object.creator, 
+        session.add(self.factory.create(creator=self.first_object.creator,
                                         workspace=self.first_object.workspace))
 
         session.commit()
@@ -249,7 +249,7 @@ class CountTestsMixin:
 
     def test_count_descending(self, test_client, session, user_factory):
 
-        session.add(self.factory.create(creator=self.first_object.creator, 
+        session.add(self.factory.create(creator=self.first_object.creator,
                                         workspace=self.first_object.workspace))
 
         session.commit()
@@ -329,4 +329,28 @@ class ReadOnlyAPITests(ListTestsMixin,
     pass
 
 
-# I'm Py3
+class ReadOnlyMultiWorkspacedAPITests(ListTestsMixin,
+                                      RetrieveTestsMixin,
+                                      GenericAPITest):
+
+    @pytest.fixture(autouse=True)
+    def load_workspace_with_objects(self, database, session, workspace):
+        self.objects = self.factory.create_batch(
+            OBJECT_COUNT, workspaces=[workspace])
+        self.first_object = self.objects[0]
+        session.add_all(self.objects)
+        session.commit()
+        assert workspace.id is not None
+        self.workspace = workspace
+        return workspace
+
+    @pytest.mark.usefixtures('mock_envelope_list')
+    def test_list_retrieves_all_items_from_workspace(self, test_client,
+                                                     second_workspace,
+                                                     session):
+        obj = self.factory.create(workspaces=[second_workspace])
+        session.add(obj)
+        session.commit()
+        res = test_client.get(self.url())
+        assert res.status_code == 200
+        assert len(res.json['data']) == OBJECT_COUNT

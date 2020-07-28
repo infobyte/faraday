@@ -20,6 +20,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     event,
+    Table,
 )
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship
@@ -1411,6 +1412,14 @@ class Credential(Metadata):
 
 
 
+association_workspace_and_agents_table = Table(
+        'association_workspace_and_agents_table',
+        db.Model.metadata,
+        Column('workspace_id', Integer, ForeignKey('workspace.id')),
+        Column('agent_id', Integer, ForeignKey('agent.id'))
+    )
+
+
 class Workspace(Metadata):
     __tablename__ = 'workspace'
     id = Column(Integer, primary_key=True)
@@ -1437,6 +1446,12 @@ class Workspace(Metadata):
     workspace_permission_instances = relationship(
         "WorkspacePermission",
         cascade="all, delete-orphan")
+
+    agents = relationship(
+        'Agent',
+        secondary=association_workspace_and_agents_table,
+        back_populates="workspaces",
+    )
 
     @classmethod
     def query_with_count(cls, confirmed, active=True, readonly=None, workspace_name=None):
@@ -2072,11 +2087,10 @@ class Agent(Metadata):
     token = Column(Text, unique=True, nullable=False, default=lambda:
                     "".join([SystemRandom().choice(string.ascii_letters + string.digits)
                             for _ in range(64)]))
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
-    workspace = relationship(
+    workspaces = relationship(
         'Workspace',
-        foreign_keys=[workspace_id],
-        backref=backref('agents', cascade="all, delete-orphan"),
+        secondary=association_workspace_and_agents_table,
+        back_populates="agents"
     )
     name = NonBlankColumn(Text)
     active = Column(Boolean, default=True)

@@ -75,6 +75,7 @@ class TestAgentWebsocketToken:
         )
         assert res.status_code == 403
 
+    @pytest.mark.usefixtures('session')
     def test_succeeds_with_agent_token(self, test_client, agent, session):
         session.add(agent)
         session.commit()

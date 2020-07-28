@@ -41,11 +41,7 @@ let
 
     flask-login = self.callPackage ./packages/flask-login { };
 
-    flask-restless = self.callPackage ./packages/flask-restless { };
-
     flask-security = self.callPackage ./packages/flask-security { };
-
-    mimerender = self.callPackage ./packages/mimerender { };
 
     nplusone = self.callPackage ./packages/nplusone { };
 

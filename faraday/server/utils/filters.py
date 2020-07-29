@@ -171,8 +171,8 @@ class FlaskRestlessFilterSchema(Schema):
 
 
 class FlaskRestlessOperator(Schema):
-    _or = fields.List(fields.Nested("self"), attribute='or', data_key='or')
-    _and = fields.List(fields.Nested("self"), attribute='and', data_key='and')
+    _or = fields.Nested("self", attribute='or', data_key='or')
+    _and = fields.Nested("self", attribute='and', data_key='and')
 
     def load(
         self,
@@ -213,7 +213,7 @@ class FlaskRestlessOrderFieldSchema(Schema):
 
 
 class FilterSchema(Schema):
-    filters = fields.List(fields.Nested("FlaskRestlessSchema"))
+    filters = fields.Nested("FlaskRestlessSchema")
     order_by = fields.List(fields.Nested(FlaskRestlessOrderFieldSchema))
     group_by = fields.List(fields.Nested(FlaskRestlessGroupFieldSchema))
     limit = fields.Integer()

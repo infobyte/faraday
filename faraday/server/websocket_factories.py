@@ -52,12 +52,6 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                 pass
         return (protocol, headers)
 
-    # {
-    #     "action": "RUN_STATUS",
-    #     "running": true,
-    #     "message": "todo bien guachin"
-    # }
-
     def onMessage(self, payload, is_binary):
         from faraday.server.web import app # pylint:disable=import-outside-toplevel
         """
@@ -149,10 +143,18 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                     agent_execution = AgentExecution.query.filter(AgentExecution.id == execution_id).first()
                     if agent_execution:
 
-                        if agent.workspace.name != agent_execution.workspace.name:
+                        if agent_execution.workspace.name not in \
+                                [
+                                    workspace.name
+                                    for workspace in agent.workspaces
+                                ]:
                             logger.exception(
-                                ValueError(f"The {agent.name} agent has permission to workspace {agent.workspace.name} "
-                                           f"and ask to write to workspace {agent_execution.workspace.name}")
+                                ValueError(
+                                    f"The {agent.name} agent has permission "
+                                    f"to workspace {agent.workspaces} and "
+                                    "ask to write to workspace "
+                                    f"{agent_execution.workspace.name}"
+                                )
                             )
                         else:
                             agent_execution.successful = message.get('successful', None)

@@ -60,7 +60,7 @@ def file_upload(workspace=None):
     if report_file:
 
         chars = string.ascii_uppercase + string.digits
-        random_prefix = ''.join(random.choice(chars) for x in range(12))
+        random_prefix = ''.join(random.choice(chars) for x in range(12)) # nosec
         raw_report_filename = '{0}_{1}'.format(random_prefix, secure_filename(report_file.filename))
 
         try:

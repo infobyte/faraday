@@ -1,7 +1,8 @@
 
 import logging
 from io import BytesIO
-from lxml.etree import Element, SubElement, tostring
+from lxml.etree import Element, SubElement, tostring # nosec
+# We don't use Element for parsing
 from flask import Blueprint, request, abort, send_file
 
 from faraday.server.models import Workspace

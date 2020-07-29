@@ -28,7 +28,6 @@ marshmallow-sqlalchemy
 filteralchemy-fork
 filedepot>=0.5.0
 nplusone>=0.8.1
-Flask-Restless>=0.17.0
 syslog-rfc5424-formatter>=1.1.1
 simplekv>=0.13.0
 Flask-KVSession-fork>=0.6.3

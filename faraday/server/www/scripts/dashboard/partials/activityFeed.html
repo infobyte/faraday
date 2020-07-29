@@ -51,6 +51,12 @@
                           uib-tooltip="{{ cmd.command + ' ' + cmd.params}}"><span class="little-gray">ran</span> <strong>{{cmd.command}}</strong></span>
                     <span ng-if="cmd.import_source == 'report'"
                           uib-tooltip="Import {{ cmd.command + ': ' + cmd.params}}">imported <strong>{{cmd.tool == 'unknown' ? cmd.command : cmd.tool}}</strong> report</span>
+                    <span ng-if="cmd.import_source == 'agent'">
+                        <b class="fg-blue">{{cmd.tool}}</b>
+                        agent ran
+                        <span uib-tooltip="{{ fitStringInTooltip(cmd.params) }}"><strong>{{cmd.command}}</strong></span>
+                        executor
+                    </span>
                     <span class="little-gray"> and found</span>
                     <span ng-if="cmd.hosts_count == 0 && cmd.services_count == 0 && cmd.vulnerabilities_count == 0 "> <strong>nothing</strong></span>
                     <span ng-if="cmd.hosts_count != 0 || cmd.services_count != 0 || cmd.vulnerabilities_count != 0 ">: </span>

@@ -18,11 +18,12 @@ let
 
     builtins.fetchTarball {
       url =
-        "https://github.com/infobyte/nixpkgs/archive/08171b150735d24a7c47673ee3d0f364fd723360.tar.gz";
-      sha256 = "0hv1sjwqsz44p8mpxwyjhy3n3791302gz1iv0ms0mbs19jpvf5hh";
+        "https://github.com/infobyte/nixpkgs/archive/6edef530cb277f73587bfc7cb8ef17175abd306d.tar.gz";
+      sha256 = "034d88hgni68bghpbrmakgbiyrr8m0zwlgag6a0zqpzf6pdl818x";
     };
 
   packageOverrides = self: super: {
+
     apispec-webframeworks =
       self.callPackage ./packages/apispec-webframeworks { };
 

@@ -70,6 +70,16 @@ angular.module('faradayApp')
                     return count;
                 };
 
+                $scope.fitStringInTooltip = function (string) {
+                    /**
+                     * Summary: split string to fit it into tooltip.
+                     * */
+                    if (string.length >= 18)
+                        return string.substring(0, 18) + ' ' + string.substring(18)
+                    else
+                        return string
+                };
+
                 dashboardSrv.registerCallback(init);
                 init();
             }]);

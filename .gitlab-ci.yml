@@ -31,6 +31,7 @@ before_script:
 
 include:
   - local: .gitlab/ci/.storage-gitlab-ci.yml
+  - local: .gitlab/ci/.github-gitlab-ci.yml
 
 stages:
     - pre_testing
@@ -40,6 +41,7 @@ stages:
     - build
     - distro_testing
     - deploy
+    - publish
 
 services:
     - postgres:latest

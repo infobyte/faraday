@@ -27,20 +27,99 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert res.status_code == 200
         assert res.json['stats']['hosts'] == 1
 
-
-    def test_vuln_count(self,
+    @pytest.mark.parametrize('querystring', [
+        '?confirmed=1&status=open',
+        '?confirmed=true&status=open'
+    ])
+    def test_vuln_count_open_confirmed(self,
                         vulnerability_factory,
+                        vulnerability_web_factory,
                         test_client,
-                        session):
+                        session,
+                        querystring):
         vulns = vulnerability_factory.create_batch(8, workspace=self.first_object,
-                                                   confirmed=False)
-        vulns += vulnerability_factory.create_batch(5, workspace=self.first_object,
-                                                    confirmed=True)
+                                                   confirmed=False, status='open')
+
+        vulns += vulnerability_factory.create_batch(3, workspace=self.first_object,
+                                                    confirmed=True, status='closed')
+
+        vulns += vulnerability_web_factory.create_batch(2, workspace=self.first_object,
+                                                    confirmed=True, status='open')
+
+
+
         session.add_all(vulns)
         session.commit()
-        res = test_client.get(self.url(self.first_object))
+        res = test_client.get(self.url(self.first_object) + querystring)
         assert res.status_code == 200
+        assert res.json['stats']['code_vulns'] == 0
+        assert res.json['stats']['web_vulns'] == 2
+        assert res.json['stats']['std_vulns'] == 0
+        assert res.json['stats']['total_vulns'] == 2
+
+
+    @pytest.mark.parametrize('querystring', [
+        '?status=closed',
+        '?status=closed'
+    ])
+    def test_vuln_count_open(self,
+                        vulnerability_factory,
+                        vulnerability_web_factory,
+                        test_client,
+                        session,
+                        querystring):
+        vulns = vulnerability_factory.create_batch(8, workspace=self.first_object,
+                                                   confirmed=False, status='open')
+
+        vulns += vulnerability_factory.create_batch(3, workspace=self.first_object,
+                                                    confirmed=True, status='closed')
+
+        vulns += vulnerability_web_factory.create_batch(2, workspace=self.first_object,
+                                                    confirmed=True, status='open')
+
+
+
+        session.add_all(vulns)
+        session.commit()
+        res = test_client.get(self.url(self.first_object) + querystring)
+        assert res.status_code == 200
+        assert res.json['stats']['code_vulns'] == 0
+        assert res.json['stats']['web_vulns'] == 0
+        assert res.json['stats']['std_vulns'] == 3
+        assert res.json['stats']['total_vulns'] == 3
+
+    @pytest.mark.parametrize('querystring', [
+        '?status=asdfss',
+        '?status=close',
+        '?status=',
+        '?status=\' or 1 == 1',
+    ])
+    def test_vuln_count_invalid_status(self,
+                        vulnerability_factory,
+                        vulnerability_web_factory,
+                        test_client,
+                        session,
+                        querystring):
+        vulns = vulnerability_factory.create_batch(8, workspace=self.first_object,
+                                                   confirmed=False, status='open')
+
+        vulns += vulnerability_factory.create_batch(3, workspace=self.first_object,
+                                                    confirmed=True, status='closed')
+
+        vulns += vulnerability_web_factory.create_batch(2, workspace=self.first_object,
+                                                    confirmed=True, status='open')
+
+
+
+        session.add_all(vulns)
+        session.commit()
+        res = test_client.get(self.url(self.first_object) + querystring)
+        assert res.status_code == 200
+        assert res.json['stats']['code_vulns'] == 0
+        assert res.json['stats']['web_vulns'] == 2
+        assert res.json['stats']['std_vulns'] == 11
         assert res.json['stats']['total_vulns'] == 13
+
 
     @pytest.mark.parametrize('querystring', [
         '?confirmed=1',
@@ -244,5 +323,3 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         res = test_client.post('/v2/ws/', data=raw_data)
         assert res.status_code == 400
         assert workspace_count_previous == session.query(Workspace).count()
-
-# I'm Py3

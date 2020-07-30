@@ -267,6 +267,9 @@ def user_logged_in_succesfull(app, user):
             logger.debug("Faraday-Client license_check response: %s", res.text)
         except Exception as e:
             logger.warning("Error sending client license_check [%s]", e)
+    # cleanup old sessions
+    logger.debug("Cleanup sessions")
+    KVSessionExtension(app=app).cleanup_sessions(app)
 
 def create_app(db_connection_string=None, testing=None):
     app = Flask(__name__)

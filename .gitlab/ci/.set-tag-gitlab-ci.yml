@@ -6,7 +6,7 @@ tag_on_github:
       - git config remote.github.url >/dev/null || git remote add github https://${GH_TOKEN}@github.com/infobyte/faraday.git
       - CHANGELOG/check_pre_tag.py
       - git tag v$IMAGE_TAG -m "$(cat CHANGELOG/$IMAGE_TAG/white.md)"
-      - git push origin v$IMAGE_TAG
+      - git push github v$IMAGE_TAG
     rules:
       - if: '$CI_COMMIT_TAG =~ /^white-v[0-9.]+$/'
         when: on_success

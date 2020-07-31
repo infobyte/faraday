@@ -48,7 +48,7 @@ from faraday.server.models import (
 )
 from faraday.server.utils.database import get_or_create
 from faraday.server.utils.export import export_vulns_to_csv
-from faraday.server.utils.py3 import BytesJSONEncoder
+
 from faraday.server.utils.filters import FlaskRestlessSchema
 from faraday.server.api.modules.services import ServiceSchema
 from faraday.server.schemas import (
@@ -81,7 +81,7 @@ class EvidenceSchema(AutoSchema):
 
     def get_data(self, file_obj):
         depot = DepotManager.get()
-        return b64encode(depot.get(file_obj.content.get('file_id')).read())
+        return b64encode(depot.get(file_obj.content.get('file_id')).read()).decode()
 
 
 class ImpactSchema(Schema):
@@ -764,8 +764,7 @@ class VulnerabilityView(PaginatedMixin,
 
         if 'group_by' not in filters:
             vulns = self.schema_class_dict[_type](**marshmallow_params).dumps(
-                vulns.all(),
-                cls=BytesJSONEncoder)
+                vulns.all())
             vulns_data = json.loads(vulns)
         else:
             column_names = ['count'] + [field['field'] for field in filters.get('group_by',[])]

@@ -30,7 +30,6 @@ from faraday.server.utils.database import (
     is_unique_constraint_violation
     )
 
-from faraday.server.utils.py3 import BytesJSONEncoder
 from faraday.server.config import faraday_server
 
 logger = logging.getLogger(__name__)
@@ -38,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 def output_json(data, code, headers=None):
     content_type = 'application/json'
-    dumped = json.dumps(data, cls=BytesJSONEncoder)
+    dumped = json.dumps(data)
     if headers:
         headers.update({'Content-Type': content_type})
     else:

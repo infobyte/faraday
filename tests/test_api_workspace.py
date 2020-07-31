@@ -59,10 +59,9 @@ class TestWorkspaceAPI(ReadWriteAPITests):
 
 
     @pytest.mark.parametrize('querystring', [
-        '?status=closed',
         '?status=closed'
     ])
-    def test_vuln_count_open(self,
+    def test_vuln_count_closed(self,
                         vulnerability_factory,
                         vulnerability_web_factory,
                         test_client,
@@ -76,8 +75,6 @@ class TestWorkspaceAPI(ReadWriteAPITests):
 
         vulns += vulnerability_web_factory.create_batch(2, workspace=self.first_object,
                                                     confirmed=True, status='open')
-
-
 
         session.add_all(vulns)
         session.commit()

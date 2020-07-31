@@ -30,8 +30,8 @@ before_script:
     - mkdir -pv $APT_CACHE_DIR
 
 include:
+  - local: .gitlab/ci/.set-tag-gitlab-ci.yml
   - local: .gitlab/ci/.storage-gitlab-ci.yml
-  - local: .gitlab/ci/.github-gitlab-ci.yml
 
 stages:
     - pre_testing

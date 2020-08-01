@@ -96,11 +96,38 @@ class TestLogin():
         assert res.status_code == 200
 
         headers = {'Authorization': 'Token ' + res.json}
-
+        ws = factories.WorkspaceFactory.create(name='wonderland')
+        session.add(ws)
+        session.commit()
         # clean cookies make sure test_client has no session
         test_client.cookie_jar.clear()
-        res = test_client.get('/session', headers=headers)
+        res = test_client.get('/v2/ws/wonderland/', headers=headers)
         assert res.status_code == 200
+
+    def test_retrieve_token_from_api_dont_generate_session(self, test_client, session):
+        """
+         After generate a token no session is created
+        """
+
+        alice = factories.UserFactory.create(
+            active=True,
+            username='alice',
+            password=hash_password('passguord'),
+            role='pentester')
+        session.add(alice)
+        session.commit()
+
+        login_payload = {
+            'email': 'alice',
+            'password': 'passguord',
+        }
+        res = test_client.post('/login', data=login_payload)
+        assert res.status_code == 200
+        res = test_client.get('/v2/token/')
+        assert res.status_code == 200
+        assert res.headers.has_key('Set-Cookie') is False
+
+
 
     def test_cant_retrieve_token_unauthenticated(self, test_client):
         # clean cookies make sure test_client has no session

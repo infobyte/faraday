@@ -23,6 +23,7 @@ let
     };
 
   packageOverrides = self: super: {
+    anyascii = self.callPackage ./packages/anyascii { };
 
     apispec-webframeworks =
       self.callPackage ./packages/apispec-webframeworks { };

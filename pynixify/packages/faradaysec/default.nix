@@ -9,8 +9,8 @@
 , flask_sqlalchemy, hypothesis, lib, marshmallow, marshmallow-sqlalchemy
 , nplusone, pgcli, pillow, psycopg2, pyasn1, pylint, pyopenssl, pytest
 , pytest-factoryboy, pytestcov, pytestrunner, requests, responses
-, service-identity, simplejson, simplekv, sphinx, sqlalchemy
-, syslog-rfc5424-formatter, tqdm, twine, twisted, webargs, werkzeug, wtforms }:
+, service-identity, simplekv, sphinx, sqlalchemy, syslog-rfc5424-formatter, tqdm
+, twine, twisted, webargs, werkzeug, wtforms }:
 buildPythonPackage rec {
   pname = "faradaysec";
   version = "0.1dev";
@@ -52,7 +52,6 @@ buildPythonPackage rec {
     filteralchemy-fork
     filedepot
     nplusone
-    simplejson
     syslog-rfc5424-formatter
     simplekv
     flask-kvsession-fork

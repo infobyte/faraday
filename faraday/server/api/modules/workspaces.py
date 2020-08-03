@@ -16,7 +16,7 @@ from sqlalchemy.orm import (
 from sqlalchemy.orm.exc import NoResultFound
 
 
-from faraday.server.models import db, Workspace, _make_vuln_count_property
+from faraday.server.models import db, Workspace, _make_vuln_count_property, Vulnerability
 from faraday.server.schemas import (
     JSTimestampField,
     MutableField,
@@ -139,6 +139,12 @@ class WorkspaceView(ReadWriteView):
         """
         confirmed = self._get_querystring_boolean_field('confirmed')
         active = self._get_querystring_boolean_field('active')
+        status = flask.request.args.get('status')
+
+        extra_query = None
+        if status and status in Vulnerability.STATUSES:
+            extra_query = f"status='{status}'"
+
         self._validate_object_id(object_id)
         query = db.session.query(Workspace).filter_by(name=object_id)
         if active is not None:
@@ -148,23 +154,27 @@ class WorkspaceView(ReadWriteView):
                      Workspace.vulnerability_web_count,
                          _make_vuln_count_property('vulnerability_web',
                                           confirmed=confirmed,
+                                          extra_query=extra_query,
                                           use_column_property=False),
                  ),
                  with_expression(
                      Workspace.vulnerability_standard_count,
                          _make_vuln_count_property('vulnerability',
                                           confirmed=confirmed,
+                                          extra_query=extra_query,
                                           use_column_property=False)
                 ),
                 with_expression(
                      Workspace.vulnerability_total_count,
                          _make_vuln_count_property(type_=None,
                                           confirmed=confirmed,
+                                          extra_query=extra_query,
                                           use_column_property=False)
                ),
                with_expression(
                      Workspace.vulnerability_code_count,
                     _make_vuln_count_property('vulnerability_code',
+                                          extra_query=extra_query,
                                           use_column_property=False)
             ),
 

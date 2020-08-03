@@ -5,6 +5,7 @@ tag_on_github:
     script:
       - git config remote.github.url >/dev/null || git remote add github https://${GH_TOKEN}@github.com/infobyte/faraday.git
       - CHANGELOG/check_pre_tag.py
+      - git push github white/dev:master
       - git tag v$IMAGE_TAG -m "$(cat CHANGELOG/$IMAGE_TAG/white.md)"
       - git push github v$IMAGE_TAG
     rules:

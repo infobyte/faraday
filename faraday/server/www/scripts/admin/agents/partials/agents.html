@@ -97,13 +97,15 @@
                         data-toggle="modal" data-target="#selectExecutorModal-{{agent.id}}" ng-disabled="!agent.active || disableExecute || agent.status=='offline'">
                     Execute
                 </button>
-                <button type="button" class="btn"
+                <!--<button type="button" class="btn"
                         ng-class="{'btn-danger': agent.active, 'btn-success': !agent.active}"
-                        title="{{agent.active?'Pause Agent': 'Unpause Agent'}}"
+                        title="{ {agent.active?'Pause Agent': 'Unpause
+                        Agent'}}"
                         ng-click="changeStatusAgent(agent)"
                         ng-disabled="agent.status=='offline'">
-                    <span ng-bind="agent.active ?'Pause': 'Unpause'"></span>
-                </button>
+                    <span ng-bind="agent.active ?'Pause':
+                    'Unpause'"></span>
+                </button>-->
                 <button type="button" class="btn btn-danger" title="Remove Agent" ng-click="removeAgent(agent.id)">
                     Remove
                 </button>

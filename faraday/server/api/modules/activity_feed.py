@@ -20,18 +20,12 @@ class ActivityFeedSchema(AutoSchema):
     sum_created_vulnerabilities = fields.Method(serialize='get_sum_created_vulnerabilities', allow_none=True)
     sum_created_hosts = fields.Method(serialize='get_sum_created_hosts', allow_none=True)
     sum_created_services = fields.Method(serialize='get_sum_created_services', allow_none=True)
-    sum_created_vulnerability_critical = fields.Method(serialize='get_sum_created_vulnerability_critical',
-                                                       allow_none=True)
-    sum_created_vulnerability_high = fields.Method(serialize='get_sum_created_vulnerability_high',
-                                                       allow_none=True)
-    sum_created_vulnerability_medium = fields.Method(serialize='get_sum_created_vulnerability_medium',
-                                                       allow_none=True)
-    sum_created_vulnerability_low = fields.Method(serialize='get_sum_created_vulnerability_low',
-                                                       allow_none=True)
-    sum_created_vulnerability_info = fields.Method(serialize='get_sum_created_vulnerability_info',
-                                                       allow_none=True)
-    sum_created_vulnerability_unclassified = fields.Method(serialize='get_sum_created_vulnerability_unclassified',
-                                                       allow_none=True)
+    sum_created_vulnerability_critical = fields.Integer(dump_only=True)
+    sum_created_vulnerability_high = fields.Integer(dump_only=True)
+    sum_created_vulnerability_medium = fields.Integer(dump_only=True)
+    sum_created_vulnerability_low = fields.Integer(dump_only=True)
+    sum_created_vulnerability_info = fields.Integer(dump_only=True)
+    sum_created_vulnerability_unclassified = fields.Integer(dump_only=True)
     workspace = PrimaryKeyRelatedField('name', dump_only=True)
     creator = PrimaryKeyRelatedField('username', dump_only=True)
 
@@ -49,25 +43,6 @@ class ActivityFeedSchema(AutoSchema):
 
     def get_sum_created_services(self, obj):
         return obj.sum_created_services
-
-    def get_sum_created_vulnerability_critical(self, obj):
-        return obj.sum_created_vulnerability_critical
-
-    def get_sum_created_vulnerability_high(self, obj):
-        return obj.sum_created_vulnerability_high
-
-    def get_sum_created_vulnerability_medium(self, obj):
-        return obj.sum_created_vulnerability_medium
-
-    def get_sum_created_vulnerability_low(self, obj):
-        return obj.sum_created_vulnerability_low
-
-    def get_sum_created_vulnerability_info(self, obj):
-        return obj.sum_created_vulnerability_info
-
-    def get_sum_created_vulnerability_unclassified(self, obj):
-        return obj.sum_created_vulnerability_unclassified
-
 
     class Meta:
         model = Command

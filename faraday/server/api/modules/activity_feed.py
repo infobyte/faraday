@@ -20,8 +20,12 @@ class ActivityFeedSchema(AutoSchema):
     sum_created_vulnerabilities = fields.Method(serialize='get_sum_created_vulnerabilities', allow_none=True)
     sum_created_hosts = fields.Method(serialize='get_sum_created_hosts', allow_none=True)
     sum_created_services = fields.Method(serialize='get_sum_created_services', allow_none=True)
-    sum_created_vulnerability_critical = fields.Method(serialize='get_sum_created_vulnerability_critical',
-                                                       allow_none=True)
+    sum_created_vulnerability_critical = fields.Integer(dump_only=True)
+    sum_created_vulnerability_high = fields.Integer(dump_only=True)
+    sum_created_vulnerability_medium = fields.Integer(dump_only=True)
+    sum_created_vulnerability_low = fields.Integer(dump_only=True)
+    sum_created_vulnerability_info = fields.Integer(dump_only=True)
+    sum_created_vulnerability_unclassified = fields.Integer(dump_only=True)
     workspace = PrimaryKeyRelatedField('name', dump_only=True)
     creator = PrimaryKeyRelatedField('username', dump_only=True)
 
@@ -40,15 +44,16 @@ class ActivityFeedSchema(AutoSchema):
     def get_sum_created_services(self, obj):
         return obj.sum_created_services
 
-    def get_sum_created_vulnerability_critical(self, obj):
-        return obj.sum_created_vulnerability_critical
-
     class Meta:
         model = Command
         fields = ('_id', 'command', 'ip', 'hostname',
                   'params', 'user', 'workspace', 'tool',
                   'import_source', 'itime', 'sum_created_vulnerabilities',
-                  'sum_created_hosts', 'sum_created_services', 'sum_created_vulnerability_critical', 'creator')
+                  'sum_created_hosts', 'sum_created_services',
+                  'sum_created_vulnerability_critical', 'sum_created_vulnerability_high',
+                  'sum_created_vulnerability_medium', 'sum_created_vulnerability_low',
+                  'sum_created_vulnerability_info', 'sum_created_vulnerability_unclassified',
+                  'creator')
 
 
 class ActivityFeedView(PaginatedMixin, ReadWriteWorkspacedView):
@@ -72,6 +77,11 @@ class ActivityFeedView(PaginatedMixin, ReadWriteWorkspacedView):
                 'hosts_count': command['sum_created_hosts'] or 0,
                 'services_count': command['sum_created_services'] or 0,
                 'criticalIssue': command['sum_created_vulnerability_critical'] or 0,
+                'highIssue': command['sum_created_vulnerability_high'] or 0,
+                'mediumIssue': command['sum_created_vulnerability_medium'] or 0,
+                'lowIssue': command['sum_created_vulnerability_low'] or 0,
+                'infoIssue': command['sum_created_vulnerability_info'] or 0,
+                'unclassifiedIssue': command['sum_created_vulnerability_unclassified'] or 0,
                 'date': command['itime'],
                 'creator': command['creator']
             })
@@ -81,4 +91,3 @@ class ActivityFeedView(PaginatedMixin, ReadWriteWorkspacedView):
 
 
 ActivityFeedView.register(activityfeed_api)
-# I'm Py3

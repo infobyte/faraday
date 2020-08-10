@@ -897,6 +897,13 @@ class Command(Metadata):
     sum_created_services = _make_created_objects_sum('service')
 
     sum_created_vulnerability_critical = _make_created_objects_sum_joined('vulnerability', {'severity': '\'critical\''})
+    sum_created_vulnerability_high = _make_created_objects_sum_joined('vulnerability', {'severity': '\'high\''})
+    sum_created_vulnerability_medium = _make_created_objects_sum_joined('vulnerability', {'severity': '\'medium\''})
+    sum_created_vulnerability_low = _make_created_objects_sum_joined('vulnerability', {'severity': '\'low\''})
+    sum_created_vulnerability_info = _make_created_objects_sum_joined('vulnerability',
+                                                                      {'severity': '\'informational\''})
+    sum_created_vulnerability_unclassified = _make_created_objects_sum_joined('vulnerability',
+                                                                              {'severity': '\'unclassified\''})
 
     @property
     def parent(self):

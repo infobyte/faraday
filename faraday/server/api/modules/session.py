@@ -4,7 +4,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 """
-from flask import jsonify, session, Blueprint, current_app, abort
+from flask import jsonify, Blueprint
 from flask_wtf.csrf import generate_csrf
 from faraday.server.api.base import get_user_permissions
 import flask
@@ -19,4 +19,4 @@ def session_info():
     data['preferences'] = user.preferences
     data['permissions'] = get_user_permissions(user)
     return jsonify(data)
-# I'm Py3
+

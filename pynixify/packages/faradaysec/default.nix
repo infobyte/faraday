@@ -11,14 +11,12 @@
 , pytest-factoryboy, pytestcov, pytestrunner, requests, responses
 , service-identity, simplekv, sphinx, sqlalchemy, syslog-rfc5424-formatter, tqdm
 , twine, twisted, webargs, werkzeug, wtforms }:
+
 buildPythonPackage rec {
   pname = "faradaysec";
-  version = "0.1dev";
+  version = "3.11.1";
 
   src = lib.cleanSource ../../..;
-
-  doCheck = true;
-  checkPhase = "true  # TODO fill with the real command for testing";
 
   buildInputs = [ pytestrunner ];
   propagatedBuildInputs = [
@@ -75,7 +73,9 @@ buildPythonPackage rec {
     twine
   ];
 
-  meta = {
+  checkPhase = "true  # TODO fill with the real command for testing";
+
+  meta = with lib; {
     description =
       "Collaborative Penetration Test and Vulnerability Management Platform https://www.faradaysec.com";
     homepage = "https://github.com/infobyte/faraday";

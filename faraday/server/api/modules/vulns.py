@@ -24,7 +24,12 @@ from sqlalchemy import desc, or_, func
 from werkzeug.datastructures import ImmutableMultiDict
 from depot.manager import DepotManager
 
-from faraday.server.utils.search import search, QueryBuilder, Filter as RestLessFilter
+from faraday.server.utils.search import (
+search,
+QueryBuilder,
+Filter as RestLessFilter,
+)
+
 from faraday.server.api.base import (
     AutoSchema,
     FilterAlchemyMixin,
@@ -733,6 +738,13 @@ class VulnerabilityView(PaginatedMixin,
             hosts_os_filter = hosts_os_filter[0]
             filters['filters'] = [host_os_filter for host_os_filter in filters.get('filters', []) if host_os_filter.get('name') != 'host__os']
 
+        offset = None
+        limit = None
+        if 'offset' in filters:
+            offset = filters.pop('offset')
+        if 'limit' in filters:
+            limit = filters.pop('limit') # we need to remove pagination, since
+        # SQLAlchemy query can't be extended with filters after applying limits/offsets
         vulns = search(db.session,
                        vulnerability_class,
                        filters)
@@ -761,7 +773,10 @@ class VulnerabilityView(PaginatedMixin,
 
         else:
             _type = 'Vulnerability'
-
+        if limit:
+            vulns = vulns.limit(limit)
+        if offset:
+            vulns = vulns.offset(offset)
         if 'group_by' not in filters:
             vulns = self.schema_class_dict[_type](**marshmallow_params).dumps(
                 vulns.all())

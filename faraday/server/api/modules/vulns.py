@@ -778,6 +778,13 @@ class VulnerabilityView(PaginatedMixin,
         if offset:
             vulns = vulns.offset(offset)
         if 'group_by' not in filters:
+            vulns = vulns.options(
+                joinedload(VulnerabilityGeneric.tags),
+                joinedload(Vulnerability.host),
+                joinedload(Vulnerability.service),
+                joinedload(VulnerabilityWeb.service),
+            )
+
             vulns = self.schema_class_dict[_type](**marshmallow_params).dumps(
                 vulns.all())
             vulns_data = json.loads(vulns)

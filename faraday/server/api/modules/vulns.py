@@ -816,9 +816,13 @@ class VulnerabilityView(PaginatedMixin,
 
         workspace = self._get_workspace(workspace_name)
         marshmallow_params = {'many': True, 'context': {}}
-        normal_vulns_data = self._filter_vulns(Vulnerability, filters, hostname_filters, workspace, marshmallow_params, False)
-        web_vulns_data = self._filter_vulns(VulnerabilityWeb, filters, hostname_filters, workspace, marshmallow_params, True)
-        return normal_vulns_data + web_vulns_data
+        if 'group_by' not in filters:
+            normal_vulns_data = self._filter_vulns(Vulnerability, filters, hostname_filters, workspace, marshmallow_params, False)
+            web_vulns_data = self._filter_vulns(VulnerabilityWeb, filters, hostname_filters, workspace, marshmallow_params, True)
+            return normal_vulns_data + web_vulns_data
+        else:
+            vulns_data = self._filter_vulns(VulnerabilityGeneric, filters, hostname_filters, workspace, marshmallow_params, False)
+            return vulns_data
 
     @route('/<int:vuln_id>/attachment/<attachment_filename>/', methods=['GET'])
     def get_attachment(self, workspace_name, vuln_id, attachment_filename):

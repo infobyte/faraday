@@ -730,7 +730,7 @@ class VulnerabilityView(PaginatedMixin,
 
         return res_filters, hostname_filters
 
-    def _filter_vulns(self, vulnerability_class, filters, hostname_filters, workspace, marshmallow_params, is_web):
+    def _filter_vulns(self, vulnerability_class, filters, hostname_filters, workspace, marshmallow_params, is_web, limit, offset):
         hosts_os_filter = [host_os_filter for host_os_filter in filters.get('filters', []) if host_os_filter.get('name') == 'host__os']
 
         if hosts_os_filter:
@@ -738,12 +738,6 @@ class VulnerabilityView(PaginatedMixin,
             hosts_os_filter = hosts_os_filter[0]
             filters['filters'] = [host_os_filter for host_os_filter in filters.get('filters', []) if host_os_filter.get('name') != 'host__os']
 
-        offset = None
-        limit = None
-        if 'offset' in filters:
-            offset = filters.pop('offset')
-        if 'limit' in filters:
-            limit = filters.pop('limit') # we need to remove pagination, since
         # SQLAlchemy query can't be extended with filters after applying limits/offsets
         vulns = search(db.session,
                        vulnerability_class,
@@ -817,8 +811,31 @@ class VulnerabilityView(PaginatedMixin,
         workspace = self._get_workspace(workspace_name)
         marshmallow_params = {'many': True, 'context': {}}
         if 'group_by' not in filters:
-            normal_vulns_data = self._filter_vulns(Vulnerability, filters, hostname_filters, workspace, marshmallow_params, False)
-            web_vulns_data = self._filter_vulns(VulnerabilityWeb, filters, hostname_filters, workspace, marshmallow_params, True)
+            offset = None
+            limit = None
+            if 'offset' in filters:
+                offset = filters.pop('offset')
+            if 'limit' in filters:
+                limit = filters.pop('limit') # we need to remove pagination, since
+
+            normal_vulns_data = self._filter_vulns(
+                    Vulnerability,
+                    filters,
+                    hostname_filters,
+                    workspace,
+                    marshmallow_params,
+                    is_web=False,
+                    limit=limit,
+                    offset=offset)
+            web_vulns_data = self._filter_vulns(
+                    VulnerabilityWeb,
+                    filters,
+                    hostname_filters,
+                    workspace,
+                    marshmallow_params,
+                    is_web=True,
+                    limit=limit,
+                    offset=offset)
             return normal_vulns_data + web_vulns_data
         else:
             vulns_data = self._filter_vulns(VulnerabilityGeneric, filters, hostname_filters, workspace, marshmallow_params, False)

@@ -503,7 +503,7 @@ agent_integration:
       - when: never
 
 qa_integration:
-    stage: deploy_testing
+    stage: post_deploy_testing
     variables:
       REMOTE_BRANCH: $CI_COMMIT_BRANCH
       MAIN_COMMIT_SHA: $CI_COMMIT_SHA

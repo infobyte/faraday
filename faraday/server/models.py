@@ -2189,7 +2189,8 @@ class SearchFilter(Metadata):
 class Configuration(Metadata):
     __tablename__ = "configuration"
     id = Column(Integer, primary_key=True)
-    integrations = Column(JSONType, nullable=False, default={})
+    key = Column(String, unique=True, nullable=False)
+    value = Column(JSONType, nullable=False)
 
 
 # This constraint uses Columns from different classes

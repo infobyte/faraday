@@ -23,7 +23,8 @@ def upgrade():
     configuration_table = op.create_table(
         'configuration',
         sa.Column('id', sa.Integer, primary_key=True),
-        sa.Column('integrations', JSONB, nullable=False, default={}),
+        sa.Column('key', sa.String, unique=True, nullable=False),
+        sa.Column('value', JSONB, nullable=False),
         sa.Column('create_date', sa.DateTime),
         sa.Column('update_date', sa.DateTime),
         sa.Column('creator_id', sa.Integer),
@@ -46,29 +47,32 @@ def upgrade():
         if not tool or (not url and not project_key):
             pass
         else:
-            integration_data = {'url': url}
+            integration_name = f'{tool}_integration'
+            integration_config = {'url': url}
             if project_key and tool == 'jira':
-                integration_data['project_key'] = project_key
-
-            integration_config = {
-                tool: integration_data
-            }
+                integration_config['project_key'] = project_key
 
             op.bulk_insert(
                 configuration_table,
-                [{"integrations": integration_config}]
+                [{
+                    "key": integration_name,
+                    "value": integration_config
+                }]
             )
 
 
 def downgrade():
     connection = op.get_bind()
-    query = connection.execute('SELECT integrations FROM configuration').first()
-    integration_config = query[0] if query else None
+    query = connection.execute("SELECT key, value FROM configuration where key='jira_integration' or key='servicenow_integration'").first()
+    if query:
+        integration_name, integration_config = query
+    else:
+        integration_config = None
 
     if integration_config:
-        tool = list(integration_config.keys())[0]
-        url = integration_config[tool].get('url', '')
-        project_key = integration_config[tool].get('project_key', '')
+        tool = integration_name.split('_integration')[0]
+        url = integration_config.get('url', '')
+        project_key = integration_config.get('project_key', '')
     else:
         tool = ''
         url = ''

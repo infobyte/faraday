@@ -4,6 +4,7 @@
 
 { beautifulsoup4, buildPythonPackage, click, colorama, dateutil, fetchPypi
 , html2text, lib, lxml, pytz, requests, simplejson }:
+
 buildPythonPackage rec {
   pname = "faraday-plugins";
   version = "1.2.3";
@@ -12,9 +13,6 @@ buildPythonPackage rec {
     inherit pname version;
     sha256 = "08h40pix7jfqjz59d7g01scp5sjcwsk0jdlag1gj61mc51rjlzw5";
   };
-
-  # TODO FIXME
-  doCheck = false;
 
   propagatedBuildInputs = [
     click
@@ -28,5 +26,8 @@ buildPythonPackage rec {
     colorama
   ];
 
-  meta = { description = "Faraday plugins package"; };
+  # TODO FIXME
+  doCheck = false;
+
+  meta = with lib; { description = "Faraday plugins package"; };
 }

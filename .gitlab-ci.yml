@@ -41,6 +41,7 @@ stages:
     - build
     - distro_testing
     - deploy
+    - post_deploy_testing
     - publish
 
 services:
@@ -502,12 +503,10 @@ agent_integration:
       - when: never
 
 qa_integration:
-    stage: distro_testing
+    stage: post_deploy_testing
     variables:
-        SOURCE: faraday
-        REMOTE_BRANCH: $CI_COMMIT_REF_NAME
-        PIPELINE: $CI_PIPELINE_ID
-        REMOTE_JOB_TOKEN: $CI_JOB_TOKEN
+      REMOTE_BRANCH: $CI_COMMIT_BRANCH
+      MAIN_COMMIT_SHA: $CI_COMMIT_SHA
     trigger:
         project: faradaysec/qa/automation
         strategy: depend

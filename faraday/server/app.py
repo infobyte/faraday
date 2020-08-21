@@ -169,7 +169,6 @@ def register_handlers(app):
                     logger.warn('Invalid authentication token.')
                     flask.abort(401)
                 logged_in = True
-                flask.session['_user_id'] = user.id  # TODO use public flask_login functions
             elif auth_type == 'agent':
                 # Don't handle the agent logic here, do it in another
                 # before_request handler

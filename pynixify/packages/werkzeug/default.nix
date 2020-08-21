@@ -3,6 +3,7 @@
 # deleted, and you will lose the changes you made to it.
 
 { buildPythonPackage, fetchPypi, lib }:
+
 buildPythonPackage rec {
   pname = "werkzeug";
   version = "1.0.1";
@@ -16,7 +17,7 @@ buildPythonPackage rec {
   # TODO FIXME
   doCheck = false;
 
-  meta = {
+  meta = with lib; {
     description = "The comprehensive WSGI web application library.";
     homepage = "https://palletsprojects.com/p/werkzeug/";
   };

@@ -3,6 +3,7 @@
 # deleted, and you will lose the changes you made to it.
 
 { buildPythonPackage, fetchPypi, lib }:
+
 buildPythonPackage rec {
   pname = "anyascii";
   version = "0.1.6";
@@ -15,7 +16,7 @@ buildPythonPackage rec {
   # TODO FIXME
   doCheck = false;
 
-  meta = {
+  meta = with lib; {
     description = "Unicode to ASCII transliteration";
     homepage = "https://github.com/hunterwb/any-ascii";
   };

@@ -4,6 +4,7 @@
 
 { buildPythonPackage, fetchPypi, flask, itsdangerous, lib, simplekv, six
 , werkzeug }:
+
 buildPythonPackage rec {
   pname = "flask-kvsession-fork";
   version = "0.6.3";
@@ -14,12 +15,12 @@ buildPythonPackage rec {
     sha256 = "0j5ncqb2kwigs2h12vd5jwhj11ma2igw35yz9l79h2q2gg38nn8l";
   };
 
+  propagatedBuildInputs = [ flask simplekv werkzeug itsdangerous six ];
+
   # TODO FIXME
   doCheck = false;
 
-  propagatedBuildInputs = [ flask simplekv werkzeug itsdangerous six ];
-
-  meta = {
+  meta = with lib; {
     description = "Transparent server-side session support for flask";
     homepage = "https://github.com/mbr/flask-kvsession";
   };

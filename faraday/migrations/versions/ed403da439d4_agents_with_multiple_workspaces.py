@@ -56,13 +56,13 @@ def downgrade():
     UPDATE agent
     SET workspace_id=wa.workspace_id
     FROM agent as a
-         INNER JOIN association_workspace_and_agents_table wa 
+         INNER JOIN association_workspace_and_agents_table wa
              ON wa.agent_id = a.id
     WHERE agent.id=a.id
       AND NOT EXISTS (
         SELECT *
         FROM agent as aa
-          INNER JOIN association_workspace_and_agents_table waa 
+          INNER JOIN association_workspace_and_agents_table waa
           ON waa.agent_id = aa.id
         WHERE aa.id = a.id
         AND waa.workspace_id > wa.workspace_id
@@ -71,11 +71,21 @@ def downgrade():
 
     # DROP EXECUTORS FROM AGENTS WITHOUT WORKSPACE
     conn.execute("""
+    DELETE FROM agent_execution
+    WHERE executor_id IN (
+        SELECT e.id
+        FROM executor e
+        INNER JOIN agent a ON e.agent_id = a.id
+        WHERE a.workspace_id IS NULL
+    )
+    """)
+
+    conn.execute("""
     DELETE FROM executor
     WHERE agent_id IN (
-        SELECT id 
+        SELECT id
         FROM agent
-        WHERE workspace_id IS NULL 
+        WHERE workspace_id IS NULL
     )
     """)
 

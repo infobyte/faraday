@@ -730,7 +730,7 @@ class VulnerabilityView(PaginatedMixin,
 
         return res_filters, hostname_filters
 
-    def _filter_vulns(self, vulnerability_class, filters, hostname_filters, workspace, marshmallow_params, is_web, limit=None, offset=None):
+    def _filter_vulns(self, vulnerability_class, filters, hostname_filters, workspace, marshmallow_params, is_web):
         hosts_os_filter = [host_os_filter for host_os_filter in filters.get('filters', []) if host_os_filter.get('name') == 'host__os']
 
         if hosts_os_filter:
@@ -738,7 +738,6 @@ class VulnerabilityView(PaginatedMixin,
             hosts_os_filter = hosts_os_filter[0]
             filters['filters'] = [host_os_filter for host_os_filter in filters.get('filters', []) if host_os_filter.get('name') != 'host__os']
 
-        # SQLAlchemy query can't be extended with filters after applying limits/offsets
         vulns = search(db.session,
                        vulnerability_class,
                        filters)
@@ -767,29 +766,13 @@ class VulnerabilityView(PaginatedMixin,
 
         else:
             _type = 'Vulnerability'
-        if limit:
-            vulns = vulns.limit(limit)
-        if offset:
-            vulns = vulns.offset(offset)
         if 'group_by' not in filters:
             vulns = vulns.options(
                 joinedload(VulnerabilityGeneric.tags),
                 joinedload(Vulnerability.host),
-                joinedload(Vulnerability.service),
                 joinedload(VulnerabilityWeb.service),
             )
-
-            vulns = self.schema_class_dict[_type](**marshmallow_params).dumps(
-                vulns.all())
-            vulns_data = json.loads(vulns)
-        else:
-            column_names = ['count'] + [field['field'] for field in filters.get('group_by',[])]
-            rows = [list(zip(column_names, row)) for row in vulns.all()]
-            vulns_data = []
-            for row in rows:
-                vulns_data.append({field[0]:field[1] for field in row})
-
-        return vulns_data
+        return vulns
 
     def _filter(self, filters, workspace_name, confirmed=False):
         try:
@@ -824,21 +807,53 @@ class VulnerabilityView(PaginatedMixin,
                     hostname_filters,
                     workspace,
                     marshmallow_params,
-                    is_web=False,
-                    limit=limit,
-                    offset=offset)
+                    is_web=False)
+
             web_vulns_data = self._filter_vulns(
                     VulnerabilityWeb,
                     filters,
                     hostname_filters,
                     workspace,
                     marshmallow_params,
-                    is_web=True,
-                    limit=limit,
-                    offset=offset)
-            return normal_vulns_data + web_vulns_data
+                    is_web=True)
+
+            if db.engine.dialect.name == 'postgresql':
+                vulns = normal_vulns_data.union(web_vulns_data)
+                # postgresql pagination with offset and limit need to order by a field
+                # to guarentee that all pages returns all objects
+                # without order by postgresql could repeat rows
+                vulns = vulns.order_by(VulnerabilityGeneric.id)
+
+                if limit:
+                    vulns = vulns.limit(limit)
+                if offset:
+                    vulns = vulns.offset(offset)
+                vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(
+                    vulns.all())
+                return json.loads(vulns)
+            else:
+
+                normal_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(
+                    normal_vulns_data.all())
+
+                web_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(
+                    web_vulns_data.all())
+                return json.loads(normal_vulns) + json.loads(web_vulns)
         else:
-            vulns_data = self._filter_vulns(VulnerabilityGeneric, filters, hostname_filters, workspace, marshmallow_params, False)
+            vulns = self._filter_vulns(
+                VulnerabilityGeneric,
+                filters,
+                hostname_filters,
+                workspace,
+                marshmallow_params,
+                False
+            )
+            column_names = ['count'] + [field['field'] for field in filters.get('group_by',[])]
+            rows = [list(zip(column_names, row)) for row in vulns.all()]
+            vulns_data = []
+            for row in rows:
+                vulns_data.append({field[0]:field[1] for field in row})
+
             return vulns_data
 
     @route('/<int:vuln_id>/attachment/<attachment_filename>/', methods=['GET'])

@@ -932,6 +932,16 @@ class VulnerabilityGeneric(VulnerabilityABC):
     association_date = Column(DateTime, nullable=True)
     disassociated_manually = Column(Boolean, nullable=False, default=False)
     tool = BlankColumn(Text, nullable=False)
+    method = BlankColumn(Text)
+    parameters = BlankColumn(Text)
+    parameter_name = BlankColumn(Text)
+    path = BlankColumn(Text)
+    query_string = BlankColumn(Text)
+    request = BlankColumn(Text)
+    response = BlankColumn(Text)
+    website = BlankColumn(Text)
+    status_code = Column(Integer, nullable=True)
+
 
     vulnerability_duplicate_id =  Column(
                         Integer,
@@ -1118,15 +1128,6 @@ class Vulnerability(VulnerabilityGeneric):
 
 class VulnerabilityWeb(VulnerabilityGeneric):
     __tablename__ = None
-    method = BlankColumn(Text)
-    parameters = BlankColumn(Text)
-    parameter_name = BlankColumn(Text)
-    path = BlankColumn(Text)
-    query_string = BlankColumn(Text)
-    request = BlankColumn(Text)
-    response = BlankColumn(Text)
-    website = BlankColumn(Text)
-    status_code = Column(Integer, nullable=True)
 
     @declared_attr
     def service_id(cls):

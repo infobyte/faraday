@@ -607,7 +607,8 @@ class VulnerabilityView(PaginatedMixin,
         # We use web since it has all the fields
         return self.schema_class_dict['VulnerabilityWeb']
 
-    def _envelope_list(self, objects, pagination_metadata=None):
+    def _envelope_list(self, objects, workspace_name, pagination_metadata=None):
+        workspace = self._get_workspace(workspace_name)
         vulns = []
         for index, vuln in enumerate(objects):
             # we use index when the filter endpoint uses group by and
@@ -620,7 +621,9 @@ class VulnerabilityView(PaginatedMixin,
         return {
             'vulnerabilities': vulns,
             'count': (pagination_metadata.total
-                      if pagination_metadata is not None else len(vulns))
+                      if pagination_metadata is not None else len(vulns)),
+            'total': Vulnerability.query.filter_by(workspace=workspace).count() \
+                    + VulnerabilityWeb.query.filter_by(workspace=workspace).count()
         }
 
     def count(self, **kwargs):
@@ -694,7 +697,7 @@ class VulnerabilityView(PaginatedMixin,
 
         """
         filters = request.args.get('q')
-        return self._envelope_list(self._filter(filters, workspace_name))
+        return self._envelope_list(self._filter(filters, workspace_name), workspace_name)
 
     def _hostname_filters(self, filters):
         res_filters = []
@@ -770,6 +773,7 @@ class VulnerabilityView(PaginatedMixin,
             vulns = vulns.options(
                 joinedload(VulnerabilityGeneric.tags),
                 joinedload(Vulnerability.host),
+                joinedload(Vulnerability.service),
                 joinedload(VulnerabilityWeb.service),
             )
         return vulns

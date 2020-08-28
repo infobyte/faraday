@@ -607,8 +607,15 @@ class VulnerabilityView(PaginatedMixin,
         # We use web since it has all the fields
         return self.schema_class_dict['VulnerabilityWeb']
 
-    def _envelope_list(self, objects, workspace_name, pagination_metadata=None):
-        workspace = self._get_workspace(workspace_name)
+    def _envelope_list(self, objects, pagination_metadata=None, workspace_name=None):
+        extended_data = {}
+        if workspace_name:
+            workspace = self._get_workspace(workspace_name)
+            extended_data = {
+                'total': Vulnerability.query.filter_by(workspace=workspace).count() \
+                + VulnerabilityWeb.query.filter_by(workspace=workspace).count()
+            }
+
         vulns = []
         for index, vuln in enumerate(objects):
             # we use index when the filter endpoint uses group by and
@@ -618,13 +625,13 @@ class VulnerabilityView(PaginatedMixin,
                 'key': vuln.get('_id', index),
                 'value': vuln
             })
-        return {
+        res = {
             'vulnerabilities': vulns,
             'count': (pagination_metadata.total
-                      if pagination_metadata is not None else len(vulns)),
-            'total': Vulnerability.query.filter_by(workspace=workspace).count() \
-                    + VulnerabilityWeb.query.filter_by(workspace=workspace).count()
+                      if pagination_metadata is not None else len(vulns))
         }
+        res.update(extended_data)
+        return res
 
     def count(self, **kwargs):
         """Override to change severity values"""
@@ -697,7 +704,7 @@ class VulnerabilityView(PaginatedMixin,
 
         """
         filters = request.args.get('q')
-        return self._envelope_list(self._filter(filters, workspace_name), workspace_name)
+        return self._envelope_list(self._filter(filters, workspace_name), workspace_name=workspace_name)
 
     def _hostname_filters(self, filters):
         res_filters = []

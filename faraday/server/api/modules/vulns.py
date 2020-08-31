@@ -607,14 +607,8 @@ class VulnerabilityView(PaginatedMixin,
         # We use web since it has all the fields
         return self.schema_class_dict['VulnerabilityWeb']
 
-    def _envelope_list(self, objects, pagination_metadata=None, workspace_name=None):
+    def _envelope_list(self, objects, pagination_metadata=None):
         extended_data = {}
-        if workspace_name:
-            workspace = self._get_workspace(workspace_name)
-            extended_data = {
-                'total': Vulnerability.query.filter_by(workspace=workspace).count() \
-                + VulnerabilityWeb.query.filter_by(workspace=workspace).count()
-            }
 
         vulns = []
         for index, vuln in enumerate(objects):
@@ -704,7 +698,12 @@ class VulnerabilityView(PaginatedMixin,
 
         """
         filters = request.args.get('q')
-        return self._envelope_list(self._filter(filters, workspace_name), workspace_name=workspace_name)
+        filtered_vulns, count = self._filter(filters, workspace_name)
+        class PageMeta:
+            total = 0
+        pagination_metadata = PageMeta()
+        pagination_metadata.total = count
+        return self._envelope_list(filtered_vulns, pagination_metadata)
 
     def _hostname_filters(self, filters):
         res_filters = []
@@ -834,14 +833,14 @@ class VulnerabilityView(PaginatedMixin,
                 # to guarentee that all pages returns all objects
                 # without order by postgresql could repeat rows
                 vulns = vulns.order_by(VulnerabilityGeneric.id)
-
+                count = vulns.count()
                 if limit:
                     vulns = vulns.limit(limit)
                 if offset:
                     vulns = vulns.offset(offset)
                 vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(
                     vulns.all())
-                return json.loads(vulns)
+                return json.loads(vulns), count
             else:
 
                 normal_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(
@@ -849,7 +848,7 @@ class VulnerabilityView(PaginatedMixin,
 
                 web_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(
                     web_vulns_data.all())
-                return json.loads(normal_vulns) + json.loads(web_vulns)
+                return json.loads(normal_vulns) + json.loads(web_vulns), normal_vulns_data.count() + web_vulns_data.count()
         else:
             vulns = self._filter_vulns(
                 VulnerabilityGeneric,
@@ -865,7 +864,7 @@ class VulnerabilityView(PaginatedMixin,
             for row in rows:
                 vulns_data.append({field[0]:field[1] for field in row})
 
-            return vulns_data
+            return vulns_data, len(rows)
 
     @route('/<int:vuln_id>/attachment/<attachment_filename>/', methods=['GET'])
     def get_attachment(self, workspace_name, vuln_id, attachment_filename):
@@ -960,7 +959,7 @@ class VulnerabilityView(PaginatedMixin,
         custom_fields_columns = []
         for custom_field in db.session.query(CustomFieldsSchema).order_by(CustomFieldsSchema.field_order):
             custom_fields_columns.append(custom_field.field_name)
-        vulns_query = self._filter(filters, workspace_name, confirmed)
+        vulns_query, _ = self._filter(filters, workspace_name, confirmed)
         memory_file = export_vulns_to_csv(vulns_query, custom_fields_columns)
         return send_file(memory_file,
                          attachment_filename="Faraday-SR-%s.csv" % workspace_name,

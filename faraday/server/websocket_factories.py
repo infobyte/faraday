@@ -95,18 +95,16 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                 self.factory.leave_workspace(self, message['workspace'])
             if message['action'] == 'JOIN_AGENT':
                 if 'token' not in message or 'executors' not in message:
-                    logger.warn("Invalid agent join message")
-                    self.state = WebSocketProtocol.STATE_CLOSING
-                    self.sendClose()
+                    logger.warning("Invalid agent join message")
+                    self.sendClose(1000, reason="Invalid JOIN_AGENT message")
                     return False
                 with app.app_context():
                     try:
                         agent = decode_agent_websocket_token(message['token'])
                         update_executors(agent, message['executors'])
                     except ValueError:
-                        logger.warn('Invalid agent token!')
-                        self.state = WebSocketProtocol.STATE_CLOSING
-                        self.sendClose()
+                        logger.warning('Invalid agent token!')
+                        self.sendClose(1000, reason="Invalid agent token!")
                         return False
                     # factory will now send broadcast messages to the agent
                     return self.factory.join_agent(self, agent)
@@ -119,16 +117,12 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                     ]
                     agent = Agent.query.get(agent_id)
                     assert agent is not None  # TODO the agent could be deleted here
-                self.factory.leave_agent(self, agent)
-                self.state = WebSocketProtocol.STATE_CLOSING
-                self.sendClose()
-                return False
+                return self.factory.leave_agent(self, agent)
             if message['action'] == 'RUN_STATUS':
                 with app.app_context():
                     if 'executor_name' not in message:
                         logger.warning('Missing executor_name param in message: ''{}'.format(message))
-                        self.sendClose()
-                        return
+                        return True
 
                     (agent_id,) = [
                         k

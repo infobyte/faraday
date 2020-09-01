@@ -18,7 +18,6 @@ from faraday.server.utils.database import get_or_create
 
 txaio.use_twisted()
 
-from autobahn.websocket.protocol import WebSocketProtocol
 from twisted.internet import reactor
 from sqlalchemy.orm.exc import NoResultFound
 

@@ -3,6 +3,10 @@ let
   version = builtins.head (builtins.match ".*'([0-9]+.[0-9]+(.[0-9]+)?)'.*"
     (builtins.readFile ./faraday/__init__.py));
 
+  pynixifyCommand = ''
+    pynixify --nixpkgs https://github.com/infobyte/nixpkgs/archive/6edef530cb277f73587bfc7cb8ef17175abd306d.tar.gz --local faradaysec --tests faradaysec
+  '';
+
 in { dockerName ? "registry.gitlab.com/faradaysec/faraday", dockerTag ? version
 , systemUser ? "faraday", systemGroup ? "faraday", systemHome ? null
 , port ? 5985, websocketPort ? 9000, bindAddress ? "localhost"
@@ -12,9 +16,10 @@ in { dockerName ? "registry.gitlab.com/faradaysec/faraday", dockerTag ? version
 , useLastCommit ? true }: rec {
 
   faraday-server = python38.pkgs.faradaysec.overrideAttrs (old:
-    {
+    assert !builtins.hasAttr "checkInputs" old; {
       doCheck = true;
       checkPhase = "true";
+      checkInputs = [ pynixify runPynixify ];
     } // lib.optionalAttrs useLastCommit {
       src = builtins.fetchGit {
         url = ./.;
@@ -71,5 +76,44 @@ in { dockerName ? "registry.gitlab.com/faradaysec/faraday", dockerTag ? version
 
       [Install]
       WantedBy=multi-user.target
+    '';
+
+  pynixify = let
+    src = builtins.fetchGit {
+      url = "https://github.com/cript0nauta/pynixify.git";
+      ref = "refs/tags/v0.1";
+    };
+
+    original =
+      # TODO: use python 3.8 after migrating to 20.09
+      python37Packages.callPackage "${src}/nix/packages/pynixify" { };
+
+  in original.overridePythonAttrs (drv: {
+    # based in https://github.com/cript0nauta/pynixify/blob/main/default.nix
+    checkInputs = drv.checkInputs ++ [ nix nixfmtCustom bats ];
+
+    checkPhase = ''
+      mypy pynixify/ tests/ acceptance_tests/
+      pytest tests/ -m 'not usesnix'  # We can't run Nix inside Nix builds
+    '';
+
+    postInstall = ''
+      # Add nixfmt to pynixify's PATH
+      wrapProgram $out/bin/pynixify --prefix PATH : "${nixfmtCustom}/bin"
+    '';
+  });
+
+  nixfmtCustom =
+    # custom wrapper of nixfmt that sets the column width to 1. This will force
+    # splitting function arguments into separate lines and prevent merge
+    # conflicts with our commercial versions.
+    writeShellScriptBin "nixfmt" ''
+      exec ${nixfmt}/bin/nixfmt --width=1 $@
+    '';
+
+  runPynixify =
+    writeShellScriptBin "run-pynixify" ''
+      export PATH=${pynixify}/bin:$PATH
+      ${pynixifyCommand}
     '';
 }

@@ -11,6 +11,7 @@ angular.module('faradayApp')
         'vulnModelsManager',
         'APIURL',
         '$route',
+        'BASEURL',
         function ($scope,
                   $filter,
                   $http,
@@ -21,7 +22,8 @@ angular.module('faradayApp')
                   commonsFact,
                   vulnModelsManager,
                   APIURL,
-                  $route) {
+                  $route,
+                  BASEURL) {
 
                 $scope.models = [];
                 $scope.loaded_models = false;
@@ -145,7 +147,7 @@ angular.module('faradayApp')
 
                     var loadCSV = function(data) {
 
-                        $http.get($scope.baseurl + '_api/session').then(
+                        $http.get(BASEURL + '_api/session').then(
                             function(d) {
                               $scope.csrf_token = d.data.csrf_token;
 

@@ -27,6 +27,7 @@ New features in the latest update
  * Catch errors in faraday-manage commands when the connection string is not
    specified in the server.ini file
  * Fix bug that generated a session when using Token authentication
+ * Fix bug that requested to the API when an invalid filter is used
  * Cleanup old sessions when a user logs in
  * Remove unmaintained Flask-Restless dependency
  * Remove pbkdf2\_sha1 and plain password schemes. We only support bcrypt

@@ -1,0 +1,1 @@
+Dont execute a request to faraday api when an invalid filter is used

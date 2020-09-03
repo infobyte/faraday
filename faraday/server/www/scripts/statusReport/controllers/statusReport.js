@@ -1314,6 +1314,10 @@ angular.module("faradayApp")
                         $scope.gridOptions.paginationPageSize = $scope.gridOptions.totalItems;
 
                 }
+            })
+            .catch(function(error){
+                 $scope.loading = false;
+                 commonsFact.showMessage('Invalid filter, please check the documentation: support.faradaysec.com');
             });
         };
 
@@ -1354,7 +1358,9 @@ angular.module("faradayApp")
                 if (params !== undefined && params !== ''){
                     params = params.replace(/^ +| +$/g, '');
                     var jsonOptions = parserFact.evaluateExpression(params);
-                    loadFilteredVulns($routeParams.wsId, jsonOptions);
+                    if (jsonOptions !== null){
+                       loadFilteredVulns($routeParams.wsId, jsonOptions);
+                    }
                 }else{
                     loadVulns();
                 }
@@ -1363,7 +1369,9 @@ angular.module("faradayApp")
                 if (params !== undefined && params !== '') {
                     params = params.replace(/^ +| +$/g, '');
                     var jsonOptions = parserFact.evaluateExpression(params);
-                    loadFilteredVulns($routeParams.wsId, jsonOptions);
+                    if (jsonOptions !== null){
+                       loadFilteredVulns($routeParams.wsId, jsonOptions);
+                    }
                 }
                 var url = "/status/ws/" + $routeParams.wsId + "/groupby/" + $routeParams.groupbyId;
                 $location.path(url);

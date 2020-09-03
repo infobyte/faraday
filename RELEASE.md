@@ -9,7 +9,7 @@ New features in the latest update
 =====================================
 
 
-3.12 [Aug 29th, 2020]:
+3.12 [Sep 3rd, 2020]:
 ---
  * Now agents can upload data to multiples workspaces
  * Add agent and executor data to Activity Feed

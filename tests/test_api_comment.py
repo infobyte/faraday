@@ -113,5 +113,12 @@ class TestCredentialsAPIGeneric(ReadOnlyAPITests):
         assert 'object' in res.json
         assert type(res.json) == dict
 
-
-# I'm Py3
+    def test_default_order_field(self, session, test_client):
+        workspace = factories.WorkspaceFactory.create()
+        factories.CommentFactory.create(workspace=workspace, text='first')
+        factories.CommentFactory.create(workspace=workspace, text='second')
+        factories.CommentFactory.create(workspace=workspace, text='third')
+        factories.CommentFactory.create(workspace=workspace, text='fourth')
+        get_comments = test_client.get(self.url(workspace=workspace))
+        expected = ['first', 'second', 'third','fourth']
+        assert expected == [comment['text'] for comment in get_comments.json]

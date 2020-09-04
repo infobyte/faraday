@@ -3,6 +3,7 @@
 # deleted, and you will lose the changes you made to it.
 
 { buildPythonPackage, fetchPypi, lib }:
+
 buildPythonPackage rec {
   pname = "simplekv";
   version = "0.14.1";
@@ -15,7 +16,7 @@ buildPythonPackage rec {
   # TODO FIXME
   doCheck = false;
 
-  meta = {
+  meta = with lib; {
     description = "A key-value storage for binary data, support many backends.";
     homepage = "http://github.com/mbr/simplekv";
   };

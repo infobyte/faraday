@@ -3,6 +3,7 @@
 # deleted, and you will lose the changes you made to it.
 
 { buildPythonPackage, fetchPypi, lib }:
+
 buildPythonPackage rec {
   pname = "syslog-rfc5424-formatter";
   version = "1.2.2";
@@ -15,7 +16,7 @@ buildPythonPackage rec {
   # TODO FIXME
   doCheck = false;
 
-  meta = {
+  meta = with lib; {
     description =
       "Logging formatter which produces well-formatted RFC5424 Syslog Protocol messages";
     homepage = "https://github.com/easypost/syslog-rfc5424-formatter";

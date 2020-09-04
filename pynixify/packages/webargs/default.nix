@@ -3,6 +3,7 @@
 # deleted, and you will lose the changes you made to it.
 
 { buildPythonPackage, fetchPypi, lib, marshmallow }:
+
 buildPythonPackage rec {
   pname = "webargs";
   version = "6.1.0";
@@ -12,12 +13,12 @@ buildPythonPackage rec {
     sha256 = "0gxvd1k5czch2l3jpvgbb53wbzl2drld25rs45jcfkrwbjrpzd7b";
   };
 
+  propagatedBuildInputs = [ marshmallow ];
+
   # TODO FIXME
   doCheck = false;
 
-  propagatedBuildInputs = [ marshmallow ];
-
-  meta = {
+  meta = with lib; {
     description =
       "Declarative parsing and validation of HTTP request objects, with built-in support for popular web frameworks, including Flask, Django, Bottle, Tornado, Pyramid, webapp2, Falcon, and aiohttp.";
     homepage = "https://github.com/marshmallow-code/webargs";

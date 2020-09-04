@@ -5,6 +5,7 @@
 { Babel, buildPythonPackage, fetchPypi, flask, flask-babelex, flask-login
 , flask_mail, flask_principal, flask_wtf, itsdangerous, lib, passlib
 , pytestrunner }:
+
 buildPythonPackage rec {
   pname = "flask-security";
   version = "3.0.0";
@@ -14,9 +15,6 @@ buildPythonPackage rec {
     pname = "Flask-Security";
     sha256 = "0ck4ybpppka56cqv0s26h1jjq6sqvwmqfm85ylq9zy28b9gsl7fn";
   };
-
-  # TODO FIXME
-  doCheck = false;
 
   buildInputs = [ Babel pytestrunner ];
   propagatedBuildInputs = [
@@ -30,7 +28,10 @@ buildPythonPackage rec {
     passlib
   ];
 
-  meta = {
+  # TODO FIXME
+  doCheck = false;
+
+  meta = with lib; {
     description = "Simple security for Flask apps.";
     homepage = "https://github.com/mattupstate/flask-security";
   };

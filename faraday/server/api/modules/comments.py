@@ -49,7 +49,7 @@ class CommentView(CommentCreateMixing, ReadWriteWorkspacedView):
     route_base = 'comment'
     model_class = Comment
     schema_class = CommentSchema
-
+    order_field = 'create_date'
 
 class UniqueCommentView(GenericWorkspacedView, CommentCreateMixing):
     """

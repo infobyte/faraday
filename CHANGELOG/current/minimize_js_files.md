@@ -1,0 +1,1 @@
+Minimize js files

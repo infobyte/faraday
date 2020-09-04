@@ -2187,6 +2187,13 @@ class SearchFilter(Metadata):
     user_query = Column(String, nullable=False)
 
 
+class Configuration(Metadata):
+    __tablename__ = "configuration"
+    id = Column(Integer, primary_key=True)
+    key = Column(String, unique=True, nullable=False)
+    value = Column(JSONType, nullable=False)
+
+
 # This constraint uses Columns from different classes
 # Since it applies to the table vulnerability it should be adVulnerability.ded to the Vulnerability class
 # However, since it contains columns from children classes, this cannot be done

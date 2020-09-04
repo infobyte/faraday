@@ -3,6 +3,7 @@
 # deleted, and you will lose the changes you made to it.
 
 { apispec, buildPythonPackage, fetchPypi, lib }:
+
 buildPythonPackage rec {
   pname = "apispec-webframeworks";
   version = "0.5.2";
@@ -12,12 +13,12 @@ buildPythonPackage rec {
     sha256 = "1wyw30402xq2a8icrsjmy9v43jyvawcjd85ccb2zicqlg4k5pcqd";
   };
 
+  propagatedBuildInputs = [ apispec ];
+
   # TODO FIXME
   doCheck = false;
 
-  propagatedBuildInputs = [ apispec ];
-
-  meta = {
+  meta = with lib; {
     description = "Web framework plugins for apispec.";
     homepage = "https://github.com/marshmallow-code/apispec-webframeworks";
   };

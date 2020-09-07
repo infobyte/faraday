@@ -11,12 +11,12 @@ More information [HERE](https://github.com/infobyte/faraday/wiki/NGINX-Setup)
 
 Send us a email with all relevant information about your discovery at:
 
-![](https://raw.github.com/wiki/infobyte/faraday/images/extras/security-email.png) 
+![](https://raw.github.com/wiki/infobyte/faraday/images/extras/security-email.png)
 
 To encrypt your communications, or to verify signed messages you receive from us you can use the PGP key below.
 
 **Key ID:** 3A48E3A9FC5DE068     **Key type:** RSA     **Key size:** 4096
- 
+
 Fingerprint: `841D C247 7544 1625 5533 7BC8 3A48 E3A9 FC5D E068`
 
     -----BEGIN PGP PUBLIC KEY BLOCK-----

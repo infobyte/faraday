@@ -17,7 +17,7 @@ def generate_nginx_config(fqdn, port, ws_port, ssl_certificate, ssl_key, multite
         static_path = f"/opt/faraday/lib/python{version.major}.{version.minor}/site-packages/faraday/server/www/"
         templates_path = Path(__file__).parent / 'templates'
         file_loader = FileSystemLoader(templates_path)
-        env = Environment(loader=file_loader)
+        env = Environment(loader=file_loader, autoescape=True)
         template = env.get_template('nginx_config.j2')
         output = template.render(**{'fqdn': fqdn, 'static_path': static_path, 'faraday_port': port,
                                     'faraday_ws_port': ws_port, 'ssl_certificate': ssl_certificate, 'ssl_key': ssl_key,

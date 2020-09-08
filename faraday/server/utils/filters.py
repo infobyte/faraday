@@ -14,7 +14,7 @@ from dateutil.parser import parse
 from sqlalchemy import inspect
 from collections.abc import Iterable
 from dateutil.parser._parser import ParserError
-from marshmallow import Schema, fields, ValidationError, types, validate
+from marshmallow import Schema, fields, ValidationError, types, validate, post_load
 from marshmallow_sqlalchemy.convert import ModelConverter
 
 from faraday.server.models import VulnerabilityWeb, Host, Service
@@ -227,6 +227,25 @@ class FilterSchema(Schema):
     group_by = fields.List(fields.Nested(FlaskRestlessGroupFieldSchema))
     limit = fields.Integer()
     offset = fields.Integer()
+
+    @post_load
+    def validate_order_and_group_by(self, data, **kwargs):
+        """
+            We need to validate that if group_by is used, all the field
+            in the order_by are the same.
+            When using different order_by fields with group, it will cause
+            an error on PostgreSQL
+        """
+        if 'group_by' in data and 'order_by' in data:
+            group_by_fields = set()
+            order_by_fields = set()
+            for group_field in data['group_by']:
+                group_by_fields.add(group_field['field'])
+            for order_field in data['order_by']:
+                order_by_fields.add(order_field['field'])
+
+            if order_by_fields != group_by_fields:
+                raise ValidationError('Can\'t group and order by with different fields. ')
 
 
 class FlaskRestlessSchema(Schema):

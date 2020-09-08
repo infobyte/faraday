@@ -88,8 +88,9 @@ def check_alembic_version():
 
         current_revision = context.get_current_revision()
         if head_revision != current_revision:
-            if glob.glob(os.path.join(faraday.server.config.FARADAY_BASE, 'migrations', 'versions',
-                         '{}_*.py'.format(current_revision))):
+            version_path = faraday.server.config.FARADAY_BASE / 'migrations'\
+                           / 'versions'
+            if list(version_path.glob(f'{current_revision}_*.py')):
                 print('--' * 20)
                 print('Missing migrations, please execute: \n\n')
                 print('faraday-manage migrate')

@@ -8,6 +8,7 @@ import json
 import logging
 from base64 import b64encode, b64decode
 from json.decoder import JSONDecodeError
+from pathlib import Path
 
 import flask
 import wtforms
@@ -521,8 +522,8 @@ class VulnerabilityView(PaginatedMixin,
                 File,
                 object_id=obj.id,
                 object_type='vulnerability',
-                name=os.path.splitext(os.path.basename(filename))[0],
-                filename=os.path.basename(filename),
+                name=Path(filename).stem,
+                filename=Path(filename).name,
                 content=faraday_file,
             )
 

@@ -7,7 +7,6 @@ See the file 'doc/LICENSE' for the license information
 """
 import sys
 import os
-sys.path.append(os.getcwd())
 
 import click
 
@@ -48,4 +47,3 @@ def main(confirm):
 
 if __name__ == '__main__':
     main()
-# I'm Py3

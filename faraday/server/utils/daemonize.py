@@ -13,8 +13,10 @@ import atexit
 import signal
 import logging
 from functools import partial
+from pathlib import Path
 
 import faraday.server.config
+from faraday.server.config import FARADAY_SERVER_PID_FILE
 
 logger = logging.getLogger(__name__)
 
@@ -185,12 +187,11 @@ def is_server_running(port):
     else:
         return pid
 
-
 def get_server_pid(port):
-    if not os.path.isfile(faraday.server.config.FARADAY_SERVER_PID_FILE.format(port)):
+    if not Path(str(FARADAY_SERVER_PID_FILE).format(port)).exists():
         return None
 
-    with open(faraday.server.config.FARADAY_SERVER_PID_FILE.format(port), 'r') as pid_file:
+    with open(str(FARADAY_SERVER_PID_FILE).format(port), 'r') as pid_file:
         # If PID file is badly written, delete it and
         # assume server is not running
         try:
@@ -206,24 +207,23 @@ def get_server_pid(port):
 
 
 def create_pid_file(port):
-    with open(faraday.server.config.FARADAY_SERVER_PID_FILE.format(port), 'w') as pid_file:
+    with open(str(FARADAY_SERVER_PID_FILE).format(port), 'w') as pid_file:
         pid_file.write('{}'.format(os.getpid()))
     atexit.register(partial(remove_pid_file, port))
 
 
 def remove_pid_file(port):
-    os.remove(faraday.server.config.FARADAY_SERVER_PID_FILE.format(port))
+    os.remove(str(FARADAY_SERVER_PID_FILE).format(port))
 
 
 def get_ports_running():
     ports = []
     re_string = re.escape(faraday.server.config.FARADAY_SERVER_PID_FILE)
     re_string = re_string.replace("\{0\}", "[0-9]+")
-    home_dir = os.listdir(faraday.server.config.CONST_FARADAY_HOME_PATH)
+    home_dir = faraday.server.config.CONST_FARADAY_HOME_PATH
 
-    for path in home_dir:
-        path = faraday.server.config.CONST_FARADAY_HOME_PATH + "/" + path
-        if re.match(re_string, path):
+    for path in home_dir.iterdir():
+        if re.match(re_string, str(path)):
             port = path.split("-")[-1].split(".")[0]
             ports.append(int(port))
 

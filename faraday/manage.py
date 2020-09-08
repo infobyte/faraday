@@ -244,7 +244,7 @@ def support():
 def migrate(downgrade, revision):
     try:
         revision = revision or ("-1" if downgrade else "head")
-        config = Config(os.path.join(FARADAY_BASE,"alembic.ini"))
+        config = Config(FARADAY_BASE / "alembic.ini")
         os.chdir(FARADAY_BASE)
         if downgrade:
             alembic.command.downgrade(config, revision)

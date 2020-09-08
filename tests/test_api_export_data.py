@@ -9,6 +9,7 @@ import os
 import pytest
 from lxml.etree import fromstring, tostring
 
+from tests.conftest import TEST_DATA_PATH
 from tests.factories import (
     WorkspaceFactory,
     HostFactory,
@@ -90,11 +91,9 @@ class TestExportData():
         assert response.status_code == 200
         response_xml = response.data
 
-        xml_file_path = os.path.join(
-                os.path.dirname(os.path.realpath(__file__)),
-                'data',
-                'faraday_export_data_xml_metasploit.xml')
-        with open(xml_file_path, 'rb') as output:
+        xml_file_path = TEST_DATA_PATH / \
+                        'faraday_export_data_xml_metasploit.xml'
+        with xml_file_path.open('rb') as output:
             xml_file = output.read()
 
         response_tree = fromstring(response_xml)

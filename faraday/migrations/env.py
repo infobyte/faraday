@@ -2,7 +2,6 @@
 import logging
 import sys
 import os
-sys.path.append(os.getcwd())
 import faraday.server.config
 from faraday.server.web import app
 from faraday.server.models import db
@@ -24,9 +23,8 @@ fileConfig(config.config_file_name)
 # from myapp import mymodel
 target_metadata = db.metadata
 alembic_logger = logging.getLogger('alembic.runtime.migration')
-LOG_FILE = os.path.expanduser(os.path.join(
-    faraday.server.config.CONST_FARADAY_HOME_PATH,
-    'logs', 'alembic.log'))
+LOG_FILE = faraday.server.config.CONST_FARADAY_HOME_PATH / 'logs' \
+           / 'alembic.log'
 fh = logging.FileHandler(LOG_FILE)
 fh.setLevel(logging.INFO)
 alembic_logger.addHandler(fh)

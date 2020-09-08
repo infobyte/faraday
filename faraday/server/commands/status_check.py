@@ -97,11 +97,11 @@ def check_postgresql_encoding():
 
 def check_storage_permission():
 
-    path = os.path.join(CONST_FARADAY_HOME_PATH, 'storage', 'test')
+    path = CONST_FARADAY_HOME_PATH / 'storage' / 'test'
 
     try:
-        os.mkdir(path)
-        os.rmdir(path)
+        path.mkdir()
+        path.rmdir()
         return True
     except OSError:
         return None

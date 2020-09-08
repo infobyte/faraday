@@ -7,25 +7,22 @@ See the file 'doc/LICENSE' for the license information
 
 from tempfile import NamedTemporaryFile
 
-import os
-import sys
 import json
 import inspect
 import pytest
 from factory import Factory
 from flask.testing import FlaskClient
 from flask_principal import Identity, identity_changed
-from sqlalchemy import event
+from pathlib import Path
 from pytest_factoryboy import register
+from sqlalchemy import event
 
-sys.path.append(os.path.abspath(os.getcwd()))
 from faraday.server.app import create_app
 from faraday.server.models import db
 from tests import factories
 
 
-TEST_BASE = os.path.abspath(os.path.dirname(__file__))
-TEST_DATA = os.path.join(TEST_BASE, 'data')
+TEST_DATA_PATH = Path(__file__).parent / 'data'
 
 TEMPORATY_SQLITE = NamedTemporaryFile()
 # Discover factories to automatically register them to pytest-factoryboy and to

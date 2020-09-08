@@ -10,8 +10,6 @@ import sys
 import unittest
 import pytest
 
-sys.path.append(os.path.abspath(os.getcwd()))
-
 from faraday.server.models import db
 
 

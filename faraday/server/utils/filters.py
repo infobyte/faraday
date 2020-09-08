@@ -79,6 +79,11 @@ class FlaskRestlessFilterSchema(Schema):
         return res
 
     def _validate_filter_types(self, filter_):
+        """
+            Compares the filter_ list against the model field and the value to be compared.
+            PostgreSQL is very hincha con los types.
+            Return a list of filters (filters are dicts)
+        """
         if isinstance(filter_['val'], str) and '\x00' in filter_['val']:
             raise ValidationError('Value can\'t containt null chars')
         converter = ModelConverter()
@@ -108,7 +113,11 @@ class FlaskRestlessFilterSchema(Schema):
             if not isinstance(filter_['val'], Iterable):
                 filter_['val'] = [filter_['val']]
 
-        field = converter.column2field(column)
+        try:
+            field = converter.column2field(column)
+        except AttributeError:
+            return [filter_]
+
         if filter_['op'].lower() in ['ilike', 'like']:
             # like muse be used with string
             if isinstance(filter_['val'], numbers.Number) or isinstance(field, fields.Number):

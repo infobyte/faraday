@@ -832,12 +832,15 @@ class VulnerabilityView(PaginatedMixin,
                 # postgresql pagination with offset and limit need to order by a field
                 # to guarentee that all pages returns all objects
                 # without order by postgresql could repeat rows
+
+
                 vulns = vulns.order_by(VulnerabilityGeneric.id)
-                count = vulns.count()
                 if limit:
                     vulns = vulns.limit(limit)
                 if offset:
                     vulns = vulns.offset(offset)
+                count = vulns.count()
+
                 vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(
                     vulns.all())
                 return json.loads(vulns), count

@@ -3,7 +3,6 @@
 # See the file 'doc/LICENSE' for the license information
 import os
 import sys
-import glob
 import socket
 import argparse
 
@@ -106,6 +105,7 @@ def check_alembic_version():
 def main():
     os.chdir(faraday.server.config.FARADAY_BASE)
     check_alembic_version()
+    # TODO RETURN TO prev CWD
     check_postgresql()
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', action='store_true', help='run Faraday Server in debug mode')

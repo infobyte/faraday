@@ -315,3 +315,4 @@ class InitDB():
             alembic_cfg = Config(FARADAY_BASE / 'alembic.ini')
             os.chdir(FARADAY_BASE)
             command.stamp(alembic_cfg, "head")
+            # TODO ADD RETURN TO PREV DIR

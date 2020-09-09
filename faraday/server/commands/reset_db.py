@@ -5,9 +5,6 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 """
-import sys
-import os
-
 import click
 
 from faraday.server.models import db

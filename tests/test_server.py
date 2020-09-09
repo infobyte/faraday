@@ -5,8 +5,6 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-import os
-import sys
 import unittest
 import pytest
 

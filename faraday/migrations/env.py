@@ -1,7 +1,5 @@
 
 import logging
-import sys
-import os
 import faraday.server.config
 from faraday.server.web import app
 from faraday.server.models import db

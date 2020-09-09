@@ -250,6 +250,7 @@ def migrate(downgrade, revision):
             alembic.command.downgrade(config, revision)
         else:
             alembic.command.upgrade(config, revision)
+        # TODO Return to prev dir
     except OperationalError as e:
         logger = logging.getLogger(__name__)
         logger.error("Migration Error: %s", e)

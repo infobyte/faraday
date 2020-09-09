@@ -5,7 +5,6 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-import os
 import pytest
 from lxml.etree import fromstring, tostring
 

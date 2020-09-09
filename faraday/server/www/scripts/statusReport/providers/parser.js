@@ -14,11 +14,11 @@ angular.module('faradayApp')
             try {
                 var filter = peg$parse(expression);
                 outputJson["filters"].push(filter);
+                return escape(JSON.stringify(outputJson));
             } catch (e) {
                 commonsFact.showMessage(e.message || e);
+                return null;
             }
-
-            return escape(JSON.stringify(outputJson));
         };
 
         var testParenthesisPairs = function (string) {

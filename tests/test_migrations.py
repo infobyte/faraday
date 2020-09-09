@@ -8,7 +8,10 @@ class TestMigrations:
 
     def test_migrations_check_revision_hashes(self):
         config = Config()
-        config.set_main_option("script_location", FARADAY_BASE / "migrations")
+        config.set_main_option(
+            "script_location",
+            str(FARADAY_BASE / "migrations")
+        )
         script = ScriptDirectory.from_config(config)
 
         alembic_hashes = []

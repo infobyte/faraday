@@ -6,6 +6,7 @@ See the file 'doc/LICENSE' for the license information
 """
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
+from apispec_webframeworks.flask import FlaskPlugin
 from faraday.server.web import app
 from faraday import __version__ as f_version
 import json
@@ -19,7 +20,7 @@ def openapi_format(format="yaml"):
         title="Faraday API",
         version="2",
         openapi_version="3.0.2",
-        plugins=[FaradayAPIPlugin(), MarshmallowPlugin()],
+        plugins=[FaradayAPIPlugin(), FlaskPlugin(), MarshmallowPlugin()],
         info={'description': 'The Faraday server API'},
     )
 

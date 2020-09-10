@@ -15,8 +15,11 @@ import logging
 from functools import partial
 from pathlib import Path
 
-import faraday.server.config
-from faraday.server.config import FARADAY_SERVER_PID_FILE
+from faraday.server.config import (
+    CONST_FARADAY_HOME_PATH,
+    FARADAY_SERVER_PID_FILE,
+    FARADAY_BASE
+)
 
 logger = logging.getLogger(__name__)
 
@@ -139,7 +142,7 @@ def createDaemon():
 
 def start_server():
     logger.info('Running as a daemon')
-    WORKDIR = faraday.server.config.FARADAY_BASE  # pylint:disable=unused-variable
+    WORKDIR = FARADAY_BASE  # pylint:disable=unused-variable
     createDaemon()
 
 
@@ -218,13 +221,12 @@ def remove_pid_file(port):
 
 def get_ports_running():
     ports = []
-    re_string = re.escape(faraday.server.config.FARADAY_SERVER_PID_FILE)
-    re_string = re_string.replace("\{0\}", "[0-9]+")
-    home_dir = faraday.server.config.CONST_FARADAY_HOME_PATH
+    home_dir = CONST_FARADAY_HOME_PATH
 
     for path in home_dir.iterdir():
-        if re.match(re_string, str(path)):
-            port = path.split("-")[-1].split(".")[0]
-            ports.append(int(port))
+        match = re.match(r"faraday\-server\-port\-(?P<last_name>[0-9]+)\.pid",
+                         path.name)
+        if match:
+            ports.append(int(match.group(1)))
 
     return ports

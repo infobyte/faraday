@@ -76,8 +76,10 @@ def openapi_yaml():
 
 
 @click.command(help="Import Vulnerability templates")
-def import_vulnerability_templates():
-    import_vulnerability_template.import_vulnerability_templates()
+@click.option('--language', required=False, default='en')
+@click.option('--list-languages', is_flag=True)
+def import_vulnerability_templates(language, list_languages):
+    import_vulnerability_template.run(language, list_languages)
 
 
 @click.command(help="Create Faraday DB in Postgresql, also tables and indexes")

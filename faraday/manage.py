@@ -71,8 +71,13 @@ def show_urls():
 
 
 @click.command(help="Show all URLs in OPENAPI format")
-def openapi_yaml():
-    openapi_format()
+@click.option('--no-servers', default=False, is_flag=True,
+              help="Avoids adding servers tag")
+@click.option('--server', required=False, prompt=False, default="localhost",
+              help="Server host/ip where to test api docs.")
+def openapi_yaml(server, no_servers):
+    openapi_format(format="yaml", server=server, no_servers=no_servers)
+
 
 
 @click.command(help="Import Vulnerability templates")

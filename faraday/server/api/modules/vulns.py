@@ -676,7 +676,9 @@ class VulnerabilityView(PaginatedMixin,
             tags: ["vulnerability", "filter"]
             summary: Filters, sorts and groups vulnerabilities using a json with parameters.
             parameters:
-            - q: recursive json with filters that supports operators. The json could also contain sort and group
+            - in: query
+              name: q
+              description: recursive json with filters that supports operators. The json could also contain sort and group
 
             responses:
               200:

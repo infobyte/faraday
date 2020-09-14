@@ -127,6 +127,17 @@ class FaradayAPIPlugin(BasePlugin):
                 operations[view_name] = yaml_utils.load_yaml_from_docstring(
                     view.__doc__.format(schema_class=view_instance._get_schema_class().__name__, class_model=class_model, tag_name=class_model)
                 )
+        elif hasattr(view, "__doc__"):
+            if not view.__doc__:
+                view.__doc__ = ""
+            if hasattr(view_instance.model_class, "__name__"):
+                class_model = view_instance.model_class.__name__
+            else:
+                class_model = 'No name'
+            for method in rule.methods:
+                operations[method.lower()] = yaml_utils.load_yaml_from_docstring(
+                    view.__doc__.format(schema_class=view_instance._get_schema_class().__name__, class_model=class_model, tag_name=class_model)
+                )
 
         if hasattr(view, "view_class") and issubclass(view.view_class, MethodView):
             for method in view.methods:
@@ -136,4 +147,5 @@ class FaradayAPIPlugin(BasePlugin):
                     operations[method_name] = yaml_utils.load_yaml_from_docstring(
                         method.__doc__
                     )
+
         return self.flaskpath2openapi(rule.rule)

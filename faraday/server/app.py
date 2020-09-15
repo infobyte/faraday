@@ -54,7 +54,7 @@ def setup_storage_path():
     config.read(faraday.server.config.LOCAL_CONFIG_FILE)
     try:
         config.add_section('storage')
-        config.set('storage', 'path', default_path)
+        config.set('storage', 'path', str(default_path))
     except DuplicateSectionError:
         logger.info('Duplicate section storage. skipping.')
     with faraday.server.config.LOCAL_CONFIG_FILE.open('w') as configfile:

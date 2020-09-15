@@ -19,5 +19,5 @@ def main(version_id):
 
 
 if __name__ == '__main__':
-    version = os.environ.get("IMAGE_TAG", args.version)
+    version = os.environ.get("FARADAY_VERSION", args.version)
     main(version)

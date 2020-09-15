@@ -1,7 +1,6 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-import os
 import sys
 import functools
 import logging
@@ -72,7 +71,7 @@ class FaradayRedirectResource(Redirect):
 class WebServer:
     UI_URL_PATH = b'_ui'
     API_URL_PATH = b'_api'
-    WEB_UI_LOCAL_PATH = os.path.join(faraday.server.config.FARADAY_BASE, 'server/www')
+    WEB_UI_LOCAL_PATH = faraday.server.config.FARADAY_BASE / 'server/www'
 
     def __init__(self):
         self.__ssl_enabled = faraday.server.config.ssl.enabled
@@ -147,7 +146,7 @@ class WebServer:
                 self.raw_report_processor.stop()
             self.ping_home_thread.stop()
 
-        log_path = os.path.join(CONST_FARADAY_HOME_PATH, 'logs', 'access-logging.log')
+        log_path = CONST_FARADAY_HOME_PATH / 'logs' / 'access-logging.log'
         site = twisted.web.server.Site(self.__root_resource,
                                        logPath=log_path,
                                        logFormatter=proxiedLogFormatter)

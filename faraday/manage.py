@@ -45,6 +45,7 @@ from faraday.server.commands import change_password as change_pass
 from faraday.server.commands.custom_fields import add_custom_field_main, delete_custom_field_main
 from faraday.server.commands import support as support_zip
 from faraday.server.commands import change_username
+from faraday.server.commands import import_vulnerability_template
 from faraday.server.models import db, User
 from faraday.server.web import app
 from faraday_plugins.plugins.manager import PluginsManager
@@ -70,8 +71,20 @@ def show_urls():
 
 
 @click.command(help="Show all URLs in OPENAPI format")
-def openapi_yaml():
-    openapi_format()
+@click.option('--no-servers', default=False, is_flag=True,
+              help="Avoids adding servers tag")
+@click.option('--server', required=False, prompt=False, default="localhost",
+              help="Server host/ip where to test api docs.")
+def openapi_yaml(server, no_servers):
+    openapi_format(format="yaml", server=server, no_servers=no_servers)
+
+
+
+@click.command(help="Import Vulnerability templates")
+@click.option('--language', required=False, default='en')
+@click.option('--list-languages', is_flag=True)
+def import_vulnerability_templates(language, list_languages):
+    import_vulnerability_template.run(language, list_languages)
 
 
 @click.command(help="Create Faraday DB in Postgresql, also tables and indexes")
@@ -244,12 +257,13 @@ def support():
 def migrate(downgrade, revision):
     try:
         revision = revision or ("-1" if downgrade else "head")
-        config = Config(os.path.join(FARADAY_BASE,"alembic.ini"))
+        config = Config(FARADAY_BASE / "alembic.ini")
         os.chdir(FARADAY_BASE)
         if downgrade:
             alembic.command.downgrade(config, revision)
         else:
             alembic.command.upgrade(config, revision)
+        # TODO Return to prev dir
     except OperationalError as e:
         logger = logging.getLogger(__name__)
         logger.error("Migration Error: %s", e)
@@ -298,6 +312,8 @@ cli.add_command(support)
 cli.add_command(list_plugins)
 cli.add_command(rename_user)
 cli.add_command(openapi_yaml)
+cli.add_command(import_vulnerability_templates)
+
 
 if __name__ == '__main__':
 

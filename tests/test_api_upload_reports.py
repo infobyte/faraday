@@ -5,10 +5,12 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-import os
+from pathlib import Path
+
 import pytest
 from io import BytesIO
 
+from tests.conftest import TEST_DATA_PATH
 from tests.factories import WorkspaceFactory
 
 from faraday.server.threads.reports_processor import REPORTS_QUEUE
@@ -23,15 +25,12 @@ class TestFileUpload():
         ws = WorkspaceFactory.create(name="abc")
         session.add(ws)
         session.commit()
-        path = os.path.join(
-                os.path.dirname(os.path.realpath(__file__)),
-                'data',
-                'nmap_plugin_with_api.xml')
+        path = TEST_DATA_PATH / 'nmap_plugin_with_api.xml'
 
-        with open(path,'rb') as report:
+        with path.open('rb') as report:
             file_contents = report.read()
         data = {
-            'file' : (BytesIO(file_contents), 'nmap_report.xml'),
+            'file': (BytesIO(file_contents), 'nmap_report.xml'),
             'csrf_token': csrf_token
         }
 
@@ -53,7 +52,8 @@ class TestFileUpload():
 
         from faraday.server.threads.reports_processor import ReportsManager
         false_thread = ReportsManager(None)
-        false_thread.process_report(queue_elem[0], queue_elem[1], queue_elem[2], queue_elem[3])
+        false_thread.process_report(queue_elem[0], Path(queue_elem[1]),
+                                    queue_elem[2], queue_elem[3])
         command = Command.query.filter(Command.workspace_id == ws_id).one()
         assert command
         assert command.creator_id == logged_user_id
@@ -80,12 +80,9 @@ class TestFileUpload():
         ws = WorkspaceFactory.create(name="abc")
         session.add(ws)
         session.commit()
-        path = os.path.join(
-                os.path.dirname(os.path.realpath(__file__)),
-                'data',
-                'nmap_plugin_with_api.xml')
+        path = TEST_DATA_PATH / 'nmap_plugin_with_api.xml'
 
-        with open(path,'r') as report:
+        with path.open('r') as report:
             file_contents = report.read().encode('utf-8')
 
         data = {
@@ -98,19 +95,15 @@ class TestFileUpload():
                 use_json_data=False)
 
         assert res.status_code == 403
-    
 
     def test_request_with_workspace_deactivate(self, test_client, session, csrf_token):
         ws = WorkspaceFactory.create(name="abc")
         ws.active = False
         session.add(ws)
         session.commit()
-        path = os.path.join(
-                os.path.dirname(os.path.realpath(__file__)),
-                'data',
-                'nmap_plugin_with_api.xml')
+        path = TEST_DATA_PATH / 'nmap_plugin_with_api.xml'
 
-        with open(path,'r') as report:
+        with path.open('r') as report:
             file_contents = report.read().encode('utf-8')
 
         data = {

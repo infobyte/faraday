@@ -2,13 +2,11 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 import logging
-import os
 import string
 import datetime
 
 import requests
 from itsdangerous import TimedJSONWebSignatureSerializer, SignatureExpired, BadSignature
-from os.path import join
 from random import SystemRandom
 
 from faraday.server.config import LOCAL_CONFIG_FILE, copy_default_config_to_local
@@ -48,10 +46,10 @@ logger = logging.getLogger(__name__)
 
 
 def setup_storage_path():
-    default_path = join(CONST_FARADAY_HOME_PATH, 'storage')
-    if not os.path.exists(default_path):
-        logger.info('Creating directory {0}'.format(default_path))
-        os.mkdir(default_path)
+    default_path = CONST_FARADAY_HOME_PATH / 'storage'
+    if not default_path.exists():
+        logger.info(f'Creating directory {default_path}')
+        default_path.mkdir()
     config = ConfigParser()
     config.read(faraday.server.config.LOCAL_CONFIG_FILE)
     try:
@@ -59,7 +57,7 @@ def setup_storage_path():
         config.set('storage', 'path', default_path)
     except DuplicateSectionError:
         logger.info('Duplicate section storage. skipping.')
-    with open(faraday.server.config.LOCAL_CONFIG_FILE, 'w') as configfile:
+    with faraday.server.config.LOCAL_CONFIG_FILE.open('w') as configfile:
         config.write(configfile)
 
     return default_path
@@ -221,7 +219,7 @@ def register_handlers(app):
 
 
 def save_new_secret_key(app):
-    if not os.path.exists(LOCAL_CONFIG_FILE):
+    if not LOCAL_CONFIG_FILE.exists():
         copy_default_config_to_local()
     config = ConfigParser()
     config.read(LOCAL_CONFIG_FILE)
@@ -238,7 +236,7 @@ def save_new_secret_key(app):
 
 
 def save_new_agent_creation_token():
-    assert os.path.exists(LOCAL_CONFIG_FILE)
+    assert LOCAL_CONFIG_FILE.exists()
     config = ConfigParser()
     config.read(LOCAL_CONFIG_FILE)
     rng = SystemRandom()
@@ -433,4 +431,3 @@ class CustomLoginForm(LoginForm):
             self.email.errors.append(get_message('DISABLED_ACCOUNT')[0])
             return False
         return True
-

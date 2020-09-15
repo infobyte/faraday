@@ -5,12 +5,8 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-import os
-import sys
 import unittest
 import pytest
-
-sys.path.append(os.path.abspath(os.getcwd()))
 
 from faraday.server.models import db
 

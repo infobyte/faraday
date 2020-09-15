@@ -6,6 +6,7 @@ See the file 'doc/LICENSE' for the license information
 """
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
+from apispec_webframeworks.flask import FlaskPlugin
 from faraday.server.web import app
 from faraday import __version__ as f_version
 import json
@@ -13,14 +14,24 @@ import json
 from faraday.utils.faraday_openapi_plugin import FaradayAPIPlugin
 
 
-def openapi_format(format="yaml"):
+def openapi_format(format="yaml", server="localhost", no_servers=False):
+    extra_specs = {'info': {
+        'description': 'The Faraday REST API enables you to interact with '
+                       '[our server](https://github.com/infobyte/faraday).\n'
+                       'Use this API to interact or integrate with Faraday'
+                       ' server. This page documents the REST API, with HTTP'
+                       ' response codes and example requests and responses.'}
+    }
+
+    if not no_servers:
+        extra_specs['servers'] = [{'url': f'https://{server}/_api'}]
 
     spec = APISpec(
         title="Faraday API",
         version="2",
         openapi_version="3.0.2",
-        plugins=[FaradayAPIPlugin(), MarshmallowPlugin()],
-        info={'description': 'The Faraday server API'},
+        plugins=[FaradayAPIPlugin(), FlaskPlugin(), MarshmallowPlugin()],
+        **extra_specs
     )
 
     with app.test_request_context():

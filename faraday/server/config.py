@@ -93,6 +93,11 @@ class ConfigSection:
                 if value:
                     self.__setattr__(att, value)
 
+    def set(self, option_name, value):
+        if isinstance(value, Path):
+            value = str(value)
+        return self.__setattr__(option_name,value)
+
     @staticmethod
     def parse_section(section_name, __parser):
         section = None

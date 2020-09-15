@@ -1,7 +1,6 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2018  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-import os
 import string
 import random
 import logging
@@ -64,23 +63,25 @@ def file_upload(workspace=None):
         raw_report_filename = '{0}_{1}'.format(random_prefix, secure_filename(report_file.filename))
 
         try:
-            file_path = os.path.join(CONST_FARADAY_HOME_PATH, 'uploaded_reports', raw_report_filename)
-            with open(file_path, 'wb') as output:
+            file_path = CONST_FARADAY_HOME_PATH / 'uploaded_reports' \
+                        / raw_report_filename
+            with file_path.open('wb') as output:
                 output.write(report_file.read())
         except AttributeError:
             logger.warning(
                 "Upload reports in WEB-UI not configurated, run Faraday client and try again...")
             abort(make_response(jsonify(message="Upload reports not configurated: Run faraday client and start Faraday server again"), 500))
         else:
-            logger.info("Get plugin for file: %s", file_path)
+            logger.info(f"Get plugin for file: {file_path}")
             plugin = report_analyzer.get_plugin(file_path)
             if not plugin:
                 logger.info("Could not get plugin for file")
                 abort(make_response(jsonify(message="Invalid report file"), 400))
             else:
-                logger.info("Plugin for file: %s Plugin: %s", file_path, plugin.id)
+                logger.info(
+                    f"Plugin for file: {file_path} Plugin: {plugin.id}"
+                )
                 REPORTS_QUEUE.put((workspace, file_path, plugin.id, flask.g.user))
                 return make_response(jsonify(message="ok"), 200)
     else:
         abort(make_response(jsonify(message="Missing report file"), 400))
-# I'm Py3

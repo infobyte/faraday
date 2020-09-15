@@ -73,10 +73,10 @@ class InitDB():
             config.read(LOCAL_CONFIG_FILE)
             if not self._check_current_config(config):
                 return
-            faraday_path_conf = os.path.expanduser(CONST_FARADAY_HOME_PATH)
+            faraday_path_conf = CONST_FARADAY_HOME_PATH
             # we use psql_log_filename for historical saving. we will ask faraday users this file.
             # current_psql_output is for checking psql command already known errors for each execution.
-            psql_log_filename = os.path.join(faraday_path_conf, 'logs', 'psql_log.log')
+            psql_log_filename = faraday_path_conf / 'logs' / 'psql_log.log'
             current_psql_output = TemporaryFile()
             with open(psql_log_filename, 'ab+') as psql_log_file:
                 hostname = 'localhost'
@@ -123,8 +123,8 @@ class InitDB():
 
             statement = text("""
                 INSERT INTO faraday_user (
-                            username, name, password, 
-                            is_ldap, active, last_login_ip, 
+                            username, name, password,
+                            is_ldap, active, last_login_ip,
                             current_login_ip, role, state_otp
                         ) VALUES (
                             'faraday', 'Administrator', :password,
@@ -312,7 +312,7 @@ class InitDB():
             else:
                 raise
         else:
-            alembic_cfg = Config(os.path.join(FARADAY_BASE, 'alembic.ini'))
+            alembic_cfg = Config(FARADAY_BASE / 'alembic.ini')
             os.chdir(FARADAY_BASE)
             command.stamp(alembic_cfg, "head")
-# I'm Py3
+            # TODO ADD RETURN TO PREV DIR

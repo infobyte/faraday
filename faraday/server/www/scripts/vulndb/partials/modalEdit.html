@@ -144,14 +144,10 @@
                            </p>
                     </div>
                     <div class="col-md-12 margin-bottom-15px">
-                            <div class="col-md-12" ng-repeat="cf in customFields | orderBy : 'field_order'">
-                                <!--<custom-field field="{{cf}}"></custom-field>-->
-                                <div class="col-md-6">
-                                    <label for="model">{{cf.field_display_name}}</label>
-                                    <input type="text" name="name" class="form-control" placeholder="Name" ng-model="cf.value">
-                                </div>
-                            </div>
+                        <div class="col-md-12" ng-repeat="cf in customFields | orderBy : 'field_order'">
+                            <custom-fields-vuln-db field="{{cf}}"></custom-fields-vuln-db>
                         </div>
+                    </div>
                 </div>
             </div>
         </div><!-- .form-horizontal -->

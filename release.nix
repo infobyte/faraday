@@ -13,6 +13,7 @@ in { dockerName ? "registry.gitlab.com/faradaysec/faraday", dockerTag ? version
 
   faraday-server = python38.pkgs.faradaysec.overrideAttrs (old:
     {
+      name = "faraday-server-${version}";
       doCheck = true;
       checkPhase = "true";
     } // lib.optionalAttrs useLastCommit {

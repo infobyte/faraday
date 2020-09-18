@@ -13,6 +13,9 @@ tag_on_github:
     rules:
       - if: '$CI_COMMIT_TAG =~ /^white-v[0-9.]+$/'
         when: on_success
+    dependencies:
+      - generate_deb
+      - generate_rpm
 
 publish_pypi:
     image: python:3

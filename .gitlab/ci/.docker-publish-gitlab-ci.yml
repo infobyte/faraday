@@ -14,7 +14,7 @@ docker-publish-dev:
     - docker image tag $CI_REGISTRY_IMAGE:latest $CI_REGISTRY_IMAGE:$VERSION
     - docker push "$CI_REGISTRY_IMAGE"
   rules:
-    - if: '$CI_COMMIT_REF_NAME == "white/master"'
+    - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
       when: on_success
   needs: # dev won't wait for any previous stage, it will deploy instantly, and
       # then run tests in docker image (To be done)

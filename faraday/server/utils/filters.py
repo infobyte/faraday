@@ -247,6 +247,7 @@ class FilterSchema(Schema):
             if order_by_fields != group_by_fields:
                 raise ValidationError('Can\'t group and order by with different fields. ')
 
+        return data
 
 class FlaskRestlessSchema(Schema):
     valid_schemas = [

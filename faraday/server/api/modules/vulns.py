@@ -20,7 +20,7 @@ from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy import desc, or_, func
+from sqlalchemy import desc, or_, func, asc
 from werkzeug.datastructures import ImmutableMultiDict
 from depot.manager import DepotManager
 
@@ -739,7 +739,7 @@ class VulnerabilityView(PaginatedMixin,
 
         return res_filters, hostname_filters
 
-    def _filter_vulns(self, vulnerability_class, filters, hostname_filters, workspace, marshmallow_params, is_web):
+    def _generate_filter_query(self, vulnerability_class, filters, hostname_filters, workspace, marshmallow_params, is_web):
         hosts_os_filter = [host_os_filter for host_os_filter in filters.get('filters', []) if host_os_filter.get('name') == 'host__os']
 
         if hosts_os_filter:
@@ -813,7 +813,7 @@ class VulnerabilityView(PaginatedMixin,
             if 'limit' in filters:
                 limit = filters.pop('limit') # we need to remove pagination, since
 
-            normal_vulns_data = self._filter_vulns(
+            normal_vulns_data = self._generate_filter_query(
                     Vulnerability,
                     filters,
                     hostname_filters,
@@ -821,7 +821,7 @@ class VulnerabilityView(PaginatedMixin,
                     marshmallow_params,
                     is_web=False)
 
-            web_vulns_data = self._filter_vulns(
+            web_vulns_data = self._generate_filter_query(
                     VulnerabilityWeb,
                     filters,
                     hostname_filters,
@@ -830,13 +830,29 @@ class VulnerabilityView(PaginatedMixin,
                     is_web=True)
 
             if db.engine.dialect.name == 'postgresql':
+                # TODO: after the refactor of removing vuln web
+                # we need to remove this union query
                 vulns = normal_vulns_data.union(web_vulns_data)
                 # postgresql pagination with offset and limit need to order by a field
                 # to guarentee that all pages returns all objects
                 # without order by postgresql could repeat rows
+                if 'order_by' not in filters:
+                    vulns = vulns.order_by(VulnerabilityGeneric.id)
+                else:
+                    for val in filters['order_by']:
 
+                        field = getattr(VulnerabilityWeb, val['field'], None)
+                        if not field:
+                            logger.warning(f'Trying to sort with invalid field {val["field"]}')
+                            continue
+                        direction = getattr(field, val['direction'])
+                        if direction == 'desc':
+                            direction = desc
+                        else:
+                            direction = asc
+                        order_param = direction(field)
+                        vulns = vulns.order_by(order_param)
 
-                vulns = vulns.order_by(VulnerabilityGeneric.id)
                 if limit:
                     vulns = vulns.limit(limit)
                 if offset:
@@ -855,7 +871,7 @@ class VulnerabilityView(PaginatedMixin,
                     web_vulns_data.all())
                 return json.loads(normal_vulns) + json.loads(web_vulns), normal_vulns_data.count() + web_vulns_data.count()
         else:
-            vulns = self._filter_vulns(
+            vulns = self._generate_filter_query(
                 VulnerabilityGeneric,
                 filters,
                 hostname_filters,

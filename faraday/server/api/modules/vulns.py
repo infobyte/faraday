@@ -739,7 +739,7 @@ class VulnerabilityView(PaginatedMixin,
 
         return res_filters, hostname_filters
 
-    def _generate_filter_query(self, vulnerability_class, filters, hostname_filters, workspace, marshmallow_params, is_web):
+    def _generate_filter_query(self, vulnerability_class, filters, hostname_filters, workspace, marshmallow_params):
         hosts_os_filter = [host_os_filter for host_os_filter in filters.get('filters', []) if host_os_filter.get('name') == 'host__os']
 
         if hosts_os_filter:
@@ -763,18 +763,12 @@ class VulnerabilityView(PaginatedMixin,
 
         if hosts_os_filter:
             os_value = hosts_os_filter['val']
-            if is_web:
-                exists_part = vulnerability_class.query.join(Service).join(Host).filter(Host.os == os_value).exists()
-            else:
-                filt = RestLessFilter('host__os', 'has', os_value)
-                exists_part = QueryBuilder._create_filter(vulnerability_class, filt)
-            vulns = vulns.filter(exists_part)
+            service_exists_part = vulnerability_class.query.join(Service).join(Host).filter(Host.os == os_value, Vulnerability.host_id == Host.id).exists()
+            host_exists_part = vulnerability_class.query.join(Service).join(Host).filter(Host.os == os_value, Vulnerability.host_id == Host.id).exists()
+            filt = RestLessFilter('host__os', 'has', os_value)
+            host_relation_filter = QueryBuilder._create_filter(vulnerability_class, filt)
+            vulns = vulns.filter(or_(host_relation_filter, service_exists_part))
 
-        if is_web:
-            _type = 'VulnerabilityWeb'
-
-        else:
-            _type = 'Vulnerability'
         if 'group_by' not in filters:
             vulns = vulns.options(
                 joinedload(VulnerabilityGeneric.tags),
@@ -784,7 +778,7 @@ class VulnerabilityView(PaginatedMixin,
             )
         return vulns
 
-    def _filter(self, filters, workspace_name, confirmed=False):
+    def _filter(self, filters, workspace_name):
         try:
             filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
             hostname_filters = []
@@ -793,15 +787,6 @@ class VulnerabilityView(PaginatedMixin,
         except (ValidationError, JSONDecodeError) as ex:
             logger.exception(ex)
             flask.abort(400, "Invalid filters")
-        if confirmed:
-            if 'filters' not in filters:
-                filters = {}
-                filters['filters'] = []
-            filters['filters'].append({
-                "name": "confirmed",
-                "op": "==",
-                "val": "true"
-            })
 
         workspace = self._get_workspace(workspace_name)
         marshmallow_params = {'many': True, 'context': {}}
@@ -813,63 +798,22 @@ class VulnerabilityView(PaginatedMixin,
             if 'limit' in filters:
                 limit = filters.pop('limit') # we need to remove pagination, since
 
-            normal_vulns_data = self._generate_filter_query(
-                    Vulnerability,
-                    filters,
-                    hostname_filters,
-                    workspace,
-                    marshmallow_params,
-                    is_web=False)
+            vulns = self._generate_filter_query(
+                VulnerabilityGeneric,
+                filters,
+                hostname_filters,
+                workspace,
+                marshmallow_params)
 
-            web_vulns_data = self._generate_filter_query(
-                    VulnerabilityWeb,
-                    filters,
-                    hostname_filters,
-                    workspace,
-                    marshmallow_params,
-                    is_web=True)
+            if limit:
+                vulns = vulns.limit(limit)
+            if offset:
+                vulns = vulns.offset(offset)
+            count = vulns.count()
 
-            if db.engine.dialect.name == 'postgresql':
-                # TODO: after the refactor of removing vuln web
-                # we need to remove this union query
-                vulns = normal_vulns_data.union(web_vulns_data)
-                # postgresql pagination with offset and limit need to order by a field
-                # to guarentee that all pages returns all objects
-                # without order by postgresql could repeat rows
-                if 'order_by' not in filters:
-                    vulns = vulns.order_by(VulnerabilityGeneric.id)
-                else:
-                    for val in filters['order_by']:
-
-                        field = getattr(VulnerabilityWeb, val['field'], None)
-                        if not field:
-                            logger.warning(f'Trying to sort with invalid field {val["field"]}')
-                            continue
-                        direction = getattr(field, val['direction'])
-                        if direction == 'desc':
-                            direction = desc
-                        else:
-                            direction = asc
-                        order_param = direction(field)
-                        vulns = vulns.order_by(order_param)
-
-                if limit:
-                    vulns = vulns.limit(limit)
-                if offset:
-                    vulns = vulns.offset(offset)
-                count = vulns.count()
-
-                vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(
-                    vulns.all())
-                return json.loads(vulns), count
-            else:
-
-                normal_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(
-                    normal_vulns_data.all())
-
-                web_vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(
-                    web_vulns_data.all())
-                return json.loads(normal_vulns) + json.loads(web_vulns), normal_vulns_data.count() + web_vulns_data.count()
+            vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(
+                vulns.all())
+            return json.loads(vulns), count
         else:
             vulns = self._generate_filter_query(
                 VulnerabilityGeneric,
@@ -877,7 +821,6 @@ class VulnerabilityView(PaginatedMixin,
                 hostname_filters,
                 workspace,
                 marshmallow_params,
-                False
             )
             column_names = ['count'] + [field['field'] for field in filters.get('group_by',[])]
             rows = [list(zip(column_names, row)) for row in vulns.all()]
@@ -980,7 +923,17 @@ class VulnerabilityView(PaginatedMixin,
         custom_fields_columns = []
         for custom_field in db.session.query(CustomFieldsSchema).order_by(CustomFieldsSchema.field_order):
             custom_fields_columns.append(custom_field.field_name)
-        vulns_query, _ = self._filter(filters, workspace_name, confirmed)
+        if confirmed:
+            if 'filters' not in filters:
+                filters = {}
+                filters['filters'] = []
+            filters['filters'].append({
+                "name": "confirmed",
+                "op": "==",
+                "val": "true"
+            })
+            filters = json.dumps(filters)
+        vulns_query, _ = self._filter(filters, workspace_name)
         memory_file = export_vulns_to_csv(vulns_query, custom_fields_columns)
         return send_file(memory_file,
                          attachment_filename="Faraday-SR-%s.csv" % workspace_name,

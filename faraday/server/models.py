@@ -1061,6 +1061,14 @@ class VulnerabilityGeneric(VulnerabilityABC):
         .where(text('vulnerability.service_id = service.id and '
                     'host_inner.id = service.host_id'))
     )
+
+    host_id = Column(Integer, ForeignKey(Host.id), index=True)
+    host = relationship(
+        'Host',
+        backref=backref("vulnerabilities", cascade="all, delete-orphan"),
+        foreign_keys=[host_id],
+    )
+
     target_host_os = column_property(
         case([
             (text('vulnerability.host_id IS NOT null'),
@@ -1090,15 +1098,17 @@ class VulnerabilityGeneric(VulnerabilityABC):
     def has_duplicate(self):
         return self.vulnerability_duplicate_id == None
 
+    @property
+    def hostnames(self):
+        if self.host is not None:
+            return self.host.hostnames
+        elif self.service is not None:
+            return self.service.host.hostnames
+        raise ValueError("Vulnerability has no service nor host")
+
 
 class Vulnerability(VulnerabilityGeneric):
     __tablename__ = None
-    host_id = Column(Integer, ForeignKey(Host.id), index=True)
-    host = relationship(
-        'Host',
-        backref=backref("vulnerabilities", cascade="all, delete-orphan"),
-        foreign_keys=[host_id],
-    )
 
     @declared_attr
     def service_id(cls):
@@ -1109,13 +1119,6 @@ class Vulnerability(VulnerabilityGeneric):
     def service(cls):
         return relationship('Service', backref=backref("vulnerabilities", cascade="all, delete-orphan"))
 
-    @property
-    def hostnames(self):
-        if self.host is not None:
-            return self.host.hostnames
-        elif self.service is not None:
-            return self.service.host.hostnames
-        raise ValueError("Vulnerability has no service nor host")
 
     @property
     def parent(self):
@@ -1138,17 +1141,6 @@ class VulnerabilityWeb(VulnerabilityGeneric):
     @declared_attr
     def service(cls):
         return relationship('Service', backref=backref("vulnerabilities_web", cascade="all, delete-orphan"))
-
-    @declared_attr
-    def host_id(cls):
-        return VulnerabilityGeneric.__table__.c.get(
-            'host_id', Column(Integer, db.ForeignKey('host.id'),
-                                 nullable=False))
-
-    @declared_attr
-    def host(cls):
-        return relationship('Host', backref=backref("vulnerabilities_web", cascade="all, delete-orphan"))
-
 
     @property
     def parent(self):

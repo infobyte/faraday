@@ -608,8 +608,6 @@ class VulnerabilityView(PaginatedMixin,
         return self.schema_class_dict['VulnerabilityWeb']
 
     def _envelope_list(self, objects, pagination_metadata=None):
-        extended_data = {}
-
         vulns = []
         for index, vuln in enumerate(objects):
             # we use index when the filter endpoint uses group by and
@@ -619,13 +617,11 @@ class VulnerabilityView(PaginatedMixin,
                 'key': vuln.get('_id', index),
                 'value': vuln
             })
-        res = {
+        return {
             'vulnerabilities': vulns,
             'count': (pagination_metadata.total
                       if pagination_metadata is not None else len(vulns))
         }
-        res.update(extended_data)
-        return res
 
     def count(self, **kwargs):
         """Override to change severity values"""
@@ -763,11 +759,7 @@ class VulnerabilityView(PaginatedMixin,
 
         if hosts_os_filter:
             os_value = hosts_os_filter['val']
-            service_exists_part = vulnerability_class.query.join(Service).join(Host).filter(Host.os == os_value, Vulnerability.host_id == Host.id).exists()
-            host_exists_part = vulnerability_class.query.join(Service).join(Host).filter(Host.os == os_value, Vulnerability.host_id == Host.id).exists()
-            filt = RestLessFilter('host__os', 'has', os_value)
-            host_relation_filter = QueryBuilder._create_filter(vulnerability_class, filt)
-            vulns = vulns.filter(or_(host_relation_filter, service_exists_part))
+            vulns = vulns.join(Host).join(Service).filter(Host.os==os_value)
 
         if 'group_by' not in filters:
             vulns = vulns.options(

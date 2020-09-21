@@ -17,7 +17,7 @@
 import inspect
 
 from sqlalchemy import func, desc, asc
-from sqlalchemy import and_, or_, func, collate
+from sqlalchemy import and_, or_
 from sqlalchemy import inspect as sqlalchemy_inspect
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.orm.attributes import InstrumentedAttribute

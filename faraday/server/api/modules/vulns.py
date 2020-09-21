@@ -20,14 +20,12 @@ from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow.validate import OneOf
 from sqlalchemy.orm import aliased, joinedload, selectin_polymorphic, undefer
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy import desc, or_, func, asc
+from sqlalchemy import desc, or_, func
 from werkzeug.datastructures import ImmutableMultiDict
 from depot.manager import DepotManager
 
 from faraday.server.utils.search import (
-search,
-QueryBuilder,
-Filter as RestLessFilter,
+    search,
 )
 
 from faraday.server.api.base import (

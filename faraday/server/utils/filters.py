@@ -11,7 +11,6 @@ import datetime
 from distutils.util import strtobool
 
 from dateutil.parser import parse
-from sqlalchemy import inspect
 from collections.abc import Iterable
 from dateutil.parser._parser import ParserError
 from marshmallow import Schema, fields, ValidationError, types, validate, post_load
@@ -21,36 +20,12 @@ from faraday.server.models import VulnerabilityWeb, Host, Service
 from faraday.server.utils.search import OPERATORS
 from faraday.server.fields import JSONType
 
-WHITE_LIST = [
-    'tags__name',
-    'service__name',
-    'type',
-    'policy_violations__name',
-    'host__os',
-    'references__name',
-    'evidence__filename',
-    'service__port',
-    'hostnames',
-    'creator'
-]
-
-
-COUNT_FIELDS = [
-    'host__vulnerability_critical_generic_count',
-    'host__vulnerability_high_generic_count',
-    'host__vulnerability_medium_generic_count',
-    'host__vulnerability_low_generic_count',
-    'host__vulnerability_info_generic_count',
-]
-
-VULNERABILITY_FIELDS = [str(algo).split('.')[1] for algo in inspect(VulnerabilityWeb).attrs] + WHITE_LIST + COUNT_FIELDS
-
 
 VALID_OPERATORS = set(OPERATORS.keys()) - set(['desc', 'asc'])
 
 
 class FlaskRestlessFilterSchema(Schema):
-    name = fields.String(validate=validate.OneOf(VULNERABILITY_FIELDS), required=True)
+    name = fields.String(required=True)
     val = fields.Raw(required=True)
     op = fields.String(validate=validate.OneOf(list(OPERATORS.keys())), required=True)
     valid_relationship = {
@@ -78,6 +53,9 @@ class FlaskRestlessFilterSchema(Schema):
                 res += self._validate_filter_types(filter_)
         return res
 
+    def _model_class(self):
+        raise NotImplementedError
+
     def _validate_filter_types(self, filter_):
         """
             Compares the filter_ list against the model field and the value to be compared.
@@ -96,7 +74,10 @@ class FlaskRestlessFilterSchema(Schema):
                 raise ValidationError('Invalid Relationship')
             column = getattr(model, column_name)
         else:
-            column = getattr(VulnerabilityWeb, column_name)
+            try:
+                column = getattr(self._model_class(), column_name)
+            except AttributeError:
+                raise ValidationError('Field does not exists')
 
         if not getattr(column, 'type', None) and filter_['op'].lower():
             if filter_['op'].lower() in ['eq', '==']:
@@ -179,9 +160,23 @@ class FlaskRestlessFilterSchema(Schema):
         return [filter_]
 
 
+class FlaskRestlessVulnerabilityFilterSchema(FlaskRestlessFilterSchema):
+    def _model_class(self):
+        return VulnerabilityWeb
+
+class FlaskRestlessHostFilterSchema(FlaskRestlessFilterSchema):
+    def _model_class(self):
+        return Host
+
+
 class FlaskRestlessOperator(Schema):
     _or = fields.List(fields.Nested("self"), attribute='or', data_key='or')
     _and = fields.List(fields.Nested("self"), attribute='and', data_key='and')
+
+    model_filter_schemas = [
+        FlaskRestlessHostFilterSchema,
+        FlaskRestlessVulnerabilityFilterSchema,
+    ]
 
     def load(
         self,
@@ -202,9 +197,16 @@ class FlaskRestlessOperator(Schema):
         for search_filter in data:
             # we try to validate against filter schema since the list could contain
             # operatores mixed with filters in the list
-            try:
-                res += FlaskRestlessFilterSchema(many=False).load(search_filter)
-            except ValidationError:
+            valid_count = 0
+            for schema in self.model_filter_schemas:
+                try:
+                    res += schema(many=False).load(search_filter)
+                    valid_count += 1
+                    break
+                except ValidationError:
+                    continue
+
+            if valid_count == 0:
                 res.append(self._do_load(
                     search_filter, many=False, partial=partial, unknown=unknown, postprocess=True
                 ))
@@ -213,11 +215,11 @@ class FlaskRestlessOperator(Schema):
 
 
 class FlaskRestlessGroupFieldSchema(Schema):
-    field = fields.String(validate=validate.OneOf(VULNERABILITY_FIELDS), required=True)
+    field = fields.String(required=True)
 
 
 class FlaskRestlessOrderFieldSchema(Schema):
-    field = fields.String(validate=validate.OneOf(VULNERABILITY_FIELDS), required=True)
+    field = fields.String(required=True)
     direction = fields.String(validate=validate.OneOf(["asc", "desc"]), required=False)
 
 
@@ -249,11 +251,12 @@ class FilterSchema(Schema):
 
         return data
 
+
 class FlaskRestlessSchema(Schema):
     valid_schemas = [
         FilterSchema,
-        FlaskRestlessFilterSchema,
         FlaskRestlessOperator,
+        FlaskRestlessVulnerabilityFilterSchema,
     ]
 
     def load(

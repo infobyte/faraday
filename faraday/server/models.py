@@ -119,8 +119,6 @@ class CustomEngineConnector(_EngineConnector):
 
 db = SQLAlchemy()
 
-SCHEMA_VERSION = 'W.3.0.0'
-
 
 def _make_generic_count_property(parent_table, children_table, where=None):
     """Make a deferred by default column property that counts the

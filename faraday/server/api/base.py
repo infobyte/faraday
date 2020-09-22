@@ -23,12 +23,15 @@ from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
 from webargs.flaskparser import FlaskParser
 from webargs.core import ValidationError
+from flask_classful import route
+
 from faraday.server.models import Workspace, db, Command, CommandObject
 from faraday.server.schemas import NullToBlankString
 from faraday.server.utils.database import (
     get_conflict_object,
     is_unique_constraint_violation
     )
+from faraday.server.utils.search import search
 
 from faraday.server.config import faraday_server
 
@@ -341,6 +344,7 @@ class GenericView(FlaskView):
             response = {'success': False, 'message': f"Exception: {err.original_exception}" if faraday_server.debug else 'Internal Server Error'}
             return flask.jsonify(response), 500
 
+
 class GenericWorkspacedView(GenericView):
     """Abstract class for a view that depends on the workspace, that is
     passed in the URL
@@ -592,6 +596,92 @@ class FilterAlchemyMixin:
     def _filter_query(self, query):
         assert self.filterset_class is not None, 'You must define a filterset'
         return self.filterset_class(query).filter()
+
+
+class FilterWorkspacedMixin(ListMixin):
+    """Add filter endpoint for searching on any objects columns
+    """
+
+    @route('/filter')
+    def filter(self, workspace_name):
+        """
+        ---
+            tags: ["filter"]
+            summary: Filters, sorts and groups objects using a json with parameters.
+            parameters:
+            - q: recursive json with filters that supports operators. The json could also contain sort and group
+
+            responses:
+              200:
+                description: return filtered, sorted and grouped results
+                content:
+                  application/json:
+                    schema: FlaskRestlessSchema
+              400:
+                description: invalid q was sent to the server
+
+        """
+        filters = request.args.get('q')
+        filtered_objs, count = self._filter(filters, workspace_name)
+        class PageMeta:
+            total = 0
+        pagination_metadata = PageMeta()
+        pagination_metadata.total = count
+        return self._envelope_list(filtered_objs, pagination_metadata)
+
+    def _generate_filter_query(self, filters, workpsace):
+        objs = search(db.session,
+                       self.model_class,
+                       filters)
+        objs = objs.filter(self.model_class.workspace==workspace)
+        return objs
+
+    def _filter(self, filters, workspace_name):
+        marshmallow_params = {'many': True, 'context': {}}
+        try:
+            filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
+            hostname_filters = []
+            if filters:
+                _, hostname_filters = self._hostname_filters(filters.get('filters', []))
+        except (ValidationError, JSONDecodeError) as ex:
+            logger.exception(ex)
+            flask.abort(400, "Invalid filters")
+
+        workspace = self._get_workspace(workspace_name)
+        if 'group_by' not in filters:
+            offset = None
+            limit = None
+            if 'offset' in filters:
+                offset = filters.pop('offset')
+            if 'limit' in filters:
+                limit = filters.pop('limit') # we need to remove pagination, since
+
+            objs = self._generate_filter_query(
+                filters,
+                workspace,
+            )
+
+            if limit:
+                objs = objs.limit(limit)
+            if offset:
+                objs = objs.offset(offset)
+            count = objs.count()
+
+            objs = self.schema_class_dict(**marshmallow_params).dumps(
+                objs.all())
+            return json.loads(objs), count
+        else:
+            objs = self._generate_filter_query(
+                filters,
+                workspace,
+            )
+            column_names = ['count'] + [field['field'] for field in filters.get('group_by',[])]
+            rows = [list(zip(column_names, row)) for row in objs.all()]
+            vulns_data = []
+            for row in rows:
+                vulns_data.append({field[0]:field[1] for field in row})
+
+            return vulns_data, len(rows)
 
 
 class ListWorkspacedMixin(ListMixin):

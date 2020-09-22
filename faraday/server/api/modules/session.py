@@ -18,5 +18,6 @@ def session_info():
     data['csrf_token'] = generate_csrf()
     data['preferences'] = user.preferences
     data['permissions'] = get_user_permissions(user)
+    data['role'] = "admin"
     return jsonify(data)
 

@@ -66,7 +66,6 @@ command_data = {
     'user': 'root',
     'hostname': 'pc',
     'start_date': '2014-12-22T03:12:58.019077+00:00',
-    'duration': 30,
 }
 
 
@@ -385,15 +384,22 @@ def test_create_service_with_vulnweb(session, host):
     assert vuln.status_code == 200
 
 
-def test_update_command(session, workspace):
+@pytest.mark.parametrize("duration", [None, "30"])
+def test_update_command(session, workspace, duration):
     command = new_empty_command(workspace)
     assert count(Command, workspace) == 1
-    bc.bulk_create(workspace, command, dict(command=command_data, hosts=[]))
+    command_data_ = command_data.copy()
+    if duration is not None:
+        command_data_["duration"] = duration
+    bc.bulk_create(workspace, command, dict(command=command_data_, hosts=[]))
     assert count(Command, workspace) == 1
     command = workspace.commands[0]
     assert command.tool == 'pytest'
     assert command.user == 'root'
-    assert (command.end_date - command.start_date).microseconds == 30
+    if duration is not None:
+        assert (command.end_date - command.start_date).microseconds == 30
+    else:
+        assert command.end_date is not None
 
 
 def test_updates_command_object(session, workspace):

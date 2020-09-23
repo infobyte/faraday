@@ -5,8 +5,6 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-from pathlib import Path
-
 import pytest
 from io import BytesIO
 
@@ -15,7 +13,7 @@ from tests.factories import WorkspaceFactory
 
 from faraday.server.threads.reports_processor import REPORTS_QUEUE
 
-from faraday.server.models import Host, Vulnerability, Service, Command
+from faraday.server.models import Host, Service, Command
 
 
 @pytest.mark.usefixtures('logged_user')
@@ -58,6 +56,8 @@ class TestFileUpload():
         command = Command.query.filter(Command.workspace_id == ws_id).one()
         assert command
         assert command.creator_id == logged_user_id
+        assert command.id == res.json["command_id"]
+        assert command.end_date
         host = Host.query.filter(Host.workspace_id == ws_id).first()
         assert host
         assert host.creator_id == logged_user_id

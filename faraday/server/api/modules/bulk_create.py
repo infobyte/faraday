@@ -153,7 +153,7 @@ class BulkCommandSchema(AutoSchema):
 
     I don't need that here, so I'll write a schema from scratch."""
 
-    duration = fields.TimeDelta('microseconds', required=True)
+    duration = fields.TimeDelta('microseconds', required=False)
 
     class Meta:
         model = Command
@@ -164,8 +164,9 @@ class BulkCommandSchema(AutoSchema):
 
     @post_load
     def load_end_date(self, data, **kwargs):
-        duration = data.pop('duration')
-        data['end_date'] = data['start_date'] + duration
+        if 'duration' in data:
+            duration = data.pop('duration')
+            data['end_date'] = data['start_date'] + duration
         return data
 
 
@@ -218,6 +219,10 @@ def bulk_create(ws: Workspace,
         command = _update_command(command, data['command'])
     for host in data['hosts']:
         _create_host(ws, host, command)
+    if 'command' in data:
+        command.end_date = datetime.now() if command.end_date is None else \
+            command.end_date
+        db.session.commit()
 
 
 def _update_command(command: Command, command_data: dict):

@@ -56,6 +56,7 @@ class ReportsManager(Thread):
                             f"{plugin.id}")
                 plugin.processReport(str(file_path))
                 vulns_data = plugin.get_data()
+                del vulns_data['command']['duration']
             except Exception as e:
                 logger.error("Processing Error: %s", e)
                 logger.exception(e)

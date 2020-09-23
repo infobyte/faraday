@@ -12,6 +12,7 @@ from faraday.server.models import (
     Vulnerability,
     VulnerabilityGeneric,
     VulnerabilityWeb,
+    Workspace
 )
 from faraday.server.api.modules import bulk_create as bc
 
@@ -73,9 +74,20 @@ def count(model, workspace):
     return model.query.filter(model.workspace == workspace).count()
 
 
+def new_empty_command(workspace: Workspace):
+    command = Command()
+    command.workspace = workspace
+    command.start_date = datetime.now()
+    command.import_source = 'report'
+    command.tool = "In progress"
+    command.command = "In progress"
+    db.session.commit()
+    return command
+
+
 def test_create_host(session, workspace):
     assert count(Host, workspace) == 0
-    bc.bulk_create(workspace, dict(hosts=[host_data]))
+    bc.bulk_create(workspace, None, dict(hosts=[host_data]))
     db.session.commit()
     host = Host.query.filter(Host.workspace == workspace).one()
     assert host.ip == "127.0.0.1"
@@ -84,18 +96,18 @@ def test_create_host(session, workspace):
 
 def test_create_duplicated_hosts(session, workspace):
     assert count(Host, workspace) == 0
-    bc.bulk_create(workspace, dict(hosts=[host_data, host_data]))
+    bc.bulk_create(workspace, None, dict(hosts=[host_data, host_data]))
     db.session.commit()
     assert count(Host, workspace) == 1
 
 
 def test_create_host_add_hostnames(session, workspace):
     assert count(Host, workspace) == 0
-    bc.bulk_create(workspace, dict(hosts=[host_data]))
+    bc.bulk_create(workspace, None, dict(hosts=[host_data]))
     db.session.commit()
     host_copy = host_data.copy()
     host_copy['hostnames'] = ["test3.org"]
-    bc.bulk_create(workspace, dict(hosts=[host_copy]))
+    bc.bulk_create(workspace, None, dict(hosts=[host_copy]))
     db.session.commit()
     host = Host.query.filter(Host.workspace == workspace).one()
     assert host.ip == "127.0.0.1"
@@ -110,14 +122,14 @@ def test_create_existing_host(session, host):
         "description": host.description,
         "hostnames": [hn.name for hn in host.hostnames]
     }
-    bc.bulk_create(host.workspace, dict(hosts=[data]))
+    bc.bulk_create(host.workspace, None, dict(hosts=[data]))
     assert count(Host, host.workspace) == 1
 
 
 def test_create_host_with_services(session, workspace):
     host_data_ = host_data.copy()
     host_data_['services'] = [service_data]
-    bc.bulk_create(workspace, dict(hosts=[host_data_]))
+    bc.bulk_create(workspace, None, dict(hosts=[host_data_]))
     assert count(Host, workspace) == 1
     assert count(Service, workspace) == 1
     service = Service.query.filter(Service.workspace == workspace).one()
@@ -194,7 +206,15 @@ def test_creates_vuln_with_command_object_with_tool(session, service):
     vuln_web_data_ = vuln_data.copy()
     service_data_['vulnerabilities'] = [vuln_web_data_]
     host_data_['services'] = [service_data_]
-    bc.bulk_create(service.workspace, dict(command=command_data, hosts=[host_data_]))
+    command = new_empty_command(service.workspace)
+    bc.bulk_create(
+        service.workspace,
+        command,
+        dict(
+            command=command_data,
+            hosts=[host_data_]
+            )
+    )
     assert count(Vulnerability, service.workspace) == 1
     vuln = service.workspace.vulnerabilities[0]
     assert vuln.tool == vuln_data['tool']
@@ -207,7 +227,12 @@ def test_creates_vuln_with_command_object_without_tool(session, service):
     vuln_web_data_.pop('tool')
     service_data_['vulnerabilities'] = [vuln_web_data_]
     host_data_['services'] = [service_data_]
-    bc.bulk_create(service.workspace, dict(command=command_data, hosts=[host_data_]))
+    command = new_empty_command(service.workspace)
+    bc.bulk_create(
+        service.workspace,
+        command,
+        dict(command=command_data, hosts=[host_data_])
+    )
     assert count(Vulnerability, service.workspace) == 1
     vuln = service.workspace.vulnerabilities[0]
     assert vuln.tool == command_data['tool']
@@ -263,7 +288,7 @@ def test_create_existing_host_cred(session, host, credential_factory):
 def test_create_host_with_vuln(session, workspace):
     host_data_ = host_data.copy()
     host_data_['vulnerabilities'] = [vuln_data]
-    bc.bulk_create(workspace, dict(hosts=[host_data_]))
+    bc.bulk_create(workspace, None, dict(hosts=[host_data_]))
     assert count(Host, workspace) == 1
     host = workspace.hosts[0]
     assert count(Vulnerability, workspace) == 1
@@ -275,7 +300,7 @@ def test_create_host_with_vuln(session, workspace):
 def test_create_host_with_cred(session, workspace):
     host_data_ = host_data.copy()
     host_data_['credentials'] = [credential_data]
-    bc.bulk_create(workspace, dict(hosts=[host_data_]))
+    bc.bulk_create(workspace, None, dict(hosts=[host_data_]))
     assert count(Host, workspace) == 1
     host = workspace.hosts[0]
     assert count(Credential, workspace) == 1
@@ -360,8 +385,10 @@ def test_create_service_with_vulnweb(session, host):
     assert vuln.status_code == 200
 
 
-def test_create_command(session, workspace):
-    bc.bulk_create(workspace, dict(command=command_data, hosts=[]))
+def test_update_command(session, workspace):
+    command = new_empty_command(workspace)
+    assert count(Command, workspace) == 1
+    bc.bulk_create(workspace, command, dict(command=command_data, hosts=[]))
     assert count(Command, workspace) == 1
     command = workspace.commands[0]
     assert command.tool == 'pytest'
@@ -369,7 +396,7 @@ def test_create_command(session, workspace):
     assert (command.end_date - command.start_date).microseconds == 30
 
 
-def test_creates_command_object(session, workspace):
+def test_updates_command_object(session, workspace):
     host_data_ = host_data.copy()
     service_data_ = service_data.copy()
     vuln_web_data_ = vuln_data.copy()
@@ -379,7 +406,12 @@ def test_creates_command_object(session, workspace):
     host_data_['services'] = [service_data_]
     host_data_['vulnerabilities'] = [vuln_data]
     host_data_['credentials'] = [credential_data]
-    bc.bulk_create(workspace, dict(command=command_data, hosts=[host_data_]))
+    command = new_empty_command(workspace)
+    bc.bulk_create(
+        workspace,
+        command,
+        dict(command=command_data, hosts=[host_data_])
+    )
 
     command = workspace.commands[0]
     host = workspace.hosts[0]
@@ -512,7 +544,8 @@ def test_creates_command_object_on_duplicates(
 
     data['command'] = command_data.copy()
 
-    bc.bulk_create(command.workspace, data)
+    command2 = new_empty_command(command.workspace)
+    bc.bulk_create(command.workspace, command2, data)
     assert count(Command, command.workspace) == 2
 
     new_command = Command.query.filter_by(tool='pytest').one()
@@ -539,11 +572,15 @@ def test_bulk_create_endpoint(session, workspace, test_client, logged_user):
     host_data_['services'] = [service_data_]
     host_data_['credentials'] = [credential_data]
     host_data_['vulnerabilities'] = [vuln_data]
-    res = test_client.post(url, data=dict(hosts=[host_data_]))
+    res = test_client.post(
+        url,
+        data=dict(hosts=[host_data_], command=command_data)
+    )
     assert res.status_code == 201, res.json
     assert count(Host, workspace) == 1
     assert count(Service, workspace) == 1
     assert count(Vulnerability, workspace) == 2
+    assert count(Command, workspace) == 1
     host = Host.query.filter(Host.workspace == workspace).one()
     assert host.ip == "127.0.0.1"
     assert host.creator_id == logged_user.id
@@ -555,6 +592,9 @@ def test_bulk_create_endpoint(session, workspace, test_client, logged_user):
     assert service.creator_id == logged_user.id
     credential = Credential.query.filter(Credential.workspace == workspace).one()
     assert credential.creator_id == logged_user.id
+    command = Command.query.filter(Credential.workspace == workspace).one()
+    assert command.creator_id == logged_user.id
+    assert res.json["command_id"] == command.id
 
 
 @pytest.mark.usefixtures('logged_user')
@@ -868,4 +908,3 @@ def test_bulk_create_endpoint_fails_with_list_in_NullToBlankString(session, work
     assert count(Service, workspace) == 0
     assert count(Credential, workspace) == 0
     assert count(Vulnerability, workspace) == 0
-

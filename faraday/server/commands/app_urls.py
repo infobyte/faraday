@@ -20,7 +20,8 @@ def openapi_format(format="yaml", server="localhost", no_servers=False):
                        '[our server](https://github.com/infobyte/faraday).\n'
                        'Use this API to interact or integrate with Faraday'
                        ' server. This page documents the REST API, with HTTP'
-                       ' response codes and example requests and responses.'}
+                       ' response codes and example requests and responses.'},
+        'security': {"ApiKeyAuth": []}
     }
 
     if not no_servers:
@@ -33,6 +34,18 @@ def openapi_format(format="yaml", server="localhost", no_servers=False):
         plugins=[FaradayAPIPlugin(), FlaskPlugin(), MarshmallowPlugin()],
         **extra_specs
     )
+    api_key_scheme = {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization"
+    }
+
+    spec.components.security_scheme("API_KEY", api_key_scheme)
+    response_401_unauthorized = {
+        "description": "You are not authenticated or your API key is missing "
+                       "or invalid"
+    }
+    spec.components.response("UnauthorizedError", response_401_unauthorized)
 
     with app.test_request_context():
         for endpoint in app.view_functions:

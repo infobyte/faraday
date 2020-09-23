@@ -6,11 +6,11 @@
 
 buildPythonPackage rec {
   pname = "webargs";
-  version = "6.1.0";
+  version = "6.1.1";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "0gxvd1k5czch2l3jpvgbb53wbzl2drld25rs45jcfkrwbjrpzd7b";
+    sha256 = "02sdrr1w8x4wgx9yq8p6d690jfnivmjmnpzssq7fmzbsjzfwlbj1";
   };
 
   propagatedBuildInputs = [ marshmallow ];

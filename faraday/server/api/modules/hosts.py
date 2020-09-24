@@ -24,7 +24,7 @@ from faraday.server.api.base import (
     AutoSchema,
     FilterAlchemyMixin,
     FilterSetMeta,
-)
+    FilterWorkspacedMixin)
 from faraday.server.schemas import (
     MetadataSchema,
     MutableField,
@@ -129,9 +129,11 @@ class HostCountSchema(Schema):
     total = fields.Integer(dump_only=True, allow_none=False,
                                  attribute='vulnerability_total_count')
 
+
 class HostsView(PaginatedMixin,
                 FilterAlchemyMixin,
-                ReadWriteWorkspacedView):
+                ReadWriteWorkspacedView,
+                FilterWorkspacedMixin):
     route_base = 'hosts'
     model_class = Host
     order_field = desc(Host.vulnerability_critical_generic_count),\

@@ -6,6 +6,7 @@ See the file 'doc/LICENSE' for the license information
 """
 import json
 import logging
+from json import JSONDecodeError
 
 import flask
 import sqlalchemy
@@ -31,6 +32,7 @@ from faraday.server.utils.database import (
     get_conflict_object,
     is_unique_constraint_violation
     )
+from faraday.server.utils.filters import FlaskRestlessSchema
 from faraday.server.utils.search import search
 
 from faraday.server.config import faraday_server
@@ -621,28 +623,31 @@ class FilterWorkspacedMixin(ListMixin):
                 description: invalid q was sent to the server
 
         """
-        filters = request.args.get('q')
+        # TODO: Podrian mandar sin parametros? Sin parametros pincha.
+        filters = flask.request.args.get('q')
         filtered_objs, count = self._filter(filters, workspace_name)
+
         class PageMeta:
             total = 0
         pagination_metadata = PageMeta()
         pagination_metadata.total = count
         return self._envelope_list(filtered_objs, pagination_metadata)
 
-    def _generate_filter_query(self, filters, workpsace):
+    def _generate_filter_query(self, filters, workspace):
         objs = search(db.session,
                        self.model_class,
                        filters)
-        objs = objs.filter(self.model_class.workspace==workspace)
+
+        objs = objs.filter(self.model_class.workspace == workspace)
         return objs
 
     def _filter(self, filters, workspace_name):
         marshmallow_params = {'many': True, 'context': {}}
         try:
             filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
-            hostname_filters = []
-            if filters:
-                _, hostname_filters = self._hostname_filters(filters.get('filters', []))
+            # hostname_filters = []
+            # if filters:
+            #    _, hostname_filters = self._hostname_filters(filters.get('filters', []))
         except (ValidationError, JSONDecodeError) as ex:
             logger.exception(ex)
             flask.abort(400, "Invalid filters")
@@ -658,7 +663,7 @@ class FilterWorkspacedMixin(ListMixin):
 
             objs = self._generate_filter_query(
                 filters,
-                workspace,
+                workspace
             )
 
             if limit:
@@ -666,16 +671,15 @@ class FilterWorkspacedMixin(ListMixin):
             if offset:
                 objs = objs.offset(offset)
             count = objs.count()
-
-            objs = self.schema_class_dict(**marshmallow_params).dumps(
-                objs.all())
+            # esto deberia ser un dict como en el de vulns?
+            objs = self.schema_class(**marshmallow_params).dumps(objs.all())
             return json.loads(objs), count
         else:
             objs = self._generate_filter_query(
                 filters,
                 workspace,
             )
-            column_names = ['count'] + [field['field'] for field in filters.get('group_by',[])]
+            column_names = ['count'] + [field['field'] for field in filters.get('group_by', [])]
             rows = [list(zip(column_names, row)) for row in objs.all()]
             vulns_data = []
             for row in rows:

@@ -257,6 +257,7 @@ class FlaskRestlessSchema(Schema):
         FilterSchema,
         FlaskRestlessOperator,
         FlaskRestlessVulnerabilityFilterSchema,
+        FlaskRestlessHostFilterSchema,
     ]
 
     def load(

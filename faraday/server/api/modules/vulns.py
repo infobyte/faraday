@@ -794,16 +794,15 @@ class VulnerabilityView(PaginatedMixin,
                 hostname_filters,
                 workspace,
                 marshmallow_params)
-
+            total_vulns = vulns
             if limit:
                 vulns = vulns.limit(limit)
             if offset:
                 vulns = vulns.offset(offset)
-            count = vulns.count()
 
             vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(
                 vulns.all())
-            return json.loads(vulns), count
+            return json.loads(vulns), total_vulns.count()
         else:
             vulns = self._generate_filter_query(
                 VulnerabilityGeneric,

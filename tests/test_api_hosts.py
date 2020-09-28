@@ -450,8 +450,7 @@ class TestHostAPI:
             "description": "",
             "os": "",
             "owned": False,
-            "owner": "",
-            "mark_important": False
+            "owner": ""
         }
         res = test_client.put(self.url(host_with_hostnames), data=data)
         assert res.status_code == 200
@@ -499,7 +498,8 @@ class TestHostAPI:
             "os":"Microsoft Windows Server 2008 R2 Standard Service Pack 1",
             "id": 4000,
             "icon":"windows",
-            "versions": []}
+            "versions": [],
+            "mark_important": False}
 
         res = test_client.put(self.url(host, workspace=host.workspace), data=raw_data)
         assert res.status_code == 200
@@ -531,7 +531,8 @@ class TestHostAPI:
             u'services': 0,
             u'service_summaries': [],
             u'vulns': 0,
-            u"versions": []}
+            u"versions": [],
+            u'mark_important': False}
 
     def test_add_hosts_from_csv(self, session, test_client, csrf_token):
         ws = WorkspaceFactory.create(name='abc')

@@ -24,7 +24,10 @@ from sqlalchemy import desc, or_, func
 from werkzeug.datastructures import ImmutableMultiDict
 from depot.manager import DepotManager
 
-from faraday.server.utils.search import search, QueryBuilder, Filter as RestLessFilter
+from faraday.server.utils.search import (
+    search,
+)
+
 from faraday.server.api.base import (
     AutoSchema,
     FilterAlchemyMixin,
@@ -691,7 +694,12 @@ class VulnerabilityView(PaginatedMixin,
 
         """
         filters = request.args.get('q')
-        return self._envelope_list(self._filter(filters, workspace_name))
+        filtered_vulns, count = self._filter(filters, workspace_name)
+        class PageMeta:
+            total = 0
+        pagination_metadata = PageMeta()
+        pagination_metadata.total = count
+        return self._envelope_list(filtered_vulns, pagination_metadata)
 
     def _hostname_filters(self, filters):
         res_filters = []
@@ -727,7 +735,7 @@ class VulnerabilityView(PaginatedMixin,
 
         return res_filters, hostname_filters
 
-    def _filter_vulns(self, vulnerability_class, filters, hostname_filters, workspace, marshmallow_params, is_web):
+    def _generate_filter_query(self, vulnerability_class, filters, hostname_filters, workspace, marshmallow_params):
         hosts_os_filter = [host_os_filter for host_os_filter in filters.get('filters', []) if host_os_filter.get('name') == 'host__os']
 
         if hosts_os_filter:
@@ -751,54 +759,67 @@ class VulnerabilityView(PaginatedMixin,
 
         if hosts_os_filter:
             os_value = hosts_os_filter['val']
-            if is_web:
-                exists_part = vulnerability_class.query.join(Service).join(Host).filter(Host.os == os_value).exists()
-            else:
-                filt = RestLessFilter('host__os', 'has', os_value)
-                exists_part = QueryBuilder._create_filter(vulnerability_class, filt)
-            vulns = vulns.filter(exists_part)
-
-        if is_web:
-            _type = 'VulnerabilityWeb'
-
-        else:
-            _type = 'Vulnerability'
+            vulns = vulns.join(Host).join(Service).filter(Host.os==os_value)
 
         if 'group_by' not in filters:
-            vulns = self.schema_class_dict[_type](**marshmallow_params).dumps(
+            vulns = vulns.options(
+                joinedload(VulnerabilityGeneric.tags),
+                joinedload(Vulnerability.host),
+                joinedload(Vulnerability.service),
+                joinedload(VulnerabilityWeb.service),
+            )
+        return vulns
+
+    def _filter(self, filters, workspace_name):
+        try:
+            filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
+            hostname_filters = []
+            if filters:
+                _, hostname_filters = self._hostname_filters(filters.get('filters', []))
+        except (ValidationError, JSONDecodeError) as ex:
+            logger.exception(ex)
+            flask.abort(400, "Invalid filters")
+
+        workspace = self._get_workspace(workspace_name)
+        marshmallow_params = {'many': True, 'context': {}}
+        if 'group_by' not in filters:
+            offset = None
+            limit = None
+            if 'offset' in filters:
+                offset = filters.pop('offset')
+            if 'limit' in filters:
+                limit = filters.pop('limit') # we need to remove pagination, since
+
+            vulns = self._generate_filter_query(
+                VulnerabilityGeneric,
+                filters,
+                hostname_filters,
+                workspace,
+                marshmallow_params)
+            total_vulns = vulns
+            if limit:
+                vulns = vulns.limit(limit)
+            if offset:
+                vulns = vulns.offset(offset)
+
+            vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(
                 vulns.all())
-            vulns_data = json.loads(vulns)
+            return json.loads(vulns), total_vulns.count()
         else:
+            vulns = self._generate_filter_query(
+                VulnerabilityGeneric,
+                filters,
+                hostname_filters,
+                workspace,
+                marshmallow_params,
+            )
             column_names = ['count'] + [field['field'] for field in filters.get('group_by',[])]
             rows = [list(zip(column_names, row)) for row in vulns.all()]
             vulns_data = []
             for row in rows:
                 vulns_data.append({field[0]:field[1] for field in row})
 
-        return vulns_data
-
-    def _filter(self, filters, workspace_name, confirmed=False):
-        try:
-            filters = FlaskRestlessSchema().load(json.loads(filters))
-            _, hostname_filters = self._hostname_filters(filters.get('filters', []))
-        except (ValidationError, JSONDecodeError) as ex:
-            logger.exception(ex)
-            flask.abort(400, "Invalid filters")
-        if confirmed:
-            if 'filters' not in filters:
-                filters = {}
-                filters['filters'] = []
-            filters['filters'].append({
-                "name": "confirmed",
-                "op": "==",
-                "val": "true"
-            })
-
-        workspace = self._get_workspace(workspace_name)
-        marshmallow_params = {'many': True, 'context': {}}
-        normal_vulns_data = self._filter_vulns(Vulnerability, filters, hostname_filters, workspace, marshmallow_params, False)
-        web_vulns_data = self._filter_vulns(VulnerabilityWeb, filters, hostname_filters, workspace, marshmallow_params, True)
-        return normal_vulns_data + web_vulns_data
+            return vulns_data, len(rows)
 
     @route('/<int:vuln_id>/attachment/<attachment_filename>/', methods=['GET'])
     def get_attachment(self, workspace_name, vuln_id, attachment_filename):
@@ -893,7 +914,17 @@ class VulnerabilityView(PaginatedMixin,
         custom_fields_columns = []
         for custom_field in db.session.query(CustomFieldsSchema).order_by(CustomFieldsSchema.field_order):
             custom_fields_columns.append(custom_field.field_name)
-        vulns_query = self._filter(filters, workspace_name, confirmed)
+        if confirmed:
+            if 'filters' not in filters:
+                filters = {}
+                filters['filters'] = []
+            filters['filters'].append({
+                "name": "confirmed",
+                "op": "==",
+                "val": "true"
+            })
+            filters = json.dumps(filters)
+        vulns_query, _ = self._filter(filters, workspace_name)
         memory_file = export_vulns_to_csv(vulns_query, custom_fields_columns)
         return send_file(memory_file,
                          attachment_filename="Faraday-SR-%s.csv" % workspace_name,

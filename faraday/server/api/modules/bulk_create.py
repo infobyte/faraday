@@ -377,6 +377,8 @@ class BulkCreateView(GenericWorkspacedView):
               content:
                 application/json:
                   schema: BulkCreateSchema
+            401:
+               $ref: "#/components/responses/UnauthorizedError"
             403:
                description: Disabled workspace
             404:
@@ -441,5 +443,3 @@ class BulkCreateView(GenericWorkspacedView):
     post.is_public = True
 
 BulkCreateView.register(bulk_create_api)
-
-

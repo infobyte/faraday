@@ -25,5 +25,3 @@ class TokenAuthView(GenericView):
 
 
 TokenAuthView.register(token_api)
-
-# I'm Py3

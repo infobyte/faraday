@@ -86,7 +86,7 @@ class TestFileUpload():
             file_contents = report.read().encode('utf-8')
 
         data = {
-            'file' : (BytesIO(file_contents), 'nmap_report.xml'),
+            'file': (BytesIO(file_contents), 'nmap_report.xml'),
         }
 
         res = test_client.post(
@@ -107,8 +107,8 @@ class TestFileUpload():
             file_contents = report.read().encode('utf-8')
 
         data = {
-            'file' : (BytesIO(file_contents), 'nmap_report.xml'),
-            'csrf_token' : csrf_token
+            'file': (BytesIO(file_contents), 'nmap_report.xml'),
+            'csrf_token': csrf_token
         }
         res = test_client.post(
                 '/v2/ws/{ws_name}/upload_report'.format(ws_name=ws.name),

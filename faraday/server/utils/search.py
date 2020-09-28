@@ -16,7 +16,7 @@
 """
 import inspect
 
-from sqlalchemy import func, desc, asc
+from sqlalchemy import func
 from sqlalchemy import and_, or_
 from sqlalchemy import inspect as sqlalchemy_inspect
 from sqlalchemy.ext.associationproxy import AssociationProxy

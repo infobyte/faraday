@@ -31,24 +31,27 @@ class ReportsManager(Thread):
         self.__event.set()
 
     def send_report_request(self,
-                            workspace: Workspace,
-                            command: Command,
+                            workspace_name: str,
+                            command_id: int,
                             report_json: dict,
-                            user: User):
-        logger.info("Send Report data to workspace [%s]", workspace.name)
+                            user_id: int):
+        logger.info("Send Report data to workspace [%s]", workspace_name)
         from faraday.server.web import app  # pylint:disable=import-outside-toplevel
         with app.app_context():
+            ws = Workspace.query.filter_by(name=workspace_name).one()
+            command = Command.query.filter_by(id=command_id).one()
+            user = User.query.filter_by(id=user_id).one()
             schema = BulkCreateSchema()
             data = schema.load(report_json)
             data = add_creator(data, user)
-            bulk_create(workspace, command, data, True)
+            bulk_create(ws, command, data, True)
 
     def process_report(self,
-                       workspace: Workspace,
-                       command: Command,
+                       workspace_name: str,
+                       command_id: int,
                        file_path: Path,
                        plugin_id: int,
-                       user: User):
+                       user_id: int):
         plugin = self.plugins_manager.get_plugin(plugin_id)
         if plugin:
             try:
@@ -63,7 +66,7 @@ class ReportsManager(Thread):
             else:
                 try:
                     self.send_report_request(
-                        workspace, command, vulns_data, user
+                        workspace_name, command_id, vulns_data, user_id
                     )
                     logger.info("Report processing finished")
                 except Exception as e:
@@ -76,17 +79,19 @@ class ReportsManager(Thread):
         logger.debug("Start Reports Manager")
         while not self.__event.is_set():
             try:
-                tuple5: Tuple[Workspace, Command, Path, int, User] = \
+                tpl: Tuple[str, int, Path, int, int] = \
                     self.upload_reports_queue.get(False, timeout=0.1)
-                workspace, command, file_path, plugin_id, user = tuple5
+
+                workspace_name, command_id, file_path, plugin_id, user_id = tpl
+
                 logger.info(f"Processing raw report {file_path}")
                 if file_path.is_file():
                     self.process_report(
-                        workspace,
-                        command,
+                        workspace_name,
+                        command_id,
                         file_path,
                         plugin_id,
-                        user
+                        user_id
                     )
                 else:
                     logger.warning(f"Report file [{file_path}] don't exists",

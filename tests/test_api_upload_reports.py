@@ -40,9 +40,9 @@ class TestFileUpload():
         assert res.status_code == 200
         assert len(REPORTS_QUEUE.queue) == 1
         queue_elem = REPORTS_QUEUE.queue[0]
-        assert queue_elem[0] == ws
+        assert queue_elem[0] == ws.name
         assert queue_elem[3].lower() == "nmap"
-        assert queue_elem[4].id == logged_user.id
+        assert queue_elem[4] == logged_user.id
 
         # I'm testing a method which lost referene of workspace and logged_user within the test
         ws_id = ws.id

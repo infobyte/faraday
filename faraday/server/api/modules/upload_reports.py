@@ -97,11 +97,11 @@ def file_upload(workspace=None):
 
                 REPORTS_QUEUE.put(
                     (
-                        workspace_instance,
-                        command,
+                        workspace_instance.name,
+                        command.id,
                         file_path,
                         plugin.id,
-                        flask.g.user
+                        flask.g.user.id
                     )
                 )
                 return make_response(

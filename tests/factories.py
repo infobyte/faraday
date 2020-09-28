@@ -54,18 +54,21 @@ from faraday.server.models import (
     RuleAction)
 
 # Make partials for start and end date. End date must be after start date
-FuzzyStartTime = lambda: (
-    FuzzyNaiveDateTime(
+def FuzzyStartTime():
+    return (
+        FuzzyNaiveDateTime(
         datetime.datetime.now() - datetime.timedelta(days=40),
         datetime.datetime.now() - datetime.timedelta(days=20),
+        )
     )
-)
-FuzzyEndTime = lambda: (
-    FuzzyNaiveDateTime(
-        datetime.datetime.now() - datetime.timedelta(days=19),
-        datetime.datetime.now()
+
+def FuzzyEndTime():
+    return (
+        FuzzyNaiveDateTime(
+            datetime.datetime.now() - datetime.timedelta(days=19),
+            datetime.datetime.now()
+        )
     )
-)
 
 all_unicode = ''.join(chr(i) for i in range(65536))
 UNICODE_LETTERS = ''.join(c for c in all_unicode if unicodedata.category(c) == 'Lu' or unicodedata.category(c) == 'Ll')

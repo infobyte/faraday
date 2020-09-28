@@ -450,7 +450,8 @@ class TestHostAPI:
             "description": "",
             "os": "",
             "owned": False,
-            "owner": ""
+            "owner": "",
+            "mark_important": False
         }
         res = test_client.put(self.url(host_with_hostnames), data=data)
         assert res.status_code == 200

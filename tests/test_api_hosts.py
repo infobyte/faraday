@@ -302,7 +302,7 @@ class TestHostAPI:
         host_factory.create_batch(5, workspace=second_workspace, os='Unix')
 
         session.commit()
-        res = test_client.get(f'{self.url()}/filter?q={{"filters":[{{"name": "os", "op":"eq", "val":"Unix"}}]}}')
+        res = test_client.get(f'{self.url()}filter?q={{"filters":[{{"name": "os", "op":"eq", "val":"Unix"}}]}}')
         assert res.status_code == 200
         self.compare_results(hosts, res)
 

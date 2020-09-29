@@ -30,7 +30,7 @@ class FlaskRestlessFilterSchema(Schema):
     op = fields.String(validate=validate.OneOf(list(OPERATORS.keys())), required=True)
     valid_relationship = {
         'host': Host,
-        'service': Service
+        'services': Service
     }
 
     def load(

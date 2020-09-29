@@ -530,7 +530,7 @@ class QueryBuilder:
 
         filters = []
         for filt in search_params.filters:
-            if not getattr(filt, 'fieldname', False) or filt.fieldname in valid_model_fields:
+            if not getattr(filt, 'fieldname', False) or filt.fieldname.split('__')[0] in valid_model_fields:
                 try:
                     filters.append(create_filt(model, filt))
                 except AttributeError:

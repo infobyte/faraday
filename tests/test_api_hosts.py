@@ -289,6 +289,23 @@ class TestHostAPI:
         assert res.status_code == 200
         self.compare_results(hosts, res)
 
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_filter_restless_by_os_exact(self, test_client, session, workspace,
+                                second_workspace, host_factory):
+        # The hosts that should be shown
+        hosts = host_factory.create_batch(10, workspace=workspace, os='Unix')
+
+        # Search should be case sensitive so this shouln't be shown
+        host_factory.create_batch(1, workspace=workspace, os='UNIX')
+
+        # This shouldn't be shown, they are from other workspace
+        host_factory.create_batch(5, workspace=second_workspace, os='Unix')
+
+        session.commit()
+        res = test_client.get(f'{self.url()}/filter?q={{"filters":[{{"name": "os", "op":"eq", "val":"Unix"}}]}}')
+        assert res.status_code == 200
+        self.compare_results(hosts, res)
+
     def test_filter_by_os_like_ilike(self, test_client, session, workspace,
                                      second_workspace, host_factory):
         # The hosts that should be shown
@@ -314,6 +331,32 @@ class TestHostAPI:
         assert res.status_code == 200
         self.compare_results(hosts + [case_insensitive_host], res)
 
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_filter_restless_by_os_like_ilike(self, test_client, session, workspace,
+                                     second_workspace, host_factory):
+        # The hosts that should be shown
+        hosts = host_factory.create_batch(5, workspace=workspace, os='Unix 1')
+        hosts += host_factory.create_batch(5, workspace=workspace, os='Unix 2')
+
+        # This should only be shown when using ilike, not when using like
+        case_insensitive_host = host_factory.create(
+            workspace=workspace, os='UNIX 3')
+
+        # This doesn't match the like expression
+        host_factory.create(workspace=workspace, os="Test Unix 1")
+
+        # This shouldn't be shown anywhere, they are from other workspace
+        host_factory.create_batch(5, workspace=second_workspace, os='Unix')
+
+        session.commit()
+        res = test_client.get(f'{self.url()}filter?q={{"filters":[{{"name": "os", "op":"like", "val":"Unix %"}}]}}')
+        assert res.status_code == 200
+        self.compare_results(hosts, res)
+
+        res = test_client.get(f'{self.url()}filter?q={{"filters":[{{"name": "os", "op":"ilike", "val":"Unix %"}}]}}')
+        assert res.status_code == 200
+        self.compare_results(hosts + [case_insensitive_host], res)
+
     def test_filter_by_service(self, test_client, session, workspace,
                                service_factory, host_factory):
         services = service_factory.create_batch(10, workspace=workspace,
@@ -330,6 +373,26 @@ class TestHostAPI:
         expected_host_ids = set(host.id for host in hosts)
         assert shown_hosts_ids == expected_host_ids
 
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_filter_restless_by_service_name(self, test_client, session, workspace,
+                               service_factory, host_factory):
+        services = service_factory.create_batch(10, workspace=workspace,
+                                                name="IRC")
+        hosts = [service.host for service in services]
+
+        # Hosts that shouldn't be shown
+        host_factory.create_batch(5, workspace=workspace)
+
+        session.commit()
+
+        res = test_client.get(f'{self.url()}'
+                              f'filter?q={{"filters":[{{"name": "services__name", "op":"any", "val":"IRC"}}]}}')
+        assert res.status_code == 200
+        shown_hosts_ids = set(obj['id'] for obj in res.json['rows'])
+        expected_host_ids = set(host.id for host in hosts)
+        assert shown_hosts_ids == expected_host_ids
+
+
     def test_filter_by_service_port(self, test_client, session, workspace,
                                service_factory, host_factory):
         services = service_factory.create_batch(10, workspace=workspace, port=25)
@@ -340,6 +403,24 @@ class TestHostAPI:
 
         session.commit()
         res = test_client.get(self.url() + '?port=25')
+        assert res.status_code == 200
+        shown_hosts_ids = set(obj['id'] for obj in res.json['rows'])
+        expected_host_ids = set(host.id for host in hosts)
+        assert shown_hosts_ids == expected_host_ids
+
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_filter_restless_by_service_port(self, test_client, session, workspace,
+                               service_factory, host_factory):
+        services = service_factory.create_batch(10, workspace=workspace, port=25)
+        hosts = [service.host for service in services]
+
+        # Hosts that shouldn't be shown
+        host_factory.create_batch(5, workspace=workspace)
+
+        session.commit()
+        res = test_client.get(f'{self.url()}'
+                              f'filter?q={{"filters":[{{"name": "services__port", "op":"any", "val":"25"}}]}}')
         assert res.status_code == 200
         shown_hosts_ids = set(obj['id'] for obj in res.json['rows'])
         expected_host_ids = set(host.id for host in hosts)
@@ -357,6 +438,24 @@ class TestHostAPI:
         res = test_client.get(self.url() + '?port=invalid_port')
         assert res.status_code == 200
         assert res.json['total_rows'] == 0
+
+    def test_filter_restless_by_invalid_service_port(self, test_client, session, workspace,
+                               service_factory, host_factory):
+        services = service_factory.create_batch(10, workspace=workspace, port=25)
+        hosts = [service.host for service in services]
+
+        # Hosts that shouldn't be shown
+        host_factory.create_batch(5, workspace=workspace)
+
+        session.commit()
+        res = test_client.get(f'{self.url()}'
+                              f'filter?q={{"filters":[{{"name": "services__port", "op":"any", "val":"sarasa"}}]}}')
+        assert res.status_code == 400
+
+    def test_filter_restless_by_invalid_field(self, test_client):
+        res = test_client.get(f'{self.url()}'
+                              f'filter?q={{"filters":[{{"name": "severity", "op":"any", "val":"sarasa"}}]}}')
+        assert res.status_code == 400
 
     def test_search_ip(self, test_client, session, workspace, host_factory):
         host = host_factory.create(ip="longname",

@@ -55,7 +55,7 @@ class TestWebsocketBroadcastServerProtocol:
         message = '{{"action": "JOIN_AGENT", "workspace": "{}", "token": "{}", "executors": [] }}'.format(workspace.name, token)
         assert proto.onMessage(message, False)
 
-        message = '{{"action": "LEAVE_AGENT" }}'.format(token)
+        message = '{"action": "LEAVE_AGENT" }'
         assert proto.onMessage(message, False)
 
     def test_agent_status(self, session, proto, workspace, test_client):
@@ -66,7 +66,7 @@ class TestWebsocketBroadcastServerProtocol:
         assert proto.onMessage(message, False)
         assert agent.is_online
 
-        message = '{{"action": "LEAVE_AGENT"}}'.format(token)
+        message = '{"action": "LEAVE_AGENT"}'
         assert proto.onMessage(message, False)
         assert not agent.is_online
 

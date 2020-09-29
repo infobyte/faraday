@@ -13,7 +13,7 @@ import pytz
 try:
     import urlparse
     from urllib import urlencode
-except: # For Python 3
+except ImportError:  # For Python 3
     import urllib.parse as urlparse
     from urllib.parse import urlencode
 from random import choice
@@ -137,8 +137,8 @@ class TestHostAPI:
         assert host.ip == "127.0.0.1"
         assert host.description == "aaaaa"
         assert host.os == ''
-        assert host.workspace == self.workspace    
-    
+        assert host.workspace == self.workspace
+
     def test_create_a_host_fails_with_missing_desc(self, test_client):
         res = test_client.post(self.url(), data={
             "ip": "127.0.0.1",

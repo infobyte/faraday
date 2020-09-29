@@ -24,7 +24,8 @@ from faraday.server.models import (
     Vulnerability,
     VulnerabilityWeb,
     AgentExecution,
-    Workspace, Metadata
+    Workspace,
+    Metadata
 )
 from faraday.server.utils.database import (
     get_conflict_object,
@@ -211,7 +212,7 @@ def get_or_create(ws: Workspace, model_class: Type[Metadata], data: dict):
 def bulk_create(ws: Workspace,
                 command: Optional[Command],
                 data: dict,
-                data_already_deserialized: bool=False):
+                data_already_deserialized: bool = False):
     if not data_already_deserialized:
         schema = BulkCreateSchema()
         data = schema.load(data)

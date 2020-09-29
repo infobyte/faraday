@@ -8,13 +8,13 @@
 , flask-classful, flask-kvsession-fork, flask-login, flask-security
 , flask_sqlalchemy, hypothesis, lib, marshmallow, marshmallow-sqlalchemy
 , nplusone, pgcli, pillow, psycopg2, pyasn1, pylint, pyopenssl, pytest
-, pytest-factoryboy, pytestcov, pytestrunner, requests, responses
+, pytest-factoryboy, pytestcov, pytestrunner, pyyaml, requests, responses
 , service-identity, simplekv, sphinx, sqlalchemy, syslog-rfc5424-formatter, tqdm
 , twine, twisted, webargs, werkzeug, wtforms }:
 
 buildPythonPackage rec {
   pname = "faradaysec";
-  version = "3.11.1";
+  version = "3.12";
 
   src = lib.cleanSource ../../..;
 
@@ -57,6 +57,7 @@ buildPythonPackage rec {
     faraday-plugins
     apispec
     apispec-webframeworks
+    pyyaml
   ];
   checkInputs = [
     pytest

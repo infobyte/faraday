@@ -21,6 +21,7 @@ from datetime import datetime
 from difflib import SequenceMatcher
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from pathlib import Path
 
 import click
 import requests
@@ -876,9 +877,9 @@ def main(workspace, server_address, user, password, output, email, email_passwor
 
     )
 
-    for d in [output, 'log/']:
-        if not os.path.isdir(d):
-            os.makedirs(d)
+    for d in [output, 'log/']: # TODO CHANGE THIS
+        if not Path(d):
+            Path(d).mkdir(parents=True)
 
     numeric_level = getattr(logging, loglevel.upper(), None)
     if not isinstance(numeric_level, int):

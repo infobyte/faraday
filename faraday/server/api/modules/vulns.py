@@ -2,12 +2,12 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 
-import os
 import io
 import json
 import logging
 from base64 import b64encode, b64decode
 from json.decoder import JSONDecodeError
+from pathlib import Path
 
 import flask
 import wtforms
@@ -524,8 +524,8 @@ class VulnerabilityView(PaginatedMixin,
                 File,
                 object_id=obj.id,
                 object_type='vulnerability',
-                name=os.path.splitext(os.path.basename(filename))[0],
-                filename=os.path.basename(filename),
+                name=Path(filename).stem,
+                filename=Path(filename).name,
                 content=faraday_file,
             )
 
@@ -679,7 +679,9 @@ class VulnerabilityView(PaginatedMixin,
             tags: ["vulnerability", "filter"]
             summary: Filters, sorts and groups vulnerabilities using a json with parameters.
             parameters:
-            - q: recursive json with filters that supports operators. The json could also contain sort and group
+            - in: query
+              name: q
+              description: recursive json with filters that supports operators. The json could also contain sort and group
 
             responses:
               200:
@@ -794,16 +796,15 @@ class VulnerabilityView(PaginatedMixin,
                 hostname_filters,
                 workspace,
                 marshmallow_params)
-
+            total_vulns = vulns
             if limit:
                 vulns = vulns.limit(limit)
             if offset:
                 vulns = vulns.offset(offset)
-            count = vulns.count()
 
             vulns = self.schema_class_dict['VulnerabilityWeb'](**marshmallow_params).dumps(
                 vulns.all())
-            return json.loads(vulns), count
+            return json.loads(vulns), total_vulns.count()
         else:
             vulns = self._generate_filter_query(
                 VulnerabilityGeneric,

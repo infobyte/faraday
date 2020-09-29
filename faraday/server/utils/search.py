@@ -16,7 +16,7 @@
 """
 import inspect
 
-from sqlalchemy import func, desc, asc
+from sqlalchemy import func
 from sqlalchemy import and_, or_
 from sqlalchemy import inspect as sqlalchemy_inspect
 from sqlalchemy.ext.associationproxy import AssociationProxy
@@ -555,24 +555,14 @@ class QueryBuilder:
                         relation_model = relation.mapper.class_
                         field = getattr(relation_model, field_name_in_relation)
                         direction = getattr(field, val.direction)
-                        if direction == 'desc':
-                            direction = desc
-                        else:
-                            direction = asc
                         if relation_model not in joined_models:
                             query = query.join(relation_model)
                         joined_models.add(relation_model)
-                        order_param = field
-                        query = query.order_by(order_param)
+                        query = query.order_by(direction())
                     else:
                         field = getattr(model, val.field)
                         direction = getattr(field, val.direction)
-                        if direction == 'desc':
-                            direction = desc
-                        else:
-                            direction = asc
-                        order_param = field
-                        query = query.order_by(order_param)
+                        query = query.order_by(direction())
             else:
                 if not search_params.group_by:
                     pks = primary_key_names(model)

@@ -5,7 +5,7 @@ from pathlib import Path
 
 def generate_nginx_config(fqdn, port, ws_port, ssl_certificate, ssl_key, multitenant_url):
     click.echo(f"Generating Faraday nginx config for server: {fqdn}")
-    click.echo(f"Faraday")
+    click.echo("Faraday")
     if multitenant_url:
         click.echo(f"- Multitenant URL: /{multitenant_url}/")
     click.echo(f"- Port: {port}")

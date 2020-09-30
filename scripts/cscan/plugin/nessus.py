@@ -10,7 +10,7 @@ import time
 import sys
 import argparse
 import os
-from faraday.config.constant import CONST_FARADAY_HOME_PATH
+from faraday.server.config import CONST_FARADAY_HOME_PATH
 from faraday.server.config import FARADAY_BASE
 
 my_env = os.environ
@@ -59,7 +59,7 @@ def connect(method, resource, data=None):
         print(e['error'])
         sys.exit()
 
-    # When downloading a scan we need the raw contents not the JSON data. 
+    # When downloading a scan we need the raw contents not the JSON data.
     if 'download' in resource:
         return r.content
     else:
@@ -187,7 +187,7 @@ def status(sid, hid):
 
     Get the historical information for the particular scan and hid. Return
     the status if available. If not return unknown.
-    """ 
+    """
 
     d = get_scan_history(sid, hid)
     return d['status']
@@ -239,9 +239,10 @@ def download(sid, fid, output=None):
     # For version 7, use the nessus scan Id to avoid overwrite the output file
     if not output:
         print('Using Nessus 7. Ignore --output. This is normal.')
-        report_path = os.path.join(FARADAY_BASE,'scripts','cscan','output','nessus_{0}.xml'.format(sid))
-        if not os.path.exists(report_path):
-            with open(report_path,'w') as report:
+        report_path = FARADAY_BASE / 'scripts' / 'cscan' / 'output' / \
+                      f'nessus_{sid}.xml'
+        if not report_path.exists():
+            with report_path.open('w') as report:
                 print('Saving scan results to {0}.'.format(report_path))
                 report.write(data)
 
@@ -280,12 +281,12 @@ def get_scans():
         scans_info['id'] =  scans['id']
         scans_info['creation_date'] =  scans['creation_date']
         scan_list.append(scans_info)
-    
+
     scan_list = sorted(scan_list,key=lambda scan:scan['creation_date'])
     return scan_list
 
 def get_date():
-    with open(os.path.join(CONST_FARADAY_HOME_PATH,'cscan','date.txt'),'r') as date_file:
+    with (CONST_FARADAY_HOME_PATH/'cscan'/'date.txt').open('r') as date_file:
         date = date_file.read()
         try:
             date = int(date)
@@ -296,7 +297,7 @@ def get_date():
         return date
 
 def set_date(date):
-    with open(os.path.join(CONST_FARADAY_HOME_PATH,'cscan','date.txt'),'w') as date_file:
+    with (CONST_FARADAY_HOME_PATH/'cscan'/'date.txt').open('w') as date_file:
         date_file.write(str(date))
 
 def get_version():
@@ -305,10 +306,10 @@ def get_version():
 
 
 def create_directory():
-    if not os.path.exists(os.path.join(CONST_FARADAY_HOME_PATH,'cscan')):
-        os.mkdir(os.path.join(CONST_FARADAY_HOME_PATH,'cscan'))
-    if not os.path.exists(os.path.join(CONST_FARADAY_HOME_PATH,'cscan','date.txt')):
-        open(os.path.join(CONST_FARADAY_HOME_PATH,'cscan','date.txt'),'w').close()
+    if not (CONST_FARADAY_HOME_PATH / 'cscan').exists():
+        (CONST_FARADAY_HOME_PATH / 'cscan').mkdir()
+    if not (CONST_FARADAY_HOME_PATH / 'cscan' / 'date.txt').exists():
+        (CONST_FARADAY_HOME_PATH /'cscan' / 'date.txt').open('w').close()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='nessus_client is develop for automating security testing')
@@ -362,7 +363,7 @@ if __name__ == "__main__":
             if scan['creation_date'] > date:
                 set_date(scan['creation_date'])
                 print('Downloading scan. Id: {0}'.format(scan['id']))
-                file_id = export(scan['id']) 
+                file_id = export(scan['id'])
                 download(scan['id'], file_id)
             else:
                 print('Scan up to date. Id: {0}'.format(scan['id']))

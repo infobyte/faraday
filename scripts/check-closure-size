@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+MAX="$((MAX_CLOSURE_SIZE_IN_MB * 1024 * 1024))"
+OUT_PATH="${1?Usage: $0 PATH}"
+
+CLOSURE_SIZE="$(nix path-info --closure-size "${OUT_PATH}" | awk '{ print $2 }')"
+
+if [ "$CLOSURE_SIZE" -gt "$MAX" ]; then
+    echo "ERROR: closure size too big!"
+    echo "Consider changing your dependencies or increasing MAX_CLOSURE_SIZE_IN_MB in .gitlab-ci.yml"
+    nix path-info --human-readable --closure-size "${OUT_PATH}"
+    exit 1
+fi

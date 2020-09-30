@@ -5,15 +5,15 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-import os
 import pytest
 from io import BytesIO
 
+from tests.conftest import TEST_DATA_PATH
 from tests.factories import WorkspaceFactory
 
 from faraday.server.threads.reports_processor import REPORTS_QUEUE
 
-from faraday.server.models import Host, Vulnerability, Service, Command
+from faraday.server.models import Host, Service, Command
 
 
 @pytest.mark.usefixtures('logged_user')
@@ -23,15 +23,12 @@ class TestFileUpload():
         ws = WorkspaceFactory.create(name="abc")
         session.add(ws)
         session.commit()
-        path = os.path.join(
-                os.path.dirname(os.path.realpath(__file__)),
-                'data',
-                'nmap_plugin_with_api.xml')
+        path = TEST_DATA_PATH / 'nmap_plugin_with_api.xml'
 
-        with open(path,'rb') as report:
+        with path.open('rb') as report:
             file_contents = report.read()
         data = {
-            'file' : (BytesIO(file_contents), 'nmap_report.xml'),
+            'file': (BytesIO(file_contents), 'nmap_report.xml'),
             'csrf_token': csrf_token
         }
 
@@ -44,8 +41,8 @@ class TestFileUpload():
         assert len(REPORTS_QUEUE.queue) == 1
         queue_elem = REPORTS_QUEUE.queue[0]
         assert queue_elem[0] == ws.name
-        assert queue_elem[2].lower() == "nmap"
-        assert queue_elem[3].id == logged_user.id
+        assert queue_elem[3].lower() == "nmap"
+        assert queue_elem[4] == logged_user.id
 
         # I'm testing a method which lost referene of workspace and logged_user within the test
         ws_id = ws.id
@@ -53,10 +50,14 @@ class TestFileUpload():
 
         from faraday.server.threads.reports_processor import ReportsManager
         false_thread = ReportsManager(None)
-        false_thread.process_report(queue_elem[0], queue_elem[1], queue_elem[2], queue_elem[3])
+        false_thread.process_report(queue_elem[0], queue_elem[1],
+                                    queue_elem[2], queue_elem[3],
+                                    queue_elem[4])
         command = Command.query.filter(Command.workspace_id == ws_id).one()
         assert command
         assert command.creator_id == logged_user_id
+        assert command.id == res.json["command_id"]
+        assert command.end_date
         host = Host.query.filter(Host.workspace_id == ws_id).first()
         assert host
         assert host.creator_id == logged_user_id
@@ -80,16 +81,13 @@ class TestFileUpload():
         ws = WorkspaceFactory.create(name="abc")
         session.add(ws)
         session.commit()
-        path = os.path.join(
-                os.path.dirname(os.path.realpath(__file__)),
-                'data',
-                'nmap_plugin_with_api.xml')
+        path = TEST_DATA_PATH / 'nmap_plugin_with_api.xml'
 
-        with open(path,'r') as report:
+        with path.open('r') as report:
             file_contents = report.read().encode('utf-8')
 
         data = {
-            'file' : (BytesIO(file_contents), 'nmap_report.xml'),
+            'file': (BytesIO(file_contents), 'nmap_report.xml'),
         }
 
         res = test_client.post(
@@ -98,24 +96,20 @@ class TestFileUpload():
                 use_json_data=False)
 
         assert res.status_code == 403
-    
 
     def test_request_with_workspace_deactivate(self, test_client, session, csrf_token):
         ws = WorkspaceFactory.create(name="abc")
         ws.active = False
         session.add(ws)
         session.commit()
-        path = os.path.join(
-                os.path.dirname(os.path.realpath(__file__)),
-                'data',
-                'nmap_plugin_with_api.xml')
+        path = TEST_DATA_PATH / 'nmap_plugin_with_api.xml'
 
-        with open(path,'r') as report:
+        with path.open('r') as report:
             file_contents = report.read().encode('utf-8')
 
         data = {
-            'file' : (BytesIO(file_contents), 'nmap_report.xml'),
-            'csrf_token' : csrf_token
+            'file': (BytesIO(file_contents), 'nmap_report.xml'),
+            'csrf_token': csrf_token
         }
         res = test_client.post(
                 '/v2/ws/{ws_name}/upload_report'.format(ws_name=ws.name),

@@ -1,7 +1,8 @@
 
 import pytest
 from faraday.server.models import Agent, Executor
-from faraday.server.websocket_factories import WorkspaceServerFactory, update_executors
+from faraday.server.websocket_factories import WorkspaceServerFactory, \
+    update_executors, BroadcastServerProtocol
 
 from tests.factories import AgentFactory, ExecutorFactory
 
@@ -16,14 +17,25 @@ def _join_agent(test_client, session):
     return token
 
 
+class TransportMock:
+    def write(self, data: bytearray):
+        pass
+
+
 @pytest.fixture
 def proto():
     factory = WorkspaceServerFactory('ws://127.0.0.1')
     proto = factory.buildProtocol(('127.0.0.1', 0))
+    proto.maskServerFrames = False
+    proto.logFrames = False
+    proto.send_queue = []
+    proto.state = BroadcastServerProtocol.STATE_CLOSING
+    proto.transport = TransportMock()
+
     return proto
 
 
-class TestWebsockerBroadcastServerProtocol():
+class TestWebsocketBroadcastServerProtocol:
 
     def test_join_agent_message_with_invalid_token_fails(self, session, proto, test_client):
         message = '{"action": "JOIN_AGENT", "token": "pepito" }'
@@ -43,8 +55,8 @@ class TestWebsockerBroadcastServerProtocol():
         message = '{{"action": "JOIN_AGENT", "workspace": "{}", "token": "{}", "executors": [] }}'.format(workspace.name, token)
         assert proto.onMessage(message, False)
 
-        message = '{{"action": "LEAVE_AGENT" }}'.format(token)
-        assert not proto.onMessage(message, False)
+        message = '{"action": "LEAVE_AGENT" }'
+        assert proto.onMessage(message, False)
 
     def test_agent_status(self, session, proto, workspace, test_client):
         token = _join_agent(test_client, session)
@@ -54,8 +66,8 @@ class TestWebsockerBroadcastServerProtocol():
         assert proto.onMessage(message, False)
         assert agent.is_online
 
-        message = '{{"action": "LEAVE_AGENT"}}'.format(token)
-        assert not proto.onMessage(message, False)
+        message = '{"action": "LEAVE_AGENT"}'
+        assert proto.onMessage(message, False)
         assert not agent.is_online
 
 

@@ -4,19 +4,19 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-import os
 import pytest
 from faraday.server.models import File
 from depot.manager import DepotManager
 
-CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
+from tests.conftest import TEST_DATA_PATH
 
 
 @pytest.fixture
 def depotfile():
     depot = DepotManager.get('default')
-    path = os.path.join(CURRENT_PATH, '../data', 'faraday.png')
-    with open(path, 'rb') as fp:
+    png_file_path = TEST_DATA_PATH / 'faraday.png'
+
+    with png_file_path.open('rb') as fp:
         fileid = depot.create(fp, 'faraday.png', 'image/png')
     return fileid
 

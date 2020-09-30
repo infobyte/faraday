@@ -122,8 +122,6 @@ class CustomEngineConnector(_EngineConnector):
 
 db = SQLAlchemy()
 
-SCHEMA_VERSION = 'W.3.0.0'
-
 
 def _make_generic_count_property(parent_table, children_table, where=None):
     """Make a deferred by default column property that counts the
@@ -936,6 +934,16 @@ class VulnerabilityGeneric(VulnerabilityABC):
     association_date = Column(DateTime, nullable=True)
     disassociated_manually = Column(Boolean, nullable=False, default=False)
     tool = BlankColumn(Text, nullable=False)
+    method = BlankColumn(Text)
+    parameters = BlankColumn(Text)
+    parameter_name = BlankColumn(Text)
+    path = BlankColumn(Text)
+    query_string = BlankColumn(Text)
+    request = BlankColumn(Text)
+    response = BlankColumn(Text)
+    website = BlankColumn(Text)
+    status_code = Column(Integer, nullable=True)
+
 
     vulnerability_duplicate_id = Column(
                         Integer,
@@ -1055,6 +1063,14 @@ class VulnerabilityGeneric(VulnerabilityABC):
         .where(text('vulnerability.service_id = service.id and '
                     'host_inner.id = service.host_id'))
     )
+
+    host_id = Column(Integer, ForeignKey(Host.id), index=True)
+    host = relationship(
+        'Host',
+        backref=backref("vulnerabilities", cascade="all, delete-orphan"),
+        foreign_keys=[host_id],
+    )
+
     target_host_os = column_property(
         case([
             (text('vulnerability.host_id IS NOT null'),
@@ -1084,15 +1100,17 @@ class VulnerabilityGeneric(VulnerabilityABC):
     def has_duplicate(self):
         return self.vulnerability_duplicate_id == None
 
+    @property
+    def hostnames(self):
+        if self.host is not None:
+            return self.host.hostnames
+        elif self.service is not None:
+            return self.service.host.hostnames
+        raise ValueError("Vulnerability has no service nor host")
+
 
 class Vulnerability(VulnerabilityGeneric):
     __tablename__ = None
-    host_id = Column(Integer, ForeignKey(Host.id), index=True)
-    host = relationship(
-        'Host',
-        backref=backref("vulnerabilities", cascade="all, delete-orphan"),
-        foreign_keys=[host_id],
-    )
 
     @declared_attr
     def service_id(cls):
@@ -1103,13 +1121,6 @@ class Vulnerability(VulnerabilityGeneric):
     def service(cls):
         return relationship('Service', backref=backref("vulnerabilities", cascade="all, delete-orphan"))
 
-    @property
-    def hostnames(self):
-        if self.host is not None:
-            return self.host.hostnames
-        elif self.service is not None:
-            return self.service.host.hostnames
-        raise ValueError("Vulnerability has no service nor host")
 
     @property
     def parent(self):
@@ -1122,15 +1133,6 @@ class Vulnerability(VulnerabilityGeneric):
 
 class VulnerabilityWeb(VulnerabilityGeneric):
     __tablename__ = None
-    method = BlankColumn(Text)
-    parameters = BlankColumn(Text)
-    parameter_name = BlankColumn(Text)
-    path = BlankColumn(Text)
-    query_string = BlankColumn(Text)
-    request = BlankColumn(Text)
-    response = BlankColumn(Text)
-    website = BlankColumn(Text)
-    status_code = Column(Integer, nullable=True)
 
     @declared_attr
     def service_id(cls):
@@ -1141,17 +1143,6 @@ class VulnerabilityWeb(VulnerabilityGeneric):
     @declared_attr
     def service(cls):
         return relationship('Service', backref=backref("vulnerabilities_web", cascade="all, delete-orphan"))
-
-    @declared_attr
-    def host_id(cls):
-        return VulnerabilityGeneric.__table__.c.get(
-            'host_id', Column(Integer, db.ForeignKey('host.id'),
-                                 nullable=False))
-
-    @declared_attr
-    def host(cls):
-        return relationship('Host', backref=backref("vulnerabilities_web", cascade="all, delete-orphan"))
-
 
     @property
     def parent(self):
@@ -2187,6 +2178,13 @@ class SearchFilter(Metadata):
     name = Column(String, nullable=False)
     json_query = Column(String, nullable=False) # meant to store json but just readonly
     user_query = Column(String, nullable=False)
+
+
+class Configuration(Metadata):
+    __tablename__ = "configuration"
+    id = Column(Integer, primary_key=True)
+    key = Column(String, unique=True, nullable=False)
+    value = Column(JSONType, nullable=False)
 
 
 # This constraint uses Columns from different classes

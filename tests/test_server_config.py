@@ -7,6 +7,8 @@ See the file 'doc/LICENSE' for the license information
 import re
 import random
 import string
+import tempfile
+from pathlib import Path
 from unittest import mock
 
 from faraday import __version__
@@ -16,23 +18,21 @@ from faraday.server.config import (
 )
 
 
-@mock.patch('os.makedirs')
 @mock.patch('shutil.copyfile')
-def test_copy_default_config_to_local_does_not_exist(copyfile, makedirs):
-    random_name = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in
-            range(25))
+def test_copy_default_config_to_local_does_not_exist(copyfile):
+    random_name = ''.join(
+        random.choice(string.ascii_uppercase + string.digits) for _ in
+        range(25)
+    )
+    filename = Path(tempfile.gettempdir()) / random_name
 
-    new_file = '/tmp/{0}'.format(random_name)
-    with mock.patch('faraday.server.config.LOCAL_CONFIG_FILE', new_file):
+    with mock.patch('faraday.server.config.LOCAL_CONFIG_FILE', filename):
         assert copy_default_config_to_local() is None
-        assert makedirs.called
         assert copyfile.called
 
     # the second call will re use the file just created.
-    makedirs.reset_mock()
     copyfile.reset_mock()
     assert copy_default_config_to_local() is None
-    assert not makedirs.called
     assert not copyfile.called
 
 VERSION_PATTERN = r"""

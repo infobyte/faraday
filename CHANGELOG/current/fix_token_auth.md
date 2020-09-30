@@ -1,1 +1,0 @@
-Dont generate a session when the authentication uses Token

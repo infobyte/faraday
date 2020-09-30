@@ -1,18 +1,15 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-import os
 import logging
 import logging.handlers
 import faraday.server.config
 import errno
 
 from syslog_rfc5424_formatter import RFC5424Formatter
+from faraday.server.config import CONST_FARADAY_HOME_PATH
 
-LOG_FILE = os.path.expanduser(os.path.join(
-    faraday.server.config.CONST_FARADAY_HOME_PATH,
-    'logs',
-    'faraday-server.log'))
+LOG_FILE = CONST_FARADAY_HOME_PATH / 'logs' / 'faraday-server.log'
 
 MAX_LOG_FILE_SIZE = 5 * 1024 * 1024     # 5 MB
 MAX_LOG_FILE_BACKUP_COUNT = 5
@@ -86,7 +83,7 @@ def set_logging_level(level):
 
 def create_logging_path():
     try:
-        os.makedirs(os.path.dirname(LOG_FILE))
+        LOG_FILE.parent.mkdir(parents=True)
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise

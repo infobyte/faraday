@@ -65,7 +65,8 @@ class ListTestsMixin:
     def mock_envelope_list(self, monkeypatch):
         assert self.view_class is not None, 'You must define view_class ' \
             'in order to use ListTestsMixin or PaginationTestsMixin'
-        def _envelope_list(self, objects, pagination_metadata=None):
+
+        def _envelope_list(_, objects, pagination_metadata=None):
             return {"data": objects}
         monkeypatch.setattr(self.view_class, '_envelope_list', _envelope_list)
 

@@ -35,3 +35,4 @@ distro>=1.4.0
 faraday-plugins>=1.0.1,<2.0.0
 apispec>=3.0.0
 apispec-webframeworks>=0.5.0
+pyyaml

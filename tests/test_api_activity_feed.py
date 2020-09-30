@@ -47,7 +47,7 @@ class TestActivityFeed():
         itime = 1544745600.0
         data = {
             'command': command.command,
-            'tool' : command.tool,
+            'tool': command.tool,
             'itime': itime
 
         }

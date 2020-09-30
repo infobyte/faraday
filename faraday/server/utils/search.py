@@ -16,7 +16,8 @@
 """
 import inspect
 
-from sqlalchemy import and_, or_, func
+from sqlalchemy import func
+from sqlalchemy import and_, or_
 from sqlalchemy import inspect as sqlalchemy_inspect
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.orm.attributes import InstrumentedAttribute
@@ -651,4 +652,3 @@ def search(session, model, search_params, _ignore_order_by=False):
         # may raise NoResultFound or MultipleResultsFound
         return query.one()
     return query
-

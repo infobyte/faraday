@@ -45,6 +45,7 @@ from faraday.server.commands import change_password as change_pass
 from faraday.server.commands.custom_fields import add_custom_field_main, delete_custom_field_main
 from faraday.server.commands import support as support_zip
 from faraday.server.commands import change_username
+from faraday.server.commands import nginx_config
 from faraday.server.commands import import_vulnerability_template
 from faraday.server.models import db, User
 from faraday.server.web import app
@@ -296,6 +297,16 @@ def rename_user(current_username, new_username):
     else:
         change_username.change_username(current_username, new_username)
 
+@click.command(help="Generate nginx config")
+@click.option('--fqdn', prompt='Server FQDN', help='The FQDN of your faraday server', type=str, show_default=True)
+@click.option('--port', prompt='Faraday port', help='Faraday listening port', type=int, default=5985)
+@click.option('--ws-port', prompt='Faraday Websocket port', help='Faraday websocket listening port', type=int,
+              default=9000, show_default=True)
+@click.option('--ssl-certificate', prompt='SSL Certificate Path', help='SSL Certificate Path', type=click.Path(exists=True))
+@click.option('--ssl-key', prompt='SSL Key Path', help='SSL Key Path', type=click.Path(exists=True))
+@click.option('--multitenant-url', help='URL for multitenant config', type=str)
+def generate_nginx_config(fqdn, port, ws_port, ssl_certificate, ssl_key, multitenant_url):
+    nginx_config.generate_nginx_config(fqdn, port, ws_port, ssl_certificate, ssl_key, multitenant_url)
 
 cli.add_command(show_urls)
 cli.add_command(initdb)
@@ -312,6 +323,7 @@ cli.add_command(support)
 cli.add_command(list_plugins)
 cli.add_command(rename_user)
 cli.add_command(openapi_yaml)
+cli.add_command(generate_nginx_config)
 cli.add_command(import_vulnerability_templates)
 
 

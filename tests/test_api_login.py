@@ -9,7 +9,7 @@ from tests import factories
 from tests.conftest import logged_user, login_as
 
 
-class TestLogin():
+class TestLogin:
     def test_case_bug_with_username(self, test_client, session):
         """
             When the user case does not match the one in database,
@@ -104,7 +104,7 @@ class TestLogin():
         test_client.cookie_jar.clear()
         res = test_client.get('/v2/ws/wonderland/', headers=headers)
         assert res.status_code == 200
-        assert res.headers.has_key('Set-Cookie') is False
+        assert 'Set-Cookie' not in res.headers
         cookies = [cookie.name for cookie in test_client.cookie_jar]
         assert "faraday_session_2" not in cookies
 

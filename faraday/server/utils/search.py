@@ -486,6 +486,21 @@ class QueryBuilder:
         return or_(create_filt(model, f) for f in filt)
 
     @staticmethod
+    def create_filters_func(model, valid_model_fields):
+        create_filt = QueryBuilder._create_filter
+
+        def create_filters(filt):
+            if not getattr(filt, 'fieldname', False) or filt.fieldname in valid_model_fields:
+                try:
+                    return create_filt(model, filt)
+                except AttributeError:
+                    # Can't create the filter since the model or submodel does not have the attribute (usually mapper)
+                    return None
+            return None
+
+        return create_filters
+
+    @staticmethod
     def create_query(session, model, search_params, _ignore_order_by=False):
         """Builds an SQLAlchemy query instance based on the search parameters
         present in ``search_params``, an instance of :class:`SearchParameters`.
@@ -528,14 +543,11 @@ class QueryBuilder:
         # This function call may raise an exception.
         valid_model_fields = [str(algo).split('.')[1] for algo in sqlalchemy_inspect(model).attrs]
 
-        filters = []
-        for filt in search_params.filters:
-            if not getattr(filt, 'fieldname', False) or filt.fieldname in valid_model_fields:
-                try:
-                    filters.append(create_filt(model, filt))
-                except AttributeError:
-                    # Can't create the filter since the model or submodel does not have the attribute (usually mapper)
-                    pass
+        filters_generator = map(
+            QueryBuilder.create_filters_func(model, valid_model_fields),
+            search_params.filters
+        )
+        filters = [filt for filt in filters_generator if filt is not None]
 
         # Multiple filter criteria at the top level of the provided search
         # parameters are interpreted as a conjunction (AND).

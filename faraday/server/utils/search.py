@@ -652,4 +652,3 @@ def search(session, model, search_params, _ignore_order_by=False):
         # may raise NoResultFound or MultipleResultsFound
         return query.one()
     return query
-

@@ -1,5 +1,7 @@
 import logging
 from datetime import datetime, timedelta
+from typing import Type, Optional
+
 import flask
 import sqlalchemy
 from sqlalchemy.orm.exc import NoResultFound
@@ -21,7 +23,10 @@ from faraday.server.models import (
     Service,
     Vulnerability,
     VulnerabilityWeb,
-    AgentExecution)
+    AgentExecution,
+    Workspace,
+    Metadata
+)
 from faraday.server.utils.database import (
     get_conflict_object,
     is_unique_constraint_violation,
@@ -149,7 +154,7 @@ class BulkCommandSchema(AutoSchema):
 
     I don't need that here, so I'll write a schema from scratch."""
 
-    duration = fields.TimeDelta('microseconds', required=True)
+    duration = fields.TimeDelta('microseconds', required=False)
 
     class Meta:
         model = Command
@@ -160,8 +165,9 @@ class BulkCommandSchema(AutoSchema):
 
     @post_load
     def load_end_date(self, data, **kwargs):
-        duration = data.pop('duration')
-        data['end_date'] = data['start_date'] + duration
+        if 'duration' in data:
+            duration = data.pop('duration')
+            data['end_date'] = data['start_date'] + duration
         return data
 
 
@@ -178,7 +184,7 @@ class BulkCreateSchema(Schema):
     execution_id = fields.Integer(attribute='execution_id')
 
 
-def get_or_create(ws, model_class, data):
+def get_or_create(ws: Workspace, model_class: Type[Metadata], data: dict):
     """Check for conflicts and create a new object
 
     Is is passed the data parsed by the marshmallow schema (it
@@ -203,21 +209,26 @@ def get_or_create(ws, model_class, data):
     return (True, obj)
 
 
-def bulk_create(ws, data, data_already_deserialized=False):
+def bulk_create(ws: Workspace,
+                command: Optional[Command],
+                data: dict,
+                data_already_deserialized: bool = False):
     if not data_already_deserialized:
         schema = BulkCreateSchema()
         data = schema.load(data)
     if 'command' in data:
-        command = _create_command(ws, data['command'])
-    else:
-        command = None
+        command = _update_command(command, data['command'])
     for host in data['hosts']:
         _create_host(ws, host, command)
+    if 'command' in data:
+        command.end_date = datetime.now() if command.end_date is None else \
+            command.end_date
+        db.session.commit()
 
 
-def _create_command(ws, command_data):
-    (created, command) = get_or_create(ws, Command, command_data)
-    assert created  # There isn't an unique constraint in command
+def _update_command(command: Command, command_data: dict):
+    db.session.query(Command).filter(Command.id == command.id).update(command_data)
+    db.session.commit()
     return command
 
 
@@ -435,10 +446,24 @@ class BulkCreateView(GenericWorkspacedView):
         else:
             workspace = self._get_workspace(workspace_name)
             creator_user = flask.g.user
-            data = add_creator(data,creator_user)
+            data = add_creator(data, creator_user)
 
-        bulk_create(workspace, data, True)
-        return "Created", 201
+        if 'command' in data:
+            command = Command(**(data['command']))
+            command.workspace = workspace
+            db.session.add(command)
+            db.session.commit()
+        else:
+            # Here the data won't appear in the activity field
+            command = None
+
+        bulk_create(workspace, command, data, True)
+        return flask.jsonify(
+            {
+                "message": "Created",
+                "command_id": None if command is None else command.id
+            }
+        ), 201
 
     post.is_public = True
 

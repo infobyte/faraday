@@ -667,7 +667,6 @@ class FilterWorkspacedMixin(ListMixin):
             if offset:
                 objs = objs.offset(offset)
             count = objs.count()
-            # esto deberia ser un dict como en el de vulns?
             objs = self.schema_class(**marshmallow_params).dumps(objs.all())
             return json.loads(objs), count
         else:

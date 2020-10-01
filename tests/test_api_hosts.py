@@ -457,6 +457,17 @@ class TestHostAPI:
                               f'filter?q={{"filters":[{{"name": "severity", "op":"any", "val":"sarasa"}}]}}')
         assert res.status_code == 400
 
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_filter_restless_with_no_q_param(self, test_client, session, workspace, host_factory):
+        res = test_client.get(f'{self.url()}filter')
+        assert res.status_code == 200
+        assert len(res.json['rows']) == HOSTS_COUNT
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_filter_restless_with_empty_q_param(self, test_client, session, workspace, host_factory):
+        res = test_client.get(f'{self.url()}filter?q')
+        assert res.status_code == 400
+
     def test_search_ip(self, test_client, session, workspace, host_factory):
         host = host_factory.create(ip="longname",
                                    workspace=workspace)

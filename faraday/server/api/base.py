@@ -623,8 +623,7 @@ class FilterWorkspacedMixin(ListMixin):
                 description: invalid q was sent to the server
 
         """
-        # TODO: Podrian mandar sin parametros? Sin parametros pincha.
-        filters = flask.request.args.get('q')
+        filters = flask.request.args.get('q', '{"filters": []}')
         filtered_objs, count = self._filter(filters, workspace_name)
 
         class PageMeta:
@@ -645,9 +644,6 @@ class FilterWorkspacedMixin(ListMixin):
         marshmallow_params = {'many': True, 'context': {}}
         try:
             filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
-            # hostname_filters = []
-            # if filters:
-            #    _, hostname_filters = self._hostname_filters(filters.get('filters', []))
         except (ValidationError, JSONDecodeError) as ex:
             logger.exception(ex)
             flask.abort(400, "Invalid filters")

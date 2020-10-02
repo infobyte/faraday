@@ -169,6 +169,17 @@ class WebsocketSSLConfigObject(ConfigSection):
         self.enabled = False
 
 
+class SmtpConfigObject(ConfigSection):
+    def __init__(self):
+        self.username = None
+        self.password = None
+        self.host = None
+        self.port = None
+        self.sender = None
+        self.ssl = False
+        self.certfile = None
+        self.keyfile = None
+
 class StorageConfigObject(ConfigSection):
     def __init__(self):
         self.path = None
@@ -186,6 +197,7 @@ ssl = SSLConfigObject()
 websocket_ssl = WebsocketSSLConfigObject()
 storage = StorageConfigObject()
 logger_config = LoggerConfig()
+smtp = SmtpConfigObject()
 
 parse_and_bind_configuration()
 

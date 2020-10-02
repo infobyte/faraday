@@ -14,13 +14,10 @@ import logging
 import os
 import re
 import signal
-import smtplib
 import sys
 import time
 from datetime import datetime
 from difflib import SequenceMatcher
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 from pathlib import Path
 
 import click
@@ -29,39 +26,12 @@ import requests
 from faraday.searcher.api import Api
 from faraday.searcher.validator import validate_rules
 from faraday.server.models import Service, Host
+from faraday.utils.smtp import MailNotification
 
 logger = logging.getLogger('Faraday searcher')
 
 threshold = 0.75
 min_weight = 0.3
-
-
-class MailNotification:
-    def __init__(self, mail_from, mail_password, mail_protocol, mail_port):
-        self.mail_from = mail_from
-        self.mail_password = mail_password
-        self.mail_protocol = mail_protocol
-        self.mail_port = mail_port
-
-    def send_mail(self, to_addr, subject, body):
-        from_addr = self.mail_from
-        msg = MIMEMultipart()
-        msg['From'] = from_addr
-        msg['To'] = to_addr
-        msg['Subject'] = subject
-
-        msg.attach(MIMEText(body, 'plain'))
-        try:
-            server_mail = smtplib.SMTP(self.mail_protocol, self.mail_port)
-            server_mail.starttls()
-            server_mail.login(from_addr, self.mail_password)
-            text = msg.as_string()
-            server_mail.sendmail(from_addr, to_addr, text)
-            server_mail.quit()
-        except Exception as error:
-            logger.error("Error: unable to send email")
-            logger.exception(error)
-
 
 def compare(a, b):
     return SequenceMatcher(None, a, b).ratio()
@@ -854,11 +824,12 @@ class Searcher:
 @click.option('--email', required=False)
 @click.option('--email_password', required=False)
 @click.option('--mail_protocol', required=False)
-@click.option('--port_protocol', required=False, default=587)
+@click.option('--port_protocol', required=False)
+@click.option('--ssl', required=False)
 @click.option('--log', required=False, default='debug')
 @click.option('--rules', required=True, prompt=True, help='Filename with rules')
-def main(workspace, server_address, user, password, output, email, email_password, mail_protocol, port_protocol, log,
-         rules):
+def main(workspace, server_address, user, password, output, email,
+         email_password, mail_protocol, port_protocol, ssl, log, rules):
     signal.signal(signal.SIGINT, signal_handler)
 
     loglevel = log
@@ -870,11 +841,11 @@ def main(workspace, server_address, user, password, output, email, email_passwor
             sys.exit(1)
 
     mail_notification = MailNotification(
-        email,
-        email_password,
-        mail_protocol,
-        port_protocol,
-
+        smtp_host=mail_protocol,
+        smtp_sender=email,
+        smtp_password=email_password,
+        smtp_port=port_protocol,
+        smtp_ssl=ssl
     )
 
     for d in [output, 'log/']: # TODO CHANGE THIS

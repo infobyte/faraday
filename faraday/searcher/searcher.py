@@ -821,15 +821,17 @@ class Searcher:
 @click.option('--user', required=True, prompt=True, help='')
 @click.option('--password', required=True, prompt=True, hide_input=True, help='')
 @click.option('--output', required=False, help='Choose a custom output directory', default='output')
-@click.option('--email', required=False)
-@click.option('--email_password', required=False)
+@click.option('--email_sender', required=False)
+@click.option('--smtp_username', required=False)
+@click.option('--smtp_password', required=False)
 @click.option('--mail_protocol', required=False)
 @click.option('--port_protocol', required=False)
 @click.option('--ssl', required=False)
 @click.option('--log', required=False, default='debug')
 @click.option('--rules', required=True, prompt=True, help='Filename with rules')
-def main(workspace, server_address, user, password, output, email,
-         email_password, mail_protocol, port_protocol, ssl, log, rules):
+def main(workspace, server_address, user, password, output, email_sender,
+         smtp_username, smtp_password, mail_protocol, port_protocol, ssl,
+         log, rules):
     signal.signal(signal.SIGINT, signal_handler)
 
     loglevel = log
@@ -842,8 +844,9 @@ def main(workspace, server_address, user, password, output, email,
 
     mail_notification = MailNotification(
         smtp_host=mail_protocol,
-        smtp_sender=email,
-        smtp_password=email_password,
+        smtp_sender=email_sender,
+        smtp_username=smtp_username,
+        smtp_password=smtp_password,
         smtp_port=port_protocol,
         smtp_ssl=ssl
     )

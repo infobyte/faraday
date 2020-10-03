@@ -538,12 +538,10 @@ class QueryBuilder:
             query = session.query(*select_fields)
         else:
             query = session.query(model)
-        # For the sake of brevity, rename this method.
-        create_filt = QueryBuilder._create_filter
         # This function call may raise an exception.
         valid_model_fields = [str(algo).split('.')[1] for algo in sqlalchemy_inspect(model).attrs]
 
-        filters_generator = map(
+        filters_generator = map(   # pylint: disable=W1636
             QueryBuilder.create_filters_func(model, valid_model_fields),
             search_params.filters
         )

@@ -4,6 +4,7 @@ from marshmallow.exceptions import ValidationError
 
 from faraday.server.utils.filters import FilterSchema
 from faraday.server.utils.filters import FlaskRestlessSchema
+from faraday.server.models import VulnerabilityWeb
 
 
 class TestFilters:
@@ -239,3 +240,10 @@ class TestFilters:
 
         res = FilterSchema().load(filters)
         assert res == filters
+
+    def test_case_filter_invalid_attr(self):
+        filters = {'filters': [
+            {"name": "columna_pepe", "op": "has", "val": "Linux"}
+        ]}
+        with pytest.raises(ValidationError):
+            FilterSchema().load(filters)

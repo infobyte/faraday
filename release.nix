@@ -17,6 +17,7 @@ in { dockerName ? "registry.gitlab.com/faradaysec/faraday", dockerTag ? version
 
   faraday-server = python38.pkgs.faradaysec.overrideAttrs (old:
     assert !builtins.hasAttr "checkInputs" old; {
+      name = "faraday-server-${version}";
       doCheck = true;
       checkPhase = "true";
       checkInputs = [ pynixify runPynixify ];

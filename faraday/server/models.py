@@ -1908,7 +1908,7 @@ class ExecutiveReport(Metadata):
     vuln_count = Column(Integer, default=0)  # saves the amount of vulns when the report was generated.
     markdown = Column(Boolean, default=False, nullable=False)
     advanced_filter = Column(Boolean, default=False, nullable=False)
-    advanced_filter_parsed = Column(String, nullable=False)
+    advanced_filter_parsed = Column(String, nullable=False, default="")
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(

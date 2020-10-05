@@ -5,6 +5,7 @@ import subprocess
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--mode', choices=['diff', 'ls'], default='diff')
+parser.add_argument('--local', action='store_true', default=False)
 args = parser.parse_args()
 
 ACTUAL_BRANCH = subprocess.run(
@@ -13,6 +14,9 @@ ACTUAL_BRANCH = subprocess.run(
 ).stdout.decode().strip()
 
 BRANCH_NAME = os.environ.get("CI_COMMIT_REF_NAME", ACTUAL_BRANCH)
+if not args.local:
+    BRANCH_NAME = f"origin/{BRANCH_NAME}"
+
 PINK_FILE = "faraday/server/api/modules/reports.py"
 BLACK_FILE = "faraday/server/api/modules/jira.py"
 
@@ -25,7 +29,7 @@ if mode == "diff":
     )
 else:
     child = subprocess.run(
-        ["git", "ls-tree", f"origin/{BRANCH_NAME}", "--name-only", "-r"],
+        ["git", "ls-tree", BRANCH_NAME, "--name-only", "-r"],
         stdout=subprocess.PIPE
     )
 

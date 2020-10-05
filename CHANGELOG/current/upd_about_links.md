@@ -1,0 +1,1 @@
+Change documentation and what's new links in about

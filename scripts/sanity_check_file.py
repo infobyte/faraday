@@ -25,7 +25,7 @@ if mode == "diff":
     )
 else:
     child = subprocess.run(
-        ["git", "ls-tree", BRANCH_NAME, "--name-only", "-r"],
+        ["git", "ls-tree", f"origin/{BRANCH_NAME}", "--name-only", "-r"],
         stdout=subprocess.PIPE
     )
 

@@ -43,3 +43,4 @@ if __name__ == '__main__':
         intersection = git_diff_intersection({BLACK_FILE})
     assert len(intersection) == 0, f"The {intersection} should not be in " \
                                    f"{BRANCH_NAME}"
+    assert child.returncode == 0

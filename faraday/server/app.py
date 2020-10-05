@@ -184,7 +184,8 @@ def register_handlers(app):
         if logged_in:
             assert user
 
-        if not logged_in and not getattr(view, 'is_public', False):
+        if not logged_in and not getattr(view, 'is_public', False):# \
+            #and flask.request.method != 'OPTIONS':
             flask.abort(401)
 
         g.user = None

@@ -15,7 +15,7 @@ angular.module('faradayApp')
                 $.ajax({
                     type: 'POST',
                     url: BASEURL + '_api/login',
-                    data: JSON.stringify({"email": user, "password": pass}),
+                    data: JSON.stringify({"email": user, "password": pass, "remember": true}),
                     dataType: 'json',
                     contentType: 'application/json'
                 })

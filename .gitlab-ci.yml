@@ -74,6 +74,18 @@ sanity_check:
     rules:
         - when: on_success
 
+migration_sanity_check:
+    tags:
+        - faradaytests
+    image: python:3
+    stage: pre_testing
+    script:
+        - scripts/model_check.py
+    rules:
+        - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master|dev)$/'
+          when: always
+        - when: never
+
 bandit:
     tags:
         - faradaytests

@@ -24,7 +24,7 @@ from faraday.server.api.base import (
     AutoSchema,
     FilterAlchemyMixin,
     FilterSetMeta,
-)
+    FilterWorkspacedMixin)
 from faraday.server.schemas import (
     MetadataSchema,
     MutableField,
@@ -67,7 +67,7 @@ class HostSchema(AutoSchema):
                                       dump_only=True)
     versions = fields.Method('get_service_version',
                                       dump_only=True)
-    mark_important = fields.Boolean(default=False)
+    important = fields.Boolean(default=False)
 
     class Meta:
         model = Host
@@ -75,7 +75,7 @@ class HostSchema(AutoSchema):
                   'credentials', 'default_gateway', 'metadata',
                   'name', 'os', 'owned', 'owner', 'services', 'vulns',
                   'hostnames', 'type', 'service_summaries', 'versions',
-                  'mark_important'
+                  'important'
                   )
 
     def get_service_summaries(self, obj):
@@ -131,9 +131,11 @@ class HostCountSchema(Schema):
     total = fields.Integer(dump_only=True, allow_none=False,
                                  attribute='vulnerability_total_count')
 
+
 class HostsView(PaginatedMixin,
                 FilterAlchemyMixin,
-                ReadWriteWorkspacedView):
+                ReadWriteWorkspacedView,
+                FilterWorkspacedMixin):
     route_base = 'hosts'
     model_class = Host
     order_field = desc(Host.vulnerability_critical_generic_count),\

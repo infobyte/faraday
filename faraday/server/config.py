@@ -30,10 +30,10 @@ if not FARADAY_SERVER_SESSIONS_DIR.exists():
 FARADAY_SERVER_PID_FILE = CONST_FARADAY_HOME_PATH / \
                           'faraday-server-port-{0}.pid'
 REQUIREMENTS_FILE = FARADAY_BASE / 'requirements.txt'
-DEFAULT_CONFIG_FILE = FARADAY_BASE / 'server/default.ini'
-REPORTS_VIEWS_DIR = FARADAY_BASE / 'views/reports'
-LOCAL_CONFIG_FILE = CONST_FARADAY_HOME_PATH / 'config/server.ini'
-LOCAL_REPORTS_FOLDER = CONST_FARADAY_HOME_PATH / 'uploaded_reports/'
+DEFAULT_CONFIG_FILE = FARADAY_BASE / 'server' / 'default.ini'
+REPORTS_VIEWS_DIR = FARADAY_BASE / 'views' / 'reports'
+LOCAL_CONFIG_FILE = CONST_FARADAY_HOME_PATH / 'config' / 'server.ini'
+LOCAL_REPORTS_FOLDER = CONST_FARADAY_HOME_PATH / 'uploaded_reports'
 
 CONFIG_FILES = [DEFAULT_CONFIG_FILE, LOCAL_CONFIG_FILE]
 CONST_LICENSES_DB = 'faraday_licenses'
@@ -134,7 +134,7 @@ class FaradayServerConfigObject(ConfigSection):
         self.secret_key = None
         self.websocket_port = None
         self.session_timeout = 12
-        self.api_token_expiration = 2592000
+        self.api_token_expiration = 43200  # Default as 12 hs
         self.agent_token = None
         self.debug = False
         self.custom_plugins_folder = None
@@ -169,6 +169,17 @@ class WebsocketSSLConfigObject(ConfigSection):
         self.enabled = False
 
 
+class SmtpConfigObject(ConfigSection):
+    def __init__(self):
+        self.username = None
+        self.password = None
+        self.host = None
+        self.port = None
+        self.sender = None
+        self.ssl = False
+        self.certfile = None
+        self.keyfile = None
+
 class StorageConfigObject(ConfigSection):
     def __init__(self):
         self.path = None
@@ -186,6 +197,7 @@ ssl = SSLConfigObject()
 websocket_ssl = WebsocketSSLConfigObject()
 storage = StorageConfigObject()
 logger_config = LoggerConfig()
+smtp = SmtpConfigObject()
 
 parse_and_bind_configuration()
 

@@ -44,14 +44,17 @@ from flask_sqlalchemy import (
 
 from depot.fields.sqlalchemy import UploadedFileField
 
-from faraday.server.fields import FaradayUploadedFile, JSONType
+from faraday.server.fields import JSONType
 from flask_security import (
     UserMixin,
 )
+
+from faraday.server.fields import FaradayUploadedFile
 from faraday.server.utils.database import (
     BooleanToIntColumn,
     get_object_type_for,
     is_unique_constraint_violation)
+
 
 NonBlankColumn = partial(Column, nullable=False,
                          info={'allow_blank': False})
@@ -118,8 +121,6 @@ class CustomEngineConnector(_EngineConnector):
 
 
 db = SQLAlchemy()
-
-SCHEMA_VERSION = 'W.3.0.0'
 
 
 def _make_generic_count_property(parent_table, children_table, where=None):
@@ -281,174 +282,6 @@ class SourceCode(Metadata):
         return
 
 
-class Host(Metadata):
-    __tablename__ = 'host'
-    id = Column(Integer, primary_key=True)
-    ip = NonBlankColumn(Text)  # IP v4 or v6
-    description = BlankColumn(Text)
-    os = BlankColumn(Text)
-
-    owned = Column(Boolean, nullable=False, default=False)
-
-    default_gateway_ip = BlankColumn(Text)
-    default_gateway_mac = BlankColumn(Text)
-
-    mac = BlankColumn(Text)
-    net_segment = BlankColumn(Text)
-
-    services = relationship(
-        'Service',
-        order_by='Service.protocol,Service.port',
-        cascade="all, delete-orphan"
-    )
-
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True,
-                          nullable=False)
-    workspace = relationship(
-        'Workspace',
-        foreign_keys=[workspace_id],
-        backref=backref("hosts", cascade="all, delete-orphan")
-        )
-
-    open_service_count = _make_generic_count_property(
-        'host', 'service', where=text("service.status = 'open'"))
-    total_service_count = _make_generic_count_property('host', 'service')
-
-    __host_vulnerabilities = (
-        select([func.count(text('vulnerability.id'))]).
-        select_from(text('vulnerability')).
-        where(text('vulnerability.host_id = host.id')).
-        as_scalar()
-    )
-    __service_vulnerabilities = (
-        select([func.count(text('vulnerability.id'))]).
-        select_from(text('vulnerability, service')).
-        where(text('vulnerability.service_id = service.id and '
-                   'service.host_id = host.id')).
-        as_scalar()
-    )
-    vulnerability_count = column_property(
-        # select(text('count(*)')).select_from(__host_vulnerabilities.subquery()),
-        __host_vulnerabilities + __service_vulnerabilities,
-        deferred=True)
-
-    credentials_count = _make_generic_count_property('host', 'credential')
-
-    __table_args__ = (
-        UniqueConstraint(ip, workspace_id, name='uix_host_ip_workspace'),
-    )
-
-    vulnerability_info_count = query_expression()
-    vulnerability_med_count = query_expression()
-    vulnerability_high_count = query_expression()
-    vulnerability_critical_count = query_expression()
-    vulnerability_low_count = query_expression()
-    vulnerability_unclassified_count = query_expression()
-    vulnerability_total_count = query_expression()
-
-    vulnerability_critical_generic_count = _make_vuln_generic_count_by_severity('critical')
-    vulnerability_high_generic_count = _make_vuln_generic_count_by_severity('high')
-    vulnerability_medium_generic_count = _make_vuln_generic_count_by_severity('medium')
-    vulnerability_low_generic_count = _make_vuln_generic_count_by_severity('low')
-    vulnerability_info_generic_count = _make_vuln_generic_count_by_severity('informational')
-    vulnerability_unclassified_generic_count = _make_vuln_generic_count_by_severity('unclassified')
-
-    mark_important = Column(Boolean, nullable=False, default=False)
-
-    @classmethod
-    def query_with_count(cls, confirmed, host_ids, workspace_name):
-        query = cls.query.join(Workspace).filter(Workspace.name == workspace_name)
-        if host_ids:
-            query = query.filter(cls.id.in_(host_ids))
-        return query.options(
-            with_expression(
-                cls.vulnerability_info_count,
-                _make_vuln_count_property(
-                    type_=None,
-                    confirmed = confirmed,
-                    use_column_property = False,
-                    extra_query = "vulnerability.severity='informational'",
-                    get_hosts_vulns = True
-                )
-            ),
-            with_expression(
-                cls.vulnerability_med_count,
-                _make_vuln_count_property(
-                    type_ = None,
-                    confirmed = confirmed,
-                    use_column_property = False,
-                    extra_query = "vulnerability.severity='medium'",
-                    get_hosts_vulns = True
-                )
-            ),
-            with_expression(
-                cls.vulnerability_high_count,
-                _make_vuln_count_property(
-                    type_ = None,
-                    confirmed = confirmed,
-                    use_column_property = False,
-                    extra_query = "vulnerability.severity='high'",
-                    get_hosts_vulns = True
-                )
-            ),
-            with_expression(
-                cls.vulnerability_critical_count,
-                _make_vuln_count_property(
-                    type_ = None,
-                    confirmed = confirmed,
-                    use_column_property = False,
-                    extra_query = "vulnerability.severity='critical'",
-                    get_hosts_vulns = True
-                )
-            ),
-            with_expression(
-                cls.vulnerability_low_count,
-                _make_vuln_count_property(
-                    type_ = None,
-                    confirmed = confirmed,
-                    use_column_property = False,
-                    extra_query = "vulnerability.severity='low'",
-                    get_hosts_vulns = True
-                )
-            ),
-            with_expression(
-                cls.vulnerability_unclassified_count,
-                _make_vuln_count_property(
-                    type_ = None,
-                    confirmed = confirmed,
-                    use_column_property = False,
-                    extra_query = "vulnerability.severity='unclassified'",
-                    get_hosts_vulns = True
-                )
-            ),
-            with_expression(
-                cls.vulnerability_total_count,
-                _make_vuln_count_property(
-                    type_ = None,
-                    confirmed = confirmed,
-                    use_column_property = False,
-                    get_hosts_vulns = True
-                )
-            ),
-        )
-
-    @property
-    def parent(self):
-        return
-
-    def set_hostnames(self, new_hostnames):
-        """Override the host's hostnames. Take care of deleting old not
-        used hostnames and to leave the sames the ones that weren't
-        modified
-
-        This function was thought to update existing objects, it shouldn't
-        be used when creating!
-        """
-        return set_children_objects(self, new_hostnames,
-                                    parent_field='hostnames',
-                                    child_field='name')
-
-
 def set_children_objects(instance, value, parent_field, child_field='id',
                          workspaced=True):
     """
@@ -514,59 +347,6 @@ class Hostname(Metadata):
     def parent(self):
         return self.host
 
-
-class Service(Metadata):
-    STATUSES = [
-        'open',
-        'closed',
-        'filtered'
-    ]
-    __tablename__ = 'service'
-    id = Column(Integer, primary_key=True)
-    name = BlankColumn(Text)
-    description = BlankColumn(Text)
-    port = Column(Integer, nullable=False)
-    owned = Column(Boolean, nullable=False, default=False)
-
-    protocol = NonBlankColumn(Text)
-    status = Column(Enum(*STATUSES, name='service_statuses'), nullable=False)
-    version = BlankColumn(Text)
-
-    banner = BlankColumn(Text)
-
-    host_id = Column(Integer, ForeignKey('host.id'), index=True, nullable=False)
-    host = relationship(
-        'Host',
-        foreign_keys=[host_id],
-    )
-
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
-    workspace = relationship(
-        'Workspace',
-        backref=backref('services', cascade="all, delete-orphan"),
-        foreign_keys=[workspace_id]
-    )
-
-    vulnerability_count = _make_generic_count_property('service',
-                                                       'vulnerability')
-    credentials_count = _make_generic_count_property('service', 'credential')
-
-    __table_args__ = (
-        UniqueConstraint(port, protocol, host_id, workspace_id, name='uix_service_port_protocol_host_workspace'),
-    )
-
-    @property
-    def parent(self):
-        return self.host
-
-    @property
-    def summary(self):
-        if self.version and self.version.lower() != "unknown":
-            version = " (" + self.version + ")"
-        else:
-            version = ""
-        return "(%s/%s) %s%s" % (self.port, self.protocol, self.name,
-                                 version or "")
 
 
 class CustomFieldsSchema(db.Model):
@@ -912,6 +692,228 @@ class Command(Metadata):
         return
 
 
+class Host(Metadata):
+    __tablename__ = 'host'
+    id = Column(Integer, primary_key=True)
+    ip = NonBlankColumn(Text)  # IP v4 or v6
+    description = BlankColumn(Text)
+    os = BlankColumn(Text)
+
+    owned = Column(Boolean, nullable=False, default=False)
+
+    default_gateway_ip = BlankColumn(Text)
+    default_gateway_mac = BlankColumn(Text)
+
+    mac = BlankColumn(Text)
+    net_segment = BlankColumn(Text)
+
+    services = relationship(
+        'Service',
+        order_by='Service.protocol,Service.port',
+        cascade="all, delete-orphan"
+    )
+
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True,
+                          nullable=False)
+    workspace = relationship(
+        'Workspace',
+        foreign_keys=[workspace_id],
+        backref=backref("hosts", cascade="all, delete-orphan")
+        )
+
+    open_service_count = _make_generic_count_property(
+        'host', 'service', where=text("service.status = 'open'"))
+    total_service_count = _make_generic_count_property('host', 'service')
+
+    __host_vulnerabilities = (
+        select([func.count(text('vulnerability.id'))]).
+        select_from(text('vulnerability')).
+        where(text('vulnerability.host_id = host.id')).
+        as_scalar()
+    )
+    __service_vulnerabilities = (
+        select([func.count(text('vulnerability.id'))]).
+        select_from(text('vulnerability, service')).
+        where(text('vulnerability.service_id = service.id and '
+                   'service.host_id = host.id')).
+        as_scalar()
+    )
+    vulnerability_count = column_property(
+        # select(text('count(*)')).select_from(__host_vulnerabilities.subquery()),
+        __host_vulnerabilities + __service_vulnerabilities,
+        deferred=True)
+
+    credentials_count = _make_generic_count_property('host', 'credential')
+
+    __table_args__ = (
+        UniqueConstraint(ip, workspace_id, name='uix_host_ip_workspace'),
+    )
+
+    vulnerability_info_count = query_expression()
+    vulnerability_med_count = query_expression()
+    vulnerability_high_count = query_expression()
+    vulnerability_critical_count = query_expression()
+    vulnerability_low_count = query_expression()
+    vulnerability_unclassified_count = query_expression()
+    vulnerability_total_count = query_expression()
+
+    vulnerability_critical_generic_count = _make_vuln_generic_count_by_severity('critical')
+    vulnerability_high_generic_count = _make_vuln_generic_count_by_severity('high')
+    vulnerability_medium_generic_count = _make_vuln_generic_count_by_severity('medium')
+    vulnerability_low_generic_count = _make_vuln_generic_count_by_severity('low')
+    vulnerability_info_generic_count = _make_vuln_generic_count_by_severity('informational')
+    vulnerability_unclassified_generic_count = _make_vuln_generic_count_by_severity('unclassified')
+
+    important = Column(Boolean, nullable=False, default=False)
+
+    @classmethod
+    def query_with_count(cls, confirmed, host_ids, workspace_name):
+        query = cls.query.join(Workspace).filter(Workspace.name == workspace_name)
+        if host_ids:
+            query = query.filter(cls.id.in_(host_ids))
+        return query.options(
+            with_expression(
+                cls.vulnerability_info_count,
+                _make_vuln_count_property(
+                    type_=None,
+                    confirmed = confirmed,
+                    use_column_property = False,
+                    extra_query = "vulnerability.severity='informational'",
+                    get_hosts_vulns = True
+                )
+            ),
+            with_expression(
+                cls.vulnerability_med_count,
+                _make_vuln_count_property(
+                    type_ = None,
+                    confirmed = confirmed,
+                    use_column_property = False,
+                    extra_query = "vulnerability.severity='medium'",
+                    get_hosts_vulns = True
+                )
+            ),
+            with_expression(
+                cls.vulnerability_high_count,
+                _make_vuln_count_property(
+                    type_ = None,
+                    confirmed = confirmed,
+                    use_column_property = False,
+                    extra_query = "vulnerability.severity='high'",
+                    get_hosts_vulns = True
+                )
+            ),
+            with_expression(
+                cls.vulnerability_critical_count,
+                _make_vuln_count_property(
+                    type_ = None,
+                    confirmed = confirmed,
+                    use_column_property = False,
+                    extra_query = "vulnerability.severity='critical'",
+                    get_hosts_vulns = True
+                )
+            ),
+            with_expression(
+                cls.vulnerability_low_count,
+                _make_vuln_count_property(
+                    type_ = None,
+                    confirmed = confirmed,
+                    use_column_property = False,
+                    extra_query = "vulnerability.severity='low'",
+                    get_hosts_vulns = True
+                )
+            ),
+            with_expression(
+                cls.vulnerability_unclassified_count,
+                _make_vuln_count_property(
+                    type_ = None,
+                    confirmed = confirmed,
+                    use_column_property = False,
+                    extra_query = "vulnerability.severity='unclassified'",
+                    get_hosts_vulns = True
+                )
+            ),
+            with_expression(
+                cls.vulnerability_total_count,
+                _make_vuln_count_property(
+                    type_ = None,
+                    confirmed = confirmed,
+                    use_column_property = False,
+                    get_hosts_vulns = True
+                )
+            ),
+        )
+
+    @property
+    def parent(self):
+        return
+
+    def set_hostnames(self, new_hostnames):
+        """Override the host's hostnames. Take care of deleting old not
+        used hostnames and to leave the sames the ones that weren't
+        modified
+
+        This function was thought to update existing objects, it shouldn't
+        be used when creating!
+        """
+        return set_children_objects(self, new_hostnames,
+                                    parent_field='hostnames',
+                                    child_field='name')
+
+
+class Service(Metadata):
+    STATUSES = [
+        'open',
+        'closed',
+        'filtered'
+    ]
+    __tablename__ = 'service'
+    id = Column(Integer, primary_key=True)
+    name = BlankColumn(Text)
+    description = BlankColumn(Text)
+    port = Column(Integer, nullable=False)
+    owned = Column(Boolean, nullable=False, default=False)
+
+    protocol = NonBlankColumn(Text)
+    status = Column(Enum(*STATUSES, name='service_statuses'), nullable=False)
+    version = BlankColumn(Text)
+
+    banner = BlankColumn(Text)
+
+    host_id = Column(Integer, ForeignKey('host.id'), index=True, nullable=False)
+    host = relationship(
+        'Host',
+        foreign_keys=[host_id],
+    )
+
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship(
+        'Workspace',
+        backref=backref('services', cascade="all, delete-orphan"),
+        foreign_keys=[workspace_id]
+    )
+
+    vulnerability_count = _make_generic_count_property('service',
+                                                       'vulnerability')
+    credentials_count = _make_generic_count_property('service', 'credential')
+
+    __table_args__ = (
+        UniqueConstraint(port, protocol, host_id, workspace_id, name='uix_service_port_protocol_host_workspace'),
+    )
+
+    @property
+    def parent(self):
+        return self.host
+
+    @property
+    def summary(self):
+        if self.version and self.version.lower() != "unknown":
+            version = " (" + self.version + ")"
+        else:
+            version = ""
+        return "(%s/%s) %s%s" % (self.port, self.protocol, self.name,
+                                 version or "")
+
+
 class VulnerabilityGeneric(VulnerabilityABC):
     STATUSES = [
         'open',
@@ -934,8 +936,18 @@ class VulnerabilityGeneric(VulnerabilityABC):
     association_date = Column(DateTime, nullable=True)
     disassociated_manually = Column(Boolean, nullable=False, default=False)
     tool = BlankColumn(Text, nullable=False)
+    method = BlankColumn(Text)
+    parameters = BlankColumn(Text)
+    parameter_name = BlankColumn(Text)
+    path = BlankColumn(Text)
+    query_string = BlankColumn(Text)
+    request = BlankColumn(Text)
+    response = BlankColumn(Text)
+    website = BlankColumn(Text)
+    status_code = Column(Integer, nullable=True)
 
-    vulnerability_duplicate_id =  Column(
+
+    vulnerability_duplicate_id = Column(
                         Integer,
                         ForeignKey('vulnerability.id'),
                         index=True,
@@ -945,7 +957,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
                 backref=backref('vulnerability_duplicate', remote_side=[id])
             )
 
-    vulnerability_template_id =  Column(
+    vulnerability_template_id = Column(
                         Integer,
                         ForeignKey('vulnerability_template.id'),
                         index=True,
@@ -1053,6 +1065,14 @@ class VulnerabilityGeneric(VulnerabilityABC):
         .where(text('vulnerability.service_id = service.id and '
                     'host_inner.id = service.host_id'))
     )
+
+    host_id = Column(Integer, ForeignKey(Host.id), index=True)
+    host = relationship(
+        'Host',
+        backref=backref("vulnerabilities", cascade="all, delete-orphan"),
+        foreign_keys=[host_id],
+    )
+
     target_host_os = column_property(
         case([
             (text('vulnerability.host_id IS NOT null'),
@@ -1082,15 +1102,17 @@ class VulnerabilityGeneric(VulnerabilityABC):
     def has_duplicate(self):
         return self.vulnerability_duplicate_id == None
 
+    @property
+    def hostnames(self):
+        if self.host is not None:
+            return self.host.hostnames
+        elif self.service is not None:
+            return self.service.host.hostnames
+        raise ValueError("Vulnerability has no service nor host")
+
 
 class Vulnerability(VulnerabilityGeneric):
     __tablename__ = None
-    host_id = Column(Integer, ForeignKey(Host.id), index=True)
-    host = relationship(
-        'Host',
-        backref=backref("vulnerabilities", cascade="all, delete-orphan"),
-        foreign_keys=[host_id],
-    )
 
     @declared_attr
     def service_id(cls):
@@ -1101,13 +1123,6 @@ class Vulnerability(VulnerabilityGeneric):
     def service(cls):
         return relationship('Service', backref=backref("vulnerabilities", cascade="all, delete-orphan"))
 
-    @property
-    def hostnames(self):
-        if self.host is not None:
-            return self.host.hostnames
-        elif self.service is not None:
-            return self.service.host.hostnames
-        raise ValueError("Vulnerability has no service nor host")
 
     @property
     def parent(self):
@@ -1120,15 +1135,6 @@ class Vulnerability(VulnerabilityGeneric):
 
 class VulnerabilityWeb(VulnerabilityGeneric):
     __tablename__ = None
-    method = BlankColumn(Text)
-    parameters = BlankColumn(Text)
-    parameter_name = BlankColumn(Text)
-    path = BlankColumn(Text)
-    query_string = BlankColumn(Text)
-    request = BlankColumn(Text)
-    response = BlankColumn(Text)
-    website = BlankColumn(Text)
-    status_code = Column(Integer, nullable=True)
 
     @declared_attr
     def service_id(cls):
@@ -1139,17 +1145,6 @@ class VulnerabilityWeb(VulnerabilityGeneric):
     @declared_attr
     def service(cls):
         return relationship('Service', backref=backref("vulnerabilities_web", cascade="all, delete-orphan"))
-
-    @declared_attr
-    def host_id(cls):
-        return VulnerabilityGeneric.__table__.c.get(
-            'host_id', Column(Integer, db.ForeignKey('host.id'),
-                                 nullable=False))
-
-    @declared_attr
-    def host(cls):
-        return relationship('Host', backref=backref("vulnerabilities_web", cascade="all, delete-orphan"))
-
 
     @property
     def parent(self):
@@ -1538,7 +1533,7 @@ class Workspace(Metadata):
             params['workspace_name'] = workspace_name
         if filters:
             query += ' WHERE ' + ' AND '.join(filters)
-        #query += " GROUP BY workspace.id "
+        # query += " GROUP BY workspace.id "
         query += " ORDER BY workspace.name ASC"
         return db.session.execute(text(query), params)
 
@@ -1743,7 +1738,6 @@ class TaskTemplate(TaskABC):
     __mapper_args__ = {
         'concrete': True
     }
-
     template = relationship(
         'MethodologyTemplate',
         backref=backref('tasks', cascade="all, delete-orphan"))
@@ -1857,6 +1851,7 @@ class TagObject(db.Model):
 
     object_id = Column(Integer, nullable=False)
     object_type = Column(Enum(*OBJECT_TYPES, name='object_types'), nullable=False)
+
     tag = relationship('Tag', backref='tagged_objects')
     tag_id = Column(Integer, ForeignKey('tag.id'), index=True)
 
@@ -1914,6 +1909,8 @@ class ExecutiveReport(Metadata):
     confirmed = Column(Boolean, nullable=False, default=False)
     vuln_count = Column(Integer, default=0)  # saves the amount of vulns when the report was generated.
     markdown = Column(Boolean, default=False, nullable=False)
+    advanced_filter = Column(Boolean, default=False, nullable=False)
+    advanced_filter_parsed = Column(String, nullable=False, default="")
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
@@ -1988,7 +1985,6 @@ class KnowledgeBase(db.Model):
 
     faraday_kb_id = Column(Text, nullable=False)
     reference_id = Column(Integer, nullable=False)
-
     script_name = Column(Text, nullable=False)
     external_identifier = Column(Text, nullable=False)
     tool_name = Column(Text, nullable=False)

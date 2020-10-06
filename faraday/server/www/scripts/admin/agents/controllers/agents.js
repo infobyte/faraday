@@ -39,7 +39,9 @@ angular.module('faradayApp')
                     $scope.workspaces = [];
 
                     wss.forEach(function (ws) {
-                        $scope.workspaces.push(ws);
+                        if (ws.active && !ws.readonly) {
+                          $scope.workspaces.push(ws);  
+                        }
                     });
 
                     $scope.workspace = $scope.workspaces[0].name;

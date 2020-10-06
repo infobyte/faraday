@@ -35,5 +35,5 @@ repos:
         language: python
         verbose: true
         pass_filenames: false
-        args: [--mode=ls]
+        args: [--mode=ls, --local]
         stages: [push]

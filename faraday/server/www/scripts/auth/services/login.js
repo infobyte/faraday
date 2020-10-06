@@ -10,12 +10,12 @@ angular.module('faradayApp')
             user_obj: null,
             last_time_checked: new Date(0),
 
-            login: function(user, pass){
+            login: function(user, pass, remember){
                 var deferred = $q.defer();
                 $.ajax({
                     type: 'POST',
                     url: BASEURL + '_api/login',
-                    data: JSON.stringify({"email": user, "password": pass, "remember": true}),
+                    data: JSON.stringify({"email": user, "password": pass, "remember": remember}),
                     dataType: 'json',
                     contentType: 'application/json'
                 })

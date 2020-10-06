@@ -22,6 +22,14 @@
             </span>
           </label>
         </div>
+            <div class="form-input margin-top-30px">
+          <label>
+            <span class="placeholder">
+              Remember me
+            </span>
+            <input id="remember" type="checkbox" ng-model="data.remember" ng-change="checkResetError()">
+          </label>
+        </div>
 				<p class="font-xs font-bold fg-red pull-left margin-top-18px">{{errorMessage}}</p>
 	    </div><!-- .form-signin -->
       <button class="btn-frd btn-xl bg-blue btn-block" style="background-color: #00a8e1" type="submit" ng-click="login()">Login</button>

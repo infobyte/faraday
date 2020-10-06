@@ -11,7 +11,7 @@ def check(source_branch: str, target_branch: str) -> None:
         stdout=subprocess.PIPE
     )
     assert child.returncode == 0, (child.stdout, child.returncode)
-    assert b"deletion" not in child.stdout
+    assert b"insertion" not in child.stdout
 
 
 if __name__ == '__main__':

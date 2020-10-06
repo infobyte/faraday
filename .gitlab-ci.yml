@@ -353,7 +353,7 @@ build_nix_python3:
     - when: never
 
 generate_build_file:
-    image: registry.gitlab.com/faradaysec/integrationrepo
+    image: registry.gitlab.com/faradaysec/devops
     stage: build_faraday
     script:
         - "/bin/mkdir faraday_copy"
@@ -373,7 +373,7 @@ generate_build_file:
 
 
 generate_deb:
-    image: registry.gitlab.com/faradaysec/integrationrepo
+    image: registry.gitlab.com/faradaysec/devops
     stage: build
     before_script:
         - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-linux-installers-builder.git
@@ -552,7 +552,7 @@ agent_integration:
     variables:
       FARADAY_REF: $CI_COMMIT_REF_NAME
     trigger:
-      project: faradaysec/integrationrepo
+      project: faradaysec/devops
       strategy: depend
     rules:
       - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'

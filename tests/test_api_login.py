@@ -168,10 +168,9 @@ class TestLogin:
 
     def test_login_remember_me(self, test_client, session):
         """
-            When the user case does not match the one in database,
-            the form is valid but no record was found in the database.
+            When the remember me option is true, flask stores a remember_token
         """
-
+        test_client.cookie_jar.clear()
         susan = factories.UserFactory.create(
                 active=True,
                 username='susan',
@@ -179,7 +178,7 @@ class TestLogin:
                 role='pentester')
         session.add(susan)
         session.commit()
-        # we use lower case username, but in db is Capitalized
+
         login_payload = {
             'email': 'susan',
             'password': 'pepito',
@@ -192,10 +191,10 @@ class TestLogin:
 
     def test_login_not_remember_me(self, test_client, session):
         """
-            When the user case does not match the one in database,
-            the form is valid but no record was found in the database.
+            When the remember me option is false, flask dont stores a remember_token
         """
 
+        test_client.cookie_jar.clear()
         susan = factories.UserFactory.create(
                 active=True,
                 username='susan',
@@ -203,7 +202,6 @@ class TestLogin:
                 role='pentester')
         session.add(susan)
         session.commit()
-        # we use lower case username, but in db is Capitalized
         login_payload = {
             'email': 'susan',
             'password': 'pepito',
@@ -216,10 +214,10 @@ class TestLogin:
 
     def test_login_without_remember_me(self, test_client, session):
         """
-            When the user case does not match the one in database,
-            the form is valid but no record was found in the database.
+            When the remember me option is missing, flask dont stores a remember_token
         """
 
+        test_client.cookie_jar.clear()
         susan = factories.UserFactory.create(
                 active=True,
                 username='susan',
@@ -227,7 +225,6 @@ class TestLogin:
                 role='pentester')
         session.add(susan)
         session.commit()
-        # we use lower case username, but in db is Capitalized
         login_payload = {
             'email': 'susan',
             'password': 'pepito'

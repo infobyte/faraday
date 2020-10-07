@@ -165,3 +165,74 @@ class TestLogin:
 
         ws = test_client.get('/v2/ws/wonderland/', headers=headers)
         assert ws.status_code == 200
+
+    def test_login_remember_me(self, test_client, session):
+        """
+            When the user case does not match the one in database,
+            the form is valid but no record was found in the database.
+        """
+
+        susan = factories.UserFactory.create(
+                active=True,
+                username='susan',
+                password=hash_password('pepito'),
+                role='pentester')
+        session.add(susan)
+        session.commit()
+        # we use lower case username, but in db is Capitalized
+        login_payload = {
+            'email': 'susan',
+            'password': 'pepito',
+            'remember': True
+        }
+        res = test_client.post('/login', data=login_payload)
+        assert res.status_code == 200
+        cookies = [cookie.name for cookie in test_client.cookie_jar]
+        assert "remember_token" in cookies
+
+    def test_login_not_remember_me(self, test_client, session):
+        """
+            When the user case does not match the one in database,
+            the form is valid but no record was found in the database.
+        """
+
+        susan = factories.UserFactory.create(
+                active=True,
+                username='susan',
+                password=hash_password('pepito'),
+                role='pentester')
+        session.add(susan)
+        session.commit()
+        # we use lower case username, but in db is Capitalized
+        login_payload = {
+            'email': 'susan',
+            'password': 'pepito',
+            'remember': False
+        }
+        res = test_client.post('/login', data=login_payload)
+        assert res.status_code == 200
+        cookies = [cookie.name for cookie in test_client.cookie_jar]
+        assert "remember_token" not in cookies
+
+    def test_login_without_remember_me(self, test_client, session):
+        """
+            When the user case does not match the one in database,
+            the form is valid but no record was found in the database.
+        """
+
+        susan = factories.UserFactory.create(
+                active=True,
+                username='susan',
+                password=hash_password('pepito'),
+                role='pentester')
+        session.add(susan)
+        session.commit()
+        # we use lower case username, but in db is Capitalized
+        login_payload = {
+            'email': 'susan',
+            'password': 'pepito'
+        }
+        res = test_client.post('/login', data=login_payload)
+        assert res.status_code == 200
+        cookies = [cookie.name for cookie in test_client.cookie_jar]
+        assert "remember_token" not in cookies

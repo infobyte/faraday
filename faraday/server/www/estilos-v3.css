@@ -1048,3 +1048,16 @@ ul#nav-tabs-container {
     font-size: 16px;
     font-weight: bold;
 }
+
+.remember-me span{
+    display: inline-block !important;
+    width: fit-content;
+    margin-left: 20px;
+}
+
+.remember-me input{
+    display: inline-block;
+    width: fit-content;
+    margin-top: 0;
+    top: 4px;
+}

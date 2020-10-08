@@ -1059,5 +1059,6 @@ ul#nav-tabs-container {
     display: inline-block;
     width: fit-content;
     margin-top: 0;
-    top: 4px;
+    top: -2.5px;
+    left: 0;
 }

@@ -943,7 +943,10 @@ class VulnerabilityGeneric(VulnerabilityABC):
     response = BlankColumn(Text)
     website = BlankColumn(Text)
     status_code = Column(Integer, nullable=True)
+    cvss = BlankColumn(Text)
+    cwe= BlankColumn(Text)
 
+    cve = relationship('References', backref=backref('vulnerabilty', lazy=True))
 
     vulnerability_duplicate_id = Column(
                         Integer,

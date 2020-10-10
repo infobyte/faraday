@@ -946,7 +946,10 @@ class VulnerabilityGeneric(VulnerabilityABC):
     cvss = BlankColumn(Text)
     cwe= BlankColumn(Text)
 
-    cve = relationship('References', backref=backref('vulnerabilty', lazy=True))
+
+    @property
+    def cve(self):
+        return db.session.query(VulnerabilityGeneric).get(self.id).filter(VulnerabilityGeneric.references.name.contains('CVE'))
 
     vulnerability_duplicate_id = Column(
                         Integer,

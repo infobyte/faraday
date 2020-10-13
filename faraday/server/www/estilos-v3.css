@@ -1058,6 +1058,7 @@ ul#nav-tabs-container {
 .remember-me input{
     display: inline-block;
     width: fit-content;
+    width: -moz-max-content;
     margin-top: 0;
     top: -2.5px;
     left: 0;

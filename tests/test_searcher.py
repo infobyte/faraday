@@ -4,11 +4,12 @@ import json
 import pytest
 
 from faraday.searcher.api import Api
-from faraday.searcher.searcher import Searcher, MailNotification
+from faraday.searcher.searcher import Searcher
 from faraday.searcher.sqlapi import SqlApi
 from faraday.server.models import Service, Host, VulnerabilityWeb
 from faraday.server.models import Vulnerability, CommandObject
 from faraday.server.schemas import WorkerRuleSchema
+from faraday.utils.smtp import MailNotification
 from tests.factories import (
     VulnerabilityTemplateFactory,
     ServiceFactory,
@@ -319,10 +320,10 @@ class TestSearcherRules():
         session.commit()
 
         mail_notification = MailNotification(
-            'test@test.com',
-            'testpass',
-            'smtp.gmail.com',
-            587
+            smtp_host='smtp.gmail.com',
+            smtp_sender='test@test.com',
+            smtp_password='testpass',
+            smtp_port=587
         )
         _api = api(workspace, test_client, session)
         searcher = Searcher(_api, mail_notification=mail_notification)
@@ -877,5 +878,3 @@ class TestSearcherRules():
         searcher.process(rules_data)
         vulns_count = session.query(Vulnerability).filter_by(workspace=workspace).count()
         assert vulns_count == 5
-
-

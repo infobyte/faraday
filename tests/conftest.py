@@ -226,7 +226,7 @@ def test_client(app):
     from flask import g
     try:
         del g.csrf_token
-    except:
+    except (NameError, AttributeError):
         pass
 
     return app.test_client()

@@ -276,6 +276,7 @@ disable=blacklisted-name,
         redundant-unittest-assert,
         deprecated-method,
         bad-thread-instantiation,
+        map-builtin-not-iterating
 
 
 # Enable the message, report, category or checker with the given id(s). You can

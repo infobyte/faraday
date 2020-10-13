@@ -4,6 +4,7 @@
 import string
 import random
 import logging
+from datetime import datetime
 
 from faraday.server.config import CONST_FARADAY_HOME_PATH
 from faraday.server.threads.reports_processor import REPORTS_QUEUE
@@ -21,7 +22,7 @@ from werkzeug.utils import secure_filename
 from wtforms import ValidationError
 
 from faraday.server.utils.web import gzipped
-from faraday.server.models import Workspace
+from faraday.server.models import Workspace, Command, db
 from faraday.server import config
 
 from faraday_plugins.plugins.manager import PluginsManager, ReportAnalyzer
@@ -81,7 +82,31 @@ def file_upload(workspace=None):
                 logger.info(
                     f"Plugin for file: {file_path} Plugin: {plugin.id}"
                 )
-                REPORTS_QUEUE.put((workspace, file_path, plugin.id, flask.g.user))
-                return make_response(jsonify(message="ok"), 200)
+                workspace_instance = Workspace.query.filter_by(
+                    name=workspace).one()
+                command = Command()
+                command.workspace = workspace_instance
+                command.start_date = datetime.now()
+                command.import_source = 'report'
+                # The data will be updated in the bulk_create function
+                command.tool = "In progress"
+                command.command = "In progress"
+
+                db.session.add(command)
+                db.session.commit()
+
+                REPORTS_QUEUE.put(
+                    (
+                        workspace_instance.name,
+                        command.id,
+                        file_path,
+                        plugin.id,
+                        flask.g.user.id
+                    )
+                )
+                return make_response(
+                    jsonify(message="ok", command_id=command.id),
+                    200
+                )
     else:
         abort(make_response(jsonify(message="Missing report file"), 400))

@@ -122,7 +122,6 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         '?confirmed=1',
         '?confirmed=true'
     ])
-
     def test_vuln_count_confirmed(self,
                                   vulnerability_factory,
                                   test_client,
@@ -142,7 +141,6 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         '?confirmed=0',
         '?confirmed=false'
     ])
-
     def test_vuln_count_confirmed(self,
                                   vulnerability_factory,
                                   test_client,

@@ -32,6 +32,7 @@ before_script:
 include:
   - local: .gitlab/ci/.set-tag-gitlab-ci.yml
   - local: .gitlab/ci/.storage-gitlab-ci.yml
+  - local: .gitlab/ci/.docker-publish-gitlab-ci.yml
 
 stages:
     - pre_testing
@@ -73,6 +74,18 @@ sanity_check:
     rules:
         - when: on_success
 
+migration_sanity_check:
+    tags:
+        - faradaytests
+    image: python:3
+    stage: pre_testing
+    script:
+        - scripts/model_check.py
+    rules:
+        - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master|dev)$/'
+          when: always
+        - when: never
+
 bandit:
     tags:
         - faradaytests
@@ -91,17 +104,29 @@ build_and_push_to_cachix:
         - faradaytests
     image: nixorg/nix
     stage: pre_testing
+    variables:
+      # Note: this size has to fit both our community, professional and corporate versions
+      MAX_CLOSURE_SIZE_IN_MB: 750
     script:
         - nix-env -if pynixify/nixpkgs.nix -A cachix
+        - nix-env -if pynixify/nixpkgs.nix -A gawk
         - mkdir -p ~/.config/cachix
         - export USER=$(whoami)
         - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
         - cachix use faradaysec
         - nix-build | cachix push faradaysec
+        - ./scripts/check-closure-size ./result
     rules:
       - if: '$FULL_TEST || $DAILY_TEST'
         when: on_success
       - when: always
+
+flake8:
+    image: python:3
+    stage: pre_testing
+    script:
+      - pip install flake8
+      - flake8 .
 
 pylint:
     tags:
@@ -151,6 +176,10 @@ pylint:
         when: on_failure
         paths:
             - ~/.faraday/logs/faraday-server.log
+    needs:
+      - job: build_and_push_to_cachix
+        artifacts: false
+  # Speed up tests
     rules:
       - if: $BUILD_TEST
         when: never
@@ -180,6 +209,9 @@ pylint:
         when: on_failure
         paths:
             - dist/*
+    needs:
+      - job: build_and_push_to_cachix
+        artifacts: false
     rules:
         - if: $BUILD_TEST
           when: never
@@ -210,6 +242,7 @@ postgresql_test_nix:
         - mkdir run_from
         - source faraday_venv/bin/activate
         - cd run_from && pytest ../tests -v --capture=sys --cov=../faraday/server --color=yes --disable-warnings --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB
+    needs: [] # Speed up tests
     artifacts:
         when: on_failure
         paths:
@@ -320,7 +353,7 @@ build_nix_python3:
     - when: never
 
 generate_build_file:
-    image: registry.gitlab.com/faradaysec/integrationrepo
+    image: registry.gitlab.com/faradaysec/devops
     stage: build_faraday
     script:
         - "/bin/mkdir faraday_copy"
@@ -340,7 +373,7 @@ generate_build_file:
 
 
 generate_deb:
-    image: registry.gitlab.com/faradaysec/integrationrepo
+    image: registry.gitlab.com/faradaysec/devops
     stage: build
     before_script:
         - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-linux-installers-builder.git
@@ -366,9 +399,11 @@ generate_deb:
         - cd ../../
         - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server deb
         - mv faraday-server_amd64.deb ../../faraday-server_amd64.deb
-    dependencies:
-      - generate_build_file
-      - build_nix_python3
+    needs:
+      - job: generate_build_file
+        artifacts: true
+      - job: build_nix_python3
+        artifacts: true
     artifacts:
         name: 'faraday_$CI_COMMIT_REF_NAME.deb'
         paths:
@@ -386,8 +421,9 @@ smoke_test_deb:
     allow_failure: false
     stage: distro_testing  # TODO improve
     image: ubuntu:18.04
-    dependencies:
-        - generate_deb
+    needs:
+      - job: generate_deb
+        artifacts: true
     script:
         - apt-get update -y
         - apt install -y sudo curl
@@ -449,9 +485,11 @@ generate_rpm:
         - cd ../../
         - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm
         - mv faraday-server_amd64.rpm ../../faraday-server_amd64.rpm
-    dependencies:
-        - generate_build_file
-        - build_nix_python3
+    needs:
+      - job: generate_build_file
+        artifacts: true
+      - job: build_nix_python3
+        artifacts: true
     artifacts:
         name: 'faraday_$CI_COMMIT_REF_NAME.rpm'
         paths:
@@ -463,6 +501,27 @@ generate_rpm:
       - if: '$CI_COMMIT_TAG || $BUILD_TEST || $FULL_TEST || $DAILY_TEST'
         when: on_success
       - when: never
+
+generate_docker_tar_gz:
+    stage: build
+    image: nixorg/nix
+    script:
+        - nix-env -if pynixify/nixpkgs.nix -A cachix
+        - mkdir -p ~/.config/cachix
+        - export USER=$(whoami)
+        - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
+        - cachix use faradaysec
+        - nix-build ./release.nix -A dockerImage --argstr dockerName $CI_REGISTRY_IMAGE --argstr dockerTag latest
+        - cp $(readlink result) faraday-server-docker.tar.gz
+    artifacts:
+      paths:
+        - faraday-server-docker.tar.gz
+    rules:
+        - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
+          when: on_success
+        - if: '$CI_COMMIT_TAG || $BUILD_TEST || $FULL_TEST || $DAILY_TEST'
+          when: on_success
+
 
 test_hypothesis:
     tags:
@@ -493,7 +552,7 @@ agent_integration:
     variables:
       FARADAY_REF: $CI_COMMIT_REF_NAME
     trigger:
-      project: faradaysec/integrationrepo
+      project: faradaysec/devops
       strategy: depend
     rules:
       - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'

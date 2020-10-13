@@ -1,0 +1,1 @@
+Improve SMTP configuration

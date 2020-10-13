@@ -20,4 +20,3 @@ def session_info():
     data['permissions'] = get_user_permissions(user)
     data['role'] = "admin"
     return jsonify(data)
-

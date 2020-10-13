@@ -40,7 +40,7 @@ angular.module('faradayApp')
 
                     wss.forEach(function (ws) {
                         if (ws.active && !ws.readonly) {
-                          $scope.workspaces.push(ws);  
+                          $scope.workspaces.push(ws);
                         }
                     });
 

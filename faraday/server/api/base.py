@@ -685,6 +685,91 @@ class FilterWorkspacedMixin(ListMixin):
             return vulns_data, len(rows)
 
 
+class FilterMixin(ListMixin):
+    """Add filter endpoint for searching on any objects columns
+    """
+
+    @route('/filter')
+    def filter(self):
+        """
+        ---
+            tags: ["filter"]
+            summary: Filters, sorts and groups objects using a json with parameters.
+            parameters:
+            - in: query
+              name: q
+              description: recursive json with filters that supports operators. The json could also contain sort and group
+
+            responses:
+              200:
+                description: return filtered, sorted and grouped results
+                content:
+                  application/json:
+                    schema: FlaskRestlessSchema
+              400:
+                description: invalid q was sent to the server
+
+        """
+        filters = flask.request.args.get('q', '{"filters": []}')
+        filtered_objs, count = self._filter(filters)
+
+        class PageMeta:
+            total = 0
+        pagination_metadata = PageMeta()
+        pagination_metadata.total = count
+        return self._envelope_list(filtered_objs, pagination_metadata)
+
+    def _generate_filter_query(self, filters):
+        objs = search(db.session,
+                       self.model_class,
+                       filters)
+
+        # objs = objs.filter(self.model_class.workspace == workspace)
+        return objs
+
+    def _filter(self, filters):
+        marshmallow_params = {'many': True, 'context': {}}
+        try:
+            filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
+        except (ValidationError, JSONDecodeError) as ex:
+            logger.exception(ex)
+            flask.abort(400, "Invalid filters")
+
+        # workspace = self._get_workspace(workspace_name)
+        if 'group_by' not in filters:
+            offset = None
+            limit = None
+            if 'offset' in filters:
+                offset = filters.pop('offset')
+            if 'limit' in filters:
+                limit = filters.pop('limit') # we need to remove pagination, since
+
+            objs = self._generate_filter_query(
+                filters,
+                # workspace
+            )
+
+            if limit:
+                objs = objs.limit(limit)
+            if offset:
+                objs = objs.offset(offset)
+            count = objs.count()
+            objs = self.schema_class(**marshmallow_params).dumps(objs.all())
+            return json.loads(objs), count
+        else:
+            objs = self._generate_filter_query(
+                filters,
+                # workspace,
+            )
+            column_names = ['count'] + [field['field'] for field in filters.get('group_by', [])]
+            rows = [list(zip(column_names, row)) for row in objs.all()]
+            vulns_data = []
+            for row in rows:
+                vulns_data.append({field[0]:field[1] for field in row})
+
+            return vulns_data, len(rows)
+
+
 class ListWorkspacedMixin(ListMixin):
     """Add GET /<workspace_name>/<route_base>/ route"""
     # There are no differences with the non-workspaced implementations. The code

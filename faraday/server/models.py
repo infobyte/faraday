@@ -1444,6 +1444,7 @@ class Workspace(Metadata):
     vulnerability_code_count = query_expression()
     vulnerability_standard_count = query_expression()
     vulnerability_total_count = query_expression()
+    active_agents_count = query_expression()
 
     workspace_permission_instances = relationship(
         "WorkspacePermission",
@@ -1473,6 +1474,11 @@ class Workspace(Metadata):
                     FROM host
                     WHERE host.workspace_id = workspace.id
                 ) AS host_count,
+                (SELECT count(*)
+                        FROM association_workspace_and_agents_table as assoc
+                        JOIN agent ON agent.id = assoc.agent_id and assoc.workspace_id = workspace.id
+                        WHERE agent.active is TRUE
+                ) AS active_agents_count,
                 p_4.count_3 as open_services,
                 p_4.count_4 as total_service_count,
                 p_5.count_5 as vulnerability_web_count,

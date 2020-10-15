@@ -8,7 +8,8 @@ angular.module('faradayApp')
 
         $scope.data = {
             "user": null,
-            "pass": null
+            "pass": null,
+            "remember": false
         };
 
         $scope.errorLoginFlag = false;
@@ -20,7 +21,7 @@ angular.module('faradayApp')
 
         $scope.login = function(){
             if ($scope.data.user && $scope.data.pass){
-                loginSrv.login($scope.data.user, $scope.data.pass).then(function(user){
+                loginSrv.login($scope.data.user, $scope.data.pass, $scope.data.remember).then(function(user){
                     var currentUrl = "/workspaces";
                     if($cookies.currentUrl != undefined) {
                         currentUrl = $cookies.currentUrl;

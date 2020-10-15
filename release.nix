@@ -4,7 +4,7 @@ let
     (builtins.readFile ./faraday/__init__.py));
 
   pynixifyCommand = ''
-    pynixify --nixpkgs https://github.com/infobyte/nixpkgs/archive/5b9ec00761376dc3749786d90aef2776f8962218.tar.gz --local faradaysec --tests faradaysec
+    pynixify --nixpkgs https://github.com/infobyte/nixpkgs/archive/468cb72902f321e860447fc58f2fc2672782c05b.tar.gz --local faradaysec --tests faradaysec
   '';
 
 in { dockerName ? "registry.gitlab.com/faradaysec/faraday", dockerTag ? version

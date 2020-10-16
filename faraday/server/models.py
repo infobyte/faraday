@@ -1656,7 +1656,10 @@ class User(db.Model, UserMixin):
     def get_security_payload(self):
         return {
             "username": self.username,
-            "name": self.email
+            "name": self.username,
+            "email": self.email,
+            "role": self.role,
+            "roles": [self.role],
         }
 
 

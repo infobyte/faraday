@@ -14,7 +14,7 @@ class TestSessionLogged():
         res = test_client.get('/session')
         assert res.status_code == 200
 
-    @pytest.mark.parametrize('role', ['admin', 'pentester', 'client'])
+    @pytest.mark.parametrize('role', ['admin', 'pentester', 'client', 'asset_owner'])
     def test_session_when_user_is_logged_with_different_roles(self, test_client, session, user, role):
         user.role = role
         session.commit()

@@ -20,6 +20,31 @@ class TestWorkspaceAPI(ReadWriteAPITests):
     lookup_field = 'name'
     view_class = WorkspaceView
 
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_filter_restless_by_name(self, test_client):
+        res = test_client.get(f'{self.url()}filter?q='
+                              f'{{"filters":[{{"name": "name", "op":"eq", "val": "{self.first_object.name}"}}]}}')
+        assert res.status_code == 200
+        assert len(res.json) == 1
+        assert res.json[0]['name'] == self.first_object.name
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_filter_restless_by_name_zero_results_found(self, test_client):
+        res = test_client.get(f'{self.url()}filter?q='
+                              f'{{"filters":[{{"name": "name", "op":"eq", "val": "thiswsdoesnotexist"}}]}}')
+        assert res.status_code == 200
+        assert len(res.json) == 0
+
+    def test_filter_restless_by_description(self, test_client):
+        self.first_object.description = "this is a new description"
+        res = test_client.get(f'{self.url()}filter?q='
+                              f'{{"filters":[{{"name": "description", "op":"eq", "val": "{self.first_object.description}"}}]}}')
+        assert res.status_code == 200
+        assert len(res.json) == 1
+        assert res.json[0]['description'] == self.first_object.description
+
+
+
     def test_host_count(self, host_factory, test_client, session):
         host_factory.create(workspace=self.first_object)
         session.commit()

@@ -15,6 +15,7 @@
 
 """
 import inspect
+import logging
 
 from sqlalchemy import func
 from sqlalchemy import and_, or_
@@ -23,6 +24,9 @@ from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.orm.attributes import QueryableAttribute
 from sqlalchemy.orm import ColumnProperty
+
+
+logger = logging.getLogger(__name__)
 
 
 def session_query(session, model):

@@ -318,7 +318,7 @@ alpha_unit_test 3.8:
       - if: '$FULL_TEST || $DAILY_TEST || $ALPHA_TEST'
         when: on_success
       - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master|dev)$/'
-        when: on_success
+        when: never #on_success REACTIVATE WHEN HAVE TIME TO CHECK
       - when: never
 
 alpha_unit_test 3.9:

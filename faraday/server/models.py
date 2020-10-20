@@ -764,6 +764,8 @@ class Host(Metadata):
     vulnerability_info_generic_count = _make_vuln_generic_count_by_severity('informational')
     vulnerability_unclassified_generic_count = _make_vuln_generic_count_by_severity('unclassified')
 
+    important = Column(Boolean, nullable=False, default=False)
+
     @classmethod
     def query_with_count(cls, confirmed, host_ids, workspace_name):
         query = cls.query.join(Workspace).filter(Workspace.name == workspace_name)

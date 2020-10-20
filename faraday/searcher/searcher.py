@@ -113,27 +113,6 @@ def get_model_environment(model, _models):
     return environment
 
 
-def process_models_by_similarity(api, _models, rule, mail_notificacion):
-    logger.debug("--> Start Process models by similarity")
-    for index_m1, m1 in zip(list(range(len(_models) - 1)), _models):
-        for _, m2 in zip(list(range(index_m1 + 1, len(_models))), _models[index_m1 + 1:]):
-            if m1.id != m2.id and is_same_level(m1, m2):
-                if equals(m1, m2, rule):
-                    environment = [m1, m2]
-                    _objs_value = None
-                    if 'object' in rule:
-                        _objs_value = rule['object']
-                    _object = get_object(environment, _objs_value)
-                    if _object is not None:
-                        if 'conditions' in rule:
-                            environment = get_model_environment(m2, _models)
-                            if can_execute_action(environment, rule['conditions']):
-                                execute_action(api, _object, rule, mail_notificacion)
-                        else:
-                            execute_action(api, _object, rule, mail_notificacion)
-    logger.debug("<-- Finish Process models by similarity")
-
-
 def get_field(obj, field):
     try:
         if field in obj.__dict__ or hasattr(obj, field):

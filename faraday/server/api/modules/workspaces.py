@@ -16,7 +16,7 @@ from sqlalchemy.orm import (
 from sqlalchemy.orm.exc import NoResultFound
 
 
-from faraday.server.models import db, Workspace, _make_vuln_count_property, Vulnerability
+from faraday.server.models import db, Workspace, _make_vuln_count_property, Vulnerability, _make_active_agents_count_property
 from faraday.server.schemas import (
     JSTimestampField,
     MutableField,
@@ -178,11 +178,13 @@ class WorkspaceView(ReadWriteView):
                      Workspace.vulnerability_code_count,
                     _make_vuln_count_property('vulnerability_code',
                                           extra_query=extra_query,
-                                          use_column_property=False)
-            ),
-
-
-        )
+                                          use_column_property=False),
+               ),
+               with_expression(
+                   Workspace.active_agents_count,
+                   _make_active_agents_count_property(),
+               ),
+            )
 
         try:
             obj = query.one()

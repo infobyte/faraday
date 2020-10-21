@@ -135,7 +135,7 @@ def _make_active_agents_count_property():
     if db.session.bind.dialect.name == 'sqlite':
         # SQLite has no "true" expression, we have to use the integer 1
         # instead
-        query = query.where(text('agent.active = true'))
+        query = query.where(text('agent.active = 1'))
     elif db.session.bind.dialect.name == 'postgresql':
         # I suppose that we're using PostgreSQL, that can't compare
         # booleans with integers

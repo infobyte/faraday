@@ -123,6 +123,27 @@ class CustomEngineConnector(_EngineConnector):
 db = SQLAlchemy()
 
 
+def _make_active_agents_count_property():
+    query = select([func.count(text('1'))])
+
+    from_clause = table('association_workspace_and_agents_table').join(
+        Agent, text('agent.id = association_workspace_and_agents_table.agent_id '
+                    'and association_workspace_and_agents_table.workspace_id = workspace.id')
+    )
+    query = query.select_from(from_clause)
+
+    if db.session.bind.dialect.name == 'sqlite':
+        # SQLite has no "true" expression, we have to use the integer 1
+        # instead
+        query = query.where(text('agent.active = 1'))
+    elif db.session.bind.dialect.name == 'postgresql':
+        # I suppose that we're using PostgreSQL, that can't compare
+        # booleans with integers
+        query = query.where(text('agent.active = true'))
+
+    return query
+
+
 def _make_generic_count_property(parent_table, children_table, where=None):
     """Make a deferred by default column property that counts the
     amount of childrens of some parent object"""
@@ -1446,6 +1467,7 @@ class Workspace(Metadata):
     vulnerability_code_count = query_expression()
     vulnerability_standard_count = query_expression()
     vulnerability_total_count = query_expression()
+    active_agents_count = query_expression()
 
     workspace_permission_instances = relationship(
         "WorkspacePermission",
@@ -1475,6 +1497,11 @@ class Workspace(Metadata):
                     FROM host
                     WHERE host.workspace_id = workspace.id
                 ) AS host_count,
+                (SELECT count(*)
+                        FROM association_workspace_and_agents_table as assoc
+                        JOIN agent ON agent.id = assoc.agent_id and assoc.workspace_id = workspace.id
+                        WHERE agent.active is TRUE
+                ) AS active_agents_count,
                 p_4.count_3 as open_services,
                 p_4.count_4 as total_service_count,
                 p_5.count_5 as vulnerability_web_count,

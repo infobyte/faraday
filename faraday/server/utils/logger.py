@@ -13,7 +13,7 @@ LOG_FILE = CONST_FARADAY_HOME_PATH / 'logs' / 'faraday-server.log'
 
 MAX_LOG_FILE_SIZE = 5 * 1024 * 1024     # 5 MB
 MAX_LOG_FILE_BACKUP_COUNT = 5
-LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s {%(threadName)s} [%(filename)s:%(lineno)s - %(funcName)s()]  %(message)s'
+LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s {%(threadName)s} [pid:%(process)d] [%(filename)s:%(lineno)s - %(funcName)s()]  %(message)s'
 LOG_DATE_FORMAT = '%Y-%m-%dT%H:%M:%S%z'
 ROOT_LOGGER = u'faraday'
 LOGGING_HANDLERS = []

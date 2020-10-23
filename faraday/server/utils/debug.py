@@ -6,10 +6,10 @@ import cProfile
 import pstats
 import contextlib
 from io import StringIO
+import logging
 
-import faraday.server.utils.logger
 
-debug_logger = faraday.server.utils.logger.get_logger(__name__)
+debug_logger = logging.getLogger(__name__)
 
 class Timer:
     def __init__(self, tag, logger=None):

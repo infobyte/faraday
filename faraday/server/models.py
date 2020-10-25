@@ -943,13 +943,22 @@ class VulnerabilityGeneric(VulnerabilityABC):
     response = BlankColumn(Text)
     website = BlankColumn(Text)
     status_code = Column(Integer, nullable=True)
-    cvss = BlankColumn(Text)
-    cwe= BlankColumn(Text)
-
+    cvss_v2 = BlankColumn(Text)
+    cvss_v3 = BlankColumn(Text)
 
     @property
     def cve(self):
         return db.session.query(VulnerabilityGeneric).get(self.id).filter(VulnerabilityGeneric.references.name.contains('CVE'))
+
+    @property
+    def cwe(self):
+        return db.session.query(VulnerabilityGeneric).get(self.id).filter(
+            VulnerabilityGeneric.references.name.contains('CWE'))
+
+    @property
+    def owasp(self):
+        return db.session.query(VulnerabilityGeneric).get(self.id).filter(
+            VulnerabilityGeneric.references.name.contains('OWASP'))
 
     vulnerability_duplicate_id = Column(
                         Integer,

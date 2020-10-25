@@ -167,7 +167,7 @@ class VulnerabilitySchema(AutoSchema):
             '_attachments',
             'target', 'host_os', 'resolution', 'metadata',
             'custom_fields', 'external_id', 'tool',
-            'cvss', 'cwe', 'cve'
+            'cvss_v2', 'cvss_v2', 'cwe', 'cve', 'owasp'
             )
 
     def get_type(self, obj):

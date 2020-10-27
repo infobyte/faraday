@@ -1,29 +1,13 @@
-# Expires map
-map $sent_http_content_type $expires {
-    default                    off;
-    text/html                  max;
-    text/css                   max;
-    application/javascript     max;
-    ~image/                    max;
-}
-
 server {
     server_name {{ fqdn }};
     listen 443 ssl http2;
 
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
-    add_header X-XSS-Protection "1; mode = block";
-    add_header X-Frame-Options "SAMEORIGIN";
-    add_header X-Content-Type-Options nosniff;
     client_max_body_size 150M;
 
     ssl on;
     ssl_session_cache shared:SSL:50m;
     ssl_certificate           {{ ssl_certificate }};
     ssl_certificate_key       {{ ssl_key }};
-    gzip on;
-    gzip_types application/javascript text/css;
-    expires $expires;
 
     location /{% if multitenant_url %}{{ multitenant_url }}/{% endif %} {
         alias {{ static_path }};

@@ -128,6 +128,13 @@ flake8:
       - pip install flake8
       - flake8 .
 
+no-format-str:
+    image: python:3
+    stage: pre_testing
+    script:
+      - pip install flynt
+      - flynt -df faraday tests
+
 pylint:
     tags:
         - faradaytests

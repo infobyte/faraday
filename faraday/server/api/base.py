@@ -724,7 +724,6 @@ class FilterMixin(ListMixin):
                        self.model_class,
                        filters)
 
-        # objs = objs.filter(self.model_class.workspace == workspace)
         return objs
 
     def _filter(self, filters):
@@ -735,7 +734,6 @@ class FilterMixin(ListMixin):
             logger.exception(ex)
             flask.abort(400, "Invalid filters")
 
-        # workspace = self._get_workspace(workspace_name)
         if 'group_by' not in filters:
             offset = None
             limit = None
@@ -746,7 +744,6 @@ class FilterMixin(ListMixin):
 
             objs = self._generate_filter_query(
                 filters,
-                # workspace
             )
 
             if limit:
@@ -759,7 +756,6 @@ class FilterMixin(ListMixin):
         else:
             objs = self._generate_filter_query(
                 filters,
-                # workspace,
             )
             column_names = ['count'] + [field['field'] for field in filters.get('group_by', [])]
             rows = [list(zip(column_names, row)) for row in objs.all()]

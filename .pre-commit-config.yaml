@@ -13,6 +13,11 @@ repos:
     hooks:
     -   id: flake8
         additional_dependencies: [flake8-typing-imports==1.9.0]
+-   repo: https://github.com/ikamensh/flynt/
+    rev: '0.56'
+    hooks:
+    -   id: flynt
+        args: [ -df ]
 -   repo: local
     hooks:
     -   id: sanity-check

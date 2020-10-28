@@ -635,12 +635,12 @@ class FilterWorkspacedMixin(ListMixin):
         return self._envelope_list(filtered_objs, pagination_metadata)
 
     def _generate_filter_query(self, filters, workspace):
-        objs = search(db.session,
+        filter_query = search(db.session,
                        self.model_class,
                        filters)
 
-        objs = objs.filter(self.model_class.workspace == workspace)
-        return objs
+        filter_query = filter_query.filter(self.model_class.workspace == workspace)
+        return filter_query
 
     def _filter(self, filters, workspace_name):
         marshmallow_params = {'many': True, 'context': {}}
@@ -659,30 +659,30 @@ class FilterWorkspacedMixin(ListMixin):
             if 'limit' in filters:
                 limit = filters.pop('limit') # we need to remove pagination, since
 
-            objs = self._generate_filter_query(
+            filter_query = self._generate_filter_query(
                 filters,
                 workspace
             )
 
             if limit:
-                objs = objs.limit(limit)
+                filter_query = filter_query.limit(limit)
             if offset:
-                objs = objs.offset(offset)
-            count = objs.count()
-            objs = self.schema_class(**marshmallow_params).dumps(objs.all())
+                filter_query = filter_query.offset(offset)
+            count = filter_query.count()
+            objs = self.schema_class(**marshmallow_params).dumps(filter_query.all())
             return json.loads(objs), count
         else:
-            objs = self._generate_filter_query(
+            filter_query = self._generate_filter_query(
                 filters,
                 workspace,
             )
             column_names = ['count'] + [field['field'] for field in filters.get('group_by', [])]
-            rows = [list(zip(column_names, row)) for row in objs.all()]
-            vulns_data = []
+            rows = [list(zip(column_names, row)) for row in filter_query.all()]
+            data = []
             for row in rows:
-                vulns_data.append({field[0]:field[1] for field in row})
+                data.append({field[0]: field[1] for field in row})
 
-            return vulns_data, len(rows)
+            return data, len(rows)
 
 
 class FilterMixin(ListMixin):
@@ -720,10 +720,10 @@ class FilterMixin(ListMixin):
         return self._envelope_list(filtered_objs, pagination_metadata)
 
     def _generate_filter_query(self, filters):
-        objs = search(db.session,
+        filter_query = search(db.session,
                       self.model_class,
                       filters)
-        return objs
+        return filter_query
 
     def _filter(self, filters, extra_filters=None):
         marshmallow_params = {'many': True, 'context': {}}
@@ -741,33 +741,33 @@ class FilterMixin(ListMixin):
             if 'limit' in filters:
                 limit = filters.pop('limit') # we need to remove pagination, since
 
-            objs = self._generate_filter_query(
+            filter_query = self._generate_filter_query(
                 filters,
             )
 
             if extra_filters is not None:
-                objs = objs.filter(extra_filters)
+                filter_query = filter_query.filter(extra_filters)
             if limit:
-                objs = objs.limit(limit)
+                filter_query = filter_query.limit(limit)
             if offset:
-                objs = objs.offset(offset)
-            count = objs.count()
-            objs = self.schema_class(**marshmallow_params).dumps(objs.all())
+                filter_query = filter_query.offset(offset)
+            count = filter_query.count()
+            objs = self.schema_class(**marshmallow_params).dumps(filter_query.all())
             return json.loads(objs), count
         else:
-            objs = self._generate_filter_query(
+            filter_query = self._generate_filter_query(
                 filters,
             )
             if extra_filters is not None:
-                objs += objs.filter(extra_filters)
+                filter_query += filter_query.filter(extra_filters)
 
             column_names = ['count'] + [field['field'] for field in filters.get('group_by', [])]
-            rows = [list(zip(column_names, row)) for row in objs.all()]
-            vulns_data = []
+            rows = [list(zip(column_names, row)) for row in filter_query.all()]
+            data = []
             for row in rows:
-                vulns_data.append({field[0]:field[1] for field in row})
+                data.append({field[0]: field[1] for field in row})
 
-            return vulns_data, len(rows)
+            return data, len(rows)
 
 
 class ListWorkspacedMixin(ListMixin):

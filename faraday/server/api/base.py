@@ -721,12 +721,11 @@ class FilterMixin(ListMixin):
 
     def _generate_filter_query(self, filters):
         objs = search(db.session,
-                       self.model_class,
-                       filters)
-
+                      self.model_class,
+                      filters)
         return objs
 
-    def _filter(self, filters):
+    def _filter(self, filters, extra_filters=None):
         marshmallow_params = {'many': True, 'context': {}}
         try:
             filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
@@ -746,6 +745,8 @@ class FilterMixin(ListMixin):
                 filters,
             )
 
+            if extra_filters is not None:
+                objs = objs.filter(extra_filters)
             if limit:
                 objs = objs.limit(limit)
             if offset:
@@ -757,6 +758,9 @@ class FilterMixin(ListMixin):
             objs = self._generate_filter_query(
                 filters,
             )
+            if extra_filters is not None:
+                objs += objs.filter(extra_filters)
+
             column_names = ['count'] + [field['field'] for field in filters.get('group_by', [])]
             rows = [list(zip(column_names, row)) for row in objs.all()]
             vulns_data = []

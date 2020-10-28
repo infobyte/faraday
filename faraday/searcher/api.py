@@ -60,23 +60,23 @@ class Api:
         url = self.base + 'v2/' + path
         if self.command_id and 'commands' not in url and not url.endswith('}') and not is_get:
             if '?' in url:
-                url += '&command_id={}'.format(self.command_id)
+                url += f'&command_id={self.command_id}'
             elif url.endswith('/'):
-                url += '?command_id={}'.format(self.command_id)
+                url += f'?command_id={self.command_id}'
             else:
-                url += '/?command_id={}'.format(self.command_id)
+                url += f'/?command_id={self.command_id}'
         return url
 
     def _get(self, url, object_name):
-        logger.debug('Getting url {}'.format(url))
+        logger.debug(f'Getting url {url}')
         if self.headers:
             response = self.requests.get(url, headers=self.headers)
         else:
             response = self.requests.get(url, cookies=self.cookies)
         if response.status_code == 401:
-            raise ApiError('Unauthorized operation trying to get {}'.format(object_name))
+            raise ApiError(f'Unauthorized operation trying to get {object_name}')
         if response.status_code != 200:
-            raise ApiError('Cannot fetch {}. Url {}'.format(object_name, url))
+            raise ApiError(f'Cannot fetch {object_name}. Url {url}')
         if isinstance(response.json, dict):
             return response.json
         return json.loads(response.content)
@@ -87,9 +87,9 @@ class Api:
         else:
             response = self.requests.post(url, json=data, cookies=self.cookies)
         if response.status_code == 401:
-            raise ApiError('Unauthorized operation trying to get {}'.format(object_name))
+            raise ApiError(f'Unauthorized operation trying to get {object_name}')
         if response.status_code != 201:
-            raise ApiError('Cannot fetch {}, api response: {}'.format(object_name, getattr(response, 'text', None)))
+            raise ApiError(f"Cannot fetch {object_name}, api response: {getattr(response, 'text', None)}")
         if isinstance(response.json, dict):
             return response.json
         return json.loads(response.content)
@@ -100,9 +100,9 @@ class Api:
         else:
             response = self.requests.put(url, json=data, cookies=self.cookies)
         if response.status_code == 401:
-            raise ApiError('Unauthorized operation trying to upFdate {}'.format(object_name))
+            raise ApiError(f'Unauthorized operation trying to upFdate {object_name}')
         if response.status_code != 200:
-            raise ApiError('Unable to update {}'.format(object_name))
+            raise ApiError(f'Unable to update {object_name}')
         if isinstance(response.json, dict):
             return response.json
         return json.loads(response.content)
@@ -113,9 +113,9 @@ class Api:
         else:
             response = self.requests.delete(url, cookies=self.cookies)
         if response.status_code == 401:
-            raise ApiError('Unauthorized operation trying to delete {}'.format(object_name))
+            raise ApiError(f'Unauthorized operation trying to delete {object_name}')
         if response.status_code != 204:
-            raise ApiError('Unable to delete {}'.format(object_name))
+            raise ApiError(f'Unable to delete {object_name}')
         return True
 
     def login(self, username, password):
@@ -134,7 +134,7 @@ class Api:
                 else:
                     token = self.requests.get(self.base + 'v2/token/').json
 
-                header = {'Authorization': 'Token {}'.format(token)}
+                header = {'Authorization': f'Token {token}'}
 
                 return header, cookies
         except ConnectionError as ex:
@@ -149,7 +149,7 @@ class Api:
         self.params = params
         self.tool_name = tool_name
         data = self._command_info()
-        res = self._post(self._url('ws/{}/commands/'.format(self.workspace)), data, 'command')
+        res = self._post(self._url(f'ws/{self.workspace}/commands/'), data, 'command')
         return res["_id"]
 
     def _command_info(self, duration=None):
@@ -171,18 +171,18 @@ class Api:
 
     def close_command(self, command_id, duration):
         data = self._command_info(duration)
-        self._put(self._url('ws/{}/commands/{}/'.format(self.workspace, command_id)), data, 'command')
+        self._put(self._url(f'ws/{self.workspace}/commands/{command_id}/'), data, 'command')
 
     def fetch_vulnerabilities(self):
-        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/vulns/'.format(self.workspace), True),
+        return [Structure(**item['value']) for item in self._get(self._url(f'ws/{self.workspace}/vulns/', True),
                                                                  'vulnerabilities')['vulnerabilities']]
 
     def fetch_services(self):
-        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/services/'.format(self.workspace), True),
+        return [Structure(**item['value']) for item in self._get(self._url(f'ws/{self.workspace}/services/', True),
                                                                  'services')['services']]
 
     def fetch_hosts(self):
-        return [Structure(**item['value']) for item in self._get(self._url('ws/{}/hosts/'.format(self.workspace), True),
+        return [Structure(**item['value']) for item in self._get(self._url(f'ws/{self.workspace}/hosts/', True),
                                                                  'hosts')['rows']]
 
     def fetch_templates(self):
@@ -192,22 +192,22 @@ class Api:
     def filter_vulnerabilities(self, **kwargs):
         if len(list(kwargs.keys())) > 1:
             params = urlencode(kwargs)
-            url = self._url('ws/{}/vulns/?{}'.format(self.workspace, params))
+            url = self._url(f'ws/{self.workspace}/vulns/?{params}')
         else:
             params = self.parse_args(**kwargs)
-            url = self._url('ws/{}/vulns/{}'.format(self.workspace, params), True)
+            url = self._url(f'ws/{self.workspace}/vulns/{params}', True)
         return [Structure(**item['value']) for item in
                 self._get(url, 'vulnerabilities')['vulnerabilities']]
 
     def filter_services(self, **kwargs):
         params = urlencode(kwargs)
-        url = self._url('ws/{}/services/?{}'.format(self.workspace, params), True)
+        url = self._url(f'ws/{self.workspace}/services/?{params}', True)
         return [Structure(**item['value']) for item in
                 self._get(url, 'services')['services']]
 
     def filter_hosts(self, **kwargs):
         params = urlencode(kwargs)
-        url = self._url('ws/{}/hosts/?{}'.format(self.workspace, params), True)
+        url = self._url(f'ws/{self.workspace}/hosts/?{params}', True)
         return [Structure(**item['value']) for item in
                 self._get(url, 'hosts')['rows']]
 
@@ -222,7 +222,7 @@ class Api:
         return filtered_templates
 
     def update_vulnerability(self, vulnerability):
-        return Structure(**self._put(self._url('ws/{}/vulns/{}/'.format(self.workspace, vulnerability.id)),
+        return Structure(**self._put(self._url(f'ws/{self.workspace}/vulns/{vulnerability.id}/'),
                                      vulnerability.__dict__, 'vulnerability'))
 
     def update_service(self, service):
@@ -230,28 +230,28 @@ class Api:
             service.ports = [service.ports]
         else:
             service.ports = []
-        return Structure(**self._put(self._url('ws/{}/services/{}/'.format(self.workspace, service.id)),
+        return Structure(**self._put(self._url(f'ws/{self.workspace}/services/{service.id}/'),
                                      service.__dict__, 'service'))
 
     def update_host(self, host):
-        return Structure(**self._put(self._url('ws/{}/hosts/{}/'.format(self.workspace, host.id)),
+        return Structure(**self._put(self._url(f'ws/{self.workspace}/hosts/{host.id}/'),
                                      host.__dict__, 'hosts'))
 
     def delete_vulnerability(self, vulnerability_id):
-        return self._delete(self._url('ws/{}/vulns/{}/'.format(self.workspace, vulnerability_id)), 'vulnerability')
+        return self._delete(self._url(f'ws/{self.workspace}/vulns/{vulnerability_id}/'), 'vulnerability')
 
     def delete_service(self, service_id):
-        return self._delete(self._url('ws/{}/services/{}/'.format(self.workspace, service_id)), 'service')
+        return self._delete(self._url(f'ws/{self.workspace}/services/{service_id}/'), 'service')
 
     def delete_host(self, host_id):
-        return self._delete(self._url('ws/{}/hosts/{}/'.format(self.workspace, host_id)), 'host')
+        return self._delete(self._url(f'ws/{self.workspace}/hosts/{host_id}/'), 'host')
 
     @staticmethod
     def parse_args(**kwargs):
         if len(list(kwargs.keys())) > 0:
             key = list(kwargs.keys())[0]
             value = kwargs.get(key, '')
-            item = '"name":"{}","op":"eq","val":"{}"'.format(key, value)
+            item = f'"name":"{key}","op":"eq","val":"{value}"'
             params = 'filter?q={"filters":[{' + item + '}]}'
             return params
         return ''

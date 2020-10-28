@@ -295,13 +295,13 @@ class WorkerActionSchema(Schema):
 
     def get_command(self, obj):
         if obj.command == 'UPDATE':
-            return "--{command}:{field}={value}".format(command=obj.command, field=obj.field, value=obj.value)
+            return f"--{obj.command}:{obj.field}={obj.value}"
         if obj.command in ['DELETE', 'REMOVE']:
             return "--DELETE:"
         if obj.command == 'ALERT':
-            return "--{command}:{value}".format(command=obj.command, value=obj.value)
+            return f"--{obj.command}:{obj.value}"
 
-        raise ValidationError("Command {} not supported.".format(obj.command))
+        raise ValidationError(f"Command {obj.command} not supported.")
 
 
 class WorkerConditionSchema(Schema):
@@ -311,8 +311,8 @@ class WorkerConditionSchema(Schema):
         if obj.operator == "equals":
             operator = "="
         else:
-            raise ValidationError("Condition operator {} not support.".format(obj.operator))
-        return '{field}{operator}{value}'.format(field=obj.field, operator=operator, value=obj.value)
+            raise ValidationError(f"Condition operator {obj.operator} not support.")
+        return f'{obj.field}{operator}{obj.value}'
 
 
 class WorkerRuleSchema(Schema):
@@ -338,7 +338,7 @@ class WorkerRuleSchema(Schema):
                     value = 'info'
                 if value == 'medium':
                     value = 'med'
-                return '{}={}'.format(object_rule_name, value)
+                return f'{object_rule_name}={value}'
 
     @post_dump
     def remove_none_values(self, data, **kwargs):

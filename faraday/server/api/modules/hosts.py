@@ -191,7 +191,7 @@ class HostsView(PaginatedMixin,
             hosts_reader = csv.DictReader(stream)
             if set(hosts_reader.fieldnames) != FILE_HEADERS:
                 logger.error("Missing Required headers in CSV (%s)", FILE_HEADERS)
-                abort(400, "Missing Required headers in CSV (%s)" % FILE_HEADERS)
+                abort(400, f"Missing Required headers in CSV ({FILE_HEADERS})")
             hosts_created_count = 0
             hosts_with_errors_count = 0
             for host_dict in hosts_reader:
@@ -213,7 +213,7 @@ class HostsView(PaginatedMixin,
             return make_response(jsonify(hosts_created=hosts_created_count, hosts_with_errors=hosts_with_errors_count), 200)
         except Exception as e:
             logger.error("Error parsing hosts CSV (%s)", e)
-            abort(400, "Error parsing hosts CSV (%s)" % e)
+            abort(400, f"Error parsing hosts CSV ({e})")
 
 
     @route('/<host_id>/services/')

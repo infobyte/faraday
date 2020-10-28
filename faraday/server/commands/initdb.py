@@ -48,7 +48,7 @@ class InitDB():
             config.get('database', 'connection_string')
             reconfigure = None
             while not reconfigure:
-                reconfigure = input('Database section {yellow} already found{white}. Do you want to reconfigure database? (yes/no) '.format(yellow=Fore.YELLOW, white=Fore.WHITE))
+                reconfigure = input(f'Database section {Fore.YELLOW} already found{Fore.WHITE}. Do you want to reconfigure database? (yes/no) ')
                 if reconfigure.lower() == 'no':
                     return False
                 elif reconfigure.lower() == 'yes':
@@ -165,9 +165,9 @@ class InitDB():
         current_psql_output_file.seek(0)
         psql_output = current_psql_output_file.read().decode('utf-8')
         if 'unknown user: postgres' in psql_output:
-            print('ERROR: Postgres user not found. Did you install package {blue}postgresql{white}?'.format(blue=Fore.BLUE, white=Fore.WHITE))
+            print(f'ERROR: Postgres user not found. Did you install package {Fore.BLUE}postgresql{Fore.WHITE}?')
         elif 'could not connect to server' in psql_output:
-            print('ERROR: {red}PostgreSQL service{white} is not running. Please verify that it is running in port 5432 before executing setup script.'.format(red=Fore.RED, white=Fore.WHITE))
+            print(f'ERROR: {Fore.RED}PostgreSQL service{Fore.WHITE} is not running. Please verify that it is running in port 5432 before executing setup script.')
         elif process_status > 0:
             current_psql_output_file.seek(0)
             print('ERROR: ' + psql_output)
@@ -189,7 +189,7 @@ class InitDB():
         username =  os.environ.get("FARADAY_DATABASE_USER", 'faraday_postgresql')
         postgres_command = ['sudo', '-u', 'postgres', 'psql']
         if sys.platform == 'darwin':
-            print('{blue}MAC OS detected{white}'.format(blue=Fore.BLUE, white=Fore.WHITE))
+            print(f'{Fore.BLUE}MAC OS detected{Fore.WHITE}')
             postgres_command = ['psql', 'postgres']
         password = self.generate_random_pw(25)
         command = postgres_command + [ '-c', 'CREATE ROLE {0} WITH LOGIN PASSWORD \'{1}\';'.format(username, password)]
@@ -199,10 +199,10 @@ class InitDB():
         output = psql_log_file.read()
         if isinstance(output, bytes):
             output = output.decode('utf-8')
-        already_exists_error = 'role "{0}" already exists'.format(username)
+        already_exists_error = f'role "{username}" already exists'
         return_code = p.returncode
         if already_exists_error in output:
-            print("{yellow}WARNING{white}: Role {username} already exists, skipping creation ".format(yellow=Fore.YELLOW, white=Fore.WHITE, username=username))
+            print(f"{Fore.YELLOW}WARNING{Fore.WHITE}: Role {username} already exists, skipping creation ")
 
             try:
                 if not getattr(faraday.server.config, 'database', None):
@@ -243,16 +243,16 @@ class InitDB():
         if sys.platform == 'darwin':
             postgres_command = []
 
-        print('Creating database {0}'.format(database_name))
+        print(f'Creating database {database_name}')
         command = postgres_command + ['createdb', '-E', 'utf8', '-O', username, database_name]
         p = Popen(command, stderr=psql_log_file, stdout=psql_log_file, cwd='/tmp') # nosec
         p.wait()
         return_code = p.returncode
         psql_log_file.seek(0)
         output = psql_log_file.read().decode('utf-8')
-        already_exists_error = 'database creation failed: ERROR:  database "{0}" already exists'.format(database_name)
+        already_exists_error = f'database creation failed: ERROR:  database "{database_name}" already exists'
         if already_exists_error in output:
-            print('{yellow}WARNING{white}: Database already exists.'.format(yellow=Fore.YELLOW, white=Fore.WHITE))
+            print(f'{Fore.YELLOW}WARNING{Fore.WHITE}: Database already exists.')
             return_code = 0
         return database_name, return_code
 
@@ -260,7 +260,7 @@ class InitDB():
         """
              This step saves database configuration to server.ini
         """
-        print('Saving database credentials file in {0}'.format(LOCAL_CONFIG_FILE))
+        print(f'Saving database credentials file in {LOCAL_CONFIG_FILE}')
 
         conn_string = 'postgresql+psycopg2://{username}:{password}@{server}/{database_name}'.format(
             username=username,
@@ -293,7 +293,7 @@ class InitDB():
             db.create_all()
         except OperationalError as ex:
             if 'could not connect to server' in str(ex):
-                print('ERROR: {red}PostgreSQL service{white} is not running. Please verify that it is running in port 5432 before executing setup script.'.format(red=Fore.RED, white=Fore.WHITE))
+                print(f'ERROR: {Fore.RED}PostgreSQL service{Fore.WHITE} is not running. Please verify that it is running in port 5432 before executing setup script.')
                 sys.exit(1)
             elif 'password authentication failed' in str(ex):
                 print('ERROR: ')
@@ -307,7 +307,7 @@ class InitDB():
         except ImportError as ex:
             if 'psycopg2' in str(ex):
                 print(
-                    'ERROR: Missing python depency {red}psycopg2{white}. Please install it with {blue}pip install psycopg2'.format(red=Fore.RED, white=Fore.WHITE, blue=Fore.BLUE))
+                    f'ERROR: Missing python depency {Fore.RED}psycopg2{Fore.WHITE}. Please install it with {Fore.BLUE}pip install psycopg2')
                 sys.exit(1)
             else:
                 raise

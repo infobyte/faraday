@@ -62,7 +62,7 @@ def copy_default_config_to_local():
     shutil.copyfile(DEFAULT_CONFIG_FILE, LOCAL_CONFIG_FILE)
 
     from faraday.server.utils.logger import get_logger # pylint:disable=import-outside-toplevel
-    get_logger(__name__).info(u"Local faraday-server configuration created at {}".format(LOCAL_CONFIG_FILE))
+    get_logger(__name__).info(f"Local faraday-server configuration created at {LOCAL_CONFIG_FILE}")
 
 
 def parse_and_bind_configuration():

@@ -7,6 +7,7 @@ See the file 'doc/LICENSE' for the license information
 import json
 import logging
 from json import JSONDecodeError
+from typing import Tuple
 
 import flask
 import sqlalchemy
@@ -725,7 +726,7 @@ class FilterMixin(ListMixin):
                       filters)
         return filter_query
 
-    def _filter(self, filters, extra_filters=None):
+    def _filter(self, filters: str, extra_filters: str = None) -> Tuple[list, int]:
         marshmallow_params = {'many': True, 'context': {}}
         try:
             filters = FlaskRestlessSchema().load(json.loads(filters)) or {}

@@ -318,8 +318,8 @@ class TestHostAPI:
         assert res.status_code == 200
         assert len(res.json['rows']) == 2
         assert res.json['total_rows'] == 2
-        assert res.json['rows'][0]['value']['os'] == 'unix'
-        assert res.json['rows'][1]['value']['os'] == 'Unix'
+        assert res.json['rows'][0]['value']['os'] == 'Unix'
+        assert res.json['rows'][1]['value']['os'] == 'unix'
 
     def test_filter_by_os_like_ilike(self, test_client, session, workspace,
                                      second_workspace, host_factory):

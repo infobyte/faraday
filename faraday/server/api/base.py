@@ -23,6 +23,7 @@ from marshmallow import Schema, EXCLUDE, fields
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
+from sqlalchemy.sql.elements import BooleanClauseList
 from webargs.flaskparser import FlaskParser
 from webargs.core import ValidationError
 from flask_classful import route
@@ -726,7 +727,7 @@ class FilterMixin(ListMixin):
                       filters)
         return filter_query
 
-    def _filter(self, filters: str, extra_filters: str = None) -> Tuple[list, int]:
+    def _filter(self, filters: str, extra_alchemy_filters: BooleanClauseList = None) -> Tuple[list, int]:
         marshmallow_params = {'many': True, 'context': {}}
         try:
             filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
@@ -746,8 +747,8 @@ class FilterMixin(ListMixin):
                 filters,
             )
 
-            if extra_filters is not None:
-                filter_query = filter_query.filter(extra_filters)
+            if extra_alchemy_filters is not None:
+                filter_query = filter_query.filter(extra_alchemy_filters)
             if limit:
                 filter_query = filter_query.limit(limit)
             if offset:
@@ -759,8 +760,8 @@ class FilterMixin(ListMixin):
             filter_query = self._generate_filter_query(
                 filters,
             )
-            if extra_filters is not None:
-                filter_query += filter_query.filter(extra_filters)
+            if extra_alchemy_filters is not None:
+                filter_query += filter_query.filter(extra_alchemy_filters)
 
             column_names = ['count'] + [field['field'] for field in filters.get('group_by', [])]
             rows = [list(zip(column_names, row)) for row in filter_query.all()]

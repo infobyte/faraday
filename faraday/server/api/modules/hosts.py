@@ -307,10 +307,12 @@ class HostsView(PaginatedMixin,
 
     def _envelope_list(self, objects, pagination_metadata=None):
         hosts = []
-        for host in objects:
+        for index, host in enumerate(objects):
+            # we use index when the filter endpoint uses group by and
+            # the _id was not used in the group by
             hosts.append({
-                'id': host['id'],
-                'key': host['id'],
+                'id': host.get('_id', index),
+                'key': host.get('_id', index),
                 'value': host
             })
         return {

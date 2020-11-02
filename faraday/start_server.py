@@ -35,7 +35,7 @@ def setup_environment(check_deps=False):
 def is_server_running(port):
     pid = daemonize.is_server_running(port)
     if pid is not None:
-        logger.warning("Faraday Server is already running. PID: {}".format(pid))
+        logger.warning(f"Faraday Server is already running. PID: {pid}")
         return True
     else:
         return False
@@ -54,7 +54,7 @@ def check_postgresql():
                 logger.warning('No workspaces found')
         except sqlalchemy.exc.ArgumentError:
             logger.error(
-                '\n\b{RED}Please check your PostgreSQL connection string in the file ~/.faraday/config/server.ini on your home directory.{WHITE} \n'.format(RED=Fore.RED, WHITE=Fore.WHITE)
+                f'\n{Fore.RED}Please check your PostgreSQL connection string in the file ~/.faraday/config/server.ini on your home directory.{Fore.WHITE} \n'
             )
             sys.exit(1)
         except sqlalchemy.exc.OperationalError:
@@ -63,7 +63,7 @@ def check_postgresql():
             sys.exit(1)
         except sqlalchemy.exc.ProgrammingError:
             logger.error(
-                    '\n\nn{WHITE}Missing migrations, please execute: \n\nfaraday-manage migrate'.format(WHITE=Fore.WHITE))
+                    f'\n\nn{Fore.WHITE}Missing migrations, please execute: \n\nfaraday-manage migrate')
             sys.exit(1)
 
 
@@ -116,7 +116,7 @@ def main():
     parser.add_argument('--websocket_port', help='Overides server.ini websocket port configuration')
     parser.add_argument('--bind_address', help='Overides server.ini bind_address configuration')
     f_version = faraday.__version__
-    parser.add_argument('-v', '--version', action='version', version='Faraday v{version}'.format(version=f_version))
+    parser.add_argument('-v', '--version', action='version', version=f'Faraday v{f_version}')
     args = parser.parse_args()
     if args.debug or faraday.server.config.faraday_server.debug:
         faraday.server.utils.logger.set_logging_level(faraday.server.config.DEBUG)

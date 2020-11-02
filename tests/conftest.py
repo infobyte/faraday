@@ -77,7 +77,7 @@ class CustomClient(FlaskClient):
 def pytest_addoption(parser):
     # currently for tests using sqlite and memory have problem while using transactions
     # we need to review sqlite configuraitons for persistence using PRAGMA.
-    parser.addoption('--connection-string', default='sqlite:////{0}'.format(TEMPORATY_SQLITE.name),
+    parser.addoption('--connection-string', default=f'sqlite:////{TEMPORATY_SQLITE.name}',
                      help="Database connection string. Defaults to in-memory "
                      "sqlite if not specified:")
     parser.addoption('--ignore-nplusone', action='store_true',
@@ -291,7 +291,7 @@ def skip_by_sql_dialect(app, request):
     dialect = db.session.bind.dialect.name
     if request.node.get_closest_marker('skip_sql_dialect'):
         if request.node.get_closest_marker('skip_sql_dialect').args[0] == dialect:
-            pytest.skip('Skipped dialect is {}'.format(dialect))
+            pytest.skip(f'Skipped dialect is {dialect}')
 
 
 @pytest.fixture

@@ -147,13 +147,12 @@ def _make_active_agents_count_property():
 def _make_generic_count_property(parent_table, children_table, where=None):
     """Make a deferred by default column property that counts the
     amount of childrens of some parent object"""
-    children_id_field = '{}.id'.format(children_table)
-    parent_id_field = '{}.id'.format(parent_table)
-    children_rel_field = '{}.{}_id'.format(children_table, parent_table)
+    children_id_field = f'{children_table}.id'
+    parent_id_field = f'{parent_table}.id'
+    children_rel_field = f'{children_table}.{parent_table}_id'
     query = (select([func.count(text(children_id_field))]).
              select_from(table(children_table)).
-             where(text('{} = {}'.format(
-                 children_rel_field, parent_id_field))))
+             where(text(f'{children_rel_field} = {parent_id_field}')))
     if where is not None:
         query = query.where(where)
     return column_property(query, deferred=True)
@@ -194,7 +193,7 @@ def _make_vuln_count_property(type_=None, confirmed=None,
         # Don't do queries using this style!
         # This can cause SQL injection vulnerabilities
         # In this case type_ is supplied from a whitelist so this is safe
-        query = query.where(text("vulnerability.type = '%s'" % type_))
+        query = query.where(text(f"vulnerability.type = '{type_}'"))
     if confirmed:
         if db.session.bind.dialect.name == 'sqlite':
             # SQLite has no "true" expression, we have to use the integer 1
@@ -633,7 +632,7 @@ class CommandObject(db.Model):
 
 
 def _make_created_objects_sum(object_type_filter):
-    where_conditions = ["command_object.object_type= '%s'" % object_type_filter]
+    where_conditions = [f"command_object.object_type= '{object_type_filter}'"]
     where_conditions.append("command_object.command_id = command.id")
     where_conditions.append("command_object.workspace_id = command.workspace_id")
     return column_property(
@@ -650,12 +649,12 @@ def _make_created_objects_sum_joined(object_type_filter, join_filters):
     :param join_filters: Filter for vulnerability fields.
     :return: column property with sum of created objects.
     """
-    where_conditions = ["command_object.object_type= '%s'" % object_type_filter]
+    where_conditions = [f"command_object.object_type= '{object_type_filter}'"]
     where_conditions.append("command_object.command_id = command.id")
     where_conditions.append("vulnerability.id = command_object.object_id ")
     where_conditions.append("command_object.workspace_id = vulnerability.workspace_id")
     for attr, filter_value in join_filters.items():
-        where_conditions.append("vulnerability.{0} = {1}".format(attr, filter_value))
+        where_conditions.append(f"vulnerability.{attr} = {filter_value}")
     return column_property(
         select([func.sum(CommandObject.created)]). \
             select_from(table('command_object')). \
@@ -931,8 +930,7 @@ class Service(Metadata):
             version = " (" + self.version + ")"
         else:
             version = ""
-        return "(%s/%s) %s%s" % (self.port, self.protocol, self.name,
-                                 version or "")
+        return f"({self.port}/{self.protocol}) {self.name}{version or ''}"
 
 
 class VulnerabilityGeneric(VulnerabilityABC):
@@ -1679,8 +1677,7 @@ class User(db.Model, UserMixin):
         super(User, self).__init__(*args, **kwargs)
 
     def __repr__(self):
-        return '<%sUser: %s>' % ('LDAP ' if self.is_ldap else '',
-                                 self.username)
+        return f"<{'LDAP ' if self.is_ldap else ''}User: {self.username}>"
 
     def get_security_payload(self):
         return {

@@ -277,7 +277,7 @@ class GenericView(FlaskView):
         try:
             obj = query.filter(self._get_lookup_field() == object_id).one()
         except NoResultFound:
-            flask.abort(404, 'Object with id "%s" not found' % object_id)
+            flask.abort(404, f'Object with id "{object_id}" not found')
         return obj
 
     def _dump(self, obj, route_kwargs, **kwargs):
@@ -366,9 +366,9 @@ class GenericWorkspacedView(GenericView):
         try:
             ws = Workspace.query.filter_by(name=workspace_name).one()
             if not ws.active:
-                flask.abort(403, "Disabled workspace: %s" % workspace_name)
+                flask.abort(403, f"Disabled workspace: {workspace_name}")
         except NoResultFound:
-            flask.abort(404, "No such workspace: %s" % workspace_name)
+            flask.abort(404, f"No such workspace: {workspace_name}")
         return ws
 
     def _get_base_query(self, workspace_name):
@@ -385,7 +385,7 @@ class GenericWorkspacedView(GenericView):
         try:
             obj = query.filter(self._get_lookup_field() == object_id).one()
         except NoResultFound:
-            flask.abort(404, 'Object with id "%s" not found' % object_id)
+            flask.abort(404, f'Object with id "{object_id}" not found')
         return obj
 
     def _set_schema_context(self, context, **kwargs):
@@ -510,9 +510,9 @@ class SortableMixin:
             field_instance = schema.fields[order_field]
         except KeyError:
             if self.sort_pass_silently:
-                logger.warn("Unknown field: %s" % order_field)
+                logger.warn(f"Unknown field: {order_field}")
                 return self.order_field
-            raise InvalidUsage("Unknown field: %s" % order_field)
+            raise InvalidUsage(f"Unknown field: {order_field}")
 
         # Translate from the field name in the schema to the database field
         # name
@@ -523,10 +523,10 @@ class SortableMixin:
         model_class = self.sort_model_class or self.model_class
         if order_field not in inspect(model_class).attrs:
             if self.sort_pass_silently:
-                logger.warn("Field not in the DB: %s" % order_field)
+                logger.warn(f"Field not in the DB: {order_field}")
                 return self.order_field
             # It could be something like fields.Method
-            raise InvalidUsage("Field not in the DB: %s" % order_field)
+            raise InvalidUsage(f"Field not in the DB: {order_field}")
 
         if hasattr(model_class, order_field + '_id'):
             # Ugly hack to allow sorting by a parent
@@ -537,11 +537,9 @@ class SortableMixin:
                                           self.default_sort_direction)
         if sort_dir not in ('asc', 'desc'):
             if self.sort_pass_silently:
-                logger.warn("Invalid value for sorting direction: %s" %
-                            sort_dir)
+                logger.warn(f"Invalid value for sorting direction: {sort_dir}")
                 return self.order_field
-            raise InvalidUsage("Invalid value for sorting direction: %s" %
-                               sort_dir)
+            raise InvalidUsage(f"Invalid value for sorting direction: {sort_dir}")
         try:
             if self.order_field is not None:
                 if not isinstance(self.order_field, tuple):
@@ -551,14 +549,10 @@ class SortableMixin:
                 return getattr(field, sort_dir)()
         except NotImplementedError:
             if self.sort_pass_silently:
-                logger.warn("field {} doesn't support sorting".format(
-                    order_field
-                ))
+                logger.warn(f"field {order_field} doesn't support sorting")
                 return self.order_field
             # There are some fields that can't be used for sorting
-            raise InvalidUsage("field {} doesn't support sorting".format(
-                order_field
-            ))
+            raise InvalidUsage(f"field {order_field} doesn't support sorting")
 
 
 class PaginatedMixin:
@@ -1190,7 +1184,7 @@ class CountWorkspacedMixin:
         # using format is not a great practice.
         # the user input is group_by, however it's filtered by column name.
         table_name = inspect(self.model_class).tables[0].name
-        group_by = '{0}.{1}'.format(table_name, group_by)
+        group_by = f'{table_name}.{group_by}'
 
         count = self._filter_query(
             db.session.query(self.model_class)

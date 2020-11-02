@@ -65,7 +65,7 @@ def copy_default_config_to_local():
     # Copy default config file into faraday local config
     shutil.copyfile(DEFAULT_CONFIG_FILE, LOCAL_CONFIG_FILE)
 
-    logger.info(u"Local faraday-server configuration created at {}".format(LOCAL_CONFIG_FILE))
+    logger.info(f"Local faraday-server configuration created at {LOCAL_CONFIG_FILE}")
 
 
 def parse_and_bind_configuration():

@@ -154,7 +154,7 @@ def stop_server(port):
         return False
 
     try:
-        logger.info('Sending SIGTERM to pid {0}, in port {1}'.format(pid, port))
+        logger.info(f'Sending SIGTERM to pid {pid}, in port {port}')
         os.kill(pid, signal.SIGTERM)
         logger.info("Faraday Server stopped successfully")
     except OSError as err:
@@ -211,7 +211,7 @@ def get_server_pid(port):
 
 def create_pid_file(port):
     with open(str(FARADAY_SERVER_PID_FILE).format(port), 'w') as pid_file:
-        pid_file.write('{}'.format(os.getpid()))
+        pid_file.write(f'{os.getpid()}')
     atexit.register(partial(remove_pid_file, port))
 
 

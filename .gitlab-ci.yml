@@ -81,6 +81,9 @@ migration_sanity_check:
     stage: pre_testing
     script:
         - scripts/model_check.py
+        - pip install .
+        - cd faraday
+        - $(alembic branches)
     rules:
         - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master|dev)$/'
           when: always
@@ -127,6 +130,13 @@ flake8:
     script:
       - pip install flake8
       - flake8 .
+
+no-format-str:
+    image: python:3
+    stage: pre_testing
+    script:
+      - pip install flynt
+      - flynt -df faraday tests
 
 pylint:
     tags:
@@ -548,10 +558,11 @@ test_hypothesis:
         when: on_success
       - when: never
 
-agent_integration:
+agent_integration_and_db_regression:
     stage: post_testing
     variables:
       FARADAY_REF: $CI_COMMIT_REF_NAME
+      FARADAY_REGRESSION: "True"
     trigger:
       project: faradaysec/devops
       strategy: depend

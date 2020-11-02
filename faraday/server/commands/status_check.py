@@ -107,26 +107,24 @@ def check_storage_permission():
 
 
 def print_config_info():
-    print('\n{white}Showing faraday server configuration'.format(white=Fore.WHITE))
-    print('{blue} {KEY}: {white}{VALUE}'.
-          format(KEY='version', VALUE=faraday.__version__, white=Fore.WHITE, blue=Fore.BLUE))
+    print(f'\n{Fore.WHITE}Showing faraday server configuration')
+    print(f"{Fore.BLUE} version: {Fore.WHITE}{faraday.__version__}")
 
     data_keys = ['bind_address', 'port', 'websocket_port', 'debug']
     for key in data_keys:
         print('{blue} {KEY}: {white}{VALUE}'.
               format(KEY=key, VALUE=getattr(faraday.server.config.faraday_server, key), white=Fore.WHITE, blue=Fore.BLUE))
 
-    print('\n{white}Showing faraday plugins data'.format(white=Fore.WHITE))
-    print('{blue} {KEY}: {white}{VALUE}'.
-          format(KEY='version', VALUE=faraday_plugins.__version__, white=Fore.WHITE, blue=Fore.BLUE))
+    print(f'\n{Fore.WHITE}Showing faraday plugins data')
+    print(f"{Fore.BLUE} version: {Fore.WHITE}{faraday_plugins.__version__}")
 
-    print('\n{white}Showing dashboard configuration'.format(white=Fore.WHITE))
+    print(f'\n{Fore.WHITE}Showing dashboard configuration')
     data_keys = ['show_vulns_by_price']
     for key in data_keys:
         print('{blue} {KEY}: {white}{VALUE}'.
               format(KEY=key, VALUE=getattr(faraday.server.config.dashboard, key), white=Fore.WHITE, blue=Fore.BLUE))
 
-    print('\n{white}Showing storage configuration'.format(white=Fore.WHITE))
+    print(f'\n{Fore.WHITE}Showing storage configuration')
     data_keys = ['path']
     for key in data_keys:
         print('{blue} {KEY}: {white}{VALUE}'.
@@ -153,8 +151,7 @@ def print_postgresql_status():
         print('[{red}-{white}] PostgreSQL is running, but needs to be 9.4 or newer, please update PostgreSQL'.\
             format(red=Fore.RED, white=Fore.WHITE))
     elif result:
-        print('[{green}+{white}] PostgreSQL is running and up to date'.\
-            format(green=Fore.GREEN, white=Fore.WHITE))
+        print(f'[{Fore.GREEN}+{Fore.WHITE}] PostgreSQL is running and up to date')
         return exit_code
 
 
@@ -164,18 +161,15 @@ def print_postgresql_other_status():
 
     lock_status = check_locks_postgresql()
     if lock_status:
-        print('[{yellow}-{white}] Warning: PostgreSQL lock detected.' \
-            .format(yellow=Fore.YELLOW, white=Fore.WHITE))
+        print(f'[{Fore.YELLOW}-{Fore.WHITE}] Warning: PostgreSQL lock detected.')
     elif lock_status == False:
-        print('[{green}+{white}] PostgreSQL lock not detected. '.\
-            format(green=Fore.GREEN, white=Fore.WHITE))
+        print(f'[{Fore.GREEN}+{Fore.WHITE}] PostgreSQL lock not detected. ')
     elif lock_status == None:
         pass
 
     encoding = check_postgresql_encoding()
     if encoding:
-        print('[{green}+{white}] PostgreSQL encoding: {db_encoding}'.\
-                format(green=Fore.GREEN, white=Fore.WHITE, db_encoding=encoding))
+        print(f'[{Fore.GREEN}+{Fore.WHITE}] PostgreSQL encoding: {encoding}')
     elif encoding == None:
         pass
 
@@ -200,11 +194,9 @@ def print_config_status():
     check_postgres()
 
     if check_storage_permission():
-        print('[{green}+{white}] /.faraday/storage -> Permission accepted' \
-            .format(green=Fore.GREEN, white=Fore.WHITE))
+        print(f'[{Fore.GREEN}+{Fore.WHITE}] /.faraday/storage -> Permission accepted')
     else:
-        print('[{red}-{white}] /.faraday/storage -> Permission denied'\
-            .format(red=Fore.RED, white=Fore.WHITE))
+        print(f'[{Fore.RED}-{Fore.WHITE}] /.faraday/storage -> Permission denied')
 
     if check_open_ports():
         print("[{green}+{white}] Port {PORT} in {ad} is open"\
@@ -217,11 +209,11 @@ def print_config_status():
 def full_status_check():
     print_config_info()
 
-    print('\n{white}Checking if postgreSQL is running...'.format(white=Fore.WHITE))
+    print(f'\n{Fore.WHITE}Checking if postgreSQL is running...')
     print_postgresql_status()
     print_postgresql_other_status()
 
-    print('\n{white}Checking if Faraday is running...'.format(white=Fore.WHITE))
+    print(f'\n{Fore.WHITE}Checking if Faraday is running...')
     print_faraday_status()
 
     print('\n{white}Checking Faraday config...{white}'.format(white=Fore.WHITE))

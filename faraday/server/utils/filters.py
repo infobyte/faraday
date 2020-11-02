@@ -279,4 +279,4 @@ class FlaskRestlessSchema(Schema):
                 return schema(many=many).load(data)
             except ValidationError:
                 continue
-        raise ValidationError('No valid schema found. data {}'.format(data))
+        raise ValidationError(f'No valid schema found. data {data}')

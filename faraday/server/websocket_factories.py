@@ -42,7 +42,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
     def onConnect(self, request):
         protocol, headers = None, {}
         # see if there already is a cookie set ..
-        logger.debug('Websocket request {0}'.format(request))
+        logger.debug(f'Websocket request {request}')
         if 'cookie' in request.headers:
             try:
                 cookie = http.cookies.SimpleCookie()
@@ -64,8 +64,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
             message = json.loads(payload)
             if message['action'] == 'JOIN_WORKSPACE':
                 if 'workspace' not in message or 'token' not in message:
-                    logger.warning('Invalid join workspace message: '
-                                   '{}'.format(message))
+                    logger.warning(f'Invalid join workspace message: {message}')
                     self.sendClose()
                     return
                 signer = itsdangerous.TimestampSigner(app.config['SECRET_KEY'],
@@ -120,7 +119,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
             if message['action'] == 'RUN_STATUS':
                 with app.app_context():
                     if 'executor_name' not in message:
-                        logger.warning('Missing executor_name param in message: ''{}'.format(message))
+                        logger.warning(f'Missing executor_name param in message: {message}')
                         return True
 
                     (agent_id,) = [
@@ -230,22 +229,22 @@ class WorkspaceServerFactory(WebSocketServerFactory):
         reactor.callLater(0.5, self.tick)
 
     def join_workspace(self, client, workspace):
-        logger.debug('Join workspace {0}'.format(workspace))
+        logger.debug(f'Join workspace {workspace}')
         if client not in self.workspace_clients[workspace]:
-            logger.debug("registered client {}".format(client.peer))
+            logger.debug(f"registered client {client.peer}")
             self.workspace_clients[workspace].append(client)
 
     def leave_workspace(self, client, workspace_name):
-        logger.debug('Leave workspace {0}'.format(workspace_name))
+        logger.debug(f'Leave workspace {workspace_name}')
         self.workspace_clients[workspace_name].remove(client)
 
     def join_agent(self, agent_connection, agent):
-        logger.info("Agent {} joined!".format(agent.id))
+        logger.info(f"Agent {agent.id} joined!")
         connected_agents[agent.id] = agent_connection
         return True
 
     def leave_agent(self, agent_connection, agent):
-        logger.info("Agent {} left".format(agent.id))
+        logger.info(f"Agent {agent.id} left")
         connected_agents.pop(agent.id)
         return True
 
@@ -256,7 +255,7 @@ class WorkspaceServerFactory(WebSocketServerFactory):
         for workspace_name, clients in self.workspace_clients.items():
             for client in clients:
                 if client == client_to_unregister:
-                    logger.debug("unregistered client from workspace {0}".format(workspace_name))
+                    logger.debug(f"unregistered client from workspace {workspace_name}")
                     self.leave_workspace(client, workspace_name)
                     return
 
@@ -264,17 +263,17 @@ class WorkspaceServerFactory(WebSocketServerFactory):
         for (key, value) in connected_agents.copy().items():
             if value == protocol:
                 del connected_agents[key]
-                logger.info("Agent {} disconnected!".format(key))
+                logger.info(f"Agent {key} disconnected!")
 
     def broadcast(self, msg):
         if isinstance(msg, str):
             msg = msg.encode('utf-8')
-        logger.debug("broadcasting prepared message '{}' ..".format(msg))
+        logger.debug(f"broadcasting prepared message '{msg}' ..")
         prepared_msg = json.loads(self.prepareMessage(msg).payload)
         if b'agent_id' not in msg:
             for client in self.workspace_clients[prepared_msg['workspace']]:
                 reactor.callFromThread(client.sendPreparedMessage, self.prepareMessage(msg))
-                logger.debug("prepared message sent to {}".format(client.peer))
+                logger.debug(f"prepared message sent to {client.peer}")
 
         if b'agent_id' in msg:
             agent_id = prepared_msg['agent_id']
@@ -284,5 +283,4 @@ class WorkspaceServerFactory(WebSocketServerFactory):
                 # The agent is offline
                 return
             reactor.callFromThread(agent_connection.sendPreparedMessage, self.prepareMessage(msg))
-            logger.debug("prepared message sent to agent id: {}".format(
-                agent_id))
+            logger.debug(f"prepared message sent to agent id: {agent_id}")

@@ -25,8 +25,7 @@ class TestActivityFeed():
         session.commit()
 
         res = test_client.get(
-            '/v2/ws/{ws_name}/activities/'
-                .format(ws_name=ws.name)
+            f'/v2/ws/{ws.name}/activities/'
             )
 
         assert res.status_code == 200
@@ -53,8 +52,7 @@ class TestActivityFeed():
         }
 
         res = test_client.put(
-                '/v2/ws/{ws_name}/activities/{id}/'
-                .format(ws_name=ws.name, id=command.id),
+                f'/v2/ws/{ws.name}/activities/{command.id}/',
                 data=data,
             )
         assert res.status_code == 200

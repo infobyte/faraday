@@ -35,14 +35,14 @@ angular.module('faradayApp')
                             <div ng-if="cf.field_type === \'choice\'"> \n\
                                 <div class="tab-pane-header">{{cf.field_display_name}}</div> \n\
                                 <div class="btn-group col-md-6 col-sm-6 col-xs-6 btn-cf-choice" ng-if="cf.field_type === \'choice\'"> \n\
-                                    <button type = "button" class="dropdown-toggle btn-change-property primary-btn btn-primary-white" data-toggle = "dropdown" id="btn-chg-choice" title="Choices">\n\
+                                    <button type = "button" class="dropdown-toggle btn-change-property primary-btn btn-primary-white no-overflow" data-toggle = "dropdown" id="btn-chg-choice" title="Choices">\n\
                                         <span ng-if="modal.data.custom_fields[cf.field_name] !== null">{{modal.data.custom_fields[cf.field_name]}}</span>\n\
                                         <span ng-if="modal.data.custom_fields[cf.field_name] === null">Select {{cf.field_display_name}}</span>\n\
                                     </button>\n\
                                     <button type="button" class="dropdown-toggle secondary-btn btn-change-property btn-secondary-white" data-toggle="dropdown" id="caret-choice" title="Choices">\n\
                                         <span> <i class="fa fa-angle-down fa-lg" aria-hidden="true"></i> </span> \n\
                                     </button> \n\
-                                        <ul class="dropdown-menu dropdown-menu-right col-md-12 dropd-cf-choice" role="menu"> \n\
+                                        <ul class="dropdown-menu dropdown-menu-right col-md-12 dropd-cf-choice no-overflow" role="menu"> \n\
                                             <li ng-repeat="choice in  parserOptions(cf.field_metadata)">\n\
                                                 <a class="ws" ng-click="modal.data.custom_fields[cf.field_name] = choice">{{choice}}</a> \n\
                                             </li>\n\

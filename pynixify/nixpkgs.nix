@@ -47,7 +47,13 @@ let
     };
 
   nixpkgs =
-    <nixpkgs>;
+
+    builtins.fetchTarball {
+      url =
+        "https://github.com/infobyte/nixpkgs/archive/ee27c439178fe7a30f5edcbe2f08f381ba30493c.tar.gz";
+      sha256 =
+        "1gmkg0ql311zrm10zapshldwfb66zvwbl6a2hxhdcvr98nkj7lys";
+    };
 
   packageOverrides =
     self: super: {

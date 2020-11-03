@@ -47,11 +47,13 @@ angular.module('faradayApp')
                 $scope.data.model = $scope.other_model;
             }
 
-            $scope.customFields.forEach(function(cf){
-                if(cf.value){
-                    $scope.data.customfields[cf.field_name] = cf.value;
-                }
-            })
+            for (const fieldName in $scope.data.customfields) {
+                $scope.customFields.forEach(function(cf){
+                    if(cf.field_name === fieldName){
+                        cf.value = $scope.data.customfields[fieldName];
+                    }
+                })
+            }
 
             if ($scope.data.easeofresolution === ""){
                 $scope.data.easeofresolution = null;

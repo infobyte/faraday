@@ -3,19 +3,19 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .service('loginSrv', ['BASEURL', '$q', function(BASEURL, $q) {
+    .service('loginSrv', ['BASEURL', '$q', '$cookies', function(BASEURL, $q, $cookies) {
         
         loginSrv = {
             is_authenticated: false,
             user_obj: null,
             last_time_checked: new Date(0),
 
-            login: function(user, pass){
+            login: function(user, pass, remember){
                 var deferred = $q.defer();
                 $.ajax({
                     type: 'POST',
                     url: BASEURL + '_api/login',
-                    data: JSON.stringify({"email": user, "password": pass}),
+                    data: JSON.stringify({"email": user, "password": pass, "remember": remember}),
                     dataType: 'json',
                     contentType: 'application/json'
                 })
@@ -84,6 +84,7 @@ angular.module('faradayApp')
                     loginSrv.user_obj = null;
                     deferred.resolve();
                 }
+                $cookies.remove('remember_token');
                 $.ajax({
                     url: BASEURL + '_api/logout',
                     type: 'GET',

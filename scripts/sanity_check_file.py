@@ -5,6 +5,7 @@ import subprocess
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--mode', choices=['diff', 'ls'], default='diff')
+parser.add_argument('--local', action='store_true', default=False)
 args = parser.parse_args()
 
 ACTUAL_BRANCH = subprocess.run(
@@ -13,6 +14,9 @@ ACTUAL_BRANCH = subprocess.run(
 ).stdout.decode().strip()
 
 BRANCH_NAME = os.environ.get("CI_COMMIT_REF_NAME", ACTUAL_BRANCH)
+if not args.local:
+    BRANCH_NAME = f"origin/{BRANCH_NAME}"
+
 PINK_FILE = "faraday/server/api/modules/reports.py"
 BLACK_FILE = "faraday/server/api/modules/jira.py"
 
@@ -43,3 +47,4 @@ if __name__ == '__main__':
         intersection = git_diff_intersection({BLACK_FILE})
     assert len(intersection) == 0, f"The {intersection} should not be in " \
                                    f"{BRANCH_NAME}"
+    assert child.returncode == 0, (child.stdout, child.returncode)

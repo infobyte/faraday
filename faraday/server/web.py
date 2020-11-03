@@ -116,7 +116,7 @@ class WebServer:
 
     def __build_websockets_resource(self):
         websocket_port = int(faraday.server.config.faraday_server.websocket_port)
-        url = '{0}:{1}/websockets'.format(self.__bind_address, websocket_port)
+        url = f'{self.__bind_address}:{websocket_port}/websockets'
         if self.__websocket_ssl_enabled:
             url = 'wss://' + url
         else:
@@ -186,14 +186,14 @@ class WebServer:
                 except error.CannotListenError:
                     logger.warn('Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
                 except Exception as ex:
-                    logger.warn('Could not start websocket, error: {}'.format(ex))
+                    logger.warn(f'Could not start websocket, error: {ex}')
             else:
                 try:
                     listenWS(self.__build_websockets_resource(), interface=self.__bind_address)
                 except error.CannotListenError:
                     logger.warn('Could not start websockets, address already open. This is ok is you wan to run multiple instances.')
                 except Exception as ex:
-                    logger.warn('Could not start websocket, error: {}'.format(ex))
+                    logger.warn(f'Could not start websocket, error: {ex}')
             logger.info('Faraday Server is ready')
             reactor.addSystemEventTrigger('before', 'shutdown', signal_handler)
             reactor.run()

@@ -45,12 +45,13 @@ angular.module('faradayApp')
             $scope.data.policyviolations = angular.copy($scope.policyviolations);
             $scope.data.refs = angular.copy($scope.references);
             $scope.data.references = $scope.data.refs.join(',');
-            $scope.customFields.forEach(function(cf){
-                if(cf.value){
-                    $scope.data.customfields[cf.field_name] = cf.value;
-                }
-            })
-
+            for (const fieldName in $scope.data.customfields) {
+                $scope.customFields.forEach(function(cf){
+                    if(cf.field_name === fieldName){
+                        cf.value = $scope.data.customfields[fieldName];
+                    }
+                })
+            }
 
             $modalInstance.close($scope.data);
         };

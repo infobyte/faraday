@@ -6,10 +6,12 @@ import os
 import shutil
 import errno
 from configparser import ConfigParser
+import logging
 
 from logging import (
     DEBUG,
     INFO,
+
 )
 from pathlib import Path
 
@@ -39,6 +41,8 @@ CONFIG_FILES = [DEFAULT_CONFIG_FILE, LOCAL_CONFIG_FILE]
 CONST_LICENSES_DB = 'faraday_licenses'
 CONST_VULN_MODEL_DB = 'cwe'
 
+logger = logging.getLogger(__name__)
+
 if not LOCAL_REPORTS_FOLDER.exists():
     try:
         LOCAL_REPORTS_FOLDER.mkdir(parents=True)
@@ -61,8 +65,7 @@ def copy_default_config_to_local():
     # Copy default config file into faraday local config
     shutil.copyfile(DEFAULT_CONFIG_FILE, LOCAL_CONFIG_FILE)
 
-    from faraday.server.utils.logger import get_logger # pylint:disable=import-outside-toplevel
-    get_logger(__name__).info(u"Local faraday-server configuration created at {}".format(LOCAL_CONFIG_FILE))
+    logger.info(f"Local faraday-server configuration created at {LOCAL_CONFIG_FILE}")
 
 
 def parse_and_bind_configuration():

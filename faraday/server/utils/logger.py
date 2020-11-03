@@ -13,16 +13,14 @@ LOG_FILE = CONST_FARADAY_HOME_PATH / 'logs' / 'faraday-server.log'
 
 MAX_LOG_FILE_SIZE = 5 * 1024 * 1024     # 5 MB
 MAX_LOG_FILE_BACKUP_COUNT = 5
-LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s {%(threadName)s} [%(filename)s:%(lineno)s - %(funcName)s()]  %(message)s'
+LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s {%(threadName)s} [pid:%(process)d] [%(filename)s:%(lineno)s - %(funcName)s()]  %(message)s'
 LOG_DATE_FORMAT = '%Y-%m-%dT%H:%M:%S%z'
-ROOT_LOGGER = u'faraday'
 LOGGING_HANDLERS = []
 LVL_SETTABLE_HANDLERS = []
 
 
 def setup_logging():
-    logger = logging.getLogger(ROOT_LOGGER)
-    logger.propagate = False
+    logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
 
     if faraday.server.config.logger_config.use_rfc5424_formatter:
@@ -53,26 +51,9 @@ def setup_file_logging(formatter):
 
 
 def add_handler(handler):
-    logger = logging.getLogger(ROOT_LOGGER)
+    logger = logging.getLogger()
     logger.addHandler(handler)
     LOGGING_HANDLERS.append(handler)
-
-
-def get_logger(obj=None):
-    """Creates a logger named by a string or an object's class name.
-     Allowing logger to additionally accept strings as names
-     for non-class loggings."""
-    if obj is None:
-        logger = logging.getLogger(ROOT_LOGGER)
-    elif isinstance(obj, str):
-        if obj != ROOT_LOGGER:
-            logger = logging.getLogger(u'{}.{}'.format(ROOT_LOGGER, obj))
-        else:
-            logger = logging.getLogger(obj)
-    else:
-        cls_name = obj.__class__.__name__
-        logger = logging.getLogger(u'{}.{}'.format(ROOT_LOGGER, cls_name))
-    return logger
 
 
 def set_logging_level(level):

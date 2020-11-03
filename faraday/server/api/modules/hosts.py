@@ -67,13 +67,15 @@ class HostSchema(AutoSchema):
                                       dump_only=True)
     versions = fields.Method('get_service_version',
                                       dump_only=True)
+    important = fields.Boolean(default=False)
 
     class Meta:
         model = Host
         fields = ('id', '_id', '_rev', 'ip', 'description', 'mac',
                   'credentials', 'default_gateway', 'metadata',
                   'name', 'os', 'owned', 'owner', 'services', 'vulns',
-                  'hostnames', 'type', 'service_summaries', 'versions'
+                  'hostnames', 'type', 'service_summaries', 'versions',
+                  'important'
                   )
 
     def get_service_summaries(self, obj):
@@ -189,7 +191,7 @@ class HostsView(PaginatedMixin,
             hosts_reader = csv.DictReader(stream)
             if set(hosts_reader.fieldnames) != FILE_HEADERS:
                 logger.error("Missing Required headers in CSV (%s)", FILE_HEADERS)
-                abort(400, "Missing Required headers in CSV (%s)" % FILE_HEADERS)
+                abort(400, f"Missing Required headers in CSV ({FILE_HEADERS})")
             hosts_created_count = 0
             hosts_with_errors_count = 0
             for host_dict in hosts_reader:
@@ -211,7 +213,7 @@ class HostsView(PaginatedMixin,
             return make_response(jsonify(hosts_created=hosts_created_count, hosts_with_errors=hosts_with_errors_count), 200)
         except Exception as e:
             logger.error("Error parsing hosts CSV (%s)", e)
-            abort(400, "Error parsing hosts CSV (%s)" % e)
+            abort(400, f"Error parsing hosts CSV ({e})")
 
 
     @route('/<host_id>/services/')
@@ -305,10 +307,12 @@ class HostsView(PaginatedMixin,
 
     def _envelope_list(self, objects, pagination_metadata=None):
         hosts = []
-        for host in objects:
+        for index, host in enumerate(objects):
+            # we use index when the filter endpoint uses group by and
+            # the _id was not used in the group by
             hosts.append({
-                'id': host['id'],
-                'key': host['id'],
+                'id': host.get('_id', index),
+                'key': host.get('_id', index),
                 'value': host
             })
         return {

@@ -184,14 +184,15 @@ def register_handlers(app):
         if logged_in:
             assert user
 
-        if not logged_in and not getattr(view, 'is_public', False):
+        if not logged_in and not getattr(view, 'is_public', False) \
+                and flask.request.method != 'OPTIONS':
             flask.abort(401)
 
         g.user = None
         if logged_in:
             g.user = user
             if user is None:
-                logger.warn("Unknown user id {}".format(session["_user_id"]))
+                logger.warn(f"Unknown user id {session['_user_id']}")
                 del flask.session['_user_id']
                 flask.abort(401)  # 403 would be better but breaks the web ui
                 return

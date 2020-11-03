@@ -306,6 +306,22 @@ class TestHostAPI:
         assert res.status_code == 200
         self.compare_results(hosts, res)
 
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_filter_restless_filter_and_group_by_os(self, test_client, session, workspace, host_factory):
+        host_factory.create_batch(10, workspace=workspace, os='Unix')
+        host_factory.create_batch(1, workspace=workspace, os='unix')
+        session.commit()
+        res = test_client.get(f'{self.url()}filter?q={{"filters":[{{"name": "os", "op": "like", "val": "%nix"}}], '
+                              f'"group_by":[{{"field": "os"}}], '
+                              f'"order_by":[{{"field": "os", "direction": "desc"}}]}}')
+        assert res.status_code == 200
+        assert len(res.json['rows']) == 2
+        assert res.json['total_rows'] == 2
+        assert 'unix' in [row['value']['os'] for row in res.json['rows']]
+        assert 'Unix' in [row['value']['os'] for row in res.json['rows']]
+
+
     def test_filter_by_os_like_ilike(self, test_client, session, workspace,
                                      second_workspace, host_factory):
         # The hosts that should be shown
@@ -608,7 +624,8 @@ class TestHostAPI:
             "os":"Microsoft Windows Server 2008 R2 Standard Service Pack 1",
             "id": 4000,
             "icon":"windows",
-            "versions": []}
+            "versions": [],
+            "important": False}
 
         res = test_client.put(self.url(host, workspace=host.workspace), data=raw_data)
         assert res.status_code == 200
@@ -640,7 +657,8 @@ class TestHostAPI:
             u'services': 0,
             u'service_summaries': [],
             u'vulns': 0,
-            u"versions": []}
+            u"versions": [],
+            u'important': False}
 
     def test_add_hosts_from_csv(self, session, test_client, csrf_token):
         ws = WorkspaceFactory.create(name='abc')
@@ -656,7 +674,7 @@ class TestHostAPI:
             'csrf_token': csrf_token
         }
         headers = {'Content-type': 'multipart/form-data'}
-        res = test_client.post('/v2/ws/{0}/hosts/bulk_create/'.format(ws.name),
+        res = test_client.post(f'/v2/ws/{ws.name}/hosts/bulk_create/',
                                data=data, headers=headers, use_json_data=False)
         assert res.status_code == 200
         assert res.json['hosts_created'] == expected_created_hosts
@@ -671,7 +689,7 @@ class TestHostAPI:
         hosts_ids = [host_1.id, host_2.id]
         request_data = {'hosts_ids': hosts_ids}
 
-        delete_response = test_client.delete('/v2/ws/{0}/hosts/bulk_delete/'.format(ws.name), data=request_data)
+        delete_response = test_client.delete(f'/v2/ws/{ws.name}/hosts/bulk_delete/', data=request_data)
 
         deleted_hosts = delete_response.json['deleted_hosts']
         host_count_after_delete = db.session.query(Host).filter(
@@ -686,7 +704,7 @@ class TestHostAPI:
         ws = WorkspaceFactory.create(name="abc")
         request_data = {'hosts_ids': []}
 
-        delete_response = test_client.delete('/v2/ws/{0}/hosts/bulk_delete/'.format(ws.name), data=request_data)
+        delete_response = test_client.delete(f'/v2/ws/{ws.name}/hosts/bulk_delete/', data=request_data)
 
         assert delete_response.status_code == 400
 
@@ -699,7 +717,7 @@ class TestHostAPI:
 
         # Try to delete workspace_2's host from workspace_1
         request_data = {'hosts_ids': [host_of_ws_2.id]}
-        url = '/v2/ws/{0}/hosts/bulk_delete/'.format(workspace_1.name)
+        url = f'/v2/ws/{workspace_1.name}/hosts/bulk_delete/'
         delete_response = test_client.delete(url, data=request_data)
 
         assert delete_response.json['deleted_hosts'] == 0
@@ -707,7 +725,7 @@ class TestHostAPI:
     def test_bulk_delete_hosts_invalid_characters_in_request(self, test_client):
         ws = WorkspaceFactory.create(name="abc")
         request_data = {'hosts_ids': [-1, 'test']}
-        delete_response = test_client.delete('/v2/ws/{0}/hosts/bulk_delete/'.format(ws.name), data=request_data)
+        delete_response = test_client.delete(f'/v2/ws/{ws.name}/hosts/bulk_delete/', data=request_data)
 
         assert delete_response.json['deleted_hosts'] == 0
 
@@ -722,7 +740,7 @@ class TestHostAPI:
         headers = [('content-type', 'text/xml')]
 
         delete_response = test_client.delete(
-            '/v2/ws/{0}/hosts/bulk_delete/'.format(ws.name),
+            f'/v2/ws/{ws.name}/hosts/bulk_delete/',
             data=request_data,
             headers=headers)
 
@@ -910,7 +928,7 @@ class TestHostAPIGeneric(ReadWriteAPITests, PaginationTestsMixin):
             "os":"Unknown",
         }
 
-        res = test_client.put('v2/ws/{0}/hosts/{1}/'.format(host.workspace.name, host.id), data=data)
+        res = test_client.put(f'v2/ws/{host.workspace.name}/hosts/{host.id}/', data=data)
         assert res.status_code == 200
 
         assert session.query(Hostname).filter_by(host=host).count() == 1
@@ -1041,7 +1059,7 @@ def test_hypothesis(host_with_hostnames, test_client, session):
     def send_api_request(raw_data):
 
         ws_name = host_with_hostnames.workspace.name
-        res = test_client.post('/v2/ws/{0}/vulns/'.format(ws_name),
+        res = test_client.post(f'/v2/ws/{ws_name}/vulns/',
                                data=raw_data)
         assert res.status_code in [201, 400, 409]
 

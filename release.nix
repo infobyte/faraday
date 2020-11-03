@@ -82,7 +82,7 @@ in { dockerName ? "registry.gitlab.com/faradaysec/faraday", dockerTag ? version
   pynixify = let
     src = builtins.fetchGit {
       url = "https://github.com/cript0nauta/pynixify.git";
-      ref = "refs/tags/v0.1";
+      ref = "refs/heads/main";
     };
 
     original =

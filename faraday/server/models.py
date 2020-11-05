@@ -123,16 +123,36 @@ class CustomEngineConnector(_EngineConnector):
 db = SQLAlchemy()
 
 
+def _make_active_agents_count_property():
+    query = select([func.count(text('1'))])
+
+    from_clause = table('association_workspace_and_agents_table').join(
+        Agent, text('agent.id = association_workspace_and_agents_table.agent_id '
+                    'and association_workspace_and_agents_table.workspace_id = workspace.id')
+    )
+    query = query.select_from(from_clause)
+
+    if db.session.bind.dialect.name == 'sqlite':
+        # SQLite has no "true" expression, we have to use the integer 1
+        # instead
+        query = query.where(text('agent.active = 1'))
+    elif db.session.bind.dialect.name == 'postgresql':
+        # I suppose that we're using PostgreSQL, that can't compare
+        # booleans with integers
+        query = query.where(text('agent.active = true'))
+
+    return query
+
+
 def _make_generic_count_property(parent_table, children_table, where=None):
     """Make a deferred by default column property that counts the
     amount of childrens of some parent object"""
-    children_id_field = '{}.id'.format(children_table)
-    parent_id_field = '{}.id'.format(parent_table)
-    children_rel_field = '{}.{}_id'.format(children_table, parent_table)
+    children_id_field = f'{children_table}.id'
+    parent_id_field = f'{parent_table}.id'
+    children_rel_field = f'{children_table}.{parent_table}_id'
     query = (select([func.count(text(children_id_field))]).
              select_from(table(children_table)).
-             where(text('{} = {}'.format(
-                 children_rel_field, parent_id_field))))
+             where(text(f'{children_rel_field} = {parent_id_field}')))
     if where is not None:
         query = query.where(where)
     return column_property(query, deferred=True)
@@ -173,7 +193,7 @@ def _make_vuln_count_property(type_=None, confirmed=None,
         # Don't do queries using this style!
         # This can cause SQL injection vulnerabilities
         # In this case type_ is supplied from a whitelist so this is safe
-        query = query.where(text("vulnerability.type = '%s'" % type_))
+        query = query.where(text(f"vulnerability.type = '{type_}'"))
     if confirmed:
         if db.session.bind.dialect.name == 'sqlite':
             # SQLite has no "true" expression, we have to use the integer 1
@@ -612,7 +632,7 @@ class CommandObject(db.Model):
 
 
 def _make_created_objects_sum(object_type_filter):
-    where_conditions = ["command_object.object_type= '%s'" % object_type_filter]
+    where_conditions = [f"command_object.object_type= '{object_type_filter}'"]
     where_conditions.append("command_object.command_id = command.id")
     where_conditions.append("command_object.workspace_id = command.workspace_id")
     return column_property(
@@ -629,12 +649,12 @@ def _make_created_objects_sum_joined(object_type_filter, join_filters):
     :param join_filters: Filter for vulnerability fields.
     :return: column property with sum of created objects.
     """
-    where_conditions = ["command_object.object_type= '%s'" % object_type_filter]
+    where_conditions = [f"command_object.object_type= '{object_type_filter}'"]
     where_conditions.append("command_object.command_id = command.id")
     where_conditions.append("vulnerability.id = command_object.object_id ")
     where_conditions.append("command_object.workspace_id = vulnerability.workspace_id")
     for attr, filter_value in join_filters.items():
-        where_conditions.append("vulnerability.{0} = {1}".format(attr, filter_value))
+        where_conditions.append(f"vulnerability.{attr} = {filter_value}")
     return column_property(
         select([func.sum(CommandObject.created)]). \
             select_from(table('command_object')). \
@@ -763,6 +783,8 @@ class Host(Metadata):
     vulnerability_low_generic_count = _make_vuln_generic_count_by_severity('low')
     vulnerability_info_generic_count = _make_vuln_generic_count_by_severity('informational')
     vulnerability_unclassified_generic_count = _make_vuln_generic_count_by_severity('unclassified')
+
+    important = Column(Boolean, nullable=False, default=False)
 
     @classmethod
     def query_with_count(cls, confirmed, host_ids, workspace_name):
@@ -908,8 +930,7 @@ class Service(Metadata):
             version = " (" + self.version + ")"
         else:
             version = ""
-        return "(%s/%s) %s%s" % (self.port, self.protocol, self.name,
-                                 version or "")
+        return f"({self.port}/{self.protocol}) {self.name}{version or ''}"
 
 
 class VulnerabilityGeneric(VulnerabilityABC):
@@ -1444,6 +1465,7 @@ class Workspace(Metadata):
     vulnerability_code_count = query_expression()
     vulnerability_standard_count = query_expression()
     vulnerability_total_count = query_expression()
+    active_agents_count = query_expression()
 
     workspace_permission_instances = relationship(
         "WorkspacePermission",
@@ -1473,6 +1495,11 @@ class Workspace(Metadata):
                     FROM host
                     WHERE host.workspace_id = workspace.id
                 ) AS host_count,
+                (SELECT count(*)
+                        FROM association_workspace_and_agents_table as assoc
+                        JOIN agent ON agent.id = assoc.agent_id and assoc.workspace_id = workspace.id
+                        WHERE agent.active is TRUE
+                ) AS active_agents_count,
                 p_4.count_3 as open_services,
                 p_4.count_4 as total_service_count,
                 p_5.count_5 as vulnerability_web_count,
@@ -1650,13 +1677,15 @@ class User(db.Model, UserMixin):
         super(User, self).__init__(*args, **kwargs)
 
     def __repr__(self):
-        return '<%sUser: %s>' % ('LDAP ' if self.is_ldap else '',
-                                 self.username)
+        return f"<{'LDAP ' if self.is_ldap else ''}User: {self.username}>"
 
     def get_security_payload(self):
         return {
             "username": self.username,
-            "name": self.email
+            "name": self.username,
+            "email": self.email,
+            "role": self.role,
+            "roles": [self.role],
         }
 
 

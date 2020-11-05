@@ -258,7 +258,7 @@ class TestSearcherRules():
             'id': 'APPLY_TEMPLATE',
             'model': 'Vulnerability',
             'object': "severity=low",
-            'actions': ["--UPDATE:template={}".format(template_id)]
+            'actions': [f"--UPDATE:template={template_id}"]
         }]
 
         searcher.process(rules)

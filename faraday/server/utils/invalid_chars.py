@@ -90,7 +90,7 @@ def remove_invalid_chars(c):
                     (0xDFFFE, 0xDFFFF), (0xEFFFE, 0xEFFFF), (0xFFFFE, 0xFFFFF),
                     (0x10FFFE, 0x10FFFF) ]
 
-    illegal_ranges = ["%s-%s" % (chr(low), chr(high))
+    illegal_ranges = [f"{chr(low)}-{chr(high)}"
                   for (low, high) in illegal_unichrs
                   if low < sys.maxunicode]
 

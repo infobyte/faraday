@@ -1,0 +1,1 @@
+Add Remember Me option

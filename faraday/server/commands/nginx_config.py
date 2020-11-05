@@ -3,6 +3,7 @@ import click
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 
+
 def generate_nginx_config(fqdn, port, ws_port, ssl_certificate, ssl_key, multitenant_url):
     click.echo(f"Generating Faraday nginx config for server: {fqdn}")
     click.echo("Faraday")

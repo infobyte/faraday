@@ -264,7 +264,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         session.add_all(vulns)
         session.commit()
         raw_data = {'name': 'something', 'description': ''}
-        res = test_client.put('/v2/ws/{}/'.format(workspace.name),
+        res = test_client.put(f'/v2/ws/{workspace.name}/',
                               data=raw_data)
         assert res.status_code == 200
         assert res.json['stats']['web_vulns'] == 5
@@ -293,7 +293,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         ]
         raw_data = {'name': 'something', 'description': 'test',
                     'scope': desired_scope}
-        res = test_client.put('/v2/ws/{}/'.format(workspace.name), data=raw_data)
+        res = test_client.put(f'/v2/ws/{workspace.name}/', data=raw_data)
         assert res.status_code == 200
         assert set(res.json['scope']) == set(desired_scope)
         assert set(s.name for s in workspace.scope) == set(desired_scope)
@@ -306,12 +306,10 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         workspace.active = False
         session.add(workspace)
         session.commit()
-        res = test_client.put('{url}{id}/activate/'
-                    .format(url=self.url(),
-                    id=workspace.name))
+        res = test_client.put(f'{self.url()}{workspace.name}/activate/')
         assert res.status_code == 200
 
-        res = test_client.get('{url}{id}/'.format(url=self.url(),id=workspace.name))
+        res = test_client.get(f'{self.url()}{workspace.name}/')
         active = res.json.get('active')
         assert active == True
 
@@ -322,12 +320,10 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         workspace.active = True
         session.add(workspace)
         session.commit()
-        res = test_client.put('{url}{id}/deactivate/'
-                    .format(url=self.url(),
-                    id=workspace.name))
+        res = test_client.put(f'{self.url()}{workspace.name}/deactivate/')
         assert res.status_code == 200
 
-        res = test_client.get('{url}{id}/'.format(url=self.url(),id=workspace.name))
+        res = test_client.get(f'{self.url()}{workspace.name}/')
         active = res.json.get('active')
         assert active == False
 

@@ -104,7 +104,7 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
         credential = self.factory.create(host=host, service=None,
                                          workspace=self.workspace)
         session.commit()
-        res = test_client.get(self.url(workspace=credential.workspace) + '?host_id={0}'.format(credential.host.id))
+        res = test_client.get(self.url(workspace=credential.workspace) + f'?host_id={credential.host.id}')
         assert res.status_code == 200
         assert [cred['value']['parent'] for cred in res.json['rows']] == [credential.host.id]
         assert [cred['value']['parent_type'] for cred in res.json['rows']] == [u'Host']
@@ -113,7 +113,7 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
         service = ServiceFactory.create()
         credential = self.factory.create(service=service, host=None, workspace=service.workspace)
         session.commit()
-        res = test_client.get(self.url(workspace=credential.workspace) + '?service={0}'.format(credential.service.id))
+        res = test_client.get(self.url(workspace=credential.workspace) + f'?service={credential.service.id}')
         assert res.status_code == 200
         assert [cred['value']['parent'] for cred in res.json['rows']] == [credential.service.id]
         assert [cred['value']['parent_type'] for cred in res.json['rows']] == [u'Service']
@@ -249,10 +249,10 @@ class TestCredentialsAPIGeneric(ReadWriteAPITests):
         credential4 = self.factory.create(service=service2, host=None, workspace=second_workspace)
 
         credentials_target = [
-            "{}/{}".format(credential.service.host.ip, credential.service.name),
-            "{}".format(credential2.host.ip),
-            "{}".format(credential3.host.ip),
-            "{}/{}".format(credential4.service.host.ip, credential4.service.name),
+            f"{credential.service.host.ip}/{credential.service.name}",
+            f"{credential2.host.ip}",
+            f"{credential3.host.ip}",
+            f"{credential4.service.host.ip}/{credential4.service.name}",
         ]
 
         # Desc order

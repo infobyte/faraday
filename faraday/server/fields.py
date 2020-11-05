@@ -50,7 +50,7 @@ class FaradayUploadedFile(UploadedFile):
             content = content.encode('utf-8')
         image_format = imghdr.what(None, h=content[:32])
         if image_format:
-            content_type = 'image/{0}'.format(image_format)
+            content_type = f'image/{image_format}'
             self.generate_thumbnail(content)
         return super(FaradayUploadedFile, self).process_content(
                 content, filename, content_type)
@@ -83,7 +83,7 @@ class FaradayUploadedFile(UploadedFile):
         output.seek(0)
 
         thumb_path, thumb_id = self.store_content(output,
-                                                  'thumb.%s' % self.thumbnail_format.lower())
+                                                  f'thumb.{self.thumbnail_format.lower()}')
         self['thumb_id'] = thumb_id
         self['thumb_path'] = thumb_path
 

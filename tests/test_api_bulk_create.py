@@ -571,7 +571,7 @@ def test_creates_command_object_on_duplicates(
 def test_bulk_create_endpoint(session, workspace, test_client, logged_user):
     assert count(Host, workspace) == 0
     assert count(VulnerabilityGeneric, workspace) == 0
-    url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
+    url = f'v2/ws/{workspace.name}/bulk_create/'
     host_data_ = host_data.copy()
     service_data_ = service_data.copy()
     service_data_['vulnerabilities'] = [vuln_data]
@@ -638,7 +638,7 @@ def test_bulk_create_endpoint_run_over_closed_vuln(session, workspace, test_clie
 
 @pytest.mark.usefixtures('logged_user')
 def test_bulk_create_endpoint_without_host_ip(session, workspace, test_client):
-    url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
+    url = f'v2/ws/{workspace.name}/bulk_create/'
     host_data_ = host_data.copy()
     host_data_.pop('ip')
     res = test_client.post(url, data=dict(hosts=[host_data_]))
@@ -646,7 +646,7 @@ def test_bulk_create_endpoint_without_host_ip(session, workspace, test_client):
 
 
 def test_bulk_create_endpoints_fails_without_auth(session, workspace, test_client):
-    url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
+    url = f'v2/ws/{workspace.name}/bulk_create/'
     res = test_client.post(url, data=dict(hosts=[host_data]))
     assert res.status_code == 401
     assert count(Host, workspace) == 0
@@ -655,11 +655,11 @@ def test_bulk_create_endpoints_fails_without_auth(session, workspace, test_clien
 @pytest.mark.parametrize('token_type', ['agent', 'token'])
 def test_bulk_create_endpoints_fails_with_invalid_token(
         session, token_type, workspace, test_client):
-    url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
+    url = f'v2/ws/{workspace.name}/bulk_create/'
     res = test_client.post(
         url,
         data=dict(hosts=[host_data]),
-        headers=[("authorization", "{} 1234".format(token_type))]
+        headers=[("authorization", f"{token_type} 1234")]
     )
     if token_type == 'token':
         # TODO change expected status code to 403
@@ -677,11 +677,11 @@ def test_bulk_create_with_agent_token_in_different_workspace_fails(
     session.add(agent)
     session.commit()
     assert agent.token
-    url = 'v2/ws/{}/bulk_create/'.format(second_workspace.name)
+    url = f'v2/ws/{second_workspace.name}/bulk_create/'
     res = test_client.post(
         url,
         data=dict(hosts=[host_data]),
-        headers=[("authorization", "agent {}".format(agent.token))]
+        headers=[("authorization", f"agent {agent.token}")]
     )
     assert res.status_code == 404
     assert b'No such workspace' in res.data
@@ -694,11 +694,11 @@ def test_bulk_create_with_not_existent_workspace_fails(
     session.add(agent)
     session.commit()
     assert agent.token
-    url = 'v2/ws/{}/bulk_create/'.format("im_a_incorrect_ws")
+    url = "v2/ws/im_a_incorrect_ws/bulk_create/"
     res = test_client.post(
         url,
         data=dict(hosts=[host_data]),
-        headers=[("authorization", "agent {}".format(agent.token))]
+        headers=[("authorization", f"agent {agent.token}")]
     )
     assert res.status_code == 404
     assert b'No such workspace' in res.data
@@ -711,11 +711,11 @@ def test_bulk_create_endpoint_with_agent_token_without_execution_id(session, age
     session.commit()
     for workspace in agent.workspaces:
         assert count(Host, workspace) == 0
-        url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
+        url = f'v2/ws/{workspace.name}/bulk_create/'
         res = test_client.post(
             url,
             data=dict(hosts=[host_data]),
-            headers=[("authorization", "agent {}".format(agent.token))]
+            headers=[("authorization", f"agent {agent.token}")]
         )
         assert res.status_code == 400
         assert b"\'execution_id\' argument expected" in res.data
@@ -738,11 +738,11 @@ def test_bulk_create_endpoint_with_agent_token(session, agent_execution,
         session.commit()
 
         assert count(Host, workspace) == 0
-        url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
+        url = f'v2/ws/{workspace.name}/bulk_create/'
         res = test_client.post(
             url,
             data=dict(hosts=[host_data], execution_id=-1),
-            headers=[("authorization", "agent {}".format(agent.token))]
+            headers=[("authorization", f"agent {agent.token}")]
         )
         assert res.status_code == 400
 
@@ -751,7 +751,7 @@ def test_bulk_create_endpoint_with_agent_token(session, agent_execution,
         res = test_client.post(
             url,
             data=dict(hosts=[host_data], execution_id=extra_agent_execution.id),
-            headers=[("authorization", "agent {}".format(agent.token))]
+            headers=[("authorization", f"agent {agent.token}")]
         )
         assert res.status_code == 400
         assert count(Host, workspace) == 0
@@ -759,7 +759,7 @@ def test_bulk_create_endpoint_with_agent_token(session, agent_execution,
         res = test_client.post(
             url,
             data=dict(hosts=[host_data], execution_id=agent_execution.id),
-            headers=[("authorization", "agent {}".format(agent.token))]
+            headers=[("authorization", f"agent {agent.token}")]
         )
         assert res.status_code == 201, res.json
         assert count(Host, workspace) == 1
@@ -782,11 +782,11 @@ def test_bulk_create_endpoint_with_agent_token_with_param(session, agent_executi
         session.add(agent_execution)
         session.commit()
         assert count(Host, workspace) == 0
-        url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
+        url = f'v2/ws/{workspace.name}/bulk_create/'
         res = test_client.post(
             url,
             data=dict(hosts=[host_data], execution_id=agent_execution.id),
-            headers=[("authorization", "agent {}".format(agent.token))]
+            headers=[("authorization", f"agent {agent.token}")]
         )
         assert res.status_code == 201
         assert count(Host, workspace) == 1
@@ -810,11 +810,11 @@ def test_bulk_create_endpoint_with_agent_token_readonly_workspace(
     session.commit()
     for workspace in agent.workspaces:
 
-        url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
+        url = f'v2/ws/{workspace.name}/bulk_create/'
         res = test_client.post(
             url,
             data=dict(hosts=[host_data]),
-            headers=[("authorization", "agent {}".format(agent.token))]
+            headers=[("authorization", f"agent {agent.token}")]
         )
         assert res.status_code == 403
 
@@ -827,18 +827,18 @@ def test_bulk_create_endpoint_with_agent_token_disabled_workspace(
         session.add(workspace)
     session.commit()
     for workspace in agent.workspaces:
-        url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
+        url = f'v2/ws/{workspace.name}/bulk_create/'
         res = test_client.post(
             url,
             data=dict(hosts=[host_data]),
-            headers=[("authorization", "agent {}".format(agent.token))]
+            headers=[("authorization", f"agent {agent.token}")]
         )
         assert res.status_code == 403
 
 @pytest.mark.usefixtures('logged_user')
 def test_bulk_create_endpoint_raises_400_with_no_data(
         session, test_client, workspace):
-    url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
+    url = f'v2/ws/{workspace.name}/bulk_create/'
     res = test_client.post(
         url,
         data="",
@@ -851,7 +851,7 @@ def test_bulk_create_endpoint_raises_400_with_no_data(
 def test_bulk_create_endpoint_with_vuln_run_date(session, workspace, test_client):
     assert count(Host, workspace) == 0
     assert count(VulnerabilityGeneric, workspace) == 0
-    url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
+    url = f'v2/ws/{workspace.name}/bulk_create/'
     run_date = datetime.now(timezone.utc) - timedelta(days=30)
     host_data_copy = host_data.copy()
     vuln_data_copy = vuln_data.copy()
@@ -868,7 +868,7 @@ def test_bulk_create_endpoint_with_vuln_run_date(session, workspace, test_client
 def test_bulk_create_endpoint_with_vuln_future_run_date(session, workspace, test_client):
     assert count(Host, workspace) == 0
     assert count(VulnerabilityGeneric, workspace) == 0
-    url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
+    url = f'v2/ws/{workspace.name}/bulk_create/'
     run_date = datetime.now(timezone.utc) + timedelta(days=10)
     host_data_copy = host_data.copy()
     vuln_data_copy = vuln_data.copy()
@@ -886,7 +886,7 @@ def test_bulk_create_endpoint_with_vuln_future_run_date(session, workspace, test
 def test_bulk_create_endpoint_with_invalid_vuln_run_date(session, workspace, test_client):
     assert count(Host, workspace) == 0
     assert count(VulnerabilityGeneric, workspace) == 0
-    url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
+    url = f'v2/ws/{workspace.name}/bulk_create/'
     host_data_copy = host_data.copy()
     vuln_data_copy = vuln_data.copy()
     vuln_data_copy['run_date'] = "INVALID_VALUE"
@@ -902,7 +902,7 @@ def test_bulk_create_endpoint_with_invalid_vuln_run_date(session, workspace, tes
 def test_bulk_create_endpoint_fails_with_list_in_NullToBlankString(session, workspace, test_client, logged_user):
     assert count(Host, workspace) == 0
     assert count(VulnerabilityGeneric, workspace) == 0
-    url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
+    url = f'v2/ws/{workspace.name}/bulk_create/'
     host_data_ = host_data.copy()
     host_data_['services'] = [service_data]
     host_data_['credentials'] = [credential_data]

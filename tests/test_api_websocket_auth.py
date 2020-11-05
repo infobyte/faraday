@@ -13,20 +13,17 @@ from faraday.server.api.modules.websocket_auth import decode_agent_websocket_tok
 class TestWebsocketAuthEndpoint:
 
     def test_not_logged_in_request_fail(self, test_client, workspace):
-        res = test_client.post('/v2/ws/{}/websocket_token/'.format(
-            workspace.name))
+        res = test_client.post(f'/v2/ws/{workspace.name}/websocket_token/')
         assert res.status_code == 401
 
     @pytest.mark.usefixtures('logged_user')
     def test_get_method_not_allowed(self, test_client, workspace):
-        res = test_client.get('/v2/ws/{}/websocket_token/'.format(
-            workspace.name))
+        res = test_client.get(f'/v2/ws/{workspace.name}/websocket_token/')
         assert res.status_code == 405
 
     @pytest.mark.usefixtures('logged_user')
     def test_succeeds(self, test_client, workspace):
-        res = test_client.post('/v2/ws/{}/websocket_token/'.format(
-            workspace.name))
+        res = test_client.post(f'/v2/ws/{workspace.name}/websocket_token/')
         assert res.status_code == 200
 
         # A token for that workspace should be generated,

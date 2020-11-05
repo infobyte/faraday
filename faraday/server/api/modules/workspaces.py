@@ -16,7 +16,7 @@ from sqlalchemy.orm import (
 from sqlalchemy.orm.exc import NoResultFound
 
 
-from faraday.server.models import db, Workspace, _make_vuln_count_property, Vulnerability
+from faraday.server.models import db, Workspace, _make_vuln_count_property, Vulnerability, _make_active_agents_count_property
 from faraday.server.schemas import (
     JSTimestampField,
     MutableField,
@@ -70,12 +70,15 @@ class WorkspaceSchema(AutoSchema):
     update_date = fields.DateTime(attribute='update_date',
                            dump_only=True)
 
+    active_agents_count = fields.Integer(dump_only=True)
+
 
     class Meta:
         model = Workspace
         fields = ('_id', 'id', 'customer', 'description', 'active',
                   'duration', 'name', 'public', 'scope', 'stats',
-                  'create_date', 'update_date', 'readonly')
+                  'create_date', 'update_date', 'readonly',
+                  'active_agents_count')
 
     @post_load
     def post_load_duration(self, data, **kwargs):
@@ -175,16 +178,18 @@ class WorkspaceView(ReadWriteView, FilterMixin):
                      Workspace.vulnerability_code_count,
                     _make_vuln_count_property('vulnerability_code',
                                           extra_query=extra_query,
-                                          use_column_property=False)
-            ),
-
-
-        )
+                                          use_column_property=False),
+               ),
+               with_expression(
+                   Workspace.active_agents_count,
+                   _make_active_agents_count_property(),
+               ),
+            )
 
         try:
             obj = query.one()
         except NoResultFound:
-            flask.abort(404, 'Object with name "%s" not found' % object_id)
+            flask.abort(404, f'Object with name "{object_id}" not found')
         return obj
 
     def _perform_create(self, data, **kwargs):

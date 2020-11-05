@@ -42,6 +42,8 @@ class WorkspaceSummarySchema(Schema):
                                 attribute='vulnerability_code_count')
     std_vulns = fields.Integer(dump_only=True, allow_none=False,
                                attribute='vulnerability_standard_count')
+    critical_vulns = fields.Integer(dump_only=True, allow_none=False,
+                               attribute='vulnerability_critical_severity_count')
     total_vulns = fields.Integer(dump_only=True, allow_none=False,
                                  attribute='vulnerability_total_count')
 
@@ -184,6 +186,12 @@ class WorkspaceView(ReadWriteView):
                    Workspace.active_agents_count,
                    _make_active_agents_count_property(),
                ),
+               with_expression(
+                   Workspace.vulnerability_critical_severity_count,
+                   _make_vuln_count_property(None,
+                                          extra_query="severity = 'critical'",
+                                          use_column_property=False),
+               )
             )
 
         try:

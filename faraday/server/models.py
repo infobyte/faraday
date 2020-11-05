@@ -1465,6 +1465,7 @@ class Workspace(Metadata):
     vulnerability_code_count = query_expression()
     vulnerability_standard_count = query_expression()
     vulnerability_total_count = query_expression()
+    vulnerability_critical_severity_count = query_expression()
     active_agents_count = query_expression()
 
     workspace_permission_instances = relationship(

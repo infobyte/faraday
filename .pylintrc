@@ -279,7 +279,8 @@ disable=blacklisted-name,
         bad-thread-instantiation,
         map-builtin-not-iterating,
         unused-import,
-        comparison-with-callable
+        comparison-with-callable,
+        unused-variable
 
 
 

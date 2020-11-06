@@ -3,8 +3,8 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('loginCtrl', ['$scope', '$location', '$cookies', 'loginSrv', 'BASEURL',
-        function($scope, $location, $cookies, loginSrv, BASEURL) {
+    .controller('loginCtrl', ['$scope', '$location', '$cookies', 'loginSrv', 'BASEURL' ,'$uibModal',
+    function($scope, $location, $cookies, loginSrv, BASEURL, $uibModal) {
 
         $scope.data = {
             "user": null,
@@ -42,6 +42,19 @@ angular.module('faradayApp')
                 if(auth) $location.path('/');
             });
         });
+
+        $scope._forgotPassword = function () {
+            var modal = $uibModal.open({
+                templateUrl: 'scripts/auth/partials/forgotPassword.html',
+                controller: 'forgotPasswordCtrl',
+                size: ''
+            });
+
+            modal.result.then(function () {
+                debugger;
+            });
+        };
+
 
     }]);
 

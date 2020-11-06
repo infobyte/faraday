@@ -27,6 +27,9 @@ from flask_security.utils import (
     get_message,
     verify_and_update_password,
     verify_hash)
+
+from flask_mail import Mail
+
 from flask_kvsession import KVSessionExtension
 from simplekv.fs import FilesystemStore
 from simplekv.decorator import PrefixDecorator
@@ -90,6 +93,9 @@ def register_blueprints(app):
     from faraday.server.api.modules.preferences import preferences_api  # pylint:disable=import-outside-toplevel
     from faraday.server.api.modules.export_data import export_data_api  # pylint:disable=import-outside-toplevel
 
+    #Custom reset password
+    from faraday.server.api.modules.auth import auth
+
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(activityfeed_api)
     app.register_blueprint(credentials_api)
@@ -114,6 +120,7 @@ def register_blueprints(app):
     app.register_blueprint(searchfilter_api)
     app.register_blueprint(preferences_api)
     app.register_blueprint(export_data_api)
+    app.register_blueprint(auth)
 
 
 def check_testing_configuration(testing, app):
@@ -298,10 +305,17 @@ def create_app(db_connection_string=None, testing=None):
         'SECURITY_POST_LOGIN_VIEW': '/_api/session',
         'SECURITY_POST_LOGOUT_VIEW': '/_api/login',
         'SECURITY_POST_CHANGE_VIEW': '/_api/change',
+        'SECURITY_RESET_PASSWORD_TEMPLATE': '/security/reset.html',
+        'SECURITY_POST_RESET_VIEW': '/',
+        'SECURITY_SEND_PASSWORD_RESET_EMAIL':True,
+        #For testing porpouse
+        'SECURITY_EMAIL_SENDER': "noreply@infobytesec.com",
         'SECURITY_CHANGEABLE': True,
+        'SECURITY_RECOVERABLE': True,
         'SECURITY_SEND_PASSWORD_CHANGE_EMAIL': False,
         'SECURITY_MSG_USER_DOES_NOT_EXIST': login_failed_message,
         'SECURITY_TOKEN_AUTHENTICATION_HEADER': 'Authorization',
+
 
         # The line bellow should not be necessary because of the
         # CustomLoginForm, but i'll include it anyway.
@@ -371,6 +385,11 @@ def create_app(db_connection_string=None, testing=None):
 
     app.view_functions['security.login'].is_public = True
     app.view_functions['security.logout'].is_public = True
+
+    # For password recovery of Flask Security
+    app.view_functions['security.forgot_password'].is_public = True
+    app.view_functions['security.reset_password'].is_public = True
+
 
     app.debug = faraday.server.config.is_debug_mode()
     minify_json_output(app)

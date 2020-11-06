@@ -1,0 +1,1 @@
+Performance Metrics of process_report with (<ReportsManager(Thread-3, initial)>, 'abc', 1, PosixPath('/home/oargueyo/.faraday/uploaded_reports/O1CM9FJT8OTO_nmap_report.xml'), 'Nmap', 1); memory before: 261,996,544; memory after: 261,996,544; memory consumed: 0; exec time: 00:00:00; loadavg: [134.0, 123.0, 92.0]

@@ -18,6 +18,8 @@ from autobahn.twisted.websocket import (
     listenWS
 )
 
+from flask_mail import Mail
+
 from OpenSSL.SSL import Error as SSLError
 
 import faraday.server.config
@@ -34,6 +36,13 @@ from faraday.server.websocket_factories import (
 
 
 app = create_app()  # creates a Flask(__name__) app
+# After 'Create app'
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USE_SSL'] = True
+app.config['MAIL_USERNAME'] = 'oargueyo@infobytesec.com'
+app.config['MAIL_PASSWORD'] = 'wssxykyctnaicbek'
+mail = Mail(app)
 logger = logging.getLogger(__name__)
 
 

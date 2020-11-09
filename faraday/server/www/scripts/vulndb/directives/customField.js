@@ -44,7 +44,7 @@ angular.module('faradayApp')
                                     </button> \n\
                                         <ul class="dropdown-menu dropdown-menu-right col-md-12 dropd-cf-choice" role="menu"> \n\
                                             <li ng-repeat="choice in  parserOptions(cf.field_metadata)">\n\
-                                                <a class="ws" ng-click="data.customfields[cf.field_name] = choice">{{choice}}</a> \n\
+                                                <a class="ws no-overflow" ng-click="data.customfields[cf.field_name] = choice">{{choice}}</a> \n\
                                             </li>\n\
                                         </ul>\n\
                                 </div> \n\

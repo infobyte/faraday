@@ -7,7 +7,7 @@
 , fetchPypi
 , flask
 , flask-babelex
-, flask-login
+, flask_login
 , flask_mail
 , flask_principal
 , flask_wtf
@@ -41,7 +41,7 @@ buildPythonPackage rec {
   propagatedBuildInputs =
     [
       flask
-      flask-login
+      flask_login
       flask_mail
       flask_principal
       flask_wtf

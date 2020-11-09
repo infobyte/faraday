@@ -5,6 +5,7 @@ import os
 import sys
 import socket
 import argparse
+import logging
 
 from alembic.runtime.migration import MigrationContext
 
@@ -19,7 +20,7 @@ from faraday.server.web import app
 from alembic.script import ScriptDirectory
 from alembic.config import Config
 
-logger = faraday.server.utils.logger.get_logger(faraday.server.utils.logger.ROOT_LOGGER)
+logger = logging.getLogger(__name__)
 
 init()
 
@@ -34,7 +35,7 @@ def setup_environment(check_deps=False):
 def is_server_running(port):
     pid = daemonize.is_server_running(port)
     if pid is not None:
-        logger.warn(f"Faraday Server is already running. PID: {pid}")
+        logger.warning(f"Faraday Server is already running. PID: {pid}")
         return True
     else:
         return False
@@ -50,7 +51,7 @@ def check_postgresql():
     with app.app_context():
         try:
             if not db.session.query(Workspace).count():
-                logger.warn('No workspaces found')
+                logger.warning('No workspaces found')
         except sqlalchemy.exc.ArgumentError:
             logger.error(
                 f'\n{Fore.RED}Please check your PostgreSQL connection string in the file ~/.faraday/config/server.ini on your home directory.{Fore.WHITE} \n'

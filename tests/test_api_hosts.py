@@ -306,6 +306,22 @@ class TestHostAPI:
         assert res.status_code == 200
         self.compare_results(hosts, res)
 
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_filter_restless_filter_and_group_by_os(self, test_client, session, workspace, host_factory):
+        host_factory.create_batch(10, workspace=workspace, os='Unix')
+        host_factory.create_batch(1, workspace=workspace, os='unix')
+        session.commit()
+        res = test_client.get(f'{self.url()}filter?q={{"filters":[{{"name": "os", "op": "like", "val": "%nix"}}], '
+                              f'"group_by":[{{"field": "os"}}], '
+                              f'"order_by":[{{"field": "os", "direction": "desc"}}]}}')
+        assert res.status_code == 200
+        assert len(res.json['rows']) == 2
+        assert res.json['total_rows'] == 2
+        assert 'unix' in [row['value']['os'] for row in res.json['rows']]
+        assert 'Unix' in [row['value']['os'] for row in res.json['rows']]
+
+
     def test_filter_by_os_like_ilike(self, test_client, session, workspace,
                                      second_workspace, host_factory):
         # The hosts that should be shown

@@ -9,19 +9,18 @@ from alembic import op
 import sqlalchemy as sa
 
 
-# revision identifiers, used by Alembic.
-from faraday.server.models import User
-
 revision = 'f8a44acd0e41'
 down_revision = '526aa91cac98'
 branch_labels = None
 depends_on = None
 
+ROLES = ['admin', 'pentester', 'client']
+
 
 def upgrade():
-    old_type = sa.Enum(*User.ROLES, name='user_roles')
+    old_type = sa.Enum(*ROLES, name='user_roles')
 
-    new_types = list(set(User.ROLES + ['asset_owner']))
+    new_types = list(set(ROLES + ['asset_owner']))
     new_options = sorted(new_types)
     new_type = sa.Enum(*new_options, name='user_roles')
 
@@ -39,7 +38,7 @@ def upgrade():
 
 
 def downgrade():
-    new_types = list(set(User.ROLES + ['asset_owner']))
+    new_types = list(set(ROLES + ['asset_owner']))
     new_options = sorted(new_types)
     new_type = sa.Enum(*new_options, name='user_roles')
 
@@ -48,7 +47,7 @@ def downgrade():
     tcr = sa.sql.table('faraday_user',
                        sa.Column('role', new_type, nullable=False))
 
-    old_type = sa.Enum(*User.ROLES, name='user_roles')
+    old_type = sa.Enum(*ROLES, name='user_roles')
 
     # Convert 'asset_owner' status into 'client'
     op.execute(tcr.update().where(tcr.c.role == u'asset_owner')

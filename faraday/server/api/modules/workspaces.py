@@ -23,7 +23,7 @@ from faraday.server.schemas import (
     PrimaryKeyRelatedField,
     SelfNestedField,
 )
-from faraday.server.api.base import ReadWriteView, AutoSchema
+from faraday.server.api.base import ReadWriteView, AutoSchema, FilterMixin
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +92,7 @@ class WorkspaceSchema(AutoSchema):
         return data
 
 
-class WorkspaceView(ReadWriteView):
+class WorkspaceView(ReadWriteView, FilterMixin):
     route_base = 'ws'
     lookup_field = 'name'
     lookup_field_type = str

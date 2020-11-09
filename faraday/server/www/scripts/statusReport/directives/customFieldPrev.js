@@ -44,9 +44,9 @@ angular.module('faradayApp')
                                     <button type="button" class="dropdown-toggle secondary-btn btn-change-property btn-secondary-white" data-toggle="dropdown" id="caret-choice" title="Choices"> \n\
                                         <span><i class="fa fa-angle-down fa-lg" aria-hidden="true"></i> </span> \n\
                                     </button> \n\
-                                    <ul class="dropdown-menu dropdown-menu-right col-md-12 dropd-cf-choice no-overflow" role="menu"> \n\
+                                    <ul class="dropdown-menu dropdown-menu-right col-md-12 dropd-cf-choice" role="menu"> \n\
                                         <li ng-repeat="choice in  parserOptions(cf.field_metadata)"> \n\
-                                        <a class="ws" href="javascript:;" ng-click="onChangeChoiceCf(choice)">{{choice}}</a> \n\
+                                        <a class="ws no-overflow" href="javascript:;" ng-click="onChangeChoiceCf(choice)">{{choice}}</a> \n\
                                         </li> \n\
                                     </ul> \n\
                                  </div> \n\

@@ -1066,4 +1066,5 @@ ul#nav-tabs-container {
 
 .no-overflow {
     overflow: hidden;
+    text-overflow: ellipsis;
 }

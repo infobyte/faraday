@@ -408,7 +408,8 @@ generate_deb:
         - make gem
         - gem install --no-ri --no-rdoc fpm-1.11.0.gem
         - cd ../../
-        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server deb
+        - POSTFIX=$(echo "$CI_COMMIT_BRANCH" | awk '{split($1,a,"_");split($1,b,"/"); if (a[3]!="y2k") if (b[2]=="dev"||b[2]=="master") print ""; else print "~"a[3]; else exit 1;}')
+        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG)~$((`date '+%s%N'`/1000))$POSTFIX server deb
         - mv faraday-server_amd64.deb ../../faraday-server_amd64.deb
     needs:
       - job: generate_build_file

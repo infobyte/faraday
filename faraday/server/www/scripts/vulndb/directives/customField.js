@@ -35,7 +35,7 @@ angular.module('faradayApp')
                             <div ng-if="cf.field_type === \'choice\'"> \n\
                                 <div class="tab-pane-header">{{cf.field_display_name}}</div> \n\
                                 <div class="btn-group col-md-6 col-sm-6 col-xs-6 btn-cf-choice" ng-if="cf.field_type === \'choice\'"> \n\
-                                    <button type = "button" class="dropdown-toggle btn-change-property primary-btn btn-primary-white" data-toggle = "dropdown" id="btn-chg-choice" title="Choices">\n\
+                                    <button type = "button" class="dropdown-toggle btn-change-property primary-btn btn-primary-white no-overflow" data-toggle = "dropdown" id="btn-chg-choice" title="Choices">\n\
                                         <span ng-if="data.customfields[cf.field_name] !== null">{{data.customfields[cf.field_name]}}</span>\n\
                                         <span ng-if="data.customfields[cf.field_name] === null">Select {{cf.field_display_name}}</span>\n\
                                     </button>\n\

@@ -37,7 +37,7 @@ angular.module('faradayApp')
                             <div ng-if="cf.field_type === \'choice\'"> \n\
                                 <div class="tab-pane-header"><i class="fa fa-spinner fa-spin" ng-show="isUpdatingVuln === true && fieldToEdit === cf.field_name"></i>  {{cf.field_display_name}}</div> \n\
                                 <div class="btn-group col-md-6 col-sm-6 col-xs-6 btn-cf-choice" ng-if="cf.field_type === \'choice\'"> \n\
-                                    <button type="button" class="dropdown-toggle btn-change-property primary-btn btn-primary-white"  data-toggle = "dropdown" id = "btn-chg-choice" title = "Choices">\n\
+                                    <button type="button" class="dropdown-toggle btn-change-property primary-btn btn-primary-white no-overflow"  data-toggle = "dropdown" id = "btn-chg-choice" title = "Choices">\n\
                                         <span ng-if="lastClickedVuln.custom_fields[cf.field_name] !== null" > {{lastClickedVuln.custom_fields[cf.field_name]}}</span>\n\
                                         <span ng-if="lastClickedVuln.custom_fields[cf.field_name] === null">Select {{cf.field_display_name}}</span> \n\
                                     </button> \n\
@@ -46,7 +46,7 @@ angular.module('faradayApp')
                                     </button> \n\
                                     <ul class="dropdown-menu dropdown-menu-right col-md-12 dropd-cf-choice" role="menu"> \n\
                                         <li ng-repeat="choice in  parserOptions(cf.field_metadata)"> \n\
-                                        <a class="ws" href="javascript:;" ng-click="onChangeChoiceCf(choice)">{{choice}}</a> \n\
+                                        <a class="ws no-overflow" href="javascript:;" ng-click="onChangeChoiceCf(choice)">{{choice}}</a> \n\
                                         </li> \n\
                                     </ul> \n\
                                  </div> \n\

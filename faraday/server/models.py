@@ -221,7 +221,53 @@ def _make_vuln_count_property(type_=None, confirmed=None,
         return query
 
 
-def _make_vuln_generic_count_by_severity(severity):
+def count_vulnerability_severities(query,
+                     model,
+                     all_severities=False,
+                     critical=False,
+                     informational=False,
+                     high=False,
+                     medium=False,
+                     low=False,
+                     unclassified=False):
+    """
+    We assume that vulnerability_SEVERITYNAME_count attr exists in the model passed by param
+    :param query: Alchemy query to append options
+    :param model: model name
+    :param all_severities: All severities will be counted
+    :param critical: Critical severities will be counted if True
+    :param informational: Informational severities will be counted if True
+    :param high: High severities will be counted if True
+    :param low: Low severities will be counted if True
+    :param unclassified: Unclassified severities will be counted  if True
+    :return: Query with options added
+    """
+
+    severities = {
+        'informational': True if all_severities else informational,
+        'critical': True if all_severities else critical,
+        'high': True if all_severities else high,
+        'medium': True if all_severities else medium,
+        'low': True if all_severities else low,
+        'unclassified': True if all_severities else unclassified
+    }
+
+    for severity_name, filter_severity in severities.items():
+        if filter_severity:
+            query = query.options(
+                with_expression(
+                    getattr(model, f'vulnerability_{severity_name}_count'),
+                    _make_vuln_count_property(None,
+                                              extra_query=f"severity = '{severity_name}'",
+                                              use_column_property=False,
+                                              get_hosts_vulns=False)
+                )
+            )
+    return query
+
+
+
+def _make_vuln_generic_count_by_severity(severity, tablename="host"):
     assert severity in ['critical', 'high', 'medium', 'low', 'informational', 'unclassified']
 
     vuln_count = (
@@ -1465,8 +1511,14 @@ class Workspace(Metadata):
     vulnerability_code_count = query_expression()
     vulnerability_standard_count = query_expression()
     vulnerability_total_count = query_expression()
-    vulnerability_critical_severity_count = query_expression()
     active_agents_count = query_expression()
+
+    vulnerability_informational_count = query_expression()
+    vulnerability_medium_count = query_expression()
+    vulnerability_high_count = query_expression()
+    vulnerability_critical_count = query_expression()
+    vulnerability_low_count = query_expression()
+    vulnerability_unclassified_count = query_expression()
 
     workspace_permission_instances = relationship(
         "WorkspacePermission",

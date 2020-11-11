@@ -16,7 +16,8 @@ from sqlalchemy.orm import (
 from sqlalchemy.orm.exc import NoResultFound
 
 
-from faraday.server.models import db, Workspace, _make_vuln_count_property, Vulnerability, _make_active_agents_count_property
+from faraday.server.models import db, Workspace, _make_vuln_count_property, Vulnerability, \
+    _make_active_agents_count_property, count_vulnerability_severities
 from faraday.server.schemas import (
     JSTimestampField,
     MutableField,
@@ -43,7 +44,17 @@ class WorkspaceSummarySchema(Schema):
     std_vulns = fields.Integer(dump_only=True, allow_none=False,
                                attribute='vulnerability_standard_count')
     critical_vulns = fields.Integer(dump_only=True, allow_none=False,
-                               attribute='vulnerability_critical_severity_count')
+                               attribute='vulnerability_critical_count')
+    info_vulns = fields.Integer(dump_only=True, allow_none=False,
+                               attribute='vulnerability_informational_count')
+    high_vulns = fields.Integer(dump_only=True, allow_none=False,
+                               attribute='vulnerability_high_count')
+    medium_vulns = fields.Integer(dump_only=True, allow_none=False,
+                               attribute='vulnerability_medium_count')
+    low_vulns = fields.Integer(dump_only=True, allow_none=False,
+                               attribute='vulnerability_low_count')
+    unclassified_vulns = fields.Integer(dump_only=True, allow_none=False,
+                               attribute='vulnerability_unclassified_count')
     total_vulns = fields.Integer(dump_only=True, allow_none=False,
                                  attribute='vulnerability_total_count')
 
@@ -186,13 +197,8 @@ class WorkspaceView(ReadWriteView):
                    Workspace.active_agents_count,
                    _make_active_agents_count_property(),
                ),
-               with_expression(
-                   Workspace.vulnerability_critical_severity_count,
-                   _make_vuln_count_property(None,
-                                          extra_query="severity = 'critical'",
-                                          use_column_property=False),
-               )
             )
+        query = count_vulnerability_severities(query, Workspace, all_severities=True)
 
         try:
             obj = query.one()

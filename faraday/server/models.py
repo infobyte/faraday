@@ -1559,6 +1559,12 @@ class Workspace(Metadata):
                 p_5.count_6 as vulnerability_code_count,
                 p_5.count_7 as vulnerability_standard_count,
                 p_5.count_8 as vulnerability_total_count,
+                p_5.count_9 as vulnerability_critical_count,
+                p_5.count_10 as vulnerability_high_count,
+                p_5.count_11 as vulnerability_medium_count,
+                p_5.count_12 as vulnerability_low_ccount,
+                p_5.count_13 as vulnerability_informational_count,
+                p_5.count_14 as vulnerability_unclassified_count,
                 workspace.create_date AS workspace_create_date,
                 workspace.update_date AS workspace_update_date,
                 workspace.id AS workspace_id,
@@ -1574,12 +1580,24 @@ class Workspace(Metadata):
                 workspace.creator_id AS workspace_creator_id,
                 (SELECT {concat_func}(scope.name, ',') FROM scope where scope.workspace_id=workspace.id) as scope_raw
             FROM workspace
-            LEFT JOIN (SELECT w.id as wid, COUNT(case when service.id IS NOT NULL and service.status = 'open' then 1 else null end) as count_3, COUNT(case when service.id IS NOT NULL then 1 else null end) AS count_4
+            LEFT JOIN (SELECT w.id as wid,
+             COUNT(case when service.id IS NOT NULL and service.status = 'open' then 1 else null end) as count_3,
+              COUNT(case when service.id IS NOT NULL then 1 else null end) AS count_4
                     FROM service
                     RIGHT JOIN workspace w ON service.workspace_id = w.id
                     GROUP BY w.id
                 ) AS p_4 ON p_4.wid = workspace.id
-            LEFT JOIN (SELECT w.id as w_id, COUNT(case when vulnerability.type = 'vulnerability_web' then 1 else null end) as count_5, COUNT(case when vulnerability.type = 'vulnerability_code' then 1 else null end) AS count_6, COUNT(case when vulnerability.type = 'vulnerability' then 1 else null end) as count_7, COUNT(case when vulnerability.id IS NOT NULL then 1 else null end) AS count_8
+            LEFT JOIN (SELECT w.id as w_id,
+             COUNT(case when vulnerability.type = 'vulnerability_web' then 1 else null end) as count_5,
+             COUNT(case when vulnerability.type = 'vulnerability_code' then 1 else null end) AS count_6,
+             COUNT(case when vulnerability.type = 'vulnerability' then 1 else null end) as count_7,
+             COUNT(case when vulnerability.id IS NOT NULL then 1 else null end) AS count_8,
+             COUNT(case when vulnerability.severity = 'critical' then 1 else null end) as count_9,
+             COUNT(case when vulnerability.severity = 'high' then 1 else null end) as count_10,
+             COUNT(case when vulnerability.severity = 'medium' then 1 else null end) as count_11,
+             COUNT(case when vulnerability.severity = 'medium' then 1 else null end) as count_12,
+             COUNT(case when vulnerability.severity = 'informational' then 1 else null end) as count_13,
+             COUNT(case when vulnerability.severity = 'unclassified' then 1 else null end) as count_14
                     FROM vulnerability
                     RIGHT JOIN workspace w ON vulnerability.workspace_id = w.id
                     WHERE 1=1 {0}
@@ -1613,6 +1631,7 @@ class Workspace(Metadata):
             query += ' WHERE ' + ' AND '.join(filters)
         # query += " GROUP BY workspace.id "
         query += " ORDER BY workspace.name ASC"
+
         return db.session.execute(text(query), params)
 
     def set_scope(self, new_scope):

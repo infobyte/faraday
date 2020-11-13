@@ -1,0 +1,45 @@
+generate_build_file:
+    image: registry.gitlab.com/faradaysec/devops
+    stage: pre_build
+    script:
+        - "/bin/mkdir faraday_copy"
+        - "/usr/bin/rsync -aq --exclude 'faraday_copy' --exclude '.cache' . faraday_copy"
+        - "/bin/tar -zcf faraday.tar.gz faraday_copy"
+    rules:
+      - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
+        when: on_success
+      - if: '$CI_COMMIT_TAG || $BUILD_TEST || $FULL_TEST || $DAILY_TEST'
+        when: on_success
+      - when: never
+    artifacts:
+        name: 'faraday'
+        paths:
+            - "faraday.tar.gz"
+        expire_in: 15 days
+
+build_nix_python3:
+  image: nixorg/nix
+  stage: pre_build
+  script:
+    - nix-env -if pynixify/nixpkgs.nix -A cachix
+    - mkdir -p ~/.config/cachix
+    - export USER=$(whoami)
+    - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
+    - cachix use faradaysec
+    - nix-build
+    - tar cf /py3.tar $(nix-store --query --requisites $(readlink result))
+    - mkdir -p /opt/faraday
+    - cp -r $(readlink result)/* /opt/faraday
+    - tar rvf /py3.tar /opt/faraday
+    - mv /py3.tar $CI_PROJECT_DIR
+  artifacts:
+    name: python3
+    paths:
+      - py3.tar
+    expire_in: 15 days # in the future we don't need to expire this.
+  rules:
+    - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
+      when: on_success
+    - if: '$CI_COMMIT_TAG || $BUILD_TEST || $FULL_TEST || $DAILY_TEST'
+      when: on_success
+    - when: never

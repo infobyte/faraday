@@ -1,0 +1,89 @@
+merge_conflict_check:
+    tags:
+        - faradaytests
+    image: python:3
+    stage: pre_testing
+    allow_failure: true
+    script:
+        - git config --global user.email "you@example.com"
+        - git config --global user.name "Mergerbot"
+        - python3 scripts/merge-conflict-detector.py
+    rules:
+        - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master|dev)$/'
+          when: on_success
+        - when: never
+
+sanity_check:
+    tags:
+        - faradaytests
+    image: python:3
+    stage: pre_testing
+    script:
+        - bash scripts/sanity_check_commit.sh
+        - scripts/sanity_check_file.py --mode=ls
+    rules:
+        - when: on_success
+
+migration_sanity_check:
+    tags:
+        - faradaytests
+    image: python:3
+    stage: pre_testing
+    script:
+        - scripts/model_check.py
+        - pip install .
+        - cd faraday
+        - $(alembic branches)
+    rules:
+        - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master|dev)$/'
+          when: always
+        - when: never
+
+bandit:
+    tags:
+        - faradaytests
+    image: python:3
+    stage: pre_testing
+    script:
+      - pip3 install virtualenv
+      - virtualenv -p python3 faraday_venv
+      - source faraday_venv/bin/activate
+      - pip3 install bandit
+      - "bandit -r ${CI_PROJECT_DIR}/faraday --format custom --skip B101 --msg-template \
+          \"{abspath}:{line}: {test_id}[bandit]: {severity}: {msg}\""
+
+build_and_push_to_cachix:
+    tags:
+        - faradaytests
+    image: nixorg/nix
+    stage: pre_testing
+    variables:
+      # Note: this size has to fit both our community, professional and corporate versions
+      MAX_CLOSURE_SIZE_IN_MB: 850
+    script:
+        - nix-env -if pynixify/nixpkgs.nix -A cachix
+        - nix-env -if pynixify/nixpkgs.nix -A gawk
+        - mkdir -p ~/.config/cachix
+        - export USER=$(whoami)
+        - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
+        - cachix use faradaysec
+        - nix-build | cachix push faradaysec
+        - ./scripts/check-closure-size ./result
+    rules:
+      - if: '$FULL_TEST || $DAILY_TEST'
+        when: on_success
+      - when: always
+
+flake8:
+    image: python:3
+    stage: pre_testing
+    script:
+      - pip install flake8
+      - flake8 .
+
+no-format-str:
+    image: python:3
+    stage: pre_testing
+    script:
+      - pip install flynt
+      - flynt -df faraday tests

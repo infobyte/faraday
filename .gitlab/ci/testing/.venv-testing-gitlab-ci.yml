@@ -1,0 +1,96 @@
+.unit_tests_base:
+    tags:
+        - faradaytests
+    stage: testing
+    coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
+    script:
+        - export LC_ALL=C.UTF-8
+        - export LANG=C.UTF-8
+        - mkdir -p ~/.faraday/config
+        - cp tests/data/server.ini ~/.faraday/config
+        - mkdir run_from
+        - source faraday_venv/bin/activate
+        - cd run_from && pytest ../tests -v --capture=sys --cov=../faraday/server --color=yes --disable-warnings --connection-string=postgresql+psycopg2://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB
+    needs: [] # Speed up tests
+    artifacts:
+        when: on_failure
+        paths:
+            - ~/.faraday/logs/faraday-server.log
+
+.latest_unit_test_base:
+  extends: .unit_tests_base
+  before_script:
+      - pip install virtualenv
+      - virtualenv faraday_venv
+      - source faraday_venv/bin/activate
+      - pip install .
+      - pip install -r requirements_dev.txt
+      - pip install pytest-cov
+      - pip install pyyaml
+  after_script:
+      - source faraday_venv/bin/activate
+      - pip freeze
+  allow_failure: true
+  rules:
+      #- if: '$FULL_TEST || $DAILY_TEST || $ALPHA_TEST'
+      - if: '$ALPHA_TEST' # FOR NOW, ASKED TO NOT CHARGE CI WORKER
+        when: on_success
+      - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master|dev)$/'
+        when: never # FOR NOW, ASKED TO NOT CHARGE CI WORKER
+        #when: on_success
+      - when: never
+
+
+.alpha_unit_test_base:
+  extends: .unit_tests_base
+  before_script:
+      - pip install virtualenv
+      - virtualenv faraday_venv
+      - source faraday_venv/bin/activate
+      - pip install --pre .
+      - pip install --pre -r requirements_dev.txt
+      - pip install --pre pytest-cov
+      - pip install --pre pyyaml
+  after_script:
+    - source faraday_venv/bin/activate
+    - pip freeze
+  allow_failure: true
+  rules:
+      #- if: '$FULL_TEST || $DAILY_TEST || $ALPHA_TEST'
+      - if: '$ALPHA_TEST' # FOR NOW, ASKED TO FIX #6474 first
+        when: on_success
+      - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master|dev)$/'
+        when: never # FOR NOW, ASKED TO FIX #6474 first
+        #when: on_success
+      - when: never
+
+unit_test 3.7:
+    extends: .latest_unit_test_base
+    image: python:3.7
+
+unit_test 3.8:
+    extends: .latest_unit_test_base
+    image: python:3.8
+
+unit_test 3.9:
+    extends: .latest_unit_test_base
+    image: python:3.9-rc
+
+alpha_unit_test 3.7:
+    extends: .alpha_unit_test_base
+    image: python:3.7
+
+alpha_unit_test 3.8:
+    extends: .alpha_unit_test_base
+    image: python:3.8
+    rules:
+      #- if: '$FULL_TEST || $DAILY_TEST || $ALPHA_TEST'
+      - if: '$ALPHA_TEST'
+        when: on_success
+      - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master|dev)$/'
+        when: never #on_success REACTIVATE WHEN HAVE TIME TO CHECK
+      - when: never
+
+alpha_unit_test 3.9:
+    extends: .alpha_unit_test_base
+    image: python:3.9-rc

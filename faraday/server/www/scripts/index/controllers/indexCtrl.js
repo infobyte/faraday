@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('indexCtrl', 
+    .controller('indexCtrl',
         ['$scope', '$uibModal', 'indexFact', 'BASEURL',
         function($scope, $uibModal, indexFact, BASEURL) {
         	indexFact.getConf().then(function(conf) {
@@ -21,6 +21,14 @@ angular.module('faradayApp')
                 $scope.base_url = BASEURL;
                 var modal = $uibModal.open({
                     templateUrl: 'scripts/commons/partials/modalAbout.html',
+                    scope: $scope
+                });
+            };
+
+            $scope.extras = function() {
+                $scope.base_url = BASEURL;
+                var modal = $uibModal.open({
+                    templateUrl: 'scripts/commons/partials/modalExtras.html',
                     scope: $scope
                 });
             };

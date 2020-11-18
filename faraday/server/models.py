@@ -1562,7 +1562,7 @@ class Workspace(Metadata):
                 p_5.count_9 as vulnerability_critical_count,
                 p_5.count_10 as vulnerability_high_count,
                 p_5.count_11 as vulnerability_medium_count,
-                p_5.count_12 as vulnerability_low_ccount,
+                p_5.count_12 as vulnerability_low_count,
                 p_5.count_13 as vulnerability_informational_count,
                 p_5.count_14 as vulnerability_unclassified_count,
                 workspace.create_date AS workspace_create_date,
@@ -1595,7 +1595,7 @@ class Workspace(Metadata):
              COUNT(case when vulnerability.severity = 'critical' then 1 else null end) as count_9,
              COUNT(case when vulnerability.severity = 'high' then 1 else null end) as count_10,
              COUNT(case when vulnerability.severity = 'medium' then 1 else null end) as count_11,
-             COUNT(case when vulnerability.severity = 'medium' then 1 else null end) as count_12,
+             COUNT(case when vulnerability.severity = 'low' then 1 else null end) as count_12,
              COUNT(case when vulnerability.severity = 'informational' then 1 else null end) as count_13,
              COUNT(case when vulnerability.severity = 'unclassified' then 1 else null end) as count_14
                     FROM vulnerability

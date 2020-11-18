@@ -198,7 +198,7 @@ class WorkspaceView(ReadWriteView):
                    _make_active_agents_count_property(),
                ),
             )
-        query = count_vulnerability_severities(query, Workspace, all_severities=True)
+        query = count_vulnerability_severities(query, Workspace, status=status, confirmed=confirmed, all_severities=True)
 
         try:
             obj = query.one()

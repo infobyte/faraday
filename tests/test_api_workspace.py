@@ -38,7 +38,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
                         session,
                         querystring):
         vulns = vulnerability_factory.create_batch(8, workspace=self.first_object,
-                                                   confirmed=False, status='open', severity='informational')
+                                                   confirmed=False, status='open', severity='critical')
 
         vulns += vulnerability_factory.create_batch(3, workspace=self.first_object,
                                                     confirmed=True, status='closed', severity='critical')
@@ -55,7 +55,8 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert res.json['stats']['code_vulns'] == 0
         assert res.json['stats']['web_vulns'] == 2
         assert res.json['stats']['std_vulns'] == 0
-        # assert res.json['stats']['critical_vulns'] == 3
+        assert res.json['stats']['critical_vulns'] == 0
+        assert res.json['stats']['info_vulns'] == 2
         assert res.json['stats']['total_vulns'] == 2
 
 
@@ -84,7 +85,8 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert res.json['stats']['code_vulns'] == 0
         assert res.json['stats']['web_vulns'] == 0
         assert res.json['stats']['std_vulns'] == 3
-        # assert res.json['stats']['critical_vulns'] == 0
+        assert res.json['stats']['critical_vulns'] == 0
+        assert res.json['stats']['info_vulns'] == 3
         assert res.json['stats']['total_vulns'] == 3
 
     @pytest.mark.parametrize('querystring', [

@@ -223,6 +223,8 @@ def _make_vuln_count_property(type_=None, confirmed=None,
 
 def count_vulnerability_severities(query,
                      model,
+                     status=None,
+                     confirmed=None,
                      all_severities=False,
                      critical=False,
                      informational=False,
@@ -244,23 +246,29 @@ def count_vulnerability_severities(query,
     """
 
     severities = {
-        'informational': True if all_severities else informational,
-        'critical': True if all_severities else critical,
-        'high': True if all_severities else high,
-        'medium': True if all_severities else medium,
-        'low': True if all_severities else low,
-        'unclassified': True if all_severities else unclassified
+        'informational': all_severities or informational,
+        'critical': all_severities or critical,
+        'high': all_severities or high,
+        'medium': all_severities or medium,
+        'low': all_severities or low,
+        'unclassified': all_severities or unclassified
     }
+
+    extra_query = None
+    if status and status in Vulnerability.STATUSES:
+        extra_query = f"status = '{status}'"
 
     for severity_name, filter_severity in severities.items():
         if filter_severity:
+            _extra_query = f"{extra_query} AND severity = '{severity_name}'" if extra_query else f"severity = '{severity_name}'"
             query = query.options(
                 with_expression(
                     getattr(model, f'vulnerability_{severity_name}_count'),
                     _make_vuln_count_property(None,
-                                              extra_query=f"severity = '{severity_name}'",
+                                              extra_query=_extra_query,
                                               use_column_property=False,
-                                              get_hosts_vulns=False)
+                                              get_hosts_vulns=False,
+                                              confirmed=confirmed)
                 )
             )
     return query

@@ -625,7 +625,8 @@ class TestHostAPI:
             "id": 4000,
             "icon":"windows",
             "versions": [],
-            "important": False}
+            "important": False,
+        }
 
         res = test_client.put(self.url(host, workspace=host.workspace), data=raw_data)
         assert res.status_code == 200
@@ -658,7 +659,17 @@ class TestHostAPI:
             u'service_summaries': [],
             u'vulns': 0,
             u"versions": [],
-            u'important': False}
+            u'important': False,
+            u'severity_counts': {
+                u'critical': None,
+                u'high': None,
+                u'host_id': host.id,
+                u'info': None,
+                u'med': None,
+                u'total': None,
+                u'unclassified': None
+            }
+        }
 
     def test_add_hosts_from_csv(self, session, test_client, csrf_token):
         ws = WorkspaceFactory.create(name='abc')

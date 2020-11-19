@@ -84,7 +84,7 @@ class HostSchema(AutoSchema):
     service_summaries = fields.Method('get_service_summaries', dump_only=True)
     versions = fields.Method('get_service_version', dump_only=True)
     important = fields.Boolean(default=False)
-    severity_counts = SelfNestedField(HostCountSchema())
+    severity_counts = SelfNestedField(HostCountSchema(), dump_only=True)
 
     class Meta:
         model = Host
@@ -152,10 +152,6 @@ class HostsView(PaginatedMixin,
                    Host.open_service_count,
                    Host.vulnerability_count]
     get_joinedloads = [Host.hostnames, Host.services, Host.update_user]
-
-    def index(self, workspace_name, **kwargs):
-        query = self._get_base_query(workspace_name=workspace_name)
-        return self._envelope_list(self._dump(query.all(), route_kwargs=kwargs, many=True))
 
     def _get_base_query(self, workspace_name):
         return Host.query_with_count(None, None, workspace_name)

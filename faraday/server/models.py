@@ -221,25 +221,28 @@ def _make_vuln_count_property(type_=None, confirmed=None,
         return query
 
 
-def count_vulnerability_severities(query,
-                     model,
-                     status=None,
-                     confirmed=None,
-                     all_severities=False,
-                     critical=False,
-                     informational=False,
-                     high=False,
-                     medium=False,
-                     low=False,
-                     unclassified=False):
+def count_vulnerability_severities(query: str,
+                                   model: db.Model,
+                                   status: str = None,
+                                   confirmed: bool = None,
+                                   all_severities: bool = False,
+                                   critical: bool = False,
+                                   informational: bool = False,
+                                   high: bool = False,
+                                   medium: bool = False,
+                                   low: bool = False,
+                                   unclassified: bool = False):
     """
     We assume that vulnerability_SEVERITYNAME_count attr exists in the model passed by param
     :param query: Alchemy query to append options
-    :param model: model name
+    :param model: model class
+    :param status: vulnerability status
+    :param confirmed: if vuln is confirmed or not
     :param all_severities: All severities will be counted
     :param critical: Critical severities will be counted if True
     :param informational: Informational severities will be counted if True
     :param high: High severities will be counted if True
+    :param medium: Medium severities will be counted if True
     :param low: Low severities will be counted if True
     :param unclassified: Unclassified severities will be counted  if True
     :return: Query with options added
@@ -260,7 +263,8 @@ def count_vulnerability_severities(query,
 
     for severity_name, filter_severity in severities.items():
         if filter_severity:
-            _extra_query = f"{extra_query} AND severity = '{severity_name}'" if extra_query else f"severity = '{severity_name}'"
+            _extra_query = f"{extra_query} AND severity = '{severity_name}'" \
+                if extra_query else f"severity = '{severity_name}'"
             query = query.options(
                 with_expression(
                     getattr(model, f'vulnerability_{severity_name}_count'),

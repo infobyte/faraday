@@ -526,8 +526,8 @@ class TestHostAPI:
 
         host = host_factory.create(workspace=workspace)
         service = service_factory.create(host=host, workspace=workspace)
-        vulnerability_factory.create(service=service, host=None, workspace=workspace)
-        vulnerability_factory.create(service=None, host=host, workspace=workspace)
+        vulnerability_factory.create(service=service, host=None, workspace=workspace, severity="low")
+        vulnerability_factory.create(service=None, host=host, workspace=workspace, severity="critical")
 
         session.commit()
 
@@ -536,6 +536,12 @@ class TestHostAPI:
         json_host = list(filter(lambda json_host: json_host['value']['id'] == host.id, res.json['rows']))[0]
         # the host has one vuln associated. another one via service.
         assert json_host['value']['vulns'] == 2
+        assert json_host['value']['severity_counts']['critical'] == 1
+        assert json_host['value']['severity_counts']['low'] == 1
+        assert json_host['value']['severity_counts']['info'] == 0
+        assert json_host['value']['severity_counts']['unclassified'] == 0
+        assert json_host['value']['severity_counts']['med'] == 0
+        assert json_host['value']['severity_counts']['high'] == 0
 
     def test_host_services_vuln_count_verification(self, test_client, session,
                                                    workspace, host_factory, vulnerability_factory,
@@ -666,6 +672,7 @@ class TestHostAPI:
                 u'host_id': host.id,
                 u'info': None,
                 u'med': None,
+                u'low': None,
                 u'total': None,
                 u'unclassified': None
             }

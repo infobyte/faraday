@@ -50,6 +50,8 @@ class HostCountSchema(Schema):
                               attribute='vulnerability_high_count')
     med = fields.Integer(dump_only=True, allow_none=False,
                               attribute='vulnerability_med_count')
+    low = fields.Integer(dump_only=True, allow_none=False,
+                              attribute='vulnerability_low_count')
     info = fields.Integer(dump_only=True, allow_none=False,
                               attribute='vulnerability_info_count')
     unclassified = fields.Integer(dump_only=True, allow_none=False,

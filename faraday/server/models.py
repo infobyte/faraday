@@ -1,6 +1,7 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+import logging
 import operator
 import string
 from datetime import datetime
@@ -55,6 +56,7 @@ from faraday.server.utils.database import (
     get_object_type_for,
     is_unique_constraint_violation)
 
+logger = logging.getLogger(__name__)
 
 NonBlankColumn = partial(Column, nullable=False,
                          info={'allow_blank': False})
@@ -258,8 +260,11 @@ def count_vulnerability_severities(query: str,
     }
 
     extra_query = None
-    if status and status in Vulnerability.STATUSES:
-        extra_query = f"status = '{status}'"
+    if status:
+        if status in Vulnerability.STATUSES:
+            extra_query = f"status = '{status}'"
+        else:
+            logging.warning("Incorrect status (%s) requested " % status)
 
     for severity_name, filter_severity in severities.items():
         if filter_severity:

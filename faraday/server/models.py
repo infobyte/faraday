@@ -264,7 +264,7 @@ def count_vulnerability_severities(query: str,
         if status in Vulnerability.STATUSES:
             extra_query = f"status = '{status}'"
         else:
-            logging.warning("Incorrect status (%s) requested " % status)
+            logging.warning(f"Incorrect status ({status}) requested ")
 
     for severity_name, filter_severity in severities.items():
         if filter_severity:

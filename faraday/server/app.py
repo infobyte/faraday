@@ -28,8 +28,6 @@ from flask_security.utils import (
     verify_and_update_password,
     verify_hash)
 
-from flask_mail import Mail
-
 from flask_kvsession import KVSessionExtension
 from simplekv.fs import FilesystemStore
 from simplekv.decorator import PrefixDecorator

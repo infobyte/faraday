@@ -115,6 +115,8 @@ class ConfigSection:
             section = storage
         elif section_name == 'logger':
             section = logger_config
+        elif section_name == 'smtp':
+            section = smtp
         else:
             return
         section.parse(__parser)

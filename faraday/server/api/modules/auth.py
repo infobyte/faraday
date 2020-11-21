@@ -10,12 +10,11 @@ import flask
 from flask_security.recoverable import \
     send_reset_password_instructions
 
-from flask import request, session, Blueprint, redirect
-from flask_security.views import anonymous_user_required, login_user, after_this_request, get_post_login_redirect
+from flask import request, Blueprint
+from flask_security.views import anonymous_user_required
 
 from faraday.server.models import User
 
-from faraday.server.utils.invalid_chars import remove_null_caracters
 
 auth = Blueprint('auth', __name__)
 

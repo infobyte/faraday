@@ -25,12 +25,4 @@ angular.module('faradayApp')
                 });
             };
 
-            $scope.extras = function() {
-                $scope.base_url = BASEURL;
-                var modal = $uibModal.open({
-                    templateUrl: 'scripts/commons/partials/modalExtras.html',
-                    scope: $scope
-                });
-            };
-
         }]);

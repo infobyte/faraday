@@ -125,6 +125,10 @@ faradayApp.config(['$routeProvider', '$uibTooltipProvider', 'BASEURL',
             controller: 'workspacesCtrl',
             title: 'Dashboard | '
         }).
+        when('/extras', {
+            templateUrl: 'scripts/extras/partials/extras.html',
+            title: 'Extras | '
+        }).
         when('/help', {
             templateUrl: 'scripts/help/partials/help.html',
             title: 'Help | '

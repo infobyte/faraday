@@ -40,6 +40,26 @@ host_api = Blueprint('host_api', __name__)
 logger = logging.getLogger(__name__)
 
 
+
+class HostCountSchema(Schema):
+    host_id = fields.Integer(dump_only=True, allow_none=False,
+                                 attribute='id')
+    critical = fields.Integer(dump_only=True, allow_none=False,
+                                 attribute='vulnerability_critical_count')
+    high = fields.Integer(dump_only=True, allow_none=False,
+                              attribute='vulnerability_high_count')
+    med = fields.Integer(dump_only=True, allow_none=False,
+                              attribute='vulnerability_med_count')
+    low = fields.Integer(dump_only=True, allow_none=False,
+                              attribute='vulnerability_low_count')
+    info = fields.Integer(dump_only=True, allow_none=False,
+                              attribute='vulnerability_info_count')
+    unclassified = fields.Integer(dump_only=True, allow_none=False,
+                              attribute='vulnerability_unclassified_count')
+    total = fields.Integer(dump_only=True, allow_none=False,
+                                 attribute='vulnerability_total_count')
+
+
 class HostSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     id = fields.Integer()
@@ -63,11 +83,10 @@ class HostSchema(AutoSchema):
         fields.List(fields.String))
     metadata = SelfNestedField(MetadataSchema())
     type = fields.Function(lambda obj: 'Host', dump_only=True)
-    service_summaries = fields.Method('get_service_summaries',
-                                      dump_only=True)
-    versions = fields.Method('get_service_version',
-                                      dump_only=True)
+    service_summaries = fields.Method('get_service_summaries', dump_only=True)
+    versions = fields.Method('get_service_version', dump_only=True)
     important = fields.Boolean(default=False)
+    severity_counts = SelfNestedField(HostCountSchema(), dump_only=True)
 
     class Meta:
         model = Host
@@ -75,7 +94,7 @@ class HostSchema(AutoSchema):
                   'credentials', 'default_gateway', 'metadata',
                   'name', 'os', 'owned', 'owner', 'services', 'vulns',
                   'hostnames', 'type', 'service_summaries', 'versions',
-                  'important'
+                  'important', 'severity_counts'
                   )
 
     def get_service_summaries(self, obj):
@@ -115,22 +134,6 @@ class HostFilterSet(FilterSet):
     port = ServicePortFilter(fields.Str())
 
 
-class HostCountSchema(Schema):
-    host_id = fields.Integer(dump_only=True, allow_none=False,
-                                 attribute='id')
-    critical = fields.Integer(dump_only=True, allow_none=False,
-                                 attribute='vulnerability_critical_count')
-    high = fields.Integer(dump_only=True, allow_none=False,
-                              attribute='vulnerability_high_count')
-    med = fields.Integer(dump_only=True, allow_none=False,
-                              attribute='vulnerability_med_count')
-    info = fields.Integer(dump_only=True, allow_none=False,
-                              attribute='vulnerability_info_count')
-    unclassified = fields.Integer(dump_only=True, allow_none=False,
-                              attribute='vulnerability_unclassified_count')
-    total = fields.Integer(dump_only=True, allow_none=False,
-                                 attribute='vulnerability_total_count')
-
 
 class HostsView(PaginatedMixin,
                 FilterAlchemyMixin,
@@ -151,6 +154,9 @@ class HostsView(PaginatedMixin,
                    Host.open_service_count,
                    Host.vulnerability_count]
     get_joinedloads = [Host.hostnames, Host.services, Host.update_user]
+
+    def _get_base_query(self, workspace_name):
+        return Host.query_with_count(None, None, workspace_name)
 
     @route('/bulk_create/', methods=['POST'])
     def bulk_create(self, workspace_name):

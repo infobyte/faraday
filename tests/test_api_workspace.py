@@ -63,13 +63,13 @@ class TestWorkspaceAPI(ReadWriteAPITests):
                         session,
                         querystring):
         vulns = vulnerability_factory.create_batch(8, workspace=self.first_object,
-                                                   confirmed=False, status='open')
+                                                   confirmed=False, status='open', severity='critical')
 
         vulns += vulnerability_factory.create_batch(3, workspace=self.first_object,
-                                                    confirmed=True, status='closed')
+                                                    confirmed=True, status='closed', severity='critical')
 
         vulns += vulnerability_web_factory.create_batch(2, workspace=self.first_object,
-                                                    confirmed=True, status='open')
+                                                    confirmed=True, status='open', severity='informational')
 
 
 
@@ -80,6 +80,8 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert res.json['stats']['code_vulns'] == 0
         assert res.json['stats']['web_vulns'] == 2
         assert res.json['stats']['std_vulns'] == 0
+        assert res.json['stats']['critical_vulns'] == 0
+        assert res.json['stats']['info_vulns'] == 2
         assert res.json['stats']['total_vulns'] == 2
 
 
@@ -93,13 +95,13 @@ class TestWorkspaceAPI(ReadWriteAPITests):
                         session,
                         querystring):
         vulns = vulnerability_factory.create_batch(8, workspace=self.first_object,
-                                                   confirmed=False, status='open')
+                                                   confirmed=False, status='open', severity='informational')
 
         vulns += vulnerability_factory.create_batch(3, workspace=self.first_object,
-                                                    confirmed=True, status='closed')
+                                                    confirmed=True, status='closed', severity='informational')
 
         vulns += vulnerability_web_factory.create_batch(2, workspace=self.first_object,
-                                                    confirmed=True, status='open')
+                                                    confirmed=True, status='open', severity='informational')
 
         session.add_all(vulns)
         session.commit()
@@ -108,6 +110,8 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert res.json['stats']['code_vulns'] == 0
         assert res.json['stats']['web_vulns'] == 0
         assert res.json['stats']['std_vulns'] == 3
+        assert res.json['stats']['critical_vulns'] == 0
+        assert res.json['stats']['info_vulns'] == 3
         assert res.json['stats']['total_vulns'] == 3
 
     @pytest.mark.parametrize('querystring', [

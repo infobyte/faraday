@@ -164,16 +164,51 @@ angular.module('faradayApp')
                                 }).then(
                                     function(d) {
                                         $scope.loading = false;
-                                        commonsFact.showMessage("Vulnerability templates created: " + d.data.vulns_created + "  Vulnerability templates with error: " + d.data.vulns_with_errors + "", true);
+                                        var message = "Vulnerability templates created:\n";
+                                        d.data.vulns_created.forEach(function(vuln) {
+                                            message += "\t" + vuln[1] + "\n";
+                                        });
+
+                                        message += "\n\n";
+                                        message += loadCSVErrorMessage(d.data);
+
+                                        commonsFact.showMessage(message, true);
                                         $route.reload();
                                     },
                                     function(d){
                                         $scope.loading = false;
-                                        commonsFact.showMessage("Error uploading vulnerability templates");
+                                        var message = "Error uploading vulnerability templates.\n\n";
+                                        if(d.status === 400 && d.data.message)
+                                            message += d.data.message;
+                                        else
+                                            message += loadCSVErrorMessage(d.data)
+                                        commonsFact.showMessage(message);
                                     }
                                 );
                             }
                           );
+                    };
+
+                    var loadCSVErrorMessage = function(data) {
+                        var message = "";
+                        if(data.vulns_with_conflict.length > 0) {
+                            message += "Vulnerability templates that were " +
+                                       "not created due to conflict error:\n";
+                            data.vulns_with_conflict.forEach(function(vuln) {
+                                message += "\t" + vuln[1] + "\n";
+                            });
+                        }
+                        message += "\n\n";
+
+                        if(data.vulns_with_errors.length > 0) {
+                            message += "Vulnerability templates that were " +
+                                       "not create due to an error:\n";
+                            data.vulns_with_errors.forEach(function(vuln) {
+                                message += "\t" + vuln[1] + "\n";
+                            });
+                        }
+
+                        return message;
                     };
 
                     modal.result.then(function(data) {

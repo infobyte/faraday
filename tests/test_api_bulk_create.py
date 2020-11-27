@@ -928,7 +928,7 @@ def test_bulk_create_with_custom_fields_list(test_client, workspace, session, lo
 
     assert count(Host, workspace) == 0
     assert count(VulnerabilityGeneric, workspace) == 0
-    url = 'v2/ws/{}/bulk_create/'.format(workspace.name)
+    url = f'v2/ws/{workspace.name}/bulk_create/'
     host_data_ = host_data.copy()
     service_data_ = service_data.copy()
     vuln_data_ = vuln_data.copy()

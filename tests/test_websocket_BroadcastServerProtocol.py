@@ -12,7 +12,7 @@ def _join_agent(test_client, session):
     session.add(agent)
     session.commit()
 
-    headers = {"Authorization": "Agent {}".format(agent.token)}
+    headers = {"Authorization": f"Agent {agent.token}"}
     token = test_client.post('v2/agent_websocket_token/', headers=headers).json['token']
     return token
 
@@ -47,12 +47,12 @@ class TestWebsocketBroadcastServerProtocol:
 
     def test_join_agent_message_with_valid_token(self, session, proto, workspace, test_client):
         token = _join_agent(test_client, session)
-        message = '{{"action": "JOIN_AGENT", "workspace": "{}", "token": "{}", "executors": [] }}'.format(workspace.name, token)
+        message = f'{{"action": "JOIN_AGENT", "workspace": "{workspace.name}", "token": "{token}", "executors": [] }}'
         assert proto.onMessage(message, False)
 
     def test_leave_agent_happy_path(self, session, proto, workspace, test_client):
         token = _join_agent(test_client, session)
-        message = '{{"action": "JOIN_AGENT", "workspace": "{}", "token": "{}", "executors": [] }}'.format(workspace.name, token)
+        message = f'{{"action": "JOIN_AGENT", "workspace": "{workspace.name}", "token": "{token}", "executors": [] }}'
         assert proto.onMessage(message, False)
 
         message = '{"action": "LEAVE_AGENT" }'
@@ -62,7 +62,7 @@ class TestWebsocketBroadcastServerProtocol:
         token = _join_agent(test_client, session)
         agent = Agent.query.one()
         assert not agent.is_online
-        message = '{{"action": "JOIN_AGENT", "workspace": "{}", "token": "{}", "executors": [] }}'.format(workspace.name, token)
+        message = f'{{"action": "JOIN_AGENT", "workspace": "{workspace.name}", "token": "{token}", "executors": [] }}'
         assert proto.onMessage(message, False)
         assert agent.is_online
 

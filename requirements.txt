@@ -20,7 +20,7 @@ python-dateutil>=2.6.0
 requests>=2.18.4
 pyasn1
 service_identity>=17.0.0
-SQLAlchemy>=1.2.0b2
+SQLAlchemy>=1.2.0,<1.4.0
 tqdm>=4.15.0
 twisted>=18.9.0
 webargs>=6.0.0

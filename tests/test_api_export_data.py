@@ -22,7 +22,7 @@ from tests.factories import (
 class TestExportData():
     def test_export_data_without_format(self, test_client):
         workspace = WorkspaceFactory.create()
-        url = '/v2/ws/{ws_name}/export_data'.format(ws_name=workspace.name)
+        url = f'/v2/ws/{workspace.name}/export_data'
         response = test_client.get(url)
         assert response.status_code == 400
 
@@ -85,7 +85,7 @@ class TestExportData():
         session.add(vuln_web)
         session.commit()
 
-        url = '/v2/ws/{ws_name}/export_data?format=xml_metasploit'.format(ws_name=workspace.name)
+        url = f'/v2/ws/{workspace.name}/export_data?format=xml_metasploit'
         response = test_client.get(url)
         assert response.status_code == 200
         response_xml = response.data

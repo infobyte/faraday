@@ -202,7 +202,7 @@ class BooleanToIntColumn(expression.FunctionElement):
 
 @compiler.compiles(BooleanToIntColumn, 'postgresql')
 def _integer_to_boolean_postgresql(element, compiler, **kw):
-    return '{0}::int'.format(element.expression_str)
+    return f'{element.expression_str}::int'
 
 
 @compiler.compiles(BooleanToIntColumn, 'sqlite')
@@ -218,8 +218,7 @@ def get_object_type_for(instance):
                                           'VulnerabilityCode']:
             object_type = 'vulnerability'
         else:
-            raise RuntimeError("Unknown table for object: {}".format(
-                instance))
+            raise RuntimeError(f"Unknown table for object: {instance}")
     return object_type
 
 

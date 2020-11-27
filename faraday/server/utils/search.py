@@ -165,7 +165,7 @@ class OrderBy:
 
     def __repr__(self):
         """Returns a string representation of this object."""
-        return '<OrderBy {0}, {1}>'.format(self.field, self.direction)
+        return f'<OrderBy {self.field}, {self.direction}>'
 
 
 class GroupBy:
@@ -181,7 +181,7 @@ class GroupBy:
 
     def __repr__(self):
         """Returns a string representation of this object."""
-        return '<GroupBy {0}>'.format(self.field)
+        return f'<GroupBy {self.field}>'
 
 
 class Filter:
@@ -286,12 +286,12 @@ class JunctionFilter(Filter):
 
 class ConjunctionFilter(JunctionFilter):
     def __repr__(self):
-        return 'and_{0}'.format(tuple(repr(f) for f in self))
+        return f'and_{tuple(repr(f) for f in self)}'
 
 
 class DisjunctionFilter(JunctionFilter):
     def __repr__(self):
-        return 'or_{0}'.format(tuple(repr(f) for f in self))
+        return f'or_{tuple(repr(f) for f in self)}'
 
 
 class SearchParameters:

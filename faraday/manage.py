@@ -20,7 +20,7 @@ if platform.system() == "Linux":
         #The current user may be different from the logged user
         current_user = getuser()
         if current_user != 'root' and faraday_group.gr_gid not in os.getgroups():
-            print("\n\nUser (%s) must be in the '%s' group." % (os.getlogin(), FARADAY_GROUP))
+            print(f"\n\nUser ({os.getlogin()}) must be in the '{FARADAY_GROUP}' group.")
             print("After adding the user to the group, please logout and login again.")
             sys.exit(1)
     except KeyError:
@@ -214,7 +214,7 @@ def create_superuser(username, email, password):
                                        is_ldap=False)
         db.session.commit()
         click.echo(click.style(
-            'User {} created successfully!'.format(username),
+            f'User {username} created successfully!',
             fg='green', bold=True))
 
 

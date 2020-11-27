@@ -405,10 +405,10 @@ class TestListCommandView(ReadOnlyAPITests):
         )
         session.commit()
 
-        res = test_client.get(u'/v2/ws/{0}/hosts/{1}/'.format(host.workspace.name, host.id))
+        res = test_client.get(f'/v2/ws/{host.workspace.name}/hosts/{host.id}/')
         assert res.status_code == 200
 
-        res = test_client.delete(u'/v2/ws/{0}/hosts/{1}/'.format(host.workspace.name, host.id))
+        res = test_client.delete(f'/v2/ws/{host.workspace.name}/hosts/{host.id}/')
         assert res.status_code == 204
 
         res = test_client.get(self.url(workspace=command.workspace) + 'activity_feed/')

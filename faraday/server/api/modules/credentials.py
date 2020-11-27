@@ -80,13 +80,13 @@ class CredentialSchema(AutoSchema):
             not_parent_field = 'host_id'
         else:
             raise ValidationError(
-                'Unknown parent type: {}'.format(parent_type))
+                f'Unknown parent type: {parent_type}')
         try:
             parent = db.session.query(parent_class).join(Workspace).filter(
                 Workspace.name == self.context['workspace_name'],
                 parent_class.id == parent_id).one()
         except NoResultFound:
-            raise InvalidUsage('Parent id not found: {}'.format(parent_id))
+            raise InvalidUsage(f'Parent id not found: {parent_id}')
         data[parent_field] = parent.id
         data[not_parent_field] = None
         return data

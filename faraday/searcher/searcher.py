@@ -62,7 +62,7 @@ def is_same_level(model1, model2):
 
 
 def equals(m1, m2, rule):
-    logger.debug("Comparing by similarity '%s' and '%s'" % (m1.name, m2.name))
+    logger.debug(f"Comparing by similarity '{m1.name}' and '{m2.name}'")
     match = True
     total_ratio = 0
     count_fields = 0
@@ -97,7 +97,7 @@ def equals(m1, m2, rule):
         percent = (total_ratio * 100.0) / count_fields
     else:
         percent = 0.0
-    logger.debug("Verify result with %.2f %% evaluating rule %s:" % (percent, rule['id']))
+    logger.debug(f"Verify result with {percent:.2f} % evaluating rule {rule['id']}:")
 
     if match and total_ratio >= (threshold * count_fields):
         logger.info("MATCH")
@@ -121,7 +121,7 @@ def get_field(obj, field):
             return getattr(obj, 'references')
         return None
     except AttributeError:
-        logger.error("ERROR: Field %s is invalid" % field)
+        logger.error(f"ERROR: Field {field} is invalid")
         return None
 
 
@@ -139,7 +139,7 @@ def update_vulnerability(api, vuln, key, value):
     if key == 'template':
         cwe = get_cwe(api, value)
         if cwe is None:
-            logger.error("%s: cwe not found" % value)
+            logger.error(f"{value}: cwe not found")
             return False
 
         vuln.name = cwe.name
@@ -147,16 +147,16 @@ def update_vulnerability(api, vuln, key, value):
         vuln.desc = cwe.description
         vuln.resolution = cwe.resolution
 
-        logger.info("Applying template '%s' to vulnerability '%s' with id '%s'" % (value, vuln.name, vuln.id))
+        logger.info(f"Applying template '{value}' to vulnerability '{vuln.name}' with id '{vuln.id}'")
 
     elif key == 'confirmed':
         value = value == 'True'
         vuln.confirmed = value
-        logger.info("Changing property %s to %s in vulnerability '%s' with id %s" % (key, value, vuln.name, vuln.id))
+        logger.info(f"Changing property {key} to {value} in vulnerability '{vuln.name}' with id {vuln.id}")
     elif key == 'owned':
         value = value == 'True'
         vuln.owned = value
-        logger.info("Changing property %s to %s in vulnerability '%s' with id %s" % (key, value, vuln.name, vuln.id))
+        logger.info(f"Changing property {key} to {value} in vulnerability '{vuln.name}' with id {vuln.id}")
     else:
         to_add = True
         if key.startswith('-'):
@@ -174,10 +174,10 @@ def update_vulnerability(api, vuln, key, value):
             if isinstance(field, str):
                 setattr(vuln, key, value)
                 logger.info(
-                    "Changing property %s to %s in vulnerability '%s' with id %s" % (key, value, vuln.name, vuln.id))
+                    f"Changing property {key} to {value} in vulnerability '{vuln.name}' with id {vuln.id}")
             else:
                 set_array(field, value, add=to_add)
-                action = 'Adding %s to %s list in vulnerability %s with id %s' % (value, key, vuln.name, vuln.id)
+                action = f'Adding {value} to {key} list in vulnerability {vuln.name} with id {vuln.id}'
                 if not to_add:
                     action = 'Removing %s from %s list in vulnerability %s with id %s' % (
                         value, key, vuln.name, vuln.id)
@@ -187,7 +187,7 @@ def update_vulnerability(api, vuln, key, value):
         if field is not None and is_custom_field is True:
             vuln.custom_fields[key] = value
             logger.info(
-                "Changing custom field %s to %s in vulnerability '%s' with id %s" % (key, value, vuln.name, vuln.id))
+                f"Changing custom field {key} to {value} in vulnerability '{vuln.name}' with id {vuln.id}")
 
     api.update_vulnerability(vuln)
 
@@ -199,7 +199,7 @@ def update_service(api, service, key, value):
     if key == 'owned':
         value = value == 'True'
         service.owned = value
-        logger.info("Changing property %s to %s in service '%s' with id %s" % (key, value, service.name, service.id))
+        logger.info(f"Changing property {key} to {value} in service '{service.name}' with id {service.id}")
     else:
         to_add = True
         if key.startswith('-'):
@@ -211,10 +211,10 @@ def update_service(api, service, key, value):
             if isinstance(field, str):
                 setattr(service, key, value)
                 logger.info(
-                    "Changing property %s to %s in service '%s' with id %s" % (key, value, service.name, service.id))
+                    f"Changing property {key} to {value} in service '{service.name}' with id {service.id}")
             else:
                 set_array(field, value, add=to_add)
-                action = 'Adding %s to %s list in service %s with id %s' % (value, key, service.name, service.id)
+                action = f'Adding {value} to {key} list in service {service.name} with id {service.id}'
                 if not to_add:
                     action = 'Removing %s from %s list in service %s with id %s' % (
                         value, key, service.name, service.id)
@@ -231,7 +231,7 @@ def update_host(api, host, key, value):
     if key == 'owned':
         value = value == 'True'
         host.owned = value
-        logger.info("Changing property %s to %s in host '%s' with id %s" % (key, value, host.name, host.id))
+        logger.info(f"Changing property {key} to {value} in host '{host.name}' with id {host.id}")
     else:
         to_add = True
         if key.startswith('-'):
@@ -242,10 +242,10 @@ def update_host(api, host, key, value):
         if field is not None:
             if isinstance(field, str):
                 setattr(host, key, value)
-                logger.info("Changing property %s to %s in host '%s' with id %s" % (key, value, host.name, host.id))
+                logger.info(f"Changing property {key} to {value} in host '{host.name}' with id {host.id}")
             else:
                 set_array(field, value, add=to_add)
-                action = 'Adding %s to %s list in host %s with id %s' % (value, key, host.name, host.id)
+                action = f'Adding {value} to {key} list in host {host.name} with id {host.id}'
                 if not to_add:
                     action = 'Removing %s from %s list in host %s with id %s' % (
                         value, key, host.name, host.id)
@@ -409,7 +409,7 @@ class Searcher:
     def _process_vulnerabilities(self, rules):
         logger.debug("--> Start Process vulnerabilities")
         for rule_item in rules:
-            logger.debug('Processing rule {}'.format(rule_item['id']))
+            logger.debug(f"Processing rule {rule_item['id']}")
             if rule_item['model'].lower() == 'vulnerability':
                 count_values = 1
                 values = [None]
@@ -434,7 +434,7 @@ class Searcher:
     def _process_services(self, rules):
         logger.debug("--> Start Process services")
         for rule_item in rules:
-            logger.debug('Processing rule {}'.format(rule_item['id']))
+            logger.debug(f"Processing rule {rule_item['id']}")
             if rule_item['model'].lower() == 'service':
                 count_values = 1
                 values = [None]
@@ -459,7 +459,7 @@ class Searcher:
     def _process_hosts(self, rules):
         logger.debug("--> Start Process Hosts")
         for rule_item in rules:
-            logger.debug('Processing rule {}'.format(rule_item['id']))
+            logger.debug(f"Processing rule {rule_item['id']}")
             if rule_item['model'].lower() == 'host':
                 count_values = 1
                 values = [None]
@@ -502,7 +502,7 @@ class Searcher:
         if 'parent' in rule:
             parent = self._get_parent(rule['parent'])
             if parent is None:
-                logger.warning("WARNING: Parent %s not found in rule %s " % (rule['parent'], rule['id']))
+                logger.warning(f"WARNING: Parent {rule['parent']} not found in rule {rule['id']} ")
                 return self._fetch_objects(rule['model']), None
             return self._get_objects_by_parent(parent, rule['model']), parent
         return self._fetch_objects(rule['model']), None
@@ -576,7 +576,7 @@ class Searcher:
         return len(self._filter_objects(rule['model'], **kwargs)) > 0
 
     def _execute_action(self, objects, rule):
-        logger.info("Running actions of rule '%s' :" % rule['id'])
+        logger.info(f"Running actions of rule '{rule['id']}' :")
         actions = rule['actions']
         _objs_value = None
         if 'object' in rule:
@@ -616,22 +616,22 @@ class Searcher:
                 elif command == 'DELETE':
                     if object_type in ['Vulnerabilityweb', 'Vulnerability_web', 'Vulnerability']:
                         self.api.delete_vulnerability(obj.id)
-                        logger.info("Deleting vulnerability '%s' with id '%s':" % (obj.name, obj.id))
+                        logger.info(f"Deleting vulnerability '{obj.name}' with id '{obj.id}':")
 
                     elif object_type == 'Service':
                         self.api.delete_service(obj.id)
-                        logger.info("Deleting service '%s' with id '%s':" % (obj.name, obj.id))
+                        logger.info(f"Deleting service '{obj.name}' with id '{obj.id}':")
 
                     elif object_type == 'Host':
                         self.api.delete_host(obj.id)
-                        logger.info("Deleting host '%s' with id '%s':" % (obj.ip, obj.id))
+                        logger.info(f"Deleting host '{obj.ip}' with id '{obj.id}':")
                 else:
                     if self.mail_notification:
                         subject = 'Faraday searcher alert'
                         body = '%s %s have been modified by rule %s at %s' % (
                             object_type, obj.name, rule['id'], str(datetime.now()))
                         self.mail_notification.send_mail(expression, subject, body)
-                        logger.info("Sending mail to: '%s'" % expression)
+                        logger.info(f"Sending mail to: '{expression}'")
                     else:
                         logger.warn("Searcher needs SMTP configuration to send mails")
 
@@ -644,7 +644,7 @@ class Searcher:
         if key == 'template':
             cwe = get_cwe(self.api, value)
             if cwe is None:
-                logger.error("%s: cwe not found" % value)
+                logger.error(f"{value}: cwe not found")
                 return False
 
             vuln.name = cwe.name
@@ -652,18 +652,18 @@ class Searcher:
             vuln.desc = cwe.description
             vuln.resolution = cwe.resolution
 
-            logger.info("Applying template '%s' to vulnerability '%s' with id '%s'" % (value, vuln.name, vuln.id))
+            logger.info(f"Applying template '{value}' to vulnerability '{vuln.name}' with id '{vuln.id}'")
 
         elif key == 'confirmed':
             value = value == 'True'
             vuln.confirmed = value
             logger.info(
-                "Changing property %s to %s in vulnerability '%s' with id %s" % (key, value, vuln.name, vuln.id))
+                f"Changing property {key} to {value} in vulnerability '{vuln.name}' with id {vuln.id}")
         elif key == 'owned':
             value = value == 'True'
             vuln.owned = value
             logger.info(
-                "Changing property %s to %s in vulnerability '%s' with id %s" % (key, value, vuln.name, vuln.id))
+                f"Changing property {key} to {value} in vulnerability '{vuln.name}' with id {vuln.id}")
         else:
             to_add = True
             if key.startswith('-'):
@@ -716,7 +716,7 @@ class Searcher:
             value = value == 'True'
             service.owned = value
             logger.info(
-                "Changing property %s to %s in service '%s' with id %s" % (key, value, service.name, service.id))
+                f"Changing property {key} to {value} in service '{service.name}' with id {service.id}")
         else:
             to_add = True
             if key.startswith('-'):
@@ -732,7 +732,7 @@ class Searcher:
                             key, value, service.name, service.id))
                 else:
                     self.api.set_array(field, value, add=to_add, key=key, object=service)
-                    action = 'Adding %s to %s list in service %s with id %s' % (value, key, service.name, service.id)
+                    action = f'Adding {value} to {key} list in service {service.name} with id {service.id}'
                     if not to_add:
                         action = 'Removing %s from %s list in service %s with id %s' % (
                             value, key, service.name, service.id)
@@ -748,7 +748,7 @@ class Searcher:
         if key == 'owned':
             value = value == 'True'
             host.owned = value
-            logger.info("Changing property %s to %s in host '%s' with id %s" % (key, value, host.ip, host.id))
+            logger.info(f"Changing property {key} to {value} in host '{host.ip}' with id {host.id}")
         else:
             to_add = True
             if key.startswith('-'):
@@ -759,10 +759,10 @@ class Searcher:
             if field is not None:
                 if isinstance(field, str):
                     setattr(host, key, value)
-                    logger.info("Changing property %s to %s in host '%s' with id %s" % (key, value, host.ip, host.id))
+                    logger.info(f"Changing property {key} to {value} in host '{host.ip}' with id {host.id}")
                 else:
                     self.api.set_array(field, value, add=to_add, key=key, object=host)
-                    action = 'Adding %s to %s list in host %s with id %s' % (value, key, host.ip, host.id)
+                    action = f'Adding {value} to {key} list in host {host.ip} with id {host.id}'
                     if not to_add:
                         action = 'Removing %s from %s list in host %s with id %s' % (
                             value, key, host.ip, host.id)
@@ -836,7 +836,7 @@ def main(workspace, server_address, user, password, output, email_sender,
 
     numeric_level = getattr(logging, loglevel.upper(), None)
     if not isinstance(numeric_level, int):
-        raise ValueError('Invalid log level: %s' % loglevel)
+        raise ValueError(f'Invalid log level: {loglevel}')
 
     if not logger.handlers:
         logger.propagate = 0
@@ -858,7 +858,7 @@ def main(workspace, server_address, user, password, output, email_sender,
 
     try:
         logger.info('Started')
-        logger.info('Searching objects into workspace %s ' % workspace)
+        logger.info(f'Searching objects into workspace {workspace} ')
 
         if not server_address.endswith('/'):
             server_address += '/'

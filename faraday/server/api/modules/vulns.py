@@ -256,7 +256,7 @@ class VulnerabilitySchema(AutoSchema):
                 parent_class.id == parent_id
             ).one()
         except NoResultFound:
-            raise ValidationError('Parent id not found: {}'.format(parent_id))
+            raise ValidationError(f'Parent id not found: {parent_id}')
         data[parent_field] = parent.id
         # TODO migration: check what happens when updating the parent from
         # service to host or viceverse
@@ -929,7 +929,7 @@ class VulnerabilityView(PaginatedMixin,
         vulns_query, _ = self._filter(filters, workspace_name)
         memory_file = export_vulns_to_csv(vulns_query, custom_fields_columns)
         return send_file(memory_file,
-                         attachment_filename="Faraday-SR-%s.csv" % workspace_name,
+                         attachment_filename=f"Faraday-SR-{workspace_name}.csv",
                          as_attachment=True,
                          cache_timeout=-1)
 

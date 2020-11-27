@@ -22,7 +22,7 @@ class SqlApi:
         if len(workspace) > 0:
             self.workspace = workspace[0]
         else:
-            raise ApiError("Workspace %s doesn't exist" % workspace_name)
+            raise ApiError(f"Workspace {workspace_name} doesn't exist")
 
     def create_command(self, itime, params, tool_name):
         self.itime = itime

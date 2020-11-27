@@ -6,10 +6,10 @@ import cProfile
 import pstats
 import contextlib
 from io import StringIO
+import logging
 
-import faraday.server.utils.logger
 
-debug_logger = faraday.server.utils.logger.get_logger(__name__)
+debug_logger = logging.getLogger(__name__)
 
 class Timer:
     def __init__(self, tag, logger=None):
@@ -23,7 +23,7 @@ class Timer:
     def __exit__(self, *args):
         self.__end = time.time()
         diff = (self.__end - self.__start) * 1000
-        self.__logger.debug('elapsed time in {}: {} ms'.format(self.__tag, diff))
+        self.__logger.debug(f'elapsed time in {self.__tag}: {diff} ms')
 
 #
 # Debug utility extracted from http://docs.sqlalchemy.org/en/latest/faq/performance.html

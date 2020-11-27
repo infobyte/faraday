@@ -85,7 +85,7 @@ class ServiceSchema(AutoSchema):
                     Host.id == host_id
                 ).one()
             except NoResultFound:
-                raise ValidationError('Host with id {} not found'.format(host_id))
+                raise ValidationError(f'Host with id {host_id} not found')
 
         return data
 

@@ -19,7 +19,7 @@ def reset_db_all():
     for table in ('vulnerability', 'vulnerability_template', 'comment',
                   'faraday_user'):
         try:
-            db.engine.execute('DROP TABLE {} CASCADE'.format(table))
+            db.engine.execute(f'DROP TABLE {table} CASCADE')
         except Exception as ex:
             print(ex)
     db.drop_all()

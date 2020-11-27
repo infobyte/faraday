@@ -248,5 +248,5 @@ setup(
         'Source': 'https://github.com/infobyte/faraday/',
     },
     setup_requires=['pytest-runner'],
-    tests_require=['pytest', 'flask'] + dev_required,
+    tests_require=dev_required,
 )

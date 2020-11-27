@@ -118,10 +118,10 @@ class AgentCreationView(CreateMixin, GenericView):
         try:
             ws = Workspace.query.filter_by(name=workspace_name).one()
             if not ws.active:
-                flask.abort(403, "Disabled workspace: %s" % workspace_name)
+                flask.abort(403, f"Disabled workspace: {workspace_name}")
             return ws
         except NoResultFound:
-            flask.abort(404, "No such workspace: %s" % workspace_name)
+            flask.abort(404, f"No such workspace: {workspace_name}")
 
     def _perform_create(self,  data, **kwargs):
         token = data.pop('token')
@@ -190,10 +190,10 @@ class AgentWithWorkspacesView(UpdateMixin,
         try:
             ws = Workspace.query.filter_by(name=workspace_name).one()
             if not ws.active:
-                flask.abort(403, "Disabled workspace: %s" % workspace_name)
+                flask.abort(403, f"Disabled workspace: {workspace_name}")
             return ws
         except NoResultFound:
-            flask.abort(404, "No such workspace: %s" % workspace_name)
+            flask.abort(404, f"No such workspace: {workspace_name}")
 
     def _update_object(self, obj, data):
         """Perform changes in the selected object

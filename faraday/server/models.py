@@ -1,6 +1,7 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+import logging
 import operator
 import string
 from datetime import datetime
@@ -55,6 +56,7 @@ from faraday.server.utils.database import (
     get_object_type_for,
     is_unique_constraint_violation)
 
+logger = logging.getLogger(__name__)
 
 NonBlankColumn = partial(Column, nullable=False,
                          info={'allow_blank': False})
@@ -147,13 +149,12 @@ def _make_active_agents_count_property():
 def _make_generic_count_property(parent_table, children_table, where=None):
     """Make a deferred by default column property that counts the
     amount of childrens of some parent object"""
-    children_id_field = '{}.id'.format(children_table)
-    parent_id_field = '{}.id'.format(parent_table)
-    children_rel_field = '{}.{}_id'.format(children_table, parent_table)
+    children_id_field = f'{children_table}.id'
+    parent_id_field = f'{parent_table}.id'
+    children_rel_field = f'{children_table}.{parent_table}_id'
     query = (select([func.count(text(children_id_field))]).
              select_from(table(children_table)).
-             where(text('{} = {}'.format(
-                 children_rel_field, parent_id_field))))
+             where(text(f'{children_rel_field} = {parent_id_field}')))
     if where is not None:
         query = query.where(where)
     return column_property(query, deferred=True)
@@ -194,7 +195,7 @@ def _make_vuln_count_property(type_=None, confirmed=None,
         # Don't do queries using this style!
         # This can cause SQL injection vulnerabilities
         # In this case type_ is supplied from a whitelist so this is safe
-        query = query.where(text("vulnerability.type = '%s'" % type_))
+        query = query.where(text(f"vulnerability.type = '{type_}'"))
     if confirmed:
         if db.session.bind.dialect.name == 'sqlite':
             # SQLite has no "true" expression, we have to use the integer 1
@@ -222,7 +223,68 @@ def _make_vuln_count_property(type_=None, confirmed=None,
         return query
 
 
-def _make_vuln_generic_count_by_severity(severity):
+def count_vulnerability_severities(query: str,
+                                   model: db.Model,
+                                   status: str = None,
+                                   confirmed: bool = None,
+                                   all_severities: bool = False,
+                                   critical: bool = False,
+                                   informational: bool = False,
+                                   high: bool = False,
+                                   medium: bool = False,
+                                   low: bool = False,
+                                   unclassified: bool = False):
+    """
+    We assume that vulnerability_SEVERITYNAME_count attr exists in the model passed by param
+    :param query: Alchemy query to append options
+    :param model: model class
+    :param status: vulnerability status
+    :param confirmed: if vuln is confirmed or not
+    :param all_severities: All severities will be counted
+    :param critical: Critical severities will be counted if True
+    :param informational: Informational severities will be counted if True
+    :param high: High severities will be counted if True
+    :param medium: Medium severities will be counted if True
+    :param low: Low severities will be counted if True
+    :param unclassified: Unclassified severities will be counted  if True
+    :return: Query with options added
+    """
+
+    severities = {
+        'informational': all_severities or informational,
+        'critical': all_severities or critical,
+        'high': all_severities or high,
+        'medium': all_severities or medium,
+        'low': all_severities or low,
+        'unclassified': all_severities or unclassified
+    }
+
+    extra_query = None
+    if status:
+        if status in Vulnerability.STATUSES:
+            extra_query = f"status = '{status}'"
+        else:
+            logging.warning(f"Incorrect status ({status}) requested ")
+
+    for severity_name, filter_severity in severities.items():
+        if filter_severity:
+            _extra_query = f"{extra_query} AND severity = '{severity_name}'" \
+                if extra_query else f"severity = '{severity_name}'"
+            query = query.options(
+                with_expression(
+                    getattr(model, f'vulnerability_{severity_name}_count'),
+                    _make_vuln_count_property(None,
+                                              extra_query=_extra_query,
+                                              use_column_property=False,
+                                              get_hosts_vulns=False,
+                                              confirmed=confirmed)
+                )
+            )
+    return query
+
+
+
+def _make_vuln_generic_count_by_severity(severity, tablename="host"):
     assert severity in ['critical', 'high', 'medium', 'low', 'informational', 'unclassified']
 
     vuln_count = (
@@ -633,7 +695,7 @@ class CommandObject(db.Model):
 
 
 def _make_created_objects_sum(object_type_filter):
-    where_conditions = ["command_object.object_type= '%s'" % object_type_filter]
+    where_conditions = [f"command_object.object_type= '{object_type_filter}'"]
     where_conditions.append("command_object.command_id = command.id")
     where_conditions.append("command_object.workspace_id = command.workspace_id")
     return column_property(
@@ -650,12 +712,12 @@ def _make_created_objects_sum_joined(object_type_filter, join_filters):
     :param join_filters: Filter for vulnerability fields.
     :return: column property with sum of created objects.
     """
-    where_conditions = ["command_object.object_type= '%s'" % object_type_filter]
+    where_conditions = [f"command_object.object_type= '{object_type_filter}'"]
     where_conditions.append("command_object.command_id = command.id")
     where_conditions.append("vulnerability.id = command_object.object_id ")
     where_conditions.append("command_object.workspace_id = vulnerability.workspace_id")
     for attr, filter_value in join_filters.items():
-        where_conditions.append("vulnerability.{0} = {1}".format(attr, filter_value))
+        where_conditions.append(f"vulnerability.{attr} = {filter_value}")
     return column_property(
         select([func.sum(CommandObject.created)]). \
             select_from(table('command_object')). \
@@ -931,8 +993,7 @@ class Service(Metadata):
             version = " (" + self.version + ")"
         else:
             version = ""
-        return "(%s/%s) %s%s" % (self.port, self.protocol, self.name,
-                                 version or "")
+        return f"({self.port}/{self.protocol}) {self.name}{version or ''}"
 
 
 class VulnerabilityGeneric(VulnerabilityABC):
@@ -1469,6 +1530,13 @@ class Workspace(Metadata):
     vulnerability_total_count = query_expression()
     active_agents_count = query_expression()
 
+    vulnerability_informational_count = query_expression()
+    vulnerability_medium_count = query_expression()
+    vulnerability_high_count = query_expression()
+    vulnerability_critical_count = query_expression()
+    vulnerability_low_count = query_expression()
+    vulnerability_unclassified_count = query_expression()
+
     workspace_permission_instances = relationship(
         "WorkspacePermission",
         cascade="all, delete-orphan")
@@ -1508,6 +1576,12 @@ class Workspace(Metadata):
                 p_5.count_6 as vulnerability_code_count,
                 p_5.count_7 as vulnerability_standard_count,
                 p_5.count_8 as vulnerability_total_count,
+                p_5.count_9 as vulnerability_critical_count,
+                p_5.count_10 as vulnerability_high_count,
+                p_5.count_11 as vulnerability_medium_count,
+                p_5.count_12 as vulnerability_low_count,
+                p_5.count_13 as vulnerability_informational_count,
+                p_5.count_14 as vulnerability_unclassified_count,
                 workspace.create_date AS workspace_create_date,
                 workspace.update_date AS workspace_update_date,
                 workspace.id AS workspace_id,
@@ -1523,12 +1597,24 @@ class Workspace(Metadata):
                 workspace.creator_id AS workspace_creator_id,
                 (SELECT {concat_func}(scope.name, ',') FROM scope where scope.workspace_id=workspace.id) as scope_raw
             FROM workspace
-            LEFT JOIN (SELECT w.id as wid, COUNT(case when service.id IS NOT NULL and service.status = 'open' then 1 else null end) as count_3, COUNT(case when service.id IS NOT NULL then 1 else null end) AS count_4
+            LEFT JOIN (SELECT w.id as wid,
+             COUNT(case when service.id IS NOT NULL and service.status = 'open' then 1 else null end) as count_3,
+              COUNT(case when service.id IS NOT NULL then 1 else null end) AS count_4
                     FROM service
                     RIGHT JOIN workspace w ON service.workspace_id = w.id
                     GROUP BY w.id
                 ) AS p_4 ON p_4.wid = workspace.id
-            LEFT JOIN (SELECT w.id as w_id, COUNT(case when vulnerability.type = 'vulnerability_web' then 1 else null end) as count_5, COUNT(case when vulnerability.type = 'vulnerability_code' then 1 else null end) AS count_6, COUNT(case when vulnerability.type = 'vulnerability' then 1 else null end) as count_7, COUNT(case when vulnerability.id IS NOT NULL then 1 else null end) AS count_8
+            LEFT JOIN (SELECT w.id as w_id,
+             COUNT(case when vulnerability.type = 'vulnerability_web' then 1 else null end) as count_5,
+             COUNT(case when vulnerability.type = 'vulnerability_code' then 1 else null end) AS count_6,
+             COUNT(case when vulnerability.type = 'vulnerability' then 1 else null end) as count_7,
+             COUNT(case when vulnerability.id IS NOT NULL then 1 else null end) AS count_8,
+             COUNT(case when vulnerability.severity = 'critical' then 1 else null end) as count_9,
+             COUNT(case when vulnerability.severity = 'high' then 1 else null end) as count_10,
+             COUNT(case when vulnerability.severity = 'medium' then 1 else null end) as count_11,
+             COUNT(case when vulnerability.severity = 'low' then 1 else null end) as count_12,
+             COUNT(case when vulnerability.severity = 'informational' then 1 else null end) as count_13,
+             COUNT(case when vulnerability.severity = 'unclassified' then 1 else null end) as count_14
                     FROM vulnerability
                     RIGHT JOIN workspace w ON vulnerability.workspace_id = w.id
                     WHERE 1=1 {0}
@@ -1562,6 +1648,7 @@ class Workspace(Metadata):
             query += ' WHERE ' + ' AND '.join(filters)
         # query += " GROUP BY workspace.id "
         query += " ORDER BY workspace.name ASC"
+
         return db.session.execute(text(query), params)
 
     def set_scope(self, new_scope):
@@ -1679,8 +1766,7 @@ class User(db.Model, UserMixin):
         super(User, self).__init__(*args, **kwargs)
 
     def __repr__(self):
-        return '<%sUser: %s>' % ('LDAP ' if self.is_ldap else '',
-                                 self.username)
+        return f"<{'LDAP ' if self.is_ldap else ''}User: {self.username}>"
 
     def get_security_payload(self):
         return {

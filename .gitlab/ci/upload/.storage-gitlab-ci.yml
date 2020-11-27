@@ -14,10 +14,10 @@
 
 
 .google_storage_deb_rpm:
-    stage: deploy
+    stage: upload
     image: 'google/cloud-sdk:latest'
     variables:
-      FILE_BASENAME: faraday-server-community_amd64
+      FILE_BASENAME: faraday-server-community
       GCLOUD_FILE_PATH: ${STORAGE_SPACE_BASE}${STORAGE_SPACE_ROUTE}/${FILE_BASENAME}
 
 google_storage_deb_rpm_dev:

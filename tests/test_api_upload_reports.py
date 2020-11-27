@@ -33,7 +33,7 @@ class TestFileUpload():
         }
 
         res = test_client.post(
-                '/v2/ws/{ws_name}/upload_report'.format(ws_name=ws.name),
+                f'/v2/ws/{ws.name}/upload_report',
                 data=data,
                 use_json_data=False)
 
@@ -72,7 +72,7 @@ class TestFileUpload():
         session.commit()
 
         res = test_client.post(
-                '/v2/ws/{ws_name}/upload_report'.format(ws_name=ws.name))
+                f'/v2/ws/{ws.name}/upload_report')
 
         assert res.status_code == 400
 
@@ -91,7 +91,7 @@ class TestFileUpload():
         }
 
         res = test_client.post(
-                '/v2/ws/{ws_name}/upload_report'.format(ws_name=ws.name),
+                f'/v2/ws/{ws.name}/upload_report',
                 data=data,
                 use_json_data=False)
 
@@ -112,7 +112,7 @@ class TestFileUpload():
             'csrf_token': csrf_token
         }
         res = test_client.post(
-                '/v2/ws/{ws_name}/upload_report'.format(ws_name=ws.name),
+                f'/v2/ws/{ws.name}/upload_report',
                 data=data,
                 use_json_data=False)
 

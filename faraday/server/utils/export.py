@@ -128,7 +128,7 @@ def _build_vuln_data(vuln, custom_fields_columns):
     vuln_date = vuln['metadata']['create_time']
     if vuln['service']:
         service_fields = ["status", "protocol", "name", "summary", "version", "ports"]
-        service_fields_values = ["%s:%s" % (field, vuln['service'][field]) for field in service_fields]
+        service_fields_values = [f"{field}:{vuln['service'][field]}" for field in service_fields]
         vuln_service = " - ".join(service_fields_values)
     else:
         vuln_service = ""

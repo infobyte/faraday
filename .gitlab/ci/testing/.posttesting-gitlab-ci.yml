@@ -1,0 +1,14 @@
+agent_integration_and_db_regression:
+    stage: post_testing
+    variables:
+      FARADAY_REF: $CI_COMMIT_REF_NAME
+      FARADAY_REGRESSION: "True"
+    trigger:
+      project: faradaysec/devops
+      strategy: depend
+    rules:
+      - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
+        when: on_success
+      - if: '$INTEGRATION || $FULL_TEST || $DAILY_TEST'
+        when: on_success
+      - when: never

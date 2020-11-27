@@ -42,8 +42,8 @@ def validate_fields(model, fields):
     if model in vfields and len(fields) != 0:
         for field in fields:
             if field not in vfields[model]:
-                print("ERROR: The field '%s' doesn't exist in model '%s'" % (field, model))
-                logger.error("The field '%s' doesn't exist in model '%s'" % (field, model))
+                print(f"ERROR: The field '{field}' doesn't exist in model '{model}'")
+                logger.error(f"The field '{field}' doesn't exist in model '{model}'")
                 return False
         return True
     else:
@@ -56,11 +56,11 @@ def validate_indexer(indexer, allow_old_option=False):
         array = item.split('=')
         if allow_old_option:
             if item != '--old' and len(array) != 2 or '' in array:
-                logger.error("ERROR: '%s' must have 'field=value' or '--old'" % item)
+                logger.error(f"ERROR: '{item}' must have 'field=value' or '--old'")
                 return False
 
         elif len(array) != 2 or '' in array:
-            logger.error("ERROR: '%s' must have 'field=value' " % item)
+            logger.error(f"ERROR: '{item}' must have 'field=value' ")
             return False
 
     return True
@@ -89,13 +89,13 @@ def validate_values(values, rule, rule_id):
     for index, item in enumerate(values):
         if index != 0:
             if len(values[index - 1]) != len(values[index]):
-                logger.error("Each value item must be equal in rule: %s" % rule_id)
+                logger.error(f"Each value item must be equal in rule: {rule_id}")
                 return False
         keys = item.keys()
 
     for var in _vars:
         if var not in keys:
-            logger.error("Variable '%s' should has a value in rule: %s" % (var, rule_id))
+            logger.error(f"Variable '{var}' should has a value in rule: {rule_id}")
             return False
     return True
 
@@ -138,19 +138,19 @@ def validate_action(actions):
 def validate(key, dictionary, validate_function=None, rule_id=None, mandatory=True, **args):
     if rule_id is None:
         if key not in dictionary:
-            logger.error("ERROR: Key %s doesn't exist" % key)
+            logger.error(f"ERROR: Key {key} doesn't exist")
             return False
         if not validate_function(args['id_list'], dictionary[key]):
-            logger.error("ERROR: Key %s is repeated" % key)
+            logger.error(f"ERROR: Key {key} is repeated")
             return False
     else:
         if key not in dictionary and mandatory:
-            logger.error("ERROR: Key %s doesn't exist in rule: %s" % (key, rule_id))
+            logger.error(f"ERROR: Key {key} doesn't exist in rule: {rule_id}")
             return False
         if key in dictionary:
             if key == 'fields':
                 if not validate_function(args['model'], dictionary[key]):
-                    logger.error("ERROR: Key %s has an invalid value in rule: %s" % (key, rule_id))
+                    logger.error(f"ERROR: Key {key} has an invalid value in rule: {rule_id}")
                     return False
                 return True
 
@@ -158,7 +158,7 @@ def validate(key, dictionary, validate_function=None, rule_id=None, mandatory=Tr
                 return validate_function(dictionary[key], dictionary, rule_id)
 
             if not validate_function(dictionary[key]):
-                logger.error("ERROR: Key %s has an invalid value in rule: %s" % (key, rule_id))
+                logger.error(f"ERROR: Key {key} has an invalid value in rule: {rule_id}")
                 return False
 
     return True

@@ -17,7 +17,7 @@ def export_data(workspace_name):
     workspace = Workspace.query.filter_by(name=workspace_name).first()
     if not workspace:
         logger.error("No such workspace. Please, specify a valid workspace.")
-        abort(404, "No such workspace: %s" % workspace_name)
+        abort(404, f"No such workspace: {workspace_name}")
 
     export_format = request.args.get('format', '')
     if not export_format:
@@ -28,7 +28,7 @@ def export_data(workspace_name):
         memory_file = xml_metasploit_format(workspace)
         return send_file(
             memory_file,
-            attachment_filename="Faraday-%s-data.xml" % workspace_name,
+            attachment_filename=f"Faraday-{workspace_name}-data.xml",
             as_attachment=True,
             cache_timeout=-1
         )

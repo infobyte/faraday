@@ -23,7 +23,7 @@ def delete_custom_field_wizard():
     print('This wizard will guide you to DELETE custom field to the vulneraiblity model.')
     print('All available custom fields are:')
     for custom_field in db.session.query(CustomFieldsSchema):
-        print('* {0}'.format(custom_field.field_name))
+        print(f'* {custom_field.field_name}')
     print('End of custom fields')
     field_name = click.prompt('Field name')
     custom_field = db.session.query(CustomFieldsSchema).filter_by(field_name=field_name).first()
@@ -54,7 +54,7 @@ def add_custom_field_wizard():
         print('Custom field current order')
     for custom_field in custom_fields:
         current_used_orders.add(custom_field.field_order)
-        print('Field {0}, order {1}'.format(custom_field.field_display_name, custom_field.field_order))
+        print(f'Field {custom_field.field_display_name}, order {custom_field.field_order}')
     field_order = click.prompt('Field order index')
     invalid_field_order = False
     try:

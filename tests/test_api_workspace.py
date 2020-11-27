@@ -20,6 +20,31 @@ class TestWorkspaceAPI(ReadWriteAPITests):
     lookup_field = 'name'
     view_class = WorkspaceView
 
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_filter_restless_by_name(self, test_client):
+        res = test_client.get(f'{self.url()}filter?q='
+                              f'{{"filters":[{{"name": "name", "op":"eq", "val": "{self.first_object.name}"}}]}}')
+        assert res.status_code == 200
+        assert len(res.json) == 1
+        assert res.json[0]['name'] == self.first_object.name
+
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_filter_restless_by_name_zero_results_found(self, test_client):
+        res = test_client.get(f'{self.url()}filter?q='
+                              f'{{"filters":[{{"name": "name", "op":"eq", "val": "thiswsdoesnotexist"}}]}}')
+        assert res.status_code == 200
+        assert len(res.json) == 0
+
+    def test_filter_restless_by_description(self, test_client):
+        self.first_object.description = "this is a new description"
+        res = test_client.get(f'{self.url()}filter?q='
+                              f'{{"filters":[{{"name": "description", "op":"eq", "val": "{self.first_object.description}"}}]}}')
+        assert res.status_code == 200
+        assert len(res.json) == 1
+        assert res.json[0]['description'] == self.first_object.description
+
+
+
     def test_host_count(self, host_factory, test_client, session):
         host_factory.create(workspace=self.first_object)
         session.commit()
@@ -38,13 +63,13 @@ class TestWorkspaceAPI(ReadWriteAPITests):
                         session,
                         querystring):
         vulns = vulnerability_factory.create_batch(8, workspace=self.first_object,
-                                                   confirmed=False, status='open')
+                                                   confirmed=False, status='open', severity='critical')
 
         vulns += vulnerability_factory.create_batch(3, workspace=self.first_object,
-                                                    confirmed=True, status='closed')
+                                                    confirmed=True, status='closed', severity='critical')
 
         vulns += vulnerability_web_factory.create_batch(2, workspace=self.first_object,
-                                                    confirmed=True, status='open')
+                                                    confirmed=True, status='open', severity='informational')
 
 
 
@@ -55,6 +80,8 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert res.json['stats']['code_vulns'] == 0
         assert res.json['stats']['web_vulns'] == 2
         assert res.json['stats']['std_vulns'] == 0
+        assert res.json['stats']['critical_vulns'] == 0
+        assert res.json['stats']['info_vulns'] == 2
         assert res.json['stats']['total_vulns'] == 2
 
 
@@ -68,13 +95,13 @@ class TestWorkspaceAPI(ReadWriteAPITests):
                         session,
                         querystring):
         vulns = vulnerability_factory.create_batch(8, workspace=self.first_object,
-                                                   confirmed=False, status='open')
+                                                   confirmed=False, status='open', severity='informational')
 
         vulns += vulnerability_factory.create_batch(3, workspace=self.first_object,
-                                                    confirmed=True, status='closed')
+                                                    confirmed=True, status='closed', severity='informational')
 
         vulns += vulnerability_web_factory.create_batch(2, workspace=self.first_object,
-                                                    confirmed=True, status='open')
+                                                    confirmed=True, status='open', severity='informational')
 
         session.add_all(vulns)
         session.commit()
@@ -83,6 +110,8 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert res.json['stats']['code_vulns'] == 0
         assert res.json['stats']['web_vulns'] == 0
         assert res.json['stats']['std_vulns'] == 3
+        assert res.json['stats']['critical_vulns'] == 0
+        assert res.json['stats']['info_vulns'] == 3
         assert res.json['stats']['total_vulns'] == 3
 
     @pytest.mark.parametrize('querystring', [
@@ -239,7 +268,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         session.add_all(vulns)
         session.commit()
         raw_data = {'name': 'something', 'description': ''}
-        res = test_client.put('/v2/ws/{}/'.format(workspace.name),
+        res = test_client.put(f'/v2/ws/{workspace.name}/',
                               data=raw_data)
         assert res.status_code == 200
         assert res.json['stats']['web_vulns'] == 5
@@ -268,7 +297,7 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         ]
         raw_data = {'name': 'something', 'description': 'test',
                     'scope': desired_scope}
-        res = test_client.put('/v2/ws/{}/'.format(workspace.name), data=raw_data)
+        res = test_client.put(f'/v2/ws/{workspace.name}/', data=raw_data)
         assert res.status_code == 200
         assert set(res.json['scope']) == set(desired_scope)
         assert set(s.name for s in workspace.scope) == set(desired_scope)
@@ -281,12 +310,10 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         workspace.active = False
         session.add(workspace)
         session.commit()
-        res = test_client.put('{url}{id}/activate/'
-                    .format(url=self.url(),
-                    id=workspace.name))
+        res = test_client.put(f'{self.url()}{workspace.name}/activate/')
         assert res.status_code == 200
 
-        res = test_client.get('{url}{id}/'.format(url=self.url(),id=workspace.name))
+        res = test_client.get(f'{self.url()}{workspace.name}/')
         active = res.json.get('active')
         assert active == True
 
@@ -297,12 +324,10 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         workspace.active = True
         session.add(workspace)
         session.commit()
-        res = test_client.put('{url}{id}/deactivate/'
-                    .format(url=self.url(),
-                    id=workspace.name))
+        res = test_client.put(f'{self.url()}{workspace.name}/deactivate/')
         assert res.status_code == 200
 
-        res = test_client.get('{url}{id}/'.format(url=self.url(),id=workspace.name))
+        res = test_client.get(f'{self.url()}{workspace.name}/')
         active = res.json.get('active')
         assert active == False
 

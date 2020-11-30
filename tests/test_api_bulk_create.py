@@ -15,6 +15,7 @@ from faraday.server.models import (
     Workspace
 )
 from faraday.server.api.modules import bulk_create as bc
+from tests.factories import CustomFieldsSchemaFactory
 
 host_data = {
     "ip": "127.0.0.1",
@@ -896,8 +897,6 @@ def test_bulk_create_endpoint_with_invalid_vuln_run_date(session, workspace, tes
     assert count(VulnerabilityGeneric, workspace) == 0
 
 
-
-
 @pytest.mark.usefixtures('logged_user')
 def test_bulk_create_endpoint_fails_with_list_in_NullToBlankString(session, workspace, test_client, logged_user):
     assert count(Host, workspace) == 0
@@ -914,3 +913,52 @@ def test_bulk_create_endpoint_fails_with_list_in_NullToBlankString(session, work
     assert count(Service, workspace) == 0
     assert count(Credential, workspace) == 0
     assert count(Vulnerability, workspace) == 0
+
+
+@pytest.mark.usefixtures('logged_user')
+def test_bulk_create_with_custom_fields_list(test_client, workspace, session, logged_user):
+    custom_field_schema = CustomFieldsSchemaFactory(
+        field_name='changes',
+        field_type='list',
+        field_display_name='Changes',
+        table_name='vulnerability'
+    )
+    session.add(custom_field_schema)
+    session.commit()
+
+    assert count(Host, workspace) == 0
+    assert count(VulnerabilityGeneric, workspace) == 0
+    url = f'v2/ws/{workspace.name}/bulk_create/'
+    host_data_ = host_data.copy()
+    service_data_ = service_data.copy()
+    vuln_data_ = vuln_data.copy()
+    vuln_data_['custom_fields'] = {'changes': ['1', '2', '3']}
+    service_data_['vulnerabilities'] = [vuln_data_]
+    host_data_['services'] = [service_data_]
+    host_data_['credentials'] = [credential_data]
+    host_data_['vulnerabilities'] = [vuln_data_]
+    res = test_client.post(
+        url,
+        data=dict(hosts=[host_data_], command=command_data)
+    )
+    assert res.status_code == 201, res.json
+    assert count(Host, workspace) == 1
+    assert count(Service, workspace) == 1
+    assert count(Vulnerability, workspace) == 2
+    assert count(Command, workspace) == 1
+    host = Host.query.filter(Host.workspace == workspace).one()
+    assert host.ip == "127.0.0.1"
+    assert host.creator_id == logged_user.id
+    assert set({hn.name for hn in host.hostnames}) == {"test.com", "test2.org"}
+    assert len(host.services) == 1
+    assert len(host.vulnerabilities) == 1
+    assert len(host.services[0].vulnerabilities) == 1
+    service = Service.query.filter(Service.workspace == workspace).one()
+    assert service.creator_id == logged_user.id
+    credential = Credential.query.filter(Credential.workspace == workspace).one()
+    assert credential.creator_id == logged_user.id
+    command = Command.query.filter(Credential.workspace == workspace).one()
+    assert command.creator_id == logged_user.id
+    assert res.json["command_id"] == command.id
+    for vuln in Vulnerability.query.filter(Vulnerability.workspace == workspace):
+        assert vuln.custom_fields['changes'] == ['1', '2', '3']

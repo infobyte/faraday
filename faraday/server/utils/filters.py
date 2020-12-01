@@ -16,7 +16,7 @@ from dateutil.parser._parser import ParserError
 from marshmallow import Schema, fields, ValidationError, types, validate, post_load
 from marshmallow_sqlalchemy.convert import ModelConverter
 
-from faraday.server.models import VulnerabilityWeb, Host, Service
+from faraday.server.models import VulnerabilityWeb, Host, Service, VulnerabilityTemplate
 from faraday.server.utils.search import OPERATORS
 from faraday.server.fields import JSONType
 
@@ -164,6 +164,10 @@ class FlaskRestlessVulnerabilityFilterSchema(FlaskRestlessFilterSchema):
     def _model_class(self):
         return VulnerabilityWeb
 
+class FlaskRestlessVulnerabilityTemplateFilterSchema(FlaskRestlessFilterSchema):
+    def _model_class(self):
+        return VulnerabilityTemplate
+
 class FlaskRestlessHostFilterSchema(FlaskRestlessFilterSchema):
     def _model_class(self):
         return Host
@@ -176,6 +180,7 @@ class FlaskRestlessOperator(Schema):
     model_filter_schemas = [
         FlaskRestlessHostFilterSchema,
         FlaskRestlessVulnerabilityFilterSchema,
+        FlaskRestlessVulnerabilityTemplateFilterSchema,
     ]
 
     def load(
@@ -257,6 +262,7 @@ class FlaskRestlessSchema(Schema):
         FilterSchema,
         FlaskRestlessOperator,
         FlaskRestlessVulnerabilityFilterSchema,
+        FlaskRestlessVulnerabilityTemplateFilterSchema,
         FlaskRestlessHostFilterSchema,
     ]
 

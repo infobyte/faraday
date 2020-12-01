@@ -8,6 +8,8 @@ import re
 import typing
 import numbers
 import datetime
+
+import marshmallow_sqlalchemy
 from distutils.util import strtobool
 
 from dateutil.parser import parse
@@ -97,6 +99,8 @@ class FlaskRestlessFilterSchema(Schema):
         try:
             field = converter.column2field(column)
         except AttributeError:
+            return [filter_]
+        except marshmallow_sqlalchemy.exceptions.ModelConversionError:
             return [filter_]
 
         if filter_['op'].lower() in ['ilike', 'like']:

@@ -49,11 +49,11 @@ class HostCountSchema(Schema):
     high = fields.Integer(dump_only=True, allow_none=False,
                               attribute='vulnerability_high_count')
     med = fields.Integer(dump_only=True, allow_none=False,
-                              attribute='vulnerability_med_count')
+                              attribute='vulnerability_medium_count')
     low = fields.Integer(dump_only=True, allow_none=False,
                               attribute='vulnerability_low_count')
     info = fields.Integer(dump_only=True, allow_none=False,
-                              attribute='vulnerability_info_count')
+                              attribute='vulnerability_informational_count')
     unclassified = fields.Integer(dump_only=True, allow_none=False,
                               attribute='vulnerability_unclassified_count')
     total = fields.Integer(dump_only=True, allow_none=False,
@@ -157,6 +157,37 @@ class HostsView(PaginatedMixin,
 
     def _get_base_query(self, workspace_name):
         return Host.query_with_count(None, None, workspace_name)
+
+    @route('/filter')
+    def filter(self, workspace_name):
+        """
+        ---
+            tags: ["filter"]
+            summary: Filters, sorts and groups objects using a json with parameters.
+            parameters:
+            - in: query
+              name: q
+              description: recursive json with filters that supports operators. The json could also contain sort and group
+
+            responses:
+              200:
+                description: return filtered, sorted and grouped results
+                content:
+                  application/json:
+                    schema: FlaskRestlessSchema
+              400:
+                description: invalid q was sent to the server
+
+        """
+        filters = flask.request.args.get('q', '{"filters": []}')
+        filtered_objs, count = self._filter(filters, workspace_name, severity_count=True)
+
+        class PageMeta:
+            total = 0
+
+        pagination_metadata = PageMeta()
+        pagination_metadata.total = count
+        return self._envelope_list(filtered_objs, pagination_metadata)
 
     @route('/bulk_create/', methods=['POST'])
     def bulk_create(self, workspace_name):

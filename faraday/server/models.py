@@ -284,7 +284,7 @@ def count_vulnerability_severities(query: str,
 
     query = query.options(
         with_expression(
-            getattr(model, f'vulnerability_total_count'),
+            getattr(model, 'vulnerability_total_count'),
             _make_vuln_count_property(None,
                                       extra_query=extra_query,
                                       use_column_property=False,

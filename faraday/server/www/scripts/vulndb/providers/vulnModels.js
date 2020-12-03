@@ -33,15 +33,20 @@ angular.module('faradayApp').
                 vulnModelsManager.bulkCreate = function(vulns){
                     var deferred = $q.defer();
                     var self = this;
-                    ServerAPI.bulkCreateVulnerabilityTemplate(vulns)
-                        .then(function(response) {
-                            var vulnsCreated = response.data.vulns_created;
-                            self.updateState(self.totalNumberOfModels + vulnsCreated.length);
-                            deferred.resolve(response);
-                        }, function(response) {
-                            deferred.reject(response)
+                    $http.get(BASEURL + '_api/session')
+                        .then(function(d) {
+                            var dataToSend = {}
+                            dataToSend.csrf_token = d.data.csrf_token;
+                            dataToSend.vulns = vulns;
+                            ServerAPI.bulkCreateVulnerabilityTemplate(dataToSend)
+                                .then(function (response) {
+                                    var vulnsCreated = response.data.vulns_created;
+                                    self.updateState(self.totalNumberOfModels + vulnsCreated.length);
+                                    deferred.resolve(response);
+                                }, function (response) {
+                                    deferred.reject(response)
+                                })
                         })
-
                     return deferred.promise;
                 }
 

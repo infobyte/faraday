@@ -471,7 +471,7 @@ class TestHostAPI:
         assert severities['med'] == 0
         assert severities['low'] == 1
         assert severities['unclassified'] == 0
-        assert severities['total_vulns'] == 5
+        assert severities['total'] == 5
 
     def test_filter_by_invalid_service_port(self, test_client, session, workspace,
                                service_factory, host_factory):

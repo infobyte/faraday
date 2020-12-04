@@ -4,10 +4,13 @@ Copyright (C) 2020  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 """
+import logging
 import re
 import typing
 import numbers
 import datetime
+
+import marshmallow_sqlalchemy
 from distutils.util import strtobool
 
 from dateutil.parser import parse
@@ -23,6 +26,7 @@ from faraday.server.fields import JSONType
 
 VALID_OPERATORS = set(OPERATORS.keys()) - set(['desc', 'asc'])
 
+logger = logging.getLogger(__name__)
 
 class FlaskRestlessFilterSchema(Schema):
     name = fields.String(required=True)
@@ -96,7 +100,11 @@ class FlaskRestlessFilterSchema(Schema):
 
         try:
             field = converter.column2field(column)
-        except AttributeError:
+        except AttributeError as e:
+            logger.warning(f"Column {column_name} could not be converted. {e}")
+            return [filter_]
+        except marshmallow_sqlalchemy.exceptions.ModelConversionError as e:
+            logger.warning(f"Column {column_name} could not be converted. {e}")
             return [filter_]
 
         if filter_['op'].lower() in ['ilike', 'like']:

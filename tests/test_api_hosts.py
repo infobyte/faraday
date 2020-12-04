@@ -443,9 +443,7 @@ class TestHostAPI:
         assert shown_hosts_ids == expected_host_ids
 
     @pytest.mark.usefixtures('ignore_nplusone')
-    def test_filter_verity_severity_counts(self, test_client, session,
-                                                   workspace, host_factory, vulnerability_factory,
-                                                   service_factory):
+    def test_filter_verify_severity_counts(self, test_client, session, workspace, host_factory, vulnerability_factory):
         host = host_factory.create(workspace=workspace)
         vulnerability_factory.create(service=None, host=host, workspace=workspace, severity='critical')
         vulnerability_factory.create(service=None, host=host, workspace=workspace, severity='critical')

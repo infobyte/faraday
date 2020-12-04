@@ -442,6 +442,35 @@ class TestHostAPI:
         expected_host_ids = set(host.id for host in hosts)
         assert shown_hosts_ids == expected_host_ids
 
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_filter_verify_severity_counts(self, test_client, session, workspace, host_factory, vulnerability_factory):
+        host = host_factory.create(workspace=workspace)
+        vulnerability_factory.create(service=None, host=host, workspace=workspace, severity='critical')
+        vulnerability_factory.create(service=None, host=host, workspace=workspace, severity='critical')
+        vulnerability_factory.create(service=None, host=host, workspace=workspace, severity='high')
+        vulnerability_factory.create(service=None, host=host, workspace=workspace, severity='low')
+        vulnerability_factory.create(service=None, host=host, workspace=workspace, severity='informational')
+
+        host2 = host_factory.create(workspace=workspace)
+        vulnerability_factory.create(service=None, host=host2, workspace=workspace, severity='critical')
+        vulnerability_factory.create(service=None, host=host2, workspace=workspace, severity='critical')
+
+        session.commit()
+
+        res = test_client.get(f'{self.url()}'
+                              f'filter?q={{"filters":[{{"name": "ip", "op":"eq", "val":"{host.ip}"}}]}}')
+
+        assert res.status_code == 200
+
+        severities =  res.json['rows'][0]['value']['severity_counts']
+        assert severities['info'] == 1
+        assert severities['critical'] == 2
+        assert severities['high'] == 1
+        assert severities['med'] == 0
+        assert severities['low'] == 1
+        assert severities['unclassified'] == 0
+        assert severities['total'] == 5
+
     def test_filter_by_invalid_service_port(self, test_client, session, workspace,
                                service_factory, host_factory):
         services = service_factory.create_batch(10, workspace=workspace, port=25)

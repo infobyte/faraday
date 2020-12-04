@@ -28,7 +28,7 @@ from webargs.flaskparser import FlaskParser
 from webargs.core import ValidationError
 from flask_classful import route
 
-from faraday.server.models import Workspace, db, Command, CommandObject
+from faraday.server.models import Workspace, db, Command, CommandObject, count_vulnerability_severities
 from faraday.server.schemas import NullToBlankString
 from faraday.server.utils.database import (
     get_conflict_object,
@@ -630,15 +630,20 @@ class FilterWorkspacedMixin(ListMixin):
         pagination_metadata.total = count
         return self._envelope_list(filtered_objs, pagination_metadata)
 
-    def _generate_filter_query(self, filters, workspace):
+    def _generate_filter_query(self, filters, workspace, severity_count=False):
         filter_query = search(db.session,
                        self.model_class,
                        filters)
 
         filter_query = filter_query.filter(self.model_class.workspace == workspace)
+
+        if severity_count and 'group_by' not in filters:
+            filter_query = count_vulnerability_severities(filter_query, self.model_class,
+                                                          all_severities=True, host_vulns=True)
+
         return filter_query
 
-    def _filter(self, filters, workspace_name):
+    def _filter(self, filters, workspace_name, severity_count=False):
         marshmallow_params = {'many': True, 'context': {}}
         try:
             filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
@@ -657,7 +662,8 @@ class FilterWorkspacedMixin(ListMixin):
 
             filter_query = self._generate_filter_query(
                 filters,
-                workspace
+                workspace,
+                severity_count=severity_count
             )
 
             if limit:

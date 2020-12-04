@@ -442,31 +442,6 @@ class TestHostAPI:
         expected_host_ids = set(host.id for host in hosts)
         assert shown_hosts_ids == expected_host_ids
 
-
-
-    @pytest.mark.usefixtures('ignore_nplusone')
-    def test_filter_restless_by_target(self, test_client, session, workspace, host_factory):
-
-        host_factory.create(workspace=workspace, ip="192.168.0.1")
-        host_factory.create(workspace=workspace, ip="192.168.0.2")
-
-        session.commit()
-        res = test_client.get(f'{self.url()}'
-                              f'filter?q={{"filters":[{{"name": "target", "op":"eq", "val":"192.168.0.2"}}]}}')
-        assert res.status_code == 200
-
-    @pytest.mark.usefixtures('ignore_nplusone')
-    def test_filter_restless_by_target_host_ip(self, test_client, session, workspace, host_factory):
-
-        host_factory.create(workspace=workspace, ip="192.168.0.2")
-
-        session.commit()
-        res = test_client.get(f'{self.url()}'
-                              f'filter?q={{"filters":[{{"name": "target_host_ip", "op":"eq", "val":"192.168.0.2"}}]}}')
-        assert res.status_code == 200
-        assert len(res.json['rows']) == 1
-        assert res.json['rows'][0]['ip'] == '192.168.0.2'
-
     def test_filter_by_invalid_service_port(self, test_client, session, workspace,
                                service_factory, host_factory):
         services = service_factory.create_batch(10, workspace=workspace, port=25)

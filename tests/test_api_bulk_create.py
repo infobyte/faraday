@@ -724,9 +724,13 @@ def test_bulk_create_endpoint_with_agent_token_without_execution_id(session, age
         assert count(Command, workspace) == 0
 
 
-def test_bulk_create_endpoint_with_agent_token(session, agent_execution,
+@pytest.mark.parametrize('start_date', [None, datetime.now()])
+@pytest.mark.parametrize('duration', [None, 1200])
+def test_bulk_create_endpoint_with_agent_token(session,
                                                test_client,
-                                               agent_execution_factory):
+                                               agent_execution_factory,
+                                               start_date, duration):
+    agent_execution = agent_execution_factory.create()
     agent = agent_execution.executor.agent
     extra_agent_execution = agent_execution_factory.create()
 
@@ -734,44 +738,89 @@ def test_bulk_create_endpoint_with_agent_token(session, agent_execution,
         agent_execution.executor.parameters_metadata = {}
         agent_execution.parameters_data = {}
         agent_execution.workspace = workspace
+        agent_execution.command.workspace = workspace
         session.add(agent_execution)
         session.add(extra_agent_execution)
         session.commit()
 
-        assert count(Host, workspace) == 0
+        command_data = {}
+        if start_date:
+            command_data.update({
+                'tool': agent.name,  # Agent name
+                'command': agent_execution.executor.name,
+                'user': '',
+                'hostname': '',
+                'params': '',
+                'import_source': 'agent',
+                'start_date': str(start_date)
+            })
+        if duration:
+            command_data.update({
+                'tool': agent.name,  # Agent name
+                'command': agent_execution.executor.name,
+                'user': '',
+                'hostname': '',
+                'params': '',
+                'import_source': 'agent',
+                'duration': str(duration)
+            })
+
+        data_kwargs = {
+            "hosts": [host_data],
+            "execution_id": -1
+        }
+        if command_data:
+            data_kwargs["command"] = command_data
+
+        initial_host_count = Host.query.filter(Host.workspace == workspace and Host.creator_id is None).count()
+        assert count(Command, workspace) == 1
         url = f'v2/ws/{workspace.name}/bulk_create/'
         res = test_client.post(
             url,
-            data=dict(hosts=[host_data], execution_id=-1),
+            data=dict(**data_kwargs),
             headers=[("authorization", f"agent {agent.token}")]
         )
         assert res.status_code == 400
 
-        assert count(Host, workspace) == 0
-        assert count(Command, workspace) == 0
+        assert Host.query.filter(Host.workspace == workspace and Host.creator_id is None).count() == initial_host_count
+        assert count(Command, workspace) == 1
+        data_kwargs["execution_id"] = extra_agent_execution.id
         res = test_client.post(
             url,
-            data=dict(hosts=[host_data], execution_id=extra_agent_execution.id),
+            data=dict(**data_kwargs),
             headers=[("authorization", f"agent {agent.token}")]
         )
         assert res.status_code == 400
-        assert count(Host, workspace) == 0
-        assert count(Command, workspace) == 0
+        assert Host.query.filter(Host.workspace == workspace and Host.creator_id is None).count() == initial_host_count
+        assert count(Command, workspace) == 1
+        data_kwargs["execution_id"] = agent_execution.id
         res = test_client.post(
             url,
-            data=dict(hosts=[host_data], execution_id=agent_execution.id),
+            data=dict(**data_kwargs),
             headers=[("authorization", f"agent {agent.token}")]
         )
-        assert res.status_code == 201, res.json
-        assert count(Host, workspace) == 1
-        host = Host.query.filter(Host.workspace == workspace).one()
-        assert host.creator_id is None
-        assert count(Command, workspace) == 1
-        command = Command.query.filter(Command.workspace == workspace).one()
-        assert command.tool == agent.name
-        assert command.command == agent_execution.executor.name
-        assert command.params == ""
-        assert command.import_source == 'agent'
+
+        if start_date or duration is None:
+            assert res.status_code == 201, res.json
+            assert Host.query.filter(Host.workspace == workspace and Host.creator_id is None).count() == \
+                   initial_host_count + 1
+            assert count(Command, workspace) == 1
+            command = Command.query.filter(Command.workspace == workspace).one()
+            assert command.tool == agent.name
+            assert command.command == agent_execution.executor.name
+            assert command.params == ""
+            assert command.import_source == 'agent'
+            command_id = res.json["command_id"]
+            assert command.id == command_id
+            assert command.id == agent_execution.command.id
+            assert command.start_date is not None
+            if duration is None:
+                assert command.end_date is None
+            else:
+                assert command.end_date == command.start_date + timedelta(microseconds=duration)
+        else:
+            assert res.status_code == 400, res.json
+
 
 
 def test_bulk_create_endpoint_with_agent_token_with_param(session, agent_execution, test_client):
@@ -780,9 +829,11 @@ def test_bulk_create_endpoint_with_agent_token_with_param(session, agent_executi
     session.commit()
     for workspace in agent.workspaces:
         agent_execution.workspace = workspace
+        agent_execution.command.workspace = workspace
         session.add(agent_execution)
         session.commit()
         assert count(Host, workspace) == 0
+        assert count(Command, workspace) == 1
         url = f'v2/ws/{workspace.name}/bulk_create/'
         res = test_client.post(
             url,
@@ -800,6 +851,9 @@ def test_bulk_create_endpoint_with_agent_token_with_param(session, agent_executi
         params = ', '.join([f'{key}={value}' for (key, value) in agent_execution.parameters_data.items()])
         assert command.params == str(params)
         assert command.import_source == 'agent'
+        command_id = res.json["command_id"]
+        assert command.id == command_id
+        assert command.id == agent_execution.command.id
 
 
 def test_bulk_create_endpoint_with_agent_token_readonly_workspace(

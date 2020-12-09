@@ -450,7 +450,13 @@ class BulkCreateView(GenericWorkspacedView):
             if end_date is not None:
                 data["command"]["end_date"] = end_date
 
-            command = Command.query.filter(Command.id == agent_execution.command.id).one()
+            command = Command.query.filter(Command.id == agent_execution.command.id).one_or_none()
+            if command is None:
+                logger.exception(
+                    ValueError(f"There is no command with {agent_execution.command.id}")
+                )
+                flask.abort(400, "Trying to update a not existent command")
+
             _update_command(command, data['command'])
             db.session.flush()
 

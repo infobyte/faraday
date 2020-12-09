@@ -781,6 +781,12 @@ class Command(Metadata):
     sum_created_vulnerability_unclassified = _make_created_objects_sum_joined('vulnerability',
                                                                               {'severity': '\'unclassified\''})
 
+    agent_execution = relationship(
+        'AgentExecution',
+        uselist=False,
+        back_populates="command"
+    )
+
     @property
     def parent(self):
         return
@@ -2261,6 +2267,13 @@ class AgentExecution(Metadata):
         backref=backref('agent_executions', cascade="all, delete-orphan"),
     )
     parameters_data = Column(JSONType, nullable=False)
+    command_id = Column(Integer, ForeignKey('command.id'), index=True)
+    command = relationship(
+        'Command',
+        foreign_keys=[command_id],
+        backref=backref('agent_execution_id', cascade="all, delete-orphan")
+    )
+
 
     @property
     def parent(self):

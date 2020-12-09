@@ -162,22 +162,21 @@ class HostsView(PaginatedMixin,
     def filter(self, workspace_name):
         """
         ---
-            tags: ["filter"]
-            summary: Filters, sorts and groups objects using a json with parameters.
-            parameters:
-            - in: query
-              name: q
-              description: recursive json with filters that supports operators. The json could also contain sort and group
-
-            responses:
-              200:
-                description: return filtered, sorted and grouped results
-                content:
-                  application/json:
-                    schema: FlaskRestlessSchema
-              400:
-                description: invalid q was sent to the server
-
+        get:
+          tags: ["Filter, Hosts"]
+          description: Filters, sorts and groups hosts using a json with parameters. These parameters must be part of the model.
+          parameters:
+          - in: query
+            name: q
+            description: Recursive json with filters that supports operators. The json could also contain sort and group.
+          responses:
+            200:
+              description: Returns filtered, sorted and grouped results
+              content:
+                application/json:
+                  schema: FlaskRestlessSchema
+            400:
+              description: Invalid q was sent to the server
         """
         filters = flask.request.args.get('q', '{"filters": []}')
         filtered_objs, count = self._filter(filters, workspace_name, severity_count=True)

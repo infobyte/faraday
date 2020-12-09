@@ -11,6 +11,7 @@ from marshmallow import (
     Schema,
     utils,
     ValidationError,
+    validates_schema,
 )
 from marshmallow.validate import Range
 from faraday.server.models import (
@@ -146,6 +147,12 @@ class HostBulkSchema(hosts.HostSchema):
 
     class Meta(hosts.HostSchema.Meta):
         fields = hosts.HostSchema.Meta.fields + ('services', 'vulnerabilities')
+
+    @validates_schema
+    def validate_schema(self, data, **kwargs):
+        for vulnerability in data['vulnerabilities']:
+            if vulnerability['type'] != 'vulnerability':
+                raise ValidationError('Type "Vulnerability Web" cannot have "Host" type as a parent')
 
 
 class BulkCommandSchema(AutoSchema):

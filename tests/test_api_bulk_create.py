@@ -962,3 +962,18 @@ def test_bulk_create_with_custom_fields_list(test_client, workspace, session, lo
     assert res.json["command_id"] == command.id
     for vuln in Vulnerability.query.filter(Vulnerability.workspace == workspace):
         assert vuln.custom_fields['changes'] == ['1', '2', '3']
+
+
+@pytest.mark.usefixtures('logged_user')
+def test_vuln_web_cannot_have_host_parent(session, workspace, test_client, logged_user):
+    url = f'v2/ws/{workspace.name}/bulk_create/'
+    host_data_ = host_data.copy()
+    vuln_web_data_ = vuln_web_data.copy()
+    vuln_web_data_['severity'] = "high"
+    vuln_web_data_['name'] = "test"
+    host_data_['vulnerabilities'] = [vuln_web_data_]
+    res = test_client.post(
+        url,
+        data=dict(hosts=[host_data_], command=command_data)
+    )
+    assert res.status_code == 400

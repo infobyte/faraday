@@ -450,7 +450,7 @@ class BulkCreateView(GenericWorkspacedView):
             if end_date is not None:
                 data["command"]["end_date"] = end_date
 
-            command = Command.query.filter(Command.id == agent_execution.id).one()
+            command = Command.query.filter(Command.id == agent_execution.command.id).one()
             _update_command(command, data['command'])
             db.session.flush()
 

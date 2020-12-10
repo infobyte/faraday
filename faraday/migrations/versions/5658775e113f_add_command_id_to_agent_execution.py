@@ -31,5 +31,5 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_constraint('command_agent_execution_id_fkey', 'agent_execution')
-    op.drop_column('command', 'agent_execution_id')
+    op.drop_constraint('agent_execution_command_id_fkey', 'agent_execution')
+    op.drop_column('agent_execution', 'command_id')

@@ -179,6 +179,10 @@ class AgentRunSchema(Schema):
         required=True
     )
 
+    def __init__(self, *args, **kwargs):
+        super(AgentRunSchema, self).__init__(*args, **kwargs)
+        self.unknown = EXCLUDE
+
 
 class AgentWithWorkspacesView(UpdateMixin,
                               DeleteMixin,

@@ -7,6 +7,7 @@ See the file 'doc/LICENSE' for the license information
 import json
 import logging
 from json import JSONDecodeError
+from typing import Tuple
 
 import flask
 import sqlalchemy
@@ -22,11 +23,12 @@ from marshmallow import Schema, EXCLUDE, fields
 from marshmallow.validate import Length
 from marshmallow_sqlalchemy import ModelConverter
 from marshmallow_sqlalchemy.schema import ModelSchemaMeta, ModelSchemaOpts
+from sqlalchemy.sql.elements import BooleanClauseList
 from webargs.flaskparser import FlaskParser
 from webargs.core import ValidationError
 from flask_classful import route
 
-from faraday.server.models import Workspace, db, Command, CommandObject
+from faraday.server.models import Workspace, db, Command, CommandObject, count_vulnerability_severities
 from faraday.server.schemas import NullToBlankString
 from faraday.server.utils.database import (
     get_conflict_object,
@@ -628,15 +630,20 @@ class FilterWorkspacedMixin(ListMixin):
         pagination_metadata.total = count
         return self._envelope_list(filtered_objs, pagination_metadata)
 
-    def _generate_filter_query(self, filters, workspace):
-        objs = search(db.session,
+    def _generate_filter_query(self, filters, workspace, severity_count=False):
+        filter_query = search(db.session,
                        self.model_class,
                        filters)
 
-        objs = objs.filter(self.model_class.workspace == workspace)
-        return objs
+        filter_query = filter_query.filter(self.model_class.workspace == workspace)
 
-    def _filter(self, filters, workspace_name):
+        if severity_count and 'group_by' not in filters:
+            filter_query = count_vulnerability_severities(filter_query, self.model_class,
+                                                          all_severities=True, host_vulns=True)
+
+        return filter_query
+
+    def _filter(self, filters, workspace_name, severity_count=False):
         marshmallow_params = {'many': True, 'context': {}}
         try:
             filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
@@ -653,30 +660,124 @@ class FilterWorkspacedMixin(ListMixin):
             if 'limit' in filters:
                 limit = filters.pop('limit') # we need to remove pagination, since
 
-            objs = self._generate_filter_query(
+            filter_query = self._generate_filter_query(
                 filters,
-                workspace
+                workspace,
+                severity_count=severity_count
             )
 
             if limit:
-                objs = objs.limit(limit)
+                filter_query = filter_query.limit(limit)
             if offset:
-                objs = objs.offset(offset)
-            count = objs.count()
-            objs = self.schema_class(**marshmallow_params).dumps(objs.all())
+                filter_query = filter_query.offset(offset)
+            count = filter_query.count()
+            objs = self.schema_class(**marshmallow_params).dumps(filter_query.all())
             return json.loads(objs), count
         else:
-            objs = self._generate_filter_query(
+            filter_query = self._generate_filter_query(
                 filters,
                 workspace,
             )
             column_names = ['count'] + [field['field'] for field in filters.get('group_by', [])]
-            rows = [list(zip(column_names, row)) for row in objs.all()]
-            vulns_data = []
+            rows = [list(zip(column_names, row)) for row in filter_query.all()]
+            data = []
             for row in rows:
-                vulns_data.append({field[0]:field[1] for field in row})
+                data.append({field[0]: field[1] for field in row})
 
-            return vulns_data, len(rows)
+            return data, len(rows)
+
+
+class FilterMixin(ListMixin):
+    """Add filter endpoint for searching on any objects columns
+    """
+
+    @route('/filter')
+    def filter(self):
+        """
+        ---
+            tags: ["filter"]
+            summary: Filters, sorts and groups objects using a json with parameters.
+            parameters:
+            - in: query
+              name: q
+              description: recursive json with filters that supports operators. The json could also contain sort and group
+
+            responses:
+              200:
+                description: return filtered, sorted and grouped results
+                content:
+                  application/json:
+                    schema: FlaskRestlessSchema
+              400:
+                description: invalid q was sent to the server
+
+        """
+        filters = flask.request.args.get('q', '{"filters": []}')
+        filtered_objs, count = self._filter(filters)
+
+        class PageMeta:
+            total = 0
+        pagination_metadata = PageMeta()
+        pagination_metadata.total = count
+        return self._envelope_list(filtered_objs, pagination_metadata)
+
+    def _generate_filter_query(self, filters, severity_count=False, host_vulns=False):
+        filter_query = search(db.session,
+                      self.model_class,
+                      filters)
+
+        if severity_count and 'group_by' not in filters:
+            filter_query = count_vulnerability_severities(filter_query, self.model_class,
+                                                          all_severities=True, host_vulns=host_vulns)
+
+        return filter_query
+
+    def _filter(self, filters: str, extra_alchemy_filters: BooleanClauseList = None,
+                severity_count=False, host_vulns=False) -> Tuple[list, int]:
+        marshmallow_params = {'many': True, 'context': {}}
+        try:
+            filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
+        except (ValidationError, JSONDecodeError) as ex:
+            logger.exception(ex)
+            flask.abort(400, "Invalid filters")
+
+        if 'group_by' not in filters:
+            offset = None
+            limit = None
+            if 'offset' in filters:
+                offset = filters.pop('offset')
+            if 'limit' in filters:
+                limit = filters.pop('limit') # we need to remove pagination, since
+
+            filter_query = self._generate_filter_query(
+                filters,
+                severity_count=severity_count,
+                host_vulns=host_vulns
+            )
+
+            if extra_alchemy_filters is not None:
+                filter_query = filter_query.filter(extra_alchemy_filters)
+            if limit:
+                filter_query = filter_query.limit(limit)
+            if offset:
+                filter_query = filter_query.offset(offset)
+            count = filter_query.count()
+            objs = self.schema_class(**marshmallow_params).dumps(filter_query.all())
+            return json.loads(objs), count
+        else:
+            filter_query = self._generate_filter_query(
+                filters,
+            )
+            if extra_alchemy_filters is not None:
+                filter_query += filter_query.filter(extra_alchemy_filters)
+
+            column_names = ['count'] + [field['field'] for field in filters.get('group_by', [])]
+            rows = [list(zip(column_names, row)) for row in filter_query.all()]
+            data = []
+            for row in rows:
+                data.append({field[0]: field[1] for field in row})
+
+            return data, len(rows)
 
 
 class ListWorkspacedMixin(ListMixin):

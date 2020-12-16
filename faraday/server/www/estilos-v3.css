@@ -1063,3 +1063,9 @@ ul#nav-tabs-container {
     top: -2.5px;
     left: 0;
 }
+
+.no-overflow {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

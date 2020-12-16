@@ -11,7 +11,7 @@ buildPythonPackage rec {
   pname =
     "anyascii";
   version =
-    "0.1.6";
+    "0.1.7";
 
   src =
     fetchPypi {
@@ -19,7 +19,7 @@ buildPythonPackage rec {
         pname
         version;
       sha256 =
-        "112z1jlqngcqdnpb7amb1r2yvd4n0h1748jjsfsy35qx3y32ij6r";
+        "1xcrhmgpv8da34sg62r0yfxzyq2kwgiaardkih9z3sm96dlhgsyh";
     };
 
   # TODO FIXME
@@ -27,10 +27,6 @@ buildPythonPackage rec {
     false;
 
   meta =
-    with lib; {
-      description =
-        "Unicode to ASCII transliteration";
-      homepage =
-        "https://github.com/hunterwb/any-ascii";
-    };
+    with lib;
+    { };
 }

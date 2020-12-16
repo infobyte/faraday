@@ -1,0 +1,14 @@
+qa_integration:
+    stage: upload_testing
+    variables:
+      REMOTE_BRANCH: $CI_COMMIT_BRANCH
+      MAIN_COMMIT_SHA: $CI_COMMIT_SHA
+    trigger:
+        project: faradaysec/qa/automation
+        strategy: depend
+        branch: develop
+    rules:
+      - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
+        when: on_success
+      - if: '$CI_COMMIT_TAG || $BUILD_TEST || $FULL_TEST || $DAILY_TEST'
+        when: on_success

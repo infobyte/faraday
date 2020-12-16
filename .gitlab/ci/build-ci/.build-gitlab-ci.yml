@@ -1,0 +1,118 @@
+generate_deb:
+    image: registry.gitlab.com/faradaysec/devops
+    stage: build
+    before_script:
+        - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-linux-installers-builder.git
+        - mv py3.tar /
+        - cd /; tar xf py3.tar; cd -
+
+    script:
+        - mkdir build_installer
+        - cp -a faraday.tar.gz build_installer/.
+        - cd build_installer
+        - /bin/tar zxf faraday.tar.gz
+        - cd faraday_copy
+        - cp -r /nix .
+        - mv ../../faraday-linux-installers-builder .
+        - cd faraday-linux-installers-builder
+        - git rev-parse HEAD
+        - git clone https://github.com/jordansissel/fpm.git
+        - cd fpm
+        - git checkout d7b466787d17581bc723e474ecf6e18f48226031
+        - git apply ../fpm-patchs/fpm.virtualenv.patch
+        - make gem
+        - gem install --no-ri --no-rdoc fpm-1.11.0.gem
+        - cd ../../
+        - POSTFIX=$(echo "$CI_COMMIT_BRANCH" | awk '{split($1,a,"_");split($1,b,"/"); if (a[3]!="y2k") if (b[2]=="dev"||b[2]=="master") print ""; else print "~"a[3]; else exit 1;}')
+        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG)~$((`date '+%s%N'`/1000))$POSTFIX server deb
+        - mv faraday-server_amd64.deb ../../faraday-server_amd64.deb
+    needs:
+      - job: generate_build_file
+        artifacts: true
+      - job: build_nix_python3
+        artifacts: true
+    artifacts:
+        name: 'faraday_$CI_COMMIT_REF_NAME.deb'
+        paths:
+            - "faraday-server_amd64.deb"
+        expire_in: 15 days
+    rules:
+      - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
+        when: on_success
+      - if: '$CI_COMMIT_TAG || $BUILD_TEST || $FULL_TEST || $DAILY_TEST'
+        when: on_success
+      - when: never
+
+
+generate_rpm:
+    stage: build
+    image: centos:7
+    before_script:
+      - yum -y upgrade
+      - yum -y install which git epel-release centos-release-scl
+      - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/faradaysec/faraday-linux-installers-builder.git
+      - mv py3.tar /
+      - cd /; tar xf py3.tar; cd -
+      - yum -y install curl zsh mailcap libffi-devel openssl-devel openldap-devel libjpeg-devel postgresql-devel
+      - yum groups -y install "Development Tools"
+      - yum -y install rh-python36 rh-ruby23 rh-ruby23-ruby-devel
+      - source /opt/rh/rh-ruby23/enable
+      - export X_SCLS="`scl enable rh-ruby23 'echo $X_SCLS'`"
+      - source /opt/rh/rh-python36/enable
+      - pip install virtualenv
+      - pip install virtualenv-tools3
+    script:
+        - mkdir build_installer
+        - cp -a faraday.tar.gz build_installer/.
+        - cd build_installer
+        - /bin/tar zxf faraday.tar.gz
+        - cd faraday_copy
+        - cp -r /nix .
+        - mv ../../faraday-linux-installers-builder .
+        - cd faraday-linux-installers-builder
+        - git rev-parse HEAD
+        - git clone https://github.com/jordansissel/fpm.git
+        - cd fpm
+        - git checkout d7b466787d17581bc723e474ecf6e18f48226031
+        - git apply ../fpm-patchs/fpm.virtualenv.patch
+        - make gem
+        - gem install --no-ri --no-rdoc fpm-1.11.0.gem
+        - cd ../../
+        - sh faraday-linux-installers-builder/build.sh $(eval $IMAGE_TAG) server rpm
+        - mv faraday-server_amd64.rpm ../../faraday-server_amd64.rpm
+    needs:
+      - job: generate_build_file
+        artifacts: true
+      - job: build_nix_python3
+        artifacts: true
+    artifacts:
+        name: 'faraday_$CI_COMMIT_REF_NAME.rpm'
+        paths:
+            - "faraday-server_amd64.rpm"
+        expire_in: 15 days
+    rules:
+      - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
+        when: on_success
+      - if: '$CI_COMMIT_TAG || $BUILD_TEST || $FULL_TEST || $DAILY_TEST'
+        when: on_success
+      - when: never
+
+generate_docker_tar_gz:
+    stage: build
+    image: nixorg/nix
+    script:
+        - nix-env -if pynixify/nixpkgs.nix -A cachix
+        - mkdir -p ~/.config/cachix
+        - export USER=$(whoami)
+        - echo "$CACHIX_CONFG" >~/.config/cachix/cachix.dhall
+        - cachix use faradaysec
+        - nix-build ./release.nix -A dockerImage --argstr dockerName $CI_REGISTRY_IMAGE --argstr dockerTag latest
+        - cp $(readlink result) faraday-server-docker.tar.gz
+    artifacts:
+      paths:
+        - faraday-server-docker.tar.gz
+    rules:
+        - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master)$/'
+          when: on_success
+        - if: '$CI_COMMIT_TAG || $BUILD_TEST || $FULL_TEST || $DAILY_TEST'
+          when: on_success

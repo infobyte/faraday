@@ -351,7 +351,7 @@ def create_app(db_connection_string=None, testing=None):
     if not DepotManager.get('default'):
         if testing:
             DepotManager.configure('default', {
-                'depot.storage_path': '/tmp'
+                'depot.storage_path': '/tmp'  # nosec
             })
         else:
             DepotManager.configure('default', {

@@ -21,8 +21,8 @@
 , flask
 , flask-classful
 , flask-kvsession-fork
-, flask-login
 , flask-security
+, flask_login
 , flask_sqlalchemy
 , hypothesis
 , lib
@@ -82,7 +82,7 @@ buildPythonPackage rec {
       flask-classful
       email_validator
       wtforms
-      flask-login
+      flask_login
       flask-security
       marshmallow
       pillow
@@ -112,8 +112,6 @@ buildPythonPackage rec {
     ];
   checkInputs =
     [
-      pytest
-      flask
       flask
       factory_boy
       pylint

@@ -7,8 +7,6 @@ Create Date: 2020-03-27 05:37:11.000671+00:00
 """
 from alembic import op
 import sqlalchemy as sa
-from faraday.server.models import Command
-
 
 # revision identifiers, used by Alembic.
 revision = '282ac9b6569f'
@@ -16,12 +14,16 @@ down_revision = '84f266a05be3'
 branch_labels = None
 depends_on = None
 
+IMPORT_SOURCE = [
+        'report',
+        'shell'
+    ]
 
-old_types = Command.IMPORT_SOURCE.remove('agent')
-new_types = list(set(Command.IMPORT_SOURCE + ['agent']))
+old_types = IMPORT_SOURCE
+new_types = list(set(IMPORT_SOURCE + ['agent']))
 new_options = sorted(new_types)
 
-old_type = sa.Enum(*Command.IMPORT_SOURCE, name='import_source_enum')
+old_type = sa.Enum(*IMPORT_SOURCE, name='import_source_enum')
 new_type = sa.Enum(*new_options, name='import_source_enum')
 tmp_type = sa.Enum(*new_options, name='_import_source_enum')
 

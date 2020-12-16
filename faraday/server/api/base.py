@@ -299,7 +299,7 @@ class GenericView(FlaskView):
         data. It a ``Marshmallow.Schema`` instance to perform the
         deserialization
         """
-        return FlaskParser().parse(schema, request, location="json",
+        return FlaskParser(unknown=EXCLUDE).parse(schema, request, location="json",
                                    *args, **kwargs)
 
     @classmethod

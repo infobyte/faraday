@@ -36,8 +36,6 @@ from flask_security.utils import do_flash, send_mail, \
     config_value, get_token_status, verify_hash
 from flask_security.forms import ResetPasswordForm
 
-from flask_security.views import anonymous_user_required
-
 from faraday.server.models import User
 
 auth = Blueprint('auth', __name__)

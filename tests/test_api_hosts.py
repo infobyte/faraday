@@ -442,6 +442,35 @@ class TestHostAPI:
         expected_host_ids = set(host.id for host in hosts)
         assert shown_hosts_ids == expected_host_ids
 
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_filter_verify_severity_counts(self, test_client, session, workspace, host_factory, vulnerability_factory):
+        host = host_factory.create(workspace=workspace)
+        vulnerability_factory.create(service=None, host=host, workspace=workspace, severity='critical')
+        vulnerability_factory.create(service=None, host=host, workspace=workspace, severity='critical')
+        vulnerability_factory.create(service=None, host=host, workspace=workspace, severity='high')
+        vulnerability_factory.create(service=None, host=host, workspace=workspace, severity='low')
+        vulnerability_factory.create(service=None, host=host, workspace=workspace, severity='informational')
+
+        host2 = host_factory.create(workspace=workspace)
+        vulnerability_factory.create(service=None, host=host2, workspace=workspace, severity='critical')
+        vulnerability_factory.create(service=None, host=host2, workspace=workspace, severity='critical')
+
+        session.commit()
+
+        res = test_client.get(f'{self.url()}'
+                              f'filter?q={{"filters":[{{"name": "ip", "op":"eq", "val":"{host.ip}"}}]}}')
+
+        assert res.status_code == 200
+
+        severities =  res.json['rows'][0]['value']['severity_counts']
+        assert severities['info'] == 1
+        assert severities['critical'] == 2
+        assert severities['high'] == 1
+        assert severities['med'] == 0
+        assert severities['low'] == 1
+        assert severities['unclassified'] == 0
+        assert severities['total'] == 5
+
     def test_filter_by_invalid_service_port(self, test_client, session, workspace,
                                service_factory, host_factory):
         services = service_factory.create_batch(10, workspace=workspace, port=25)
@@ -526,8 +555,8 @@ class TestHostAPI:
 
         host = host_factory.create(workspace=workspace)
         service = service_factory.create(host=host, workspace=workspace)
-        vulnerability_factory.create(service=service, host=None, workspace=workspace)
-        vulnerability_factory.create(service=None, host=host, workspace=workspace)
+        vulnerability_factory.create(service=service, host=None, workspace=workspace, severity="low")
+        vulnerability_factory.create(service=None, host=host, workspace=workspace, severity="critical")
 
         session.commit()
 
@@ -536,6 +565,12 @@ class TestHostAPI:
         json_host = list(filter(lambda json_host: json_host['value']['id'] == host.id, res.json['rows']))[0]
         # the host has one vuln associated. another one via service.
         assert json_host['value']['vulns'] == 2
+        assert json_host['value']['severity_counts']['critical'] == 1
+        assert json_host['value']['severity_counts']['low'] == 1
+        assert json_host['value']['severity_counts']['info'] == 0
+        assert json_host['value']['severity_counts']['unclassified'] == 0
+        assert json_host['value']['severity_counts']['med'] == 0
+        assert json_host['value']['severity_counts']['high'] == 0
 
     def test_host_services_vuln_count_verification(self, test_client, session,
                                                    workspace, host_factory, vulnerability_factory,
@@ -625,7 +660,8 @@ class TestHostAPI:
             "id": 4000,
             "icon":"windows",
             "versions": [],
-            "important": False}
+            "important": False,
+        }
 
         res = test_client.put(self.url(host, workspace=host.workspace), data=raw_data)
         assert res.status_code == 200
@@ -658,7 +694,18 @@ class TestHostAPI:
             u'service_summaries': [],
             u'vulns': 0,
             u"versions": [],
-            u'important': False}
+            u'important': False,
+            u'severity_counts': {
+                u'critical': None,
+                u'high': None,
+                u'host_id': host.id,
+                u'info': None,
+                u'med': None,
+                u'low': None,
+                u'total': None,
+                u'unclassified': None
+            }
+        }
 
     def test_add_hosts_from_csv(self, session, test_client, csrf_token):
         ws = WorkspaceFactory.create(name='abc')

@@ -542,6 +542,11 @@ angular.module("faradayApp")
                 return modVulnerabilityTemplate(createNonWorkspacedObject, vulnerabilityTemplate);
             };
 
+            ServerAPI.bulkCreateVulnerabilityTemplate = function (vulns) {
+                var bulkCreateURL = APIURL + 'vulnerability_template/bulk_create/';
+                return send_data(bulkCreateURL, vulns, false, "POST");
+            };
+
             ServerAPI.updateVulnerabilityTemplate = function (vulnerabilityTemplate) {
                 return modVulnerabilityTemplate(updateNonWorkspacedObject, vulnerabilityTemplate);
             };

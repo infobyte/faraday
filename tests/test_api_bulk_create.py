@@ -15,6 +15,7 @@ from faraday.server.models import (
     Workspace
 )
 from faraday.server.api.modules import bulk_create as bc
+from tests.factories import CustomFieldsSchemaFactory
 
 host_data = {
     "ip": "127.0.0.1",
@@ -723,9 +724,13 @@ def test_bulk_create_endpoint_with_agent_token_without_execution_id(session, age
         assert count(Command, workspace) == 0
 
 
-def test_bulk_create_endpoint_with_agent_token(session, agent_execution,
+@pytest.mark.parametrize('start_date', [None, datetime.now()])
+@pytest.mark.parametrize('duration', [None, 1200])
+def test_bulk_create_endpoint_with_agent_token(session,
                                                test_client,
-                                               agent_execution_factory):
+                                               agent_execution_factory,
+                                               start_date, duration):
+    agent_execution = agent_execution_factory.create()
     agent = agent_execution.executor.agent
     extra_agent_execution = agent_execution_factory.create()
 
@@ -733,44 +738,89 @@ def test_bulk_create_endpoint_with_agent_token(session, agent_execution,
         agent_execution.executor.parameters_metadata = {}
         agent_execution.parameters_data = {}
         agent_execution.workspace = workspace
+        agent_execution.command.workspace = workspace
         session.add(agent_execution)
         session.add(extra_agent_execution)
         session.commit()
 
-        assert count(Host, workspace) == 0
+        command_data = {}
+        if start_date:
+            command_data.update({
+                'tool': agent.name,  # Agent name
+                'command': agent_execution.executor.name,
+                'user': '',
+                'hostname': '',
+                'params': '',
+                'import_source': 'agent',
+                'start_date': str(start_date)
+            })
+        if duration:
+            command_data.update({
+                'tool': agent.name,  # Agent name
+                'command': agent_execution.executor.name,
+                'user': '',
+                'hostname': '',
+                'params': '',
+                'import_source': 'agent',
+                'duration': str(duration)
+            })
+
+        data_kwargs = {
+            "hosts": [host_data],
+            "execution_id": -1
+        }
+        if command_data:
+            data_kwargs["command"] = command_data
+
+        initial_host_count = Host.query.filter(Host.workspace == workspace and Host.creator_id is None).count()
+        assert count(Command, workspace) == 1
         url = f'v2/ws/{workspace.name}/bulk_create/'
         res = test_client.post(
             url,
-            data=dict(hosts=[host_data], execution_id=-1),
+            data=dict(**data_kwargs),
             headers=[("authorization", f"agent {agent.token}")]
         )
         assert res.status_code == 400
 
-        assert count(Host, workspace) == 0
-        assert count(Command, workspace) == 0
+        assert Host.query.filter(Host.workspace == workspace and Host.creator_id is None).count() == initial_host_count
+        assert count(Command, workspace) == 1
+        data_kwargs["execution_id"] = extra_agent_execution.id
         res = test_client.post(
             url,
-            data=dict(hosts=[host_data], execution_id=extra_agent_execution.id),
+            data=dict(**data_kwargs),
             headers=[("authorization", f"agent {agent.token}")]
         )
         assert res.status_code == 400
-        assert count(Host, workspace) == 0
-        assert count(Command, workspace) == 0
+        assert Host.query.filter(Host.workspace == workspace and Host.creator_id is None).count() == initial_host_count
+        assert count(Command, workspace) == 1
+        data_kwargs["execution_id"] = agent_execution.id
         res = test_client.post(
             url,
-            data=dict(hosts=[host_data], execution_id=agent_execution.id),
+            data=dict(**data_kwargs),
             headers=[("authorization", f"agent {agent.token}")]
         )
-        assert res.status_code == 201, res.json
-        assert count(Host, workspace) == 1
-        host = Host.query.filter(Host.workspace == workspace).one()
-        assert host.creator_id is None
-        assert count(Command, workspace) == 1
-        command = Command.query.filter(Command.workspace == workspace).one()
-        assert command.tool == agent.name
-        assert command.command == agent_execution.executor.name
-        assert command.params == ""
-        assert command.import_source == 'agent'
+
+        if start_date or duration is None:
+            assert res.status_code == 201, res.json
+            assert Host.query.filter(Host.workspace == workspace and Host.creator_id is None).count() == \
+                   initial_host_count + 1
+            assert count(Command, workspace) == 1
+            command = Command.query.filter(Command.workspace == workspace).one()
+            assert command.tool == agent.name
+            assert command.command == agent_execution.executor.name
+            assert command.params == ""
+            assert command.import_source == 'agent'
+            command_id = res.json["command_id"]
+            assert command.id == command_id
+            assert command.id == agent_execution.command.id
+            assert command.start_date is not None
+            if duration is None:
+                assert command.end_date is None
+            else:
+                assert command.end_date == command.start_date + timedelta(microseconds=duration)
+        else:
+            assert res.status_code == 400, res.json
+
 
 
 def test_bulk_create_endpoint_with_agent_token_with_param(session, agent_execution, test_client):
@@ -779,9 +829,11 @@ def test_bulk_create_endpoint_with_agent_token_with_param(session, agent_executi
     session.commit()
     for workspace in agent.workspaces:
         agent_execution.workspace = workspace
+        agent_execution.command.workspace = workspace
         session.add(agent_execution)
         session.commit()
         assert count(Host, workspace) == 0
+        assert count(Command, workspace) == 1
         url = f'v2/ws/{workspace.name}/bulk_create/'
         res = test_client.post(
             url,
@@ -799,6 +851,9 @@ def test_bulk_create_endpoint_with_agent_token_with_param(session, agent_executi
         params = ', '.join([f'{key}={value}' for (key, value) in agent_execution.parameters_data.items()])
         assert command.params == str(params)
         assert command.import_source == 'agent'
+        command_id = res.json["command_id"]
+        assert command.id == command_id
+        assert command.id == agent_execution.command.id
 
 
 def test_bulk_create_endpoint_with_agent_token_readonly_workspace(
@@ -896,8 +951,6 @@ def test_bulk_create_endpoint_with_invalid_vuln_run_date(session, workspace, tes
     assert count(VulnerabilityGeneric, workspace) == 0
 
 
-
-
 @pytest.mark.usefixtures('logged_user')
 def test_bulk_create_endpoint_fails_with_list_in_NullToBlankString(session, workspace, test_client, logged_user):
     assert count(Host, workspace) == 0
@@ -914,3 +967,67 @@ def test_bulk_create_endpoint_fails_with_list_in_NullToBlankString(session, work
     assert count(Service, workspace) == 0
     assert count(Credential, workspace) == 0
     assert count(Vulnerability, workspace) == 0
+
+
+@pytest.mark.usefixtures('logged_user')
+def test_bulk_create_with_custom_fields_list(test_client, workspace, session, logged_user):
+    custom_field_schema = CustomFieldsSchemaFactory(
+        field_name='changes',
+        field_type='list',
+        field_display_name='Changes',
+        table_name='vulnerability'
+    )
+    session.add(custom_field_schema)
+    session.commit()
+
+    assert count(Host, workspace) == 0
+    assert count(VulnerabilityGeneric, workspace) == 0
+    url = f'v2/ws/{workspace.name}/bulk_create/'
+    host_data_ = host_data.copy()
+    service_data_ = service_data.copy()
+    vuln_data_ = vuln_data.copy()
+    vuln_data_['custom_fields'] = {'changes': ['1', '2', '3']}
+    service_data_['vulnerabilities'] = [vuln_data_]
+    host_data_['services'] = [service_data_]
+    host_data_['credentials'] = [credential_data]
+    host_data_['vulnerabilities'] = [vuln_data_]
+    res = test_client.post(
+        url,
+        data=dict(hosts=[host_data_], command=command_data)
+    )
+    assert res.status_code == 201, res.json
+    assert count(Host, workspace) == 1
+    assert count(Service, workspace) == 1
+    assert count(Vulnerability, workspace) == 2
+    assert count(Command, workspace) == 1
+    host = Host.query.filter(Host.workspace == workspace).one()
+    assert host.ip == "127.0.0.1"
+    assert host.creator_id == logged_user.id
+    assert set({hn.name for hn in host.hostnames}) == {"test.com", "test2.org"}
+    assert len(host.services) == 1
+    assert len(host.vulnerabilities) == 1
+    assert len(host.services[0].vulnerabilities) == 1
+    service = Service.query.filter(Service.workspace == workspace).one()
+    assert service.creator_id == logged_user.id
+    credential = Credential.query.filter(Credential.workspace == workspace).one()
+    assert credential.creator_id == logged_user.id
+    command = Command.query.filter(Credential.workspace == workspace).one()
+    assert command.creator_id == logged_user.id
+    assert res.json["command_id"] == command.id
+    for vuln in Vulnerability.query.filter(Vulnerability.workspace == workspace):
+        assert vuln.custom_fields['changes'] == ['1', '2', '3']
+
+
+@pytest.mark.usefixtures('logged_user')
+def test_vuln_web_cannot_have_host_parent(session, workspace, test_client, logged_user):
+    url = f'v2/ws/{workspace.name}/bulk_create/'
+    host_data_ = host_data.copy()
+    vuln_web_data_ = vuln_web_data.copy()
+    vuln_web_data_['severity'] = "high"
+    vuln_web_data_['name'] = "test"
+    host_data_['vulnerabilities'] = [vuln_web_data_]
+    res = test_client.post(
+        url,
+        data=dict(hosts=[host_data_], command=command_data)
+    )
+    assert res.status_code == 400

@@ -40,6 +40,26 @@ host_api = Blueprint('host_api', __name__)
 logger = logging.getLogger(__name__)
 
 
+
+class HostCountSchema(Schema):
+    host_id = fields.Integer(dump_only=True, allow_none=False,
+                                 attribute='id')
+    critical = fields.Integer(dump_only=True, allow_none=False,
+                                 attribute='vulnerability_critical_count')
+    high = fields.Integer(dump_only=True, allow_none=False,
+                              attribute='vulnerability_high_count')
+    med = fields.Integer(dump_only=True, allow_none=False,
+                              attribute='vulnerability_medium_count')
+    low = fields.Integer(dump_only=True, allow_none=False,
+                              attribute='vulnerability_low_count')
+    info = fields.Integer(dump_only=True, allow_none=False,
+                              attribute='vulnerability_informational_count')
+    unclassified = fields.Integer(dump_only=True, allow_none=False,
+                              attribute='vulnerability_unclassified_count')
+    total = fields.Integer(dump_only=True, allow_none=False,
+                                 attribute='vulnerability_total_count')
+
+
 class HostSchema(AutoSchema):
     _id = fields.Integer(dump_only=True, attribute='id')
     id = fields.Integer()
@@ -63,11 +83,10 @@ class HostSchema(AutoSchema):
         fields.List(fields.String))
     metadata = SelfNestedField(MetadataSchema())
     type = fields.Function(lambda obj: 'Host', dump_only=True)
-    service_summaries = fields.Method('get_service_summaries',
-                                      dump_only=True)
-    versions = fields.Method('get_service_version',
-                                      dump_only=True)
+    service_summaries = fields.Method('get_service_summaries', dump_only=True)
+    versions = fields.Method('get_service_version', dump_only=True)
     important = fields.Boolean(default=False)
+    severity_counts = SelfNestedField(HostCountSchema(), dump_only=True)
 
     class Meta:
         model = Host
@@ -75,7 +94,7 @@ class HostSchema(AutoSchema):
                   'credentials', 'default_gateway', 'metadata',
                   'name', 'os', 'owned', 'owner', 'services', 'vulns',
                   'hostnames', 'type', 'service_summaries', 'versions',
-                  'important'
+                  'important', 'severity_counts'
                   )
 
     def get_service_summaries(self, obj):
@@ -115,22 +134,6 @@ class HostFilterSet(FilterSet):
     port = ServicePortFilter(fields.Str())
 
 
-class HostCountSchema(Schema):
-    host_id = fields.Integer(dump_only=True, allow_none=False,
-                                 attribute='id')
-    critical = fields.Integer(dump_only=True, allow_none=False,
-                                 attribute='vulnerability_critical_count')
-    high = fields.Integer(dump_only=True, allow_none=False,
-                              attribute='vulnerability_high_count')
-    med = fields.Integer(dump_only=True, allow_none=False,
-                              attribute='vulnerability_med_count')
-    info = fields.Integer(dump_only=True, allow_none=False,
-                              attribute='vulnerability_info_count')
-    unclassified = fields.Integer(dump_only=True, allow_none=False,
-                              attribute='vulnerability_unclassified_count')
-    total = fields.Integer(dump_only=True, allow_none=False,
-                                 attribute='vulnerability_total_count')
-
 
 class HostsView(PaginatedMixin,
                 FilterAlchemyMixin,
@@ -151,6 +154,40 @@ class HostsView(PaginatedMixin,
                    Host.open_service_count,
                    Host.vulnerability_count]
     get_joinedloads = [Host.hostnames, Host.services, Host.update_user]
+
+    def _get_base_query(self, workspace_name):
+        return Host.query_with_count(None, None, workspace_name)
+
+    @route('/filter')
+    def filter(self, workspace_name):
+        """
+        ---
+            tags: ["filter"]
+            summary: Filters, sorts and groups objects using a json with parameters.
+            parameters:
+            - in: query
+              name: q
+              description: recursive json with filters that supports operators. The json could also contain sort and group
+
+            responses:
+              200:
+                description: return filtered, sorted and grouped results
+                content:
+                  application/json:
+                    schema: FlaskRestlessSchema
+              400:
+                description: invalid q was sent to the server
+
+        """
+        filters = flask.request.args.get('q', '{"filters": []}')
+        filtered_objs, count = self._filter(filters, workspace_name, severity_count=True)
+
+        class PageMeta:
+            total = 0
+
+        pagination_metadata = PageMeta()
+        pagination_metadata.total = count
+        return self._envelope_list(filtered_objs, pagination_metadata)
 
     @route('/bulk_create/', methods=['POST'])
     def bulk_create(self, workspace_name):

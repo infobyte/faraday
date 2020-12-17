@@ -16,7 +16,8 @@ from sqlalchemy.orm import (
 from sqlalchemy.orm.exc import NoResultFound
 
 
-from faraday.server.models import db, Workspace, _make_vuln_count_property, Vulnerability, _make_active_agents_count_property
+from faraday.server.models import db, Workspace, _make_vuln_count_property, Vulnerability, \
+    _make_active_agents_count_property, count_vulnerability_severities
 from faraday.server.schemas import (
     JSTimestampField,
     MutableField,
@@ -42,6 +43,18 @@ class WorkspaceSummarySchema(Schema):
                                 attribute='vulnerability_code_count')
     std_vulns = fields.Integer(dump_only=True, allow_none=False,
                                attribute='vulnerability_standard_count')
+    critical_vulns = fields.Integer(dump_only=True, allow_none=False,
+                               attribute='vulnerability_critical_count')
+    info_vulns = fields.Integer(dump_only=True, allow_none=False,
+                               attribute='vulnerability_informational_count')
+    high_vulns = fields.Integer(dump_only=True, allow_none=False,
+                               attribute='vulnerability_high_count')
+    medium_vulns = fields.Integer(dump_only=True, allow_none=False,
+                               attribute='vulnerability_medium_count')
+    low_vulns = fields.Integer(dump_only=True, allow_none=False,
+                               attribute='vulnerability_low_count')
+    unclassified_vulns = fields.Integer(dump_only=True, allow_none=False,
+                               attribute='vulnerability_unclassified_count')
     total_vulns = fields.Integer(dump_only=True, allow_none=False,
                                  attribute='vulnerability_total_count')
 
@@ -119,6 +132,37 @@ class WorkspaceView(ReadWriteView, FilterMixin):
             objects.append(workspace_stat_dict)
         return self._envelope_list(self._dump(objects, kwargs, many=True))
 
+    @route('/filter')
+    def filter(self):
+        """
+        ---
+            tags: ["filter"]
+            summary: Filters, sorts and groups objects using a json with parameters.
+            parameters:
+            - in: query
+              name: q
+              description: recursive json with filters that supports operators. The json could also contain sort and group
+
+            responses:
+              200:
+                description: return filtered, sorted and grouped results
+                content:
+                  application/json:
+                    schema: FlaskRestlessSchema
+              400:
+                description: invalid q was sent to the server
+
+        """
+        filters = flask.request.args.get('q', '{"filters": []}')
+        filtered_objs, count = self._filter(filters, severity_count=True, host_vulns=False)
+
+        class PageMeta:
+            total = 0
+
+        pagination_metadata = PageMeta()
+        pagination_metadata.total = count
+        return self._envelope_list(filtered_objs, pagination_metadata)
+
     def _get_querystring_boolean_field(self, field_name, default=None):
         try:
             val = bool(json.loads(flask.request.args[field_name]))
@@ -187,6 +231,7 @@ class WorkspaceView(ReadWriteView, FilterMixin):
                    _make_active_agents_count_property(),
                ),
             )
+        query = count_vulnerability_severities(query, Workspace, status=status, confirmed=confirmed, all_severities=True)
 
         try:
             obj = query.one()

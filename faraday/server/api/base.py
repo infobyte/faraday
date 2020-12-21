@@ -461,6 +461,17 @@ class ListMixin:
         return self.order_field
 
     def index(self, **kwargs):
+        """
+          ---
+          tags: [{tag_name}]
+          summary: "Get a list of {class_model}."
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: {schema_class}
+        """
         query = self._filter_query(self._get_eagerloaded_query(**kwargs))
         order_field = self._get_order_field(**kwargs)
         if order_field is not None:
@@ -1263,7 +1274,7 @@ class CountWorkspacedMixin:
         """
           ---
           tags: [{tag_name}]
-          summary: "Group objects by the field set in the group_by GET parameter."
+          summary: "Group {class_model} by the field set in the group_by GET parameter."
           responses:
             200:
               description: Ok

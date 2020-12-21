@@ -136,7 +136,7 @@ class WorkspaceView(ReadWriteView, FilterMixin):
     def filter(self):
         """
         ---
-            tags: ["filter"]
+            tags: ["Filter"]
             summary: Filters, sorts and groups objects using a json with parameters.
             parameters:
             - in: query

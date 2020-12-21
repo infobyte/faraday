@@ -177,6 +177,17 @@ class HostsView(PaginatedMixin,
                   schema: FlaskRestlessSchema
             400:
               description: Invalid q was sent to the server
+        options:
+          tags: ["Filter", "Host"]
+          responses:
+            200:
+              description: Ok
+        head:
+          tags: ["Filter", "Host"]
+          responses:
+            200:
+              description: Ok
+
         """
         filters = flask.request.args.get('q', '{"filters": []}')
         filtered_objs, count = self._filter(filters, workspace_name, severity_count=True)
@@ -259,6 +270,28 @@ class HostsView(PaginatedMixin,
 
     @route('/<host_id>/services/')
     def service_list(self, workspace_name, host_id):
+        """
+        ---
+        get:
+          tags: ["Host", "Service"]
+          summary: Get the services of a host
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: ServiceSchema
+        head:
+          tags: ["Host", "Service"]
+          responses:
+            200:
+              description: Ok
+        options:
+          tags: ["Host", "Service"]
+          responses:
+            200:
+              description: Ok
+        """
         services = self._get_object(host_id, workspace_name).services
         return ServiceSchema(many=True).dump(services)
 
@@ -305,6 +338,28 @@ class HostsView(PaginatedMixin,
 
     @route('/<host_id>/tools_history/')
     def tool_impacted_by_host(self, workspace_name, host_id):
+        """
+        ---
+        get:
+          tags: ["Host", "Command"]
+          summary: "Get the command impacted by a host"
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: CommandSchema
+        head:
+          tags: ["Host", "Command"]
+          responses:
+            200:
+              description: Ok
+        options:
+          tags: ["Host", "Command"]
+          responses:
+            200:
+              description: Ok
+        """
         workspace = self._get_workspace(workspace_name)
         query = db.session.query(Host, Command).filter(Host.id == CommandObject.object_id,
                                                        CommandObject.object_type == 'host',

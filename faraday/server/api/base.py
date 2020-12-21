@@ -1252,6 +1252,19 @@ class CountWorkspacedMixin:
     count_extra_filters = []
 
     def count(self, **kwargs):
+        """
+          ---
+          tags: [{tag_name}]
+          summary: "Group objects by the field set in the group_by GET parameter."
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: {schema_class}
+            404:
+              description: group_by is not specified
+        """
         res = {
             'groups': [],
             'total_count': 0

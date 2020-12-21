@@ -43,7 +43,43 @@ class TestWorkspaceAPI(ReadWriteAPITests):
         assert len(res.json) == 1
         assert res.json[0]['description'] == self.first_object.description
 
+    def test_filter_restless_with_vulns_stats(self, test_client, vulnerability_factory,
+                                              vulnerability_web_factory, session):
 
+        vulns = vulnerability_factory.create_batch(8, workspace=self.first_object,
+                                                   confirmed=False, status='open', severity='informational')
+
+        vulns += vulnerability_factory.create_batch(3, workspace=self.first_object,
+                                                    confirmed=True, status='closed', severity='critical')
+
+        vulns += vulnerability_web_factory.create_batch(2, workspace=self.first_object,
+                                                    confirmed=True, status='open', severity='low')
+
+        vulns += vulnerability_web_factory.create_batch(2, workspace=self.first_object,
+                                                        confirmed=True, status='open', severity='high')
+
+        vulns += vulnerability_web_factory.create_batch(2, workspace=self.first_object,
+                                                        confirmed=True, status='open', severity='unclassified')
+
+        vulns += vulnerability_web_factory.create_batch(2, workspace=self.first_object,
+                                                        confirmed=True, status='open', severity='medium')
+
+        session.add_all(vulns)
+        session.commit()
+
+        self.first_object.description = "this is a new description"
+        res = test_client.get(f'{self.url()}filter?q='
+                              f'{{"filters":[{{"name": "description", "op":"eq", "val": "{self.first_object.description}"}}]}}')
+        assert res.status_code == 200
+        assert len(res.json) == 1
+        assert res.json[0]['description'] == self.first_object.description
+        assert res.json[0]['stats']['total_vulns'] == 19
+        assert res.json[0]['stats']['info_vulns'] == 8
+        assert res.json[0]['stats']['critical_vulns'] == 3
+        assert res.json[0]['stats']['low_vulns'] == 2
+        assert res.json[0]['stats']['high_vulns'] == 2
+        assert res.json[0]['stats']['medium_vulns'] == 2
+        assert res.json[0]['stats']['unclassified_vulns'] == 2
 
     def test_host_count(self, host_factory, test_client, session):
         host_factory.create(workspace=self.first_object)

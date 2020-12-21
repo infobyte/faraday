@@ -270,7 +270,7 @@ def user_logged_in_succesfull(app, user):
     KVSessionExtension(app=app).cleanup_sessions(app)
 
 def create_app(db_connection_string=None, testing=None):
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder=None)
 
     try:
         secret_key = faraday.server.config.faraday_server.secret_key

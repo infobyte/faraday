@@ -299,7 +299,7 @@ class GenericView(FlaskView):
         data. It a ``Marshmallow.Schema`` instance to perform the
         deserialization
         """
-        return FlaskParser().parse(schema, request, location="json",
+        return FlaskParser(unknown=EXCLUDE).parse(schema, request, location="json",
                                    *args, **kwargs)
 
     @classmethod
@@ -718,13 +718,19 @@ class FilterMixin(ListMixin):
         pagination_metadata.total = count
         return self._envelope_list(filtered_objs, pagination_metadata)
 
-    def _generate_filter_query(self, filters):
+    def _generate_filter_query(self, filters, severity_count=False, host_vulns=False):
         filter_query = search(db.session,
                       self.model_class,
                       filters)
+
+        if severity_count and 'group_by' not in filters:
+            filter_query = count_vulnerability_severities(filter_query, self.model_class,
+                                                          all_severities=True, host_vulns=host_vulns)
+
         return filter_query
 
-    def _filter(self, filters: str, extra_alchemy_filters: BooleanClauseList = None) -> Tuple[list, int]:
+    def _filter(self, filters: str, extra_alchemy_filters: BooleanClauseList = None,
+                severity_count=False, host_vulns=False) -> Tuple[list, int]:
         marshmallow_params = {'many': True, 'context': {}}
         try:
             filters = FlaskRestlessSchema().load(json.loads(filters)) or {}
@@ -742,6 +748,8 @@ class FilterMixin(ListMixin):
 
             filter_query = self._generate_filter_query(
                 filters,
+                severity_count=severity_count,
+                host_vulns=host_vulns
             )
 
             if extra_alchemy_filters is not None:

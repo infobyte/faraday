@@ -1,6 +1,8 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2019  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+from datetime import datetime
+
 import flask
 import logging
 
@@ -21,7 +23,7 @@ from faraday.server.api.base import (
 )
 from faraday.server.api.modules.workspaces import WorkspaceSchema
 from faraday.server.models import Agent, Executor, AgentExecution, db, \
-    Workspace
+    Workspace, Command
 from faraday.server.schemas import PrimaryKeyRelatedField
 from faraday.server.config import faraday_server
 from faraday.server.events import changes_queue
@@ -177,6 +179,10 @@ class AgentRunSchema(Schema):
         required=True
     )
 
+    def __init__(self, *args, **kwargs):
+        super(AgentRunSchema, self).__init__(*args, **kwargs)
+        self.unknown = EXCLUDE
+
 
 class AgentWithWorkspacesView(UpdateMixin,
                               DeleteMixin,
@@ -290,6 +296,17 @@ class AgentView(ReadOnlyMultiWorkspacedView):
         try:
             executor = Executor.query.filter(Executor.name == executor_data['executor'],
                                          Executor.agent_id == agent_id).one()
+            params = ', '.join([f'{key}={value}' for (key, value) in executor_data["args"].items()])
+            command = Command(
+                import_source="agent",
+                tool=agent.name,
+                command=executor.name,
+                user='',
+                hostname='',
+                params=params,
+                start_date=datetime.now(),
+                workspace=workspace
+            )
 
             agent_execution = AgentExecution(
                 running=None,
@@ -297,7 +314,8 @@ class AgentView(ReadOnlyMultiWorkspacedView):
                 message='',
                 executor=executor,
                 workspace_id=workspace.id,
-                parameters_data=executor_data["args"]
+                parameters_data=executor_data["args"],
+                command=command
             )
             db.session.add(agent_execution)
             db.session.commit()
@@ -313,10 +331,10 @@ class AgentView(ReadOnlyMultiWorkspacedView):
         except NoResultFound as e:
             logger.exception(e)
             abort(400, "Can not find an agent execution with that id")
-
-        return flask.jsonify({
-            'successful': True,
-        })
+        else:
+            return flask.jsonify({
+                'command_id': command.id,
+            })
 
 
 AgentWithWorkspacesView.register(agent_api)

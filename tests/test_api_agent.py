@@ -8,7 +8,7 @@ from unittest import mock
 import pytest
 
 from faraday.server.api.modules.agent import AgentWithWorkspacesView, AgentView
-from faraday.server.models import Agent
+from faraday.server.models import Agent, Command
 from tests.factories import AgentFactory, WorkspaceFactory, ExecutorFactory
 from tests.test_api_non_workspaced_base import ReadOnlyAPITests
 from tests.test_api_workspaced_base import ReadOnlyMultiWorkspacedAPITests
@@ -521,6 +521,9 @@ class TestAgentAPI(ReadOnlyMultiWorkspacedAPITests):
             json=payload
         )
         assert res.status_code == 200
+        command_id = res.json["command_id"]
+        command = Command.query.filter(Command.workspace_id == self.workspace.id).one()
+        assert command_id == command.id
 
     def test_invalid_json_on_executorData_breaks_the_api(self, csrf_token,
                                                          session, test_client):

@@ -302,6 +302,7 @@ def create_app(db_connection_string=None, testing=None):
         'SECURITY_SEND_PASSWORD_CHANGE_EMAIL': False,
         'SECURITY_MSG_USER_DOES_NOT_EXIST': login_failed_message,
         'SECURITY_TOKEN_AUTHENTICATION_HEADER': 'Authorization',
+        'SECURITY_TRACKABLE': True,
 
         # The line bellow should not be necessary because of the
         # CustomLoginForm, but i'll include it anyway.

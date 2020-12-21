@@ -622,7 +622,30 @@ class VulnerabilityView(PaginatedMixin,
         }
 
     def count(self, **kwargs):
-        """Override to change severity values"""
+        """
+        ---
+        get:
+          tags: ["Vuln"]
+          summary: "Group vulnerabilities by the field set in the group_by GET parameter."
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: VulnerabilityWeb
+            404:
+              description: group_by is not specified
+        head:
+          tags: ["Vuln"]
+          responses:
+            200:
+              description: Ok
+        options:
+          tags: ["Vuln"]
+          responses:
+            200:
+              description: Ok
+        """
         res = super(VulnerabilityView, self).count(**kwargs)
 
         def convert_group(group):
@@ -642,6 +665,20 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('/<int:vuln_id>/attachment/', methods=['POST'])
     def post_attachment(self, workspace_name, vuln_id):
+        """
+        ---
+        post:
+          tags: ["Vuln", "File"]
+          description: Creates a new attachment in the vuln
+          responses:
+            201:
+              description: Created
+        options:
+          tags: ["Vuln", "File"]
+          responses:
+            200:
+              description: Ok
+        """
 
         try:
             validate_csrf(request.form.get('csrf_token'))
@@ -691,6 +728,16 @@ class VulnerabilityView(PaginatedMixin,
                   schema: FlaskRestlessSchema
             400:
               description: Invalid q was sent to the server
+        options:
+          tags: ["Vuln", "File"]
+          responses:
+            200:
+              description: Ok
+        head:
+          tags: ["Vuln", "File"]
+          responses:
+            200:
+              description: Ok
         """
         filters = request.args.get('q')
         filtered_vulns, count = self._filter(filters, workspace_name)
@@ -824,6 +871,25 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('/<int:vuln_id>/attachment/<attachment_filename>/', methods=['GET'])
     def get_attachment(self, workspace_name, vuln_id, attachment_filename):
+        """
+        ---
+        get:
+          tags: ["Vuln", "File"]
+          description: Get a vuln attachment
+          responses:
+            200:
+              description: Ok
+        options:
+          tags: ["Vuln", "File"]
+          responses:
+            200:
+              description: Ok
+        head:
+          tags: ["Vuln", "File"]
+          responses:
+            200:
+              description: Ok
+        """
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(VulnerabilityGeneric.id == vuln_id,
                               Workspace.name == workspace_name).first()
@@ -857,7 +923,7 @@ class VulnerabilityView(PaginatedMixin,
         """
         ---
         get:
-          tags: ["Vuln"]
+          tags: ["Vuln", "File"]
           description: Gets an attachment for a vulnerability
           responses:
             200:
@@ -869,6 +935,16 @@ class VulnerabilityView(PaginatedMixin,
               description: Workspace disabled or no permission
             404:
               description: Not Found
+        options:
+          tags: ["Vuln", "File"]
+          responses:
+            200:
+              description: Ok
+        head:
+          tags: ["Vuln", "File"]
+          responses:
+            200:
+              description: Ok
         """
         workspace = self._get_workspace(workspace_name)
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
@@ -889,6 +965,15 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('/<int:vuln_id>/attachment/<attachment_filename>/', methods=['DELETE'])
     def delete_attachment(self, workspace_name, vuln_id, attachment_filename):
+        """
+        ---
+        delete:
+          tags: ["Vuln", "File"]
+          description: Remove a vuln attachment
+          responses:
+            200:
+              description: Ok
+        """
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(
             VulnerabilityGeneric.id == vuln_id, Workspace.name == workspace_name).first()
@@ -910,6 +995,25 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('export_csv/', methods=['GET'])
     def export_csv(self, workspace_name):
+        """
+        ---
+        get:
+          tags: ["Vuln", "File"]
+          description: Get a CSV file with all vulns from a workspace
+          responses:
+            200:
+              description: Ok
+        options:
+          tags: ["Vuln", "File"]
+          responses:
+            200:
+              description: Ok
+        head:
+          tags: ["Vuln", "File"]
+          responses:
+            200:
+              description: Ok
+        """
         confirmed = bool(request.args.get('confirmed'))
         filters = request.args.get('q', '{}')
         custom_fields_columns = []
@@ -935,6 +1039,24 @@ class VulnerabilityView(PaginatedMixin,
 
     @route('bulk_delete/', methods=['DELETE'])
     def bulk_delete(self, workspace_name):
+        """
+        ---
+        delete:
+          tags: ["Bulk", "Vuln"]
+          description: Delete vulnerabilities in bulk
+          responses:
+            200:
+              description: Ok
+            400:
+              description: Bad request
+            403:
+              description: Forbidden
+        options:
+          tags: ["Bulk", "Vuln"]
+          responses:
+            200:
+              description: Ok
+        """
         workspace = self._get_workspace(workspace_name)
         json_quest = request.get_json()
         vulnerability_ids = json_quest.get('vulnerability_ids', [])
@@ -969,6 +1091,16 @@ class VulnerabilityView(PaginatedMixin,
           responses:
             200:
               description: List of top users
+        options:
+          tags: ["Vuln"]
+          responses:
+            200:
+              description: Ok
+        head:
+          tags: ["Vuln"]
+          responses:
+            200:
+              description: Ok
         """
         limit = flask.request.args.get('limit', 1)
         workspace = self._get_workspace(workspace_name)

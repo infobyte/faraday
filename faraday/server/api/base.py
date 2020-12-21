@@ -1354,6 +1354,30 @@ class CountMultiWorkspacedMixin:
     count_extra_filters = []
 
     def count_multi_workspace(self, **kwargs):
+        """
+        ---
+          tags: [{tag_name}]
+          summary: "Count {class_model} by multiples workspaces"
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: {schema_class}
+            400:
+              description: No workspace passed or group_by is not specified
+        """
+        #"""head:
+        #  tags: [{tag_name}]
+        #   responses:
+        #     200:
+        #       description: Ok
+        # options:
+        #   tags: [{tag_name}]
+        #   responses:
+        #     200:
+        #       description: Ok
+        # """
         res = {
             'groups': defaultdict(dict),
             'total_count': 0

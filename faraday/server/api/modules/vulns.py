@@ -677,7 +677,7 @@ class VulnerabilityView(PaginatedMixin,
         """
         ---
         get:
-          tags: ["Filter, Vulns"]
+          tags: ["Filter", "Vuln"]
           description: Filters, sorts and groups vulnerabilities using a json with parameters. These parameters must be part of the model.
           parameters:
           - in: query
@@ -857,7 +857,7 @@ class VulnerabilityView(PaginatedMixin,
         """
         ---
         get:
-          tags: ["Vulns"]
+          tags: ["Vuln"]
           description: Gets an attachment for a vulnerability
           responses:
             200:
@@ -963,7 +963,7 @@ class VulnerabilityView(PaginatedMixin,
         """
         ---
         get:
-          tags: ["Vulns"]
+          tags: ["Vuln"]
           params: limit
           description: Gets a list of top users having account its uploaded vulns
           responses:

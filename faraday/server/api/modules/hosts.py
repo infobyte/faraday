@@ -163,7 +163,7 @@ class HostsView(PaginatedMixin,
         """
         ---
         get:
-          tags: ["Filter, Hosts"]
+          tags: ["Filter", "Host"]
           description: Filters, sorts and groups hosts using a json with parameters. These parameters must be part of the model.
           parameters:
           - in: query
@@ -193,7 +193,7 @@ class HostsView(PaginatedMixin,
         """
         ---
         post:
-          tags: ["Vulns"]
+          tags: ["Vuln"]
           description: Creates hosts in bulk
           responses:
             201:
@@ -262,7 +262,7 @@ class HostsView(PaginatedMixin,
         """
         ---
         get:
-          tags: ["Hosts"]
+          tags: ["Host"]
           summary: Counts Vulnerabilities per host
           responses:
             200:

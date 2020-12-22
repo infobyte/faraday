@@ -1209,6 +1209,10 @@ class VulnerabilityGeneric(VulnerabilityABC):
             return self.service.host.hostnames
         raise ValueError("Vulnerability has no service nor host")
 
+    @declared_attr
+    def service(cls):
+        return relationship('Service', backref=backref("vulnerabilitiesGeneric", cascade="all, delete-orphan"))
+
 
 class Vulnerability(VulnerabilityGeneric):
     __tablename__ = None

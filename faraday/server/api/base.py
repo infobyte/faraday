@@ -614,21 +614,20 @@ class FilterWorkspacedMixin(ListMixin):
     def filter(self, workspace_name):
         """
         ---
-        get:
-          tags: ["Filter"]
-          description: Filters, sorts and groups workspaced objects using a json with parameters. These parameters must be part of the model.
-          parameters:
-          - in: query
-            name: q
-            description: recursive json with filters that supports operators. The json could also contain sort and group.
-          responses:
-            200:
-              description: returns filtered, sorted and grouped results
-              content:
-                application/json:
-                  schema: FlaskRestlessSchema
-            400:
-              description: invalid q was sent to the server
+        tags: [Filter, {tag_name}]
+        description: Filters, sorts and groups workspaced objects using a json with parameters. These parameters must be part of the model.
+        parameters:
+        - in: query
+          name: q
+          description: recursive json with filters that supports operators. The json could also contain sort and group.
+        responses:
+          200:
+            description: returns filtered, sorted and grouped results
+            content:
+              application/json:
+                schema: FlaskRestlessSchema
+          400:
+            description: invalid q was sent to the server
         """
         filters = flask.request.args.get('q', '{"filters": []}')
         filtered_objs, count = self._filter(filters, workspace_name)
@@ -704,21 +703,20 @@ class FilterMixin(ListMixin):
     def filter(self):
         """
         ---
-        get:
-          tags: ["Filter"]
-          description: Filters, sorts and groups non workspaced objects using a json with parameters. These parameters must be part of the model.
-          parameters:
-          - in: query
-            name: q
-            description: Recursive json with filters that supports operators. The json could also contain sort and group.
-          responses:
-            200:
-              description: Returns filtered, sorted and grouped results
-              content:
-                application/json:
-                  schema: FlaskRestlessSchema
-            400:
-              description: Invalid q was sent to the server
+        tags: ["Filter", {tag_name}]
+        description: Filters, sorts and groups non workspaced objects using a json with parameters. These parameters must be part of the model.
+        parameters:
+        - in: query
+          name: q
+          description: Recursive json with filters that supports operators. The json could also contain sort and group.
+        responses:
+          200:
+            description: Returns filtered, sorted and grouped results
+            content:
+              application/json:
+                schema: FlaskRestlessSchema
+          400:
+            description: Invalid q was sent to the server
         """
         filters = flask.request.args.get('q', '{"filters": []}')
         filtered_objs, count = self._filter(filters)

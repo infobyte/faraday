@@ -253,7 +253,10 @@ def expire_session(app, user):
     logger.debug("Cleanup sessions")
     session.destroy()
     KVSessionExtension(app=app).cleanup_sessions(app)
-    audit_logger.info(f"User [{user.username}] logged out")
+
+    user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    user_current_login_at = datetime.datetime.now()
+    audit_logger.info(f"User [{user.username}] logged out from IP [{user_ip}] at [{user_current_login_at}]")
 
 
 def user_logged_in_succesfull(app, user):
@@ -270,7 +273,10 @@ def user_logged_in_succesfull(app, user):
     # cleanup old sessions
     logger.debug("Cleanup sessions")
     KVSessionExtension(app=app).cleanup_sessions(app)
-    audit_logger.info(f"User [{user.username}] logged in")
+
+    user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    user_current_login_at = datetime.datetime.now()
+    audit_logger.info(f"User [{user.username}] logged in from IP [{user_ip}] at [{user_current_login_at}]")
 
 
 def create_app(db_connection_string=None, testing=None):

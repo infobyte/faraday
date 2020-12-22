@@ -625,7 +625,7 @@ class VulnerabilityView(PaginatedMixin,
         """
         ---
         get:
-          tags: ["Vuln"]
+          tags: ["Vulnerability"]
           summary: "Group vulnerabilities by the field set in the group_by GET parameter."
           responses:
             200:
@@ -635,7 +635,7 @@ class VulnerabilityView(PaginatedMixin,
                   schema: VulnerabilityWeb
             404:
               description: group_by is not specified
-        tags: ["Vuln"]
+        tags: ["Vulnerability"]
         responses:
           200:
             description: Ok
@@ -662,12 +662,12 @@ class VulnerabilityView(PaginatedMixin,
         """
         ---
         post:
-          tags: ["Vuln", "File"]
+          tags: ["Vulnerability", "File"]
           description: Creates a new attachment in the vuln
           responses:
             201:
               description: Created
-        tags: ["Vuln", "File"]
+        tags: ["Vulnerability", "File"]
         responses:
           200:
             description: Ok
@@ -707,7 +707,7 @@ class VulnerabilityView(PaginatedMixin,
         """
         ---
         get:
-          tags: ["Filter", "Vuln"]
+          tags: ["Filter", "Vulnerability"]
           description: Filters, sorts and groups vulnerabilities using a json with parameters. These parameters must be part of the model.
           parameters:
           - in: query
@@ -721,7 +721,7 @@ class VulnerabilityView(PaginatedMixin,
                   schema: FlaskRestlessSchema
             400:
               description: Invalid q was sent to the server
-        tags: ["Filter", "Vuln"]
+        tags: ["Filter", "Vulnerability"]
         responses:
           200:
             description: Ok
@@ -861,12 +861,12 @@ class VulnerabilityView(PaginatedMixin,
         """
         ---
         get:
-          tags: ["Vuln", "File"]
+          tags: ["Vulnerability", "File"]
           description: Get a vuln attachment
           responses:
             200:
               description: Ok
-        tags: ["Vuln", "File"]
+        tags: ["Vulnerability", "File"]
         responses:
           200:
             description: Ok
@@ -904,7 +904,7 @@ class VulnerabilityView(PaginatedMixin,
         """
         ---
         get:
-          tags: ["Vuln", "File"]
+          tags: ["Vulnerability", "File"]
           description: Gets an attachment for a vulnerability
           responses:
             200:
@@ -916,7 +916,7 @@ class VulnerabilityView(PaginatedMixin,
               description: Workspace disabled or no permission
             404:
               description: Not Found
-        tags: ["Vuln", "File"]
+        tags: ["Vulnerability", "File"]
         responses:
           200:
             description: Ok
@@ -943,7 +943,7 @@ class VulnerabilityView(PaginatedMixin,
         """
         ---
         delete:
-          tags: ["Vuln", "File"]
+          tags: ["Vulnerability", "File"]
           description: Remove a vuln attachment
           responses:
             200:
@@ -973,12 +973,12 @@ class VulnerabilityView(PaginatedMixin,
         """
         ---
         get:
-          tags: ["Vuln", "File"]
+          tags: ["Vulnerability", "File"]
           description: Get a CSV file with all vulns from a workspace
           responses:
             200:
               description: Ok
-        tags: ["Vuln", "File"]
+        tags: ["Vulnerability", "File"]
         responses:
           200:
             description: Ok
@@ -1011,7 +1011,7 @@ class VulnerabilityView(PaginatedMixin,
         """
         ---
         delete:
-          tags: ["Bulk", "Vuln"]
+          tags: ["Bulk", "Vulnerability"]
           description: Delete vulnerabilities in bulk
           responses:
             200:
@@ -1020,7 +1020,7 @@ class VulnerabilityView(PaginatedMixin,
               description: Bad request
             403:
               description: Forbidden
-        tags: ["Bulk", "Vuln"]
+        tags: ["Bulk", "Vulnerability"]
         responses:
           200:
             description: Ok
@@ -1053,13 +1053,13 @@ class VulnerabilityView(PaginatedMixin,
         """
         ---
         get:
-          tags: ["Vuln"]
+          tags: ["Vulnerability"]
           params: limit
           description: Gets a list of top users having account its uploaded vulns
           responses:
             200:
               description: List of top users
-        tags: ["Vuln"]
+        tags: ["Vulnerability"]
         responses:
           200:
             description: Ok

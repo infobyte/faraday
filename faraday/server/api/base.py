@@ -461,6 +461,17 @@ class ListMixin:
         return self.order_field
 
     def index(self, **kwargs):
+        """
+          ---
+          tags: [{tag_name}]
+          summary: "Get a list of {class_model}."
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: {schema_class}
+        """
         query = self._filter_query(self._get_eagerloaded_query(**kwargs))
         order_field = self._get_order_field(**kwargs)
         if order_field is not None:
@@ -597,29 +608,26 @@ class FilterAlchemyMixin:
 
 
 class FilterWorkspacedMixin(ListMixin):
-    """Add filter endpoint for searching on any objects columns
+    """Add filter endpoint for searching on any workspaced objects columns
     """
-
     @route('/filter')
     def filter(self, workspace_name):
         """
         ---
-            tags: ["filter"]
-            summary: Filters, sorts and groups objects using a json with parameters.
-            parameters:
-            - in: query
-              name: q
-              description: recursive json with filters that supports operators. The json could also contain sort and group
-
-            responses:
-              200:
-                description: return filtered, sorted and grouped results
-                content:
-                  application/json:
-                    schema: FlaskRestlessSchema
-              400:
-                description: invalid q was sent to the server
-
+        tags: [Filter, {tag_name}]
+        description: Filters, sorts and groups workspaced objects using a json with parameters. These parameters must be part of the model.
+        parameters:
+        - in: query
+          name: q
+          description: recursive json with filters that supports operators. The json could also contain sort and group.
+        responses:
+          200:
+            description: returns filtered, sorted and grouped results
+            content:
+              application/json:
+                schema: FlaskRestlessSchema
+          400:
+            description: invalid q was sent to the server
         """
         filters = flask.request.args.get('q', '{"filters": []}')
         filtered_objs, count = self._filter(filters, workspace_name)
@@ -688,29 +696,27 @@ class FilterWorkspacedMixin(ListMixin):
 
 
 class FilterMixin(ListMixin):
-    """Add filter endpoint for searching on any objects columns
+    """Add filter endpoint for searching on any non workspaced objects columns
     """
 
     @route('/filter')
     def filter(self):
         """
         ---
-            tags: ["filter"]
-            summary: Filters, sorts and groups objects using a json with parameters.
-            parameters:
-            - in: query
-              name: q
-              description: recursive json with filters that supports operators. The json could also contain sort and group
-
-            responses:
-              200:
-                description: return filtered, sorted and grouped results
-                content:
-                  application/json:
-                    schema: FlaskRestlessSchema
-              400:
-                description: invalid q was sent to the server
-
+        tags: ["Filter", {tag_name}]
+        description: Filters, sorts and groups non workspaced objects using a json with parameters. These parameters must be part of the model.
+        parameters:
+        - in: query
+          name: q
+          description: Recursive json with filters that supports operators. The json could also contain sort and group.
+        responses:
+          200:
+            description: Returns filtered, sorted and grouped results
+            content:
+              application/json:
+                schema: FlaskRestlessSchema
+          400:
+            description: Invalid q was sent to the server
         """
         filters = flask.request.args.get('q', '{"filters": []}')
         filtered_objs, count = self._filter(filters)
@@ -1263,6 +1269,19 @@ class CountWorkspacedMixin:
     count_extra_filters = []
 
     def count(self, **kwargs):
+        """
+          ---
+          tags: [{tag_name}]
+          summary: "Group {class_model} by the field set in the group_by GET parameter."
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: {schema_class}
+            404:
+              description: group_by is not specified
+        """
         res = {
             'groups': [],
             'total_count': 0
@@ -1333,6 +1352,30 @@ class CountMultiWorkspacedMixin:
     count_extra_filters = []
 
     def count_multi_workspace(self, **kwargs):
+        """
+        ---
+          tags: [{tag_name}]
+          summary: "Count {class_model} by multiples workspaces"
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: {schema_class}
+            400:
+              description: No workspace passed or group_by is not specified
+        """
+        #"""head:
+        #  tags: [{tag_name}]
+        #   responses:
+        #     200:
+        #       description: Ok
+        # options:
+        #   tags: [{tag_name}]
+        #   responses:
+        #     200:
+        #       description: Ok
+        # """
         res = {
             'groups': defaultdict(dict),
             'total_count': 0

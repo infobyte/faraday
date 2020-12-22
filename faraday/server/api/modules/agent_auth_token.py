@@ -24,10 +24,38 @@ class AgentAuthTokenView(GenericView):
     schema_class = AgentAuthTokenSchema
 
     def index(self):
+        """
+          ---
+          get:
+            summary: "Get a token to register new agents."
+            tags: ["Agent"]
+            responses:
+              200:
+                description: Ok
+                content:
+                  application/json:
+                    schema: AgentAuthTokenSchema
+          tags: ["Agent"]
+          responses:
+            200:
+              description: Ok
+        """
         return AgentAuthTokenSchema().dump(
             {'token': faraday_server.agent_token})
 
     def post(self):
+        """
+          ---
+          post:
+            summary: "Generate a new token to register new agents."
+            tags: ["Agent"]
+            responses:
+              200:
+                description: Ok
+                content:
+                  application/json:
+                    schema: AgentAuthTokenSchema
+        """
         from faraday.server.app import save_new_agent_creation_token  # pylint:disable=import-outside-toplevel
         try:
             validate_csrf(flask.request.form.get('csrf_token'))

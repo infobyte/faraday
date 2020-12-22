@@ -635,16 +635,10 @@ class VulnerabilityView(PaginatedMixin,
                   schema: VulnerabilityWeb
             404:
               description: group_by is not specified
-        head:
-          tags: ["Vuln"]
-          responses:
-            200:
-              description: Ok
-        options:
-          tags: ["Vuln"]
-          responses:
-            200:
-              description: Ok
+        tags: ["Vuln"]
+        responses:
+          200:
+            description: Ok
         """
         res = super(VulnerabilityView, self).count(**kwargs)
 
@@ -673,11 +667,10 @@ class VulnerabilityView(PaginatedMixin,
           responses:
             201:
               description: Created
-        options:
-          tags: ["Vuln", "File"]
-          responses:
-            200:
-              description: Ok
+        tags: ["Vuln", "File"]
+        responses:
+          200:
+            description: Ok
         """
 
         try:
@@ -728,16 +721,10 @@ class VulnerabilityView(PaginatedMixin,
                   schema: FlaskRestlessSchema
             400:
               description: Invalid q was sent to the server
-        options:
-          tags: ["Filter", "Vuln"]
-          responses:
-            200:
-              description: Ok
-        head:
-          tags: ["Filter", "Vuln"]
-          responses:
-            200:
-              description: Ok
+        tags: ["Filter", "Vuln"]
+        responses:
+          200:
+            description: Ok
         """
         filters = request.args.get('q')
         filtered_vulns, count = self._filter(filters, workspace_name)
@@ -879,16 +866,10 @@ class VulnerabilityView(PaginatedMixin,
           responses:
             200:
               description: Ok
-        options:
-          tags: ["Vuln", "File"]
-          responses:
-            200:
-              description: Ok
-        head:
-          tags: ["Vuln", "File"]
-          responses:
-            200:
-              description: Ok
+        tags: ["Vuln", "File"]
+        responses:
+          200:
+            description: Ok
         """
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
             Workspace).filter(VulnerabilityGeneric.id == vuln_id,
@@ -935,16 +916,10 @@ class VulnerabilityView(PaginatedMixin,
               description: Workspace disabled or no permission
             404:
               description: Not Found
-        options:
-          tags: ["Vuln", "File"]
-          responses:
-            200:
-              description: Ok
-        head:
-          tags: ["Vuln", "File"]
-          responses:
-            200:
-              description: Ok
+        tags: ["Vuln", "File"]
+        responses:
+          200:
+            description: Ok
         """
         workspace = self._get_workspace(workspace_name)
         vuln_workspace_check = db.session.query(VulnerabilityGeneric, Workspace.id).join(
@@ -1003,16 +978,10 @@ class VulnerabilityView(PaginatedMixin,
           responses:
             200:
               description: Ok
-        options:
-          tags: ["Vuln", "File"]
-          responses:
-            200:
-              description: Ok
-        head:
-          tags: ["Vuln", "File"]
-          responses:
-            200:
-              description: Ok
+        tags: ["Vuln", "File"]
+        responses:
+          200:
+            description: Ok
         """
         confirmed = bool(request.args.get('confirmed'))
         filters = request.args.get('q', '{}')
@@ -1051,11 +1020,10 @@ class VulnerabilityView(PaginatedMixin,
               description: Bad request
             403:
               description: Forbidden
-        options:
-          tags: ["Bulk", "Vuln"]
-          responses:
-            200:
-              description: Ok
+        tags: ["Bulk", "Vuln"]
+        responses:
+          200:
+            description: Ok
         """
         workspace = self._get_workspace(workspace_name)
         json_quest = request.get_json()
@@ -1091,16 +1059,10 @@ class VulnerabilityView(PaginatedMixin,
           responses:
             200:
               description: List of top users
-        options:
-          tags: ["Vuln"]
-          responses:
-            200:
-              description: Ok
-        head:
-          tags: ["Vuln"]
-          responses:
-            200:
-              description: Ok
+        tags: ["Vuln"]
+        responses:
+          200:
+            description: Ok
         """
         limit = flask.request.args.get('limit', 1)
         workspace = self._get_workspace(workspace_name)

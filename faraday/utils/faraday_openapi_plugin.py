@@ -66,6 +66,7 @@ Passing a method view function::
 
 
 """
+import os
 import re
 import logging
 from flask import current_app
@@ -137,9 +138,10 @@ class FaradayAPIPlugin(BasePlugin):
                 class_model = 'No name'
             for method in rule.methods:
                 logger.debug(f'{view_name} / {class_model} / {rule.methods} / {method} / {view_instance._get_schema_class().__name__}')
-                operations[method.lower()] = yaml_utils.load_yaml_from_docstring(
-                    view.__doc__.format(schema_class=view_instance._get_schema_class().__name__, class_model=class_model, tag_name=class_model)
-                )
+                if method not in ['HEAD', 'OPTIONS'] or os.environ.get("FULL_API_DOC", None):
+                    operations[method.lower()] = yaml_utils.load_yaml_from_docstring(
+                        view.__doc__.format(schema_class=view_instance._get_schema_class().__name__, class_model=class_model, tag_name=class_model)
+                    )
         if hasattr(view, "view_class") and issubclass(view.view_class, MethodView):
             for method in view.methods:
                 if method in rule.methods:

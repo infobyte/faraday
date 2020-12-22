@@ -291,11 +291,10 @@ class WorkspaceView(ReadWriteView, FilterMixin):
           responses:
             200:
               description: Ok
-        options:
-          tags: ["Workspace"]
-          responses:
-            200:
-              description: Ok
+        tags: ["Workspace"]
+        responses:
+          200:
+            description: Ok
         """
         changed = self._get_object(workspace_id).activate()
         db.session.commit()
@@ -311,11 +310,10 @@ class WorkspaceView(ReadWriteView, FilterMixin):
           responses:
             200:
               description: Ok
-        options:
-          tags: ["Workspace"]
-          responses:
-            200:
-              description: Ok
+        tags: ["Workspace"]
+        responses:
+          200:
+            description: Ok
         """
         changed = self._get_object(workspace_id).deactivate()
         db.session.commit()
@@ -331,11 +329,10 @@ class WorkspaceView(ReadWriteView, FilterMixin):
           responses:
             200:
               description: Ok
-        options:
-          tags: ["Workspace"]
-          responses:
-            200:
-              description: Ok
+        tags: ["Workspace"]
+        responses:
+          200:
+            description: Ok
         """
         self._get_object(workspace_id).change_readonly()
         db.session.commit()

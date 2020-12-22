@@ -177,17 +177,10 @@ class HostsView(PaginatedMixin,
                   schema: FlaskRestlessSchema
             400:
               description: Invalid q was sent to the server
-        options:
-          tags: ["Filter", "Host"]
-          responses:
-            200:
-              description: Ok
-        head:
-          tags: ["Filter", "Host"]
-          responses:
-            200:
-              description: Ok
-
+        tags: ["Filter", "Host"]
+        responses:
+          200:
+            description: Ok
         """
         filters = flask.request.args.get('q', '{"filters": []}')
         filtered_objs, count = self._filter(filters, workspace_name, severity_count=True)
@@ -216,11 +209,10 @@ class HostsView(PaginatedMixin,
               description: Bad request
             403:
               description: Forbidden
-        options:
-          tags: ["Bulk", "Host"]
-          responses:
-            200:
-              description: Ok
+        tags: ["Bulk", "Host"]
+        responses:
+          200:
+            description: Ok
         """
         try:
             validate_csrf(flask.request.form.get('csrf_token'))
@@ -281,16 +273,10 @@ class HostsView(PaginatedMixin,
               content:
                 application/json:
                   schema: ServiceSchema
-        head:
-          tags: ["Host", "Service"]
-          responses:
-            200:
-              description: Ok
-        options:
-          tags: ["Host", "Service"]
-          responses:
-            200:
-              description: Ok
+        tags: ["Host", "Service"]
+        responses:
+          200:
+            description: Ok
         """
         services = self._get_object(host_id, workspace_name).services
         return ServiceSchema(many=True).dump(services)
@@ -308,16 +294,10 @@ class HostsView(PaginatedMixin,
               content:
                 application/json:
                   schema: HostCountSchema
-        head:
-          tags: ["Host"]
-          responses:
-            200:
-              description: Ok
-        options:
-          tags: ["Host"]
-          responses:
-            200:
-              description: Ok
+        tags: ["Host"]
+        responses:
+          200:
+            description: Ok
         """
         host_ids = flask.request.args.get('hosts', None)
         if host_ids:
@@ -349,16 +329,10 @@ class HostsView(PaginatedMixin,
               content:
                 application/json:
                   schema: CommandSchema
-        head:
-          tags: ["Host", "Command"]
-          responses:
-            200:
-              description: Ok
-        options:
-          tags: ["Host", "Command"]
-          responses:
-            200:
-              description: Ok
+        tags: ["Host", "Command"]
+        responses:
+          200:
+            description: Ok
         """
         workspace = self._get_workspace(workspace_name)
         query = db.session.query(Host, Command).filter(Host.id == CommandObject.object_id,
@@ -442,11 +416,10 @@ class HostsView(PaginatedMixin,
               description: Bad request
             403:
               description: Forbidden
-        options:
-          tags: ["Bulk", "Host"]
-          responses:
-            200:
-              description: Ok
+        tags: ["Bulk", "Host"]
+        responses:
+          200:
+            description: Ok
         """
         workspace = self._get_workspace(workspace_name)
         json_request = flask.request.get_json()

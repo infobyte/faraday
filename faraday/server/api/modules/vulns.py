@@ -729,12 +729,12 @@ class VulnerabilityView(PaginatedMixin,
             400:
               description: Invalid q was sent to the server
         options:
-          tags: ["Vuln", "File"]
+          tags: ["Filter", "Vuln"]
           responses:
             200:
               description: Ok
         head:
-          tags: ["Vuln", "File"]
+          tags: ["Filter", "Vuln"]
           responses:
             200:
               description: Ok

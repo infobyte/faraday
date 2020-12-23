@@ -37,6 +37,8 @@ from flask_security.utils import do_flash, send_mail, \
 from flask_security.forms import ResetPasswordForm
 
 from faraday.server.models import User
+_security = LocalProxy(lambda: app.extensions['security'])
+_datastore = LocalProxy(lambda: _security.datastore)
 
 auth = Blueprint('auth', __name__)
 logger = logging.getLogger(__name__)
@@ -89,6 +91,7 @@ def reset_password(token):
             form = ResetPasswordForm(MultiDict(request.get_json()))
             if form.validate_on_submit() and validate_strong_password(form.password.data, form.password_confirm.data):
                 update_password(user, form.password.data)
+                _datastore.commit()
                 return flask.jsonify(response=dict(message="Password changed successfully"), success=True, code=200)
 
         return make_response(flask.jsonify(response=dict(message="Bad request"), success=False, code=400),400)

@@ -11,6 +11,8 @@ merge_conflict_check:
     rules:
         - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master|dev)$/'
           when: on_success
+        - if: '$CI_COMMIT_TAG'
+          when: never
         - when: never
 
 sanity_check:
@@ -22,7 +24,12 @@ sanity_check:
         - bash scripts/sanity_check_commit.sh
         - scripts/sanity_check_file.py --mode=ls
     rules:
-        - when: on_success
+      rules:
+        - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master|dev)$/'
+          when: on_success
+        - if: '$CI_COMMIT_TAG'
+          when: never
+        - when: never
 
 migration_sanity_check:
     tags:
@@ -37,6 +44,8 @@ migration_sanity_check:
     rules:
         - if: '$CI_COMMIT_REF_NAME =~ /^.*\/(master|dev)$/'
           when: always
+        - if: '$CI_COMMIT_TAG'
+          when: never
         - when: never
 
 bandit:
@@ -51,6 +60,10 @@ bandit:
       - pip3 install bandit
       - "bandit -r ${CI_PROJECT_DIR}/faraday --format custom --skip B101 --msg-template \
           \"{abspath}:{line}: {test_id}[bandit]: {severity}: {msg}\""
+    rules:
+        - if: '$CI_COMMIT_TAG'
+          when: never
+        - when: on_success
 
 build_and_push_to_cachix:
     tags:
@@ -80,6 +93,10 @@ flake8:
     script:
       - pip install flake8
       - flake8 .
+    rules:
+        - if: '$CI_COMMIT_TAG'
+          when: never
+        - when: on_success
 
 no-format-str:
     image: python:3
@@ -87,3 +104,7 @@ no-format-str:
     script:
       - pip install flynt
       - flynt -df faraday tests
+    rules:
+        - if: '$CI_COMMIT_TAG'
+          when: never
+        - when: on_success

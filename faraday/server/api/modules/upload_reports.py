@@ -38,7 +38,21 @@ report_analyzer = ReportAnalyzer(plugins_manager)
 @upload_api.route('/v2/ws/<workspace>/upload_report', methods=['POST'])
 def file_upload(workspace=None):
     """
-    Upload a report file to Server and process that report with Faraday client plugins.
+    ---
+    post:
+      tags: ["Workspace", "File"]
+      description: Upload a report file to create data within the given workspace
+      responses:
+        201:
+          description: Created
+        400:
+          description: Bad request
+        403:
+          description: Forbidden
+    tags: ["Workspace", "File"]
+    responses:
+      200:
+        description: Ok
     """
     logger.info("Importing new plugin report in server...")
     # Authorization code copy-pasted from server/api/base.py

@@ -11,6 +11,7 @@ from marshmallow import (
     Schema,
     utils,
     ValidationError,
+    validates_schema,
 )
 from marshmallow.validate import Range
 from faraday.server.models import (
@@ -147,6 +148,12 @@ class HostBulkSchema(hosts.HostSchema):
     class Meta(hosts.HostSchema.Meta):
         fields = hosts.HostSchema.Meta.fields + ('services', 'vulnerabilities')
 
+    @validates_schema
+    def validate_schema(self, data, **kwargs):
+        for vulnerability in data['vulnerabilities']:
+            if vulnerability['type'] != 'vulnerability':
+                raise ValidationError('Type "Vulnerability Web" cannot have "Host" type as a parent')
+
 
 class BulkCommandSchema(AutoSchema):
     """The schema of faraday/server/api/modules/commandsrun.py has a lot
@@ -212,7 +219,8 @@ def get_or_create(ws: Workspace, model_class: Type[Metadata], data: dict):
 def bulk_create(ws: Workspace,
                 command: Optional[Command],
                 data: dict,
-                data_already_deserialized: bool = False):
+                data_already_deserialized: bool = False,
+                set_end_date: bool = True):
     if not data_already_deserialized:
         schema = BulkCreateSchema()
         data = schema.load(data)
@@ -220,7 +228,7 @@ def bulk_create(ws: Workspace,
         command = _update_command(command, data['command'])
     for host in data['hosts']:
         _create_host(ws, host, command)
-    if 'command' in data:
+    if 'command' in data and set_end_date:
         command.end_date = datetime.now() if command.end_date is None else \
             command.end_date
         db.session.commit()
@@ -409,7 +417,7 @@ class BulkCreateView(GenericWorkspacedView):
 
             execution_id = data["execution_id"]
 
-            agent_execution = AgentExecution.query.filter(
+            agent_execution: AgentExecution = AgentExecution.query.filter(
                 AgentExecution.id == execution_id
             ).one_or_none()
 
@@ -427,37 +435,54 @@ class BulkCreateView(GenericWorkspacedView):
                 )
                 flask.abort(400, "Trying to write to the incorrect workspace")
 
-            now = datetime.now()
-
             params_data = agent_execution.parameters_data
             params = ', '.join([f'{key}={value}' for (key, value) in params_data.items()])
 
+            start_date = (data["command"].get("start_date") or agent_execution.command.start_date) \
+                if "command" in data else agent_execution.command.start_date
+
+            end_date = data["command"].get("end_date", None) if "command" in data else None
 
             data["command"] = {
+                'id': agent_execution.command.id,
                 'tool': agent.name, # Agent name
                 'command': agent_execution.executor.name,
                 'user': '',
                 'hostname': '',
                 'params': params,
                 'import_source': 'agent',
-                'start_date': (data["command"].get("start_date") or now) if "command" in data else now, #Now or when received run
-                'end_date': (data["command"].get("start_date") or now) if "command" in data else now, #Now or when received run
+                'start_date': start_date
             }
+
+            if end_date is not None:
+                data["command"]["end_date"] = end_date
+
+            command = Command.query.filter(Command.id == agent_execution.command.id).one_or_none()
+            if command is None:
+                logger.exception(
+                    ValueError(f"There is no command with {agent_execution.command.id}")
+                )
+                flask.abort(400, "Trying to update a not existent command")
+
+            _update_command(command, data['command'])
+            db.session.flush()
+
+
         else:
             workspace = self._get_workspace(workspace_name)
             creator_user = flask.g.user
             data = add_creator(data, creator_user)
 
-        if 'command' in data:
-            command = Command(**(data['command']))
-            command.workspace = workspace
-            db.session.add(command)
-            db.session.commit()
-        else:
-            # Here the data won't appear in the activity field
-            command = None
+            if 'command' in data:
+                command = Command(**(data['command']))
+                command.workspace = workspace
+                db.session.add(command)
+                db.session.commit()
+            else:
+                # Here the data won't appear in the activity field
+                command = None
 
-        bulk_create(workspace, command, data, True)
+        bulk_create(workspace, command, data, True, False)
         return flask.jsonify(
             {
                 "message": "Created",

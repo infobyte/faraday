@@ -114,7 +114,8 @@ angular.module('faradayApp').
                                 }
                                 var message;
                                 if (res.status == 409) {
-                                    message = "Vulnerability template already exists. " + res.data.message + " ID: " + res.data.object._id;
+                                    message = "Vulnerability template \"" + res.data.object.name +
+                                              "\" already exists with vulnerability template ID: " + res.data.object.id;
                                 } else {
                                     message = "Unable to save the Vuln Model. " + msg;
                                 }

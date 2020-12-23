@@ -44,7 +44,7 @@ class ReportsManager(Thread):
             schema = BulkCreateSchema()
             data = schema.load(report_json)
             data = add_creator(data, user)
-            bulk_create(ws, command, data, True)
+            bulk_create(ws, command, data, True, True)
 
     def process_report(self,
                        workspace_name: str,

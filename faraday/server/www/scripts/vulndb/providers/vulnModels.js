@@ -10,7 +10,7 @@ angular.module('faradayApp').
                 vulnModelsManager.models = [];
                 vulnModelsManager.totalNumberOfModels = 0;
 
-                    vulnModelsManager.create = function(data) {
+                vulnModelsManager.create = function(data) {
                     var deferred = $q.defer();
                     var self = this;
                     try {
@@ -28,6 +28,27 @@ angular.module('faradayApp').
 
                     return deferred.promise;
                 };
+
+
+                vulnModelsManager.bulkCreate = function(vulns){
+                    var deferred = $q.defer();
+                    var self = this;
+                    $http.get(BASEURL + '_api/session')
+                        .then(function(d) {
+                            var dataToSend = {}
+                            dataToSend.csrf_token = d.data.csrf_token;
+                            dataToSend.vulns = vulns;
+                            ServerAPI.bulkCreateVulnerabilityTemplate(dataToSend)
+                                .then(function (response) {
+                                    var vulnsCreated = response.data.vulns_created;
+                                    self.updateState(self.totalNumberOfModels + vulnsCreated.length);
+                                    deferred.resolve(response);
+                                }, function (response) {
+                                    deferred.reject(response)
+                                })
+                        })
+                    return deferred.promise;
+                }
 
                 vulnModelsManager.delete = function(vulnModel) {
                     var deferred = $q.defer();

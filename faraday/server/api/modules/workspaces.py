@@ -116,6 +116,22 @@ class WorkspaceView(ReadWriteView, FilterMixin):
     order_field = Workspace.name.asc()
 
     def index(self, **kwargs):
+        """
+          ---
+          get:
+            summary: "Get a list of workspaces."
+            tags: ["Workspace"]
+            responses:
+              200:
+                description: Ok
+                content:
+                  application/json:
+                    schema: WorkspaceSchema
+          tags: ["Workspace"]
+          responses:
+            200:
+              description: Ok
+        """
         query = self._get_base_query()
         objects = []
         for workspace_stat in query:
@@ -131,6 +147,37 @@ class WorkspaceView(ReadWriteView, FilterMixin):
                     workspace_stat_dict['scope'].append({'name': scope})
             objects.append(workspace_stat_dict)
         return self._envelope_list(self._dump(objects, kwargs, many=True))
+
+    @route('/filter')
+    def filter(self):
+        """
+        ---
+            tags: ["Filter"]
+            summary: Filters, sorts and groups objects using a json with parameters.
+            parameters:
+            - in: query
+              name: q
+              description: recursive json with filters that supports operators. The json could also contain sort and group
+
+            responses:
+              200:
+                description: return filtered, sorted and grouped results
+                content:
+                  application/json:
+                    schema: FlaskRestlessSchema
+              400:
+                description: invalid q was sent to the server
+
+        """
+        filters = flask.request.args.get('q', '{"filters": []}')
+        filtered_objs, count = self._filter(filters, severity_count=True, host_vulns=False)
+
+        class PageMeta:
+            total = 0
+
+        pagination_metadata = PageMeta()
+        pagination_metadata.total = count
+        return self._envelope_list(filtered_objs, pagination_metadata)
 
     def _get_querystring_boolean_field(self, field_name, default=None):
         try:
@@ -236,18 +283,57 @@ class WorkspaceView(ReadWriteView, FilterMixin):
 
     @route('/<workspace_id>/activate/', methods=["PUT"])
     def activate(self, workspace_id):
+        """
+        ---
+        put:
+          tags: ["Workspace"]
+          description: Activate a workspace
+          responses:
+            200:
+              description: Ok
+        tags: ["Workspace"]
+        responses:
+          200:
+            description: Ok
+        """
         changed = self._get_object(workspace_id).activate()
         db.session.commit()
         return changed
 
     @route('/<workspace_id>/deactivate/', methods=["PUT"])
     def deactivate(self, workspace_id):
+        """
+        ---
+        put:
+          tags: ["Workspace"]
+          description: Deactivate a workspace
+          responses:
+            200:
+              description: Ok
+        tags: ["Workspace"]
+        responses:
+          200:
+            description: Ok
+        """
         changed = self._get_object(workspace_id).deactivate()
         db.session.commit()
         return changed
 
     @route('/<workspace_id>/change_readonly/', methods=["PUT"])
     def change_readonly(self, workspace_id):
+        """
+        ---
+        put:
+          tags: ["Workspace"]
+          description: Change readonly workspace's status
+          responses:
+            200:
+              description: Ok
+        tags: ["Workspace"]
+        responses:
+          200:
+            description: Ok
+        """
         self._get_object(workspace_id).change_readonly()
         db.session.commit()
         return self._get_object(workspace_id).readonly

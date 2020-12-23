@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('indexCtrl', 
+    .controller('indexCtrl',
         ['$scope', '$uibModal', 'indexFact', 'BASEURL',
         function($scope, $uibModal, indexFact, BASEURL) {
         	indexFact.getConf().then(function(conf) {

@@ -11,4 +11,5 @@ deploy_to_dev_environment:
         when: on_success
       - if: '$CI_COMMIT_TAG || $BUILD_TEST || $FULL_TEST || $DAILY_TEST'
         when: manual
+        allow_failure: true
       - when: never

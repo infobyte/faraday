@@ -80,6 +80,17 @@ class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
 
     @route('/activity_feed/')
     def activity_feed(self, workspace_name):
+        """
+        ---
+          tags: ["Command"]
+          description: Gets a summary of the lastest executed commands
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema: CommandSchema
+        """
         res = []
         query = Command.query.join(Workspace).filter_by(name=workspace_name)
         for command in query.all():
@@ -102,7 +113,7 @@ class CommandView(PaginatedMixin, ReadWriteWorkspacedView):
     def last_command(self, workspace_name):
         """
         ---
-          tags: ["Commands"]
+          tags: ["Command"]
           description: Gets the last executed command
           responses:
             200:

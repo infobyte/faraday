@@ -57,20 +57,20 @@ class TestAgentAuthTokenAPIGeneric():
 
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
     def test_create_agent_token(self, faraday_server_config, test_client, session):
-        faraday_server_config.agent_token = None
+        faraday_server_config.agent_token_secret = None
         res = test_client.get('/v2/agent_token/')
         assert 'token' in res.json
         assert len(res.json['token'])
 
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
     def test_create_agent_token_without_csrf_fails(self, faraday_server_config, test_client, session):
-        faraday_server_config.agent_token = None
+        faraday_server_config.agent_token_secret = None
         res = test_client.post('/v2/agent_token/')
         assert res.status_code == 403
 
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
     def test_create_new_agent_token(self, faraday_server_config, test_client, session, csrf_token):
-        faraday_server_config.agent_token = None
+        faraday_server_config.agent_token_secret = None
         headers = {'Content-type': 'multipart/form-data'}
         res = test_client.post('/v2/agent_token/',
                                data={"csrf_token": csrf_token},
@@ -91,7 +91,7 @@ class TestAgentCreationAPI():
         other_workspace = WorkspaceFactory.create()
         session.add(other_workspace)
         session.commit()
-        faraday_server_config.agent_token = 'sarasa'
+        faraday_server_config.agent_token_secret = 'sarasa'
         logout(test_client, [302])
         initial_agent_count = len(session.query(Agent).all())
         raw_data = get_raw_agent(
@@ -117,7 +117,7 @@ class TestAgentCreationAPI():
         workspace = WorkspaceFactory.create()
         session.add(workspace)
         session.commit()
-        faraday_server_config.agent_token = 'sarasa'
+        faraday_server_config.agent_token_secret = 'sarasa'
         logout(test_client, [302])
         initial_agent_count = len(session.query(Agent).all())
         raw_data = get_raw_agent(
@@ -139,7 +139,7 @@ class TestAgentCreationAPI():
         workspace = WorkspaceFactory.create()
         session.add(workspace)
         session.commit()
-        faraday_server_config.agent_token = 'sarasa'
+        faraday_server_config.agent_token_secret = 'sarasa'
         logout(test_client, [302])
         raw_data = get_raw_agent(
             token="INVALID",
@@ -156,7 +156,7 @@ class TestAgentCreationAPI():
         workspace = WorkspaceFactory.create()
         session.add(workspace)
         session.commit()
-        faraday_server_config.agent_token = None
+        faraday_server_config.agent_token_secret = None
         logout(test_client, [302])
         raw_data = get_raw_agent(
             name="test agent",
@@ -169,7 +169,7 @@ class TestAgentCreationAPI():
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
     def test_create_agent_invalid_payload(self, faraday_server_config,
                                           test_client, session):
-        faraday_server_config.agent_token = None
+        faraday_server_config.agent_token_secret = None
         logout(test_client, [302])
         raw_data = {"PEPE": 'INVALID'}
         # /v2/agent_registration/
@@ -182,7 +182,7 @@ class TestAgentCreationAPI():
         workspace = WorkspaceFactory.create()
         session.add(workspace)
         session.commit()
-        faraday_server_config.agent_token = 'sarasa'
+        faraday_server_config.agent_token_secret = 'sarasa'
         logout(test_client, [302])
         raw_data = get_raw_agent(
             token="sarasa",
@@ -199,7 +199,7 @@ class TestAgentCreationAPI():
         workspace = WorkspaceFactory.create()
         session.add(workspace)
         session.commit()
-        faraday_server_config.agent_token = 'sarasa'
+        faraday_server_config.agent_token_secret = 'sarasa'
         logout(test_client, [302])
         raw_data = get_raw_agent(
             token="sarasa",
@@ -217,7 +217,7 @@ class TestAgentCreationAPI():
         workspace = WorkspaceFactory.create()
         session.add(workspace)
         session.commit()
-        faraday_server_config.agent_token = 'sarasa'
+        faraday_server_config.agent_token_secret = 'sarasa'
         logout(test_client, [302])
         raw_data = get_raw_agent(
             name="test agent",

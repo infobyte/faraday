@@ -5,6 +5,7 @@ import logging
 import string
 import datetime
 
+import pyotp
 import requests
 from itsdangerous import TimedJSONWebSignatureSerializer, SignatureExpired, BadSignature
 from random import SystemRandom
@@ -236,16 +237,15 @@ def save_new_secret_key(app):
         config.write(configfile)
 
 
-def save_new_agent_creation_token():
+def save_new_agent_creation_token_secret():
     assert LOCAL_CONFIG_FILE.exists()
     config = ConfigParser()
     config.read(LOCAL_CONFIG_FILE)
-    rng = SystemRandom()
-    agent_token = "".join([rng.choice(string.ascii_letters + string.digits) for _ in range(25)])
-    config.set('faraday_server', 'agent_token', agent_token)
+    agent_secret = pyotp.random_base32()
+    config.set('faraday_server', 'agent_token_secret', agent_secret)
     with open(LOCAL_CONFIG_FILE, 'w') as configfile:
         config.write(configfile)
-    faraday.server.config.faraday_server.agent_token = agent_token
+    faraday.server.config.faraday_server.agent_token_secret = agent_secret
 
 
 def expire_session(app, user):
@@ -286,8 +286,8 @@ def create_app(db_connection_string=None, testing=None):
         else:
             app.config['SECRET_KEY'] = secret_key
 
-    if faraday.server.config.faraday_server.agent_token is None:
-        save_new_agent_creation_token()
+    if faraday.server.config.faraday_server.agent_token_secret is None:
+        save_new_agent_creation_token_secret()
 
     login_failed_message = ("Invalid username or password", 'error')
 

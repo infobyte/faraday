@@ -10,18 +10,14 @@ from faraday.server.api.base import (
     GenericView,
 )
 from faraday.server.config import faraday_server
+import pyotp
 
 
 agent_auth_token_api = Blueprint('agent_auth_token_api', __name__)
 
 
-class AgentAuthTokenSchema(Schema):
-    token = fields.String(required=True)
-
-
 class AgentAuthTokenView(GenericView):
     route_base = 'agent_token'
-    schema_class = AgentAuthTokenSchema
 
     def index(self):
         """
@@ -40,8 +36,7 @@ class AgentAuthTokenView(GenericView):
             200:
               description: Ok
         """
-        return AgentAuthTokenSchema().dump(
-            {'token': faraday_server.agent_token})
+        return {'token': pyotp.TOTP(faraday_server.agent_token_secret).now()}
 
     def post(self):
         """
@@ -56,14 +51,13 @@ class AgentAuthTokenView(GenericView):
                   application/json:
                     schema: AgentAuthTokenSchema
         """
-        from faraday.server.app import save_new_agent_creation_token  # pylint:disable=import-outside-toplevel
-        try:
-            validate_csrf(flask.request.form.get('csrf_token'))
-        except ValidationError:
-            flask.abort(403)
-        save_new_agent_creation_token()
-        return AgentAuthTokenSchema().dump(
-            {'token': faraday_server.agent_token})
+        # from faraday.server.app import save_new_agent_creation_token  # pylint:disable=import-outside-toplevel
+        # try:
+        #     validate_csrf(flask.request.form.get('csrf_token'))
+        # except ValidationError:
+        #     flask.abort(403)
+        # save_new_agent_creation_token()
+        return {'token': pyotp.TOTP(faraday_server.agent_token_secret).now()}
 
 
 AgentAuthTokenView.register(agent_auth_token_api)

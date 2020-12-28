@@ -6,6 +6,7 @@ from datetime import datetime
 import flask
 import logging
 
+import pyotp
 from flask import Blueprint, abort, request, make_response, jsonify
 from flask_classful import route
 from marshmallow import fields, Schema, EXCLUDE
@@ -127,10 +128,10 @@ class AgentCreationView(CreateMixin, GenericView):
 
     def _perform_create(self,  data, **kwargs):
         token = data.pop('token')
-        if not faraday_server.agent_token:
+        if not faraday_server.agent_token_secret:
             # someone is trying to use the token, but no token was generated yet.
             abort(401, "Invalid Token")
-        if token != faraday_server.agent_token:
+        if not pyotp.TOTP(faraday_server.agent_token_secret).verify(token, valid_window=1):
             abort(401, "Invalid Token")
 
         workspace_names = data.pop('workspaces')

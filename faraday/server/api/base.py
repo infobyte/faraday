@@ -673,12 +673,11 @@ class FilterWorkspacedMixin(ListMixin):
                 workspace,
                 severity_count=severity_count
             )
-
+            count = filter_query.count()
             if limit:
                 filter_query = filter_query.limit(limit)
             if offset:
                 filter_query = filter_query.offset(offset)
-            count = filter_query.count()
             objs = self.schema_class(**marshmallow_params).dumps(filter_query.all())
             return json.loads(objs), count
         else:

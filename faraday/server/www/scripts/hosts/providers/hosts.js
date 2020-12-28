@@ -68,7 +68,7 @@ angular.module('faradayApp')
                         host = new Host(host_data.value);
                         result.hosts.push(host);
                     });
-                    result.total = response.data.total_rows;
+                    result.total = response.data.count;
                     deferred.resolve(result);
                 }, function(response) {
                     deferred.reject();

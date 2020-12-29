@@ -4,18 +4,24 @@
 import datetime
 
 from flask import Blueprint
+from marshmallow import fields, Schema
 from faraday.server.api.base import (
     GenericView,
 )
 from faraday.server.config import faraday_server
 import pyotp
 
-
 agent_auth_token_api = Blueprint('agent_auth_token_api', __name__)
+
+
+class AgentAuthTokenSchema(Schema):
+    token = fields.String(required=True)
+    expires_in = fields.Float(required=True)
 
 
 class AgentAuthTokenView(GenericView):
     route_base = 'agent_token'
+    schema_class = AgentAuthTokenSchema
 
     def index(self):
         """
@@ -35,11 +41,11 @@ class AgentAuthTokenView(GenericView):
               description: Ok
         """
         totp = pyotp.TOTP(faraday_server.agent_token_secret)
-        return {'token': totp.now(),
-                'expires_in': totp.interval - datetime.datetime.now().timestamp() % totp.interval}
+        return AgentAuthTokenSchema().dump(
+            {'token': totp.now(),
+             'expires_in': totp.interval - datetime.datetime.now().timestamp() % totp.interval})
 
 
 AgentAuthTokenView.register(agent_auth_token_api)
-
 
 # I'm Py3

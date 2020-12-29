@@ -35,6 +35,7 @@
 , pyasn1
 , pylint
 , pyopenssl
+, pyotp
 , pytest
 , pytest-factoryboy
 , pytestcov
@@ -109,6 +110,7 @@ buildPythonPackage rec {
       apispec
       apispec-webframeworks
       pyyaml
+      pyotp
     ];
   checkInputs =
     [

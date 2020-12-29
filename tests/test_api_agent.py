@@ -59,7 +59,7 @@ class TestAgentAuthTokenAPIGeneric():
 
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
     def test_get_agent_token(self, faraday_server_config, test_client, session):
-        faraday_server_config.agent_token_secret = None
+        faraday_server_config.agent_registration_secret = None
         res = test_client.get('/v2/agent_token/')
         assert 'token' in res.json and 'expires_in' in res.json
         assert len(res.json['token'])
@@ -77,7 +77,7 @@ class TestAgentCreationAPI():
         session.add(other_workspace)
         session.commit()
         secret = pyotp.random_base32()
-        faraday_server_config.agent_token_secret = secret
+        faraday_server_config.agent_registration_secret = secret
         logout(test_client, [302])
         initial_agent_count = len(session.query(Agent).all())
         raw_data = get_raw_agent(
@@ -104,7 +104,7 @@ class TestAgentCreationAPI():
         session.add(workspace)
         session.commit()
         secret = pyotp.random_base32()
-        faraday_server_config.agent_token_secret = secret
+        faraday_server_config.agent_registration_secret = secret
         logout(test_client, [302])
         initial_agent_count = len(session.query(Agent).all())
         raw_data = get_raw_agent(
@@ -127,7 +127,7 @@ class TestAgentCreationAPI():
         session.add(workspace)
         session.commit()
         secret = pyotp.random_base32()
-        faraday_server_config.agent_token_secret = secret
+        faraday_server_config.agent_registration_secret = secret
         logout(test_client, [302])
         raw_data = get_raw_agent(
             token="INVALID",
@@ -144,7 +144,7 @@ class TestAgentCreationAPI():
         workspace = WorkspaceFactory.create()
         session.add(workspace)
         session.commit()
-        faraday_server_config.agent_token_secret = None
+        faraday_server_config.agent_registration_secret = None
         logout(test_client, [302])
         raw_data = get_raw_agent(
             name="test agent",
@@ -157,7 +157,7 @@ class TestAgentCreationAPI():
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
     def test_create_agent_invalid_payload(self, faraday_server_config,
                                           test_client, session):
-        faraday_server_config.agent_token_secret = None
+        faraday_server_config.agent_registration_secret = None
         logout(test_client, [302])
         raw_data = {"PEPE": 'INVALID'}
         # /v2/agent_registration/
@@ -171,7 +171,7 @@ class TestAgentCreationAPI():
         session.add(workspace)
         session.commit()
         secret = pyotp.random_base32()
-        faraday_server_config.agent_token_secret = secret
+        faraday_server_config.agent_registration_secret = secret
         logout(test_client, [302])
         raw_data = get_raw_agent(
             token=pyotp.TOTP(secret).now(),
@@ -189,7 +189,7 @@ class TestAgentCreationAPI():
         session.add(workspace)
         session.commit()
         secret = pyotp.random_base32()
-        faraday_server_config.agent_token_secret = secret
+        faraday_server_config.agent_registration_secret = secret
         logout(test_client, [302])
         raw_data = get_raw_agent(
             token=pyotp.TOTP(secret).now(),
@@ -208,7 +208,7 @@ class TestAgentCreationAPI():
         session.add(workspace)
         session.commit()
         secret = pyotp.random_base32()
-        faraday_server_config.agent_token_secret = secret
+        faraday_server_config.agent_registration_secret = secret
         logout(test_client, [302])
         raw_data = get_raw_agent(
             name="test agent",

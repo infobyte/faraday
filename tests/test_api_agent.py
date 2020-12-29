@@ -5,6 +5,8 @@ See the file 'doc/LICENSE' for the license information
 """
 
 from unittest import mock
+
+import pyotp
 import pytest
 
 from faraday.server.api.modules.agent import AgentWithWorkspacesView, AgentView
@@ -56,27 +58,10 @@ def get_raw_agent(name="My agent", active=None, token=None, workspaces=None):
 class TestAgentAuthTokenAPIGeneric():
 
     @mock.patch('faraday.server.api.modules.agent.faraday_server')
-    def test_create_agent_token(self, faraday_server_config, test_client, session):
+    def test_get_agent_token(self, faraday_server_config, test_client, session):
         faraday_server_config.agent_token_secret = None
         res = test_client.get('/v2/agent_token/')
-        assert 'token' in res.json
-        assert len(res.json['token'])
-
-    @mock.patch('faraday.server.api.modules.agent.faraday_server')
-    def test_create_agent_token_without_csrf_fails(self, faraday_server_config, test_client, session):
-        faraday_server_config.agent_token_secret = None
-        res = test_client.post('/v2/agent_token/')
-        assert res.status_code == 403
-
-    @mock.patch('faraday.server.api.modules.agent.faraday_server')
-    def test_create_new_agent_token(self, faraday_server_config, test_client, session, csrf_token):
-        faraday_server_config.agent_token_secret = None
-        headers = {'Content-type': 'multipart/form-data'}
-        res = test_client.post('/v2/agent_token/',
-                               data={"csrf_token": csrf_token},
-                               headers=headers,
-                               use_json_data=False)
-        assert res.status_code == 200
+        assert 'token' in res.json and 'expires_in' in res.json
         assert len(res.json['token'])
 
 
@@ -91,12 +76,13 @@ class TestAgentCreationAPI():
         other_workspace = WorkspaceFactory.create()
         session.add(other_workspace)
         session.commit()
-        faraday_server_config.agent_token_secret = 'sarasa'
+        secret = pyotp.random_base32()
+        faraday_server_config.agent_token_secret = secret
         logout(test_client, [302])
         initial_agent_count = len(session.query(Agent).all())
         raw_data = get_raw_agent(
             name='new_agent',
-            token='sarasa',
+            token=pyotp.TOTP(secret).now(),
             workspaces=[workspace, other_workspace]
         )
         # /v2/agent_registration/
@@ -117,12 +103,13 @@ class TestAgentCreationAPI():
         workspace = WorkspaceFactory.create()
         session.add(workspace)
         session.commit()
-        faraday_server_config.agent_token_secret = 'sarasa'
+        secret = pyotp.random_base32()
+        faraday_server_config.agent_token_secret = secret
         logout(test_client, [302])
         initial_agent_count = len(session.query(Agent).all())
         raw_data = get_raw_agent(
             name=None,
-            token='sarasa',
+            token=pyotp.TOTP(secret).now(),
             workspaces=[workspace]
         )
         # /v2/agent_registration/
@@ -139,7 +126,8 @@ class TestAgentCreationAPI():
         workspace = WorkspaceFactory.create()
         session.add(workspace)
         session.commit()
-        faraday_server_config.agent_token_secret = 'sarasa'
+        secret = pyotp.random_base32()
+        faraday_server_config.agent_token_secret = secret
         logout(test_client, [302])
         raw_data = get_raw_agent(
             token="INVALID",
@@ -182,10 +170,11 @@ class TestAgentCreationAPI():
         workspace = WorkspaceFactory.create()
         session.add(workspace)
         session.commit()
-        faraday_server_config.agent_token_secret = 'sarasa'
+        secret = pyotp.random_base32()
+        faraday_server_config.agent_token_secret = secret
         logout(test_client, [302])
         raw_data = get_raw_agent(
-            token="sarasa",
+            token=pyotp.TOTP(secret).now(),
             name="test agent",
             workspaces=[]
         )
@@ -199,10 +188,11 @@ class TestAgentCreationAPI():
         workspace = WorkspaceFactory.create()
         session.add(workspace)
         session.commit()
-        faraday_server_config.agent_token_secret = 'sarasa'
+        secret = pyotp.random_base32()
+        faraday_server_config.agent_token_secret = secret
         logout(test_client, [302])
         raw_data = get_raw_agent(
-            token="sarasa",
+            token=pyotp.TOTP(secret).now(),
             name="test agent",
             workspaces=[]
         )
@@ -217,11 +207,12 @@ class TestAgentCreationAPI():
         workspace = WorkspaceFactory.create()
         session.add(workspace)
         session.commit()
-        faraday_server_config.agent_token_secret = 'sarasa'
+        secret = pyotp.random_base32()
+        faraday_server_config.agent_token_secret = secret
         logout(test_client, [302])
         raw_data = get_raw_agent(
             name="test agent",
-            token='sarasa'
+            token=pyotp.TOTP(secret).now()
         )
         # /v2/agent_registration/
         res = test_client.post('/v2/agent_registration/', data=raw_data)

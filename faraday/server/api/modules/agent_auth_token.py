@@ -1,11 +1,9 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2019  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-import flask
+import datetime
+
 from flask import Blueprint
-from flask_wtf.csrf import validate_csrf
-from wtforms import ValidationError
-from marshmallow import fields, Schema
 from faraday.server.api.base import (
     GenericView,
 )
@@ -23,7 +21,7 @@ class AgentAuthTokenView(GenericView):
         """
           ---
           get:
-            summary: "Get a token to register new agents."
+            summary: "Get the current TOTP token to register new agents."
             tags: ["Agent"]
             responses:
               200:
@@ -36,28 +34,9 @@ class AgentAuthTokenView(GenericView):
             200:
               description: Ok
         """
-        return {'token': pyotp.TOTP(faraday_server.agent_token_secret).now()}
-
-    def post(self):
-        """
-          ---
-          post:
-            summary: "Generate a new token to register new agents."
-            tags: ["Agent"]
-            responses:
-              200:
-                description: Ok
-                content:
-                  application/json:
-                    schema: AgentAuthTokenSchema
-        """
-        # from faraday.server.app import save_new_agent_creation_token  # pylint:disable=import-outside-toplevel
-        # try:
-        #     validate_csrf(flask.request.form.get('csrf_token'))
-        # except ValidationError:
-        #     flask.abort(403)
-        # save_new_agent_creation_token()
-        return {'token': pyotp.TOTP(faraday_server.agent_token_secret).now()}
+        totp = pyotp.TOTP(faraday_server.agent_token_secret)
+        return {'token': totp.now(),
+                'expires_in': totp.interval - datetime.datetime.now().timestamp() % totp.interval}
 
 
 AgentAuthTokenView.register(agent_auth_token_api)

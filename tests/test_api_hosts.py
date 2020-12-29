@@ -307,6 +307,21 @@ class TestHostAPI:
         self.compare_results(hosts, res)
 
     @pytest.mark.usefixtures('ignore_nplusone')
+    def test_filter_restless_count(self, test_client, session, workspace,
+                                second_workspace, host_factory):
+        # The hosts that should be shown
+        hosts = host_factory.create_batch(30, workspace=workspace, os='Unix')
+
+        # This shouldn't be shown, they are from other workspace
+        host_factory.create_batch(5, workspace=second_workspace, os='Unix')
+
+        session.commit()
+        res = test_client.get(f'{self.url()}filter?q={{"filters":[{{"name": "os", "op":"eq", "val":"Unix"}}],'
+                              f'"offset":0, "limit":20}}')
+        assert res.status_code == 200
+        assert res.json['count'] == 30
+
+    @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_filter_and_group_by_os(self, test_client, session, workspace, host_factory):
         host_factory.create_batch(10, workspace=workspace, os='Unix')
         host_factory.create_batch(1, workspace=workspace, os='unix')

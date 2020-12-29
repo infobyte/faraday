@@ -40,7 +40,7 @@ class AgentAuthTokenView(GenericView):
             200:
               description: Ok
         """
-        totp = pyotp.TOTP(faraday_server.agent_registration_secret)
+        totp = pyotp.TOTP(faraday_server.agent_registration_secret, digits=25)
         return AgentAuthTokenSchema().dump(
             {'token': totp.now(),
              'expires_in': totp.interval - datetime.datetime.now().timestamp() % totp.interval})

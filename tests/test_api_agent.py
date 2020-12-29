@@ -82,7 +82,7 @@ class TestAgentCreationAPI():
         initial_agent_count = len(session.query(Agent).all())
         raw_data = get_raw_agent(
             name='new_agent',
-            token=pyotp.TOTP(secret).now(),
+            token=pyotp.TOTP(secret, digits=25).now(),
             workspaces=[workspace, other_workspace]
         )
         # /v2/agent_registration/
@@ -109,7 +109,7 @@ class TestAgentCreationAPI():
         initial_agent_count = len(session.query(Agent).all())
         raw_data = get_raw_agent(
             name=None,
-            token=pyotp.TOTP(secret).now(),
+            token=pyotp.TOTP(secret, digits=25).now(),
             workspaces=[workspace]
         )
         # /v2/agent_registration/
@@ -174,7 +174,7 @@ class TestAgentCreationAPI():
         faraday_server_config.agent_registration_secret = secret
         logout(test_client, [302])
         raw_data = get_raw_agent(
-            token=pyotp.TOTP(secret).now(),
+            token=pyotp.TOTP(secret, digits=25).now(),
             name="test agent",
             workspaces=[]
         )
@@ -192,7 +192,7 @@ class TestAgentCreationAPI():
         faraday_server_config.agent_registration_secret = secret
         logout(test_client, [302])
         raw_data = get_raw_agent(
-            token=pyotp.TOTP(secret).now(),
+            token=pyotp.TOTP(secret, digits=25).now(),
             name="test agent",
             workspaces=[]
         )
@@ -212,7 +212,7 @@ class TestAgentCreationAPI():
         logout(test_client, [302])
         raw_data = get_raw_agent(
             name="test agent",
-            token=pyotp.TOTP(secret).now()
+            token=pyotp.TOTP(secret, digits=25).now()
         )
         # /v2/agent_registration/
         res = test_client.post('/v2/agent_registration/', data=raw_data)

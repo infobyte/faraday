@@ -340,7 +340,7 @@ def _create_vuln(ws, vuln_data, command=None, **kwargs):
         logger.debug("Apply run date to vuln")
         vuln.create_date = run_date
         db.session.commit()
-    elif not created and any(vuln_data["custom_fields"]):
+    elif not created and ("custom_fields" in vuln_data and any(vuln_data["custom_fields"])):
         # Updates Custom Fields
         vuln.custom_fields = vuln_data.pop('custom_fields', {})
         db.session.commit()

@@ -116,6 +116,22 @@ class WorkspaceView(ReadWriteView, FilterMixin):
     order_field = Workspace.name.asc()
 
     def index(self, **kwargs):
+        """
+          ---
+          get:
+            summary: "Get a list of workspaces."
+            tags: ["Workspace"]
+            responses:
+              200:
+                description: Ok
+                content:
+                  application/json:
+                    schema: WorkspaceSchema
+          tags: ["Workspace"]
+          responses:
+            200:
+              description: Ok
+        """
         query = self._get_base_query()
         objects = []
         for workspace_stat in query:
@@ -136,7 +152,7 @@ class WorkspaceView(ReadWriteView, FilterMixin):
     def filter(self):
         """
         ---
-            tags: ["filter"]
+            tags: ["Filter"]
             summary: Filters, sorts and groups objects using a json with parameters.
             parameters:
             - in: query
@@ -267,18 +283,57 @@ class WorkspaceView(ReadWriteView, FilterMixin):
 
     @route('/<workspace_id>/activate/', methods=["PUT"])
     def activate(self, workspace_id):
+        """
+        ---
+        put:
+          tags: ["Workspace"]
+          description: Activate a workspace
+          responses:
+            200:
+              description: Ok
+        tags: ["Workspace"]
+        responses:
+          200:
+            description: Ok
+        """
         changed = self._get_object(workspace_id).activate()
         db.session.commit()
         return changed
 
     @route('/<workspace_id>/deactivate/', methods=["PUT"])
     def deactivate(self, workspace_id):
+        """
+        ---
+        put:
+          tags: ["Workspace"]
+          description: Deactivate a workspace
+          responses:
+            200:
+              description: Ok
+        tags: ["Workspace"]
+        responses:
+          200:
+            description: Ok
+        """
         changed = self._get_object(workspace_id).deactivate()
         db.session.commit()
         return changed
 
     @route('/<workspace_id>/change_readonly/', methods=["PUT"])
     def change_readonly(self, workspace_id):
+        """
+        ---
+        put:
+          tags: ["Workspace"]
+          description: Change readonly workspace's status
+          responses:
+            200:
+              description: Ok
+        tags: ["Workspace"]
+        responses:
+          200:
+            description: Ok
+        """
         self._get_object(workspace_id).change_readonly()
         db.session.commit()
         return self._get_object(workspace_id).readonly

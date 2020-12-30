@@ -7,7 +7,7 @@ tag_on_github:
       - export FARADAY_VERSION=$(eval $IMAGE_TAG)
       - CHANGELOG/check_pre_tag.py
       - git push github white/dev:master
-      - git tag v$IMAGE_TAG -m "$(cat CHANGELOG/$FARADAY_VERSION/white.md)"
+      - git tag v$FARADAY_VERSION -m "$(cat CHANGELOG/$FARADAY_VERSION/white.md)"
       - git push github v$FARADAY_VERSION
       - scripts/github_release.py
     rules:

@@ -4,7 +4,7 @@
 
 angular.module('faradayApp')
     .service('loginSrv', ['BASEURL', '$q', '$cookies', function(BASEURL, $q, $cookies) {
-        
+
         loginSrv = {
             is_authenticated: false,
             user_obj: null,

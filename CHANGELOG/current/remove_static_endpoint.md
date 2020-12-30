@@ -1,1 +1,0 @@
-Remove Flask static endpoint

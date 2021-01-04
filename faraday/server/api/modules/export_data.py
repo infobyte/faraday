@@ -14,6 +14,16 @@ logger = logging.getLogger(__name__)
 
 @export_data_api.route('/v2/ws/<workspace_name>/export_data', methods=['GET'])
 def export_data(workspace_name):
+    """
+    ---
+    get:
+      tags: ["File","Workspace"]
+      description: Exports all the workspace data in a XML file
+      responses:
+        200:
+          description: Ok
+    """
+
     workspace = Workspace.query.filter_by(name=workspace_name).first()
     if not workspace:
         logger.error("No such workspace. Please, specify a valid workspace.")

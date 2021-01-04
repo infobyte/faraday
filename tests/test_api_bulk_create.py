@@ -1031,3 +1031,27 @@ def test_vuln_web_cannot_have_host_parent(session, workspace, test_client, logge
         data=dict(hosts=[host_data_], command=command_data)
     )
     assert res.status_code == 400
+
+
+def test_bulk_create_update_service(session, service):
+    session.add(service)
+    session.commit()
+    new_service_version = f"{service.name}_changed"
+    new_service_name = f"{service.name}_changed"
+    new_service_description = f"{service.description}_changed"
+    new_service_owned = not service.owned
+    data = {
+        "version": new_service_version,
+        "name": new_service_name,
+        "description": new_service_description,
+        "port": service.port,
+        "protocol": service.protocol,
+        "owned": new_service_owned,
+    }
+    data = bc.BulkServiceSchema().load(data)
+    bc._create_service(service.workspace, service.host, data)
+    assert count(Service, service.host.workspace) == 1
+    assert service.version == new_service_version
+    assert service.name == new_service_name
+    assert service.description == new_service_description
+    assert service.owned == new_service_owned

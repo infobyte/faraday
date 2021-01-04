@@ -18,11 +18,13 @@ from autobahn.twisted.websocket import (
     listenWS
 )
 
+from flask_mail import Mail
+
 from OpenSSL.SSL import Error as SSLError
 
 import faraday.server.config
 
-from faraday.server.config import CONST_FARADAY_HOME_PATH
+from faraday.server.config import CONST_FARADAY_HOME_PATH, smtp
 from faraday.server.utils import logger
 from faraday.server.threads.reports_processor import ReportsManager, REPORTS_QUEUE
 from faraday.server.threads.ping_home import PingHomeThread
@@ -34,6 +36,13 @@ from faraday.server.websocket_factories import (
 
 
 app = create_app()  # creates a Flask(__name__) app
+# After 'Create app'
+app.config['MAIL_SERVER'] = smtp.host
+app.config['MAIL_PORT'] = smtp.port
+app.config['MAIL_USE_SSL'] = smtp.ssl
+app.config['MAIL_USERNAME'] = smtp.username
+app.config['MAIL_PASSWORD'] = smtp.password
+mail = Mail(app)
 logger = logging.getLogger(__name__)
 
 

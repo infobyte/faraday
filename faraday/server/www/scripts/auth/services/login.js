@@ -92,6 +92,26 @@ angular.module('faradayApp')
                     error: callback
                 });
                 return deferred.promise;
+            },
+
+            recover: function(email){
+                var deferred = $q.defer();
+
+                $.ajax({
+                    type: 'POST',
+                    url: BASEURL + '_api/auth/forgot_password',
+                    data: JSON.stringify({"email": email}),
+                    dataType: 'json',
+                    contentType: 'application/json'
+                })
+                .done(function(data){
+                    deferred.resolve(data);
+                })
+                .fail(function(){
+                    deferred.reject();
+                });
+
+                return deferred.promise;
             }
         }
 

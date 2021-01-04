@@ -30,8 +30,9 @@ docker-publish-prod:
     CI_REGISTRY_IMAGE: index.docker.io/faradaysec/faraday
   script:
     - docker image tag registry.gitlab.com/faradaysec/faraday:latest $CI_REGISTRY_IMAGE:latest
+    - docker push $CI_REGISTRY_IMAGE:latest
     - docker image tag $CI_REGISTRY_IMAGE:latest $CI_REGISTRY_IMAGE:$VERSION
-    - docker push "$CI_REGISTRY_IMAGE"
+    - docker push $CI_REGISTRY_IMAGE:$VERSION
   rules:
     - if: '$CI_COMMIT_TAG =~ /^white-v[0-9.]+$/'
       when: on_success

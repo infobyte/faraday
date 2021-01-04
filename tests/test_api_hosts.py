@@ -306,6 +306,20 @@ class TestHostAPI:
         assert res.status_code == 200
         self.compare_results(hosts, res)
 
+    @pytest.mark.usefixtures('ignore_nplusone')
+    def test_filter_restless_count(self, test_client, session, workspace,
+                                second_workspace, host_factory):
+        # The hosts that should be shown
+        hosts = host_factory.create_batch(30, workspace=workspace, os='Unix')
+
+        # This shouldn't be shown, they are from other workspace
+        host_factory.create_batch(5, workspace=second_workspace, os='Unix')
+
+        session.commit()
+        res = test_client.get(f'{self.url()}filter?q={{"filters":[{{"name": "os", "op":"eq", "val":"Unix"}}],'
+                              f'"offset":0, "limit":20}}')
+        assert res.status_code == 200
+        assert res.json['count'] == 30
 
     @pytest.mark.usefixtures('ignore_nplusone')
     def test_filter_restless_filter_and_group_by_os(self, test_client, session, workspace, host_factory):
@@ -317,10 +331,9 @@ class TestHostAPI:
                               f'"order_by":[{{"field": "os", "direction": "desc"}}]}}')
         assert res.status_code == 200
         assert len(res.json['rows']) == 2
-        assert res.json['total_rows'] == 2
+        assert res.json['count'] == 2
         assert 'unix' in [row['value']['os'] for row in res.json['rows']]
         assert 'Unix' in [row['value']['os'] for row in res.json['rows']]
-
 
     def test_filter_by_os_like_ilike(self, test_client, session, workspace,
                                      second_workspace, host_factory):
@@ -482,7 +495,7 @@ class TestHostAPI:
         session.commit()
         res = test_client.get(self.url() + '?port=invalid_port')
         assert res.status_code == 200
-        assert res.json['total_rows'] == 0
+        assert res.json['count'] == 0
 
     def test_filter_restless_by_invalid_service_port(self, test_client, session, workspace,
                                service_factory, host_factory):

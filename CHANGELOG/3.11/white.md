@@ -10,6 +10,7 @@
  * Add creator information when uploading reports or using de bulk create api
  * Add feature to disable rules in the searcher
  * Add API endpoint to export Faraday data to Metasploit XML format
+ * Change websocket url route from / to /websockets
  * Use run date instead of creation date when plugins report specifies it
  * Improve knowledge base UX
  * Improve workspace table and status report table UX.

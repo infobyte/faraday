@@ -184,6 +184,11 @@ class SmtpConfigObject(ConfigSection):
         self.ssl = False
         self.certfile = None
         self.keyfile = None
+        self.enabled = False
+
+    def is_enabled(self):
+        return self.enabled is True
+
 
 class StorageConfigObject(ConfigSection):
     def __init__(self):

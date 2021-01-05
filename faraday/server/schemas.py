@@ -7,6 +7,7 @@ See the file 'doc/LICENSE' for the license information
 import json
 import time
 import datetime
+import logging
 from flask import g
 from marshmallow import fields, Schema, post_dump, EXCLUDE
 from marshmallow.utils import missing as missing_
@@ -18,6 +19,8 @@ from faraday.server.models import (
     VulnerabilityABC,
     CustomFieldsSchema,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class JSTimestampField(fields.Integer):
@@ -73,7 +76,10 @@ class FaradayCustomField(fields.Field):
                     field_name=key,
                 ).first()
                 if not field_schema:
-                    raise ValidationError("Invalid custom field, not found in schema. Did you add it first?")
+                    logger.warning(
+                        f"Invalid custom field {key}. Did you forget to add it?"
+                    )
+                    continue
                 if field_schema.field_type == 'str':
                     serialized[key] = str(raw_data)
                 elif field_schema.field_type == 'int':

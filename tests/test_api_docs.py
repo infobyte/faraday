@@ -1,6 +1,5 @@
 import json
 
-import pytest
 import yaml
 from apispec import APISpec
 from faraday.server.web import app
@@ -27,6 +26,7 @@ class TestDocs:
 
     def test_yaml_docs_with_no_doc(self):
 
+        exc = {'/login', '/logout', '/change'}
         failing = []
 
         with app.test_request_context():
@@ -36,6 +36,9 @@ class TestDocs:
         spec_yaml = yaml.load(spec.to_yaml(), Loader=yaml.BaseLoader)
 
         for path_key, path_value in spec_yaml["paths"].items():
+
+            if path_key in exc:
+                continue
 
             path_temp = {path_key: {}}
 

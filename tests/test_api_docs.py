@@ -6,6 +6,7 @@ from faraday.server.web import app
 from apispec.ext.marshmallow import MarshmallowPlugin
 from apispec_webframeworks.flask import FlaskPlugin
 from faraday.utils.faraday_openapi_plugin import FaradayAPIPlugin
+from faraday.server.commands.app_urls import openapi_format
 
 extra_specs = {
     'info': {'description': 'TEST'},
@@ -75,3 +76,21 @@ class TestDocs:
             print("Endpoints with default docs:\n")
             print(json.dumps(failing, indent=1))
         assert not any(failing)
+
+    def test_tags_sorted_correctly(self):
+
+        tags = set()
+
+        with app.test_request_context():
+            for endpoint in app.view_functions:
+                spec.path(view=app.view_functions[endpoint], app=app)
+
+        spec_yaml = yaml.load(spec.to_yaml(), Loader=yaml.BaseLoader)
+
+        for path_value in spec_yaml["paths"].values():
+            for data_value in path_value.values():
+                if 'tags' in data_value and any(data_value['tags']):
+                    for tag in data_value['tags']:
+                        tags.add(tag)
+
+        assert sorted(tags) == openapi_format(return_tags=True)

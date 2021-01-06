@@ -9,13 +9,12 @@ from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from apispec_webframeworks.flask import FlaskPlugin
 from faraday.server.web import app
-from faraday import __version__ as f_version
 import json
 
 from faraday.utils.faraday_openapi_plugin import FaradayAPIPlugin
 
 
-def openapi_format(format="yaml", server="localhost", no_servers=False):
+def openapi_format(format="yaml", server="localhost", no_servers=False, return_tags=False):
     extra_specs = {'info': {
         'description': 'The Faraday REST API enables you to interact with '
                        '[our server](https://github.com/infobyte/faraday).\n'
@@ -63,6 +62,9 @@ def openapi_format(format="yaml", server="localhost", no_servers=False):
                         tags.add(tag)
         for tag in sorted(tags):
             spec.tag({'name': tag})
+
+        if return_tags:
+            return sorted(tags)
 
         if format.lower() == "yaml":
             print(spec.to_yaml())

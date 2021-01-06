@@ -54,7 +54,7 @@ def openapi_format(format="yaml", server="localhost", no_servers=False, return_t
             spec.path(view=endpoint, app=app)
 
         # Set up global tags
-        spec_yaml = yaml.load(spec.to_yaml(), Loader=yaml.BaseLoader)
+        spec_yaml = yaml.load(spec.to_yaml(), Loader=yaml.SafeLoader)
         for path_value in spec_yaml["paths"].values():
             for data_value in path_value.values():
                 if 'tags' in data_value and any(data_value['tags']):

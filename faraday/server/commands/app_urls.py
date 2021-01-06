@@ -4,6 +4,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 """
+import yaml
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from apispec_webframeworks.flask import FlaskPlugin
@@ -47,9 +48,22 @@ def openapi_format(format="yaml", server="localhost", no_servers=False):
     }
     spec.components.response("UnauthorizedError", response_401_unauthorized)
 
+    tags = set()
+
     with app.test_request_context():
-        for endpoint in app.view_functions:
-            spec.path(view=app.view_functions[endpoint], app=app)
+        for endpoint in app.view_functions.values():
+            spec.path(view=endpoint, app=app)
+
+        # Set up global tags
+        spec_yaml = yaml.load(spec.to_yaml(), Loader=yaml.BaseLoader)
+        for path_value in spec_yaml["paths"].values():
+            for data_value in path_value.values():
+                if 'tags' in data_value and any(data_value['tags']):
+                    for tag in data_value['tags']:
+                        tags.add(tag)
+        for tag in sorted(tags):
+            spec.tag({'name': tag})
+
         if format.lower() == "yaml":
             print(spec.to_yaml())
         else:

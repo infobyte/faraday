@@ -9,6 +9,7 @@ from builtins import range
 
 import flask
 from flask_login import current_user
+from marshmallow import Schema, fields
 
 from werkzeug.local import LocalProxy
 from werkzeug.datastructures import MultiDict
@@ -47,6 +48,15 @@ logger = logging.getLogger(__name__)
 @auth.route('/auth/forgot_password', methods= ['POST'])
 @anonymous_user_required
 def forgot_password():
+    """
+    ---
+    post:
+      tags: ["User"]
+      description: Send a token within an email to the user for password recovery
+      responses:
+        200:
+          description: Ok
+    """
 
     if not config.smtp.is_enabled():
         logger.warning('Missing SMTP Config.')
@@ -72,6 +82,15 @@ def forgot_password():
 @auth.route('/auth/reset_password/<token>', methods= ['POST'])
 @anonymous_user_required
 def reset_password(token):
+    """
+    ---
+    post:
+      tags: ["User"]
+      description: Reset the user's password based on the given token
+      responses:
+        200:
+          description: Ok
+    """
     if not config.smtp.is_enabled():
         logger.warning('Missing SMTP Config.')
         return make_response(flask.jsonify(response=dict(message="Operation not implemented"), success=False, code=501), 501)

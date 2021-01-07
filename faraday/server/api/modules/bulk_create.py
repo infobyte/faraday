@@ -281,7 +281,10 @@ def _update_service(service: Service, service_data: dict) -> Service:
     updated = False
 
     for key in keys:
-        value = service_data.get(key, '')
+        if key == 'owned':
+            value = service_data.get(key, False)
+        else:
+            value = service_data.get(key, '')
         if value != getattr(service, key):
             setattr(service, key, value)
             updated = True

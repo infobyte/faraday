@@ -277,32 +277,14 @@ def _create_command_object_for(ws, created, obj, command):
 
 
 def _update_service(service: Service, service_data: dict) -> Service:
+    keys = ['version', 'description', 'name', 'status', 'owned']
     updated = False
 
-    version = service_data.get('version', '')
-    if service.version != version:
-        service.version = version
-        updated = True
-
-    name = service_data.get('name', '')
-    if service.name != name:
-        service.name = name
-        updated = True
-
-    description = service_data.get('description', '')
-    if service.description != description:
-        service.description = description
-        updated = True
-
-    status = service_data.get('status', '')
-    if service.status != status:
-        service.status = status
-        updated = True
-
-    owned = service_data.get('owned', False)
-    if service.owned != owned:
-        service.owned = owned
-        updated = True
+    for key in keys:
+        value = service_data.get(key, '')
+        if value != getattr(service, key):
+            setattr(service, key, value)
+            updated = True
 
     if updated:
         service.update_date = datetime.now()
